@@ -56,11 +56,18 @@ jest.mock("@codesandbox/sandpack-react", () => {
         { "data-testid": "sandpack-layout" },
         children,
       ),
+    SandpackFileExplorer: () =>
+      React.createElement("div", { "data-testid": "sandpack-file-explorer" }),
     useSandpack: () => ({
       sandpack: {
         files: {
           "/index.js": { code: "console.log('hello')" },
+          "/styles.css": { code: "body {}" },
         },
+        activeFile: "/index.js",
+        addFile: jest.fn(),
+        deleteFile: jest.fn(),
+        setActiveFile: jest.fn(),
       },
       dispatch: jest.fn(),
     }),
@@ -268,5 +275,236 @@ describe("SandpackBlockComponent rendering", () => {
 
     // The render function should return something
     expect(rendered).toBeDefined();
+  });
+});
+
+describe("validateSandpackFilename", () => {
+  let validateSandpackFilename: (
+    filename: string,
+    existingFiles: Record<string, string>,
+  ) => string | null;
+
+  beforeAll(async () => {
+    const mod = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+    validateSandpackFilename = mod.validateSandpackFilename;
+  });
+
+  const empty: Record<string, string> = {};
+
+  it("returns null for valid /app.js", () => {
+    expect(validateSandpackFilename("/app.js", empty)).toBeNull();
+  });
+
+  it("returns null for valid /src/utils.ts", () => {
+    expect(validateSandpackFilename("/src/utils.ts", empty)).toBeNull();
+  });
+
+  it("returns null for valid /styles/main.css", () => {
+    expect(validateSandpackFilename("/styles/main.css", empty)).toBeNull();
+  });
+
+  it("returns null for valid /src/components/Button.tsx", () => {
+    expect(
+      validateSandpackFilename("/src/components/Button.tsx", empty),
+    ).toBeNull();
+  });
+
+  it("returns error for empty string", () => {
+    expect(validateSandpackFilename("", empty)).toBe("Filename is required");
+  });
+
+  it("returns error for whitespace-only string", () => {
+    expect(validateSandpackFilename("   ", empty)).toBe("Filename is required");
+  });
+
+  it("returns error when missing leading slash", () => {
+    expect(validateSandpackFilename("app.js", empty)).toBe("Must start with /");
+  });
+
+  it("returns error when name exceeds 50 characters", () => {
+    const long = "/" + "a".repeat(48) + ".js"; // 52 chars total
+    expect(validateSandpackFilename(long, empty)).toBe("Max 50 characters");
+  });
+
+  it("returns error for special chars (spaces)", () => {
+    expect(validateSandpackFilename("/my file.js", empty)).toBe(
+      "Only letters, numbers, dots, hyphens, underscores, and slashes allowed",
+    );
+  });
+
+  it("returns error for special chars (<)", () => {
+    expect(validateSandpackFilename("/file<name>.js", empty)).toBe(
+      "Only letters, numbers, dots, hyphens, underscores, and slashes allowed",
+    );
+  });
+
+  it("returns error for consecutive dots (/foo..bar.js)", () => {
+    expect(validateSandpackFilename("/foo..bar.js", empty)).toBe(
+      "Cannot contain consecutive dots",
+    );
+  });
+
+  it("returns error for consecutive slashes (/foo//bar.js)", () => {
+    expect(validateSandpackFilename("/foo//bar.js", empty)).toBe(
+      "Cannot contain consecutive slashes",
+    );
+  });
+
+  it("returns error when file already exists", () => {
+    expect(
+      validateSandpackFilename("/app.js", { "/app.js": "console.log('hi')" }),
+    ).toBe("File already exists");
+  });
+
+  it("returns error for no file extension (/README)", () => {
+    expect(validateSandpackFilename("/README", empty)).toBe(
+      "Only letters, numbers, dots, hyphens, underscores, and slashes allowed",
+    );
+  });
+});
+
+describe("FileActions", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(window, "confirm").mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const createMockBlock = (overrides = {}) => ({
+    id: "block-123",
+    type: "sandpack-block",
+    props: {
+      template: "vanilla",
+      files: "{}",
+      showPreview: true,
+      editable: true,
+      ...overrides,
+    },
+  });
+
+  it("renders add file button in author mode (isEditable=true)", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    expect(screen.getByTestId("add-file-button")).toBeInTheDocument();
+  });
+
+  it("does not render add file button when not in author mode (isEditable=false)", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: false, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    expect(screen.queryByTestId("add-file-button")).not.toBeInTheDocument();
+  });
+
+  it("clicking add file button shows popover with input", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    const addButton = screen.getByTestId("add-file-button");
+    fireEvent.click(addButton);
+
+    expect(screen.getByTestId("new-filename-input")).toBeInTheDocument();
+  });
+
+  it("submitting an invalid filename shows an error message", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    fireEvent.click(screen.getByTestId("add-file-button"));
+
+    const input = screen.getByTestId("new-filename-input");
+    // Clear the default "/" value and type an invalid filename
+    fireEvent.change(input, { target: { value: "no-leading-slash.js" } });
+
+    fireEvent.click(screen.getByText("Create"));
+
+    expect(screen.getByTestId("filename-error")).toBeInTheDocument();
+    expect(screen.getByTestId("filename-error")).toHaveTextContent(
+      "Must start with /",
+    );
+  });
+
+  it("delete file button is disabled when only one file exists", async () => {
+    // Override useSandpack for this test to return only one file
+    const sandpackMock = require("@codesandbox/sandpack-react");
+    const originalUseSandpack = sandpackMock.useSandpack;
+    sandpackMock.useSandpack = () => ({
+      sandpack: {
+        files: {
+          "/index.js": { code: "console.log('hello')" },
+        },
+        activeFile: "/index.js",
+        addFile: jest.fn(),
+        deleteFile: jest.fn(),
+        setActiveFile: jest.fn(),
+      },
+      dispatch: jest.fn(),
+    });
+
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    // Open the file explorer to reveal the per-file delete buttons
+    fireEvent.click(screen.getByTestId("file-explorer-toggle"));
+
+    const deleteButton = screen.getByTestId("delete-file-button-/index.js");
+    expect(deleteButton).toBeDisabled();
+
+    // Restore
+    sandpackMock.useSandpack = originalUseSandpack;
+  });
+
+  it("delete file button calls window.confirm on click", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = createMockBlock();
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    // Open the file explorer to reveal the per-file delete buttons
+    fireEvent.click(screen.getByTestId("file-explorer-toggle"));
+
+    const deleteButton = screen.getByTestId("delete-file-button-/index.js");
+    fireEvent.click(deleteButton);
+
+    expect(window.confirm).toHaveBeenCalledWith("Delete /index.js?");
   });
 });

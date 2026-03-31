@@ -100,8 +100,8 @@ export function SandpackViewer({
                 onClick={() => setShowFileExplorer((v) => !v)}
                 className={`rounded p-1 transition-colors ${
                   showFileExplorer
-                    ? "bg-[#3e3e3e] text-gray-200"
-                    : "text-gray-500 hover:text-gray-300"
+                    ? "bg-[#3e3e3e] text-white"
+                    : "text-white hover:bg-[#3e3e3e]"
                 }`}
               >
                 <PanelLeft size={14} />
@@ -111,7 +111,7 @@ export function SandpackViewer({
               {showFileExplorer ? "Hide file explorer" : "Show file explorer"}
             </TooltipContent>
           </Tooltip>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-white">
             {TEMPLATE_LABELS[template]}
           </span>
         </div>
@@ -120,7 +120,7 @@ export function SandpackViewer({
             <TooltipTrigger asChild>
               <button
                 onClick={() => setIsFullscreen((v) => !v)}
-                className="rounded p-1.5 text-gray-300 transition-colors hover:bg-[#3e3e3e] hover:text-white"
+                className="rounded p-1.5 text-white transition-colors hover:bg-[#3e3e3e]"
               >
                 {isFullscreen ? (
                   <Minimize2 size={13} />
