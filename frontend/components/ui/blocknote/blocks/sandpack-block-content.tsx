@@ -5,10 +5,9 @@ import {
   SandpackLayout,
   SandpackCodeEditor,
   SandpackPreview,
-  SandpackFileExplorer,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import React from "react";
 import {
   Edit,
@@ -19,6 +18,8 @@ import {
   PanelLeft,
   Maximize2,
   Minimize2,
+  Plus,
+  X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -135,23 +136,144 @@ export const TEMPLATE_LABELS: Record<SandpackTemplate, string> = {
   "react-ts": "React + TypeScript",
 };
 
+const MAX_FILES = 20;
+const BUBBLE_EVENTS = [
+  "keydown",
+  "keypress",
+  "keyup",
+  "input",
+  "paste",
+  "cut",
+] as const;
+const MAX_FILENAME_LENGTH = 50;
+const VALID_FILENAME_PATTERN = /^\/[a-zA-Z0-9][a-zA-Z0-9._\-/]*\.[a-zA-Z0-9]+$/;
+
+export function validateSandpackFilename(
+  filename: string,
+  existingFiles: Record<string, string>,
+): string | null {
+  if (!filename || filename.trim().length === 0) return "Filename is required";
+  if (filename.length > MAX_FILENAME_LENGTH)
+    return `Max ${MAX_FILENAME_LENGTH} characters`;
+  if (!filename.startsWith("/")) return "Must start with /";
+  if (filename.includes("..")) return "Cannot contain consecutive dots";
+  if (filename.includes("//")) return "Cannot contain consecutive slashes";
+  if (!VALID_FILENAME_PATTERN.test(filename))
+    return "Only letters, numbers, dots, hyphens, underscores, and slashes allowed";
+  if (filename in existingFiles) return "File already exists";
+  return null;
+}
+
 interface FileChangeListenerProps {
   onFilesChange: (files: Record<string, string>) => void;
 }
 
 function FileChangeListener({ onFilesChange }: FileChangeListenerProps) {
   const { sandpack } = useSandpack();
+  // Keep a ref so the effect always calls the latest callback without
+  // needing it in the dependency array (avoids re-running on every render).
+  const onFilesChangeRef = useRef(onFilesChange);
+  onFilesChangeRef.current = onFilesChange;
 
   useEffect(() => {
-    const files = sandpack.files;
     const simplified: Record<string, string> = {};
-    Object.entries(files).forEach(([filename, fileObj]) => {
+    Object.entries(sandpack.files).forEach(([filename, fileObj]) => {
       simplified[filename] = fileObj.code;
     });
-    onFilesChange(simplified);
+    onFilesChangeRef.current(simplified);
   }, [sandpack.files]);
 
   return null;
+}
+
+// Null-rendering component inside SandpackProvider that exposes sandpack.addFile
+// via a ref so the title bar (outside the provider) can trigger file creation.
+interface SandpackFileCommandsProps {
+  addFileCommandRef: React.MutableRefObject<
+    ((filename: string) => void) | null
+  >;
+}
+
+function SandpackFileCommands({
+  addFileCommandRef,
+}: SandpackFileCommandsProps) {
+  const { sandpack } = useSandpack();
+  addFileCommandRef.current = (filename: string) => {
+    sandpack.addFile(filename, "");
+    sandpack.setActiveFile(filename);
+  };
+  return null;
+}
+
+interface CustomFileExplorerProps {
+  height: string;
+  isAuthorMode: boolean;
+}
+
+function CustomFileExplorer({ height, isAuthorMode }: CustomFileExplorerProps) {
+  const { sandpack } = useSandpack();
+  const filePaths = Object.keys(sandpack.files).sort();
+  const fileCount = filePaths.length;
+
+  const handleDelete = (path: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const confirmed = window.confirm(`Delete ${path}?`);
+    if (!confirmed) return;
+    sandpack.deleteFile(path);
+  };
+
+  return (
+    <div
+      style={{ height, minWidth: "160px", maxWidth: "200px" }}
+      role="listbox"
+      aria-label="Files"
+      className="overflow-y-auto border-r border-[#333] bg-[#1e1e1e]"
+    >
+      {filePaths.map((path) => {
+        const isActive = sandpack.activeFile === path;
+        const displayPath = path.slice(1); // strip leading slash
+        return (
+          <div
+            key={path}
+            role="option"
+            aria-selected={isActive}
+            tabIndex={0}
+            onClick={() => sandpack.setActiveFile(path)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                sandpack.setActiveFile(path);
+              }
+            }}
+            className={`group flex cursor-pointer items-center justify-between px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#0078d4] focus:outline-none ${
+              isActive
+                ? "bg-[#2d2d2d] text-white"
+                : "text-gray-400 hover:bg-[#252525] hover:text-white"
+            }`}
+          >
+            <span className="truncate" title={path}>
+              {displayPath}
+            </span>
+            {isAuthorMode && (
+              <button
+                onClick={(e) => handleDelete(path, e)}
+                disabled={fileCount <= 1}
+                className="ml-1 shrink-0 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#555] focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
+                title={
+                  fileCount <= 1
+                    ? "Cannot delete the last file"
+                    : `Delete ${path}`
+                }
+                data-testid={`delete-file-button-${path}`}
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 interface SandpackBlockInnerProps {
@@ -163,6 +285,9 @@ interface SandpackBlockInnerProps {
   isAuthorMode: boolean;
   resolvedTheme: string | undefined;
   onFilesChange?: (files: Record<string, string>) => void;
+  addFileCommandRef?: React.MutableRefObject<
+    ((filename: string) => void) | null
+  >;
   fullscreen?: boolean;
 }
 
@@ -175,6 +300,7 @@ function SandpackBlockInner({
   isAuthorMode,
   resolvedTheme,
   onFilesChange,
+  addFileCommandRef,
   fullscreen,
 }: SandpackBlockInnerProps) {
   const sandpackTheme = resolvedTheme === "dark" ? "dark" : "light";
@@ -192,14 +318,14 @@ function SandpackBlockInner({
       {isAuthorMode && onFilesChange && (
         <FileChangeListener onFilesChange={onFilesChange} />
       )}
+      {isAuthorMode && addFileCommandRef && (
+        <SandpackFileCommands addFileCommandRef={addFileCommandRef} />
+      )}
       <SandpackLayout>
         {showFileExplorer && (
-          <SandpackFileExplorer
-            style={{
-              height: panelHeight,
-              minWidth: "160px",
-              maxWidth: "200px",
-            }}
+          <CustomFileExplorer
+            height={panelHeight}
+            isAuthorMode={isAuthorMode}
           />
         )}
         <SandpackCodeEditor
@@ -235,6 +361,15 @@ export function SandpackBlockContent({
   const isAuthorMode = editor?.isEditable !== false;
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [addFileOpen, setAddFileOpen] = useState(false);
+  const [newFilename, setNewFilename] = useState("/");
+  const [addFileError, setAddFileError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
+  const addFilePopoverRef = useRef<HTMLDivElement>(null);
+  const addFileCommandRef = useRef<((filename: string) => void) | null>(null);
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -244,6 +379,76 @@ export function SandpackBlockContent({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [isFullscreen]);
+
+  // Clear debounce timer on unmount to avoid firing updateBlock on a dead editor.
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
+  // Stop keyboard/input/paste events from bubbling out to ProseMirror.
+  // ProseMirror registers native DOM listeners that fire before React synthetic
+  // events, so we must intercept at the native level to prevent keystrokes
+  // typed inside CodeMirror from leaking into the lesson editor.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const stop = (e: Event) => e.stopPropagation();
+    BUBBLE_EVENTS.forEach((evt) => el.addEventListener(evt, stop));
+    return () =>
+      BUBBLE_EVENTS.forEach((evt) => el.removeEventListener(evt, stop));
+  }, []);
+
+  // Same event isolation for the fullscreen overlay — uses a ref+effect so
+  // listeners are properly cleaned up each time the overlay mounts/unmounts.
+  useEffect(() => {
+    const el = fullscreenRef.current;
+    if (!isFullscreen || !el) return;
+    const stop = (e: Event) => e.stopPropagation();
+    BUBBLE_EVENTS.forEach((evt) => el.addEventListener(evt, stop));
+    return () =>
+      BUBBLE_EVENTS.forEach((evt) => el.removeEventListener(evt, stop));
+  }, [isFullscreen]);
+
+  const closeAddFilePopover = () => {
+    setAddFileOpen(false);
+    setNewFilename("/");
+    setAddFileError(null);
+  };
+
+  useEffect(() => {
+    if (!addFileOpen) return;
+    addFileInputRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAddFilePopover();
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (
+        addFilePopoverRef.current &&
+        !addFilePopoverRef.current.contains(e.target as Node)
+      ) {
+        closeAddFilePopover();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onMouseDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onMouseDown);
+    };
+  }, [addFileOpen]);
+
+  const handleAddFileCreate = () => {
+    const validationError = validateSandpackFilename(newFilename, parsedFiles);
+    if (validationError) {
+      setAddFileError(validationError);
+      return;
+    }
+    addFileCommandRef.current?.(newFilename);
+    setShowFileExplorer(true);
+    closeAddFilePopover();
+  };
 
   const currentTemplate = (block.props.template ||
     "vanilla") as SandpackTemplate;
@@ -260,6 +465,7 @@ export function SandpackBlockContent({
       return {};
     }
   }, [block.props.files]);
+  const fileCount = Object.keys(parsedFiles).length;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -338,19 +544,24 @@ export function SandpackBlockContent({
     if (!editor) return;
     const newFilesJson = JSON.stringify(newFiles);
     if (newFilesJson === block.props.files) return;
-    // Defer to avoid flushSync conflict with BlockNote's editor.updateBlock
-    // (BlockNote calls flushSync internally, which crashes inside a React lifecycle).
+
+    // Debounce saves: cancel the previous pending update and schedule a new one.
+    // Firing updateBlock on every keystroke queues rapid ProseMirror transactions
+    // that can step on each other and produce "Position X out of range" errors.
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
     const currentBlock = block;
     const currentEditor = editor;
-    setTimeout(() => {
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
       try {
         currentEditor.updateBlock(currentBlock, {
           props: { ...currentBlock.props, files: newFilesJson },
         });
       } catch {
-        // Ignore update errors during rapid typing
+        // Ignore stale-reference errors if the block was removed
       }
-    }, 0);
+    }, 600);
   };
 
   const titleBar = (
@@ -375,6 +586,82 @@ export function SandpackBlockContent({
               {showFileExplorer ? "Hide file explorer" : "Show file explorer"}
             </TooltipContent>
           </Tooltip>
+
+          {isAuthorMode && (
+            <div className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      if (fileCount < MAX_FILES) {
+                        setAddFileOpen((v) => !v);
+                        setNewFilename("/");
+                        setAddFileError(null);
+                      }
+                    }}
+                    disabled={fileCount >= MAX_FILES}
+                    className="rounded p-1 text-white transition-colors hover:bg-[#3e3e3e] disabled:cursor-not-allowed disabled:opacity-40"
+                    data-testid="add-file-button"
+                  >
+                    <Plus size={13} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {fileCount >= MAX_FILES
+                    ? `Maximum ${MAX_FILES} files reached`
+                    : "Add file"}
+                </TooltipContent>
+              </Tooltip>
+
+              {addFileOpen && (
+                <div
+                  ref={addFilePopoverRef}
+                  role="dialog"
+                  aria-label="Add new file"
+                  className="absolute top-full left-0 z-50 mt-1 w-64 rounded border border-[#555] bg-[#2d2d2d] p-3 shadow-lg"
+                >
+                  <input
+                    ref={addFileInputRef}
+                    type="text"
+                    aria-label="New filename"
+                    value={newFilename}
+                    onChange={(e) => {
+                      setNewFilename(e.target.value);
+                      setAddFileError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddFileCreate();
+                    }}
+                    placeholder="/filename.js"
+                    className="w-full rounded border border-[#555] bg-[#1e1e1e] px-2 py-1 text-sm text-white outline-none focus:border-[#0078d4]"
+                    data-testid="new-filename-input"
+                  />
+                  {addFileError && (
+                    <p
+                      className="mt-1 text-xs text-red-400"
+                      data-testid="filename-error"
+                    >
+                      {addFileError}
+                    </p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={handleAddFileCreate}
+                      className="rounded bg-[#0078d4] px-2 py-1 text-xs text-white hover:bg-[#106ebe]"
+                    >
+                      Create
+                    </button>
+                    <button
+                      onClick={closeAddFilePopover}
+                      className="rounded px-2 py-1 text-xs text-white hover:bg-[#3e3e3e]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {isAuthorMode ? (
             <div
@@ -493,6 +780,7 @@ export function SandpackBlockContent({
       isAuthorMode={isAuthorMode}
       resolvedTheme={resolvedTheme}
       onFilesChange={isAuthorMode ? handleFilesChange : undefined}
+      addFileCommandRef={isAuthorMode ? addFileCommandRef : undefined}
       fullscreen={isFullscreen}
     />
   );
@@ -500,6 +788,7 @@ export function SandpackBlockContent({
   return (
     <>
       <div
+        ref={containerRef}
         className="my-4 w-full overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e]"
         contentEditable={false}
         onMouseDown={handleMouseDown}
@@ -510,6 +799,7 @@ export function SandpackBlockContent({
 
       {isFullscreen && (
         <div
+          ref={fullscreenRef}
           className="fixed inset-0 z-50 flex flex-col bg-[#1e1e1e]"
           onMouseDown={handleMouseDown}
         >
