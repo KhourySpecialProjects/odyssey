@@ -437,8 +437,16 @@ export function PresentationShell({
                 (layout === "image-left" || layout === "image-right") &&
                 layoutImageUrl
               ) {
+                // Filter out the image-layout block from text content
+                const textBlocks = allBlocks.filter(
+                  (b) =>
+                    !(
+                      b.__component === "droplets.generic" && "slideLayout" in b
+                    ),
+                );
+
                 const imgSide = (
-                  <div className="flex h-full w-1/2 shrink-0 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
+                  <div className="flex min-w-0 basis-1/2 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
                     <img
                       src={layoutImageUrl}
                       alt=""
@@ -446,9 +454,23 @@ export function PresentationShell({
                     />
                   </div>
                 );
+
+                // If no text blocks, render image centered at larger size
+                if (textBlocks.length === 0) {
+                  return (
+                    <div className="flex w-full items-center justify-center">
+                      <img
+                        src={layoutImageUrl}
+                        alt=""
+                        className="max-h-[75vh] w-auto rounded-lg object-contain"
+                      />
+                    </div>
+                  );
+                }
+
                 const textSide = (
-                  <div className="flex h-full w-1/2 flex-col justify-center space-y-5 overflow-y-auto px-2">
-                    {allBlocks.map((block, idx) => (
+                  <div className="flex max-h-[60vh] min-w-0 basis-1/2 flex-col justify-center space-y-5 overflow-y-auto px-2">
+                    {textBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
                         block={block}
@@ -456,9 +478,10 @@ export function PresentationShell({
                     ))}
                   </div>
                 );
+
                 return (
                   <div
-                    className="flex w-full max-w-5xl items-stretch gap-10 text-left"
+                    className="flex w-full max-w-5xl items-stretch gap-6 text-left"
                     style={{ minHeight: "60vh" }}
                   >
                     {layout === "image-left" ? (
@@ -491,7 +514,7 @@ export function PresentationShell({
               // Default layout
               return (
                 <div className="w-full max-w-4xl text-left">
-                  <div className="max-h-[85vh] space-y-4 overflow-hidden [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto">
+                  <div className="max-h-[85vh] space-y-4 overflow-y-auto [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto">
                     {allBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
