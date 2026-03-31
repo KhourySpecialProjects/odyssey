@@ -174,6 +174,80 @@ function ReportRow({ report }: { report: Report }) {
   );
 }
 
+// ——— ReportMobileCard ———
+function ReportMobileCard({ report }: { report: Report }) {
+  const [isPending, startTransition] = useTransition();
+
+  const strippedDescription = useMemo(
+    () =>
+      report.description
+        ?.replace(/<\/p>\s*<p>/gi, "\n")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/?p>/gi, "")
+        .replace(/<[^>]+>/g, "")
+        .trim(),
+    [report.description],
+  );
+
+  const truncatedDescription =
+    strippedDescription && strippedDescription.length > DESC_CHAR_LIMIT
+      ? strippedDescription.slice(0, DESC_CHAR_LIMIT) + "..."
+      : strippedDescription;
+
+  const handleDelete = () => {
+    if (!confirm("Delete this report? This cannot be undone.")) return;
+    startTransition(async () => {
+      const response = await deleteReport(report.id);
+      if (response?.success) {
+        toast.success("Report removed");
+      } else {
+        toast.error("Failed to remove report");
+      }
+    });
+  };
+
+  return (
+    <div
+      className={cn(
+        "w-full rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900",
+        isPending && "pointer-events-none opacity-50",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-[#101828] dark:text-white">
+            {report.fullName}
+          </p>
+          {truncatedDescription && (
+            <p className="mt-0.5 line-clamp-2 text-xs text-[#667085] dark:text-slate-400">
+              {truncatedDescription}
+            </p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          disabled={isPending}
+          className="h-8 w-8 shrink-0 p-0 text-red-500 hover:bg-slate-100 hover:text-red-500 dark:text-red-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+        >
+          <IconTrash className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <Link
+          href={report.path}
+          target="_blank"
+          className="flex items-center gap-1 text-xs text-[#2D7597] hover:underline"
+        >
+          <IconExternalLink className="h-3 w-3" />
+          {report.path}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // ——— Main Client Component ———
 export function ReportsPageClient({ reports }: { reports: Report[] }) {
   const {
@@ -248,6 +322,9 @@ export function ReportsPageClient({ reports }: { reports: Report[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageItems.map((report) => (
+          <ReportMobileCard key={report.id} report={report} />
+        ))}
       >
         {pageItems.map((report) => (
           <ReportRow key={report.id} report={report} />
