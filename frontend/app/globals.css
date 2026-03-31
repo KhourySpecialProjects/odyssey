@@ -111,3 +111,14 @@
     --border-angle: 360deg;
   }
 }
+
+/* Fix CodeMirror text selection visibility in Sandpack's light theme.
+   The default light theme uses a near-white selection that disappears
+   against the white editor background. */
+html:not(.dark) .sp-wrapper .cm-selectionBackground,
+html:not(.dark) .sp-wrapper .cm-focused .cm-selectionBackground {
+  background: #b3d4fd !important;
+}
+html:not(.dark) .sp-wrapper .cm-editor ::selection {
+  background: #b3d4fd;
+}
