@@ -19,6 +19,7 @@ import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
 import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block";
 import { SlideBreak } from "@/components/ui/blocknote/blocks/slide-break-block";
 import { NotebookCodeBlock } from "@/components/ui/blocknote/blocks/notebook-code-block";
+import { SandpackBlock } from "@/components/ui/blocknote/blocks/sandpack-block";
 
 const blockTypesToHide = new Set([
   "quote",
@@ -143,6 +144,7 @@ export const blockNoteSchema = BlockNoteSchema.create({
     "code-block": CodeBlock(),
     "slide-break": SlideBreak(),
     "notebook-code": NotebookCodeBlock(),
+    "sandpack-block": SandpackBlock(),
   },
   styleSpecs: customStyleSpecs,
 });

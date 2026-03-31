@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   stripHtmlTags,
   uppercaseFirstChar,
+  getDifficultyBadgeColor,
+  cn,
   isAuthorizedUserAdmin,
 } from "@/lib/utils";
 import {
@@ -87,6 +89,17 @@ export default async function DropletRoute({ params }: Props) {
             <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
+            {droplet.difficulty && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-sm",
+                  getDifficultyBadgeColor(droplet.difficulty),
+                )}
+              >
+                {uppercaseFirstChar(droplet.difficulty)}
+              </Badge>
+            )}
             {droplet.tags?.map((tag) => (
               <Badge key={tag.id} variant="outline" className="text-sm">
                 {tag.name}

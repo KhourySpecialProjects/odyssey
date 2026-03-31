@@ -20,6 +20,8 @@ export type Dataset = {
   droplet?: Droplet;
 };
 
+export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
+
 export type DropletStatus = "draft" | "edit" | "published";
 
 export type AnnouncementType =
@@ -184,6 +186,15 @@ export type Block =
       editable: boolean;
       runnable: boolean;
       _clientId?: string;
+    }
+  | {
+      __component: "droplets.sandpack-block";
+      id?: number;
+      template: string;
+      files: string;
+      showPreview: boolean;
+      editable: boolean;
+      _clientId?: string;
     };
 
 export type Lesson = {
@@ -225,6 +236,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
+  difficulty: DropletDifficulty;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];

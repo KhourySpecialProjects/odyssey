@@ -78,7 +78,15 @@ export const USER_POPULATES = {
     fields: PROFILE_FIELDS,
     populate: {
       droplets: {
-        fields: ["id", "name", "slug", "status", "type", "focusArea"],
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "status",
+          "type",
+          "focusArea",
+          "difficulty",
+        ],
       },
       created_playlists: {
         fields: ["id", "name", "slug", "isPublic"],

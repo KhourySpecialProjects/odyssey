@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
-import { Code, Play } from "lucide-react";
+import { Code, Play, AppWindow } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -263,6 +263,42 @@ export const getNotebookCodeSlashMenuItems = (
     aliases: ["notebook", "jupyter", "python", "colab"],
     group: "Data Science",
     subtext: "Interactive Python notebook cell with Pyodide",
+  },
+];
+
+export const getSandpackSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Live Sandbox",
+    icon: createElement(AppWindow, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "sandpack-block",
+            props: {
+              template: "vanilla",
+              files: "{}",
+              showPreview: true,
+              editable: true,
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: [
+      "sandbox",
+      "sandpack",
+      "live",
+      "playground",
+      "interactive",
+      "web",
+    ],
+    group: "Code",
+    subtext: "Interactive code sandbox with live preview",
   },
 ];
 

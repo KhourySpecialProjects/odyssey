@@ -22,6 +22,7 @@ import {
   getCodeSlashMenuItems,
   getSlideBreakSlashMenuItems,
   getNotebookCodeSlashMenuItems,
+  getSandpackSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { Block } from "@blocknote/core";
@@ -258,6 +259,7 @@ export function BlockNoteEditorClient({
             const codeItems = getCodeSlashMenuItems(editor);
             const slideBreakItems = getSlideBreakSlashMenuItems(editor);
             const notebookCodeItems = getNotebookCodeSlashMenuItems(editor);
+            const sandpackItems = getSandpackSlashMenuItems(editor);
 
             const allItems = [
               ...defaultItems,
@@ -265,6 +267,7 @@ export function BlockNoteEditorClient({
               ...quizItems,
               ...latexItems,
               ...codeItems,
+              ...sandpackItems,
               ...slideBreakItems,
               ...notebookCodeItems,
             ];

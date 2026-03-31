@@ -526,6 +526,22 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "sandpack-block": {
+      const template = blockAny.props?.template || "vanilla";
+      const files = blockAny.props?.files || "{}";
+      const showPreview = blockAny.props?.showPreview ?? true;
+      const editable = blockAny.props?.editable ?? true;
+
+      return {
+        __component: "droplets.sandpack-block",
+        id: blockIndex,
+        template,
+        files,
+        showPreview,
+        editable,
+      };
+    }
+
     case "slide-break": {
       return {
         __component: "droplets.generic",

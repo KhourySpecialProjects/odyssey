@@ -120,7 +120,7 @@ jest.mock("@blocknote/react", () => ({
   getDefaultReactSlashMenuItems: jest.fn(() => []),
   blockTypeSelectItems: jest.fn(() => []),
   getFormattingToolbarItems: jest.fn((items) => items),
-  createReactBlockSpec: jest.fn((config, spec) => ({
+  createReactBlockSpec: jest.fn((config, spec) => () => ({
     type: config.type,
     propSchema: config.propSchema,
     ...spec,

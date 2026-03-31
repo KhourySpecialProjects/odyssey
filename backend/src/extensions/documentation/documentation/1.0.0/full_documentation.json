@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2026-03-30T18:58:43.998Z"
+    "x-generation-date": "2026-03-30T20:47:42.562Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -749,6 +749,14 @@
                           "personal",
                           "professional",
                           "technical"
+                        ]
+                      },
+                      "difficulty": {
+                        "type": "string",
+                        "enum": [
+                          "beginner",
+                          "intermediate",
+                          "advanced"
                         ]
                       },
                       "lessons": {
@@ -4772,6 +4780,14 @@
                                                                     "technical"
                                                                   ]
                                                                 },
+                                                                "difficulty": {
+                                                                  "type": "string",
+                                                                  "enum": [
+                                                                    "beginner",
+                                                                    "intermediate",
+                                                                    "advanced"
+                                                                  ]
+                                                                },
                                                                 "lessons": {
                                                                   "type": "object",
                                                                   "properties": {
@@ -8079,6 +8095,14 @@
                                                       "technical"
                                                     ]
                                                   },
+                                                  "difficulty": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "beginner",
+                                                      "intermediate",
+                                                      "advanced"
+                                                    ]
+                                                  },
                                                   "lessons": {
                                                     "type": "object",
                                                     "properties": {
@@ -11232,6 +11256,14 @@
                                                     "personal",
                                                     "professional",
                                                     "technical"
+                                                  ]
+                                                },
+                                                "difficulty": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "beginner",
+                                                    "intermediate",
+                                                    "advanced"
                                                   ]
                                                 },
                                                 "lessons": {
@@ -14390,6 +14422,14 @@
                           "technical"
                         ]
                       },
+                      "difficulty": {
+                        "type": "string",
+                        "enum": [
+                          "beginner",
+                          "intermediate",
+                          "advanced"
+                        ]
+                      },
                       "lessons": {
                         "type": "object",
                         "properties": {
@@ -17438,6 +17478,7 @@
               "type",
               "slug",
               "focusArea",
+              "difficulty",
               "isHidden",
               "learningObjectives",
               "status"
@@ -17463,6 +17504,14 @@
                   "personal",
                   "professional",
                   "technical"
+                ]
+              },
+              "difficulty": {
+                "type": "string",
+                "enum": [
+                  "beginner",
+                  "intermediate",
+                  "advanced"
                 ]
               },
               "lessons": {
@@ -17735,6 +17784,7 @@
           "type",
           "slug",
           "focusArea",
+          "difficulty",
           "isHidden",
           "learningObjectives",
           "status"
@@ -17759,6 +17809,14 @@
               "personal",
               "professional",
               "technical"
+            ]
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
             ]
           },
           "lessons": {
@@ -17969,6 +18027,14 @@
                                           "personal",
                                           "professional",
                                           "technical"
+                                        ]
+                                      },
+                                      "difficulty": {
+                                        "type": "string",
+                                        "enum": [
+                                          "beginner",
+                                          "intermediate",
+                                          "advanced"
                                         ]
                                       },
                                       "lessons": {
@@ -21253,6 +21319,14 @@
                           "technical"
                         ]
                       },
+                      "difficulty": {
+                        "type": "string",
+                        "enum": [
+                          "beginner",
+                          "intermediate",
+                          "advanced"
+                        ]
+                      },
                       "lessons": {
                         "type": "object",
                         "properties": {
@@ -24504,6 +24578,14 @@
                                                     "personal",
                                                     "professional",
                                                     "technical"
+                                                  ]
+                                                },
+                                                "difficulty": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "beginner",
+                                                    "intermediate",
+                                                    "advanced"
                                                   ]
                                                 },
                                                 "lessons": {
@@ -27764,6 +27846,14 @@
                                                     "technical"
                                                   ]
                                                 },
+                                                "difficulty": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "beginner",
+                                                    "intermediate",
+                                                    "advanced"
+                                                  ]
+                                                },
                                                 "lessons": {
                                                   "type": "object",
                                                   "properties": {
@@ -30986,6 +31076,14 @@
                                                       "personal",
                                                       "professional",
                                                       "technical"
+                                                    ]
+                                                  },
+                                                  "difficulty": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "beginner",
+                                                      "intermediate",
+                                                      "advanced"
                                                     ]
                                                   },
                                                   "lessons": {
@@ -34715,6 +34813,14 @@
                                                       "technical"
                                                     ]
                                                   },
+                                                  "difficulty": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "beginner",
+                                                      "intermediate",
+                                                      "advanced"
+                                                    ]
+                                                  },
                                                   "lessons": {
                                                     "type": "object",
                                                     "properties": {
@@ -38066,6 +38172,14 @@
                                                     "technical"
                                                   ]
                                                 },
+                                                "difficulty": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "beginner",
+                                                    "intermediate",
+                                                    "advanced"
+                                                  ]
+                                                },
                                                 "lessons": {
                                                   "type": "object",
                                                   "properties": {
@@ -41357,6 +41471,14 @@
                             "personal",
                             "professional",
                             "technical"
+                          ]
+                        },
+                        "difficulty": {
+                          "type": "string",
+                          "enum": [
+                            "beginner",
+                            "intermediate",
+                            "advanced"
                           ]
                         },
                         "lessons": {
@@ -44947,6 +45069,14 @@
                                         "technical"
                                       ]
                                     },
+                                    "difficulty": {
+                                      "type": "string",
+                                      "enum": [
+                                        "beginner",
+                                        "intermediate",
+                                        "advanced"
+                                      ]
+                                    },
                                     "lessons": {
                                       "type": "object",
                                       "properties": {
@@ -48057,6 +48187,14 @@
                             "personal",
                             "professional",
                             "technical"
+                          ]
+                        },
+                        "difficulty": {
+                          "type": "string",
+                          "enum": [
+                            "beginner",
+                            "intermediate",
+                            "advanced"
                           ]
                         },
                         "lessons": {
@@ -51789,6 +51927,14 @@
                             "personal",
                             "professional",
                             "technical"
+                          ]
+                        },
+                        "difficulty": {
+                          "type": "string",
+                          "enum": [
+                            "beginner",
+                            "intermediate",
+                            "advanced"
                           ]
                         },
                         "lessons": {

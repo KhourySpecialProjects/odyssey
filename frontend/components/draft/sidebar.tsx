@@ -77,6 +77,7 @@ export function Sidebar({
     | "isHidden"
     | "type"
     | "originalDropletId"
+    | "difficulty"
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {

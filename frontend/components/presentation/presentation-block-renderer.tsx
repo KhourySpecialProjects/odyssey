@@ -17,6 +17,16 @@ import { TableRenderer } from "@/components/droplets/lessons/table-renderer";
 import DOMPurify from "isomorphic-dompurify";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import dynamic from "next/dynamic";
+import { parseSandpackFiles } from "@/lib/utils";
+
+const SandpackViewer = dynamic(
+  () =>
+    import("@/components/draft/lesson/sandpack-viewer").then(
+      (mod) => mod.SandpackViewer,
+    ),
+  { ssr: false },
+);
 
 interface PresentationBlockRendererProps {
   block: Block;
@@ -180,6 +190,17 @@ export function PresentationBlockRenderer({
             }}
           />
         </div>
+      );
+
+    case "droplets.sandpack-block":
+      return (
+        <SandpackViewer
+          template={block.template as "vanilla" | "react" | "react-ts"}
+          files={parseSandpackFiles(block.files)}
+          showPreview={block.showPreview}
+          editable={block.editable}
+          presentationMode
+        />
       );
 
     default:

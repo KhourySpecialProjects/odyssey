@@ -128,6 +128,7 @@ export default async function Droplet({ params }: Props) {
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
+              difficulty={droplet.difficulty}
               dropletId={droplet.id}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
