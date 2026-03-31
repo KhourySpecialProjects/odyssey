@@ -1,9 +1,8 @@
 /**
  * Presentation mode slide-splitting utilities.
  *
- * Splits on <!--SLIDE_BREAK--> markers. If an image block within a slide
- * has a layout set, it emits a <!--LAYOUT:...--> marker that controls
- * how that slide is presented (image-left, image-right, full-image).
+ * Splits on <!--SLIDE_BREAK--> markers. Image blocks with a `slideLayout`
+ * property control slide layout (image-left, image-right, full-image).
  */
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
@@ -38,26 +37,18 @@ function isSlideBreak(block: Block): boolean {
   );
 }
 
-function isLayoutMarker(block: Block): boolean {
+function hasSlideLayout(block: Block): block is Extract<
+  Block,
+  { __component: "droplets.generic" }
+> & {
+  slideLayout: SlideLayout;
+  slideLayoutImageUrl: string;
+} {
   return (
     block.__component === "droplets.generic" &&
-    block.content.startsWith("<!--LAYOUT:")
+    "slideLayout" in block &&
+    block.slideLayout !== undefined
   );
-}
-
-function getLayout(block: Block): SlideLayout {
-  const c = (block as { content: string }).content;
-  if (c.startsWith("<!--LAYOUT:IMAGE_LEFT")) return "image-left";
-  if (c.startsWith("<!--LAYOUT:IMAGE_RIGHT")) return "image-right";
-  if (c.startsWith("<!--LAYOUT:FULL_IMAGE")) return "full-image";
-  return "default";
-}
-
-function getLayoutImageUrl(block: Block): string | undefined {
-  const match = (block as { content: string }).content.match(
-    /<!--LAYOUT:[A-Z_]+:(.*?)-->/,
-  );
-  return match ? match[1] : undefined;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {
@@ -79,7 +70,7 @@ export function splitBlocksIntoSlides(
       : lesson.blocks ?? [];
 
   const cleanBlocks = rawBlocks.filter(
-    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isLayoutMarker(b),
+    (b) => !isEmptySpacing(b) && !isSlideBreak(b),
   );
   if (cleanBlocks.length === 0) return [];
 
@@ -128,6 +119,7 @@ function splitByMarkers(
         layoutImageUrl: currentLayoutImageUrl,
       });
       current = [];
+      heading = undefined;
       currentLayout = "default";
       currentLayoutImageUrl = undefined;
     }
@@ -141,11 +133,10 @@ function splitByMarkers(
       continue;
     }
 
-    // Layout markers set the layout for the current slide (not added to content)
-    if (isLayoutMarker(block)) {
-      currentLayout = getLayout(block);
-      currentLayoutImageUrl = getLayoutImageUrl(block);
-      continue;
+    // Read layout from typed property — block stays in the array
+    if (hasSlideLayout(block)) {
+      currentLayout = block.slideLayout;
+      currentLayoutImageUrl = block.slideLayoutImageUrl;
     }
 
     const h = extractHeadingTitle(block);
