@@ -19,7 +19,7 @@
     "@strapi/provider-upload-aws-s3": "^4.22.0",
     "@strapi/strapi": "^4.22.0",
     "pg": "^8.11.5",
-    "react": "^18.0.0",
+    "react": "^19.2.4",
     "react-dom": "^18.0.0",
     "react-router-dom": "5.3.4",
     "styled-components": "5.3.3"
