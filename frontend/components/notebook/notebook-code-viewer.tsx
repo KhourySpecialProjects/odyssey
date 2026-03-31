@@ -117,7 +117,13 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
         .split("\n")
         .find((l: string) => l.startsWith("__TEST_RESULTS__"));
       if (resultsLine) {
-        setTestResults(JSON.parse(resultsLine.replace("__TEST_RESULTS__", "")));
+        try {
+          setTestResults(
+            JSON.parse(resultsLine.replace("__TEST_RESULTS__", "")),
+          );
+        } catch {
+          setTestResults([{ passed: false, message: "Invalid test output" }]);
+        }
       } else if (testResult.error) {
         setTestResults([{ passed: false, message: testResult.error }]);
       }

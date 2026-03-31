@@ -151,7 +151,7 @@ finally:
 [_stdout_capture.getvalue(), _stderr_capture.getvalue(), _plots]
 `;
 
-    let result: ExecutionResult = {
+    const result: ExecutionResult = {
       stdout: "",
       stderr: "",
       plots: [],

@@ -518,13 +518,15 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const testCode = blockAny.props?.testCode || "";
 
       return {
-        __component: "droplets.notebook-code",
+        __component: "droplets.code-block" as const,
         id: blockIndex,
         language,
         code,
         editable,
+        runnable: true,
         testCode,
-      };
+        isNotebook: true,
+      } as Block;
     }
 
     case "sandpack-block": {

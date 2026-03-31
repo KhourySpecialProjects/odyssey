@@ -518,22 +518,22 @@ function LessonBlockRenderer({
       );
 
     case "droplets.code-block":
+      if (block.isNotebook) {
+        return (
+          <NotebookCodeViewer
+            code={block.code}
+            language={block.language}
+            editable={block.editable}
+            testCode={block.testCode}
+          />
+        );
+      }
       return (
         <CodeBlockViewer
           language={block.language}
           code={block.code}
           editable={block.editable}
           runnable={block.runnable}
-        />
-      );
-
-    case "droplets.notebook-code":
-      return (
-        <NotebookCodeViewer
-          code={block.code}
-          language={block.language}
-          editable={block.editable}
-          testCode={block.testCode}
         />
       );
 
