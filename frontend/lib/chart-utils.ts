@@ -10,9 +10,9 @@ export interface TimeframeOption {
 
 /** Standard timeframe options used across admin charts */
 export const CHART_TIMEFRAMES: TimeframeOption[] = [
-  { label: "7 days", value: 7 },
-  { label: "30 days", value: 30 },
-  { label: "90 days", value: 90 },
+  { label: "7d", value: 7 },
+  { label: "30d", value: 30 },
+  { label: "90d", value: 90 },
 ];
 
 /** Compact timeframe options for smaller chart cards */

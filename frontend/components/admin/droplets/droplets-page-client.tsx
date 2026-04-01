@@ -38,8 +38,10 @@ const DropletAnalyticsModal = dynamic(
 );
 
 const DROPLET_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[45%]" },
-  { label: "Tags", width: "w-[35%]" },
+  { label: "Title", width: "w-[35%]" },
+  { label: "Type", width: "w-[10%]" },
+  { label: "Focus Area", width: "w-[12%]" },
+  { label: "Tags", width: "w-[23%]" },
   { label: "Actions", width: "w-[20%]" },
 ];
 
@@ -49,6 +51,7 @@ const TAG_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   skill: { bg: "bg-[#fae6f3]", text: "text-[#855169]" },
   knowledge: { bg: "bg-[#f9f7e6]", text: "text-[#7f6b55]" },
   professional: { bg: "bg-[#def2fd]", text: "text-[#284965]" },
+  personal: { bg: "bg-[#f0fdf4]", text: "text-[#166534]" },
   databases: { bg: "bg-[#e0f2fe]", text: "text-[#0c4a6e]" },
   interviews: { bg: "bg-[#fef3c7]", text: "text-[#92400e]" },
   cloud: { bg: "bg-[#ede9fe]", text: "text-[#5b21b6]" },
@@ -102,6 +105,15 @@ const FILTER_TYPE_OPTIONS = [
   { value: "skill", label: "Skill" },
 ] as const;
 
+const FILTER_FOCUS_AREA_OPTIONS = [
+  { value: "personal", label: "Personal" },
+  { value: "technical", label: "Technical" },
+  { value: "professional", label: "Professional" },
+] as const;
+
+const TYPE_VALUES = new Set(["knowledge", "skill"]);
+const FOCUS_AREA_VALUES = new Set(["personal", "technical", "professional"]);
+
 // ——— DropletTableRow ———
 function DropletTableRow({ droplet }: { droplet: Droplet }) {
   const [isHidden, setIsHidden] = useState(droplet.isHidden);
@@ -148,21 +160,43 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
           </Link>
         </td>
 
+        {/* Type */}
+        <td className="h-[56px] px-6 py-[11px]">
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+              typeColors.bg,
+              typeColors.text,
+            )}
+          >
+            {uppercaseFirstChar(droplet.type)}
+          </Badge>
+        </td>
+
+        {/* Focus Area */}
+        <td className="h-[56px] px-6 py-[11px]">
+          {droplet.focusArea &&
+            (() => {
+              const focusColors = getTagColors(droplet.focusArea);
+              return (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    focusColors.bg,
+                    focusColors.text,
+                  )}
+                >
+                  {uppercaseFirstChar(droplet.focusArea)}
+                </Badge>
+              );
+            })()}
+        </td>
+
         {/* Tags */}
         <td className="h-[56px] px-6 py-[11px]">
           <div className="flex flex-wrap gap-[5px]">
-            {/* Type badge */}
-            <Badge
-              variant="outline"
-              className={cn(
-                "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                typeColors.bg,
-                typeColors.text,
-              )}
-            >
-              {uppercaseFirstChar(droplet.type)}
-            </Badge>
-            {/* Tag badges */}
             {droplet.tags?.map((tag) => {
               const colors = getTagColors(tag.name);
               return (
@@ -341,7 +375,15 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
       }
       return sorted;
     },
-    filterFn: (d, types) => types.length === 0 || types.includes(d.type),
+    filterFn: (d, filters) => {
+      const activeTypes = filters.filter((f) => TYPE_VALUES.has(f));
+      const activeFocus = filters.filter((f) => FOCUS_AREA_VALUES.has(f));
+      const typeMatch =
+        activeTypes.length === 0 || activeTypes.includes(d.type);
+      const focusMatch =
+        activeFocus.length === 0 || activeFocus.includes(d.focusArea);
+      return typeMatch && focusMatch;
+    },
   });
 
   return (
@@ -368,8 +410,19 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
             onReset={handleFilterReset}
             hasActiveFilters={hasActiveFilters}
           >
+            <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+              Type
+            </p>
             <FilterCheckboxGroup
               options={FILTER_TYPE_OPTIONS}
+              selected={draftFilterTypes}
+              onToggle={toggleDraftFilterType}
+            />
+            <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+              Focus Area
+            </p>
+            <FilterCheckboxGroup
+              options={FILTER_FOCUS_AREA_OPTIONS}
               selected={draftFilterTypes}
               onToggle={toggleDraftFilterType}
             />

@@ -75,7 +75,7 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           filters: expect.objectContaining({
             email: {
-              $eq: testEmail,
+              $eqi: testEmail,
             },
           }),
         }),
@@ -126,7 +126,7 @@ describe("Authorized User Tests", () => {
       expect(fetchAPI).toHaveBeenCalledWith("/authorized-users", {
         urlParams: expect.objectContaining({
           filters: expect.objectContaining({
-            email: { $eq: testEmail },
+            email: { $eqi: testEmail },
             isEnabled: true,
           }),
         }),

@@ -668,7 +668,7 @@ export function RequestsPageClient({
             }}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "relative z-10 mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-semibold transition-colors duration-200",
+              "relative z-10 mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-normal transition-colors duration-200",
               activeTab === tab.key
                 ? "text-white"
                 : "text-[#202630] hover:text-[#2D7597] dark:text-slate-300",
