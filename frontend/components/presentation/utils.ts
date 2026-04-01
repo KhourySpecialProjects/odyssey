@@ -43,19 +43,18 @@ const LEGACY_LAYOUT_MAP: Record<string, SlideLayout> = {
   FULL_IMAGE: "full-image",
 };
 
-function hasSlideLayout(block: Block): block is Extract<
-  Block,
-  { __component: "droplets.generic" }
-> & {
-  slideLayout: SlideLayout;
-  slideLayoutImageUrl: string;
-} {
+function getSlideLayout(
+  block: Block,
+): { layout: SlideLayout; imageUrl?: string } | null {
   if (
     block.__component === "droplets.generic" &&
     "slideLayout" in block &&
     block.slideLayout !== undefined
   ) {
-    return true;
+    return {
+      layout: block.slideLayout,
+      imageUrl: block.slideLayoutImageUrl,
+    };
   }
 
   // Backward compat: parse legacy <!--LAYOUT:...--> comment format
@@ -69,14 +68,12 @@ function hasSlideLayout(block: Block): block is Extract<
     if (match) {
       const layout = LEGACY_LAYOUT_MAP[match[1]];
       if (layout) {
-        (block as Record<string, unknown>).slideLayout = layout;
-        (block as Record<string, unknown>).slideLayoutImageUrl = match[2];
-        return true;
+        return { layout, imageUrl: match[2] || undefined };
       }
     }
   }
 
-  return false;
+  return null;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {
@@ -161,10 +158,11 @@ function splitByMarkers(
       continue;
     }
 
-    // Read layout from typed property — block stays in the array
-    if (hasSlideLayout(block)) {
-      currentLayout = block.slideLayout;
-      currentLayoutImageUrl = block.slideLayoutImageUrl;
+    // Read layout from typed property or legacy comment — block stays in the array
+    const parsedLayout = getSlideLayout(block);
+    if (parsedLayout) {
+      currentLayout = parsedLayout.layout;
+      currentLayoutImageUrl = parsedLayout.imageUrl;
     }
 
     const h = extractHeadingTitle(block);

@@ -73,15 +73,10 @@ export function BlockNoteEditorClient({
     },
   });
 
-  let editorBlocks: CustomBlockNoteBlock[] | undefined;
-  try {
-    editorBlocks = isReady
-      ? (editor.document as unknown as CustomBlockNoteBlock[])
-      : undefined;
-  } catch {
-    // editor.document may throw if editor is not fully mounted
-  }
-  const overflowingBreaks = useSlideOverflowDetection(editorBlocks);
+  const [documentBlocks, setDocumentBlocks] = useState<
+    CustomBlockNoteBlock[] | undefined
+  >();
+  const overflowingBreaks = useSlideOverflowDetection(documentBlocks);
 
   // Delay initialization to ensure DOM is stable after route transitions
   useEffect(() => {
@@ -174,6 +169,7 @@ export function BlockNoteEditorClient({
         }
 
         // Always call onChange with the final content
+        setDocumentBlocks(content as unknown as CustomBlockNoteBlock[]);
         onChange(content as unknown as Block[]);
       } catch (error) {
         processingPattern = false;

@@ -404,7 +404,7 @@ export function Sidebar({
                         className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                       >
                         <Wand2 className="h-4 w-4" />
-                        Auto-Format Slides
+                        Auto-Format Lesson
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
@@ -427,7 +427,7 @@ export function Sidebar({
                     ) : (
                       <>
                         <Wand2 className="h-4 w-4" />
-                        Auto-Format Slides
+                        Auto-Format Lesson
                       </>
                     )}
                   </button>
@@ -437,11 +437,10 @@ export function Sidebar({
                   >
                     <AlertDialogContent className="max-w-md">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Auto-Format Slides</AlertDialogTitle>
+                        <AlertDialogTitle>Auto-Format Lesson</AlertDialogTitle>
                         <AlertDialogDescription>
                           This will use AI to automatically insert slide breaks
-                          and set image layouts across all lessons in this
-                          droplet.
+                          and set image layouts in the currently open lesson.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">

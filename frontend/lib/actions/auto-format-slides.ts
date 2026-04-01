@@ -102,7 +102,7 @@ export async function autoFormatSlides(
         return (
           typeof op.afterBlockIndex === "number" &&
           op.afterBlockIndex >= 0 &&
-          op.afterBlockIndex < blockSummaries.length
+          op.afterBlockIndex < blockSummaries.length - 1
         );
       }
       if (op.type === "set-image-layout") {
