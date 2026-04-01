@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   blockTypeSelectItems,
   FormattingToolbar,
@@ -26,6 +32,11 @@ import {
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { Block } from "@blocknote/core";
+import type { CustomBlockNoteBlock } from "@/types";
+import { useSlideOverflowDetection } from "@/hooks/useSlideOverflowDetection";
+
+const SlideOverflowContext = createContext<Set<string>>(new Set());
+export const useSlideOverflow = () => useContext(SlideOverflowContext);
 
 const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
 
@@ -60,6 +71,12 @@ export function BlockNoteEditorClient({
       cellTextColor: false,
     },
   });
+
+  const overflowingBreaks = useSlideOverflowDetection(
+    isReady
+      ? (editor.document as unknown as CustomBlockNoteBlock[])
+      : undefined,
+  );
 
   // Delay initialization to ensure DOM is stable after route transitions
   useEffect(() => {
@@ -178,6 +195,51 @@ export function BlockNoteEditorClient({
     };
   }, [editor, onChange, isReady]);
 
+  // Listen for auto-format operations from the sidebar
+  useEffect(() => {
+    if (!isReady) return;
+
+    const handleAutoFormat = (e: Event) => {
+      const { operations } = (e as CustomEvent).detail;
+      if (!operations || !Array.isArray(operations)) return;
+
+      // Sort insert operations in reverse order so indices stay valid
+      const insertOps = operations
+        .filter((op: any) => op.type === "insert-slide-break")
+        .sort((a: any, b: any) => b.afterBlockIndex - a.afterBlockIndex);
+
+      const layoutOps = operations.filter(
+        (op: any) => op.type === "set-image-layout",
+      );
+
+      // Apply layout changes first (doesn't shift indices)
+      for (const op of layoutOps) {
+        const block = editor.document[op.blockIndex];
+        if (block && block.type === "image") {
+          editor.updateBlock(block, {
+            props: { layout: op.layout } as any,
+          });
+        }
+      }
+
+      // Insert slide breaks in reverse order
+      for (const op of insertOps) {
+        const afterBlock = editor.document[op.afterBlockIndex];
+        if (afterBlock) {
+          editor.insertBlocks(
+            [{ type: "slide-break" as any }],
+            afterBlock,
+            "after",
+          );
+        }
+      }
+    };
+
+    window.addEventListener("auto-format-slides", handleAutoFormat);
+    return () =>
+      window.removeEventListener("auto-format-slides", handleAutoFormat);
+  }, [editor, isReady]);
+
   //  formatting toolbar block types to hide
   const blockedBlockTypes = new Set([
     "Toggle Heading 1",
@@ -233,55 +295,57 @@ export function BlockNoteEditorClient({
   }
 
   return (
-    <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
-      <BlockNoteView
-        editor={editor}
-        editable={editable}
-        theme={resolvedTheme === "dark" ? "dark" : "light"}
-        slashMenu={false}
-        formattingToolbar={false}
-      >
-        <FormattingToolbarController
-          formattingToolbar={() => (
-            <FormattingToolbar>{toolbarItems}</FormattingToolbar>
-          )}
-        />
+    <SlideOverflowContext.Provider value={overflowingBreaks}>
+      <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
+        <BlockNoteView
+          editor={editor}
+          editable={editable}
+          theme={resolvedTheme === "dark" ? "dark" : "light"}
+          slashMenu={false}
+          formattingToolbar={false}
+        >
+          <FormattingToolbarController
+            formattingToolbar={() => (
+              <FormattingToolbar>{toolbarItems}</FormattingToolbar>
+            )}
+          />
 
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={async (query) => {
-            const defaultItems = getDefaultReactSlashMenuItems(editor).filter(
-              (item) => !itemsToHide.has(item.title ?? ""),
-            );
-            const calloutItems = getCalloutSlashMenuItems(editor);
-            const quizItems = getQuizSlashMenuItems(editor);
-            const latexItems = getLatexSlashMenuItems(editor);
-            const codeItems = getCodeSlashMenuItems(editor);
-            const slideBreakItems = getSlideBreakSlashMenuItems(editor);
-            const notebookCodeItems = getNotebookCodeSlashMenuItems(editor);
-            const sandpackItems = getSandpackSlashMenuItems(editor);
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) => {
+              const defaultItems = getDefaultReactSlashMenuItems(editor).filter(
+                (item) => !itemsToHide.has(item.title ?? ""),
+              );
+              const calloutItems = getCalloutSlashMenuItems(editor);
+              const quizItems = getQuizSlashMenuItems(editor);
+              const latexItems = getLatexSlashMenuItems(editor);
+              const codeItems = getCodeSlashMenuItems(editor);
+              const slideBreakItems = getSlideBreakSlashMenuItems(editor);
+              const notebookCodeItems = getNotebookCodeSlashMenuItems(editor);
+              const sandpackItems = getSandpackSlashMenuItems(editor);
 
-            const allItems = [
-              ...defaultItems,
-              ...calloutItems,
-              ...quizItems,
-              ...latexItems,
-              ...codeItems,
-              ...sandpackItems,
-              ...slideBreakItems,
-              ...notebookCodeItems,
-            ];
+              const allItems = [
+                ...defaultItems,
+                ...calloutItems,
+                ...quizItems,
+                ...latexItems,
+                ...codeItems,
+                ...sandpackItems,
+                ...slideBreakItems,
+                ...notebookCodeItems,
+              ];
 
-            return allItems.filter(
-              (item) =>
-                item.title.toLowerCase().includes(query.toLowerCase()) ||
-                item.aliases?.some((alias) =>
-                  alias.toLowerCase().includes(query.toLowerCase()),
-                ),
-            );
-          }}
-        />
-      </BlockNoteView>
-    </div>
+              return allItems.filter(
+                (item) =>
+                  item.title.toLowerCase().includes(query.toLowerCase()) ||
+                  item.aliases?.some((alias) =>
+                    alias.toLowerCase().includes(query.toLowerCase()),
+                  ),
+              );
+            }}
+          />
+        </BlockNoteView>
+      </div>
+    </SlideOverflowContext.Provider>
   );
 }
