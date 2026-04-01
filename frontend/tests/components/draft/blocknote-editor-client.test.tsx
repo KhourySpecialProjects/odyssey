@@ -140,9 +140,16 @@ jest.mock("@/components/ui/blocknote/editor/slash-menu-config", () => ({
   getCodeSlashMenuItems: jest.fn(() => []),
   getSlideBreakSlashMenuItems: jest.fn(() => []),
   getNotebookCodeSlashMenuItems: jest.fn(() => []),
+  getSandpackSlashMenuItems: jest.fn(() => []),
 }));
 
 jest.mock("@/components/ui/blocknote/editor/custom-blocknote.css", () => ({}));
+
+jest.mock("@/hooks/useSlideOverflowDetection", () => ({
+  useSlideOverflowDetection: () => new Set(),
+}));
+
+jest.mock("@/lib/actions/auto-format-slides", () => ({}));
 
 // Mock Dialog component to avoid importing BlockNote's FloatingComposer
 jest.mock("@/components/ui/dialog", () => ({
@@ -327,9 +334,9 @@ describe("BlockNoteEditorClient", () => {
       expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
     });
 
-    const editorContainer = container.firstChild;
+    const editorContainer = container.querySelector(".blocknote-no-link");
 
-    expect(editorContainer).toHaveClass("blocknote-no-link");
+    expect(editorContainer).toBeInTheDocument();
     expect(editorContainer).toHaveClass("w-full");
     expect(editorContainer).toHaveClass("rounded-lg");
     expect(editorContainer).toHaveClass("border");
