@@ -78,7 +78,7 @@ const latexStyleSpec = createStyleSpec(
             displayMode: false,
           });
           wrapper.classList.remove("bn-inline-latex--error");
-        } catch (error) {
+        } catch {
           preview.textContent = latex;
           wrapper.classList.add("bn-inline-latex--error");
         }
