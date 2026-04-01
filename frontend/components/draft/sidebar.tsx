@@ -20,6 +20,7 @@ import {
   SLIDE_BREAK_MARKER,
   SLIDE_BREAK_TYPE,
 } from "@/lib/blocknote/slide-break";
+import { autoFormatSlides } from "@/lib/actions/auto-format-slides";
 import { Droplet, Lesson, User } from "@/types";
 import {
   SettingsIcon,
@@ -27,7 +28,10 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Home,
+  Wand2,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
@@ -92,6 +96,7 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isAutoFormatting, setIsAutoFormatting] = useState(false);
   const lessons = (dropletLessons || [])
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -141,6 +146,63 @@ export function Sidebar({
       setIsOpen(false);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  const handleAutoFormat = async () => {
+    setIsAutoFormatting(true);
+    try {
+      const allBlocks: {
+        index: number;
+        type: string;
+        textPreview: string;
+        hasImage: boolean;
+        imageUrl?: string;
+      }[] = [];
+      let globalIndex = 0;
+
+      for (const lesson of lessons) {
+        const blocks = lesson.blocksV2 ?? [];
+        for (const block of blocks) {
+          const b = block as any;
+          const textContent =
+            b.content
+              ?.map((c: any) => c.text ?? "")
+              .join("")
+              .slice(0, 100) ?? "";
+
+          allBlocks.push({
+            index: globalIndex,
+            type: b.type ?? "unknown",
+            textPreview: textContent,
+            hasImage: b.type === "image",
+            imageUrl: b.props?.url,
+          });
+          globalIndex++;
+        }
+      }
+
+      const result = await autoFormatSlides(allBlocks);
+
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("auto-format-slides", {
+          detail: { operations: result.operations },
+        }),
+      );
+
+      toast.success(
+        `Auto-formatted: ${result.operations.filter((o) => o.type === "insert-slide-break").length} slide breaks inserted`,
+      );
+    } catch (err) {
+      console.error("Auto-format error:", err);
+      toast.error("Failed to auto-format slides");
+    } finally {
+      setIsAutoFormatting(false);
     }
   };
 
@@ -293,6 +355,23 @@ export function Sidebar({
               >
                 Preview
               </Link>
+              <button
+                onClick={handleAutoFormat}
+                disabled={isAutoFormatting}
+                className="flex items-center justify-center gap-2 rounded-full bg-amber-400 px-6 py-2 text-center text-black transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700"
+              >
+                {isAutoFormatting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Formatting...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4" />
+                    Auto-Format Slides
+                  </>
+                )}
+              </button>
               {hasSlideBreaks ? (
                 <Link
                   className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
