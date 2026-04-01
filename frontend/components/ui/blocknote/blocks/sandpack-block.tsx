@@ -75,6 +75,12 @@ export const SandpackBlock = createReactBlockSpec(
       editable: {
         default: true,
       },
+      description: {
+        default: "",
+      },
+      lockedFiles: {
+        default: "[]",
+      },
     },
     content: "none",
   },

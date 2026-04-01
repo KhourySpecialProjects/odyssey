@@ -516,6 +516,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const files = blockAny.props?.files || "{}";
       const showPreview = blockAny.props?.showPreview ?? true;
       const editable = blockAny.props?.editable ?? true;
+      const description = blockAny.props?.description || "";
+      const lockedFiles = blockAny.props?.lockedFiles || "[]";
 
       return {
         __component: "droplets.sandpack-block",
@@ -524,6 +526,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         files,
         showPreview,
         editable,
+        description,
+        lockedFiles,
       };
     }
 
