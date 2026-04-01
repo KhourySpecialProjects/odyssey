@@ -37,6 +37,12 @@ function isSlideBreak(block: Block): boolean {
   );
 }
 
+const LEGACY_LAYOUT_MAP: Record<string, SlideLayout> = {
+  IMAGE_LEFT: "image-left",
+  IMAGE_RIGHT: "image-right",
+  FULL_IMAGE: "full-image",
+};
+
 function hasSlideLayout(block: Block): block is Extract<
   Block,
   { __component: "droplets.generic" }
@@ -44,11 +50,33 @@ function hasSlideLayout(block: Block): block is Extract<
   slideLayout: SlideLayout;
   slideLayoutImageUrl: string;
 } {
-  return (
+  if (
     block.__component === "droplets.generic" &&
     "slideLayout" in block &&
     block.slideLayout !== undefined
-  );
+  ) {
+    return true;
+  }
+
+  // Backward compat: parse legacy <!--LAYOUT:...--> comment format
+  if (
+    block.__component === "droplets.generic" &&
+    block.content.startsWith("<!--LAYOUT:")
+  ) {
+    const match = block.content.match(
+      /<!--LAYOUT:(IMAGE_LEFT|IMAGE_RIGHT|FULL_IMAGE):(.*?)-->/,
+    );
+    if (match) {
+      const layout = LEGACY_LAYOUT_MAP[match[1]];
+      if (layout) {
+        (block as any).slideLayout = layout;
+        (block as any).slideLayoutImageUrl = match[2];
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {

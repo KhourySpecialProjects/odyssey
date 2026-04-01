@@ -222,8 +222,17 @@ export function BlockNoteEditorClient({
         }
       }
 
-      // Insert slide breaks in reverse order
+      // Deduplicate consecutive indices (ops are sorted descending)
+      const dedupedOps: typeof insertOps = [];
       for (const op of insertOps) {
+        const last = dedupedOps[dedupedOps.length - 1];
+        if (!last || Math.abs(last.afterBlockIndex - op.afterBlockIndex) > 1) {
+          dedupedOps.push(op);
+        }
+      }
+
+      // Insert slide breaks in reverse order
+      for (const op of dedupedOps) {
         const afterBlock = editor.document[op.afterBlockIndex];
         if (afterBlock) {
           editor.insertBlocks(
@@ -235,9 +244,23 @@ export function BlockNoteEditorClient({
       }
     };
 
+    const handleBlocksRequest = () => {
+      window.dispatchEvent(
+        new CustomEvent("auto-format-blocks-response", {
+          detail: { blocks: editor.document },
+        }),
+      );
+    };
+
     window.addEventListener("auto-format-slides", handleAutoFormat);
-    return () =>
+    window.addEventListener("auto-format-blocks-request", handleBlocksRequest);
+    return () => {
       window.removeEventListener("auto-format-slides", handleAutoFormat);
+      window.removeEventListener(
+        "auto-format-blocks-request",
+        handleBlocksRequest,
+      );
+    };
   }, [editor, isReady]);
 
   //  formatting toolbar block types to hide

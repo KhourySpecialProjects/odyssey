@@ -101,8 +101,87 @@ export interface ExecutionResult {
   error: string | null;
 }
 
+// Packages already available in Pyodide (pre-loaded or built-in)
+const PRELOADED_PACKAGES = new Set([
+  "micropip",
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "sys",
+  "io",
+  "os",
+  "math",
+  "json",
+  "re",
+  "collections",
+  "itertools",
+  "functools",
+  "datetime",
+  "random",
+  "string",
+  "base64",
+  "traceback",
+  "warnings",
+  "typing",
+  "copy",
+  "csv",
+  "pathlib",
+  "statistics",
+]);
+
+// Map common import names to their pip package names
+const PACKAGE_NAME_MAP: Record<string, string> = {
+  sklearn: "scikit-learn",
+  cv2: "opencv-python",
+  PIL: "Pillow",
+  bs4: "beautifulsoup4",
+  yaml: "pyyaml",
+  attr: "attrs",
+  dateutil: "python-dateutil",
+};
+
+function extractImports(code: string): string[] {
+  const imports = new Set<string>();
+  // Match "import X", "import X.Y", "from X import Y", "from X.Y import Z"
+  const importRegex = /^(?:import|from)\s+([a-zA-Z_][a-zA-Z0-9_]*)/gm;
+  let match;
+  while ((match = importRegex.exec(code)) !== null) {
+    const pkg = match[1];
+    if (!PRELOADED_PACKAGES.has(pkg)) {
+      imports.add(PACKAGE_NAME_MAP[pkg] ?? pkg);
+    }
+  }
+  return [...imports];
+}
+
+async function installMissingPackages(
+  pyodide: PyodideInstance,
+  code: string,
+): Promise<void> {
+  const packages = extractImports(code);
+  if (packages.length === 0) return;
+
+  const installCode = `
+import micropip
+_pkgs = ${JSON.stringify(packages)}
+for _pkg in _pkgs:
+    try:
+        await micropip.install(_pkg)
+    except Exception as _e:
+        pass
+`;
+  await pyodide.runPythonAsync(installCode);
+}
+
 export async function runPython(code: string): Promise<ExecutionResult> {
   const pyodide = await initPyodide();
+
+  // Auto-install missing packages before execution
+  try {
+    await installMissingPackages(pyodide, code);
+  } catch {
+    // Non-fatal — execution will show the ImportError if install failed
+  }
 
   const TIMEOUT_MS = 30_000;
   const timeoutPromise = new Promise<never>((_, reject) =>

@@ -60,7 +60,7 @@ describe("splitBlocksIntoSlides", () => {
     expect(imageSlide!.blocks.length).toBe(2);
   });
 
-  it("does NOT parse old LAYOUT comments as layout markers", () => {
+  it("handles legacy <!--LAYOUT:--> comment format for backward compat", () => {
     const lesson = makeLessonV1([
       { __component: "droplets.generic", id: 1, content: SLIDE_BREAK_MARKER },
       {
@@ -73,13 +73,9 @@ describe("splitBlocksIntoSlides", () => {
     ]);
 
     const slides = splitBlocksIntoSlides(lesson, 0);
-    const contentSlides = slides.filter(
-      (s) =>
-        s.lessonIndex === 0 &&
-        s.blocks.length > 0 &&
-        !s.blocks[0].content.includes("text-center"),
-    );
-    expect(contentSlides.length).toBe(1);
-    expect(contentSlides[0].layout).toBe("default");
+    const imageSlide = slides.find((s) => s.layout === "image-right");
+    expect(imageSlide).toBeDefined();
+    expect(imageSlide!.layoutImageUrl).toBe("https://example.com/old.jpg");
+    expect(imageSlide!.blocks.length).toBeGreaterThanOrEqual(1);
   });
 });

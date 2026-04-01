@@ -18,56 +18,73 @@ type BlockSummary = {
   imageUrl?: string;
 };
 
+const SYSTEM_PROMPT = `You insert slide breaks and set image layouts for a presentation editor.
+
+## Height Budget
+
+Each slide must stay under **~900px** (1080p screen).
+
+| Block type | Height |
+|------------|--------|
+| heading | ~60px |
+| paragraph | ~40–120px depending on length |
+| bulletListItem | ~36px each |
+| notebook-code / code-block | **~300px** |
+| image | ~400px |
+| quiz-* | ~200px |
+| video | ~360px |
+
+## Image Layouts
+
+- \`image-left\`: image on left, text on right — use when text follows the image
+- \`image-right\`: image on right, text on left — use when text precedes the image
+- \`full-image\`: image fills the whole slide — use for standalone images with no adjacent text
+
+## Rules
+
+1. Do NOT insert a slide break before the first block or after the last block
+2. If \`slide-break\` blocks already exist, work around them — do not duplicate
+3. Each slide must stay under ~900px total estimated height
+4. A slide with a \`notebook-code\` block should have at most 1–2 other blocks (heading + short paragraph)
+5. NEVER put two \`notebook-code\` or \`code-block\` blocks on the same slide
+6. NEVER insert consecutive slide breaks — leave at least 2 content blocks between breaks
+7. Break at natural content boundaries (before headings, between topics, before/after images)
+
+## Response Format
+
+Respond with ONLY a JSON array. No explanation, no markdown fences, no commentary.
+
+Operation types:
+- \`{"type": "insert-slide-break", "afterBlockIndex": N}\`
+- \`{"type": "set-image-layout", "blockIndex": N, "layout": "image-left" | "image-right" | "full-image"}\``;
+
 export async function autoFormatSlides(
   blockSummaries: BlockSummary[],
 ): Promise<{ operations: AutoFormatOperation[] } | { error: string }> {
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY || "",
-  });
-
   if (!process.env.ANTHROPIC_API_KEY) {
     return { error: "Anthropic API key not configured" };
   }
 
-  const blockList = blockSummaries
-    .map((b) => {
-      let desc = `[${b.index}] ${b.type}`;
-      if (b.textPreview) desc += `: "${b.textPreview}"`;
-      if (b.hasImage) desc += ` (image: ${b.imageUrl ?? "unknown"})`;
-      return desc;
-    })
-    .join("\n");
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  const blocks = blockSummaries.map((b) => ({
+    index: b.index,
+    type: b.type,
+    ...(b.textPreview && { text: b.textPreview }),
+    ...(b.hasImage && { imageUrl: b.imageUrl }),
+  }));
 
   try {
     const msg = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
       max_tokens: 2048,
+      system: SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content: `You are formatting lesson content for a slide presentation. Given the block list below, decide:
-
-1. Where to insert slide breaks to create well-sized slides. Each slide should have roughly 3-8 blocks of content. Break at natural content boundaries (before headings, between topics, before/after images).
-2. For any image blocks, what presentation layout to use:
-   - "image-left": image on left, text on right (use when text follows the image)
-   - "image-right": image on right, text on left (use when text precedes the image)
-   - "full-image": image fills the whole slide (use for standalone images with no adjacent text)
-
-Rules:
-- Do NOT insert a slide break before the very first block.
-- Do NOT insert a slide break after the very last block.
-- If slide breaks already exist (type: "slide-break"), work around them — do not duplicate.
-- Keep text-heavy slides to ~25 lines or fewer.
-- Keep image+text slides to ~15 lines of text.
-
-Respond with ONLY a JSON array of operations. No explanation, no markdown fences.
-
-Operation types:
-{"type":"insert-slide-break","afterBlockIndex":N}
-{"type":"set-image-layout","blockIndex":N,"layout":"image-left"|"image-right"|"full-image"}
-
-Block list:
-${blockList}`,
+          content: `Insert slide breaks and set image layouts for these blocks:\n\n${JSON.stringify(blocks, null, 2)}`,
         },
       ],
     });

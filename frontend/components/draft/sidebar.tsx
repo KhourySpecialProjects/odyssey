@@ -11,6 +11,16 @@ import {
 } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -97,6 +107,11 @@ export function Sidebar({
 
   const [isOpen, setIsOpen] = useState(false);
   const [isAutoFormatting, setIsAutoFormatting] = useState(false);
+  const [hasAutoFormatted, setHasAutoFormatted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`auto-formatted-${droplet.id}`) === "true";
+  });
+  const [showAutoFormatConfirm, setShowAutoFormatConfirm] = useState(false);
   const lessons = (dropletLessons || [])
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -152,6 +167,26 @@ export function Sidebar({
   const handleAutoFormat = async () => {
     setIsAutoFormatting(true);
     try {
+      // Request current editor blocks via custom event
+      const blocks = await new Promise<any[]>((resolve) => {
+        let settled = false;
+        const timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("auto-format-blocks-response", handler);
+          resolve([]);
+        }, 2000);
+        const handler = (e: Event) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          window.removeEventListener("auto-format-blocks-response", handler);
+          resolve((e as CustomEvent).detail.blocks ?? []);
+        };
+        window.addEventListener("auto-format-blocks-response", handler);
+        window.dispatchEvent(new CustomEvent("auto-format-blocks-request"));
+      });
+
       const allBlocks: {
         index: number;
         type: string;
@@ -159,27 +194,27 @@ export function Sidebar({
         hasImage: boolean;
         imageUrl?: string;
       }[] = [];
-      let globalIndex = 0;
 
-      for (const lesson of lessons) {
-        const blocks = lesson.blocksV2 ?? [];
-        for (const block of blocks) {
-          const b = block as any;
-          const textContent =
-            b.content
-              ?.map((c: any) => c.text ?? "")
-              .join("")
-              .slice(0, 100) ?? "";
+      for (let i = 0; i < blocks.length; i++) {
+        const b = blocks[i] as any;
+        const textContent =
+          b.content
+            ?.map((c: any) => c.text ?? "")
+            .join("")
+            .slice(0, 100) ?? "";
 
-          allBlocks.push({
-            index: globalIndex,
-            type: b.type ?? "unknown",
-            textPreview: textContent,
-            hasImage: b.type === "image",
-            imageUrl: b.props?.url,
-          });
-          globalIndex++;
-        }
+        allBlocks.push({
+          index: i,
+          type: b.type ?? "unknown",
+          textPreview: textContent,
+          hasImage: b.type === "image",
+          imageUrl: b.props?.url,
+        });
+      }
+
+      if (allBlocks.length === 0) {
+        toast.error("No content found in the editor");
+        return;
       }
 
       const result = await autoFormatSlides(allBlocks);
@@ -195,6 +230,8 @@ export function Sidebar({
         }),
       );
 
+      setHasAutoFormatted(true);
+      localStorage.setItem(`auto-formatted-${droplet.id}`, "true");
       toast.success(
         `Auto-formatted: ${result.operations.filter((o) => o.type === "insert-slide-break").length} slide breaks inserted`,
       );
@@ -355,23 +392,76 @@ export function Sidebar({
               >
                 Preview
               </Link>
-              <button
-                onClick={handleAutoFormat}
-                disabled={isAutoFormatting}
-                className="flex items-center justify-center gap-2 rounded-full bg-amber-400 px-6 py-2 text-center text-black transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700"
-              >
-                {isAutoFormatting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Formatting...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="h-4 w-4" />
-                    Auto-Format Slides
-                  </>
-                )}
-              </button>
+              {hasAutoFormatted ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                      >
+                        <Wand2 className="h-4 w-4" />
+                        Auto-Format Slides
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      Auto-format can only be used once per droplet
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowAutoFormatConfirm(true)}
+                    disabled={isAutoFormatting}
+                    className="flex items-center justify-center gap-2 rounded-full bg-amber-400 px-6 py-2 text-center text-black transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700"
+                  >
+                    {isAutoFormatting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Formatting...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4" />
+                        Auto-Format Slides
+                      </>
+                    )}
+                  </button>
+                  <AlertDialog
+                    open={showAutoFormatConfirm}
+                    onOpenChange={setShowAutoFormatConfirm}
+                  >
+                    <AlertDialogContent className="max-w-md">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Auto-Format Slides</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will use AI to automatically insert slide breaks
+                          and set image layouts across all lessons in this
+                          droplet.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                          This action can only be used once per droplet. You can
+                          manually adjust slide breaks afterward.
+                        </p>
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleAutoFormat()}
+                          className="bg-amber-500 text-black hover:bg-amber-600"
+                        >
+                          <Wand2 className="mr-2 h-4 w-4" />
+                          Format Slides
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
               {hasSlideBreaks ? (
                 <Link
                   className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
