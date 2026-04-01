@@ -381,18 +381,18 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const alt = (blockAny.props?.name as string) || "";
       const layout = (blockAny.props?.layout as string) || "default";
       const imgTag = `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" class="rounded-md" />`;
+
       if (layout !== "default" && url) {
-        const layoutKey = layout.toUpperCase().replace(/-/g, "_");
-        // Prefix with layout comment for presentation mode.
-        // Regular renderers (DOMPurify) strip the comment and show just the <img>.
         return {
-          __component: "droplets.generic",
+          __component: "droplets.generic" as const,
           id: blockId,
-          content: `<!--LAYOUT:${layoutKey}:${url}-->${imgTag}`,
+          content: imgTag,
+          slideLayout: layout as "image-left" | "image-right" | "full-image",
+          slideLayoutImageUrl: url,
         };
       }
       return {
-        __component: "droplets.generic",
+        __component: "droplets.generic" as const,
         id: blockId,
         content: imgTag,
       };
