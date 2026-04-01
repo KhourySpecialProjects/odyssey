@@ -320,7 +320,6 @@ export function SandpackViewer({
   files,
   showPreview,
   editable,
-  description = "",
   lockedFiles,
   presentationMode = false,
 }: SandpackViewerProps) {
