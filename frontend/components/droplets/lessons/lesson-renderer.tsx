@@ -202,7 +202,7 @@ export function LessonRenderer({
       if (!el) return;
       const rect = el.getBoundingClientRect();
       if (rect.height === 0) return;
-      const scrolled = window.innerHeight - rect.top;
+      const scrolled = rect.height - (rect.bottom - window.innerHeight);
       const pct = Math.min(100, Math.max(0, (scrolled / rect.height) * 100));
       for (const milestone of MILESTONES) {
         if (pct >= milestone && !firedMilestones.current.has(milestone)) {

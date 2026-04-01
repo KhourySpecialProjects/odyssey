@@ -58,7 +58,7 @@ function RoundedTopCursor({
   height?: number;
 }) {
   if (x == null || y == null || width == null || height == null) return null;
-  const r = 6;
+  const r = Math.min(6, width / 2);
   return (
     <path
       d={`M${x + r},${y} h${width - 2 * r} a${r},${r} 0 0 1 ${r},${r} v${height - r} h${-width} v${-(height - r)} a${r},${r} 0 0 1 ${r},${-r}z`}
@@ -108,7 +108,7 @@ export function UniquePageviewBarChart({
       ? secondHalf.reduce((s, d) => s + d.count, 0) / secondHalf.length
       : 0;
   const trendPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
-  const trendUp = trendPct >= 0;
+  const trendUp = trendPct > 0;
 
   const periodLabel = dateRange
     ? `from ${formatChartDate(dateRange.start)} – ${formatChartDate(dateRange.end)}`

@@ -207,13 +207,14 @@ export async function getDropletAnalytics(
   const scrollDepth: LessonScrollDepth[] = lessons.map((lesson) => {
     const phData = posthogScrollDepth.get(lesson.id);
     if (phData && phData.size > 0) {
+      const ph25 = phData.get(25) ?? 0;
       return {
         lessonId: lesson.id,
         lessonName: lesson.name,
         estimated: false,
         points: [
-          { label: "Started", count: totalEnrolled },
-          { label: "25%", count: phData.get(25) ?? 0 },
+          { label: "Started", count: Math.max(totalEnrolled, ph25) },
+          { label: "25%", count: ph25 },
           { label: "50%", count: phData.get(50) ?? 0 },
           { label: "75%", count: phData.get(75) ?? 0 },
           { label: "100%", count: phData.get(100) ?? 0 },

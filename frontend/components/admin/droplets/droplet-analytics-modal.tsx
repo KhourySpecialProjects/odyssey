@@ -279,7 +279,7 @@ export function DropletAnalyticsModal({
       .then(setAnalytics)
       .catch(() => setAnalytics(null))
       .finally(() => setLoading(false));
-  }, [open, droplet.id]);
+  }, [open, droplet.id, droplet.lessons]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

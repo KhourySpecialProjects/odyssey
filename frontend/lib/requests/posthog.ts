@@ -283,7 +283,7 @@ export async function fetchLessonScrollDepth(
        FROM events
        WHERE event = 'lesson_scroll_depth'
          AND JSONExtractInt(properties, 'droplet_id') = ${dropletId}
-         AND lesson_id IN (${lessonIds.join(", ")})
+         AND JSONExtractInt(properties, 'lesson_id') IN (${lessonIds.join(", ")})
        GROUP BY lesson_id, pct`,
     );
     if (!rows) return new Map();
@@ -294,8 +294,11 @@ export async function fetchLessonScrollDepth(
       result.get(lessonId)!.set(pct, users);
     }
     return result;
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (scroll depth):", e.message);
+  } catch (e: unknown) {
+    console.error(
+      "PostHog Fetch Error (scroll depth):",
+      e instanceof Error ? e.message : e,
+    );
     return new Map();
   }
 }
