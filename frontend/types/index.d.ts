@@ -194,6 +194,8 @@ export type Block =
       files: string;
       showPreview: boolean;
       editable: boolean;
+      description?: string;
+      lockedFiles?: string;
       _clientId?: string;
     };
 

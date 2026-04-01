@@ -544,6 +544,8 @@ function LessonBlockRenderer({
           files={parseSandpackFiles(block.files)}
           showPreview={block.showPreview}
           editable={block.editable}
+          description={block.description}
+          lockedFiles={block.lockedFiles}
         />
       );
 
