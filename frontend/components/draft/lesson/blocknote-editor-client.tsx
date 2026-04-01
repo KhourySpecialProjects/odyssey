@@ -208,13 +208,19 @@ export function BlockNoteEditorClient({
       const ops = operations as AutoFormatOperation[];
       const insertOps = ops
         .filter(
-          (op): op is Extract<AutoFormatOperation, { type: "insert-slide-break" }> =>
-            op.type === "insert-slide-break",
+          (
+            op,
+          ): op is Extract<
+            AutoFormatOperation,
+            { type: "insert-slide-break" }
+          > => op.type === "insert-slide-break",
         )
         .sort((a, b) => b.afterBlockIndex - a.afterBlockIndex);
 
       const layoutOps = ops.filter(
-        (op): op is Extract<AutoFormatOperation, { type: "set-image-layout" }> =>
+        (
+          op,
+        ): op is Extract<AutoFormatOperation, { type: "set-image-layout" }> =>
           op.type === "set-image-layout",
       );
 

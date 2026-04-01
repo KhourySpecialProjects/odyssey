@@ -200,7 +200,10 @@ export function Sidebar({
         const content = b.content as { text?: string }[] | undefined;
         const props = b.props as { url?: string } | undefined;
         const textContent =
-          content?.map((c) => c.text ?? "").join("").slice(0, 100) ?? "";
+          content
+            ?.map((c) => c.text ?? "")
+            .join("")
+            .slice(0, 100) ?? "";
 
         allBlocks.push({
           index: i,
