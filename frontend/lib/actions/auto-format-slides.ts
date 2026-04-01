@@ -2,7 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-type AutoFormatOperation =
+export type AutoFormatOperation =
   | { type: "insert-slide-break"; afterBlockIndex: number }
   | {
       type: "set-image-layout";

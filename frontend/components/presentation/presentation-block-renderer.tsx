@@ -160,12 +160,12 @@ export function PresentationBlockRenderer({
     case "droplets.code-block":
       return (
         <div className="max-h-[65vh] overflow-y-auto rounded-lg">
-          {(block as any).isNotebook ? (
+          {"isNotebook" in block && block.isNotebook ? (
             <NotebookCodeViewer
               code={block.code}
               language={block.language}
               editable={block.editable}
-              testCode={(block as any).testCode}
+              testCode={"testCode" in block ? (block.testCode as string) : ""}
             />
           ) : (
             <CodeBlockViewer

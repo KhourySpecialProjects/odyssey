@@ -31,6 +31,7 @@ import {
   getSandpackSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
+import type { AutoFormatOperation } from "@/lib/actions/auto-format-slides";
 import type { Block } from "@blocknote/core";
 import type { CustomBlockNoteBlock } from "@/types";
 import { useSlideOverflowDetection } from "@/hooks/useSlideOverflowDetection";
@@ -204,12 +205,17 @@ export function BlockNoteEditorClient({
       if (!operations || !Array.isArray(operations)) return;
 
       // Sort insert operations in reverse order so indices stay valid
-      const insertOps = operations
-        .filter((op: any) => op.type === "insert-slide-break")
-        .sort((a: any, b: any) => b.afterBlockIndex - a.afterBlockIndex);
+      const ops = operations as AutoFormatOperation[];
+      const insertOps = ops
+        .filter(
+          (op): op is Extract<AutoFormatOperation, { type: "insert-slide-break" }> =>
+            op.type === "insert-slide-break",
+        )
+        .sort((a, b) => b.afterBlockIndex - a.afterBlockIndex);
 
-      const layoutOps = operations.filter(
-        (op: any) => op.type === "set-image-layout",
+      const layoutOps = ops.filter(
+        (op): op is Extract<AutoFormatOperation, { type: "set-image-layout" }> =>
+          op.type === "set-image-layout",
       );
 
       // Apply layout changes first (doesn't shift indices)
@@ -217,6 +223,7 @@ export function BlockNoteEditorClient({
         const block = editor.document[op.blockIndex];
         if (block && block.type === "image") {
           editor.updateBlock(block, {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             props: { layout: op.layout } as any,
           });
         }
@@ -236,6 +243,7 @@ export function BlockNoteEditorClient({
         const afterBlock = editor.document[op.afterBlockIndex];
         if (afterBlock) {
           editor.insertBlocks(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [{ type: "slide-break" as any }],
             afterBlock,
             "after",

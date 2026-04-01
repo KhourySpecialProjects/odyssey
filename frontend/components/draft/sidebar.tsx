@@ -168,7 +168,7 @@ export function Sidebar({
     setIsAutoFormatting(true);
     try {
       // Request current editor blocks via custom event
-      const blocks = await new Promise<any[]>((resolve) => {
+      const blocks = await new Promise<Record<string, unknown>[]>((resolve) => {
         let settled = false;
         const timeoutId = setTimeout(() => {
           if (settled) return;
@@ -196,19 +196,18 @@ export function Sidebar({
       }[] = [];
 
       for (let i = 0; i < blocks.length; i++) {
-        const b = blocks[i] as any;
+        const b = blocks[i];
+        const content = b.content as { text?: string }[] | undefined;
+        const props = b.props as { url?: string } | undefined;
         const textContent =
-          b.content
-            ?.map((c: any) => c.text ?? "")
-            .join("")
-            .slice(0, 100) ?? "";
+          content?.map((c) => c.text ?? "").join("").slice(0, 100) ?? "";
 
         allBlocks.push({
           index: i,
-          type: b.type ?? "unknown",
+          type: (b.type as string) ?? "unknown",
           textPreview: textContent,
           hasImage: b.type === "image",
-          imageUrl: b.props?.url,
+          imageUrl: props?.url,
         });
       }
 

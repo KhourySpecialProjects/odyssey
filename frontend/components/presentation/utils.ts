@@ -69,8 +69,8 @@ function hasSlideLayout(block: Block): block is Extract<
     if (match) {
       const layout = LEGACY_LAYOUT_MAP[match[1]];
       if (layout) {
-        (block as any).slideLayout = layout;
-        (block as any).slideLayoutImageUrl = match[2];
+        (block as Record<string, unknown>).slideLayout = layout;
+        (block as Record<string, unknown>).slideLayoutImageUrl = match[2];
         return true;
       }
     }
