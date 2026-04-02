@@ -76,7 +76,7 @@ export default async function CheckPermission({ params, children }: Props) {
         user={user}
         availableDroplets={availableDroplets}
       />
-      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg">
+      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg xl:pl-64">
         {!droplet.inReview ? (
           <div className="bg-red-100 p-1 text-center dark:bg-red-100 dark:text-black">
             ** Information that you enter will be saved automatically. **

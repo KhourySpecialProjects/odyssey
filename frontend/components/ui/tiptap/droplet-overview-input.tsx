@@ -7,6 +7,13 @@ import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import { useCallback } from "react";
+import { IconLink, IconLinkOff } from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function DropletOverviewInput({
   initialContent,
@@ -46,7 +53,7 @@ export function DropletOverviewInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky w-full max-w-2xl p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:text-slate-300 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-800 border-[#D0D5DD] dark:text-slate-300 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
       },
     },
     immediatelyRender: false,
@@ -101,29 +108,44 @@ export function DropletOverviewInput({
   }
 
   return (
-    <>
-      <div className="control-group mt-2 mb-2">
-        <div className="button-group flex gap-2">
-          <button
-            onClick={setLink}
-            className={`rounded border px-3 py-1 transition-colors ${
-              editorState?.isLink
-                ? "border-blue-600 bg-blue-500 text-white"
-                : "border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
-            }`}
-          >
-            Set link
-          </button>
-          <button
-            onClick={() => editor.chain().focus().unsetLink().run()}
-            disabled={!editorState?.isLink}
-            className="rounded border border-slate-300 bg-white px-3 py-1 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
-          >
-            Unset link
-          </button>
+    <div className="flex flex-1 flex-col">
+      <TooltipProvider>
+        <div className="mt-2 mb-2 flex h-7 items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={setLink}
+                className={`flex h-7 w-7 items-center justify-center rounded border transition-colors ${
+                  editorState?.isLink
+                    ? "border-blue-600 bg-blue-500 text-white"
+                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                }`}
+              >
+                <IconLink className="h-4 w-4" stroke={1.8} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Set link</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => editor.chain().focus().unsetLink().run()}
+                disabled={!editorState?.isLink}
+                className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+              >
+                <IconLinkOff className="h-4 w-4" stroke={1.8} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Unset link</TooltipContent>
+          </Tooltip>
         </div>
-      </div>
-      <EditorContent role="textbox" name="droplet-overview" editor={editor} />
-    </>
+      </TooltipProvider>
+      <EditorContent
+        className="mt-4 flex-1"
+        role="textbox"
+        name="droplet-overview"
+        editor={editor}
+      />
+    </div>
   );
 }

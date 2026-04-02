@@ -1,23 +1,16 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getPath,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-  isContentEditor,
-} from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Droplet, Lesson, User } from "@/types";
 import {
-  SettingsIcon,
-  ArrowLeftIcon,
-  PanelRightClose,
-  PanelRightOpen,
-  Home,
-} from "lucide-react";
+  IconArrowLeft,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+  IconEye,
+  IconSearch,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
@@ -42,9 +35,6 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 
-import { ContentActionButton } from "./metadata/content-action-button";
-
-import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
 import { MantineProvider } from "@mantine/core";
 
 export function Sidebar({
@@ -71,6 +61,7 @@ export function Sidebar({
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(69);
   const pathname = usePathname();
 
   const {
@@ -86,13 +77,20 @@ export function Sidebar({
     .sort((a, b) => a.orderIndex - b.orderIndex);
 
   useLayoutEffect(() => {
+    const updateHeaderHeight = () => {
+      const header = document.querySelector<HTMLElement>(".sticky.top-0.z-50");
+      if (header) setHeaderHeight(header.getBoundingClientRect().height);
+    };
+
     const handleResize = () => {
       // Auto-collapse sidebar on mobile screens
       if (window.innerWidth < 1280) {
         setExpanded(false);
       }
+      updateHeaderHeight();
     };
 
+    updateHeaderHeight();
     handleResize();
 
     window.addEventListener("resize", handleResize);
@@ -117,8 +115,8 @@ export function Sidebar({
   };
 
   const classes = {
-    link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
-    activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
+    link: "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors hover:bg-slate-200 dark:hover:bg-slate-700",
+    activeLink: "bg-[#2D7597] text-white",
   };
 
   const sensors = useSensors(
@@ -178,9 +176,10 @@ export function Sidebar({
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <PanelRightClose
+          <IconLayoutSidebarLeftExpand
             className="dark:text-white"
             data-testid="sidebar-overlay"
+            stroke={1.8}
           />
         </button>
         <Link
@@ -194,233 +193,148 @@ export function Sidebar({
         <button
           aria-controls="sidebar"
           type="button"
-          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-2 text-slate-800 shadow-md transition-all hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
-          <PanelRightClose className="h-6 w-6 dark:text-white" />
+          <IconLayoutSidebarLeftExpand
+            className="h-5 w-5 dark:text-white"
+            stroke={1.8}
+          />
         </button>
       )}
       <aside
         id="sidebar"
         className={cn(
-          "fixed left-0 z-40 h-screen w-64 transition-transform xl:sticky xl:top-0",
+          "fixed left-0 z-40 w-64 transition-transform",
           expanded ? "translate-x-0" : "-translate-x-full",
         )}
+        style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
         aria-label="Sidebar"
       >
-        <div className="flex h-full flex-col overflow-y-auto bg-slate-50 py-4 xl:justify-between xl:pb-0 dark:bg-slate-800">
+        <div className="flex h-full flex-col overflow-y-auto bg-[#FCFCFD] py-4 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] xl:justify-between xl:pb-0 dark:bg-slate-900">
           <div className="px-3">
-            <div className="flex flex-row justify-between pr-2">
-              <Button
+            <div className="flex flex-row items-center justify-between pb-2">
+              <button
                 type="button"
+                data-testid="home"
                 onClick={() =>
                   droplet.status !== "draft"
                     ? setIsOpen(true)
                     : router.push(`/my-content`)
                 }
-                className={cn(
-                  "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
-                )}
+                className="flex flex-1 items-center p-2"
               >
-                <div className="flex w-6 justify-center">
-                  <ArrowLeftIcon className="h-5 w-5 shrink-0" />
-                </div>
-                <Home data-testid="home" />
-              </Button>
-              <div className="w-full"></div>
-
-              <button onClick={() => setExpanded(false)}>
-                <PanelRightOpen />
+                <IconArrowLeft className="h-5 w-5 flex-shrink-0" stroke={1.8} />
+              </button>
+              <Link
+                href={`/d/${droplet.slug}`}
+                title="Preview droplet"
+                className="p-2 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <IconEye className="h-5 w-5" stroke={1.8} />
+              </Link>
+              <button
+                onClick={() => setExpanded(false)}
+                className="p-2 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <IconLayoutSidebarLeftCollapse
+                  className="h-5 w-5"
+                  stroke={1.8}
+                />
               </button>
             </div>
-            <p className="my-2 p-2 text-lg leading-7 font-extrabold">
-              {droplet.name}
-            </p>
+            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+              <DialogContent className="sm:max-w-[825px]">
+                <DialogHeader>
+                  <DialogTitle>
+                    Would you like to announce these changes to everyone
+                    enrolled in this droplet?
+                  </DialogTitle>
+                </DialogHeader>
 
-            <ul className="flex w-full flex-col items-center font-medium">
-              <li className="w-full space-y-2">
-                <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                  <DialogContent className="sm:max-w-[825px]">
-                    <DialogHeader>
-                      <DialogTitle>
-                        Would you like to announce these changes to everyone
-                        enrolled in this droplet?
-                      </DialogTitle>
-                    </DialogHeader>
+                <div className="mt-4 flex flex-col gap-4">
+                  <Button onClick={handleDropletPost}>Share</Button>
+                  <Button onClick={() => router.push(`/my-content`)}>
+                    Not Now
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
-                    <div className="mt-4 flex flex-col gap-4">
-                      <Button onClick={handleDropletPost}>Share</Button>
-                      <Button onClick={() => router.push(`/my-content`)}>
-                        Not Now
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </li>
-            </ul>
-            <div className="flex w-full flex-col gap-2 pb-2">
+            <div className="flex flex-col space-y-1.5">
+              <p className="px-4 pb-3 text-xl leading-7 font-extrabold">
+                {droplet.name}
+              </p>
+
               <Link
-                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("/d/")[1]}`}
+                href={`/draft/d/${droplet.slug}`}
+                className={cn(
+                  "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors",
+                  pathname === `/draft/d/${droplet.slug}`
+                    ? classes.activeLink
+                    : "hover:bg-slate-200 dark:hover:bg-slate-700",
+                )}
               >
-                Preview
+                <IconSearch
+                  className={cn(
+                    "ml-4 h-5 w-5 shrink-0",
+                    pathname === `/draft/d/${droplet.slug}` ? "text-white" : "",
+                  )}
+                  stroke={1.8}
+                />
+                <span
+                  className={cn(
+                    "ml-2 text-lg leading-none font-medium",
+                    pathname === `/draft/d/${droplet.slug}`
+                      ? "text-white"
+                      : "text-black dark:text-white",
+                  )}
+                >
+                  Overview
+                </span>
               </Link>
 
-              {/* Edit Draft - Special handling */}
-              {droplet.originalDropletId && droplet.status === "draft" && (
-                <>
-                  {/* Content Creators can only request review for edit drafts */}
-                  {!droplet.inReview && isContentCreator(user.roles) && (
-                    <>
-                      <ContentActionButton
-                        droplet={droplet}
-                        actionType="requestReview"
-                        buttonText={
-                          droplet.afterReview
-                            ? "Re-Request Review"
-                            : "Request Review"
-                        }
-                      />
-                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
-                        Submit your changes for review before publishing
-                      </p>
-                    </>
-                  )}
+              {/* Add lesson section */}
+              <div className="mt-2">
+                <MantineProvider>
+                  <AddLesson
+                    droplet={droplet}
+                    onAddLesson={addLessonCallback}
+                    availableDroplets={availableDroplets}
+                    currentLessonCount={dropletLessons.length}
+                  />
+                </MantineProvider>
+              </div>
 
-                  {/* Content Editors and Admins can request changes on edit drafts in review */}
-                  {droplet.inReview &&
-                    (isContentEditor(user.roles) ||
-                      isAuthorizedUserFaculty(user.roles) ||
-                      isAuthorizedUserAdmin(user.roles)) && (
-                      <ContentActionButton
+              {/* Sortable lessons list */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={lessons.map((lesson) => lesson.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="space-y-1.5">
+                    {lessons.map((lesson) => (
+                      <SortableLesson
+                        key={lesson.id}
+                        lesson={lesson}
                         droplet={droplet}
-                        actionType="requestChanges"
-                        buttonText="Request Changes"
+                        pathname={pathname}
                       />
-                    )}
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
 
-                  {/* Faculty/Admin/Content Editors (when in review) can publish edit drafts */}
-                  {(isAuthorizedUserAdmin(user.roles) ||
-                    isAuthorizedUserFaculty(user.roles) ||
-                    (isContentEditor(user.roles) && droplet.inReview)) && (
-                    <>
-                      <ContentActionButton
-                        droplet={droplet}
-                        actionType="publishDraft"
-                        buttonText="Publish Changes"
-                      />
-                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
-                        This will update the published version with your changes
-                      </p>
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* Regular Draft - Show normal workflow */}
-              {!droplet.originalDropletId && (
-                <>
-                  {!droplet.inReview &&
-                    droplet.status === "draft" &&
-                    isContentCreator(user.roles) && (
-                      <ContentActionButton
-                        droplet={droplet}
-                        actionType="requestReview"
-                        buttonText={
-                          droplet.afterReview
-                            ? "Re-Request Review"
-                            : "Request Review"
-                        }
-                      />
-                    )}
-
-                  {/* Review Droplet Button - Content editors and admins only, draft in review */}
-                  {droplet.inReview &&
-                    droplet.status === "draft" &&
-                    (isContentEditor(user.roles) ||
-                      isAuthorizedUserAdmin(user.roles)) && (
-                      <ContentActionButton
-                        droplet={droplet}
-                        actionType="requestChanges"
-                        buttonText="Request Changes"
-                      />
-                    )}
-
-                  {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
-                  {droplet.status === "draft" &&
-                    (isAuthorizedUserFaculty(user.roles) ||
-                      isAuthorizedUserAdmin(user.roles) ||
-                      (isContentEditor(user.roles) && droplet.inReview)) && (
-                      <ContentActionButton
-                        droplet={droplet}
-                        actionType="publish"
-                        buttonText="Publish Droplet"
-                      />
-                    )}
-                </>
+              {isProcessing && (
+                <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
+                  Updating lesson order...
+                </div>
               )}
             </div>
-
-            <Separator
-              orientation="horizontal"
-              className="my-2 dark:bg-slate-500"
-            />
-
-            <Link
-              href={`/draft/d/${droplet.slug}`}
-              className={cn(
-                "flex w-full items-center justify-start px-4 text-base dark:bg-black",
-                classes.link,
-                pathname === `/draft/d/${droplet.slug}` && classes.activeLink,
-              )}
-            >
-              <div className="flex w-6 justify-center">
-                <SettingsIcon className="h-5 w-5 shrink-0" />
-              </div>
-              <span className="ms-2 leading-snug">Metadata</span>
-            </Link>
-
-            {/* Add lesson section */}
-            <MantineProvider>
-              <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
-            </MantineProvider>
-            {/* Add existing lesson section - NEW */}
-            <AddExistingLesson
-              droplet={droplet}
-              availableDroplets={availableDroplets}
-              currentLessonCount={dropletLessons.length}
-              onAddLesson={addLessonCallback}
-            />
-
-            {/* Sortable lessons list */}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={lessons.map((lesson) => lesson.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="space-y-1">
-                  {lessons.map((lesson) => (
-                    <SortableLesson
-                      key={lesson.id}
-                      lesson={lesson}
-                      droplet={droplet}
-                      pathname={pathname}
-                      classes={classes}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
-            </DndContext>
-
-            {isProcessing && (
-              <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
-                Updating lesson order...
-              </div>
-            )}
           </div>
         </div>
       </aside>

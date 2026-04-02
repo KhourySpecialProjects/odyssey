@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+    - generic [ref=e2]:
+        - generic [ref=e3]:
+            - generic [ref=e4]:
+                - paragraph: < local ENVIRONMENT >
+            - banner [ref=e5]:
+                - generic [ref=e7]:
+                    - generic [ref=e8]:
+                        - banner [ref=e9] [cursor=pointer]:
+                            - img [ref=e10]
+                            - generic [ref=e11]: Toggle navigation menu
+                        - link "Khoury Odyssey Logo Odyssey, a Khoury College Learning Platform" [ref=e12] [cursor=pointer]:
+                            - /url: /
+                            - img "Khoury Odyssey Logo" [ref=e13]
+                            - generic [ref=e14]: Odyssey, a Khoury College Learning Platform
+                    - button "Log in" [ref=e16] [cursor=pointer]:
+                        - img [ref=e17]
+                        - text: Log in
+            - generic [ref=e21]:
+                - paragraph [ref=e22]:
+                    - strong [ref=e23]: Ready to join the Odyssey?
+                - link "request access" [ref=e24] [cursor=pointer]:
+                    - /url: /request-access
+                    - text: Request Access
+                    - img [ref=e25]
+        - main [ref=e27]:
+            - generic [ref=e35]:
+                - heading "Reinforce Your Learning and Fuel Your Future" [level=1] [ref=e36]
+                - paragraph [ref=e37]: Odyssey is a new platform designed to provide on-demand access to modern knowledge and skills pertinent to today's undergraduate Khoury students.
+                - generic [ref=e38]:
+                    - link "Explore" [ref=e39] [cursor=pointer]:
+                        - /url: /explore
+                        - text: Explore
+                        - img [ref=e40]
+                    - link "Request Access" [ref=e42] [cursor=pointer]:
+                        - /url: /request-access
+                        - text: Request Access
+                        - img [ref=e43]
+        - contentinfo [ref=e48]:
+            - img [ref=e50]
+            - generic [ref=e52]:
+                - generic [ref=e54]:
+                    - link "About Odyssey" [ref=e55] [cursor=pointer]:
+                        - /url: /about
+                    - link "Features" [ref=e56] [cursor=pointer]:
+                        - /url: /features
+                    - link "Contributors" [ref=e57] [cursor=pointer]:
+                        - /url: /contributors
+                - link "Khoury Odyssey Logo" [ref=e59] [cursor=pointer]:
+                    - /url: /
+                    - img "Khoury Odyssey Logo" [ref=e60]
+                - generic [ref=e61]:
+                    - generic [ref=e62]:
+                        - link "Odyssey Github Repo" [ref=e63] [cursor=pointer]:
+                            - /url: https://github.com/KhourySpecialProjects/odyssey
+                            - img "Odyssey Github Repo" [ref=e64]
+                        - button [ref=e65] [cursor=pointer]:
+                            - img
+                            - img [ref=e66]
+                    - button "Report Bug" [ref=e73] [cursor=pointer]:
+                        - img [ref=e74]
+                        - generic [ref=e83]: Report Bug
+    - region "Notifications alt+T"
+    - alert [ref=e84]

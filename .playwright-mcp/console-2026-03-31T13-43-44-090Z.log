@@ -1,0 +1,34 @@
+[    1634ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[    1772ms] [WARNING] Image with src "/logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/utils/warn-once.js:15
+[  177617ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  179406ms] [LOG] [Fast Refresh] done in 1789ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  321572ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  324043ms] [LOG] [Fast Refresh] done in 2471ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  328959ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  332347ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  335118ms] [LOG] [Fast Refresh] done in 2771ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  339444ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  342094ms] [LOG] [Fast Refresh] done in 2650ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  343876ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  349587ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  351401ms] [LOG] [Fast Refresh] done in 1814ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  353703ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  354631ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  358391ms] [LOG] [Fast Refresh] done in 3760ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  360306ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  366802ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  369485ms] [LOG] [Fast Refresh] done in 2683ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  375541ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  377091ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  380103ms] [LOG] [Fast Refresh] done in 3013ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  381404ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  415638ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  421697ms] [LOG] [Fast Refresh] done in 6058ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  534965ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  539945ms] [LOG] [Fast Refresh] done in 4981ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0

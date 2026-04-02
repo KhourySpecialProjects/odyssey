@@ -1,22 +1,28 @@
 import { updateDropletFunFact, getDroplets } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { getCachedDraftDropletBySlug } from "@/lib/requests/cached";
+import { stripHtmlTags } from "@/lib/utils";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
 import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import { isContentCreator } from "@/lib/utils";
+import {
+  isContentCreator,
+  isContentEditor,
+  isAuthorizedUserFaculty,
+  isAuthorizedUserAdmin,
+} from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
-import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
-
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
+import Link from "next/link";
 
 type Props = {
   params: Promise<Params>;
@@ -118,8 +124,8 @@ export default async function Droplet({ params }: Props) {
 
   return (
     <>
-      <GradientBackground className="px-0">
-        <div className="mx-auto max-w-2xl px-5 md:px-0">
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div className="px-40">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <ClickableBadges
               focusArea={droplet.focusArea}
@@ -130,11 +136,18 @@ export default async function Droplet({ params }: Props) {
             />
           </div>
 
-          <DropletName
-            data-testid="droplet-name"
-            dropletId={droplet.id}
-            startingName={droplet.name}
-          />
+          <div className="mt-6">
+            <DropletName
+              data-testid="droplet-name"
+              dropletId={droplet.id}
+              startingName={droplet.name}
+            />
+          </div>
+          {droplet.description ? (
+            <p className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
+              {stripHtmlTags(droplet.description)}
+            </p>
+          ) : null}
 
           {droplet.status === "published" && (
             <div className="p-2">This droplet is currently live</div>
@@ -155,20 +168,22 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="mx-auto w-full max-w-2xl space-y-10">
+        <div className="w-full space-y-10 px-40 pt-6">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
           />
-          <Description
-            dropletId={droplet.id}
-            initialContent={droplet.description ?? ""}
-          />
 
-          <Overview
-            dropletId={droplet.id}
-            initialContent={droplet.overview ?? ""}
-          />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <Description
+              dropletId={droplet.id}
+              initialContent={droplet.description ?? ""}
+            />
+            <Overview
+              dropletId={droplet.id}
+              initialContent={droplet.overview ?? ""}
+            />
+          </div>
 
           <LearningObjectives
             dropletId={droplet.id}
@@ -186,13 +201,92 @@ export default async function Droplet({ params }: Props) {
             prerequisites={droplet.prerequisites ?? []}
             postrequisites={droplet.postrequisites ?? []}
           />
+
           <FunFactEditor
             funFact={droplet.funFact ?? ""}
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
+
+          {/* Bottom action bar */}
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 py-6 dark:border-slate-700">
+            {/* Edit Draft */}
+            {droplet.originalDropletId && droplet.status === "draft" && (
+              <>
+                {!droplet.inReview && isContentCreator(user.roles) && (
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="requestReview"
+                    buttonText={
+                      droplet.afterReview
+                        ? "Re-Request Review"
+                        : "Request Review"
+                    }
+                  />
+                )}
+                {droplet.inReview &&
+                  (isContentEditor(user.roles) ||
+                    isAuthorizedUserFaculty(user.roles) ||
+                    isAuthorizedUserAdmin(user.roles)) && (
+                    <ContentActionButton
+                      droplet={droplet}
+                      actionType="requestChanges"
+                      buttonText="Request Changes"
+                    />
+                  )}
+                {(isAuthorizedUserAdmin(user.roles) ||
+                  isAuthorizedUserFaculty(user.roles) ||
+                  (isContentEditor(user.roles) && droplet.inReview)) && (
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="publishDraft"
+                    buttonText="Publish Changes"
+                  />
+                )}
+              </>
+            )}
+
+            {/* Regular Draft */}
+            {!droplet.originalDropletId && (
+              <>
+                {!droplet.inReview &&
+                  droplet.status === "draft" &&
+                  isContentCreator(user.roles) && (
+                    <ContentActionButton
+                      droplet={droplet}
+                      actionType="requestReview"
+                      buttonText={
+                        droplet.afterReview
+                          ? "Re-Request Review"
+                          : "Request Review"
+                      }
+                    />
+                  )}
+                {droplet.inReview &&
+                  droplet.status === "draft" &&
+                  (isContentEditor(user.roles) ||
+                    isAuthorizedUserAdmin(user.roles)) && (
+                    <ContentActionButton
+                      droplet={droplet}
+                      actionType="requestChanges"
+                      buttonText="Request Changes"
+                    />
+                  )}
+                {droplet.status === "draft" &&
+                  (isAuthorizedUserFaculty(user.roles) ||
+                    isAuthorizedUserAdmin(user.roles) ||
+                    (isContentEditor(user.roles) && droplet.inReview)) && (
+                    <ContentActionButton
+                      droplet={droplet}
+                      actionType="publish"
+                      buttonText="Publish Droplet"
+                    />
+                  )}
+              </>
+            )}
+          </div>
         </div>
-      </GradientBackground>
+      </div>
     </>
   );
 }

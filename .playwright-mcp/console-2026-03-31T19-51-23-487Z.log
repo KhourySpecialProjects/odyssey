@@ -1,0 +1,16 @@
+[    1368ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[    2345ms] [LOG] [Fast Refresh] done in 980ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[    3469ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[    3499ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ <anonymous>:0
+[    3571ms] [WARNING] Image with src "/logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/utils/warn-once.js:15
+[   61391ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[   70484ms] [LOG] [Fast Refresh] done in 9094ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  164516ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  176510ms] [LOG] [Fast Refresh] done in 11994ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  180898ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  226290ms] [LOG] [Fast Refresh] rebuilding @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  239747ms] [LOG] [Fast Refresh] done in 13458ms @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0
+[  252093ms] [WARNING] %c%s%c [next-auth][warn][NEXTAUTH_URL] background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   
+https://next-auth.js.org/warnings#nextauth_url @ https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.234.4:0

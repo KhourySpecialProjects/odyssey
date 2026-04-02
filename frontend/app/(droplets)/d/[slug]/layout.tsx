@@ -48,9 +48,9 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (user?.email) {
     authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-    const enrollments = await getCachedEnrollmentsWithLessonIds(
-      authorizedUser.id,
-    );
+    const enrollments = authorizedUser
+      ? await getCachedEnrollmentsWithLessonIds(authorizedUser.id)
+      : [];
 
     const currentEnrollment = enrollments.find(
       (enrollment) => enrollment.droplet?.id === droplet.id,
@@ -69,7 +69,7 @@ export default async function RootLayout({ params, children }: Props) {
       .includes(authorizedUser?.id);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
       <Sidebar
         author={isAuthor || false}
         user={user}
@@ -77,7 +77,9 @@ export default async function RootLayout({ params, children }: Props) {
         completedLessonIds={completedLessonIds}
         enrollmentId={enrollmentId}
       />
-      <main className="w-full flex-1">{children}</main>
+      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg xl:pl-64">
+        {children}
+      </main>
     </div>
   );
 }

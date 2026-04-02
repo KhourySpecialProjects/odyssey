@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 export interface MultiSelectItem {
@@ -79,24 +79,39 @@ export function MultiSelect({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={cn("h-fit dark:hover:bg-black", className)}
+            className={cn(
+              "h-auto min-h-10 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-800",
+              className,
+            )}
           >
             {selected?.length > 0 ? (
               <>
                 <div className="flex w-full flex-wrap items-center justify-start gap-1">
                   {selected.map((option) => (
                     <Badge
-                      variant="secondary"
+                      variant="outline"
                       key={option.id}
-                      className="rounded-sm px-1 py-0 font-normal dark:text-black"
+                      className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-normal text-slate-800"
                     >
                       {option.name}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(
+                            selected.filter((s) => s.id !== option.id),
+                          );
+                        }}
+                        className="ml-0.5 rounded-full hover:opacity-70"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </Badge>
                   ))}
                 </div>
               </>
             ) : (
-              <p className="text-slate-400">
+              <p className="font-normal text-slate-500 dark:text-slate-500">
                 {label === "Tags"
                   ? "Select Tags..."
                   : label === "Prerequisites"

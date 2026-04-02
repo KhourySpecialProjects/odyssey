@@ -1,7 +1,12 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { convertBlockNoteToMarkdown, uppercaseFirstChar } from "@/lib/utils";
+import {
+  convertBlockNoteToMarkdown,
+  uppercaseFirstChar,
+  cn,
+} from "@/lib/utils";
+import { getTagColors } from "@/lib/tag-colors";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -351,7 +356,7 @@ ${
     <Link
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
-      <li className="h-full overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <li className="h-full overflow-hidden rounded-lg border border-[#efeff0] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
@@ -391,20 +396,52 @@ ${
                 </Badge>
               )}
 
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-                {uppercaseFirstChar(droplet.focusArea)}
-              </Badge>
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-                {uppercaseFirstChar(droplet.type)}
-              </Badge>
-              {droplet.tags?.map((tag) => (
-                <Badge
-                  key={tag.id}
-                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
-                >
-                  {tag.name}
-                </Badge>
-              ))}
+              {(() => {
+                const c = getTagColors(droplet.focusArea);
+                return (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                      c.bg,
+                      c.text,
+                    )}
+                  >
+                    {uppercaseFirstChar(droplet.focusArea)}
+                  </Badge>
+                );
+              })()}
+              {(() => {
+                const c = getTagColors(droplet.type);
+                return (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                      c.bg,
+                      c.text,
+                    )}
+                  >
+                    {uppercaseFirstChar(droplet.type)}
+                  </Badge>
+                );
+              })()}
+              {droplet.tags?.map((tag) => {
+                const c = getTagColors(tag.name);
+                return (
+                  <Badge
+                    key={tag.id}
+                    variant="outline"
+                    className={cn(
+                      "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                      c.bg,
+                      c.text,
+                    )}
+                  >
+                    {tag.name}
+                  </Badge>
+                );
+              })}
             </div>
             <div className="flex flex-col justify-center gap-1">
               <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">

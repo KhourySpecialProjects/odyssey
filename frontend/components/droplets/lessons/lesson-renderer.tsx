@@ -39,6 +39,8 @@ import posthog from "posthog-js";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import { HighlightHintBanner } from "./highlight-hint-banner";
+import { HighlightDropdown } from "./highlight-dropdown";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -1126,13 +1128,20 @@ export function LessonRenderer({
   }
 
   return (
-    <div
-      ref={lessonContentRef}
-      className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]"
-    >
-      <div className="relative mx-auto w-full max-w-2xl xl:py-8">
-        <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
+    <div ref={lessonContentRef} className="w-full py-8">
+      {(enrollmentId || author) && (
+        <HighlightDropdown
+          setExpanded={setExpanded}
+          expanded={expanded}
+          isActive={true}
+        />
+      )}
+      <div className="relative w-full">
+        <h1 className="text-[2.5rem] font-bold text-balance text-slate-900 dark:text-white">
+          {lesson.name}
+        </h1>
 
+        {enrollmentId && !author && <HighlightHintBanner />}
         <div className="mt-8 space-y-2">
           {displayBlocks.map((b: Block, i: number) => (
             <LessonBlockRenderer
@@ -1155,24 +1164,6 @@ export function LessonRenderer({
               author={author}
             />
           ))}
-        </div>
-        <div className="mt-8 flex items-center justify-between">
-          <button
-            onClick={handleMarkAsComplete}
-            disabled={
-              isPending ||
-              !enrollmentId ||
-              completedLessonIds.includes(lesson.id) ||
-              !canProceed
-            }
-            className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
-          >
-            {isPending
-              ? "Marking as complete..."
-              : completedLessonIds.includes(lesson.id)
-                ? "Completed"
-                : "Mark as complete"}
-          </button>
         </div>
       </div>
     </div>

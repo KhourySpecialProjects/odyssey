@@ -18,6 +18,8 @@ import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function Header({
   user,
@@ -27,6 +29,8 @@ export function Header({
   authorizedUser: AuthorizedUser | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isDraft = pathname?.startsWith("/draft/");
 
   const getNavLinks = () => {
     return generalConfig.mainNav;
@@ -38,10 +42,25 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
-      <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900",
+        !isDraft && "xl:px-6",
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-full items-center justify-between py-3",
+          isDraft ? "px-4 xl:px-0" : "mx-auto max-w-screen-xl px-4",
+        )}
+      >
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
-          <div className="flex flex-row gap-4">
+          <div
+            className={cn(
+              "flex flex-row gap-4",
+              isDraft && "xl:w-64 xl:justify-center",
+            )}
+          >
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild role="banner">
                 <Button
@@ -94,7 +113,13 @@ export function Header({
             />
           </nav>
 
-          <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
+          <div
+            className={cn(
+              "flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2",
+              isDraft &&
+                "xl:ml-0 xl:w-64 xl:justify-center xl:justify-self-end",
+            )}
+          >
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />
