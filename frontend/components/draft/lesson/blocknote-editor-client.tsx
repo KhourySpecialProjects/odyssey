@@ -237,7 +237,12 @@ export function BlockNoteEditorClient({
           // Insert slide-break with two-column layout
           editor.insertBlocks(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [{ type: "slide-break" as any, props: { nextSlideLayout: "two-columns" } as any }],
+            [
+              {
+                type: "slide-break" as any,
+                props: { nextSlideLayout: "two-columns" } as any,
+              },
+            ],
             afterBlock,
             "after",
           );
