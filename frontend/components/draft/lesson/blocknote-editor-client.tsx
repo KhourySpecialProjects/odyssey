@@ -205,50 +205,49 @@ export function BlockNoteEditorClient({
       const { operations } = (e as CustomEvent).detail;
       if (!operations || !Array.isArray(operations)) return;
 
-      // Sort insert operations in reverse order so indices stay valid
-      const ops = operations as AutoFormatOperation[];
-      const insertOps = ops
-        .filter(
-          (
-            op,
-          ): op is Extract<
-            AutoFormatOperation,
-            { type: "insert-slide-break" }
-          > => op.type === "insert-slide-break",
-        )
+      // Process operations in reverse order so indices stay valid
+      const ops = (operations as AutoFormatOperation[])
+        .slice()
         .sort((a, b) => b.afterBlockIndex - a.afterBlockIndex);
 
-      const layoutOps = ops.filter(
-        (
-          op,
-        ): op is Extract<AutoFormatOperation, { type: "set-image-layout" }> =>
-          op.type === "set-image-layout",
-      );
-
-      // Apply layout changes first (doesn't shift indices)
-      for (const op of layoutOps) {
-        const block = editor.document[op.blockIndex];
-        if (block && block.type === "image") {
-          editor.updateBlock(block, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props: { layout: op.layout } as any,
-          });
-        }
-      }
-
-      // Deduplicate consecutive indices (ops are sorted descending)
-      const dedupedOps: typeof insertOps = [];
-      for (const op of insertOps) {
+      // Deduplicate consecutive indices
+      const dedupedOps: AutoFormatOperation[] = [];
+      for (const op of ops) {
         const last = dedupedOps[dedupedOps.length - 1];
         if (!last || Math.abs(last.afterBlockIndex - op.afterBlockIndex) > 1) {
           dedupedOps.push(op);
         }
       }
 
-      // Insert slide breaks in reverse order
       for (const op of dedupedOps) {
         const afterBlock = editor.document[op.afterBlockIndex];
-        if (afterBlock) {
+        if (!afterBlock) continue;
+
+        if (op.type === "insert-two-column-break") {
+          // Insert column-break first (before slide-break shifts indices)
+          const colAfterBlock = editor.document[op.columnBreakAfterIndex];
+          if (colAfterBlock) {
+            editor.insertBlocks(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              [{ type: "column-break" as any }],
+              colAfterBlock,
+              "after",
+            );
+          }
+          // Insert slide-break with two-column layout
+          /* eslint-disable @typescript-eslint/no-explicit-any */
+          editor.insertBlocks(
+            [
+              {
+                type: "slide-break" as any,
+                props: { nextSlideLayout: "two-columns" } as any,
+              },
+            ],
+            afterBlock,
+            "after",
+          );
+          /* eslint-enable @typescript-eslint/no-explicit-any */
+        } else {
           editor.insertBlocks(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [{ type: "slide-break" as any }],

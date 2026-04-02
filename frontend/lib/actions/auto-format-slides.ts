@@ -5,9 +5,9 @@ import Anthropic from "@anthropic-ai/sdk";
 export type AutoFormatOperation =
   | { type: "insert-slide-break"; afterBlockIndex: number }
   | {
-      type: "set-image-layout";
-      blockIndex: number;
-      layout: "image-left" | "image-right" | "full-image";
+      type: "insert-two-column-break";
+      afterBlockIndex: number;
+      columnBreakAfterIndex: number;
     };
 
 type BlockSummary = {
@@ -18,7 +18,7 @@ type BlockSummary = {
   imageUrl?: string;
 };
 
-const SYSTEM_PROMPT = `You insert slide breaks and set image layouts for a presentation editor.
+const SYSTEM_PROMPT = `You insert slide breaks for a presentation editor. You can also create two-column slides.
 
 ## Height Budget
 
@@ -34,11 +34,18 @@ Each slide must stay under **~900px** (1080p screen).
 | quiz-* | ~200px |
 | video | ~360px |
 
-## Image Layouts
+## Two-Column Layout
 
-- \`image-left\`: image on left, text on right — use when text follows the image
-- \`image-right\`: image on right, text on left — use when text precedes the image
-- \`full-image\`: image fills the whole slide — use for standalone images with no adjacent text
+Use two-column slides when content naturally pairs side-by-side:
+- A code block + its explanation
+- Two parallel lists (e.g. pros/cons, before/after)
+- An image + descriptive text
+- Two short independent paragraphs on the same topic
+
+Do NOT use two-column for:
+- Long prose paragraphs (they need full width)
+- Quizzes or videos (they need full width)
+- Content that has a clear sequential flow
 
 ## Rules
 
@@ -49,14 +56,16 @@ Each slide must stay under **~900px** (1080p screen).
 5. NEVER put two \`notebook-code\` or \`code-block\` blocks on the same slide
 6. NEVER insert consecutive slide breaks — leave at least 2 content blocks between breaks
 7. Break at natural content boundaries (before headings, between topics, before/after images)
+8. Two-column slides must have at least 2 content blocks (1+ per column)
+9. The column break index must be between the slide break and the next slide break
 
 ## Response Format
 
 Respond with ONLY a JSON array. No explanation, no markdown fences, no commentary.
 
 Operation types:
-- \`{"type": "insert-slide-break", "afterBlockIndex": N}\`
-- \`{"type": "set-image-layout", "blockIndex": N, "layout": "image-left" | "image-right" | "full-image"}\``;
+- \`{"type": "insert-slide-break", "afterBlockIndex": N}\` — standard single-column slide break
+- \`{"type": "insert-two-column-break", "afterBlockIndex": N, "columnBreakAfterIndex": M}\` — slide break with two-column layout; a column break is inserted after block M to split left/right columns`;
 
 export async function autoFormatSlides(
   blockSummaries: BlockSummary[],
@@ -84,7 +93,7 @@ export async function autoFormatSlides(
       messages: [
         {
           role: "user",
-          content: `Insert slide breaks and set image layouts for these blocks:\n\n${JSON.stringify(blocks, null, 2)}`,
+          content: `Insert slide breaks for these blocks:\n\n${JSON.stringify(blocks, null, 2)}`,
         },
       ],
     });
@@ -101,16 +110,21 @@ export async function autoFormatSlides(
       if (op.type === "insert-slide-break") {
         return (
           typeof op.afterBlockIndex === "number" &&
+          Number.isInteger(op.afterBlockIndex) &&
           op.afterBlockIndex >= 0 &&
           op.afterBlockIndex < blockSummaries.length - 1
         );
       }
-      if (op.type === "set-image-layout") {
+      if (op.type === "insert-two-column-break") {
         return (
-          typeof op.blockIndex === "number" &&
-          op.blockIndex >= 0 &&
-          op.blockIndex < blockSummaries.length &&
-          ["image-left", "image-right", "full-image"].includes(op.layout)
+          typeof op.afterBlockIndex === "number" &&
+          typeof op.columnBreakAfterIndex === "number" &&
+          Number.isInteger(op.afterBlockIndex) &&
+          Number.isInteger(op.columnBreakAfterIndex) &&
+          op.afterBlockIndex >= 0 &&
+          op.afterBlockIndex < blockSummaries.length - 1 &&
+          op.columnBreakAfterIndex > op.afterBlockIndex &&
+          op.columnBreakAfterIndex < blockSummaries.length - 1
         );
       }
       return false;

@@ -380,18 +380,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "image": {
       const url = (blockAny.props?.url as string) || "";
       const alt = (blockAny.props?.name as string) || "";
-      const layout = (blockAny.props?.layout as string) || "default";
       const imgTag = `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" class="rounded-md" />`;
 
-      if (layout !== "default" && url) {
-        return {
-          __component: "droplets.generic" as const,
-          id: blockId,
-          content: imgTag,
-          slideLayout: layout as "image-left" | "image-right" | "full-image",
-          slideLayoutImageUrl: url,
-        };
-      }
       return {
         __component: "droplets.generic" as const,
         id: blockId,

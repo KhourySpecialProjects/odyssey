@@ -16,8 +16,6 @@ import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/actions";
 import imageCompression from "browser-image-compression";
 import { toast } from "sonner";
-import type { SlideLayout } from "@/components/presentation/utils";
-
 const compressImage = async (imageFile: File) => {
   const options = {
     maxSizeMB: 1,
@@ -32,13 +30,6 @@ const compressImage = async (imageFile: File) => {
   }
 };
 
-const SLIDE_LAYOUTS: { value: SlideLayout; label: string }[] = [
-  { value: "default", label: "Default (inline)" },
-  { value: "image-left", label: "Image Left (slide)" },
-  { value: "image-right", label: "Image Right (slide)" },
-  { value: "full-image", label: "Full Image (slide)" },
-];
-
 export const ImageBlock = createReactBlockSpec(
   {
     type: "image",
@@ -49,9 +40,6 @@ export const ImageBlock = createReactBlockSpec(
       caption: {
         default: "",
       },
-      layout: {
-        default: "default",
-      },
     },
     content: "none",
   },
@@ -60,9 +48,6 @@ export const ImageBlock = createReactBlockSpec(
       const [isEditing, setIsEditing] = useState(false);
       const [imageUrl, setImageUrl] = useState(props.block?.props?.url || "");
       const [caption, setCaption] = useState(props.block?.props?.caption || "");
-      const [layout, setLayout] = useState(
-        props.block?.props?.layout || "default",
-      );
       const [uploading, setUploading] = useState(false);
       const [isReady, setIsReady] = useState(false);
       const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,13 +74,7 @@ export const ImageBlock = createReactBlockSpec(
         if (!isMountedRef.current || !isReady) return;
         setImageUrl(props.block?.props?.url || "");
         setCaption(props.block?.props?.caption || "");
-        setLayout(props.block?.props?.layout || "default");
-      }, [
-        props.block?.props?.url,
-        props.block?.props?.caption,
-        props.block?.props?.layout,
-        isReady,
-      ]);
+      }, [props.block?.props?.url, props.block?.props?.caption, isReady]);
 
       // Early return if editor or block is not ready
       if (!props.editor || !props.block) {
@@ -175,7 +154,6 @@ export const ImageBlock = createReactBlockSpec(
             props: {
               url: imageUrl.trim(),
               caption: caption.trim(),
-              layout,
             },
           });
           if (isMountedRef.current) {
@@ -201,7 +179,6 @@ export const ImageBlock = createReactBlockSpec(
         if (!isMountedRef.current) return;
         setImageUrl(props.block?.props?.url || "");
         setCaption(props.block?.props?.caption || "");
-        setLayout(props.block?.props?.layout || "default");
         setIsEditing(false);
       };
 
@@ -343,32 +320,6 @@ export const ImageBlock = createReactBlockSpec(
                       placeholder="Image caption"
                       onMouseDown={(e) => e.stopPropagation()}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="slide-layout">Presentation Layout</Label>
-                    <select
-                      id="slide-layout"
-                      value={layout}
-                      onChange={(e) => setLayout(e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="border-input bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-                    >
-                      {SLIDE_LAYOUTS.map((l) => (
-                        <option key={l.value} value={l.value}>
-                          {l.label}
-                        </option>
-                      ))}
-                    </select>
-                    {layout !== "default" && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        In presentation mode, this image will appear with the{" "}
-                        <strong>
-                          {SLIDE_LAYOUTS.find((l) => l.value === layout)?.label}
-                        </strong>{" "}
-                        layout.
-                      </p>
-                    )}
                   </div>
 
                   {imageUrl && (
