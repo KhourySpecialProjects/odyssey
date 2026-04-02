@@ -6,6 +6,8 @@ interface ParseResult {
   blocks: CustomBlockNoteBlock[];
 }
 
+const IMPORT_IMG_REGEX = /^!\[.*?\]\(IMPORT_IMG_([a-f0-9-]+)\)$/;
+
 /**
  * Parse markdown content and convert to BlockNote JSON format
  */
@@ -21,6 +23,21 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
 
     // Skip empty lines
     if (!trimmedLine) {
+      i++;
+      continue;
+    }
+
+    // Horizontal rule / slide break separator
+    if (trimmedLine === "---") {
+      blocks.push(createSeparator());
+      i++;
+      continue;
+    }
+
+    // Image import marker: ![...](IMPORT_IMG_<uuid>)
+    const imgMatch = trimmedLine.match(IMPORT_IMG_REGEX);
+    if (imgMatch) {
+      blocks.push(createImageBlock(`IMPORT_IMG_${imgMatch[1]}`));
       i++;
       continue;
     }
@@ -117,6 +134,107 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
   return { title, blocks };
 }
 
+/** Inline content: text segment or link */
+type InlineContent =
+  | { type: "text"; text: string; styles: Record<string, boolean> }
+  | {
+      type: "link";
+      href: string;
+      content: Array<{
+        type: "text";
+        text: string;
+        styles: Record<string, boolean>;
+      }>;
+    };
+
+/**
+ * Parse inline markdown (bold, italic, links) into BlockNote content segments.
+ * Handles: **bold**, *italic*, [text](url)
+ */
+function parseInlineStyles(text: string): InlineContent[] {
+  // First pass: split on links [text](url)
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  const parts: Array<{
+    type: "text" | "link";
+    raw: string;
+    href?: string;
+    linkText?: string;
+  }> = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", raw: text.slice(lastIndex, match.index) });
+    }
+    parts.push({
+      type: "link",
+      raw: match[0],
+      href: match[2],
+      linkText: match[1],
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push({ type: "text", raw: text.slice(lastIndex) });
+  }
+  if (parts.length === 0) {
+    parts.push({ type: "text", raw: text });
+  }
+
+  // Second pass: for each text part, parse bold/italic
+  const result: InlineContent[] = [];
+  for (const part of parts) {
+    if (part.type === "link") {
+      result.push({
+        type: "link",
+        href: part.href!,
+        content: parseBoldItalic(part.linkText!),
+      });
+    } else {
+      result.push(...parseBoldItalic(part.raw));
+    }
+  }
+
+  return result;
+}
+
+/** Parse **bold** and *italic* markers in a text string */
+function parseBoldItalic(
+  text: string,
+): Array<{ type: "text"; text: string; styles: Record<string, boolean> }> {
+  const segments: Array<{
+    type: "text";
+    text: string;
+    styles: Record<string, boolean>;
+  }> = [];
+  const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      const before = text.slice(lastIndex, match.index);
+      if (before) segments.push({ text: before, type: "text", styles: {} });
+    }
+    if (match[1]) {
+      segments.push({ text: match[1], type: "text", styles: { bold: true } });
+    } else if (match[2]) {
+      segments.push({ text: match[2], type: "text", styles: { italic: true } });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ text: text.slice(lastIndex), type: "text", styles: {} });
+  }
+  if (segments.length === 0) {
+    segments.push({ text, type: "text", styles: {} });
+  }
+
+  return segments;
+}
+
 /**
  * Create a heading block
  */
@@ -131,13 +249,7 @@ function createHeading(text: string, level: 1 | 2 | 3): CustomBlockNoteBlock {
       textAlignment: "left",
       backgroundColor: "default",
     },
-    content: [
-      {
-        text,
-        type: "text",
-        styles: {},
-      },
-    ],
+    content: parseInlineStyles(text),
     children: [],
   };
 }
@@ -477,13 +589,7 @@ function parseList(
         textAlignment: "left",
         backgroundColor: "default",
       },
-      content: [
-        {
-          text,
-          type: "text",
-          styles: {},
-        },
-      ],
+      content: parseInlineStyles(text),
       children: [],
     });
 
@@ -497,8 +603,6 @@ function parseList(
  * Parse paragraph (handles inline LaTeX with $...$)
  */
 function parseParagraph(text: string): CustomBlockNoteBlock {
-  // For now, we'll treat inline LaTeX as regular text
-  // BlockNote will need to handle inline LaTeX separately if needed
   return {
     id: uuidv4(),
     type: "paragraph",
@@ -507,13 +611,37 @@ function parseParagraph(text: string): CustomBlockNoteBlock {
       textAlignment: "left",
       backgroundColor: "default",
     },
-    content: [
-      {
-        text,
-        type: "text",
-        styles: {},
-      },
-    ],
+    content: parseInlineStyles(text),
+    children: [],
+  };
+}
+
+function createSeparator(): CustomBlockNoteBlock {
+  return {
+    id: uuidv4(),
+    type: "paragraph",
+    props: {
+      textColor: "default",
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    content: [{ type: "text", text: "---", styles: {} }],
+    children: [],
+  };
+}
+
+function createImageBlock(url: string): CustomBlockNoteBlock {
+  return {
+    id: uuidv4(),
+    type: "image",
+    props: {
+      url,
+      caption: "",
+      width: 512,
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    content: undefined,
     children: [],
   };
 }
