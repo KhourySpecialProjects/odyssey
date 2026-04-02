@@ -110,6 +110,7 @@ export async function autoFormatSlides(
       if (op.type === "insert-slide-break") {
         return (
           typeof op.afterBlockIndex === "number" &&
+          Number.isInteger(op.afterBlockIndex) &&
           op.afterBlockIndex >= 0 &&
           op.afterBlockIndex < blockSummaries.length - 1
         );
@@ -118,6 +119,8 @@ export async function autoFormatSlides(
         return (
           typeof op.afterBlockIndex === "number" &&
           typeof op.columnBreakAfterIndex === "number" &&
+          Number.isInteger(op.afterBlockIndex) &&
+          Number.isInteger(op.columnBreakAfterIndex) &&
           op.afterBlockIndex >= 0 &&
           op.afterBlockIndex < blockSummaries.length - 1 &&
           op.columnBreakAfterIndex > op.afterBlockIndex &&

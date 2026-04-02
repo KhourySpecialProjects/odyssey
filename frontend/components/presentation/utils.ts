@@ -121,11 +121,11 @@ function splitByMarkers(
     if (isEmptySpacing(block)) continue;
 
     if (isSlideBreak(block)) {
-      const layout =
+      const raw =
         block.__component === "droplets.generic" && "nextSlideLayout" in block
-          ? (block.nextSlideLayout as SlideLayout | undefined)
+          ? block.nextSlideLayout
           : undefined;
-      pendingLayout = layout && layout !== "default" ? layout : undefined;
+      pendingLayout = raw === "two-columns" ? "two-columns" : undefined;
       flush();
       continue;
     }
