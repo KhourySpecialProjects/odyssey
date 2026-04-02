@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, memo, lazy, Suspense } from "react";
+import { useState, useEffect, memo, lazy, Suspense } from "react";
 import {
   Dialog,
   DialogContent,
@@ -87,9 +87,9 @@ export function ImportFileModal({
   const [creationProgress, setCreationProgress] = useState<{
     current: number;
     total: number;
+    stage: string;
   } | null>(null);
   const [creationError, setCreationError] = useState("");
-  const [creationStage, setCreationStage] = useState("");
   const [extractedImages, setExtractedImages] = useState<
     Map<string, ImportImage>
   >(new Map());
@@ -97,25 +97,25 @@ export function ImportFileModal({
   const fileName = selectedFile?.name ?? "";
   const fileType: "pdf" | "pptx" = fileName.endsWith(".pptx") ? "pptx" : "pdf";
   const progressText = creationProgress
-    ? `${creationStage || "Creating lessons"}: ${creationProgress.current} of ${creationProgress.total}...`
+    ? `${creationProgress.stage}: ${creationProgress.current} of ${creationProgress.total}...`
     : "Preparing lessons...";
 
-  // Create blob URLs for image previews, clean up on unmount
-  const blobUrls = useMemo(() => {
+  // Create blob URLs for image previews; revoke old ones on change/unmount
+  const [blobUrls, setBlobUrls] = useState<Map<string, string>>(new Map());
+
+  useEffect(() => {
     const urls = new Map<string, string>();
     for (const [id, img] of extractedImages) {
       urls.set(`IMPORT_IMG_${id}`, URL.createObjectURL(img.blob));
     }
-    return urls;
-  }, [extractedImages]);
+    setBlobUrls(urls);
 
-  useEffect(() => {
     return () => {
-      for (const url of blobUrls.values()) {
+      for (const url of urls.values()) {
         URL.revokeObjectURL(url);
       }
     };
-  }, [blobUrls]);
+  }, [extractedImages]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -260,8 +260,7 @@ export function ImportFileModal({
       lessons: lessonsData,
       images: extractedImages.size > 0 ? extractedImages : undefined,
       onProgress: (current, total, stage) => {
-        setCreationProgress({ current, total });
-        setCreationStage(stage);
+        setCreationProgress({ current, total, stage });
       },
     });
 
@@ -290,7 +289,6 @@ export function ImportFileModal({
     setSelectedIds(new Set());
     setCreationProgress(null);
     setCreationError("");
-    setCreationStage("");
     setExtractionStatus("");
     setExtractedImages(new Map());
     onClose();

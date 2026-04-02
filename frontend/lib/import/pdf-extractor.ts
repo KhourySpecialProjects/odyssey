@@ -14,9 +14,7 @@ interface TextItem {
  * Extract formatted markdown from a PDF file using pdfjs-dist.
  * Maps font sizes to heading levels, detects bold, extracts images and links.
  */
-export async function extractTextFromPDF(
-  file: File,
-): Promise<{
+export async function extractTextFromPDF(file: File): Promise<{
   text: string;
   warnings: string[];
   images: Map<string, ImportImage>;
@@ -262,10 +260,12 @@ function applyLinkAnnotations(
         y <= top + tolerance &&
         item.str.trim()
       ) {
-        // Replace the item's text with a markdown link
-        const escaped = item.str.trim();
-        if (text.includes(escaped) && !text.includes(`[${escaped}]`)) {
-          text = text.replace(escaped, `[${escaped}](${ann.url})`);
+        const raw = item.str.trim();
+        // Escape regex special chars and use word boundary to avoid partial matches
+        const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`(?<!\\[)${escaped}(?!\\])`);
+        if (regex.test(text)) {
+          text = text.replace(regex, `[${raw}](${ann.url})`);
         }
       }
     }

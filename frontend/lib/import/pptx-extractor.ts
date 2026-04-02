@@ -6,9 +6,7 @@ import type { ImportImage } from "./types";
  * Extract formatted markdown from a PPTX file using JSZip + DOMParser.
  * Extracts images, links, and adds slide break separators (---).
  */
-export async function extractTextFromPPTX(
-  file: File,
-): Promise<{
+export async function extractTextFromPPTX(file: File): Promise<{
   text: string;
   warnings: string[];
   images: Map<string, ImportImage>;
@@ -210,7 +208,8 @@ function parseSlideMarkdown(xmlString: string, rels: RelationshipMap): string {
   try {
     const parser = new DOMParser();
     doc = parser.parseFromString(xmlString, "application/xml");
-  } catch {
+  } catch (err) {
+    console.warn("Failed to parse slide XML:", err);
     return "";
   }
 
