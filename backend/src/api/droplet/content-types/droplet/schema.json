@@ -171,6 +171,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "reviewers"
+    },
+    "datasets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::dataset.dataset",
+      "mappedBy": "droplet"
     }
   }
 }

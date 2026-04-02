@@ -18,6 +18,8 @@ import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
 import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block";
 import { SlideBreak } from "@/components/ui/blocknote/blocks/slide-break-block";
+import { ColumnBreak } from "@/components/ui/blocknote/blocks/column-break-block";
+import { NotebookCodeBlock } from "@/components/ui/blocknote/blocks/notebook-code-block";
 import { SandpackBlock } from "@/components/ui/blocknote/blocks/sandpack-block";
 
 const blockTypesToHide = new Set([
@@ -78,7 +80,7 @@ const latexStyleSpec = createStyleSpec(
             displayMode: false,
           });
           wrapper.classList.remove("bn-inline-latex--error");
-        } catch (error) {
+        } catch {
           preview.textContent = latex;
           wrapper.classList.add("bn-inline-latex--error");
         }
@@ -142,6 +144,8 @@ export const blockNoteSchema = BlockNoteSchema.create({
     image: ImageBlock(),
     "code-block": CodeBlock(),
     "slide-break": SlideBreak(),
+    "column-break": ColumnBreak(),
+    "notebook-code": NotebookCodeBlock(),
     "sandpack-block": SandpackBlock(),
   },
   styleSpecs: customStyleSpecs,

@@ -28,6 +28,8 @@ const SandpackViewer = dynamic(
   { ssr: false },
 );
 
+import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
+
 interface PresentationBlockRendererProps {
   block: Block;
   lessonId?: number;
@@ -158,12 +160,21 @@ export function PresentationBlockRenderer({
     case "droplets.code-block":
       return (
         <div className="max-h-[65vh] overflow-y-auto rounded-lg">
-          <CodeBlockViewer
-            language={block.language}
-            code={block.code}
-            editable={block.editable}
-            runnable={block.runnable}
-          />
+          {"isNotebook" in block && block.isNotebook ? (
+            <NotebookCodeViewer
+              code={block.code}
+              language={block.language}
+              editable={block.editable}
+              testCode={"testCode" in block ? (block.testCode as string) : ""}
+            />
+          ) : (
+            <CodeBlockViewer
+              language={block.language}
+              code={block.code}
+              editable={block.editable}
+              runnable={block.runnable}
+            />
+          )}
         </div>
       );
 
@@ -199,6 +210,8 @@ export function PresentationBlockRenderer({
           files={parseSandpackFiles(block.files)}
           showPreview={block.showPreview}
           editable={block.editable}
+          description={block.description}
+          lockedFiles={block.lockedFiles}
           presentationMode
         />
       );

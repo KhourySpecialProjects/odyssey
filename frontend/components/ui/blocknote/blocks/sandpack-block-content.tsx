@@ -8,10 +8,12 @@ import {
   useSandpack,
 } from "@codesandbox/sandpack-react";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import React from "react";
 import {
   Edit,
   Lock,
+  LockOpen,
   Eye,
   EyeOff,
   RotateCcw,
@@ -20,6 +22,7 @@ import {
   Minimize2,
   Plus,
   X,
+  BookOpen,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -136,7 +139,13 @@ export const TEMPLATE_LABELS: Record<SandpackTemplate, string> = {
   "react-ts": "React + TypeScript",
 };
 
-const MAX_FILES = 20;
+const TEMPLATE_DOCS: Record<SandpackTemplate, string> = {
+  vanilla: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+  react: "https://react.dev",
+  "react-ts": "https://www.typescriptlang.org/docs/",
+};
+
+export const MAX_FILES = 20;
 const BUBBLE_EVENTS = [
   "keydown",
   "keypress",
@@ -207,10 +216,21 @@ function SandpackFileCommands({
 
 interface CustomFileExplorerProps {
   height: string;
-  isAuthorMode: boolean;
+  /** Show the per-file delete (X) button */
+  canDelete: boolean;
+  /** Paths that are locked read-only */
+  lockedFiles: string[];
+  /** If provided, each file shows an interactive lock toggle. If omitted, the
+   *  lock icon is rendered as a static indicator (viewer mode). */
+  onToggleLock?: (path: string) => void;
 }
 
-function CustomFileExplorer({ height, isAuthorMode }: CustomFileExplorerProps) {
+export function CustomFileExplorer({
+  height,
+  canDelete,
+  lockedFiles,
+  onToggleLock,
+}: CustomFileExplorerProps) {
   const { sandpack } = useSandpack();
   const filePaths = Object.keys(sandpack.files).sort();
   const fileCount = filePaths.length;
@@ -227,11 +247,13 @@ function CustomFileExplorer({ height, isAuthorMode }: CustomFileExplorerProps) {
       style={{ height, minWidth: "160px", maxWidth: "200px" }}
       role="listbox"
       aria-label="Files"
-      className="overflow-y-auto border-r border-[#333] bg-[#1e1e1e]"
+      className="overflow-y-auto border-r border-gray-200 bg-white"
     >
       {filePaths.map((path) => {
         const isActive = sandpack.activeFile === path;
+        const isLocked = lockedFiles.includes(path);
         const displayPath = path.slice(1); // strip leading slash
+
         return (
           <div
             key={path}
@@ -247,32 +269,94 @@ function CustomFileExplorer({ height, isAuthorMode }: CustomFileExplorerProps) {
             }}
             className={`group flex cursor-pointer items-center justify-between px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#0078d4] focus:outline-none ${
               isActive
-                ? "bg-[#2d2d2d] text-white"
-                : "text-gray-400 hover:bg-[#252525] hover:text-white"
+                ? "bg-sky-50 text-gray-900"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
             <span className="truncate" title={path}>
               {displayPath}
             </span>
-            {isAuthorMode && (
-              <button
-                onClick={(e) => handleDelete(path, e)}
-                disabled={fileCount <= 1}
-                className="ml-1 shrink-0 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#555] focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
-                title={
-                  fileCount <= 1
-                    ? "Cannot delete the last file"
-                    : `Delete ${path}`
-                }
-                data-testid={`delete-file-button-${path}`}
-              >
-                <X size={10} />
-              </button>
-            )}
+
+            <span className="ml-1 flex shrink-0 items-center gap-0.5">
+              {/* Lock toggle — interactive in author mode, static indicator otherwise */}
+              {onToggleLock ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleLock(path);
+                  }}
+                  className={`rounded p-0.5 transition-opacity hover:bg-gray-200 focus:opacity-100 focus:outline-none ${
+                    isLocked
+                      ? "text-amber-500 opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  }`}
+                  title={isLocked ? `Unlock ${path}` : `Lock ${path}`}
+                  aria-label={isLocked ? `Unlock ${path}` : `Lock ${path}`}
+                  data-testid={`lock-file-button-${path}`}
+                >
+                  {isLocked ? <LockOpen size={9} /> : <Lock size={9} />}
+                </button>
+              ) : (
+                // Viewer: static lock icon when locked, nothing when unlocked
+                isLocked && (
+                  <span
+                    className="cursor-default rounded p-0.5 text-amber-400"
+                    title="This file is read-only"
+                    aria-label="Read-only file"
+                  >
+                    <Lock size={9} />
+                  </span>
+                )
+              )}
+
+              {canDelete && (
+                <button
+                  onClick={(e) => handleDelete(path, e)}
+                  disabled={fileCount <= 1}
+                  className="rounded p-0.5 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-200 focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20"
+                  title={
+                    fileCount <= 1
+                      ? "Cannot delete the last file"
+                      : `Delete ${path}`
+                  }
+                  data-testid={`delete-file-button-${path}`}
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </span>
           </div>
         );
       })}
     </div>
+  );
+}
+
+// Renders SandpackCodeEditor with per-file read-only enforcement based on the
+// active file. Must be rendered inside a SandpackProvider.
+interface ReadOnlySandpackEditorProps {
+  lockedFiles: string[];
+  /** Global read-only override (e.g. editable=false for all students) */
+  globalReadOnly: boolean;
+  height: string;
+}
+
+export function ReadOnlySandpackEditor({
+  lockedFiles,
+  globalReadOnly,
+  height,
+}: ReadOnlySandpackEditorProps) {
+  const { sandpack } = useSandpack();
+  const isCurrentFileLocked = lockedFiles.includes(sandpack.activeFile);
+
+  return (
+    <SandpackCodeEditor
+      readOnly={isCurrentFileLocked || globalReadOnly}
+      showLineNumbers
+      showTabs={false}
+      showInlineErrors
+      style={{ height, flex: 1 }}
+    />
   );
 }
 
@@ -283,11 +367,13 @@ interface SandpackBlockInnerProps {
   showFileExplorer: boolean;
   editable: boolean;
   isAuthorMode: boolean;
+  lockedFiles: string[];
   resolvedTheme: string | undefined;
   onFilesChange?: (files: Record<string, string>) => void;
   addFileCommandRef?: React.MutableRefObject<
     ((filename: string) => void) | null
   >;
+  onToggleLock?: (path: string) => void;
   fullscreen?: boolean;
 }
 
@@ -298,9 +384,11 @@ function SandpackBlockInner({
   showFileExplorer,
   editable,
   isAuthorMode,
+  lockedFiles,
   resolvedTheme,
   onFilesChange,
   addFileCommandRef,
+  onToggleLock,
   fullscreen,
 }: SandpackBlockInnerProps) {
   const sandpackTheme = resolvedTheme === "dark" ? "dark" : "light";
@@ -325,20 +413,20 @@ function SandpackBlockInner({
         {showFileExplorer && (
           <CustomFileExplorer
             height={panelHeight}
-            isAuthorMode={isAuthorMode}
+            canDelete={isAuthorMode}
+            lockedFiles={lockedFiles}
+            onToggleLock={isAuthorMode ? onToggleLock : undefined}
           />
         )}
-        <SandpackCodeEditor
-          readOnly={!editable && !isAuthorMode}
-          showLineNumbers
-          showTabs={false}
-          showInlineErrors
-          style={{ height: panelHeight, flex: 1 }}
+        <ReadOnlySandpackEditor
+          lockedFiles={lockedFiles}
+          globalReadOnly={!editable && !isAuthorMode}
+          height={panelHeight}
         />
         {showPreview && (
           <SandpackPreview
             style={{ height: panelHeight, flex: 1 }}
-            showNavigator
+            showOpenInCodeSandbox={false}
           />
         )}
       </SandpackLayout>
@@ -376,8 +464,8 @@ export function SandpackBlockContent({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsFullscreen(false);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [isFullscreen]);
 
   // Clear debounce timer on unmount to avoid firing updateBlock on a dead editor.
@@ -388,9 +476,6 @@ export function SandpackBlockContent({
   }, []);
 
   // Stop keyboard/input/paste events from bubbling out to ProseMirror.
-  // ProseMirror registers native DOM listeners that fire before React synthetic
-  // events, so we must intercept at the native level to prevent keystrokes
-  // typed inside CodeMirror from leaking into the lesson editor.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -400,8 +485,7 @@ export function SandpackBlockContent({
       BUBBLE_EVENTS.forEach((evt) => el.removeEventListener(evt, stop));
   }, []);
 
-  // Same event isolation for the fullscreen overlay — uses a ref+effect so
-  // listeners are properly cleaned up each time the overlay mounts/unmounts.
+  // Same event isolation for the fullscreen overlay.
   useEffect(() => {
     const el = fullscreenRef.current;
     if (!isFullscreen || !el) return;
@@ -466,6 +550,29 @@ export function SandpackBlockContent({
     }
   }, [block.props.files]);
   const fileCount = Object.keys(parsedFiles).length;
+
+  const parsedLockedFiles: string[] = React.useMemo(() => {
+    try {
+      const parsed = JSON.parse(block.props.lockedFiles || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [block.props.lockedFiles]);
+
+  const toggleFileLock = (path: string) => {
+    if (!editor) return;
+    const updated = parsedLockedFiles.includes(path)
+      ? parsedLockedFiles.filter((p) => p !== path)
+      : [...parsedLockedFiles, path];
+    try {
+      editor.updateBlock(block, {
+        props: { ...block.props, lockedFiles: JSON.stringify(updated) },
+      });
+    } catch (error) {
+      console.error("Error toggling file lock:", error);
+    }
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -545,9 +652,6 @@ export function SandpackBlockContent({
     const newFilesJson = JSON.stringify(newFiles);
     if (newFilesJson === block.props.files) return;
 
-    // Debounce saves: cancel the previous pending update and schedule a new one.
-    // Firing updateBlock on every keystroke queues rapid ProseMirror transactions
-    // that can step on each other and produce "Position X out of range" errors.
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
     const currentBlock = block;
@@ -566,7 +670,7 @@ export function SandpackBlockContent({
 
   const titleBar = (
     <TooltipProvider delayDuration={400}>
-      <div className="flex items-center justify-between border-b border-[#333] bg-[#2d2d2d] px-3 py-2">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-3 py-2">
         <div className="flex items-center gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -574,8 +678,8 @@ export function SandpackBlockContent({
                 onClick={() => setShowFileExplorer((v) => !v)}
                 className={`rounded p-1 transition-colors ${
                   showFileExplorer
-                    ? "bg-[#3e3e3e] text-white"
-                    : "text-white hover:bg-[#3e3e3e]"
+                    ? "bg-gray-200 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
                 data-testid="file-explorer-toggle"
               >
@@ -588,113 +692,123 @@ export function SandpackBlockContent({
           </Tooltip>
 
           {isAuthorMode && (
-            <div className="relative">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      if (fileCount < MAX_FILES) {
-                        setAddFileOpen((v) => !v);
-                        setNewFilename("/");
-                        setAddFileError(null);
-                      }
-                    }}
-                    disabled={fileCount >= MAX_FILES}
-                    className="rounded p-1 text-white transition-colors hover:bg-[#3e3e3e] disabled:cursor-not-allowed disabled:opacity-40"
-                    data-testid="add-file-button"
-                  >
-                    <Plus size={13} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {fileCount >= MAX_FILES
-                    ? `Maximum ${MAX_FILES} files reached`
-                    : "Add file"}
-                </TooltipContent>
-              </Tooltip>
+            <>
+              {/* Add file */}
+              <div className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        if (fileCount < MAX_FILES) {
+                          setAddFileOpen((v) => !v);
+                          setNewFilename("/");
+                          setAddFileError(null);
+                        }
+                      }}
+                      disabled={fileCount >= MAX_FILES}
+                      className="rounded p-1 text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      data-testid="add-file-button"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {fileCount >= MAX_FILES
+                      ? `Maximum ${MAX_FILES} files reached`
+                      : "Add file"}
+                  </TooltipContent>
+                </Tooltip>
 
-              {addFileOpen && (
-                <div
-                  ref={addFilePopoverRef}
-                  role="dialog"
-                  aria-label="Add new file"
-                  className="absolute top-full left-0 z-50 mt-1 w-64 rounded border border-[#555] bg-[#2d2d2d] p-3 shadow-lg"
-                >
-                  <input
-                    ref={addFileInputRef}
-                    type="text"
-                    aria-label="New filename"
-                    value={newFilename}
-                    onChange={(e) => {
-                      setNewFilename(e.target.value);
-                      setAddFileError(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddFileCreate();
-                    }}
-                    placeholder="/filename.js"
-                    className="w-full rounded border border-[#555] bg-[#1e1e1e] px-2 py-1 text-sm text-white outline-none focus:border-[#0078d4]"
-                    data-testid="new-filename-input"
-                  />
-                  {addFileError && (
-                    <p
-                      className="mt-1 text-xs text-red-400"
-                      data-testid="filename-error"
-                    >
-                      {addFileError}
-                    </p>
-                  )}
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={handleAddFileCreate}
-                      className="rounded bg-[#0078d4] px-2 py-1 text-xs text-white hover:bg-[#106ebe]"
-                    >
-                      Create
-                    </button>
-                    <button
-                      onClick={closeAddFilePopover}
-                      className="rounded px-2 py-1 text-xs text-white hover:bg-[#3e3e3e]"
-                    >
-                      Cancel
-                    </button>
+                {addFileOpen && (
+                  <div
+                    ref={addFilePopoverRef}
+                    role="dialog"
+                    aria-label="Add new file"
+                    className="absolute top-full left-0 z-50 mt-1 w-64 rounded border border-gray-200 bg-white p-3 shadow-lg"
+                  >
+                    <input
+                      ref={addFileInputRef}
+                      type="text"
+                      aria-label="New filename"
+                      value={newFilename}
+                      onChange={(e) => {
+                        setNewFilename(e.target.value);
+                        setAddFileError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddFileCreate();
+                      }}
+                      placeholder="/filename.js"
+                      className="w-full rounded border border-gray-300 bg-gray-50 px-2 py-1 text-sm text-gray-900 outline-none focus:border-[#0078d4]"
+                      data-testid="new-filename-input"
+                    />
+                    {addFileError && (
+                      <p
+                        className="mt-1 text-xs text-red-400"
+                        data-testid="filename-error"
+                      >
+                        {addFileError}
+                      </p>
+                    )}
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleAddFileCreate}
+                        className="rounded bg-[#0078d4] px-2 py-1 text-xs text-white hover:bg-[#106ebe]"
+                      >
+                        Create
+                      </button>
+                      <button
+                        onClick={closeAddFilePopover}
+                        className="rounded px-2 py-1 text-xs text-gray-700 hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           )}
 
+          {/* Template selector — dropdown in author mode, plain label otherwise */}
           {isAuthorMode ? (
-            <div
-              className="flex items-center gap-0.5"
+            <select
+              value={currentTemplate}
+              onChange={(e) =>
+                changeTemplate(e.target.value as SandpackTemplate)
+              }
+              className="w-auto rounded border border-gray-300 bg-gray-100 py-0.5 pr-6 pl-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-[#0078d4]"
               data-testid="template-selector"
             >
               {(Object.keys(TEMPLATE_LABELS) as SandpackTemplate[]).map(
                 (tmpl) => (
-                  <Tooltip key={tmpl}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => changeTemplate(tmpl)}
-                        className={`rounded px-2 py-0.5 text-xs transition-colors ${
-                          currentTemplate === tmpl
-                            ? "bg-[#0078d4] text-white"
-                            : "text-white hover:bg-[#3e3e3e]"
-                        }`}
-                      >
-                        {TEMPLATE_LABELS[tmpl]}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Switch to {TEMPLATE_LABELS[tmpl]}
-                    </TooltipContent>
-                  </Tooltip>
+                  <option key={tmpl} value={tmpl}>
+                    {TEMPLATE_LABELS[tmpl]}
+                  </option>
                 ),
               )}
-            </div>
+            </select>
           ) : (
-            <span className="text-xs text-white">
+            <span className="text-xs text-gray-700">
               {TEMPLATE_LABELS[currentTemplate]}
             </span>
           )}
+
+          {/* Docs link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a
+                href={TEMPLATE_DOCS[currentTemplate]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded p-1 text-gray-700 transition-colors hover:bg-gray-100"
+                aria-label="Open documentation"
+              >
+                <BookOpen size={13} />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>Open documentation</TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="flex items-center gap-1">
@@ -704,7 +818,7 @@ export function SandpackBlockContent({
                 <TooltipTrigger asChild>
                   <button
                     onClick={resetToDefaults}
-                    className="rounded p-1.5 text-white transition-colors hover:bg-[#3e3e3e]"
+                    className="rounded p-1.5 text-gray-700 transition-colors hover:bg-gray-100"
                     data-testid="reset-button"
                   >
                     <RotateCcw size={13} />
@@ -716,7 +830,7 @@ export function SandpackBlockContent({
                 <TooltipTrigger asChild>
                   <button
                     onClick={toggleEditable}
-                    className="rounded p-1.5 text-white transition-colors hover:bg-[#3e3e3e]"
+                    className="rounded p-1.5 text-gray-700 transition-colors hover:bg-gray-100"
                     data-testid="editable-toggle"
                   >
                     {currentEditable ? <Edit size={13} /> : <Lock size={13} />}
@@ -732,7 +846,7 @@ export function SandpackBlockContent({
                 <TooltipTrigger asChild>
                   <button
                     onClick={toggleShowPreview}
-                    className="rounded p-1.5 text-white transition-colors hover:bg-[#3e3e3e]"
+                    className="rounded p-1.5 text-gray-700 transition-colors hover:bg-gray-100"
                     data-testid="preview-toggle"
                   >
                     {currentShowPreview ? (
@@ -752,7 +866,7 @@ export function SandpackBlockContent({
             <TooltipTrigger asChild>
               <button
                 onClick={() => setIsFullscreen((v) => !v)}
-                className="rounded p-1.5 text-gray-300 transition-colors hover:bg-[#3e3e3e] hover:text-white"
+                className="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
               >
                 {isFullscreen ? (
                   <Minimize2 size={13} />
@@ -778,9 +892,11 @@ export function SandpackBlockContent({
       showFileExplorer={showFileExplorer}
       editable={currentEditable}
       isAuthorMode={isAuthorMode}
+      lockedFiles={parsedLockedFiles}
       resolvedTheme={resolvedTheme}
       onFilesChange={isAuthorMode ? handleFilesChange : undefined}
       addFileCommandRef={isAuthorMode ? addFileCommandRef : undefined}
+      onToggleLock={isAuthorMode ? toggleFileLock : undefined}
       fullscreen={isFullscreen}
     />
   );
@@ -789,7 +905,7 @@ export function SandpackBlockContent({
     <>
       <div
         ref={containerRef}
-        className="my-4 w-full overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e]"
+        className="my-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-[#1e1e1e] shadow-md"
         contentEditable={false}
         onMouseDown={handleMouseDown}
       >
@@ -797,16 +913,18 @@ export function SandpackBlockContent({
         {!isFullscreen && sandpackInner}
       </div>
 
-      {isFullscreen && (
-        <div
-          ref={fullscreenRef}
-          className="fixed inset-0 z-50 flex flex-col bg-[#1e1e1e]"
-          onMouseDown={handleMouseDown}
-        >
-          {titleBar}
-          {sandpackInner}
-        </div>
-      )}
+      {isFullscreen &&
+        createPortal(
+          <div
+            ref={fullscreenRef}
+            className="fixed inset-0 z-[9999] flex flex-col bg-[#1e1e1e]"
+            onMouseDown={handleMouseDown}
+          >
+            {titleBar}
+            {sandpackInner}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

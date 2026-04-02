@@ -63,6 +63,14 @@
   color: white;
 }
 
+/* Prevent the global dark-mode color override from breaking Sandpack/CodeMirror syntax highlighting */
+.dark .sp-wrapper pre,
+.dark .sp-wrapper pre *,
+.dark .sp-wrapper code,
+.dark .sp-wrapper code * {
+  color: unset;
+}
+
 /* Specific fix for callout bullet list items in dark mode */
 .dark .pt-3.pl-3 * {
   color: #334155 !important;

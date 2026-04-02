@@ -268,7 +268,7 @@ export function AuthorizedUserBlock({
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="scale-75 sm:scale-100">
+            <DialogContent>
               <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
                 <IconX className="h-4 w-4" />
               </DialogClose>

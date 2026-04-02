@@ -8,6 +8,7 @@
 import { useSlideNavigation } from "./use-slide-navigation";
 import { PresentationBlockRenderer } from "./presentation-block-renderer";
 import type { Slide } from "./utils";
+import { isColumnBreak } from "./utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,13 @@ import {
   BookTextIcon,
 } from "lucide-react";
 import { Logo } from "@/components/header/logo";
+import dynamic from "next/dynamic";
+
+const Confetti = dynamic(
+  () =>
+    import("@/app/(droplets)/d/[slug]/recap/confetti").then((m) => m.Confetti),
+  { ssr: false },
+);
 
 interface PresentationShellProps {
   dropletName: string;
@@ -165,8 +173,6 @@ export function PresentationShell({
     };
   }, [
     dropletName,
-    dropletDescription,
-    dropletTags,
     dropletOverview,
     dropletObjectives,
     dropletAuthors,
@@ -191,7 +197,7 @@ export function PresentationShell({
   if (!mounted) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white text-slate-900 dark:bg-[#191919] dark:text-white">
-        <h1 className="text-5xl font-bold tracking-tight">{dropletName}</h1>
+        <h1 className="text-6xl font-bold tracking-tight">{dropletName}</h1>
       </div>
     );
   }
@@ -234,7 +240,7 @@ export function PresentationShell({
       </div>
 
       {/* ── Slide viewport ── */}
-      <div className="flex h-full w-full items-center justify-center overflow-hidden px-16 py-12">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden px-20 py-16">
         <div
           key={currentSlideKey}
           className="flex w-full max-w-5xl flex-col items-center justify-center text-center"
@@ -242,16 +248,17 @@ export function PresentationShell({
           {isEndSlide ? (
             /* ── End slide ── */
             <div className="flex flex-col items-center gap-6">
-              <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
+              <Confetti />
+              <h1 className="text-6xl font-bold tracking-tight sm:text-7xl">
                 Thank You
               </h1>
-              <p className="text-xl text-slate-500 dark:text-slate-400">
+              <p className="text-2xl text-slate-500 dark:text-slate-400">
                 {dropletName}
               </p>
-              <div className="mt-4 h-0.5 w-16 rounded-full bg-sky-400/40" />
+              <div className="mt-4 h-0.5 w-24 rounded-full bg-sky-400/40" />
               <button
                 onClick={exit}
-                className="mt-6 rounded-md bg-sky-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-sky-500"
+                className="mt-8 rounded-md bg-sky-600 px-8 py-3 text-base font-medium text-white transition hover:bg-sky-500"
               >
                 Exit Presentation
               </button>
@@ -264,7 +271,7 @@ export function PresentationShell({
                   {dropletTags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400"
+                      className="rounded-full border border-slate-300 px-4 py-1.5 text-base text-slate-500 dark:border-slate-600 dark:text-slate-400"
                     >
                       {tag}
                     </span>
@@ -272,26 +279,26 @@ export function PresentationShell({
                 </div>
               )}
 
-              <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+              <h1 className="text-6xl font-bold tracking-tight sm:text-7xl md:text-8xl">
                 {dropletName}
               </h1>
 
               {dropletDescription && (
-                <p className="max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl dark:text-slate-400">
+                <p className="max-w-2xl text-xl leading-relaxed text-slate-500 sm:text-2xl dark:text-slate-400">
                   {dropletDescription}
                 </p>
               )}
 
-              <p className="mt-8 text-sm text-slate-400 dark:text-slate-500">
+              <p className="mt-8 text-base text-slate-400 dark:text-slate-500">
                 Press{" "}
-                <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-mono text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-mono text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
                   →
                 </kbd>{" "}
                 to start{" "}
                 <span className="mx-1 text-slate-300 dark:text-slate-600">
                   ·
                 </span>{" "}
-                <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-mono text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-mono text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
                   Esc
                 </kbd>{" "}
                 to exit
@@ -324,8 +331,8 @@ export function PresentationShell({
                   /* ignore */
                 }
                 return (
-                  <div className="flex flex-col items-center gap-6">
-                    <h2 className="text-3xl font-bold">Learning Objectives</h2>
+                  <div className="flex flex-col items-center gap-8">
+                    <h2 className="text-4xl font-bold">Learning Objectives</h2>
                     <div className="flex w-full max-w-3xl flex-col gap-3">
                       {objs.map((obj, i) => (
                         <div
@@ -333,7 +340,7 @@ export function PresentationShell({
                           className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-100 px-5 py-3 text-left dark:border-slate-700 dark:bg-slate-800/50"
                         >
                           <GoalIcon className="mt-0.5 h-5 w-5 shrink-0 text-sky-500" />
-                          <p className="text-base leading-relaxed text-slate-700 dark:text-slate-200">
+                          <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-200">
                             {obj}
                           </p>
                         </div>
@@ -353,9 +360,9 @@ export function PresentationShell({
                   /* ignore */
                 }
                 return (
-                  <div className="flex flex-col items-center gap-6">
-                    <h2 className="text-3xl font-bold">What&rsquo;s Inside</h2>
-                    <p className="text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-center gap-8">
+                    <h2 className="text-4xl font-bold">What&rsquo;s Inside</h2>
+                    <p className="text-lg text-slate-500 dark:text-slate-400">
                       This Droplet contains the following lessons:
                     </p>
                     <div className="flex w-full max-w-2xl flex-col divide-y divide-slate-200 rounded-lg border border-slate-200 bg-slate-100/50 dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800/50">
@@ -365,7 +372,7 @@ export function PresentationShell({
                           className="flex items-center gap-3 px-5 py-3"
                         >
                           <BookTextIcon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                          <span className="text-base text-slate-700 dark:text-slate-200">
+                          <span className="text-lg text-slate-700 dark:text-slate-200">
                             {name}
                           </span>
                         </div>
@@ -385,9 +392,9 @@ export function PresentationShell({
                   /* ignore */
                 }
                 return (
-                  <div className="flex flex-col items-center gap-6">
-                    <h2 className="text-3xl font-bold">About the Authors</h2>
-                    <p className="text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-center gap-8">
+                    <h2 className="text-4xl font-bold">About the Authors</h2>
+                    <p className="text-lg text-slate-500 dark:text-slate-400">
                       This Droplet was written by:
                     </p>
                     <div className="flex flex-wrap justify-center gap-4">
@@ -398,10 +405,10 @@ export function PresentationShell({
                             key={i}
                             className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-100/50 px-5 py-3 dark:border-slate-700 dark:bg-slate-800/50"
                           >
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-sky-300 text-sm font-semibold text-sky-600 dark:border-sky-500 dark:text-sky-400">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-sky-300 text-base font-semibold text-sky-600 dark:border-sky-500 dark:text-sky-400">
                               {initials}
                             </div>
-                            <span className="text-base text-slate-700 dark:text-slate-200">
+                            <span className="text-lg text-slate-700 dark:text-slate-200">
                               {author.firstName} {author.lastName}
                             </span>
                           </div>
@@ -418,10 +425,10 @@ export function PresentationShell({
                   .trim();
                 return (
                   <div className="flex flex-col items-center gap-4">
-                    <p className="text-sm font-medium tracking-widest text-sky-500/70 uppercase">
+                    <p className="text-base font-medium tracking-widest text-sky-500/70 uppercase">
                       Lesson
                     </p>
-                    <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                    <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
                       {titleText}
                     </h1>
                     <div className="mt-2 h-0.5 w-16 rounded-full bg-sky-400/40" />
@@ -437,8 +444,16 @@ export function PresentationShell({
                 (layout === "image-left" || layout === "image-right") &&
                 layoutImageUrl
               ) {
+                // Filter out the image-layout block from text content
+                const textBlocks = allBlocks.filter(
+                  (b) =>
+                    !(
+                      b.__component === "droplets.generic" && "slideLayout" in b
+                    ),
+                );
+
                 const imgSide = (
-                  <div className="flex h-full w-1/2 shrink-0 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
+                  <div className="flex min-w-0 basis-1/2 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
                     <img
                       src={layoutImageUrl}
                       alt=""
@@ -446,9 +461,23 @@ export function PresentationShell({
                     />
                   </div>
                 );
+
+                // If no text blocks, render image centered at larger size
+                if (textBlocks.length === 0) {
+                  return (
+                    <div className="flex w-full items-center justify-center">
+                      <img
+                        src={layoutImageUrl}
+                        alt=""
+                        className="max-h-[75vh] w-auto rounded-lg object-contain"
+                      />
+                    </div>
+                  );
+                }
+
                 const textSide = (
-                  <div className="flex h-full w-1/2 flex-col justify-center space-y-5 overflow-y-auto px-2">
-                    {allBlocks.map((block, idx) => (
+                  <div className="flex max-h-[60vh] min-w-0 basis-1/2 flex-col justify-center space-y-5 overflow-y-auto px-2">
+                    {textBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
                         block={block}
@@ -456,9 +485,10 @@ export function PresentationShell({
                     ))}
                   </div>
                 );
+
                 return (
                   <div
-                    className="flex w-full max-w-5xl items-stretch gap-10 text-left"
+                    className="flex w-full max-w-5xl items-stretch gap-6 text-left"
                     style={{ minHeight: "60vh" }}
                   >
                     {layout === "image-left" ? (
@@ -488,10 +518,56 @@ export function PresentationShell({
                 );
               }
 
+              // Two-column layout
+              if (layout === "two-columns") {
+                // Single pass: split content blocks at the first column-break
+                const leftBlocks: typeof allBlocks = [];
+                const rightBlocks: typeof allBlocks = [];
+                let foundBreak = false;
+                for (const b of allBlocks) {
+                  if (!foundBreak && isColumnBreak(b)) {
+                    foundBreak = true;
+                    continue;
+                  }
+                  if (isColumnBreak(b)) continue;
+                  (foundBreak ? rightBlocks : leftBlocks).push(b);
+                }
+                // Fallback: no column-break found, split at midpoint
+                if (!foundBreak && leftBlocks.length > 1) {
+                  const mid = Math.ceil(leftBlocks.length / 2);
+                  rightBlocks.push(...leftBlocks.splice(mid));
+                }
+
+                if (leftBlocks.length > 0 && rightBlocks.length > 0) {
+                  const columnClass =
+                    "flex max-h-[85vh] min-w-0 basis-1/2 flex-col space-y-4 overflow-y-auto [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto";
+                  return (
+                    <div className="flex w-full max-w-5xl items-start gap-8 text-left">
+                      <div className={columnClass}>
+                        {leftBlocks.map((block, idx) => (
+                          <PresentationBlockRenderer
+                            key={`${currentSlideKey}-left-${idx}`}
+                            block={block}
+                          />
+                        ))}
+                      </div>
+                      <div className={columnClass}>
+                        {rightBlocks.map((block, idx) => (
+                          <PresentationBlockRenderer
+                            key={`${currentSlideKey}-right-${idx}`}
+                            block={block}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+              }
+
               // Default layout
               return (
                 <div className="w-full max-w-4xl text-left">
-                  <div className="max-h-[85vh] space-y-4 overflow-hidden [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto">
+                  <div className="max-h-[85vh] space-y-4 overflow-y-auto [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto">
                     {allBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
@@ -503,7 +579,7 @@ export function PresentationShell({
               );
             })()
           ) : (
-            <p className="text-xl text-slate-400 dark:text-slate-500">
+            <p className="text-2xl text-slate-400 dark:text-slate-500">
               Empty slide
             </p>
           )}
@@ -517,7 +593,7 @@ export function PresentationShell({
           className="fixed top-1/2 left-3 z-[102] -translate-y-1/2 p-2 text-slate-300 transition hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-300"
           aria-label="Previous slide"
         >
-          <ChevronLeftIcon className="h-10 w-10" strokeWidth={1.5} />
+          <ChevronLeftIcon className="h-12 w-12" strokeWidth={1.5} />
         </button>
       )}
       {nav.canGoNext && (
@@ -526,12 +602,12 @@ export function PresentationShell({
           className="fixed top-1/2 right-3 z-[102] -translate-y-1/2 p-2 text-slate-300 transition hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-300"
           aria-label="Next slide"
         >
-          <ChevronRightIcon className="h-10 w-10" strokeWidth={1.5} />
+          <ChevronRightIcon className="h-12 w-12" strokeWidth={1.5} />
         </button>
       )}
 
       {/* ── Slide number (bottom-right) ── */}
-      <div className="fixed right-4 bottom-3 z-[102] text-xs text-slate-400 tabular-nums dark:text-slate-500">
+      <div className="fixed right-4 bottom-3 z-[102] text-sm text-slate-400 tabular-nums dark:text-slate-500">
         {nav.globalSlideNumber} / {nav.totalGlobalSlides}
       </div>
 
@@ -540,7 +616,7 @@ export function PresentationShell({
         !isEndSlide &&
         currentSlide &&
         currentSlide.lessonIndex >= 0 && (
-          <div className="fixed bottom-3 left-4 z-[102] max-w-[40%] truncate text-xs text-slate-400 dark:text-slate-600">
+          <div className="fixed bottom-3 left-4 z-[102] max-w-[40%] truncate text-sm text-slate-400 dark:text-slate-600">
             Lesson {currentSlide.lessonIndex + 1}: {currentSlide.lessonName}
           </div>
         )}
@@ -555,7 +631,7 @@ export function PresentationShell({
 
       {/* ── Lesson dots ── */}
       {titleSlideArray.length > 2 && (
-        <div className="fixed inset-x-0 bottom-4 z-[102] flex justify-center">
+        <div className="fixed inset-x-0 bottom-5 z-[102] flex justify-center">
           <div className="flex items-center gap-1">
             {titleSlideArray.map((_, idx) => (
               <button

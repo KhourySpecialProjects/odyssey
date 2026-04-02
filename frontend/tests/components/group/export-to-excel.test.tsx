@@ -247,15 +247,15 @@ describe("GroupProgressGrid Excel Export", () => {
     // Check that aoa_to_sheet was called with the correct data structure including completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
         "Test Droplet 2",
         "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
-      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 14:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 09:15"],
       ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
@@ -274,7 +274,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Should still call XLSX functions but with only header row (including completion date columns)
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
@@ -297,7 +297,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should still call XLSX functions but with only member columns
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 10:30", ""],
+      ["Recorded on: 1/15/2025 15:30", ""],
       ["user1@test.com", "John Doe"],
       ["user2@test.com", "Jane Smith"],
       ["user3@test.com", "N/A"],
@@ -312,15 +312,15 @@ describe("GroupProgressGrid Excel Export", () => {
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
         "Test Droplet 2",
         "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
-      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 14:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 09:15"],
       ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
@@ -329,7 +329,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Mock the worksheet with cells (updated for new structure)
     const mockWorksheet = {
       "!ref": "A1:F4", // Updated to include completion date columns
-      A1: { v: "Recorded on: 1/15/2025 10:30" },
+      A1: { v: "Recorded on: 1/15/2025 15:30" },
       B1: { v: "" },
       C1: { v: "Test Droplet 1" },
       D1: { v: "Completion Date" },
@@ -340,13 +340,13 @@ describe("GroupProgressGrid Excel Export", () => {
       C2: { v: 50 }, // 50% completion
       D2: { v: "" }, // completion date column
       E2: { v: 100 }, // 100% completion
-      F2: { v: "01/10/2025 09:30" }, // completion date
+      F2: { v: "01/10/2025 14:30" }, // completion date
       A3: { v: "user2@test.com" },
       B3: { v: "Jane Smith" },
       C3: { v: 0 }, // 0% completion
       D3: { v: "" }, // completion date column
       E3: { v: 100 }, // 100% completion
-      F3: { v: "01/12/2025 04:15" }, // completion date
+      F3: { v: "01/12/2025 09:15" }, // completion date
       A4: { v: "user3@test.com" },
       B4: { v: "N/A" },
       C4: { v: 25 }, // 25% completion
@@ -376,15 +376,15 @@ describe("GroupProgressGrid Excel Export", () => {
     // The completion status should come from the statuses prop with completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
         "Test Droplet 2",
         "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
-      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 14:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 09:15"],
       ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
@@ -403,7 +403,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should call XLSX functions with minimal data
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 10:30", ""],
+      ["Recorded on: 1/15/2025 15:30", ""],
     ]);
   });
 
@@ -484,7 +484,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Missing statuses should default to 0 with empty completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
@@ -492,7 +492,7 @@ describe("GroupProgressGrid Excel Export", () => {
         "Completion Date",
       ],
       ["user1@test.com", "John Doe", 50, "", 0, ""],
-      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 09:15"],
       ["user3@test.com", "N/A", 0, "", 0, ""],
     ]);
   });
@@ -529,7 +529,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Should show completion dates only for 100% completion
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
@@ -540,12 +540,12 @@ describe("GroupProgressGrid Excel Export", () => {
         "user1@test.com",
         "John Doe",
         100,
-        "01/08/2025 11:45",
+        "01/08/2025 16:45",
         100,
-        "01/10/2025 09:30",
+        "01/10/2025 14:30",
       ],
-      ["user2@test.com", "Jane Smith", 100, "01/09/2025 06:20", 75, ""],
-      ["user3@test.com", "N/A", 0, "", 100, "01/11/2025 08:15"],
+      ["user2@test.com", "Jane Smith", 100, "01/09/2025 11:20", 75, ""],
+      ["user3@test.com", "N/A", 0, "", 100, "01/11/2025 13:15"],
     ]);
   });
 
@@ -575,7 +575,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Should show empty completion dates for 100% completion without dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 10:30",
+        "Recorded on: 1/15/2025 15:30",
         "",
         "Test Droplet 1",
         "Completion Date",
@@ -583,7 +583,7 @@ describe("GroupProgressGrid Excel Export", () => {
         "Completion Date",
       ],
       ["user1@test.com", "John Doe", 100, "", 50, ""],
-      ["user2@test.com", "Jane Smith", 100, "01/12/2025 04:15", 0, ""],
+      ["user2@test.com", "Jane Smith", 100, "01/12/2025 09:15", 0, ""],
       ["user3@test.com", "N/A", 25, "", 100, ""],
     ]);
   });

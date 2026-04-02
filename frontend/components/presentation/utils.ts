@@ -1,19 +1,20 @@
 /**
  * Presentation mode slide-splitting utilities.
  *
- * Splits on <!--SLIDE_BREAK--> markers. If an image block within a slide
- * has a layout set, it emits a <!--LAYOUT:...--> marker that controls
- * how that slide is presented (image-left, image-right, full-image).
+ * Splits on <!--SLIDE_BREAK--> markers. Image blocks with a `slideLayout`
+ * property control slide layout (image-left, image-right, full-image).
  */
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
 
 export type SlideLayout =
   | "default"
   | "image-left"
   | "image-right"
-  | "full-image";
+  | "full-image"
+  | "two-columns";
 
 export type Slide = {
   blocks: Block[];
@@ -38,26 +39,50 @@ function isSlideBreak(block: Block): boolean {
   );
 }
 
-function isLayoutMarker(block: Block): boolean {
+export function isColumnBreak(block: Block): boolean {
   return (
     block.__component === "droplets.generic" &&
+    block.content === COLUMN_BREAK_MARKER
+  );
+}
+
+const LEGACY_LAYOUT_MAP: Record<string, SlideLayout> = {
+  IMAGE_LEFT: "image-left",
+  IMAGE_RIGHT: "image-right",
+  FULL_IMAGE: "full-image",
+};
+
+function getSlideLayout(
+  block: Block,
+): { layout: SlideLayout; imageUrl?: string } | null {
+  if (
+    block.__component === "droplets.generic" &&
+    "slideLayout" in block &&
+    block.slideLayout !== undefined
+  ) {
+    return {
+      layout: block.slideLayout,
+      imageUrl: block.slideLayoutImageUrl,
+    };
+  }
+
+  // Backward compat: parse legacy <!--LAYOUT:...--> comment format
+  if (
+    block.__component === "droplets.generic" &&
     block.content.startsWith("<!--LAYOUT:")
-  );
-}
+  ) {
+    const match = block.content.match(
+      /<!--LAYOUT:(IMAGE_LEFT|IMAGE_RIGHT|FULL_IMAGE):(.*?)-->/,
+    );
+    if (match) {
+      const layout = LEGACY_LAYOUT_MAP[match[1]];
+      if (layout) {
+        return { layout, imageUrl: match[2] || undefined };
+      }
+    }
+  }
 
-function getLayout(block: Block): SlideLayout {
-  const c = (block as { content: string }).content;
-  if (c.startsWith("<!--LAYOUT:IMAGE_LEFT")) return "image-left";
-  if (c.startsWith("<!--LAYOUT:IMAGE_RIGHT")) return "image-right";
-  if (c.startsWith("<!--LAYOUT:FULL_IMAGE")) return "full-image";
-  return "default";
-}
-
-function getLayoutImageUrl(block: Block): string | undefined {
-  const match = (block as { content: string }).content.match(
-    /<!--LAYOUT:[A-Z_]+:(.*?)-->/,
-  );
-  return match ? match[1] : undefined;
+  return null;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {
@@ -79,7 +104,7 @@ export function splitBlocksIntoSlides(
       : lesson.blocks ?? [];
 
   const cleanBlocks = rawBlocks.filter(
-    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isLayoutMarker(b),
+    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isColumnBreak(b),
   );
   if (cleanBlocks.length === 0) return [];
 
@@ -116,6 +141,8 @@ function splitByMarkers(
   let heading: string | undefined;
   let currentLayout: SlideLayout = "default";
   let currentLayoutImageUrl: string | undefined;
+  // Layout requested by the slide-break block for the NEXT slide
+  let pendingLayout: SlideLayout | undefined;
 
   function flush() {
     if (current.length > 0) {
@@ -128,8 +155,15 @@ function splitByMarkers(
         layoutImageUrl: currentLayoutImageUrl,
       });
       current = [];
-      currentLayout = "default";
+      heading = undefined;
+      currentLayout = pendingLayout ?? "default";
       currentLayoutImageUrl = undefined;
+      pendingLayout = undefined;
+    } else if (pendingLayout !== undefined) {
+      // No blocks accumulated yet, but a pending layout was set by a slide break.
+      // Apply it now so the upcoming blocks inherit this layout.
+      currentLayout = pendingLayout;
+      pendingLayout = undefined;
     }
   }
 
@@ -137,15 +171,22 @@ function splitByMarkers(
     if (isEmptySpacing(block)) continue;
 
     if (isSlideBreak(block)) {
+      // Read the nextSlideLayout from the slide-break block
+      const layout =
+        block.__component === "droplets.generic" && "nextSlideLayout" in block
+          ? (block.nextSlideLayout as SlideLayout | undefined)
+          : undefined;
+      pendingLayout = layout && layout !== "default" ? layout : undefined;
       flush();
       continue;
     }
 
-    // Layout markers set the layout for the current slide (not added to content)
-    if (isLayoutMarker(block)) {
-      currentLayout = getLayout(block);
-      currentLayoutImageUrl = getLayoutImageUrl(block);
-      continue;
+    // Read layout from typed property or legacy comment — image layout takes
+    // precedence over the slide-break's nextSlideLayout
+    const parsedLayout = getSlideLayout(block);
+    if (parsedLayout) {
+      currentLayout = parsedLayout.layout;
+      currentLayoutImageUrl = parsedLayout.imageUrl;
     }
 
     const h = extractHeadingTitle(block);
