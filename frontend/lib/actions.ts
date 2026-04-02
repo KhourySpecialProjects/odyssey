@@ -68,6 +68,91 @@ export async function uploadImage(formData: FormData) {
   }
 }
 
+const DATASET_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
+const DATASET_ALLOWED_TYPES = new Set([
+  "text/csv",
+  "application/json",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+]);
+const DATASET_ALLOWED_EXTENSIONS = /\.(csv|json|xlsx|xls)$/i;
+
+export async function uploadDataset(formData: FormData) {
+  const file = formData.get("dataset") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "No file provided.", url: null };
+  }
+  if (
+    !DATASET_ALLOWED_TYPES.has(file.type) &&
+    !DATASET_ALLOWED_EXTENSIONS.test(file.name)
+  ) {
+    return {
+      ok: false,
+      error: "Only CSV, JSON, and XLSX files are allowed.",
+      url: null,
+    };
+  }
+  if (file.size > DATASET_MAX_BYTES) {
+    return { ok: false, error: "File exceeds the 25 MB limit.", url: null };
+  }
+
+  try {
+    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const response = await s3.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: `${rootPath}/datasets/${fileName}`,
+        Body: buffer,
+        ContentType: file.type || "application/octet-stream",
+      }),
+    );
+
+    if (response["$metadata"].httpStatusCode !== 200) {
+      return { ok: false, error: "Failed to upload dataset.", url: null };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      url: `${process.env.AWS_S3_BUCKET_URL}/${rootPath}/datasets/${fileName}`,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to upload dataset.",
+      url: null,
+    };
+  }
+}
+
+export async function deleteDataset(fileUrl: string) {
+  try {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
+    const key = fileUrl.replace(`${bucketUrl}/`, "");
+
+    const response = await s3.send(
+      new DeleteObjectCommand({ Bucket: bucketName, Key: key }),
+    );
+
+    if (
+      response["$metadata"].httpStatusCode !== 204 &&
+      response["$metadata"].httpStatusCode !== 200
+    ) {
+      return { ok: false, error: "Failed to delete dataset." };
+    }
+    return { ok: true, error: null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "Failed to delete dataset." };
+  }
+}
+
 export async function createAuthorizedUserWithState(
   _prevState: any,
   formData: FormData,

@@ -202,6 +202,14 @@ export type Resource = {
   url: string;
 };
 
+export type Dataset = {
+  id: number;
+  name: string;
+  url: string;
+  fileType: string;
+  fileSize: number;
+};
+
 export type Droplet = {
   id: number;
   slug: string;
@@ -226,6 +234,7 @@ export type Droplet = {
   funFact?: string;
   averageRating?: number;
   usersFavorited?: AuthorizedUser[];
+  datasets?: Dataset[];
 };
 
 export type QuizAnswerOption = {

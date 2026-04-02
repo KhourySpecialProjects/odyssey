@@ -294,8 +294,10 @@ export function Sidebar({
                 </span>
               </Link>
 
+              <div className="h-1" />
+
               {/* Add lesson section */}
-              <div className="mt-2">
+              <div>
                 <MantineProvider>
                   <AddLesson
                     droplet={droplet}

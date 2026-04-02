@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
+import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
@@ -207,6 +208,8 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
+
+          <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
 
           {/* Bottom action bar */}
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 py-6 dark:border-slate-700">

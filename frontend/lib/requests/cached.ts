@@ -83,6 +83,7 @@ export const getCachedDraftDropletBySlug = cache((slug: string) =>
       prerequisites: { populate: "*" },
       postrequisites: { populate: "*" },
       nextSteps: { fields: ["label", "url"] },
+      datasets: { fields: ["name", "url", "fileType", "fileSize"] },
     },
   }),
 );

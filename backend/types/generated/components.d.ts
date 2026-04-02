@@ -19,6 +19,19 @@ export interface DropletsCallout extends Schema.Component {
   };
 }
 
+export interface DropletsDataset extends Schema.Component {
+  collectionName: 'components_droplets_datasets';
+  info: {
+    displayName: 'Dataset';
+  };
+  attributes: {
+    fileSize: Attribute.Integer & Attribute.Required;
+    fileType: Attribute.String & Attribute.Required;
+    name: Attribute.String & Attribute.Required;
+    url: Attribute.String & Attribute.Required;
+  };
+}
+
 export interface DropletsExpandable extends Schema.Component {
   collectionName: 'components_droplets_expandables';
   info: {
@@ -186,6 +199,7 @@ declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'droplets.callout': DropletsCallout;
+      'droplets.dataset': DropletsDataset;
       'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
       'droplets.learning-objective': DropletsLearningObjective;
