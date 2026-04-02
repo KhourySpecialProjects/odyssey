@@ -6,6 +6,7 @@
 import katex from "katex";
 import { Block, CustomBlockNoteBlock } from "@/types";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
 
 type BlockNoteTextStyles = {
   bold?: boolean;
@@ -381,18 +382,18 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const alt = (blockAny.props?.name as string) || "";
       const layout = (blockAny.props?.layout as string) || "default";
       const imgTag = `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" class="rounded-md" />`;
+
       if (layout !== "default" && url) {
-        const layoutKey = layout.toUpperCase().replace(/-/g, "_");
-        // Prefix with layout comment for presentation mode.
-        // Regular renderers (DOMPurify) strip the comment and show just the <img>.
         return {
-          __component: "droplets.generic",
+          __component: "droplets.generic" as const,
           id: blockId,
-          content: `<!--LAYOUT:${layoutKey}:${url}-->${imgTag}`,
+          content: imgTag,
+          slideLayout: layout as "image-left" | "image-right" | "full-image",
+          slideLayoutImageUrl: url,
         };
       }
       return {
-        __component: "droplets.generic",
+        __component: "droplets.generic" as const,
         id: blockId,
         content: imgTag,
       };
@@ -511,11 +512,31 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "notebook-code": {
+      const language = blockAny.props?.language || "python";
+      const code = blockAny.props?.code || "";
+      const editable = blockAny.props?.editable === "true";
+      const testCode = blockAny.props?.testCode || "";
+
+      return {
+        __component: "droplets.code-block" as const,
+        id: blockIndex,
+        language,
+        code,
+        editable,
+        runnable: true,
+        testCode,
+        isNotebook: true,
+      } as Block;
+    }
+
     case "sandpack-block": {
       const template = blockAny.props?.template || "vanilla";
       const files = blockAny.props?.files || "{}";
       const showPreview = blockAny.props?.showPreview ?? true;
       const editable = blockAny.props?.editable ?? true;
+      const description = blockAny.props?.description || "";
+      const lockedFiles = blockAny.props?.lockedFiles || "[]";
 
       return {
         __component: "droplets.sandpack-block",
@@ -524,14 +545,29 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         files,
         showPreview,
         editable,
+        description,
+        lockedFiles,
       };
     }
 
     case "slide-break": {
+      const nextSlideLayout = blockAny.props?.nextSlideLayout;
+      return {
+        __component: "droplets.generic" as const,
+        id: blockId,
+        content: SLIDE_BREAK_MARKER,
+        ...(nextSlideLayout &&
+          nextSlideLayout !== "default" && {
+            nextSlideLayout: nextSlideLayout as "default" | "two-columns",
+          }),
+      };
+    }
+
+    case "column-break": {
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: SLIDE_BREAK_MARKER,
+        content: COLUMN_BREAK_MARKER,
       };
     }
 

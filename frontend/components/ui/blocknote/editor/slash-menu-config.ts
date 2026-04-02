@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
-import { Code, AppWindow } from "lucide-react";
+import { Code, Play, AppWindow, Columns2 } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -238,6 +238,34 @@ export const getCodeSlashMenuItems = (
   },
 ];
 
+export const getNotebookCodeSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Notebook Code",
+    icon: createElement(Play, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "notebook-code",
+            props: {
+              code: "# Write your Python code here\n",
+              language: "python",
+              editable: "true",
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["notebook", "jupyter", "python", "colab"],
+    group: "Data Science",
+    subtext: "Interactive Python notebook cell with Pyodide",
+  },
+];
+
 export const getSandpackSlashMenuItems = (
   editor: CustomBlockNoteEditor,
 ): DefaultReactSuggestionItem[] => [
@@ -290,5 +318,24 @@ export const getSlideBreakSlashMenuItems = (
     aliases: ["slide", "break", "presentation", "page break", "divider"],
     group: "Presentation",
     subtext: "Start a new presentation slide",
+  },
+];
+
+export const getColumnBreakSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Column Break",
+    icon: createElement(Columns2, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "column-break" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["column", "col break", "split column", "column break"],
+    group: "Presentation",
+    subtext: "Split content between left and right columns",
   },
 ];

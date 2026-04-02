@@ -191,6 +191,50 @@ function PlaylistTableRow({ playlist }: { playlist: PlaylistWithCounts }) {
   );
 }
 
+// ——— PlaylistMobileCard ———
+function PlaylistMobileCard({ playlist }: { playlist: PlaylistWithCounts }) {
+  const durationConfig = DURATION_CONFIG[playlist.duration] ?? null;
+
+  return (
+    <Link
+      href={`/draft/p/${playlist.slug}`}
+      prefetch={false}
+      className="block w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-[#101828] dark:text-white">
+          {playlist.name}
+        </p>
+        <span className="shrink-0 text-slate-400">&#8250;</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-[#667085] dark:text-slate-400">
+          {playlist.dropletsCount} droplet{playlist.dropletsCount !== 1 && "s"}
+        </span>
+        <span className="text-xs text-slate-300 dark:text-slate-600">|</span>
+        <span className="text-xs text-[#667085] dark:text-slate-400">
+          {playlist.lessonsCount} lesson{playlist.lessonsCount !== 1 && "s"}
+        </span>
+        <span className="text-xs text-slate-300 dark:text-slate-600">|</span>
+        <span className="text-xs text-[#667085] dark:text-slate-400">
+          {playlist.groupsCount} group{playlist.groupsCount !== 1 && "s"}
+        </span>
+        {durationConfig && (
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-medium",
+              durationConfig.className,
+            )}
+          >
+            {durationConfig.label}
+          </Badge>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ——— Main Client Component ———
 export function PlaylistsPageClient({
   playlists,
@@ -283,6 +327,9 @@ export function PlaylistsPageClient({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pagePlaylists.map((playlist) => (
+          <PlaylistMobileCard key={playlist.id} playlist={playlist} />
+        ))}
       >
         {pagePlaylists.map((playlist) => (
           <PlaylistTableRow key={playlist.id} playlist={playlist} />

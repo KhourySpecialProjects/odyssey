@@ -57,6 +57,8 @@
  * access-requests createAccessRequest, deleteAccessRequest                  900s
  * creation-reqs   createCreationRequest, approveCreationRequest,            900s
  *                 deleteCreationRequest
+ * datasets        createDataset, deleteDataset                              900s
+ *                 (global tag; datasets are scoped to droplets)
  * users           createAuthorizedUser, createBatchAuthorizedUsers,         900s
  *                 updateUserInfo, deleteAuthorizedUser, setTimeZone,
  *                 approveCreationRequest
@@ -97,6 +99,7 @@ export const CACHE_TAGS = {
   allGroups: "groups", // all group queries (getManagedGroups, getGroupBySlug, getGroupByID, getUserGroups, getGroupBySlugV2, fetchAnnouncements)
   allDueDates: "due-dates", // all due date queries (getGroupDueDates, getUserDueDates)
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)
+  datasets: "datasets", // global tag for dataset metadata
 
   // Per-user (scoped to individual user)
   enrollments: (userId: number) => `enrollments-${userId}`,

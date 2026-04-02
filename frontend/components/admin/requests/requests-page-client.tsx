@@ -275,6 +275,167 @@ function CreationRequestRow({ request }: { request: CreationRequest }) {
   );
 }
 
+// ——— AccessRequestMobileCard ———
+function AccessRequestMobileCard({ request }: { request: AccessRequest }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleApprove = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", request.email);
+      formData.append("isEnabled", "true");
+
+      const result = await createAuthorizedUser(formData);
+
+      if (result.ok) {
+        toast.success("User is now authorized!");
+        const deleteFormData = new FormData();
+        deleteFormData.append("id", request.id);
+        await deleteAccessRequest(deleteFormData);
+      } else if (result["error"] === "This attribute must be unique") {
+        toast.error("This user is already authorized!");
+      } else {
+        toast.error("Failed to approve request");
+      }
+    });
+  };
+
+  const handleReject = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("id", request.id);
+      const result = await deleteAccessRequest(formData);
+      if (result?.error) {
+        toast.error("Failed to reject request");
+      } else {
+        toast.success("Request rejected");
+      }
+    });
+  };
+
+  const displayName =
+    request.givenName && request.familyName
+      ? `${request.givenName} ${request.familyName}`
+      : request.email;
+
+  return (
+    <div
+      className={cn(
+        "w-full rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900",
+        isPending && "pointer-events-none opacity-50",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-[#101828] dark:text-white">
+            {displayName}
+          </p>
+          <p className="truncate text-xs text-[#667085] dark:text-slate-400">
+            {request.email}
+          </p>
+        </div>
+        <Badge
+          variant="outline"
+          className="shrink-0 rounded-full border-0 bg-[#f2f4f7] px-2 py-0.5 text-xs font-medium text-[#60646c] dark:bg-slate-700 dark:text-slate-300"
+        >
+          {collegeLabel(request.college)}
+        </Badge>
+      </div>
+      <div className="mt-2">
+        <AcceptRejectButtons
+          onAccept={handleApprove}
+          onReject={handleReject}
+          disabled={isPending}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ——— CreatorRequestMobileCard ———
+function CreatorRequestMobileCard({ request }: { request: CreationRequest }) {
+  const [isPending, startTransition] = useTransition();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleApprove = () => {
+    if (!request.id || !request.user?.id) {
+      toast.error("Invalid request data");
+      return;
+    }
+    startTransition(async () => {
+      const result = await approveCreationRequest(
+        request.id.toString(),
+        request.user.id,
+      );
+      if (result.ok) {
+        toast.success(
+          `${request.user.firstName} ${request.user.lastName} is now a Content Creator!`,
+        );
+        setModalOpen(false);
+      } else {
+        toast.error(`Failed to approve: ${result.error}`);
+      }
+    });
+  };
+
+  const handleReject = () => {
+    if (!request.id) {
+      toast.error("Invalid request data");
+      return;
+    }
+    startTransition(async () => {
+      const result = await deleteCreationRequest(request.id.toString());
+      if (result.ok) {
+        toast.success("Request declined");
+        setModalOpen(false);
+      } else {
+        toast.error(`Failed to decline: ${result.error}`);
+      }
+    });
+  };
+
+  const displayName =
+    request.user?.firstName && request.user?.lastName
+      ? `${request.user.firstName} ${request.user.lastName}`
+      : request.user?.email ?? "Unknown";
+
+  return (
+    <>
+      <div
+        className={cn(
+          "w-full rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900",
+          isPending && "pointer-events-none opacity-50",
+        )}
+      >
+        <div className="min-w-0">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="truncate text-sm font-semibold text-[#101828] underline dark:text-white"
+          >
+            {displayName}
+          </button>
+          <p className="truncate text-xs text-[#667085] dark:text-slate-400">
+            {request.user?.email ?? "\u2014"}
+          </p>
+        </div>
+        <div className="mt-2">
+          <AcceptRejectButtons
+            onAccept={handleApprove}
+            onReject={handleReject}
+            disabled={isPending}
+          />
+        </div>
+      </div>
+
+      <CreationRequestModal
+        request={request}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
+  );
+}
+
 // ——— Access Requests Table ———
 function AccessRequestsTable({
   accessRequests,
@@ -365,6 +526,9 @@ function AccessRequestsTable({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageItems.map((request) => (
+          <AccessRequestMobileCard key={request.id} request={request} />
+        ))}
       >
         {pageItems.map((request) => (
           <AccessRequestRow key={request.id} request={request} />
@@ -452,6 +616,9 @@ function CreationRequestsTable({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageItems.map((request) => (
+          <CreatorRequestMobileCard key={request.id} request={request} />
+        ))}
       >
         {pageItems.map((request) => (
           <CreationRequestRow key={request.id} request={request} />
@@ -501,7 +668,7 @@ export function RequestsPageClient({
             }}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "relative z-10 mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-semibold transition-colors duration-200",
+              "relative z-10 mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-normal transition-colors duration-200",
               activeTab === tab.key
                 ? "text-white"
                 : "text-[#202630] hover:text-[#2D7597] dark:text-slate-300",

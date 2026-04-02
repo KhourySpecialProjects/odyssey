@@ -74,3 +74,15 @@ jest.mock("flat", () => ({
   flatten: (obj: any) => obj,
   unflatten: (obj: any) => obj,
 }));
+
+// Mock posthog-js to prevent network calls in tests
+jest.mock("posthog-js", () => ({
+  init: jest.fn(),
+  capture: jest.fn(),
+  identify: jest.fn(),
+  reset: jest.fn(),
+  onFeatureFlags: jest.fn(),
+  isFeatureEnabled: jest.fn(),
+  getFeatureFlag: jest.fn(),
+  people: { set: jest.fn() },
+}));

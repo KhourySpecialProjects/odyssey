@@ -15,7 +15,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
@@ -36,6 +36,9 @@ import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
+import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
+import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import dynamic from "next/dynamic";
 
 const SandpackViewer = dynamic(
@@ -54,7 +57,7 @@ import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "lessons" | "name">;
+  droplet: Pick<Droplet, "id" | "lessons" | "name" | "datasets">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -94,6 +97,8 @@ export function LessonRenderer({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const lessonContentRef = useRef<HTMLDivElement>(null);
+  const firedMilestones = useRef<Set<number>>(new Set());
 
   // Move all hooks before any early returns
   useEffect(() => {
@@ -182,6 +187,41 @@ export function LessonRenderer({
       }
     }
   }, [authUser?.id]);
+
+  useEffect(() => {
+    firedMilestones.current = new Set();
+  }, [lesson.id]);
+
+  useEffect(() => {
+    if (!enrollmentId) return;
+
+    const MILESTONES = [25, 50, 75, 100];
+
+    function handleScroll() {
+      const el = lessonContentRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height === 0) return;
+      const scrolled = rect.height - (rect.bottom - window.innerHeight);
+      const pct = Math.min(100, Math.max(0, (scrolled / rect.height) * 100));
+      for (const milestone of MILESTONES) {
+        if (pct >= milestone && !firedMilestones.current.has(milestone)) {
+          firedMilestones.current.add(milestone);
+          posthog.capture("lesson_scroll_depth", {
+            percent: milestone,
+            lesson_id: lesson.id,
+            lesson_name: lesson.name,
+            droplet_id: droplet.id,
+            user_id: authUser?.id,
+          });
+        }
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lesson.id, droplet.id, enrollmentId, authUser?.id]);
 
   if (isNotEnrolled) {
     return (
@@ -332,33 +372,40 @@ export function LessonRenderer({
   }
 
   return (
-    <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
+    <div
+      ref={lessonContentRef}
+      className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]"
+    >
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
-        <div className="mt-8 space-y-2">
-          {displayBlocks.map((b: Block, i: number) => (
-            <LessonBlockRenderer
-              key={i}
-              block={b}
-              lessonId={lesson.id}
-              dropletId={droplet.id}
-              dropletName={droplet.name}
-              lessonName={lesson.name}
-              userId={authUser?.id}
-              highlights={highlights}
-              onHighlight={handleHighlight}
-              onDeleteHighlight={handleDeleteHighlight}
-              onNote={handleCreateNote}
-              enrollmentId={enrollmentId}
-              expanded={expanded}
-              setExpanded={setExpanded}
-              activeBlock={activeBlock}
-              setActiveBlock={(id: number) => setActiveBlock(id)}
-              author={author}
-            />
-          ))}
-        </div>
+        <DatasetProvider datasets={droplet.datasets ?? []}>
+          <PyodideProvider>
+            <div className="mt-8 space-y-2">
+              {displayBlocks.map((b: Block, i: number) => (
+                <LessonBlockRenderer
+                  key={i}
+                  block={b}
+                  lessonId={lesson.id}
+                  dropletId={droplet.id}
+                  dropletName={droplet.name}
+                  lessonName={lesson.name}
+                  userId={authUser?.id}
+                  highlights={highlights}
+                  onHighlight={handleHighlight}
+                  onDeleteHighlight={handleDeleteHighlight}
+                  onNote={handleCreateNote}
+                  enrollmentId={enrollmentId}
+                  expanded={expanded}
+                  setExpanded={setExpanded}
+                  activeBlock={activeBlock}
+                  setActiveBlock={(id: number) => setActiveBlock(id)}
+                  author={author}
+                />
+              ))}
+            </div>
+          </PyodideProvider>
+        </DatasetProvider>
         <div className="mt-8 flex items-center justify-between">
           <button
             onClick={handleMarkAsComplete}
@@ -511,6 +558,16 @@ function LessonBlockRenderer({
       );
 
     case "droplets.code-block":
+      if (block.isNotebook) {
+        return (
+          <NotebookCodeViewer
+            code={block.code}
+            language={block.language}
+            editable={block.editable}
+            testCode={block.testCode}
+          />
+        );
+      }
       return (
         <CodeBlockViewer
           language={block.language}
@@ -527,6 +584,8 @@ function LessonBlockRenderer({
           files={parseSandpackFiles(block.files)}
           showPreview={block.showPreview}
           editable={block.editable}
+          description={block.description}
+          lockedFiles={block.lockedFiles}
         />
       );
 

@@ -20,6 +20,7 @@ jest.mock("react-syntax-highlighter", () => ({
 
 jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
   atomOneDark: {},
+  githubGist: {},
 }));
 
 // Mock language imports
@@ -137,9 +138,18 @@ jest.mock("@/components/ui/blocknote/editor/slash-menu-config", () => ({
   getQuizSlashMenuItems: jest.fn(() => []),
   getLatexSlashMenuItems: jest.fn(() => []),
   getCodeSlashMenuItems: jest.fn(() => []),
+  getSlideBreakSlashMenuItems: jest.fn(() => []),
+  getNotebookCodeSlashMenuItems: jest.fn(() => []),
+  getSandpackSlashMenuItems: jest.fn(() => []),
 }));
 
 jest.mock("@/components/ui/blocknote/editor/custom-blocknote.css", () => ({}));
+
+jest.mock("@/hooks/useSlideOverflowDetection", () => ({
+  useSlideOverflowDetection: () => new Set(),
+}));
+
+jest.mock("@/lib/actions/auto-format-slides", () => ({}));
 
 // Mock Dialog component to avoid importing BlockNote's FloatingComposer
 jest.mock("@/components/ui/dialog", () => ({
@@ -157,6 +167,10 @@ jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
 
 jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
   ImageBlock: jest.fn(() => ({ type: "image" })),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/notebook-code-block", () => ({
+  NotebookCodeBlock: jest.fn(() => ({ type: "notebook-code" })),
 }));
 
 import { render, screen, waitFor } from "@testing-library/react";
@@ -320,9 +334,9 @@ describe("BlockNoteEditorClient", () => {
       expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
     });
 
-    const editorContainer = container.firstChild;
+    const editorContainer = container.querySelector(".blocknote-no-link");
 
-    expect(editorContainer).toHaveClass("blocknote-no-link");
+    expect(editorContainer).toBeInTheDocument();
     expect(editorContainer).toHaveClass("w-full");
     expect(editorContainer).toHaveClass("rounded-lg");
     expect(editorContainer).toHaveClass("border");

@@ -17,6 +17,8 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import { DatasetUpload } from "@/components/draft/dataset/dataset-upload";
+import { getDatasetsByDropletId } from "@/lib/requests/dataset";
 
 type Props = {
   params: Promise<Params>;
@@ -56,6 +58,8 @@ export default async function Droplet({ params }: Props) {
     }),
     getTags(),
   ]);
+
+  const datasets = droplet ? await getDatasetsByDropletId(droplet.id) : [];
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
@@ -192,6 +196,19 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
+
+          <section className="w-full max-w-2xl">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Datasets
+            </h2>
+            <p className="text-slate-500 dark:text-slate-300">
+              Upload data files for use in notebook code blocks (CSV, JSON, or
+              XLSX)
+            </p>
+            <div className="mt-4">
+              <DatasetUpload dropletId={droplet.id} datasets={datasets} />
+            </div>
+          </section>
         </div>
       </GradientBackground>
     </>
