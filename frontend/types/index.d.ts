@@ -5,6 +5,23 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
+export type DatasetFormat = "csv" | "json" | "xlsx";
+
+export type Dataset = {
+  id: number;
+  name: string;
+  format: DatasetFormat;
+  fileUrl: string;
+  fileSize: number;
+  rowCount: number;
+  columnCount: number;
+  columnNames: string[];
+  columnTypes: string[]; // "string" | "number" | "boolean" | "date" | "unknown"
+  droplet?: Droplet;
+};
+
+export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
+
 export type DropletStatus = "draft" | "edit" | "published";
 
 export type AnnouncementType =
@@ -122,6 +139,9 @@ export type Block =
       id?: number;
       sourceBlockIds?: number[]; // For grouped blocks - all source BlockNote block IDs
       _clientId?: string;
+      slideLayout?: "image-left" | "image-right" | "full-image" | "two-columns";
+      nextSlideLayout?: "default" | "two-columns";
+      slideLayoutImageUrl?: string;
     }
   | {
       __component: "droplets.expandable";
@@ -168,6 +188,17 @@ export type Block =
       code: string;
       editable: boolean;
       runnable: boolean;
+      _clientId?: string;
+    }
+  | {
+      __component: "droplets.sandpack-block";
+      id?: number;
+      template: string;
+      files: string;
+      showPreview: boolean;
+      editable: boolean;
+      description?: string;
+      lockedFiles?: string;
       _clientId?: string;
     };
 
@@ -218,6 +249,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
+  difficulty: DropletDifficulty;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];

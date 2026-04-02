@@ -4,7 +4,12 @@ import { AuthorizedUser, Droplet } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { getDueDateBadgeColor, uppercaseFirstChar } from "@/lib/utils";
+import {
+  getDueDateBadgeColor,
+  uppercaseFirstChar,
+  getDifficultyBadgeColor,
+  cn,
+} from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
@@ -73,6 +78,17 @@ export function GroupDropletTile({
               >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
+              {droplet.difficulty && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-xs",
+                    getDifficultyBadgeColor(droplet.difficulty),
+                  )}
+                >
+                  {uppercaseFirstChar(droplet.difficulty)}
+                </Badge>
+              )}
             </div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
               <div className="ml-0 flex w-2/3 justify-end">

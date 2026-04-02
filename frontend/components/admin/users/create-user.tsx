@@ -176,9 +176,17 @@ export function CreateUser() {
 
             {/* Drag & Drop area */}
             <div
+              role="button"
+              tabIndex={0}
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               className="mt-3 flex h-[56px] cursor-pointer items-center gap-[10px] rounded-[30px] border border-dashed border-[#efeff0] bg-[#fcfcfd] px-5 transition-colors hover:border-[#2D7597]"
             >
               <IconUpload className="h-5 w-5 text-[#667085]" />

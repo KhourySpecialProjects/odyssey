@@ -78,7 +78,7 @@ export function ReportsIcon({ active }: { active: boolean }) {
 }
 
 // ——— Nav item definitions ———
-const NAV_ITEMS: {
+export const NAV_ITEMS: {
   label: string;
   variant: Exclude<AdminNavVariant, "Default">;
   href: string;
@@ -147,7 +147,7 @@ export function AdminNav({ property1 }: AdminNavProps) {
   return (
     <nav
       aria-label="Admin navigation"
-      className="sticky top-[69px] flex h-[calc(100vh-69px)] w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
+      className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] md:flex dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
     >
       <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {

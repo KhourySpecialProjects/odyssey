@@ -2,8 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { CornerDownLeftIcon, LoaderIcon } from "lucide-react";
-import { IconUpload, IconPlus, IconFileText } from "@tabler/icons-react";
+import {
+  PlusIcon,
+  CornerDownLeftIcon,
+  LoaderIcon,
+  FileInput,
+  FileText,
+} from "lucide-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
@@ -31,17 +36,7 @@ export function AddLesson({
   availableDroplets = [],
   currentLessonCount = 0,
 }: {
-  droplet: Pick<
-    Droplet,
-    | "id"
-    | "name"
-    | "slug"
-    | "lessons"
-    | "type"
-    | "focusArea"
-    | "learningObjectives"
-    | "status"
-  >;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "difficulty">;
   onAddLesson: (newLesson: Lesson) => void;
   availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   currentLessonCount?: number;
@@ -110,6 +105,7 @@ export function AddLesson({
             slug: droplet.slug,
             type: response.data.attributes.type || "",
             focusArea: response.data.attributes.focusArea || "",
+            difficulty: droplet.difficulty,
             learningObjectives: [],
             isHidden: false,
             status: "draft",
@@ -152,6 +148,7 @@ export function AddLesson({
               slug: droplet.slug,
               type: createResponse.data.attributes.type || "",
               focusArea: createResponse.data.attributes.focusArea || "",
+              difficulty: droplet.difficulty,
               learningObjectives: [],
               isHidden: false,
               status: "draft",
@@ -232,12 +229,14 @@ export function AddLesson({
     <>
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2 pl-4">
-          <IconFileText className="h-5 w-5 shrink-0" stroke={1.8} />
+          <FileText className="h-5 w-5 shrink-0" />
           <p className="text-lg leading-none font-medium">Lessons</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="cursor-pointer p-1">
-            <IconUpload
+          {" "}
+          {/* Changed to flex container */}
+          <div className="cursor-pointer p-2">
+            <FileInput
               role="button"
               onClick={() => setIsImportModalOpen(true)}
               className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
@@ -246,11 +245,10 @@ export function AddLesson({
           </div>
           <div className="relative" ref={menuRef}>
             <div className="cursor-pointer p-1">
-              <IconPlus
+              <PlusIcon
                 role="button"
                 onClick={() => setShowMenu((v) => !v)}
                 className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                stroke={2.5}
               />
             </div>
             {showMenu && (

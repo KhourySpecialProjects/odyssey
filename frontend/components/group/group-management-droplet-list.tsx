@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar, cn } from "@/lib/utils";
+import { uppercaseFirstChar, cn, getDifficultyBadgeColor } from "@/lib/utils";
 
 interface DropletItemProps {
   droplet: Droplet;
@@ -75,6 +75,14 @@ const DropletItem = ({
               <Badge variant="secondary" className="dark:bg-slate-700">
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
+              {droplet.difficulty && (
+                <Badge
+                  variant="outline"
+                  className={getDifficultyBadgeColor(droplet.difficulty)}
+                >
+                  {uppercaseFirstChar(droplet.difficulty)}
+                </Badge>
+              )}
             </div>
 
             <span className="block text-xl font-bold text-slate-950 dark:text-slate-300">

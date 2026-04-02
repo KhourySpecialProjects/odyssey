@@ -6,7 +6,6 @@ import { updateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
-import { getTagColors } from "@/lib/tag-colors";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
@@ -45,6 +44,49 @@ const DROPLET_COLUMNS: AdminColumnDef[] = [
   { label: "Tags", width: "w-[23%]" },
   { label: "Actions", width: "w-[20%]" },
 ];
+
+// ——— Tag display config ———
+const TAG_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  technical: { bg: "bg-[#e2e9ff]", text: "text-[#58579c]" },
+  skill: { bg: "bg-[#fae6f3]", text: "text-[#855169]" },
+  knowledge: { bg: "bg-[#f9f7e6]", text: "text-[#7f6b55]" },
+  professional: { bg: "bg-[#def2fd]", text: "text-[#284965]" },
+  personal: { bg: "bg-[#f0fdf4]", text: "text-[#166534]" },
+  databases: { bg: "bg-[#e0f2fe]", text: "text-[#0c4a6e]" },
+  interviews: { bg: "bg-[#fef3c7]", text: "text-[#92400e]" },
+  cloud: { bg: "bg-[#ede9fe]", text: "text-[#5b21b6]" },
+  security: { bg: "bg-[#fce7f3]", text: "text-[#9d174d]" },
+  networking: { bg: "bg-[#d1fae5]", text: "text-[#065f46]" },
+  algorithms: { bg: "bg-[#fee2e2]", text: "text-[#991b1b]" },
+  web: { bg: "bg-[#dbeafe]", text: "text-[#1e40af]" },
+  ai: { bg: "bg-[#f3e8ff]", text: "text-[#6b21a8]" },
+  "machine learning": { bg: "bg-[#f3e8ff]", text: "text-[#6b21a8]" },
+  devops: { bg: "bg-[#ccfbf1]", text: "text-[#134e4a]" },
+  testing: { bg: "bg-[#fff7ed]", text: "text-[#9a3412]" },
+};
+
+// Fallback: hash the tag name to pick a color from a vibrant palette
+const FALLBACK_COLORS = [
+  { bg: "bg-[#fce4ec]", text: "text-[#880e4f]" },
+  { bg: "bg-[#e8eaf6]", text: "text-[#283593]" },
+  { bg: "bg-[#e0f7fa]", text: "text-[#00695c]" },
+  { bg: "bg-[#fff3e0]", text: "text-[#e65100]" },
+  { bg: "bg-[#f3e5f5]", text: "text-[#6a1b9a]" },
+  { bg: "bg-[#e8f5e9]", text: "text-[#2e7d32]" },
+  { bg: "bg-[#fce4ec]", text: "text-[#ad1457]" },
+  { bg: "bg-[#e1f5fe]", text: "text-[#01579b]" },
+];
+
+function getTagColors(name: string) {
+  const key = name.toLowerCase();
+  if (TAG_TYPE_COLORS[key]) return TAG_TYPE_COLORS[key];
+  // Hash the name to consistently pick a color
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = key.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
+}
 
 const DEFAULT_SORT = "title-asc";
 
@@ -247,6 +289,61 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
   );
 }
 
+// ——— DropletMobileCard ———
+function DropletMobileCard({ droplet }: { droplet: Droplet }) {
+  const typeColors = getTagColors(droplet.type);
+  const visibleTags = droplet.tags?.slice(0, 3) ?? [];
+  const extraCount = (droplet.tags?.length ?? 0) - 3;
+
+  return (
+    <Link
+      href={`/draft/d/${droplet.slug}`}
+      prefetch={false}
+      className="block w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-[#101828] dark:text-white">
+          {droplet.name}
+        </p>
+        <span className="shrink-0 text-slate-400">&#8250;</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        <Badge
+          variant="outline"
+          className={cn(
+            "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+            typeColors.bg,
+            typeColors.text,
+          )}
+        >
+          {uppercaseFirstChar(droplet.type)}
+        </Badge>
+        {visibleTags.map((tag) => {
+          const colors = getTagColors(tag.name);
+          return (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className={cn(
+                "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+                colors.bg,
+                colors.text,
+              )}
+            >
+              {tag.name}
+            </Badge>
+          );
+        })}
+        {extraCount > 0 && (
+          <span className="px-1 text-xs text-slate-400">
+            +{extraCount} more
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ——— Main Client Component ———
 export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
   const {
@@ -341,6 +438,9 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageDroplets.map((droplet) => (
+          <DropletMobileCard key={droplet.id} droplet={droplet} />
+        ))}
       >
         {pageDroplets.map((droplet) => (
           <DropletTableRow key={droplet.id} droplet={droplet} />

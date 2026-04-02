@@ -24,6 +24,8 @@ import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import Link from "next/link";
+import { DatasetUpload } from "@/components/draft/dataset/dataset-upload";
+import { getDatasetsByDropletId } from "@/lib/requests/dataset";
 
 type Props = {
   params: Promise<Params>;
@@ -63,6 +65,8 @@ export default async function Droplet({ params }: Props) {
     }),
     getTags(),
   ]);
+
+  const datasets = droplet ? await getDatasetsByDropletId(droplet.id) : [];
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
@@ -131,6 +135,7 @@ export default async function Droplet({ params }: Props) {
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
+              difficulty={droplet.difficulty}
               dropletId={droplet.id}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
@@ -211,83 +216,18 @@ export default async function Droplet({ params }: Props) {
 
           <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
 
-          {/* Bottom action bar */}
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 py-6 dark:border-slate-700">
-            {/* Edit Draft */}
-            {droplet.originalDropletId && droplet.status === "draft" && (
-              <>
-                {!droplet.inReview && isContentCreator(user.roles) && (
-                  <ContentActionButton
-                    droplet={droplet}
-                    actionType="requestReview"
-                    buttonText={
-                      droplet.afterReview
-                        ? "Re-Request Review"
-                        : "Request Review"
-                    }
-                  />
-                )}
-                {droplet.inReview &&
-                  (isContentEditor(user.roles) ||
-                    isAuthorizedUserFaculty(user.roles) ||
-                    isAuthorizedUserAdmin(user.roles)) && (
-                    <ContentActionButton
-                      droplet={droplet}
-                      actionType="requestChanges"
-                      buttonText="Request Changes"
-                    />
-                  )}
-                {(isAuthorizedUserAdmin(user.roles) ||
-                  isAuthorizedUserFaculty(user.roles) ||
-                  (isContentEditor(user.roles) && droplet.inReview)) && (
-                  <ContentActionButton
-                    droplet={droplet}
-                    actionType="publishDraft"
-                    buttonText="Publish Changes"
-                  />
-                )}
-              </>
-            )}
-
-            {/* Regular Draft */}
-            {!droplet.originalDropletId && (
-              <>
-                {!droplet.inReview &&
-                  droplet.status === "draft" &&
-                  isContentCreator(user.roles) && (
-                    <ContentActionButton
-                      droplet={droplet}
-                      actionType="requestReview"
-                      buttonText={
-                        droplet.afterReview
-                          ? "Re-Request Review"
-                          : "Request Review"
-                      }
-                    />
-                  )}
-                {droplet.inReview &&
-                  droplet.status === "draft" &&
-                  (isContentEditor(user.roles) ||
-                    isAuthorizedUserAdmin(user.roles)) && (
-                    <ContentActionButton
-                      droplet={droplet}
-                      actionType="requestChanges"
-                      buttonText="Request Changes"
-                    />
-                  )}
-                {droplet.status === "draft" &&
-                  (isAuthorizedUserFaculty(user.roles) ||
-                    isAuthorizedUserAdmin(user.roles) ||
-                    (isContentEditor(user.roles) && droplet.inReview)) && (
-                    <ContentActionButton
-                      droplet={droplet}
-                      actionType="publish"
-                      buttonText="Publish Droplet"
-                    />
-                  )}
-              </>
-            )}
-          </div>
+          <section className="w-full max-w-2xl">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Datasets
+            </h2>
+            <p className="text-slate-500 dark:text-slate-300">
+              Upload data files for use in notebook code blocks (CSV, JSON, or
+              XLSX)
+            </p>
+            <div className="mt-4">
+              <DatasetUpload dropletId={droplet.id} datasets={datasets} />
+            </div>
+          </section>
         </div>
       </div>
     </>

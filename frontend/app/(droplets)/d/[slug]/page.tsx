@@ -1,16 +1,23 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { Badge } from "@/components/ui/badge";
-import { stripHtmlTags, uppercaseFirstChar, cn } from "@/lib/utils";
-import { getTagColors } from "@/lib/tag-colors";
 import {
-  IconFileText,
-  IconChartPie,
-  IconTarget,
-  IconHammer,
-} from "@tabler/icons-react";
+  stripHtmlTags,
+  uppercaseFirstChar,
+  getDifficultyBadgeColor,
+  cn,
+  isAuthorizedUserAdmin,
+} from "@/lib/utils";
+import {
+  BookTextIcon,
+  FilePieChartIcon,
+  GoalIcon,
+  HammerIcon,
+  PresentationIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   getCachedUser,
@@ -47,71 +54,56 @@ export default async function DropletRoute({ params }: Props) {
   if (!droplet) return notFound();
 
   let isEnrolled = false;
+  let isAuthor = false;
+  const isAdmin = isAuthorizedUserAdmin(user?.roles);
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
 
-    if (authorizedUser) {
-      const enrollments = await getCachedEnrollmentsWithLessonIds(
-        authorizedUser.id,
-      );
-      isEnrolled = enrollments.some(
-        (e) => e.droplet && e.droplet.id === droplet.id,
-      );
-    }
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
+    isEnrolled = enrollments.some(
+      (e) => e.droplet && e.droplet.id === droplet.id,
+    );
+    isAuthor =
+      droplet.authorized_users
+        ?.map((a: { id: number }) => a.id)
+        .includes(authorizedUser.id) ?? false;
   }
+
+  const canPresent =
+    (isEnrolled || isAdmin || isAuthor) &&
+    droplet.lessons != null &&
+    droplet.lessons.length > 0;
 
   return (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
         <div className="px-40">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-            {(() => {
-              const c = getTagColors(droplet.focusArea);
-              return (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                    c.bg,
-                    c.text,
-                  )}
-                >
-                  {uppercaseFirstChar(droplet.focusArea)}
-                </Badge>
-              );
-            })()}
-            {(() => {
-              const c = getTagColors(droplet.type);
-              return (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                    c.bg,
-                    c.text,
-                  )}
-                >
-                  {uppercaseFirstChar(droplet.type)}
-                </Badge>
-              );
-            })()}
-            {droplet.tags?.map((tag) => {
-              const c = getTagColors(tag.name);
-              return (
-                <Badge
-                  key={tag.id}
-                  variant="outline"
-                  className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                    c.bg,
-                    c.text,
-                  )}
-                >
-                  {tag.name}
-                </Badge>
-              );
-            })}
+            <Badge variant="outline" className="text-sm">
+              {uppercaseFirstChar(droplet.focusArea)}
+            </Badge>
+            <Badge variant="outline" className="text-sm">
+              {uppercaseFirstChar(droplet.type)}
+            </Badge>
+            {droplet.difficulty && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-sm",
+                  getDifficultyBadgeColor(droplet.difficulty),
+                )}
+              >
+                {uppercaseFirstChar(droplet.difficulty)}
+              </Badge>
+            )}
+            {droplet.tags?.map((tag) => (
+              <Badge key={tag.id} variant="outline" className="text-sm">
+                {tag.name}
+              </Badge>
+            ))}
 
             {droplet.averageRating && droplet.averageRating != 0.0 ? (
               <StarRating
@@ -180,10 +172,7 @@ export default async function DropletRoute({ params }: Props) {
                     key={`objective-${objective.id}`}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                   >
-                    <IconTarget
-                      className="mr-0.5 h-5 w-5 shrink-0"
-                      stroke={1.8}
-                    />
+                    <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
                     {objective.objective}
                   </li>
                 ))}
@@ -211,20 +200,11 @@ export default async function DropletRoute({ params }: Props) {
                           className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                         >
                           {lesson.type === "activity" ? (
-                            <IconHammer
-                              className="mr-0.5 h-5 w-5 shrink-0"
-                              stroke={1.8}
-                            />
+                            <HammerIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           ) : lesson.type === "caseStudy" ? (
-                            <IconChartPie
-                              className="mr-0.5 h-5 w-5 shrink-0"
-                              stroke={1.8}
-                            />
+                            <FilePieChartIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           ) : (
-                            <IconFileText
-                              className="mr-0.5 h-5 w-5 shrink-0"
-                              stroke={1.8}
-                            />
+                            <BookTextIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           )}
                           {lesson.name}
                         </li>
@@ -255,8 +235,17 @@ export default async function DropletRoute({ params }: Props) {
           </section>
 
           {droplet.lessons && droplet.lessons.length > 0 ? (
-            <section>
+            <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <EnrollButton droplet={droplet} isEnrolled={isEnrolled} />
+              {canPresent && (
+                <Link
+                  href={`/d/${p.slug}/present`}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <PresentationIcon className="h-4 w-4" />
+                  Present
+                </Link>
+              )}
             </section>
           ) : null}
         </div>

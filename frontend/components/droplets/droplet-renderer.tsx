@@ -6,6 +6,7 @@ interface DropletProps {
     name: string;
     type: string;
     focusArea: string;
+    difficulty?: string;
     lessons: {
       blocks: Block[];
     }[];
@@ -17,7 +18,8 @@ export function DropletRenderer({ droplet }: DropletProps) {
     <div className="mx-auto w-full max-w-prose">
       <p className="-mx-4 rounded-md bg-slate-50 p-4 text-slate-700">
         You are viewing the <strong>{droplet.name}</strong> {droplet.type}{" "}
-        Droplet in the {droplet.focusArea} focus area.
+        Droplet in the {droplet.focusArea} focus area
+        {droplet.difficulty ? ` (${droplet.difficulty} difficulty)` : ""}.
       </p>
 
       <div className="h-8"></div>

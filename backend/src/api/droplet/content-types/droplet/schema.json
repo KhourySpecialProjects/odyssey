@@ -39,6 +39,15 @@
       ],
       "required": true
     },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "required": true
+    },
     "lessons": {
       "type": "relation",
       "relation": "manyToMany",
@@ -164,9 +173,10 @@
       "inversedBy": "reviewers"
     },
     "datasets": {
-      "type": "component",
-      "repeatable": true,
-      "component": "droplets.dataset"
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::dataset.dataset",
+      "mappedBy": "droplet"
     }
   }
 }

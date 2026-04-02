@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +18,9 @@ import { UserDropdown } from "./user-dropdown";
 import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { NAV_ITEMS as ADMIN_NAV_ITEMS } from "@/components/admin/admin-nav";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export function Header({
   user,
@@ -30,37 +31,22 @@ export function Header({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const isDraft = pathname?.startsWith("/draft/");
+  const isAdminRoute = pathname.startsWith("/admin");
 
+  const generalConfig = getGeneralConfig(user);
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
-  const generalConfig = getGeneralConfig(user);
 
   const handleCloseSheet = () => {
     setIsOpen(false);
   };
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900",
-        !isDraft && "xl:px-6",
-      )}
-    >
-      <div
-        className={cn(
-          "flex h-full items-center justify-between py-3",
-          isDraft ? "px-4 xl:px-0" : "mx-auto max-w-screen-xl px-4",
-        )}
-      >
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
+      <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
-          <div
-            className={cn(
-              "flex flex-row gap-4",
-              isDraft && "xl:w-64 xl:justify-center",
-            )}
-          >
+          <div className="flex flex-row gap-4">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild role="banner">
                 <Button
@@ -72,9 +58,12 @@ export function Header({
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
+              <SheetContent
+                side="left"
+                className="flex flex-col overflow-y-auto"
+              >
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <nav className="grid gap-6">
+                <nav className="grid gap-4">
                   <Link href="/">
                     <Logo width={165} height={45} />
                     <span className="sr-only">
@@ -87,8 +76,39 @@ export function Header({
                     onLinkClick={handleCloseSheet}
                   />
 
-                  <DarkMode className="sm:hidden" />
+                  {isAdminRoute && (
+                    <>
+                      <div className="h-px bg-slate-200 dark:bg-slate-700" />
+                      <ul className="flex flex-col space-y-1 text-lg">
+                        {ADMIN_NAV_ITEMS.map((item) => {
+                          const isActive =
+                            pathname === item.href ||
+                            (item.href !== "/admin" &&
+                              pathname.startsWith(item.href));
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                onClick={handleCloseSheet}
+                                className={cn(
+                                  "block rounded px-3 py-1.5",
+                                  isActive
+                                    ? "bg-sky-700 font-bold text-white"
+                                    : "text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700",
+                                )}
+                              >
+                                {item.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
                 </nav>
+                <div className="mt-auto pt-4 sm:hidden">
+                  <DarkMode />
+                </div>
               </SheetContent>
             </Sheet>
             <Link href="/" className="hidden w-max sm:block">
@@ -113,13 +133,7 @@ export function Header({
             />
           </nav>
 
-          <div
-            className={cn(
-              "flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2",
-              isDraft &&
-                "xl:ml-0 xl:w-64 xl:justify-center xl:justify-self-end",
-            )}
-          >
+          <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />

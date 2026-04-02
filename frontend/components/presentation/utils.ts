@@ -1,0 +1,200 @@
+/**
+ * Presentation mode slide-splitting utilities.
+ *
+ * Splits on <!--SLIDE_BREAK--> markers. Image blocks with a `slideLayout`
+ * property control slide layout (image-left, image-right, full-image).
+ */
+import { Block, Lesson } from "@/types";
+import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
+
+export type SlideLayout =
+  | "default"
+  | "image-left"
+  | "image-right"
+  | "full-image"
+  | "two-columns";
+
+export type Slide = {
+  blocks: Block[];
+  title?: string;
+  lessonName: string;
+  lessonIndex: number;
+  layout: SlideLayout;
+  layoutImageUrl?: string;
+};
+
+// ── Helpers ──
+
+function isEmptySpacing(block: Block): boolean {
+  if (block.__component !== "droplets.generic") return false;
+  return block.content.includes("empty-paragraph-spacing");
+}
+
+function isSlideBreak(block: Block): boolean {
+  return (
+    block.__component === "droplets.generic" &&
+    block.content === SLIDE_BREAK_MARKER
+  );
+}
+
+export function isColumnBreak(block: Block): boolean {
+  return (
+    block.__component === "droplets.generic" &&
+    block.content === COLUMN_BREAK_MARKER
+  );
+}
+
+const LEGACY_LAYOUT_MAP: Record<string, SlideLayout> = {
+  IMAGE_LEFT: "image-left",
+  IMAGE_RIGHT: "image-right",
+  FULL_IMAGE: "full-image",
+};
+
+function getSlideLayout(
+  block: Block,
+): { layout: SlideLayout; imageUrl?: string } | null {
+  if (
+    block.__component === "droplets.generic" &&
+    "slideLayout" in block &&
+    block.slideLayout !== undefined
+  ) {
+    return {
+      layout: block.slideLayout,
+      imageUrl: block.slideLayoutImageUrl,
+    };
+  }
+
+  // Backward compat: parse legacy <!--LAYOUT:...--> comment format
+  if (
+    block.__component === "droplets.generic" &&
+    block.content.startsWith("<!--LAYOUT:")
+  ) {
+    const match = block.content.match(
+      /<!--LAYOUT:(IMAGE_LEFT|IMAGE_RIGHT|FULL_IMAGE):(.*?)-->/,
+    );
+    if (match) {
+      const layout = LEGACY_LAYOUT_MAP[match[1]];
+      if (layout) {
+        return { layout, imageUrl: match[2] || undefined };
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractHeadingTitle(block: Block): string | undefined {
+  if (block.__component !== "droplets.generic") return undefined;
+  const match = block.content.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
+  if (!match) return undefined;
+  return match[1].replace(/<[^>]+>/g, "").trim() || undefined;
+}
+
+// ── Main ──
+
+export function splitBlocksIntoSlides(
+  lesson: Lesson,
+  lessonIndex: number,
+): Slide[] {
+  const rawBlocks: Block[] =
+    lesson.blocksVersion === "v2" && lesson.blocksV2
+      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
+      : lesson.blocks ?? [];
+
+  const cleanBlocks = rawBlocks.filter(
+    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isColumnBreak(b),
+  );
+  if (cleanBlocks.length === 0) return [];
+
+  const hasSlideBreaks = rawBlocks.some(isSlideBreak);
+  if (!hasSlideBreaks) return [];
+
+  const slides: Slide[] = [];
+
+  // Lesson title card
+  slides.push({
+    blocks: [
+      {
+        __component: "droplets.generic" as const,
+        id: -(lessonIndex + 1) * 1000,
+        content: `<h1 class="text-center">${lesson.name}</h1>`,
+      },
+    ],
+    title: lesson.name,
+    lessonName: lesson.name,
+    lessonIndex,
+    layout: "default",
+  });
+
+  return splitByMarkers(rawBlocks, lesson, lessonIndex, slides);
+}
+
+function splitByMarkers(
+  rawBlocks: Block[],
+  lesson: Lesson,
+  lessonIndex: number,
+  slides: Slide[],
+): Slide[] {
+  let current: Block[] = [];
+  let heading: string | undefined;
+  let currentLayout: SlideLayout = "default";
+  let currentLayoutImageUrl: string | undefined;
+  // Layout requested by the slide-break block for the NEXT slide
+  let pendingLayout: SlideLayout | undefined;
+
+  function flush() {
+    if (current.length > 0) {
+      slides.push({
+        blocks: current,
+        title: heading,
+        lessonName: lesson.name,
+        lessonIndex,
+        layout: currentLayout,
+        layoutImageUrl: currentLayoutImageUrl,
+      });
+      current = [];
+      heading = undefined;
+      currentLayout = pendingLayout ?? "default";
+      currentLayoutImageUrl = undefined;
+      pendingLayout = undefined;
+    } else if (pendingLayout !== undefined) {
+      // No blocks accumulated yet, but a pending layout was set by a slide break.
+      // Apply it now so the upcoming blocks inherit this layout.
+      currentLayout = pendingLayout;
+      pendingLayout = undefined;
+    }
+  }
+
+  for (const block of rawBlocks) {
+    if (isEmptySpacing(block)) continue;
+
+    if (isSlideBreak(block)) {
+      // Read the nextSlideLayout from the slide-break block
+      const layout =
+        block.__component === "droplets.generic" && "nextSlideLayout" in block
+          ? (block.nextSlideLayout as SlideLayout | undefined)
+          : undefined;
+      pendingLayout = layout && layout !== "default" ? layout : undefined;
+      flush();
+      continue;
+    }
+
+    // Read layout from typed property or legacy comment — image layout takes
+    // precedence over the slide-break's nextSlideLayout
+    const parsedLayout = getSlideLayout(block);
+    if (parsedLayout) {
+      currentLayout = parsedLayout.layout;
+      currentLayoutImageUrl = parsedLayout.imageUrl;
+    }
+
+    const h = extractHeadingTitle(block);
+    if (h) heading = h;
+
+    current.push(block);
+  }
+
+  flush();
+  return slides;
+}

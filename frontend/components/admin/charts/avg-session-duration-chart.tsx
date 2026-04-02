@@ -102,7 +102,7 @@ export function AvgSessionDurationChart({
           : `in the last ${timeframe} days`;
 
   return (
-    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+    <Card className="flex h-[320px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] md:h-[396px] dark:bg-slate-800">
       <CardHeader className="flex-row items-start justify-between px-6 pt-5 pb-1">
         <CardTitle className="text-[20px] font-medium dark:text-white">
           Average Session Duration
@@ -137,9 +137,12 @@ export function AvgSessionDurationChart({
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 12, fill: "#60646c" }}
-                interval={Math.max(0, Math.floor(formatted.length / 7) - 1)}
-                padding={{ left: 24, right: 10 }}
+                tick={{ fontSize: 11, fill: "#60646c" }}
+                interval="preserveStartEnd"
+                padding={{ left: 16, right: 10 }}
+                angle={-35}
+                textAnchor="end"
+                height={45}
               />
               <YAxis
                 tickLine={false}

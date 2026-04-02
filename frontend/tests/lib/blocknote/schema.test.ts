@@ -3,12 +3,24 @@ jest.mock("@/components/ui/blocknote/blocks/code-block", () => ({
   CodeBlock: jest.fn(() => ({ type: "code-block" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/slide-break-block", () => ({
+  SlideBreak: jest.fn(() => ({ type: "slide-break" })),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/slide-layout-blocks", () => ({
+  ImageLeftLayout: jest.fn(() => ({ type: "slide-image-left" })),
+  ImageRightLayout: jest.fn(() => ({ type: "slide-image-right" })),
+  FullImageLayout: jest.fn(() => ({ type: "slide-full-image" })),
+  TwoColumnsLayout: jest.fn(() => ({ type: "slide-two-columns" })),
+}));
+
 jest.mock("react-syntax-highlighter", () => ({
   Light: jest.fn(),
 }));
 
 jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
   atomOneDark: {},
+  githubGist: {},
 }));
 
 // Mock all language imports
@@ -44,7 +56,7 @@ jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
 
 // Mock BlockNote before importing schema
 jest.mock("@blocknote/react", () => ({
-  createReactBlockSpec: jest.fn((config, spec) => ({
+  createReactBlockSpec: jest.fn((config, spec) => () => ({
     type: config.type,
     propSchema: config.propSchema,
     ...spec,
@@ -124,6 +136,10 @@ jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
   ImageBlock: jest.fn(() => ({ type: "image" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/notebook-code-block", () => ({
+  NotebookCodeBlock: jest.fn(() => ({ type: "notebook-code" })),
+}));
+
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 
 describe("blockNoteSchema", () => {
@@ -162,6 +178,11 @@ describe("blockNoteSchema", () => {
   it("should include custom code-block", () => {
     const blockSpecs = blockNoteSchema.blockSpecs;
     expect(blockSpecs).toHaveProperty("code-block");
+  });
+
+  it("should include custom notebook-code block", () => {
+    const blockSpecs = blockNoteSchema.blockSpecs;
+    expect(blockSpecs).toHaveProperty("notebook-code");
   });
 
   it("should include default blocks that are not filtered", () => {
