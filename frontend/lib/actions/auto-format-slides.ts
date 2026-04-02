@@ -2,13 +2,10 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-export type AutoFormatOperation =
-  | { type: "insert-slide-break"; afterBlockIndex: number }
-  | {
-      type: "set-image-layout";
-      blockIndex: number;
-      layout: "image-left" | "image-right" | "full-image";
-    };
+export type AutoFormatOperation = {
+  type: "insert-slide-break";
+  afterBlockIndex: number;
+};
 
 type BlockSummary = {
   index: number;
@@ -18,7 +15,7 @@ type BlockSummary = {
   imageUrl?: string;
 };
 
-const SYSTEM_PROMPT = `You insert slide breaks and set image layouts for a presentation editor.
+const SYSTEM_PROMPT = `You insert slide breaks for a presentation editor.
 
 ## Height Budget
 
@@ -34,12 +31,6 @@ Each slide must stay under **~900px** (1080p screen).
 | quiz-* | ~200px |
 | video | ~360px |
 
-## Image Layouts
-
-- \`image-left\`: image on left, text on right — use when text follows the image
-- \`image-right\`: image on right, text on left — use when text precedes the image
-- \`full-image\`: image fills the whole slide — use for standalone images with no adjacent text
-
 ## Rules
 
 1. Do NOT insert a slide break before the first block or after the last block
@@ -54,9 +45,8 @@ Each slide must stay under **~900px** (1080p screen).
 
 Respond with ONLY a JSON array. No explanation, no markdown fences, no commentary.
 
-Operation types:
-- \`{"type": "insert-slide-break", "afterBlockIndex": N}\`
-- \`{"type": "set-image-layout", "blockIndex": N, "layout": "image-left" | "image-right" | "full-image"}\``;
+Operation type:
+- \`{"type": "insert-slide-break", "afterBlockIndex": N}\``;
 
 export async function autoFormatSlides(
   blockSummaries: BlockSummary[],
@@ -97,24 +87,13 @@ export async function autoFormatSlides(
       .trim();
     const operations: AutoFormatOperation[] = JSON.parse(cleaned);
 
-    const valid = operations.filter((op) => {
-      if (op.type === "insert-slide-break") {
-        return (
-          typeof op.afterBlockIndex === "number" &&
-          op.afterBlockIndex >= 0 &&
-          op.afterBlockIndex < blockSummaries.length - 1
-        );
-      }
-      if (op.type === "set-image-layout") {
-        return (
-          typeof op.blockIndex === "number" &&
-          op.blockIndex >= 0 &&
-          op.blockIndex < blockSummaries.length &&
-          ["image-left", "image-right", "full-image"].includes(op.layout)
-        );
-      }
-      return false;
-    });
+    const valid = operations.filter(
+      (op) =>
+        op.type === "insert-slide-break" &&
+        typeof op.afterBlockIndex === "number" &&
+        op.afterBlockIndex >= 0 &&
+        op.afterBlockIndex < blockSummaries.length - 1,
+    );
 
     return { operations: valid };
   } catch (err) {

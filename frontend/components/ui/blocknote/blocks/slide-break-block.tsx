@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { Columns2Icon, SeparatorHorizontal } from "lucide-react";
 import { dashedLineStyle, SLIDE_BREAK_TYPE } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_TYPE } from "@/lib/blocknote/column-break";
 import { useSlideOverflow } from "@/components/draft/lesson/blocknote-editor-client";
 import { cn } from "@/lib/utils";
 
@@ -31,11 +32,47 @@ export const SlideBreak = createReactBlockSpec(
       const isTwoColumns = props.block.props.nextSlideLayout === "two-columns";
 
       function toggleLayout() {
+        const enabling = !isTwoColumns;
         props.editor.updateBlock(props.block, {
           props: {
-            nextSlideLayout: isTwoColumns ? "default" : "two-columns",
+            nextSlideLayout: enabling ? "two-columns" : "default",
           },
         });
+
+        const allBlocks = props.editor.document;
+        const thisIdx = allBlocks.findIndex((b) => b.id === props.block.id);
+        if (thisIdx < 0) return;
+
+        // Find content blocks between this slide-break and the next
+        const contentBlocks = [];
+        for (let i = thisIdx + 1; i < allBlocks.length; i++) {
+          if ((allBlocks[i].type as string) === SLIDE_BREAK_TYPE) break;
+          contentBlocks.push(allBlocks[i]);
+        }
+
+        if (enabling) {
+          // Auto-insert a column-break at the midpoint if none exists
+          const hasColumnBreak = contentBlocks.some(
+            (b) => (b.type as string) === COLUMN_BREAK_TYPE,
+          );
+          if (!hasColumnBreak && contentBlocks.length >= 2) {
+            const midIdx = Math.ceil(contentBlocks.length / 2) - 1;
+            const afterBlock = contentBlocks[midIdx];
+            props.editor.insertBlocks(
+              [{ type: COLUMN_BREAK_TYPE as any }],
+              afterBlock,
+              "after",
+            );
+          }
+        } else {
+          // Remove all column-breaks in this slide when disabling
+          const colBreaks = contentBlocks.filter(
+            (b) => (b.type as string) === COLUMN_BREAK_TYPE,
+          );
+          for (const cb of colBreaks) {
+            props.editor.removeBlocks([cb]);
+          }
+        }
       }
 
       return (
