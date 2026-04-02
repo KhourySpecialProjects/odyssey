@@ -1,24 +1,42 @@
 import { createReactBlockSpec } from "@blocknote/react";
-import { SeparatorHorizontal } from "lucide-react";
+import { Columns2Icon, SeparatorHorizontal } from "lucide-react";
 import { dashedLineStyle, SLIDE_BREAK_TYPE } from "@/lib/blocknote/slide-break";
 import { useSlideOverflow } from "@/components/draft/lesson/blocknote-editor-client";
+import { cn } from "@/lib/utils";
 
 /**
  * Slide Break block for BlockNote.
  * A visual divider that marks where a new presentation slide begins.
  * In the editor, it renders as a dashed line with a "Slide Break" label.
  * In presentation mode, the splitter uses these markers to create new slides.
+ *
+ * The optional `nextSlideLayout` prop controls the layout of the slide that
+ * follows this break. Set to "two-columns" to split content into two columns.
  */
 export const SlideBreak = createReactBlockSpec(
   {
     type: SLIDE_BREAK_TYPE,
-    propSchema: {},
+    propSchema: {
+      nextSlideLayout: {
+        default: "default" as const,
+        values: ["default", "two-columns"] as const,
+      },
+    },
     content: "none",
   },
   {
     render: (props) => {
       const overflowingBreaks = useSlideOverflow();
       const isOverflowing = overflowingBreaks.has(props.block.id);
+      const isTwoColumns = props.block.props.nextSlideLayout === "two-columns";
+
+      function toggleLayout() {
+        props.editor.updateBlock(props.block, {
+          props: {
+            nextSlideLayout: isTwoColumns ? "default" : "two-columns",
+          },
+        });
+      }
 
       return (
         <div className="pointer-events-none my-2 w-full select-none">
@@ -27,6 +45,26 @@ export const SlideBreak = createReactBlockSpec(
           <div className="flex items-center justify-center gap-2 py-0.5 text-xs font-semibold tracking-widest text-sky-400 uppercase dark:text-sky-500">
             <SeparatorHorizontal className="h-3 w-3" />
             Slide Break
+          </div>
+          <div className="pointer-events-auto flex items-center justify-center py-1">
+            <button
+              type="button"
+              onClick={toggleLayout}
+              className={cn(
+                "flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                isTwoColumns
+                  ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-400",
+              )}
+              title={
+                isTwoColumns
+                  ? "Next slide: two columns (click to revert)"
+                  : "Set next slide to two-column layout"
+              }
+            >
+              <Columns2Icon className="h-3 w-3" />
+              {isTwoColumns ? "Two Columns" : "Single Column"}
+            </button>
           </div>
           <div className="h-3 w-full bg-gradient-to-t from-sky-50/40 to-transparent dark:from-sky-950/20" />
           <div style={dashedLineStyle} />

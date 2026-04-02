@@ -16,13 +16,14 @@ jest.mock("@/lib/blocknote/schema", () => ({
 }));
 
 jest.mock("@/lib/blocknote/types", () => ({
-  CalloutType: {} as any,
+  CalloutType: {},
 }));
 
 import {
   getCalloutSlashMenuItems,
   getQuizSlashMenuItems,
   getSandpackSlashMenuItems,
+  getColumnBreakSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 
 // Mock BlockNote editor
@@ -197,6 +198,53 @@ describe("getQuizSlashMenuItems", () => {
             ]),
           }),
         }),
+      ]),
+      expect.anything(),
+      "after",
+    );
+  });
+});
+
+describe("getColumnBreakSlashMenuItems", () => {
+  it("returns an array with one item titled 'Column Break'", () => {
+    const editor = createMockEditor();
+    const items = getColumnBreakSlashMenuItems(editor);
+
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe("Column Break");
+  });
+
+  it("has correct aliases including 'column' and 'col break'", () => {
+    const editor = createMockEditor();
+    const items = getColumnBreakSlashMenuItems(editor);
+
+    expect(items[0].aliases).toContain("column");
+    expect(items[0].aliases).toContain("col break");
+  });
+
+  it("belongs to the Presentation group", () => {
+    const editor = createMockEditor();
+    const items = getColumnBreakSlashMenuItems(editor);
+
+    expect(items[0].group).toBe("Presentation");
+  });
+
+  it("has an icon defined", () => {
+    const editor = createMockEditor();
+    const items = getColumnBreakSlashMenuItems(editor);
+
+    expect(items[0].icon).toBeDefined();
+  });
+
+  it("calls editor.insertBlocks with column-break type on click", () => {
+    const editor = createMockEditor();
+    const items = getColumnBreakSlashMenuItems(editor);
+
+    items[0].onItemClick?.();
+
+    expect(editor.insertBlocks).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "column-break" }),
       ]),
       expect.anything(),
       "after",

@@ -7,12 +7,14 @@
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
 
 export type SlideLayout =
   | "default"
   | "image-left"
   | "image-right"
-  | "full-image";
+  | "full-image"
+  | "two-columns";
 
 export type Slide = {
   blocks: Block[];
@@ -34,6 +36,13 @@ function isSlideBreak(block: Block): boolean {
   return (
     block.__component === "droplets.generic" &&
     block.content === SLIDE_BREAK_MARKER
+  );
+}
+
+export function isColumnBreak(block: Block): boolean {
+  return (
+    block.__component === "droplets.generic" &&
+    block.content === COLUMN_BREAK_MARKER
   );
 }
 
@@ -95,7 +104,7 @@ export function splitBlocksIntoSlides(
       : lesson.blocks ?? [];
 
   const cleanBlocks = rawBlocks.filter(
-    (b) => !isEmptySpacing(b) && !isSlideBreak(b),
+    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isColumnBreak(b),
   );
   if (cleanBlocks.length === 0) return [];
 
@@ -132,6 +141,8 @@ function splitByMarkers(
   let heading: string | undefined;
   let currentLayout: SlideLayout = "default";
   let currentLayoutImageUrl: string | undefined;
+  // Layout requested by the slide-break block for the NEXT slide
+  let pendingLayout: SlideLayout | undefined;
 
   function flush() {
     if (current.length > 0) {
@@ -145,8 +156,14 @@ function splitByMarkers(
       });
       current = [];
       heading = undefined;
-      currentLayout = "default";
+      currentLayout = pendingLayout ?? "default";
       currentLayoutImageUrl = undefined;
+      pendingLayout = undefined;
+    } else if (pendingLayout !== undefined) {
+      // No blocks accumulated yet, but a pending layout was set by a slide break.
+      // Apply it now so the upcoming blocks inherit this layout.
+      currentLayout = pendingLayout;
+      pendingLayout = undefined;
     }
   }
 
@@ -154,11 +171,18 @@ function splitByMarkers(
     if (isEmptySpacing(block)) continue;
 
     if (isSlideBreak(block)) {
+      // Read the nextSlideLayout from the slide-break block
+      const layout =
+        block.__component === "droplets.generic" && "nextSlideLayout" in block
+          ? (block.nextSlideLayout as SlideLayout | undefined)
+          : undefined;
+      pendingLayout = layout && layout !== "default" ? layout : undefined;
       flush();
       continue;
     }
 
-    // Read layout from typed property or legacy comment — block stays in the array
+    // Read layout from typed property or legacy comment — image layout takes
+    // precedence over the slide-break's nextSlideLayout
     const parsedLayout = getSlideLayout(block);
     if (parsedLayout) {
       currentLayout = parsedLayout.layout;
