@@ -6,6 +6,7 @@
 import katex from "katex";
 import { Block, CustomBlockNoteBlock } from "@/types";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
 
 type BlockNoteTextStyles = {
   bold?: boolean;
@@ -550,10 +551,23 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     }
 
     case "slide-break": {
+      const nextSlideLayout = blockAny.props?.nextSlideLayout;
+      return {
+        __component: "droplets.generic" as const,
+        id: blockId,
+        content: SLIDE_BREAK_MARKER,
+        ...(nextSlideLayout &&
+          nextSlideLayout !== "default" && {
+            nextSlideLayout: nextSlideLayout as "default" | "two-columns",
+          }),
+      };
+    }
+
+    case "column-break": {
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: SLIDE_BREAK_MARKER,
+        content: COLUMN_BREAK_MARKER,
       };
     }
 
