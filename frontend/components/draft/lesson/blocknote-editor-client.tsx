@@ -235,8 +235,8 @@ export function BlockNoteEditorClient({
             );
           }
           // Insert slide-break with two-column layout
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           editor.insertBlocks(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [
               {
                 type: "slide-break" as any,
@@ -246,6 +246,7 @@ export function BlockNoteEditorClient({
             afterBlock,
             "after",
           );
+          /* eslint-enable @typescript-eslint/no-explicit-any */
         } else {
           editor.insertBlocks(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
