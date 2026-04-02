@@ -218,24 +218,6 @@ export function BlockNoteEditorClient({
         )
         .sort((a, b) => b.afterBlockIndex - a.afterBlockIndex);
 
-      const layoutOps = ops.filter(
-        (
-          op,
-        ): op is Extract<AutoFormatOperation, { type: "set-image-layout" }> =>
-          op.type === "set-image-layout",
-      );
-
-      // Apply layout changes first (doesn't shift indices)
-      for (const op of layoutOps) {
-        const block = editor.document[op.blockIndex];
-        if (block && block.type === "image") {
-          editor.updateBlock(block, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props: { layout: op.layout } as any,
-          });
-        }
-      }
-
       // Deduplicate consecutive indices (ops are sorted descending)
       const dedupedOps: typeof insertOps = [];
       for (const op of insertOps) {

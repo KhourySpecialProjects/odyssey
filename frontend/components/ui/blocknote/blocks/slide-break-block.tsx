@@ -59,6 +59,7 @@ export const SlideBreak = createReactBlockSpec(
             const midIdx = Math.ceil(contentBlocks.length / 2) - 1;
             const afterBlock = contentBlocks[midIdx];
             props.editor.insertBlocks(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               [{ type: COLUMN_BREAK_TYPE as any }],
               afterBlock,
               "after",
