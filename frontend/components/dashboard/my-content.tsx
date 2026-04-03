@@ -26,6 +26,7 @@ export async function MyContent({
   const contentType = (await searchParams)?.contentType || "droplets";
   const type = (await searchParams)?.type;
   const focusArea = (await searchParams)?.focusArea;
+  const difficulty = (await searchParams)?.difficulty;
   const tags = (await searchParams)?.tags;
   const user = await getCurrentUser();
 
@@ -55,6 +56,7 @@ export async function MyContent({
             tags={tags}
             type={type}
             focusArea={focusArea}
+            difficulty={difficulty}
           />
         ) : contentType === "playlists" ? (
           <UserPlaylistsGrid sortKey={sortKey} />

@@ -102,6 +102,15 @@ export const DROPLET_FILTERS = [
       },
     ],
   },
+  {
+    name: "difficulty",
+    label: "Difficulty",
+    options: [
+      { label: "Beginner", value: "beginner" },
+      { label: "Intermediate", value: "intermediate" },
+      { label: "Advanced", value: "advanced" },
+    ],
+  },
 ];
 
 export type SortFilterItem = {

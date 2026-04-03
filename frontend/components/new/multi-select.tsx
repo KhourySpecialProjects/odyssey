@@ -58,13 +58,15 @@ export function MultiSelect({
     try {
       if (tagName) {
         const result = await createNewTag(tagName);
-        if (result.success) {
+        if (result.success && result.data) {
+          setSelected([...selected, result.data]);
           toast.success("Tag created successfully");
         } else {
           console.error("Failed to create tag", result.error);
           toast.error(`"${tagName} tag already exists"`);
         }
         setIsOpen(false);
+        setTagName("");
       }
     } catch (error) {
       console.error("Failed to create new tag: ", error);

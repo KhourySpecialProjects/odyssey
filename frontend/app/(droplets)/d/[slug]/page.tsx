@@ -2,15 +2,23 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Badge } from "@/components/ui/badge";
-import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
+import {
+  stripHtmlTags,
+  uppercaseFirstChar,
+  getDifficultyBadgeColor,
+  cn,
+  isAuthorizedUserAdmin,
+} from "@/lib/utils";
 import {
   BookTextIcon,
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
+  PresentationIcon,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   getCachedUser,
@@ -47,6 +55,8 @@ export default async function DropletRoute({ params }: Props) {
   if (!droplet) return notFound();
 
   let isEnrolled = false;
+  let isAuthor = false;
+  const isAdmin = isAuthorizedUserAdmin(user?.roles);
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
@@ -57,7 +67,16 @@ export default async function DropletRoute({ params }: Props) {
     isEnrolled = enrollments.some(
       (e) => e.droplet && e.droplet.id === droplet.id,
     );
+    isAuthor =
+      droplet.authorized_users
+        ?.map((a: { id: number }) => a.id)
+        .includes(authorizedUser.id) ?? false;
   }
+
+  const canPresent =
+    (isEnrolled || isAdmin || isAuthor) &&
+    droplet.lessons != null &&
+    droplet.lessons.length > 0;
 
   return (
     <>
@@ -70,6 +89,17 @@ export default async function DropletRoute({ params }: Props) {
             <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
+            {droplet.difficulty && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-sm",
+                  getDifficultyBadgeColor(droplet.difficulty),
+                )}
+              >
+                {uppercaseFirstChar(droplet.difficulty)}
+              </Badge>
+            )}
             {droplet.tags?.map((tag) => (
               <Badge key={tag.id} variant="outline" className="text-sm">
                 {tag.name}
@@ -206,8 +236,17 @@ export default async function DropletRoute({ params }: Props) {
           </section>
 
           {droplet.lessons && droplet.lessons.length > 0 ? (
-            <section>
+            <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <EnrollButton droplet={droplet} isEnrolled={isEnrolled} />
+              {canPresent && (
+                <Link
+                  href={`/d/${p.slug}/present`}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <PresentationIcon className="h-4 w-4" />
+                  Present
+                </Link>
+              )}
             </section>
           ) : null}
         </div>

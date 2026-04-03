@@ -7,6 +7,7 @@ interface AdminPaginationProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   colSpan?: number;
+  variant?: "desktop" | "mobile";
 }
 
 export function AdminPagination({
@@ -14,8 +15,35 @@ export function AdminPagination({
   totalPages,
   onPageChange,
   colSpan = 3,
+  variant = "desktop",
 }: AdminPaginationProps) {
   if (totalPages <= 1) return null;
+
+  if (variant === "mobile") {
+    return (
+      <div className="flex items-center justify-center gap-4 py-4">
+        <button
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          aria-label="Go to previous page"
+          className="text-sm font-medium text-[#344054] disabled:opacity-40 dark:text-slate-300"
+        >
+          ‹ Prev
+        </button>
+        <span className="text-sm text-[#667085] dark:text-slate-400">
+          {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          aria-label="Go to next page"
+          className="text-sm font-medium text-[#2D7597] disabled:opacity-40"
+        >
+          Next ›
+        </button>
+      </div>
+    );
+  }
 
   return (
     <tr className="border-t border-[#eaecf0] dark:border-slate-700">

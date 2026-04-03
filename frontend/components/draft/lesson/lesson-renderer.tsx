@@ -19,6 +19,10 @@ import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
 import { BlockNoteEditor } from "./blocknote-editor";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
+import { DatasetProvider } from "@/lib/contexts/dataset-context";
+import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
+import type { Dataset } from "@/types";
 
 export interface BaseBlock {
   __component: string;
@@ -43,9 +47,14 @@ export interface OpenEndedQuizBlock extends BaseBlock {
 interface LessonRendererProps {
   lesson: Lesson;
   dropletSlug: string;
+  datasets?: Dataset[];
 }
 
-export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
+export function LessonRenderer({
+  lesson,
+  dropletSlug,
+  datasets = [],
+}: LessonRendererProps) {
   const router = useRouter();
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
@@ -320,6 +329,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             ],
           };
           break;
+        case "Slide Break":
+          newBlock = {
+            __component: "droplets.generic",
+            content: SLIDE_BREAK_MARKER,
+          };
+          break;
         default:
           return;
       }
@@ -455,11 +470,17 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             <p className="mb-4 text-center text-sm text-slate-500">
               BlockNote Editor - Changes saved automatically
             </p>
-            <BlockNoteEditor
-              key={`editor-${lesson.id}`}
-              initialContent={lesson.blocksV2 as unknown as BlockNoteBlock[]}
-              onChange={debounceUpdateV2}
-            />
+            <DatasetProvider datasets={datasets}>
+              <PyodideProvider>
+                <BlockNoteEditor
+                  key={`editor-${lesson.id}`}
+                  initialContent={
+                    lesson.blocksV2 as unknown as BlockNoteBlock[]
+                  }
+                  onChange={debounceUpdateV2}
+                />
+              </PyodideProvider>
+            </DatasetProvider>
           </div>
         </div>
       )}

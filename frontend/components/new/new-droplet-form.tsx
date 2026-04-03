@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { FocusArea, DropletType } from "@/types";
+import { FocusArea, DropletType, DropletDifficulty } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { RadioSelect } from "./radio-select";
@@ -55,6 +55,7 @@ export function CreateDropletForm({
   const [dropletName, setDropletName] = useState<string>("");
   const [focusAreaValue, setFocusAreaValue] = useState<string>("");
   const [typeValue, setTypeValue] = useState<string>("");
+  const [difficultyValue, setDifficultyValue] = useState<string>("");
   const initArr1: string[] = [""];
   const [learningObjectives, setLearningObjectives] = useState(initArr1);
 
@@ -72,6 +73,7 @@ export function CreateDropletForm({
     dropletName,
     focusAreaValue,
     typeValue,
+    difficultyValue,
     selectedTags,
     learningObjectives,
   ]);
@@ -84,6 +86,7 @@ export function CreateDropletForm({
       name: normalizedName,
       focusArea: focusAreaValue as FocusArea,
       type: typeValue as DropletType,
+      difficulty: difficultyValue as DropletDifficulty,
       tagIds: selectedTags.map((tag) => tag.id),
       learningObjectives: learningObjectives.filter(
         (objective) => objective.trim() !== "",
@@ -94,6 +97,7 @@ export function CreateDropletForm({
       !data.name ||
       !data.focusArea ||
       !data.type ||
+      !data.difficulty ||
       data.tagIds.length === 0 ||
       data.learningObjectives.length === 0
     ) {
@@ -179,6 +183,9 @@ export function CreateDropletForm({
   const focusAreaFilter = DROPLET_FILTERS.find(
     (filter) => filter.name === "focusArea",
   );
+  const difficultyFilter = DROPLET_FILTERS.find(
+    (filter) => filter.name === "difficulty",
+  );
 
   return (
     <form
@@ -249,6 +256,35 @@ export function CreateDropletForm({
               setSelected={setTypeValue}
               firstTime={true}
             />
+            {difficultyFilter && (
+              <Select
+                key={difficultyFilter.name}
+                name={difficultyFilter.name}
+                value={difficultyValue}
+                onValueChange={setDifficultyValue}
+              >
+                <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
+                  <SelectLabel className="pb-2 pl-0">
+                    {difficultyFilter.label}{" "}
+                    <span className="text-red-500">*</span>
+                  </SelectLabel>
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder="Select..."
+                      className="placeholder:text-slate-400"
+                    />
+                  </SelectTrigger>
+                </SelectGroup>
+
+                <SelectContent>
+                  {difficultyFilter.options.map((option) => (
+                    <SelectItem value={option.value} key={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="xs:flex-col flex items-start justify-start gap-x-10 gap-y-8 lg:flex-row">
             <div className="xs:w-full lg:w-1/2">

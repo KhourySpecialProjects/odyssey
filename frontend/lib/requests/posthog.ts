@@ -269,6 +269,40 @@ export async function fetchWeeklyNewUsers(): Promise<
   }
 }
 
+export async function fetchLessonScrollDepth(
+  dropletId: number,
+  lessonIds: number[],
+): Promise<Map<number, Map<number, number>>> {
+  if (lessonIds.length === 0) return new Map();
+  try {
+    const rows = await runHogQLQuery(
+      `SELECT
+         JSONExtractInt(properties, 'lesson_id') AS lesson_id,
+         JSONExtractInt(properties, 'percent') AS pct,
+         count(DISTINCT distinct_id) AS users
+       FROM events
+       WHERE event = 'lesson_scroll_depth'
+         AND JSONExtractInt(properties, 'droplet_id') = ${dropletId}
+         AND JSONExtractInt(properties, 'lesson_id') IN (${lessonIds.join(", ")})
+       GROUP BY lesson_id, pct`,
+    );
+    if (!rows) return new Map();
+
+    const result = new Map<number, Map<number, number>>();
+    for (const [lessonId, pct, users] of rows as [number, number, number][]) {
+      if (!result.has(lessonId)) result.set(lessonId, new Map());
+      result.get(lessonId)!.set(pct, users);
+    }
+    return result;
+  } catch (e: unknown) {
+    console.error(
+      "PostHog Fetch Error (scroll depth):",
+      e instanceof Error ? e.message : e,
+    );
+    return new Map();
+  }
+}
+
 export async function fetchAvgSessionDuration(): Promise<
   { date: string; duration: number }[]
 > {

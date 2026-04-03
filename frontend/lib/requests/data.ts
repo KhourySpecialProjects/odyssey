@@ -16,7 +16,7 @@ export async function fetchDroplets() {
     while (true) {
       const query = qs.stringify({
         sort: ["id"],
-        fields: ["id", "name", "type", "slug", "isHidden"],
+        fields: ["id", "name", "type", "slug", "isHidden", "focusArea"],
         populate: {
           lessons: { fields: ["id", "name"] },
           tags: { fields: ["id", "name"] },

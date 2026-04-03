@@ -2,38 +2,46 @@
 
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { uppercaseFirstChar, getDifficultyBadgeColor, cn } from "@/lib/utils";
 import { X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { updateDroplet, createNewTag } from "@/lib/requests/droplet";
 import { useRouter } from "next/navigation";
-import type { Tag } from "@/types";
+import type { Tag, DropletDifficulty } from "@/types";
 import { Button } from "@/components/ui/button";
+import { DROPLET_FILTERS } from "@/lib/globals";
 
 type ClickableBadgesProps = {
   focusArea: string;
   type: string;
+  difficulty?: DropletDifficulty;
   dropletId: number;
   selectedTags: Tag[];
   availableTags: Tag[];
 };
 
-const focusAreaOptions = ["Personal", "Professional", "Academic"];
-const typeOptions = ["Skill", "Knowledge"];
+const getOptions = (name: string) =>
+  DROPLET_FILTERS.find((f) => f.name === name)!.options.map((o) => o.label);
+
+const focusAreaOptions = getOptions("focusArea");
+const typeOptions = getOptions("type");
+const difficultyOptions = getOptions("difficulty");
 
 export function ClickableBadges({
   focusArea,
   type,
+  difficulty,
   dropletId,
   selectedTags: initialSelectedTags,
   availableTags: initialAvailableTags,
 }: ClickableBadgesProps) {
   const [activePopup, setActivePopup] = useState<
-    "focusArea" | "type" | "addTag" | null
+    "focusArea" | "type" | "difficulty" | "addTag" | null
   >(null);
   const [isPending, startTransition] = useTransition();
   const [localFocusArea, setLocalFocusArea] = useState(focusArea);
   const [localType, setLocalType] = useState(type);
+  const [localDifficulty, setLocalDifficulty] = useState(difficulty);
   const [selectedTags, setSelectedTags] = useState(initialSelectedTags);
   const [availableTags, setAvailableTags] = useState(initialAvailableTags);
   const [tagSearchQuery, setTagSearchQuery] = useState("");
@@ -41,14 +49,19 @@ export function ClickableBadges({
   const [newTagName, setNewTagName] = useState("");
   const router = useRouter();
 
-  const handleSelect = async (variant: "focusArea" | "type", value: string) => {
+  const handleSelect = async (
+    variant: "focusArea" | "type" | "difficulty",
+    value: string,
+  ) => {
     setActivePopup(null);
 
     // Optimistic update
     if (variant === "focusArea") {
       setLocalFocusArea(value);
-    } else {
+    } else if (variant === "type") {
       setLocalType(value);
+    } else {
+      setLocalDifficulty(value.toLowerCase() as DropletDifficulty);
     }
 
     // Call update function
@@ -59,23 +72,33 @@ export function ClickableBadges({
         });
 
         if (result.ok) {
-          toast.success(
-            `${variant === "focusArea" ? "Focus area" : "Type"} updated successfully`,
-          );
+          const label =
+            variant === "focusArea"
+              ? "Focus area"
+              : variant === "type"
+                ? "Type"
+                : "Difficulty";
+          toast.success(`${label} updated successfully`);
           router.refresh();
         } else {
           throw new Error(result.error || "Update failed");
         }
       } catch (error) {
         console.error(`Error updating ${variant}:`, error);
-        toast.error(
-          `Failed to update ${variant === "focusArea" ? "focus area" : "type"}`,
-        );
+        const label =
+          variant === "focusArea"
+            ? "focus area"
+            : variant === "type"
+              ? "type"
+              : "difficulty";
+        toast.error(`Failed to update ${label}`);
         // Revert optimistic update on error
         if (variant === "focusArea") {
           setLocalFocusArea(focusArea);
-        } else {
+        } else if (variant === "type") {
           setLocalType(type);
+        } else {
+          setLocalDifficulty(difficulty);
         }
       }
     });
@@ -299,6 +322,65 @@ export function ClickableBadges({
           </Badge>
         </button>
       ))}
+
+      <div className="relative">
+        <button
+          className="h-full"
+          onClick={() => setActivePopup("difficulty")}
+          disabled={isPending}
+        >
+          <Badge
+            className={cn(
+              "h-full border border-slate-300 text-black hover:opacity-80 dark:text-white",
+              localDifficulty
+                ? getDifficultyBadgeColor(localDifficulty.toLowerCase())
+                : "bg-slate-200 dark:bg-slate-600",
+            )}
+          >
+            {localDifficulty ? (
+              uppercaseFirstChar(localDifficulty.toLowerCase())
+            ) : (
+              <>
+                No Difficulty <span className="text-red-500">*</span>
+              </>
+            )}
+          </Badge>
+        </button>
+
+        {activePopup === "difficulty" && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setActivePopup(null)}
+            />
+
+            <div className="absolute z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Difficulty
+                </h3>
+                <button
+                  onClick={() => setActivePopup(null)}
+                  className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="p-2">
+                {difficultyOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => handleSelect("difficulty", option)}
+                    className="w-full rounded px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="relative h-full p-0">
         <button

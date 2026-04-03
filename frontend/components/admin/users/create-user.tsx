@@ -110,14 +110,14 @@ export function CreateUser() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#2D7597] text-white hover:bg-[#255e78]">
-          <IconPlus className="mr-1 h-5 w-5" />
+        <Button className="gap-1 bg-[#2D7597] text-white hover:bg-[#255e78]">
+          <IconPlus className="h-5 w-5" stroke={2.25} />
           Create User
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0">
         <DialogTitle className="sr-only">Create User</DialogTitle>
-        <DialogClose className="absolute top-4 right-4 z-10 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+        <DialogClose className="absolute top-7 right-7 z-10 rounded-full p-1.5 text-[#c1c7d0] transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
           <IconX className="h-5 w-5" />
         </DialogClose>
         <div className="px-14 py-10">
@@ -143,12 +143,12 @@ export function CreateUser() {
                     handleAddSingleUser();
                   }
                 }}
-                className="h-[44px] flex-1 rounded-[30px] border-2 border-[#efeff0] bg-[#fcfcfd] px-5 text-[16px] text-slate-900 outline-none placeholder:text-[#667085] focus:border-[#2D7597]"
+                className="h-[44px] flex-1 rounded-[30px] border border-[#efeff0] bg-[#fcfcfd] px-5 text-[16px] text-slate-900 outline-none placeholder:text-[#667085] focus:border-[#2D7597]"
               />
               <button
                 onClick={handleAddSingleUser}
                 disabled={singleLoading || !singleEmail.trim()}
-                className="flex h-[44px] w-[121px] items-center justify-center gap-[6px] rounded-[8px] border border-[#2D7597] bg-[#2D7597] text-[16px] font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:opacity-50"
+                className="flex h-[44px] w-[121px] items-center justify-center gap-[6px] rounded-[8px] border border-[#2D7597] bg-[#2D7597] text-[16px] font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:pointer-events-none disabled:opacity-50"
               >
                 <IconPlus className="h-5 w-5" />
                 {singleLoading ? "Adding..." : "Add User"}
@@ -171,15 +171,23 @@ export function CreateUser() {
               onChange={(e) => setBatchEmails(e.target.value)}
               placeholder="Enter email addresses separated by commas or new lines."
               rows={4}
-              className="mt-4 w-full rounded-[30px] border-2 border-[#efeff0] bg-[#fcfcfd] px-5 py-4 text-[16px] text-slate-900 outline-none placeholder:text-[#667085] focus:border-[#2D7597]"
+              className="mt-4 w-full rounded-[30px] border border-[#efeff0] bg-[#fcfcfd] px-5 py-4 text-[16px] text-slate-900 outline-none placeholder:text-[#667085] focus:border-[#2D7597]"
             />
 
             {/* Drag & Drop area */}
             <div
+              role="button"
+              tabIndex={0}
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
-              className="mt-3 flex h-[56px] cursor-pointer items-center gap-[10px] rounded-[30px] border-[3px] border-dashed border-[#efeff0] bg-[#fcfcfd] px-5 transition-colors hover:border-[#2D7597]"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              className="mt-3 flex h-[56px] cursor-pointer items-center gap-[10px] rounded-[30px] border border-dashed border-[#efeff0] bg-[#fcfcfd] px-5 transition-colors hover:border-[#2D7597]"
             >
               <IconUpload className="h-5 w-5 text-[#667085]" />
               <p className="text-[16px] text-[#667085]">
@@ -203,7 +211,7 @@ export function CreateUser() {
               <button
                 onClick={handleAddBatchUsers}
                 disabled={batchLoading || !batchEmails.trim()}
-                className="flex h-[44px] w-[127px] items-center justify-center gap-[6px] rounded-[8px] border border-[#2D7597] bg-[#2D7597] text-[16px] font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:opacity-50"
+                className="flex h-[44px] w-[127px] items-center justify-center gap-[6px] rounded-[8px] border border-[#2D7597] bg-[#2D7597] text-[16px] font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:pointer-events-none disabled:opacity-50"
               >
                 <IconPlus className="h-5 w-5" />
                 {batchLoading ? "Adding..." : "Add Users"}

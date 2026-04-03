@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,8 @@ import { UserDropdown } from "./user-dropdown";
 import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
+import { NAV_ITEMS as ADMIN_NAV_ITEMS } from "@/components/admin/admin-nav";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 export function Header({
@@ -27,11 +30,13 @@ export function Header({
   authorizedUser: AuthorizedUser | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith("/admin");
 
+  const generalConfig = getGeneralConfig(user);
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
-  const generalConfig = getGeneralConfig(user);
 
   const handleCloseSheet = () => {
     setIsOpen(false);
@@ -53,9 +58,12 @@ export function Header({
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
+              <SheetContent
+                side="left"
+                className="flex flex-col overflow-y-auto"
+              >
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <nav className="grid gap-6">
+                <nav className="grid gap-4">
                   <Link href="/">
                     <Logo width={165} height={45} />
                     <span className="sr-only">
@@ -68,8 +76,39 @@ export function Header({
                     onLinkClick={handleCloseSheet}
                   />
 
-                  <DarkMode className="sm:hidden" />
+                  {isAdminRoute && (
+                    <>
+                      <div className="h-px bg-slate-200 dark:bg-slate-700" />
+                      <ul className="flex flex-col space-y-1 text-lg">
+                        {ADMIN_NAV_ITEMS.map((item) => {
+                          const isActive =
+                            pathname === item.href ||
+                            (item.href !== "/admin" &&
+                              pathname.startsWith(item.href));
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                onClick={handleCloseSheet}
+                                className={cn(
+                                  "block rounded px-3 py-1.5",
+                                  isActive
+                                    ? "bg-sky-700 font-bold text-white"
+                                    : "text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700",
+                                )}
+                              >
+                                {item.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
                 </nav>
+                <div className="mt-auto pt-4 sm:hidden">
+                  <DarkMode />
+                </div>
               </SheetContent>
             </Sheet>
             <Link href="/" className="hidden w-max sm:block">

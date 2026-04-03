@@ -13,8 +13,11 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { writeFile, mkdir, unlink } from "node:fs/promises";
+import path from "node:path";
 import { createAuthorizedUser } from "./requests/authorized-user";
 import { creationRequestSchema } from "./validations/creation-request";
+import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
@@ -22,6 +25,9 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+const isLocal = process.env.NODE_ENV === "development";
+const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION || "us-east-2",
@@ -38,9 +44,16 @@ export async function uploadImage(formData: FormData) {
   try {
     const file = formData.get("image") as File;
     const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (isLocal) {
+      await mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
+      await writeFile(path.join(LOCAL_UPLOADS_DIR, fileName), buffer);
+      return { ok: true, error: null, url: `/uploads/${fileName}` };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const uploadParams = {
       Bucket: bucketName,
@@ -77,6 +90,15 @@ export async function createAuthorizedUserWithState(
 
 export async function deleteImage(fileName: string) {
   try {
+    if (isLocal) {
+      const resolved = path.resolve(LOCAL_UPLOADS_DIR, fileName);
+      if (!resolved.startsWith(LOCAL_UPLOADS_DIR + path.sep)) {
+        return { ok: false, error: "Invalid file path" };
+      }
+      await unlink(resolved);
+      return { ok: true, error: null };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
 
@@ -593,6 +615,103 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
   }
 }
 
+const MAX_NOTEBOOK_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Saves notebook JSON content to S3.
+ * Used for auto-saving .ipynb content extracted from the JupyterLite iframe.
+ * If existingUrl is provided, overwrites the file at that key; otherwise creates a new object.
+ * @param notebookJson - The .ipynb content as a JSON string
+ * @param existingUrl - Optional S3 URL to overwrite (avoids creating new objects on every save)
+ */
+export async function saveNotebookContent(
+  notebookJson: string,
+  existingUrl?: string,
+): Promise<{ ok: boolean; error: string | null; url: string | null }> {
+  try {
+    // Validate size before parsing (cheap check first)
+    if (Buffer.byteLength(notebookJson, "utf8") > MAX_NOTEBOOK_FILE_SIZE) {
+      return {
+        ok: false,
+        error: "Notebook size exceeds the 10MB limit.",
+        url: null,
+      };
+    }
+
+    // Validate JSON structure — must have "cells" array and "metadata" object
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(notebookJson);
+    } catch {
+      return {
+        ok: false,
+        error: "Invalid notebook: content is not valid JSON.",
+        url: null,
+      };
+    }
+
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !Array.isArray((parsed as Record<string, unknown>).cells) ||
+      typeof (parsed as Record<string, unknown>).metadata !== "object"
+    ) {
+      return {
+        ok: false,
+        error:
+          'Invalid notebook: must have a "cells" array and a "metadata" object.',
+        url: null,
+      };
+    }
+
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
+    const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
+
+    let s3Key: string;
+    let returnUrl: string;
+
+    if (existingUrl) {
+      // Extract S3 key from the existing URL
+      // URL format: {bucketUrl}/{rootPath}/notebooks/{filename}
+      const prefix = `${bucketUrl}/`;
+      s3Key = existingUrl.startsWith(prefix)
+        ? existingUrl.slice(prefix.length)
+        : existingUrl;
+      returnUrl = existingUrl;
+    } else {
+      const fileName = `${uuidv4()}.ipynb`;
+      s3Key = `${rootPath}/notebooks/${fileName}`;
+      returnUrl = `${bucketUrl}/${s3Key}`;
+    }
+
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: s3Key,
+      Body: Buffer.from(notebookJson, "utf8"),
+      ContentType: "application/json",
+    };
+
+    const response = await s3.send(new PutObjectCommand(uploadParams));
+    if (response["$metadata"].httpStatusCode !== 200) {
+      return {
+        ok: false,
+        error: "Failed to upload notebook to S3.",
+        url: null,
+      };
+    }
+
+    return { ok: true, error: null, url: returnUrl };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Failed to save notebook content.",
+      url: null,
+    };
+  }
+}
+
 /**
  * Fetches creation request for a specific user
  * @param userId - The ID of the authorized user
@@ -644,5 +763,68 @@ export async function fetchCreationRequestByUser(
   } catch (error) {
     console.error("Database Error:", error);
     return null;
+  }
+}
+
+const ALLOWED_DATASET_EXTENSIONS = new Set(["csv", "json", "xlsx"]);
+
+export async function uploadDataset(formData: FormData) {
+  const file = formData.get("file") as File | null;
+
+  if (!file || file.size === 0) {
+    return { ok: false, error: "No file provided.", url: null };
+  }
+
+  if (file.size > MAX_DATASET_FILE_SIZE) {
+    return {
+      ok: false,
+      error: "File exceeds the 25MB maximum size limit.",
+      url: null,
+    };
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!ALLOWED_DATASET_EXTENSIONS.has(extension)) {
+    return {
+      ok: false,
+      error: "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
+      url: null,
+    };
+  }
+
+  try {
+    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (isLocal) {
+      await mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
+      await writeFile(path.join(LOCAL_UPLOADS_DIR, fileName), buffer);
+      return { ok: true, error: null, url: `/uploads/${fileName}` };
+    }
+
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
+
+    const response = await s3.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: `${rootPath}/${fileName}`,
+        Body: buffer,
+        ContentType: file.type || "application/octet-stream",
+      }),
+    );
+
+    if (response["$metadata"].httpStatusCode !== 200) {
+      return { ok: false, error: "Failed to upload dataset.", url: null };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      url: `${process.env.AWS_S3_BUCKET_URL}/${rootPath}/${fileName}`,
+    };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "Failed to upload dataset.", url: null };
   }
 }

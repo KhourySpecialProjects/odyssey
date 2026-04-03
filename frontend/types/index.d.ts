@@ -5,6 +5,23 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
+export type DatasetFormat = "csv" | "json" | "xlsx";
+
+export type Dataset = {
+  id: number;
+  name: string;
+  format: DatasetFormat;
+  fileUrl: string;
+  fileSize: number;
+  rowCount: number;
+  columnCount: number;
+  columnNames: string[];
+  columnTypes: string[]; // "string" | "number" | "boolean" | "date" | "unknown"
+  droplet?: Droplet;
+};
+
+export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
+
 export type DropletStatus = "draft" | "edit" | "published";
 
 export type AnnouncementType =
@@ -122,6 +139,7 @@ export type Block =
       id?: number;
       sourceBlockIds?: number[]; // For grouped blocks - all source BlockNote block IDs
       _clientId?: string;
+      nextSlideLayout?: "default" | "two-columns";
     }
   | {
       __component: "droplets.expandable";
@@ -169,6 +187,17 @@ export type Block =
       editable: boolean;
       runnable: boolean;
       _clientId?: string;
+    }
+  | {
+      __component: "droplets.sandpack-block";
+      id?: number;
+      template: string;
+      files: string;
+      showPreview: boolean;
+      editable: boolean;
+      description?: string;
+      lockedFiles?: string;
+      _clientId?: string;
     };
 
 export type Lesson = {
@@ -210,6 +239,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
+  difficulty: DropletDifficulty;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
@@ -226,6 +256,7 @@ export type Droplet = {
   funFact?: string;
   averageRating?: number;
   usersFavorited?: AuthorizedUser[];
+  datasets?: Dataset[];
 };
 
 export type QuizAnswerOption = {

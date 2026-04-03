@@ -10,6 +10,27 @@ import {
   isContentEditor,
 } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import {
+  SLIDE_BREAK_MARKER,
+  SLIDE_BREAK_TYPE,
+} from "@/lib/blocknote/slide-break";
+import { autoFormatSlides } from "@/lib/actions/auto-format-slides";
 import { Droplet, Lesson, User } from "@/types";
 import {
   SettingsIcon,
@@ -17,10 +38,13 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Home,
+  Wand2,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useLayoutEffect, useState, useEffect } from "react";
+import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
@@ -67,6 +91,7 @@ export function Sidebar({
     | "isHidden"
     | "type"
     | "originalDropletId"
+    | "difficulty"
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {
@@ -81,9 +106,32 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isAutoFormatting, setIsAutoFormatting] = useState(false);
+  const [hasAutoFormatted, setHasAutoFormatted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`auto-formatted-${droplet.id}`) === "true";
+  });
+  const [showAutoFormatConfirm, setShowAutoFormatConfirm] = useState(false);
   const lessons = (dropletLessons || [])
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
+
+  const hasSlideBreaks = useMemo(
+    () =>
+      lessons.some((lesson) => {
+        if (lesson.blocksVersion === "v2" && lesson.blocksV2) {
+          return lesson.blocksV2.some(
+            (b: { type?: string }) => b.type === SLIDE_BREAK_TYPE,
+          );
+        }
+        return lesson.blocks?.some(
+          (b) =>
+            b.__component === "droplets.generic" &&
+            b.content === SLIDE_BREAK_MARKER,
+        );
+      }),
+    [lessons],
+  );
 
   useLayoutEffect(() => {
     const handleResize = () => {
@@ -113,6 +161,87 @@ export function Sidebar({
       setIsOpen(false);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  const handleAutoFormat = async () => {
+    setIsAutoFormatting(true);
+    try {
+      // Request current editor blocks via custom event
+      const blocks = await new Promise<Record<string, unknown>[]>((resolve) => {
+        let settled = false;
+        const timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("auto-format-blocks-response", handler);
+          resolve([]);
+        }, 2000);
+        const handler = (e: Event) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          window.removeEventListener("auto-format-blocks-response", handler);
+          resolve((e as CustomEvent).detail.blocks ?? []);
+        };
+        window.addEventListener("auto-format-blocks-response", handler);
+        window.dispatchEvent(new CustomEvent("auto-format-blocks-request"));
+      });
+
+      const allBlocks: {
+        index: number;
+        type: string;
+        textPreview: string;
+        hasImage: boolean;
+        imageUrl?: string;
+      }[] = [];
+
+      for (let i = 0; i < blocks.length; i++) {
+        const b = blocks[i];
+        const content = b.content as { text?: string }[] | undefined;
+        const props = b.props as { url?: string } | undefined;
+        const textContent =
+          content
+            ?.map((c) => c.text ?? "")
+            .join("")
+            .slice(0, 100) ?? "";
+
+        allBlocks.push({
+          index: i,
+          type: (b.type as string) ?? "unknown",
+          textPreview: textContent,
+          hasImage: b.type === "image",
+          imageUrl: props?.url,
+        });
+      }
+
+      if (allBlocks.length === 0) {
+        toast.error("No content found in the editor");
+        return;
+      }
+
+      const result = await autoFormatSlides(allBlocks);
+
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("auto-format-slides", {
+          detail: { operations: result.operations },
+        }),
+      );
+
+      setHasAutoFormatted(true);
+      localStorage.setItem(`auto-formatted-${droplet.id}`, "true");
+      toast.success(
+        `Auto-formatted: ${result.operations.filter((o) => o.type === "insert-slide-break").length} slide breaks inserted`,
+      );
+    } catch (err) {
+      console.error("Auto-format error:", err);
+      toast.error("Failed to auto-format slides");
+    } finally {
+      setIsAutoFormatting(false);
     }
   };
 
@@ -146,6 +275,16 @@ export function Sidebar({
         ...newLesson,
         orderIndex: dropletLessons.length,
       },
+    ]);
+  };
+
+  const addLessonsCallback = (newLessons: Lesson[]) => {
+    updateDropletLessons([
+      ...dropletLessons,
+      ...newLessons.map((lesson, i) => ({
+        ...lesson,
+        orderIndex: dropletLessons.length + i,
+      })),
     ]);
   };
 
@@ -261,10 +400,105 @@ export function Sidebar({
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("/d/")[1]}`}
+                href={`/d/${droplet.slug}`}
               >
                 Preview
               </Link>
+              {hasAutoFormatted ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                      >
+                        <Wand2 className="h-4 w-4" />
+                        Auto-Format Lesson
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      Auto-format can only be used once per droplet
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowAutoFormatConfirm(true)}
+                    disabled={isAutoFormatting}
+                    className="flex items-center justify-center gap-2 rounded-full bg-amber-400 px-6 py-2 text-center text-black transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700"
+                  >
+                    {isAutoFormatting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Formatting...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4" />
+                        Auto-Format Lesson
+                      </>
+                    )}
+                  </button>
+                  <AlertDialog
+                    open={showAutoFormatConfirm}
+                    onOpenChange={setShowAutoFormatConfirm}
+                  >
+                    <AlertDialogContent className="max-w-md">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Auto-Format Lesson</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will use AI to automatically insert slide breaks
+                          and set image layouts in the currently open lesson.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                          This action can only be used once per droplet. You can
+                          manually adjust slide breaks afterward.
+                        </p>
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleAutoFormat()}
+                          className="bg-amber-500 text-black hover:bg-amber-600"
+                        >
+                          <Wand2 className="mr-2 h-4 w-4" />
+                          Format Slides
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+              {hasSlideBreaks ? (
+                <Link
+                  className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
+                  href={`/d/${droplet.slug}/present`}
+                  target="_blank"
+                >
+                  Present
+                </Link>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="w-full cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                      >
+                        Present
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      No presentation blocks in sight
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
 
               {/* Edit Draft - Special handling */}
               {droplet.originalDropletId && droplet.status === "draft" && (
@@ -382,7 +616,11 @@ export function Sidebar({
 
             {/* Add lesson section */}
             <MantineProvider>
-              <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
+              <AddLesson
+                droplet={droplet}
+                onAddLesson={addLessonCallback}
+                onAddLessons={addLessonsCallback}
+              />
             </MantineProvider>
             {/* Add existing lesson section - NEW */}
             <AddExistingLesson

@@ -63,6 +63,14 @@
   color: white;
 }
 
+/* Prevent the global dark-mode color override from breaking Sandpack/CodeMirror syntax highlighting */
+.dark .sp-wrapper pre,
+.dark .sp-wrapper pre *,
+.dark .sp-wrapper code,
+.dark .sp-wrapper code * {
+  color: unset;
+}
+
 /* Specific fix for callout bullet list items in dark mode */
 .dark .pt-3.pl-3 * {
   color: #334155 !important;
@@ -110,4 +118,15 @@
   to {
     --border-angle: 360deg;
   }
+}
+
+/* Fix CodeMirror text selection visibility in Sandpack's light theme.
+   The default light theme uses a near-white selection that disappears
+   against the white editor background. */
+html:not(.dark) .sp-wrapper .cm-selectionBackground,
+html:not(.dark) .sp-wrapper .cm-focused .cm-selectionBackground {
+  background: #b3d4fd !important;
+}
+html:not(.dark) .sp-wrapper .cm-editor ::selection {
+  background: #b3d4fd;
 }

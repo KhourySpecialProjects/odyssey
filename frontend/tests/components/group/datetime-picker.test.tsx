@@ -45,7 +45,8 @@ describe("MUIDateTimePicker", () => {
       render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
 
       const picker = screen.getByTestId("picker");
-      expect(picker).toHaveValue("03/20/2024 11:00 AM");
+      // With TZ=UTC, 15:00:00.000Z displays as 3:00 PM
+      expect(picker).toHaveValue("03/20/2024 03:00 PM");
     });
   });
 });
