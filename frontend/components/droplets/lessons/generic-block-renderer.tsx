@@ -40,9 +40,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onDeleteHighlight,
   onNote,
   enrollmentId,
-  expanded,
-  setExpanded,
-  activeBlock,
+  expanded: _expanded,
+  setExpanded: _setExpanded,
+  activeBlock: _activeBlock,
   setActiveBlock,
   author = false,
 }) => {

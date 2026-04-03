@@ -36,7 +36,18 @@ export function AddLesson({
   availableDroplets = [],
   currentLessonCount = 0,
 }: {
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "difficulty">;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "difficulty"
+    | "type"
+    | "focusArea"
+    | "learningObjectives"
+    | "status"
+  >;
   onAddLesson: (newLesson: Lesson) => void;
   availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   currentLessonCount?: number;

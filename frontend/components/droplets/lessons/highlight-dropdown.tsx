@@ -2,7 +2,6 @@
 
 import {
   IconHelpCircle,
-  IconHighlight,
   IconNotebook,
   IconNotes,
   IconTrash,

@@ -35,7 +35,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { duplicateDroplet } from "@/lib/requests/droplet";
-import { Separator } from "../ui/separator";
 import { toast } from "sonner";
 
 export default function Sidebar({

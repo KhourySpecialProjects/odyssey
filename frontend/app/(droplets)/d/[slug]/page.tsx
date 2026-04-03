@@ -6,7 +6,6 @@ import {
   uppercaseFirstChar,
   getDifficultyBadgeColor,
   cn,
-  isAuthorizedUserAdmin,
 } from "@/lib/utils";
 import { getTagColors } from "@/lib/tag-colors";
 import { IconTarget, IconBook2 } from "@tabler/icons-react";
@@ -48,8 +47,6 @@ export default async function DropletRoute({ params }: Props) {
   if (!droplet) return notFound();
 
   let isEnrolled = false;
-  let isAuthor = false;
-  const isAdmin = isAuthorizedUserAdmin(user?.roles);
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
@@ -60,10 +57,6 @@ export default async function DropletRoute({ params }: Props) {
     isEnrolled = enrollments.some(
       (e) => e.droplet && e.droplet.id === droplet.id,
     );
-    isAuthor =
-      droplet.authorized_users
-        ?.map((a: { id: number }) => a.id)
-        .includes(authorizedUser.id) ?? false;
   }
 
   return (
@@ -95,7 +88,7 @@ export default async function DropletRoute({ params }: Props) {
               <Badge
                 variant="outline"
                 className={cn(
-                  "border-0 text-sm",
+                  "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
                   getDifficultyBadgeColor(droplet.difficulty),
                 )}
               >
