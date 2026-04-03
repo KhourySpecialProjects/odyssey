@@ -43,10 +43,25 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
-      <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900",
+        !isAdminRoute && "xl:px-6",
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-full items-center justify-between px-4 py-3",
+          !isAdminRoute && "mx-auto max-w-screen-xl",
+        )}
+      >
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
-          <div className="flex flex-row gap-4">
+          <div
+            className={cn(
+              "flex flex-row gap-4",
+              isAdminRoute && "xl:w-64 xl:shrink-0 xl:justify-center",
+            )}
+          >
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild role="banner">
                 <Button
@@ -133,7 +148,12 @@ export function Header({
             />
           </nav>
 
-          <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
+          <div
+            className={cn(
+              "flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2",
+              isAdminRoute && "xl:pr-6",
+            )}
+          >
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />

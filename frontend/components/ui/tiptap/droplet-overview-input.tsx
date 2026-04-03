@@ -6,21 +6,21 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
-import { useCallback } from "react";
-import { IconLink, IconLinkOff } from "@tabler/icons-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useCallback, useEffect } from "react";
 
 export function DropletOverviewInput({
   initialContent,
   updateContent,
+  editorActionsRef,
+  onIsLinkChange,
 }: {
   initialContent: string;
   updateContent: (content: string) => void;
+  editorActionsRef?: React.RefObject<{
+    setLink: () => void;
+    unsetLink: () => void;
+  } | null>;
+  onIsLinkChange?: (isLink: boolean) => void;
 }) {
   const editor = useEditor({
     editable: true,
@@ -102,50 +102,31 @@ export function DropletOverviewInput({
     },
   });
 
-  // Now it's safe to return early
+  // Wire up actions ref and isLink callback for parent use
+  useEffect(() => {
+    if (!editor) return;
+    if (editorActionsRef) {
+      editorActionsRef.current = {
+        setLink,
+        unsetLink: () => editor.chain().focus().unsetLink().run(),
+      };
+    }
+  }, [editor, setLink, editorActionsRef]);
+
+  useEffect(() => {
+    onIsLinkChange?.(editorState?.isLink ?? false);
+  }, [editorState?.isLink, onIsLinkChange]);
+
   if (!editor) {
     return null;
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <TooltipProvider>
-        <div className="mt-2 mb-2 flex h-7 items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={setLink}
-                className={`flex h-7 w-7 items-center justify-center rounded border transition-colors ${
-                  editorState?.isLink
-                    ? "border-blue-600 bg-blue-500 text-white"
-                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-                }`}
-              >
-                <IconLink className="h-4 w-4" stroke={1.8} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Set link</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => editor.chain().focus().unsetLink().run()}
-                disabled={!editorState?.isLink}
-                className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-              >
-                <IconLinkOff className="h-4 w-4" stroke={1.8} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Unset link</TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-      <EditorContent
-        className="mt-4 flex-1"
-        role="textbox"
-        name="droplet-overview"
-        editor={editor}
-      />
-    </div>
+    <EditorContent
+      className="flex-1"
+      role="textbox"
+      name="droplet-overview"
+      editor={editor}
+    />
   );
 }

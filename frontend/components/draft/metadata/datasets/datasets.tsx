@@ -36,7 +36,7 @@ export function Datasets({
     }
 
     const formData = new FormData();
-    formData.append("dataset", file);
+    formData.append("file", file);
     const result = await uploadDataset(formData);
 
     if (!result.ok || !result.url) {
@@ -107,7 +107,7 @@ export function Datasets({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         Datasets
       </h2>
-      <p className="mt-1 text-slate-500 dark:text-slate-300">
+      <p className="mt-1 text-slate-600 dark:text-slate-300">
         Upload data files for use in notebook code blocks (CSV, JSON, or XLSX)
       </p>
 
@@ -132,7 +132,7 @@ export function Datasets({
               "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors",
               isDragging
                 ? "border-sky-400 bg-sky-50 dark:border-sky-500 dark:bg-sky-950/30"
-                : "border-slate-300 bg-slate-50 hover:border-[#2D7597] dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-[#2D7597]",
+                : "border-[#D0D5DD] bg-[#fcfcfd] hover:border-[#2D7597] dark:border-slate-600 dark:bg-slate-800 dark:hover:border-[#2D7597]",
               isPending && "pointer-events-none opacity-60",
             )}
             onClick={() => inputRef.current?.click()}
@@ -146,7 +146,7 @@ export function Datasets({
             onDragLeave={() => setIsDragging(false)}
             onDrop={onDrop}
           >
-            <IconUpload className="h-6 w-6 text-slate-500 dark:text-slate-500" />
+            <IconUpload className="h-6 w-6 text-slate-600 dark:text-slate-300" />
             <p className="text-sm text-slate-600 dark:text-slate-300">
               Drag &amp; drop a file here, or{" "}
               <span className="text-sky-600 underline dark:text-sky-400">
@@ -168,9 +168,9 @@ export function Datasets({
         />
 
         {/* Dataset list */}
-        <div className="rounded-lg border border-slate-200 bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
+        <div className="rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
           {datasets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-500 dark:text-slate-500">
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
               <IconFile className="h-6 w-6" />
               <p className="text-sm">No datasets uploaded yet</p>
             </div>

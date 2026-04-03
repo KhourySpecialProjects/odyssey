@@ -69,7 +69,7 @@ export function NextSteps({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         Learn More
       </h2>
-      <p className="mt-1 text-slate-500 dark:text-slate-300">
+      <p className="mt-1 text-slate-600 dark:text-slate-300">
         To further your understanding, we recommend exploring:
       </p>
       <div className="mt-4 rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">

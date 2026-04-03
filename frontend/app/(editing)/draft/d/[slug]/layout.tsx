@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { AuthorizedUser, Droplet } from "@/types";
-import { Sidebar } from "@/components/draft/sidebar";
+import { DraftLayoutShell } from "@/components/draft/draft-layout-shell";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getDroplets } from "@/lib/requests/droplet";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -70,25 +70,12 @@ export default async function CheckPermission({ params, children }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
-      <Sidebar
-        droplet={droplet}
-        user={user}
-        availableDroplets={availableDroplets}
-      />
-      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg xl:pl-64">
-        {!droplet.inReview ? (
-          <div className="bg-red-100 p-1 text-center dark:bg-red-100 dark:text-black">
-            ** Information that you enter will be saved automatically. **
-          </div>
-        ) : (
-          <div className="bg-orange-300 p-1 text-center dark:bg-orange-300 dark:text-black">
-            ** This droplet is currently in review **
-          </div>
-        )}
-
-        {children}
-      </main>
-    </div>
+    <DraftLayoutShell
+      droplet={droplet}
+      user={user}
+      availableDroplets={availableDroplets}
+    >
+      {children}
+    </DraftLayoutShell>
   );
 }

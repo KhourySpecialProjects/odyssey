@@ -9,10 +9,16 @@ import {
   IconLayoutSidebarLeftExpand,
   IconLayoutSidebarLeftCollapse,
   IconPencil,
+  IconPresentation,
   IconSearch,
-  IconGripVertical,
-  IconClipboardList,
+  IconListCheck,
 } from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
@@ -38,14 +44,17 @@ export default function Sidebar({
   droplet,
   completedLessonIds = [],
   enrollmentId,
+  expanded,
+  setExpanded,
 }: {
   user?: User | null;
   author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "lessons" | "status" | "id">;
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
+  expanded: boolean;
+  setExpanded: (v: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isCreatingDraft, setIsCreatingDraft] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(69);
@@ -54,6 +63,7 @@ export default function Sidebar({
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
+  const canPresent = isEnrolled && (droplet.lessons?.length ?? 0) > 0;
 
   const activeLinkClasses =
     "relative flex h-[44px] w-full items-center rounded-[78px] bg-[#2D7597] text-white transition-colors";
@@ -169,7 +179,7 @@ export default function Sidebar({
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
-          className="text-lg font-bold"
+          className="text-base font-bold"
         >
           {droplet.name}
         </Link>
@@ -216,6 +226,30 @@ export default function Sidebar({
                     <IconPencil className="h-5 w-5" />
                   </button>
                 )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {canPresent ? (
+                        <Link
+                          href={`/d/${droplet.slug}/present`}
+                          target="_blank"
+                          className="p-2 text-[#344054] transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                        >
+                          <IconPresentation className="h-5 w-5" />
+                        </Link>
+                      ) : (
+                        <button
+                          aria-disabled="true"
+                          onClick={(e) => e.preventDefault()}
+                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                        >
+                          <IconPresentation className="h-5 w-5" />
+                        </button>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Present</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <button
                   onClick={() => setExpanded(false)}
                   className="p-2 text-[#344054] hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
@@ -242,12 +276,14 @@ export default function Sidebar({
                   >
                     <IconSearch
                       className={cn(
-                        "ml-4 h-5 w-5 shrink-0",
+                        "ml-4 h-4 w-4 shrink-0",
                         pathname === `/d/${droplet.slug}` ? "text-white" : "",
                       )}
                       stroke={1.8}
                     />
-                    <span className="ml-2 text-lg leading-none">Overview</span>
+                    <span className="ml-2 text-base leading-none">
+                      Overview
+                    </span>
                   </Link>
                 </li>
 
@@ -284,16 +320,15 @@ export default function Sidebar({
                           }}
                           aria-disabled={!!isLocked}
                         >
-                          <IconGripVertical
+                          <span
                             className={cn(
-                              "ml-4 h-4 w-4 shrink-0",
+                              "ml-7 h-4 w-px shrink-0 self-center rounded-full",
                               pathname === `/d/${droplet.slug}/${lesson.slug}`
-                                ? "text-white"
-                                : "text-slate-400",
+                                ? "bg-white"
+                                : "bg-slate-300 dark:bg-slate-600",
                             )}
-                            stroke={1.8}
                           />
-                          <span className="pl-2 text-base leading-snug">
+                          <span className="pl-3 text-base leading-snug">
                             {lesson.name}
                           </span>
                           {isLocked && (
@@ -316,16 +351,16 @@ export default function Sidebar({
                         : inactiveLinkClasses
                     }
                   >
-                    <IconClipboardList
+                    <IconListCheck
                       className={cn(
-                        "ml-4 h-5 w-5 shrink-0",
+                        "ml-4 h-4 w-4 shrink-0",
                         pathname === `/d/${droplet.slug}/recap`
                           ? "text-white"
                           : "",
                       )}
                       stroke={1.8}
                     />
-                    <span className="ml-2 text-lg leading-none">Recap</span>
+                    <span className="ml-2 text-base leading-none">Recap</span>
                   </Link>
                 </li>
               </ul>

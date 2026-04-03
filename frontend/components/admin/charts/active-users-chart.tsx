@@ -97,9 +97,9 @@ export function ActiveUsersChart({
           : `in the last ${timeframe} days`;
 
   return (
-    <Card className="flex h-[320px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] md:h-[396px] dark:bg-slate-800">
+    <Card className="flex h-[320px] flex-col overflow-hidden rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] md:h-[396px] dark:border-slate-600 dark:bg-slate-800">
       <CardHeader className="flex-row items-start justify-between px-6 pt-5 pb-1">
-        <CardTitle className="text-[20px] font-medium dark:text-white">
+        <CardTitle className="text-[20px] font-normal dark:text-white">
           Active Users
         </CardTitle>
         <TimeframeSelector

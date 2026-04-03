@@ -8,12 +8,7 @@ import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import {
-  isContentCreator,
-  isContentEditor,
-  isAuthorizedUserFaculty,
-  isAuthorizedUserAdmin,
-} from "@/lib/utils";
+import { isContentCreator } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
@@ -22,10 +17,6 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
-import Link from "next/link";
-import { DatasetUpload } from "@/components/draft/dataset/dataset-upload";
-import { getDatasetsByDropletId } from "@/lib/requests/dataset";
 
 type Props = {
   params: Promise<Params>;
@@ -65,8 +56,6 @@ export default async function Droplet({ params }: Props) {
     }),
     getTags(),
   ]);
-
-  const datasets = droplet ? await getDatasetsByDropletId(droplet.id) : [];
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
@@ -215,20 +204,8 @@ export default async function Droplet({ params }: Props) {
           />
 
           <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
-
-          <section className="w-full max-w-2xl">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Datasets
-            </h2>
-            <p className="text-slate-500 dark:text-slate-300">
-              Upload data files for use in notebook code blocks (CSV, JSON, or
-              XLSX)
-            </p>
-            <div className="mt-4">
-              <DatasetUpload dropletId={droplet.id} datasets={datasets} />
-            </div>
-          </section>
         </div>
+        <div className="pb-16" />
       </div>
     </>
   );

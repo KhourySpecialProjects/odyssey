@@ -43,20 +43,24 @@ export function Authors({
       </h2>
 
       {selectedUsers.length > 0 && (
-        <ul className="mb-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
+        <ul className="mb-4 flex flex-col gap-3">
           {selectedUsers.map((user) => (
-            <AuthorCard
+            <li
               key={user.id}
-              author={user}
-              {...user}
-              inDraft={true}
-              onRemove={() => {
-                const newSelectedIds = currentSelectedIds.filter(
-                  (id) => id !== user.id,
-                );
-                handleSelectionChange(newSelectedIds);
-              }}
-            />
+              className="rounded-lg border border-[#D0D5DD] bg-white dark:border-slate-600 dark:bg-slate-900"
+            >
+              <AuthorCard
+                author={user}
+                {...user}
+                inDraft={true}
+                onRemove={() => {
+                  const newSelectedIds = currentSelectedIds.filter(
+                    (id) => id !== user.id,
+                  );
+                  handleSelectionChange(newSelectedIds);
+                }}
+              />
+            </li>
           ))}
         </ul>
       )}

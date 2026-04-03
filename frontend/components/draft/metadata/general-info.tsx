@@ -22,12 +22,12 @@ export function GeneralInfo({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         General Info
       </h2>
-      <p className="mt-1 text-slate-500 dark:text-slate-300">
+      <p className="mt-1 text-slate-600 dark:text-slate-300">
         Information that users will see when they view the droplet{" "}
       </p>
-      <div className="mt-4 flex flex-col gap-6">
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="mb-2 text-sm text-slate-900 dark:text-white">
+          <h2 className="mb-2 text-sm text-slate-600 dark:text-slate-300">
             Prerequisite Droplets
           </h2>
           <Selection
@@ -39,7 +39,7 @@ export function GeneralInfo({
         </div>
 
         <div>
-          <h2 className="mb-2 text-sm text-slate-900 dark:text-white">
+          <h2 className="mb-2 text-sm text-slate-600 dark:text-slate-300">
             Similar Droplets
           </h2>
           <Selection

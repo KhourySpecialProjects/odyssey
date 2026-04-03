@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar, getDifficultyBadgeColor, cn } from "@/lib/utils";
 import { getTagColors } from "@/lib/tag-colors";
 import { X, Plus } from "lucide-react";
@@ -348,12 +347,12 @@ export function ClickableBadges({
           onClick={() => setActivePopup("difficulty")}
           disabled={isPending}
         >
-          <Badge
+          <span
             className={cn(
-              "h-full border border-slate-300 text-black hover:opacity-80 dark:text-white",
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
               localDifficulty
                 ? getDifficultyBadgeColor(localDifficulty.toLowerCase())
-                : "bg-slate-200 dark:bg-slate-600",
+                : "bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300",
             )}
           >
             {localDifficulty ? (
@@ -363,7 +362,7 @@ export function ClickableBadges({
                 No Difficulty <span className="text-red-500">*</span>
               </>
             )}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "difficulty" && (

@@ -1,4 +1,4 @@
-import Sidebar from "@/components/droplets/sidebar";
+import { DropletLayoutShell } from "@/components/droplets/droplet-layout-shell";
 import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
@@ -69,17 +69,14 @@ export default async function RootLayout({ params, children }: Props) {
       .includes(authorizedUser?.id);
 
   return (
-    <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
-      <Sidebar
-        author={isAuthor || false}
-        user={user}
-        droplet={droplet}
-        completedLessonIds={completedLessonIds}
-        enrollmentId={enrollmentId}
-      />
-      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg xl:pl-64">
-        {children}
-      </main>
-    </div>
+    <DropletLayoutShell
+      author={isAuthor || false}
+      user={user}
+      droplet={droplet}
+      completedLessonIds={completedLessonIds}
+      enrollmentId={enrollmentId}
+    >
+      {children}
+    </DropletLayoutShell>
   );
 }

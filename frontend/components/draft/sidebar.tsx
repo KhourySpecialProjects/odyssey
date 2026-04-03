@@ -1,7 +1,14 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getPath } from "@/lib/utils";
+import {
+  cn,
+  getPath,
+  isAuthorizedUserAdmin,
+  isContentCreator,
+  isContentEditor,
+} from "@/lib/utils";
+import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
   AlertDialog,
@@ -26,20 +33,18 @@ import {
 import { autoFormatSlides } from "@/lib/actions/auto-format-slides";
 import { Droplet, Lesson, User } from "@/types";
 import {
-  SettingsIcon,
-  ArrowLeftIcon,
-  PanelRightClose,
-  PanelRightOpen,
-  Home,
-  Wand2,
-  Loader2,
-  Eye,
-} from "lucide-react";
+  IconArrowLeft,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+  IconLoader2,
+  IconPresentation,
+  IconSearch,
+  IconWand,
+} from "@tabler/icons-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
-import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
   DndContext,
@@ -66,6 +71,8 @@ export function Sidebar({
   user,
   droplet,
   availableDroplets,
+  expanded,
+  setExpanded,
 }: {
   user: User;
   droplet: Pick<
@@ -85,8 +92,9 @@ export function Sidebar({
     | "difficulty"
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
+  expanded: boolean;
+  setExpanded: (v: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(69);
   const pathname = usePathname();
 
@@ -244,11 +252,6 @@ export function Sidebar({
     }
   };
 
-  const classes = {
-    link: "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors hover:bg-slate-200 dark:hover:bg-slate-700",
-    activeLink: "bg-[#2D7597] text-white",
-  };
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
@@ -288,6 +291,22 @@ export function Sidebar({
 
   if (!user) return <UnauthorizedRoute />;
 
+  const showActionButton = droplet.status !== "published" && !droplet.inReview;
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
+  const isEditor = isContentEditor(user.roles);
+  const isCreator = isContentCreator(user.roles);
+  const actionButtonProps =
+    showActionButton && (isAdmin || isEditor)
+      ? {
+          actionType: (droplet.originalDropletId
+            ? "publishDraft"
+            : "publish") as "publishDraft" | "publish",
+          buttonText: "Publish",
+        }
+      : showActionButton && isCreator
+        ? { actionType: "requestReview" as const, buttonText: "Review" }
+        : null;
+
   return (
     <>
       <div
@@ -306,14 +325,14 @@ export function Sidebar({
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <PanelRightOpen
-            className="dark:text-white"
+          <IconLayoutSidebarLeftExpand
+            className="h-5 w-5 dark:text-white"
             data-testid="sidebar-overlay"
           />
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
-          className="z-20 text-lg font-bold"
+          className="z-20 text-base font-bold"
         >
           {droplet.name}
         </Link>
@@ -325,7 +344,7 @@ export function Sidebar({
           className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-2 text-slate-800 shadow-md transition-all hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
-          <PanelRightOpen className="h-5 w-5 dark:text-white" />
+          <IconLayoutSidebarLeftExpand className="h-5 w-5 dark:text-white" />
         </button>
       )}
       <aside
@@ -350,20 +369,73 @@ export function Sidebar({
                 }
                 className="flex flex-1 items-center p-2"
               >
-                <ArrowLeftIcon className="h-5 w-5 flex-shrink-0" />
+                <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
               </button>
-              <Link
-                href={`/d/${droplet.slug}`}
-                title="Preview droplet"
-                className="p-2 hover:text-slate-600 dark:hover:text-slate-300"
-              >
-                <Eye className="h-5 w-5" />
-              </Link>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {hasAutoFormatted ? (
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                      >
+                        <IconWand className="h-5 w-5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowAutoFormatConfirm(true)}
+                        disabled={isAutoFormatting}
+                        className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
+                      >
+                        {isAutoFormatting ? (
+                          <IconLoader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <IconWand className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {hasAutoFormatted
+                      ? "Auto-format can only be used once per droplet"
+                      : "Auto-Format Lesson"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {hasSlideBreaks ? (
+                      <Link
+                        href={`/d/${droplet.slug}/present`}
+                        target="_blank"
+                        className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-500"
+                      >
+                        <IconPresentation className="h-5 w-5" />
+                      </Link>
+                    ) : (
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                      >
+                        <IconPresentation className="h-5 w-5" />
+                      </button>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {hasSlideBreaks
+                      ? "Present"
+                      : "No presentation blocks in sight"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <button
                 onClick={() => setExpanded(false)}
                 className="p-2 hover:text-slate-600 dark:hover:text-slate-300"
               >
-                <PanelRightClose className="h-5 w-5" />
+                <IconLayoutSidebarLeftCollapse className="h-5 w-5" />
               </button>
             </div>
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -390,108 +462,52 @@ export function Sidebar({
               </p>
 
               <Link
-                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${droplet.slug}`}
+                href={`/draft/d/${droplet.slug}`}
+                className={
+                  pathname === `/draft/d/${droplet.slug}`
+                    ? "relative flex h-[44px] w-full items-center rounded-[78px] bg-[#2D7597] text-white transition-colors"
+                    : "relative flex h-[44px] w-full items-center rounded-[78px] text-slate-900 transition-colors hover:bg-slate-200 dark:text-white dark:hover:bg-slate-700"
+                }
               >
-                Overview
+                <IconSearch
+                  className={cn(
+                    "ml-4 h-4 w-4 shrink-0",
+                    pathname === `/draft/d/${droplet.slug}` ? "text-white" : "",
+                  )}
+                  stroke={1.8}
+                />
+                <span className="ml-2 text-base leading-none">Overview</span>
               </Link>
-              {hasAutoFormatted ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        aria-disabled="true"
-                        onClick={(e) => e.preventDefault()}
-                        className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                      >
-                        <Wand2 className="h-4 w-4" />
-                        Auto-Format Lesson
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      Auto-format can only be used once per droplet
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowAutoFormatConfirm(true)}
-                    disabled={isAutoFormatting}
-                    className="flex items-center justify-center gap-2 rounded-full bg-amber-400 px-6 py-2 text-center text-black transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700"
-                  >
-                    {isAutoFormatting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Formatting...
-                      </>
-                    ) : (
-                      <>
-                        <Wand2 className="h-4 w-4" />
-                        Auto-Format Lesson
-                      </>
-                    )}
-                  </button>
-                  <AlertDialog
-                    open={showAutoFormatConfirm}
-                    onOpenChange={setShowAutoFormatConfirm}
-                  >
-                    <AlertDialogContent className="max-w-md">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Auto-Format Lesson</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will use AI to automatically insert slide breaks
-                          and set image layouts in the currently open lesson.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
-                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                          This action can only be used once per droplet. You can
-                          manually adjust slide breaks afterward.
-                        </p>
-                      </div>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleAutoFormat()}
-                          className="bg-amber-500 text-black hover:bg-amber-600"
-                        >
-                          <Wand2 className="mr-2 h-4 w-4" />
-                          Format Slides
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-              {hasSlideBreaks ? (
-                <Link
-                  className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
-                  href={`/d/${droplet.slug}/present`}
-                  target="_blank"
-                >
-                  Present
-                </Link>
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        aria-disabled="true"
-                        onClick={(e) => e.preventDefault()}
-                        className="w-full cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                      >
-                        Present
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      No presentation blocks in sight
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              <div className="h-1" />
+              <AlertDialog
+                open={showAutoFormatConfirm}
+                onOpenChange={setShowAutoFormatConfirm}
+              >
+                <AlertDialogContent className="max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Auto-Format Lesson</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will use AI to automatically insert slide breaks and
+                      set image layouts in the currently open lesson.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      This action can only be used once per droplet. You can
+                      manually adjust slide breaks afterward.
+                    </p>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleAutoFormat()}
+                      className="bg-amber-500 text-black hover:bg-amber-600"
+                    >
+                      <IconWand className="mr-2 h-4 w-4" />
+                      Format Slides
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {/* Add lesson section */}
               <div>
@@ -532,6 +548,28 @@ export function Sidebar({
                 <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
                   Updating lesson order...
                 </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 p-3 dark:border-slate-700">
+            <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
+              <Link
+                href={`/d/${droplet.slug}`}
+                className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              >
+                Preview
+              </Link>
+              {actionButtonProps && (
+                <ContentActionButton
+                  droplet={
+                    droplet as Parameters<
+                      typeof ContentActionButton
+                    >[0]["droplet"]
+                  }
+                  actionType={actionButtonProps.actionType}
+                  buttonText={actionButtonProps.buttonText}
+                />
               )}
             </div>
           </div>

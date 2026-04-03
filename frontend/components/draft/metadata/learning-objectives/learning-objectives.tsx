@@ -79,7 +79,7 @@ export function LearningObjectives({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         Learning Objectives
       </h2>
-      <p className="mt-1 text-slate-500 dark:text-slate-300">
+      <p className="mt-1 text-slate-600 dark:text-slate-300">
         By completing this Droplet, you should:
       </p>
       <div className="mt-4 rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">

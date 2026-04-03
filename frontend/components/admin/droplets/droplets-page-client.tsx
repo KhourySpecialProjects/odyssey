@@ -38,9 +38,9 @@ const DropletAnalyticsModal = dynamic(
 );
 
 const DROPLET_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[35%]" },
+  { label: "Title", width: "w-[30%]" },
   { label: "Type", width: "w-[10%]" },
-  { label: "Focus Area", width: "w-[12%]" },
+  { label: "Focus Area", width: "w-[17%]" },
   { label: "Tags", width: "w-[23%]" },
   { label: "Actions", width: "w-[20%]" },
 ];
@@ -150,11 +150,11 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
       )}
       <tr className="border-b border-[#eaecf0] transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
         {/* Title */}
-        <td className="h-[56px] py-3 pr-6 pl-[30px]">
+        <td className="h-[56px] overflow-hidden py-3 pr-6 pl-[30px]">
           <Link
             href={`/d/${droplet.slug}`}
             prefetch={false}
-            className="truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
+            className="block truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
           >
             {droplet.name}
           </Link>
@@ -183,7 +183,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium whitespace-nowrap",
                     focusColors.bg,
                     focusColors.text,
                   )}
@@ -394,7 +394,7 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

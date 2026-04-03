@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import {
-  PlusIcon,
-  CornerDownLeftIcon,
-  LoaderIcon,
-  FileInput,
-  FileText,
-} from "lucide-react";
+  IconCornerDownLeft,
+  IconUpload,
+  IconBook2,
+  IconLoader2,
+  IconPlus,
+} from "@tabler/icons-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
@@ -229,14 +229,14 @@ export function AddLesson({
     <>
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2 pl-4">
-          <FileText className="h-5 w-5 shrink-0" />
-          <p className="text-lg leading-none font-medium">Lessons</p>
+          <IconBook2 className="h-4 w-4 shrink-0" stroke={1.5} />
+          <p className="text-base leading-none font-medium">Lessons</p>
         </div>
         <div className="flex items-center gap-2">
           {" "}
           {/* Changed to flex container */}
           <div className="cursor-pointer p-2">
-            <FileInput
+            <IconUpload
               role="button"
               onClick={() => setIsImportModalOpen(true)}
               className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
@@ -245,10 +245,11 @@ export function AddLesson({
           </div>
           <div className="relative" ref={menuRef}>
             <div className="cursor-pointer p-1">
-              <PlusIcon
+              <IconPlus
                 role="button"
                 onClick={() => setShowMenu((v) => !v)}
                 className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                stroke={2.5}
               />
             </div>
             {showMenu && (
@@ -393,9 +394,9 @@ function InputIcon() {
   return (
     <>
       {pending ? (
-        <LoaderIcon className="mr-2 animate-spin" />
+        <IconLoader2 className="mr-2 animate-spin" />
       ) : (
-        <CornerDownLeftIcon className="mr-2" />
+        <IconCornerDownLeft className="mr-2" />
       )}
     </>
   );

@@ -50,7 +50,7 @@ export function AdminTable({
 
       {/* Desktop table */}
       <div className={mobileCards ? "hidden md:block" : ""}>
-        <div className="overflow-hidden rounded-[8px] border-2 border-[rgba(0,0,0,0.05)] dark:border-slate-700">
+        <div className="overflow-hidden rounded-[8px] border border-[#D0D5DD] dark:border-slate-700">
           <table className="w-full table-fixed">
             <colgroup>
               {columns.map((col, i) => (
@@ -58,7 +58,7 @@ export function AdminTable({
               ))}
             </colgroup>
             <thead>
-              <tr className="border-b border-[#eaecf0] bg-[#fcfcfd] dark:border-slate-700 dark:bg-slate-800">
+              <tr className="border-b border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-700 dark:bg-slate-800">
                 {columns.map((col, i) => (
                   <th
                     key={i}

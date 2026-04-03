@@ -10,7 +10,7 @@ export default function Page() {
         <h1 className="text-2xl leading-tight font-semibold text-black md:text-[40px] dark:text-white">
           Droplets
         </h1>
-        <p className="mt-1 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
+        <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
           The following droplets have been created.
         </p>
       </div>
