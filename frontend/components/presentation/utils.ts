@@ -1,20 +1,15 @@
 /**
  * Presentation mode slide-splitting utilities.
  *
- * Splits on <!--SLIDE_BREAK--> markers. Image blocks with a `slideLayout`
- * property control slide layout (image-left, image-right, full-image).
+ * Splits on <!--SLIDE_BREAK--> markers. Two-column layout is controlled
+ * by the `nextSlideLayout` property on slide-break blocks.
  */
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
 
-export type SlideLayout =
-  | "default"
-  | "image-left"
-  | "image-right"
-  | "full-image"
-  | "two-columns";
+export type SlideLayout = "default" | "two-columns";
 
 export type Slide = {
   blocks: Block[];
@@ -22,7 +17,6 @@ export type Slide = {
   lessonName: string;
   lessonIndex: number;
   layout: SlideLayout;
-  layoutImageUrl?: string;
 };
 
 // ── Helpers ──
@@ -44,45 +38,6 @@ export function isColumnBreak(block: Block): boolean {
     block.__component === "droplets.generic" &&
     block.content === COLUMN_BREAK_MARKER
   );
-}
-
-const LEGACY_LAYOUT_MAP: Record<string, SlideLayout> = {
-  IMAGE_LEFT: "image-left",
-  IMAGE_RIGHT: "image-right",
-  FULL_IMAGE: "full-image",
-};
-
-function getSlideLayout(
-  block: Block,
-): { layout: SlideLayout; imageUrl?: string } | null {
-  if (
-    block.__component === "droplets.generic" &&
-    "slideLayout" in block &&
-    block.slideLayout !== undefined
-  ) {
-    return {
-      layout: block.slideLayout,
-      imageUrl: block.slideLayoutImageUrl,
-    };
-  }
-
-  // Backward compat: parse legacy <!--LAYOUT:...--> comment format
-  if (
-    block.__component === "droplets.generic" &&
-    block.content.startsWith("<!--LAYOUT:")
-  ) {
-    const match = block.content.match(
-      /<!--LAYOUT:(IMAGE_LEFT|IMAGE_RIGHT|FULL_IMAGE):(.*?)-->/,
-    );
-    if (match) {
-      const layout = LEGACY_LAYOUT_MAP[match[1]];
-      if (layout) {
-        return { layout, imageUrl: match[2] || undefined };
-      }
-    }
-  }
-
-  return null;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {
@@ -140,7 +95,6 @@ function splitByMarkers(
   let current: Block[] = [];
   let heading: string | undefined;
   let currentLayout: SlideLayout = "default";
-  let currentLayoutImageUrl: string | undefined;
   // Layout requested by the slide-break block for the NEXT slide
   let pendingLayout: SlideLayout | undefined;
 
@@ -152,16 +106,12 @@ function splitByMarkers(
         lessonName: lesson.name,
         lessonIndex,
         layout: currentLayout,
-        layoutImageUrl: currentLayoutImageUrl,
       });
       current = [];
       heading = undefined;
       currentLayout = pendingLayout ?? "default";
-      currentLayoutImageUrl = undefined;
       pendingLayout = undefined;
     } else if (pendingLayout !== undefined) {
-      // No blocks accumulated yet, but a pending layout was set by a slide break.
-      // Apply it now so the upcoming blocks inherit this layout.
       currentLayout = pendingLayout;
       pendingLayout = undefined;
     }
@@ -171,22 +121,13 @@ function splitByMarkers(
     if (isEmptySpacing(block)) continue;
 
     if (isSlideBreak(block)) {
-      // Read the nextSlideLayout from the slide-break block
-      const layout =
+      const raw =
         block.__component === "droplets.generic" && "nextSlideLayout" in block
-          ? (block.nextSlideLayout as SlideLayout | undefined)
+          ? block.nextSlideLayout
           : undefined;
-      pendingLayout = layout && layout !== "default" ? layout : undefined;
+      pendingLayout = raw === "two-columns" ? "two-columns" : undefined;
       flush();
       continue;
-    }
-
-    // Read layout from typed property or legacy comment — image layout takes
-    // precedence over the slide-break's nextSlideLayout
-    const parsedLayout = getSlideLayout(block);
-    if (parsedLayout) {
-      currentLayout = parsedLayout.layout;
-      currentLayoutImageUrl = parsedLayout.imageUrl;
     }
 
     const h = extractHeadingTitle(block);

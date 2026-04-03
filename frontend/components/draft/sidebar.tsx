@@ -280,6 +280,16 @@ export function Sidebar({
     ]);
   };
 
+  const addLessonsCallback = (newLessons: Lesson[]) => {
+    updateDropletLessons([
+      ...dropletLessons,
+      ...newLessons.map((lesson, i) => ({
+        ...lesson,
+        orderIndex: dropletLessons.length + i,
+      })),
+    ]);
+  };
+
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 

@@ -13,6 +13,7 @@ import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
 import { ImportLessonModal } from "../ui/import-lesson-modal";
+import { ImportFileModal } from "./import-file-modal";
 import { toast } from "sonner";
 import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
 import {
@@ -35,6 +36,7 @@ export function AddLesson({
   onAddLesson,
   availableDroplets = [],
   currentLessonCount = 0,
+  onAddLessons,
 }: {
   droplet: Pick<
     Droplet,
@@ -51,9 +53,11 @@ export function AddLesson({
   onAddLesson: (newLesson: Lesson) => void;
   availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   currentLessonCount?: number;
+  onAddLessons?: (newLessons: Lesson[]) => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isFileImportModalOpen, setIsFileImportModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isExistingOpen, setIsExistingOpen] = useState(false);
   const [selectedDropletId, setSelectedDropletId] = useState("");
@@ -96,45 +100,49 @@ export function AddLesson({
   }, []);
 
   async function add(formData: FormData) {
-    const response = await addLesson({
-      name: formData.get("name") as string,
-      dropletId: parseInt(formData.get("dropletId") as string),
-      orderIndex: droplet.lessons?.length || 0,
-    });
+    const name = formData.get("name") as string;
+    if (name?.trim()) {
+      const response = await addLesson({
+        name,
+        dropletId: droplet.id,
+        orderIndex: droplet.lessons?.length || 0,
+      });
 
-    if (response && !response.error) {
-      const newLesson: Lesson = {
-        id: response.data.id,
-        name: response.data.attributes.name,
-        slug: response.data.attributes.slug,
-        type: response.data.attributes.type || "general",
-        blocks: [],
-        droplets: [
-          {
-            id: droplet.id,
-            name: droplet.name,
-            slug: droplet.slug,
-            type: response.data.attributes.type || "",
-            focusArea: response.data.attributes.focusArea || "",
-            difficulty: droplet.difficulty,
-            learningObjectives: [],
-            isHidden: false,
-            status: "draft",
-          },
-        ],
-        notes: "",
-        orderIndex: response.data.orderIndex,
-      };
+      if (response?.data) {
+        const newLesson: Lesson = {
+          id: response.data.id,
+          name: response.data.attributes.name,
+          slug: response.data.attributes.slug,
+          type: response.data.attributes.type || "general",
+          blocks: [],
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: response.data.attributes.type || "",
+              focusArea: response.data.attributes.focusArea || "",
+              difficulty: droplet.difficulty,
+              learningObjectives: [],
+              isHidden: false,
+              status: "draft",
+            },
+          ],
+          notes: "",
+          orderIndex: response.data.orderIndex,
+        };
 
-      onAddLesson(newLesson);
-      setIsHidden(true);
-      router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
+        onAddLesson(newLesson);
+        setIsHidden(true);
+        router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
+      }
     }
   }
 
   async function handleImport(markdown: string) {
     try {
       const { title, blocks } = parseMarkdownToBlockNote(markdown);
+
       const createResponse = await addLesson({
         name: title,
         dropletId: droplet.id,
@@ -143,15 +151,13 @@ export function AddLesson({
         blocksVersion: "v2",
       });
 
-      if (createResponse && !createResponse.error) {
+      if (createResponse?.data) {
         const newLesson: Lesson = {
           id: createResponse.data.id,
           name: createResponse.data.attributes.name,
           slug: createResponse.data.attributes.slug,
           type: createResponse.data.attributes.type || "general",
           blocks: [],
-          blocksV2: blocks,
-          blocksVersion: "v2",
           droplets: [
             {
               id: droplet.id,
@@ -170,9 +176,8 @@ export function AddLesson({
         };
 
         onAddLesson(newLesson);
-        toast.success(
-          `Lesson "${title}" imported successfully with ${blocks.length} blocks!`,
-        );
+        setIsImportModalOpen(false);
+        toast.success(`Lesson "${newLesson.name}" imported successfully`);
         router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
       } else {
         toast.error(createResponse?.error || "Failed to create lesson");
@@ -244,8 +249,6 @@ export function AddLesson({
           <p className="text-base leading-none font-medium">Lessons</p>
         </div>
         <div className="flex items-center gap-2">
-          {" "}
-          {/* Changed to flex container */}
           <div className="cursor-pointer p-2">
             <IconUpload
               role="button"
@@ -284,18 +287,35 @@ export function AddLesson({
                 >
                   Add Existing Lesson
                 </button>
+                <button
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setIsFileImportModalOpen(true);
+                  }}
+                >
+                  Import from File (PDF/PPTX)
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Import Modal */}
+      {/* Markdown Import Modal */}
       <ImportLessonModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={handleImport}
         dropletName={droplet.name}
+      />
+
+      {/* File Import Modal (PDF/PPTX) */}
+      <ImportFileModal
+        isOpen={isFileImportModalOpen}
+        onClose={() => setIsFileImportModalOpen(false)}
+        droplet={droplet}
+        onAddLessons={onAddLessons ?? (() => {})}
       />
 
       {/* Add Existing Lesson Dialog */}
@@ -380,18 +400,12 @@ export function AddLesson({
               <input
                 ref={inputRef}
                 type="text"
-                className="border-0 bg-transparent ring-0 outline-none focus:ring-0 focus:outline-none"
-                placeholder="Lesson Name"
                 name="name"
+                required
+                placeholder="Enter a lesson name"
+                className="w-full rounded border-0 bg-transparent p-2 text-sm outline-none placeholder:text-sm placeholder:text-gray-400"
               />
-              <input
-                type="submit"
-                name="dropletId"
-                hidden
-                readOnly
-                value={droplet.id}
-              />
-              <InputIcon />
+              <SubmitButton />
             </form>
           </li>
         ) : null}
@@ -400,15 +414,21 @@ export function AddLesson({
   );
 }
 
-function InputIcon() {
+function SubmitButton() {
   const { pending } = useFormStatus();
+
   return (
-    <>
+    <button
+      type="submit"
+      aria-label="Submit"
+      disabled={pending}
+      className="flex items-center p-2"
+    >
       {pending ? (
         <IconLoader2 className="mr-2 animate-spin" />
       ) : (
         <IconCornerDownLeft className="mr-2" />
       )}
-    </>
+    </button>
   );
 }

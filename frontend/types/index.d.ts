@@ -139,9 +139,7 @@ export type Block =
       id?: number;
       sourceBlockIds?: number[]; // For grouped blocks - all source BlockNote block IDs
       _clientId?: string;
-      slideLayout?: "image-left" | "image-right" | "full-image" | "two-columns";
       nextSlideLayout?: "default" | "two-columns";
-      slideLayoutImageUrl?: string;
     }
   | {
       __component: "droplets.expandable";
@@ -231,14 +229,6 @@ export type Resource = {
   id: number;
   label?: string;
   url: string;
-};
-
-export type Dataset = {
-  id: number;
-  name: string;
-  url: string;
-  fileType: string;
-  fileSize: number;
 };
 
 export type Droplet = {

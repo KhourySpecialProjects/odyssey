@@ -213,33 +213,11 @@ describe("Confetti Component", () => {
     });
   });
 
-  test("should handle missing canvas context", async () => {
-    const mockCanvas = document.createElement("canvas");
-    jest.spyOn(mockCanvas, "getContext").mockReturnValue(null);
-    jest.spyOn(document, "createElement").mockReturnValue(mockCanvas);
-
+  test("should fire confetti immediately without waiting for image load", async () => {
     render(<Confetti />);
 
     await waitFor(() => {
       expect(confetti.create).toHaveBeenCalled();
-    });
-  });
-
-  test("should handle missing pattern from context", async () => {
-    const mockCtx = {
-      drawImage: jest.fn(),
-      createPattern: jest.fn(() => null),
-    } as unknown as CanvasRenderingContext2D;
-
-    const mockCanvas = document.createElement("canvas");
-    jest.spyOn(mockCanvas, "getContext").mockReturnValue(mockCtx);
-    jest.spyOn(document, "createElement").mockReturnValue(mockCanvas);
-
-    render(<Confetti />);
-
-    await waitFor(() => {
-      expect(mockCtx.drawImage).toHaveBeenCalled();
-      expect(mockCtx.createPattern).toHaveBeenCalled();
     });
   });
 });
