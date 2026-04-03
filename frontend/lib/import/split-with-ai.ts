@@ -3,6 +3,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { v4 as uuidv4 } from "uuid";
 import type { ImportSection } from "./types";
+import { getCurrentUser } from "@/lib/auth/session";
+import { checkRateLimit, formatRateLimitError } from "./rate-limiter";
 
 interface LessonSplit {
   title: string;
@@ -28,6 +30,20 @@ export async function splitTextWithAI(
   fileType: "pdf" | "pptx",
   fileName: string,
 ): Promise<{ sections: ImportSection[]; warnings: string[] }> {
+  const user = await getCurrentUser();
+  if (!user?.email) {
+    throw new Error("You must be signed in to use AI splitting.");
+  }
+
+  const { allowed, retryAfterMs } = checkRateLimit(
+    user.email,
+    user.roles ?? [],
+    "split",
+  );
+  if (!allowed) {
+    throw new Error(formatRateLimitError(retryAfterMs ?? 0));
+  }
+
   if (!rawText.trim()) {
     throw new Error("No text content to split into lessons.");
   }

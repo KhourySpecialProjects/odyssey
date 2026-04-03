@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo, lazy, Suspense } from "react";
+import { useState, useEffect, memo, lazy, Suspense, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +60,7 @@ import { splitTextWithAI } from "@/lib/import/split-with-ai";
 import { createLessonsFromImport } from "@/lib/import/create-lessons";
 import { MAX_FILE_SIZE } from "@/lib/import/constants";
 import { expandLessonContent } from "@/lib/import/expand-with-ai";
+import { customPromptAI } from "@/lib/import/custom-prompt-ai";
 
 const Markdown = lazy(() => import("react-markdown"));
 
@@ -531,6 +532,9 @@ interface SortableSectionCardProps {
   imageBlobUrls: Map<string, string>;
 }
 
+const PROSE_CLASSES =
+  "prose prose-sm dark:prose-invert prose-headings:mt-2 prose-headings:mb-1 prose-h1:text-base prose-h2:text-sm prose-h3:text-sm prose-p:my-1 prose-p:text-xs prose-p:leading-relaxed prose-ul:my-1 prose-ul:text-xs prose-ol:my-1 prose-ol:text-xs prose-li:my-0 prose-strong:font-semibold max-w-none";
+
 const SortableSectionCard = memo(function SortableSectionCard({
   section,
   isSelected,
@@ -545,6 +549,23 @@ const SortableSectionCard = memo(function SortableSectionCard({
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanding, setIsExpanding] = useState(false);
   const [isAlreadyExpanded, setIsAlreadyExpanded] = useState(false);
+
+  // Comparison mode state (Task 4)
+  const [expandedContent, setExpandedContent] = useState<string | null>(null);
+  const [comparisonMode, setComparisonMode] = useState(false);
+
+  // Custom prompt toolbar state (Task 5)
+  const [showPromptToolbar, setShowPromptToolbar] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [selectionRange, setSelectionRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const [isPrompting, setIsPrompting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const promptInputRef = useRef<HTMLInputElement>(null);
+
   const {
     attributes,
     listeners,
@@ -561,8 +582,75 @@ const SortableSectionCard = memo(function SortableSectionCard({
 
   const previewText = section.markdownContent.slice(0, 200).replace(/\n/g, " ");
   const isLong = section.markdownContent.length > 200;
-
   const cleanContent = section.markdownContent.trim();
+  const cleanExpandedContent = expandedContent?.trim() ?? "";
+
+  function handleCollapseCard() {
+    setIsExpanded(false);
+    setIsEditing(false);
+    setComparisonMode(false);
+    setExpandedContent(null);
+    setShowPromptToolbar(false);
+    setPromptText("");
+    setSelectionRange(null);
+  }
+
+  function handleSelectionChange() {
+    const el = textareaRef.current;
+    if (!el) return;
+    const hasSelection = el.selectionStart !== el.selectionEnd;
+    if (hasSelection) {
+      setSelectionRange({ start: el.selectionStart, end: el.selectionEnd });
+      if (!showPromptToolbar) setShowPromptToolbar(true);
+    }
+  }
+
+  function handleTextareaBlur(e: React.FocusEvent) {
+    // If focus is moving to the prompt toolbar, keep it open
+    if (
+      toolbarRef.current &&
+      e.relatedTarget instanceof Node &&
+      toolbarRef.current.contains(e.relatedTarget)
+    ) {
+      return;
+    }
+    // If toolbar is showing and user clicks elsewhere, keep it — they may come back.
+    // Only dismiss via the X button or successful submit.
+  }
+
+  async function handlePromptSubmit() {
+    if (!selectionRange || !promptText.trim()) return;
+    const selected = section.markdownContent.slice(
+      selectionRange.start,
+      selectionRange.end,
+    );
+    setIsPrompting(true);
+    const { result, error } = await customPromptAI(
+      section.title,
+      section.markdownContent,
+      selected,
+      promptText,
+    );
+    setIsPrompting(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    const newContent =
+      section.markdownContent.slice(0, selectionRange.start) +
+      result +
+      section.markdownContent.slice(selectionRange.end);
+    onContentChange(newContent);
+    setShowPromptToolbar(false);
+    setPromptText("");
+    setSelectionRange(null);
+  }
+
+  const selectedPreview = selectionRange
+    ? section.markdownContent
+        .slice(selectionRange.start, selectionRange.end)
+        .slice(0, 50)
+    : "";
 
   return (
     <li
@@ -619,13 +707,16 @@ const SortableSectionCard = memo(function SortableSectionCard({
             </p>
           )}
 
-          {/* Expand/collapse + edit toggles */}
+          {/* Expand/collapse + edit toggles — hidden during comparison mode */}
           {section.markdownContent && (
             <div className="mt-1 flex items-center gap-3">
               <button
                 onClick={() => {
-                  setIsExpanded(!isExpanded);
-                  if (isExpanded) setIsEditing(false);
+                  if (isExpanded) {
+                    handleCollapseCard();
+                  } else {
+                    setIsExpanded(true);
+                  }
                 }}
                 className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
                 aria-label={isExpanded ? "Collapse preview" : "Preview lesson"}
@@ -642,10 +733,16 @@ const SortableSectionCard = memo(function SortableSectionCard({
                   </>
                 )}
               </button>
-              {isExpanded && (
+              {isExpanded && !comparisonMode && (
                 <>
                   <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => {
+                      setIsEditing(!isEditing);
+                      if (isEditing) {
+                        setShowPromptToolbar(false);
+                        setSelectionRange(null);
+                      }
+                    }}
                     className={cn(
                       "text-xs",
                       isEditing
@@ -663,13 +760,15 @@ const SortableSectionCard = memo(function SortableSectionCard({
                           section.title,
                           section.markdownContent,
                         );
+                        setIsExpanding(false);
                         if (error) {
                           toast.error(error);
                         } else {
-                          onContentChange(expanded);
-                          setIsAlreadyExpanded(true);
+                          // Enter comparison mode instead of directly replacing
+                          setExpandedContent(expanded);
+                          setComparisonMode(true);
+                          setIsEditing(false);
                         }
-                        setIsExpanding(false);
                       }}
                       disabled={isExpanding}
                       className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600 disabled:opacity-50 dark:text-purple-400 dark:hover:text-purple-300"
@@ -692,19 +791,155 @@ const SortableSectionCard = memo(function SortableSectionCard({
             </div>
           )}
 
-          {/* Expanded: edit or rendered preview */}
+          {/* Expanded content area */}
           {isExpanded && (
-            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-              {isEditing ? (
-                <textarea
-                  value={section.markdownContent}
-                  onChange={(e) => onContentChange(e.target.value)}
-                  className="h-64 w-full resize-none bg-transparent p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none dark:text-slate-300"
-                  aria-label="Edit lesson content"
-                />
+            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+              {/* Comparison mode (Task 4) */}
+              {comparisonMode && expandedContent !== null ? (
+                <div>
+                  <div className="max-h-96 overflow-y-auto">
+                    <Suspense
+                      fallback={
+                        <p className="p-3 text-xs text-slate-400">
+                          Loading preview...
+                        </p>
+                      }
+                    >
+                      <div className="grid grid-cols-2 gap-2 p-3">
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Original
+                          </p>
+                          <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-slate-900">
+                            <div className={PROSE_CLASSES}>
+                              <Markdown>{cleanContent}</Markdown>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-purple-600 dark:text-purple-400">
+                            Expanded
+                          </p>
+                          <div className="rounded border border-purple-200 bg-white p-2 dark:border-purple-700 dark:bg-slate-900">
+                            <div className={PROSE_CLASSES}>
+                              <Markdown>{cleanExpandedContent}</Markdown>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Suspense>
+                  </div>
+                  {/* Accept / Reject buttons */}
+                  <div className="flex items-center gap-2 border-t border-slate-200 px-3 py-2 dark:border-slate-700">
+                    <button
+                      onClick={() => {
+                        onContentChange(expandedContent);
+                        setIsAlreadyExpanded(true);
+                        setComparisonMode(false);
+                        setExpandedContent(null);
+                      }}
+                      className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
+                    >
+                      Accept expanded
+                    </button>
+                    <button
+                      onClick={() => {
+                        setComparisonMode(false);
+                        setExpandedContent(null);
+                      }}
+                      className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ) : isEditing ? (
+                /* Edit mode with custom prompt toolbar (Task 5) */
+                <div className="relative">
+                  {showPromptToolbar && (
+                    <div
+                      ref={toolbarRef}
+                      onMouseDown={(e) => {
+                        // Prevent ALL toolbar clicks from stealing focus from textarea.
+                        // This preserves the text selection highlight in the textarea.
+                        e.preventDefault();
+                      }}
+                      className="absolute top-0 right-0 left-0 z-10 flex flex-col gap-1 rounded-t-md border-b border-slate-300 bg-white p-2 shadow-md dark:border-slate-600 dark:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 shrink-0 text-purple-500" />
+                        <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+                          &ldquo;
+                          {selectedPreview}
+                          {selectionRange &&
+                          selectionRange.end - selectionRange.start > 50
+                            ? "..."
+                            : ""}
+                          &rdquo;
+                        </span>
+                        <button
+                          onClick={() => {
+                            setShowPromptToolbar(false);
+                            setSelectionRange(null);
+                            setPromptText("");
+                          }}
+                          className="ml-auto shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          aria-label="Dismiss toolbar"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          ref={promptInputRef}
+                          type="text"
+                          value={promptText}
+                          onChange={(e) => setPromptText(e.target.value)}
+                          onClick={() => promptInputRef.current?.focus()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              void handlePromptSubmit();
+                            }
+                          }}
+                          maxLength={500}
+                          placeholder="e.g., explain in more detail"
+                          className="flex-1 rounded border border-slate-300 bg-transparent px-2 py-1 text-xs outline-none focus:border-purple-400 dark:border-slate-600"
+                        />
+                        <button
+                          onClick={() => void handlePromptSubmit()}
+                          disabled={isPrompting || !promptText.trim()}
+                          className="flex items-center gap-1 rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                          aria-label="Submit prompt"
+                        >
+                          {isPrompting ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <textarea
+                    ref={textareaRef}
+                    value={section.markdownContent}
+                    onChange={(e) => onContentChange(e.target.value)}
+                    onMouseUp={handleSelectionChange}
+                    onKeyUp={handleSelectionChange}
+                    onBlur={handleTextareaBlur}
+                    className={cn(
+                      "h-64 w-full resize-none bg-transparent p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none selection:bg-blue-200 dark:text-slate-300 dark:selection:bg-blue-800",
+                      showPromptToolbar && "pt-16",
+                    )}
+                    aria-label="Edit lesson content"
+                  />
+                </div>
               ) : (
+                /* Preview mode */
                 cleanContent && (
-                  <div className="p-3">
+                  <div className="max-h-72 overflow-y-auto p-3">
                     <Suspense
                       fallback={
                         <p className="text-xs text-slate-400">
@@ -712,7 +947,7 @@ const SortableSectionCard = memo(function SortableSectionCard({
                         </p>
                       }
                     >
-                      <div className="prose prose-sm dark:prose-invert prose-headings:mt-2 prose-headings:mb-1 prose-h1:text-base prose-h2:text-sm prose-h3:text-sm prose-p:my-1 prose-p:text-xs prose-p:leading-relaxed prose-ul:my-1 prose-ul:text-xs prose-ol:my-1 prose-ol:text-xs prose-li:my-0 prose-strong:font-semibold max-w-none">
+                      <div className={PROSE_CLASSES}>
                         <Markdown
                           components={{
                             img: ({ src, alt }) => {

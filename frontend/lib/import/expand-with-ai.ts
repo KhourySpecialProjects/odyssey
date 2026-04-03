@@ -1,6 +1,8 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import { getCurrentUser } from "@/lib/auth/session";
+import { checkRateLimit, formatRateLimitError } from "./rate-limiter";
 
 /**
  * Expand condensed slide/PDF content into educational prose.
@@ -11,6 +13,26 @@ export async function expandLessonContent(
   title: string,
   condensedContent: string,
 ): Promise<{ expanded: string; error?: string }> {
+  const user = await getCurrentUser();
+  if (!user?.email) {
+    return {
+      expanded: condensedContent,
+      error: "You must be signed in to use AI expansion.",
+    };
+  }
+
+  const { allowed, retryAfterMs } = checkRateLimit(
+    user.email,
+    user.roles ?? [],
+    "expand",
+  );
+  if (!allowed) {
+    return {
+      expanded: condensedContent,
+      error: formatRateLimitError(retryAfterMs ?? 0),
+    };
+  }
+
   if (!condensedContent.trim()) {
     return { expanded: condensedContent };
   }
