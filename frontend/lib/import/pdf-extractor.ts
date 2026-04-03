@@ -87,7 +87,7 @@ export async function extractTextFromPDF(file: File): Promise<{
         const ops = await page.getOperatorList();
         const paintImageOps = [
           pdfjsLib.OPS?.paintImageXObject,
-          pdfjsLib.OPS?.paintJpegXObject,
+          (pdfjsLib.OPS as Record<string, number>)?.paintJpegXObject,
           pdfjsLib.OPS?.paintImageXObjectRepeat,
         ].filter(Boolean);
         hasImages = ops.fnArray.some((fn: number) =>
@@ -152,11 +152,17 @@ export async function extractTextFromPDF(file: File): Promise<{
           .map((item) => {
             const str = item.str.trim();
             if (!str) return "";
+            const isHeading = maxFontSize > thresholds.h3;
             const isBold =
+              item.fontName && /bold/i.test(item.fontName) && !isHeading;
+            const isItalic =
               item.fontName &&
-              /bold/i.test(item.fontName) &&
-              maxFontSize <= thresholds.h3;
-            return isBold ? `**${str}**` : str;
+              /italic|oblique/i.test(item.fontName) &&
+              !isHeading;
+            if (isBold && isItalic) return `***${str}***`;
+            if (isBold) return `**${str}**`;
+            if (isItalic) return `*${str}*`;
+            return str;
           })
           .filter(Boolean)
           .join(" ")

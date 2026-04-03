@@ -21,6 +21,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ import {
 import { splitTextWithAI } from "@/lib/import/split-with-ai";
 import { createLessonsFromImport } from "@/lib/import/create-lessons";
 import { MAX_FILE_SIZE } from "@/lib/import/constants";
+import { expandLessonContent } from "@/lib/import/expand-with-ai";
 
 const Markdown = lazy(() => import("react-markdown"));
 
@@ -541,6 +543,8 @@ const SortableSectionCard = memo(function SortableSectionCard({
 }: SortableSectionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanding, setIsExpanding] = useState(false);
+  const [isAlreadyExpanded, setIsAlreadyExpanded] = useState(false);
   const {
     attributes,
     listeners,
@@ -639,17 +643,51 @@ const SortableSectionCard = memo(function SortableSectionCard({
                 )}
               </button>
               {isExpanded && (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={cn(
-                    "text-xs",
-                    isEditing
-                      ? "text-green-600 hover:text-green-700 dark:text-green-400"
-                      : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300",
+                <>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className={cn(
+                      "text-xs",
+                      isEditing
+                        ? "text-green-600 hover:text-green-700 dark:text-green-400"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300",
+                    )}
+                  >
+                    {isEditing ? "Done editing" : "Edit content"}
+                  </button>
+                  {!isAlreadyExpanded && (
+                    <button
+                      onClick={async () => {
+                        setIsExpanding(true);
+                        const { expanded, error } = await expandLessonContent(
+                          section.title,
+                          section.markdownContent,
+                        );
+                        if (error) {
+                          toast.error(error);
+                        } else {
+                          onContentChange(expanded);
+                          setIsAlreadyExpanded(true);
+                        }
+                        setIsExpanding(false);
+                      }}
+                      disabled={isExpanding}
+                      className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600 disabled:opacity-50 dark:text-purple-400 dark:hover:text-purple-300"
+                    >
+                      {isExpanding ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Expanding...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3 w-3" />
+                          Expand content
+                        </>
+                      )}
+                    </button>
                   )}
-                >
-                  {isEditing ? "Done editing" : "Edit content"}
-                </button>
+                </>
               )}
             </div>
           )}

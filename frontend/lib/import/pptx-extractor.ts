@@ -261,9 +261,11 @@ function extractParagraphMarkdown(
         const text = textEls[0]?.textContent ?? "";
         if (!text) return "";
 
-        // Check for bold
         const rPr = run.getElementsByTagName("a:rPr")[0];
         const isBold = rPr?.getAttribute("b") === "1";
+        const isItalic = rPr?.getAttribute("i") === "1";
+        const isUnderline = rPr?.getAttribute("u") === "sng";
+        const isStrike = rPr?.getAttribute("strike") === "sngStrike";
 
         // Check for hyperlink
         const hlinkClick = rPr
@@ -273,7 +275,11 @@ function extractParagraphMarkdown(
         const linkUrl = linkRId ? rels.links.get(linkRId) : null;
 
         let formatted = text;
-        if (isBold) formatted = `**${formatted}**`;
+        if (isBold && isItalic) formatted = `***${formatted}***`;
+        else if (isBold) formatted = `**${formatted}**`;
+        else if (isItalic) formatted = `*${formatted}*`;
+        if (isStrike) formatted = `~~${formatted}~~`;
+        if (isUnderline) formatted = `<u>${formatted}</u>`;
         if (linkUrl) formatted = `[${formatted}](${linkUrl})`;
 
         return formatted;

@@ -9,7 +9,6 @@ import {
   Import,
   FileText,
   ChevronDown,
-  FileInput,
 } from "lucide-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";

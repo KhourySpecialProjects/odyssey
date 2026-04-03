@@ -109,6 +109,16 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
       }
     }
 
+    // Code block (triple backtick)
+    if (trimmedLine.startsWith("```")) {
+      const result = parseCodeBlock(lines, i);
+      if (result) {
+        blocks.push(result.block);
+        i = result.nextIndex;
+        continue;
+      }
+    }
+
     // Numbered List
     if (/^\d+\.\s/.test(trimmedLine)) {
       const result = parseList(lines, i, "numbered");
@@ -117,9 +127,9 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
       continue;
     }
 
-    // Bulleted List
-    if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
-      const result = parseList(lines, i, "bullet");
+    // Bulleted List (including indented/nested)
+    if (/^(\s*)[-*]\s/.test(line)) {
+      const result = parseNestedList(lines, i);
       blocks.push(...result.blocks);
       i = result.nextIndex;
       continue;
@@ -199,16 +209,23 @@ function parseInlineStyles(text: string): InlineContent[] {
   return result;
 }
 
-/** Parse **bold** and *italic* markers in a text string */
-function parseBoldItalic(
-  text: string,
-): Array<{ type: "text"; text: string; styles: Record<string, boolean> }> {
-  const segments: Array<{
-    type: "text";
-    text: string;
-    styles: Record<string, boolean>;
-  }> = [];
-  const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
+type TextSegment = {
+  type: "text";
+  text: string;
+  styles: Record<string, boolean>;
+};
+
+/**
+ * Parse inline markdown formatting into BlockNote text segments.
+ * Handles: ***bold+italic***, **bold**, *italic*, ~~strikethrough~~,
+ * `inline code`, <u>underline</u>
+ */
+function parseBoldItalic(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+
+  // Order matters: match longer patterns first to avoid partial matches
+  const regex =
+    /\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~|`([^`]+)`|<u>(.+?)<\/u>/g;
   let lastIndex = 0;
   let match;
 
@@ -217,11 +234,35 @@ function parseBoldItalic(
       const before = text.slice(lastIndex, match.index);
       if (before) segments.push({ text: before, type: "text", styles: {} });
     }
+
     if (match[1]) {
-      segments.push({ text: match[1], type: "text", styles: { bold: true } });
+      // ***bold+italic***
+      segments.push({
+        text: match[1],
+        type: "text",
+        styles: { bold: true, italic: true },
+      });
     } else if (match[2]) {
-      segments.push({ text: match[2], type: "text", styles: { italic: true } });
+      // **bold**
+      segments.push({ text: match[2], type: "text", styles: { bold: true } });
+    } else if (match[3]) {
+      // *italic*
+      segments.push({ text: match[3], type: "text", styles: { italic: true } });
+    } else if (match[4]) {
+      // ~~strikethrough~~
+      segments.push({ text: match[4], type: "text", styles: { strike: true } });
+    } else if (match[5]) {
+      // `inline code`
+      segments.push({ text: match[5], type: "text", styles: { code: true } });
+    } else if (match[6]) {
+      // <u>underline</u>
+      segments.push({
+        text: match[6],
+        type: "text",
+        styles: { underline: true },
+      });
     }
+
     lastIndex = match.index + match[0].length;
   }
 
@@ -554,7 +595,7 @@ function createTable(rows: string[][]): CustomBlockNoteBlock {
 }
 
 /**
- * Parse lists (numbered or bulleted)
+ * Parse numbered lists (flat — no nesting support for numbered lists).
  */
 function parseList(
   lines: string[],
@@ -597,6 +638,108 @@ function parseList(
   }
 
   return { blocks, nextIndex: i };
+}
+
+/**
+ * Parse nested bullet lists. Indented items (2+ spaces before - or *)
+ * become children of the previous item at a lower indent level.
+ */
+function parseNestedList(
+  lines: string[],
+  startIndex: number,
+): { blocks: CustomBlockNoteBlock[]; nextIndex: number } {
+  let i = startIndex;
+
+  interface ListNode {
+    block: CustomBlockNoteBlock;
+    indent: number;
+  }
+
+  const stack: ListNode[] = [];
+  const topBlocks: CustomBlockNoteBlock[] = [];
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const indentMatch = line.match(/^(\s*)/);
+    const indent = indentMatch ? indentMatch[1].length : 0;
+    const trimmed = line.trim();
+
+    if (!trimmed.startsWith("- ") && !trimmed.startsWith("* ")) break;
+
+    const text = trimmed.substring(2).trim();
+    const block: CustomBlockNoteBlock = {
+      id: uuidv4(),
+      type: "bulletListItem",
+      props: {
+        textColor: "default",
+        textAlignment: "left",
+        backgroundColor: "default",
+      },
+      content: parseInlineStyles(text),
+      children: [],
+    };
+
+    // Pop stack until we find a parent with lower indent
+    while (stack.length > 0 && stack[stack.length - 1].indent >= indent) {
+      stack.pop();
+    }
+
+    if (stack.length > 0) {
+      // Nested: add as child of the last item at lower indent
+      stack[stack.length - 1].block.children.push(block);
+    } else {
+      // Top-level item
+      topBlocks.push(block);
+    }
+
+    stack.push({ block, indent });
+    i++;
+  }
+
+  return { blocks: topBlocks, nextIndex: i };
+}
+
+/**
+ * Parse fenced code blocks (```language ... ```)
+ */
+function parseCodeBlock(
+  lines: string[],
+  startIndex: number,
+): { block: CustomBlockNoteBlock; nextIndex: number } | null {
+  const firstLine = lines[startIndex].trim();
+  if (!firstLine.startsWith("```")) return null;
+
+  const language = firstLine.slice(3).trim() || "text";
+  let i = startIndex + 1;
+  const codeLines: string[] = [];
+
+  while (i < lines.length) {
+    if (lines[i].trim() === "```") {
+      i++;
+      break;
+    }
+    codeLines.push(lines[i]);
+    i++;
+  }
+
+  return {
+    block: {
+      id: uuidv4(),
+      type: "codeBlock",
+      props: {
+        language,
+      },
+      content: [
+        {
+          type: "text",
+          text: codeLines.join("\n"),
+          styles: {},
+        },
+      ],
+      children: [],
+    },
+    nextIndex: i,
+  };
 }
 
 /**
