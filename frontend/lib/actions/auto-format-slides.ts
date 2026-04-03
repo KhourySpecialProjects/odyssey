@@ -1,6 +1,11 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import { getCurrentUser } from "@/lib/auth/session";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
 
 export type AutoFormatOperation =
   | { type: "insert-slide-break"; afterBlockIndex: number }
@@ -61,6 +66,20 @@ Operation types:
 export async function autoFormatSlides(
   blockSummaries: BlockSummary[],
 ): Promise<{ operations: AutoFormatOperation[] } | { error: string }> {
+  const user = await getCurrentUser();
+  if (!user?.email) {
+    return { error: "You must be signed in to use auto-format." };
+  }
+
+  const { allowed, retryAfterMs } = checkRateLimit(
+    user.email,
+    user.roles ?? [],
+    "auto-format",
+  );
+  if (!allowed) {
+    return { error: formatRateLimitError(retryAfterMs ?? 0) };
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return { error: "Anthropic API key not configured" };
   }

@@ -1,27 +1,29 @@
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
-export type AIAction = "split" | "expand" | "custom-prompt";
+export type AIAction = "split" | "expand" | "custom-prompt" | "auto-format";
 
-type RoleTier = "system-admin" | "faculty" | "creator-editor" | "user";
+type RoleTier = "system-admin" | "faculty" | "creator-editor";
 
 export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
   split: {
     "system-admin": 1000,
     faculty: 20,
     "creator-editor": 15,
-    user: 5,
   },
   expand: {
     "system-admin": 1000,
     faculty: 50,
     "creator-editor": 30,
-    user: 10,
   },
   "custom-prompt": {
     "system-admin": 1000,
     faculty: 50,
     "creator-editor": 30,
-    user: 10,
+  },
+  "auto-format": {
+    "system-admin": 1000,
+    faculty: 20,
+    "creator-editor": 15,
   },
 };
 
@@ -39,7 +41,7 @@ function getRoleTier(roles: AuthorizedUserRoleTitle[]): RoleTier {
   ) {
     return "creator-editor";
   }
-  return "user";
+  return "creator-editor";
 }
 
 /**

@@ -202,7 +202,11 @@ export async function extractTextFromPDF(file: File): Promise<{
         canvas.height = viewport.height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({
+            canvasContext: ctx,
+            viewport,
+            canvas,
+          } as Parameters<typeof page.render>[0]).promise;
           const blob = await new Promise<Blob | null>((resolve) =>
             canvas.toBlob(resolve, "image/jpeg", 0.85),
           );

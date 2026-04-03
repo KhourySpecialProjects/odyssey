@@ -1,7 +1,6 @@
 import { checkRateLimit, RATE_LIMITS, type AIAction } from "../rate-limiter";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
-// We manipulate Date.now to control the sliding window
 const realDateNow = Date.now;
 
 function setNow(ms: number) {
@@ -11,7 +10,6 @@ function setNow(ms: number) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.restoreAllMocks();
-  // Reset the module between tests to clear the in-memory store
   jest.resetModules();
 });
 
@@ -19,28 +17,24 @@ afterAll(() => {
   Date.now = realDateNow;
 });
 
-// Helper to import a fresh instance of the module
-async function freshModule() {
-  const m = await import("../rate-limiter");
-  return m;
-}
-
 describe("RATE_LIMITS config", () => {
-  it("has limits for all three actions", () => {
+  it("has limits for all four actions", () => {
     expect(RATE_LIMITS["split"]).toBeDefined();
     expect(RATE_LIMITS["expand"]).toBeDefined();
     expect(RATE_LIMITS["custom-prompt"]).toBeDefined();
+    expect(RATE_LIMITS["auto-format"]).toBeDefined();
   });
 
   it("System Admin limit is effectively unlimited (1000)", () => {
     expect(RATE_LIMITS["split"]["system-admin"]).toBe(1000);
     expect(RATE_LIMITS["expand"]["system-admin"]).toBe(1000);
     expect(RATE_LIMITS["custom-prompt"]["system-admin"]).toBe(1000);
+    expect(RATE_LIMITS["auto-format"]["system-admin"]).toBe(1000);
   });
 
-  it("Faculty has higher limit than User", () => {
+  it("Faculty has higher limit than Creator/Editor", () => {
     expect(RATE_LIMITS["expand"]["faculty"]).toBeGreaterThan(
-      RATE_LIMITS["expand"]["user"],
+      RATE_LIMITS["expand"]["creator-editor"],
     );
   });
 });
@@ -51,8 +45,8 @@ describe("checkRateLimit", () => {
     const { checkRateLimit: check } = await import("../rate-limiter");
     setNow(1000);
     const result = check(
-      "user@test.com",
-      [AuthorizedUserRoleTitle.User],
+      "creator@test.com",
+      [AuthorizedUserRoleTitle.ContentCreator],
       "expand",
     );
     expect(result.allowed).toBe(true);
@@ -66,16 +60,18 @@ describe("checkRateLimit", () => {
     );
     setNow(1000);
 
-    const userLimit = limits["expand"]["user"]; // 10
+    const creatorLimit = limits["expand"]["creator-editor"]; // 30
     const email = "blocked@test.com";
 
-    // Exhaust the limit
-    for (let i = 0; i < userLimit; i++) {
-      check(email, [AuthorizedUserRoleTitle.User], "expand");
+    for (let i = 0; i < creatorLimit; i++) {
+      check(email, [AuthorizedUserRoleTitle.ContentCreator], "expand");
     }
 
-    // Next call should be blocked
-    const result = check(email, [AuthorizedUserRoleTitle.User], "expand");
+    const result = check(
+      email,
+      [AuthorizedUserRoleTitle.ContentCreator],
+      "expand",
+    );
     expect(result.allowed).toBe(false);
     expect(result.retryAfterMs).toBeGreaterThan(0);
   });
@@ -89,22 +85,28 @@ describe("checkRateLimit", () => {
     const base = 0;
     setNow(base);
 
-    const userLimit = limits["expand"]["user"];
+    const creatorLimit = limits["expand"]["creator-editor"];
     const email = "sliding@test.com";
 
-    // Exhaust limit at t=0
-    for (let i = 0; i < userLimit; i++) {
-      check(email, [AuthorizedUserRoleTitle.User], "expand");
+    for (let i = 0; i < creatorLimit; i++) {
+      check(email, [AuthorizedUserRoleTitle.ContentCreator], "expand");
     }
 
-    // Still blocked just before the window expires
     setNow(base + 3599_000);
-    const stillBlocked = check(email, [AuthorizedUserRoleTitle.User], "expand");
+    const stillBlocked = check(
+      email,
+      [AuthorizedUserRoleTitle.ContentCreator],
+      "expand",
+    );
     expect(stillBlocked.allowed).toBe(false);
 
-    // After 1 hour + 1ms, old entries are pruned and request is allowed
+    // After 1 hour + 1ms, old entries pruned
     setNow(base + 3600_001);
-    const allowed = check(email, [AuthorizedUserRoleTitle.User], "expand");
+    const allowed = check(
+      email,
+      [AuthorizedUserRoleTitle.ContentCreator],
+      "expand",
+    );
     expect(allowed.allowed).toBe(true);
   });
 
@@ -116,15 +118,17 @@ describe("checkRateLimit", () => {
     setNow(1000);
 
     const facultyLimit = limits["expand"]["faculty"]; // 50
-    const userLimit = limits["expand"]["user"]; // 10
+    const creatorLimit = limits["expand"]["creator-editor"]; // 30
     const email = "multi@test.com";
 
-    // User has both User and Faculty roles — Faculty should win
-    // Exhaust beyond user limit but under faculty limit
-    for (let i = 0; i < userLimit + 5; i++) {
+    // Has both Creator and Faculty — Faculty should win
+    for (let i = 0; i < creatorLimit + 5; i++) {
       check(
         email,
-        [AuthorizedUserRoleTitle.User, AuthorizedUserRoleTitle.Faculty],
+        [
+          AuthorizedUserRoleTitle.ContentCreator,
+          AuthorizedUserRoleTitle.Faculty,
+        ],
         "expand",
       );
     }
@@ -132,24 +136,26 @@ describe("checkRateLimit", () => {
     // Should still be allowed (faculty limit not yet reached)
     const result = check(
       email,
-      [AuthorizedUserRoleTitle.User, AuthorizedUserRoleTitle.Faculty],
+      [AuthorizedUserRoleTitle.ContentCreator, AuthorizedUserRoleTitle.Faculty],
       "expand",
     );
     expect(result.allowed).toBe(true);
 
     // Exhaust up to faculty limit
-    for (let i = userLimit + 6; i < facultyLimit; i++) {
+    for (let i = creatorLimit + 6; i < facultyLimit; i++) {
       check(
         email,
-        [AuthorizedUserRoleTitle.User, AuthorizedUserRoleTitle.Faculty],
+        [
+          AuthorizedUserRoleTitle.ContentCreator,
+          AuthorizedUserRoleTitle.Faculty,
+        ],
         "expand",
       );
     }
 
-    // Now at faculty limit — next should be blocked
     const blocked = check(
       email,
-      [AuthorizedUserRoleTitle.User, AuthorizedUserRoleTitle.Faculty],
+      [AuthorizedUserRoleTitle.ContentCreator, AuthorizedUserRoleTitle.Faculty],
       "expand",
     );
     expect(blocked.allowed).toBe(false);
@@ -161,7 +167,6 @@ describe("checkRateLimit", () => {
     setNow(1000);
 
     const email = "admin@test.com";
-    // Make 999 calls — all should be allowed (limit is 1000)
     for (let i = 0; i < 999; i++) {
       const r = check(email, [AuthorizedUserRoleTitle.SysAdmin], "split");
       expect(r.allowed).toBe(true);
@@ -176,20 +181,23 @@ describe("checkRateLimit", () => {
     setNow(1000);
 
     const email = "separate@test.com";
-    const splitLimit = limits["split"]["user"]; // 5
+    const splitLimit = limits["split"]["creator-editor"]; // 15
 
-    // Exhaust split limit
     for (let i = 0; i < splitLimit; i++) {
-      check(email, [AuthorizedUserRoleTitle.User], "split");
+      check(email, [AuthorizedUserRoleTitle.ContentCreator], "split");
     }
 
-    const splitBlocked = check(email, [AuthorizedUserRoleTitle.User], "split");
+    const splitBlocked = check(
+      email,
+      [AuthorizedUserRoleTitle.ContentCreator],
+      "split",
+    );
     expect(splitBlocked.allowed).toBe(false);
 
     // expand action should still be allowed
     const expandAllowed = check(
       email,
-      [AuthorizedUserRoleTitle.User],
+      [AuthorizedUserRoleTitle.ContentCreator],
       "expand",
     );
     expect(expandAllowed.allowed).toBe(true);
@@ -202,20 +210,29 @@ describe("checkRateLimit", () => {
     );
     setNow(1000);
 
-    const limit = limits["expand"]["user"];
+    const limit = limits["expand"]["creator-editor"];
 
-    // Exhaust for user A
     for (let i = 0; i < limit; i++) {
-      check("userA@test.com", [AuthorizedUserRoleTitle.User], "expand");
+      check(
+        "creatorA@test.com",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        "expand",
+      );
     }
 
-    // user A is blocked
     expect(
-      check("userA@test.com", [AuthorizedUserRoleTitle.User], "expand").allowed,
+      check(
+        "creatorA@test.com",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        "expand",
+      ).allowed,
     ).toBe(false);
-    // user B is not affected
     expect(
-      check("userB@test.com", [AuthorizedUserRoleTitle.User], "expand").allowed,
+      check(
+        "creatorB@test.com",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        "expand",
+      ).allowed,
     ).toBe(true);
   });
 });
