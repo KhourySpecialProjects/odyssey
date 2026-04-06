@@ -132,10 +132,10 @@ describe("LessonRenderer", () => {
   });
 
   describe("Initial Rendering", () => {
-    it("renders lesson name input", () => {
+    it("renders lesson name as heading", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("renders all blocks", () => {
@@ -173,10 +173,7 @@ describe("LessonRenderer", () => {
     it("initializes with lesson name", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      const nameInput = screen.getByTestId(
-        "lesson-name-field",
-      ) as HTMLInputElement;
-      expect(nameInput.defaultValue).toContain("Test Lesson");
+      expect(screen.getByText("Test Lesson")).toBeInTheDocument();
     });
   });
 
@@ -184,6 +181,7 @@ describe("LessonRenderer", () => {
     it("updates lesson name on input change", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
     });
@@ -196,6 +194,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
     });
@@ -207,6 +206,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "New Name" } });
 
@@ -437,7 +437,7 @@ describe("LessonRenderer", () => {
         <LessonRenderer lesson={emptyLesson} dropletSlug="test-droplet" />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles lesson with single block", () => {
@@ -597,7 +597,7 @@ describe("LessonRenderer", () => {
         <LessonRenderer lesson={longNameLesson} dropletSlug="test-droplet" />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles lesson with special characters in name", () => {
@@ -613,7 +613,7 @@ describe("LessonRenderer", () => {
         />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles blocks without id", () => {
@@ -634,19 +634,18 @@ describe("LessonRenderer", () => {
     it("handles empty dropletSlug", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="" />);
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
   });
 
   describe("Styling", () => {
-    it("applies correct classes to lesson name input", () => {
+    it("applies correct classes to lesson name input when editing", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
+
       const nameInput = screen.getByTestId("lesson-name-input");
-      expect(nameInput).toHaveClass("mb-3");
-      expect(nameInput).toHaveClass("w-[700px]");
-      expect(nameInput).toHaveClass("max-w-2xl");
-      expect(nameInput).toHaveClass("text-center");
+      expect(nameInput).toHaveClass("w-full");
     });
 
     it("confirm button has correct styling", () => {

@@ -137,24 +137,27 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
   });
 
   it("toggles mobile menu", () => {
+    const mockSetExpanded = jest.fn();
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={mockSetExpanded}
       />,
     );
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
-    expect(screen.getByRole("complementary")).toHaveClass(
-      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
-    );
+    expect(mockSetExpanded).toHaveBeenCalledWith(true);
   });
 
   it("navigates to /my-content when home button clicked on draft droplet", async () => {
@@ -163,6 +166,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -180,6 +185,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -209,6 +216,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -244,6 +253,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -274,6 +285,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={false}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -287,16 +300,13 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={true}
+        setExpanded={jest.fn()}
       />,
     );
 
-    const menuButton = screen.getByRole("button", { name: /open sidebar/i });
-    fireEvent.click(menuButton);
-
     const sidebar = screen.getByRole("complementary");
-    expect(sidebar).toHaveClass(
-      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
-    );
+    expect(sidebar).toHaveClass("translate-x-0");
   });
 
   it("renders preview button", () => {
@@ -305,6 +315,8 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={true}
+        setExpanded={jest.fn()}
       />,
     );
 
@@ -313,18 +325,20 @@ describe("Sidebar", () => {
     expect(previewLink).toHaveAttribute("href", "/d/test-droplet");
   });
 
-  it("renders metadata link", () => {
+  it("renders overview link", () => {
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        expanded={true}
+        setExpanded={jest.fn()}
       />,
     );
 
-    const metadataLink = screen.getByText("Metadata");
-    expect(metadataLink).toBeInTheDocument();
-    expect(metadataLink.closest("a")).toHaveAttribute(
+    const overviewLink = screen.getByText("Overview");
+    expect(overviewLink).toBeInTheDocument();
+    expect(overviewLink.closest("a")).toHaveAttribute(
       "href",
       "/draft/d/test-droplet",
     );

@@ -78,6 +78,7 @@ export function MultiSelect({
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            data-testid="multi-select-trigger"
             variant="outline"
             className={cn(
               "h-auto min-h-10 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-800",

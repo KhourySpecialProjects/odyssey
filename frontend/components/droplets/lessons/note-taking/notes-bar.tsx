@@ -29,6 +29,8 @@ export function NotesBar({
   const [pageHeight, setPageHeight] = useState(0);
   const [, setNoteDisabled] = useState(false);
   const [focused, setFocused] = useState<number | null>(null);
+  const [popoverY, setPopoverY] = useState<number | null>(null);
+  const [popoverX, setPopoverX] = useState<number | null>(null);
 
   if (!enrollmentId) {
     enrollmentId = "";
@@ -56,6 +58,10 @@ export function NotesBar({
     );
     setNotes(fetchedNotes);
   }, [userId, lesson.slug]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const handleDragMove = useCallback(
     (e: MouseEvent) => {
@@ -198,7 +204,49 @@ export function NotesBar({
       <div
         className="notes-bar relative w-full space-y-4"
         style={{ height: pageHeight + "px" }}
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          // Don't open popover when clicking on note blocks or delete buttons
+          if (
+            target.closest(".note-block") ||
+            target.closest("[data-testid='deleteNote']")
+          ) {
+            return;
+          }
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const relativeY = e.clientY - rect.top;
+          const relativeX = e.clientX - rect.right;
+          setPopoverY(relativeY);
+          setPopoverX(relativeX);
+        }}
       >
+        <p className="pointer-events-none absolute top-2 right-0 left-0 text-center text-sm text-slate-400">
+          Click anywhere to create a note
+        </p>
+
+        {popoverY !== null && (
+          <div
+            className="absolute z-30 rounded border border-slate-200 bg-white px-3 py-2 shadow-md"
+            style={{
+              top: `${popoverY}px`,
+              right: `${Math.abs(popoverX ?? 0)}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="text-sm font-medium text-slate-700 hover:text-slate-900"
+              onClick={async (e) => {
+                e.stopPropagation();
+                setPopoverY(null);
+                setPopoverX(null);
+                await createNoteAtY(popoverY);
+              }}
+            >
+              Create a Note?
+            </button>
+          </div>
+        )}
+
         {notes.map((note) => (
           <div
             key={note.id}

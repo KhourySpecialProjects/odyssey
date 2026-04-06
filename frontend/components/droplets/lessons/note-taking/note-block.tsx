@@ -2,7 +2,13 @@ import { Note } from "@/types";
 import { useState, useCallback } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { IconGripVertical, IconTrash } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconGripVertical,
+  IconTrash,
+} from "@tabler/icons-react";
+import { stripHtmlTags } from "@/lib/utils";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -29,6 +35,7 @@ export function NoteBlock({
 }) {
   const [content, setContent] = useState(note.content);
   const [focused, setFocused] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [, setNoteMessage] = useState("Save");
 
   const handleBlur = useCallback(async () => {
@@ -150,14 +157,22 @@ export function NoteBlock({
     return newRange;
   };
 
+  const getGeneralNoteLabel = () => {
+    if (!content) return "General Note";
+    const stripped = stripHtmlTags(content);
+    if (!stripped) return "General Note";
+    if (stripped.length <= 15) return stripped;
+    return stripped.substring(0, 15) + " ...";
+  };
+
   return (
     <div
       className={cn(
         "note-block mr-8 ml-12 flex w-full flex-row rounded-[8px] border bg-white p-2",
-        "dark:border-slate-700 dark:bg-slate-800",
+        "dark:border-slate-500 dark:bg-slate-700",
         focused
-          ? "border-[#2D7597] shadow-[0px_0px_0px_3px_rgba(45,117,151,0.2)]"
-          : "border-[#eaecf0] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]",
+          ? "shadow-[0px_0px_16px_rgb(29,58,138)]"
+          : "shadow-[0px_0px_8px_rgb(29,58,138)]",
       )}
     >
       <div className="flex w-4/5 flex-1 flex-col px-1 py-2">
@@ -235,45 +250,71 @@ export function NoteBlock({
               </Badge>
             </div>
           ) : (
-            <div className="flex w-full flex-row justify-start" />
+            <div className="flex w-full flex-row justify-start">
+              {!expanded && (
+                <span className="text-sm text-slate-500">
+                  {getGeneralNoteLabel()}
+                </span>
+              )}
+              {expanded && (
+                <span className="text-sm font-medium text-slate-600">
+                  General Note
+                </span>
+              )}
+            </div>
           )}
 
           <button
             type="button"
-            className="trash-icon ml-2 cursor-pointer p-1 text-red-400 transition-colors hover:text-red-600"
+            className="chevron-toggle ml-auto cursor-pointer p-1 text-slate-500 transition-colors hover:text-slate-700"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-label={expanded ? "Collapse note" : "Expand note"}
+            data-testid={expanded ? "chevronup" : "chevrondown"}
+          >
+            {expanded ? (
+              <IconChevronUp className="h-4 w-4" />
+            ) : (
+              <IconChevronDown className="h-4 w-4" />
+            )}
+          </button>
+
+          <div
+            role="button"
+            className="trash-icon ml-2 cursor-pointer rounded bg-red-700 p-1 text-white transition-colors hover:bg-red-800"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(note.id);
             }}
-            name="delete"
             data-testid="deleteNote"
           >
             <IconTrash className="h-4 w-4" />
-          </button>
+          </div>
         </div>
 
-        <div
-          onBlur={() => {
-            handleBlur();
-            onFocus(null);
-            setFocused(false);
-          }}
-          onFocus={() => {
-            onFocus(note.id);
-            setFocused(true);
-          }}
-        >
-          <div className="flex w-full flex-row items-center rounded-tl-md rounded-tr-md border bg-white dark:border-slate-500 dark:bg-slate-800">
-            <div className="flex-grow" data-testid="toolbar">
-              <DefaultToolbar editor={editor!} note={true} />
+        {expanded && (
+          <div
+            onBlur={() => {
+              handleBlur();
+              onFocus(null);
+              setFocused(false);
+            }}
+            onFocus={() => {
+              onFocus(note.id);
+              setFocused(true);
+            }}
+          >
+            <div className="flex w-full flex-row items-center rounded-tl-md rounded-tr-md border bg-white dark:border-slate-500 dark:bg-slate-800">
+              <div className="flex-grow" data-testid="toolbar">
+                <DefaultToolbar editor={editor!} note={true} />
+              </div>
             </div>
+            <EditorContent
+              name="lesson-generic"
+              editor={editor}
+              data-testid="editor"
+            />
           </div>
-          <EditorContent
-            name="lesson-generic"
-            editor={editor}
-            data-testid="editor"
-          />
-        </div>
+        )}
       </div>
     </div>
   );
