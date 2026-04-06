@@ -169,14 +169,14 @@ export function CodeBlockViewer({
   };
 
   return (
-    <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+    <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
-        <span className="text-sm font-medium text-gray-200">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {languageLabel}
         </span>
         {runnable && (
-          <span className="flex items-center gap-1 text-xs text-green-400">
+          <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <Play size={12} />
             Runnable
           </span>
@@ -188,7 +188,7 @@ export function CodeBlockViewer({
         {isEditing && editable ? (
           <div>
             <CodeEditor language={language} value={code} onChange={setCode} />
-            <div className="flex gap-2 border-t border-gray-700 bg-gray-800 p-2">
+            <div className="flex gap-2 border-t border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
               <button
                 onClick={() => setIsEditing(false)}
                 className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
@@ -201,7 +201,7 @@ export function CodeBlockViewer({
                   setCode(initialCode);
                   setIsEditing(false);
                 }}
-                className="flex items-center gap-1 rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
+                className="flex items-center gap-1 rounded bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-700"
               >
                 <X size={14} />
                 Reset
@@ -216,7 +216,7 @@ export function CodeBlockViewer({
             <CodeEditor language={language} value={code} readOnly />
             {editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
+                <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                   Click to edit
                 </span>
               </div>
@@ -227,8 +227,8 @@ export function CodeBlockViewer({
 
       {/* Run Button and Output */}
       {runnable && (
-        <div className="border-t border-gray-700">
-          <div className="bg-gray-800 p-2">
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50 p-2 dark:bg-gray-800">
             <button
               onClick={runCode}
               disabled={isRunning}
@@ -252,23 +252,32 @@ export function CodeBlockViewer({
             <div
               className={`border-t p-4 ${
                 executionSuccess
-                  ? "border-gray-700 bg-gray-950"
-                  : "border-red-700/30 bg-red-950/20"
+                  ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950"
+                  : "border-red-300/30 bg-red-50/20 dark:border-red-700/30 dark:bg-red-950/20"
               }`}
             >
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {executionSuccess ? (
-                  <span className="font-medium text-gray-400">Output:</span>
+                  <span className="font-medium text-gray-500 dark:text-gray-400">
+                    Output:
+                  </span>
                 ) : (
                   <>
-                    <AlertCircle size={14} className="text-red-400" />
-                    <span className="font-medium text-red-400">Error:</span>
+                    <AlertCircle
+                      size={14}
+                      className="text-red-500 dark:text-red-400"
+                    />
+                    <span className="font-medium text-red-500 dark:text-red-400">
+                      Error:
+                    </span>
                   </>
                 )}
               </div>
               <pre
                 className={`font-mono text-sm whitespace-pre-wrap ${
-                  executionSuccess ? "text-green-400" : "text-red-300"
+                  executionSuccess
+                    ? "text-green-700 dark:text-green-400"
+                    : "text-red-600 dark:text-red-300"
                 }`}
               >
                 {output}
