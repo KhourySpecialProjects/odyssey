@@ -5,19 +5,12 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
-export type DatasetFormat = "csv" | "json" | "xlsx";
-
 export type Dataset = {
   id: number;
   name: string;
-  format: DatasetFormat;
-  fileUrl: string;
+  url: string;
+  fileType: string;
   fileSize: number;
-  rowCount: number;
-  columnCount: number;
-  columnNames: string[];
-  columnTypes: string[]; // "string" | "number" | "boolean" | "date" | "unknown"
-  droplet?: Droplet;
 };
 
 export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
