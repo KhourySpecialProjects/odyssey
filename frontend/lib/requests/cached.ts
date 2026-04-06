@@ -125,17 +125,7 @@ export const getCachedDropletBySlug = cache((slug: string) =>
       },
       nextSteps: { fields: ["id", "label", "url"] },
       datasets: {
-        fields: [
-          "id",
-          "name",
-          "format",
-          "fileUrl",
-          "fileSize",
-          "rowCount",
-          "columnCount",
-          "columnNames",
-          "columnTypes",
-        ],
+        fields: ["id", "name", "url", "fileType", "fileSize"],
       },
     },
   }),

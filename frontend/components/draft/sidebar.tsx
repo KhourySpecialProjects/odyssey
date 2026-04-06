@@ -107,6 +107,7 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAutoFormatting, setIsAutoFormatting] = useState(false);
   const [hasAutoFormatted, setHasAutoFormatted] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -156,11 +157,15 @@ export function Sidebar({
   }, []);
 
   const handleDropletPost = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await createDropletAnnouncement(droplet.name, droplet.id);
       router.push(`/my-content`);
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -459,8 +464,13 @@ export function Sidebar({
                 </DialogHeader>
 
                 <div className="mt-4 flex flex-col gap-4">
-                  <Button onClick={handleDropletPost}>Share</Button>
-                  <Button onClick={() => router.push(`/my-content`)}>
+                  <Button onClick={handleDropletPost} disabled={isSubmitting}>
+                    Share
+                  </Button>
+                  <Button
+                    onClick={() => router.push(`/my-content`)}
+                    disabled={isSubmitting}
+                  >
                     Not Now
                   </Button>
                 </div>
