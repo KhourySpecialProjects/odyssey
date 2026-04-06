@@ -691,7 +691,7 @@ export async function saveNotebookContent(
       Key: s3Key,
       Body: Buffer.from(notebookJson, "utf8"),
       ContentType: "application/json",
-      CacheControl: "public, max-age=604800, immutable",
+      CacheControl: "public, no-cache",
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));

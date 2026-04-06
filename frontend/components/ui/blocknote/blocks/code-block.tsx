@@ -242,8 +242,14 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   const changeLanguage = (lang: string) => {
     if (!isMounted || !editor) return;
     try {
+      const langConfig = allLanguages.find((l) => l.value === lang);
+      const isExecutable = !!langConfig?.pistonName;
       editor.updateBlock(block, {
-        props: { ...block.props, language: lang },
+        props: {
+          ...block.props,
+          language: lang,
+          ...(isExecutable ? {} : { runnable: false }),
+        },
       });
     } catch (error) {
       console.error("Error changing language:", error);

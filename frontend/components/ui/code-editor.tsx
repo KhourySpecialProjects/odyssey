@@ -12,6 +12,8 @@ import { php } from "@codemirror/lang-php";
 import { rust } from "@codemirror/lang-rust";
 import { json } from "@codemirror/lang-json";
 import { StreamLanguage } from "@codemirror/language";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 import { go } from "@codemirror/legacy-modes/mode/go";
 import { ruby } from "@codemirror/legacy-modes/mode/ruby";
 import { shell } from "@codemirror/legacy-modes/mode/shell";
@@ -82,10 +84,11 @@ export function CodeEditor({
 
   const extensions = useMemo(() => {
     const ext: Extension[] = [];
+    if (!readOnly) ext.push(keymap.of([indentWithTab]));
     const langExt = getLanguageExtension(language);
     if (langExt) ext.push(langExt);
     return ext;
-  }, [language]);
+  }, [language, readOnly]);
 
   return (
     <CodeMirror
