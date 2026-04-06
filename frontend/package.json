@@ -103,7 +103,7 @@
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
     "@types/luxon": "^3.4.2",
-    "@types/node-fetch": "^2.6.12",
+    "@types/node-fetch": "^2.6.13",
     "@types/react-tabs": "^5.0.4",
     "@uiw/codemirror-theme-github": "^4.25.9",
     "@uiw/react-codemirror": "^4.25.9",
