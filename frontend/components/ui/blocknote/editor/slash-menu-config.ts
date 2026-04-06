@@ -222,7 +222,7 @@ export const getCodeSlashMenuItems = (
             type: "code-block",
             props: {
               language: "python",
-              code: "# Write your code here\n",
+              code: "",
               editable: true,
               runnable: true,
             },
