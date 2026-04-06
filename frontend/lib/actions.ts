@@ -60,6 +60,7 @@ export async function uploadImage(formData: FormData) {
       Key: `${rootPath}/${fileName}`,
       Body: buffer,
       ContentType: file.type,
+      CacheControl: "public, max-age=604800, immutable",
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
@@ -690,6 +691,7 @@ export async function saveNotebookContent(
       Key: s3Key,
       Body: Buffer.from(notebookJson, "utf8"),
       ContentType: "application/json",
+      CacheControl: "public, no-cache",
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
@@ -811,6 +813,7 @@ export async function uploadDataset(formData: FormData) {
         Key: `${rootPath}/${fileName}`,
         Body: buffer,
         ContentType: file.type || "application/octet-stream",
+        CacheControl: "public, max-age=604800, immutable",
       }),
     );
 
