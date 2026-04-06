@@ -258,8 +258,8 @@ export default function Sidebar({
               </div>
             </div>
 
-            <div className="flex flex-col space-y-1.5">
-              <p className="px-4 pb-3 text-xl leading-7 font-extrabold">
+            <div className="-mt-2 flex flex-col space-y-1.5">
+              <p className="mt-6 px-4 pb-3 text-xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
 

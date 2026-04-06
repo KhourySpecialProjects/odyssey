@@ -46,7 +46,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
 import { AddLesson } from "@/components/draft/add-lesson";
-import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
 import {
   DndContext,
   closestCenter,
@@ -477,8 +476,8 @@ export function Sidebar({
               </DialogContent>
             </Dialog>
 
-            <div className="flex flex-col space-y-1.5">
-              <p className="px-4 pb-3 text-xl leading-7 font-extrabold">
+            <div className="-mt-2 flex flex-col space-y-1.5">
+              <p className="mt-6 px-4 pb-3 text-xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
 
@@ -537,12 +536,8 @@ export function Sidebar({
                     droplet={droplet}
                     onAddLesson={addLessonCallback}
                     onAddLessons={addLessonsCallback}
-                  />
-                  <AddExistingLesson
-                    droplet={droplet}
                     availableDroplets={availableDroplets}
                     currentLessonCount={dropletLessons.length}
-                    onAddLesson={addLessonCallback}
                   />
                 </MantineProvider>
               </div>

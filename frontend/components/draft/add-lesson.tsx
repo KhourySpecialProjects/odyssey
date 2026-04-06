@@ -8,11 +8,10 @@ import {
   IconBook2,
   IconLoader2,
   IconPlus,
-  IconChevronDown,
 } from "@tabler/icons-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
-import { addLesson } from "@/lib/requests/lesson";
+import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
 import { ImportLessonModal } from "../ui/import-lesson-modal";
 import { ImportFileModal } from "./import-file-modal";
 import { toast } from "sonner";
@@ -23,23 +22,62 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export function AddLesson({
   droplet,
   onAddLesson,
   onAddLessons,
+  availableDroplets = [],
+  currentLessonCount = 0,
 }: {
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "difficulty">;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "difficulty"
+    | "type"
+    | "focusArea"
+    | "learningObjectives"
+    | "status"
+  >;
   onAddLesson: (newLesson: Lesson) => void;
   onAddLessons?: (newLessons: Lesson[]) => void;
+  availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
+  currentLessonCount?: number;
 }) {
   const [isHidden, setIsHidden] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFileImportModalOpen, setIsFileImportModalOpen] = useState(false);
+  const [isExistingOpen, setIsExistingOpen] = useState(false);
+  const [selectedDropletId, setSelectedDropletId] = useState("");
+  const [selectedLessonId, setSelectedLessonId] = useState("");
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLLIElement>(null);
   const router = useRouter();
+
+  const selectedDroplet = availableDroplets.find(
+    (d) => d.id.toString() === selectedDropletId,
+  );
+  const availableLessons =
+    selectedDroplet?.lessons?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
 
   const handleClick = () => {
     setIsHidden(false);
@@ -152,6 +190,59 @@ export function AddLesson({
     }
   }
 
+  async function handleDuplicate() {
+    if (!selectedLessonId) {
+      toast.error("Please select a lesson");
+      return;
+    }
+    setIsLoadingExisting(true);
+    try {
+      const result = await duplicateLessonToDroplet(
+        parseInt(selectedLessonId),
+        droplet.id,
+        currentLessonCount,
+      );
+
+      if (result.ok && result.data) {
+        const attributes = result.data.attributes;
+        const newLesson: Lesson = {
+          id: result.data.id,
+          name: attributes.name,
+          slug: attributes.slug,
+          type: attributes.type,
+          orderIndex: attributes.orderIndex,
+          blocks: attributes.blocks || [],
+          blocksV2: attributes.blocksV2 || null,
+          blocksVersion: attributes.blocksVersion || "v1",
+          notes: attributes.notes || null,
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: droplet.type,
+              focusArea: droplet.focusArea,
+              learningObjectives: droplet.learningObjectives,
+              status: droplet.status,
+            } as Droplet,
+          ],
+        };
+        onAddLesson(newLesson);
+        toast.success("Lesson duplicated successfully!");
+        setIsExistingOpen(false);
+        setSelectedDropletId("");
+        setSelectedLessonId("");
+      } else {
+        toast.error(result.error || "Failed to duplicate lesson");
+      }
+    } catch (error) {
+      console.error("Error duplicating lesson:", error);
+      toast.error("Failed to duplicate lesson");
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  }
+
   return (
     <>
       <div className="flex w-full items-center justify-between">
@@ -165,13 +256,12 @@ export function AddLesson({
               <div
                 role="button"
                 aria-label="Import lessons"
-                className="flex cursor-pointer items-center gap-0.5 p-2"
+                className="flex cursor-pointer items-center p-2"
               >
                 <IconUpload
                   className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                   stroke={2.5}
                 />
-                <IconChevronDown className="h-3 w-3" stroke={2.5} />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -183,15 +273,28 @@ export function AddLesson({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="cursor-pointer p-1">
-            <IconPlus
-              role="button"
-              aria-label="Add lesson"
-              onClick={handleClick}
-              className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-              stroke={2.5}
-            />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                role="button"
+                aria-label="Add lesson"
+                className="cursor-pointer p-1"
+              >
+                <IconPlus
+                  className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  stroke={2.5}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleClick}>
+                New Lesson
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsExistingOpen(true)}>
+                Add Existing Lesson
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -208,6 +311,76 @@ export function AddLesson({
         droplet={droplet}
         onAddLessons={onAddLessons ?? (() => {})}
       />
+
+      {/* Add Existing Lesson Dialog */}
+      <Dialog open={isExistingOpen} onOpenChange={setIsExistingOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Lesson from Another Droplet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Droplet</label>
+              <Select
+                value={selectedDropletId}
+                onValueChange={(value) => {
+                  setSelectedDropletId(value);
+                  setSelectedLessonId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a droplet..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDroplets
+                    .filter((d) => d.id !== droplet.id)
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((d) => (
+                      <SelectItem key={d.id} value={d.id.toString()}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedDropletId && availableLessons.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Lesson</label>
+                <Select
+                  value={selectedLessonId}
+                  onValueChange={setSelectedLessonId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a lesson..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLessons.map((lesson) => (
+                      <SelectItem key={lesson.id} value={lesson.id.toString()}>
+                        {lesson.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {selectedDropletId && availableLessons.length === 0 && (
+              <p className="text-muted-foreground text-sm">
+                No lessons available in this droplet
+              </p>
+            )}
+
+            <Button
+              onClick={handleDuplicate}
+              disabled={!selectedLessonId || isLoadingExisting}
+              className="w-full"
+            >
+              {isLoadingExisting ? "Duplicating..." : "Duplicate Lesson"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ul className={isHidden ? "hidden" : ""}>
         {!isHidden ? (
