@@ -66,7 +66,7 @@
     "@mantine/core": "^8.3.6",
     "@mantine/hooks": "^8.3.6",
     "@microsoft/microsoft-graph-client": "^3.0.7",
-    "@mui/icons-material": "^7.3.4",
+    "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.4",
     "@mui/x-date-pickers": "^7.27.0",
     "@nextui-org/table": "^2.2.8",
