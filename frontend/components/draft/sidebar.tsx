@@ -525,6 +525,7 @@ export function Sidebar({
                   <AddLesson
                     droplet={droplet}
                     onAddLesson={addLessonCallback}
+                    onAddLessons={addLessonsCallback}
                     availableDroplets={availableDroplets}
                     currentLessonCount={dropletLessons.length}
                   />

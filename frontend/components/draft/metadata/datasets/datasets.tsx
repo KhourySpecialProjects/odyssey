@@ -49,6 +49,7 @@ export function Datasets({
     startTransition(async () => {
       const response = await updateDroplet(dropletId, {
         datasets: [
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           ...datasets.map(({ id: _id, ...d }) => d),
           {
             name: file.name,
@@ -75,6 +76,7 @@ export function Datasets({
       const response = await updateDroplet(dropletId, {
         datasets: datasets
           .filter((d) => d.id !== dataset.id)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .map(({ id: _id, ...d }) => d),
       });
 
