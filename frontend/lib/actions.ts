@@ -82,6 +82,36 @@ export async function uploadImage(formData: FormData) {
   }
 }
 
+export async function deleteDataset(fileUrl: string) {
+  try {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
+    const prefix = bucketUrl.endsWith("/") ? bucketUrl : `${bucketUrl}/`;
+
+    if (!fileUrl.startsWith(prefix)) {
+      return { ok: false, error: "Invalid file URL." };
+    }
+
+    const key = fileUrl.slice(prefix.length);
+
+    const response = await s3.send(
+      new DeleteObjectCommand({ Bucket: bucketName, Key: key }),
+    );
+
+    if (
+      response["$metadata"].httpStatusCode !== 204 &&
+      response["$metadata"].httpStatusCode !== 200
+    ) {
+      return { ok: false, error: "Failed to delete dataset." };
+    }
+    revalidateTag(CACHE_TAGS.datasets);
+    return { ok: true, error: null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "Failed to delete dataset." };
+  }
+}
+
 export async function createAuthorizedUserWithState(
   _prevState: any,
   formData: FormData,

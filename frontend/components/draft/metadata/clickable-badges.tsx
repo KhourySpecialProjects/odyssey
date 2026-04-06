@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar, getDifficultyBadgeColor, cn } from "@/lib/utils";
+import { getTagColors } from "@/lib/tag-colors";
 import { X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { updateDroplet, createNewTag } from "@/lib/requests/droplet";
@@ -224,9 +224,15 @@ export function ClickableBadges({
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
-          <Badge className="h-full border border-slate-300 bg-purple-200 text-black hover:bg-purple-400 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-400">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(localFocusArea).bg,
+              getTagColors(localFocusArea).text,
+            )}
+          >
             {uppercaseFirstChar(localFocusArea)}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "focusArea" && (
@@ -270,9 +276,15 @@ export function ClickableBadges({
           onClick={() => setActivePopup("type")}
           disabled={isPending}
         >
-          <Badge className="dark:text-whitegit h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:text-white">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(localType).bg,
+              getTagColors(localType).text,
+            )}
+          >
             {uppercaseFirstChar(localType)}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "type" && (
@@ -317,9 +329,15 @@ export function ClickableBadges({
           disabled={isPending}
           className="h-full"
         >
-          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300 dark:text-white">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(tag.name).bg,
+              getTagColors(tag.name).text,
+            )}
+          >
             {tag.name}
-          </Badge>
+          </span>
         </button>
       ))}
 
@@ -329,12 +347,12 @@ export function ClickableBadges({
           onClick={() => setActivePopup("difficulty")}
           disabled={isPending}
         >
-          <Badge
+          <span
             className={cn(
-              "h-full border border-slate-300 text-black hover:opacity-80 dark:text-white",
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
               localDifficulty
                 ? getDifficultyBadgeColor(localDifficulty.toLowerCase())
-                : "bg-slate-200 dark:bg-slate-600",
+                : "bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300",
             )}
           >
             {localDifficulty ? (
@@ -344,7 +362,7 @@ export function ClickableBadges({
                 No Difficulty <span className="text-red-500">*</span>
               </>
             )}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "difficulty" && (
@@ -388,9 +406,9 @@ export function ClickableBadges({
           onClick={() => setActivePopup("addTag")}
           disabled={isPending}
         >
-          <div className="flex h-full flex-row items-center text-black dark:text-white">
-            <Plus className="h-4 w-4" />
-            <p>Add Tag</p>
+          <div className="flex h-full flex-row items-center gap-1 text-black dark:text-white">
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            <p className="text-[14px] leading-[18px] font-medium">Add Tag</p>
           </div>
         </button>
 

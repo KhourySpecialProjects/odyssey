@@ -50,7 +50,7 @@ export function NotebookCodeViewer({
     await Promise.all(
       unloaded.map((ds) =>
         pyodide
-          .loadDataset(ds.name, ds.fileUrl)
+          .loadDataset(ds.name, ds.url)
           .then(() => datasetsLoadedRef.current.add(ds.id))
           .catch((err) =>
             console.warn(`Failed to load dataset "${ds.name}":`, err),

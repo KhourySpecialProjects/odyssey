@@ -28,7 +28,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
   };
 
   return (
-    <li
+    <div
       onClick={inDraft ? undefined : handleClick}
       className={`flex items-center gap-4 p-4 transition-colors ${
         inDraft
@@ -70,6 +70,6 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
           </p>
         )}
       </div>
-    </li>
+    </div>
   );
 }

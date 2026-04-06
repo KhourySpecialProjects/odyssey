@@ -3,7 +3,7 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Droplet } from "@/types";
-import { GoalIcon, Link2Icon } from "lucide-react";
+import { IconTarget, IconLink } from "@tabler/icons-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -131,28 +131,28 @@ export default async function DropletRecapRoute({ params }: Props) {
           </>
         )}
 
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mt-3 text-6xl font-black text-slate-900 dark:text-white">
+      <div className="px-4 pt-6 sm:px-8 lg:px-40">
+        <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
           Recap
         </h1>
       </div>
-      <div className="mx-auto w-full max-w-2xl space-y-8 py-8 md:space-y-12">
+      <div className="w-full space-y-10 px-4 pt-6 sm:px-8 lg:px-40">
         <section>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             Learning Objectives
           </h2>
-          <p className="text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-slate-500 dark:text-slate-300">
             Now that you have completed this Droplet, you should:
           </p>
 
-          <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
+          <div className="mt-4 rounded-lg border border-[#efeff0] bg-[#fcfcfd] dark:border-slate-500 dark:bg-slate-800">
             <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
               {droplet.learningObjectives.map((objective) => (
                 <li
                   key={objective.id}
                   className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                 >
-                  <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
+                  <IconTarget className="mr-0.5 h-5 w-5 shrink-0" />
                   {objective.objective}
                 </li>
               ))}
@@ -165,7 +165,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Notes
             </h2>
-            <p className="pb-2 text-slate-500 dark:text-slate-300">
+            <p className="mt-1 pb-2 text-slate-500 dark:text-slate-300">
               A collection of notes and highlights that you created throughout
               this droplet:
             </p>
@@ -201,7 +201,7 @@ export default async function DropletRecapRoute({ params }: Props) {
               To further your understanding, we recommend exploring:
             </p>
 
-            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
+            <div className="mt-4 rounded-lg border border-[#efeff0] bg-[#fcfcfd] dark:border-slate-500 dark:bg-slate-800">
               <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.nextSteps.map((resource) => (
                   <li key={resource.id}>
@@ -211,7 +211,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700 dark:text-slate-300"
                     >
-                      <Link2Icon className="mr-0.5 h-5 w-5 shrink-0" />
+                      <IconLink className="mr-0.5 h-5 w-5 shrink-0" />
                       {resource.label ?? resource.url}
                     </Link>
                   </li>
@@ -226,7 +226,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Extend Your Odyssey
             </h2>
-            <p className="text-slate-500 dark:text-slate-300">
+            <p className="mt-1 text-slate-500 dark:text-slate-300">
               Have you explored these Droplets yet?
             </p>
 
@@ -257,6 +257,7 @@ export default async function DropletRecapRoute({ params }: Props) {
           </section>
         ) : null}
       </div>
+      <div className="pb-12"></div>
     </>
   );
 }
