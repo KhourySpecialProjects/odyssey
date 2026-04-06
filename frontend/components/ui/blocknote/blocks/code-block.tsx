@@ -3,45 +3,13 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { useState, useEffect, ErrorInfo } from "react";
 import React from "react";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-// Import languages
-import javascript from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
-import typescript from "react-syntax-highlighter/dist/esm/languages/hljs/typescript";
-import python from "react-syntax-highlighter/dist/esm/languages/hljs/python";
-import java from "react-syntax-highlighter/dist/esm/languages/hljs/java";
-import cpp from "react-syntax-highlighter/dist/esm/languages/hljs/cpp";
-import c from "react-syntax-highlighter/dist/esm/languages/hljs/c";
-import csharp from "react-syntax-highlighter/dist/esm/languages/hljs/csharp";
-import php from "react-syntax-highlighter/dist/esm/languages/hljs/php";
-import ruby from "react-syntax-highlighter/dist/esm/languages/hljs/ruby";
-import bash from "react-syntax-highlighter/dist/esm/languages/hljs/bash";
-import go from "react-syntax-highlighter/dist/esm/languages/hljs/go";
-import rust from "react-syntax-highlighter/dist/esm/languages/hljs/rust";
-import kotlin from "react-syntax-highlighter/dist/esm/languages/hljs/kotlin";
-import swift from "react-syntax-highlighter/dist/esm/languages/hljs/swift";
 import { Play, Edit, Lock, Check, X, AlertCircle, Loader2 } from "lucide-react";
-
-// Register languages
-SyntaxHighlighter.registerLanguage("javascript", javascript);
-SyntaxHighlighter.registerLanguage("typescript", typescript);
-SyntaxHighlighter.registerLanguage("python", python);
-SyntaxHighlighter.registerLanguage("java", java);
-SyntaxHighlighter.registerLanguage("cpp", cpp);
-SyntaxHighlighter.registerLanguage("c", c);
-SyntaxHighlighter.registerLanguage("csharp", csharp);
-SyntaxHighlighter.registerLanguage("php", php);
-SyntaxHighlighter.registerLanguage("ruby", ruby);
-SyntaxHighlighter.registerLanguage("bash", bash);
-SyntaxHighlighter.registerLanguage("go", go);
-SyntaxHighlighter.registerLanguage("rust", rust);
-SyntaxHighlighter.registerLanguage("kotlin", kotlin);
-SyntaxHighlighter.registerLanguage("swift", swift);
+import { CodeEditor } from "@/components/ui/code-editor";
 
 // Piston API configuration - calling directly
 const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
 
-// Only languages supported by both Piston and react-syntax-highlighter
+// Languages supported by both Piston and CodeMirror
 const SUPPORTED_LANGUAGES = {
   Web: [
     {
@@ -90,16 +58,25 @@ const SUPPORTED_LANGUAGES = {
       fileName: "main.swift",
     },
   ],
+  Other: [
+    { value: "json", label: "JSON", pistonName: "", fileName: "data.json" },
+    {
+      value: "plaintext",
+      label: "Plain Text",
+      pistonName: "",
+      fileName: "file.txt",
+    },
+  ],
 };
 
 const allLanguages = Object.values(SUPPORTED_LANGUAGES).flat();
 
 const executePistonCode = async (language: string, code: string) => {
   const langConfig = allLanguages.find((l) => l.value === language);
-  if (!langConfig) {
+  if (!langConfig || !langConfig.pistonName) {
     return {
       success: false,
-      output: `Language ${language} is not supported`,
+      output: `Language ${language} is not supported for execution`,
     };
   }
 
@@ -175,7 +152,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   const [isRunning, setIsRunning] = useState(false);
   const [executionSuccess, setExecutionSuccess] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const currentLanguage = allLanguages.find(
     (lang) => lang.value === block.props.language,
@@ -197,17 +173,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       setCode(block.props.code);
     }
   }, [block.props.code, isEditing]);
-
-  // Focus textarea when entering editing mode
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      // Small delay to ensure textarea is rendered
-      const timer = setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-  }, [isEditing]);
 
   const handleSave = () => {
     if (!isMounted || !editor) return;
@@ -378,105 +343,10 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       <div className="relative">
         {isEditing && block.props.editable ? (
           <div>
-            <textarea
-              ref={textareaRef}
+            <CodeEditor
+              language={block.props.language}
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => {
-                // Handle Tab key for indentation - make sure it works in all modes
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  e.stopPropagation(); // Prevent BlockNote from handling it
-
-                  const textarea = e.currentTarget;
-                  const start = textarea.selectionStart;
-                  const end = textarea.selectionEnd;
-                  const value = textarea.value;
-
-                  if (e.shiftKey) {
-                    // Shift+Tab: Outdent (remove indentation)
-                    const linesBefore = value.substring(0, start).split("\n");
-                    const currentLineIndex = linesBefore.length - 1;
-                    const currentLine = linesBefore[currentLineIndex];
-
-                    // Check if line starts with tab or spaces
-                    if (currentLine.startsWith("\t")) {
-                      // Remove one tab
-                      const newValue =
-                        value.substring(0, start - 1) + value.substring(start);
-                      setCode(newValue);
-                      // Set cursor position
-                      setTimeout(() => {
-                        textarea.selectionStart = start - 1;
-                        textarea.selectionEnd = start - 1;
-                      }, 0);
-                    } else if (currentLine.match(/^ {1,4}/)) {
-                      // Remove up to 4 spaces (or fewer if less than 4)
-                      const spacesToRemove = Math.min(
-                        4,
-                        currentLine.match(/^ */)?.[0].length || 0,
-                      );
-                      if (spacesToRemove > 0) {
-                        const newValue =
-                          value.substring(0, start - spacesToRemove) +
-                          value.substring(start);
-                        setCode(newValue);
-                        setTimeout(() => {
-                          textarea.selectionStart = start - spacesToRemove;
-                          textarea.selectionEnd = start - spacesToRemove;
-                        }, 0);
-                      }
-                    }
-                  } else {
-                    // Tab: Indent
-                    const selectedText = value.substring(start, end);
-                    const lines = selectedText.split("\n");
-
-                    if (lines.length > 1) {
-                      // Multiple lines selected - indent all lines
-                      const indentedLines = lines.map((line, index) => {
-                        if (index === 0) {
-                          // First line: add tab at cursor position
-                          return "\t" + line;
-                        } else {
-                          // Subsequent lines: add tab at start
-                          return "\t" + line;
-                        }
-                      });
-                      const newValue =
-                        value.substring(0, start) +
-                        indentedLines.join("\n") +
-                        value.substring(end);
-                      setCode(newValue);
-                      // Set cursor position to maintain selection
-                      setTimeout(() => {
-                        textarea.selectionStart = start + 1;
-                        textarea.selectionEnd =
-                          start + indentedLines.join("\n").length;
-                      }, 0);
-                    } else {
-                      // Single line or no selection - insert tab
-                      const newValue =
-                        value.substring(0, start) + "\t" + value.substring(end);
-                      setCode(newValue);
-                      // Set cursor position after the tab
-                      setTimeout(() => {
-                        textarea.selectionStart = start + 1;
-                        textarea.selectionEnd = start + 1;
-                      }, 0);
-                    }
-                  }
-                }
-              }}
-              onFocus={(e) => {
-                // Ensure textarea stays focused
-                e.stopPropagation();
-              }}
-              className="w-full resize-none bg-gray-900 p-4 font-mono text-sm text-gray-100 outline-none"
-              rows={Math.max(5, code.split("\n").length)}
-              style={{ minHeight: "120px" }}
-              spellCheck={false}
-              autoFocus
+              onChange={setCode}
             />
             <div className="flex gap-2 border-t border-gray-700 bg-gray-800 p-2">
               <button
@@ -501,25 +371,15 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             onClick={() => {
               if (block.props.editable) {
                 setIsEditing(true);
-                // Focus the textarea after state update
-                setTimeout(() => {
-                  textareaRef.current?.focus();
-                }, 0);
               }
             }}
           >
-            <SyntaxHighlighter
+            <CodeEditor
               language={block.props.language}
-              style={atomOneDark}
-              customStyle={{
-                margin: 0,
-                padding: "1rem",
-                background: "transparent",
-              }}
-              PreTag="div"
-            >
-              {code || "# Write your code here"}
-            </SyntaxHighlighter>
+              value={code}
+              readOnly
+              placeholder="# Write your code here"
+            />
             {block.props.editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
