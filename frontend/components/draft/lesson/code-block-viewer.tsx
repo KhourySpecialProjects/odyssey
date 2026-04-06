@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { CodeEditor } from "@/components/ui/code-editor";
 
 const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
@@ -250,11 +251,12 @@ export function CodeBlockViewer({
 
           {output && (
             <div
-              className={`border-t p-4 ${
+              className={cn(
+                "border-t p-4",
                 executionSuccess
                   ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950"
-                  : "border-red-300/30 bg-red-50/20 dark:border-red-700/30 dark:bg-red-950/20"
-              }`}
+                  : "border-red-300/30 bg-red-50/20 dark:border-red-700/30 dark:bg-red-950/20",
+              )}
             >
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {executionSuccess ? (
@@ -274,11 +276,12 @@ export function CodeBlockViewer({
                 )}
               </div>
               <pre
-                className={`font-mono text-sm whitespace-pre-wrap ${
+                className={cn(
+                  "font-mono text-sm whitespace-pre-wrap",
                   executionSuccess
                     ? "text-green-700 dark:text-green-400"
-                    : "text-red-600 dark:text-red-300"
-                }`}
+                    : "text-red-600 dark:text-red-300",
+                )}
               >
                 {output}
               </pre>

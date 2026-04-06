@@ -327,10 +327,12 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             </select>
           )}
 
-          <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-            <Play size={12} />
-            Executable
-          </span>
+          {!!currentLanguage?.pistonName && (
+            <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <Play size={12} />
+              Executable
+            </span>
+          )}
         </div>
 
         {!isViewMode && (
