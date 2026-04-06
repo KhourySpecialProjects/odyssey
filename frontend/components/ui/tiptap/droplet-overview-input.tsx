@@ -16,7 +16,7 @@ export function DropletOverviewInput({
 }: {
   initialContent: string;
   updateContent: (content: string) => void;
-  editorActionsRef?: React.RefObject<{
+  editorActionsRef?: React.MutableRefObject<{
     setLink: () => void;
     unsetLink: () => void;
   } | null>;

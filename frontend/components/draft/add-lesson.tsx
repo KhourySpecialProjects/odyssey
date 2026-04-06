@@ -8,72 +8,43 @@ import {
   IconBook2,
   IconLoader2,
   IconPlus,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
-import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
+import { addLesson } from "@/lib/requests/lesson";
 import { ImportLessonModal } from "../ui/import-lesson-modal";
 import { ImportFileModal } from "./import-file-modal";
 import { toast } from "sonner";
 import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AddLesson({
   droplet,
   onAddLesson,
-  availableDroplets = [],
-  currentLessonCount = 0,
   onAddLessons,
 }: {
-  droplet: Pick<
-    Droplet,
-    | "id"
-    | "name"
-    | "slug"
-    | "lessons"
-    | "difficulty"
-    | "type"
-    | "focusArea"
-    | "learningObjectives"
-    | "status"
-  >;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "difficulty">;
   onAddLesson: (newLesson: Lesson) => void;
-  availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
-  currentLessonCount?: number;
   onAddLessons?: (newLessons: Lesson[]) => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFileImportModalOpen, setIsFileImportModalOpen] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [isExistingOpen, setIsExistingOpen] = useState(false);
-  const [selectedDropletId, setSelectedDropletId] = useState("");
-  const [selectedLessonId, setSelectedLessonId] = useState("");
-  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLLIElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const selectedDroplet = availableDroplets.find(
-    (d) => d.id.toString() === selectedDropletId,
-  );
-  const availableLessons =
-    selectedDroplet?.lessons?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
+  const handleClick = () => {
+    setIsHidden(false);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
 
   const handleClickOutside = (event: MouseEvent) => {
     if (
@@ -82,13 +53,6 @@ export function AddLesson({
       !ref.current.contains(event.target)
     ) {
       setIsHidden(true);
-    }
-    if (
-      menuRef.current &&
-      event.target instanceof Node &&
-      !menuRef.current.contains(event.target)
-    ) {
-      setShowMenu(false);
     }
   };
 
@@ -188,59 +152,6 @@ export function AddLesson({
     }
   }
 
-  async function handleDuplicate() {
-    if (!selectedLessonId) {
-      toast.error("Please select a lesson");
-      return;
-    }
-    setIsLoadingExisting(true);
-    try {
-      const result = await duplicateLessonToDroplet(
-        parseInt(selectedLessonId),
-        droplet.id,
-        currentLessonCount,
-      );
-
-      if (result.ok && result.data) {
-        const attributes = result.data.attributes;
-        const newLesson: Lesson = {
-          id: result.data.id,
-          name: attributes.name,
-          slug: attributes.slug,
-          type: attributes.type,
-          orderIndex: attributes.orderIndex,
-          blocks: attributes.blocks || [],
-          blocksV2: attributes.blocksV2 || null,
-          blocksVersion: attributes.blocksVersion || "v1",
-          notes: attributes.notes || null,
-          droplets: [
-            {
-              id: droplet.id,
-              name: droplet.name,
-              slug: droplet.slug,
-              type: droplet.type,
-              focusArea: droplet.focusArea,
-              learningObjectives: droplet.learningObjectives,
-              status: droplet.status,
-            } as Droplet,
-          ],
-        };
-        onAddLesson(newLesson);
-        toast.success("Lesson duplicated successfully!");
-        setIsExistingOpen(false);
-        setSelectedDropletId("");
-        setSelectedLessonId("");
-      } else {
-        toast.error(result.error || "Failed to duplicate lesson");
-      }
-    } catch (error) {
-      console.error("Error duplicating lesson:", error);
-      toast.error("Failed to duplicate lesson");
-    } finally {
-      setIsLoadingExisting(false);
-    }
-  }
-
   return (
     <>
       <div className="flex w-full items-center justify-between">
@@ -249,60 +160,41 @@ export function AddLesson({
           <p className="text-base leading-none font-medium">Lessons</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="cursor-pointer p-2">
-            <IconUpload
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                role="button"
+                aria-label="Import lessons"
+                className="flex cursor-pointer items-center gap-0.5 p-2"
+              >
+                <IconUpload
+                  className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  stroke={2.5}
+                />
+                <IconChevronDown className="h-3 w-3" stroke={2.5} />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsImportModalOpen(true)}>
+                Import from Markdown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsFileImportModalOpen(true)}>
+                Import from File (PDF/PPTX)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="cursor-pointer p-1">
+            <IconPlus
               role="button"
-              onClick={() => setIsImportModalOpen(true)}
+              aria-label="Add lesson"
+              onClick={handleClick}
               className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
               stroke={2.5}
             />
           </div>
-          <div className="relative" ref={menuRef}>
-            <div className="cursor-pointer p-1">
-              <IconPlus
-                role="button"
-                onClick={() => setShowMenu((v) => !v)}
-                className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                stroke={2.5}
-              />
-            </div>
-            {showMenu && (
-              <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <button
-                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setIsHidden(false);
-                    setTimeout(() => inputRef.current?.focus(), 0);
-                  }}
-                >
-                  New Lesson
-                </button>
-                <button
-                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setIsExistingOpen(true);
-                  }}
-                >
-                  Add Existing Lesson
-                </button>
-                <button
-                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setIsFileImportModalOpen(true);
-                  }}
-                >
-                  Import from File (PDF/PPTX)
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Markdown Import Modal */}
       <ImportLessonModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
@@ -310,83 +202,12 @@ export function AddLesson({
         dropletName={droplet.name}
       />
 
-      {/* File Import Modal (PDF/PPTX) */}
       <ImportFileModal
         isOpen={isFileImportModalOpen}
         onClose={() => setIsFileImportModalOpen(false)}
         droplet={droplet}
         onAddLessons={onAddLessons ?? (() => {})}
       />
-
-      {/* Add Existing Lesson Dialog */}
-      <Dialog open={isExistingOpen} onOpenChange={setIsExistingOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Add Lesson from Another Droplet</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Droplet</label>
-              <Select
-                value={selectedDropletId}
-                onValueChange={(value) => {
-                  setSelectedDropletId(value);
-                  setSelectedLessonId("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a droplet..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDroplets
-                    .filter((d) => d.id !== droplet.id)
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((d) => (
-                      <SelectItem key={d.id} value={d.id.toString()}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedDropletId && availableLessons.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Lesson</label>
-                <Select
-                  value={selectedLessonId}
-                  onValueChange={setSelectedLessonId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a lesson..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableLessons.map((lesson) => (
-                      <SelectItem key={lesson.id} value={lesson.id.toString()}>
-                        {lesson.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {selectedDropletId && availableLessons.length === 0 && (
-              <p className="text-muted-foreground text-sm">
-                No lessons available in this droplet
-              </p>
-            )}
-
-            <Button
-              onClick={handleDuplicate}
-              disabled={!selectedLessonId || isLoadingExisting}
-              className="w-full"
-            >
-              {isLoadingExisting ? "Duplicating..." : "Duplicate Lesson"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <ul className={isHidden ? "hidden" : ""}>
         {!isHidden ? (

@@ -46,6 +46,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
 import { AddLesson } from "@/components/draft/add-lesson";
+import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
 import {
   DndContext,
   closestCenter,
@@ -526,8 +527,12 @@ export function Sidebar({
                     droplet={droplet}
                     onAddLesson={addLessonCallback}
                     onAddLessons={addLessonsCallback}
+                  />
+                  <AddExistingLesson
+                    droplet={droplet}
                     availableDroplets={availableDroplets}
                     currentLessonCount={dropletLessons.length}
+                    onAddLesson={addLessonCallback}
                   />
                 </MantineProvider>
               </div>

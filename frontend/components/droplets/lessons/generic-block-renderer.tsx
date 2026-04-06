@@ -411,17 +411,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       const highlightStart = Math.min(startOffset, endOffset);
       const highlightEnd = Math.max(startOffset, endOffset);
 
+      const startSpan = range.startContainer.parentElement?.closest(
+        'span[style*="background-color"]',
+      ) as HTMLElement | null;
+      const endSpan = range.endContainer?.parentElement?.closest(
+        'span[style*="background-color"]',
+      ) as HTMLElement | null;
+      // Only treat as "edit existing highlight" when the entire selection is
+      // contained within the same span; a partial overlap is a new selection.
       const highlightSpan =
-        range.startContainer.parentElement?.closest(
-          'span[style*="background-color"]',
-        ) ||
-        range.endContainer?.parentElement?.closest(
-          'span[style*="background-color"]',
-        );
+        startSpan && endSpan && startSpan === endSpan ? startSpan : null;
 
       popupRef.current.x = highlightStart;
       popupRef.current.y = highlightEnd;
-      popupRef.current.highlightSpan = highlightSpan as HTMLElement | null;
+      popupRef.current.highlightSpan = highlightSpan;
       popupRef.current.savedRange = savedSelectionRef.current;
 
       // Show floating selection toolbar
@@ -528,11 +531,16 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     if (!startNode || !endNode) return;
 
+    const existingSpan = popupRef.current.highlightSpan;
+    const effectiveColor = existingSpan
+      ? (existingSpan.style.backgroundColor as HighlightColor)
+      : colorToUse;
+
     onHighlight(
       {
         text,
         position: { start: globalStart, end: globalEnd },
-        color: colorToUse,
+        color: effectiveColor,
         blockId: block.id,
       },
       isWithNote,
@@ -540,25 +548,31 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     popupRef.current.highlightSpan = null;
 
-    try {
-      const newRange = document.createRange();
-      newRange.setStart(startNode, startOffset);
-      newRange.setEnd(endNode, endOffset);
+    if (!existingSpan) {
+      try {
+        const newRange = document.createRange();
+        newRange.setStart(startNode, startOffset);
+        newRange.setEnd(endNode, endOffset);
 
-      const span = document.createElement("span");
-      span.style.borderRadius = "8px";
-      span.style.backgroundColor = colorToUse;
-      span.style.setProperty("color", "black", "important");
-      newRange.surroundContents(span);
-    } catch {
-      highlightRange(startNode, startOffset, endNode, endOffset, colorToUse);
+        const span = document.createElement("span");
+        span.style.borderRadius = "8px";
+        span.style.backgroundColor = colorToUse;
+        span.style.setProperty("color", "black", "important");
+        newRange.surroundContents(span);
+      } catch {
+        highlightRange(startNode, startOffset, endNode, endOffset, colorToUse);
+      }
     }
   };
 
   const handleApplyColor = (color: HighlightColor) => {
+    const savedRange = popupRef.current.savedRange;
     if (
       popupRef.current.highlightSpan &&
-      popupRef.current.highlightSpan.textContent
+      popupRef.current.highlightSpan.textContent &&
+      savedRange &&
+      popupRef.current.highlightSpan.contains(savedRange.startContainer) &&
+      popupRef.current.highlightSpan.contains(savedRange.endContainer)
     ) {
       const blockOffset = getTextOffset(
         contentRef.current!,
