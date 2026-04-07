@@ -1566,6 +1566,90 @@ export interface ApiTagTag extends Schema.CollectionType {
   };
 }
 
+export interface ApiVoyageVoyage extends Schema.CollectionType {
+  collectionName: 'voyages';
+  info: {
+    displayName: 'Voyage';
+    pluralName: 'voyages';
+    singularName: 'voyage';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    authors: Attribute.Relation<
+      'api::voyage.voyage',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    description: Attribute.Text;
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    publishedAt: Attribute.DateTime;
+    slug: Attribute.UID<'api::voyage.voyage', 'name'> & Attribute.Required;
+    status: Attribute.Enumeration<['draft', 'published']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'draft'>;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyage_playlists: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToMany',
+      'api::voyage-playlist.voyage-playlist'
+    >;
+  };
+}
+
+export interface ApiVoyagePlaylistVoyagePlaylist extends Schema.CollectionType {
+  collectionName: 'voyage_playlists';
+  info: {
+    displayName: 'VoyagePlaylist';
+    pluralName: 'voyage-playlists';
+    singularName: 'voyage-playlist';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage-playlist.voyage-playlist',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    orderIndex: Attribute.Integer & Attribute.Required;
+    playlist: Attribute.Relation<
+      'api::voyage-playlist.voyage-playlist',
+      'manyToOne',
+      'api::playlist.playlist'
+    >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage-playlist.voyage-playlist',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyage: Attribute.Relation<
+      'api::voyage-playlist.voyage-playlist',
+      'manyToOne',
+      'api::voyage.voyage'
+    >;
+  };
+}
+
 export interface PluginContentReleasesRelease extends Schema.CollectionType {
   collectionName: 'strapi_releases';
   info: {
@@ -2021,6 +2105,8 @@ declare module '@strapi/types' {
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
       'api::tag.tag': ApiTagTag;
+      'api::voyage-playlist.voyage-playlist': ApiVoyagePlaylistVoyagePlaylist;
+      'api::voyage.voyage': ApiVoyageVoyage;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
