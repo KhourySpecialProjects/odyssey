@@ -100,7 +100,7 @@ describe("FeedClient", () => {
     // expect(fetchAnnouncements).toHaveBeenLastCalledWith(mockAuthUser, 2);
   });
 
-  it("shows no more announcements message when on single page", async () => {
+  it("does not show pagination when on a single page", async () => {
     const mockInitialAnnouncements = generateMockAnnouncements(10);
 
     (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
@@ -110,7 +110,7 @@ describe("FeedClient", () => {
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
     await waitFor(() => {
-      expect(screen.getByText("No more announcements")).toBeInTheDocument();
+      expect(screen.queryByText(/prev/i)).not.toBeInTheDocument();
     });
   });
 

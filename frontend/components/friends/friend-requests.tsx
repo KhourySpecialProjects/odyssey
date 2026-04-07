@@ -61,7 +61,7 @@ export function FriendRequests({
           ))}
 
         <div
-          className={`min-h-0 flex-1 overflow-y-auto rounded-md p-1 ${noProfile ? "bg-slate-50" : "mt-4 bg-slate-100 md:p-4"} dark:bg-slate-800`}
+          className={`min-h-0 flex-1 overflow-y-auto rounded-md p-1 ${noProfile ? "" : "mt-4 bg-slate-100 md:p-4 dark:bg-slate-800"}`}
         >
           {friendRequests.length > 0 ? (
             <ul className="grid auto-cols-auto grid-cols-1 space-y-2 divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   IconLayoutGrid,
@@ -136,6 +136,7 @@ interface AdminNavProps {
 export function AdminNav({ property1 }: AdminNavProps) {
   const pathname = usePathname();
   const [headerHeight, setHeaderHeight] = useState(69);
+  const navRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
     const update = () => {
@@ -145,6 +146,24 @@ export function AdminNav({ property1 }: AdminNavProps) {
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    const updateBottom = () => {
+      if (!navRef.current) return;
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!footer) return;
+      const footerTop = footer.getBoundingClientRect().top;
+      const bottom = Math.max(0, window.innerHeight - footerTop);
+      navRef.current.style.bottom = `${bottom}px`;
+    };
+    updateBottom();
+    window.addEventListener("scroll", updateBottom, { passive: true });
+    window.addEventListener("resize", updateBottom);
+    return () => {
+      window.removeEventListener("scroll", updateBottom);
+      window.removeEventListener("resize", updateBottom);
+    };
   }, []);
 
   const activeVariant: AdminNavVariant = (() => {
@@ -158,9 +177,10 @@ export function AdminNav({ property1 }: AdminNavProps) {
 
   return (
     <nav
+      ref={navRef}
       aria-label="Admin navigation"
-      className="fixed left-0 z-40 hidden w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] md:flex dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
-      style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
+      className="fixed left-0 z-40 hidden w-64 flex-shrink-0 flex-col border-r border-[#D0D5DD] bg-[#FCFCFD] md:flex dark:border-slate-700 dark:bg-slate-900"
+      style={{ top: headerHeight, bottom: 0 }}
     >
       <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {

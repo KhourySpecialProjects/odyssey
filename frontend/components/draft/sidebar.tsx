@@ -44,7 +44,13 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
   DndContext,
@@ -96,6 +102,7 @@ export function Sidebar({
   setExpanded: (v: boolean) => void;
 }) {
   const [headerHeight, setHeaderHeight] = useState(69);
+  const sidebarRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
 
   const {
@@ -153,6 +160,26 @@ export function Sidebar({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const updateBottom = () => {
+      if (!sidebarRef.current) return;
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!footer) return;
+      const bottom = Math.max(
+        0,
+        window.innerHeight - footer.getBoundingClientRect().top,
+      );
+      sidebarRef.current.style.bottom = `${bottom}px`;
+    };
+    updateBottom();
+    window.addEventListener("scroll", updateBottom, { passive: true });
+    window.addEventListener("resize", updateBottom);
+    return () => {
+      window.removeEventListener("scroll", updateBottom);
+      window.removeEventListener("resize", updateBottom);
+    };
   }, []);
 
   const handleDropletPost = async () => {
@@ -368,10 +395,11 @@ export function Sidebar({
           "fixed left-0 z-40 w-64 transition-transform",
           expanded ? "translate-x-0" : "-translate-x-full",
         )}
-        style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
+        style={{ top: headerHeight, bottom: 0 }}
         aria-label="Sidebar"
+        ref={sidebarRef}
       >
-        <div className="flex h-full flex-col overflow-y-auto bg-[#FCFCFD] py-4 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] xl:justify-between xl:pb-0 dark:bg-slate-900">
+        <div className="flex h-full flex-col overflow-y-auto border-r border-[#D0D5DD] bg-[#FCFCFD] py-4 xl:justify-between xl:pb-0 dark:border-slate-700 dark:bg-slate-900">
           <div className="px-3">
             <div className="flex flex-row items-center justify-between pb-2">
               <button

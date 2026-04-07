@@ -25,7 +25,6 @@ export function FriendRequestFeedBlock({
   const handleApprove = () => {
     startTransition(async () => {
       const result = await acceptFriendRequest(user.id, request.id);
-
       if (result.success) {
         toast.success("Friend request accepted!");
       } else {
@@ -45,15 +44,20 @@ export function FriendRequestFeedBlock({
     });
   };
 
+  const displayName =
+    request.firstName && request.lastName
+      ? `${request.firstName} ${request.lastName}`
+      : request.email;
+
   return (
     <div className="flex flex-col justify-center">
       <div className="mt-2 flex flex-row items-center gap-2">
         <Avatar
           variant="round"
-          className="h-8 w-8 flex-shrink-0 border border-sky-800"
+          className="h-10 w-10 flex-shrink-0 border border-slate-200"
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
-          <AvatarFallback>
+          <AvatarFallback className="text-base font-normal text-black">
             {request.firstName && request.lastName ? (
               getInitials(request.firstName + " " + request.lastName)
             ) : (
@@ -65,57 +69,48 @@ export function FriendRequestFeedBlock({
         <button
           onClick={() => setOpen(true)}
           className="min-w-0 flex-1"
-          title={
-            request.firstName && request.lastName
-              ? `${request.firstName} ${request.lastName}`
-              : `${request.email}`
-          }
+          title={displayName}
         >
-          <div className="w-full">
-            <p className="truncate text-left font-medium text-slate-900 dark:text-slate-300">
-              {request.firstName && request.lastName
-                ? request.firstName + " " + request.lastName
-                : request.email}
+          <div className="w-full text-left">
+            <p className="truncate text-sm font-medium text-[#475569] dark:text-slate-300">
+              {displayName}
             </p>
+            {request.firstName && request.lastName && (
+              <p className="truncate text-xs text-[#475569] dark:text-slate-400">
+                {request.email}
+              </p>
+            )}
           </div>
         </button>
 
-        <div className="flex flex-col justify-center gap-1">
+        <div className="flex flex-row items-center gap-1">
           <Button
-            className="flex items-center justify-center bg-emerald-400 text-white hover:bg-emerald-600 hover:text-white dark:bg-emerald-700 dark:hover:bg-emerald-800"
-            style={{ height: "20px", width: "50px" }}
-            size="sm"
+            className="h-[28px] w-[28px] flex-shrink-0 rounded-full border border-emerald-500 bg-white p-0 text-emerald-500 hover:bg-emerald-50 hover:text-emerald-500 dark:bg-slate-900 dark:hover:bg-slate-800"
+            size="icon"
             variant="outline"
             onClick={handleApprove}
             role="accept"
           >
-            <div className="group relative">
-              <Check className="h-3 w-3 transition-transform group-hover:scale-110" />
-            </div>
+            <Check className="h-4 w-4" />
           </Button>
           <Button
-            className="flex items-center justify-center hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
-            variant="destructive"
-            size="sm"
+            className="h-[28px] w-[28px] flex-shrink-0 rounded-full border border-red-500 bg-white p-0 text-red-500 hover:bg-red-50 hover:text-red-500 dark:bg-slate-900 dark:hover:bg-slate-800"
+            size="icon"
+            variant="outline"
             onClick={handleReject}
-            style={{ height: "20px", width: "50px" }}
             role="reject"
           >
-            <div className="group relative">
-              <X className="h-3 w-3 transition-transform group-hover:scale-110" />
-            </div>
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div>
-        <ProfileBlock
-          user={user}
-          otherUser={request}
-          isOpen={open}
-          setIsOpen={setOpen}
-        />
-      </div>
+      <ProfileBlock
+        user={user}
+        otherUser={request}
+        isOpen={open}
+        setIsOpen={setOpen}
+      />
     </div>
   );
 }

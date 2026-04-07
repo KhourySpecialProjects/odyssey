@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import {
@@ -57,6 +57,7 @@ export default function Sidebar({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isCreatingDraft, setIsCreatingDraft] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(69);
+  const sidebarRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
@@ -97,6 +98,26 @@ export default function Sidebar({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const updateBottom = () => {
+      if (!sidebarRef.current) return;
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!footer) return;
+      const bottom = Math.max(
+        0,
+        window.innerHeight - footer.getBoundingClientRect().top,
+      );
+      sidebarRef.current.style.bottom = `${bottom}px`;
+    };
+    updateBottom();
+    window.addEventListener("scroll", updateBottom, { passive: true });
+    window.addEventListener("resize", updateBottom);
+    return () => {
+      window.removeEventListener("scroll", updateBottom);
+      window.removeEventListener("resize", updateBottom);
+    };
   }, []);
 
   if (!user) return <UnauthorizedRoute />;
@@ -198,15 +219,16 @@ export default function Sidebar({
       )}
 
       <aside
+        ref={sidebarRef}
         id="sidebar"
         className={cn(
           "fixed left-0 z-40 w-64 transition-transform",
           expanded ? "translate-x-0" : "-translate-x-full",
         )}
-        style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
+        style={{ top: headerHeight, bottom: 0 }}
         aria-label="Sidebar"
       >
-        <div className="flex h-full flex-col overflow-y-auto bg-[#FCFCFD] py-4 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] xl:justify-between xl:pb-0 dark:bg-slate-900">
+        <div className="flex h-full flex-col overflow-y-auto border-r border-[#D0D5DD] bg-[#FCFCFD] py-4 xl:justify-between xl:pb-0 dark:border-slate-700 dark:bg-slate-900">
           <div className="px-3">
             <div className="flex flex-row items-center justify-between pb-2">
               <Link

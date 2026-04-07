@@ -93,14 +93,7 @@ export function FeedClient({
             Next ›
           </button>
         </div>
-      ) : (
-        !isLoading &&
-        filteredAnnouncements.length > 0 && (
-          <p className="border-t border-neutral-200 pt-3 text-center text-sm text-slate-500 dark:border-neutral-700">
-            No more announcements
-          </p>
-        )
-      )}
+      ) : null}
     </div>
   );
 }

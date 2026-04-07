@@ -336,7 +336,7 @@ export function FeedBlock({
 
   return (
     <>
-      <li className="relative flex flex-col gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
+      <li className="relative flex flex-col gap-3 rounded-[8px] border border-[#D0D5DD] bg-[#FCFCFD] p-4 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
           {config.icon}
           <span className="text-sm font-semibold">{config.label}</span>
@@ -354,7 +354,7 @@ export function FeedBlock({
             />
           )}
         </div>
-        <div className="text-right text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <div className="text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
           {formatDate(announcement.firstCreated)}
         </div>
       </li>

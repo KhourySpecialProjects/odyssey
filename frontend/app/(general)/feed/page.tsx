@@ -15,7 +15,7 @@ export default async function FeedPage() {
   if (!authUser) return notFound();
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-8">
+    <div className="w-full">
       <FeedContainer authUser={authUser} />
     </div>
   );
