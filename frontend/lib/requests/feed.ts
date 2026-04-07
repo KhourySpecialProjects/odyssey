@@ -17,6 +17,7 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 export async function fetchAnnouncements(
   user: AuthorizedUser,
   page?: number,
+  roles?: string[],
 ): Promise<{
   data: Announcement[];
   pagination: {
@@ -120,9 +121,9 @@ export async function fetchAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated"],
-      filters: {
-        $or: orFilters,
-      },
+      filters: roles?.length
+        ? { $and: [{ $or: orFilters }, { type: { $in: roles } }] }
+        : { $or: orFilters },
       populate: {
         authorized_user: {
           fields: [

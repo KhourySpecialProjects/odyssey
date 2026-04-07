@@ -17,7 +17,7 @@ export function FeedClient({
   const [isLoading, setIsLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change — the page change triggers the fetch effect
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedRoles]);
@@ -29,6 +29,7 @@ export function FeedClient({
         const { data, pagination } = await fetchAnnouncements(
           authUser,
           currentPage,
+          selectedRoles,
         );
         setAnnouncements(data);
         setTotalPages(pagination.pageCount);
@@ -39,11 +40,7 @@ export function FeedClient({
       }
     };
     load();
-  }, [authUser, currentPage, selectedRoles]);
-
-  const filteredAnnouncements = announcements.filter((post) =>
-    selectedRoles.includes(post.type),
-  );
+  }, [authUser, currentPage]);
 
   return (
     <div className="flex h-full flex-col">
@@ -56,9 +53,9 @@ export function FeedClient({
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             />
           </div>
-        ) : filteredAnnouncements.length > 0 ? (
+        ) : announcements.length > 0 ? (
           <ul className="grid grid-cols-1 gap-3">
-            {filteredAnnouncements.map((post) => (
+            {announcements.map((post) => (
               <FeedBlock
                 key={post.id}
                 announcement={post}

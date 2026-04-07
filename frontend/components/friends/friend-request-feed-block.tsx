@@ -89,7 +89,7 @@ export function FriendRequestFeedBlock({
             size="icon"
             variant="outline"
             onClick={handleApprove}
-            role="accept"
+            aria-label="Accept friend request"
           >
             <Check className="h-4 w-4" />
           </Button>
@@ -98,7 +98,7 @@ export function FriendRequestFeedBlock({
             size="icon"
             variant="outline"
             onClick={handleReject}
-            role="reject"
+            aria-label="Reject friend request"
           >
             <X className="h-4 w-4" />
           </Button>
