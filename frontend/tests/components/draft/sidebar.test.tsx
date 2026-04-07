@@ -320,9 +320,9 @@ describe("Sidebar", () => {
       />,
     );
 
-    const previewLink = screen.getByText("Preview");
-    expect(previewLink).toBeInTheDocument();
-    expect(previewLink).toHaveAttribute("href", "/d/test-droplet");
+    const previewButton = screen.getByText("Preview");
+    expect(previewButton).toBeInTheDocument();
+    expect(previewButton.tagName).toBe("BUTTON");
   });
 
   it("renders overview link", () => {

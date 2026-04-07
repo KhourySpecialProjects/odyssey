@@ -184,6 +184,26 @@ export function LessonRenderer({
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 
+  // Listen for flush-save requests from sidebar Preview button
+  useEffect(() => {
+    const handleFlushSave = async () => {
+      try {
+        if (editorVersion === "v2") {
+          await debounceUpdateV2.flush();
+        } else {
+          await debounceUpdate.flush();
+        }
+      } finally {
+        window.dispatchEvent(new CustomEvent("flush-save-complete"));
+      }
+    };
+
+    window.addEventListener("flush-save-request", handleFlushSave);
+    return () => {
+      window.removeEventListener("flush-save-request", handleFlushSave);
+    };
+  }, [editorVersion, debounceUpdateV2, debounceUpdate]);
+
   const updateNameBackend = useCallback(
     async (name: string) => {
       const response = await updateLesson(lesson.id, { name });

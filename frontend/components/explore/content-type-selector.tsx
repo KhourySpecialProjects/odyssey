@@ -6,9 +6,11 @@ import { Button } from "../ui/button";
 export function ContentTypeSelector({
   droplets,
   playlists,
+  voyages,
 }: {
   droplets?: number;
   playlists?: number;
+  voyages?: number;
 }) {
   const contentTypes = [
     {
@@ -18,6 +20,10 @@ export function ContentTypeSelector({
     {
       name: playlists !== undefined ? `Playlists (${playlists})` : "Playlists",
       value: "playlists",
+    },
+    {
+      name: voyages !== undefined ? `Voyages (${voyages})` : "Voyages",
+      value: "voyages",
     },
   ];
   const router = useRouter();
