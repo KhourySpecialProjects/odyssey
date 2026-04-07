@@ -14,16 +14,16 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentTypeSelector } from "@/components/explore/content-type-selector";
 import { PlaylistsGrid } from "@/components/explore/playlists-grid";
-import { VoyagesGrid } from "@/components/explore/voyages-grid";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getPlaylists } from "@/lib/requests/playlist";
-import { getVoyages } from "@/lib/requests/voyage";
 import { SearchProvider } from "@/contexts/SearchContext";
 
 export const metadata: Metadata = {
   title: "Explore",
   description: "Discover content on Khoury Odyssey.",
 };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export default async function ExplorePage({
   searchParams,
 }: {
@@ -33,85 +33,106 @@ export default async function ExplorePage({
     sort,
     type,
     focusArea,
-    difficulty,
     tags,
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-  const droplets =
-    contentType === "droplets"
-      ? await getDroplets({
-          filters: {
-            $and: [
-              { status: { $eq: "published" } },
-              { isHidden: false },
-              type
-                ? {
-                    $or: type.split(",").map((val) => ({ type: { $eq: val } })),
-                  }
-                : {},
-              focusArea
-                ? {
-                    $or: focusArea
-                      .split(",")
-                      .map((val) => ({ focusArea: { $eq: val } })),
-                  }
-                : {},
-              difficulty
-                ? {
-                    $or: difficulty
-                      .split(",")
-                      .map((val) => ({ difficulty: { $eq: val } })),
-                  }
-                : {},
-              tags
-                ? {
-                    $or: tags
-                      .split(",")
-                      .map((val) => ({ tags: { slug: { $eq: val } } })),
-                  }
-                : {},
-            ],
-          },
-          populate: {
-            lessons: { fields: ["id"] },
-            tags: { fields: ["id", "name", "slug"] },
-            authorized_users: { fields: ["id", "firstName", "lastName"] },
-          },
-          fields: [
-            "id",
-            "name",
-            "slug",
-            "type",
-            "focusArea",
-            "difficulty",
-            "averageRating",
-            "description",
-            "isHidden",
-            "status",
-          ],
-        })
-      : [];
-
-  const playlists =
-    contentType === "playlists"
-      ? await getPlaylists({
-          filters: {
-            $and: [{ isPublic: true }],
-          },
-          populate: {
-            droplets: {
-              populate: {
-                lessons: {
-                  fields: ["id", "name", "slug"],
+  const droplets = await getDroplets({
+    filters: {
+      $and: [
+        { status: { $eq: "published" } },
+        { isHidden: false },
+        type
+          ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
+          : {},
+        focusArea
+          ? {
+              $or: focusArea
+                .split(",")
+                .map((val) => ({ focusArea: { $eq: val } })),
+            }
+          : {},
+        tags
+          ? {
+              $or: tags
+                .split(",")
+                .map((val) => ({ tags: { slug: { $eq: val } } })),
+            }
+          : {},
+      ],
+    },
+    populate: {
+      lessons: {
+        fields: ["*"],
+        populate: {
+          blocks: {
+            on: {
+              "droplets.generic": {
+                populate: "*",
+              },
+              "droplets.expandable": {
+                populate: "*",
+              },
+              "droplets.callout": {
+                populate: "*",
+              },
+              "droplets.video": {
+                populate: "*",
+              },
+              "droplets.quiz": {
+                populate: {
+                  questions: {
+                    populate: {
+                      answerOptions: true,
+                    },
+                  },
+                },
+              },
+              "droplets.open-ended-quiz": {
+                populate: {
+                  questions: true,
                 },
               },
             },
           },
-        })
-      : [];
+        },
+      },
+      tags: {
+        fields: ["*"],
+      },
+      authorized_users: {
+        fields: ["firstName", "lastName", "email"],
+      },
+      learningObjectives: {
+        fields: ["objective"],
+      },
+      nextSteps: {
+        fields: ["label", "url"],
+      },
+      prerequisites: {
+        fields: ["name"],
+      },
+      postrequisites: {
+        fields: ["name"],
+      },
+    },
+    fields: ["*"],
+  });
 
-  const voyages = contentType === "voyages" ? await getVoyages() : [];
+  const playlists = await getPlaylists({
+    filters: {
+      $and: [{ isPublic: true }],
+    },
+    populate: {
+      droplets: {
+        populate: {
+          lessons: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+    },
+  });
 
   return (
     <SearchProvider>
@@ -122,11 +143,8 @@ export default async function ExplorePage({
       <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
           <ContentTypeSelector
-            droplets={contentType === "droplets" ? droplets.length : undefined}
-            playlists={
-              contentType === "playlists" ? playlists.length : undefined
-            }
-            voyages={contentType === "voyages" ? voyages.length : undefined}
+            droplets={droplets.length}
+            playlists={playlists.length}
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
@@ -156,10 +174,6 @@ export default async function ExplorePage({
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
             <DropletsGrid droplets={droplets} sortKey={sortKey} />
-          </Suspense>
-        ) : contentType === "voyages" ? (
-          <Suspense fallback={<DropletsSkeleton />}>
-            <VoyagesGrid voyages={voyages} />
           </Suspense>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>

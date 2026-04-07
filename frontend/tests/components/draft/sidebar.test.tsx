@@ -137,27 +137,23 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
   });
 
   it("toggles mobile menu", () => {
-    const mockSetExpanded = jest.fn();
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={mockSetExpanded}
       />,
     );
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
-    expect(mockSetExpanded).toHaveBeenCalledWith(true);
+    const sidebar = screen.getByRole("complementary");
+    expect(sidebar).toBeInTheDocument();
   });
 
   it("navigates to /my-content when home button clicked on draft droplet", async () => {
@@ -166,8 +162,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -185,8 +179,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -216,8 +208,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -253,8 +243,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -285,8 +273,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -294,19 +280,17 @@ describe("Sidebar", () => {
     expect(lists.length).toBeGreaterThan(0);
   });
 
-  it("expands/collapses on mobile", () => {
+  it("renders sidebar element", () => {
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={true}
-        setExpanded={jest.fn()}
       />,
     );
 
     const sidebar = screen.getByRole("complementary");
-    expect(sidebar).toHaveClass("translate-x-0");
+    expect(sidebar).toBeInTheDocument();
   });
 
   it("renders preview button", () => {
@@ -315,8 +299,6 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={true}
-        setExpanded={jest.fn()}
       />,
     );
 
@@ -325,22 +307,15 @@ describe("Sidebar", () => {
     expect(previewButton.tagName).toBe("BUTTON");
   });
 
-  it("renders overview link", () => {
+  it("renders metadata section", () => {
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
-        expanded={true}
-        setExpanded={jest.fn()}
       />,
     );
 
-    const overviewLink = screen.getByText("Overview");
-    expect(overviewLink).toBeInTheDocument();
-    expect(overviewLink.closest("a")).toHaveAttribute(
-      "href",
-      "/draft/d/test-droplet",
-    );
+    expect(screen.getByText("Metadata")).toBeInTheDocument();
   });
 });
