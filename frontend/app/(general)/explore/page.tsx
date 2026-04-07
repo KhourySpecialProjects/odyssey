@@ -14,8 +14,10 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentTypeSelector } from "@/components/explore/content-type-selector";
 import { PlaylistsGrid } from "@/components/explore/playlists-grid";
+import { VoyagesGrid } from "@/components/explore/voyages-grid";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getPlaylists } from "@/lib/requests/playlist";
+import { getVoyages } from "@/lib/requests/voyage";
 import { SearchProvider } from "@/contexts/SearchContext";
 
 export const metadata: Metadata = {
@@ -119,6 +121,8 @@ export default async function ExplorePage({
     fields: ["*"],
   });
 
+  const voyages = contentType === "voyages" ? await getVoyages() : [];
+
   const playlists = await getPlaylists({
     filters: {
       $and: [{ isPublic: true }],
@@ -145,6 +149,7 @@ export default async function ExplorePage({
           <ContentTypeSelector
             droplets={droplets.length}
             playlists={playlists.length}
+            voyages={contentType === "voyages" ? voyages.length : undefined}
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
@@ -174,6 +179,10 @@ export default async function ExplorePage({
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
             <DropletsGrid droplets={droplets} sortKey={sortKey} />
+          </Suspense>
+        ) : contentType === "voyages" ? (
+          <Suspense fallback={<DropletsSkeleton />}>
+            <VoyagesGrid voyages={voyages} />
           </Suspense>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
