@@ -608,7 +608,7 @@ export function Sidebar({
                       />
                     )}
 
-                  {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+                  {/* Publish Button - Faculty/Admin for drafts anytime, Content Editor only when in review */}
                   {droplet.status === "draft" &&
                     (isAuthorizedUserFaculty(user.roles) ||
                       isAuthorizedUserAdmin(user.roles) ||

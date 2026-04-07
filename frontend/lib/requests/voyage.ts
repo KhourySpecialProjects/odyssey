@@ -4,6 +4,25 @@ import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/options";
+import { getCachedUser } from "./cached";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+
+async function requireAdminOrFaculty() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return false;
+  const user = await getCachedUser(session.user.email);
+  if (!user?.roles) return false;
+  const titles = user.roles.map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any) => (typeof r === "string" ? r : r.title) as string,
+  );
+  return (
+    titles.includes(AuthorizedUserRoleTitle.SysAdmin) ||
+    titles.includes(AuthorizedUserRoleTitle.Faculty)
+  );
+}
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -99,6 +118,7 @@ export async function getVoyageBySlug(slug: string): Promise<Voyage | null> {
   const urlParams = {
     filters: {
       slug: { $eq: slug },
+      status: { $eq: "published" },
     },
     populate: {
       voyage_playlists: {
@@ -144,6 +164,9 @@ export async function createVoyage(data: {
   status?: "draft" | "published";
   authorId?: number;
 }) {
+  if (!(await requireAdminOrFaculty())) {
+    return { ok: false, error: "Unauthorized", data: null };
+  }
   try {
     const dataToSend: Record<string, unknown> = {
       name: data.name,
@@ -209,6 +232,9 @@ export async function updateVoyage(
     status?: "draft" | "published";
   },
 ) {
+  if (!(await requireAdminOrFaculty())) {
+    return { ok: false, error: "Unauthorized", data: null };
+  }
   try {
     const dataToSend: Record<string, unknown> = {};
 
@@ -267,6 +293,9 @@ export async function updateVoyage(
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
+  if (!(await requireAdminOrFaculty())) {
+    return { ok: false, error: "Unauthorized" };
+  }
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
