@@ -34,28 +34,28 @@ export function FeedBlock({
 
   const announcementConfig = {
     playlist: {
-      bgColor: "bg-green-200 dark:bg-[#29703B]",
-      icon: <ListVideo />,
+      icon: <ListVideo size={18} />,
+      label: "Playlist",
     },
     droplet: {
-      bgColor: "bg-blue-200 dark:bg-[#266697]",
-      icon: <Droplet />,
+      icon: <Droplet size={18} />,
+      label: "Droplet",
     },
     group: {
-      bgColor: "bg-purple-200 dark:bg-[#754ABA]",
-      icon: <UsersRound />,
+      icon: <UsersRound size={18} />,
+      label: "Group",
     },
     friend: {
-      bgColor: "bg-yellow-200 dark:bg-[#C38508]",
-      icon: <Handshake />,
+      icon: <Handshake size={18} />,
+      label: "Friend",
     },
     kudos: {
-      bgColor: "bg-orange-200 dark:bg-[#B55E0C]",
-      icon: <PartyPopper />,
+      icon: <PartyPopper size={18} />,
+      label: "Kudos",
     },
     system: {
-      bgColor: "bg-red-200 dark:bg-[#B83028]",
-      icon: <Info />,
+      icon: <Info size={18} />,
+      label: "System",
     },
   };
 
@@ -336,31 +336,26 @@ export function FeedBlock({
 
   return (
     <>
-      <li
-        className={`${config.bgColor} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3`}
-      >
-        <div className="flex w-full flex-col justify-between gap-1">
-          <div className="flex items-center space-x-4">
-            <div className="dark:text-slate-200">{config.icon}</div>
-            <div className="min-w-0 flex-1">
-              {hasStructuredData()
-                ? renderStructuredContent()
-                : renderPlainContent()}
-
-              {announcement.authorized_user &&
-                announcement.type !== "system" && (
-                  <ProfileBlock
-                    user={authUser}
-                    otherUser={announcement.authorized_user}
-                    isOpen={profileOpen}
-                    setIsOpen={setProfileOpen}
-                  />
-                )}
-            </div>
-          </div>
-          <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
-            {formatDate(announcement.firstCreated)}
-          </div>
+      <li className="relative flex flex-col gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
+        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+          {config.icon}
+          <span className="text-sm font-semibold">{config.label}</span>
+        </div>
+        <div className="min-w-0">
+          {hasStructuredData()
+            ? renderStructuredContent()
+            : renderPlainContent()}
+          {announcement.authorized_user && announcement.type !== "system" && (
+            <ProfileBlock
+              user={authUser}
+              otherUser={announcement.authorized_user}
+              isOpen={profileOpen}
+              setIsOpen={setProfileOpen}
+            />
+          )}
+        </div>
+        <div className="text-right text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {formatDate(announcement.firstCreated)}
         </div>
       </li>
 
