@@ -664,7 +664,6 @@ export function Sidebar({
                       lesson={lesson}
                       droplet={droplet}
                       pathname={pathname}
-                      classes={classes}
                     />
                   ))}
                 </ul>

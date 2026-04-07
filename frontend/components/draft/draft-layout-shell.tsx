@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
 import { Droplet, User } from "@/types";
 
@@ -33,23 +31,14 @@ export function DraftLayoutShell({
   availableDroplets,
   children,
 }: DraftLayoutShellProps) {
-  const [expanded, setExpanded] = useState(true);
-
   return (
     <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
       <Sidebar
         droplet={droplet}
         user={user}
         availableDroplets={availableDroplets}
-        expanded={expanded}
-        setExpanded={setExpanded}
       />
-      <main
-        className={cn(
-          "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300",
-          expanded ? "xl:pl-64" : "xl:pl-0",
-        )}
-      >
+      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300">
         {children}
       </main>
     </div>
