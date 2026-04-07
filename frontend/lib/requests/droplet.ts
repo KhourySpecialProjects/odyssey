@@ -290,6 +290,9 @@ export async function updateDroplet(
       ...(data.slug && { slug: data.slug }),
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
+      ...(data.difficulty !== undefined && {
+        difficulty: data.difficulty || null,
+      }),
       ...(data.authorized_users && { authorized_users: data.authorized_users }),
       ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
@@ -301,6 +304,7 @@ export async function updateDroplet(
       ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
       ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
+      ...(data.datasets !== undefined && { datasets: data.datasets }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
@@ -311,11 +315,6 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    console.log(
-      "Sending update to Strapi:",
-      JSON.stringify(dataToSend, null, 2),
-    );
-
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
@@ -325,8 +324,6 @@ export async function updateDroplet(
       },
     });
     const responseData = await response.json();
-
-    console.log("Strapi response:", JSON.stringify(responseData, null, 2));
 
     if (!response.ok || (response.ok && responseData.error)) {
       // Better error handling
@@ -452,6 +449,7 @@ const CreateDropletSchema = DropletSchema.pick({
   type: true,
   tagIds: true,
   learningObjectives: true,
+  difficulty: true,
 });
 
 export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
@@ -468,6 +466,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       slug: "random", // this gets overwritten when created, but just has to be defined as something
       focusArea: data.focusArea,
       type: data.type,
+      difficulty: data.difficulty,
       tags: {
         connect: data.tagIds,
       },
@@ -660,6 +659,7 @@ export async function duplicateDroplet(dropletId: number) {
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
+      difficulty: originalDroplet.difficulty,
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",
@@ -966,6 +966,13 @@ export async function publishDraftToOriginal(
       "lessons",
     );
 
+    // Fail fast before any destructive writes if required fields are missing
+    if (draftDroplet.difficulty == null) {
+      throw new Error(
+        "Draft droplet is missing a difficulty. Set it in the editor before publishing.",
+      );
+    }
+
     // Fetch draft enrollments before DB writes begin
     draftEnrollments = await fetch(
       `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate[authorizedUser][fields][0]=id`,
@@ -1007,6 +1014,8 @@ export async function publishDraftToOriginal(
     // Only add fields that exist and are valid
     if (draftDroplet.focusArea) updateData.focusArea = draftDroplet.focusArea;
     if (draftDroplet.type) updateData.type = draftDroplet.type;
+    if (draftDroplet.difficulty !== undefined)
+      updateData.difficulty = draftDroplet.difficulty;
     if (draftDroplet.description !== undefined)
       updateData.description = draftDroplet.description;
     if (draftDroplet.overview !== undefined)

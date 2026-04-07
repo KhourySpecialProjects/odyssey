@@ -38,8 +38,10 @@ const DropletAnalyticsModal = dynamic(
 );
 
 const DROPLET_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[45%]" },
-  { label: "Tags", width: "w-[35%]" },
+  { label: "Title", width: "w-[30%]" },
+  { label: "Type", width: "w-[10%]" },
+  { label: "Focus Area", width: "w-[17%]" },
+  { label: "Tags", width: "w-[23%]" },
   { label: "Actions", width: "w-[20%]" },
 ];
 
@@ -49,6 +51,7 @@ const TAG_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   skill: { bg: "bg-[#fae6f3]", text: "text-[#855169]" },
   knowledge: { bg: "bg-[#f9f7e6]", text: "text-[#7f6b55]" },
   professional: { bg: "bg-[#def2fd]", text: "text-[#284965]" },
+  personal: { bg: "bg-[#f0fdf4]", text: "text-[#166534]" },
   databases: { bg: "bg-[#e0f2fe]", text: "text-[#0c4a6e]" },
   interviews: { bg: "bg-[#fef3c7]", text: "text-[#92400e]" },
   cloud: { bg: "bg-[#ede9fe]", text: "text-[#5b21b6]" },
@@ -102,6 +105,15 @@ const FILTER_TYPE_OPTIONS = [
   { value: "skill", label: "Skill" },
 ] as const;
 
+const FILTER_FOCUS_AREA_OPTIONS = [
+  { value: "personal", label: "Personal" },
+  { value: "technical", label: "Technical" },
+  { value: "professional", label: "Professional" },
+] as const;
+
+const TYPE_VALUES = new Set(["knowledge", "skill"]);
+const FOCUS_AREA_VALUES = new Set(["personal", "technical", "professional"]);
+
 // ——— DropletTableRow ———
 function DropletTableRow({ droplet }: { droplet: Droplet }) {
   const [isHidden, setIsHidden] = useState(droplet.isHidden);
@@ -138,31 +150,53 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
       )}
       <tr className="border-b border-[#eaecf0] transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
         {/* Title */}
-        <td className="h-[56px] py-3 pr-6 pl-[30px]">
+        <td className="h-[56px] overflow-hidden py-3 pr-6 pl-[30px]">
           <Link
             href={`/d/${droplet.slug}`}
             prefetch={false}
-            className="truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
+            className="block truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
           >
             {droplet.name}
           </Link>
         </td>
 
+        {/* Type */}
+        <td className="h-[56px] px-6 py-[11px]">
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+              typeColors.bg,
+              typeColors.text,
+            )}
+          >
+            {uppercaseFirstChar(droplet.type)}
+          </Badge>
+        </td>
+
+        {/* Focus Area */}
+        <td className="h-[56px] px-6 py-[11px]">
+          {droplet.focusArea &&
+            (() => {
+              const focusColors = getTagColors(droplet.focusArea);
+              return (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium whitespace-nowrap",
+                    focusColors.bg,
+                    focusColors.text,
+                  )}
+                >
+                  {uppercaseFirstChar(droplet.focusArea)}
+                </Badge>
+              );
+            })()}
+        </td>
+
         {/* Tags */}
         <td className="h-[56px] px-6 py-[11px]">
           <div className="flex flex-wrap gap-[5px]">
-            {/* Type badge */}
-            <Badge
-              variant="outline"
-              className={cn(
-                "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                typeColors.bg,
-                typeColors.text,
-              )}
-            >
-              {uppercaseFirstChar(droplet.type)}
-            </Badge>
-            {/* Tag badges */}
             {droplet.tags?.map((tag) => {
               const colors = getTagColors(tag.name);
               return (
@@ -255,6 +289,61 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
   );
 }
 
+// ——— DropletMobileCard ———
+function DropletMobileCard({ droplet }: { droplet: Droplet }) {
+  const typeColors = getTagColors(droplet.type);
+  const visibleTags = droplet.tags?.slice(0, 3) ?? [];
+  const extraCount = (droplet.tags?.length ?? 0) - 3;
+
+  return (
+    <Link
+      href={`/draft/d/${droplet.slug}`}
+      prefetch={false}
+      className="block w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-[#101828] dark:text-white">
+          {droplet.name}
+        </p>
+        <span className="shrink-0 text-slate-400">&#8250;</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        <Badge
+          variant="outline"
+          className={cn(
+            "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+            typeColors.bg,
+            typeColors.text,
+          )}
+        >
+          {uppercaseFirstChar(droplet.type)}
+        </Badge>
+        {visibleTags.map((tag) => {
+          const colors = getTagColors(tag.name);
+          return (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className={cn(
+                "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+                colors.bg,
+                colors.text,
+              )}
+            >
+              {tag.name}
+            </Badge>
+          );
+        })}
+        {extraCount > 0 && (
+          <span className="px-1 text-xs text-slate-400">
+            +{extraCount} more
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ——— Main Client Component ———
 export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
   const {
@@ -286,7 +375,15 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
       }
       return sorted;
     },
-    filterFn: (d, types) => types.length === 0 || types.includes(d.type),
+    filterFn: (d, filters) => {
+      const activeTypes = filters.filter((f) => TYPE_VALUES.has(f));
+      const activeFocus = filters.filter((f) => FOCUS_AREA_VALUES.has(f));
+      const typeMatch =
+        activeTypes.length === 0 || activeTypes.includes(d.type);
+      const focusMatch =
+        activeFocus.length === 0 || activeFocus.includes(d.focusArea);
+      return typeMatch && focusMatch;
+    },
   });
 
   return (
@@ -297,7 +394,7 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -313,8 +410,19 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
             onReset={handleFilterReset}
             hasActiveFilters={hasActiveFilters}
           >
+            <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+              Type
+            </p>
             <FilterCheckboxGroup
               options={FILTER_TYPE_OPTIONS}
+              selected={draftFilterTypes}
+              onToggle={toggleDraftFilterType}
+            />
+            <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+              Focus Area
+            </p>
+            <FilterCheckboxGroup
+              options={FILTER_FOCUS_AREA_OPTIONS}
               selected={draftFilterTypes}
               onToggle={toggleDraftFilterType}
             />
@@ -330,6 +438,9 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageDroplets.map((droplet) => (
+          <DropletMobileCard key={droplet.id} droplet={droplet} />
+        ))}
       >
         {pageDroplets.map((droplet) => (
           <DropletTableRow key={droplet.id} droplet={droplet} />

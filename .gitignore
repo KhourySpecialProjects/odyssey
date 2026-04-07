@@ -12,6 +12,12 @@ frontend/providers/PHProvider.tsx
 # Claude Code audit log
 .claude/bash-audit.log
 
+# Claude Code worktrees (temporary agent working dirs)
+.claude/worktrees/
+
+# Playwright MCP logs
+.playwright-mcp/
+
 # personal agent settings (each developer has their own)
 .claude/settings.local.json
 .claude/.env
@@ -28,7 +34,14 @@ yarn-error.log*
 .terraform/
 terraform/terraform.tfvars
 
-# playwright 
+# playwright
 docker-compose.playwright.yml
+.playwright-mcp/
+
+# claude worktrees
+.claude/worktrees/
+
+# Strapi auto-generated docs (regenerated on schema changes)
+backend/src/extensions/documentation/documentation/
 
 */auth.json

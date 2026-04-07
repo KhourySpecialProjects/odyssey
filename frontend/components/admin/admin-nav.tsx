@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLayoutEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   IconLayoutGrid,
@@ -38,7 +39,7 @@ function NavIcon({
   return (
     <Icon
       className={cn(
-        "h-[20px] w-[20px] flex-shrink-0",
+        "h-4 w-4 flex-shrink-0",
         active ? "text-white" : "text-[#344054] dark:text-slate-400",
       )}
       stroke={1.8}
@@ -78,7 +79,7 @@ export function ReportsIcon({ active }: { active: boolean }) {
 }
 
 // ——— Nav item definitions ———
-const NAV_ITEMS: {
+export const NAV_ITEMS: {
   label: string;
   variant: Exclude<AdminNavVariant, "Default">;
   href: string;
@@ -134,6 +135,17 @@ interface AdminNavProps {
 
 export function AdminNav({ property1 }: AdminNavProps) {
   const pathname = usePathname();
+  const [headerHeight, setHeaderHeight] = useState(69);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const header = document.querySelector<HTMLElement>(".sticky.top-0.z-50");
+      if (header) setHeaderHeight(header.getBoundingClientRect().height);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   const activeVariant: AdminNavVariant = (() => {
     if (property1 && property1 !== "Default") return property1;
@@ -147,7 +159,8 @@ export function AdminNav({ property1 }: AdminNavProps) {
   return (
     <nav
       aria-label="Admin navigation"
-      className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
+      className="fixed left-0 z-40 hidden w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] md:flex dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
+      style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
     >
       <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
@@ -169,7 +182,7 @@ export function AdminNav({ property1 }: AdminNavProps) {
                 </span>
                 <span
                   className={cn(
-                    "absolute left-[27.4%] text-[18px] leading-none font-normal",
+                    "absolute left-[27.4%] text-base leading-none font-normal",
                     isActive ? "text-white" : "text-black dark:text-white",
                   )}
                 >

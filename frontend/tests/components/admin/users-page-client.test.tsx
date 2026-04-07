@@ -83,17 +83,21 @@ describe("UsersPageClient", () => {
   it("renders all users in the table", () => {
     render(<UsersPageClient users={mockUsers} />);
 
-    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
-    expect(screen.getByText("Bob Jones")).toBeInTheDocument();
-    expect(screen.getByText("Carol Lee")).toBeInTheDocument();
+    // Each user appears in both mobile card and desktop table row
+    expect(screen.getAllByText("Alice Smith").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Bob Jones").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Carol Lee").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows role badges for each user", () => {
     render(<UsersPageClient users={mockUsers} />);
 
-    expect(screen.getByText("Admin")).toBeInTheDocument();
-    expect(screen.getByText("Faculty")).toBeInTheDocument();
-    expect(screen.getByText("Content Creator")).toBeInTheDocument();
+    // Badges appear in both mobile and desktop views
+    expect(screen.getAllByText("Admin").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Faculty").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Content Creator").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders edit and activity action buttons for each user", () => {
@@ -118,12 +122,18 @@ describe("UsersPageClient", () => {
       }),
     ];
     render(<UsersPageClient users={users} />);
-    expect(screen.getByText("noname@example.com")).toBeInTheDocument();
+    // Email appears in both mobile card and desktop table
+    expect(
+      screen.getAllByText("noname@example.com").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("displays empty state when no users found", () => {
     render(<UsersPageClient users={[]} />);
-    expect(screen.getByText("No users found.")).toBeInTheDocument();
+    // Empty message may appear in both mobile and desktop views
+    expect(
+      screen.getAllByText("No users found.").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("filters users by search term", async () => {
@@ -133,13 +143,14 @@ describe("UsersPageClient", () => {
     fireEvent.change(searchInput, { target: { value: "alice" } });
 
     await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+      expect(screen.getAllByText("Alice Smith").length).toBeGreaterThanOrEqual(
+        1,
+      );
       expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument();
     });
   });
 
   it("paginates with 8 items per page", () => {
-    // Use zero-padded names so alphabetical sort matches numeric order
     const manyUsers = Array.from({ length: 15 }, (_, i) =>
       makeUser({
         id: i + 1,
@@ -152,10 +163,12 @@ describe("UsersPageClient", () => {
 
     render(<UsersPageClient users={manyUsers} />);
 
-    // First 8 (sorted alphabetically) should be visible
-    expect(screen.getByText("First User01")).toBeInTheDocument();
-    expect(screen.getByText("First User08")).toBeInTheDocument();
-    // 9th should not be visible on page 1
+    expect(screen.getAllByText("First User01").length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(screen.getAllByText("First User08").length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.queryByText("First User09")).not.toBeInTheDocument();
   });
 
@@ -170,8 +183,10 @@ describe("UsersPageClient", () => {
     );
     render(<UsersPageClient users={manyUsers} />);
     expect(
-      screen.getByRole("button", { name: /previous/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+      screen.getAllByRole("button", { name: /previous/i }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByRole("button", { name: /next/i }).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 });

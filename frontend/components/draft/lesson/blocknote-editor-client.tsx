@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   blockTypeSelectItems,
   FormattingToolbar,
@@ -20,9 +26,21 @@ import {
   getQuizSlashMenuItems,
   getLatexSlashMenuItems,
   getCodeSlashMenuItems,
+  getSlideBreakSlashMenuItems,
+  getColumnBreakSlashMenuItems,
+  getNotebookCodeSlashMenuItems,
+  getSandpackSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
+import type { AutoFormatOperation } from "@/lib/actions/auto-format-slides";
 import type { Block } from "@blocknote/core";
+import type { CustomBlockNoteBlock } from "@/types";
+import { useSlideOverflowDetection } from "@/hooks/useSlideOverflowDetection";
+
+const SlideOverflowContext = createContext<Set<string>>(new Set());
+export const useSlideOverflow = () => useContext(SlideOverflowContext);
+
+const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
 
 interface BlockNoteEditorClientProps {
   initialContent?: Block[];
@@ -38,9 +56,16 @@ export function BlockNoteEditorClient({
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
 
+  const safeInitialContent = initialContent?.filter((b) =>
+    knownBlockTypes.has(b.type as string),
+  );
+
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
-    initialContent: initialContent || undefined,
+    initialContent:
+      safeInitialContent && safeInitialContent.length > 0
+        ? safeInitialContent
+        : undefined,
     tables: {
       splitCells: false,
       cellBackgroundColor: true,
@@ -48,6 +73,11 @@ export function BlockNoteEditorClient({
       cellTextColor: false,
     },
   });
+
+  const [documentBlocks, setDocumentBlocks] = useState<
+    CustomBlockNoteBlock[] | undefined
+  >();
+  const overflowingBreaks = useSlideOverflowDetection(documentBlocks);
 
   // Delay initialization to ensure DOM is stable after route transitions
   useEffect(() => {
@@ -140,6 +170,7 @@ export function BlockNoteEditorClient({
         }
 
         // Always call onChange with the final content
+        setDocumentBlocks(content as unknown as CustomBlockNoteBlock[]);
         onChange(content as unknown as Block[]);
       } catch (error) {
         processingPattern = false;
@@ -165,6 +196,86 @@ export function BlockNoteEditorClient({
       }
     };
   }, [editor, onChange, isReady]);
+
+  // Listen for auto-format operations from the sidebar
+  useEffect(() => {
+    if (!isReady) return;
+
+    const handleAutoFormat = (e: Event) => {
+      const { operations } = (e as CustomEvent).detail;
+      if (!operations || !Array.isArray(operations)) return;
+
+      // Process operations in reverse order so indices stay valid
+      const ops = (operations as AutoFormatOperation[])
+        .slice()
+        .sort((a, b) => b.afterBlockIndex - a.afterBlockIndex);
+
+      // Deduplicate consecutive indices
+      const dedupedOps: AutoFormatOperation[] = [];
+      for (const op of ops) {
+        const last = dedupedOps[dedupedOps.length - 1];
+        if (!last || Math.abs(last.afterBlockIndex - op.afterBlockIndex) > 1) {
+          dedupedOps.push(op);
+        }
+      }
+
+      for (const op of dedupedOps) {
+        const afterBlock = editor.document[op.afterBlockIndex];
+        if (!afterBlock) continue;
+
+        if (op.type === "insert-two-column-break") {
+          // Insert column-break first (before slide-break shifts indices)
+          const colAfterBlock = editor.document[op.columnBreakAfterIndex];
+          if (colAfterBlock) {
+            editor.insertBlocks(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              [{ type: "column-break" as any }],
+              colAfterBlock,
+              "after",
+            );
+          }
+          // Insert slide-break with two-column layout
+          /* eslint-disable @typescript-eslint/no-explicit-any */
+          editor.insertBlocks(
+            [
+              {
+                type: "slide-break" as any,
+                props: { nextSlideLayout: "two-columns" } as any,
+              },
+            ],
+            afterBlock,
+            "after",
+          );
+          /* eslint-enable @typescript-eslint/no-explicit-any */
+        } else {
+          editor.insertBlocks(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [{ type: "slide-break" as any }],
+            afterBlock,
+            "after",
+          );
+        }
+      }
+    };
+
+    const handleBlocksRequest = () => {
+      window.dispatchEvent(
+        new CustomEvent("auto-format-blocks-response", {
+          detail: { blocks: editor.document },
+        }),
+      );
+    };
+
+    window.addEventListener("auto-format-slides", handleAutoFormat);
+    window.addEventListener("auto-format-blocks-request", handleBlocksRequest);
+    return () => {
+      window.removeEventListener("auto-format-slides", handleAutoFormat);
+      window.removeEventListener(
+        "auto-format-blocks-request",
+        handleBlocksRequest,
+      );
+    };
+  }, [editor, isReady]);
 
   //  formatting toolbar block types to hide
   const blockedBlockTypes = new Set([
@@ -221,49 +332,59 @@ export function BlockNoteEditorClient({
   }
 
   return (
-    <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
-      <BlockNoteView
-        editor={editor}
-        editable={editable}
-        theme={resolvedTheme === "dark" ? "dark" : "light"}
-        slashMenu={false}
-        formattingToolbar={false}
-      >
-        <FormattingToolbarController
-          formattingToolbar={() => (
-            <FormattingToolbar>{toolbarItems}</FormattingToolbar>
-          )}
-        />
+    <SlideOverflowContext.Provider value={overflowingBreaks}>
+      <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
+        <BlockNoteView
+          editor={editor}
+          editable={editable}
+          theme={resolvedTheme === "dark" ? "dark" : "light"}
+          slashMenu={false}
+          formattingToolbar={false}
+        >
+          <FormattingToolbarController
+            formattingToolbar={() => (
+              <FormattingToolbar>{toolbarItems}</FormattingToolbar>
+            )}
+          />
 
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={async (query) => {
-            const defaultItems = getDefaultReactSlashMenuItems(editor).filter(
-              (item) => !itemsToHide.has(item.title ?? ""),
-            );
-            const calloutItems = getCalloutSlashMenuItems(editor);
-            const quizItems = getQuizSlashMenuItems(editor);
-            const latexItems = getLatexSlashMenuItems(editor);
-            const codeItems = getCodeSlashMenuItems(editor);
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) => {
+              const defaultItems = getDefaultReactSlashMenuItems(editor).filter(
+                (item) => !itemsToHide.has(item.title ?? ""),
+              );
+              const calloutItems = getCalloutSlashMenuItems(editor);
+              const quizItems = getQuizSlashMenuItems(editor);
+              const latexItems = getLatexSlashMenuItems(editor);
+              const codeItems = getCodeSlashMenuItems(editor);
+              const slideBreakItems = getSlideBreakSlashMenuItems(editor);
+              const columnBreakItems = getColumnBreakSlashMenuItems(editor);
+              const notebookCodeItems = getNotebookCodeSlashMenuItems(editor);
+              const sandpackItems = getSandpackSlashMenuItems(editor);
 
-            const allItems = [
-              ...defaultItems,
-              ...calloutItems,
-              ...quizItems,
-              ...latexItems,
-              ...codeItems,
-            ];
+              const allItems = [
+                ...defaultItems,
+                ...calloutItems,
+                ...quizItems,
+                ...latexItems,
+                ...codeItems,
+                ...sandpackItems,
+                ...slideBreakItems,
+                ...columnBreakItems,
+                ...notebookCodeItems,
+              ];
 
-            return allItems.filter(
-              (item) =>
-                item.title.toLowerCase().includes(query.toLowerCase()) ||
-                item.aliases?.some((alias) =>
-                  alias.toLowerCase().includes(query.toLowerCase()),
-                ),
-            );
-          }}
-        />
-      </BlockNoteView>
-    </div>
+              return allItems.filter(
+                (item) =>
+                  item.title.toLowerCase().includes(query.toLowerCase()) ||
+                  item.aliases?.some((alias) =>
+                    alias.toLowerCase().includes(query.toLowerCase()),
+                  ),
+              );
+            }}
+          />
+        </BlockNoteView>
+      </div>
+    </SlideOverflowContext.Provider>
   );
 }

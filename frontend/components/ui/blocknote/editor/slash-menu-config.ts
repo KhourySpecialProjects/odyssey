@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
-import { Code } from "lucide-react";
+import { Code, Play, AppWindow, Columns2 } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -17,6 +17,7 @@ import {
   FileText,
   LayoutList,
   TypeIcon,
+  SeparatorHorizontal,
 } from "lucide-react";
 
 const createCalloutItem = (
@@ -221,7 +222,7 @@ export const getCodeSlashMenuItems = (
             type: "code-block",
             props: {
               language: "python",
-              code: "# Write your code here\n",
+              code: "",
               editable: true,
               runnable: true,
             },
@@ -234,5 +235,107 @@ export const getCodeSlashMenuItems = (
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
     subtext: "Display code with syntax highlighting",
+  },
+];
+
+export const getNotebookCodeSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Notebook Code",
+    icon: createElement(Play, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "notebook-code",
+            props: {
+              code: "# Write your Python code here\n",
+              language: "python",
+              editable: "true",
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["notebook", "jupyter", "python", "colab"],
+    group: "Data Science",
+    subtext: "Interactive Python notebook cell with Pyodide",
+  },
+];
+
+export const getSandpackSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Live Sandbox",
+    icon: createElement(AppWindow, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "sandpack-block",
+            props: {
+              template: "vanilla",
+              files: "{}",
+              showPreview: true,
+              editable: true,
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: [
+      "sandbox",
+      "sandpack",
+      "live",
+      "playground",
+      "interactive",
+      "web",
+    ],
+    group: "Code",
+    subtext: "Interactive code sandbox with live preview",
+  },
+];
+
+export const getSlideBreakSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Slide Break",
+    icon: createElement(SeparatorHorizontal, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-break" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["slide", "break", "presentation", "page break", "divider"],
+    group: "Presentation",
+    subtext: "Start a new presentation slide",
+  },
+];
+
+export const getColumnBreakSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Column Break",
+    icon: createElement(Columns2, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "column-break" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["column", "col break", "split column", "column break"],
+    group: "Presentation",
+    subtext: "Split content between left and right columns",
   },
 ];

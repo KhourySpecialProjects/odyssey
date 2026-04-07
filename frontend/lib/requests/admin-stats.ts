@@ -81,6 +81,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     currentEnrollmentsResult,
     lastMonthEnrollmentsResult,
     completedEnrollmentsResult,
+    lastMonthCompletedEnrollmentsResult,
   ] = await Promise.allSettled([
     // Users
     fetchAuthorizedUsersMetadata({ pagination: { pageSize: 1, page: 1 } }),
@@ -97,11 +98,14 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       filters: { createdAt: { $lt: cutoff } },
       pagination: { pageSize: 1, page: 1 },
     }),
-    // Completed enrollments (for current retention only)
-    // lastMonth retention is omitted: no completedAt field exists in the schema,
-    // so a historical completion count cannot be computed accurately.
+    // Completed enrollments (current)
     fetchEnrollmentMetadata({
       filters: { isComplete: { $eq: true } },
+      pagination: { pageSize: 1, page: 1 },
+    }),
+    // Completed enrollments (last month — created before cutoff, reliably set unlike completionDate)
+    fetchEnrollmentMetadata({
+      filters: { isComplete: { $eq: true }, createdAt: { $lt: cutoff } },
       pagination: { pageSize: 1, page: 1 },
     }),
   ]);
@@ -132,6 +136,10 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     completedEnrollmentsResult.status === "fulfilled"
       ? completedEnrollmentsResult.value
       : null;
+  const lastMonthCompletedEnrollmentsRes =
+    lastMonthCompletedEnrollmentsResult.status === "fulfilled"
+      ? lastMonthCompletedEnrollmentsResult.value
+      : null;
 
   const currentUsers = currentUsersRes?.meta?.pagination?.total ?? 0;
   const lastMonthUsers = lastMonthUsersRes?.meta?.pagination?.total ?? 0;
@@ -144,10 +152,20 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const completedEnrollments =
     completedEnrollmentsRes?.meta?.pagination?.total ?? 0;
 
+  const lastMonthCompletedEnrollments =
+    lastMonthCompletedEnrollmentsRes?.meta?.pagination?.total ?? 0;
+
   const currentRetentionPct =
     currentEnrollments === 0
       ? 0
       : Math.round((completedEnrollments / currentEnrollments) * 10000) / 100;
+
+  const lastMonthRetentionPct =
+    lastMonthEnrollments === 0
+      ? 0
+      : Math.round(
+          (lastMonthCompletedEnrollments / lastMonthEnrollments) * 10000,
+        ) / 100;
 
   return {
     users: {
@@ -167,10 +185,10 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     },
     retentionRate: {
       current: Math.round(currentRetentionPct),
-      lastMonth: 0,
+      lastMonth: Math.round(lastMonthRetentionPct),
       currentPct: `${currentRetentionPct.toFixed(2)}%`,
-      lastMonthPct: "N/A",
-      trend: undefined,
+      lastMonthPct: `${lastMonthRetentionPct.toFixed(2)}%`,
+      trend: computeTrend(currentRetentionPct, lastMonthRetentionPct),
     },
   };
 }

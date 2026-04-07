@@ -3,45 +3,13 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { useState, useEffect, ErrorInfo } from "react";
 import React from "react";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-// Import languages
-import javascript from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
-import typescript from "react-syntax-highlighter/dist/esm/languages/hljs/typescript";
-import python from "react-syntax-highlighter/dist/esm/languages/hljs/python";
-import java from "react-syntax-highlighter/dist/esm/languages/hljs/java";
-import cpp from "react-syntax-highlighter/dist/esm/languages/hljs/cpp";
-import c from "react-syntax-highlighter/dist/esm/languages/hljs/c";
-import csharp from "react-syntax-highlighter/dist/esm/languages/hljs/csharp";
-import php from "react-syntax-highlighter/dist/esm/languages/hljs/php";
-import ruby from "react-syntax-highlighter/dist/esm/languages/hljs/ruby";
-import bash from "react-syntax-highlighter/dist/esm/languages/hljs/bash";
-import go from "react-syntax-highlighter/dist/esm/languages/hljs/go";
-import rust from "react-syntax-highlighter/dist/esm/languages/hljs/rust";
-import kotlin from "react-syntax-highlighter/dist/esm/languages/hljs/kotlin";
-import swift from "react-syntax-highlighter/dist/esm/languages/hljs/swift";
 import { Play, Edit, Lock, Check, X, AlertCircle, Loader2 } from "lucide-react";
-
-// Register languages
-SyntaxHighlighter.registerLanguage("javascript", javascript);
-SyntaxHighlighter.registerLanguage("typescript", typescript);
-SyntaxHighlighter.registerLanguage("python", python);
-SyntaxHighlighter.registerLanguage("java", java);
-SyntaxHighlighter.registerLanguage("cpp", cpp);
-SyntaxHighlighter.registerLanguage("c", c);
-SyntaxHighlighter.registerLanguage("csharp", csharp);
-SyntaxHighlighter.registerLanguage("php", php);
-SyntaxHighlighter.registerLanguage("ruby", ruby);
-SyntaxHighlighter.registerLanguage("bash", bash);
-SyntaxHighlighter.registerLanguage("go", go);
-SyntaxHighlighter.registerLanguage("rust", rust);
-SyntaxHighlighter.registerLanguage("kotlin", kotlin);
-SyntaxHighlighter.registerLanguage("swift", swift);
+import { CodeEditor } from "@/components/ui/code-editor";
 
 // Piston API configuration - calling directly
 const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
 
-// Only languages supported by both Piston and react-syntax-highlighter
+// Languages supported by both Piston and CodeMirror
 const SUPPORTED_LANGUAGES = {
   Web: [
     {
@@ -90,16 +58,33 @@ const SUPPORTED_LANGUAGES = {
       fileName: "main.swift",
     },
   ],
+  Other: [
+    { value: "json", label: "JSON", pistonName: "", fileName: "data.json" },
+    {
+      value: "plaintext",
+      label: "Plain Text",
+      pistonName: "",
+      fileName: "file.txt",
+    },
+  ],
 };
 
 const allLanguages = Object.values(SUPPORTED_LANGUAGES).flat();
 
+/** Return a language-appropriate comment for the placeholder text. */
+function getPlaceholder(language: string): string {
+  const hashComment = new Set(["python", "ruby", "bash"]);
+  if (hashComment.has(language)) return "# Write your code here";
+  if (language === "json" || language === "plaintext") return "";
+  return "// Write your code here";
+}
+
 const executePistonCode = async (language: string, code: string) => {
   const langConfig = allLanguages.find((l) => l.value === language);
-  if (!langConfig) {
+  if (!langConfig || !langConfig.pistonName) {
     return {
       success: false,
-      output: `Language ${language} is not supported`,
+      output: `Language ${language} is not supported for execution`,
     };
   }
 
@@ -175,7 +160,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   const [isRunning, setIsRunning] = useState(false);
   const [executionSuccess, setExecutionSuccess] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const currentLanguage = allLanguages.find(
     (lang) => lang.value === block.props.language,
@@ -197,17 +181,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       setCode(block.props.code);
     }
   }, [block.props.code, isEditing]);
-
-  // Focus textarea when entering editing mode
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      // Small delay to ensure textarea is rendered
-      const timer = setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-  }, [isEditing]);
 
   const handleSave = () => {
     if (!isMounted || !editor) return;
@@ -277,8 +250,27 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   const changeLanguage = (lang: string) => {
     if (!isMounted || !editor) return;
     try {
+      const langConfig = allLanguages.find((l) => l.value === lang);
+      const isExecutable = !!langConfig?.pistonName;
+
+      // If code is still a default placeholder comment, swap to new language's syntax
+      const boilerplates = [
+        "# Write your code here\n",
+        "// Write your code here\n",
+        "# Write your code here",
+        "// Write your code here",
+        "",
+      ];
+      const newCode = boilerplates.includes(code) ? "" : code;
+      if (newCode !== code) setCode(newCode);
+
       editor.updateBlock(block, {
-        props: { ...block.props, language: lang },
+        props: {
+          ...block.props,
+          language: lang,
+          ...(newCode !== code ? { code: newCode } : {}),
+          ...(isExecutable ? {} : { runnable: false }),
+        },
       });
     } catch (error) {
       console.error("Error changing language:", error);
@@ -293,10 +285,10 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   // If not mounted yet, show a loading state
   if (!isMounted) {
     return (
-      <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-4">
+      <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
         <div className="animate-pulse">
-          <div className="mb-4 h-4 w-1/4 rounded bg-gray-700"></div>
-          <div className="h-32 rounded bg-gray-800"></div>
+          <div className="mb-4 h-4 w-1/4 rounded bg-gray-200 dark:bg-gray-700"></div>
+          <div className="h-32 rounded bg-gray-100 dark:bg-gray-800"></div>
         </div>
       </div>
     );
@@ -304,16 +296,16 @@ const CodeBlockComponent = ({ block, editor }: any) => {
 
   return (
     <div
-      className="my-4 w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900"
+      className="my-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
       contentEditable={false}
       onMouseDown={handleMouseDown}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center gap-2">
           {isViewMode ? (
             // Student view - show language name only
-            <span className="px-3 py-1.5 text-sm font-medium text-gray-200">
+            <span className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200">
               {currentLanguage?.label || block.props.language}
             </span>
           ) : (
@@ -321,7 +313,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             <select
               value={block.props.language}
               onChange={(e) => changeLanguage(e.target.value)}
-              className="min-w-[140px] rounded border border-gray-600 bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-200"
+              className="min-w-[140px] rounded border border-gray-300 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
               {Object.entries(SUPPORTED_LANGUAGES).map(([category, langs]) => (
                 <optgroup key={category} label={category}>
@@ -335,10 +327,12 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             </select>
           )}
 
-          <span className="flex items-center gap-1 text-xs text-green-400">
-            <Play size={12} />
-            Executable
-          </span>
+          {!!currentLanguage?.pistonName && (
+            <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <Play size={12} />
+              Executable
+            </span>
+          )}
         </div>
 
         {!isViewMode && (
@@ -349,7 +343,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${
                 block.props.editable
                   ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-400"
+                  : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
               }`}
               title={block.props.editable ? "Learners can edit" : "Read-only"}
             >
@@ -363,7 +357,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${
                 block.props.runnable
                   ? "bg-green-600 text-white"
-                  : "bg-gray-700 text-gray-400"
+                  : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
               }`}
               title={block.props.runnable ? "Can run code" : "Cannot run code"}
             >
@@ -378,107 +372,12 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       <div className="relative">
         {isEditing && block.props.editable ? (
           <div>
-            <textarea
-              ref={textareaRef}
+            <CodeEditor
+              language={block.props.language}
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => {
-                // Handle Tab key for indentation - make sure it works in all modes
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  e.stopPropagation(); // Prevent BlockNote from handling it
-
-                  const textarea = e.currentTarget;
-                  const start = textarea.selectionStart;
-                  const end = textarea.selectionEnd;
-                  const value = textarea.value;
-
-                  if (e.shiftKey) {
-                    // Shift+Tab: Outdent (remove indentation)
-                    const linesBefore = value.substring(0, start).split("\n");
-                    const currentLineIndex = linesBefore.length - 1;
-                    const currentLine = linesBefore[currentLineIndex];
-
-                    // Check if line starts with tab or spaces
-                    if (currentLine.startsWith("\t")) {
-                      // Remove one tab
-                      const newValue =
-                        value.substring(0, start - 1) + value.substring(start);
-                      setCode(newValue);
-                      // Set cursor position
-                      setTimeout(() => {
-                        textarea.selectionStart = start - 1;
-                        textarea.selectionEnd = start - 1;
-                      }, 0);
-                    } else if (currentLine.match(/^ {1,4}/)) {
-                      // Remove up to 4 spaces (or fewer if less than 4)
-                      const spacesToRemove = Math.min(
-                        4,
-                        currentLine.match(/^ */)?.[0].length || 0,
-                      );
-                      if (spacesToRemove > 0) {
-                        const newValue =
-                          value.substring(0, start - spacesToRemove) +
-                          value.substring(start);
-                        setCode(newValue);
-                        setTimeout(() => {
-                          textarea.selectionStart = start - spacesToRemove;
-                          textarea.selectionEnd = start - spacesToRemove;
-                        }, 0);
-                      }
-                    }
-                  } else {
-                    // Tab: Indent
-                    const selectedText = value.substring(start, end);
-                    const lines = selectedText.split("\n");
-
-                    if (lines.length > 1) {
-                      // Multiple lines selected - indent all lines
-                      const indentedLines = lines.map((line, index) => {
-                        if (index === 0) {
-                          // First line: add tab at cursor position
-                          return "\t" + line;
-                        } else {
-                          // Subsequent lines: add tab at start
-                          return "\t" + line;
-                        }
-                      });
-                      const newValue =
-                        value.substring(0, start) +
-                        indentedLines.join("\n") +
-                        value.substring(end);
-                      setCode(newValue);
-                      // Set cursor position to maintain selection
-                      setTimeout(() => {
-                        textarea.selectionStart = start + 1;
-                        textarea.selectionEnd =
-                          start + indentedLines.join("\n").length;
-                      }, 0);
-                    } else {
-                      // Single line or no selection - insert tab
-                      const newValue =
-                        value.substring(0, start) + "\t" + value.substring(end);
-                      setCode(newValue);
-                      // Set cursor position after the tab
-                      setTimeout(() => {
-                        textarea.selectionStart = start + 1;
-                        textarea.selectionEnd = start + 1;
-                      }, 0);
-                    }
-                  }
-                }
-              }}
-              onFocus={(e) => {
-                // Ensure textarea stays focused
-                e.stopPropagation();
-              }}
-              className="w-full resize-none bg-gray-900 p-4 font-mono text-sm text-gray-100 outline-none"
-              rows={Math.max(5, code.split("\n").length)}
-              style={{ minHeight: "120px" }}
-              spellCheck={false}
-              autoFocus
+              onChange={setCode}
             />
-            <div className="flex gap-2 border-t border-gray-700 bg-gray-800 p-2">
+            <div className="flex gap-2 border-t border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
               <button
                 onClick={handleSave}
                 className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
@@ -488,7 +387,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
               </button>
               <button
                 onClick={handleCancel}
-                className="flex items-center gap-1 rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
+                className="flex items-center gap-1 rounded bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-700"
               >
                 <X size={14} />
                 Cancel
@@ -501,28 +400,18 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             onClick={() => {
               if (block.props.editable) {
                 setIsEditing(true);
-                // Focus the textarea after state update
-                setTimeout(() => {
-                  textareaRef.current?.focus();
-                }, 0);
               }
             }}
           >
-            <SyntaxHighlighter
+            <CodeEditor
               language={block.props.language}
-              style={atomOneDark}
-              customStyle={{
-                margin: 0,
-                padding: "1rem",
-                background: "transparent",
-              }}
-              PreTag="div"
-            >
-              {code || "# Write your code here"}
-            </SyntaxHighlighter>
+              value={code}
+              readOnly
+              placeholder={getPlaceholder(block.props.language)}
+            />
             {block.props.editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
+                <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                   Click to edit
                 </span>
               </div>
@@ -533,8 +422,8 @@ const CodeBlockComponent = ({ block, editor }: any) => {
 
       {/* Run Button and Output */}
       {block.props.runnable && (
-        <div className="border-t border-gray-700">
-          <div className="bg-gray-800 p-2">
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50 p-2 dark:bg-gray-800">
             <button
               onClick={runCode}
               disabled={isRunning}
@@ -558,23 +447,32 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             <div
               className={`border-t p-4 ${
                 executionSuccess
-                  ? "border-gray-700 bg-gray-950"
-                  : "border-red-700/30 bg-red-950/20"
+                  ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950"
+                  : "border-red-300/30 bg-red-50/20 dark:border-red-700/30 dark:bg-red-950/20"
               }`}
             >
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {executionSuccess ? (
-                  <span className="font-medium text-gray-400">Output:</span>
+                  <span className="font-medium text-gray-500 dark:text-gray-400">
+                    Output:
+                  </span>
                 ) : (
                   <>
-                    <AlertCircle size={14} className="text-red-400" />
-                    <span className="font-medium text-red-400">Error:</span>
+                    <AlertCircle
+                      size={14}
+                      className="text-red-500 dark:text-red-400"
+                    />
+                    <span className="font-medium text-red-500 dark:text-red-400">
+                      Error:
+                    </span>
                   </>
                 )}
               </div>
               <pre
                 className={`font-mono text-sm whitespace-pre-wrap ${
-                  executionSuccess ? "text-green-400" : "text-red-300"
+                  executionSuccess
+                    ? "text-green-700 dark:text-green-400"
+                    : "text-red-600 dark:text-red-300"
                 }`}
               >
                 {output}

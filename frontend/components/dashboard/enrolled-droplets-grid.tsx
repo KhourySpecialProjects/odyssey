@@ -22,11 +22,13 @@ export async function EnrolledDropletsGrid({
   tags,
   type,
   focusArea,
+  difficulty,
 }: {
   sortKey?: string;
   tags?: string[] | string;
   type?: string | string[];
   focusArea?: string | string[];
+  difficulty?: string | string[];
 }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
@@ -86,6 +88,7 @@ export async function EnrolledDropletsGrid({
       tags={tags}
       type={type}
       focusArea={focusArea}
+      difficulty={difficulty}
       currentUser={authorizedUser}
     />
   );

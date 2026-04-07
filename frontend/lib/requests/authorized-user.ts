@@ -37,7 +37,7 @@ export async function getAuthorizedUserByEmail<
     sort,
     filters: {
       ...filters,
-      email: { $eq: email },
+      email: { $eqi: email },
     },
     populate,
     fields,

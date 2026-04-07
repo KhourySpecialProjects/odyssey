@@ -8,7 +8,7 @@ on:
       - edited
 jobs:
   check-branches:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     env:
       PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       PR_BASE_REF: ${{ github.event.pull_request.base.ref }}

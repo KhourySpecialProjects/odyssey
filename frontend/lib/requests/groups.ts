@@ -154,7 +154,7 @@ export async function getGroupByID(
       playlists: {
         populate: {
           droplets: {
-            fields: ["id", "name", "slug", "type", "focusArea"],
+            fields: ["id", "name", "slug", "type", "focusArea", "difficulty"],
           },
         },
         fields: ["id", "name", "slug"],
@@ -418,6 +418,7 @@ export async function getGroupBySlugV2(
           "slug",
           "status",
           "focusArea",
+          "difficulty",
           "type",
           "averageRating",
           "description",

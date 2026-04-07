@@ -2,8 +2,13 @@ import { Note } from "@/types";
 import { useState, useCallback } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Trash2Icon, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconGripVertical,
+  IconTrash,
+} from "@tabler/icons-react";
+import { stripHtmlTags } from "@/lib/utils";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -29,8 +34,8 @@ export function NoteBlock({
   onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
-  const [noteExpanded, setNoteExpanded] = useState(true);
   const [focused, setFocused] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [, setNoteMessage] = useState("Save");
 
   const handleBlur = useCallback(async () => {
@@ -43,13 +48,6 @@ export function NoteBlock({
       onUpdate();
     }
   }, [content, note.id, authorizedUserId, onUpdate]);
-
-  function stripHtml(html: string): string {
-    if (!html) return "General Note";
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "General Note";
-  }
 
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
@@ -159,20 +157,28 @@ export function NoteBlock({
     return newRange;
   };
 
+  const getGeneralNoteLabel = () => {
+    if (!content) return "General Note";
+    const stripped = stripHtmlTags(content);
+    if (!stripped) return "General Note";
+    if (stripped.length <= 15) return stripped;
+    return stripped.substring(0, 15) + " ...";
+  };
+
   return (
     <div
       className={cn(
-        "note-block mx-3 flex w-full flex-row rounded-xl bg-slate-200 pt-2 pr-1 pl-1",
-        "dark:border dark:border-slate-500 dark:bg-slate-700",
+        "note-block mr-8 ml-12 flex w-full flex-row rounded-[8px] border bg-white p-2",
+        "dark:border-slate-500 dark:bg-slate-700",
         focused
-          ? "shadow-[0px_0px_16px_rgb(29,58,138)] dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
-          : "shadow-[0px_0px_8px_rgb(29,58,138)] dark:shadow-[0px_0px_6px_rgb(0,255,255)]",
+          ? "shadow-[0px_0px_16px_rgb(29,58,138)]"
+          : "shadow-[0px_0px_8px_rgb(29,58,138)]",
       )}
     >
       <div className="flex w-4/5 flex-1 flex-col px-1 py-2">
         <div className="flex flex-row items-center pb-2">
           <div className="grip-handle pr-2">
-            <GripVertical />
+            <IconGripVertical className="h-4 w-4" />
           </div>
           {note.highlight?.text ? (
             <div className="flex w-full flex-row justify-between">
@@ -245,54 +251,47 @@ export function NoteBlock({
             </div>
           ) : (
             <div className="flex w-full flex-row justify-start">
-              <Badge
-                variant="secondary"
-                className={`border border-slate-400 bg-slate-200 py-1 text-center text-sm text-slate-700 hover:bg-slate-200`}
-              >
-                {noteExpanded ? (
-                  "General Note"
-                ) : (
-                  <>
-                    {stripHtml(content).substring(0, 15)}
-                    {stripHtml(content).length > 15 ? "..." : ""}
-                  </>
-                )}
-              </Badge>
+              {!expanded && (
+                <span className="text-sm text-slate-500">
+                  {getGeneralNoteLabel()}
+                </span>
+              )}
+              {expanded && (
+                <span className="text-sm font-medium text-slate-600">
+                  General Note
+                </span>
+              )}
             </div>
           )}
 
           <button
-            className={`ml-auto ${noteExpanded ? "" : "flex w-full flex-row justify-between"} `}
-            onClick={() => setNoteExpanded(!noteExpanded)}
+            type="button"
+            className="chevron-toggle ml-auto cursor-pointer p-1 text-slate-500 transition-colors hover:text-slate-700"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-label={expanded ? "Collapse note" : "Expand note"}
+            data-testid={expanded ? "chevronup" : "chevrondown"}
           >
-            <div className={`w-full ${noteExpanded ? "hidden" : ""}`}></div>
-            {!noteExpanded ? (
-              <ChevronDown
-                className="rounded-tr-md dark:bg-slate-700"
-                data-testid="chevrondown"
-              />
+            {expanded ? (
+              <IconChevronUp className="h-4 w-4" />
             ) : (
-              <ChevronUp
-                className="rounded-tr-md dark:bg-slate-700"
-                data-testid="chevronup"
-              />
+              <IconChevronDown className="h-4 w-4" />
             )}
           </button>
 
-          <Button
-            className="trash-icon mb-1 ml-2 h-full bg-red-700 p-0 hover:bg-red-900 dark:bg-red-700 dark:hover:bg-red-900"
-            variant="default"
-            size="sm"
-            onClick={() => onDelete(note.id)}
+          <div
             role="button"
-            name="delete"
+            className="trash-icon ml-2 cursor-pointer rounded bg-red-700 p-1 text-white transition-colors hover:bg-red-800"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(note.id);
+            }}
             data-testid="deleteNote"
           >
-            <Trash2Icon className="cursor-pointer text-white" />
-          </Button>
+            <IconTrash className="h-4 w-4" />
+          </div>
         </div>
 
-        {noteExpanded ? (
+        {expanded && (
           <div
             onBlur={() => {
               handleBlur();
@@ -308,13 +307,6 @@ export function NoteBlock({
               <div className="flex-grow" data-testid="toolbar">
                 <DefaultToolbar editor={editor!} note={true} />
               </div>
-              {/*<Button 
-                variant="outline" 
-                size="sm" 
-                className="h-full bg-slate-200 rounded-md mr-4 dark:bg-slate-700 dark:border-white"
-                onClick={handleBlur} >
-                  {noteMessage}
-              </Button>*/}
             </div>
             <EditorContent
               name="lesson-generic"
@@ -322,8 +314,6 @@ export function NoteBlock({
               data-testid="editor"
             />
           </div>
-        ) : (
-          <div />
         )}
       </div>
     </div>

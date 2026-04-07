@@ -2,34 +2,86 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { PlusIcon, CornerDownLeftIcon, LoaderIcon, Import } from "lucide-react";
+import {
+  IconCornerDownLeft,
+  IconUpload,
+  IconBook2,
+  IconLoader2,
+  IconPlus,
+} from "@tabler/icons-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
-import { addLesson } from "@/lib/requests/lesson";
+import { addLesson, duplicateLessonToDroplet } from "@/lib/requests/lesson";
 import { ImportLessonModal } from "../ui/import-lesson-modal";
+import { ImportFileModal } from "./import-file-modal";
 import { toast } from "sonner";
 import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export function AddLesson({
   droplet,
   onAddLesson,
+  onAddLessons,
+  availableDroplets = [],
+  currentLessonCount = 0,
 }: {
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "difficulty"
+    | "type"
+    | "focusArea"
+    | "learningObjectives"
+    | "status"
+  >;
   onAddLesson: (newLesson: Lesson) => void;
+  onAddLessons?: (newLessons: Lesson[]) => void;
+  availableDroplets?: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
+  currentLessonCount?: number;
 }) {
   const [isHidden, setIsHidden] = useState(true);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false); // Add this state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isFileImportModalOpen, setIsFileImportModalOpen] = useState(false);
+  const [isExistingOpen, setIsExistingOpen] = useState(false);
+  const [selectedDropletId, setSelectedDropletId] = useState("");
+  const [selectedLessonId, setSelectedLessonId] = useState("");
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLLIElement>(null);
   const router = useRouter();
 
+  const selectedDroplet = availableDroplets.find(
+    (d) => d.id.toString() === selectedDropletId,
+  );
+  const availableLessons =
+    selectedDroplet?.lessons?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
+
   const handleClick = () => {
     setIsHidden(false);
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 0);
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -50,52 +102,49 @@ export function AddLesson({
   }, []);
 
   async function add(formData: FormData) {
-    const response = await addLesson({
-      name: formData.get("name") as string,
-      dropletId: parseInt(formData.get("dropletId") as string),
-      orderIndex: droplet.lessons?.length || 0,
-    });
+    const name = formData.get("name") as string;
+    if (name?.trim()) {
+      const response = await addLesson({
+        name,
+        dropletId: droplet.id,
+        orderIndex: droplet.lessons?.length || 0,
+      });
 
-    if (response && !response.error) {
-      const newLesson: Lesson = {
-        id: response.data.id,
-        name: response.data.attributes.name,
-        slug: response.data.attributes.slug,
-        type: response.data.attributes.type || "general",
-        blocks: [],
-        droplets: [
-          {
-            id: droplet.id,
-            name: droplet.name,
-            slug: droplet.slug,
-            type: response.data.attributes.type || "",
-            focusArea: response.data.attributes.focusArea || "",
-            learningObjectives: [],
-            isHidden: false,
-            status: "draft",
-          },
-        ],
-        notes: "",
-        orderIndex: response.data.orderIndex,
-      };
+      if (response?.data) {
+        const newLesson: Lesson = {
+          id: response.data.id,
+          name: response.data.attributes.name,
+          slug: response.data.attributes.slug,
+          type: response.data.attributes.type || "general",
+          blocks: [],
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: response.data.attributes.type || "",
+              focusArea: response.data.attributes.focusArea || "",
+              difficulty: droplet.difficulty,
+              learningObjectives: [],
+              isHidden: false,
+              status: "draft",
+            },
+          ],
+          notes: "",
+          orderIndex: response.data.orderIndex,
+        };
 
-      onAddLesson(newLesson);
-      setIsHidden(true);
-      router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
+        onAddLesson(newLesson);
+        setIsHidden(true);
+        router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
+      }
     }
-  }
-
-  // Updated handleImportClick function
-  function handleImportClick() {
-    setIsImportModalOpen(true);
   }
 
   async function handleImport(markdown: string) {
     try {
-      // Step 1: Parse the markdown
       const { title, blocks } = parseMarkdownToBlockNote(markdown);
 
-      // Step 2: Create the lesson with parsed blocks
       const createResponse = await addLesson({
         name: title,
         dropletId: droplet.id,
@@ -104,15 +153,13 @@ export function AddLesson({
         blocksVersion: "v2",
       });
 
-      if (createResponse && !createResponse.error) {
+      if (createResponse?.data) {
         const newLesson: Lesson = {
           id: createResponse.data.id,
           name: createResponse.data.attributes.name,
           slug: createResponse.data.attributes.slug,
           type: createResponse.data.attributes.type || "general",
           blocks: [],
-          blocksV2: blocks,
-          blocksVersion: "v2",
           droplets: [
             {
               id: droplet.id,
@@ -120,6 +167,7 @@ export function AddLesson({
               slug: droplet.slug,
               type: createResponse.data.attributes.type || "",
               focusArea: createResponse.data.attributes.focusArea || "",
+              difficulty: droplet.difficulty,
               learningObjectives: [],
               isHidden: false,
               status: "draft",
@@ -130,9 +178,8 @@ export function AddLesson({
         };
 
         onAddLesson(newLesson);
-        toast.success(
-          `Lesson "${title}" imported successfully with ${blocks.length} blocks!`,
-        );
+        setIsImportModalOpen(false);
+        toast.success(`Lesson "${newLesson.name}" imported successfully`);
         router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
       } else {
         toast.error(createResponse?.error || "Failed to create lesson");
@@ -143,31 +190,114 @@ export function AddLesson({
     }
   }
 
+  async function handleDuplicate() {
+    if (!selectedLessonId) {
+      toast.error("Please select a lesson");
+      return;
+    }
+    setIsLoadingExisting(true);
+    try {
+      const result = await duplicateLessonToDroplet(
+        parseInt(selectedLessonId),
+        droplet.id,
+        currentLessonCount,
+      );
+
+      if (result.ok && result.data) {
+        const attributes = result.data.attributes;
+        const newLesson: Lesson = {
+          id: result.data.id,
+          name: attributes.name,
+          slug: attributes.slug,
+          type: attributes.type,
+          orderIndex: attributes.orderIndex,
+          blocks: attributes.blocks || [],
+          blocksV2: attributes.blocksV2 || null,
+          blocksVersion: attributes.blocksVersion || "v1",
+          notes: attributes.notes || null,
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: droplet.type,
+              focusArea: droplet.focusArea,
+              learningObjectives: droplet.learningObjectives,
+              status: droplet.status,
+            } as Droplet,
+          ],
+        };
+        onAddLesson(newLesson);
+        toast.success("Lesson duplicated successfully!");
+        setIsExistingOpen(false);
+        setSelectedDropletId("");
+        setSelectedLessonId("");
+      } else {
+        toast.error(result.error || "Failed to duplicate lesson");
+      }
+    } catch (error) {
+      console.error("Error duplicating lesson:", error);
+      toast.error("Failed to duplicate lesson");
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  }
+
   return (
     <>
       <div className="flex w-full items-center justify-between">
-        <p className="p-2 text-lg leading-7 font-bold">Lessons</p>
+        <div className="flex items-center gap-2 pl-4">
+          <IconBook2 className="h-4 w-4 shrink-0" stroke={1.5} />
+          <p className="text-base leading-none font-medium">Lessons</p>
+        </div>
         <div className="flex items-center gap-2">
-          {" "}
-          {/* Changed to flex container */}
-          <div className="cursor-pointer p-2">
-            <Import
-              role="button"
-              onClick={handleImportClick}
-              className="transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-            />
-          </div>
-          <div className="cursor-pointer p-2">
-            <PlusIcon
-              role="button"
-              onClick={handleClick}
-              className="transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-            />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                role="button"
+                aria-label="Import lessons"
+                className="flex cursor-pointer items-center p-2"
+              >
+                <IconUpload
+                  className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  stroke={2.5}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsImportModalOpen(true)}>
+                Import from Markdown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsFileImportModalOpen(true)}>
+                Import from File (PDF/PPTX)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                role="button"
+                aria-label="Add lesson"
+                className="cursor-pointer p-1"
+              >
+                <IconPlus
+                  className="h-4 w-4 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  stroke={2.5}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleClick}>
+                New Lesson
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsExistingOpen(true)}>
+                Add Existing Lesson
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Import Modal */}
       <ImportLessonModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
@@ -175,7 +305,84 @@ export function AddLesson({
         dropletName={droplet.name}
       />
 
-      <ul>
+      <ImportFileModal
+        isOpen={isFileImportModalOpen}
+        onClose={() => setIsFileImportModalOpen(false)}
+        droplet={droplet}
+        onAddLessons={onAddLessons ?? (() => {})}
+      />
+
+      {/* Add Existing Lesson Dialog */}
+      <Dialog open={isExistingOpen} onOpenChange={setIsExistingOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Lesson from Another Droplet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Droplet</label>
+              <Select
+                value={selectedDropletId}
+                onValueChange={(value) => {
+                  setSelectedDropletId(value);
+                  setSelectedLessonId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a droplet..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDroplets
+                    .filter((d) => d.id !== droplet.id)
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((d) => (
+                      <SelectItem key={d.id} value={d.id.toString()}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedDropletId && availableLessons.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Lesson</label>
+                <Select
+                  value={selectedLessonId}
+                  onValueChange={setSelectedLessonId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a lesson..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLessons.map((lesson) => (
+                      <SelectItem key={lesson.id} value={lesson.id.toString()}>
+                        {lesson.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {selectedDropletId && availableLessons.length === 0 && (
+              <p className="text-muted-foreground text-sm">
+                No lessons available in this droplet
+              </p>
+            )}
+
+            <Button
+              onClick={handleDuplicate}
+              disabled={!selectedLessonId || isLoadingExisting}
+              className="w-full"
+            >
+              {isLoadingExisting ? "Duplicating..." : "Duplicate Lesson"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ul className={isHidden ? "hidden" : ""}>
         {!isHidden ? (
           <li ref={ref} className="mb-2 w-full rounded shadow">
             <form
@@ -187,18 +394,12 @@ export function AddLesson({
               <input
                 ref={inputRef}
                 type="text"
-                className="border-0 bg-transparent ring-0 outline-none focus:ring-0 focus:outline-none"
-                placeholder="Lesson Name"
                 name="name"
+                required
+                placeholder="Enter a lesson name"
+                className="w-full rounded border-0 bg-transparent p-2 text-sm outline-none placeholder:text-sm placeholder:text-gray-400"
               />
-              <input
-                type="submit"
-                name="dropletId"
-                hidden
-                readOnly
-                value={droplet.id}
-              />
-              <InputIcon />
+              <SubmitButton />
             </form>
           </li>
         ) : null}
@@ -207,15 +408,21 @@ export function AddLesson({
   );
 }
 
-function InputIcon() {
+function SubmitButton() {
   const { pending } = useFormStatus();
+
   return (
-    <>
+    <button
+      type="submit"
+      aria-label="Submit"
+      disabled={pending}
+      className="flex items-center p-2"
+    >
       {pending ? (
-        <LoaderIcon className="mr-2 animate-spin" />
+        <IconLoader2 className="mr-2 animate-spin" />
       ) : (
-        <CornerDownLeftIcon className="mr-2" />
+        <IconCornerDownLeft className="mr-2" />
       )}
-    </>
+    </button>
   );
 }

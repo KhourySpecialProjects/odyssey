@@ -4,7 +4,7 @@ import { PHProvider } from "@/providers/PHProvider";
 import AuthSessionProvider from "@/providers/SessionProvider";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import type { Metadata } from "next";
-import { Lato } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { FirstVisitPopupLoader } from "@/components/first-time/first-visit-popup-loader";
 import { ThemeClientProvider } from "@/components/theme.client.provider";
@@ -14,9 +14,8 @@ import Footer from "@/components/footer/page";
 import { Suspense } from "react";
 import { HeaderWrapper } from "@/components/header/header-wrapper";
 
-const lato = Lato({
-  subsets: ["latin-ext"],
-  weight: ["100", "300", "400", "700", "900"],
+const inter = Inter({
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
-      <body className={lato.className}>
+      <body className={inter.className}>
         <ThemeClientProvider>
           <AuthSessionProvider>
             <PHProvider>

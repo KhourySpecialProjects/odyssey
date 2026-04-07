@@ -3,7 +3,14 @@
 import { useId, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import {
   filterByDays,
   filterByDateRange,
@@ -65,10 +72,34 @@ export function ActiveUsersChart({
     count: d.count,
   }));
 
+  const mid = Math.floor(formatted.length / 2);
+  const firstHalf = formatted.slice(0, mid);
+  const secondHalf = formatted.slice(mid);
+  const avgFirst =
+    firstHalf.length > 0
+      ? firstHalf.reduce((s, d) => s + d.count, 0) / firstHalf.length
+      : 0;
+  const avgSecond =
+    secondHalf.length > 0
+      ? secondHalf.reduce((s, d) => s + d.count, 0) / secondHalf.length
+      : 0;
+  const trendPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
+  const trendUp = trendPct >= 0;
+
+  const periodLabel = dateRange
+    ? `from ${formatChartDate(dateRange.start)} – ${formatChartDate(dateRange.end)}`
+    : timeframe === 7
+      ? "this week"
+      : timeframe === 30
+        ? "this month"
+        : timeframe === 90
+          ? "this quarter"
+          : `in the last ${timeframe} days`;
+
   return (
-    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+    <Card className="flex h-[320px] flex-col overflow-hidden rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] md:h-[396px] dark:border-slate-600 dark:bg-slate-800">
       <CardHeader className="flex-row items-start justify-between px-6 pt-5 pb-1">
-        <CardTitle className="text-[20px] font-medium dark:text-white">
+        <CardTitle className="text-[20px] font-normal dark:text-white">
           Active Users
         </CardTitle>
         <TimeframeSelector
@@ -79,7 +110,7 @@ export function ActiveUsersChart({
           activeDateRange={dateRange}
         />
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 px-6 pb-4">
+      <CardContent className="min-h-0 flex-1 px-6 pb-2">
         {formatted.length === 0 ? (
           <div className="flex h-full items-center justify-center text-[14px] text-slate-400">
             No active user data available
@@ -101,9 +132,12 @@ export function ActiveUsersChart({
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 12, fill: "#60646c" }}
-                interval={Math.max(0, Math.floor(formatted.length / 7) - 1)}
-                padding={{ left: 24, right: 10 }}
+                tick={{ fontSize: 11, fill: "#60646c" }}
+                interval="preserveStartEnd"
+                padding={{ left: 16, right: 10 }}
+                angle={-35}
+                textAnchor="end"
+                height={45}
               />
               <YAxis
                 tickLine={false}
@@ -123,6 +157,21 @@ export function ActiveUsersChart({
           </ChartContainer>
         )}
       </CardContent>
+      {formatted.length > 0 && (
+        <CardFooter className="flex items-center gap-2 px-6 pt-0 pb-4 text-sm">
+          {trendUp ? (
+            <IconTrendingUp className="h-4 w-4 text-[#1ea438]" />
+          ) : (
+            <IconTrendingDown className="h-4 w-4 text-[#ce3131]" />
+          )}
+          <span
+            className={`font-medium ${trendUp ? "text-[#1ea438]" : "text-[#ce3131]"}`}
+          >
+            {trendUp ? "Trending up" : "Trending down"} by{" "}
+            {Math.abs(trendPct).toFixed(1)}% {periodLabel}
+          </span>
+        </CardFooter>
+      )}
     </Card>
   );
 }

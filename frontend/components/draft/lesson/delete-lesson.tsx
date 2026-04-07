@@ -36,7 +36,12 @@ export function DeleteLessonButton({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">Delete Lesson</Button>
+        <Button
+          variant="outline"
+          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+        >
+          Delete Lesson
+        </Button>
       </DialogTrigger>
       <DialogContent className={isDeleting ? "opacity-50" : ""}>
         <DialogHeader>

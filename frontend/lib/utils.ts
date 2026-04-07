@@ -8,6 +8,7 @@ import {
 } from "@/lib/globals";
 import { JSONContent } from "@tiptap/react";
 import type { BlockNode, TextNode } from "@/types/strapi";
+import type { DropletDifficulty } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,6 +26,27 @@ export function getStrapiURL(path = "") {
  */
 export function uppercaseFirstChar(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Returns Tailwind color classes for a difficulty badge.
+ *
+ * @param difficulty The droplet difficulty value
+ * @returns Tailwind class string for the badge color
+ */
+export function getDifficultyBadgeColor(
+  difficulty: DropletDifficulty | string,
+): string {
+  switch (difficulty) {
+    case "beginner":
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200";
+    case "intermediate":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200";
+    case "advanced":
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200";
+    default:
+      return "";
+  }
 }
 
 /**
@@ -545,6 +567,17 @@ export const stripHtmlTags = (html: string) => {
     .replace(/\s+/g, " ")
     .trim();
 };
+
+export function parseSandpackFiles(
+  json: string | null | undefined,
+): Record<string, string> {
+  try {
+    const parsed = JSON.parse(json || "{}");
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
 
 // Helper function to convert BlockNote JSON to markdown
 export function convertBlockNoteToMarkdown(blocks: any[]): string {

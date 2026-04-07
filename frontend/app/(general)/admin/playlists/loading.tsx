@@ -1,3 +1,5 @@
+import { CardSkeletonList } from "@/components/admin/card-skeleton";
+
 function RowSkeleton() {
   return (
     <tr className="border-b border-[#eaecf0] dark:border-slate-700">
@@ -25,24 +27,26 @@ function RowSkeleton() {
 
 export default function PlaylistsLoading() {
   return (
-    <div className="w-full px-[56px] py-8">
+    <div className="w-full px-4 py-4 md:px-[56px] md:py-8">
       <div className="mt-4 mb-2 px-4 pt-4 pb-2">
-        <div className="h-9 w-[140px] animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-        <div className="mt-2 h-5 w-[340px] animate-pulse rounded bg-slate-100 dark:bg-slate-700" />
+        <div className="h-7 w-[120px] animate-pulse rounded bg-slate-200 md:h-9 md:w-[140px] dark:bg-slate-700" />
+        <div className="mt-2 h-4 w-[200px] animate-pulse rounded bg-slate-100 md:h-5 md:w-[340px] dark:bg-slate-700" />
       </div>
 
       <div className="space-y-4">
-        {/* Controls skeleton */}
-        <div className="flex items-center justify-between">
-          <div className="h-10 w-[818px] animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="h-10 w-full animate-pulse rounded-full bg-slate-200 sm:w-[560px] dark:bg-slate-700" />
           <div className="flex gap-2">
-            <div className="h-10 w-[100px] animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
-            <div className="h-10 w-[80px] animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
+            <div className="h-10 w-[70px] animate-pulse rounded-md bg-slate-200 md:w-[100px] dark:bg-slate-700" />
+            <div className="h-10 w-[60px] animate-pulse rounded-md bg-slate-200 md:w-[80px] dark:bg-slate-700" />
           </div>
         </div>
 
-        {/* Table skeleton */}
-        <div className="overflow-hidden rounded-[8px] border-2 border-[rgba(0,0,0,0.05)] dark:border-slate-700">
+        {/* Mobile card skeletons */}
+        <CardSkeletonList />
+
+        {/* Desktop table skeleton */}
+        <div className="hidden overflow-hidden rounded-[8px] border-2 border-[rgba(0,0,0,0.05)] md:block dark:border-slate-700">
           <table className="w-full table-fixed">
             <colgroup>
               <col className="w-[35%]" />
@@ -78,23 +82,6 @@ export default function PlaylistsLoading() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <RowSkeleton key={i} />
               ))}
-              {/* Pagination row skeleton */}
-              <tr className="border-t border-[#eaecf0] dark:border-slate-700">
-                <td colSpan={6} className="h-[56px] px-[30px] py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="h-8 w-[80px] animate-pulse rounded-[8px] bg-slate-200 dark:bg-slate-700" />
-                    <div className="flex gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-8 w-8 animate-pulse rounded-[8px] bg-slate-200 dark:bg-slate-700"
-                        />
-                      ))}
-                    </div>
-                    <div className="h-8 w-[60px] animate-pulse rounded-[8px] bg-slate-200 dark:bg-slate-700" />
-                  </div>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>

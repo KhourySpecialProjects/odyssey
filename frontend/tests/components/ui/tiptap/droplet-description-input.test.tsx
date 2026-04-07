@@ -20,6 +20,6 @@ describe("DropletDescriptionInput", () => {
   it("applies correct styling", () => {
     const { container } = render(<DropletDescriptionInput {...mockProps} />);
     const editor = container.querySelector(".tiptap");
-    expect(editor).toHaveClass("hover:shadow", "focus:shadow-lg");
+    expect(editor).toHaveClass("hover:border-slate-400", "outline-none");
   });
 });

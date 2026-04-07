@@ -37,26 +37,30 @@ export function Authors({
   );
 
   return (
-    <section className="w-full max-w-2xl">
+    <section className="w-full">
       <h2 className="pt-4 pb-4 text-2xl font-bold text-slate-900 dark:text-white">
         Author(s)
       </h2>
 
       {selectedUsers.length > 0 && (
-        <ul className="mb-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
+        <ul className="mb-4 flex flex-col gap-3">
           {selectedUsers.map((user) => (
-            <AuthorCard
+            <li
               key={user.id}
-              author={user}
-              {...user}
-              inDraft={true}
-              onRemove={() => {
-                const newSelectedIds = currentSelectedIds.filter(
-                  (id) => id !== user.id,
-                );
-                handleSelectionChange(newSelectedIds);
-              }}
-            />
+              className="rounded-lg border border-[#D0D5DD] bg-white dark:border-slate-600 dark:bg-slate-900"
+            >
+              <AuthorCard
+                author={user}
+                {...user}
+                inDraft={true}
+                onRemove={() => {
+                  const newSelectedIds = currentSelectedIds.filter(
+                    (id) => id !== user.id,
+                  );
+                  handleSelectionChange(newSelectedIds);
+                }}
+              />
+            </li>
           ))}
         </ul>
       )}

@@ -1,7 +1,7 @@
 "use client";
 import { stripHtmlTags } from "@/lib/utils";
 import { Highlight, HighlightColor, Lesson, Note } from "@/types";
-import { HighlighterIcon, NotebookPen } from "lucide-react";
+import { IconHighlight, IconNotes } from "@tabler/icons-react";
 
 export default function NotesSummary({
   dropletHighlights,
@@ -26,17 +26,12 @@ export default function NotesSummary({
   const filteredNewNotes = dropletNotes.filter(
     (note) => !note.highlight || selectedColors.includes(note.highlight.color),
   );
-  // console.log("dropletHighlights:", dropletHighlights.length);
-  // console.log("dropletNotes:", dropletNotes.length);
-  // console.log("selectedColors:", selectedColors);
-  // console.log("filteredNewHighlights:", filteredNewHighlights.length);
-  // console.log("filteredNewNotes:", filteredNewNotes.length);
-  // console.log("dropletNotes IDs:", dropletNotes.map(n => n.id).join(', '));
+
   return (
     <>
-      <div className=" ">
+      <div>
         {filteredNewHighlights.length > 0 || filteredNewNotes.length > 0 ? (
-          <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
+          <div className="mt-4 overflow-hidden rounded-lg border border-[#eaecf0] dark:border-slate-700">
             <ul className="flex flex-col">
               {mappedLessons.map((lesson) => {
                 const lessonNotes = allNotes.notes.filter(
@@ -57,16 +52,19 @@ export default function NotesSummary({
                   <div key={`lesson-${lesson.id}`} className="flex flex-col">
                     {(filteredNotes.length > 0 ||
                       filteredHighlights.length > 0) && (
-                      <p className="border pl-4 font-bold dark:border-slate-500">
+                      <p className="border-b border-[#eaecf0] bg-[#fcfcfd] py-2 pl-4 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         {lesson.name}
                       </p>
                     )}
                     {filteredHighlights.map((highlight) => (
                       <li
                         key={highlight.id}
-                        className="inline-flex items-center gap-2 border px-4 py-3 leading-snug dark:border-slate-500 dark:text-slate-300"
+                        className="inline-flex items-center gap-2 border-b border-[#eaecf0] bg-white px-4 py-3 text-sm leading-snug last:border-b-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                       >
-                        <HighlighterIcon className="mr-0.5 h-5 w-5 shrink-0" />
+                        <IconHighlight
+                          className="mr-0.5 h-5 w-5 shrink-0"
+                          stroke={1.8}
+                        />
                         <span
                           className={`bg-[${highlight.color}] rounded px-1 dark:text-black`}
                         >
@@ -77,10 +75,13 @@ export default function NotesSummary({
                     {filteredNotes.map((note) => (
                       <li
                         key={note.id}
-                        className="inline-flex items-center gap-2 border px-4 py-3 leading-snug dark:border-slate-500 dark:text-slate-300"
+                        className="inline-flex items-center gap-2 border-b border-[#eaecf0] bg-white px-4 py-3 text-sm leading-snug last:border-b-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                         data-testid={`note-${note.id}`}
                       >
-                        <NotebookPen className="mr-0.5 h-5 w-5 shrink-0" />
+                        <IconNotes
+                          className="mr-0.5 h-5 w-5 shrink-0"
+                          stroke={1.8}
+                        />
                         <span>
                           {note.highlight ? (
                             <>
@@ -102,11 +103,7 @@ export default function NotesSummary({
               })}
             </ul>
           </div>
-        ) : (
-          <div className="pt-2">
-            You have no saved notes or highlights for this droplet.
-          </div>
-        )}
+        ) : null}
       </div>
     </>
   );

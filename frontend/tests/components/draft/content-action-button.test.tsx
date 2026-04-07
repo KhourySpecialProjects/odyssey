@@ -69,10 +69,8 @@ describe("ContentActionButton", () => {
 
       const button = screen.getByRole("button", { name: /publish droplet/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass("bg-blue-400");
-      expect(button).toHaveClass("hover:bg-blue-500");
-      expect(button).toHaveClass("dark:bg-blue-600");
-      expect(button).toHaveClass("dark:hover:bg-blue-800");
+      expect(button).toHaveClass("bg-[#2D7597]");
+      expect(button).toHaveClass("hover:bg-[#255e78]");
     });
 
     it("opens modal with confirmation input when publish button is clicked", () => {
@@ -283,10 +281,8 @@ describe("ContentActionButton", () => {
 
       const button = screen.getByRole("button", { name: /request review/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass("bg-orange-400");
-      expect(button).toHaveClass("hover:bg-orange-500");
-      expect(button).toHaveClass("dark:bg-orange-600");
-      expect(button).toHaveClass("dark:hover:bg-orange-800");
+      expect(button).toHaveClass("bg-[#2D7597]");
+      expect(button).toHaveClass("hover:bg-[#255e78]");
     });
 
     it("opens modal with informational text when request review button is clicked", () => {
@@ -727,13 +723,10 @@ describe("ContentActionButton", () => {
 
       let button = screen.getByRole("button", { name: /publish/i });
       expect(button).toHaveClass("w-full");
-      expect(button).toHaveClass("rounded-full");
-      expect(button).toHaveClass("px-6");
-      expect(button).toHaveClass("py-2");
-      expect(button).toHaveClass("text-center");
+      expect(button).toHaveClass("rounded-lg");
+      expect(button).toHaveClass("px-4");
       expect(button).toHaveClass("whitespace-nowrap");
-      expect(button).toHaveClass("text-black");
-      expect(button).toHaveClass("dark:text-white");
+      expect(button).toHaveClass("text-white");
 
       rerender(
         <ContentActionButton
@@ -745,7 +738,7 @@ describe("ContentActionButton", () => {
 
       button = screen.getByRole("button", { name: /request review/i });
       expect(button).toHaveClass("w-full");
-      expect(button).toHaveClass("rounded-full");
+      expect(button).toHaveClass("rounded-lg");
 
       rerender(
         <ContentActionButton
@@ -757,7 +750,7 @@ describe("ContentActionButton", () => {
 
       button = screen.getByRole("button", { name: /request changes/i });
       expect(button).toHaveClass("w-full");
-      expect(button).toHaveClass("rounded-full");
+      expect(button).toHaveClass("rounded-lg");
     });
   });
 

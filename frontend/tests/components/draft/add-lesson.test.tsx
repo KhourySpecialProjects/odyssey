@@ -8,6 +8,7 @@ import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote"
 
 jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
+  duplicateLessonToDroplet: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -59,7 +60,70 @@ jest.mock("@/components/ui/import-lesson-modal", () => ({
   },
 }));
 
+// Mock DropdownMenu (Radix portals don't work in jsdom)
+jest.mock("@/components/ui/dropdown-menu", () => {
+  const React = require("react");
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DropdownMenuTrigger: React.forwardRef(
+      (
+        {
+          children,
+          asChild,
+          ...props
+        }: { children: React.ReactNode; asChild?: boolean },
+        ref: React.Ref<HTMLDivElement>,
+      ) => <div ref={ref}>{children}</div>,
+    ),
+    DropdownMenuContent: ({
+      children,
+    }: {
+      children: React.ReactNode;
+      align?: string;
+    }) => <div>{children}</div>,
+    DropdownMenuItem: ({
+      children,
+      onClick,
+      className,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      className?: string;
+    }) => (
+      <button role="menuitem" onClick={onClick}>
+        {children}
+      </button>
+    ),
+  };
+});
+
+// Mock ImportFileModal
+jest.mock("@/components/draft/import-file-modal", () => ({
+  ImportFileModal: ({
+    isOpen,
+    onClose,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+  }) => {
+    return isOpen ? (
+      <div data-testid="file-import-modal">
+        <button onClick={onClose}>Close File Modal</button>
+      </div>
+    ) : null;
+  },
+}));
+
 const { useFormStatus } = require("react-dom");
+
+// Helper to open the markdown import modal via the dropdown
+function openMarkdownImport() {
+  // With mocked dropdown, menu items are always visible
+  const menuItem = screen.getByText("Import from Markdown");
+  fireEvent.click(menuItem);
+}
 
 describe("AddLesson", () => {
   const mockDroplet = {
@@ -81,6 +145,13 @@ describe("AddLesson", () => {
   };
 
   const mockOnAddLesson = jest.fn();
+  const mockOnAddLessons = jest.fn();
+
+  const defaultProps = {
+    droplet: mockDroplet,
+    onAddLesson: mockOnAddLesson,
+    onAddLessons: mockOnAddLessons,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -104,43 +175,49 @@ describe("AddLesson", () => {
 
   describe("Initial Rendering", () => {
     it("renders Lessons header", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
       expect(screen.getByText("Lessons")).toBeInTheDocument();
     });
 
-    it("renders add lesson button", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-      const buttons = screen.getAllByRole("button");
-      expect(buttons.length).toBeGreaterThan(0);
-    });
-
-    it("renders import button", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-      // Import icon should be present
-      const buttons = screen.getAllByRole("button");
-      expect(buttons.length).toBe(2); // Import and Add buttons
+    it("renders import dropdown trigger and add button", () => {
+      render(<AddLesson {...defaultProps} />);
+      expect(screen.getByLabelText("Import lessons")).toBeInTheDocument();
+      expect(screen.getByLabelText("Add lesson")).toBeInTheDocument();
     });
 
     it("does not show input form initially", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
       expect(
-        screen.queryByPlaceholderText("Lesson Name"),
+        screen.queryByPlaceholderText("Enter a lesson name"),
       ).not.toBeInTheDocument();
     });
 
     it("does not show import modal initially", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
       expect(screen.queryByTestId("import-modal")).not.toBeInTheDocument();
     });
   });
 
-  describe("Import Modal", () => {
-    it("opens import modal when import icon is clicked", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+  describe("Import Dropdown", () => {
+    it("opens dropdown with import options when trigger is clicked", async () => {
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      // First button should be import
-      fireEvent.click(buttons[0]);
+      fireEvent.click(screen.getByLabelText("Import lessons"));
+
+      await waitFor(() => {
+        expect(screen.getByText("Import from Markdown")).toBeInTheDocument();
+        expect(
+          screen.getByText("Import from File (PDF/PPTX)"),
+        ).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Markdown Import Modal", () => {
+    it("opens import modal via dropdown", async () => {
+      render(<AddLesson {...defaultProps} />);
+
+      openMarkdownImport();
 
       await waitFor(() => {
         expect(screen.getByTestId("import-modal")).toBeInTheDocument();
@@ -148,10 +225,9 @@ describe("AddLesson", () => {
     });
 
     it("displays droplet name in import modal", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         expect(screen.getByText(/Import to Test Droplet/i)).toBeInTheDocument();
@@ -159,10 +235,9 @@ describe("AddLesson", () => {
     });
 
     it("closes import modal when close button is clicked", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         expect(screen.getByTestId("import-modal")).toBeInTheDocument();
@@ -205,10 +280,9 @@ describe("AddLesson", () => {
         error: null,
       });
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         expect(screen.getByTestId("import-modal")).toBeInTheDocument();
@@ -262,10 +336,9 @@ describe("AddLesson", () => {
         error: null,
       });
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -290,10 +363,9 @@ describe("AddLesson", () => {
         data: null,
       });
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -327,10 +399,9 @@ describe("AddLesson", () => {
         error: null,
       });
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -367,10 +438,9 @@ describe("AddLesson", () => {
         error: null,
       });
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -382,8 +452,7 @@ describe("AddLesson", () => {
             id: 3,
             name: "Imported Lesson",
             slug: "imported-lesson",
-            blocksV2: mockBlocks,
-            blocksVersion: "v2",
+            type: "general",
           }),
         );
       });
@@ -396,10 +465,9 @@ describe("AddLesson", () => {
 
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
 
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -416,60 +484,61 @@ describe("AddLesson", () => {
   });
 
   describe("Show/Hide Form", () => {
-    it("shows input field when plus icon is clicked", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+    it("shows input field when New Lesson is clicked", async () => {
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      // Second button should be add
-      fireEvent.click(buttons[1]);
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText("Enter a lesson name"),
+        ).toBeInTheDocument();
       });
     });
 
     it("focuses input after showing form", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[1]);
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
-        const input = screen.getByPlaceholderText("Lesson Name");
+        const input = screen.getByPlaceholderText("Enter a lesson name");
         expect(input).toHaveFocus();
       });
     });
 
     it("hides form when clicking outside", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[1]);
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText("Enter a lesson name"),
+        ).toBeInTheDocument();
       });
 
       fireEvent.mouseDown(document.body);
 
       expect(
-        screen.queryByPlaceholderText("Lesson Name"),
+        screen.queryByPlaceholderText("Enter a lesson name"),
       ).not.toBeInTheDocument();
     });
   });
 
   describe("Form Submission", () => {
     it("calls addLesson with correct parameters", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+      render(<AddLesson {...defaultProps} />);
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[1]);
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText("Enter a lesson name"),
+        ).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText("Lesson Name");
+      const input = screen.getByPlaceholderText("Enter a lesson name");
       fireEvent.change(input, { target: { value: "New Lesson" } });
 
       expect(input).toHaveValue("New Lesson");
@@ -489,11 +558,14 @@ describe("AddLesson", () => {
       });
 
       render(
-        <AddLesson droplet={dropletNoLessons} onAddLesson={mockOnAddLesson} />,
+        <AddLesson
+          droplet={dropletNoLessons}
+          onAddLesson={mockOnAddLesson}
+          onAddLessons={mockOnAddLessons}
+        />,
       );
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -527,11 +599,11 @@ describe("AddLesson", () => {
         <AddLesson
           droplet={dropletWithLessons}
           onAddLesson={mockOnAddLesson}
+          onAddLessons={mockOnAddLessons}
         />,
       );
 
-      const buttons = screen.getAllByRole("button");
-      fireEvent.click(buttons[0]);
+      openMarkdownImport();
 
       await waitFor(() => {
         fireEvent.click(screen.getByTestId("trigger-import"));
@@ -548,10 +620,14 @@ describe("AddLesson", () => {
   });
 
   describe("Accessibility", () => {
-    it("import button is keyboard accessible", () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-      const buttons = screen.getAllByRole("button");
-      expect(buttons[0]).toBeInTheDocument();
+    it("import dropdown trigger is accessible", () => {
+      render(<AddLesson {...defaultProps} />);
+      expect(screen.getByLabelText("Import lessons")).toBeInTheDocument();
+    });
+
+    it("add lesson button is accessible", () => {
+      render(<AddLesson {...defaultProps} />);
+      expect(screen.getByLabelText("Add lesson")).toBeInTheDocument();
     });
   });
 });

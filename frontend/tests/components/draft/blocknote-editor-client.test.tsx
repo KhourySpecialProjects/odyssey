@@ -3,44 +3,23 @@ jest.mock("@/components/ui/blocknote/blocks/code-block", () => ({
   CodeBlock: jest.fn(() => ({ type: "code-block" })),
 }));
 
-jest.mock("react-syntax-highlighter", () => ({
-  Light: jest.fn(({ children }: any) => <div>{children}</div>),
+jest.mock("@/components/ui/blocknote/blocks/slide-break-block", () => ({
+  SlideBreak: jest.fn(() => ({ type: "slide-break" })),
 }));
 
-jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
-  atomOneDark: {},
+jest.mock("@/components/ui/blocknote/blocks/column-break-block", () => ({
+  ColumnBreak: jest.fn(() => ({ type: "column-break" })),
 }));
 
-// Mock language imports
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/javascript",
-  () => ({}),
-);
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/typescript",
-  () => ({}),
-);
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/python",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/java", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/cpp", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/c", () => ({}));
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/csharp",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/php", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/ruby", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/bash", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/go", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/rust", () => ({}));
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/kotlin",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
+jest.mock("@uiw/react-codemirror", () => ({
+  __esModule: true,
+  default: ({ value }: any) => <div>{value}</div>,
+}));
+
+jest.mock("@uiw/codemirror-theme-github", () => ({
+  githubLight: {},
+  githubDark: {},
+}));
 
 // Mock all BlockNote dependencies
 jest.mock("@blocknote/core", () => ({
@@ -108,7 +87,7 @@ jest.mock("@blocknote/react", () => ({
   getDefaultReactSlashMenuItems: jest.fn(() => []),
   blockTypeSelectItems: jest.fn(() => []),
   getFormattingToolbarItems: jest.fn((items) => items),
-  createReactBlockSpec: jest.fn((config, spec) => ({
+  createReactBlockSpec: jest.fn((config, spec) => () => ({
     type: config.type,
     propSchema: config.propSchema,
     ...spec,
@@ -126,9 +105,18 @@ jest.mock("@/components/ui/blocknote/editor/slash-menu-config", () => ({
   getQuizSlashMenuItems: jest.fn(() => []),
   getLatexSlashMenuItems: jest.fn(() => []),
   getCodeSlashMenuItems: jest.fn(() => []),
+  getSlideBreakSlashMenuItems: jest.fn(() => []),
+  getNotebookCodeSlashMenuItems: jest.fn(() => []),
+  getSandpackSlashMenuItems: jest.fn(() => []),
 }));
 
 jest.mock("@/components/ui/blocknote/editor/custom-blocknote.css", () => ({}));
+
+jest.mock("@/hooks/useSlideOverflowDetection", () => ({
+  useSlideOverflowDetection: () => new Set(),
+}));
+
+jest.mock("@/lib/actions/auto-format-slides", () => ({}));
 
 // Mock Dialog component to avoid importing BlockNote's FloatingComposer
 jest.mock("@/components/ui/dialog", () => ({
@@ -146,6 +134,10 @@ jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
 
 jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
   ImageBlock: jest.fn(() => ({ type: "image" })),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/notebook-code-block", () => ({
+  NotebookCodeBlock: jest.fn(() => ({ type: "notebook-code" })),
 }));
 
 import { render, screen, waitFor } from "@testing-library/react";
@@ -309,9 +301,9 @@ describe("BlockNoteEditorClient", () => {
       expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
     });
 
-    const editorContainer = container.firstChild;
+    const editorContainer = container.querySelector(".blocknote-no-link");
 
-    expect(editorContainer).toHaveClass("blocknote-no-link");
+    expect(editorContainer).toBeInTheDocument();
     expect(editorContainer).toHaveClass("w-full");
     expect(editorContainer).toHaveClass("rounded-lg");
     expect(editorContainer).toHaveClass("border");

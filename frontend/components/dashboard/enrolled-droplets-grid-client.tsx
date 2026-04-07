@@ -19,6 +19,7 @@ interface EnrolledDropletsGridClientProps {
   tags?: string[] | string;
   type?: string | string[];
   focusArea?: string | string[];
+  difficulty?: string | string[];
   currentUser?: AuthorizedUser;
 }
 
@@ -33,6 +34,7 @@ export function EnrolledDropletsGridClient({
   tags,
   type,
   focusArea,
+  difficulty,
   currentUser,
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -115,6 +117,16 @@ export function EnrolledDropletsGridClient({
       filtered = filtered.filter((drop) => drop.focusArea === focusArea);
     }
 
+    // Filter by difficulty
+    if (difficulty) {
+      const diffValues = Array.isArray(difficulty)
+        ? difficulty
+        : difficulty.split(",");
+      filtered = filtered.filter(
+        (drop) => drop.difficulty && diffValues.includes(drop.difficulty),
+      );
+    }
+
     // Filter by tags
     if (tags) {
       const lowercaseTags = Array.isArray(tags)
@@ -135,12 +147,12 @@ export function EnrolledDropletsGridClient({
     }
 
     return filtered;
-  }, [sortedDroplets, type, focusArea, tags, searchQuery]);
+  }, [sortedDroplets, type, focusArea, difficulty, tags, searchQuery]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [type, focusArea, tags, searchQuery]);
+  }, [type, focusArea, difficulty, tags, searchQuery]);
 
   // Step 3: Paginate
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);

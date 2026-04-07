@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import type { Report } from "./reports";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { SortButton } from "@/components/admin/sort-button";
 import {
@@ -42,19 +41,22 @@ const SORT_GROUPS = [
   },
 ] as const;
 
-const DESC_CHAR_LIMIT = 80;
+const DESC_CHAR_LIMIT = 50;
+const PATH_CHAR_LIMIT = 40;
 
 const REPORT_COLUMNS: AdminColumnDef[] = [
   { label: "Name", width: "w-[20%]" },
-  { label: "Description", width: "w-[40%]" },
-  { label: "Path", width: "w-[18%]" },
-  { label: "Actions", width: "w-[22%]" },
+  { label: "Description", width: "w-[37%]" },
+  { label: "Path", width: "w-[28%]" },
+  { label: "Actions", width: "w-[15%]" },
 ];
 
 // ——— Report Row ———
 function ReportRow({ report }: { report: Report }) {
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
+  const [pathExpanded, setPathExpanded] = useState(false);
+  const isPathLong = report.path && report.path.length > PATH_CHAR_LIMIT;
 
   const strippedDescription = useMemo(
     () =>
@@ -95,14 +97,14 @@ function ReportRow({ report }: { report: Report }) {
       )}
     >
       {/* Name */}
-      <td className="h-[80px] py-3 pr-6 pl-[30px]">
+      <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <p className="truncate text-[16px] font-medium text-[#101828] dark:text-white">
           {report.fullName}
         </p>
       </td>
 
       {/* Description */}
-      <td className="h-[80px] px-6 py-[11px]">
+      <td className="h-[56px] px-6 py-[11px]">
         <p className="text-[16px] leading-[20px] font-medium text-[#101828] dark:text-white">
           {displayDescription}
           {isTruncated && !expanded && (
@@ -125,17 +127,34 @@ function ReportRow({ report }: { report: Report }) {
       </td>
 
       {/* Path */}
-      <td className="h-[80px] px-6 py-[11px]">
-        <Badge
-          variant="outline"
-          className="max-w-full truncate rounded-[16px] border-0 bg-[#f2f4f7] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-[#60646c] dark:bg-slate-700 dark:text-slate-300"
-        >
-          {report.path}
-        </Badge>
+      <td className="h-[56px] px-6 py-[11px]">
+        {pathExpanded ? (
+          <p className="text-[16px] font-medium break-all text-[#101828] dark:text-white">
+            {report.path}{" "}
+            <button
+              onClick={() => setPathExpanded(false)}
+              className="text-[#2D7597] hover:underline"
+            >
+              See Less
+            </button>
+          </p>
+        ) : (
+          <div className="flex min-w-0 items-center gap-1 text-[16px] font-medium text-[#101828] dark:text-white">
+            <span className="min-w-0 truncate">{report.path}</span>
+            {isPathLong && (
+              <button
+                onClick={() => setPathExpanded(true)}
+                className="shrink-0 text-[#2D7597] hover:underline"
+              >
+                See More
+              </button>
+            )}
+          </div>
+        )}
       </td>
 
       {/* Actions */}
-      <td className="h-[80px] px-6 py-3">
+      <td className="h-[56px] px-6 py-3">
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-[10px]">
             <Tooltip>
@@ -171,6 +190,80 @@ function ReportRow({ report }: { report: Report }) {
         </TooltipProvider>
       </td>
     </tr>
+  );
+}
+
+// ——— ReportMobileCard ———
+function ReportMobileCard({ report }: { report: Report }) {
+  const [isPending, startTransition] = useTransition();
+
+  const strippedDescription = useMemo(
+    () =>
+      report.description
+        ?.replace(/<\/p>\s*<p>/gi, "\n")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/?p>/gi, "")
+        .replace(/<[^>]+>/g, "")
+        .trim(),
+    [report.description],
+  );
+
+  const truncatedDescription =
+    strippedDescription && strippedDescription.length > DESC_CHAR_LIMIT
+      ? strippedDescription.slice(0, DESC_CHAR_LIMIT) + "..."
+      : strippedDescription;
+
+  const handleDelete = () => {
+    if (!confirm("Delete this report? This cannot be undone.")) return;
+    startTransition(async () => {
+      const response = await deleteReport(report.id);
+      if (response?.success) {
+        toast.success("Report removed");
+      } else {
+        toast.error("Failed to remove report");
+      }
+    });
+  };
+
+  return (
+    <div
+      className={cn(
+        "w-full rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900",
+        isPending && "pointer-events-none opacity-50",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-[#101828] dark:text-white">
+            {report.fullName}
+          </p>
+          {truncatedDescription && (
+            <p className="mt-0.5 line-clamp-2 text-xs text-[#667085] dark:text-slate-400">
+              {truncatedDescription}
+            </p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          disabled={isPending}
+          className="h-8 w-8 shrink-0 p-0 text-red-500 hover:bg-slate-100 hover:text-red-500 dark:text-red-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+        >
+          <IconTrash className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <Link
+          href={report.path}
+          target="_blank"
+          className="flex items-center gap-1 text-xs text-[#2D7597] hover:underline"
+        >
+          <IconExternalLink className="h-3 w-3" />
+          {report.path}
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -228,7 +321,7 @@ export function ReportsPageClient({ reports }: { reports: Report[] }) {
           placeholder="Search reports…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -248,6 +341,9 @@ export function ReportsPageClient({ reports }: { reports: Report[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageItems.map((report) => (
+          <ReportMobileCard key={report.id} report={report} />
+        ))}
       >
         {pageItems.map((report) => (
           <ReportRow key={report.id} report={report} />

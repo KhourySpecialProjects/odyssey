@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/actions";
 import imageCompression from "browser-image-compression";
 import { toast } from "sonner";
-
 const compressImage = async (imageFile: File) => {
   const options = {
     maxSizeMB: 1,
