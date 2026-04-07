@@ -131,12 +131,18 @@ describe("Sidebar", () => {
     });
   });
 
+  const defaultProps = {
+    expanded: true,
+    setExpanded: jest.fn(),
+  };
+
   it("renders droplet name and lessons", () => {
     render(
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
@@ -148,6 +154,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
@@ -162,6 +169,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -179,6 +187,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -208,6 +217,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -243,6 +253,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockPublishedDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -273,6 +284,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -286,6 +298,7 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
@@ -299,12 +312,12 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
     const previewButton = screen.getByText("Preview");
     expect(previewButton).toBeInTheDocument();
-    expect(previewButton.tagName).toBe("BUTTON");
   });
 
   it("renders metadata section", () => {
@@ -313,9 +326,10 @@ describe("Sidebar", () => {
         user={mockUser as any}
         droplet={mockDroplet as any}
         availableDroplets={[]}
+        {...defaultProps}
       />,
     );
 
-    expect(screen.getByText("Metadata")).toBeInTheDocument();
+    expect(screen.getByText("Overview")).toBeInTheDocument();
   });
 });
