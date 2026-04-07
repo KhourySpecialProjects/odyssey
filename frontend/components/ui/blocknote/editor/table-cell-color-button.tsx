@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   BlockSchema,
@@ -7,6 +8,7 @@ import {
   StyleSchema,
   TableContent,
 } from "@blocknote/core";
+import { CellSelection, TableMap } from "prosemirror-tables";
 import { useCallback, useMemo } from "react";
 import { RiPaintFill } from "react-icons/ri";
 
@@ -57,7 +59,7 @@ export const TableCellColorButton = () => {
     );
 
     const first = colors[0];
-    return colors.every((c) => c === first) ? first : "default";
+    return colors.every((c) => c === first) ? first : undefined;
   }, [editor, selectedBlocks]);
 
   const setBackgroundColor = useCallback(
@@ -81,6 +83,9 @@ export const TableCellColorButton = () => {
           newTable[row].cells[col].props.backgroundColor = color;
         });
 
+        // Save cell positions before update
+        const savedCells = cellSelection.cells;
+
         editor.updateBlock(block, {
           type: "table",
           content: {
@@ -91,7 +96,47 @@ export const TableCellColorButton = () => {
           } as any,
         });
 
-        editor.setTextCursorPosition(block);
+        // Restore multi-cell selection instead of collapsing to text cursor
+        const view = editor.prosemirrorView;
+        if (view && savedCells.length > 0) {
+          const { state } = view;
+          // Find the table node position in the updated doc
+          let tableStart = -1;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === "table" && tableStart === -1) {
+              const map = TableMap.get(node);
+              if (map) {
+                tableStart = pos + 1; // +1 to get inside the table
+                return false;
+              }
+            }
+            return tableStart === -1;
+          });
+
+          if (tableStart > 0) {
+            try {
+              const tableNode = state.doc.nodeAt(tableStart - 1);
+              if (tableNode) {
+                const map = TableMap.get(tableNode);
+                const first = savedCells[0];
+                const last = savedCells[savedCells.length - 1];
+                const anchorPos =
+                  tableStart + map.map[first.row * map.width + first.col];
+                const headPos =
+                  tableStart + map.map[last.row * map.width + last.col];
+                const $anchor = state.doc.resolve(anchorPos);
+                const $head = state.doc.resolve(headPos);
+                const sel = new CellSelection($anchor, $head);
+                view.dispatch(state.tr.setSelection(sel));
+              }
+            } catch {
+              // Fallback if selection restoration fails
+              editor.setTextCursorPosition(block);
+            }
+          } else {
+            editor.setTextCursorPosition(block);
+          }
+        }
       }
     },
     [editor, selectedBlocks],

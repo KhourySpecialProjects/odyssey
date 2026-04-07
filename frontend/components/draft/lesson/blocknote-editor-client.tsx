@@ -172,11 +172,12 @@ export function BlockNoteEditorClient({
       if (insertAfterIndex < 0 || insertAfterIndex >= blocks.length) return;
 
       // Check if the next block is already an empty paragraph — just focus it
-      const nextBlock = blocks[insertAfterIndex + 1];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nextBlock = blocks[insertAfterIndex + 1] as any;
       if (
         nextBlock &&
         nextBlock.type === "paragraph" &&
-        (!nextBlock.content || (nextBlock.content as any[]).length === 0)
+        (!nextBlock.content || nextBlock.content.length === 0)
       ) {
         editor.setTextCursorPosition(nextBlock);
         return;

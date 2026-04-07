@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "voyage_playlists",
+  "info": {
+    "singularName": "voyage-playlist",
+    "pluralName": "voyage-playlists",
+    "displayName": "VoyagePlaylist"
+  },
+  "options": { "draftAndPublish": false },
+  "pluginOptions": {},
+  "attributes": {
+    "orderIndex": { "type": "integer", "required": true },
+    "voyage": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage.voyage",
+      "inversedBy": "voyage_playlists"
+    },
+    "playlist": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::playlist.playlist"
+    }
+  }
+}
