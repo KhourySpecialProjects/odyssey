@@ -92,7 +92,6 @@ export const TableCellColorButton = () => {
             ...(block.content as TableContent<any, any>),
             type: "tableContent",
             rows: newTable,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
         });
 

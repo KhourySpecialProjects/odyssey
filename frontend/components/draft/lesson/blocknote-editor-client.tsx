@@ -186,8 +186,8 @@ export function BlockNoteEditorClient({
       const referenceBlock = blocks[insertAfterIndex];
 
       // Insert an empty paragraph after the reference block
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       editor.insertBlocks(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [{ type: "paragraph" } as any],
         referenceBlock,
         "after",
