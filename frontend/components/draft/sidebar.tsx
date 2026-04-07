@@ -337,6 +337,7 @@ export function Sidebar({
       {!expanded && (
         <button
           aria-controls="sidebar"
+          aria-label="Expand sidebar"
           type="button"
           className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
@@ -357,6 +358,7 @@ export function Sidebar({
             <div className="flex flex-row justify-between pr-2">
               <Button
                 type="button"
+                aria-label="Go to my content"
                 onClick={() =>
                   droplet.status !== "draft"
                     ? setIsOpen(true)
@@ -373,7 +375,10 @@ export function Sidebar({
               </Button>
               <div className="w-full"></div>
 
-              <button onClick={() => setExpanded(false)}>
+              <button
+                aria-label="Collapse sidebar"
+                onClick={() => setExpanded(false)}
+              >
                 <PanelRightOpen />
               </button>
             </div>
@@ -406,17 +411,23 @@ export function Sidebar({
               <button
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
                 onClick={() => {
-                  let navigated = false;
-                  const navigate = () => {
-                    if (navigated) return;
-                    navigated = true;
-                    window.removeEventListener("flush-save-complete", navigate);
-                    router.push(previewPath);
-                  };
-                  window.addEventListener("flush-save-complete", navigate);
-                  window.dispatchEvent(new CustomEvent("flush-save-request"));
-                  // Fallback if no editor is mounted to respond
-                  setTimeout(navigate, 500);
+                  // Wait for the editor to finish flushing its debounced save
+                  // before navigating. The timeout only fires when no editor is
+                  // mounted to respond (i.e. lesson-renderer is not on screen).
+                  const saveAndNavigate = new Promise<void>((resolve) => {
+                    const onComplete = () => {
+                      window.removeEventListener(
+                        "flush-save-complete",
+                        onComplete,
+                      );
+                      resolve();
+                    };
+                    window.addEventListener("flush-save-complete", onComplete);
+                    window.dispatchEvent(new CustomEvent("flush-save-request"));
+                    // Fallback: if no editor responds within 5 s, navigate anyway
+                    setTimeout(resolve, 5000);
+                  });
+                  saveAndNavigate.then(() => router.push(previewPath));
                 }}
               >
                 Preview

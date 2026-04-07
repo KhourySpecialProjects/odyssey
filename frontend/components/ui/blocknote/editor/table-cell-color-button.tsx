@@ -51,12 +51,16 @@ export const TableCellColorButton = () => {
     const cellSelection = editor.tableHandles?.getCellSelection();
     if (!cellSelection || cellSelection.cells.length === 0) return undefined;
 
-    const colors = cellSelection.cells.map(
-      ({ row, col }) =>
-        mapTableCell(
-          (block.content as TableContent<any, any>).rows[row].cells[col],
-        ).props.backgroundColor,
-    );
+    const colors = cellSelection.cells.map(({ row, col }) => {
+      const cell = (block.content as TableContent<any, any>).rows[row].cells[
+        col
+      ];
+      // Prefer reading existing props directly; fall back to normalized form
+      const rawProps = (cell as any).props;
+      return (
+        rawProps?.backgroundColor ?? mapTableCell(cell).props.backgroundColor
+      );
+    });
 
     const first = colors[0];
     return colors.every((c) => c === first) ? first : undefined;
@@ -72,16 +76,38 @@ export const TableCellColorButton = () => {
         const cellSelection = editor.tableHandles?.getCellSelection();
         if (!cellSelection) continue;
 
-        const newTable = (block.content as TableContent<any, any>).rows.map(
-          (row) => ({
-            ...row,
-            cells: row.cells.map((cell) => mapTableCell(cell)),
-          }),
+        // Build a set of selected (row, col) pairs for O(1) lookup
+        const selectedSet = new Set(
+          cellSelection.cells.map(({ row, col }) => `${row},${col}`),
         );
 
-        cellSelection.cells.forEach(({ row, col }) => {
-          newTable[row].cells[col].props.backgroundColor = color;
-        });
+        const newTable = (block.content as TableContent<any, any>).rows.map(
+          (row, rowIdx) => ({
+            ...row,
+            cells: row.cells.map((cell, colIdx) => {
+              const normalized = mapTableCell(cell);
+              if (!selectedSet.has(`${rowIdx},${colIdx}`)) {
+                // Preserve all existing props for non-selected cells
+                return {
+                  ...normalized,
+                  props: {
+                    ...normalized.props,
+                    ...(cell as any).props,
+                  },
+                };
+              }
+              // For selected cells, patch only backgroundColor
+              return {
+                ...normalized,
+                props: {
+                  ...normalized.props,
+                  ...(cell as any).props,
+                  backgroundColor: color,
+                },
+              };
+            }),
+          }),
+        );
 
         // Save cell positions before update
         const savedCells = cellSelection.cells;

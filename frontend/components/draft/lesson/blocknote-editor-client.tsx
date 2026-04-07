@@ -142,8 +142,14 @@ export function BlockNoteEditorClient({
         return;
       }
 
-      // Find the block-outer elements that are direct children of this group
-      const blockGroup = target.closest(".bn-block-group") || target;
+      // Only handle gap clicks at the top-level editor — nested block groups
+      // (lists, tables) use a different index space than editor.document.
+      const editorEl = target.closest(".bn-editor");
+      const blockGroup =
+        editorEl?.querySelector(":scope > .bn-block-group") ||
+        (target.classList.contains("bn-editor") ? target : null);
+      if (!blockGroup) return;
+
       const blockOuters = blockGroup.querySelectorAll(
         ":scope > .bn-block-outer",
       );
@@ -151,29 +157,45 @@ export function BlockNoteEditorClient({
 
       const clickY = e.clientY;
 
-      // Find which gap the click is in — between which two blocks
-      let insertAfterIndex = -1;
+      // Find which gap the click is in — between which two blocks.
+      // Each .bn-block-outer carries a data-id matching its block in editor.document.
+      let insertAfterId: string | null = null;
+      let clickedOnBlock = false;
       for (let i = 0; i < blockOuters.length; i++) {
-        const rect = blockOuters[i].getBoundingClientRect();
+        const outer = blockOuters[i] as HTMLElement;
+        const rect = outer.getBoundingClientRect();
         if (clickY < rect.top) {
-          // Click is above this block — insert before it
-          insertAfterIndex = i - 1;
+          // Click is above this block — insert before it (after previous sibling)
+          insertAfterId =
+            i > 0
+              ? (blockOuters[i - 1] as HTMLElement).dataset.id ?? null
+              : null;
           break;
         }
         if (clickY <= rect.bottom) {
           // Click is on the block itself, not in a gap
-          return;
+          clickedOnBlock = true;
+          break;
         }
-        insertAfterIndex = i;
+        insertAfterId = outer.dataset.id ?? null;
       }
 
-      // Get the block to insert after
+      if (clickedOnBlock) return;
+
+      // Resolve blocks by ID so nested-group indices never pollute the lookup
       const blocks = editor.document;
-      if (insertAfterIndex < 0 || insertAfterIndex >= blocks.length) return;
+
+      if (insertAfterId === null) {
+        // Click was above the first block — nothing to insert after
+        return;
+      }
+
+      const referenceIndex = blocks.findIndex((b) => b.id === insertAfterId);
+      if (referenceIndex < 0) return;
 
       // Check if the next block is already an empty paragraph — just focus it
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nextBlock = blocks[insertAfterIndex + 1] as any;
+      const nextBlock = blocks[referenceIndex + 1] as any;
       if (
         nextBlock &&
         nextBlock.type === "paragraph" &&
@@ -183,7 +205,7 @@ export function BlockNoteEditorClient({
         return;
       }
 
-      const referenceBlock = blocks[insertAfterIndex];
+      const referenceBlock = blocks[referenceIndex];
 
       // Insert an empty paragraph after the reference block
       editor.insertBlocks(
@@ -195,7 +217,7 @@ export function BlockNoteEditorClient({
 
       // Focus the newly inserted block
       const updatedBlocks = editor.document;
-      const newBlockIndex = insertAfterIndex + 1;
+      const newBlockIndex = referenceIndex + 1;
       if (newBlockIndex < updatedBlocks.length) {
         editor.setTextCursorPosition(updatedBlocks[newBlockIndex]);
       }

@@ -238,6 +238,8 @@ const CodeBlockComponent = ({ block, editor }: any) => {
 
   const toggleRunnable = () => {
     if (!isMounted || !editor) return;
+    // Non-executable languages (no pistonName) cannot be made runnable
+    if (!currentLanguage?.pistonName) return;
     try {
       editor.updateBlock(block, {
         props: { ...block.props, runnable: !block.props.runnable },
