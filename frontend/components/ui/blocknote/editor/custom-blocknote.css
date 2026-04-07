@@ -1,80 +1,62 @@
-/* Force dark text in quiz blocks - light mode only */
-/* Target by data-content-type attribute on any element */
+/* BlockNote uses --bn-colors-selected-text for both block content AND toolbar
+   active buttons. Override it to dark so selected block text is readable, then
+   restore white on toolbar active buttons below. */
+.bn-container.light {
+  --bn-colors-selected-text: rgb(17 24 39) !important;
+}
 
-/* All quiz block content */
-.bn-container.light [data-content-type="quiz-multiple-choice"] *,
-.bn-container.light [data-content-type="quiz-true-false"] *,
-.bn-container.light [data-content-type="quiz-open-ended"] *,
-.bn-container.light [data-content-type^="quiz-"] * {
+/* Restore white text on active toolbar buttons (they use the same variable) */
+.bn-container.light .bn-toolbar button[data-active="true"],
+.bn-container.light .bn-toolbar button[aria-pressed="true"],
+.bn-container.light .bn-toolbar .mantine-ActionIcon-root[data-active="true"],
+.bn-container.light .bn-formatting-toolbar button[data-active="true"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Force dark text on ALL selected block descendants.
+   BlockNote uses data-selected="true", ProseMirror uses .ProseMirror-selectednode
+   (arrow key selection). Target both. */
+.bn-container.light .bn-block[data-selected="true"],
+.bn-container.light .bn-block[data-selected="true"] *,
+.bn-container.light .ProseMirror-selectednode,
+.bn-container.light .ProseMirror-selectednode * {
   color: rgb(17 24 39) !important;
   -webkit-text-fill-color: rgb(17 24 39) !important;
 }
 
-/* Form elements specifically */
-.bn-container.light [data-content-type^="quiz-"] textarea,
-.bn-container.light [data-content-type^="quiz-"] input {
-  color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
+.bn-container.light .bn-block[data-selected="true"] textarea,
+.bn-container.light .bn-block[data-selected="true"] input,
+.bn-container.light .ProseMirror-selectednode textarea,
+.bn-container.light .ProseMirror-selectednode input {
   caret-color: rgb(17 24 39) !important;
 }
 
-/* When block is selected - override BlockNote's selection color */
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type^="quiz-"]
-  *,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type="quiz-multiple-choice"]
-  *,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type="quiz-true-false"]
-  *,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type="quiz-open-ended"]
-  * {
-  color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
+/* Reset color inside CodeMirror/Sandpack so syntax highlighting is preserved */
+.bn-container.light .bn-block[data-selected="true"] .cm-editor,
+.bn-container.light .bn-block[data-selected="true"] .cm-editor *,
+.bn-container.light .bn-block[data-selected="true"] .sp-wrapper,
+.bn-container.light .bn-block[data-selected="true"] .sp-wrapper *,
+.bn-container.light .ProseMirror-selectednode .cm-editor,
+.bn-container.light .ProseMirror-selectednode .cm-editor *,
+.bn-container.light .ProseMirror-selectednode .sp-wrapper,
+.bn-container.light .ProseMirror-selectednode .sp-wrapper * {
+  color: unset !important;
+  -webkit-text-fill-color: unset !important;
 }
 
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type^="quiz-"]
-  textarea,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  [data-content-type^="quiz-"]
-  input {
+/* Override ::selection for selected blocks */
+.bn-container.light .bn-block[data-selected="true"] *::selection,
+.bn-container.light .ProseMirror-selectednode *::selection {
   color: rgb(17 24 39) !important;
   -webkit-text-fill-color: rgb(17 24 39) !important;
-  caret-color: rgb(17 24 39) !important;
+  background: transparent !important;
 }
 
-/* Also check if data-content-type is on bn-block-content */
-.bn-container.light .bn-block-content[data-content-type^="quiz-"] *,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  .bn-block-content[data-content-type^="quiz-"]
-  * {
-  color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
-}
-
-.bn-container.light .bn-block-content[data-content-type^="quiz-"] textarea,
-.bn-container.light .bn-block-content[data-content-type^="quiz-"] input,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  .bn-block-content[data-content-type^="quiz-"]
-  textarea,
-.bn-container.light
-  .bn-block[data-selected="true"]
-  .bn-block-content[data-content-type^="quiz-"]
-  input {
-  color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
-  caret-color: rgb(17 24 39) !important;
+/* Keep table cell handle above selection overlay and slightly more visible */
+.bn-table-cell-handle {
+  z-index: 10 !important;
+  position: relative !important;
 }
 
 /* Hide link button in BlockNote formatting toolbar */
@@ -84,6 +66,27 @@
 .blocknote-no-link .bn-formatting-toolbar button[title*="Link" i],
 .blocknote-no-link .bn-formatting-toolbar button[aria-label*="Create link" i] {
   display: none !important;
+}
+
+/* Slack-style inline code: border, background, rounded corners */
+.bn-inline-content code {
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  background-color: #f8f8f8;
+  font-size: 0.9em;
+  color: #e01e5a;
+}
+
+.dark .bn-inline-content code {
+  border-color: #4a4a4a;
+  background-color: #2d2d2d;
+  color: #e06b85;
+}
+
+/* Ensure enough gap between blocks for click-to-insert */
+.bn-block-group > .bn-block-outer + .bn-block-outer {
+  margin-top: 4px;
 }
 
 .bn-inline-latex {
@@ -203,5 +206,3 @@
   background: transparent !important;
   color: inherit !important;
 }
-
-
