@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { deleteVoyage } from "@/lib/requests/voyage";
 import { cn } from "@/lib/utils";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
@@ -31,10 +32,11 @@ interface VoyagesAdminPageClientProps {
 }
 
 export function VoyagesAdminPageClient({
-  voyages,
+  voyages: initialVoyages,
 }: VoyagesAdminPageClientProps) {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [voyages, setVoyages] = useState<Voyage[]>(initialVoyages);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return voyages;
@@ -46,8 +48,19 @@ export function VoyagesAdminPageClient({
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this voyage?")) return;
     setDeletingId(id);
-    await deleteVoyage(id);
-    setDeletingId(null);
+    try {
+      const result = await deleteVoyage(id);
+      if (!result.ok) {
+        toast.error(result.error ?? "Failed to delete voyage.");
+        return;
+      }
+      setVoyages((prev) => prev.filter((v) => v.id !== id));
+      toast.success("Voyage deleted.");
+    } catch {
+      toast.error("An unexpected error occurred while deleting the voyage.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (

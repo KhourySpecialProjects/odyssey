@@ -51,6 +51,45 @@ export async function getVoyages(): Promise<Voyage[]> {
 }
 
 /**
+ * Gets all voyages (draft and published) for admin use.
+ * @returns The full list of Voyages regardless of status.
+ */
+export async function getVoyagesAdmin(): Promise<Voyage[]> {
+  const path = `/voyages`;
+  const urlParams = {
+    publicationState: "preview",
+    populate: {
+      voyage_playlists: {
+        populate: {
+          playlist: {
+            fields: ["id", "name", "slug", "isPublic"],
+            populate: {
+              droplets: {
+                fields: ["id"],
+              },
+            },
+          },
+        },
+        sort: ["orderIndex:asc"],
+      },
+      authors: {
+        fields: ["id", "name", "email"],
+      },
+    },
+    sort: ["name:asc"],
+    pagination: {
+      pageSize: 200,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<Voyage[]>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+  });
+}
+
+/**
  * Gets a single Voyage by its unique slug, deeply populated.
  * @param slug The unique slug of the desired Voyage.
  * @returns The Voyage, or null if not found.

@@ -19,17 +19,20 @@ export default async function VoyagePage({ params }: Props) {
     notFound();
   }
 
-  // Sort voyage_playlists by orderIndex and extract playlist data
+  // Sort voyage_playlists by orderIndex and extract playlist data.
+  // Entries missing a playlist reference are skipped — they would produce
+  // broken links (empty slug) and a mismatched entity ID.
   const orderedPlaylists = (voyage.voyage_playlists || [])
     .slice()
     .sort((a: VoyagePlaylist, b: VoyagePlaylist) => a.orderIndex - b.orderIndex)
+    .filter((vp: VoyagePlaylist) => vp.playlist?.id && vp.playlist?.slug)
     .map((vp: VoyagePlaylist) => {
-      const playlist = vp.playlist;
-      const dropletCount = playlist?.droplets?.length ?? 0;
+      const playlist = vp.playlist!;
+      const dropletCount = playlist.droplets?.length ?? 0;
       return {
-        id: playlist?.id ?? vp.id,
-        name: playlist?.name ?? "",
-        slug: playlist?.slug ?? "",
+        id: playlist.id,
+        name: playlist.name ?? "",
+        slug: playlist.slug,
         dropletCount,
         orderIndex: vp.orderIndex,
       };

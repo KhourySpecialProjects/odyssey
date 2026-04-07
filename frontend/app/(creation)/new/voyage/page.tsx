@@ -32,6 +32,10 @@ export default async function NewVoyage() {
     }),
   ]);
 
+  if (!authUser) {
+    redirect("/explore");
+  }
+
   return (
     <div className="light:bg-slate-100 flex min-h-screen w-full flex-col items-center px-4 pt-12 md:px-12">
       <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">

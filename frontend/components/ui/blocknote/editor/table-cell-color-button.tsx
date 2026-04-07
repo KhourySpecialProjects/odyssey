@@ -125,18 +125,49 @@ export const TableCellColorButton = () => {
         const view = editor.prosemirrorView;
         if (view && savedCells.length > 0) {
           const { state } = view;
-          // Find the table node position in the updated doc
+          // Find the specific table node for the edited block.
+          // BlockNote wraps each block in a blockContainer node whose `id`
+          // attribute matches the BlockNote block id. We locate that container
+          // first, then descend to the `table` node inside it — ensuring we
+          // restore selection on the correct table when there are multiple
+          // tables in the document.
           let tableStart = -1;
           state.doc.descendants((node, pos) => {
-            if (node.type.name === "table" && tableStart === -1) {
-              const map = TableMap.get(node);
-              if (map) {
-                tableStart = pos + 1; // +1 to get inside the table
-                return false;
-              }
+            if (tableStart !== -1) return false;
+            // Match the blockContainer that owns this block
+            if (
+              (node.type.name === "blockContainer" ||
+                node.type.name === "block") &&
+              node.attrs?.id === block.id
+            ) {
+              // Descend into this container to find the table
+              node.descendants((child, childPos) => {
+                if (tableStart !== -1) return false;
+                if (child.type.name === "table") {
+                  tableStart = pos + 1 + childPos + 1; // inside the table
+                  return false;
+                }
+                return true;
+              });
+              return false;
             }
-            return tableStart === -1;
+            return true;
           });
+          // Fallback: if the block container wasn't found (e.g. node name
+          // differs), find the first table after the block's approximate
+          // position by scanning only if tableStart is still unset.
+          if (tableStart === -1) {
+            state.doc.descendants((node, pos) => {
+              if (node.type.name === "table" && tableStart === -1) {
+                const map = TableMap.get(node);
+                if (map) {
+                  tableStart = pos + 1;
+                  return false;
+                }
+              }
+              return tableStart === -1;
+            });
+          }
 
           if (tableStart > 0) {
             try {

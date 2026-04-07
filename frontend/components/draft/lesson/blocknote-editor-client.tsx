@@ -95,6 +95,7 @@ export function BlockNoteEditorClient({
     if (!isReady) return;
 
     const handleTab = (event: KeyboardEvent) => {
+      if (!editor.isEditable) return;
       if (event.key !== "Tab") return;
 
       // Get fresh view reference on each keypress
