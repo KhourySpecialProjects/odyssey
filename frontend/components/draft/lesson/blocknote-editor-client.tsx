@@ -16,6 +16,7 @@ import {
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { blockNoteSchema } from "@/lib/blocknote/schema";
+import { addRowAfter, goToNextCell, isInTable } from "prosemirror-tables";
 import { useTheme } from "next-themes";
 import {
   SuggestionMenuController,
@@ -31,6 +32,7 @@ import {
   getNotebookCodeSlashMenuItems,
   getSandpackSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
+import { TableCellColorButton } from "@/components/ui/blocknote/editor/table-cell-color-button";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { AutoFormatOperation } from "@/lib/actions/auto-format-slides";
 import type { Block } from "@blocknote/core";
@@ -87,6 +89,148 @@ export function BlockNoteEditorClient({
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Intercept Tab in tables at the DOM level to prevent block nesting
+  useEffect(() => {
+    if (!isReady) return;
+
+    const handleTab = (event: KeyboardEvent) => {
+      if (!editor.isEditable) return;
+      if (event.key !== "Tab") return;
+
+      // Get fresh view reference on each keypress
+      const view = editor.prosemirrorView;
+      if (!view || !isInTable(view.state)) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (!event.shiftKey) {
+        if (!goToNextCell(1)(view.state, view.dispatch)) {
+          addRowAfter(view.state, view.dispatch);
+          goToNextCell(1)(view.state, view.dispatch);
+        }
+      } else {
+        goToNextCell(-1)(view.state, view.dispatch);
+      }
+    };
+
+    const dom = editor.prosemirrorView?.dom;
+    if (!dom) return;
+
+    dom.addEventListener("keydown", handleTab, { capture: true });
+    return () => {
+      dom.removeEventListener("keydown", handleTab, { capture: true });
+    };
+  }, [editor, isReady]);
+
+  // Click-in-gap: insert a new paragraph when clicking the empty space between blocks
+  useEffect(() => {
+    if (!editable || !isReady) return;
+
+    const dom = editor.prosemirrorView?.dom;
+    if (!dom) return;
+
+    const handleGapClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Only handle clicks on the block group container itself (the gap area),
+      // not on actual block content
+      if (
+        !target.classList.contains("bn-block-group") &&
+        !target.classList.contains("bn-editor")
+      ) {
+        return;
+      }
+
+      // Only handle gap clicks at the top-level editor — nested block groups
+      // (lists, tables) use a different index space than editor.document.
+      const editorEl = target.closest(".bn-editor");
+      const blockGroup =
+        editorEl?.querySelector(":scope > .bn-block-group") ||
+        (target.classList.contains("bn-editor") ? target : null);
+      if (!blockGroup) return;
+
+      const blockOuters = blockGroup.querySelectorAll(
+        ":scope > .bn-block-outer",
+      );
+      if (blockOuters.length === 0) return;
+
+      const clickY = e.clientY;
+
+      // Find which gap the click is in — between which two blocks.
+      // Each .bn-block-outer carries a data-id matching its block in editor.document.
+      let insertAfterId: string | null = null;
+      let clickedOnBlock = false;
+      for (let i = 0; i < blockOuters.length; i++) {
+        const outer = blockOuters[i] as HTMLElement;
+        const rect = outer.getBoundingClientRect();
+        if (clickY < rect.top) {
+          // Click is above this block — insert before it (after previous sibling)
+          insertAfterId =
+            i > 0
+              ? (blockOuters[i - 1] as HTMLElement).dataset.id ?? null
+              : null;
+          break;
+        }
+        if (clickY <= rect.bottom) {
+          // Click is on the block itself, not in a gap
+          clickedOnBlock = true;
+          break;
+        }
+        insertAfterId = outer.dataset.id ?? null;
+      }
+
+      if (clickedOnBlock) return;
+
+      // Resolve blocks by ID so nested-group indices never pollute the lookup
+      const blocks = editor.document;
+
+      if (insertAfterId === null) {
+        // Click was above the first block — nothing to insert after
+        return;
+      }
+
+      const referenceIndex = blocks.findIndex((b) => b.id === insertAfterId);
+      if (referenceIndex < 0) return;
+
+      // Check if the next block is already an empty paragraph — just focus it
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nextBlock = blocks[referenceIndex + 1] as any;
+      if (
+        nextBlock &&
+        nextBlock.type === "paragraph" &&
+        (!nextBlock.content || nextBlock.content.length === 0)
+      ) {
+        editor.setTextCursorPosition(nextBlock);
+        return;
+      }
+
+      const referenceBlock = blocks[referenceIndex];
+
+      // Insert an empty paragraph after the reference block
+      editor.insertBlocks(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [{ type: "paragraph" } as any],
+        referenceBlock,
+        "after",
+      );
+
+      // Focus the newly inserted block
+      const updatedBlocks = editor.document;
+      const newBlockIndex = referenceIndex + 1;
+      if (newBlockIndex < updatedBlocks.length) {
+        editor.setTextCursorPosition(updatedBlocks[newBlockIndex]);
+      }
+    };
+
+    // Use the editor's root element to catch clicks on gaps
+    const editorRoot = (dom.closest(".bn-editor") || dom) as HTMLElement;
+    editorRoot.addEventListener("click", handleGapClick as EventListener);
+    return () => {
+      editorRoot.removeEventListener("click", handleGapClick as EventListener);
+    };
+  }, [editor, editable, isReady]);
 
   useEffect(() => {
     if (!editable || !onChange || !isReady) return;
@@ -343,7 +487,10 @@ export function BlockNoteEditorClient({
         >
           <FormattingToolbarController
             formattingToolbar={() => (
-              <FormattingToolbar>{toolbarItems}</FormattingToolbar>
+              <FormattingToolbar>
+                {toolbarItems}
+                <TableCellColorButton />
+              </FormattingToolbar>
             )}
           />
 

@@ -39,7 +39,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
     return (
       <table className="w-full min-w-full border-collapse border border-slate-300 dark:border-slate-600">
         {headerRow && (
-          <thead className="bg-slate-100 dark:bg-slate-700">
+          <thead>
             <tr className="border-b border-slate-300 dark:border-slate-600">
               {headerRow.cells.map((cell, cellIndex) => {
                 const bgColor = cell.backgroundColor || "inherit";
