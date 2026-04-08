@@ -1,56 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-// Import languages
-import javascript from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
-import typescript from "react-syntax-highlighter/dist/esm/languages/hljs/typescript";
-import python from "react-syntax-highlighter/dist/esm/languages/hljs/python";
-import java from "react-syntax-highlighter/dist/esm/languages/hljs/java";
-import cpp from "react-syntax-highlighter/dist/esm/languages/hljs/cpp";
-import c from "react-syntax-highlighter/dist/esm/languages/hljs/c";
-import csharp from "react-syntax-highlighter/dist/esm/languages/hljs/csharp";
-import php from "react-syntax-highlighter/dist/esm/languages/hljs/php";
-import ruby from "react-syntax-highlighter/dist/esm/languages/hljs/ruby";
-import bash from "react-syntax-highlighter/dist/esm/languages/hljs/bash";
-import go from "react-syntax-highlighter/dist/esm/languages/hljs/go";
-import rust from "react-syntax-highlighter/dist/esm/languages/hljs/rust";
-import kotlin from "react-syntax-highlighter/dist/esm/languages/hljs/kotlin";
-import swift from "react-syntax-highlighter/dist/esm/languages/hljs/swift";
 import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
-
-// Register languages
-SyntaxHighlighter.registerLanguage("javascript", javascript);
-SyntaxHighlighter.registerLanguage("typescript", typescript);
-SyntaxHighlighter.registerLanguage("python", python);
-SyntaxHighlighter.registerLanguage("java", java);
-SyntaxHighlighter.registerLanguage("cpp", cpp);
-SyntaxHighlighter.registerLanguage("c", c);
-SyntaxHighlighter.registerLanguage("csharp", csharp);
-SyntaxHighlighter.registerLanguage("php", php);
-SyntaxHighlighter.registerLanguage("ruby", ruby);
-SyntaxHighlighter.registerLanguage("bash", bash);
-SyntaxHighlighter.registerLanguage("go", go);
-SyntaxHighlighter.registerLanguage("rust", rust);
-SyntaxHighlighter.registerLanguage("kotlin", kotlin);
-SyntaxHighlighter.registerLanguage("swift", swift);
-
-// Register languages
-SyntaxHighlighter.registerLanguage("javascript", javascript);
-SyntaxHighlighter.registerLanguage("typescript", typescript);
-SyntaxHighlighter.registerLanguage("python", python);
-SyntaxHighlighter.registerLanguage("java", java);
-SyntaxHighlighter.registerLanguage("cpp", cpp);
-SyntaxHighlighter.registerLanguage("c", c);
-SyntaxHighlighter.registerLanguage("csharp", csharp);
-SyntaxHighlighter.registerLanguage("php", php);
-SyntaxHighlighter.registerLanguage("ruby", ruby);
-SyntaxHighlighter.registerLanguage("bash", bash);
-SyntaxHighlighter.registerLanguage("go", go);
-SyntaxHighlighter.registerLanguage("rust", rust);
-SyntaxHighlighter.registerLanguage("kotlin", kotlin);
-SyntaxHighlighter.registerLanguage("swift", swift);
+import { cn } from "@/lib/utils";
+import { CodeEditor } from "@/components/ui/code-editor";
 
 const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
 
@@ -217,14 +170,14 @@ export function CodeBlockViewer({
   };
 
   return (
-    <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+    <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
-        <span className="text-sm font-medium text-gray-200">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {languageLabel}
         </span>
         {runnable && (
-          <span className="flex items-center gap-1 text-xs text-green-400">
+          <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <Play size={12} />
             Runnable
           </span>
@@ -235,15 +188,8 @@ export function CodeBlockViewer({
       <div className="relative">
         {isEditing && editable ? (
           <div>
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full resize-none bg-gray-900 p-4 font-mono text-sm text-gray-100 outline-none"
-              rows={Math.max(5, code.split("\n").length)}
-              style={{ minHeight: "120px" }}
-              spellCheck={false}
-            />
-            <div className="flex gap-2 border-t border-gray-700 bg-gray-800 p-2">
+            <CodeEditor language={language} value={code} onChange={setCode} />
+            <div className="flex gap-2 border-t border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
               <button
                 onClick={() => setIsEditing(false)}
                 className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
@@ -256,7 +202,7 @@ export function CodeBlockViewer({
                   setCode(initialCode);
                   setIsEditing(false);
                 }}
-                className="flex items-center gap-1 rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
+                className="flex items-center gap-1 rounded bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-700"
               >
                 <X size={14} />
                 Reset
@@ -268,21 +214,10 @@ export function CodeBlockViewer({
             className="group relative cursor-pointer"
             onClick={() => editable && setIsEditing(true)}
           >
-            <SyntaxHighlighter
-              language={language}
-              style={atomOneDark}
-              customStyle={{
-                margin: 0,
-                padding: "1rem",
-                background: "transparent",
-              }}
-              PreTag="div"
-            >
-              {code || "// Code here"}
-            </SyntaxHighlighter>
+            <CodeEditor language={language} value={code} readOnly />
             {editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
+                <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                   Click to edit
                 </span>
               </div>
@@ -293,8 +228,8 @@ export function CodeBlockViewer({
 
       {/* Run Button and Output */}
       {runnable && (
-        <div className="border-t border-gray-700">
-          <div className="bg-gray-800 p-2">
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50 p-2 dark:bg-gray-800">
             <button
               onClick={runCode}
               disabled={isRunning}
@@ -316,26 +251,37 @@ export function CodeBlockViewer({
 
           {output && (
             <div
-              className={`border-t p-4 ${
+              className={cn(
+                "border-t p-4",
                 executionSuccess
-                  ? "border-gray-700 bg-gray-950"
-                  : "border-red-700/30 bg-red-950/20"
-              }`}
+                  ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-950"
+                  : "border-red-300/30 bg-red-50/20 dark:border-red-700/30 dark:bg-red-950/20",
+              )}
             >
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {executionSuccess ? (
-                  <span className="font-medium text-gray-400">Output:</span>
+                  <span className="font-medium text-gray-500 dark:text-gray-400">
+                    Output:
+                  </span>
                 ) : (
                   <>
-                    <AlertCircle size={14} className="text-red-400" />
-                    <span className="font-medium text-red-400">Error:</span>
+                    <AlertCircle
+                      size={14}
+                      className="text-red-500 dark:text-red-400"
+                    />
+                    <span className="font-medium text-red-500 dark:text-red-400">
+                      Error:
+                    </span>
                   </>
                 )}
               </div>
               <pre
-                className={`font-mono text-sm whitespace-pre-wrap ${
-                  executionSuccess ? "text-green-400" : "text-red-300"
-                }`}
+                className={cn(
+                  "font-mono text-sm whitespace-pre-wrap",
+                  executionSuccess
+                    ? "text-green-700 dark:text-green-400"
+                    : "text-red-600 dark:text-red-300",
+                )}
               >
                 {output}
               </pre>

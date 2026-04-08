@@ -33,13 +33,18 @@ export function DropletDescriptionInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky w-full max-w-2xl p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:text-slate-300 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-800 border-[#D0D5DD] dark:text-slate-300 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
       },
     },
     immediatelyRender: false,
   });
 
   return (
-    <EditorContent role="textbox" name="droplet-description" editor={editor} />
+    <EditorContent
+      className="h-full"
+      role="textbox"
+      name="droplet-description"
+      editor={editor}
+    />
   );
 }

@@ -87,7 +87,7 @@ describe("FriendRequests", () => {
       />,
     );
 
-    const nextButton = screen.getByRole("right");
+    const nextButton = screen.getByText(/next/i);
 
     fireEvent.click(nextButton);
 
@@ -103,11 +103,11 @@ describe("FriendRequests", () => {
       />,
     );
 
-    const nextButton = screen.getByRole("right");
+    const nextButton = screen.getByText(/next/i);
 
     fireEvent.click(nextButton);
 
-    const prevButton = screen.getByRole("left");
+    const prevButton = screen.getByText(/prev/i);
 
     fireEvent.click(prevButton);
 

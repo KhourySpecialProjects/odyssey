@@ -5,19 +5,12 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
-export type DatasetFormat = "csv" | "json" | "xlsx";
-
 export type Dataset = {
   id: number;
   name: string;
-  format: DatasetFormat;
-  fileUrl: string;
+  url: string;
+  fileType: string;
   fileSize: number;
-  rowCount: number;
-  columnCount: number;
-  columnNames: string[];
-  columnTypes: string[]; // "string" | "number" | "boolean" | "date" | "unknown"
-  droplet?: Droplet;
 };
 
 export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
@@ -461,6 +454,25 @@ export type CreationRequest = {
   dropletIdea: String;
   user: AuthorizedUser;
 };
+
+export interface VoyagePlaylist {
+  id: number;
+  orderIndex: number;
+  voyage?: Voyage;
+  playlist?: Playlist;
+}
+
+export interface Voyage {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  status: "draft" | "published";
+  authors?: AuthorizedUser[];
+  voyage_playlists?: VoyagePlaylist[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface CustomBlockNoteBlock {
   id: string;

@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_droplets_datasets",
+  "info": {
+    "displayName": "Dataset"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "fileType": {
+      "type": "string",
+      "required": true
+    },
+    "fileSize": {
+      "type": "integer",
+      "required": true
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { updateDropletFunFact, getDroplets } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { getCachedDraftDropletBySlug } from "@/lib/requests/cached";
+import { stripHtmlTags } from "@/lib/utils";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
 import { getTags } from "@/lib/requests/tag";
@@ -9,16 +10,13 @@ import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
 import { isContentCreator } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
-import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
+import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
-
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { DatasetUpload } from "@/components/draft/dataset/dataset-upload";
-import { getDatasetsByDropletId } from "@/lib/requests/dataset";
 
 type Props = {
   params: Promise<Params>;
@@ -58,8 +56,6 @@ export default async function Droplet({ params }: Props) {
     }),
     getTags(),
   ]);
-
-  const datasets = droplet ? await getDatasetsByDropletId(droplet.id) : [];
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
@@ -122,8 +118,8 @@ export default async function Droplet({ params }: Props) {
 
   return (
     <>
-      <GradientBackground className="px-0">
-        <div className="mx-auto max-w-2xl px-5 md:px-0">
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div className="px-40">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <ClickableBadges
               focusArea={droplet.focusArea}
@@ -135,11 +131,18 @@ export default async function Droplet({ params }: Props) {
             />
           </div>
 
-          <DropletName
-            data-testid="droplet-name"
-            dropletId={droplet.id}
-            startingName={droplet.name}
-          />
+          <div className="mt-6">
+            <DropletName
+              data-testid="droplet-name"
+              dropletId={droplet.id}
+              startingName={droplet.name}
+            />
+          </div>
+          {droplet.description ? (
+            <p className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
+              {stripHtmlTags(droplet.description)}
+            </p>
+          ) : null}
 
           {droplet.status === "published" && (
             <div className="p-2">This droplet is currently live</div>
@@ -160,20 +163,22 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="mx-auto w-full max-w-2xl space-y-10">
+        <div className="w-full space-y-10 px-40 pt-6">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
           />
-          <Description
-            dropletId={droplet.id}
-            initialContent={droplet.description ?? ""}
-          />
 
-          <Overview
-            dropletId={droplet.id}
-            initialContent={droplet.overview ?? ""}
-          />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <Description
+              dropletId={droplet.id}
+              initialContent={droplet.description ?? ""}
+            />
+            <Overview
+              dropletId={droplet.id}
+              initialContent={droplet.overview ?? ""}
+            />
+          </div>
 
           <LearningObjectives
             dropletId={droplet.id}
@@ -191,26 +196,17 @@ export default async function Droplet({ params }: Props) {
             prerequisites={droplet.prerequisites ?? []}
             postrequisites={droplet.postrequisites ?? []}
           />
+
           <FunFactEditor
             funFact={droplet.funFact ?? ""}
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
 
-          <section className="w-full max-w-2xl">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Datasets
-            </h2>
-            <p className="text-slate-500 dark:text-slate-300">
-              Upload data files for use in notebook code blocks (CSV, JSON, or
-              XLSX)
-            </p>
-            <div className="mt-4">
-              <DatasetUpload dropletId={droplet.id} datasets={datasets} />
-            </div>
-          </section>
+          <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
         </div>
-      </GradientBackground>
+        <div className="pb-16" />
+      </div>
     </>
   );
 }

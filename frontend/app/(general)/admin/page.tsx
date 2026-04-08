@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 function StatCardSkeleton() {
   return (
-    <div className="h-[130px] animate-pulse rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+    <div className="h-[130px] animate-pulse rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-600 dark:bg-slate-800">
       <div className="px-[27px] pt-[14px]">
         <div className="h-[18px] w-[120px] rounded bg-slate-200 dark:bg-slate-700" />
         <div className="mt-[10px] h-[40px] w-[80px] rounded bg-slate-200 dark:bg-slate-700" />
@@ -31,7 +31,7 @@ function StatCardSkeleton() {
 function ChartSkeleton({ height = "h-[280px]" }: { height?: string }) {
   return (
     <div
-      className={`${height} animate-pulse rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800`}
+      className={`${height} animate-pulse rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-600 dark:bg-slate-800`}
     >
       <div className="px-5 pt-4">
         <div className="h-[20px] w-[180px] rounded bg-slate-200 dark:bg-slate-700" />
@@ -52,8 +52,8 @@ interface StatCardProps {
 
 function StatCard({ title, value, lastMonth, trend }: StatCardProps) {
   return (
-    <Card className="h-auto min-h-[100px] rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] md:h-[130px] dark:bg-slate-800">
-      <div className="px-3 pt-3 md:px-[27px] md:pt-[14px]">
+    <Card className="h-full min-h-[100px] rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-600 dark:bg-slate-800">
+      <div className="flex h-full flex-col justify-center px-3 md:px-[27px]">
         <p className="text-sm leading-none font-normal text-black md:text-[18px] dark:text-white">
           {title}
         </p>
@@ -126,8 +126,8 @@ async function StatsAndPageviews() {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-5">
-        <div className="grid grid-cols-2 gap-5">{statCards}</div>
+      <div className="hidden md:grid md:grid-cols-2 md:gap-3">
+        <div className="grid grid-cols-2 gap-3">{statCards}</div>
         <UniquePageviewBarChart data={pageviewCountRaw} />
       </div>
       {/* Mobile */}
@@ -148,7 +148,7 @@ async function BottomCharts() {
   return (
     <>
       {/* Desktop */}
-      <div className="mt-5 hidden md:grid md:grid-cols-[682fr_421fr] md:gap-5">
+      <div className="mt-3 hidden md:grid md:grid-cols-2 md:gap-3">
         <ActiveUsersChart data={dailyActiveUsers} />
         <AvgSessionDurationChart data={sessionDurationRaw} />
       </div>
@@ -179,10 +179,10 @@ export default function Page() {
       {/* Page header — renders immediately */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl leading-tight font-semibold text-black md:text-[40px] dark:text-white">
+          <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
             Admin
           </h1>
-          <p className="mt-1 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
+          <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
             View Odyssey statistics and edit existing information.
           </p>
         </div>
@@ -193,8 +193,8 @@ export default function Page() {
         fallback={
           <>
             {/* Desktop */}
-            <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-5">
-              <div className="grid grid-cols-2 gap-5">
+            <div className="hidden md:grid md:grid-cols-2 md:gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <StatCardSkeleton />
                 <StatCardSkeleton />
                 <StatCardSkeleton />
@@ -223,7 +223,7 @@ export default function Page() {
         fallback={
           <>
             {/* Desktop */}
-            <div className="mt-5 hidden md:grid md:grid-cols-[682fr_421fr] md:gap-5">
+            <div className="mt-3 hidden md:grid md:grid-cols-2 md:gap-3">
               <ChartSkeleton height="h-[396px]" />
               <ChartSkeleton height="h-[396px]" />
             </div>

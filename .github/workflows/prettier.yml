@@ -19,7 +19,7 @@ on:
 
 jobs:
   prettier-check:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
       - name: Checkout repository
@@ -36,7 +36,7 @@ jobs:
       - name: Run Prettier check
         run: npx prettier . --check
   lint:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

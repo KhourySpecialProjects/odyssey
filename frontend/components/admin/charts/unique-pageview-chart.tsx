@@ -121,9 +121,9 @@ export function UniquePageviewBarChart({
           : `in the last ${timeframe} days`;
 
   return (
-    <div className="flex h-[280px] flex-col overflow-hidden rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+    <div className="flex h-[280px] flex-col overflow-hidden rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-600 dark:bg-slate-800">
       <div className="flex items-start justify-between px-5 pt-4 pb-2">
-        <p className="text-[20px] font-medium text-black dark:text-white">
+        <p className="text-[20px] font-normal text-black dark:text-white">
           Daily Unique Pageviews
         </p>
         <TimeframeSelector
@@ -152,9 +152,7 @@ export function UniquePageviewBarChart({
                 axisLine={false}
                 tick={{ fontSize: 11, fill: "#60646c" }}
                 interval="preserveStartEnd"
-                angle={-35}
-                textAnchor="end"
-                height={45}
+                height={30}
               />
               <YAxis
                 tickLine={false}

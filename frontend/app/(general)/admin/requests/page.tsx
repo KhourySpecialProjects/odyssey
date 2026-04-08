@@ -7,10 +7,10 @@ export default function Page() {
   return (
     <div className="w-full px-4 py-4 md:px-[56px] md:py-8">
       <div className="mb-6">
-        <h1 className="text-2xl leading-tight font-semibold text-black md:text-[40px] dark:text-white">
+        <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
           Requests
         </h1>
-        <p className="mt-1 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
+        <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
           Manage access requests and content creator applications.
         </p>
       </div>

@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Droplet, Lesson } from "@/types";
-import { Copy } from "lucide-react";
 import { useState } from "react";
 import { duplicateLessonToDroplet } from "@/lib/requests/lesson";
 import { toast } from "sonner";
@@ -121,7 +120,6 @@ export function AddExistingLesson({
           className="flex w-full items-center justify-between rounded-lg p-2 text-slate-900 transition-colors hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700"
         >
           <span className="text-left">Add Existing Lesson</span>
-          <Copy className="h-4 w-4 shrink-0" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

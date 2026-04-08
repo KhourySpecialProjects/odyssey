@@ -26,8 +26,8 @@ export function NotesContainer({
   );
 
   return (
-    <div className="flex flex-row items-start">
-      <div className="w-2/3 p-4 text-center text-xl font-bold">
+    <div className="flex flex-row items-start gap-4">
+      <div className="flex-1 text-left">
         <NotesSummary
           selectedColors={selectedColors.map(
             (color) => color.toLowerCase() as HighlightColor,
@@ -39,9 +39,13 @@ export function NotesContainer({
         />
       </div>
       {(allNotes.highlights.length > 0 || allNotes.notes.length > 0) && (
-        <div className="flex w-1/3 flex-col items-center justify-center pt-2 text-center text-xl font-bold dark:text-slate-300">
-          Filters
-          <NotesFilter onFilterChange={setSelectedColors} />
+        <div className="mt-4 w-36 shrink-0 overflow-hidden rounded-lg border border-[#eaecf0] dark:border-slate-700">
+          <p className="border-b border-[#eaecf0] bg-[#fcfcfd] px-4 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            Filters
+          </p>
+          <div className="bg-white px-4 py-3 dark:bg-slate-900">
+            <NotesFilter onFilterChange={setSelectedColors} />
+          </div>
         </div>
       )}
     </div>
