@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/learning-objective";
 import { Input } from "../ui/input";
-import { LoaderIcon } from "lucide-react";
 import { IconCornerDownLeft } from "@tabler/icons-react";
 import { updateDropletLearningObjective } from "@/lib/requests/droplet";
 
