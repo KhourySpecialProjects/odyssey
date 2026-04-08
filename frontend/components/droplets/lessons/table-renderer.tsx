@@ -2,6 +2,33 @@
 
 import React from "react";
 import DOMPurify from "isomorphic-dompurify";
+import { useTheme } from "next-themes";
+
+// BlockNote stores cell background colors as named strings (e.g. "red", "blue").
+// These must be mapped to actual CSS values to match the editor appearance.
+// Source: @blocknote/core/src/editor/defaultColors.ts
+const BLOCKNOTE_BG_COLORS: Record<string, { light: string; dark: string }> = {
+  gray: { light: "#ebeced", dark: "#9b9a97" },
+  brown: { light: "#e9e5e3", dark: "#64473a" },
+  red: { light: "#fbe4e4", dark: "#be3434" },
+  orange: { light: "#f6e9d9", dark: "#b7600a" },
+  yellow: { light: "#fbf3db", dark: "#b58b00" },
+  green: { light: "#ddedea", dark: "#4d6461" },
+  blue: { light: "#ddebf1", dark: "#0b6e99" },
+  purple: { light: "#eae4f2", dark: "#6940a5" },
+  pink: { light: "#f4dfeb", dark: "#ad1a72" },
+};
+
+function resolveBackgroundColor(
+  color: string | null,
+  isDark: boolean,
+): string | undefined {
+  if (!color || color === "default") return undefined;
+  const mapped = BLOCKNOTE_BG_COLORS[color];
+  if (mapped) return isDark ? mapped.dark : mapped.light;
+  // If it's already a CSS color value (hex, rgb, etc.), pass through
+  return color;
+}
 
 interface TableData {
   markdown: string;
@@ -22,6 +49,9 @@ interface TableRendererProps {
 }
 
 export function TableRenderer({ tableData }: TableRendererProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   // Render table directly from data to have full control over styling
   const renderTableFromData = () => {
     if (!tableData.rows || tableData.rows.length === 0) {
@@ -42,15 +72,17 @@ export function TableRenderer({ tableData }: TableRendererProps) {
           <thead>
             <tr className="border-b border-slate-300 dark:border-slate-600">
               {headerRow.cells.map((cell, cellIndex) => {
-                const bgColor = cell.backgroundColor || "inherit";
+                const bgColor = resolveBackgroundColor(
+                  cell.backgroundColor,
+                  isDark,
+                );
                 const sanitizedContent = DOMPurify.sanitize(cell.content);
                 return (
                   <th
                     key={cellIndex}
                     className="border border-slate-300 px-4 py-2 text-left font-semibold dark:border-slate-600"
                     style={{
-                      backgroundColor:
-                        bgColor !== "inherit" ? bgColor : undefined,
+                      backgroundColor: bgColor,
                     }}
                     dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                   />
@@ -70,14 +102,17 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                 className="border-t border-slate-300 dark:border-slate-600"
               >
                 {row.cells.map((cell, cellIndex) => {
-                  const bgColor = cell.backgroundColor || null;
+                  const bgColor = resolveBackgroundColor(
+                    cell.backgroundColor,
+                    isDark,
+                  );
                   const sanitizedContent = DOMPurify.sanitize(cell.content);
                   return (
                     <td
                       key={cellIndex}
                       className="border border-slate-300 px-4 py-2 dark:border-slate-600"
                       style={{
-                        backgroundColor: bgColor || undefined,
+                        backgroundColor: bgColor,
                       }}
                       dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                     />
