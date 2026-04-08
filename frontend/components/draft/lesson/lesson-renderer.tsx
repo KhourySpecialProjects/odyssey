@@ -24,6 +24,8 @@ import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
+import { useEditingLock } from "@/hooks/useEditingLock";
+import { IconLock } from "@tabler/icons-react";
 
 export interface BaseBlock {
   __component: string;
@@ -57,6 +59,12 @@ export function LessonRenderer({
   datasets = [],
 }: LessonRendererProps) {
   const router = useRouter();
+  const {
+    isOwnLock,
+    lockedBy,
+    isLoading: lockLoading,
+  } = useEditingLock(lesson.id);
+  const isReadOnly = lockLoading || !isOwnLock;
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(
@@ -386,17 +394,37 @@ export function LessonRenderer({
 
   return (
     <>
+      {isReadOnly && lockedBy && (
+        <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>
+              {lockedBy.firstName} {lockedBy.lastName}
+            </strong>{" "}
+            is currently editing this lesson. You can view but not edit.
+          </span>
+        </div>
+      )}
+      {lockLoading && (
+        <div className="mx-auto mb-4 max-w-2xl px-4 py-3 text-center text-sm text-slate-500">
+          Checking editing access...
+        </div>
+      )}
       <div className="mb-5 flex flex-col items-start justify-start rounded-md px-10 pt-6 pb-3 md:px-40">
         {isEditingName ? (
           <div className="mb-3 w-full">
             <LessonNameInput
               className="w-full text-left"
               initialContent={`<h1>${name}</h1>`}
-              updateContent={(content: string) => {
-                const textContent = htmlToText(content);
-                setName(textContent);
-                debouncedNameUpdate(textContent);
-              }}
+              updateContent={
+                isReadOnly
+                  ? () => {}
+                  : (content: string) => {
+                      const textContent = htmlToText(content);
+                      setName(textContent);
+                      debouncedNameUpdate(textContent);
+                    }
+              }
               onBlur={() => setIsEditingName(false)}
             />
           </div>
@@ -405,91 +433,95 @@ export function LessonRenderer({
             <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
               {name}
             </h1>
-            <button
-              onClick={() => setIsEditingName(true)}
-              className="flex items-center justify-center text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
-              aria-label="Edit lesson title"
-            >
-              <IconPencil className="h-5 w-5" stroke={1.8} />
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => setIsEditingName(true)}
+                className="flex items-center justify-center text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                aria-label="Edit lesson title"
+              >
+                <IconPencil className="h-5 w-5" stroke={1.8} />
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      <div className="mb-4 flex flex-row items-center gap-4 px-10 md:px-40">
-        <Button variant="outline" onClick={() => setIsPopupOpen(true)}>
-          Change URL
-        </Button>
-        {isPopupOpen && (
-          <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
-              <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
-                Enter New URL Slug
-              </h3>
-              <input
-                type="text"
-                value={newSlugInput}
-                onChange={(e) => setNewSlugInput(e.target.value)}
-                placeholder="e.g., my-new-url-slug"
-                className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
-              />
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsPopupOpen(false)}
-                  className="dark:border-slate-600 dark:text-slate-50"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleRegenerateSlug}
-                  className="bg-sky-600 text-white hover:bg-sky-700"
-                >
-                  Confirm
-                </Button>
+      {!isReadOnly && (
+        <div className="mb-4 flex flex-row items-center gap-4 px-10 md:px-40">
+          <Button variant="outline" onClick={() => setIsPopupOpen(true)}>
+            Change URL
+          </Button>
+          {isPopupOpen && (
+            <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
+                <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
+                  Enter New URL Slug
+                </h3>
+                <input
+                  type="text"
+                  value={newSlugInput}
+                  onChange={(e) => setNewSlugInput(e.target.value)}
+                  placeholder="e.g., my-new-url-slug"
+                  className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPopupOpen(false)}
+                    className="dark:border-slate-600 dark:text-slate-50"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleRegenerateSlug}
+                    className="bg-sky-600 text-white hover:bg-sky-700"
+                  >
+                    Confirm
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        {shouldShowEditorToggle && (
-          <Button
-            variant={editorVersion === "v2" ? "default" : "outline"}
-            onClick={async () => {
-              const newVersion = editorVersion === "v1" ? "v2" : "v1";
-              hasSetVersionRef.current = true;
+          )}
+          {shouldShowEditorToggle && (
+            <Button
+              variant={editorVersion === "v2" ? "default" : "outline"}
+              onClick={async () => {
+                const newVersion = editorVersion === "v1" ? "v2" : "v1";
+                hasSetVersionRef.current = true;
 
-              if (newVersion === "v2") {
-                debounceUpdateV2.flush();
-                await updateLesson(lesson.id, {
-                  blocksVersion: "v2",
-                  blocksV2: null,
-                });
-              } else {
-                debounceUpdateV2.flush();
-                await updateLesson(lesson.id, {
-                  blocksVersion: "v1",
-                  blocksV2: null,
-                });
-              }
+                if (newVersion === "v2") {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v2",
+                    blocksV2: null,
+                  });
+                } else {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v1",
+                    blocksV2: null,
+                  });
+                }
 
-              setEditorVersion(newVersion);
-            }}
-            className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
-              editorVersion === "v1"
-                ? "animate-border border-2 border-transparent text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
-                : "border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-            } hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50`}
-          >
-            {editorVersion === "v1"
-              ? "Use BlockNote Editor"
-              : "Use Classic Editor"}
-          </Button>
-        )}
-        <DeleteLessonButton
-          deleteLesson={deleteLessonBackend}
-          dropletSlug={dropletSlug}
-        />
-      </div>
+                setEditorVersion(newVersion);
+              }}
+              className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
+                editorVersion === "v1"
+                  ? "animate-border border-2 border-transparent text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
+                  : "border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+              } hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50`}
+            >
+              {editorVersion === "v1"
+                ? "Use BlockNote Editor"
+                : "Use Classic Editor"}
+            </Button>
+          )}
+          <DeleteLessonButton
+            deleteLesson={deleteLessonBackend}
+            dropletSlug={dropletSlug}
+          />
+        </div>
+      )}
 
       {editorVersion === "v1" ? (
         <>
@@ -516,7 +548,8 @@ export function LessonRenderer({
                   initialContent={
                     lesson.blocksV2 as unknown as BlockNoteBlock[]
                   }
-                  onChange={debounceUpdateV2}
+                  onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                  editable={!isReadOnly}
                 />
               </PyodideProvider>
             </DatasetProvider>

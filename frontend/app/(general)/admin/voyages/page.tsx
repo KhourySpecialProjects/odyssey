@@ -48,10 +48,11 @@ function TableSkeleton() {
       <div className="hidden overflow-hidden rounded-[8px] border-2 border-[rgba(0,0,0,0.05)] md:block dark:border-slate-700">
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-[35%]" />
-            <col className="w-[15%]" />
+            <col className="w-[30%]" />
+            <col className="w-[12%]" />
             <col className="w-[10%]" />
-            <col className="w-[20%]" />
+            <col className="w-[10%]" />
+            <col className="w-[18%]" />
             <col className="w-[10%]" />
             <col className="w-[10%]" />
           </colgroup>
@@ -60,7 +61,8 @@ function TableSkeleton() {
               {[
                 "Name",
                 "Status",
-                "Islands",
+                "Nodes",
+                "Playlists",
                 "Author",
                 "Created",
                 "Actions",
@@ -83,7 +85,7 @@ function TableSkeleton() {
                 <td className="h-[56px] py-3 pr-6 pl-[30px]">
                   <div className="h-4 w-[180px] animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                 </td>
-                {Array.from({ length: 5 }).map((__, j) => (
+                {Array.from({ length: 6 }).map((__, j) => (
                   <td key={j} className="h-[56px] px-6 py-3">
                     <div className="h-4 w-[50px] animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                   </td>

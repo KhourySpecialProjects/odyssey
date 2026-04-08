@@ -101,9 +101,11 @@ export const CACHE_TAGS = {
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)
   datasets: "datasets", // global tag for dataset metadata
   voyages: "voyages", // voyages and voyage-playlist join records
+  allVoyageEnrollments: "voyage-enrollments", // global sweep for voyage enrollment mutations
 
   // Per-user (scoped to individual user)
   enrollments: (userId: number) => `enrollments-${userId}`,
+  voyageEnrollments: (userId: number) => `voyage-enrollments-${userId}`,
   friendships: (userId: number) => `friendships-${userId}`,
   notes: (userId: number) => `notes-${userId}`,
   highlights: (userId: number) => `highlights-${userId}`,
