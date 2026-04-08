@@ -414,9 +414,9 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       </div>
 
                       {/* Bottom row: branch controls */}
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-col gap-2">
                         {/* "Branches from" select */}
-                        <div className="flex flex-1 items-center gap-1.5">
+                        <div className="flex items-center gap-1.5">
                           <label className="shrink-0 text-xs text-slate-500">
                             Branches from
                           </label>
