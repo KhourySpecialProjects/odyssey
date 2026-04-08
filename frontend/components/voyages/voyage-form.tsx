@@ -430,7 +430,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                               );
                             }}
                             disabled={isPending}
-                            className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                            className="max-w-[300px] min-w-[180px] rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <option value="">None (main path)</option>
                             {mainPathNodes
