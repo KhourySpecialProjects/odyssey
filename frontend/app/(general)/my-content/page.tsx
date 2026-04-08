@@ -7,6 +7,7 @@ import {
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getCachedUserCreation } from "@/lib/requests/cached";
+import { getVoyagesAdmin } from "@/lib/requests/voyage";
 import { MyContentTabs } from "@/components/my-content/my-content-tabs";
 
 export const metadata: Metadata = {
@@ -24,7 +25,13 @@ export default async function CreateRoute() {
       !isAuthorizedUserFaculty(user.roles))
   )
     redirect("/unauthorized");
-  const authorizedUser = await getCachedUserCreation(user.email);
+  const isAdminOrFaculty =
+    isAuthorizedUserAdmin(user.roles) || isAuthorizedUserFaculty(user.roles);
+
+  const [authorizedUser, voyages] = await Promise.all([
+    getCachedUserCreation(user.email),
+    isAdminOrFaculty ? getVoyagesAdmin() : Promise.resolve([]),
+  ]);
 
   if (!authorizedUser) redirect("/unauthorized");
 
@@ -40,14 +47,16 @@ export default async function CreateRoute() {
           My Content
         </h1>
         <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
-          Create a new Droplet or Playlist draft
+          Create a new Droplet, Playlist, or Voyage draft
         </p>
       </div>
 
       <MyContentTabs
         droplets={authorizedUser.droplets ?? []}
         playlists={playlists ?? []}
+        voyages={voyages}
         showPlaylists={showPlaylists}
+        showVoyages={isAdminOrFaculty}
       />
     </div>
   );
