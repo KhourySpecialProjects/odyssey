@@ -202,6 +202,7 @@ export async function createVoyage(data: {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
+    revalidateTag(CACHE_TAGS.userContent);
     return {
       ok: true,
       error: null,
@@ -272,6 +273,7 @@ export async function updateVoyage(
     }
 
     revalidateTag(CACHE_TAGS.voyages);
+    revalidateTag(CACHE_TAGS.userContent);
     return {
       ok: true,
       error: null,
@@ -294,7 +296,7 @@ export async function updateVoyage(
  */
 export async function deleteVoyage(id: number) {
   if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized" };
+    return { ok: false, error: "Unauthorized", data: null };
   }
   try {
     const response = await fetch(
@@ -315,7 +317,8 @@ export async function deleteVoyage(id: number) {
     const data = await response.json();
 
     revalidateTag(CACHE_TAGS.voyages);
-    return { ok: true, error: null, data: data.data };
+    revalidateTag(CACHE_TAGS.userContent);
+    return { ok: true, error: null, data: flattenAttributes(data.data) };
   } catch (err) {
     console.error(err);
     return {

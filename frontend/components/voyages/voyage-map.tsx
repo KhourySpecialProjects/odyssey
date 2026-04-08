@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { VoyageIsland } from "./voyage-island";
 import { VoyageBoat } from "./voyage-boat";
-import { VoyageWaves } from "./voyage-waves";
-import { VoyageRoute } from "./voyage-route";
 
 interface PlaylistEntry {
   id: number;
@@ -16,6 +14,7 @@ interface PlaylistEntry {
 
 interface VoyageMapProps {
   playlists: PlaylistEntry[];
+  showOceanBackground?: boolean;
 }
 
 interface IslandPosition {
@@ -24,12 +23,19 @@ interface IslandPosition {
   playlist: PlaylistEntry;
 }
 
-const ISLAND_SIZE = 84;
-const ROW_HEIGHT = 140;
-const PADDING_X = 80;
-const PADDING_Y = 60;
+export const OCEAN_GRADIENT =
+  "linear-gradient(180deg, #1a6fb5 0%, #1b7ec7 30%, #2196d4 60%, #27a8e0 100%)";
 
-function computeLayout(
+const ISLAND_SIZE = 90;
+const VERTICAL_SPACING = 160;
+const PADDING_Y = 80;
+
+/**
+ * Lay islands out in an S-curve: odd rows go left→right, even rows right→left.
+ * The horizontal position oscillates using a sine wave so the path curves
+ * naturally instead of zig-zagging.
+ */
+function computeSCurve(
   playlists: PlaylistEntry[],
   containerWidth: number,
 ): { positions: IslandPosition[]; totalHeight: number } {
@@ -38,46 +44,93 @@ function computeLayout(
   }
 
   const sorted = [...playlists].sort((a, b) => a.orderIndex - b.orderIndex);
-  const itemsPerRow = sorted.length >= 10 ? 4 : 3;
+  const marginX = Math.max(ISLAND_SIZE, containerWidth * 0.12);
+  const amplitude = (containerWidth - marginX * 2) / 2;
+  const centerX = containerWidth / 2;
 
-  const usableWidth = containerWidth - PADDING_X * 2;
-  const numRows = Math.ceil(sorted.length / itemsPerRow);
-  const totalHeight = numRows * ROW_HEIGHT + PADDING_Y * 2;
+  const positions: IslandPosition[] = sorted.map((playlist, i) => {
+    const t = sorted.length > 1 ? i / (sorted.length - 1) : 0.5;
+    // Alternate sides: first island left, then right, then left...
+    const adjustedX =
+      sorted.length === 1
+        ? centerX
+        : centerX +
+          amplitude * Math.cos(Math.PI * i + Math.PI) * (0.6 + 0.4 * t);
+    const y = PADDING_Y + i * VERTICAL_SPACING;
 
-  const positions: IslandPosition[] = [];
+    return { x: adjustedX, y, playlist };
+  });
 
-  for (let i = 0; i < sorted.length; i++) {
-    const rowIndex = Math.floor(i / itemsPerRow);
-    const posInRow = i % itemsPerRow;
-    const isReversedRow = rowIndex % 2 === 1;
-
-    const rowStart = rowIndex * itemsPerRow;
-    const rowEnd = Math.min(rowStart + itemsPerRow, sorted.length);
-    const itemsInThisRow = rowEnd - rowStart;
-
-    const spacing = itemsInThisRow > 1 ? usableWidth / (itemsInThisRow - 1) : 0;
-
-    let xOffset: number;
-    if (itemsInThisRow === 1) {
-      xOffset = containerWidth / 2;
-    } else {
-      const rawPos = posInRow * spacing;
-      xOffset = PADDING_X + (isReversedRow ? usableWidth - rawPos : rawPos);
-    }
-
-    const yOffset = PADDING_Y + rowIndex * ROW_HEIGHT + ISLAND_SIZE / 2;
-
-    positions.push({
-      x: xOffset,
-      y: yOffset,
-      playlist: sorted[i],
-    });
-  }
+  const totalHeight =
+    PADDING_Y * 2 + (sorted.length - 1) * VERTICAL_SPACING + ISLAND_SIZE;
 
   return { positions, totalHeight };
 }
 
-export function VoyageMap({ playlists }: VoyageMapProps) {
+/** Build a smooth SVG cubic bezier path through all island positions */
+function buildRoutePath(positions: { x: number; y: number }[]): string {
+  if (positions.length < 2) return "";
+  const parts: string[] = [`M ${positions[0].x} ${positions[0].y}`];
+
+  for (let i = 0; i < positions.length - 1; i++) {
+    const from = positions[i];
+    const to = positions[i + 1];
+    const dy = (to.y - from.y) * 0.45;
+    parts.push(
+      `C ${from.x} ${from.y + dy}, ${to.x} ${to.y - dy}, ${to.x} ${to.y}`,
+    );
+  }
+
+  return parts.join(" ");
+}
+
+/** Scattered wave marks for the ocean */
+const WAVE_POSITIONS: [number, number][] = [
+  [0.06, 0.08],
+  [0.88, 0.05],
+  [0.14, 0.22],
+  [0.78, 0.18],
+  [0.92, 0.32],
+  [0.08, 0.42],
+  [0.55, 0.12],
+  [0.35, 0.35],
+  [0.72, 0.48],
+  [0.18, 0.58],
+  [0.85, 0.62],
+  [0.42, 0.55],
+  [0.62, 0.72],
+  [0.05, 0.78],
+  [0.9, 0.85],
+  [0.28, 0.82],
+  [0.5, 0.92],
+  [0.75, 0.95],
+];
+
+function WaveMark({ cx, cy }: { cx: number; cy: number }) {
+  return (
+    <g opacity={0.25}>
+      <path
+        d={`M ${cx - 8} ${cy} Q ${cx - 4} ${cy - 4} ${cx} ${cy} Q ${cx + 4} ${cy + 4} ${cx + 8} ${cy}`}
+        stroke="#fff"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d={`M ${cx - 6} ${cy + 5} Q ${cx - 2} ${cy + 1} ${cx + 2} ${cy + 5} Q ${cx + 6} ${cy + 9} ${cx + 10} ${cy + 5}`}
+        stroke="#fff"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </g>
+  );
+}
+
+export function VoyageMap({
+  playlists,
+  showOceanBackground = false,
+}: VoyageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -91,60 +144,88 @@ export function VoyageMap({ playlists }: VoyageMapProps) {
     };
 
     update();
-
     const observer = new ResizeObserver(() => update());
     observer.observe(el);
-
     return () => observer.disconnect();
   }, []);
 
   const ready = containerWidth > 0;
-  const { positions, totalHeight } = computeLayout(playlists, containerWidth);
-  const routePositions = positions.map((p) => ({ x: p.x, y: p.y }));
+  const { positions, totalHeight } = useMemo(
+    () => computeSCurve(playlists, containerWidth),
+    [playlists, containerWidth],
+  );
+  const routePath = useMemo(
+    () => buildRoutePath(positions.map((p) => ({ x: p.x, y: p.y }))),
+    [positions],
+  );
 
-  // Place boat between first two islands
+  // Place boat on the path between island 1 and 2, closer to island 1
   let boatX = containerWidth / 2;
   let boatY = PADDING_Y;
   if (positions.length >= 2) {
-    boatX = (positions[0].x + positions[1].x) / 2;
-    boatY = (positions[0].y + positions[1].y) / 2 - 28;
+    boatX = positions[0].x + (positions[1].x - positions[0].x) * 0.2;
+    boatY = positions[0].y + (positions[1].y - positions[0].y) * 0.2;
   } else if (positions.length === 1) {
-    boatX = positions[0].x + ISLAND_SIZE / 2 + 16;
-    boatY = positions[0].y - 24;
+    boatX = positions[0].x + 50;
+    boatY = positions[0].y + 20;
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Map container */}
       <div
         ref={containerRef}
         className="relative w-full overflow-hidden rounded-2xl"
         style={{
           minHeight: 400,
           height: ready ? totalHeight : 400,
-          background:
-            "linear-gradient(180deg, #ffffff 0%, #f0f7ff 50%, #e8f1fb 100%)",
+          ...(showOceanBackground
+            ? {
+                background: OCEAN_GRADIENT,
+              }
+            : {}),
         }}
       >
         {ready && (
           <>
-            {/* Layer 1: Waves */}
-            <div className="absolute inset-0" style={{ zIndex: 1 }}>
-              <VoyageWaves width={containerWidth} height={totalHeight} />
-            </div>
-
-            {/* Layer 2: Route lines */}
-            {routePositions.length >= 2 && (
-              <div className="absolute inset-0" style={{ zIndex: 2 }}>
-                <VoyageRoute
-                  positions={routePositions}
-                  width={containerWidth}
-                  height={totalHeight}
+            {/* Ocean wave marks */}
+            <svg
+              className="pointer-events-none absolute inset-0"
+              width={containerWidth}
+              height={totalHeight}
+              viewBox={`0 0 ${containerWidth} ${totalHeight}`}
+              aria-hidden="true"
+            >
+              {WAVE_POSITIONS.map(([px, py], i) => (
+                <WaveMark
+                  key={i}
+                  cx={px * containerWidth}
+                  cy={py * totalHeight}
                 />
-              </div>
+              ))}
+            </svg>
+
+            {/* Dashed route line */}
+            {routePath && (
+              <svg
+                className="pointer-events-none absolute inset-0"
+                width={containerWidth}
+                height={totalHeight}
+                viewBox={`0 0 ${containerWidth} ${totalHeight}`}
+                aria-hidden="true"
+                style={{ zIndex: 2 }}
+              >
+                <path
+                  d={routePath}
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth="3"
+                  strokeDasharray="10 6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
             )}
 
-            {/* Layer 3: Boat decoration */}
+            {/* Boat */}
             {playlists.length > 0 && (
               <div
                 className="pointer-events-none absolute"
@@ -154,12 +235,12 @@ export function VoyageMap({ playlists }: VoyageMapProps) {
                   zIndex: 3,
                 }}
               >
-                <VoyageBoat size={0.18} />
+                <VoyageBoat size={0.28} />
               </div>
             )}
 
-            {/* Layer 4: Islands (on top) */}
-            {positions.map(({ x, y, playlist }) => (
+            {/* Islands */}
+            {positions.map(({ x, y, playlist }, i) => (
               <div
                 key={playlist.id}
                 className="absolute"
@@ -171,21 +252,29 @@ export function VoyageMap({ playlists }: VoyageMapProps) {
                   zIndex: 4,
                 }}
               >
-                <VoyageIsland
-                  name={playlist.name}
-                  slug={playlist.slug}
-                  dropletCount={playlist.dropletCount}
-                  size={ISLAND_SIZE}
-                  isOnRoute={true}
-                />
+                <div className="flex flex-col items-center">
+                  {/* Step number */}
+                  <div
+                    className="absolute -top-3 -left-3 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow"
+                    style={{ backgroundColor: "#2D6A4F", zIndex: 5 }}
+                  >
+                    {i + 1}
+                  </div>
+                  <VoyageIsland
+                    name={playlist.name}
+                    slug={playlist.slug}
+                    dropletCount={playlist.dropletCount}
+                    size={ISLAND_SIZE}
+                  />
+                </div>
               </div>
             ))}
           </>
         )}
       </div>
 
-      {/* Legend bar */}
-      <div className="flex flex-wrap items-center justify-center gap-6 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm text-slate-600">
+      {/* Legend */}
+      <div className="flex flex-wrap items-center justify-center gap-6 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <div
             className="h-4 w-4 rounded-full border-2"
@@ -200,10 +289,9 @@ export function VoyageMap({ playlists }: VoyageMapProps) {
               y1="4"
               x2="24"
               y2="4"
-              stroke="#2D6A4F"
+              stroke="rgba(255,255,255,0.6)"
               strokeWidth="2"
               strokeDasharray="5 3"
-              opacity={0.5}
             />
           </svg>
           <span>Learning route</span>

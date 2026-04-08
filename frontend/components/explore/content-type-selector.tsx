@@ -15,7 +15,10 @@ export function ContentTypeSelector({
   const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
-    { name: `Voyages${voyages !== undefined ? ` (${voyages})` : ""}`, value: "voyages" },
+    {
+      name: `Voyages${voyages !== undefined ? ` (${voyages})` : ""}`,
+      value: "voyages",
+    },
   ];
   const router = useRouter();
   const pathname = usePathname();
@@ -29,7 +32,7 @@ export function ContentTypeSelector({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
       {contentTypes.map((type) => (
         <Button
           key={type.value}

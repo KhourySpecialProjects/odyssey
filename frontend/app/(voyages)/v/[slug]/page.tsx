@@ -1,6 +1,6 @@
 import { getVoyageBySlug } from "@/lib/requests/voyage";
 import { notFound } from "next/navigation";
-import { VoyageMap } from "@/components/voyages/voyage-map";
+import { VoyageMap, OCEAN_GRADIENT } from "@/components/voyages/voyage-map";
 import { VoyagePlaylist } from "@/types";
 
 type Props = {
@@ -39,16 +39,23 @@ export default async function VoyagePage({ params }: Props) {
     });
 
   return (
-    <div className="container py-8">
-      <div className="mx-auto max-w-5xl">
+    <div
+      className="min-h-screen w-full"
+      style={{
+        background: OCEAN_GRADIENT,
+      }}
+    >
+      <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-8 text-center">
-          <h1 className="mb-3 text-4xl font-bold">{voyage.name}</h1>
+          <h1 className="mb-3 text-4xl font-bold text-white drop-shadow-md">
+            {voyage.name}
+          </h1>
           {voyage.description && (
-            <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-400">
+            <p className="mx-auto max-w-2xl text-lg text-blue-100">
               {voyage.description}
             </p>
           )}
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-blue-200">
             {orderedPlaylists.length}{" "}
             {orderedPlaylists.length === 1 ? "island" : "islands"}
           </p>

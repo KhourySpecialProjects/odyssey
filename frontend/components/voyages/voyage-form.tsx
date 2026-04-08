@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,13 +41,17 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
   >([]);
   const [error, setError] = useState("");
 
-  const availablePlaylists = playlists.filter(
-    (p) =>
-      !selectedPlaylists.some((sp) => sp.id === p.id) &&
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const availablePlaylists = useMemo(
+    () =>
+      playlists.filter(
+        (p) =>
+          !selectedPlaylists.some((sp) => sp.id === p.id) &&
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    [playlists, selectedPlaylists, searchQuery],
   );
 
-  function addPlaylist(playlist: Playlist) {
+  const addPlaylist = useCallback((playlist: Playlist) => {
     const dropletCount = playlist.droplets?.length ?? 0;
     setSelectedPlaylists((prev) => [
       ...prev,
@@ -60,31 +64,31 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
       },
     ]);
     setSearchQuery("");
-  }
+  }, []);
 
-  function removePlaylist(id: number) {
+  const removePlaylist = useCallback((id: number) => {
     setSelectedPlaylists((prev) =>
       prev.filter((p) => p.id !== id).map((p, i) => ({ ...p, orderIndex: i })),
     );
-  }
+  }, []);
 
-  function moveUp(index: number) {
+  const moveUp = useCallback((index: number) => {
     if (index === 0) return;
     setSelectedPlaylists((prev) => {
       const next = [...prev];
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
       return next.map((p, i) => ({ ...p, orderIndex: i }));
     });
-  }
+  }, []);
 
-  function moveDown(index: number) {
+  const moveDown = useCallback((index: number) => {
     setSelectedPlaylists((prev) => {
       if (index === prev.length - 1) return prev;
       const next = [...prev];
       [next[index], next[index + 1]] = [next[index + 1], next[index]];
       return next.map((p, i) => ({ ...p, orderIndex: i }));
     });
-  }
+  }, []);
 
   function handleSubmit(status: "draft" | "published") {
     setError("");
@@ -299,7 +303,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
           <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
             Live Preview
           </h3>
-          <VoyageMap playlists={selectedPlaylists} />
+          <VoyageMap playlists={selectedPlaylists} showOceanBackground />
         </div>
       </div>
     </div>
