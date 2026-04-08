@@ -606,7 +606,9 @@ export function Sidebar({
               <Link
                 href={
                   pathname.startsWith(`/draft/d/${droplet.slug}/`)
-                    ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`,"").split("/")[0]}` : `/d/${droplet.slug}`}
+                    ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`, "").split("/")[0]}`
+                    : `/d/${droplet.slug}`
+                }
                 className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
                 Preview
