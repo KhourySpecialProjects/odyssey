@@ -470,8 +470,38 @@ export interface Voyage {
   status: "draft" | "published";
   authors?: AuthorizedUser[];
   voyage_playlists?: VoyagePlaylist[];
+  voyage_nodes?: VoyageNode[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface VoyageNode {
+  id: number;
+  isMainPath: boolean;
+  branchType: "required" | "optional";
+  nodeType: "playlist" | "checkpoint";
+  orderIndex: number;
+  label: string;
+  voyage?: Voyage;
+  playlist?: Playlist;
+  parentNode?: VoyageNode | null;
+  childNodes?: VoyageNode[];
+}
+
+export interface VoyageEnrollment {
+  id: number;
+  enrolledAt: string;
+  completionPercentage: number;
+  authorizedUser?: AuthorizedUser;
+  voyage?: Voyage;
+}
+
+export interface VoyageNodeCompletion {
+  id: number;
+  completedAt: string;
+  authorizedUser?: AuthorizedUser;
+  voyageNode?: VoyageNode;
+  voyageEnrollment?: VoyageEnrollment;
 }
 
 interface CustomBlockNoteBlock {

@@ -28,6 +28,12 @@
       "relation": "oneToMany",
       "target": "api::voyage-playlist.voyage-playlist",
       "mappedBy": "voyage"
+    },
+    "voyage_nodes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::voyage-node.voyage-node",
+      "mappedBy": "voyage"
     }
   }
 }
