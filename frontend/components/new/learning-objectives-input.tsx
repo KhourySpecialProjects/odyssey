@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/learning-objective";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { CornerDownLeft } from "lucide-react";
+import { IconCornerDownLeft } from "@tabler/icons-react";
 import { updateDropletLearningObjective } from "@/lib/requests/droplet";
 
 export function LearningObjectivesInput({
@@ -57,41 +56,12 @@ export function LearningObjectivesInput({
   };
 
   return (
-    <div
-      className={cn(
-        "flex w-min flex-col items-start justify-center select-none",
-        className,
-      )}
-    >
-      <div className="mb-0 flex w-full items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold">
-            Learning Objectives{" "}
-            {firstTime && <span className="text-red-500">*</span>}
-          </h2>
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-300">
-            By completing this Droplet, you should:
-          </p>
-        </div>
-      </div>
-      <div className="h-40 w-full space-y-1.5 overflow-y-scroll rounded p-2">
-        <style jsx>{`
-          div::-webkit-scrollbar {
-            width: 10px;
-          }
-          div::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-          }
-          div::-webkit-scrollbar-thumb {
-            background-color: #888;
-            border-radius: 10px;
-            border: 2px solid #f1f1f1;
-          }
-          div::-webkit-scrollbar-thumb:hover {
-            background: #555;
-          }
-        `}</style>
+    <div className={cn("w-full", className)}>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        Learning Objectives{" "}
+        {firstTime && <span className="text-red-500">*</span>}
+      </h2>
+      <div className="mt-4 rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
         <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
           {learningObjectives.map((objective, index) => (
             <LearningObjectiveDisplay
@@ -108,9 +78,7 @@ export function LearningObjectivesInput({
               <Input
                 name="objective"
                 value={newObjective}
-                onChange={(e) => {
-                  setNewObjective(e.target.value);
-                }}
+                onChange={(e) => setNewObjective(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -120,19 +88,21 @@ export function LearningObjectivesInput({
                   }
                 }}
                 placeholder="New Learning Objective..."
+                className="placeholder:text-[#121216]"
                 autoComplete="off"
               />
-              <Button
-                size="sm"
+              <button
                 type="button"
+                aria-label="Add learning objective"
                 onClick={() => {
                   if (newObjective.trim() !== "") {
                     addLearningObjective(newObjective);
                   }
                 }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
-                <CornerDownLeft />
-              </Button>
+                <IconCornerDownLeft className="h-5 w-5" stroke={1.8} />
+              </button>
             </div>
           </li>
         </ul>

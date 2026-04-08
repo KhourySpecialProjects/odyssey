@@ -110,7 +110,7 @@ export function PlaylistCard({
   return (
     <Link
       href={linkTo}
-      className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+      className="inline-block h-full w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
       <div className="p-6">
         <div>

@@ -95,6 +95,7 @@ export function NextSteps({
                   setUrl(e.target.value);
                 }}
                 placeholder="URL"
+                className="placeholder:text-[#121216]"
                 autoComplete="off"
               />
               <Input
@@ -104,6 +105,7 @@ export function NextSteps({
                   setLabel(e.target.value);
                 }}
                 placeholder="Label"
+                className="placeholder:text-[#121216]"
                 autoComplete="off"
               />
               <AddButton />

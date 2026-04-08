@@ -363,7 +363,9 @@ ${
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
-                <Badge variant="destructive">Draft</Badge>
+                <span className="inline-flex items-center rounded-[16px] bg-slate-200 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-slate-600 opacity-90 dark:bg-slate-600 dark:text-slate-300">
+                  Draft
+                </span>
               ) : null}
 
               {completionPercentage != 100 && dueDate && dueDate !== "" && (

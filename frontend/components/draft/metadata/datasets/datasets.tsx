@@ -109,21 +109,16 @@ export function Datasets({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         Datasets
       </h2>
-      <p className="mt-1 text-slate-600 dark:text-slate-300">
-        Upload data files for use in notebook code blocks (CSV, JSON, or XLSX)
-      </p>
+      <div className="mt-1 flex items-center justify-between">
+        <p className="text-slate-600 dark:text-slate-300">
+          Upload data files for use in notebook code blocks (CSV, JSON, or XLSX)
+        </p>
+        <span className="ml-4 shrink-0 rounded-full border border-[#D0D5DD] px-3 py-0.5 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
+          {datasets.length} / {MAX_DATASETS} datasets
+        </span>
+      </div>
 
       <div className="mt-4 space-y-3">
-        {/* Counter row */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Datasets
-          </span>
-          <span className="rounded-full border border-slate-200 px-3 py-0.5 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
-            {datasets.length} / {MAX_DATASETS} datasets
-          </span>
-        </div>
-
         {/* Drop zone */}
         {datasets.length < MAX_DATASETS && (
           <div
@@ -148,14 +143,14 @@ export function Datasets({
             onDragLeave={() => setIsDragging(false)}
             onDrop={onDrop}
           >
-            <IconUpload className="h-6 w-6 text-slate-600 dark:text-slate-300" />
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <IconUpload className="h-6 w-6 text-[#121216] dark:text-slate-300" />
+            <p className="text-sm text-[#121216] dark:text-slate-300">
               Drag &amp; drop a file here, or{" "}
               <span className="text-sky-600 underline dark:text-sky-400">
                 click to browse
               </span>
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#121216] dark:text-slate-400">
               CSV, JSON, XLSX — max 25 MB
             </p>
           </div>
@@ -172,7 +167,7 @@ export function Datasets({
         {/* Dataset list */}
         <div className="rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
           {datasets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-[#121216] dark:text-slate-300">
               <IconFile className="h-6 w-6" />
               <p className="text-sm">No datasets uploaded yet</p>
             </div>

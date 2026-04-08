@@ -8,6 +8,8 @@ interface SearchBarProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
+  iconClassName?: string;
 }
 
 /**
@@ -20,12 +22,17 @@ export function SearchBar({
   onChange,
   placeholder = "Search",
   className,
+  inputClassName,
+  iconClassName,
 }: SearchBarProps) {
   return (
     <div className={cn("relative flex w-full items-center", className)}>
       {/* Search icon — 20px from left edge */}
       <IconSearch
-        className="pointer-events-none absolute left-5 h-5 w-5 flex-shrink-0 text-[#667085]"
+        className={cn(
+          "pointer-events-none absolute left-5 h-5 w-5 flex-shrink-0 text-[#667085]",
+          iconClassName,
+        )}
         stroke={1.8}
       />
 
@@ -38,6 +45,7 @@ export function SearchBar({
           "h-11 w-full rounded-[30px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-700 dark:bg-slate-800",
           "pr-2 pl-11",
           "text-base text-slate-900 placeholder:font-normal placeholder:text-[#667085] dark:text-white dark:placeholder:text-slate-500",
+          inputClassName,
           "transition-colors outline-none focus:border-[#2D7597] focus:ring-0",
           "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
         )}
