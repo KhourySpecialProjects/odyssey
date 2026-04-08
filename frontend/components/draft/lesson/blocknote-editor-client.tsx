@@ -42,6 +42,70 @@ export const useSlideOverflow = () => useContext(SlideOverflowContext);
 
 const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
 
+const CUSTOM_BLOCK_TYPES = new Set([
+  "latex",
+  "image",
+  "callout",
+  "quiz-true-false",
+  "quiz-open-ended",
+  "quiz-multiple-choice",
+  "code-block",
+]);
+
+// Code fence language aliases → code block language values
+const LANG_ALIASES: Record<string, string> = {
+  js: "javascript",
+  ts: "typescript",
+  py: "python",
+  rb: "ruby",
+  sh: "bash",
+  cs: "csharp",
+  "c++": "cpp",
+};
+
+function resolveLanguage(lang: string): string {
+  const lower = lang.toLowerCase();
+  return LANG_ALIASES[lower] || lower;
+}
+
+function getBlockPlainText(b: unknown): string | undefined {
+  const c = (b as Record<string, unknown>).content;
+  if (!Array.isArray(c)) return undefined;
+  return c
+    .map((item: Record<string, unknown>) =>
+      typeof item?.text === "string" ? item.text : "",
+    )
+    .join("");
+}
+
+// Formatting toolbar block types to hide
+const BLOCKED_BLOCK_TYPES = new Set([
+  "Toggle Heading 1",
+  "Toggle Heading 2",
+  "Toggle Heading 3",
+  "Heading 4",
+  "Heading 5",
+  "Heading 6",
+  "Check List",
+]);
+
+// Slash menu items to hide
+const ITEMS_TO_HIDE = new Set([
+  "Quote",
+  "Divider",
+  "Audio",
+  "Code Block",
+  "File",
+  "Check List",
+  "Toggle Heading 1",
+  "Toggle Heading 2",
+  "Toggle Heading 3",
+  "Heading 4",
+  "Heading 5",
+  "Heading 6",
+  "Emoji",
+]);
+
 interface BlockNoteEditorClientProps {
   initialContent?: Block[];
   onChange?: (content: Block[]) => void;
@@ -100,39 +164,98 @@ export function BlockNoteEditorClient({
       try {
         const content = editor.document;
 
-        // Check for LaTeX markdown patterns in the document
-        for (const block of content) {
-          // Skip custom blocks that don't support text content
-          const customBlockTypes = [
-            "latex",
-            "image",
-            "callout",
-            "quiz-true-false",
-            "quiz-open-ended",
-            "quiz-multiple-choice",
-          ];
-          if (customBlockTypes.includes(block.type as string)) {
-            continue;
+        let patternApplied = false;
+
+        for (let blockIdx = 0; blockIdx < content.length; blockIdx++) {
+          const block = content[blockIdx];
+          if (CUSTOM_BLOCK_TYPES.has(block.type as string)) continue;
+
+          // Check for code fence patterns before markdown conversion
+          const plain = getBlockPlainText(block)?.trim();
+          if (plain && plain.startsWith("```")) {
+            // Single-line: ```content``` — must have closing backticks
+            // ```js food``` → language=javascript, code=food
+            // ```food``` → language=javascript, code=food (no space = all code)
+            const singleLineMatch = plain.match(/^```(.+?)```$/);
+            if (singleLineMatch) {
+              const inner = singleLineMatch[1];
+              const langCodeMatch = inner.match(/^(\w+)\s+(.+)$/);
+              const language = langCodeMatch
+                ? resolveLanguage(langCodeMatch[1])
+                : "javascript";
+              const code = langCodeMatch
+                ? langCodeMatch[2].trim()
+                : inner.trim();
+
+              processingPattern = true;
+              await editor.replaceBlocks(
+                [block],
+                [
+                  {
+                    type: "code-block",
+                    props: { language, code },
+                  } as unknown as Parameters<typeof editor.replaceBlocks>[1][0],
+                ],
+              );
+              processingPattern = false;
+              patternApplied = true;
+              break;
+            }
+
+            // Multi-line fence: only trigger when a closing ``` exists
+            const openFenceMatch = plain.match(/^```(\w*)$/);
+            if (openFenceMatch) {
+              const language = openFenceMatch[1]
+                ? resolveLanguage(openFenceMatch[1])
+                : "javascript";
+
+              const codeLines: string[] = [];
+              let closingIndex = -1;
+              const maxLookahead = Math.min(blockIdx + 51, content.length);
+              for (let i = blockIdx + 1; i < maxLookahead; i++) {
+                const nextBlock = content[i];
+                if (CUSTOM_BLOCK_TYPES.has(nextBlock.type as string)) break;
+                const nextPlain = getBlockPlainText(nextBlock)?.trim();
+                if (nextPlain === undefined) break;
+                if (nextPlain === "```") {
+                  closingIndex = i;
+                  break;
+                }
+                codeLines.push(nextPlain);
+              }
+
+              if (closingIndex !== -1) {
+                const blocksToReplace = content.slice(
+                  blockIdx,
+                  closingIndex + 1,
+                );
+                processingPattern = true;
+                await editor.replaceBlocks(blocksToReplace, [
+                  {
+                    type: "code-block",
+                    props: {
+                      language,
+                      code: codeLines.join("\n"),
+                    },
+                  } as unknown as Parameters<typeof editor.replaceBlocks>[1][0],
+                ]);
+                processingPattern = false;
+                patternApplied = true;
+                break;
+              }
+            }
           }
 
-          // Try to convert block to markdown - skip if it fails or has no text
-          let blockText: string;
-          try {
-            blockText = editor.blocksToMarkdownLossy([block]);
-            if (!blockText || typeof blockText !== "string") continue;
-          } catch {
-            continue;
-          }
-
-          // Check for $...$ pattern (inline LaTeX) - split into blocks
-          const inlineLatexMatch = blockText.match(/\$([^$]+)\$/);
+          // Check for $...$ pattern (inline LaTeX) using already-extracted plain text
+          if (!plain) continue;
+          const inlineLatexMatch = plain.match(/\$([^$]+)\$/);
           if (inlineLatexMatch && inlineLatexMatch.index !== undefined) {
             const latexContent = inlineLatexMatch[1].trim();
             if (latexContent) {
-              const textBefore = blockText
+              const textBefore = plain
                 .substring(0, inlineLatexMatch.index)
                 .trim();
-              const textAfter = blockText
+              const textAfter = plain
                 .substring(inlineLatexMatch.index + inlineLatexMatch[0].length)
                 .trim();
 
@@ -168,6 +291,9 @@ export function BlockNoteEditorClient({
             }
           }
         }
+
+        // Skip onChange if a pattern was applied — replaceBlocks triggers another cycle
+        if (patternApplied) return;
 
         // Always call onChange with the final content
         setDocumentBlocks(content as unknown as CustomBlockNoteBlock[]);
@@ -277,38 +403,10 @@ export function BlockNoteEditorClient({
     };
   }, [editor, isReady]);
 
-  //  formatting toolbar block types to hide
-  const blockedBlockTypes = new Set([
-    "Toggle Heading 1",
-    "Toggle Heading 2",
-    "Toggle Heading 3",
-    "Heading 4",
-    "Heading 5",
-    "Heading 6",
-    "Check List",
-  ]);
-
-  // slash menu items to hide
-  const itemsToHide = new Set([
-    "Quote",
-    "Divider",
-    "Audio",
-    "Code Block",
-    "File",
-    "Check List",
-    "Toggle Heading 1",
-    "Toggle Heading 2",
-    "Toggle Heading 3",
-    "Heading 4",
-    "Heading 5",
-    "Heading 6",
-    "Emoji",
-  ]);
-
   const filteredBlockTypeItems = useMemo(
     () =>
       blockTypeSelectItems(editor.dictionary).filter(
-        (item) => !blockedBlockTypes.has(item.name ?? ""),
+        (item) => !BLOCKED_BLOCK_TYPES.has(item.name ?? ""),
       ),
     [editor.dictionary],
   );
@@ -351,7 +449,7 @@ export function BlockNoteEditorClient({
             triggerCharacter="/"
             getItems={async (query) => {
               const defaultItems = getDefaultReactSlashMenuItems(editor).filter(
-                (item) => !itemsToHide.has(item.title ?? ""),
+                (item) => !ITEMS_TO_HIDE.has(item.title ?? ""),
               );
               const calloutItems = getCalloutSlashMenuItems(editor);
               const quizItems = getQuizSlashMenuItems(editor);
