@@ -63,6 +63,16 @@ jest.mock("@/lib/requests/lesson", () => ({
   deleteLesson: jest.fn(),
 }));
 
+jest.mock("@/hooks/useEditingLock", () => ({
+  useEditingLock: () => ({
+    isLocked: true,
+    isOwnLock: true,
+    lockedBy: null,
+    isLoading: false,
+    release: jest.fn(),
+  }),
+}));
+
 jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn(),
 }));

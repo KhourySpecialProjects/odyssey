@@ -64,7 +64,7 @@ export function LessonRenderer({
     lockedBy,
     isLoading: lockLoading,
   } = useEditingLock(lesson.id);
-  const isReadOnly = !isOwnLock && !lockLoading;
+  const isReadOnly = lockLoading || !isOwnLock;
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(

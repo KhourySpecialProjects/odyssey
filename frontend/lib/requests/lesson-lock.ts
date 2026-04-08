@@ -84,14 +84,18 @@ export async function heartbeatLessonLock(
 export async function getLessonLockStatus(
   lessonId: number,
 ): Promise<LockStatus> {
-  const res = await fetch(`${STRAPI_API_URL}/lessons/${lessonId}/lock-status`, {
-    method: "GET",
-    headers: strapiHeaders(),
-  });
+  try {
+    const res = await fetch(
+      `${STRAPI_API_URL}/lessons/${lessonId}/lock-status`,
+      { method: "GET", headers: strapiHeaders() },
+    );
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return { isLocked: false, lockedBy: null, lockedAt: null };
+    }
+
+    return res.json();
+  } catch {
     return { isLocked: false, lockedBy: null, lockedAt: null };
   }
-
-  return res.json();
 }
