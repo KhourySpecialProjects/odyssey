@@ -355,7 +355,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       <div className="flex items-center gap-2">
                         {/* Order badge (main path only) */}
                         {!isBranch && (
-                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-700 text-xs font-bold text-white">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#297496] text-xs font-bold text-white">
                             {node.orderIndex + 1}
                           </div>
                         )}
@@ -414,10 +414,10 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       </div>
 
                       {/* Bottom row: branch controls */}
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-col gap-2">
                         {/* "Branches from" select */}
                         <div className="flex items-center gap-1.5">
-                          <label className="text-xs text-slate-500">
+                          <label className="shrink-0 text-xs text-slate-500">
                             Branches from
                           </label>
                           <select
@@ -430,7 +430,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                               );
                             }}
                             disabled={isPending}
-                            className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <option value="">None (main path)</option>
                             {mainPathNodes
