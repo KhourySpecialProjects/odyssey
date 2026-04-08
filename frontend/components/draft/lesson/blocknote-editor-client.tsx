@@ -359,9 +359,9 @@ export function BlockNoteEditorClient({
               for (let i = blockIdx + 1; i < maxLookahead; i++) {
                 const nextBlock = content[i];
                 if (CUSTOM_BLOCK_TYPES.has(nextBlock.type as string)) break;
-                const nextPlain = getBlockPlainText(nextBlock)?.trim();
+                const nextPlain = getBlockPlainText(nextBlock);
                 if (nextPlain === undefined) break;
-                if (nextPlain === "```") {
+                if (nextPlain.trim() === "```") {
                   closingIndex = i;
                   break;
                 }
