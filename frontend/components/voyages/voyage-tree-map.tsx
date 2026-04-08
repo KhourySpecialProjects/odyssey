@@ -145,31 +145,16 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
       const from = mainLayout[i];
       const to = mainLayout[i + 1];
 
-      if (from.children.length > 0) {
-        // Connect each branch child to the next main node
-        for (const child of from.children) {
-          lines.push({
-            px: child.x,
-            py: child.y,
-            cx: to.x,
-            cy: to.y,
-            pSize: BRANCH_SIZE,
-            cSize: MAIN_SIZE,
-            key: `c${child.node.id}-m${to.node.id}`,
-          });
-        }
-      } else {
-        // Direct main-to-main
-        lines.push({
-          px: from.x,
-          py: from.y,
-          cx: to.x,
-          cy: to.y,
-          pSize: MAIN_SIZE,
-          cSize: MAIN_SIZE,
-          key: `m${from.node.id}-m${to.node.id}`,
-        });
-      }
+      // Always connect main-to-main (the spine)
+      lines.push({
+        px: from.x,
+        py: from.y,
+        cx: to.x,
+        cy: to.y,
+        pSize: MAIN_SIZE,
+        cSize: MAIN_SIZE,
+        key: `m${from.node.id}-m${to.node.id}`,
+      });
     }
 
     // Parent to branch connectors

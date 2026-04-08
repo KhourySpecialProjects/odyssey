@@ -96,11 +96,12 @@ export default async function VoyagePage({ params }: Props) {
     ? Math.round(computeCompletionPercentage(voyageNodes, completedNodeIds))
     : 0;
 
+  const requiredNodes = voyageNodes.filter((n) => n.branchType !== "optional");
   const completedCount = isEnrolled
-    ? voyageNodes.filter((n) => completedNodeIds.has(n.id)).length
+    ? requiredNodes.filter((n) => completedNodeIds.has(n.id)).length
     : 0;
 
-  const totalCount = voyageNodes.length;
+  const totalCount = requiredNodes.length;
 
   const firstIncompleteNode = isEnrolled
     ? findFirstIncompleteNode(voyageNodes, completedNodeIds)

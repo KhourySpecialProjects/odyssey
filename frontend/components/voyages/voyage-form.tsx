@@ -138,7 +138,14 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
       setSelectedNodes((prev) => {
         // Recompute main-path orderIndex after structure change
         const updated = prev.map((n) => {
-          if (n.playlistId !== playlistId) return n;
+          if (n.playlistId !== playlistId) {
+            // If this node was a child of the node being converted to branch,
+            // promote it to main path to avoid orphaning
+            if (parentId !== null && n.parentPlaylistId === playlistId) {
+              return { ...n, isMainPath: true, parentPlaylistId: null };
+            }
+            return n;
+          }
           if (parentId === null) {
             // Promoting to main path
             const mainCount = prev.filter((p) => p.isMainPath).length;
@@ -153,7 +160,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             ...n,
             isMainPath: false,
             parentPlaylistId: parentId,
-            orderIndex: 0, // branch order = add order, reset here
+            orderIndex: 0,
           };
         });
         // Reindex main-path orderIndex sequentially

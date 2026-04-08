@@ -27,7 +27,10 @@ export function VoyageEnrollButton({
 
   function handleEnroll() {
     startTransition(async () => {
-      await enrollInVoyage(voyageId);
+      const result = await enrollInVoyage(voyageId);
+      if (!result.ok) {
+        console.error("Enrollment failed:", result.error);
+      }
     });
   }
 

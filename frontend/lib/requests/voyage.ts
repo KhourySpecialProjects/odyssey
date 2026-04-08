@@ -476,6 +476,15 @@ export async function createVoyageWithNodes(data: {
           ? playlistIdToNodeId.get(node.parentPlaylistId) ?? null
           : null;
 
+      if (parentNodeId === null && node.parentPlaylistId != null) {
+        await cleanupVoyage();
+        return {
+          ok: false,
+          error: `Branch node "${node.label}" references unknown parent playlist.`,
+          data: null,
+        };
+      }
+
       const nodeBody: Record<string, unknown> = {
         voyage: voyageId,
         playlist: node.playlistId,

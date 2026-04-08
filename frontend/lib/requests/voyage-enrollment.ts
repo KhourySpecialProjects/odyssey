@@ -633,7 +633,7 @@ async function checkPlaylistVoyageNode(
       await markVoyageNodeComplete(node.id, enrollment.id);
     }
   } catch (err) {
-    console.error("Error in checkAndCompleteVoyageNode:", err);
+    console.error("Error in checkPlaylistVoyageNode:", err);
     // Swallow error so playlist completion is not broken
   }
 }
