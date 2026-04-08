@@ -18,6 +18,7 @@ export const getCachedUser = cache((email: string) =>
 
 export const getCachedUserSocial = cache(async (email: string) => {
   const user = await getCachedUser(email);
+  if (!user) return undefined;
   return getAuthorizedUserByEmail(
     email,
     USER_POPULATES.social,
