@@ -355,7 +355,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       <div className="flex items-center gap-2">
                         {/* Order badge (main path only) */}
                         {!isBranch && (
-                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-700 text-xs font-bold text-white">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#297496] text-xs font-bold text-white">
                             {node.orderIndex + 1}
                           </div>
                         )}
