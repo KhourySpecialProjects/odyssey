@@ -42,6 +42,16 @@ export const useSlideOverflow = () => useContext(SlideOverflowContext);
 
 const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
 
+function getBlockPlainText(b: unknown): string | undefined {
+  const c = (b as Record<string, unknown>).content;
+  if (!Array.isArray(c)) return undefined;
+  return c
+    .map((item: Record<string, unknown>) =>
+      typeof item?.text === "string" ? item.text : "",
+    )
+    .join("");
+}
+
 interface BlockNoteEditorClientProps {
   initialContent?: Block[];
   onChange?: (content: Block[]) => void;
@@ -115,24 +125,19 @@ export function BlockNoteEditorClient({
             continue;
           }
 
-          // Try to convert block to markdown - skip if it fails or has no text
-          let blockText: string;
-          try {
-            blockText = editor.blocksToMarkdownLossy([block]);
-            if (!blockText || typeof blockText !== "string") continue;
-          } catch {
-            continue;
-          }
+          // Extract plain text for LaTeX check (avoids flushSync from blocksToMarkdownLossy)
+          const plainText = getBlockPlainText(block)?.trim();
+          if (!plainText) continue;
 
           // Check for $...$ pattern (inline LaTeX) - split into blocks
-          const inlineLatexMatch = blockText.match(/\$([^$]+)\$/);
+          const inlineLatexMatch = plainText.match(/\$([^$]+)\$/);
           if (inlineLatexMatch && inlineLatexMatch.index !== undefined) {
             const latexContent = inlineLatexMatch[1].trim();
             if (latexContent) {
-              const textBefore = blockText
+              const textBefore = plainText
                 .substring(0, inlineLatexMatch.index)
                 .trim();
-              const textAfter = blockText
+              const textAfter = plainText
                 .substring(inlineLatexMatch.index + inlineLatexMatch[0].length)
                 .trim();
 
