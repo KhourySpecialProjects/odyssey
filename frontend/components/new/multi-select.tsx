@@ -112,7 +112,7 @@ export function MultiSelect({
                 </div>
               </>
             ) : (
-              <p className="font-normal text-slate-500 dark:text-slate-500">
+              <p className="font-normal text-[#121216] dark:text-slate-500">
                 {label === "Tags"
                   ? "Select Tags..."
                   : label === "Prerequisites"

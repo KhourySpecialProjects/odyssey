@@ -17,7 +17,6 @@ export function FeedClient({
   const [isLoading, setIsLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Reset to page 1 when filters change — the page change triggers the fetch effect
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedRoles]);
@@ -40,7 +39,7 @@ export function FeedClient({
       }
     };
     load();
-  }, [authUser, currentPage]);
+  }, [authUser, currentPage, selectedRoles]);
 
   return (
     <div className="flex h-full flex-col">

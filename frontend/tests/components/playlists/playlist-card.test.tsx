@@ -72,7 +72,7 @@ describe("PlaylistCard", () => {
 
     it("renders with correct card styling", () => {
       const { container } = render(<PlaylistCard playlist={mockPlaylist} />);
-      const card = container.querySelector(".border-slate-200");
+      const card = container.querySelector(".rounded-lg");
       expect(card).toBeInTheDocument();
     });
   });

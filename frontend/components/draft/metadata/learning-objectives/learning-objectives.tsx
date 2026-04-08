@@ -104,6 +104,7 @@ export function LearningObjectives({
                   handleDraftChange(e.target.value);
                 }}
                 placeholder="New Learning Objective..."
+                className="placeholder:text-[#121216]"
                 autoComplete="off"
               />
               <AddButton />

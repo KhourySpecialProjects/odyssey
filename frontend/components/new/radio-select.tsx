@@ -23,7 +23,7 @@ export function RadioSelect({
 }) {
   return (
     <div className={`flex flex-col items-start ${className}`}>
-      <div className="py-1.5 text-sm font-semibold">
+      <div className="py-1.5 text-xl font-bold text-slate-900 dark:text-white">
         {label} {firstTime && <span className="text-red-500">*</span>}
       </div>
       <RadioGroup

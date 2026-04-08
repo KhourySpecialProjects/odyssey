@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { Users } from "lucide-react";
 
 const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
   { value: AnnouncementTypeTitle.System, label: "System" },
@@ -79,8 +78,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
             rel="noopener noreferrer"
             className="mb-4 block shrink-0"
           >
-            <Button className="w-full justify-start rounded-full bg-[#287697] hover:bg-[#1f6080]">
-              <Users className="mr-2 h-4 w-4" />
+            <Button className="w-full rounded-full bg-[#287697] hover:bg-[#1f6080]">
               Manage Friends
             </Button>
           </Link>

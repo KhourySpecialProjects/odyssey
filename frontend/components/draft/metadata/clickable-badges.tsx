@@ -355,13 +355,9 @@ export function ClickableBadges({
                 : "bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300",
             )}
           >
-            {localDifficulty ? (
-              uppercaseFirstChar(localDifficulty.toLowerCase())
-            ) : (
-              <>
-                No Difficulty <span className="text-red-500">*</span>
-              </>
-            )}
+            {localDifficulty
+              ? uppercaseFirstChar(localDifficulty.toLowerCase())
+              : "No Difficulty"}
           </span>
         </button>
 
@@ -454,7 +450,7 @@ export function ClickableBadges({
                         handleCreateAndAddTag();
                       }
                     }}
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-[#121216] focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
                     autoFocus
                     disabled={isPending}
                   />
@@ -489,7 +485,7 @@ export function ClickableBadges({
                       placeholder="Search tags..."
                       value={tagSearchQuery}
                       onChange={(e) => setTagSearchQuery(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-[#121216] focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
                       autoFocus
                     />
                   </div>

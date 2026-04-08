@@ -76,9 +76,10 @@ export default function Sidebar({
     droplet.lessons?.some((lesson) => lesson.id === id),
   ).length;
 
-  const dropletProgress = Math.round(
-    (totalLessonsCompleted / totalLessons) * 100,
-  );
+  const dropletProgress =
+    totalLessons > 0
+      ? Math.round((totalLessonsCompleted / totalLessons) * 100)
+      : 0;
 
   useLayoutEffect(() => {
     const updateHeaderHeight = () => {
@@ -391,7 +392,10 @@ export default function Sidebar({
           <div className="bottom-0 left-0 mt-4 w-full space-y-4 border-t border-t-slate-200 bg-slate-50 p-2 xl:sticky xl:mb-0 xl:flex-col xl:px-3 dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
-              <Progress value={dropletProgress} className="mt-1.5" />
+              <Progress
+                value={dropletProgress}
+                className="mt-1.5 border border-[#D0D5DD] dark:border-slate-700"
+              />
             </div>
           </div>
         </div>

@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { MoveLeftIcon, SearchIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { SearchBar } from "@/components/admin/search-bar";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -98,27 +97,8 @@ export function PlaylistForm({
   };
 
   const [isOpen, setIsOpen] = useState(false);
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
-  };
-
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
-
-  const updateQueryString = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) {
-      params.set("q", value);
-    } else {
-      params.delete("q");
-    }
-    router.push(`${pathname}?${params.toString()}`);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,156 +167,148 @@ export function PlaylistForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-6xl space-y-8"
+      className="flex h-min w-full flex-col space-y-8"
       role="form"
     >
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">
+      <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="lg:w-1/2">
+          <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
             Playlist Name <span className="text-red-500">*</span>
-          </Label>
+          </div>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter playlist name"
-            className="max-w-xl"
+            className="w-full border-[#D0D5DD] dark:border-slate-700"
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="public"
-            checked={isPublic}
-            onCheckedChange={setIsPublic}
-          />
-          <Label htmlFor="public">Make this playlist public</Label>
-        </div>
-
-        <div>
-          <Label htmlFor="description">Playlist Description</Label>
+        <div className="lg:w-1/2">
+          <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+            Description
+          </div>
           <Input
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter playlist description"
-            className="max-w-xl"
+            className="w-full border-[#D0D5DD] dark:border-slate-700"
           />
         </div>
       </div>
 
       <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Select and Arrange Droplets</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {selectedDroplets.length} droplets selected ({totalLessons} lessons
-            total)
-          </p>
+        <div className="pb-2 text-xl font-bold text-slate-900 dark:text-white">
+          Select and Arrange Droplets <span className="text-red-500">*</span>
         </div>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+          {selectedDroplets.length} droplets selected ({totalLessons} lessons
+          total)
+        </p>
 
-        <Separator className="mb-4 dark:bg-slate-300" />
-
-        <div className="flex justify-end space-x-4 pt-4 pb-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/my-content")}
-            className="h-12 bg-white text-black dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
-          >
-            <MoveLeftIcon size={16} />
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="h-12 dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
-          >
-            Save Playlist
-          </Button>
-          <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[825px]">
-              <DialogHeader>
-                <DialogTitle className="dark:text-slate-300">
-                  Would you like to announce these changes to everyone enrolled
-                  in this playlist?
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="mt-4 flex flex-col gap-4">
-                <Button
-                  className="dark:bg-slate-300"
-                  onClick={handlePlaylistPost}
-                >
-                  Share
-                </Button>
-                <Button
-                  className="dark:bg-slate-300"
-                  onClick={() => {
-                    setIsOpen(false);
-                    router.push("/my-content");
-                  }}
-                >
-                  Not Now
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-        {error && <p className="text-center text-red-500">{error}</p>}
-
-        <div
-          className="xs:max-w-sm flex items-center space-x-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateQueryString(tempQuery);
-          }}
-        >
-          <Input
-            type="search"
-            placeholder="Search Droplets..."
-            className="w-full md:w-[125px] lg:w-[300px]"
-            value={tempQuery}
-            onChange={(e) => setTempQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-              }
-            }}
-          />
-          <Button
-            before={<SearchIcon />}
-            onClick={() => updateQueryString(tempQuery)}
-            className="dark:bg-slate-300"
-            type="button"
-          >
-            <span className="sr-only md:not-sr-only">Search</span>
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 pt-4 md:gap-8">
-          <div className="space-y-4">
-            <h3 className="text-center font-semibold dark:text-slate-300">
-              Available Droplets
-            </h3>
+        <div className="grid grid-cols-2 gap-2 md:gap-8">
+          <div className="flex flex-col gap-2">
+            <SearchBar
+              placeholder="Search Droplets..."
+              value={tempQuery}
+              onChange={(e) => setTempQuery(e.target.value)}
+              className="w-full"
+              inputClassName="h-9 text-sm bg-white dark:bg-slate-800"
+              iconClassName="h-4 w-4"
+            />
             <DraggableTileList
               droplets={filteredDroplets}
               onAction={handleAddDroplet}
               actionType="add"
+              title="Available Droplets"
             />
           </div>
-          <div className="space-y-4">
-            <h3 className="text-center font-semibold dark:text-slate-300">
-              Selected Droplets
-            </h3>
+          <div className="flex flex-col gap-2">
+            <div className="h-9" />
             <DraggableTileList
               droplets={selectedDroplets}
               onAction={handleRemoveDroplet}
               actionType="remove"
               onMoveUp={handleMoveUp}
               onMoveDown={handleMoveDown}
+              title="Selected Droplets"
             />
           </div>
         </div>
       </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="public"
+            checked={isPublic}
+            onCheckedChange={setIsPublic}
+          />
+          <Label
+            htmlFor="public"
+            className="text-sm text-slate-700 dark:text-slate-300"
+          >
+            Make this playlist public
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={() => router.push("/my-content")}
+            className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            type="submit"
+            className="bg-[#287697] text-white hover:bg-[#1f6080]"
+          >
+            {existingPlaylist ? "Save Playlist" : "Create Playlist"}
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+          <p className="text-sm font-medium text-red-800 dark:text-red-200">
+            {error}
+          </p>
+        </div>
+      )}
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[825px]">
+          <DialogHeader>
+            <DialogTitle className="dark:text-slate-300">
+              Would you like to announce these changes to everyone enrolled in
+              this playlist?
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4 flex flex-col gap-4">
+            <Button
+              className="bg-[#287697] text-white hover:bg-[#1f6080]"
+              onClick={handlePlaylistPost}
+            >
+              Share
+            </Button>
+            <Button
+              variant="outline"
+              className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/my-content");
+              }}
+            >
+              Not Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

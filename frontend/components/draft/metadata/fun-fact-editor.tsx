@@ -57,7 +57,7 @@ export function FunFactEditor({
 
       <div className="mt-4 mb-4 w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-8 dark:border-slate-600 dark:bg-slate-800">
         <div
-          className={`prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300 ${currentFact ? "" : "text-slate-500 dark:text-slate-500"}`}
+          className={`prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300 ${currentFact ? "" : "text-[#121216] dark:text-slate-500"}`}
         >
           {currentFact ? currentFact : "Nothing here yet..."}
         </div>

@@ -82,7 +82,9 @@ export function FriendRequests({
                   ))}
             </ul>
           ) : (
-            <p className="text-center">You have no friend requests</p>
+            <p className="text-left text-sm text-[#475569] dark:text-slate-400">
+              You have no friend requests
+            </p>
           )}
         </div>
         {totalPages > 1 && (

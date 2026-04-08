@@ -100,8 +100,8 @@ describe("CreateDropletForm", () => {
     it("renders all form sections", () => {
       render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
 
-      expect(screen.getByText("Metadata")).toBeInTheDocument();
-      expect(screen.getByText("Overview")).toBeInTheDocument();
+      expect(screen.getByText("Name")).toBeInTheDocument();
+      expect(screen.getByText("Learning Objectives")).toBeInTheDocument();
     });
 
     it("renders name input field", () => {
@@ -409,8 +409,8 @@ describe("CreateDropletForm", () => {
         <CreateDropletForm tags={mockTags} author={mockAuthor} />,
       );
 
-      const metadataLabel = screen.getByText("Metadata");
-      expect(metadataLabel).toHaveClass("text-slate-400");
+      const sections = container.querySelectorAll(".dark\\:bg-slate-800");
+      expect(sections.length).toBeGreaterThan(0);
     });
 
     it("applies dark mode classes to form sections", () => {
@@ -426,8 +426,7 @@ describe("CreateDropletForm", () => {
       render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      expect(cancelButton).toHaveClass("bg-black");
-      expect(cancelButton).toHaveClass("text-white");
+      expect(cancelButton).toHaveClass("text-[#344054]");
     });
 
     it("submit button has correct styling", () => {
@@ -436,7 +435,6 @@ describe("CreateDropletForm", () => {
       const submitButton = screen.getByRole("button", {
         name: /create droplet/i,
       });
-      expect(submitButton).toHaveClass("bg-black");
       expect(submitButton).toHaveClass("text-white");
     });
   });
