@@ -3,12 +3,6 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { useState, useEffect, useRef, ErrorInfo } from "react";
 import React from "react";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  atomOneDark,
-  githubGist,
-} from "react-syntax-highlighter/dist/esm/styles/hljs";
-import python from "react-syntax-highlighter/dist/esm/languages/hljs/python";
 import {
   Play,
   Loader2,
@@ -21,12 +15,10 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
 import { usePyodide } from "@/lib/pyodide/pyodide-context";
 import { useDatasets } from "@/lib/contexts/dataset-context";
 import type { ExecutionResult } from "@/lib/pyodide/runtime";
-
-SyntaxHighlighter.registerLanguage("python", python);
+import { CodeEditor } from "@/components/ui/code-editor";
 
 // BlockNote's createReactBlockSpec doesn't export prop types for the render callback.
 // This matches the pattern used by the existing CodeBlock component.
@@ -44,11 +36,8 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
   >(null);
   const [showTestEditor, setShowTestEditor] = useState(false);
   const [testCode, setTestCode] = useState<string>(block.props.testCode || "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
 
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const isViewMode = editor?.isEditable === false;
   const isEditable = block.props.editable === "true";
   const hasTests = (block.props.testCode || "").trim().length > 0;
@@ -69,16 +58,6 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
     }
   }, [block.props.code, isEditing]);
 
-  // Focus textarea when editing starts
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      const timer = setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-  }, [isEditing]);
-
   const handleSave = () => {
     if (!isMounted || !editor) return;
     try {
@@ -89,11 +68,6 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
     } catch (err) {
       console.error("Error saving notebook code:", err);
     }
-  };
-
-  const handleCancelEdit = () => {
-    setCode(block.props.code || "");
-    setIsEditing(false);
   };
 
   const toggleEditable = () => {
@@ -119,7 +93,7 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
     await Promise.all(
       unloaded.map((ds) =>
         pyodide
-          .loadDataset(ds.name, ds.fileUrl)
+          .loadDataset(ds.name, ds.url)
           .then(() => {
             datasetsLoadedRef.current.add(ds.id);
           })
@@ -284,71 +258,22 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
         {/* Code area */}
         <div className="min-w-0 flex-1 border-l border-slate-100 dark:border-gray-700/50">
           {isEditing ? (
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
+            // onBlur on the wrapper fires when focus leaves the CodeMirror subtree
+            <div
+              onBlur={() => {
+                if (!isViewMode) {
+                  handleSave();
+                } else {
+                  setIsEditing(false);
+                }
+              }}
+            >
+              <CodeEditor
+                language="python"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onKeyDown={(e) => {
-                  // Tab indentation
-                  if (e.key === "Tab") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const ta = e.currentTarget;
-                    const start = ta.selectionStart;
-                    const end = ta.selectionEnd;
-                    const val = ta.value;
-
-                    if (e.shiftKey) {
-                      const before = val.substring(0, start);
-                      const lines = before.split("\n");
-                      const currentLine = lines[lines.length - 1];
-                      if (currentLine.startsWith("    ")) {
-                        const newVal =
-                          val.substring(0, start - 4) + val.substring(start);
-                        setCode(newVal);
-                        setTimeout(() => {
-                          ta.selectionStart = start - 4;
-                          ta.selectionEnd = start - 4;
-                        }, 0);
-                      } else if (currentLine.startsWith("\t")) {
-                        const newVal =
-                          val.substring(0, start - 1) + val.substring(start);
-                        setCode(newVal);
-                        setTimeout(() => {
-                          ta.selectionStart = start - 1;
-                          ta.selectionEnd = start - 1;
-                        }, 0);
-                      }
-                    } else {
-                      const newVal =
-                        val.substring(0, start) + "    " + val.substring(end);
-                      setCode(newVal);
-                      setTimeout(() => {
-                        ta.selectionStart = start + 4;
-                        ta.selectionEnd = start + 4;
-                      }, 0);
-                    }
-                  }
-                  // Escape exits editing in creator mode
-                  if (e.key === "Escape") {
-                    handleCancelEdit();
-                  }
-                }}
-                onBlur={() => {
-                  // Auto-save on blur for creator; in view mode just exit editing
-                  if (!isViewMode) {
-                    handleSave();
-                  } else {
-                    setIsEditing(false);
-                  }
-                }}
-                onFocus={(e) => e.stopPropagation()}
-                className="w-full resize-none bg-slate-50 p-3 font-mono text-[13px] leading-relaxed text-slate-800 outline-none dark:bg-gray-800 dark:text-gray-100"
-                rows={Math.max(3, code.split("\n").length)}
-                style={{ minHeight: "64px" }}
-                spellCheck={false}
-                autoFocus
+                onChange={setCode}
+                minHeight="64px"
+                placeholder="# Write your Python code here"
               />
             </div>
           ) : (
@@ -359,22 +284,12 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
               )}
               onClick={handleCodeAreaClick}
             >
-              <SyntaxHighlighter
+              <CodeEditor
                 language="python"
-                style={isDark ? atomOneDark : githubGist}
-                customStyle={{
-                  margin: 0,
-                  padding: "12px",
-                  background: "transparent",
-                  fontSize: "13px",
-                  lineHeight: "1.6",
-                  fontFamily:
-                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                }}
-                PreTag="div"
-              >
-                {code || "# Write your Python code here"}
-              </SyntaxHighlighter>
+                value={code}
+                readOnly
+                placeholder="# Write your Python code here"
+              />
               {(isEditable || !isViewMode) && (
                 <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <span className="rounded bg-white/90 px-1.5 py-0.5 text-[11px] text-slate-400 shadow-sm dark:bg-gray-800/90 dark:text-gray-400">

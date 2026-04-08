@@ -9,9 +9,9 @@ import { DarkMode } from "../explore/dark-mode";
 export default async function Footer() {
   const user = await getCurrentUser();
   const linkStyles =
-    "text-sm font-regular md:text-xl text-white hover:scale-105";
+    "text-xs font-regular md:text-base text-white hover:scale-105";
   return (
-    <footer className="z-60 flex w-full flex-col items-center bg-[#83C1E1] dark:bg-[#3A6B85]">
+    <footer className="relative z-50 flex w-full flex-col items-center bg-[#83C1E1] dark:bg-[#3A6B85]">
       <Wave
         fill="#2F5569"
         paused={false}
@@ -29,7 +29,7 @@ export default async function Footer() {
         <div className="flex w-1/2 flex-row justify-start gap-4 md:w-1/4">
           <Separator
             orientation={"vertical"}
-            className="h-full w-[3px] bg-slate-200 dark:bg-slate-200"
+            className="h-full w-[1.5px] bg-slate-200 dark:bg-slate-200"
           />
           <div className="flex flex-col items-center justify-between py-2">
             <Link className={linkStyles} href="/about">

@@ -125,7 +125,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -146,7 +146,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       // Verify the item appears in both the badge and the list
@@ -169,7 +169,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -193,7 +193,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       // Wait for popover to open and find the item in the list
@@ -225,7 +225,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -254,7 +254,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -273,7 +273,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -299,7 +299,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -327,7 +327,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -359,7 +359,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -396,7 +396,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -433,7 +433,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -475,7 +475,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -505,7 +505,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -528,7 +528,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const addTagButton = await screen.findByText("Add Tag");
@@ -563,7 +563,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       const searchInput = await screen.findByPlaceholderText("Tags");
@@ -665,7 +665,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       await user.click(button);
 
       await waitFor(() => {
@@ -685,7 +685,7 @@ describe("MultiSelect", () => {
           setSelected={mockSetSelected}
         />,
       );
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       expect(button).toBeInTheDocument();
     });
 
@@ -700,7 +700,7 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByTestId("multi-select-trigger");
       button.focus();
 
       await user.keyboard("{Enter}");

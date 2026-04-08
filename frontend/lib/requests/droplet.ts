@@ -304,6 +304,7 @@ export async function updateDroplet(
       ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
       ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
+      ...(data.datasets !== undefined && { datasets: data.datasets }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),

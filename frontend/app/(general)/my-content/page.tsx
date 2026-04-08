@@ -33,6 +33,8 @@ export default async function CreateRoute() {
     redirect("/unauthorized");
   const authorizedUser = await getCachedUserCreation(user.email);
 
+  if (!authorizedUser) redirect("/unauthorized");
+
   const playlists = authorizedUser.created_playlists;
 
   return (

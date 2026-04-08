@@ -14,6 +14,7 @@ export const getCachedUser = cache((email: string) =>
 
 export const getCachedUserSocial = cache(async (email: string) => {
   const user = await getCachedUser(email);
+  if (!user) return undefined;
   return getAuthorizedUserByEmail(
     email,
     USER_POPULATES.social,
@@ -83,6 +84,7 @@ export const getCachedDraftDropletBySlug = cache((slug: string) =>
       prerequisites: { populate: "*" },
       postrequisites: { populate: "*" },
       nextSteps: { fields: ["label", "url"] },
+      datasets: { fields: ["name", "url", "fileType", "fileSize"] },
     },
   }),
 );
@@ -124,17 +126,7 @@ export const getCachedDropletBySlug = cache((slug: string) =>
       },
       nextSteps: { fields: ["id", "label", "url"] },
       datasets: {
-        fields: [
-          "id",
-          "name",
-          "format",
-          "fileUrl",
-          "fileSize",
-          "rowCount",
-          "columnCount",
-          "columnNames",
-          "columnTypes",
-        ],
+        fields: ["id", "name", "url", "fileType", "fileSize"],
       },
     },
   }),

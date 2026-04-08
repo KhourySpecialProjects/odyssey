@@ -283,7 +283,7 @@ export function GroupsPageClient({ groups }: { groups: Group[] }) {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

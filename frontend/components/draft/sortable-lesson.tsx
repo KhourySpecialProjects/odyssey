@@ -5,23 +5,18 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
-import { GripVertical, Hammer, FilePieChart, BookText } from "lucide-react";
+import { IconGripVertical } from "@tabler/icons-react";
 
 interface SortableLessonProps {
   lesson: Lesson;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
   pathname: string;
-  classes: {
-    link?: string;
-    activeLink?: string;
-  };
 }
 
 export function SortableLesson({
   lesson,
   droplet,
   pathname,
-  classes,
 }: SortableLessonProps) {
   const router = useRouter();
 
@@ -55,34 +50,39 @@ export function SortableLesson({
         isDragging && "z-10 shadow-lg",
       )}
     >
-      <div className="flex items-center">
+      <div
+        className={cn(
+          "flex h-[44px] items-center rounded-[78px] transition-colors",
+          pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
+            ? "bg-[#2D7597] text-white"
+            : "hover:bg-slate-200 dark:hover:bg-slate-700",
+        )}
+      >
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing"
+          className="cursor-grab pl-4 active:cursor-grabbing"
         >
-          <GripVertical className="mr-2 h-4 w-4 shrink-0 text-slate-400" />
+          <IconGripVertical
+            className={cn(
+              "mr-2 h-4 w-4 shrink-0",
+              pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
+                ? "text-white"
+                : "text-slate-400",
+            )}
+            stroke={1.8}
+          />
         </div>
 
         <Link
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}
           onClick={handleLessonClick}
-          className={cn(
-            classes.link,
-            "flex flex-grow items-center",
-            pathname === `/draft/d/${droplet.slug}/${lesson.slug}` &&
-              classes.activeLink,
-          )}
+          className="flex flex-grow"
           passHref
         >
-          {lesson.type === "activity" ? (
-            <Hammer className="shrink-0" />
-          ) : lesson.type === "caseStudy" ? (
-            <FilePieChart className="mr-0.5 h-5 w-5 shrink-0" />
-          ) : (
-            <BookText className="shrink-0" />
-          )}
-          <span className="ml-3 leading-snug">{lesson.name}</span>
+          <span className="pl-2 text-base leading-none font-medium">
+            {lesson.name}
+          </span>
         </Link>
       </div>
     </li>

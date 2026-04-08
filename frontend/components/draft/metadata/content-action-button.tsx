@@ -7,51 +7,16 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
-
 type ActionType =
   | "publish"
   | "requestReview"
   | "requestChanges"
   | "publishDraft";
 
-type ColorConfig = {
-  button: string;
-  buttonHover: string;
-  darkButton: string;
-  darkButtonHover: string;
-};
-
 type ContentActionButtonProps = {
   droplet: Droplet;
   actionType: ActionType;
   buttonText: string;
-};
-
-const colorConfigs: Record<ActionType, ColorConfig> = {
-  publish: {
-    button: "bg-blue-400",
-    buttonHover: "hover:bg-blue-500",
-    darkButton: "dark:bg-blue-600",
-    darkButtonHover: "dark:hover:bg-blue-800",
-  },
-  requestReview: {
-    button: "bg-orange-400",
-    buttonHover: "hover:bg-orange-500",
-    darkButton: "dark:bg-orange-600",
-    darkButtonHover: "dark:hover:bg-orange-800",
-  },
-  requestChanges: {
-    button: "bg-red-400",
-    buttonHover: "hover:bg-red-500",
-    darkButton: "dark:bg-red-600",
-    darkButtonHover: "dark:hover:bg-red-800",
-  },
-  publishDraft: {
-    button: "bg-green-400",
-    buttonHover: "hover:bg-green-500",
-    darkButton: "dark:bg-green-600",
-    darkButtonHover: "dark:hover:bg-green-800",
-  },
 };
 
 export function ContentActionButton({
@@ -64,8 +29,6 @@ export function ContentActionButton({
   const [userTxt, setUserTxt] = useState<string>("");
   const [changes, setChanges] = useState(droplet.afterReview || "");
   const router = useRouter();
-
-  const colorConfig = colorConfigs[actionType];
 
   const handleAction = async () => {
     setIsLoading(true);
@@ -283,12 +246,19 @@ export function ContentActionButton({
     </div>
   ) : null;
 
+  const buttonColorClasses =
+    actionType === "publish" || actionType === "publishDraft"
+      ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
+      : actionType === "requestReview"
+        ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
+        : "border-red-400 bg-red-400 hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
+
   return (
     <>
       <button
         onClick={() => setIsPopupOpen(true)}
         disabled={isLoading}
-        className={`w-full rounded-full px-6 py-2 text-center whitespace-nowrap text-black dark:text-white ${colorConfig.button} ${colorConfig.buttonHover} ${colorConfig.darkButton} ${colorConfig.darkButtonHover} disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
       >
         {isLoading ? "Processing..." : buttonText}
       </button>

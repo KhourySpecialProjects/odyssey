@@ -494,7 +494,7 @@ function AccessRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -595,7 +595,7 @@ function CreationRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -651,7 +651,7 @@ export function RequestsPageClient({
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="relative inline-flex h-[45px] items-center rounded-[97px] bg-[#fcfcfd] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+      <div className="relative inline-flex h-[45px] items-center rounded-[97px] border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
         {/* Sliding indicator */}
         <div
           className="absolute h-[37px] rounded-[35px] bg-[#2D7597] transition-all duration-200 ease-in-out"

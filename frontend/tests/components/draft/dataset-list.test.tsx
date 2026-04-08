@@ -25,44 +25,23 @@ const mockDatasets: Dataset[] = [
   {
     id: 1,
     name: "sales_data.csv",
-    format: "csv",
-    fileUrl: "https://example.com/sales.csv",
+    url: "https://example.com/sales.csv",
+    fileType: "csv",
     fileSize: 10240,
-    rowCount: 500,
-    columnCount: 5,
-    columnNames: ["id", "name", "revenue", "date", "region"],
-    columnTypes: ["number", "string", "number", "date", "string"],
   },
   {
     id: 2,
     name: "products.json",
-    format: "json",
-    fileUrl: "https://example.com/products.json",
+    url: "https://example.com/products.json",
+    fileType: "json",
     fileSize: 5120,
-    rowCount: 200,
-    columnCount: 3,
-    columnNames: ["sku", "price", "category"],
-    columnTypes: ["string", "number", "string"],
   },
   {
     id: 3,
     name: "inventory.xlsx",
-    format: "xlsx",
-    fileUrl: "https://example.com/inventory.xlsx",
+    url: "https://example.com/inventory.xlsx",
+    fileType: "xlsx",
     fileSize: 20480,
-    rowCount: 1000,
-    columnCount: 8,
-    columnNames: ["a", "b", "c", "d", "e", "f", "g", "h"],
-    columnTypes: [
-      "string",
-      "number",
-      "string",
-      "number",
-      "string",
-      "number",
-      "string",
-      "date",
-    ],
   },
 ];
 
@@ -90,13 +69,6 @@ describe("DatasetList", () => {
     expect(screen.getByText("CSV")).toBeInTheDocument();
     expect(screen.getByText("JSON")).toBeInTheDocument();
     expect(screen.getByText("XLSX")).toBeInTheDocument();
-  });
-
-  it("shows row count for each dataset", () => {
-    render(<DatasetList datasets={mockDatasets} onDelete={mockOnDelete} />);
-    expect(screen.getByText(/500 rows/i)).toBeInTheDocument();
-    expect(screen.getByText(/200 rows/i)).toBeInTheDocument();
-    expect(screen.getByText(/1,000 rows/i)).toBeInTheDocument();
   });
 
   it("shows file sizes in human-readable format", () => {
