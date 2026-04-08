@@ -89,20 +89,19 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
     publicationState: "preview",
     populate: {
       voyage_playlists: {
+        fields: ["id"],
         populate: {
           playlist: {
-            fields: ["id", "name", "slug", "isPublic"],
-            populate: {
-              droplets: {
-                fields: ["id"],
-              },
-            },
+            fields: ["id"],
+            populate: { droplets: { fields: ["id"] } },
           },
         },
-        sort: ["orderIndex:asc"],
       },
       authors: {
-        fields: ["id", "name", "email"],
+        fields: ["id", "firstName", "email"],
+      },
+      voyage_nodes: {
+        fields: ["id"],
       },
     },
     sort: ["name:asc"],

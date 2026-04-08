@@ -12,6 +12,7 @@ import {
   IconUsers,
   IconUserPlus,
   IconMessageReport,
+  IconCompass,
   type IconProps,
 } from "@tabler/icons-react";
 
@@ -26,7 +27,8 @@ export type AdminNavVariant =
   | "Requests"
   | "Access Manager"
   | "Creators Manager"
-  | "Reports";
+  | "Reports"
+  | "Voyages";
 
 // ——— Per-icon sub-components ———
 function NavIcon({
@@ -77,6 +79,9 @@ export function CreatorsManagerIcon({ active }: { active: boolean }) {
 export function ReportsIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={IconMessageReport} active={active} />;
 }
+export function VoyagesIcon({ active }: { active: boolean }) {
+  return <NavIcon Icon={IconCompass} active={active} />;
+}
 
 // ——— Nav item definitions ———
 export const NAV_ITEMS: {
@@ -103,6 +108,12 @@ export const NAV_ITEMS: {
     variant: "Playlists",
     href: "/admin/playlists",
     Icon: PlaylistIcon,
+  },
+  {
+    label: "Voyages",
+    variant: "Voyages",
+    href: "/admin/voyages",
+    Icon: VoyagesIcon,
   },
   {
     label: "Groups",
