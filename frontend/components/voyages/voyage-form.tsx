@@ -416,8 +416,8 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       {/* Bottom row: branch controls */}
                       <div className="flex flex-wrap items-center gap-3">
                         {/* "Branches from" select */}
-                        <div className="flex items-center gap-1.5">
-                          <label className="text-xs text-slate-500">
+                        <div className="flex flex-1 items-center gap-1.5">
+                          <label className="shrink-0 text-xs text-slate-500">
                             Branches from
                           </label>
                           <select
@@ -430,7 +430,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                               );
                             }}
                             disabled={isPending}
-                            className="max-w-[300px] min-w-[180px] rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <option value="">None (main path)</option>
                             {mainPathNodes
