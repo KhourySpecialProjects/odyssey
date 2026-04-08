@@ -102,7 +102,10 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
         sort: ["orderIndex:asc"],
       },
       authors: {
-        fields: ["id", "name", "email"],
+        fields: ["id", "firstName", "lastName", "email"],
+      },
+      voyage_nodes: {
+        fields: ["id"],
       },
     },
     sort: ["name:asc"],
