@@ -93,6 +93,7 @@ export function LearningObjectivesInput({
               />
               <button
                 type="button"
+                aria-label="Add learning objective"
                 onClick={() => {
                   if (newObjective.trim() !== "") {
                     addLearningObjective(newObjective);

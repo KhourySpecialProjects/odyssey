@@ -27,6 +27,8 @@ export default async function NewPlaylist() {
     }),
   ]);
 
+  if (!authUser) return notFound();
+
   return (
     <div className="bg-white px-4 pt-4 pb-8 md:px-[300px] md:pt-8 md:pb-16 dark:bg-zinc-950">
       <div className="flex w-full flex-col">

@@ -83,19 +83,21 @@ export function PlaylistForm({
   );
 
   const handlePlaylistPost = async () => {
+    const playlist = existingPlaylist ?? createdPlaylist;
+    if (!playlist) return;
     try {
-      if (existingPlaylist) {
-        await createPlaylistAnnouncement(
-          existingPlaylist.name,
-          existingPlaylist?.id,
-        );
-        router.push("/my-content");
-      }
+      await createPlaylistAnnouncement(playlist.name, playlist.id);
+      router.push("/my-content");
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
+      setError("Failed to post announcement. Please try again.");
     }
   };
 
+  const [createdPlaylist, setCreatedPlaylist] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const searchParams = useSearchParams();
   const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
@@ -140,6 +142,9 @@ export function PlaylistForm({
       }
 
       if (response.ok) {
+        if (!existingPlaylist && response.data) {
+          setCreatedPlaylist({ id: response.data.id, name: name });
+        }
         setIsOpen(true);
       } else {
         setError(response.error || "Failed to save Playlist!");
@@ -172,22 +177,29 @@ export function PlaylistForm({
     >
       <div className="flex flex-col gap-8 lg:flex-row">
         <div className="lg:w-1/2">
-          <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+          <Label
+            htmlFor="name"
+            className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white"
+          >
             Playlist Name <span className="text-red-500">*</span>
-          </div>
+          </Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter playlist name"
+            required
             className="w-full border-[#D0D5DD] dark:border-slate-700"
           />
         </div>
 
         <div className="lg:w-1/2">
-          <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+          <Label
+            htmlFor="description"
+            className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white"
+          >
             Description
-          </div>
+          </Label>
           <Input
             id="description"
             value={description}

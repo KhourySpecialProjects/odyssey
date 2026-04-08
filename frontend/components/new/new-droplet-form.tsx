@@ -325,6 +325,7 @@ export function CreateDropletForm({
 
       <div className="flex items-center space-x-2 self-end">
         <Button
+          type="button"
           size="sm"
           variant="outline"
           onClick={() => router.push("/my-content")}
