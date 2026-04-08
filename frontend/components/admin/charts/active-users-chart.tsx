@@ -135,9 +135,7 @@ export function ActiveUsersChart({
                 tick={{ fontSize: 11, fill: "#60646c" }}
                 interval="preserveStartEnd"
                 padding={{ left: 16, right: 10 }}
-                angle={-35}
-                textAnchor="end"
-                height={45}
+                height={30}
               />
               <YAxis
                 tickLine={false}

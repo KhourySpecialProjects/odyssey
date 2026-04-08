@@ -89,7 +89,9 @@ describe("FriendRequestFeedBlock", () => {
 
     render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-    const acceptButton = screen.getByRole("accept");
+    const acceptButton = screen.getByRole("button", {
+      name: /accept friend request/i,
+    });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -103,7 +105,9 @@ describe("FriendRequestFeedBlock", () => {
 
     render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-    const acceptButton = screen.getByRole("accept");
+    const acceptButton = screen.getByRole("button", {
+      name: /accept friend request/i,
+    });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -119,7 +123,9 @@ describe("FriendRequestFeedBlock", () => {
 
     render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-    const rejectButton = screen.getByRole("reject");
+    const rejectButton = screen.getByRole("button", {
+      name: /reject friend request/i,
+    });
     fireEvent.click(rejectButton);
 
     await waitFor(() => {
@@ -133,7 +139,9 @@ describe("FriendRequestFeedBlock", () => {
 
     render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-    const rejectButton = screen.getByRole("reject");
+    const rejectButton = screen.getByRole("button", {
+      name: /reject friend request/i,
+    });
     fireEvent.click(rejectButton);
 
     await waitFor(() => {

@@ -149,7 +149,7 @@ describe("FeedBlock", () => {
         />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-blue-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
 
     it("renders correct background color for playlist type", () => {
@@ -162,7 +162,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={playlistAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-green-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
 
     it("renders correct background color for group type", () => {
@@ -175,7 +175,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={groupAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-purple-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
 
     it("renders correct background color for friend type", () => {
@@ -188,7 +188,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={friendAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-yellow-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
 
     it("renders correct background color for kudos type", () => {
@@ -201,7 +201,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-orange-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
 
     it("renders correct background color for system type", () => {
@@ -214,7 +214,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={systemAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-red-200");
+      expect(container).toHaveClass("bg-[#FCFCFD]");
     });
   });
 
@@ -507,7 +507,7 @@ describe("FeedBlock", () => {
       );
 
       // Invalid date returns empty string, doesn't throw error
-      const dateElement = container.querySelector(".text-sm");
+      const dateElement = container.querySelector(".text-left.text-sm");
       expect(dateElement?.textContent).toBe("");
     });
 
@@ -524,7 +524,7 @@ describe("FeedBlock", () => {
       );
 
       // Date section should be empty or not visible
-      const dateElement = container.querySelector(".text-sm");
+      const dateElement = container.querySelector(".text-left.text-sm");
       expect(dateElement?.textContent).toBe("");
     });
 
@@ -537,7 +537,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={nullDateAnnouncement} authUser={mockUser} />,
       );
 
-      const dateElement = container.querySelector(".text-sm");
+      const dateElement = container.querySelector(".text-left.text-sm");
       expect(dateElement?.textContent).toBe("");
     });
   });
@@ -551,7 +551,7 @@ describe("FeedBlock", () => {
         />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#266697]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode background for playlist", () => {
@@ -564,7 +564,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={playlistAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#29703B]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode background for group", () => {
@@ -577,7 +577,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={groupAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#754ABA]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode background for friend", () => {
@@ -589,7 +589,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={friendAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#C38508]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode background for kudos", () => {
@@ -602,7 +602,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#B55E0C]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode background for system", () => {
@@ -614,7 +614,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={systemAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-[#B83028]");
+      expect(container).toHaveClass("dark:bg-slate-800");
     });
 
     it("includes dark mode text color", () => {
@@ -793,7 +793,7 @@ describe("FeedBlock", () => {
       );
       const container = screen.getByRole("listitem");
 
-      expect(container).toHaveClass("p-4", "pb-3", "gap-2");
+      expect(container).toHaveClass("p-4", "gap-3");
     });
 
     it("applies rounded corners", () => {
@@ -805,7 +805,7 @@ describe("FeedBlock", () => {
       );
       const container = screen.getByRole("listitem");
 
-      expect(container).toHaveClass("rounded-lg");
+      expect(container).toHaveClass("rounded-[8px]");
     });
 
     it("applies flex layout", () => {
@@ -820,16 +820,16 @@ describe("FeedBlock", () => {
       expect(container).toHaveClass("flex", "flex-col");
     });
 
-    it("positions date in bottom right", () => {
+    it("positions date on the left", () => {
       const { container } = render(
         <FeedBlock
           announcement={mockDropletAnnouncement}
           authUser={mockUser}
         />,
       );
-      const dateElement = container.querySelector(".text-right");
+      const dateElement = container.querySelector(".text-left.text-sm");
 
-      expect(dateElement).toHaveClass("justify-end");
+      expect(dateElement).toBeInTheDocument();
     });
   });
 

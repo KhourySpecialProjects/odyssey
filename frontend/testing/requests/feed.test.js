@@ -119,8 +119,8 @@ describe("Feed tests", () => {
       expect(callUrl).toMatch(/populate/);
       expect(callUrl).toMatch(/pagination/);
 
-      expect(result).toEqual(expect.any(Array));
-      expect(result.length).toBe(mockAnnouncements.length);
+      expect(result.data).toEqual(expect.any(Array));
+      expect(result.data.length).toBe(mockAnnouncements.length);
       expect(flattenAttributes).toHaveBeenCalledWith(mockStrapiResponse.data);
     });
 
