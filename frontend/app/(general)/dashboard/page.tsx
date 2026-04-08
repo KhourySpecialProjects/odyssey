@@ -5,6 +5,7 @@ import { Filter } from "@/components/explore/filter";
 import { Search } from "@/components/explore/search";
 import { Sort } from "@/components/explore/sort";
 import { TagFilter } from "@/components/explore/tag-filter";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -17,6 +18,7 @@ import {
   getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
   getCachedUserGroups,
+  getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -40,9 +42,10 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const [allEnrollments, allGroupsRaw] = await Promise.all([
+  const [allEnrollments, allGroupsRaw, voyageEnrollments] = await Promise.all([
     getCachedEnrollmentsFavorites(authorizedUser.id),
     getCachedUserGroups(authorizedUser.id),
+    getCachedVoyageEnrollmentsByUser(authorizedUser.id),
   ]);
   const allPlaylists = authorizedUser.playlists?.length || 0;
   const allGroups = allGroupsRaw.filter((group) =>
@@ -120,6 +123,24 @@ export default async function DashboardRoute({ searchParams }: Props) {
         <Suspense fallback={<DropletsSkeleton />}>
           <MyContent searchParams={params} sortKey={sortKey} />
         </Suspense>
+      </div>
+
+      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
+        <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
+        {voyageEnrollments.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">
+            No enrolled voyages yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {voyageEnrollments.map(
+              (enrollment) =>
+                enrollment.voyage && (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage} />
+                ),
+            )}
+          </div>
+        )}
       </div>
     </SearchProvider>
   );

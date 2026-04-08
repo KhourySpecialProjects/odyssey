@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { getCachedUserCreation } from "@/lib/requests/cached";
+import { getVoyagesAdmin } from "@/lib/requests/voyage";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 
 export const metadata: Metadata = {
   title: "Create",
@@ -31,7 +33,13 @@ export default async function CreateRoute() {
       !isAuthorizedUserFaculty(user.roles))
   )
     redirect("/unauthorized");
-  const authorizedUser = await getCachedUserCreation(user.email);
+  const isAdminOrFaculty =
+    isAuthorizedUserAdmin(user.roles) || isAuthorizedUserFaculty(user.roles);
+
+  const [authorizedUser, voyages] = await Promise.all([
+    getCachedUserCreation(user.email),
+    isAdminOrFaculty ? getVoyagesAdmin() : Promise.resolve([]),
+  ]);
 
   if (!authorizedUser) redirect("/unauthorized");
 
@@ -44,7 +52,7 @@ export default async function CreateRoute() {
           My Content
         </h1>
         <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
-          Create a new Droplet or Playlist draft
+          Create a new Droplet, Playlist, or Voyage draft
         </p>
       </div>
 
@@ -112,6 +120,42 @@ export default async function CreateRoute() {
                       playlist={playlist}
                       toDraft={true}
                     />
+                  ))}
+                </ul>
+              </Suspense>
+            )}
+          </>
+        )}
+        {isAdminOrFaculty && (
+          <>
+            <div className="flex w-full items-end justify-between">
+              <h2 className="mt-4 mb-2 text-lg font-bold dark:text-slate-300">
+                My Voyages
+              </h2>
+              <Link href="/new/voyage">
+                <Button
+                  after={<PlusIcon />}
+                  className="select-none dark:bg-slate-300"
+                  size="sm"
+                >
+                  New Voyage
+                </Button>
+              </Link>
+            </div>
+            <Separator orientation="horizontal" className="mt-2 mb-4" />
+            {!voyages || voyages.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="light:text-slate-500 text-lg dark:text-slate-400">
+                  No voyages found.
+                </p>
+              </div>
+            ) : (
+              <Suspense fallback={<DropletsSkeleton />}>
+                <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {voyages.map((voyage) => (
+                    <li key={voyage.id}>
+                      <VoyageCard voyage={voyage} />
+                    </li>
                   ))}
                 </ul>
               </Suspense>

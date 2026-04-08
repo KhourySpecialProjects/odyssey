@@ -177,10 +177,14 @@ export function VoyagesAdminPageClient({
                 const authorName =
                   voyage.authors && voyage.authors.length > 0
                     ? voyage.authors
-                        .map((a) =>
-                          "name" in a
-                            ? (a as { name: string }).name
-                            : (a as { email: string }).email,
+                        .map(
+                          (a) =>
+                            (a && typeof a === "object" && "name" in a
+                              ? a.name
+                              : null) ??
+                            (a && typeof a === "object" && "email" in a
+                              ? a.email
+                              : "Unknown"),
                         )
                         .join(", ")
                     : "—";

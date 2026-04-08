@@ -7,6 +7,10 @@ import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
 import { CACHE_TAGS } from "../cache-tags";
+import {
+  getVoyageEnrollment,
+  getVoyageEnrollmentsByUser,
+} from "./voyage-enrollment";
 
 export const getCachedUser = cache((email: string) =>
   getAuthorizedUserByEmail(email, USER_POPULATES.profile, CACHE_TAGS.users),
@@ -130,4 +134,14 @@ export const getCachedDropletBySlug = cache((slug: string) =>
       },
     },
   }),
+);
+
+export const getCachedVoyageEnrollment = cache(
+  async (authorizedUserId: number, voyageId: number) =>
+    getVoyageEnrollment(authorizedUserId, voyageId),
+);
+
+export const getCachedVoyageEnrollmentsByUser = cache(
+  async (authorizedUserId: number) =>
+    getVoyageEnrollmentsByUser(authorizedUserId),
 );

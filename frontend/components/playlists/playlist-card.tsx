@@ -36,6 +36,8 @@ interface PlaylistCardProps {
   timeZone?: string;
   dashboardPage?: boolean;
   isArchived?: boolean;
+  linkPrefix?: string;
+  statsOverride?: string;
 }
 
 export function PlaylistCard({
@@ -45,6 +47,8 @@ export function PlaylistCard({
   timeZone,
   dashboardPage,
   isArchived,
+  linkPrefix,
+  statsOverride,
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   async function changeVisibility() {
@@ -71,11 +75,6 @@ export function PlaylistCard({
   const [isTextClamped, setIsTextClamped] = useState(false);
   const textRef = useRef(null);
   const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
-  const lessonCount =
-    playlist.droplets?.reduce(
-      (total, droplet) => total + (droplet.lessons?.length ?? 0),
-      0,
-    ) ?? 0;
   const strippedDescription = playlist.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -91,7 +90,11 @@ export function PlaylistCard({
     }
   }, [strippedDescription, descriptionExpanded]);
 
-  const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
+  const linkTo = linkPrefix
+    ? `${linkPrefix}/${playlist.slug}`
+    : toDraft
+      ? `/draft/p/${playlist.slug}`
+      : `/p/${playlist.slug}`;
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
@@ -142,9 +145,15 @@ export function PlaylistCard({
             {playlist.name}
           </div>
 
-          <p className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
-            Droplets: {dropletCount} &nbsp;&nbsp;&nbsp;&nbsp; Lessons:{" "}
-            {lessonCount}
+          <p className="pt-2 text-sm text-slate-500 dark:text-slate-400">
+            {statsOverride ?? (
+              <>
+                <span className="font-semibold text-slate-900 dark:text-slate-200">
+                  {dropletCount}
+                </span>{" "}
+                {dropletCount === 1 ? "droplet" : "droplets"}
+              </>
+            )}
           </p>
           <div>
             {strippedDescription &&
