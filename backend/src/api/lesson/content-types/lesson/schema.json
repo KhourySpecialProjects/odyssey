@@ -87,6 +87,14 @@
     },
     "orderIndex": {
       "type": "integer"
+    },
+    "lockedBy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "lockedAt": {
+      "type": "datetime"
     }
   }
 }

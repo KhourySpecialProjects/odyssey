@@ -1373,6 +1373,12 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::highlight.highlight'
     >;
+    lockedAt: Attribute.DateTime;
+    lockedBy: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
     name: Attribute.String &
       Attribute.Required &
       Attribute.SetMinMaxLength<{
