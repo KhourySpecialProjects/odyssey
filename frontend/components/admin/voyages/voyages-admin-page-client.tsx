@@ -203,11 +203,7 @@ function VoyageTableRow({
 }
 
 // ——— VoyageMobileCard ———
-function VoyageMobileCard({
-  voyage,
-}: {
-  voyage: VoyageWithCounts;
-}) {
+function VoyageMobileCard({ voyage }: { voyage: VoyageWithCounts }) {
   const statusConfig = STATUS_CONFIG[voyage.status] ?? null;
 
   return (
@@ -251,7 +247,11 @@ function VoyageMobileCard({
 }
 
 // ——— Main Client Component ———
-export function VoyagesAdminPageClient({ voyages: initialVoyages }: { voyages: Voyage[] }) {
+export function VoyagesAdminPageClient({
+  voyages: initialVoyages,
+}: {
+  voyages: Voyage[];
+}) {
   const [voyages, setVoyages] = useState<Voyage[]>(initialVoyages);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -282,10 +282,14 @@ export function VoyagesAdminPageClient({ voyages: initialVoyages }: { voyages: V
     searchFn: (v, q) => v.name.toLowerCase().includes(q),
     sortFn: (items, sort) => {
       const sorted = [...items];
-      if (sort === "name-asc") sorted.sort((a, b) => a.name.localeCompare(b.name));
-      else if (sort === "name-desc") sorted.sort((a, b) => b.name.localeCompare(a.name));
-      else if (sort === "nodes-asc") sorted.sort((a, b) => a.nodeCount - b.nodeCount);
-      else if (sort === "nodes-desc") sorted.sort((a, b) => b.nodeCount - a.nodeCount);
+      if (sort === "name-asc")
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+      else if (sort === "name-desc")
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+      else if (sort === "nodes-asc")
+        sorted.sort((a, b) => a.nodeCount - b.nodeCount);
+      else if (sort === "nodes-desc")
+        sorted.sort((a, b) => b.nodeCount - a.nodeCount);
       return sorted;
     },
     filterFn: (v, statuses) => statuses.includes(v.status),
