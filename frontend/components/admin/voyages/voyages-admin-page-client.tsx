@@ -87,19 +87,9 @@ function computeCounts(voyage: Voyage): VoyageWithCounts {
         acc + (vp.playlist?.droplets?.length ?? 0),
       0,
     ) ?? 0;
-  const authorName =
-    voyage.authors && voyage.authors.length > 0
-      ? voyage.authors
-          .map((a) => {
-            if (a && typeof a === "object") {
-              if ("firstName" in a && a.firstName) return a.firstName;
-              if ("name" in a && a.name) return a.name as string;
-              if ("email" in a) return a.email;
-            }
-            return "Unknown";
-          })
-          .join(", ")
-      : "\u2014";
+  const authorName = voyage.authors?.length
+    ? voyage.authors.map((a) => a.firstName || a.email).join(", ")
+    : "\u2014";
 
   return { ...voyage, nodeCount, playlistCount, dropletCount, authorName };
 }
