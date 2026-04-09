@@ -5,56 +5,32 @@ interface VoyageCardProps {
   voyage: Voyage;
 }
 
-function getTotalDropletCount(voyage: Voyage): number {
-  return (
-    voyage.voyage_playlists?.reduce((acc: number, vp: VoyagePlaylist) => {
-      return acc + (vp.playlist?.droplets?.length ?? 0);
-    }, 0) ?? 0
-  );
-}
-
 export function VoyageCard({ voyage }: VoyageCardProps) {
-  const islandCount = voyage.voyage_playlists?.length ?? 0;
-  const dropletCount = getTotalDropletCount(voyage);
+  const playlistCount = voyage.voyage_playlists?.length ?? 0;
+  const dropletCount =
+    voyage.voyage_playlists?.reduce(
+      (acc: number, vp: VoyagePlaylist) =>
+        acc + (vp.playlist?.droplets?.length ?? 0),
+      0,
+    ) ?? 0;
 
   return (
     <Link
       href={`/v/${voyage.slug}`}
-      className="group block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+      className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
     >
-      <div className="mb-4 flex gap-1.5">
-        {Array.from({ length: Math.min(islandCount, 5) }).map((_, i) => (
-          <div
-            key={i}
-            className="h-3 w-3 rounded-full border border-[#2D6A4F] bg-[#D8F3DC]"
-          />
-        ))}
-        {islandCount > 5 && (
-          <div className="flex h-3 items-center text-[10px] text-slate-400">
-            +{islandCount - 5}
-          </div>
-        )}
-      </div>
-
-      <h3 className="mb-2 text-lg font-semibold text-slate-900 group-hover:text-green-800 dark:text-slate-100 dark:group-hover:text-green-400">
+      <h3 className="line-clamp-2 text-base font-semibold text-slate-900 group-hover:text-[#287697] dark:text-white dark:group-hover:text-[#4da8cc]">
         {voyage.name}
       </h3>
-
       {voyage.description && (
-        <p className="mb-4 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
           {voyage.description}
         </p>
       )}
-
-      <div className="flex gap-3 text-xs text-slate-500 dark:text-slate-400">
-        <span>
-          {islandCount} {islandCount === 1 ? "island" : "islands"}
-        </span>
-        <span aria-hidden="true">·</span>
-        <span>
-          {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
-        </span>
-      </div>
+      <p className="mt-auto pt-3 text-xs text-slate-400 dark:text-slate-500">
+        {playlistCount} {playlistCount === 1 ? "playlist" : "playlists"}{" "}
+        &middot; {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
+      </p>
     </Link>
   );
 }
