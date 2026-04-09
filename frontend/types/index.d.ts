@@ -468,6 +468,7 @@ export interface Voyage {
   slug: string;
   description: string;
   status: "draft" | "published";
+  isSequential: boolean;
   authors?: AuthorizedUser[];
   voyage_playlists?: VoyagePlaylist[];
   voyage_nodes?: VoyageNode[];

@@ -1788,6 +1788,9 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
     > &
       Attribute.Private;
     description: Attribute.Text;
+    isSequential: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::voyage.voyage', 'name'> & Attribute.Required;
