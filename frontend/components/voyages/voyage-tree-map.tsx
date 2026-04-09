@@ -228,7 +228,13 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
                 {/* Branch type tag */}
                 {!isMain && (
                   <div className="mb-0.5 text-center">
-                    <span className="inline-block rounded-full bg-slate-200 px-2 py-0.5 text-[7px] font-bold tracking-wider text-slate-500 uppercase dark:bg-slate-700 dark:text-slate-400">
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-[7px] font-bold tracking-wider uppercase ${
+                        layout.node.branchType === "optional"
+                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      }`}
+                    >
                       {layout.node.branchType === "optional"
                         ? "optional"
                         : "required"}

@@ -100,7 +100,7 @@ export const CACHE_TAGS = {
   allDueDates: "due-dates", // all due date queries (getGroupDueDates, getUserDueDates)
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)
   datasets: "datasets", // global tag for dataset metadata
-  voyages: "voyages", // voyages and voyage-playlist join records
+  voyages: "voyages", // voyages and voyage-node records
   allVoyageEnrollments: "voyage-enrollments", // global sweep for voyage enrollment mutations
 
   // Per-user (scoped to individual user)

@@ -1725,45 +1725,6 @@ export interface ApiVoyageNodeVoyageNode extends Schema.CollectionType {
   };
 }
 
-export interface ApiVoyagePlaylistVoyagePlaylist extends Schema.CollectionType {
-  collectionName: 'voyage_playlists';
-  info: {
-    displayName: 'VoyagePlaylist';
-    pluralName: 'voyage-playlists';
-    singularName: 'voyage-playlist';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::voyage-playlist.voyage-playlist',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    orderIndex: Attribute.Integer & Attribute.Required;
-    playlist: Attribute.Relation<
-      'api::voyage-playlist.voyage-playlist',
-      'manyToOne',
-      'api::playlist.playlist'
-    >;
-    updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<
-      'api::voyage-playlist.voyage-playlist',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    voyage: Attribute.Relation<
-      'api::voyage-playlist.voyage-playlist',
-      'manyToOne',
-      'api::voyage.voyage'
-    >;
-  };
-}
-
 export interface ApiVoyageVoyage extends Schema.CollectionType {
   collectionName: 'voyages';
   info: {
@@ -1808,11 +1769,6 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
       'api::voyage.voyage',
       'oneToMany',
       'api::voyage-node.voyage-node'
-    >;
-    voyage_playlists: Attribute.Relation<
-      'api::voyage.voyage',
-      'oneToMany',
-      'api::voyage-playlist.voyage-playlist'
     >;
   };
 }
@@ -2275,7 +2231,6 @@ declare module '@strapi/types' {
       'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
       'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;
       'api::voyage-node.voyage-node': ApiVoyageNodeVoyageNode;
-      'api::voyage-playlist.voyage-playlist': ApiVoyagePlaylistVoyagePlaylist;
       'api::voyage.voyage': ApiVoyageVoyage;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

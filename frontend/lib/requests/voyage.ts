@@ -29,7 +29,7 @@ const NEXT_PUBLIC_STRAPI_API_URL =
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
- * Gets all published voyages with their voyage_playlists populated.
+ * Gets all published voyages with their voyage_nodes populated.
  * @returns The list of published Voyages.
  */
 export async function getVoyages(): Promise<Voyage[]> {
@@ -39,19 +39,6 @@ export async function getVoyages(): Promise<Voyage[]> {
       status: { $eq: "published" },
     },
     populate: {
-      voyage_playlists: {
-        populate: {
-          playlist: {
-            fields: ["id", "name", "slug", "isPublic"],
-            populate: {
-              droplets: {
-                fields: ["id"],
-              },
-            },
-          },
-        },
-        sort: ["orderIndex:asc"],
-      },
       voyage_nodes: {
         fields: ["id", "isMainPath", "branchType", "orderIndex", "label"],
         populate: {
@@ -88,20 +75,17 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
   const urlParams = {
     publicationState: "preview",
     populate: {
-      voyage_playlists: {
-        fields: ["id"],
+      authors: {
+        fields: ["id", "firstName", "email"],
+      },
+      voyage_nodes: {
+        fields: ["id", "isMainPath"],
         populate: {
           playlist: {
             fields: ["id"],
             populate: { droplets: { fields: ["id"] } },
           },
         },
-      },
-      authors: {
-        fields: ["id", "firstName", "email"],
-      },
-      voyage_nodes: {
-        fields: ["id"],
       },
     },
     sort: ["name:asc"],
@@ -122,27 +106,18 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
  * @param slug The unique slug of the desired Voyage.
  * @returns The Voyage, or null if not found.
  */
-export async function getVoyageBySlug(slug: string): Promise<Voyage | null> {
+export async function getVoyageBySlug(
+  slug: string,
+  { includeDrafts = false }: { includeDrafts?: boolean } = {},
+): Promise<Voyage | null> {
   const path = `/voyages`;
   const urlParams = {
+    ...(includeDrafts && { publicationState: "preview" }),
     filters: {
       slug: { $eq: slug },
-      status: { $eq: "published" },
+      ...(!includeDrafts && { status: { $eq: "published" } }),
     },
     populate: {
-      voyage_playlists: {
-        populate: {
-          playlist: {
-            fields: ["id", "name", "slug"],
-            populate: {
-              droplets: {
-                fields: ["id", "name", "slug"],
-              },
-            },
-          },
-        },
-        sort: ["orderIndex:asc"],
-      },
       voyage_nodes: {
         populate: {
           playlist: {
@@ -171,161 +146,6 @@ export async function getVoyageBySlug(slug: string): Promise<Voyage | null> {
   });
 
   return voyages[0] || null;
-}
-
-/**
- * Creates a new Voyage. Faculty/Admin only.
- * @param data The voyage data to create.
- * @returns The created Voyage, or an error.
- */
-export async function createVoyage(data: {
-  name: string;
-  description?: string;
-  /** Legacy flat-list mode (voyage_playlists). */
-  playlists?: { id: number; orderIndex?: number }[];
-  /** Tree mode (voyage_nodes). When provided, playlists is ignored. */
-  nodes?: {
-    playlistId: number;
-    isMainPath: boolean;
-    branchType: "required" | "optional";
-    parentPlaylistId: number | null;
-    orderIndex: number;
-    label: string;
-  }[];
-  status?: "draft" | "published";
-  authorId?: number;
-}) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized", data: null };
-  }
-  try {
-    const dataToSend: Record<string, unknown> = {
-      name: data.name,
-      description: data.description ?? "",
-      status: data.status ?? "draft",
-    };
-
-    if (data.nodes && data.nodes.length > 0) {
-      // Tree mode: voyage_nodes will be created separately after voyage is saved.
-      // For now, store the node count as a signal that tree mode was used.
-      // The actual voyage-node records are created via createVoyageNodes after this call.
-      dataToSend.voyage_playlists = [];
-    } else if (data.playlists) {
-      dataToSend.voyage_playlists = data.playlists.map((p, i) => ({
-        playlist: p.id,
-        orderIndex: p.orderIndex ?? i,
-      }));
-    }
-
-    if (data.authorId) {
-      dataToSend.authors = { connect: [data.authorId] };
-    }
-
-    const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify({ data: dataToSend }),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok || (response.ok && responseData.error)) {
-      return {
-        ok: false,
-        error: responseData.error?.message || "Failed to create voyage",
-        data: null,
-      };
-    }
-
-    revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
-  } catch (err) {
-    console.error(err);
-    return {
-      ok: false,
-      error: "Database Error: Failed to create voyage.",
-      data: null,
-    };
-  }
-}
-
-/**
- * Updates an existing Voyage.
- * @param id The ID of the Voyage to update.
- * @param data The updated voyage data.
- * @returns The updated Voyage, or an error.
- */
-export async function updateVoyage(
-  id: number,
-  data: {
-    name?: string;
-    description?: string;
-    playlists?: { id: number }[];
-    status?: "draft" | "published";
-  },
-) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized", data: null };
-  }
-  try {
-    const dataToSend: Record<string, unknown> = {};
-
-    if (data.name !== undefined) dataToSend.name = data.name;
-    if (data.description !== undefined)
-      dataToSend.description = data.description;
-    if (data.status !== undefined) dataToSend.status = data.status;
-    if (data.playlists !== undefined) {
-      dataToSend.voyage_playlists = data.playlists.map((p, i) => ({
-        playlist: p.id,
-        orderIndex: i,
-      }));
-    }
-
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({ data: dataToSend }),
-      },
-    );
-
-    const responseData = await response.json();
-
-    if (!response.ok || (response.ok && responseData.error)) {
-      return {
-        ok: false,
-        error: responseData.error?.message || "Failed to update voyage",
-        data: null,
-      };
-    }
-
-    revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
-  } catch (err) {
-    console.error(err);
-    return {
-      ok: false,
-      error: "Database Error: Failed to update voyage.",
-      data: null,
-    };
-  }
 }
 
 /**
@@ -529,6 +349,43 @@ export async function createVoyageWithNodes(data: {
       error: "Database Error: Failed to create voyage.",
       data: null,
     };
+  }
+}
+
+/**
+ * Publishes a draft Voyage by setting its status to "published".
+ */
+export async function publishVoyage(id: number) {
+  if (!(await requireAdminOrFaculty())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: { status: "published" } }),
+      },
+    );
+
+    if (!response.ok) {
+      const err = await response.json();
+      return {
+        ok: false,
+        error: err.error?.message || "Failed to publish voyage",
+      };
+    }
+
+    revalidateTag(CACHE_TAGS.voyages);
+    revalidateTag(CACHE_TAGS.userContent);
+    return { ok: true, error: null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "Failed to publish voyage." };
   }
 }
 
