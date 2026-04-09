@@ -1,11 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useSearch } from "@/contexts/SearchContext";
+import { SearchBar } from "@/components/admin/search-bar";
 
 export function Search() {
   const router = useRouter();
@@ -28,17 +26,13 @@ export function Search() {
   }, [searchQuery, pathname, router, searchParams]);
 
   return (
-    <div className="xs:max-w-sm flex items-center space-x-2">
-      <Input
-        type="search"
-        placeholder="Search..."
-        className="w-full md:w-[125px] lg:w-[300px]"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      <Button before={<SearchIcon />} className="dark:bg-slate-300">
-        <span className="sr-only md:not-sr-only">Search</span>
-      </Button>
-    </div>
+    <SearchBar
+      placeholder="Search..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full md:w-[560px]"
+      inputClassName="h-9 text-sm bg-white dark:bg-slate-800"
+      iconClassName="h-4 w-4"
+    />
   );
 }

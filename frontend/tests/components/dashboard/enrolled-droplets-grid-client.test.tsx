@@ -124,7 +124,7 @@ describe("EnrolledDropletsGridClient", () => {
         />,
       );
 
-      const nextButton = screen.getByRole("button", { name: /chevron-right/i });
+      const nextButton = screen.getByRole("button", { name: /next/i });
       fireEvent.click(nextButton);
 
       expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
@@ -142,8 +142,8 @@ describe("EnrolledDropletsGridClient", () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /chevron-right/i }));
-      fireEvent.click(screen.getByRole("button", { name: /chevron-left/i }));
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      fireEvent.click(screen.getByRole("button", { name: /previous/i }));
 
       expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
       expect(screen.getByTestId("droplet-9")).toBeInTheDocument();
@@ -160,11 +160,12 @@ describe("EnrolledDropletsGridClient", () => {
         />,
       );
 
-      const nextButton = screen.getByRole("button", { name: /chevron-right/i });
-      const prevButton = screen.getByRole("button", { name: /chevron-left/i });
-
-      expect(prevButton).toBeDisabled();
-      expect(nextButton).toBeDisabled();
+      expect(
+        screen.queryByRole("button", { name: /next/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /previous/i }),
+      ).not.toBeInTheDocument();
     });
   });
 

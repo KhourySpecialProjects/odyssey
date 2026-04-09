@@ -99,11 +99,13 @@ export const CACHE_TAGS = {
   allGroups: "groups", // all group queries (getManagedGroups, getGroupBySlug, getGroupByID, getUserGroups, getGroupBySlugV2, fetchAnnouncements)
   allDueDates: "due-dates", // all due date queries (getGroupDueDates, getUserDueDates)
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)
+  allVoyageEnrollments: "voyage-enrollments", // global sweep for voyage enrollment mutations
   datasets: "datasets", // global tag for dataset metadata
   voyages: "voyages", // voyages and voyage-playlist join records
 
   // Per-user (scoped to individual user)
   enrollments: (userId: number) => `enrollments-${userId}`,
+  voyageEnrollments: (userId: number) => `voyage-enrollments-${userId}`,
   friendships: (userId: number) => `friendships-${userId}`,
   notes: (userId: number) => `notes-${userId}`,
   highlights: (userId: number) => `highlights-${userId}`,

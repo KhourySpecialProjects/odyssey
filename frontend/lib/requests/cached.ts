@@ -7,6 +7,7 @@ import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
 import { CACHE_TAGS } from "../cache-tags";
+import { getVoyageEnrollmentsByUser } from "./voyage-enrollment";
 
 export const getCachedUser = cache((email: string) =>
   getAuthorizedUserByEmail(email, USER_POPULATES.profile, CACHE_TAGS.users),
@@ -67,6 +68,10 @@ export const getCachedUserGroups = cache((authorizedUserId: number) =>
 
 export const getCachedUserDueDates = cache((authorizedUserId: number) =>
   getUserDueDates(authorizedUserId),
+);
+
+export const getCachedVoyageEnrollmentsByUser = cache(
+  (authorizedUserId: number) => getVoyageEnrollmentsByUser(authorizedUserId),
 );
 
 export const getCachedLessonBySlug = cache((slug: string) =>

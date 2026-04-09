@@ -474,6 +474,14 @@ export interface Voyage {
   updatedAt?: string;
 }
 
+export interface VoyageEnrollment {
+  id: number;
+  enrolledAt: string;
+  completionPercentage: number;
+  authorizedUser?: AuthorizedUser;
+  voyage?: Voyage;
+}
+
 interface CustomBlockNoteBlock {
   id: string;
   type: string;

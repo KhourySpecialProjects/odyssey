@@ -63,7 +63,7 @@ export async function MyContent({
         ) : contentType === "groups" ? (
           <>
             {activeGroups.length === 0 && (
-              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+              <Message className="mb-8">
                 <MessageHeader
                   subtitle="No Results"
                   title="No Enrolled Groups"
@@ -89,7 +89,7 @@ export async function MyContent({
             <hr className="pb-2" />
             <div className="pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
-              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+              <Message className="mb-8">
                 <MessageHeader
                   subtitle="No Results"
                   title="No Archived Groups"
@@ -107,8 +107,7 @@ export async function MyContent({
           </>
         ) : contentType === "favorited" ? (
           <FavoriteDropletsGrid sortKey={sortKey} />
-        ) : null}{" "}
-        {/* Added the final case */}
+        ) : null}
       </div>
     </div>
   );

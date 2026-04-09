@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { getDueDateBadgeColor } from "@/lib/utils";
-import { Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
+import { IconArchive, IconArchiveOff } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
@@ -197,13 +198,19 @@ export function PlaylistCard({
               e.stopPropagation();
               changeVisibility();
             }}
-            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+            className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
           >
             <div className="group relative">
               {isArchived ? (
-                <ArchiveRestore className="text-purple-500" />
+                <IconArchiveOff
+                  className="h-5 w-5 text-black dark:text-white"
+                  stroke={1.8}
+                />
               ) : (
-                <Archive className="text-purple-500" />
+                <IconArchive
+                  className="h-5 w-5 text-black dark:text-white"
+                  stroke={1.8}
+                />
               )}
               <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {isArchived ? "Unarchive" : "Archive"}

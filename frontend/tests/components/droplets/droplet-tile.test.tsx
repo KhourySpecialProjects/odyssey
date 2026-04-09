@@ -343,21 +343,19 @@ describe("DropletTile", () => {
 
   describe("Archive Functionality", () => {
     it("shows archive button when isArchived is false", () => {
-      const { container } = render(
-        <DropletTile droplet={mockDroplet as any} isArchived={false} />,
-      );
+      render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
 
-      const archiveIcon = container.querySelector(".lucide-archive");
-      expect(archiveIcon).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Archive" }),
+      ).toBeInTheDocument();
     });
 
     it("shows unarchive button when isArchived is true", () => {
-      const { container } = render(
-        <DropletTile droplet={mockDroplet as any} isArchived={true} />,
-      );
+      render(<DropletTile droplet={mockDroplet as any} isArchived={true} />);
 
-      const unarchiveIcon = container.querySelector(".lucide-archive-restore");
-      expect(unarchiveIcon).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Unarchive" }),
+      ).toBeInTheDocument();
     });
 
     it("handles successful archive", async () => {

@@ -172,6 +172,7 @@ export function PlaylistForm({
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
       className="flex h-min w-full flex-col space-y-8"
       role="form"
     >
