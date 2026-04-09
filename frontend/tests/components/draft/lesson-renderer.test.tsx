@@ -68,6 +68,7 @@ const mockUseEditingLock = jest.fn().mockReturnValue({
   isOwnLock: true,
   lockedBy: null,
   isLoading: false,
+  error: null,
   release: jest.fn(),
 });
 jest.mock("@/hooks/useEditingLock", () => ({
@@ -726,6 +727,7 @@ describe("LessonRenderer", () => {
         isOwnLock: false,
         lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
         isLoading: false,
+        error: null,
         release: jest.fn(),
       });
 
@@ -743,6 +745,7 @@ describe("LessonRenderer", () => {
         isOwnLock: false,
         lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
         isLoading: false,
+        error: null,
         release: jest.fn(),
       });
 
@@ -760,6 +763,7 @@ describe("LessonRenderer", () => {
         isOwnLock: false,
         lockedBy: null,
         isLoading: true,
+        error: null,
         release: jest.fn(),
       });
 
@@ -776,6 +780,7 @@ describe("LessonRenderer", () => {
         isOwnLock: true,
         lockedBy: null,
         isLoading: false,
+        error: null,
         release: jest.fn(),
       });
 
@@ -786,6 +791,26 @@ describe("LessonRenderer", () => {
       expect(
         screen.queryByText(/is currently editing/),
       ).not.toBeInTheDocument();
+    });
+
+    it("shows error banner when lock acquisition fails", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: false,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: false,
+        error: "Could not resolve your user account",
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByText(/Unable to acquire editing lock/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Could not resolve your user account/),
+      ).toBeInTheDocument();
     });
   });
 });

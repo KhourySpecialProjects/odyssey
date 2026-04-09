@@ -48,11 +48,13 @@ export default {
       lesson.lockedBy.id !== userId &&
       !isLockStale(lesson.lockedAt)
     ) {
-      return ctx.conflict({
+      ctx.status = 409;
+      ctx.body = {
         error: "Lesson is locked",
         lockedBy: lesson.lockedBy,
         lockedAt: lesson.lockedAt,
-      });
+      };
+      return;
     }
 
     await getStrapi().entityService.update("api::lesson.lesson", id, {

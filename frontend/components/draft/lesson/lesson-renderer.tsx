@@ -63,6 +63,7 @@ export function LessonRenderer({
     isOwnLock,
     lockedBy,
     isLoading: lockLoading,
+    error: lockError,
   } = useEditingLock(lesson.id);
   const isReadOnly = lockLoading || !isOwnLock;
 
@@ -403,6 +404,12 @@ export function LessonRenderer({
             </strong>{" "}
             is currently editing this lesson. You can view but not edit.
           </span>
+        </div>
+      )}
+      {isReadOnly && !lockedBy && lockError && (
+        <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>Unable to acquire editing lock. {lockError}</span>
         </div>
       )}
       {lockLoading && (
