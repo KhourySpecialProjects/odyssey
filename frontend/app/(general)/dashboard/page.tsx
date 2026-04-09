@@ -20,7 +20,6 @@ import {
   getCachedUserGroups,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
-import { VoyageCard } from "@/components/voyages/voyage-card";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
