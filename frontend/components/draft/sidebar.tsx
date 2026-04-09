@@ -441,8 +441,8 @@ export function Sidebar({
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     {hasAutoFormatted
-                      ? "Auto-format can only be used once per droplet"
-                      : "Auto-Format Lesson"}
+                      ? "Slide breaks already generated"
+                      : "Generate slide breaks"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -469,8 +469,8 @@ export function Sidebar({
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     {hasSlideBreaks
-                      ? "Present"
-                      : "No presentation blocks in sight"}
+                      ? "Present as slides"
+                      : "Add slide breaks to enable presentation mode"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

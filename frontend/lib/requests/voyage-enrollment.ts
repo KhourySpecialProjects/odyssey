@@ -61,7 +61,8 @@ export async function getVoyageEnrollmentsByUser(
         voyage: {
           fields: ["id", "name", "slug"],
           populate: {
-            voyage_playlists: {
+            voyage_nodes: {
+              fields: ["id", "isMainPath"],
               populate: {
                 playlist: {
                   fields: ["id"],

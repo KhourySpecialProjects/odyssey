@@ -659,7 +659,9 @@ export async function duplicateDroplet(dropletId: number) {
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
-      difficulty: originalDroplet.difficulty,
+      ...(originalDroplet.difficulty
+        ? { difficulty: originalDroplet.difficulty }
+        : {}),
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",

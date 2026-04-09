@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Voyage, VoyagePlaylist } from "@/types";
+import { Voyage } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteVoyage } from "@/lib/requests/voyage";
@@ -40,8 +40,8 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const VOYAGE_COLUMNS: AdminColumnDef[] = [
   { label: "Name", width: "w-[30%]" },
   { label: "Status", width: "w-[12%]" },
-  { label: "Nodes", width: "w-[10%]" },
-  { label: "Playlists", width: "w-[10%]" },
+  { label: "Nodes", width: "w-[12%]" },
+  { label: "Droplets", width: "w-[12%]" },
   { label: "Author", width: "w-[18%]" },
   { label: "Created", width: "w-[10%]" },
   { label: "Actions", width: "w-[10%]" },
@@ -73,25 +73,22 @@ const FILTER_STATUS_OPTIONS = [
 
 interface VoyageWithCounts extends Voyage {
   nodeCount: number;
-  playlistCount: number;
   dropletCount: number;
   authorName: string;
 }
 
 function computeCounts(voyage: Voyage): VoyageWithCounts {
-  const nodeCount = voyage.voyage_nodes?.length ?? 0;
-  const playlistCount = voyage.voyage_playlists?.length ?? 0;
-  const dropletCount =
-    voyage.voyage_playlists?.reduce(
-      (acc: number, vp: VoyagePlaylist) =>
-        acc + (vp.playlist?.droplets?.length ?? 0),
-      0,
-    ) ?? 0;
+  const nodes = voyage.voyage_nodes ?? [];
+  const nodeCount = nodes.length;
+  const dropletCount = nodes.reduce(
+    (acc, n) => acc + (n.playlist?.droplets?.length ?? 0),
+    0,
+  );
   const authorName = voyage.authors?.length
     ? voyage.authors.map((a) => a.firstName || a.email).join(", ")
     : "\u2014";
 
-  return { ...voyage, nodeCount, playlistCount, dropletCount, authorName };
+  return { ...voyage, nodeCount, dropletCount, authorName };
 }
 
 // ——— VoyageTableRow ———
@@ -142,7 +139,7 @@ function VoyageTableRow({
 
       <td className="h-[56px] px-6 py-3">
         <span className="text-[16px] text-[#101828] dark:text-white">
-          {voyage.playlistCount}
+          {voyage.dropletCount}
         </span>
       </td>
 
@@ -232,10 +229,6 @@ function VoyageMobileCard({ voyage }: { voyage: VoyageWithCounts }) {
         )}
         <span className="text-xs text-[#667085] dark:text-slate-400">
           {voyage.nodeCount} node{voyage.nodeCount !== 1 && "s"}
-        </span>
-        <span className="text-xs text-slate-300 dark:text-slate-600">|</span>
-        <span className="text-xs text-[#667085] dark:text-slate-400">
-          {voyage.playlistCount} playlist{voyage.playlistCount !== 1 && "s"}
         </span>
         <span className="text-xs text-slate-300 dark:text-slate-600">|</span>
         <span className="text-xs text-[#667085] dark:text-slate-400">

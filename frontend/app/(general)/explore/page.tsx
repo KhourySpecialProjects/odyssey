@@ -121,7 +121,7 @@ export default async function ExplorePage({
     fields: ["*"],
   });
 
-  const voyages = contentType === "voyages" ? await getVoyages() : [];
+  const voyages = await getVoyages();
 
   const playlists = await getPlaylists({
     filters: {
@@ -149,7 +149,7 @@ export default async function ExplorePage({
           <ContentTypeSelector
             droplets={droplets.length}
             playlists={playlists.length}
-            voyages={contentType === "voyages" ? voyages.length : undefined}
+            voyages={voyages.length}
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

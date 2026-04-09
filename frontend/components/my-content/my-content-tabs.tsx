@@ -47,20 +47,28 @@ export function MyContentTabs({
       {/* Tab bar */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          {visibleTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                activeTab === tab.id
-                  ? "border-[#287697] bg-[#287697] text-white"
-                  : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {visibleTabs.map((tab) => {
+            const count =
+              tab.id === "droplets"
+                ? droplets.length
+                : tab.id === "playlists"
+                  ? playlists.length
+                  : voyages.length;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                  activeTab === tab.id
+                    ? "border-[#287697] bg-[#287697] text-white"
+                    : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
+                )}
+              >
+                {tab.label} ({count})
+              </button>
+            );
+          })}
         </div>
 
         {activeTab === "droplets" && (
