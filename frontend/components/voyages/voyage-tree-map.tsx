@@ -19,10 +19,10 @@ interface VoyageTreeMapProps {
   nodes: TreeNode[];
 }
 
-const MAIN_SIZE = 150;
-const BRANCH_SIZE = 130;
-const H_GAP = 100;
-const V_GAP = 140;
+const MAIN_SIZE = 260;
+const BRANCH_SIZE = 210;
+const H_GAP = 80;
+const V_GAP = 160;
 const PADDING = 100;
 
 interface LayoutNode {
@@ -99,8 +99,8 @@ function bezierPath(
   parentSize: number,
   childSize: number,
 ): string {
-  const sy = py + parentSize * 0.4;
-  const ey = cy - childSize * 0.4;
+  const sy = py + parentSize * 0.52;
+  const ey = cy - childSize * 0.52;
   const my = (sy + ey) / 2;
   return `M ${px} ${sy} C ${px} ${my}, ${cx} ${my}, ${cx} ${ey}`;
 }
