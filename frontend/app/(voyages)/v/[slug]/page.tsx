@@ -27,11 +27,13 @@ type Params = {
 export default async function VoyagePage({ params }: Props) {
   const p = await params;
 
-  // Fetch voyage and current user in parallel
-  const [voyage, sessionUser] = await Promise.all([
-    getVoyageBySlug(p.slug),
-    getCurrentUser(),
-  ]);
+  const sessionUser = await getCurrentUser();
+  const isStaff =
+    !!sessionUser?.roles &&
+    (isAuthorizedUserAdmin(sessionUser.roles) ||
+      isAuthorizedUserFaculty(sessionUser.roles));
+
+  const voyage = await getVoyageBySlug(p.slug, { includeDrafts: isStaff });
 
   if (!voyage) {
     notFound();
@@ -51,12 +53,7 @@ export default async function VoyagePage({ params }: Props) {
   const isAuthenticated = !!sessionUser;
   const isEnrolled = enrollment !== null;
   const isDraft = voyage.status === "draft";
-  const canPublish =
-    isDraft &&
-    isAuthenticated &&
-    sessionUser?.roles &&
-    (isAuthorizedUserAdmin(sessionUser.roles) ||
-      isAuthorizedUserFaculty(sessionUser.roles));
+  const canPublish = isDraft && isStaff;
 
   const voyageNodes: VoyageNode[] = voyage.voyage_nodes ?? [];
 

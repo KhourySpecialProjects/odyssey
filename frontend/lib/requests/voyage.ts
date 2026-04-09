@@ -106,12 +106,16 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
  * @param slug The unique slug of the desired Voyage.
  * @returns The Voyage, or null if not found.
  */
-export async function getVoyageBySlug(slug: string): Promise<Voyage | null> {
+export async function getVoyageBySlug(
+  slug: string,
+  { includeDrafts = false }: { includeDrafts?: boolean } = {},
+): Promise<Voyage | null> {
   const path = `/voyages`;
   const urlParams = {
-    publicationState: "preview",
+    ...(includeDrafts && { publicationState: "preview" }),
     filters: {
       slug: { $eq: slug },
+      ...(!includeDrafts && { status: { $eq: "published" } }),
     },
     populate: {
       voyage_nodes: {
