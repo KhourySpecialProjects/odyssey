@@ -95,18 +95,28 @@ export function MultiSelect({
                       className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-normal text-slate-800"
                     >
                       {option.name}
-                      <button
-                        type="button"
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(
                             selected.filter((s) => s.id !== option.id),
                           );
                         }}
-                        className="ml-0.5 rounded-full hover:opacity-70"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelected(
+                              selected.filter((s) => s.id !== option.id),
+                            );
+                          }
+                        }}
+                        className="ml-0.5 cursor-pointer rounded-full hover:opacity-70"
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </span>
                     </Badge>
                   ))}
                 </div>

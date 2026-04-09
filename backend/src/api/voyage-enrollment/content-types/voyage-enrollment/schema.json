@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "voyage_enrollments",
+  "info": {
+    "singularName": "voyage-enrollment",
+    "pluralName": "voyage-enrollments",
+    "displayName": "VoyageEnrollment"
+  },
+  "options": { "draftAndPublish": false },
+  "pluginOptions": {},
+  "attributes": {
+    "enrolledAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "completionPercentage": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0,
+      "max": 100
+    },
+    "authorizedUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "voyage": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage.voyage"
+    }
+  }
+}

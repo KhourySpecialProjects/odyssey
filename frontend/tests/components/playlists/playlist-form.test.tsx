@@ -317,10 +317,8 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const submitButton = screen.getByRole("button", {
-        name: /Save Playlist|Create Playlist/i,
-      });
-      fireEvent.click(submitButton);
+      const form = screen.getByRole("form");
+      fireEvent.submit(form);
 
       expect(
         await screen.findByText("Please enter a playlist name"),
@@ -337,10 +335,8 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Test");
       await user.clear(nameInput);
 
-      const submitButton = screen.getByRole("button", {
-        name: /Save Playlist|Create Playlist/i,
-      });
-      fireEvent.click(submitButton);
+      const form = screen.getByRole("form");
+      fireEvent.submit(form);
 
       expect(
         await screen.findByText("Please enter a playlist name"),

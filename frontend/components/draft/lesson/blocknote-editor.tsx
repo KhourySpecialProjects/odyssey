@@ -9,6 +9,7 @@ import type { Block } from "@blocknote/core";
 interface BlockNoteEditorProps {
   initialContent?: Block[];
   onChange: (content: Block[]) => void;
+  editable?: boolean;
 }
 
 const BlockNoteEditorClient = dynamic(
@@ -29,11 +30,13 @@ const BlockNoteEditorClient = dynamic(
 export function BlockNoteEditor({
   initialContent,
   onChange,
+  editable,
 }: BlockNoteEditorProps) {
   return (
     <BlockNoteEditorClient
       initialContent={initialContent}
       onChange={onChange}
+      editable={editable}
     />
   );
 }

@@ -6,18 +6,22 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { Droplet, Playlist } from "@/types";
+import { VoyageCard } from "@/components/voyages/voyage-card";
+import { Droplet, Playlist, Voyage } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface MyContentTabsProps {
   droplets: Droplet[];
   playlists: Playlist[];
+  voyages: Voyage[];
   showPlaylists: boolean;
+  showVoyages: boolean;
 }
 
 const tabs = [
   { id: "droplets", label: "My Droplets" },
   { id: "playlists", label: "My Playlists" },
+  { id: "voyages", label: "My Voyages" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -25,13 +29,18 @@ type TabId = (typeof tabs)[number]["id"];
 export function MyContentTabs({
   droplets,
   playlists,
+  voyages,
   showPlaylists,
+  showVoyages,
 }: MyContentTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("droplets");
 
-  const visibleTabs = showPlaylists
-    ? tabs
-    : tabs.filter((t) => t.id === "droplets");
+  const visibleTabs = tabs.filter(
+    (t) =>
+      t.id === "droplets" ||
+      (t.id === "playlists" && showPlaylists) ||
+      (t.id === "voyages" && showVoyages),
+  );
 
   return (
     <div className="w-full">
@@ -76,6 +85,17 @@ export function MyContentTabs({
             </Button>
           </Link>
         )}
+        {activeTab === "voyages" && showVoyages && (
+          <Link href="/new/voyage">
+            <Button
+              after={<PlusIcon />}
+              size="sm"
+              className="bg-[#287697] text-white hover:bg-[#1f6080]"
+            >
+              New Voyage
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Tab content */}
@@ -107,6 +127,22 @@ export function MyContentTabs({
                   playlist={playlist}
                   toDraft={true}
                 />
+              ))}
+            </ul>
+          ))}
+
+        {activeTab === "voyages" &&
+          showVoyages &&
+          (voyages.length === 0 ? (
+            <p className="text-lg text-[#475569] dark:text-slate-400">
+              No voyages found.
+            </p>
+          ) : (
+            <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {voyages.map((voyage) => (
+                <li key={voyage.id}>
+                  <VoyageCard voyage={voyage} />
+                </li>
               ))}
             </ul>
           ))}

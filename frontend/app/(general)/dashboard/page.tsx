@@ -5,6 +5,7 @@ import { Filter } from "@/components/explore/filter";
 import { Search } from "@/components/explore/search";
 import { Sort } from "@/components/explore/sort";
 import { TagFilter } from "@/components/explore/tag-filter";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -144,6 +145,24 @@ export default async function DashboardRoute({ searchParams }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
+        <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
+        {voyageEnrollments.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">
+            No enrolled voyages yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {voyageEnrollments.map(
+              (enrollment) =>
+                enrollment.voyage && (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage} />
+                ),
+            )}
+          </div>
+        )}
       </div>
     </SearchProvider>
   );

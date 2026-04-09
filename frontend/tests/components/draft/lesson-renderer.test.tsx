@@ -63,6 +63,18 @@ jest.mock("@/lib/requests/lesson", () => ({
   deleteLesson: jest.fn(),
 }));
 
+const mockUseEditingLock = jest.fn().mockReturnValue({
+  isLocked: true,
+  isOwnLock: true,
+  lockedBy: null,
+  isLoading: false,
+  error: null,
+  release: jest.fn(),
+});
+jest.mock("@/hooks/useEditingLock", () => ({
+  useEditingLock: (...args: unknown[]) => mockUseEditingLock(...args),
+}));
+
 jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn(),
 }));
@@ -705,6 +717,100 @@ describe("LessonRenderer", () => {
       fireEvent.click(screen.getByText("Change URL"));
 
       expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
+    });
+  });
+
+  describe("Editing Lock", () => {
+    it("shows lock banner when locked by another user", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: false,
+        lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByText(/Jane Doe/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/is currently editing this lesson/),
+      ).toBeInTheDocument();
+    });
+
+    it("hides action buttons when locked by another user", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: false,
+        lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.queryByText("Change URL")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("delete-lesson-button"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows loading state while acquiring lock", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: false,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: true,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByText("Checking editing access..."),
+      ).toBeInTheDocument();
+    });
+
+    it("shows edit controls when user holds the lock", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: true,
+        lockedBy: null,
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
+      expect(
+        screen.queryByText(/is currently editing/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows error banner when lock acquisition fails", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: false,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: false,
+        error: "Could not resolve your user account",
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByText(/Unable to acquire editing lock/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Could not resolve your user account/),
+      ).toBeInTheDocument();
     });
   });
 });
