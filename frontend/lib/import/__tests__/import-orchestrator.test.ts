@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { extractRawText, sectionsToLessons } from "../import-orchestrator";
 import type { ImportSection } from "../types";
 

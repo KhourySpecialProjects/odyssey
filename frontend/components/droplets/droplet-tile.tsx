@@ -7,6 +7,7 @@ import {
   getDifficultyBadgeColor,
   cn,
 } from "@/lib/utils";
+import { getTagColors } from "@/lib/tag-colors";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -14,7 +15,7 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { Archive, ArchiveRestore, Clock, Download } from "lucide-react";
+import { Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import {
@@ -22,8 +23,13 @@ import {
   favoriteDroplet,
   getDropletBySlug,
 } from "@/lib/requests/droplet";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import {
+  IconArchive,
+  IconArchiveOff,
+  IconDownload,
+  IconHeart,
+  IconHeartFilled,
+} from "@tabler/icons-react";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -357,12 +363,14 @@ ${
     <Link
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
-      <li className="h-full overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <li className="h-full overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
-                <Badge variant="destructive">Draft</Badge>
+                <span className="inline-flex items-center rounded-[16px] bg-slate-200 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-slate-600 opacity-90 dark:bg-slate-600 dark:text-slate-300">
+                  Draft
+                </span>
               ) : null}
 
               {completionPercentage != 100 && dueDate && dueDate !== "" && (
@@ -397,16 +405,35 @@ ${
                 </Badge>
               )}
 
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                  getTagColors(droplet.focusArea).bg,
+                  getTagColors(droplet.focusArea).text,
+                )}
+              >
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                  getTagColors(droplet.type).bg,
+                  getTagColors(droplet.type).text,
+                )}
+              >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
               {droplet.tags?.map((tag) => (
                 <Badge
                   key={tag.id}
-                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
+                  variant="outline"
+                  className={cn(
+                    "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    getTagColors(tag.name).bg,
+                    getTagColors(tag.name).text,
+                  )}
                 >
                   {tag.name}
                 </Badge>
@@ -469,9 +496,7 @@ ${
             </div>
           </div>
 
-          {/* Bottom section with ratings, favorite button, and archive button */}
           <div className="flex w-full flex-nowrap items-center justify-between gap-2">
-            {/* Left side - ratings */}
             <div className="flex min-w-0 items-center">
               {droplet.averageRating && droplet.averageRating != 0.0 ? (
                 <div className="max-w-full origin-left scale-[0.55]">
@@ -485,7 +510,6 @@ ${
               ) : null}
             </div>
 
-            {/* Right side - favorite and archive buttons */}
             <div className="ml-2 flex flex-shrink-0 items-center gap-2">
               <Button
                 size="sm"
@@ -497,7 +521,10 @@ ${
                 className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-900`}
               >
                 <div className="group relative">
-                  <Download className="text-black dark:text-white" />
+                  <IconDownload
+                    className="h-[18px] w-[18px] text-black dark:text-white"
+                    stroke={1.8}
+                  />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Export Markdown
                   </span>
@@ -514,13 +541,19 @@ ${
                       e.stopPropagation();
                       changeVisibility();
                     }}
-                    className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                    className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
                   >
                     <div className="group relative">
                       {isArchived ? (
-                        <ArchiveRestore className="text-black dark:text-white" />
+                        <IconArchiveOff
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       ) : (
-                        <Archive className="text-black dark:text-white" />
+                        <IconArchive
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       )}
                       <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isArchived ? "Unarchive" : "Archive"}
@@ -538,13 +571,19 @@ ${
                       e.stopPropagation();
                       toggleFavorite();
                     }}
-                    className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+                    className="bg-transparent shadow-none hover:bg-transparent disabled:opacity-50 dark:bg-transparent dark:hover:bg-transparent"
                   >
                     <div className="group relative">
                       {isFavorited || isHovering ? (
-                        <FavoriteIcon className="text-pink-500" />
+                        <IconHeartFilled
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       ) : (
-                        <FavoriteBorderIcon className="text-purple-500" />
+                        <IconHeart
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       )}
                       <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isFavorited ? "Unfavorite" : "Favorite"}

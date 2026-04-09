@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar, getDifficultyBadgeColor, cn } from "@/lib/utils";
+import { getTagColors } from "@/lib/tag-colors";
 import { X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { updateDroplet, createNewTag } from "@/lib/requests/droplet";
@@ -224,9 +224,15 @@ export function ClickableBadges({
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
-          <Badge className="h-full border border-slate-300 bg-purple-200 text-black hover:bg-purple-400 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-400">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(localFocusArea).bg,
+              getTagColors(localFocusArea).text,
+            )}
+          >
             {uppercaseFirstChar(localFocusArea)}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "focusArea" && (
@@ -270,9 +276,15 @@ export function ClickableBadges({
           onClick={() => setActivePopup("type")}
           disabled={isPending}
         >
-          <Badge className="dark:text-whitegit h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:text-white">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(localType).bg,
+              getTagColors(localType).text,
+            )}
+          >
             {uppercaseFirstChar(localType)}
-          </Badge>
+          </span>
         </button>
 
         {activePopup === "type" && (
@@ -317,9 +329,15 @@ export function ClickableBadges({
           disabled={isPending}
           className="h-full"
         >
-          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300 dark:text-white">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
+              getTagColors(tag.name).bg,
+              getTagColors(tag.name).text,
+            )}
+          >
             {tag.name}
-          </Badge>
+          </span>
         </button>
       ))}
 
@@ -329,22 +347,18 @@ export function ClickableBadges({
           onClick={() => setActivePopup("difficulty")}
           disabled={isPending}
         >
-          <Badge
+          <span
             className={cn(
-              "h-full border border-slate-300 text-black hover:opacity-80 dark:text-white",
+              "inline-flex items-center rounded-[16px] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium opacity-90 hover:brightness-75",
               localDifficulty
                 ? getDifficultyBadgeColor(localDifficulty.toLowerCase())
-                : "bg-slate-200 dark:bg-slate-600",
+                : "bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300",
             )}
           >
-            {localDifficulty ? (
-              uppercaseFirstChar(localDifficulty.toLowerCase())
-            ) : (
-              <>
-                No Difficulty <span className="text-red-500">*</span>
-              </>
-            )}
-          </Badge>
+            {localDifficulty
+              ? uppercaseFirstChar(localDifficulty.toLowerCase())
+              : "No Difficulty"}
+          </span>
         </button>
 
         {activePopup === "difficulty" && (
@@ -388,9 +402,9 @@ export function ClickableBadges({
           onClick={() => setActivePopup("addTag")}
           disabled={isPending}
         >
-          <div className="flex h-full flex-row items-center text-black dark:text-white">
-            <Plus className="h-4 w-4" />
-            <p>Add Tag</p>
+          <div className="flex h-full flex-row items-center gap-1 text-black dark:text-white">
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            <p className="text-[14px] leading-[18px] font-medium">Add Tag</p>
           </div>
         </button>
 
@@ -436,7 +450,7 @@ export function ClickableBadges({
                         handleCreateAndAddTag();
                       }
                     }}
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-[#121216] focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
                     autoFocus
                     disabled={isPending}
                   />
@@ -471,7 +485,7 @@ export function ClickableBadges({
                       placeholder="Search tags..."
                       value={tagSearchQuery}
                       onChange={(e) => setTagSearchQuery(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-[#121216] focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
                       autoFocus
                     />
                   </div>

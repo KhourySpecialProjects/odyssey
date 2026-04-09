@@ -6,14 +6,21 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 export function DropletOverviewInput({
   initialContent,
   updateContent,
+  editorActionsRef,
+  onIsLinkChange,
 }: {
   initialContent: string;
   updateContent: (content: string) => void;
+  editorActionsRef?: React.MutableRefObject<{
+    setLink: () => void;
+    unsetLink: () => void;
+  } | null>;
+  onIsLinkChange?: (isLink: boolean) => void;
 }) {
   const editor = useEditor({
     editable: true,
@@ -23,7 +30,7 @@ export function DropletOverviewInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
+          "before:content-[attr(data-placeholder)] before:text-[#121216] before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
       }),
       Text,
       Link.configure({
@@ -46,7 +53,7 @@ export function DropletOverviewInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky w-full max-w-2xl p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:text-slate-300 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-800 border-[#D0D5DD] dark:text-slate-300 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
       },
     },
     immediatelyRender: false,
@@ -95,35 +102,31 @@ export function DropletOverviewInput({
     },
   });
 
-  // Now it's safe to return early
+  // Wire up actions ref and isLink callback for parent use
+  useEffect(() => {
+    if (!editor) return;
+    if (editorActionsRef) {
+      editorActionsRef.current = {
+        setLink,
+        unsetLink: () => editor.chain().focus().unsetLink().run(),
+      };
+    }
+  }, [editor, setLink, editorActionsRef]);
+
+  useEffect(() => {
+    onIsLinkChange?.(editorState?.isLink ?? false);
+  }, [editorState?.isLink, onIsLinkChange]);
+
   if (!editor) {
     return null;
   }
 
   return (
-    <>
-      <div className="control-group mt-2 mb-2">
-        <div className="button-group flex gap-2">
-          <button
-            onClick={setLink}
-            className={`rounded border px-3 py-1 transition-colors ${
-              editorState?.isLink
-                ? "border-blue-600 bg-blue-500 text-white"
-                : "border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
-            }`}
-          >
-            Set link
-          </button>
-          <button
-            onClick={() => editor.chain().focus().unsetLink().run()}
-            disabled={!editorState?.isLink}
-            className="rounded border border-slate-300 bg-white px-3 py-1 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
-          >
-            Unset link
-          </button>
-        </div>
-      </div>
-      <EditorContent role="textbox" name="droplet-overview" editor={editor} />
-    </>
+    <EditorContent
+      className="flex-1"
+      role="textbox"
+      name="droplet-overview"
+      editor={editor}
+    />
   );
 }

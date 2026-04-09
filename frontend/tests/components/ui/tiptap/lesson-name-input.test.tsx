@@ -4,13 +4,11 @@ import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 jest.mock("@tiptap/react", () => ({
   useEditor: ({ content }: any) => ({
     getHTML: () => content,
+    commands: { focus: jest.fn() },
   }),
   EditorContent: ({ editor, className }: any) => (
     <div className={className}>
-      <div
-        className={editor?.options?.editorProps?.attributes?.class}
-        dangerouslySetInnerHTML={{ __html: editor?.getHTML() }}
-      />
+      <div dangerouslySetInnerHTML={{ __html: editor?.getHTML() }} />
     </div>
   ),
 }));
@@ -35,7 +33,7 @@ describe("LessonNameInput", () => {
 
   it("applies editor props", () => {
     const { container } = render(<LessonNameInput {...mockProps} />);
-    const editorContent = container.querySelector("div > div") as HTMLElement;
-    expect(editorContent).toHaveClass("test-class");
+    const editorElement = container.firstChild as HTMLElement;
+    expect(editorElement).toHaveClass("test-class");
   });
 });

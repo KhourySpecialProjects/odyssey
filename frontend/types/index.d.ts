@@ -5,19 +5,12 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
-export type DatasetFormat = "csv" | "json" | "xlsx";
-
 export type Dataset = {
   id: number;
   name: string;
-  format: DatasetFormat;
-  fileUrl: string;
+  url: string;
+  fileType: string;
   fileSize: number;
-  rowCount: number;
-  columnCount: number;
-  columnNames: string[];
-  columnTypes: string[]; // "string" | "number" | "boolean" | "date" | "unknown"
-  droplet?: Droplet;
 };
 
 export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
@@ -461,6 +454,48 @@ export type CreationRequest = {
   dropletIdea: String;
   user: AuthorizedUser;
 };
+
+export interface Voyage {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  status: "draft" | "published";
+  isSequential: boolean;
+  authors?: AuthorizedUser[];
+  voyage_nodes?: VoyageNode[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface VoyageNode {
+  id: number;
+  isMainPath: boolean;
+  branchType: "required" | "optional";
+  nodeType: "playlist" | "checkpoint";
+  orderIndex: number;
+  label: string;
+  voyage?: Voyage;
+  playlist?: Playlist;
+  parentNode?: VoyageNode | null;
+  childNodes?: VoyageNode[];
+}
+
+export interface VoyageEnrollment {
+  id: number;
+  enrolledAt: string;
+  completionPercentage: number;
+  authorizedUser?: AuthorizedUser;
+  voyage?: Voyage;
+}
+
+export interface VoyageNodeCompletion {
+  id: number;
+  completedAt: string;
+  authorizedUser?: AuthorizedUser;
+  voyageNode?: VoyageNode;
+  voyageEnrollment?: VoyageEnrollment;
+}
 
 interface CustomBlockNoteBlock {
   id: string;

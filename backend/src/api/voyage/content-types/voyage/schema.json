@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "voyages",
+  "info": {
+    "singularName": "voyage",
+    "pluralName": "voyages",
+    "displayName": "Voyage"
+  },
+  "options": { "draftAndPublish": true },
+  "pluginOptions": {},
+  "attributes": {
+    "name": { "type": "string", "required": true, "unique": true },
+    "slug": { "type": "uid", "targetField": "name", "required": true },
+    "description": { "type": "text" },
+    "status": {
+      "type": "enumeration",
+      "enum": ["draft", "published"],
+      "default": "draft",
+      "required": true
+    },
+    "authors": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "isSequential": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "voyage_nodes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::voyage-node.voyage-node",
+      "mappedBy": "voyage"
+    }
+  }
+}

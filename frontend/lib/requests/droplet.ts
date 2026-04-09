@@ -304,6 +304,7 @@ export async function updateDroplet(
       ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
       ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
+      ...(data.datasets !== undefined && { datasets: data.datasets }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
@@ -658,7 +659,9 @@ export async function duplicateDroplet(dropletId: number) {
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
-      difficulty: originalDroplet.difficulty,
+      ...(originalDroplet.difficulty
+        ? { difficulty: originalDroplet.difficulty }
+        : {}),
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",

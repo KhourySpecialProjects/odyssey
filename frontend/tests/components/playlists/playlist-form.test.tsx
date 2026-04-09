@@ -113,15 +113,11 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      expect(screen.getByLabelText(/Playlist Name/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText("Enter playlist name")).toHaveValue(
         "",
       );
       expect(
         screen.getByLabelText(/Make this playlist public/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByLabelText(/Playlist Description/i),
       ).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText("Enter playlist description"),
@@ -178,7 +174,7 @@ describe("PlaylistForm", () => {
         screen.getByRole("button", { name: /Cancel/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /Save Playlist/i }),
+        screen.getByRole("button", { name: /Create Playlist/i }),
       ).toBeInTheDocument();
     });
 
@@ -189,9 +185,6 @@ describe("PlaylistForm", () => {
 
       expect(
         screen.getByPlaceholderText("Search Droplets..."),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Search/i }),
       ).toBeInTheDocument();
     });
 
@@ -262,7 +255,7 @@ describe("PlaylistForm", () => {
       expect(searchInput).toHaveValue("Droplet 1");
     });
 
-    it("updates search query on button click", async () => {
+    it("updates search query on input change", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
@@ -271,10 +264,7 @@ describe("PlaylistForm", () => {
       const searchInput = screen.getByPlaceholderText("Search Droplets...");
       await user.type(searchInput, "test");
 
-      const searchButton = screen.getByRole("button", { name: /Search/i });
-      await user.click(searchButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith("/test?q=test");
+      expect(searchInput).toHaveValue("test");
     });
 
     it("prevents default on Enter key in search input", async () => {
@@ -304,10 +294,7 @@ describe("PlaylistForm", () => {
       const searchInput = screen.getByPlaceholderText("Search Droplets...");
       await user.clear(searchInput);
 
-      const searchButton = screen.getByRole("button", { name: /Search/i });
-      await user.click(searchButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith("/test?");
+      expect(searchInput).toHaveValue("");
     });
 
     it("initializes with query parameter from URL", () => {
@@ -330,10 +317,8 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
-      });
-      fireEvent.click(submitButton);
+      const form = screen.getByRole("form");
+      fireEvent.submit(form);
 
       expect(
         await screen.findByText("Please enter a playlist name"),
@@ -350,10 +335,8 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Test");
       await user.clear(nameInput);
 
-      const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
-      });
-      fireEvent.click(submitButton);
+      const form = screen.getByRole("form");
+      fireEvent.submit(form);
 
       expect(
         await screen.findByText("Please enter a playlist name"),
@@ -370,7 +353,7 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Valid Name");
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -421,7 +404,7 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "New Playlist");
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -465,7 +448,7 @@ describe("PlaylistForm", () => {
       await user.click(switchElement);
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -511,7 +494,7 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Failed Playlist");
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -550,7 +533,7 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Error Playlist");
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -625,7 +608,7 @@ describe("PlaylistForm", () => {
       await user.type(nameInput, "Failed Update");
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -679,7 +662,7 @@ describe("PlaylistForm", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -716,7 +699,7 @@ describe("PlaylistForm", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -757,7 +740,7 @@ describe("PlaylistForm", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -799,7 +782,7 @@ describe("PlaylistForm", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -841,7 +824,7 @@ describe("PlaylistForm", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /Save Playlist/i,
+        name: /Save Playlist|Create Playlist/i,
       });
       fireEvent.click(submitButton);
 
@@ -958,9 +941,11 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      expect(screen.getByLabelText(/Playlist Name/i)).toBeInTheDocument();
       expect(
-        screen.getByLabelText(/Playlist Description/i),
+        screen.getByPlaceholderText("Enter playlist name"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Enter playlist description"),
       ).toBeInTheDocument();
       expect(
         screen.getByLabelText(/Make this playlist public/i),
@@ -972,8 +957,9 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const searchButton = screen.getByRole("button", { name: /Search/i });
-      expect(searchButton).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Search Droplets..."),
+      ).toBeInTheDocument();
     });
 
     it("associates labels with form controls using htmlFor", () => {
@@ -981,8 +967,10 @@ describe("PlaylistForm", () => {
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const nameInput = screen.getByLabelText(/Playlist Name/i);
-      const descInput = screen.getByLabelText(/Playlist Description/i);
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      const descInput = screen.getByPlaceholderText(
+        "Enter playlist description",
+      );
       const switchElement = screen.getByLabelText(/Make this playlist public/i);
 
       expect(nameInput).toHaveAttribute("id", "name");

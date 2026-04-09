@@ -74,7 +74,7 @@ export default async function Lesson({ params }: Props) {
   const datasets = droplet ? await getDatasetsByDropletId(droplet.id) : [];
 
   return (
-    <div>
+    <div className="pb-16">
       <LessonRenderer
         lesson={lesson}
         dropletSlug={p.slug}

@@ -13,6 +13,9 @@ const config = {
   testEnvironment: "jsdom",
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
+    "^@uiw/react-codemirror$": "<rootDir>/__mocks__/@uiw/react-codemirror.js",
+    "^@uiw/codemirror-theme-github$":
+      "<rootDir>/__mocks__/@uiw/codemirror-theme-github.js",
   },
   transform: {
     "^.+\\.(ts|tsx|js|jsx)$": ["babel-jest", { presets: ["next/babel"] }],

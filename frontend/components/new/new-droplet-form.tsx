@@ -15,13 +15,7 @@ import { LearningObjectivesInput } from "@/components/new/learning-objectives-in
 import { DROPLET_FILTERS } from "@/lib/globals";
 import { Tag, User } from "@/types";
 import { useState, useEffect } from "react";
-import {
-  LoaderIcon,
-  MoveRightIcon,
-  MoveLeftIcon,
-  User2Icon,
-  ExternalLink,
-} from "lucide-react";
+import { LoaderIcon, User2Icon, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
@@ -56,8 +50,7 @@ export function CreateDropletForm({
   const [focusAreaValue, setFocusAreaValue] = useState<string>("");
   const [typeValue, setTypeValue] = useState<string>("");
   const [difficultyValue, setDifficultyValue] = useState<string>("");
-  const initArr1: string[] = [""];
-  const [learningObjectives, setLearningObjectives] = useState(initArr1);
+  const [learningObjectives, setLearningObjectives] = useState<string[]>([]);
 
   const initArr2: MultiSelectItem[] = [];
   const [selectedTags, setSelectedTags] = useState(initArr2);
@@ -189,24 +182,21 @@ export function CreateDropletForm({
 
   return (
     <form
-      className="flex h-min flex-col items-center justify-center space-y-4 p-5 md:w-4/5"
+      className="flex h-min w-full flex-col space-y-8"
       action={addDroplet}
       autoComplete="off"
     >
       <div className="flex w-full flex-col items-start justify-between gap-2">
-        <div className="w-full py-0.5 pb-2 text-sm font-semibold text-slate-400">
-          Metadata
-        </div>
-        <div className="flex w-full flex-col gap-3 rounded-md border border-slate-200 bg-white p-8 dark:border-slate-500 dark:bg-slate-800">
+        <div className="flex w-full flex-col gap-8">
           <div>
-            <div className="py-0.5 pb-2 text-sm font-semibold">
+            <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
               Name <span className="text-red-500">*</span>
             </div>
             <Input
               id="name"
               name="name"
               placeholder="Developing a Droplet"
-              className="max-w-full"
+              className="max-w-full border-[#D0D5DD] placeholder:text-[#121216] dark:border-slate-700"
               value={dropletName}
               onChange={(e) => setDropletName(e.target.value)}
             />
@@ -220,11 +210,11 @@ export function CreateDropletForm({
                 onValueChange={setFocusAreaValue}
               >
                 <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
-                  <SelectLabel className="pb-2 pl-0">
+                  <SelectLabel className="pb-2 pl-0 text-xl font-bold text-slate-900 dark:text-white">
                     {focusAreaFilter.label}{" "}
                     <span className="text-red-500">*</span>
                   </SelectLabel>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full border-[#D0D5DD] dark:border-slate-700">
                     <SelectValue
                       placeholder="Select..."
                       className="placeholder:text-slate-400"
@@ -241,21 +231,6 @@ export function CreateDropletForm({
                 </SelectContent>
               </Select>
             )}
-            <RadioSelect
-              label="Type"
-              items={
-                DROPLET_FILTERS.find(
-                  (filter) => filter.name === "type",
-                )?.options.map((option, index) => ({
-                  id: index,
-                  name: option.label,
-                  value: option.value,
-                })) ?? []
-              }
-              selected={typeValue}
-              setSelected={setTypeValue}
-              firstTime={true}
-            />
             {difficultyFilter && (
               <Select
                 key={difficultyFilter.name}
@@ -264,11 +239,11 @@ export function CreateDropletForm({
                 onValueChange={setDifficultyValue}
               >
                 <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
-                  <SelectLabel className="pb-2 pl-0">
+                  <SelectLabel className="pb-2 pl-0 text-xl font-bold text-slate-900 dark:text-white">
                     {difficultyFilter.label}{" "}
                     <span className="text-red-500">*</span>
                   </SelectLabel>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full border-[#D0D5DD] dark:border-slate-700">
                     <SelectValue
                       placeholder="Select..."
                       className="placeholder:text-slate-400"
@@ -288,7 +263,7 @@ export function CreateDropletForm({
           </div>
           <div className="xs:flex-col flex items-start justify-start gap-x-10 gap-y-8 lg:flex-row">
             <div className="xs:w-full lg:w-1/2">
-              <div className="py-1.5 text-sm font-semibold">
+              <div className="py-1.5 text-xl font-bold text-slate-900 dark:text-white">
                 Tags <span className="text-red-500">*</span>
               </div>
               <MultiSelect
@@ -301,45 +276,62 @@ export function CreateDropletForm({
               />
             </div>
 
-            <div>
-              <div className="py-1.5 text-sm font-semibold">Author(s)</div>
-              <div className="flex flex-row items-center gap-2">
-                <Avatar variant="round" size="sm">
-                  <AvatarImage src={author.image ?? undefined} />
-                  <AvatarFallback>
-                    {author.name ? (
-                      getInitials(author.name)
-                    ) : (
-                      <User2Icon className="h-4 w-4" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <p>{author.name}</p>
+            <div className="xs:w-full flex flex-row flex-wrap items-start gap-8 lg:w-1/2">
+              <RadioSelect
+                label="Type"
+                items={
+                  DROPLET_FILTERS.find(
+                    (filter) => filter.name === "type",
+                  )?.options.map((option, index) => ({
+                    id: index,
+                    name: option.label,
+                    value: option.value,
+                  })) ?? []
+                }
+                selected={typeValue}
+                setSelected={setTypeValue}
+                firstTime={true}
+              />
+
+              <div>
+                <div className="py-1.5 text-xl font-bold text-slate-900 dark:text-white">
+                  Author(s)
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                  <Avatar variant="round" size="sm">
+                    <AvatarImage src={author.image ?? undefined} />
+                    <AvatarFallback>
+                      {author.name ? (
+                        getInitials(author.name)
+                      ) : (
+                        <User2Icon className="h-4 w-4" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p>{author.name}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex w-full flex-col items-start justify-between gap-2">
-        <div className="w-full py-0.5 pb-2 text-sm font-semibold text-slate-400">
-          Overview
-        </div>
-        <LearningObjectivesInput
-          className="flex w-full flex-col gap-3 rounded-md border border-slate-200 bg-white p-8 dark:border-slate-500 dark:bg-slate-800"
-          learningObjectives={learningObjectives}
-          setLearningObjectives={setLearningObjectives}
-          firstTime={true}
-        />
-      </div>
+      <LearningObjectivesInput
+        className="flex w-full flex-col gap-3"
+        learningObjectives={learningObjectives}
+        setLearningObjectives={setLearningObjectives}
+        firstTime={true}
+      />
 
-      <div className="flex items-center justify-center space-x-4 self-end">
+      <div className="flex items-center space-x-2 self-end">
         <Button
-          before={<MoveLeftIcon />}
+          type="button"
+          size="sm"
+          variant="outline"
           onClick={() => router.push("/my-content")}
-          className="bg-black text-white dark:bg-slate-50 dark:text-black"
+          className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
         >
-          <div className="flex w-30 items-center justify-center">Cancel</div>
+          Cancel
         </Button>
 
         <SubmitButton />
@@ -365,15 +357,11 @@ function SubmitButton() {
   return (
     <Button
       disabled={pending}
-      after={
-        pending ? <LoaderIcon className="animate-spin" /> : <MoveRightIcon />
-      }
-      variant="default"
-      className="bg-black text-white dark:bg-slate-50 dark:text-black"
+      size="sm"
+      className="bg-[#287697] text-white hover:bg-[#1f6080]"
     >
-      <div className="flex w-30 items-center justify-center">
-        Create Droplet
-      </div>
+      {pending ? <LoaderIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
+      Create Droplet
     </Button>
   );
 }

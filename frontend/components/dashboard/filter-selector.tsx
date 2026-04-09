@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 interface FilterSelectorProps {
   droplets: number;
@@ -39,19 +39,20 @@ export function FilterSelector({
   return (
     <div className="flex flex-wrap gap-2">
       {contentTypes.map((type) => (
-        <Button
+        <button
           key={type.value}
-          className={
-            currentType === type.value
-              ? "h-10 w-24 bg-black dark:border dark:border-slate-900 dark:bg-white dark:text-black dark:hover:bg-slate-300"
-              : "h-10 w-24 border border-slate-500 bg-white text-black hover:bg-slate-100 dark:bg-black dark:text-white dark:hover:bg-slate-900"
-          }
           onClick={() => {
             router.push(`${pathname}?${createQueryString(type.value)}`);
           }}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+            currentType === type.value
+              ? "border-[#287697] bg-[#287697] text-white"
+              : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
+          )}
         >
           {type.name}
-        </Button>
+        </button>
       ))}
     </div>
   );

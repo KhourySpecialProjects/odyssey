@@ -58,7 +58,7 @@ export function UserMultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between dark:hover:bg-slate-900"
+          className="w-full justify-between border-[#D0D5DD] dark:border-slate-600 dark:hover:bg-slate-900"
         >
           {selectedIds.length > 0
             ? users

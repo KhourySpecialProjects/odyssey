@@ -90,9 +90,8 @@ describe("SortableLesson", () => {
     lessons: [],
   };
 
-  const mockClasses = {
-    link: "test-link",
-    activeLink: "test-active",
+  const mockRouter = {
+    push: jest.fn(),
   };
 
   beforeEach(() => {
@@ -106,22 +105,29 @@ describe("SortableLesson", () => {
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname="/test"
-        classes={mockClasses}
       />,
     );
     expect(screen.getByText(mockLesson.name)).toBeInTheDocument();
   });
 
-  it("applies active class when pathname matches", () => {
+  it("applies active styling when pathname matches", () => {
     render(
       <SortableLesson
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname={`/draft/d/test-droplet/test-lesson`}
-        classes={mockClasses}
       />,
     );
-    expect(screen.getByRole("link")).toHaveClass("test-active");
+    // Active state applies bg-[#2D7597] to the inner div, not the link itself
+    const { container } = render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname={`/draft/d/test-droplet/test-lesson`}
+      />,
+    );
+    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    expect(activeDiv).toBeInTheDocument();
   });
 
   it("navigates to correct path when clicked", () => {
@@ -133,21 +139,11 @@ describe("SortableLesson", () => {
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname="/test"
-        classes={mockClasses}
       />,
     );
 
     fireEvent.click(screen.getByRole("link"));
     expect(mockPush).toHaveBeenCalledWith("/draft/d/test-droplet/test-lesson");
-  });
-
-  const mockRouter = {
-    push: jest.fn(),
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   it("prevents default and navigates on lesson click", () => {
@@ -156,7 +152,6 @@ describe("SortableLesson", () => {
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname="/test"
-        classes={mockClasses}
       />,
     );
 
@@ -168,25 +163,17 @@ describe("SortableLesson", () => {
     );
   });
 
-  it("applies active class when pathname matches", () => {
-    const currentPath = `/draft/d/test-droplet/test-lesson`;
-
-    render(
+  it("does not apply active styling when pathname does not match", () => {
+    const { container } = render(
       <SortableLesson
         lesson={mockLesson}
         droplet={mockDroplet}
-        pathname={currentPath}
-        classes={mockClasses}
+        pathname="/some/other/path"
       />,
     );
 
-    const link = screen.getByRole("link");
-    expect(link).toHaveClass(mockClasses.activeLink);
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    expect(activeDiv).not.toBeInTheDocument();
   });
 
   it("should handle lesson click", () => {
@@ -195,7 +182,6 @@ describe("SortableLesson", () => {
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname="/some/path"
-        classes={mockClasses}
       />,
     );
 
@@ -207,19 +193,18 @@ describe("SortableLesson", () => {
     );
   });
 
-  it("should apply correct styling based on pathname", () => {
+  it("should apply active background styling when pathname matches", () => {
     const activePath = "/draft/d/test-droplet/test-lesson";
 
-    render(
+    const { container } = render(
       <SortableLesson
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname={activePath}
-        classes={mockClasses}
       />,
     );
 
-    const link = screen.getByRole("link");
-    expect(link).toHaveClass("test-link", "test-active");
+    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    expect(activeDiv).toBeInTheDocument();
   });
 });

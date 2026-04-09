@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
 import { useRouter } from "next/navigation";
 import { htmlToText } from "@/lib/utils";
+import { IconPencil } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { useMemo } from "react";
@@ -23,6 +24,8 @@ import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
+import { useEditingLock } from "@/hooks/useEditingLock";
+import { IconLock } from "@tabler/icons-react";
 
 export interface BaseBlock {
   __component: string;
@@ -56,6 +59,13 @@ export function LessonRenderer({
   datasets = [],
 }: LessonRendererProps) {
   const router = useRouter();
+  const {
+    isOwnLock,
+    lockedBy,
+    isLoading: lockLoading,
+    error: lockError,
+  } = useEditingLock(lesson.id);
+  const isReadOnly = lockLoading || !isOwnLock;
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(
@@ -63,6 +73,7 @@ export function LessonRenderer({
   );
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   // Check if lesson is truly new (empty from props and no blocksV2)
   const isLessonEmpty =
@@ -181,6 +192,26 @@ export function LessonRenderer({
   useEffect(() => {
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
+
+  // Listen for flush-save requests from sidebar Preview button
+  useEffect(() => {
+    const handleFlushSave = async () => {
+      try {
+        if (editorVersion === "v2") {
+          await debounceUpdateV2.flush();
+        } else {
+          await debounceUpdate.flush();
+        }
+      } finally {
+        window.dispatchEvent(new CustomEvent("flush-save-complete"));
+      }
+    };
+
+    window.addEventListener("flush-save-request", handleFlushSave);
+    return () => {
+      window.removeEventListener("flush-save-request", handleFlushSave);
+    };
+  }, [editorVersion, debounceUpdateV2, debounceUpdate]);
 
   const updateNameBackend = useCallback(
     async (name: string) => {
@@ -364,17 +395,66 @@ export function LessonRenderer({
 
   return (
     <>
-      <div className="mb-5 flex flex-col items-center justify-start rounded-md px-4 pt-4 pb-7">
-        <LessonNameInput
-          className="mb-3 w-[700px] max-w-2xl text-center"
-          initialContent={`<h1>${name}</h1>`}
-          updateContent={(content: string) => {
-            const textContent = htmlToText(content);
-            setName(textContent);
-            debouncedNameUpdate(textContent);
-          }}
-        />
-        <div className="flex flex-row items-center justify-center space-x-10">
+      {isReadOnly && lockedBy && (
+        <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>
+              {lockedBy.firstName} {lockedBy.lastName}
+            </strong>{" "}
+            is currently editing this lesson. You can view but not edit.
+          </span>
+        </div>
+      )}
+      {isReadOnly && !lockedBy && lockError && (
+        <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>Unable to acquire editing lock. {lockError}</span>
+        </div>
+      )}
+      {lockLoading && (
+        <div className="mx-auto mb-4 max-w-2xl px-4 py-3 text-center text-sm text-slate-500">
+          Checking editing access...
+        </div>
+      )}
+      <div className="mb-5 flex flex-col items-start justify-start rounded-md px-10 pt-6 pb-3 md:px-40">
+        {isEditingName ? (
+          <div className="mb-3 w-full">
+            <LessonNameInput
+              className="w-full text-left"
+              initialContent={`<h1>${name}</h1>`}
+              updateContent={
+                isReadOnly
+                  ? () => {}
+                  : (content: string) => {
+                      const textContent = htmlToText(content);
+                      setName(textContent);
+                      debouncedNameUpdate(textContent);
+                    }
+              }
+              onBlur={() => setIsEditingName(false)}
+            />
+          </div>
+        ) : (
+          <div className="mb-3 inline-flex items-center gap-3">
+            <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
+              {name}
+            </h1>
+            {!isReadOnly && (
+              <button
+                onClick={() => setIsEditingName(true)}
+                className="flex items-center justify-center text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                aria-label="Edit lesson title"
+              >
+                <IconPencil className="h-5 w-5" stroke={1.8} />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!isReadOnly && (
+        <div className="mb-4 flex flex-row items-center gap-4 px-10 md:px-40">
           <Button variant="outline" onClick={() => setIsPopupOpen(true)}>
             Change URL
           </Button>
@@ -448,20 +528,18 @@ export function LessonRenderer({
             dropletSlug={dropletSlug}
           />
         </div>
-      </div>
+      )}
 
       {editorVersion === "v1" ? (
         <>
           <AddLessonBlock onAddBlock={handleAddTool} />
-          <div className="flex w-full flex-col items-center justify-center space-y-4">
-            <div className="w-full max-w-2xl">
-              <BlockList
-                blocks={blocks}
-                onReorder={handleReorderSource}
-                setBlock={setBlock}
-                deleteBlock={deleteBlock}
-              />
-            </div>
+          <div className="w-full px-10 md:px-40">
+            <BlockList
+              blocks={blocks}
+              onReorder={handleReorderSource}
+              setBlock={setBlock}
+              deleteBlock={deleteBlock}
+            />
           </div>
         </>
       ) : (
@@ -477,7 +555,8 @@ export function LessonRenderer({
                   initialContent={
                     lesson.blocksV2 as unknown as BlockNoteBlock[]
                   }
-                  onChange={debounceUpdateV2}
+                  onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                  editable={!isReadOnly}
                 />
               </PyodideProvider>
             </DatasetProvider>

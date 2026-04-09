@@ -2,8 +2,11 @@
 
 import { useSearch } from "@/contexts/SearchContext";
 import { DueDate, Playlist } from "@/types";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PlaylistCard } from "../playlists/playlist-card";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+
+const ITEMS_PER_PAGE = 9;
 
 export function UserPlaylistsClient({
   customPlaylists,
@@ -19,6 +22,9 @@ export function UserPlaylistsClient({
   dashboardPage?: boolean;
 }) {
   const { searchQuery } = useSearch();
+  const [customPage, setCustomPage] = useState(1);
+  const [publicPage, setPublicPage] = useState(1);
+
   const filteredPublic = useMemo(() => {
     return publicPlaylists.filter((playlist) =>
       playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -31,6 +37,26 @@ export function UserPlaylistsClient({
     );
   }, [customPlaylists, searchQuery]);
 
+  useEffect(() => {
+    setPublicPage(1);
+  }, [publicPlaylists, searchQuery]);
+
+  useEffect(() => {
+    setCustomPage(1);
+  }, [customPlaylists, searchQuery]);
+
+  const customTotalPages = Math.ceil(filteredCustom.length / ITEMS_PER_PAGE);
+  const paginatedCustom = filteredCustom.slice(
+    (customPage - 1) * ITEMS_PER_PAGE,
+    customPage * ITEMS_PER_PAGE,
+  );
+
+  const publicTotalPages = Math.ceil(filteredPublic.length / ITEMS_PER_PAGE);
+  const paginatedPublic = filteredPublic.slice(
+    (publicPage - 1) * ITEMS_PER_PAGE,
+    publicPage * ITEMS_PER_PAGE,
+  );
+
   return (
     <div className="space-y-8 pb-4">
       {filteredCustom.length > 0 && (
@@ -39,7 +65,7 @@ export function UserPlaylistsClient({
             {!isArchived && "Private Playlists"}
           </h2>
           <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredCustom.map((playlist: Playlist, index) => (
+            {paginatedCustom.map((playlist: Playlist, index) => (
               <PlaylistCard
                 key={playlist.id}
                 playlist={playlist}
@@ -49,6 +75,12 @@ export function UserPlaylistsClient({
               />
             ))}
           </div>
+          <AdminPagination
+            currentPage={customPage}
+            totalPages={customTotalPages}
+            onPageChange={setCustomPage}
+            variant="standalone"
+          />
         </section>
       )}
 
@@ -56,22 +88,26 @@ export function UserPlaylistsClient({
         <section>
           <h2 className="mb-4 text-xl font-semibold">Public Playlists</h2>
           <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredPublic.map((playlist: Playlist) => (
-              <div key={`group-${playlist.id}`} className="h-full">
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  dueDate={
-                    dueDates?.find(
-                      (dueDate) => dueDate.playlist?.id === playlist.id,
-                    )?.dueDate || ""
-                  }
-                  dashboardPage={dashboardPage}
-                  isArchived={isArchived}
-                />
-              </div>
+            {paginatedPublic.map((playlist: Playlist) => (
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
+                dueDate={
+                  dueDates?.find(
+                    (dueDate) => dueDate.playlist?.id === playlist.id,
+                  )?.dueDate || ""
+                }
+                dashboardPage={dashboardPage}
+                isArchived={isArchived}
+              />
             ))}
           </div>
+          <AdminPagination
+            currentPage={publicPage}
+            totalPages={publicTotalPages}
+            onPageChange={setPublicPage}
+            variant="standalone"
+          />
         </section>
       )}
     </div>

@@ -516,7 +516,7 @@ describe("NextSteps", () => {
       const description = screen.getByText(
         "To further your understanding, we recommend exploring:",
       );
-      expect(description).toHaveClass("text-slate-500");
+      expect(description).toHaveClass("text-slate-600");
       expect(description).toHaveClass("dark:text-slate-300");
     });
   });

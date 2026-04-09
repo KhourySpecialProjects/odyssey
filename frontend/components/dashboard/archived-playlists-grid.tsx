@@ -51,7 +51,7 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!allArchivedPlaylists || allArchivedPlaylists.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+      <Message className="mb-8">
         <MessageHeader subtitle="No Results" title="No Archived Playlists" />
         <MessageDescription>
           You haven&apos;t archived any Playlists yet.

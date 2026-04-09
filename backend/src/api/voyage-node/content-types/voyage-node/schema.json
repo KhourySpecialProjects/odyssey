@@ -1,0 +1,61 @@
+{
+  "kind": "collectionType",
+  "collectionName": "voyage_nodes",
+  "info": {
+    "singularName": "voyage-node",
+    "pluralName": "voyage-nodes",
+    "displayName": "VoyageNode"
+  },
+  "options": { "draftAndPublish": false },
+  "pluginOptions": {},
+  "attributes": {
+    "isMainPath": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "branchType": {
+      "type": "enumeration",
+      "enum": ["required", "optional"],
+      "required": true,
+      "default": "required"
+    },
+    "nodeType": {
+      "type": "enumeration",
+      "enum": ["playlist", "checkpoint"],
+      "required": true,
+      "default": "playlist"
+    },
+    "orderIndex": {
+      "type": "integer",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "voyage": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage.voyage",
+      "inversedBy": "voyage_nodes"
+    },
+    "playlist": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::playlist.playlist"
+    },
+    "parentNode": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage-node.voyage-node",
+      "inversedBy": "childNodes"
+    },
+    "childNodes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::voyage-node.voyage-node",
+      "mappedBy": "parentNode"
+    }
+  }
+}
