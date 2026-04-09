@@ -1,9 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React from "react";
 import { cn } from "@/lib/utils";
-import { IconArchive, IconHeart } from "@tabler/icons-react";
 
 interface FilterSelectorProps {
   droplets: number;
@@ -20,24 +18,12 @@ export function FilterSelector({
   archived,
   favorited,
 }: FilterSelectorProps) {
-  const contentTypes: Array<{
-    name: string;
-    value: string;
-    icon?: React.ReactNode;
-  }> = [
+  const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
     { name: `Groups (${groups})`, value: "groups" },
-    {
-      name: `Archived (${archived})`,
-      value: "archived",
-      icon: <IconArchive className="h-3.5 w-3.5" stroke={2} />,
-    },
-    {
-      name: `Favorited (${favorited})`,
-      value: "favorited",
-      icon: <IconHeart className="h-3.5 w-3.5" stroke={2} />,
-    },
+    { name: `Archived (${archived})`, value: "archived" },
+    { name: `Favorited (${favorited})`, value: "favorited" },
   ];
   const router = useRouter();
   const pathname = usePathname();
@@ -65,17 +51,6 @@ export function FilterSelector({
               : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
           )}
         >
-          {type.icon && (
-            <span
-              className={
-                currentType === type.value
-                  ? "text-white"
-                  : "text-black dark:text-white"
-              }
-            >
-              {type.icon}
-            </span>
-          )}
           {type.name}
         </button>
       ))}
