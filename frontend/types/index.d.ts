@@ -455,13 +455,6 @@ export type CreationRequest = {
   user: AuthorizedUser;
 };
 
-export interface VoyagePlaylist {
-  id: number;
-  orderIndex: number;
-  voyage?: Voyage;
-  playlist?: Playlist;
-}
-
 export interface Voyage {
   id: number;
   name: string;
@@ -470,7 +463,6 @@ export interface Voyage {
   status: "draft" | "published";
   isSequential: boolean;
   authors?: AuthorizedUser[];
-  voyage_playlists?: VoyagePlaylist[];
   voyage_nodes?: VoyageNode[];
   createdAt?: string;
   updatedAt?: string;
