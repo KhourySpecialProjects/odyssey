@@ -56,7 +56,7 @@ export function FunFactEditor({
         displayed to users on Odyssey's homepage
       </p>
 
-      <div className="mt-4 mb-4 w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-8 dark:border-slate-600 dark:bg-slate-800">
+      <div className="mt-4 w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-8 dark:border-slate-600 dark:bg-slate-800">
         <div
           className={cn(
             currentFact
@@ -66,36 +66,38 @@ export function FunFactEditor({
         >
           {currentFact ? currentFact : "Nothing here yet..."}
         </div>
-      </div>
 
-      <div className="flex flex-row items-center justify-end gap-2">
-        <button
-          onClick={handleGenerateFact}
-          disabled={isGenerateLoading}
-          className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
-        >
-          {isGenerateLoading
-            ? "Generating..."
-            : currentFact
-              ? "Regenerate Fact"
-              : "Generate Fact"}
-        </button>
-        <button
-          onClick={handleDeleteFact}
-          disabled={isDeleteLoading}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 text-red-500 transition-colors hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-        >
-          {isDeleteLoading ? (
-            "..."
-          ) : (
-            <IconTrash className="h-4 w-4" stroke={1.8} />
+        {error && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
+
+        <div className="mt-6 flex flex-row items-center justify-end gap-2">
+          <button
+            onClick={handleGenerateFact}
+            disabled={isGenerateLoading}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          >
+            {isGenerateLoading
+              ? "Generating..."
+              : currentFact
+                ? "Regenerate Fact"
+                : "Generate Fact"}
+          </button>
+          {currentFact && (
+            <button
+              onClick={handleDeleteFact}
+              disabled={isDeleteLoading}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 transition-colors hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50 dark:border-red-800 dark:bg-slate-700 dark:text-red-400 dark:hover:bg-red-950"
+            >
+              {isDeleteLoading ? (
+                "..."
+              ) : (
+                <IconTrash className="h-4 w-4" stroke={1.8} />
+              )}
+            </button>
           )}
-        </button>
+        </div>
       </div>
-
-      {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
-      )}
     </section>
   );
 }

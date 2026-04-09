@@ -304,9 +304,9 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+      expect(screen.getByText("No enrolled groups")).toBeInTheDocument();
       expect(
-        screen.getByText("You haven't enrolled in any Groups yet."),
+        screen.getByText("You haven't enrolled in any groups yet."),
       ).toBeInTheDocument();
     });
 
@@ -315,22 +315,22 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
-      expect(screen.getByText("No Archived Groups")).toBeInTheDocument();
+      expect(screen.getByText("No archived groups")).toBeInTheDocument();
       expect(
-        screen.getByText("You haven't archived any Groups yet."),
+        screen.getByText("You haven't archived any groups yet."),
       ).toBeInTheDocument();
     });
 
     it("does not show no groups message when active groups exist", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.queryByText("No Enrolled Groups")).not.toBeInTheDocument();
+      expect(screen.queryByText("No enrolled groups")).not.toBeInTheDocument();
     });
 
     it("does not show no archived groups message when archived groups exist", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
-      expect(screen.queryByText("No Archived Groups")).not.toBeInTheDocument();
+      expect(screen.queryByText("No archived groups")).not.toBeInTheDocument();
     });
   });
 
@@ -444,7 +444,7 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+      expect(screen.getByText("No enrolled groups")).toBeInTheDocument();
     });
 
     it("handles groups with undefined users_archived", async () => {
@@ -479,7 +479,7 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+      expect(screen.getByText("No enrolled groups")).toBeInTheDocument();
     });
 
     it("handles empty members array", async () => {
@@ -496,7 +496,7 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+      expect(screen.getByText("No enrolled groups")).toBeInTheDocument();
     });
 
     it("handles multiple group memberships", async () => {

@@ -39,7 +39,7 @@ import {
   IconLoader2,
   IconPresentation,
   IconSearch,
-  IconWand,
+  IconLayoutRows,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -423,7 +423,7 @@ export function Sidebar({
                         onClick={(e) => e.preventDefault()}
                         className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
                       >
-                        <IconWand className="h-5 w-5" />
+                        <IconLayoutRows className="h-5 w-5" />
                       </button>
                     ) : (
                       <button
@@ -434,7 +434,7 @@ export function Sidebar({
                         {isAutoFormatting ? (
                           <IconLoader2 className="h-5 w-5 animate-spin" />
                         ) : (
-                          <IconWand className="h-5 w-5" />
+                          <IconLayoutRows className="h-5 w-5" />
                         )}
                       </button>
                     )}
@@ -524,7 +524,9 @@ export function Sidebar({
                   )}
                   stroke={1.8}
                 />
-                <span className="ml-2 text-base leading-none">Overview</span>
+                <span className="ml-2 text-base leading-none font-medium">
+                  Overview
+                </span>
               </Link>
               <AlertDialog
                 open={showAutoFormatConfirm}
@@ -550,7 +552,7 @@ export function Sidebar({
                       onClick={() => handleAutoFormat()}
                       className="bg-amber-500 text-black hover:bg-amber-600"
                     >
-                      <IconWand className="mr-2 h-4 w-4" />
+                      <IconLayoutRows className="mr-2 h-4 w-4" />
                       Format Slides
                     </AlertDialogAction>
                   </AlertDialogFooter>

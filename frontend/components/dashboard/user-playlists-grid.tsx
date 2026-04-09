@@ -4,12 +4,9 @@ import {
   getCachedEnrollmentsFavorites,
   getCachedUserDueDates,
 } from "@/lib/requests/cached";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { UserPlaylistsClient } from "./user-playlists-client";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconLayoutList } from "@tabler/icons-react";
 import { Lesson, Playlist } from "@/types";
 
 export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
@@ -55,13 +52,16 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!activePlaylists || activePlaylists.length === 0) {
     return (
-      <Message className="mb-8">
-        <MessageHeader subtitle="No Results" title="No Saved Playlists" />
-        <MessageDescription>
-          You haven&apos;t saved any playlists yet. Browse the explore page to
-          find playlists to save.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconLayoutList
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No saved playlists"
+        message="You haven't saved any playlists yet. Browse the explore page to find playlists to save."
+      />
     );
   }
 

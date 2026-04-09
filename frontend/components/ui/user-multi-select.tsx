@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -54,24 +53,14 @@ export function UserMultiSelect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <button
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between border-[#D0D5DD] dark:border-slate-600 dark:hover:bg-slate-900"
+          aria-label="Add author"
+          className="flex items-center justify-center rounded-md p-1 text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
         >
-          {selectedIds.length > 0
-            ? users
-                .filter((user) => selectedIds.includes(user.id))
-                .map((user) =>
-                  user.firstName && user.lastName
-                    ? user.firstName + " " + user.lastName
-                    : user.email,
-                )
-                .join(", ")
-            : "Select users..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+          <Plus className="h-5 w-5" strokeWidth={2.5} />
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <Command>

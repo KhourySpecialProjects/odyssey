@@ -67,9 +67,9 @@ describe("ArchivedDropletsGrid", () => {
 
     render(await ArchivedDropletsGrid({}));
 
-    expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
+    expect(screen.getByText("No archived droplets")).toBeInTheDocument();
     expect(
-      screen.getByText("You haven't archived any Droplets yet."),
+      screen.getByText("You haven't archived any droplets yet."),
     ).toBeInTheDocument();
   });
 
@@ -88,9 +88,9 @@ describe("ArchivedDropletsGrid", () => {
 
     render(await ArchivedDropletsGrid({}));
 
-    expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
+    expect(screen.getByText("No archived droplets")).toBeInTheDocument();
     expect(
-      screen.getByText("You haven't archived any Droplets yet."),
+      screen.getByText("You haven't archived any droplets yet."),
     ).toBeInTheDocument();
   });
 
@@ -299,7 +299,7 @@ describe("ArchivedDropletsGrid", () => {
         (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
 
         render(await ArchivedDropletsGrid({}));
-        expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
+        expect(screen.getByText("No archived droplets")).toBeInTheDocument();
       });
 
       it("should filter out non-archived enrollments", async () => {

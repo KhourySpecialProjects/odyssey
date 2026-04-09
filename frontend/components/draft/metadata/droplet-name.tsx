@@ -5,6 +5,12 @@ import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { DropletNameInput } from "@/components/ui/tiptap/droplet-name-input";
 import { stripHtmlTags } from "@/lib/utils";
 import { IconPencil } from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function DropletName({
   startingName,
@@ -21,10 +27,10 @@ export function DropletName({
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
   const updateName = (htmlName: string) => {
@@ -62,13 +68,20 @@ export function DropletName({
           <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
             {name}
           </h1>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center justify-center text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
-            aria-label="Edit title"
-          >
-            <IconPencil className="h-5 w-5" stroke={1.8} />
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center justify-center text-[#344054] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                  aria-label="Edit title"
+                >
+                  <IconPencil className="h-5 w-5" stroke={1.8} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Edit title</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
 

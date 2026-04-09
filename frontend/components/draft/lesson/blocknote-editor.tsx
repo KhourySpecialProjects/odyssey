@@ -20,7 +20,7 @@ const BlockNoteEditorClient = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full rounded-lg border border-slate-200 p-8 text-center dark:border-slate-700">
+      <div className="w-full rounded-lg border border-[#D0D5DD] p-8 text-center dark:border-slate-600">
         Loading editor...
       </div>
     ),

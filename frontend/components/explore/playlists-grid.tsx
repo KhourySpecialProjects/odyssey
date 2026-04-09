@@ -3,12 +3,9 @@ import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
 } from "@/lib/requests/cached";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { AuthorizedUser, DueDate, Playlist } from "@/types";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconLayoutList } from "@tabler/icons-react";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { SortedPlaylistsGrid } from "./sorted-playlists-grid";
 
@@ -90,12 +87,16 @@ export async function PlaylistsGrid({
 
   if (!playlistsWithCompletion || playlistsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-        <MessageHeader subtitle="No Results" title="No Public Playlists" />
-        <MessageDescription>
-          There are no public playlists available at this time.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconLayoutList
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No playlists available"
+        message="There are no public playlists available at this time."
+      />
     );
   }
 

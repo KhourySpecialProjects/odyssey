@@ -59,7 +59,7 @@ export function CalloutEditor({
 
   return (
     <div
-      className={`w-full rounded-md border border-slate-200 p-4 hover:shadow-md dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
+      className={`w-full rounded-md border border-[#D0D5DD] p-4 hover:shadow-md dark:border-slate-600 ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
     >
       <div className={`mb-4 flex w-full flex-row items-center justify-between`}>
         <div className="flex flex-row items-center">

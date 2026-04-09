@@ -75,7 +75,7 @@ describe("PlaylistsGrid", () => {
       const component = await PlaylistsGrid({ playlists: [] });
       render(component);
 
-      expect(screen.getByText("No Public Playlists")).toBeInTheDocument();
+      expect(screen.getByText("No playlists available")).toBeInTheDocument();
       expect(
         screen.getByText(
           "There are no public playlists available at this time.",
@@ -87,7 +87,7 @@ describe("PlaylistsGrid", () => {
       const component = await PlaylistsGrid({ playlists: undefined as any });
       render(component);
 
-      expect(screen.getByText("No Public Playlists")).toBeInTheDocument();
+      expect(screen.getByText("No playlists available")).toBeInTheDocument();
     });
 
     it("calculates 0% completion for playlists without droplets", async () => {

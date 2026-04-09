@@ -160,7 +160,9 @@ describe("LessonRenderer", () => {
     it("renders Change URL button", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
     });
 
     it("renders delete lesson button", () => {
@@ -230,7 +232,7 @@ describe("LessonRenderer", () => {
     it("opens slug change popup when Change URL is clicked", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
       expect(
@@ -241,7 +243,7 @@ describe("LessonRenderer", () => {
     it("closes popup when Cancel is clicked", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
       fireEvent.click(screen.getByText("Cancel"));
 
       expect(screen.queryByText("Enter New URL Slug")).not.toBeInTheDocument();
@@ -250,7 +252,7 @@ describe("LessonRenderer", () => {
     it("updates slug input value", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText(
         "e.g., my-new-url-slug",
@@ -265,7 +267,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
       fireEvent.click(screen.getByText("Confirm"));
 
       expect(updateLesson).not.toHaveBeenCalled();
@@ -279,7 +281,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "   " } });
@@ -298,7 +300,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "new-custom-slug" } });
@@ -327,7 +329,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "existing-slug" } });
@@ -348,7 +350,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "new-slug" } });
@@ -369,7 +371,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "  trimmed-slug  " } });
@@ -663,7 +665,7 @@ describe("LessonRenderer", () => {
     it("confirm button has correct styling", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const confirmButton = screen.getByText("Confirm");
       expect(confirmButton).toHaveClass("bg-sky-600");
@@ -676,7 +678,7 @@ describe("LessonRenderer", () => {
         <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
       );
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const popup = container.querySelector(".fixed.inset-0");
       expect(popup).toHaveClass("bg-black");
@@ -687,7 +689,7 @@ describe("LessonRenderer", () => {
     it("applies dark mode classes to popup", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const popupContent = screen.getByText("Enter New URL Slug").parentElement;
       expect(popupContent).toHaveClass("dark:bg-slate-900");
@@ -698,7 +700,7 @@ describe("LessonRenderer", () => {
     it("popup input has placeholder", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const input = screen.getByPlaceholderText("e.g., my-new-url-slug");
       expect(input).toBeInTheDocument();
@@ -707,14 +709,16 @@ describe("LessonRenderer", () => {
     it("buttons have descriptive text", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
       expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
     });
 
     it("popup has heading", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
     });
@@ -786,7 +790,9 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
       expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
       expect(
         screen.queryByText(/is currently editing/),

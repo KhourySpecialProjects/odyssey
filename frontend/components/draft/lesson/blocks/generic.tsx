@@ -27,7 +27,7 @@ export function GenericEditor({
   };
 
   return (
-    <div className="w-full max-w-2xl rounded-md border border-slate-200 p-4 hover:shadow-md dark:border-slate-500">
+    <div className="w-full max-w-2xl rounded-md border border-[#D0D5DD] p-4 hover:shadow-md dark:border-slate-600">
       <div className="mb-4 flex w-full flex-row items-center justify-between">
         <h2 className="text-lg">Text Block</h2>
         <Trash2Icon

@@ -12,7 +12,7 @@ import {
   IconUsers,
   IconUserPlus,
   IconMessageReport,
-  IconCompass,
+  IconMap,
   type IconProps,
 } from "@tabler/icons-react";
 
@@ -80,7 +80,7 @@ export function ReportsIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={IconMessageReport} active={active} />;
 }
 export function VoyagesIcon({ active }: { active: boolean }) {
-  return <NavIcon Icon={IconCompass} active={active} />;
+  return <NavIcon Icon={IconMap} active={active} />;
 }
 
 // ——— Nav item definitions ———

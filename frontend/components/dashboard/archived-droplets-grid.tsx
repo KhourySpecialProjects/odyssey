@@ -1,9 +1,6 @@
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconArchive } from "@tabler/icons-react";
 import {
   getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
@@ -49,12 +46,16 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8">
-        <MessageHeader subtitle="No Results" title="No Archived Droplets" />
-        <MessageDescription>
-          You haven&apos;t archived any Droplets yet.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconArchive
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No archived droplets"
+        message="You haven't archived any droplets yet."
+      />
     );
   }
 

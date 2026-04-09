@@ -2,15 +2,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser, getCachedUserGroups } from "@/lib/requests/cached";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
-import {
-  Message,
-  MessageHeader,
-  MessageDescription,
-} from "@/components/message";
 import { redirect } from "next/navigation";
 import { GroupCard } from "@/components/group/group-card";
 import { Suspense } from "react";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { IconUsers } from "@tabler/icons-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type GroupWithRole = {
   group: Group;
@@ -22,6 +19,7 @@ type Props = {
     | Promise<{ [key: string]: string | string[] | undefined }>
     | undefined;
 };
+
 export default async function GroupsPage({ searchParams }: Props) {
   const params = await searchParams;
   if (!params) {
@@ -82,41 +80,43 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="mx-auto my-4 w-full max-w-7xl space-y-6 pt-8">
-      <div className="text-center">
-        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
+    <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-[56px] md:py-8">
+      <div className="mb-6">
+        <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
           Groups
         </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
+        <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
           View and manage your group information
         </p>
       </div>
 
-      <GroupsSelector />
+      <div className="mb-6">
+        <GroupsSelector />
+      </div>
 
       <div>
         {tab === "favorites" ? (
-          <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-            <MessageHeader
-              title="Favorites Coming Soon"
-              subtitle="Future enhancements on the way!"
-            />
-            <MessageDescription>
-              The ability to favorite groups will be available in a future
-              update.
-            </MessageDescription>
-          </Message>
+          <EmptyState
+            icon={
+              <IconUsers
+                className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                stroke={1.5}
+              />
+            }
+            title="Favorites coming soon"
+            message="The ability to favorite groups will be available in a future update."
+          />
         ) : tab === "creator" && groupsByRole.creator.length === 0 ? (
-          <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500">
-            <MessageHeader
-              title="Create Your First Group"
-              subtitle="Get started with Khoury Odyssey groups!"
-            />
-            <MessageDescription>
-              Groups help you organize and share content with others. Create
-              your first group today to get started.
-            </MessageDescription>
-          </Message>
+          <EmptyState
+            icon={
+              <IconUsers
+                className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                stroke={1.5}
+              />
+            }
+            title="No groups here"
+            message={roleMessages.creator}
+          />
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
@@ -139,11 +139,16 @@ export default async function GroupsPage({ searchParams }: Props) {
                 </div>
               </Suspense>
             ) : (
-              <div className="light:text-slate-500 rounded-lg border border-dashed p-8 text-center dark:border-slate-500">
-                <p className="text-lg dark:text-slate-300">
-                  {roleMessages[tab as keyof typeof roleMessages]}
-                </p>
-              </div>
+              <EmptyState
+                icon={
+                  <IconUsers
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No groups here"
+                message={roleMessages[tab as keyof typeof roleMessages]}
+              />
             )}
           </div>
         )}

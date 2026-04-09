@@ -575,7 +575,7 @@ export function BlockNoteEditorClient({
 
   return (
     <SlideOverflowContext.Provider value={overflowingBreaks}>
-      <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="blocknote-no-link w-full rounded-lg border border-[#D0D5DD] dark:border-slate-600">
         <BlockNoteView
           editor={editor}
           editable={editable}

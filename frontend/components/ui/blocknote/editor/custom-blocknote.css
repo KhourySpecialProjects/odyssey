@@ -206,3 +206,14 @@
   background: transparent !important;
   color: inherit !important;
 }
+
+/* Placeholder text color — match overview page input text (#121216 light, slate-300 dark) */
+.bn-editor .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
+.bn-editor .bn-block-content[data-is-only-empty-block] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+  color: #121216;
+}
+
+.dark .bn-editor .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
+.dark .bn-editor .bn-block-content[data-is-only-empty-block] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+  color: rgb(203 213 225); /* slate-300 */
+}

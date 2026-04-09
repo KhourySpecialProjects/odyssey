@@ -1,9 +1,6 @@
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconDroplet } from "@tabler/icons-react";
 import {
   getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
@@ -66,12 +63,16 @@ export async function EnrolledDropletsGrid({
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8">
-        <MessageHeader subtitle="No Results" title="No Enrolled Droplets" />
-        <MessageDescription>
-          You haven&apos;t enrolled in any Droplets yet.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconDroplet
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No enrolled droplets"
+        message="You haven't enrolled in any droplets yet."
+      />
     );
   }
 
