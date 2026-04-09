@@ -1,7 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
+import React from "react";
+import { cn } from "@/lib/utils";
+import { IconArchive, IconHeart } from "@tabler/icons-react";
 
 interface FilterSelectorProps {
   droplets: number;
@@ -18,12 +20,24 @@ export function FilterSelector({
   archived,
   favorited,
 }: FilterSelectorProps) {
-  const contentTypes = [
+  const contentTypes: Array<{
+    name: string;
+    value: string;
+    icon?: React.ReactNode;
+  }> = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
     { name: `Groups (${groups})`, value: "groups" },
-    { name: `Archived (${archived})`, value: "archived" },
-    { name: `Favorited (${favorited})`, value: "favorited" },
+    {
+      name: `Archived (${archived})`,
+      value: "archived",
+      icon: <IconArchive className="h-3.5 w-3.5" stroke={2} />,
+    },
+    {
+      name: `Favorited (${favorited})`,
+      value: "favorited",
+      icon: <IconHeart className="h-3.5 w-3.5" stroke={2} />,
+    },
   ];
   const router = useRouter();
   const pathname = usePathname();
@@ -39,19 +53,31 @@ export function FilterSelector({
   return (
     <div className="flex flex-wrap gap-2">
       {contentTypes.map((type) => (
-        <Button
+        <button
           key={type.value}
-          className={
-            currentType === type.value
-              ? "h-10 w-24 bg-black dark:border dark:border-slate-900 dark:bg-white dark:text-black dark:hover:bg-slate-300"
-              : "h-10 w-24 border border-slate-500 bg-white text-black hover:bg-slate-100 dark:bg-black dark:text-white dark:hover:bg-slate-900"
-          }
           onClick={() => {
             router.push(`${pathname}?${createQueryString(type.value)}`);
           }}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+            currentType === type.value
+              ? "border-[#287697] bg-[#287697] text-white"
+              : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
+          )}
         >
+          {type.icon && (
+            <span
+              className={
+                currentType === type.value
+                  ? "text-white"
+                  : "text-black dark:text-white"
+              }
+            >
+              {type.icon}
+            </span>
+          )}
           {type.name}
-        </Button>
+        </button>
       ))}
     </div>
   );

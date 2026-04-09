@@ -55,7 +55,7 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!activePlaylists || activePlaylists.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200">
+      <Message className="mb-8">
         <MessageHeader subtitle="No Results" title="No Saved Playlists" />
         <MessageDescription>
           You haven&apos;t saved any playlists yet. Browse the explore page to

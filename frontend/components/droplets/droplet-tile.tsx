@@ -15,7 +15,7 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { Archive, ArchiveRestore, Clock, Download } from "lucide-react";
+import { Clock, Download } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import {
@@ -23,8 +23,12 @@ import {
   favoriteDroplet,
   getDropletBySlug,
 } from "@/lib/requests/droplet";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import {
+  IconArchive,
+  IconArchiveOff,
+  IconHeart,
+  IconHeartFilled,
+} from "@tabler/icons-react";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -491,9 +495,7 @@ ${
             </div>
           </div>
 
-          {/* Bottom section with ratings, favorite button, and archive button */}
           <div className="flex w-full flex-nowrap items-center justify-between gap-2">
-            {/* Left side - ratings */}
             <div className="flex min-w-0 items-center">
               {droplet.averageRating && droplet.averageRating != 0.0 ? (
                 <div className="max-w-full origin-left scale-[0.55]">
@@ -507,7 +509,6 @@ ${
               ) : null}
             </div>
 
-            {/* Right side - favorite and archive buttons */}
             <div className="ml-2 flex flex-shrink-0 items-center gap-2">
               <Button
                 size="sm"
@@ -536,13 +537,19 @@ ${
                       e.stopPropagation();
                       changeVisibility();
                     }}
-                    className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                    className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
                   >
                     <div className="group relative">
                       {isArchived ? (
-                        <ArchiveRestore className="text-purple-500" />
+                        <IconArchiveOff
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       ) : (
-                        <Archive className="text-purple-500" />
+                        <IconArchive
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       )}
                       <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isArchived ? "Unarchive" : "Archive"}
@@ -560,13 +567,19 @@ ${
                       e.stopPropagation();
                       toggleFavorite();
                     }}
-                    className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+                    className="bg-transparent shadow-none hover:bg-transparent disabled:opacity-50 dark:bg-transparent dark:hover:bg-transparent"
                   >
                     <div className="group relative">
                       {isFavorited || isHovering ? (
-                        <FavoriteIcon className="text-pink-500" />
+                        <IconHeartFilled
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       ) : (
-                        <FavoriteBorderIcon className="text-purple-500" />
+                        <IconHeart
+                          className="h-5 w-5 text-black dark:text-white"
+                          stroke={1.8}
+                        />
                       )}
                       <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isFavorited ? "Unfavorite" : "Favorite"}

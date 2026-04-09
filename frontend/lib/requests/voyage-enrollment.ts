@@ -277,6 +277,7 @@ export async function getVoyageNodeCompletions(
 export async function markVoyageNodeComplete(
   voyageNodeId: number,
   voyageEnrollmentId: number,
+  authorizedUserId?: number,
 ) {
   try {
     const user = await getCurrentUser();
@@ -289,6 +290,11 @@ export async function markVoyageNodeComplete(
       return { ok: false, error: "Authorized user not found", data: null };
     }
 
+    const userId = authorizedUserId ?? authorizedUser.id;
+    if (userId !== authorizedUser.id) {
+      return { ok: false, error: "Unauthorized", data: null };
+    }
+
     // Verify the enrollment belongs to the calling user and the node belongs to the same voyage
     const enrollmentCheck = await fetchAPI<VoyageEnrollment[]>(
       "/voyage-enrollments",
@@ -297,7 +303,7 @@ export async function markVoyageNodeComplete(
           filters: {
             $and: [
               { id: { $eq: voyageEnrollmentId } },
-              { authorizedUser: { id: { $eq: authorizedUser.id } } },
+              { authorizedUser: { id: { $eq: userId } } },
               { voyage: { voyage_nodes: { id: { $eq: voyageNodeId } } } },
             ],
           },
@@ -323,7 +329,7 @@ export async function markVoyageNodeComplete(
         urlParams: {
           filters: {
             $and: [
-              { authorizedUser: { id: { $eq: authorizedUser.id } } },
+              { authorizedUser: { id: { $eq: userId } } },
               { voyageNode: { id: { $eq: voyageNodeId } } },
             ],
           },
@@ -351,7 +357,7 @@ export async function markVoyageNodeComplete(
           data: {
             voyageNode: voyageNodeId,
             voyageEnrollment: voyageEnrollmentId,
-            authorizedUser: authorizedUser.id,
+            authorizedUser: userId,
             completedAt: new Date().toISOString(),
           },
         }),
@@ -418,10 +424,7 @@ export async function markVoyageNodeComplete(
             populate: { voyageNode: { fields: ["id"] } },
             pagination: { pageSize: 250, page: 1 },
           },
-          next: {
-            tags: [CACHE_TAGS.voyageEnrollments(authorizedUser.id)],
-            revalidate: 900,
-          },
+          next: { revalidate: 0 },
         },
       );
 
@@ -631,7 +634,7 @@ async function checkPlaylistVoyageNode(
       if (existingCompletions.length > 0) continue;
 
       // 5. Mark the node as complete
-      await markVoyageNodeComplete(node.id, enrollment.id);
+      await markVoyageNodeComplete(node.id, enrollment.id, userId);
     }
   } catch (err) {
     console.error("Error in checkPlaylistVoyageNode:", err);

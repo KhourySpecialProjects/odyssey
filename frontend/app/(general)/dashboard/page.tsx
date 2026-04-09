@@ -72,17 +72,17 @@ export default async function DashboardRoute({ searchParams }: Props) {
 
   return (
     <SearchProvider>
-      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
-        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
-          Dashboard
-        </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
-          View and manage your enrolled content
-        </p>
-      </div>
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-[56px] md:py-8">
+        <div className="mb-6">
+          <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
+            Dashboard
+          </h1>
+          <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
+            View and manage your enrolled content
+          </p>
+        </div>
 
-      <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
-        <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
+        <div className="mb-6">
           <FilterSelector
             droplets={activeDroplets}
             playlists={allPlaylists}
@@ -94,53 +94,53 @@ export default async function DashboardRoute({ searchParams }: Props) {
             }
             favorited={favoritedDroplets}
           />
-
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="flex flex-1 flex-row flex-wrap items-center gap-2">
-              {contentType === "droplets" &&
-                DROPLET_FILTERS.map((filter) => (
-                  <Filter
-                    key={filter.name}
-                    name={filter.name}
-                    label={filter.label}
-                    options={filter.options}
-                  />
-                ))}
-              {contentType === "droplets" && <TagFilter />}
-              {contentType === "droplets" && (
-                <Sort options={sorting} defaultValue={defaultSort} />
-              )}
-              {contentType !== "droplets" && (
-                <Sort options={playlistSorting} defaultValue={defaultSort} />
-              )}
-            </div>
-            <Search />
-          </div>
         </div>
-      </div>
 
-      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
-        <Suspense fallback={<DropletsSkeleton />}>
-          <MyContent searchParams={params} sortKey={sortKey} />
-        </Suspense>
-      </div>
-
-      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
-        <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
-        {voyageEnrollments.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400">
-            No enrolled voyages yet.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {voyageEnrollments.map(
-              (enrollment) =>
-                enrollment.voyage && (
-                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage} />
-                ),
+        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center">
+          <Search />
+          <div className="flex flex-1 flex-row flex-wrap items-center justify-end gap-2">
+            {contentType === "droplets" &&
+              DROPLET_FILTERS.map((filter) => (
+                <Filter
+                  key={filter.name}
+                  name={filter.name}
+                  label={filter.label}
+                  options={filter.options}
+                />
+              ))}
+            {contentType === "droplets" && <TagFilter />}
+            {contentType === "droplets" && (
+              <Sort options={sorting} defaultValue={defaultSort} />
+            )}
+            {contentType !== "droplets" && (
+              <Sort options={playlistSorting} defaultValue={defaultSort} />
             )}
           </div>
-        )}
+        </div>
+
+        <div className="mb-8">
+          <Suspense fallback={<DropletsSkeleton />}>
+            <MyContent searchParams={params} sortKey={sortKey} />
+          </Suspense>
+        </div>
+
+        <div className="mb-8">
+          <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
+          {(() => {
+            const validEnrollments = voyageEnrollments.filter((e) => e.voyage);
+            return validEnrollments.length === 0 ? (
+              <p className="text-slate-500 dark:text-slate-400">
+                No enrolled voyages yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {validEnrollments.map((enrollment) => (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage!} />
+                ))}
+              </div>
+            );
+          })()}
+        </div>
       </div>
     </SearchProvider>
   );
