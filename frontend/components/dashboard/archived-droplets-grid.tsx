@@ -9,6 +9,7 @@ import {
   getCachedEnrollmentsFavorites,
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
   id: number;
@@ -70,6 +71,7 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
       ratingsMap={ratingsMap}
       sortKey={sortKey}
       currentUser={authorizedUser}
+      isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );
 }

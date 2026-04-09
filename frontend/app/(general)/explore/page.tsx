@@ -75,6 +75,7 @@ export default async function ExplorePage({
             lessons: { fields: ["id"] },
             tags: { fields: ["id", "name", "slug"] },
             authorized_users: { fields: ["id", "firstName", "lastName"] },
+            usersFavorited: { fields: ["id"] },
           },
           fields: [
             "id",

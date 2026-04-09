@@ -10,6 +10,7 @@ import {
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
@@ -69,6 +70,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
       ratingsMap={ratingsMap}
       sortKey={sortKey}
       currentUser={authorizedUser}
+      isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );
 }

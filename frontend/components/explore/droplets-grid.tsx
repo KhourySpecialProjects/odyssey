@@ -30,18 +30,25 @@ export async function DropletsGrid({
   const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
+  let archivedDropletIds: number[] = [];
+  let favoritedDropletIds: number[] = [];
 
   let enrollments: Enrollment[] = [];
   let dueDates: DueDate[] = [];
+  let currentUserId: number | undefined;
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
+    currentUserId = authorizedUser.id;
     [enrollments, dueDates] = await Promise.all([
       getCachedEnrollmentsWithLessonIds(authorizedUser.id),
       getUserDueDates(authorizedUser.id),
     ]);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+    archivedDropletIds = enrollments
+      .filter((e) => e.isArchived)
+      .map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
@@ -117,6 +124,8 @@ export async function DropletsGrid({
       ratingsMap={ratingsMap}
       dueDates={dueDates}
       isAdmin={isAuthorizedUserAdmin(user?.roles)}
+      archivedDropletIds={archivedDropletIds}
+      currentUserId={currentUserId}
     />
   );
 }

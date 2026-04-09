@@ -20,6 +20,8 @@ interface SortedDropletsGridProps {
   ratingsMap: Map<number, number>;
   dueDates: DueDate[];
   isAdmin?: boolean;
+  archivedDropletIds?: number[];
+  currentUserId?: number;
 }
 
 export function SortedDropletsGrid({
@@ -31,6 +33,8 @@ export function SortedDropletsGrid({
   ratingsMap,
   dueDates,
   isAdmin,
+  archivedDropletIds = [],
+  currentUserId,
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
@@ -154,6 +158,14 @@ export function SortedDropletsGrid({
                 ?.dueDate || ""
             }
             isAdmin={isAdmin}
+            isArchived={archivedDropletIds.includes(droplet.id)}
+            isFavorited={
+              currentUserId
+                ? droplet.usersFavorited?.some(
+                    (user) => user.id === currentUserId,
+                  ) ?? false
+                : false
+            }
           />
         ))}
       </ul>

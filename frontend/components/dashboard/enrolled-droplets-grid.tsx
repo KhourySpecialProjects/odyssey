@@ -10,6 +10,7 @@ import {
   getCachedUserDueDates,
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
   id: number;
@@ -90,6 +91,7 @@ export async function EnrolledDropletsGrid({
       focusArea={focusArea}
       difficulty={difficulty}
       currentUser={authorizedUser}
+      isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );
 }

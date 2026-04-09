@@ -518,9 +518,9 @@ ${
                   >
                     <div className="group relative">
                       {isArchived ? (
-                        <ArchiveRestore className="text-purple-500" />
+                        <ArchiveRestore className="text-black dark:text-white" />
                       ) : (
-                        <Archive className="text-purple-500" />
+                        <Archive className="text-black dark:text-white" />
                       )}
                       <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isArchived ? "Unarchive" : "Archive"}
