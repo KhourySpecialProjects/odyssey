@@ -243,7 +243,7 @@ describe("DropletTile", () => {
       );
 
       const badge = screen.getByText("0% Complete").closest("div");
-      expect(badge).toHaveClass("bg-red-100");
+      expect(badge).toHaveClass("border-red-400");
     });
 
     it("applies correct badge color for partial completion", () => {
@@ -256,7 +256,7 @@ describe("DropletTile", () => {
       );
 
       const badge = screen.getByText("50% Complete").closest("div");
-      expect(badge).toHaveClass("bg-amber-100");
+      expect(badge).toHaveClass("border-amber-400");
     });
 
     it("applies correct badge color for 100% completion", () => {
@@ -269,7 +269,7 @@ describe("DropletTile", () => {
       );
 
       const badge = screen.getByText("100% Complete").closest("div");
-      expect(badge).toHaveClass("bg-emerald-100");
+      expect(badge).toHaveClass("border-emerald-400");
     });
   });
 
