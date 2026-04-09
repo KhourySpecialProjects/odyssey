@@ -40,6 +40,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
   const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>([]);
+  const [isSequential, setIsSequential] = useState(false);
   const [error, setError] = useState("");
 
   const availablePlaylists = useMemo(
@@ -237,6 +238,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
         name: name.trim(),
         description: description.trim() || undefined,
         status,
+        isSequential,
         nodes: selectedNodes.map((n) => ({
           playlistId: n.playlistId,
           isMainPath: n.isMainPath,
@@ -253,7 +255,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
         return;
       }
 
-      router.push("/admin/voyages");
+      router.push(`/v/${result.data?.slug}`);
     });
   }
 
@@ -503,6 +505,25 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             {error}
           </p>
         )}
+
+        {/* Sequential progression toggle */}
+        <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
+          <input
+            type="checkbox"
+            checked={isSequential}
+            onChange={(e) => setIsSequential(e.target.checked)}
+            disabled={isPending}
+            className="h-4 w-4 rounded border-slate-300 text-[#297496] focus:ring-[#297496]"
+          />
+          <div>
+            <span className="text-sm font-medium text-slate-900 dark:text-white">
+              Sequential progression
+            </span>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Lock islands until the previous one is completed
+            </p>
+          </div>
+        </label>
 
         {/* Action buttons */}
         <div className="flex gap-3">

@@ -66,9 +66,10 @@ export default async function VoyagePage({ params }: Props) {
         .filter((id): id is number => id !== undefined),
     );
   }
-  const nodeStatuses = isEnrolled
-    ? computeNodeStatuses(voyageNodes, completedNodeIds)
-    : new Map<number, "completed" | "available" | "locked">();
+  const nodeStatuses =
+    isEnrolled && voyage.isSequential
+      ? computeNodeStatuses(voyageNodes, completedNodeIds)
+      : new Map<number, "completed" | "available" | "locked">();
 
   // In preview mode (not enrolled), all nodes show as "available" so the tree is browsable
   const getNodeStatus = (

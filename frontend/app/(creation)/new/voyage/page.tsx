@@ -19,9 +19,7 @@ export default async function NewVoyage() {
   const [authUser, publicPlaylists] = await Promise.all([
     getCachedUser(user.email),
     getPlaylists({
-      filters: {
-        $and: [{ isPublic: true }],
-      },
+      filters: { isPublic: true },
       populate: {
         droplets: {
           fields: ["id"],

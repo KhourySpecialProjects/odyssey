@@ -346,6 +346,7 @@ export async function createVoyageWithNodes(data: {
   name: string;
   description?: string;
   status?: "draft" | "published";
+  isSequential?: boolean;
   authorId?: number;
   nodes: {
     playlistId: number;
@@ -361,10 +362,17 @@ export async function createVoyageWithNodes(data: {
   }
   try {
     // Phase 1: create the voyage record
+    const slug = data.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
     const voyageBody: Record<string, unknown> = {
       name: data.name,
+      slug,
       description: data.description ?? "",
       status: data.status ?? "draft",
+      isSequential: data.isSequential ?? false,
     };
     if (data.authorId) {
       voyageBody.authors = { connect: [data.authorId] };
@@ -392,7 +400,10 @@ export async function createVoyageWithNodes(data: {
       };
     }
 
-    const voyage = flattenAttributes(voyageData.data) as { id: number };
+    const voyage = flattenAttributes(voyageData.data) as {
+      id: number;
+      slug: string;
+    };
     const voyageId = voyage.id;
 
     // Phase 2: create voyage nodes — main path first, then branches

@@ -23,6 +23,11 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user"
     },
+    "isSequential": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
     "voyage_playlists": {
       "type": "relation",
       "relation": "oneToMany",
