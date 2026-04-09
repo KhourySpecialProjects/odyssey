@@ -126,42 +126,21 @@ export default async function DashboardRoute({ searchParams }: Props) {
 
         <div className="mb-8">
           <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
-          {voyageEnrollments.length === 0 ? (
-            <p className="text-slate-500 dark:text-slate-400">
-              No enrolled voyages yet.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {voyageEnrollments.map(
-                (enrollment) =>
-                  enrollment.voyage && (
-                    <VoyageCard
-                      key={enrollment.id}
-                      voyage={enrollment.voyage}
-                    />
-                  ),
-              )}
-            </div>
-          )}
+          {(() => {
+            const validEnrollments = voyageEnrollments.filter((e) => e.voyage);
+            return validEnrollments.length === 0 ? (
+              <p className="text-slate-500 dark:text-slate-400">
+                No enrolled voyages yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {validEnrollments.map((enrollment) => (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage!} />
+                ))}
+              </div>
+            );
+          })()}
         </div>
-      </div>
-
-      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
-        <h2 className="mb-4 text-xl font-bold">Enrolled Voyages</h2>
-        {voyageEnrollments.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400">
-            No enrolled voyages yet.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {voyageEnrollments.map(
-              (enrollment) =>
-                enrollment.voyage && (
-                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage} />
-                ),
-            )}
-          </div>
-        )}
       </div>
     </SearchProvider>
   );

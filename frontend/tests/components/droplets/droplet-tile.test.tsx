@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
+import { Droplet } from "@/types";
 import { toast } from "sonner";
 import { DateTime } from "luxon";
 import { archiveDroplet } from "@/lib/requests/droplet";
@@ -41,17 +42,17 @@ describe("DropletTile", () => {
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
-    focusArea: "frontend" as const,
-    type: "tutorial" as const,
+    focusArea: "frontend",
+    type: "tutorial",
     tags: [
       { id: 1, name: "Tag 1" },
       { id: 2, name: "Tag 2" },
     ],
-    status: "published" as const,
+    status: "published",
     lessons: [{ id: 1 }, { id: 2 }],
     description: "<p>Test description</p>",
     averageRating: 4.5,
-  };
+  } as unknown as Droplet;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -60,14 +61,14 @@ describe("DropletTile", () => {
 
   describe("Compact Mode", () => {
     it("renders in compact mode", () => {
-      render(<DropletTile droplet={mockDroplet as any} compact={true} />);
+      render(<DropletTile droplet={mockDroplet} compact={true} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
     });
 
     it("links to droplet page in compact mode", () => {
       const { container } = render(
-        <DropletTile droplet={mockDroplet as any} compact={true} />,
+        <DropletTile droplet={mockDroplet} compact={true} />,
       );
 
       const link = container.querySelector('a[href="/d/test-droplet"]');
@@ -75,7 +76,7 @@ describe("DropletTile", () => {
     });
 
     it("does not show badges in compact mode", () => {
-      render(<DropletTile droplet={mockDroplet as any} compact={true} />);
+      render(<DropletTile droplet={mockDroplet} compact={true} />);
 
       expect(screen.queryByText("Frontend")).not.toBeInTheDocument();
       expect(screen.queryByText("Tutorial")).not.toBeInTheDocument();
@@ -84,14 +85,14 @@ describe("DropletTile", () => {
 
   describe("Profile Page Mode", () => {
     it("renders in profile page mode", () => {
-      render(<DropletTile droplet={mockDroplet as any} profilePage={true} />);
+      render(<DropletTile droplet={mockDroplet} profilePage={true} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
     });
 
     it("links to droplet page for published droplets", () => {
       const { container } = render(
-        <DropletTile droplet={mockDroplet as any} profilePage={true} />,
+        <DropletTile droplet={mockDroplet} profilePage={true} />,
       );
 
       const link = container.querySelector('a[href="/d/test-droplet"]');
@@ -109,7 +110,7 @@ describe("DropletTile", () => {
     });
 
     it("does not show badges in profile page mode", () => {
-      render(<DropletTile droplet={mockDroplet as any} profilePage={true} />);
+      render(<DropletTile droplet={mockDroplet} profilePage={true} />);
 
       expect(screen.queryByText("Frontend")).not.toBeInTheDocument();
     });
@@ -117,7 +118,7 @@ describe("DropletTile", () => {
 
   describe("Default Mode - Basic Rendering", () => {
     it("renders droplet information", () => {
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       expect(screen.getByText("Frontend")).toBeInTheDocument();
@@ -127,7 +128,7 @@ describe("DropletTile", () => {
     });
 
     it("renders description", () => {
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(screen.getByText("Test description")).toBeInTheDocument();
     });
@@ -141,13 +142,13 @@ describe("DropletTile", () => {
     });
 
     it("does not show draft badge for published droplets", () => {
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(screen.queryByText("Draft")).not.toBeInTheDocument();
     });
 
     it("shows rating when averageRating exists and is not 0", () => {
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(screen.getByTestId("star-rating")).toBeInTheDocument();
     });
@@ -173,7 +174,7 @@ describe("DropletTile", () => {
     it("shows 0% when no lessons completed", () => {
       render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[]}
         />,
@@ -185,7 +186,7 @@ describe("DropletTile", () => {
     it("shows 50% when half completed", () => {
       render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[1]}
         />,
@@ -197,7 +198,7 @@ describe("DropletTile", () => {
     it("shows 100% when all completed", () => {
       render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[1, 2]}
         />,
@@ -209,7 +210,7 @@ describe("DropletTile", () => {
     it("does not show completion when not enrolled", () => {
       render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={false}
           completedLessonIds={[1]}
         />,
@@ -235,7 +236,7 @@ describe("DropletTile", () => {
     it("applies correct badge color for 0% completion", () => {
       const { container } = render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[]}
         />,
@@ -248,7 +249,7 @@ describe("DropletTile", () => {
     it("applies correct badge color for partial completion", () => {
       const { container } = render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[1]}
         />,
@@ -261,7 +262,7 @@ describe("DropletTile", () => {
     it("applies correct badge color for 100% completion", () => {
       const { container } = render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[1, 2]}
         />,
@@ -276,7 +277,7 @@ describe("DropletTile", () => {
     it('shows "Due today!" for today', () => {
       const today = DateTime.local().toISO();
 
-      render(<DropletTile droplet={mockDroplet as any} dueDate={today} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={today} />);
 
       expect(screen.getByText("Due today!")).toBeInTheDocument();
     });
@@ -284,7 +285,7 @@ describe("DropletTile", () => {
     it('shows "Due in 1 day" for tomorrow', () => {
       const tomorrow = DateTime.local().plus({ days: 1 }).toISO();
 
-      render(<DropletTile droplet={mockDroplet as any} dueDate={tomorrow} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={tomorrow} />);
 
       expect(screen.getByText("Due in 1 day")).toBeInTheDocument();
     });
@@ -292,7 +293,7 @@ describe("DropletTile", () => {
     it("shows correct days for future due dates", () => {
       const future = DateTime.local().plus({ days: 5 }).toISO();
 
-      render(<DropletTile droplet={mockDroplet as any} dueDate={future} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={future} />);
 
       expect(screen.getByText("Due in 5 days")).toBeInTheDocument();
     });
@@ -300,7 +301,7 @@ describe("DropletTile", () => {
     it('shows "One Day Late!" for yesterday', () => {
       const yesterday = DateTime.local().minus({ days: 1 }).toISO();
 
-      render(<DropletTile droplet={mockDroplet as any} dueDate={yesterday} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={yesterday} />);
 
       expect(screen.getByText("One Day Late!")).toBeInTheDocument();
     });
@@ -308,19 +309,19 @@ describe("DropletTile", () => {
     it("shows correct days for past due dates", () => {
       const past = DateTime.local().minus({ days: 3 }).toISO();
 
-      render(<DropletTile droplet={mockDroplet as any} dueDate={past} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={past} />);
 
       expect(screen.getByText("3 Days Late!")).toBeInTheDocument();
     });
 
     it("does not show due date when empty string", () => {
-      render(<DropletTile droplet={mockDroplet as any} dueDate="" />);
+      render(<DropletTile droplet={mockDroplet} dueDate="" />);
 
       expect(screen.queryByText(/Due/)).not.toBeInTheDocument();
     });
 
     it("does not show due date when undefined", () => {
-      render(<DropletTile droplet={mockDroplet as any} dueDate={undefined} />);
+      render(<DropletTile droplet={mockDroplet} dueDate={undefined} />);
 
       expect(screen.queryByText(/Due/)).not.toBeInTheDocument();
     });
@@ -330,7 +331,7 @@ describe("DropletTile", () => {
 
       render(
         <DropletTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           isEnrolled={true}
           completedLessonIds={[1, 2]}
           dueDate={tomorrow}
@@ -343,7 +344,7 @@ describe("DropletTile", () => {
 
   describe("Archive Functionality", () => {
     it("shows archive button when isArchived is false", () => {
-      render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
 
       expect(
         screen.getByRole("button", { name: "Archive" }),
@@ -351,7 +352,7 @@ describe("DropletTile", () => {
     });
 
     it("shows unarchive button when isArchived is true", () => {
-      render(<DropletTile droplet={mockDroplet as any} isArchived={true} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={true} />);
 
       expect(
         screen.getByRole("button", { name: "Unarchive" }),
@@ -361,7 +362,7 @@ describe("DropletTile", () => {
     it("handles successful archive", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
 
-      render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -376,7 +377,7 @@ describe("DropletTile", () => {
     it("handles successful unarchive", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
 
-      render(<DropletTile droplet={mockDroplet as any} isArchived={true} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={true} />);
 
       fireEvent.click(screen.getByRole("button", { name: "Unarchive" }));
 
@@ -391,7 +392,7 @@ describe("DropletTile", () => {
     it("handles archive failure", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: false });
 
-      render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -406,7 +407,7 @@ describe("DropletTile", () => {
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
       (archiveDroplet as jest.Mock).mockRejectedValue(new Error("Failed"));
 
-      render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
+      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -422,7 +423,7 @@ describe("DropletTile", () => {
 
     it("prevents link navigation when clicking archive button", async () => {
       const { container } = render(
-        <DropletTile droplet={mockDroplet as any} isArchived={false} />,
+        <DropletTile droplet={mockDroplet} isArchived={false} />,
       );
 
       const button = screen.getByRole("button", { name: "Archive" });
@@ -489,7 +490,7 @@ describe("DropletTile", () => {
 
   describe("Tags", () => {
     it("renders all tags", () => {
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(screen.getByText("Tag 1")).toBeInTheDocument();
       expect(screen.getByText("Tag 2")).toBeInTheDocument();
@@ -554,7 +555,7 @@ describe("DropletTile", () => {
     it("adds resize event listener", () => {
       const addEventListenerSpy = jest.spyOn(window, "addEventListener");
 
-      render(<DropletTile droplet={mockDroplet as any} />);
+      render(<DropletTile droplet={mockDroplet} />);
 
       expect(addEventListenerSpy).toHaveBeenCalledWith(
         "resize",
@@ -567,7 +568,7 @@ describe("DropletTile", () => {
     it("removes resize event listener on unmount", () => {
       const removeEventListenerSpy = jest.spyOn(window, "removeEventListener");
 
-      const { unmount } = render(<DropletTile droplet={mockDroplet as any} />);
+      const { unmount } = render(<DropletTile droplet={mockDroplet} />);
       unmount();
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith(
