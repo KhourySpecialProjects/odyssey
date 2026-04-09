@@ -15,7 +15,7 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { Clock, Download } from "lucide-react";
+import { Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import {
@@ -26,6 +26,7 @@ import {
 import {
   IconArchive,
   IconArchiveOff,
+  IconDownload,
   IconHeart,
   IconHeartFilled,
 } from "@tabler/icons-react";
@@ -520,7 +521,10 @@ ${
                 className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-900`}
               >
                 <div className="group relative">
-                  <Download className="text-black dark:text-white" />
+                  <IconDownload
+                    className="h-[18px] w-[18px] text-black dark:text-white"
+                    stroke={1.8}
+                  />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Export Markdown
                   </span>
