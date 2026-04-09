@@ -327,7 +327,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                       <span className="text-xs">
                         {playlist.droplets?.length ?? 0} droplets
                       </span>
-                      <PlusIcon className="h-4 w-4 text-green-600" />
+                      <PlusIcon className="h-4 w-4 text-[#297496]" />
                     </div>
                   </button>
                 ))
