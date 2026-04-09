@@ -22,9 +22,20 @@ export type LockStatus = {
 /** Resolve the current user's authorized-user ID. Called once on mount. */
 export async function getCurrentAuthorizedUserId(): Promise<number | null> {
   const user = await getCurrentUser();
-  if (!user?.email) return null;
+  if (!user?.email) {
+    console.warn(
+      "[lesson-lock] No session user or email — cannot acquire lock",
+    );
+    return null;
+  }
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  return authorizedUser?.id ?? null;
+  if (!authorizedUser?.id) {
+    console.warn(
+      `[lesson-lock] No authorized user found for email: ${user.email}`,
+    );
+    return null;
+  }
+  return authorizedUser.id;
 }
 
 export async function acquireLessonLock(
@@ -48,10 +59,13 @@ export async function acquireLessonLock(
     return {
       success: false,
       error: "Lesson is locked",
-      lockedBy: data.lockedBy,
+      lockedBy: data.lockedBy ?? data.error?.details?.lockedBy,
     };
   }
 
+  console.error(
+    `[lesson-lock] Failed to acquire lock: ${res.status} ${res.statusText}`,
+  );
   return { success: false, error: "Failed to acquire lock" };
 }
 
@@ -78,6 +92,11 @@ export async function heartbeatLessonLock(
     },
   );
 
+  if (!res.ok) {
+    console.error(
+      `[lesson-lock] Heartbeat failed: ${res.status} ${res.statusText}`,
+    );
+  }
   return res.ok;
 }
 

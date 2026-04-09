@@ -18,6 +18,7 @@ type EditingLockState = {
   isOwnLock: boolean;
   lockedBy: LockStatus["lockedBy"];
   isLoading: boolean;
+  error: string | null;
 };
 
 export function useEditingLock(lessonId: number) {
@@ -26,6 +27,7 @@ export function useEditingLock(lessonId: number) {
     isOwnLock: false,
     lockedBy: null,
     isLoading: true,
+    error: null,
   });
   const userIdRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setTimeout>>();
@@ -42,6 +44,7 @@ export function useEditingLock(lessonId: number) {
       isOwnLock: false,
       lockedBy: null,
       isLoading: false,
+      error: null,
     });
   }, [lessonId]);
 
@@ -63,6 +66,7 @@ export function useEditingLock(lessonId: number) {
             isOwnLock: false,
             lockedBy: null,
             isLoading: false,
+            error: null,
           });
           startPolling();
           return;
@@ -91,6 +95,7 @@ export function useEditingLock(lessonId: number) {
               isOwnLock: true,
               lockedBy: null,
               isLoading: false,
+              error: null,
             });
             startHeartbeat();
             return;
@@ -118,6 +123,7 @@ export function useEditingLock(lessonId: number) {
           isOwnLock: false,
           lockedBy: null,
           isLoading: false,
+          error: "Could not resolve your user account",
         });
         return;
       }
@@ -131,6 +137,7 @@ export function useEditingLock(lessonId: number) {
           isOwnLock: true,
           lockedBy: null,
           isLoading: false,
+          error: null,
         });
         startHeartbeat();
       } else {
@@ -139,6 +146,7 @@ export function useEditingLock(lessonId: number) {
           isOwnLock: false,
           lockedBy: result.lockedBy ?? null,
           isLoading: false,
+          error: result.lockedBy ? null : result.error ?? null,
         });
         startPolling();
       }
