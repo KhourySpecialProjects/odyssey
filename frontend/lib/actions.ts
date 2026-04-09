@@ -84,6 +84,17 @@ export async function uploadImage(formData: FormData) {
 
 export async function deleteDataset(fileUrl: string) {
   try {
+    // Local file deletion
+    if (isLocal && fileUrl.startsWith("/uploads/")) {
+      const filePath = path.join(
+        LOCAL_UPLOADS_DIR,
+        fileUrl.replace("/uploads/", ""),
+      );
+      await unlink(filePath).catch(() => {});
+      revalidateTag(CACHE_TAGS.datasets);
+      return { ok: true, error: null };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
     const prefix = bucketUrl.endsWith("/") ? bucketUrl : `${bucketUrl}/`;

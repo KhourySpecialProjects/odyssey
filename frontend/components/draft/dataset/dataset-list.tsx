@@ -122,10 +122,10 @@ export function DatasetList({ datasets, onDelete }: DatasetListProps) {
               variant="outline"
               className={cn(
                 "shrink-0 text-xs",
-                formatBadgeClass(dataset.fileType),
+                formatBadgeClass(dataset.format),
               )}
             >
-              {dataset.fileType.toUpperCase()}
+              {dataset.format.toUpperCase()}
             </Badge>
 
             {/* Delete button */}
