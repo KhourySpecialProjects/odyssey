@@ -1,5 +1,6 @@
 "use server";
 
+import qs from "qs";
 import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
@@ -429,23 +430,41 @@ export async function updateVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: Delete all existing nodes for this voyage (in parallel)
-    const existingNodesRes = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes?filters[voyage][id][$eq]=${data.id}&pagination[pageSize]=200`,
-      {
-        headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-      },
-    );
-    const existingNodesJson = await existingNodesRes.json();
-    const existingNodes = (existingNodesJson.data ?? []) as { id: number }[];
+    // Phase 2: Delete all existing nodes for this voyage (paginated, with error checking)
+    const allNodeIds: number[] = [];
+    let page = 1;
+    for (;;) {
+      const query = qs.stringify({
+        filters: { voyage: { id: { $eq: data.id } } },
+        pagination: { page, pageSize: 100 },
+        fields: ["id"],
+      });
+      const nodesPage = await fetchAPI(`/api/voyage-nodes?${query}`, {
+        next: { tags: [CACHE_TAGS.voyages] },
+      });
+      if (Array.isArray(nodesPage)) {
+        allNodeIds.push(...nodesPage.map((n: { id: number }) => n.id));
+      }
+      // fetchAPI auto-flattens, so pagination meta comes from the raw response;
+      // break after one page if we got fewer than pageSize results
+      if (!Array.isArray(nodesPage) || nodesPage.length < 100) break;
+      page++;
+    }
 
     await Promise.all(
-      existingNodes.map((node) =>
-        fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${node.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-        }),
-      ),
+      allNodeIds.map(async (nodeId) => {
+        const res = await fetch(
+          `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          },
+        );
+        if (!res.ok) {
+          throw new Error(`Failed to delete voyage-node ${nodeId}`);
+        }
+        return res;
+      }),
     );
 
     // Phase 3: Re-create nodes (main path first, then branches)

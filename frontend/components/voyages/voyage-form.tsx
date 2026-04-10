@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Playlist, Voyage } from "@/types";
+import { cn } from "@/lib/utils";
 import {
   createVoyageWithNodes,
   updateVoyageWithNodes,
@@ -395,12 +396,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
                 return (
                   <div key={node.playlistId} className={isBranch ? "ml-6" : ""}>
                     <div
-                      className={[
+                      className={cn(
                         "flex flex-col gap-2 rounded-md border px-3 py-2",
                         isBranch
                           ? "border-l-2 border-dashed border-slate-300 bg-slate-50/60 dark:border-slate-600 dark:bg-slate-800/40"
                           : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800",
-                      ].join(" ")}
+                      )}
                     >
                       {/* Top row: badge + name + reorder + remove */}
                       <div className="flex items-center gap-2">
@@ -508,12 +509,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
                                   setBranchType(node.playlistId, "required")
                                 }
                                 disabled={isPending}
-                                className={[
+                                className={cn(
                                   "px-2 py-0.5 text-xs font-medium transition-colors",
                                   node.branchType === "required"
                                     ? "bg-blue-600 text-white"
                                     : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                ].join(" ")}
+                                )}
                               >
                                 Required
                               </button>
@@ -523,12 +524,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
                                   setBranchType(node.playlistId, "optional")
                                 }
                                 disabled={isPending}
-                                className={[
+                                className={cn(
                                   "px-2 py-0.5 text-xs font-medium transition-colors",
                                   node.branchType === "optional"
                                     ? "bg-yellow-500 text-white"
                                     : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                ].join(" ")}
+                                )}
                               >
                                 Optional
                               </button>
