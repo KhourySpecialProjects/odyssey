@@ -1,10 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
-import {
-  VoyageTreeIsland,
-  ISLAND_SVG_DIMENSIONS,
-} from "./voyage-tree-island";
+import { VoyageTreeIsland, ISLAND_SVG_DIMENSIONS } from "./voyage-tree-island";
 
 export interface TreeNode {
   id: number;
