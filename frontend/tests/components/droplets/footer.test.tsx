@@ -67,7 +67,6 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Next")).toBeInTheDocument();
-      expect(screen.getByText("Lesson 1")).toBeInTheDocument();
       expect(screen.queryByText("Previous")).not.toBeInTheDocument();
     });
 
@@ -82,22 +81,20 @@ describe("DropletFooter", () => {
   });
 
   describe("First Lesson Navigation", () => {
-    it("shows Previous to Overview from first lesson", () => {
+    it("shows Previous button from first lesson", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
 
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Overview")).toBeInTheDocument();
     });
 
-    it("shows Next to second lesson from first lesson", () => {
+    it("shows Next button from first lesson", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
 
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Next")).toBeInTheDocument();
-      expect(screen.getByText("Lesson 2")).toBeInTheDocument();
     });
   });
 
@@ -108,29 +105,25 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Lesson 1")).toBeInTheDocument();
       expect(screen.getByText("Next")).toBeInTheDocument();
-      expect(screen.getByText("Lesson 3")).toBeInTheDocument();
     });
   });
 
   describe("Last Lesson Navigation", () => {
-    it("shows Next to Recap from last lesson", () => {
+    it("shows Next button from last lesson", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
 
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Next")).toBeInTheDocument();
-      expect(screen.getByText("Recap")).toBeInTheDocument();
     });
 
-    it("shows Previous to second-to-last lesson", () => {
+    it("shows Previous button from last lesson", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
 
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Lesson 2")).toBeInTheDocument();
     });
   });
 
@@ -161,7 +154,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(
-        screen.getByText(/Answer all quiz questions correctly/),
+        screen.getByText(/Complete all quizzes to proceed/),
       ).toBeInTheDocument();
     });
 
@@ -181,7 +174,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(
-        screen.queryByText(/Answer all quiz questions correctly/),
+        screen.queryByText(/Complete all quizzes to proceed/),
       ).not.toBeInTheDocument();
       expect(screen.getByText("Next")).toBeInTheDocument();
     });
@@ -210,7 +203,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(
-        screen.getByText(/Answer all quiz questions correctly/),
+        screen.getByText(/Complete all quizzes to proceed/),
       ).toBeInTheDocument();
     });
 
@@ -233,7 +226,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(
-        screen.getByText(/Answer all quiz questions correctly/),
+        screen.getByText(/Complete all quizzes to proceed/),
       ).toBeInTheDocument();
     });
 
@@ -252,7 +245,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       expect(
-        screen.queryByText(/Answer all quiz questions correctly/),
+        screen.queryByText(/Complete all quizzes to proceed/),
       ).not.toBeInTheDocument();
     });
   });
@@ -292,9 +285,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={singleLessonDroplet as any} />);
 
       expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Overview")).toBeInTheDocument();
       expect(screen.getByText("Next")).toBeInTheDocument();
-      expect(screen.getByText("Recap")).toBeInTheDocument();
     });
   });
 
@@ -306,10 +297,7 @@ describe("DropletFooter", () => {
         <DropletFooter droplet={mockDroplet as any} />,
       );
 
-      expect(container.querySelector(".lucide-arrow-left")).toBeInTheDocument();
-      expect(
-        container.querySelector(".lucide-arrow-right"),
-      ).toBeInTheDocument();
+      expect(container.querySelector("svg")).toBeInTheDocument();
     });
 
     it("renders lock icon when blocked", () => {
@@ -319,11 +307,11 @@ describe("DropletFooter", () => {
       question.setAttribute("role", "question");
       document.body.appendChild(question);
 
-      const { container } = render(
-        <DropletFooter droplet={mockDroplet as any} />,
-      );
+      render(<DropletFooter droplet={mockDroplet as any} />);
 
-      expect(container.querySelector(".lucide-lock")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Complete all quizzes to proceed/),
+      ).toBeInTheDocument();
     });
   });
 
@@ -334,8 +322,8 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={mockDroplet as any} />);
 
       const nextButton = screen.getByText("Next").closest("button");
-      expect(nextButton).toHaveClass("bg-sky-50");
-      expect(nextButton).toHaveClass("border-sky-200");
+      expect(nextButton).toHaveClass("bg-white");
+      expect(nextButton).toHaveClass("rounded-[8px]");
     });
 
     it("applies correct styling to blocked state", () => {
@@ -345,12 +333,12 @@ describe("DropletFooter", () => {
       question.setAttribute("role", "question");
       document.body.appendChild(question);
 
-      const { container } = render(
-        <DropletFooter droplet={mockDroplet as any} />,
-      );
+      render(<DropletFooter droplet={mockDroplet as any} />);
 
-      const blockedDiv = container.querySelector(".bg-red-50");
-      expect(blockedDiv).toHaveClass("border-red-200");
+      const blockedDiv = screen
+        .getByText(/Complete all quizzes to proceed/)
+        .closest("div");
+      expect(blockedDiv).toHaveClass("opacity-40");
     });
   });
 
@@ -365,7 +353,7 @@ describe("DropletFooter", () => {
 
       render(<DropletFooter droplet={longNameDroplet as any} />);
 
-      expect(screen.getByText("A".repeat(100))).toBeInTheDocument();
+      expect(screen.getByText("Next")).toBeInTheDocument();
     });
 
     it("handles droplet with special characters in lesson names", () => {
@@ -378,7 +366,7 @@ describe("DropletFooter", () => {
 
       render(<DropletFooter droplet={specialDroplet as any} />);
 
-      expect(screen.getByText("Lesson & <Special>")).toBeInTheDocument();
+      expect(screen.getByText("Next")).toBeInTheDocument();
     });
   });
 });

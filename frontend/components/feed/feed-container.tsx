@@ -1,110 +1,112 @@
 "use client";
 
-import { useState } from "react";
-import { AnnouncementTypeTitle } from "@/lib/globals";
-import { FeedClient } from "./feed-client";
-import { FeedFilter } from "./feed-filter";
-import { AnnouncementType, AuthorizedUser } from "@/types";
-import { BellRing, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { AuthorizedUser } from "@/types";
 import { FriendRequests } from "../friends/friend-requests";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { FeedLeftNav } from "./feed-left-nav";
 
-export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
-  const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
-    Object.values(AnnouncementTypeTitle),
-  );
-  const [filtersExpanded, setFiltersExpanded] = useState(false);
-  const [requestsExpanded, setRequestsExpanded] = useState(false);
+export function FeedContainer({
+  authUser,
+  isFeedTab,
+  children,
+}: {
+  authUser: AuthorizedUser;
+  isFeedTab: boolean;
+  children: React.ReactNode;
+}) {
+  const [headerHeight, setHeaderHeight] = useState(69);
+  const leftRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const header = document.querySelector<HTMLElement>(".sticky.top-0.z-50");
+      if (header) setHeaderHeight(header.getBoundingClientRect().height);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!footer) return;
+      const footerTop = footer.getBoundingClientRect().top;
+      const bottom = Math.max(0, window.innerHeight - footerTop);
+      if (leftRef.current) leftRef.current.style.bottom = `${bottom}px`;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-row gap-4">
-      <div className="flex flex-col items-end gap-4">
-        <div className="sticky top-[165px] hidden space-y-4 md:block">
-          <div className="min-w-[275px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 lg:p-4 dark:border-slate-500 dark:bg-slate-800">
-            <FriendRequests
-              noProfile={true}
-              friendsPerPage={3}
-              authUser={authUser}
-            ></FriendRequests>
-            <Link
-              href="/settings/friends"
-              className="mt-3 block"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+    <>
+      {/* Left sidebar — fixed */}
+      <nav
+        ref={leftRef}
+        aria-label="Content navigation"
+        className="fixed left-0 z-40 hidden w-[260px] border-r border-[#D0D5DD] bg-[#FCFCFD] md:block dark:border-slate-700 dark:bg-slate-900"
+        style={{ top: headerHeight }}
+      >
+        <FeedLeftNav />
+      </nav>
+
+      {/* Content row: center + right column */}
+      <div className="flex items-start md:ml-[260px]">
+        {/* Center */}
+        <div
+          className="min-w-0 flex-1"
+          style={
+            isFeedTab
+              ? {
+                  height: `calc(100vh - ${headerHeight}px)`,
+                  overflow: "hidden",
+                }
+              : { minHeight: `calc(100vh - ${headerHeight}px)` }
+          }
+        >
+          {children}
+        </div>
+
+        {/* Right column — normal flow */}
+        <div className="hidden w-[280px] shrink-0 p-4 pt-6 md:block">
+          <div
+            className="overflow-hidden rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+            style={{ minHeight: `calc(100vh - ${headerHeight + 48}px)` }}
+          >
+            <div className="p-5">
+              <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
+                Friend Requests
+              </h2>
               <Button
-                size="sm"
-                className="w-full bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
+                asChild
+                className="mb-4 w-full rounded-full bg-[#287697] hover:bg-[#1f6080]"
               >
-                <Users className="mr-2 h-4 w-4" />
-                Manage Friends
+                <Link
+                  href="/settings/friends"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Manage Friends
+                </Link>
               </Button>
-            </Link>
-          </div>
-          <FeedFilter onFilterChange={setSelectedRoles} />
-        </div>
-      </div>
-
-      <div className="relative w-full items-center justify-center text-center text-xl font-bold md:w-[65%]">
-        <FeedClient
-          selectedRoles={selectedRoles.map(
-            (role) => role.toLowerCase() as AnnouncementType,
-          )}
-          authUser={authUser}
-        />
-
-        <button
-          onClick={() => setFiltersExpanded(!filtersExpanded)}
-          className={`absolute top-0 right-0 block translate-y-[-150%] md:hidden ${filtersExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
-        >
-          <SlidersHorizontal className="h-6 w-6" />
-        </button>
-
-        <button
-          onClick={() => setRequestsExpanded(!requestsExpanded)}
-          className={`absolute top-0 left-0 block translate-y-[-150%] md:hidden ${requestsExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
-        >
-          <BellRing className="h-6 w-6" />
-        </button>
-
-        <div
-          className={cn(
-            "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
-            "feed-mobile-filters z-10 overflow-y-hidden",
-            filtersExpanded
-              ? "visibility: visible top-0 right-0"
-              : "visibility: hidden",
-          )}
-        >
-          <div className="p-2">
-            Filters
-            <FeedFilter onFilterChange={setSelectedRoles} />
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
-            "feed-mobile-friend-requests z-10 overflow-y-hidden",
-            requestsExpanded
-              ? "visibility: visible top-0 left-0"
-              : "visibility: hidden",
-          )}
-        >
-          <div>
-            <div className="rounded-md bg-slate-50 p-4 px-2 dark:bg-slate-800">
-              Friend Requests
               <FriendRequests
                 noProfile={true}
                 friendsPerPage={5}
                 authUser={authUser}
-              ></FriendRequests>
+                showTitle={false}
+              />
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

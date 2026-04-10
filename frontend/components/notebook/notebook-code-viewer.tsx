@@ -1,12 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  atomOneDark,
-  githubGist,
-} from "react-syntax-highlighter/dist/esm/styles/hljs";
-import python from "react-syntax-highlighter/dist/esm/languages/hljs/python";
+import { useState, useRef } from "react";
+import { CodeEditor } from "@/components/ui/code-editor";
 import {
   Play,
   Loader2,
@@ -18,9 +13,6 @@ import { cn } from "@/lib/utils";
 import { usePyodide } from "@/lib/pyodide/pyodide-context";
 import { useDatasets } from "@/lib/contexts/dataset-context";
 import type { ExecutionResult } from "@/lib/pyodide/runtime";
-import { useTheme } from "next-themes";
-
-SyntaxHighlighter.registerLanguage("python", python);
 
 interface NotebookCodeViewerProps {
   code: string;
@@ -35,10 +27,7 @@ export function NotebookCodeViewer({
   editable = false,
   testCode = "",
 }: NotebookCodeViewerProps) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const [code, setCode] = useState(initialCode);
-  const [isEditing, setIsEditing] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [executionCount, setExecutionCount] = useState<number | null>(null);
@@ -46,18 +35,11 @@ export function NotebookCodeViewer({
   const [testResults, setTestResults] = useState<
     { passed: boolean; message: string }[] | null
   >(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const datasetsLoadedRef = useRef<Set<number>>(new Set());
 
   const { datasets } = useDatasets();
   const pyodide = usePyodide();
   const hasTests = testCode.trim().length > 0;
-
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isEditing]);
 
   const loadDatasetsIfNeeded = async () => {
     if (datasets.length === 0) return;
@@ -179,58 +161,13 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
 
         {/* Code area */}
         <div className="min-w-0 flex-1 border-l border-slate-100 dark:border-gray-700/50">
-          {isEditing && editable ? (
-            <textarea
-              ref={textareaRef}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onBlur={() => setIsEditing(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  const ta = e.currentTarget;
-                  const start = ta.selectionStart;
-                  const end = ta.selectionEnd;
-                  const newVal =
-                    ta.value.substring(0, start) +
-                    "    " +
-                    ta.value.substring(end);
-                  setCode(newVal);
-                  setTimeout(() => {
-                    ta.selectionStart = start + 4;
-                    ta.selectionEnd = start + 4;
-                  }, 0);
-                }
-                if (e.key === "Escape") setIsEditing(false);
-              }}
-              className="w-full resize-none bg-slate-50 p-3 font-mono text-[13px] leading-relaxed text-slate-800 outline-none dark:bg-gray-800 dark:text-gray-100"
-              rows={Math.max(3, code.split("\n").length)}
-              spellCheck={false}
-              autoFocus
-            />
-          ) : (
-            <div
-              className={cn("relative", editable && "cursor-text")}
-              onClick={() => editable && setIsEditing(true)}
-            >
-              <SyntaxHighlighter
-                language={language}
-                style={isDark ? atomOneDark : githubGist}
-                customStyle={{
-                  margin: 0,
-                  padding: "12px",
-                  background: "transparent",
-                  fontSize: "13px",
-                  lineHeight: "1.6",
-                  fontFamily:
-                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                }}
-                PreTag="div"
-              >
-                {code || "# Write your Python code here"}
-              </SyntaxHighlighter>
-            </div>
-          )}
+          <CodeEditor
+            language={language}
+            value={code}
+            onChange={editable ? setCode : undefined}
+            readOnly={!editable}
+            placeholder="# Write your Python code here"
+          />
         </div>
       </div>
 

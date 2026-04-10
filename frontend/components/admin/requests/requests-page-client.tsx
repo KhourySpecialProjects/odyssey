@@ -24,6 +24,13 @@ import {
 } from "@/lib/actions";
 import { toast } from "sonner";
 import { IconCheck, IconX } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CreationRequestModal } from "@/components/shared/creation-request-manager/view-request";
 
 // ——— Tab types ———
@@ -56,10 +63,10 @@ const COLLEGE_FILTER_OPTIONS = COLLEGES.map((c) => ({
 }));
 
 const ACCESS_COLUMNS: AdminColumnDef[] = [
-  { label: "Name", width: "w-[25%]" },
-  { label: "Email", width: "w-[35%]" },
-  { label: "College", width: "w-[15%]" },
-  { label: "Actions", width: "w-[25%]" },
+  { label: "Name", width: "w-[40%]" },
+  { label: "Email", width: "w-[28%]" },
+  { label: "College", width: "w-[18%]" },
+  { label: "Actions", width: "w-[14%]" },
 ];
 
 const CREATOR_COLUMNS: AdminColumnDef[] = [
@@ -78,24 +85,41 @@ function AcceptRejectButtons({
   disabled: boolean;
 }) {
   return (
-    <div className="flex items-center gap-[5px]">
-      <button
-        onClick={onAccept}
-        disabled={disabled}
-        className="inline-flex items-center gap-[6px] rounded-[16px] bg-[#ecfdf3] px-[10px] py-[4px] text-[14px] leading-[18px] font-medium text-[#14ba6d] transition-colors hover:bg-[#d1fae5] disabled:opacity-50"
-      >
-        <IconCheck className="h-[10px] w-[10px]" stroke={3} />
-        Accept
-      </button>
-      <button
-        onClick={onReject}
-        disabled={disabled}
-        className="inline-flex items-center gap-[6px] rounded-[16px] bg-[#fdf0f1] px-[10px] py-[4px] text-[14px] leading-[18px] font-medium text-[#de3b48] transition-colors hover:bg-[#fee2e2] disabled:opacity-50"
-      >
-        <IconX className="h-[10px] w-[10px]" stroke={3} />
-        Reject
-      </button>
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onAccept}
+              disabled={disabled}
+              aria-label="accept request"
+              className="h-8 w-8 p-0"
+            >
+              <IconCheck className="h-4 w-4 text-green-600" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Accept</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onReject}
+              disabled={disabled}
+              aria-label="reject request"
+              className="h-8 w-8 p-0"
+            >
+              <IconX className="h-4 w-4 text-red-500" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Reject</TooltipContent>
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -158,7 +182,7 @@ function AccessRequestRow({ request }: { request: AccessRequest }) {
 
       {/* Email */}
       <td className="h-[56px] px-6 py-[11px]">
-        <p className="truncate text-[16px] font-medium text-[#101828] dark:text-white">
+        <p className="truncate text-[16px] font-normal text-[#101828] dark:text-white">
           {request.email}
         </p>
       </td>
@@ -252,7 +276,7 @@ function CreationRequestRow({ request }: { request: CreationRequest }) {
 
         {/* Email */}
         <td className="h-[56px] px-6 py-[11px]">
-          <p className="truncate text-[16px] font-medium text-[#101828] dark:text-white">
+          <p className="truncate text-[16px] font-normal text-[#101828] dark:text-white">
             {request.user?.email ?? "—"}
           </p>
         </td>
@@ -494,7 +518,7 @@ function AccessRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -595,7 +619,7 @@ function CreationRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -651,7 +675,7 @@ export function RequestsPageClient({
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="relative inline-flex h-[45px] items-center rounded-[97px] bg-[#fcfcfd] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+      <div className="relative inline-flex h-[45px] items-center rounded-[97px] border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
         {/* Sliding indicator */}
         <div
           className="absolute h-[37px] rounded-[35px] bg-[#2D7597] transition-all duration-200 ease-in-out"

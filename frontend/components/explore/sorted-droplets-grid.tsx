@@ -2,14 +2,14 @@
 
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Message,
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
 import { useSearch } from "@/contexts/SearchContext";
-import { PageNav } from "../ui/page-nav";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -20,6 +20,8 @@ interface SortedDropletsGridProps {
   ratingsMap: Map<number, number>;
   dueDates: DueDate[];
   isAdmin?: boolean;
+  archivedDropletIds?: number[];
+  currentUserId?: number;
 }
 
 export function SortedDropletsGrid({
@@ -31,6 +33,8 @@ export function SortedDropletsGrid({
   ratingsMap,
   dueDates,
   isAdmin,
+  archivedDropletIds = [],
+  currentUserId,
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,10 +117,13 @@ export function SortedDropletsGrid({
   const { searchQuery } = useSearch();
 
   const filteredDroplets = useMemo(() => {
-    setCurrentPage(1);
     return sortedDroplets.filter((droplet) =>
       droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
+  }, [sortedDroplets, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [sortedDroplets, searchQuery]);
 
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
@@ -154,13 +161,22 @@ export function SortedDropletsGrid({
                 ?.dueDate || ""
             }
             isAdmin={isAdmin}
+            isArchived={archivedDropletIds.includes(droplet.id)}
+            isFavorited={
+              currentUserId
+                ? droplet.usersFavorited?.some(
+                    (user) => user.id === currentUserId,
+                  ) ?? false
+                : false
+            }
           />
         ))}
       </ul>
-      <PageNav
+      <AdminPagination
         currentPage={currentPage}
-        updatePage={setCurrentPage}
         totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        variant="standalone"
       />
     </>
   );

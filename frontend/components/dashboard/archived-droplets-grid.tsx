@@ -1,14 +1,12 @@
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconArchive } from "@tabler/icons-react";
 import {
   getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
   id: number;
@@ -49,12 +47,16 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-        <MessageHeader subtitle="No Results" title="No Archived Droplets" />
-        <MessageDescription>
-          You haven&apos;t archived any Droplets yet.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconArchive
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No archived droplets"
+        message="You haven't archived any droplets yet."
+      />
     );
   }
 
@@ -70,6 +72,7 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
       ratingsMap={ratingsMap}
       sortKey={sortKey}
       currentUser={authorizedUser}
+      isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );
 }

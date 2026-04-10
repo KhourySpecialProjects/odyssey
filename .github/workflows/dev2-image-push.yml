@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push-frontend-to-dev2:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
       - name: Checkout code
@@ -76,7 +76,7 @@ jobs:
 
 
   build-and-push-backend-to-dev2:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
       
     steps:
       - name: Checkout code

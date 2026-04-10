@@ -2,7 +2,6 @@
 
 import { Enrollment, Lesson, Note } from "@/types";
 import { useState, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   deleteNote,
   getNotesByAuthorizedUserAndLesson,
@@ -10,13 +9,8 @@ import {
 import { NoteBlock } from "./note-block";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { updateNotePosition } from "@/lib/requests/notes";
-import { Badge } from "@/components/ui/badge";
+import { IconPlus } from "@tabler/icons-react";
 
 export function NotesBar({
   userId,
@@ -33,6 +27,14 @@ export function NotesBar({
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [pageHeight, setPageHeight] = useState(0);
+  const [, setNoteDisabled] = useState(false);
+  const [focused, setFocused] = useState<number | null>(null);
+  const [popoverY, setPopoverY] = useState<number | null>(null);
+  const [popoverX, setPopoverX] = useState<number | null>(null);
+
+  if (!enrollmentId) {
+    enrollmentId = "";
+  }
 
   useEffect(() => {
     const updateHeight = () => {
@@ -56,6 +58,10 @@ export function NotesBar({
     );
     setNotes(fetchedNotes);
   }, [userId, lesson.slug]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const handleDragMove = useCallback(
     (e: MouseEvent) => {
@@ -123,98 +129,43 @@ export function NotesBar({
     }
   }, [draggedNote, handleDragMove, handleDragEnd]);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [mousePositionY, setMousePositionY] = useState(0);
-  const [mousePositionX, setMousePositionX] = useState(0);
-  const [selectedNote, setSelectedNote] = useState(false);
-  const [, setNoteDisabled] = useState(false);
-  const [focused, setFocused] = useState<number | null>(null);
-
-  if (!enrollmentId) {
-    enrollmentId = "";
-  }
-
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
-
   useEffect(() => {
     setNotes(initNotes);
   }, [initNotes]);
 
-  const handleMouseClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (
-      (e.target as HTMLElement).closest(".note-block") ||
-      (e.target as HTMLElement).closest(".trash-icon")
-    ) {
-      if (dialogOpen === true) {
-        setDialogOpen(false);
-      }
-      setSelectedNote(true);
-      return;
-    }
-
-    if (selectedNote === false) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const notesBarTop = rect.top + scrollTop;
-
-      const clickY = e.clientY + scrollTop - notesBarTop;
-      setMousePositionY(clickY);
-
-      const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
-      setMousePositionX(100 - rightOffset);
-      setDialogOpen(!dialogOpen);
-    }
-    setSelectedNote(false);
-  };
-
-  const handleAddNote = () => {
-    const handleAddNote = async () => {
-      setDialogOpen(false);
-      setNoteDisabled(true);
-      //If we want to add input box before Note is created. Better response time.
-      const newNote: Note = {
-        id: 0,
-        content: "Loading...",
-        lesson: lesson,
-        enrollment: {} as Enrollment,
-        positionY: mousePositionY + 50,
-      };
-      const tempNotes = notes;
-      tempNotes.push(newNote);
-      setNotes(tempNotes);
-
-      const enrollment = await getEnrollByID(String(enrollmentId), {
-        fields: ["id"],
-        populate: {},
-      });
-      const result = await createNote(
-        lesson,
-        enrollment,
-        mousePositionY + 50,
-        userId,
-      );
-
-      if (result.success) {
-        await fetchNotes();
-      } else {
-        console.error("Failed to create note:", result.error);
-      }
-
-      setNoteDisabled(false);
+  const createNoteAtY = async (posY: number) => {
+    setNoteDisabled(true);
+    const newNote: Note = {
+      id: 0,
+      content: "Loading...",
+      lesson: lesson,
+      enrollment: {} as Enrollment,
+      positionY: posY + 50,
     };
-    handleAddNote();
+    setNotes((prev) => [...prev, newNote]);
+
+    const enrollment = await getEnrollByID(String(enrollmentId), {
+      fields: ["id"],
+      populate: {},
+    });
+    const result = await createNote(lesson, enrollment, posY + 50, userId);
+
+    if (result.success) {
+      await fetchNotes();
+    } else {
+      console.error("Failed to create note:", result.error);
+      setNotes((prev) => prev.filter((n) => n.id !== 0));
+    }
+
+    setNoteDisabled(false);
   };
 
   const handleDeleteNote = async (id: number) => {
     try {
-      // Optimistically remove the note from UI
       setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
 
       const result = await deleteNote(id, userId);
       if (!result.ok) {
-        // If delete failed, restore the notes from server
         const updatedNotes = await getNotesByAuthorizedUserAndLesson(
           userId,
           lesson.slug,
@@ -223,7 +174,6 @@ export function NotesBar({
       }
     } catch (error) {
       console.error("Failed to delete note:", error);
-      // Restore notes from server on error
       const updatedNotes = await getNotesByAuthorizedUserAndLesson(
         userId,
         lesson.slug,
@@ -234,41 +184,68 @@ export function NotesBar({
 
   return (
     <div className="">
-      <div className={`mt-5 mb-10 text-center`}>
+      <div className="mt-5 mb-10 flex items-center justify-between px-8 pl-12">
         <h1 className="text-2xl font-extrabold">My Notes</h1>
-        <Badge className="border border-slate-400 bg-sky-100 text-slate-600 hover:bg-sky-100 dark:border-white dark:bg-slate-700 dark:text-white">
-          Click anywhere to create a note
-        </Badge>
+        <button
+          onClick={() => {
+            const maxY =
+              notes.length > 0
+                ? Math.max(...notes.map((n) => n.positionY))
+                : 30;
+            createNoteAtY(notes.length > 0 ? maxY + 180 : 30);
+          }}
+          title="Create a note"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d0d5dd] bg-white text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50"
+        >
+          <IconPlus className="h-4 w-4" />
+        </button>
       </div>
 
       <div
-        className="notes-bar relative w-full cursor-pointer space-y-4"
-        onClick={(e) => handleMouseClick(e)}
+        className="notes-bar relative w-full space-y-4"
         style={{ height: pageHeight + "px" }}
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          // Don't open popover when clicking on note blocks or delete buttons
+          if (
+            target.closest(".note-block") ||
+            target.closest("[data-testid='deleteNote']")
+          ) {
+            return;
+          }
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const relativeY = e.clientY - rect.top;
+          const relativeX = e.clientX - rect.right;
+          setPopoverY(relativeY);
+          setPopoverX(relativeX);
+        }}
       >
-        <div
-          className={`absolute z-[100]`}
-          style={{
-            top: `${mousePositionY - 60}px`,
-            left: `${mousePositionX}%`,
-            position: "absolute",
-          }}
-        >
-          <Popover open={dialogOpen}>
-            <PopoverTrigger disabled={false}></PopoverTrigger>
-            <PopoverContent className="z-[100] w-max p-0">
-              <div className="p-0">
-                <Button
-                  size="sm"
-                  onClick={handleAddNote}
-                  className="z-[100] justify-center border bg-white text-slate-600 hover:bg-slate-600 hover:text-white dark:border-white dark:bg-slate-700 dark:text-white"
-                >
-                  Create a Note?
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+        <p className="pointer-events-none absolute top-2 right-0 left-0 text-center text-sm text-slate-400">
+          Click anywhere to create a note
+        </p>
+
+        {popoverY !== null && (
+          <div
+            className="absolute z-30 rounded border border-slate-200 bg-white px-3 py-2 shadow-md"
+            style={{
+              top: `${popoverY}px`,
+              right: `${Math.abs(popoverX ?? 0)}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="text-sm font-medium text-slate-700 hover:text-slate-900"
+              onClick={async (e) => {
+                e.stopPropagation();
+                setPopoverY(null);
+                setPopoverX(null);
+                await createNoteAtY(popoverY);
+              }}
+            >
+              Create a Note?
+            </button>
+          </div>
+        )}
 
         {notes.map((note) => (
           <div
@@ -276,7 +253,6 @@ export function NotesBar({
             className={`absolute w-full -translate-y-1/2 transform transition-transform ${draggedNote?.id === note.id ? "cursor-grabbing" : ""} ${focused === note.id ? "z-20" : "z-0"}`}
             style={{
               top: `${note.positionY}px`,
-              //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`, fhseihfhe
               transform: `translateY(-50%)`,
             }}
             onMouseDown={(e) => handleDragStart(note, e)}

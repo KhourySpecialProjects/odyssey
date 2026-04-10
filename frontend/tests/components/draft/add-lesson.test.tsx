@@ -8,6 +8,7 @@ import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote"
 
 jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
+  duplicateLessonToDroplet: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -483,10 +484,10 @@ describe("AddLesson", () => {
   });
 
   describe("Show/Hide Form", () => {
-    it("shows input field when plus icon is clicked", async () => {
+    it("shows input field when New Lesson is clicked", async () => {
       render(<AddLesson {...defaultProps} />);
 
-      fireEvent.click(screen.getByLabelText("Add lesson"));
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
         expect(
@@ -498,7 +499,7 @@ describe("AddLesson", () => {
     it("focuses input after showing form", async () => {
       render(<AddLesson {...defaultProps} />);
 
-      fireEvent.click(screen.getByLabelText("Add lesson"));
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
         const input = screen.getByPlaceholderText("Enter a lesson name");
@@ -509,7 +510,7 @@ describe("AddLesson", () => {
     it("hides form when clicking outside", async () => {
       render(<AddLesson {...defaultProps} />);
 
-      fireEvent.click(screen.getByLabelText("Add lesson"));
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
         expect(
@@ -529,7 +530,7 @@ describe("AddLesson", () => {
     it("calls addLesson with correct parameters", async () => {
       render(<AddLesson {...defaultProps} />);
 
-      fireEvent.click(screen.getByLabelText("Add lesson"));
+      fireEvent.click(screen.getByText("New Lesson"));
 
       await waitFor(() => {
         expect(

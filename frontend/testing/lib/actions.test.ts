@@ -41,6 +41,13 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn().mockResolvedValue({
+    email: "test@northeastern.edu",
+    roles: [],
+  }),
+}));
+
 jest.mock("@anthropic-ai/sdk", () => {
   return jest.fn().mockImplementation(() => ({
     messages: {

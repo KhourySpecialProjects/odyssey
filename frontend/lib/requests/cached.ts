@@ -7,6 +7,10 @@ import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
 import { CACHE_TAGS } from "../cache-tags";
+import {
+  getVoyageEnrollment,
+  getVoyageEnrollmentsByUser,
+} from "./voyage-enrollment";
 
 export const getCachedUser = cache((email: string) =>
   getAuthorizedUserByEmail(email, USER_POPULATES.profile, CACHE_TAGS.users),
@@ -14,6 +18,7 @@ export const getCachedUser = cache((email: string) =>
 
 export const getCachedUserSocial = cache(async (email: string) => {
   const user = await getCachedUser(email);
+  if (!user) return undefined;
   return getAuthorizedUserByEmail(
     email,
     USER_POPULATES.social,
@@ -76,13 +81,16 @@ export const getCachedDraftDropletBySlug = cache((slug: string) =>
   getDropletBySlug(slug, {
     fields: ["*"],
     populate: {
-      authorized_users: { populate: "*" },
+      authorized_users: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
       prerequisites: { populate: "*" },
       postrequisites: { populate: "*" },
       nextSteps: { fields: ["label", "url"] },
+      datasets: { fields: ["name", "url", "fileType", "fileSize"] },
     },
   }),
 );
@@ -124,18 +132,18 @@ export const getCachedDropletBySlug = cache((slug: string) =>
       },
       nextSteps: { fields: ["id", "label", "url"] },
       datasets: {
-        fields: [
-          "id",
-          "name",
-          "format",
-          "fileUrl",
-          "fileSize",
-          "rowCount",
-          "columnCount",
-          "columnNames",
-          "columnTypes",
-        ],
+        fields: ["id", "name", "url", "fileType", "fileSize"],
       },
     },
   }),
+);
+
+export const getCachedVoyageEnrollment = cache(
+  async (authorizedUserId: number, voyageId: number) =>
+    getVoyageEnrollment(authorizedUserId, voyageId),
+);
+
+export const getCachedVoyageEnrollmentsByUser = cache(
+  async (authorizedUserId: number) =>
+    getVoyageEnrollmentsByUser(authorizedUserId),
 );

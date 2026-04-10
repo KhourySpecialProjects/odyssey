@@ -38,11 +38,11 @@ const DropletAnalyticsModal = dynamic(
 );
 
 const DROPLET_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[35%]" },
-  { label: "Type", width: "w-[10%]" },
-  { label: "Focus Area", width: "w-[12%]" },
-  { label: "Tags", width: "w-[23%]" },
-  { label: "Actions", width: "w-[20%]" },
+  { label: "Title", width: "w-[32%]" },
+  { label: "Type", width: "w-[13%]" },
+  { label: "Focus Area", width: "w-[13%]" },
+  { label: "Tags", width: "w-[26%]" },
+  { label: "Actions", width: "w-[16%]" },
 ];
 
 // ——— Tag display config ———
@@ -114,6 +114,30 @@ const FILTER_FOCUS_AREA_OPTIONS = [
 const TYPE_VALUES = new Set(["knowledge", "skill"]);
 const FOCUS_AREA_VALUES = new Set(["personal", "technical", "professional"]);
 
+// ——— TagsCell ———
+function TagsCell({ tags }: { tags: { id: number; name: string }[] }) {
+  return (
+    <div className="flex flex-wrap gap-[5px]">
+      {tags.map((tag) => {
+        const colors = getTagColors(tag.name);
+        return (
+          <Badge
+            key={tag.id}
+            variant="outline"
+            className={cn(
+              "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+              colors.bg,
+              colors.text,
+            )}
+          >
+            {tag.name}
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
+
 // ——— DropletTableRow ———
 function DropletTableRow({ droplet }: { droplet: Droplet }) {
   const [isHidden, setIsHidden] = useState(droplet.isHidden);
@@ -150,11 +174,11 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
       )}
       <tr className="border-b border-[#eaecf0] transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
         {/* Title */}
-        <td className="h-[56px] py-3 pr-6 pl-[30px]">
+        <td className="h-[56px] overflow-hidden py-3 pr-6 pl-[30px]">
           <Link
             href={`/d/${droplet.slug}`}
             prefetch={false}
-            className="truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
+            className="block truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
           >
             {droplet.name}
           </Link>
@@ -183,7 +207,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium whitespace-nowrap",
                     focusColors.bg,
                     focusColors.text,
                   )}
@@ -196,24 +220,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
 
         {/* Tags */}
         <td className="h-[56px] px-6 py-[11px]">
-          <div className="flex flex-wrap gap-[5px]">
-            {droplet.tags?.map((tag) => {
-              const colors = getTagColors(tag.name);
-              return (
-                <Badge
-                  key={tag.id}
-                  variant="outline"
-                  className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                    colors.bg,
-                    colors.text,
-                  )}
-                >
-                  {tag.name}
-                </Badge>
-              );
-            })}
-          </div>
+          <TagsCell tags={droplet.tags ?? []} />
         </td>
 
         {/* Actions */}
@@ -394,7 +401,7 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

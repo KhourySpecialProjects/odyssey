@@ -30,12 +30,12 @@ import { SortRadioGroup } from "@/components/admin/sort-radio-group";
 import { FilterCheckboxGroup } from "@/components/admin/filter-checkbox-group";
 
 const PLAYLIST_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[35%]" },
-  { label: "Groups", width: "w-[10%]" },
-  { label: "Droplets", width: "w-[10%]" },
-  { label: "Lessons", width: "w-[10%]" },
-  { label: "Duration", width: "w-[15%]" },
-  { label: "Actions", width: "w-[10%]" },
+  { label: "Title", width: "w-[40%]" },
+  { label: "Groups", width: "w-[12%]" },
+  { label: "Droplets", width: "w-[12%]" },
+  { label: "Lessons", width: "w-[12%]" },
+  { label: "Duration", width: "w-[12%]" },
+  { label: "Actions", width: "w-[12%]" },
 ];
 
 // ——— Duration display config ———
@@ -294,7 +294,7 @@ export function PlaylistsPageClient({
           placeholder="Search by title..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

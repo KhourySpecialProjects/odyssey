@@ -513,7 +513,10 @@ export async function updateViewedLessons(
 
     // Get current enrollment to check current viewedLessons
     const enrollment = await getEnrollByID(enrollmentId, {
-      populate: { viewedLessons: { fields: ["id"] } },
+      populate: {
+        viewedLessons: { fields: ["id"] },
+        droplet: { fields: ["id"] },
+      },
       fields: ["id", "isComplete"],
     });
 
@@ -575,6 +578,20 @@ export async function updateViewedLessons(
     if (!alreadyViewed || (isNowComplete && !enrollment.isComplete)) {
       revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     }
+
+    // When the droplet is newly completed, check if it belongs to a voyage node
+    // and auto-complete that node. Fire-and-forget: do not block the response.
+    const dropletId = enrollment.droplet?.id;
+    if (isNowComplete && !enrollment.isComplete && dropletId) {
+      import("./voyage-enrollment")
+        .then(({ checkAndCompleteVoyageNode }) =>
+          checkAndCompleteVoyageNode(dropletId, authorizedUser.id),
+        )
+        .catch((err) => {
+          console.error("Voyage node completion failed (non-blocking):", err);
+        });
+    }
+
     return { success: true, alreadyViewed };
   } catch (error) {
     console.error("Error updating viewed lessons:", error);

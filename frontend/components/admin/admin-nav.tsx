@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   IconLayoutGrid,
@@ -11,6 +12,7 @@ import {
   IconUsers,
   IconUserPlus,
   IconMessageReport,
+  IconMap,
   type IconProps,
 } from "@tabler/icons-react";
 
@@ -25,7 +27,8 @@ export type AdminNavVariant =
   | "Requests"
   | "Access Manager"
   | "Creators Manager"
-  | "Reports";
+  | "Reports"
+  | "Voyages";
 
 // ——— Per-icon sub-components ———
 function NavIcon({
@@ -38,8 +41,10 @@ function NavIcon({
   return (
     <Icon
       className={cn(
-        "h-[20px] w-[20px] flex-shrink-0",
-        active ? "text-white" : "text-[#344054] dark:text-slate-400",
+        "h-4 w-4 flex-shrink-0",
+        active
+          ? "text-[#287697] dark:text-[#4AABCF]"
+          : "text-[#667085] dark:text-slate-400",
       )}
       stroke={1.8}
     />
@@ -76,6 +81,9 @@ export function CreatorsManagerIcon({ active }: { active: boolean }) {
 export function ReportsIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={IconMessageReport} active={active} />;
 }
+export function VoyagesIcon({ active }: { active: boolean }) {
+  return <NavIcon Icon={IconMap} active={active} />;
+}
 
 // ——— Nav item definitions ———
 export const NAV_ITEMS: {
@@ -102,6 +110,12 @@ export const NAV_ITEMS: {
     variant: "Playlists",
     href: "/admin/playlists",
     Icon: PlaylistIcon,
+  },
+  {
+    label: "Voyages",
+    variant: "Voyages",
+    href: "/admin/voyages",
+    Icon: VoyagesIcon,
   },
   {
     label: "Groups",
@@ -134,6 +148,36 @@ interface AdminNavProps {
 
 export function AdminNav({ property1 }: AdminNavProps) {
   const pathname = usePathname();
+  const [headerHeight, setHeaderHeight] = useState(69);
+  const navRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const header = document.querySelector<HTMLElement>(".sticky.top-0.z-50");
+      if (header) setHeaderHeight(header.getBoundingClientRect().height);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    const updateBottom = () => {
+      if (!navRef.current) return;
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!footer) return;
+      const footerTop = footer.getBoundingClientRect().top;
+      const bottom = Math.max(0, window.innerHeight - footerTop);
+      navRef.current.style.bottom = `${bottom}px`;
+    };
+    updateBottom();
+    window.addEventListener("scroll", updateBottom, { passive: true });
+    window.addEventListener("resize", updateBottom);
+    return () => {
+      window.removeEventListener("scroll", updateBottom);
+      window.removeEventListener("resize", updateBottom);
+    };
+  }, []);
 
   const activeVariant: AdminNavVariant = (() => {
     if (property1 && property1 !== "Default") return property1;
@@ -146,8 +190,10 @@ export function AdminNav({ property1 }: AdminNavProps) {
 
   return (
     <nav
+      ref={navRef}
       aria-label="Admin navigation"
-      className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] md:flex dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
+      className="fixed left-0 z-40 hidden w-64 flex-shrink-0 flex-col border-r border-[#D0D5DD] bg-[#FCFCFD] md:flex dark:border-slate-700 dark:bg-slate-900"
+      style={{ top: headerHeight, bottom: 0 }}
     >
       <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
@@ -157,24 +203,15 @@ export function AdminNav({ property1 }: AdminNavProps) {
               <Link
                 href={item.href}
                 className={cn(
-                  "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors",
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-[#2D7597]"
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                    ? "bg-[#287697]/10 text-[#287697] dark:bg-[#287697]/20 dark:text-[#4AABCF]"
+                    : "text-[#344054] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <span className="ml-[15%]">
-                  <item.Icon active={isActive} />
-                </span>
-                <span
-                  className={cn(
-                    "absolute left-[27.4%] text-[18px] leading-none font-normal",
-                    isActive ? "text-white" : "text-black dark:text-white",
-                  )}
-                >
-                  {item.label}
-                </span>
+                <item.Icon active={isActive} />
+                <span>{item.label}</span>
               </Link>
             </li>
           );

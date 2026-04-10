@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
-import { HighlightDropdown } from "./highlight-dropdown";
+import { SelectionToolbar } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
@@ -40,9 +40,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onDeleteHighlight,
   onNote,
   enrollmentId,
-  expanded,
-  setExpanded,
-  activeBlock,
   setActiveBlock,
   author = false,
 }) => {
@@ -64,8 +61,12 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   });
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
-  const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
+  const [toolbarPosition, setToolbarPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [isOnHighlight, setIsOnHighlight] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(
     null,
   );
@@ -335,13 +336,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   }, [
     nonTableContent,
     highlights,
-    isHighlighting,
     contentRef,
     popupRef,
     onNote,
     savedSelectionRef,
     selectedColor,
-    mousePositionY,
   ]);
 
   const getTextOffset = (parent: Node, node: Node): number => {
@@ -412,57 +411,33 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       const highlightStart = Math.min(startOffset, endOffset);
       const highlightEnd = Math.max(startOffset, endOffset);
 
+      const startSpan = range.startContainer.parentElement?.closest(
+        'span[style*="background-color"]',
+      ) as HTMLElement | null;
+      const endSpan = range.endContainer?.parentElement?.closest(
+        'span[style*="background-color"]',
+      ) as HTMLElement | null;
+      // Only treat as "edit existing highlight" when the entire selection is
+      // contained within the same span; a partial overlap is a new selection.
       const highlightSpan =
-        range.startContainer.parentElement?.closest(
-          'span[style*="background-color"]',
-        ) ||
-        range.endContainer?.parentElement?.closest(
-          'span[style*="background-color"]',
-        );
-
-      if (highlightSpan) {
-        popupRef.current.x = highlightStart;
-        popupRef.current.y = highlightEnd;
-        popupRef.current.highlightSpan = highlightSpan as HTMLElement;
-        popupRef.current.savedRange = savedSelectionRef.current;
-        return;
-      }
-
-      if (isHighlighting && text) {
-        onHighlight({
-          text,
-          position: {
-            start: highlightStart,
-            end: highlightEnd,
-          },
-          color: selectedColor,
-          blockId: block.id,
-        });
-
-        const newRange = document.createRange();
-        newRange.setStart(range.startContainer, range.startOffset);
-        newRange.setEnd(range.endContainer, range.endOffset);
-
-        const span = document.createElement("span");
-        span.style.borderRadius = "8px";
-        span.style.backgroundColor = selectedColor;
-        span.style.setProperty("color", "black", "important");
-
-        const textNode = document.createTextNode(text);
-        span.appendChild(textNode);
-
-        newRange.deleteContents();
-        newRange.insertNode(span);
-
-        if (span.parentNode) {
-          span.parentNode.normalize();
-        }
-      }
+        startSpan && endSpan && startSpan === endSpan ? startSpan : null;
 
       popupRef.current.x = highlightStart;
       popupRef.current.y = highlightEnd;
-      popupRef.current.highlightSpan = null;
+      popupRef.current.highlightSpan = highlightSpan;
       popupRef.current.savedRange = savedSelectionRef.current;
+
+      // Show floating selection toolbar
+      const selectionRect = range.getBoundingClientRect();
+      const toolbarY =
+        selectionRect.top > 50
+          ? selectionRect.top - 44
+          : selectionRect.bottom + 8;
+      setToolbarPosition({
+        x: selectionRect.left + selectionRect.width / 2,
+        y: toolbarY,
+      });
+      setIsOnHighlight(!!highlightSpan);
     }
   };
 
@@ -510,32 +485,43 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     popupRef.current.savedRange = null;
   };
 
-  const handlePopupHighlight = (isWithNote?: boolean) => {
-    if (!contentRef.current || !popupRef.current.savedRange) {
-      return;
-    }
+  const handlePopupHighlight = (
+    isWithNote?: boolean,
+    colorOverride?: HighlightColor,
+  ) => {
+    if (!contentRef.current) return;
 
-    const range = popupRef.current.savedRange;
-    const text = range.toString();
+    const colorToUse = colorOverride ?? selectedColor;
+    const globalStart = popupRef.current.x;
+    const globalEnd = popupRef.current.y;
+    const text = popupRef.current.savedText;
 
+    if (!text || globalStart === globalEnd) return;
+
+    // Use position-based walker (same as the useEffect that re-applies highlights)
     const walker = document.createTreeWalker(
       contentRef.current,
       NodeFilter.SHOW_TEXT,
     );
 
     let currentPosition = 0;
-    let startOffset = -1;
-    let endOffset = -1;
+    let startNode: Node | null = null;
+    let endNode: Node | null = null;
+    let startOffset = 0;
+    let endOffset = 0;
 
     let node = walker.nextNode();
     while (node) {
       const nodeLength = node.textContent?.length || 0;
 
-      if (node === range.startContainer && startOffset === -1) {
-        startOffset = currentPosition + range.startOffset;
+      if (!startNode && currentPosition + nodeLength > globalStart) {
+        startNode = node;
+        startOffset = globalStart - currentPosition;
       }
-      if (node === range.endContainer && endOffset === -1) {
-        endOffset = currentPosition + range.endOffset;
+
+      if (!endNode && currentPosition + nodeLength >= globalEnd) {
+        endNode = node;
+        endOffset = globalEnd - currentPosition;
         break;
       }
 
@@ -543,52 +529,50 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       node = walker.nextNode();
     }
 
-    if (startOffset === -1 || endOffset === -1) return;
+    if (!startNode || !endNode) return;
 
-    const globalStart = Math.min(startOffset, endOffset);
-    const globalEnd = Math.max(startOffset, endOffset);
+    const existingSpan = popupRef.current.highlightSpan;
+    const effectiveColor = existingSpan
+      ? (existingSpan.style.backgroundColor as HighlightColor)
+      : colorToUse;
 
-    if (text) {
-      onHighlight(
-        {
-          text,
-          position: {
-            start: globalStart,
-            end: globalEnd,
-          },
-          color: selectedColor,
-          blockId: block.id,
-        },
-        isWithNote,
-      );
+    onHighlight(
+      {
+        text,
+        position: { start: globalStart, end: globalEnd },
+        color: effectiveColor,
+        blockId: block.id,
+      },
+      isWithNote,
+    );
 
-      popupRef.current.highlightSpan = null;
+    popupRef.current.highlightSpan = null;
 
-      const newRange = document.createRange();
-      newRange.setStart(range.startContainer, range.startOffset);
-      newRange.setEnd(range.endContainer, range.endOffset);
+    if (!existingSpan) {
+      try {
+        const newRange = document.createRange();
+        newRange.setStart(startNode, startOffset);
+        newRange.setEnd(endNode, endOffset);
 
-      const span = document.createElement("span");
-      span.style.borderRadius = "8px";
-      span.style.backgroundColor = selectedColor;
-      span.style.setProperty("color", "black", "important");
-
-      const textNode = document.createTextNode(text);
-      span.appendChild(textNode);
-
-      newRange.deleteContents();
-      newRange.insertNode(span);
-
-      if (span.parentNode) {
-        span.parentNode.normalize();
+        const span = document.createElement("span");
+        span.style.borderRadius = "8px";
+        span.style.backgroundColor = colorToUse;
+        span.style.setProperty("color", "black", "important");
+        newRange.surroundContents(span);
+      } catch {
+        highlightRange(startNode, startOffset, endNode, endOffset, colorToUse);
       }
     }
   };
 
   const handleApplyColor = (color: HighlightColor) => {
+    const savedRange = popupRef.current.savedRange;
     if (
       popupRef.current.highlightSpan &&
-      popupRef.current.highlightSpan.textContent
+      popupRef.current.highlightSpan.textContent &&
+      savedRange &&
+      popupRef.current.highlightSpan.contains(savedRange.startContainer) &&
+      popupRef.current.highlightSpan.contains(savedRange.endContainer)
     ) {
       const blockOffset = getTextOffset(
         contentRef.current!,
@@ -625,37 +609,100 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     );
   };
 
-  const handleImageClick = (e: React.MouseEvent) => {
+  const handleContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.tagName !== "IMG") {
+
+    if (target.tagName === "IMG") {
+      e.preventDefault();
+      e.stopPropagation();
+      setEnlargedImage({
+        src: target.getAttribute("src") || "",
+        alt: target.getAttribute("alt") || "",
+      });
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
-    setEnlargedImage({
-      src: target.getAttribute("src") || "",
-      alt: target.getAttribute("alt") || "",
-    });
+
+    if (!enrollmentId || author) return;
+
+    // If clicking on or inside a highlight span, show toolbar with delete option
+    const highlightSpan = target.closest(
+      'span[style*="background-color"]',
+    ) as HTMLElement | null;
+    if (!highlightSpan || !contentRef.current) return;
+
+    // Walk the tree to find the character offsets of this span
+    const walker = document.createTreeWalker(
+      contentRef.current,
+      NodeFilter.SHOW_TEXT,
+    );
+    let currentPosition = 0;
+    let spanStart = -1;
+    let spanEnd = -1;
+    let node = walker.nextNode();
+    while (node) {
+      const nodeLength = node.textContent?.length || 0;
+      if (highlightSpan.contains(node)) {
+        if (spanStart === -1) spanStart = currentPosition;
+        spanEnd = currentPosition + nodeLength;
+      }
+      currentPosition += nodeLength;
+      node = walker.nextNode();
+    }
+
+    if (spanStart === -1) return;
+
+    const range = document.createRange();
+    range.selectNodeContents(highlightSpan);
+    popupRef.current.x = spanStart;
+    popupRef.current.y = spanEnd;
+    popupRef.current.savedText = highlightSpan.textContent || "";
+    popupRef.current.highlightSpan = highlightSpan;
+    popupRef.current.savedRange = range;
+    savedSelectionRef.current = range;
+
+    const rect = highlightSpan.getBoundingClientRect();
+    const toolbarY = rect.top > 50 ? rect.top - 44 : rect.bottom + 8;
+    setToolbarPosition({ x: rect.left + rect.width / 2, y: toolbarY });
+    setIsOnHighlight(true);
   };
 
   const handleCloseEnlarged = () => {
     setEnlargedImage(null);
   };
 
+  const handleToolbarApplyColor = (color: HighlightColor) => {
+    setSelectedColor(color);
+    if (isOnHighlight) {
+      handleApplyColor(color);
+    } else {
+      handlePopupHighlight(false, color);
+    }
+    setToolbarPosition(null);
+    window.getSelection()?.removeAllRanges();
+  };
+
+  const handleToolbarDelete = () => {
+    handlePopupDelete();
+    setToolbarPosition(null);
+  };
+
+  const handleToolbarNote = () => {
+    handleCreateNote();
+    setToolbarPosition(null);
+    window.getSelection()?.removeAllRanges();
+  };
+
   return (
     <div>
       {enrollmentId && !author && (
-        <HighlightDropdown
+        <SelectionToolbar
+          position={toolbarPosition}
           selectedColor={selectedColor}
-          handleApplyColor={handleApplyColor}
-          isHighlighting={isHighlighting}
-          setIsHighlighting={() => setIsHighlighting(!isHighlighting)}
-          handlePopupHighlight={handlePopupHighlight}
-          handlePopupDelete={handlePopupDelete}
-          handleCreateNote={handleCreateNote}
-          setExpanded={setExpanded}
-          expanded={expanded}
-          isActive={activeBlock === block.id}
+          isOnHighlight={isOnHighlight}
+          onApplyColor={handleToolbarApplyColor}
+          onDelete={handleToolbarDelete}
+          onNote={handleToolbarNote}
+          onClose={() => setToolbarPosition(null)}
         />
       )}
       <div style={{ display: "none" }}></div>
@@ -667,7 +714,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           ref={contentRef}
           onMouseUp={() => handleMouseUp()}
           onMouseDown={(e) => handleMouseDown(e)}
-          onClick={handleImageClick}
+          onClick={handleContentClick}
           className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit select-text dark:text-slate-300"
           dangerouslySetInnerHTML={{
             __html: DOMPurify.sanitize(nonTableContent),

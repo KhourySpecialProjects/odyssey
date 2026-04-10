@@ -47,13 +47,15 @@ describe("PlaylistCard", () => {
     it("renders playlist name and droplet count", () => {
       render(<PlaylistCard playlist={mockPlaylist} />);
       expect(screen.getByText("Test Playlist")).toBeInTheDocument();
-      expect(screen.getByText("Droplets: 0 Lessons: 0")).toBeInTheDocument();
+      expect(screen.getByText("droplets")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
     });
 
     it("renders with droplets and lessons", () => {
       render(<PlaylistCard playlist={mockPlaylistWithDroplets} />);
       expect(screen.getByText("Full Playlist")).toBeInTheDocument();
-      expect(screen.getByText("Droplets: 2 Lessons: 3")).toBeInTheDocument();
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByText("droplets")).toBeInTheDocument();
     });
 
     it("renders playlist description", () => {
@@ -72,7 +74,7 @@ describe("PlaylistCard", () => {
 
     it("renders with correct card styling", () => {
       const { container } = render(<PlaylistCard playlist={mockPlaylist} />);
-      const card = container.querySelector(".border-slate-200");
+      const card = container.querySelector(".rounded-lg");
       expect(card).toBeInTheDocument();
     });
   });
@@ -353,17 +355,14 @@ describe("PlaylistCard", () => {
   describe("Droplet and Lesson Counts", () => {
     it("calculates correct droplet count", () => {
       render(<PlaylistCard playlist={mockPlaylistWithDroplets} />);
-      expect(screen.getByText(/Droplets: 2/)).toBeInTheDocument();
-    });
-
-    it("calculates correct lesson count across droplets", () => {
-      render(<PlaylistCard playlist={mockPlaylistWithDroplets} />);
-      expect(screen.getByText(/Lessons: 3/)).toBeInTheDocument();
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByText("droplets")).toBeInTheDocument();
     });
 
     it("handles playlist with no droplets", () => {
       render(<PlaylistCard playlist={mockPlaylist} />);
-      expect(screen.getByText("Droplets: 0 Lessons: 0")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
+      expect(screen.getByText("droplets")).toBeInTheDocument();
     });
 
     it("handles droplets without lessons", () => {
@@ -375,13 +374,14 @@ describe("PlaylistCard", () => {
         ],
       };
       render(<PlaylistCard playlist={dropletsNoLessons} />);
-      expect(screen.getByText("Droplets: 2 Lessons: 0")).toBeInTheDocument();
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByText("droplets")).toBeInTheDocument();
     });
 
     it("handles undefined droplets array", () => {
       const noDroplets = { ...mockPlaylist, droplets: undefined };
       render(<PlaylistCard playlist={noDroplets} />);
-      expect(screen.getByText("Droplets: 0 Lessons: 0")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
     });
   });
 

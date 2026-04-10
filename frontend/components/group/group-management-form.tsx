@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthorizedUser, Droplet, Group, User } from "@/types";
+import { AuthorizedUser, Droplet, Group } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -10,7 +10,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -21,20 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { ContentSection } from "@/components/group/content-section";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DropletList } from "@/components/group/group-management-droplet-list";
 import { GeneralTextEditor } from "../ui/tiptap/general-text-editor";
-import { GroupSemester, Playlist } from "@/types";
+import { GroupSemester, Playlist, Voyage } from "@/types";
 import { PlaylistList } from "@/components/group/group-management-playlist-list";
+import { VoyageList } from "@/components/group/group-management-voyage-list";
 import { updateGroup } from "@/lib/requests/groups";
 import { AddDropletDialog } from "./add-droplet-dialog";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
-import { AddMemberDialog } from "./add-member-dialog";
-import { MemberTile } from "./member-tile";
+import { AddVoyageDialog } from "./add-voyage-dialog";
+import { BulkAddUsersDialog } from "./bulk-add-users-dialog";
 import { createGroup } from "@/lib/requests/groups";
 import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
@@ -66,8 +64,7 @@ const formSchema = z.object({
   semester: z.string(),
   admins: z.array(z.number()),
   managers: z.array(z.number()),
-
-  members: z.array(z.custom<User>()),
+  members: z.array(z.number()),
   droplets: z
     .array(
       z.object({
@@ -110,6 +107,16 @@ const formSchema = z.object({
       }),
     )
     .optional(),
+
+  voyages: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        slug: z.string(),
+      }),
+    )
+    .optional(),
 });
 interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
@@ -119,15 +126,11 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
-  const initialSubmissionState: { error: string | null | unknown } = {
-    error: null,
-  };
-
-  const [submissionState, setSubmissionState] = useState(
-    initialSubmissionState,
-  );
+  const [submissionState, setSubmissionState] = useState<{
+    error: string | null;
+  }>({ error: null });
   const router = useRouter();
-  const [isSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
     existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
@@ -135,17 +138,19 @@ export function GroupManagementForm({
     existingGroup?.playlists?.sort((a, b) => a.name.localeCompare(b.name)) ||
       [],
   );
-  const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
+  const [voyages, setVoyages] = useState<Voyage[]>(
+    existingGroup?.voyages?.sort((a, b) => a.name.localeCompare(b.name)) || [],
+  );
   const [hasChanges, setHasChanges] = useState(false);
-
   const [isOpen, setIsOpen] = useState(false);
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
-  };
+  const [savedGroup, setSavedGroup] = useState<{
+    id: number;
+    name: string;
+  } | null>(
+    existingGroup
+      ? { id: existingGroup.id, name: existingGroup.groupName }
+      : null,
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -155,12 +160,7 @@ export function GroupManagementForm({
       semester: existingGroup?.semester || "Open Membership",
       admins: existingGroup?.admins?.map((admin) => admin.id) || [],
       managers: existingGroup?.managers?.map((manager) => manager.id) || [],
-      members:
-        existingGroup?.members?.map((member) => ({
-          email: member.email,
-          roles: member.roles || [],
-          isActive: member.isActive ?? true,
-        })) || [],
+      members: existingGroup?.members?.map((member) => member.id) || [],
       droplets:
         existingGroup?.droplets?.map((droplet, index) => ({
           id: droplet.id,
@@ -189,6 +189,13 @@ export function GroupManagementForm({
             name: droplet.name,
           })),
         })) || [],
+
+      voyages:
+        existingGroup?.voyages?.map((voyage) => ({
+          id: voyage.id,
+          name: voyage.name,
+          slug: voyage.slug,
+        })) || [],
     },
   });
 
@@ -200,7 +207,7 @@ export function GroupManagementForm({
   }, [form]);
 
   useEffect(() => {
-    setSubmissionState(initialSubmissionState);
+    setSubmissionState({ error: null });
   }, [hasChanges]);
 
   const handleCancel = () => {
@@ -221,7 +228,7 @@ export function GroupManagementForm({
       return;
     }
     setSubmissionState({ error: null });
-    setIsOpen(true);
+    setIsSubmitting(true);
     try {
       const updateGroupData = {
         groupName: data.groupName,
@@ -229,11 +236,7 @@ export function GroupManagementForm({
         semester: data.semester,
         admins: data.admins,
         managers: data.managers,
-        members: data.members?.map((member) => ({
-          email: member.email ?? null,
-          roles: member.roles,
-          isActive: member.isActive,
-        })),
+        memberIds: data.members,
         droplets: data.droplets?.map((droplet, index) => ({
           ...droplet,
           order: index,
@@ -241,6 +244,9 @@ export function GroupManagementForm({
         playlists: data.playlists?.map((playlist, index) => ({
           ...playlist,
           order: index,
+        })),
+        voyages: data.voyages?.map((voyage) => ({
+          ...voyage,
         })),
       };
 
@@ -251,10 +257,11 @@ export function GroupManagementForm({
         initialMembers: {
           admins: data.admins,
           managers: data.managers,
-          members: data.members?.map((m) => m.email ?? "").filter(Boolean),
+          memberIds: data.members,
         },
         droplets: data.droplets?.map((d) => d.id),
         playlists: data.playlists?.map((p) => p.id),
+        voyages: data.voyages?.map((v) => v.id),
       };
 
       if (existingGroup) {
@@ -263,9 +270,16 @@ export function GroupManagementForm({
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
+        setSavedGroup({ id: newGroup.id, name: data.groupName });
       }
+      setIsOpen(true);
     } catch (error) {
       console.error("Failed to update group", error);
+      setSubmissionState({
+        error: "Failed to save group. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -281,18 +295,15 @@ export function GroupManagementForm({
   const handleGroupPost = async () => {
     setIsOpen(false);
     try {
-      if (existingGroup) {
-        await createGroupAnnouncement(
-          existingGroup.groupName,
-          existingGroup.id,
-        );
-        router.push("/g/dashboard?tab=creator");
-      } else {
-        router.push("/g/dashboard?tab=creator");
+      if (savedGroup) {
+        await createGroupAnnouncement(savedGroup.name, savedGroup.id);
       }
+      router.push("/g/dashboard?tab=creator");
     } catch (error) {
       console.error("Failed to make group announcement: ", error);
-      setSubmissionState({ error: error });
+      setSubmissionState({
+        error: "Failed to share announcement. Please try again.",
+      });
     }
   };
 
@@ -322,20 +333,16 @@ export function GroupManagementForm({
     setPlaylists(updatedPlaylists as Playlist[]);
   };
 
-  const handleMemberRemove = (emailToRemove: string) => {
-    const currentMembers = form.getValues("members") || [];
-    const updatedMembers = currentMembers.filter(
-      (m) => m.email !== emailToRemove,
-    );
+  const handleVoyageReorder = (reorderedVoyages: Voyage[]) => {
+    form.setValue("voyages", reorderedVoyages);
+    setVoyages(reorderedVoyages);
+  };
 
-    form.setValue("members", updatedMembers);
-    setMembers(
-      updatedMembers.map((member) => ({
-        ...member,
-        roles: [],
-        isActive: member.isActive ?? true,
-      })),
-    );
+  const handleVoyageRemove = (voyageId: number) => {
+    const currentVoyages = form.getValues("voyages") || [];
+    const updatedVoyages = currentVoyages.filter((v) => v.id !== voyageId);
+    form.setValue("voyages", updatedVoyages);
+    setVoyages(updatedVoyages as Voyage[]);
   };
 
   return (
@@ -344,22 +351,82 @@ export function GroupManagementForm({
         onSubmit={form.handleSubmit(onSubmit, (errors) =>
           console.error("Form validation failed ", errors),
         )}
-        className="space-y-12"
+        className="flex h-min w-full flex-col space-y-8"
+        autoComplete="off"
       >
-        <div className="space-y-8">
+        {/* Name */}
+        <FormField
+          control={form.control}
+          name="groupName"
+          render={({ field }) => (
+            <FormItem>
+              <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+                Name <span className="text-red-500">*</span>
+              </div>
+              <FormControl>
+                <Input
+                  placeholder="Enter group name"
+                  className="max-w-full border-[#D0D5DD] placeholder:text-[#121216] dark:border-slate-700"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Semester */}
+        <FormField
+          control={form.control}
+          name="semester"
+          render={({ field }) => (
+            <FormItem>
+              <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+                Semester
+              </div>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full border-[#D0D5DD] dark:border-slate-700">
+                    <SelectValue placeholder="Select a semester" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {SEMESTER_OPTIONS.map((semester) => (
+                    <SelectItem key={semester} value={semester}>
+                      {semester}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Administrators & Members side by side */}
+        <div className="xs:flex-col flex items-start justify-start gap-x-10 gap-y-8 lg:flex-row">
           <FormField
             control={form.control}
-            name="groupName"
+            name="admins"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Group Name <span className="text-red-500">*</span>
-                </FormLabel>
+              <FormItem className="xs:w-full lg:w-1/2">
+                <div className="flex items-center justify-between py-0.5 pb-2">
+                  <div className="text-xl font-bold text-slate-900 dark:text-white">
+                    Administrators
+                  </div>
+                  <BulkAddUsersDialog
+                    label="Administrators"
+                    existingIds={field.value}
+                    onAddUsers={(newIds) =>
+                      field.onChange([...field.value, ...newIds])
+                    }
+                  />
+                </div>
                 <FormControl>
-                  <Input
-                    placeholder="Enter group name"
-                    {...field}
-                    autoComplete="off"
+                  <UserMultiSelect
+                    selectedIds={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select administrators..."
                   />
                 </FormControl>
                 <FormMessage />
@@ -369,47 +436,26 @@ export function GroupManagementForm({
 
           <FormField
             control={form.control}
-            name="semester"
+            name="members"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Semester</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a semester" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SEMESTER_OPTIONS.map((semester) => (
-                      <SelectItem key={semester} value={semester}>
-                        {semester}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl className="w-full">
-                  {/* <TipTapEditor
-                    content={field.value}
+              <FormItem className="xs:w-full lg:w-1/2">
+                <div className="flex items-center justify-between py-0.5 pb-2">
+                  <div className="text-xl font-bold text-slate-900 dark:text-white">
+                    Members
+                  </div>
+                  <BulkAddUsersDialog
+                    label="Members"
+                    existingIds={field.value}
+                    onAddUsers={(newIds) =>
+                      field.onChange([...field.value, ...newIds])
+                    }
+                  />
+                </div>
+                <FormControl>
+                  <UserMultiSelect
+                    selectedIds={field.value}
                     onChange={field.onChange}
-                  /> */}
-                  <GeneralTextEditor
-                    initialContent={field.value || ""}
-                    updateContent={field.onChange}
-                    placeholder="Enter group description..."
+                    placeholder="Select members..."
                   />
                 </FormControl>
                 <FormMessage />
@@ -418,97 +464,33 @@ export function GroupManagementForm({
           />
         </div>
 
-        <Separator />
-
-        <ContentSection title="Group Leadership">
-          <div className="space-y-6">
-            <FormField
-              control={form.control}
-              name="admins"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Administrators</FormLabel>
-                  <FormControl>
-                    <UserMultiSelect
-                      selectedIds={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* <FormField
-              control={form.control}
-              name="managers"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Managers</FormLabel>
-                  <FormControl>
-                    <UserMultiSelect
-                      selectedIds={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-          </div>
-        </ContentSection>
-
-        <Separator />
-
-        <ContentSection
-          title="Members"
-          emptyMessage="No members in this group yet"
-          action={
-            <AddMemberDialog
-              existingMembers={members.map((member) => ({
-                email: member.email ?? "",
-              }))}
-              onAddMembers={(emails) => {
-                const newMembers = emails.map(
-                  (email) =>
-                    ({
-                      email,
-                      roles: [],
-                      isActive: true,
-                    }) as User,
-                );
-                const updatedMembers = [...members, ...newMembers];
-                setMembers(updatedMembers);
-                form.setValue("members", updatedMembers);
-              }}
-            />
-          }
-        >
-          {members.length > 0 ? (
-            <div className="grid grid-cols-3 gap-4">
-              {members.map((member) => (
-                <MemberTile
-                  key={member.email}
-                  member={member}
-                  onRemove={
-                    member.email !== existingGroup?.creator.email
-                      ? handleMemberRemove
-                      : undefined
-                  }
+        {/* Description */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+                Description
+              </div>
+              <FormControl className="w-full">
+                <GeneralTextEditor
+                  initialContent={field.value || ""}
+                  updateContent={field.onChange}
+                  placeholder="Enter group description..."
                 />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
-              No members have been added to this group yet
-            </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </ContentSection>
+        />
 
-        <ContentSection
-          title="Droplets"
-          emptyMessage="No droplets added to this group yet"
-          action={
+        {/* Droplets */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="py-0.5 text-xl font-bold text-slate-900 dark:text-white">
+              Droplets
+            </div>
             <AddDropletDialog
               currentDroplets={droplets}
               onAddDroplets={(newDroplet) => {
@@ -517,8 +499,7 @@ export function GroupManagementForm({
                 form.setValue("droplets", updatedDroplets);
               }}
             />
-          }
-        >
+          </div>
           {droplets.length > 0 ? (
             <DropletList
               droplets={droplets}
@@ -526,18 +507,18 @@ export function GroupManagementForm({
               onRemove={handleDropletRemove}
             />
           ) : (
-            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
+            <div className="rounded-lg border border-dashed border-[#D0D5DD] p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
               No droplets have been added to this group yet
             </div>
           )}
-        </ContentSection>
+        </div>
 
-        <Separator />
-
-        <ContentSection
-          title="Playlists"
-          emptyMessage="No playlists added to this group yet"
-          action={
+        {/* Playlists */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="py-0.5 text-xl font-bold text-slate-900 dark:text-white">
+              Playlists
+            </div>
             <AddPlaylistDialog
               currentPlaylists={playlists}
               onAddPlaylists={(newPlaylists) => {
@@ -546,8 +527,7 @@ export function GroupManagementForm({
                 form.setValue("playlists", updatedPlaylists);
               }}
             />
-          }
-        >
+          </div>
           {playlists.length > 0 ? (
             <PlaylistList
               playlists={playlists}
@@ -555,25 +535,56 @@ export function GroupManagementForm({
               onRemove={handlePlaylistRemove}
             />
           ) : (
-            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
+            <div className="rounded-lg border border-dashed border-[#D0D5DD] p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
               No playlists have been added to this group yet
             </div>
           )}
-        </ContentSection>
+        </div>
 
-        <div className="align-center flex justify-end gap-4">
+        {/* Voyages */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="py-0.5 text-xl font-bold text-slate-900 dark:text-white">
+              Voyages
+            </div>
+            <AddVoyageDialog
+              currentVoyages={voyages}
+              onAddVoyages={(newVoyages) => {
+                const updatedVoyages = [...voyages, ...newVoyages];
+                setVoyages(updatedVoyages);
+                form.setValue("voyages", updatedVoyages);
+              }}
+            />
+          </div>
+          {voyages.length > 0 ? (
+            <VoyageList
+              voyages={voyages}
+              onReorder={handleVoyageReorder}
+              onRemove={handleVoyageRemove}
+            />
+          ) : (
+            <div className="rounded-lg border border-dashed border-[#D0D5DD] p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              No voyages have been added to this group yet
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-2 self-end">
           <Button
             type="button"
+            size="sm"
             variant="outline"
-            className="dark:text-slate-300"
             onClick={handleCancel}
+            className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           >
             Cancel
           </Button>
           <Button
             type="submit"
+            size="sm"
             disabled={isSubmitting}
-            className="dark:bg-slate-100"
+            className="bg-[#287697] text-white hover:bg-[#1f6080]"
           >
             {isSubmitting
               ? "Saving..."
@@ -582,12 +593,16 @@ export function GroupManagementForm({
                 : "Create Group"}
           </Button>
         </div>
-        {submissionState.error ? (
-          <p className="text-center text-red-500">
-            {submissionState.error as string}
-          </p>
-        ) : null}
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+
+        {submissionState.error && (
+          <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+              {submissionState.error}
+            </p>
+          </div>
+        )}
+
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-[825px]">
             <DialogHeader>
               <DialogTitle>
@@ -595,7 +610,6 @@ export function GroupManagementForm({
                 this group?
               </DialogTitle>
             </DialogHeader>
-
             <div className="mt-4 flex flex-col gap-4">
               <Button onClick={handleGroupPost}>Share</Button>
               <Button

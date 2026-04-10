@@ -1,34 +1,36 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckIcon, Plus } from "lucide-react";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { cn } from "@/lib/utils";
 
 interface UserMultiSelectProps {
   selectedIds: number[];
   onChange: (value: number[]) => void;
+  placeholder?: string;
 }
 
 export function UserMultiSelect({
   selectedIds,
   onChange,
+  placeholder = "Select users...",
 }: UserMultiSelectProps) {
-  const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<AuthorizedUser[]>([]);
   const [search, setSearch] = useState("");
 
@@ -51,61 +53,62 @@ export function UserMultiSelect({
     });
   }, [users, search]);
 
+  const getUserLabel = (user: AuthorizedUser) =>
+    user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          type="button"
           role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between dark:hover:bg-slate-900"
+          variant="outline"
+          className="h-9 w-9 border-none bg-transparent p-0 text-[#344054] shadow-none transition-colors hover:bg-transparent hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-100"
+          aria-label={placeholder}
         >
-          {selectedIds.length > 0
-            ? users
-                .filter((user) => selectedIds.includes(user.id))
-                .map((user) =>
-                  user.firstName && user.lastName
-                    ? user.firstName + " " + user.lastName
-                    : user.email,
-                )
-                .join(", ")
-            : "Select users..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <Plus className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
+      <PopoverContent className="w-[400px] p-0" align="start">
         <Command>
           <CommandInput
             placeholder="Search users..."
             onValueChange={setSearch}
           />
-          <CommandEmpty>No users found.</CommandEmpty>
-          <CommandGroup className="max-h-[260px] overflow-y-auto">
-            {filteredUsers.map((user) => (
-              <CommandItem
-                key={user.id}
-                value={`${user.firstName} ${user.lastName} ${user.email}`}
-                onSelect={() => {
-                  const newSelected = selectedIds.includes(user.id)
-                    ? selectedIds.filter((id) => id !== user.id)
-                    : [...selectedIds, user.id];
-                  onChange(newSelected);
-                }}
-              >
-                <Checkbox
-                  checked={selectedIds.includes(user.id)}
-                  className="mr-2"
-                />
-                <div>
-                  <div className="text-muted-foreground text-sm">
-                    {user.firstName && user.lastName
-                      ? user.firstName + " " + user.lastName
-                      : user.email}
-                  </div>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <CommandList>
+            <CommandEmpty>No users found.</CommandEmpty>
+            <CommandGroup className="max-h-[260px] overflow-y-auto">
+              {filteredUsers.map((user) => {
+                const isSelected = selectedIds.includes(user.id);
+                return (
+                  <CommandItem
+                    key={user.id}
+                    value={`${user.firstName} ${user.lastName} ${user.email}`}
+                    onSelect={() => {
+                      const newSelected = isSelected
+                        ? selectedIds.filter((id) => id !== user.id)
+                        : [...selectedIds, user.id];
+                      onChange(newSelected);
+                    }}
+                  >
+                    <div
+                      className={cn(
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
+                        isSelected
+                          ? "bg-sky-600 text-white"
+                          : "opacity-50 [&_svg]:invisible",
+                      )}
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                    </div>
+                    <span>{getUserLabel(user)}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>

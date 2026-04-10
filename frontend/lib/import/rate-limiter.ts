@@ -1,6 +1,12 @@
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
-export type AIAction = "split" | "expand" | "custom-prompt" | "auto-format";
+export type AIAction =
+  | "split"
+  | "expand"
+  | "custom-prompt"
+  | "auto-format"
+  | "bug-report"
+  | "fun-fact";
 
 type RoleTier = "system-admin" | "faculty" | "creator-editor";
 
@@ -24,6 +30,16 @@ export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
     "system-admin": 1000,
     faculty: 20,
     "creator-editor": 15,
+  },
+  "bug-report": {
+    "system-admin": 1000,
+    faculty: 10,
+    "creator-editor": 5,
+  },
+  "fun-fact": {
+    "system-admin": 1000,
+    faculty: 20,
+    "creator-editor": 10,
   },
 };
 

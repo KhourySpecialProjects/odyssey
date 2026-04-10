@@ -22,6 +22,8 @@ import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
+import { getCurrentUser } from "@/lib/auth/session";
+import { checkRateLimit } from "@/lib/import/rate-limiter";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -60,6 +62,7 @@ export async function uploadImage(formData: FormData) {
       Key: `${rootPath}/${fileName}`,
       Body: buffer,
       ContentType: file.type,
+      CacheControl: "public, max-age=604800, immutable",
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
@@ -78,6 +81,54 @@ export async function uploadImage(formData: FormData) {
       error: "Database Error: Failed to upload image.",
       url: null,
     };
+  }
+}
+
+export async function deleteDataset(fileUrl: string) {
+  try {
+    // Local file deletion
+    if (isLocal && fileUrl.startsWith("/uploads/")) {
+      const relativePath = fileUrl.slice("/uploads/".length);
+      const resolved = path.resolve(LOCAL_UPLOADS_DIR, relativePath);
+      // Prevent path traversal — ensure resolved path stays inside uploads dir
+      if (!resolved.startsWith(LOCAL_UPLOADS_DIR + path.sep)) {
+        return { ok: false, error: "Invalid file path." };
+      }
+      try {
+        await unlink(resolved);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== "ENOENT") throw err;
+      }
+      revalidateTag(CACHE_TAGS.datasets);
+      return { ok: true, error: null };
+    }
+
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
+    const prefix = bucketUrl.endsWith("/") ? bucketUrl : `${bucketUrl}/`;
+
+    if (!fileUrl.startsWith(prefix)) {
+      return { ok: false, error: "Invalid file URL." };
+    }
+
+    const key = fileUrl.slice(prefix.length);
+
+    const response = await s3.send(
+      new DeleteObjectCommand({ Bucket: bucketName, Key: key }),
+    );
+
+    if (
+      response["$metadata"].httpStatusCode !== 204 &&
+      response["$metadata"].httpStatusCode !== 200
+    ) {
+      return { ok: false, error: "Failed to delete dataset." };
+    }
+    revalidateTag(CACHE_TAGS.datasets);
+    return { ok: true, error: null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "Failed to delete dataset." };
   }
 }
 
@@ -204,19 +255,26 @@ async function createLinearIssue(
 ) {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || "placeholder",
-    dangerouslyAllowBrowser: true,
   });
 
-  // AI-generate the Acceptance Criteria, Steps to Reproduce, and Impact sections
+  // Rate-limit the AI call (gracefully falls back to placeholder on limit)
   let generatedSections = "";
-  try {
-    const msg = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `You are a technical project manager writing a Linear bug ticket. Based on the bug description and page below, generate the following three sections in Markdown. Output only the three sections with no preamble or explanation.
+  const user = await getCurrentUser();
+  const rateLimited =
+    user?.email &&
+    !checkRateLimit(user.email, user.roles ?? [], "bug-report").allowed;
+
+  if (rateLimited) {
+    // Skip AI — use placeholder sections below
+  } else {
+    try {
+      const msg = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `You are a technical project manager writing a Linear bug ticket. Based on the bug description and page below, generate the following three sections in Markdown. Output only the three sections with no preamble or explanation.
 
 ## Acceptance Criteria
 - How do we know it's done?
@@ -230,16 +288,20 @@ async function createLinearIssue(
 
 Bug description: "${formData.description}"
 Page: "${formData.path}"`,
-        },
-      ],
-    });
-    generatedSections =
-      msg.content[0].type === "text" ? msg.content[0].text : "";
-  } catch (err) {
-    console.error(
-      "Anthropic generation failed, using placeholder sections:",
-      err,
-    );
+          },
+        ],
+      });
+      generatedSections =
+        msg.content[0].type === "text" ? msg.content[0].text : "";
+    } catch (err) {
+      console.error(
+        "Anthropic generation failed, using placeholder sections:",
+        err,
+      );
+    }
+  }
+
+  if (!generatedSections) {
     generatedSections = `## Acceptance Criteria
 - How do we know it's done?
 - [ ] [criteria #1]
@@ -690,6 +752,7 @@ export async function saveNotebookContent(
       Key: s3Key,
       Body: Buffer.from(notebookJson, "utf8"),
       ContentType: "application/json",
+      CacheControl: "public, no-cache",
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
@@ -811,6 +874,7 @@ export async function uploadDataset(formData: FormData) {
         Key: `${rootPath}/${fileName}`,
         Body: buffer,
         ContentType: file.type || "application/octet-stream",
+        CacheControl: "public, max-age=604800, immutable",
       }),
     );
 

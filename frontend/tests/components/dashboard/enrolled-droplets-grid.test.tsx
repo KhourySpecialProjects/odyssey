@@ -66,9 +66,9 @@ describe("EnrolledDropletsGrid", () => {
 
     render(await EnrolledDropletsGrid({}));
 
-    expect(screen.getByText("No Enrolled Droplets")).toBeInTheDocument();
+    expect(screen.getByText("No enrolled droplets")).toBeInTheDocument();
     expect(
-      screen.getByText("You haven't enrolled in any Droplets yet."),
+      screen.getByText("You haven't enrolled in any droplets yet."),
     ).toBeInTheDocument();
   });
 
@@ -87,9 +87,9 @@ describe("EnrolledDropletsGrid", () => {
 
     render(await EnrolledDropletsGrid({}));
 
-    expect(screen.getByText("No Enrolled Droplets")).toBeInTheDocument();
+    expect(screen.getByText("No enrolled droplets")).toBeInTheDocument();
     expect(
-      screen.getByText("You haven't enrolled in any Droplets yet."),
+      screen.getByText("You haven't enrolled in any droplets yet."),
     ).toBeInTheDocument();
   });
 

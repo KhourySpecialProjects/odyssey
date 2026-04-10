@@ -34,11 +34,12 @@ describe("azure", () => {
 
         expect(global.fetch).toHaveBeenCalledWith(
           "https://graph.microsoft.com/v1.0/me?$select=employeeId",
-          {
+          expect.objectContaining({
             headers: {
               Authorization: "Bearer test-token",
             },
-          },
+            signal: expect.any(AbortSignal),
+          }),
         );
         expect(result).toEqual({
           nuid: "12345",

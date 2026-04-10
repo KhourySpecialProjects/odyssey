@@ -26,7 +26,9 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    expect(screen.getByText("Delete Lesson")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete lesson" }),
+    ).toBeInTheDocument();
   });
 
   it("opens a confirmation dialog when clicked", () => {
@@ -37,7 +39,7 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Delete Lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
 
     expect(
       screen.getByText(/Are you sure you want to delete this lesson?/),
@@ -54,7 +56,7 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Delete Lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
 
     fireEvent.click(screen.getByText("Delete"));
 
@@ -73,7 +75,7 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Delete Lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
 
     fireEvent.click(screen.getByText("Cancel"));
 
@@ -91,7 +93,7 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Delete Lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
 
     expect(screen.getByText("Cancel")).toBeDisabled();
     expect(screen.getByText("Deleting...")).toBeDisabled();

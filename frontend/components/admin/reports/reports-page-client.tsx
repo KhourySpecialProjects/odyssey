@@ -105,7 +105,7 @@ function ReportRow({ report }: { report: Report }) {
 
       {/* Description */}
       <td className="h-[56px] px-6 py-[11px]">
-        <p className="text-[16px] leading-[20px] font-medium text-[#101828] dark:text-white">
+        <p className="text-[16px] leading-[20px] font-normal text-[#101828] dark:text-white">
           {displayDescription}
           {isTruncated && !expanded && (
             <button
@@ -129,7 +129,7 @@ function ReportRow({ report }: { report: Report }) {
       {/* Path */}
       <td className="h-[56px] px-6 py-[11px]">
         {pathExpanded ? (
-          <p className="text-[16px] font-medium break-all text-[#101828] dark:text-white">
+          <p className="text-[16px] font-normal break-all text-[#101828] dark:text-white">
             {report.path}{" "}
             <button
               onClick={() => setPathExpanded(false)}
@@ -139,7 +139,7 @@ function ReportRow({ report }: { report: Report }) {
             </button>
           </p>
         ) : (
-          <div className="flex min-w-0 items-center gap-1 text-[16px] font-medium text-[#101828] dark:text-white">
+          <div className="flex min-w-0 items-center gap-1 text-[16px] font-normal text-[#101828] dark:text-white">
             <span className="min-w-0 truncate">{report.path}</span>
             {isPathLong && (
               <button
@@ -321,7 +321,7 @@ export function ReportsPageClient({ reports }: { reports: Report[] }) {
           placeholder="Search reports…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

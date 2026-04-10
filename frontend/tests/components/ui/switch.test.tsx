@@ -24,8 +24,7 @@ describe("Switch", () => {
 
   it("applies checked styling", () => {
     const { container } = render(<Switch defaultChecked />);
-    expect(
-      container.querySelector(".peer-checked\\:bg-yellow-500"),
-    ).toBeInTheDocument();
+    const div = container.querySelector("div");
+    expect(div).toHaveClass("peer-checked:bg-[#287697]");
   });
 });

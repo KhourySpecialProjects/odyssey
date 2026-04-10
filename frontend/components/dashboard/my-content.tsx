@@ -5,16 +5,15 @@ import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 import {
   getCachedUserDashboardFull,
   getCachedUserGroups,
+  getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { UserGroups } from "./user-groups";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconUsers, IconArchive, IconMap } from "@tabler/icons-react";
 import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 
 export async function MyContent({
   searchParams,
@@ -47,6 +46,10 @@ export async function MyContent({
     group.users_archived?.some((user) => user.id === authorizedUser.id),
   );
 
+  const voyageEnrollments = await getCachedVoyageEnrollmentsByUser(
+    authorizedUser.id,
+  );
+
   return (
     <div className="w-full">
       <div className="mt-6">
@@ -63,15 +66,16 @@ export async function MyContent({
         ) : contentType === "groups" ? (
           <>
             {activeGroups.length === 0 && (
-              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-                <MessageHeader
-                  subtitle="No Results"
-                  title="No Enrolled Groups"
-                />
-                <MessageDescription>
-                  You haven&apos;t enrolled in any Groups yet.
-                </MessageDescription>
-              </Message>
+              <EmptyState
+                icon={
+                  <IconUsers
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No enrolled groups"
+                message="You haven't enrolled in any groups yet."
+              />
             )}
             <UserGroups
               activeGroups={activeGroups}
@@ -89,15 +93,16 @@ export async function MyContent({
             <hr className="pb-2" />
             <div className="pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
-              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-                <MessageHeader
-                  subtitle="No Results"
-                  title="No Archived Groups"
-                />
-                <MessageDescription>
-                  You haven&apos;t archived any Groups yet.
-                </MessageDescription>
-              </Message>
+              <EmptyState
+                icon={
+                  <IconArchive
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No archived groups"
+                message="You haven't archived any groups yet."
+              />
             )}
             <UserGroups
               activeGroups={archivedGroups}
@@ -105,10 +110,30 @@ export async function MyContent({
               sortKey={sortKey}
             />
           </>
+        ) : contentType === "voyages" ? (
+          voyageEnrollments.filter((e) => e.voyage).length === 0 ? (
+            <EmptyState
+              icon={
+                <IconMap
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No enrolled voyages"
+              message="You haven't enrolled in any voyages yet."
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {voyageEnrollments
+                .filter((e) => e.voyage)
+                .map((enrollment) => (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage!} />
+                ))}
+            </div>
+          )
         ) : contentType === "favorited" ? (
           <FavoriteDropletsGrid sortKey={sortKey} />
-        ) : null}{" "}
-        {/* Added the final case */}
+        ) : null}
       </div>
     </div>
   );

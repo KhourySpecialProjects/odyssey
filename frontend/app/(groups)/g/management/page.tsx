@@ -3,7 +3,6 @@ import { getCachedUser } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
-import { Badge } from "@/components/ui/badge";
 import {
   isAuthorizedUserAdmin,
   isAuthorizedUserFaculty,
@@ -51,24 +50,16 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-12 bg-slate-100 p-8 dark:bg-slate-800">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-          {group ? "Edit Group" : "Create New Group"}
+    <div className="bg-white px-4 pt-4 pb-8 md:px-[300px] md:pt-8 md:pb-16 dark:bg-zinc-950">
+      <div className="flex w-full flex-col">
+        <h1 className="mb-7 text-4xl font-semibold text-black dark:text-white">
+          {group ? "Edit Group" : "Create a Group"}
         </h1>
-        <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
-          {group
-            ? "Modify your group settings and manage members"
-            : "Set up a new group and invite members"}
-        </p>
-        {group && (
-          <Badge variant="outline">
-            Created by: {group.creator?.email || "Unknown"}
-          </Badge>
-        )}
+        <GroupManagementForm
+          currentUser={authorizedUser}
+          existingGroup={group}
+        />
       </div>
-
-      <GroupManagementForm currentUser={authorizedUser} existingGroup={group} />
     </div>
   );
 }

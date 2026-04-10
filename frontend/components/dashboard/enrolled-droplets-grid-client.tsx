@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AuthorizedUser, Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { PageNav } from "../ui/page-nav";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSearch } from "@/contexts/SearchContext";
 
 const ITEMS_PER_PAGE = 9;
@@ -21,6 +21,7 @@ interface EnrolledDropletsGridClientProps {
   focusArea?: string | string[];
   difficulty?: string | string[];
   currentUser?: AuthorizedUser;
+  isAdmin?: boolean;
 }
 
 export function EnrolledDropletsGridClient({
@@ -36,6 +37,7 @@ export function EnrolledDropletsGridClient({
   focusArea,
   difficulty,
   currentUser,
+  isAdmin,
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { searchQuery } = useSearch();
@@ -183,13 +185,15 @@ export function EnrolledDropletsGridClient({
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""
             }
+            isAdmin={isAdmin}
           />
         ))}
       </ul>
-      <PageNav
+      <AdminPagination
         currentPage={currentPage}
-        updatePage={setCurrentPage}
         totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        variant="standalone"
       />
     </>
   );

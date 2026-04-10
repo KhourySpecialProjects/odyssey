@@ -86,6 +86,12 @@
       "target": "api::playlist.playlist",
       "inversedBy": "groups"
     },
+    "voyages": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::voyage.voyage",
+      "inversedBy": "groups"
+    },
     "announcements": {
       "type": "relation",
       "relation": "oneToMany",

@@ -1,14 +1,13 @@
 "use client";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-//import "react-tabs/style/react-tabs.css";
-
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { AuthorizedUser, DueDate, Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -22,16 +21,6 @@ interface RenderGroupDashboardProps {
     { completionPercentage: number; completionDate: Date | undefined }
   >;
 }
-
-const tabStyle =
-  "px-4 py-2 cursor-pointer border-b-2 transition-colors focus:outline-none";
-
-const getTabClassName = (isSelected: boolean) =>
-  `${tabStyle} ${
-    isSelected
-      ? "border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-      : "border-transparent hover:border-gray-300 hover:text-gray-700 dark:hover:border-gray-600 dark:hover:text-gray-300"
-  }`;
 
 export function GroupDashboard({
   group,
@@ -58,7 +47,14 @@ export function GroupDashboard({
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  const tabNames = ["droplets", "playlists", "progress"];
+  const hasVoyages = group.voyages && group.voyages.length > 0;
+  const canViewProgress = canEdit || isAdmin;
+  const tabNames = [
+    "droplets",
+    "playlists",
+    ...(hasVoyages ? ["voyages"] : []),
+    ...(canViewProgress ? ["progress"] : []),
+  ];
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -90,129 +86,157 @@ export function GroupDashboard({
   };
 
   return (
-    <>
-      <style jsx global>{`
-        .react-tabs__tab-panel {
-          display: none;
-        }
-        .react-tabs__tab-panel--selected {
-          display: block;
-        }
-      `}</style>
-      <Tabs title="" onSelect={handleTabSelect} selectedIndex={selectedIndex}>
-        <TabList className="flex border-b border-gray-200 dark:border-gray-700">
-          <Tab className={getTabClassName(selectedIndex === 0)}>Droplets</Tab>
-          <Tab className={getTabClassName(selectedIndex === 1)}>Playlists</Tab>
-          {(canEdit || isAdmin) && (
-            <Tab className={getTabClassName(selectedIndex === 2)}>Progress</Tab>
+    <div>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {tabNames.map((tabName, index) => {
+          const label = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+          return (
+            <button
+              key={tabName}
+              onClick={() => handleTabSelect(index)}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                selectedIndex === index
+                  ? "border-[#287697] bg-[#287697] text-white"
+                  : "border-[#D0D5DD] text-[#667085] hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tabNames[selectedIndex] === "droplets" && (
+        <ContentSection
+          title=""
+          emptyMessage="No droplets have been added to this group yet."
+        >
+          {group.droplets && group.droplets.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
+                {paginatedDroplets?.map((droplet) => (
+                  <div key={droplet.id} className="h-full w-full">
+                    <GroupDropletTile
+                      droplet={droplet}
+                      dueDate={
+                        dueDates?.find(
+                          (dueDate) => dueDate.droplet?.id === droplet.id,
+                        )?.dueDate || ""
+                      }
+                      authUser={authUser}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 0}
+                  className={cn(
+                    currentPage === 0
+                      ? "invisible"
+                      : "visible dark:bg-slate-300 dark:text-black",
+                  )}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className={cn(
+                    currentPage === totalPages - 1
+                      ? "invisible"
+                      : "visible dark:bg-slate-300 dark:text-black",
+                  )}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+              No droplets have been added to this group yet.
+            </div>
           )}
-        </TabList>
-        <TabPanel>
+        </ContentSection>
+      )}
+
+      {tabNames[selectedIndex] === "playlists" &&
+        visitedTabs.has(selectedIndex) && (
           <ContentSection
             title=""
-            emptyMessage="No droplets have been added to this group yet."
+            emptyMessage="No playlists have been added to this group yet."
           >
-            {group.droplets && group.droplets.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
-                  {paginatedDroplets?.map((droplet) => (
-                    <div key={droplet.id} className="h-full w-full">
-                      <GroupDropletTile
-                        key={droplet.id}
-                        droplet={droplet}
-                        dueDate={
-                          dueDates?.find(
-                            (dueDate) => dueDate.droplet?.id === droplet.id,
-                          )?.dueDate || ""
-                        }
-                        authUser={authUser}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 0}
-                    className={`${currentPage === 0 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages - 1}
-                    className={`${currentPage === totalPages - 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-                  >
-                    Next
-                  </Button>
+            {group.playlists && group.playlists.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {group.playlists.map((playlist) => (
+                  <PlaylistCard
+                    key={playlist.id}
+                    playlist={playlist}
+                    dueDate={
+                      dueDates?.find(
+                        (dueDate) => dueDate.playlist?.id === playlist.id,
+                      )?.dueDate || ""
+                    }
+                    timeZone={authUser.timeZone?.trim()}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                No playlists have been added to this group yet.
+              </div>
+            )}
+          </ContentSection>
+        )}
+
+      {tabNames[selectedIndex] === "voyages" &&
+        visitedTabs.has(selectedIndex) && (
+          <ContentSection
+            title=""
+            emptyMessage="No voyages have been added to this group yet."
+          >
+            {group.voyages && group.voyages.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.voyages.map((voyage) => (
+                  <VoyageCard key={voyage.id} voyage={voyage} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                No voyages have been added to this group yet.
+              </div>
+            )}
+          </ContentSection>
+        )}
+
+      {tabNames[selectedIndex] === "progress" &&
+        visitedTabs.has(selectedIndex) && (
+          <ContentSection
+            title=""
+            emptyMessage="No students are enrolled in any droplets or playlists."
+          >
+            {((group.droplets && group.droplets.length > 0) ||
+              (group.playlists && group.playlists.length > 0)) &&
+            group.members &&
+            group.members.length > 0 ? (
+              <div className="flex flex-row items-start overflow-x-auto">
+                <div key={group.id}>
+                  <GroupProgressGrid group={group} statuses={statuses} />
                 </div>
               </div>
             ) : (
               <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                No droplets have been added to this group yet.
+                No droplets or members have been added to this group yet.
               </div>
             )}
           </ContentSection>
-        </TabPanel>
-        <TabPanel>
-          {visitedTabs.has(1) ? (
-            <ContentSection
-              title=""
-              emptyMessage="No playlists have been added to this group yet."
-            >
-              {group.playlists && group.playlists.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {group.playlists.map((playlist) => (
-                    <PlaylistCard
-                      key={playlist.id}
-                      playlist={playlist}
-                      dueDate={
-                        dueDates?.find(
-                          (dueDate) => dueDate.playlist?.id === playlist.id,
-                        )?.dueDate || ""
-                      }
-                      timeZone={authUser.timeZone?.trim()}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                  No playlists have been added to this group yet.
-                </div>
-              )}
-            </ContentSection>
-          ) : null}
-        </TabPanel>
-        {(canEdit || isAdmin) && (
-          <TabPanel>
-            {visitedTabs.has(2) ? (
-              <ContentSection
-                title=""
-                emptyMessage="No students are enrolled in any droplets or playlists."
-              >
-                {((group.droplets && group.droplets.length > 0) ||
-                  (group.playlists && group.playlists.length > 0)) &&
-                group.members &&
-                group.members.length > 0 ? (
-                  <div className="flex flex-row items-start overflow-x-auto">
-                    <div className="" key={group.id}>
-                      <GroupProgressGrid group={group} statuses={statuses} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                    No droplets or members have been added to this group yet.
-                  </div>
-                )}
-              </ContentSection>
-            ) : null}
-          </TabPanel>
         )}
-      </Tabs>
-    </>
+    </div>
   );
 }

@@ -670,3 +670,45 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
 
   return allEditors;
 }
+
+/**
+ * Resolves a list of emails to authorized user IDs.
+ * Creates authorized users for any emails that don't exist yet.
+ * Returns an array of user IDs.
+ */
+export async function resolveEmailsToUserIds(
+  emails: string[],
+): Promise<number[]> {
+  if (emails.length === 0) return [];
+
+  const existingUsers = await getAuthorizedUsersByEmails(emails);
+  const existingEmailSet = new Set(
+    existingUsers.map((u) => u.email.toLowerCase()),
+  );
+  const missingEmails = emails.filter(
+    (e) => !existingEmailSet.has(e.toLowerCase()),
+  );
+
+  if (missingEmails.length > 0) {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
+    await Promise.all(
+      missingEmails.map(async (email) => {
+        try {
+          const formData = new FormData();
+          formData.append("email", email);
+          formData.append("isEnabled", "true");
+          await createAuthorizedUser(formData, roleID);
+        } catch (error) {
+          console.error(`Failed to create user: ${email}`, error);
+        }
+      }),
+    );
+
+    const newUsers = await getAuthorizedUsersByEmails(missingEmails);
+    existingUsers.push(...newUsers);
+  }
+
+  return existingUsers.map((u) => u.id);
+}

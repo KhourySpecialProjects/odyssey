@@ -1,10 +1,27 @@
 import { extractTextFromPDF } from "../pdf-extractor";
 
-// Mock pdfjs-dist dynamic import
-jest.mock("pdfjs-dist", () => ({
+const mockGetDocument = jest.fn();
+const mockPdfjs = {
   GlobalWorkerOptions: { workerSrc: "" },
-  getDocument: jest.fn(),
-}));
+  getDocument: mockGetDocument,
+  OPS: {},
+};
+
+// Mock the CDN dynamic import — Jest resolves the webpackIgnore import as a
+// normal dynamic import, so we intercept the CDN URL and return our mock.
+jest.mock(
+  "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/build/pdf.min.mjs",
+  () => mockPdfjs,
+  { virtual: true },
+);
+
+// Mock fetch for the worker blob download
+global.fetch = jest.fn().mockResolvedValue({
+  blob: () => Promise.resolve(new Blob(["// worker stub"])),
+}) as unknown as typeof fetch;
+
+// Mock URL.createObjectURL
+global.URL.createObjectURL = jest.fn().mockReturnValue("blob:worker-stub");
 
 // Helper to build a mock pdfjs text item
 function makeItem(str: string, fontSize: number, x: number, y: number): object {
@@ -45,8 +62,12 @@ function makeFile(name: string, size = 1000): File {
 describe("extractTextFromPDF", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const pdfjsLib = require("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions = { workerSrc: "" };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      blob: () => Promise.resolve(new Blob(["// worker stub"])),
+    });
+    (global.URL.createObjectURL as jest.Mock).mockReturnValue(
+      "blob:worker-stub",
+    );
   });
 
   it("throws an error for files larger than 25MB", async () => {
@@ -57,7 +78,6 @@ describe("extractTextFromPDF", () => {
   });
 
   it("returns raw text with page markers", async () => {
-    const pdfjsLib = require("pdfjs-dist");
     const mockDoc = makeMockDoc([
       [
         makeItem("Introduction", 24, 50, 700),
@@ -66,7 +86,7 @@ describe("extractTextFromPDF", () => {
       [makeItem("Chapter Two", 24, 50, 700)],
     ]);
 
-    pdfjsLib.getDocument.mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve(mockDoc),
     });
 
@@ -81,13 +101,12 @@ describe("extractTextFromPDF", () => {
   });
 
   it("adds a warning for empty pages", async () => {
-    const pdfjsLib = require("pdfjs-dist");
     const mockDoc = makeMockDoc([
       [makeItem("Normal page content.", 12, 50, 700)],
       [],
     ]);
 
-    pdfjsLib.getDocument.mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve(mockDoc),
     });
 
@@ -99,10 +118,9 @@ describe("extractTextFromPDF", () => {
   });
 
   it("throws an error when all pages have no text", async () => {
-    const pdfjsLib = require("pdfjs-dist");
     const mockDoc = makeMockDoc([[], []]);
 
-    pdfjsLib.getDocument.mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve(mockDoc),
     });
 
@@ -113,15 +131,13 @@ describe("extractTextFromPDF", () => {
   });
 
   it("throws an error for password-protected PDFs", async () => {
-    const pdfjsLib = require("pdfjs-dist");
-
     let rejectFn: (e: Error) => void = () => {};
     const lazyPromise = new Promise<never>((_resolve, reject) => {
       rejectFn = reject;
     });
     lazyPromise.catch(() => {});
 
-    pdfjsLib.getDocument.mockReturnValue({ promise: lazyPromise });
+    mockGetDocument.mockReturnValue({ promise: lazyPromise });
 
     const file = makeFile("protected.pdf");
     const extractPromise = extractTextFromPDF(file);
@@ -131,8 +147,7 @@ describe("extractTextFromPDF", () => {
   });
 
   it("throws an error for PDFs with no pages", async () => {
-    const pdfjsLib = require("pdfjs-dist");
-    pdfjsLib.getDocument.mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve({ numPages: 0, getPage: jest.fn() }),
     });
 
@@ -141,14 +156,13 @@ describe("extractTextFromPDF", () => {
   });
 
   it("extracts text in correct page order", async () => {
-    const pdfjsLib = require("pdfjs-dist");
     const mockDoc = makeMockDoc([
       [makeItem("First page", 12, 50, 700)],
       [makeItem("Second page", 12, 50, 700)],
       [makeItem("Third page", 12, 50, 700)],
     ]);
 
-    pdfjsLib.getDocument.mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve(mockDoc),
     });
 

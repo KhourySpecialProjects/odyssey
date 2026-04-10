@@ -771,8 +771,7 @@ describe("GroupDashboard", () => {
 
       const tab = screen.getByText("Droplets");
       expect(tab).toHaveClass("px-4");
-      expect(tab).toHaveClass("py-2");
-      expect(tab).toHaveClass("cursor-pointer");
+      expect(tab).toHaveClass("py-1.5");
     });
 
     it("applies dark mode classes to pagination buttons", () => {
