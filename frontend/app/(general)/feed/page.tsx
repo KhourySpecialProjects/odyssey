@@ -43,7 +43,8 @@ const TAB_LABELS: Record<string, string> = {
 
 export default async function FeedPage({ searchParams }: Props) {
   const params = await searchParams;
-  const tab = (params?.tab as string) || "feed";
+  const rawTab = (params?.tab as string) || "feed";
+  const tab = DASHBOARD_TABS.has(rawTab) || rawTab === "feed" ? rawTab : "feed";
   const isFeedTab = !DASHBOARD_TABS.has(tab);
 
   const user = await getCurrentUser();

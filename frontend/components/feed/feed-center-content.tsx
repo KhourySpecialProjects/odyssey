@@ -45,6 +45,8 @@ export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
           return (
             <button
               key={option.value}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => toggleRole(option.value)}
               className={cn(
                 "rounded-full border-[1.5px] px-3 py-0.5 text-sm font-medium transition-colors",

@@ -29,7 +29,10 @@ export function FeedLeftNav() {
   const activeTab = searchParams.get("tab") || "feed";
 
   const navigate = (tab: string) => {
-    router.push(`${pathname}?tab=${tab}`);
+    if (tab === activeTab) return;
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", tab);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (

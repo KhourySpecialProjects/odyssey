@@ -85,16 +85,18 @@ export function FeedContainer({
               <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
                 Friend Requests
               </h2>
-              <Link
-                href="/settings/friends"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mb-4 block"
+              <Button
+                asChild
+                className="mb-4 w-full rounded-full bg-[#287697] hover:bg-[#1f6080]"
               >
-                <Button className="w-full rounded-full bg-[#287697] hover:bg-[#1f6080]">
+                <Link
+                  href="/settings/friends"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Manage Friends
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               <FriendRequests
                 noProfile={true}
                 friendsPerPage={5}
