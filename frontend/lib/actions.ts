@@ -84,6 +84,24 @@ export async function uploadImage(formData: FormData) {
 
 export async function deleteDataset(fileUrl: string) {
   try {
+    // Local file deletion
+    if (isLocal && fileUrl.startsWith("/uploads/")) {
+      const relativePath = fileUrl.slice("/uploads/".length);
+      const resolved = path.resolve(LOCAL_UPLOADS_DIR, relativePath);
+      // Prevent path traversal — ensure resolved path stays inside uploads dir
+      if (!resolved.startsWith(LOCAL_UPLOADS_DIR + path.sep)) {
+        return { ok: false, error: "Invalid file path." };
+      }
+      try {
+        await unlink(resolved);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== "ENOENT") throw err;
+      }
+      revalidateTag(CACHE_TAGS.datasets);
+      return { ok: true, error: null };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const bucketUrl = process.env.AWS_S3_BUCKET_URL!;
     const prefix = bucketUrl.endsWith("/") ? bucketUrl : `${bucketUrl}/`;

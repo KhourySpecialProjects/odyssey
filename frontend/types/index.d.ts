@@ -8,8 +8,8 @@ export type DropletType = "knowledge" | "skill";
 export type Dataset = {
   id: number;
   name: string;
-  url: string;
-  fileType: string;
+  fileUrl: string;
+  format: string;
   fileSize: number;
 };
 

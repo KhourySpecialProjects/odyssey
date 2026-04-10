@@ -93,7 +93,7 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
     await Promise.all(
       unloaded.map((ds) =>
         pyodide
-          .loadDataset(ds.name, ds.url)
+          .loadDataset(ds.name, ds.fileUrl)
           .then(() => {
             datasetsLoadedRef.current.add(ds.id);
           })

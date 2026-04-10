@@ -25,22 +25,22 @@ const mockDatasets: Dataset[] = [
   {
     id: 1,
     name: "sales_data.csv",
-    url: "https://example.com/sales.csv",
-    fileType: "csv",
+    fileUrl: "https://example.com/sales.csv",
+    format: "csv",
     fileSize: 10240,
   },
   {
     id: 2,
     name: "products.json",
-    url: "https://example.com/products.json",
-    fileType: "json",
+    fileUrl: "https://example.com/products.json",
+    format: "json",
     fileSize: 5120,
   },
   {
     id: 3,
     name: "inventory.xlsx",
-    url: "https://example.com/inventory.xlsx",
-    fileType: "xlsx",
+    fileUrl: "https://example.com/inventory.xlsx",
+    format: "xlsx",
     fileSize: 20480,
   },
 ];

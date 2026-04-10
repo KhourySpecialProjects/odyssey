@@ -94,8 +94,8 @@ describe("DatasetUpload", () => {
       {
         id: 1,
         name: "test.csv",
-        url: "https://example.com/test.csv",
-        fileType: "csv",
+        fileUrl: "https://example.com/test.csv",
+        format: "csv",
         fileSize: 1024,
       },
     ];
@@ -107,8 +107,8 @@ describe("DatasetUpload", () => {
     const fiveDatasets: Dataset[] = Array.from({ length: 5 }, (_, i) => ({
       id: i + 1,
       name: `dataset${i + 1}.csv`,
-      url: `https://example.com/dataset${i + 1}.csv`,
-      fileType: "csv",
+      fileUrl: `https://example.com/dataset${i + 1}.csv`,
+      format: "csv",
       fileSize: 1024,
     }));
     render(<DatasetUpload dropletId={1} datasets={fiveDatasets} />);
@@ -204,8 +204,8 @@ describe("DatasetUpload", () => {
       data: {
         id: 42,
         name: "data.csv",
-        url: "https://example.com/uploaded.csv",
-        fileType: "csv",
+        fileUrl: "https://example.com/uploaded.csv",
+        format: "csv",
         fileSize: 100,
       },
       error: null,
@@ -247,8 +247,8 @@ describe("DatasetUpload", () => {
       expect(uploadDataset).toHaveBeenCalled();
       expect(createDataset).toHaveBeenCalledWith(
         expect.objectContaining({
-          fileType: "csv",
-          url: "https://example.com/uploaded.csv",
+          format: "csv",
+          fileUrl: "https://example.com/uploaded.csv",
         }),
       );
     });
