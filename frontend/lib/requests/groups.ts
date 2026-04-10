@@ -655,11 +655,10 @@ export async function enrollUsers(group: Group) {
       for (const member of group.members || []) {
         for (const voyage of group.voyages || []) {
           allTasks.push(async () => {
-            try {
-              await enrollInVoyageDirect(member.id, voyage.id);
-            } catch (error) {
+            const result = await enrollInVoyageDirect(member.id, voyage.id);
+            if (!result.ok) {
               const msg = `Failed to enroll user ${member.id} in voyage ${voyage.id}`;
-              console.error(msg, error);
+              console.error(msg, result.error);
               failures.push(msg);
             }
           });

@@ -59,7 +59,16 @@ export function AddVoyageDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          setSelectedVoyages([]);
+          setSearch("");
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <PlusCircle className="mr-2 h-4 w-4" />

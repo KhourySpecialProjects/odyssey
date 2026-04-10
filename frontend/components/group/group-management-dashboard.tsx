@@ -48,9 +48,13 @@ export function GroupDashboard({
   };
 
   const hasVoyages = group.voyages && group.voyages.length > 0;
-  const tabNames = hasVoyages
-    ? ["droplets", "playlists", "voyages", "progress"]
-    : ["droplets", "playlists", "progress"];
+  const canViewProgress = canEdit || isAdmin;
+  const tabNames = [
+    "droplets",
+    "playlists",
+    ...(hasVoyages ? ["voyages"] : []),
+    ...(canViewProgress ? ["progress"] : []),
+  ];
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -85,7 +89,6 @@ export function GroupDashboard({
     <div>
       <div className="mb-6 flex flex-wrap gap-2">
         {tabNames.map((tabName, index) => {
-          if (tabName === "progress" && !canEdit && !isAdmin) return null;
           const label = tabName.charAt(0).toUpperCase() + tabName.slice(1);
           return (
             <button
@@ -213,7 +216,6 @@ export function GroupDashboard({
         )}
 
       {tabNames[selectedIndex] === "progress" &&
-        (canEdit || isAdmin) &&
         visitedTabs.has(selectedIndex) && (
           <ContentSection
             title=""

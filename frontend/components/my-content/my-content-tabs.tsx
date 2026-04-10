@@ -11,6 +11,7 @@ import { Droplet, Playlist, Voyage } from "@/types";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconDroplet, IconLayoutList, IconMap } from "@tabler/icons-react";
+import { useEffect, useMemo } from "react";
 
 interface MyContentTabsProps {
   droplets: Droplet[];
@@ -39,12 +40,23 @@ export function MyContentTabs({
     parseAsStringLiteral(tabIds).withDefault("droplets"),
   );
 
-  const visibleTabs = tabs.filter(
-    (t) =>
-      t.id === "droplets" ||
-      (t.id === "playlists" && showPlaylists) ||
-      (t.id === "voyages" && showVoyages),
+  const visibleTabs = useMemo(
+    () =>
+      tabs.filter(
+        (t) =>
+          t.id === "droplets" ||
+          (t.id === "playlists" && showPlaylists) ||
+          (t.id === "voyages" && showVoyages),
+      ),
+    [showPlaylists, showVoyages],
   );
+
+  useEffect(() => {
+    const ids = visibleTabs.map((t) => t.id);
+    if (!ids.includes(activeTab)) {
+      setActiveTab(ids[0] ?? "droplets");
+    }
+  }, [activeTab, visibleTabs, setActiveTab]);
 
   return (
     <div className="w-full">
