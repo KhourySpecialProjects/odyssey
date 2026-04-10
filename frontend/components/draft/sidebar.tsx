@@ -40,6 +40,7 @@ import {
   IconPresentation,
   IconSearch,
   IconLayoutRows,
+  IconHelp,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -79,6 +80,7 @@ export function Sidebar({
   availableDroplets,
   expanded,
   setExpanded,
+  onRestartTour,
 }: {
   user: User;
   droplet: Pick<
@@ -100,6 +102,7 @@ export function Sidebar({
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   expanded: boolean;
   setExpanded: (v: boolean) => void;
+  onRestartTour: () => void;
 }) {
   const [headerHeight, setHeaderHeight] = useState(69);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -404,6 +407,7 @@ export function Sidebar({
             <div className="flex flex-row items-center justify-between pb-2">
               <button
                 type="button"
+                id="tour-back-btn"
                 data-testid="home"
                 onClick={() =>
                   droplet.status !== "draft"
@@ -412,66 +416,85 @@ export function Sidebar({
                 }
                 className="flex flex-1 items-center p-2"
               >
-                <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
+                <span id="tour-back-btn-icon" className="flex items-center">
+                  <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
+                </span>
               </button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {hasAutoFormatted ? (
-                      <button
-                        aria-disabled="true"
-                        onClick={(e) => e.preventDefault()}
-                        className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
-                      >
-                        <IconLayoutRows className="h-5 w-5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowAutoFormatConfirm(true)}
-                        disabled={isAutoFormatting}
-                        className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
-                      >
-                        {isAutoFormatting ? (
-                          <IconLoader2 className="h-5 w-5 animate-spin" />
-                        ) : (
+              <div id="tour-auto-format">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {hasAutoFormatted ? (
+                        <button
+                          aria-disabled="true"
+                          onClick={(e) => e.preventDefault()}
+                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                        >
                           <IconLayoutRows className="h-5 w-5" />
-                        )}
-                      </button>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {hasAutoFormatted
-                      ? "Slide breaks already generated"
-                      : "Generate slide breaks"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setShowAutoFormatConfirm(true)}
+                          disabled={isAutoFormatting}
+                          className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
+                        >
+                          {isAutoFormatting ? (
+                            <IconLoader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <IconLayoutRows className="h-5 w-5" />
+                          )}
+                        </button>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {hasAutoFormatted
+                        ? "Slide breaks already generated"
+                        : "Generate slide breaks"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div id="tour-present">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {hasSlideBreaks ? (
+                        <Link
+                          href={`/d/${droplet.slug}/present`}
+                          target="_blank"
+                          className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-500"
+                        >
+                          <IconPresentation className="h-5 w-5" />
+                        </Link>
+                      ) : (
+                        <button
+                          aria-disabled="true"
+                          onClick={(e) => e.preventDefault()}
+                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                        >
+                          <IconPresentation className="h-5 w-5" />
+                        </button>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {hasSlideBreaks
+                        ? "Present as slides"
+                        : "Add slide breaks to enable presentation mode"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    {hasSlideBreaks ? (
-                      <Link
-                        href={`/d/${droplet.slug}/present`}
-                        target="_blank"
-                        className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-500"
-                      >
-                        <IconPresentation className="h-5 w-5" />
-                      </Link>
-                    ) : (
-                      <button
-                        aria-disabled="true"
-                        onClick={(e) => e.preventDefault()}
-                        className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
-                      >
-                        <IconPresentation className="h-5 w-5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={onRestartTour}
+                      className="p-2 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      <IconHelp className="h-5 w-5" />
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {hasSlideBreaks
-                      ? "Present as slides"
-                      : "Add slide breaks to enable presentation mode"}
-                  </TooltipContent>
+                  <TooltipContent side="bottom">Replay tour</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <button
@@ -505,11 +528,12 @@ export function Sidebar({
             </Dialog>
 
             <div className="-mt-2 flex flex-col space-y-1.5">
-              <p className="mt-6 px-4 pb-3 text-xl leading-7 font-extrabold">
+              <p className="mt-6 px-4 pb-3 text-2xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
 
               <Link
+                id="tour-overview"
                 href={`/draft/d/${droplet.slug}`}
                 className={
                   pathname === `/draft/d/${droplet.slug}`
@@ -560,7 +584,7 @@ export function Sidebar({
               </AlertDialog>
 
               {/* Add lesson section */}
-              <div>
+              <div id="tour-add-lesson">
                 <MantineProvider>
                   <AddLesson
                     droplet={droplet}
@@ -573,27 +597,29 @@ export function Sidebar({
               </div>
 
               {/* Sortable lessons list */}
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={lessons.map((lesson) => lesson.id)}
-                  strategy={verticalListSortingStrategy}
+              <div id="tour-lessons-list">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  <ul className="space-y-1.5">
-                    {lessons.map((lesson) => (
-                      <SortableLesson
-                        key={lesson.id}
-                        lesson={lesson}
-                        droplet={droplet}
-                        pathname={pathname}
-                      />
-                    ))}
-                  </ul>
-                </SortableContext>
-              </DndContext>
+                  <SortableContext
+                    items={lessons.map((lesson) => lesson.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <ul className="space-y-1.5">
+                      {lessons.map((lesson) => (
+                        <SortableLesson
+                          key={lesson.id}
+                          lesson={lesson}
+                          droplet={droplet}
+                          pathname={pathname}
+                        />
+                      ))}
+                    </ul>
+                  </SortableContext>
+                </DndContext>
+              </div>
 
               {isProcessing && (
                 <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -603,7 +629,10 @@ export function Sidebar({
             </div>
           </div>
 
-          <div className="border-t border-slate-200 p-3 dark:border-slate-700">
+          <div
+            id="tour-bottom-actions"
+            className="border-t border-slate-200 p-3 dark:border-slate-700"
+          >
             <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={

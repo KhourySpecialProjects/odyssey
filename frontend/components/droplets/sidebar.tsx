@@ -282,7 +282,7 @@ export default function Sidebar({
             </div>
 
             <div className="-mt-2 flex flex-col space-y-1.5">
-              <p className="mt-6 px-4 pb-3 text-xl leading-7 font-extrabold">
+              <p className="mt-6 px-4 pb-3 text-2xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
 
@@ -350,7 +350,7 @@ export default function Sidebar({
                                 : "bg-slate-300 dark:bg-slate-600",
                             )}
                           />
-                          <span className="pl-3 text-base leading-snug">
+                          <span className="pl-3 text-sm leading-snug">
                             {lesson.name}
                           </span>
                           {isLocked && (

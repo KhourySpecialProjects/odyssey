@@ -264,7 +264,7 @@ export function AddLesson({
                 />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => setIsImportModalOpen(true)}>
                 Import from Markdown
               </DropdownMenuItem>
@@ -286,7 +286,7 @@ export function AddLesson({
                 />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={handleClick}>
                 New Lesson
               </DropdownMenuItem>
