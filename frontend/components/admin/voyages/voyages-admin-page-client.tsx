@@ -165,16 +165,16 @@ function VoyageTableRow({
                 <Button
                   size="sm"
                   variant="outline"
-                  aria-label="view voyage"
+                  aria-label="edit voyage"
                   className="h-8 w-8 p-0"
                   asChild
                 >
-                  <Link href={`/v/${voyage.slug}`} prefetch={false}>
+                  <Link href={`/draft/v/${voyage.slug}`} prefetch={false}>
                     <IconPencil className="h-4 w-4 text-sky-600" />
                   </Link>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>View voyage</TooltipContent>
+              <TooltipContent>Edit voyage</TooltipContent>
             </Tooltip>
 
             <Tooltip>
