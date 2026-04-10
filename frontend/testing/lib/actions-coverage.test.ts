@@ -57,7 +57,9 @@ const __fileBytes = new WeakMap<Blob, Uint8Array>();
       return (__fileBytes.get(this) ?? new Uint8Array()).buffer as ArrayBuffer;
     }
     async text(): Promise<string> {
-      return new TextDecoder().decode(__fileBytes.get(this) ?? new Uint8Array());
+      return new TextDecoder().decode(
+        __fileBytes.get(this) ?? new Uint8Array(),
+      );
     }
   }
   (globalThis as unknown as { Blob: typeof PatchedBlob }).Blob = PatchedBlob;
@@ -76,7 +78,9 @@ const __fileBytes = new WeakMap<Blob, Uint8Array>();
       return (__fileBytes.get(this) ?? new Uint8Array()).buffer as ArrayBuffer;
     }
     async text(): Promise<string> {
-      return new TextDecoder().decode(__fileBytes.get(this) ?? new Uint8Array());
+      return new TextDecoder().decode(
+        __fileBytes.get(this) ?? new Uint8Array(),
+      );
     }
   }
   (globalThis as unknown as { File: typeof PatchedFile }).File = PatchedFile;
