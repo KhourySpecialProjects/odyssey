@@ -76,7 +76,6 @@ export function Datasets({
       document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("drop", handleDrop);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasets.length]);
 
   async function handleUpload(file: File) {

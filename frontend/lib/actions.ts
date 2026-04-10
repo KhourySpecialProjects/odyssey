@@ -86,11 +86,18 @@ export async function deleteDataset(fileUrl: string) {
   try {
     // Local file deletion
     if (isLocal && fileUrl.startsWith("/uploads/")) {
-      const filePath = path.join(
-        LOCAL_UPLOADS_DIR,
-        fileUrl.replace("/uploads/", ""),
-      );
-      await unlink(filePath).catch(() => {});
+      const relativePath = fileUrl.slice("/uploads/".length);
+      const resolved = path.resolve(LOCAL_UPLOADS_DIR, relativePath);
+      // Prevent path traversal — ensure resolved path stays inside uploads dir
+      if (!resolved.startsWith(LOCAL_UPLOADS_DIR + path.sep)) {
+        return { ok: false, error: "Invalid file path." };
+      }
+      try {
+        await unlink(resolved);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== "ENOENT") throw err;
+      }
       revalidateTag(CACHE_TAGS.datasets);
       return { ok: true, error: null };
     }
