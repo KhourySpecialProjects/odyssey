@@ -13,10 +13,12 @@ import {
 } from "@/lib/requests/authorized-user";
 import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
+import { requireRole } from "@/lib/auth/require-role";
 import mockUsers from "../mocks/authorizedUsersMock";
 
 const mockFetchAPI = fetchAPI as jest.Mock;
 const mockGetRoleId = getAuthorizedUserRoleIdByTitle as jest.Mock;
+const mockRequireRole = requireRole as jest.Mock;
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -40,6 +42,12 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+// Mock requireRole so updateUserInfo tests don't need a real session.
+// Individual tests can override via mockResolvedValueOnce.
+jest.mock("../../lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
 global.fetch = jest.fn();
 
 beforeEach(() => {
@@ -48,6 +56,11 @@ beforeEach(() => {
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
   mockGetRoleId.mockResolvedValue(1);
+  // Default: authenticated as SysAdmin with id=1 so all updateUserInfo tests pass.
+  mockRequireRole.mockResolvedValue({
+    ok: true,
+    user: { id: 1, email: "admin@test.com", roles: ["System Admin"] },
+  });
 });
 
 afterEach(() => {
@@ -875,7 +888,7 @@ describe("Authorized User Tests", () => {
 
       const result = await updateUserInfo(1, { first: "John" });
 
-      expect(result.success).toBe(true);
+      expect(result.ok).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/authorized-users/1"),
         expect.objectContaining({
@@ -1005,7 +1018,9 @@ describe("Authorized User Tests", () => {
         json: async () => ({ data: { id: 1 } }),
       });
 
-      await updateUserInfo(1, { roles: ["Admin", "Content Creator"] });
+      await updateUserInfo(1, {
+        roles: ["System Admin" as any, "Content Creator" as any],
+      });
 
       const body = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(body.data.roles.set).toEqual([{ id: 2 }, { id: 3 }]);
@@ -1061,7 +1076,7 @@ describe("Authorized User Tests", () => {
 
       const result = await updateUserInfo(1, { first: "John" });
 
-      expect(result.success).toBe(false);
+      expect(result.ok).toBe(false);
       expect(result.error).toBeDefined();
     });
 

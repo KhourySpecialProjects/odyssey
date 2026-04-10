@@ -27,7 +27,8 @@
       "required": true
     },
     "fileSize": {
-      "type": "integer"
+      "type": "integer",
+      "max": 104857600
     },
     "rowCount": {
       "type": "integer"

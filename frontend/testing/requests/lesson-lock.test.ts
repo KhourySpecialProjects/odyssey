@@ -20,6 +20,19 @@ jest.mock("@/lib/requests/authorized-user", () => ({
   ),
 }));
 
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(() => Promise.resolve({ id: 42, roles: [] })),
+}));
+
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      user: { id: 42, email: "test@northeastern.edu", roles: [] },
+    }),
+  ),
+}));
+
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
@@ -28,6 +41,12 @@ describe("Lesson Lock API Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (global.fetch as jest.Mock).mockReset();
+    // Restore the default authenticated mock after clearAllMocks
+    const { requireRole } = require("@/lib/auth/require-role");
+    (requireRole as jest.Mock).mockResolvedValue({
+      ok: true,
+      user: { id: 42, email: "test@northeastern.edu", roles: [] },
+    });
   });
 
   describe("getCurrentAuthorizedUserId", () => {
@@ -52,13 +71,30 @@ describe("Lesson Lock API Functions", () => {
         json: () => Promise.resolve({ locked: true, lockedBy: 42 }),
       });
 
-      const result = await acquireLessonLock(1, 42);
+      const result = await acquireLessonLock(1);
 
       expect(result.success).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/lessons/1/lock"),
         expect.objectContaining({
           method: "POST",
+          body: JSON.stringify({ userId: 42 }),
+        }),
+      );
+    });
+
+    it("resolves userId from session (not from caller)", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      await acquireLessonLock(1);
+
+      // Wire format still sends userId to Strapi — but it must be the session user's id (42)
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
           body: JSON.stringify({ userId: 42 }),
         }),
       );
@@ -75,7 +111,7 @@ describe("Lesson Lock API Functions", () => {
           }),
       });
 
-      const result = await acquireLessonLock(1, 42);
+      const result = await acquireLessonLock(1);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Lesson is locked");
@@ -92,23 +128,49 @@ describe("Lesson Lock API Functions", () => {
         status: 500,
       });
 
-      const result = await acquireLessonLock(1, 42);
+      const result = await acquireLessonLock(1);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to acquire lock");
     });
+
+    it("returns { success: false, error: 'unauthenticated' } when not authenticated", async () => {
+      const { requireRole } = require("@/lib/auth/require-role");
+      (requireRole as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      const result = await acquireLessonLock(1);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("unauthenticated");
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
   });
 
   describe("releaseLessonLock", () => {
-    it("calls DELETE with userId query param", async () => {
+    it("calls DELETE with userId query param from session", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-      await releaseLessonLock(1, 42);
+      await releaseLessonLock(1);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/lessons/1/lock?userId=42"),
         expect.objectContaining({ method: "DELETE" }),
       );
+    });
+
+    it("does not call fetch when not authenticated", async () => {
+      const { requireRole } = require("@/lib/auth/require-role");
+      (requireRole as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      await releaseLessonLock(1);
+
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 
@@ -116,7 +178,7 @@ describe("Lesson Lock API Functions", () => {
     it("returns true on success", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-      const result = await heartbeatLessonLock(1, 42);
+      const result = await heartbeatLessonLock(1);
 
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
@@ -129,11 +191,28 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns false on failure", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Server Error",
+      });
 
-      const result = await heartbeatLessonLock(1, 42);
+      const result = await heartbeatLessonLock(1);
 
       expect(result).toBe(false);
+    });
+
+    it("returns false when not authenticated", async () => {
+      const { requireRole } = require("@/lib/auth/require-role");
+      (requireRole as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      const result = await heartbeatLessonLock(1);
+
+      expect(result).toBe(false);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 

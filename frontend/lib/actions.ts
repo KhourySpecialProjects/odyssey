@@ -22,6 +22,8 @@ import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -167,10 +169,16 @@ export async function deleteImage(fileName: string) {
   }
 }
 
-export async function setTimeZone(zone: string, userId: number) {
+export async function setTimeZone(zone: string) {
+  const auth = await requireRole([]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+  const { user } = auth;
+
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      `${STRAPI_API_URL}/api/authorized-users/${user.id}`,
       {
         method: "PUT",
         headers: {
@@ -197,6 +205,11 @@ export async function setTimeZone(zone: string, userId: number) {
 }
 
 export async function deleteReport(id: string) {
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+
   const response = await fetch(`${STRAPI_API_URL}/api/reports/${id}`, {
     method: "DELETE",
     headers: {

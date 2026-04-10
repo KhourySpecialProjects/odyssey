@@ -2,8 +2,7 @@
 
 import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
-import qs from "qs";
+import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
@@ -11,8 +10,6 @@ import { CACHE_TAGS } from "../cache-tags";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
-const NEXT_PUBLIC_STRAPI_API_TOKEN =
-  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || "";
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
@@ -109,28 +106,18 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   id: number,
   { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
-  try {
-    const query = qs.stringify({
-      sort,
-      filters: { ...filters },
-      populate,
-      fields,
-    });
+  const path = `/playlists/${id}`;
+  const urlParams = {
+    sort,
+    filters: { ...filters },
+    populate,
+    fields,
+  };
 
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id + "?" + query,
-      {
-        headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
-        next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
-      },
-    );
-
-    const data = await response.json();
-    return flattenAttributes(data.data) as T;
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch playlist by id.");
-  }
+  return await fetchAPI<T>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
+  });
 }
 
 export async function updatePlaylist(

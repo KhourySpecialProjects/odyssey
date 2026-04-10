@@ -139,7 +139,7 @@ export function AuthorizedUserBlock({
             roles: selectedRoles,
             profilePhoto: response.url,
           });
-          if (updateResult.success) {
+          if (updateResult.ok) {
             toast.success("Profile photo updated successfully");
           } else {
             toast.error("Failed to update profile photo");
@@ -177,7 +177,7 @@ export function AuthorizedUserBlock({
       profilePhoto: profilePhoto || "",
     });
 
-    if (result.success) {
+    if (result.ok) {
       setUser((prevUser) => ({
         ...prevUser,
         firstName: formData.get("firstName") as string,
@@ -305,7 +305,7 @@ export function AuthorizedUserBlock({
                               roles: selectedRoles,
                               profilePhoto: "",
                             });
-                            if (result.success) {
+                            if (result.ok) {
                               setProfilePhoto("");
                               toast.success(
                                 "Profile photo removed successfully",
