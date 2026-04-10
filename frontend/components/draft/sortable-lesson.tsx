@@ -52,22 +52,22 @@ export function SortableLesson({
     >
       <div
         className={cn(
-          "flex h-[44px] items-center rounded-[78px] transition-colors",
+          "flex min-h-[44px] items-center rounded-xl px-1 transition-colors",
           pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
-            ? "bg-[#2D7597] text-white"
-            : "hover:bg-slate-200 dark:hover:bg-slate-700",
+            ? "bg-[#287697]/10 text-[#287697] dark:bg-[#287697]/20 dark:text-[#4AABCF]"
+            : "text-[#344054] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
         )}
       >
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab pl-4 active:cursor-grabbing"
+          className="cursor-grab px-1 active:cursor-grabbing"
         >
           <IconGripVertical
             className={cn(
-              "mr-2 h-4 w-4 shrink-0",
+              "h-4 w-4 shrink-0",
               pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
-                ? "text-white"
+                ? "text-[#287697] dark:text-[#4AABCF]"
                 : "text-slate-400",
             )}
             stroke={1.8}
@@ -77,10 +77,10 @@ export function SortableLesson({
         <Link
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}
           onClick={handleLessonClick}
-          className="flex flex-grow"
+          className="flex flex-grow py-2.5"
           passHref
         >
-          <span className="pl-2 text-sm leading-none font-medium">
+          <span className="pl-1 text-sm leading-snug font-medium">
             {lesson.name}
           </span>
         </Link>
