@@ -2,13 +2,23 @@
  * Shared typed test helpers.
  *
  * Usage:
- *   import { makeDroplet, mockGlobalFetch, assertOk } from "@/lib/testing/mock-helpers";
+ *   import { makeDroplet, makeTag, mockGlobalFetch, assertOk } from "@/lib/testing/mock-helpers";
  *
  * These helpers exist so test files can use proper TypeScript-safe patterns
  * without resorting to `as jest.Mock` or `as any` casts.
  */
 
-import type { Droplet, DropletDifficulty } from "@/types";
+import { DateTime } from "luxon";
+import type {
+  Droplet,
+  DropletDifficulty,
+  DueDate,
+  Enrollment,
+  Group,
+  GroupSemester,
+  Lesson,
+  Tag,
+} from "@/types";
 import { fetchAPI } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -115,6 +125,20 @@ export function assertOk<T>(result: {
 // ---------------------------------------------------------------------------
 
 /**
+ * Creates a minimal valid Tag fixture with sensible defaults.
+ * Pass overrides to customise specific fields for the test at hand.
+ */
+export function makeTag(overrides: Partial<Tag> = {}): Tag {
+  return {
+    id: 1,
+    name: "Test Tag",
+    slug: "test-tag",
+    droplets: [],
+    ...overrides,
+  };
+}
+
+/**
  * Creates a minimal valid Droplet fixture with sensible defaults.
  * Pass overrides to customise specific fields for the test at hand.
  *
@@ -134,6 +158,127 @@ export function makeDroplet(overrides: Partial<Droplet> = {}): Droplet {
     isHidden: false,
     learningObjectives: [],
     tags: [],
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Lesson test factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a minimal valid Lesson fixture with sensible defaults.
+ */
+export function makeLesson(overrides: Partial<Lesson> = {}): Lesson {
+  return {
+    id: 1,
+    name: "Test Lesson",
+    slug: "test-lesson",
+    type: "lesson",
+    blocks: [],
+    droplets: [],
+    notes: "",
+    orderIndex: 0,
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Group test factory (minimal, for use in DueDate fixtures)
+// ---------------------------------------------------------------------------
+
+function makeGroup(overrides: Partial<Group> = {}): Group {
+  return {
+    id: 1,
+    groupName: "Test Group",
+    slug: "test-group",
+    isArchived: false,
+    semester: "SPRING" as GroupSemester,
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// DueDate test factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a minimal valid DueDate fixture with sensible defaults.
+ * The `dueDate` field is a luxon DateTime; pass an ISO string to override:
+ *   makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") })
+ */
+export function makeDueDate(overrides: Partial<DueDate> = {}): DueDate {
+  return {
+    dueDate: DateTime.fromISO("2024-01-01T00:00:00.000Z"),
+    authorized_user: {
+      id: 1,
+      email: "user@example.com",
+      roles: [],
+      isEnabled: true,
+      isPublic: false,
+      linkedin: "",
+      github: "",
+      website: "",
+      firstTime: false,
+      firstName: "Test",
+      lastName: "User",
+      bio: "",
+      friendships: [],
+      sent_requests: [],
+      received_requests: [],
+      profilePhoto: "",
+      blocked: [],
+      was_blocked: [],
+      timeZone: "America/New_York",
+      groups: [],
+    },
+    group: makeGroup(),
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Enrollment test factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a minimal valid Enrollment fixture with sensible defaults.
+ */
+export function makeEnrollment(
+  overrides: Partial<Enrollment> = {},
+): Enrollment {
+  return {
+    id: "enrollment-1",
+    authorizedUser: {
+      id: 1,
+      email: "user@example.com",
+      roles: [],
+      isEnabled: true,
+      isPublic: false,
+      linkedin: "",
+      github: "",
+      website: "",
+      firstTime: false,
+      firstName: "Test",
+      lastName: "User",
+      bio: "",
+      friendships: [],
+      sent_requests: [],
+      received_requests: [],
+      profilePhoto: "",
+      blocked: [],
+      was_blocked: [],
+      timeZone: "America/New_York",
+      groups: [],
+    },
+    droplet: makeDroplet(),
+    viewedLessons: [],
+    isComplete: false,
+    rating: 0,
+    isFirstTime: false,
+    isArchived: false,
+    notes: [],
+    completionDate: new Date(),
     ...overrides,
   };
 }

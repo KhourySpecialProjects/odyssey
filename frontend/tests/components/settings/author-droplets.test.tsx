@@ -43,6 +43,7 @@ describe("AuthorDroplets", () => {
     isHidden: false,
     focusArea: "frontend" as FocusArea,
     type: "lesson" as DropletType,
+    difficulty: "beginner" as const,
     status: "published" as DropletStatus,
     learningObjectives: [],
   };

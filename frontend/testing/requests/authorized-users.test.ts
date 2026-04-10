@@ -15,10 +15,13 @@ import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
 import { requireRole } from "@/lib/auth/require-role";
 import mockUsers from "../mocks/authorizedUsersMock";
-
-const mockFetchAPI = fetchAPI as jest.Mock;
-const mockGetRoleId = getAuthorizedUserRoleIdByTitle as jest.Mock;
-const mockRequireRole = requireRole as jest.Mock;
+import {
+  getMockedFetchAPI,
+  mockGlobalFetch,
+  makeFetchResponse,
+  assertOk,
+} from "@/lib/testing/mock-helpers";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -48,18 +51,25 @@ jest.mock("../../lib/auth/require-role", () => ({
   requireRole: jest.fn(),
 }));
 
-global.fetch = jest.fn();
+const mockedFetchAPI = getMockedFetchAPI();
+
+let mockFetch: jest.MockedFunction<typeof fetch>;
 
 beforeEach(() => {
+  mockFetch = mockGlobalFetch();
   process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
   process.env.STRAPI_ACCESS_TOKEN = "test-token";
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
-  mockGetRoleId.mockResolvedValue(1);
+  jest.mocked(getAuthorizedUserRoleIdByTitle).mockResolvedValue(1);
   // Default: authenticated as SysAdmin with id=1 so all updateUserInfo tests pass.
-  mockRequireRole.mockResolvedValue({
+  jest.mocked(requireRole).mockResolvedValue({
     ok: true,
-    user: { id: 1, email: "admin@test.com", roles: ["System Admin"] },
+    user: {
+      id: 1,
+      email: "admin@test.com",
+      roles: [AuthorizedUserRoleTitle.SysAdmin],
+    },
   });
 });
 
@@ -79,7 +89,7 @@ describe("Authorized User Tests", () => {
         email: "palmer.gi@northeastern.edu",
       };
 
-      mockFetchAPI.mockResolvedValue([mockUser]);
+      mockedFetchAPI.mockResolvedValue([mockUser]);
 
       const result = await getAuthorizedUserByEmail(testEmail);
 
@@ -98,7 +108,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom populate options", async () => {
       const testEmail = "test@northeastern.edu";
-      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockedFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         populate: { roles: { fields: ["title"] } },
@@ -114,7 +124,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom fields", async () => {
       const testEmail = "test@northeastern.edu";
-      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockedFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         fields: ["id", "email"],
@@ -130,7 +140,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom filters", async () => {
       const testEmail = "test@northeastern.edu";
-      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockedFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         filters: { isEnabled: true },
@@ -151,49 +161,55 @@ describe("Authorized User Tests", () => {
   describe("getAuthorizedUsersByEmails", () => {
     it("should return matching users for a list of emails", async () => {
       const emails = ["a@test.com", "b@test.com", "c@test.com"];
-      const mockUsers = [
+      const mockUserList = [
         { id: 1, email: "a@test.com" },
         { id: 2, email: "b@test.com" },
         { id: 3, email: "c@test.com" },
       ];
-      mockFetchAPI.mockResolvedValueOnce(mockUsers);
+      mockedFetchAPI.mockResolvedValueOnce(mockUserList);
 
       const result = await getAuthorizedUsersByEmails(emails);
 
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual(mockUserList);
       expect(fetchAPI).toHaveBeenCalledTimes(1);
     });
 
     it("should send $in filter with all provided emails", async () => {
       const emails = ["a@test.com", "b@test.com"];
-      mockFetchAPI.mockResolvedValueOnce([]);
+      mockedFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(emails);
 
-      const callArgs = mockFetchAPI.mock.calls[0];
+      const callArgs = mockedFetchAPI.mock.calls[0];
+      expect(callArgs).toBeDefined();
       expect(callArgs[0]).toBe("/authorized-users");
-      expect(callArgs[1].urlParams.filters).toEqual({
+      const callParams = callArgs![1].urlParams as Record<string, unknown>;
+      expect(callParams.filters).toEqual({
         email: { $in: emails },
       });
     });
 
     it("should only request id and email fields", async () => {
-      mockFetchAPI.mockResolvedValueOnce([]);
+      mockedFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(["a@test.com"]);
 
-      const { fields } = mockFetchAPI.mock.calls[0][1].urlParams;
-      expect(fields).toEqual(["id", "email"]);
+      const fieldsParams = mockedFetchAPI.mock.calls[0]![1].urlParams as Record<
+        string,
+        unknown
+      >;
+      expect(fieldsParams.fields).toEqual(["id", "email"]);
     });
 
     it("should use pageSize of 100", async () => {
       const emails = ["a@test.com", "b@test.com", "c@test.com"];
-      mockFetchAPI.mockResolvedValueOnce([]);
+      mockedFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(emails);
 
-      const { pagination } = mockFetchAPI.mock.calls[0][1].urlParams;
-      expect(pagination).toEqual({ pageSize: 100, page: 1 });
+      const paginationParams = mockedFetchAPI.mock.calls[0]![1]
+        .urlParams as Record<string, unknown>;
+      expect(paginationParams.pagination).toEqual({ pageSize: 100, page: 1 });
     });
 
     it("should return empty array for empty email list without calling API", async () => {
@@ -205,7 +221,9 @@ describe("Authorized User Tests", () => {
 
     it("should return partial results when only some emails match", async () => {
       const emails = ["exists@test.com", "missing@test.com"];
-      mockFetchAPI.mockResolvedValueOnce([{ id: 1, email: "exists@test.com" }]);
+      mockedFetchAPI.mockResolvedValueOnce([
+        { id: 1, email: "exists@test.com" },
+      ]);
 
       const result = await getAuthorizedUsersByEmails(emails);
 
@@ -214,7 +232,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      mockFetchAPI.mockRejectedValueOnce(new Error("API Error"));
+      mockedFetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(getAuthorizedUsersByEmails(["a@test.com"])).rejects.toThrow(
         "API Error",
@@ -230,39 +248,43 @@ describe("Authorized User Tests", () => {
         .slice(100)
         .map((email, i) => ({ id: i + 101, email }));
 
-      fetchAPI
+      mockedFetchAPI
         .mockResolvedValueOnce(chunk1Users)
         .mockResolvedValueOnce(chunk2Users);
 
       const result = await getAuthorizedUsersByEmails(emails);
 
       expect(fetchAPI).toHaveBeenCalledTimes(2);
-      expect(
-        mockFetchAPI.mock.calls[0][1].urlParams.filters.email.$in,
-      ).toHaveLength(100);
-      expect(
-        mockFetchAPI.mock.calls[1][1].urlParams.filters.email.$in,
-      ).toHaveLength(50);
+      const chunk1Params = mockedFetchAPI.mock.calls[0]![1].urlParams as Record<
+        string,
+        { email: { $in: string[] } }
+      >;
+      const chunk2Params = mockedFetchAPI.mock.calls[1]![1].urlParams as Record<
+        string,
+        { email: { $in: string[] } }
+      >;
+      expect(chunk1Params.filters.email.$in).toHaveLength(100);
+      expect(chunk2Params.filters.email.$in).toHaveLength(50);
       expect(result).toHaveLength(150);
     });
 
     it("should not chunk when emails fit in a single page", async () => {
       const emails = Array.from({ length: 50 }, (_, i) => `user${i}@test.com`);
-      mockFetchAPI.mockResolvedValueOnce(
+      mockedFetchAPI.mockResolvedValueOnce(
         emails.map((email, i) => ({ id: i + 1, email })),
       );
 
       await getAuthorizedUsersByEmails(emails);
 
       expect(fetchAPI).toHaveBeenCalledTimes(1);
-      expect(
-        mockFetchAPI.mock.calls[0][1].urlParams.filters.email.$in,
-      ).toHaveLength(50);
+      const singleChunkParams = mockedFetchAPI.mock.calls[0]![1]
+        .urlParams as Record<string, { email: { $in: string[] } }>;
+      expect(singleChunkParams.filters.email.$in).toHaveLength(50);
     });
 
     it("should handle exactly 100 emails in a single chunk", async () => {
       const emails = Array.from({ length: 100 }, (_, i) => `user${i}@test.com`);
-      mockFetchAPI.mockResolvedValueOnce(
+      mockedFetchAPI.mockResolvedValueOnce(
         emails.map((email, i) => ({ id: i + 1, email })),
       );
 
@@ -274,7 +296,7 @@ describe("Authorized User Tests", () => {
     it("should flatten results from multiple chunks", async () => {
       const emails = Array.from({ length: 250 }, (_, i) => `user${i}@test.com`);
 
-      fetchAPI
+      mockedFetchAPI
         .mockResolvedValueOnce([{ id: 1, email: "user0@test.com" }])
         .mockResolvedValueOnce([{ id: 101, email: "user100@test.com" }])
         .mockResolvedValueOnce([{ id: 201, email: "user200@test.com" }]);
@@ -292,7 +314,7 @@ describe("Authorized User Tests", () => {
     it("should reject if any chunk fails", async () => {
       const emails = Array.from({ length: 150 }, (_, i) => `user${i}@test.com`);
 
-      fetchAPI
+      mockedFetchAPI
         .mockResolvedValueOnce([{ id: 1, email: "user0@test.com" }])
         .mockRejectedValueOnce(new Error("Chunk 2 failed"));
 
@@ -323,14 +345,11 @@ describe("Authorized User Tests", () => {
         },
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchAuthorizedUsers();
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users"),
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -354,7 +373,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchAuthorizedUsers()).rejects.toThrow(
         "Failed to fetch authorized users data.",
@@ -363,7 +382,7 @@ describe("Authorized User Tests", () => {
 
     it("should log error before throwing", async () => {
       const consoleError = jest.spyOn(console, "error");
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchAuthorizedUsers()).rejects.toThrow();
       expect(consoleError).toHaveBeenCalledWith(
@@ -387,7 +406,7 @@ describe("Authorized User Tests", () => {
         },
       };
 
-      mockFetchAPI.mockResolvedValue(mockResponse);
+      mockedFetchAPI.mockResolvedValue(mockResponse);
 
       const result = await fetchAuthorizedUsersMetadata();
 
@@ -399,7 +418,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should use custom pagination", async () => {
-      mockFetchAPI.mockResolvedValue({ data: [], meta: { pagination: {} } });
+      mockedFetchAPI.mockResolvedValue({ data: [], meta: { pagination: {} } });
 
       await fetchAuthorizedUsersMetadata({
         pagination: { pageSize: 50, page: 2 },
@@ -415,7 +434,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle errors", async () => {
-      mockFetchAPI.mockRejectedValue(new Error("Fetch failed"));
+      mockedFetchAPI.mockRejectedValue(new Error("Fetch failed"));
 
       await expect(fetchAuthorizedUsersMetadata()).rejects.toThrow(
         "Error getting authorized users metadata",
@@ -424,7 +443,7 @@ describe("Authorized User Tests", () => {
 
     it("should log error before rejecting", async () => {
       const consoleError = jest.spyOn(console, "error");
-      mockFetchAPI.mockRejectedValue(new Error("Fetch failed"));
+      mockedFetchAPI.mockRejectedValue(new Error("Fetch failed"));
 
       await expect(fetchAuthorizedUsersMetadata()).rejects.toThrow();
       expect(consoleError).toHaveBeenCalledWith(
@@ -452,10 +471,7 @@ describe("Authorized User Tests", () => {
         ],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchIsAuthorizedUser("palmer.gi@northeastern.edu");
       expect(result).toBe(true);
@@ -474,10 +490,7 @@ describe("Authorized User Tests", () => {
         ],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchIsAuthorizedUser("disabled@northeastern.edu");
       expect(result).toBe(false);
@@ -488,10 +501,7 @@ describe("Authorized User Tests", () => {
         data: [],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchIsAuthorizedUser(
         "unauthorized@northeastern.edu",
@@ -500,7 +510,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchIsAuthorizedUser("test@test.com")).rejects.toThrow(
         "Failed to fetch authorized users data.",
@@ -527,14 +537,11 @@ describe("Authorized User Tests", () => {
         },
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchContentCreators();
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users"),
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -559,19 +566,16 @@ describe("Authorized User Tests", () => {
         data: [],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       await fetchContentCreators();
 
-      const callUrl = global.fetch.mock.calls[0][0];
+      const callUrl = mockFetch.mock.calls[0][0];
       expect(callUrl).toMatch(/Content%20Creator/);
     });
 
     it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchContentCreators()).rejects.toThrow(
         "Failed to fetch content creators.",
@@ -611,10 +615,7 @@ describe("Authorized User Tests", () => {
         ],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchWebsiteCreators();
 
@@ -643,10 +644,7 @@ describe("Authorized User Tests", () => {
         ],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse(mockStrapiResponse));
 
       const result = await fetchWebsiteCreators();
 
@@ -654,7 +652,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchWebsiteCreators()).rejects.toThrow(
         "Failed to fetch website creators.",
@@ -665,7 +663,7 @@ describe("Authorized User Tests", () => {
   describe("createAuthorizedUser", () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      mockGetRoleId.mockResolvedValue(1);
+      jest.mocked(getAuthorizedUserRoleIdByTitle).mockResolvedValue(1);
     });
 
     it("should create user with valid email", async () => {
@@ -673,10 +671,7 @@ describe("Authorized User Tests", () => {
       formData.append("email", "newuser@northeastern.edu");
       formData.append("isEnabled", "true");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       const result = await createAuthorizedUser(formData);
 
@@ -732,10 +727,9 @@ describe("Authorized User Tests", () => {
       formData.append("email", "test@northeastern.edu");
       formData.append("isEnabled", "true");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: { message: "Duplicate email" } }),
-      });
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ error: { message: "Duplicate email" } }, 400),
+      );
 
       const result = await createAuthorizedUser(formData);
 
@@ -748,10 +742,9 @@ describe("Authorized User Tests", () => {
       formData.append("email", "test@northeastern.edu");
       formData.append("isEnabled", "true");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ error: { message: "Validation error" } }),
-      });
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ error: { message: "Validation error" } }),
+      );
 
       const result = await createAuthorizedUser(formData);
 
@@ -764,7 +757,7 @@ describe("Authorized User Tests", () => {
       formData.append("email", "test@northeastern.edu");
       formData.append("isEnabled", "true");
 
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await createAuthorizedUser(formData);
 
@@ -778,10 +771,7 @@ describe("Authorized User Tests", () => {
       formData.append("email", "test@northeastern.edu");
       formData.append("isEnabled", "true");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await createAuthorizedUser(formData);
 
@@ -792,67 +782,60 @@ describe("Authorized User Tests", () => {
   describe("createBatchAuthorizedUsers", () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      mockGetRoleId.mockResolvedValue(1);
+      jest.mocked(getAuthorizedUserRoleIdByTitle).mockResolvedValue(1);
     });
 
     it("should create multiple users successfully", async () => {
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
 
       const emails = ["user1@test.com", "user2@test.com", "user3@test.com"];
       const result = await createBatchAuthorizedUsers(emails);
 
       expect(result.ok).toBe(true);
+      assertOk(result);
       expect(result.data.successful).toHaveLength(3);
       expect(result.data.failed).toHaveLength(0);
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
     it("should handle partial failures", async () => {
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ data: { id: 1 } }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          json: async () => ({ error: { message: "Duplicate email" } }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ data: { id: 3 } }),
-        });
+      mockFetch
+        .mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }))
+        .mockResolvedValueOnce(
+          makeFetchResponse({ error: { message: "Duplicate email" } }, 400),
+        )
+        .mockResolvedValueOnce(makeFetchResponse({ data: { id: 3 } }));
 
       const emails = ["user1@test.com", "duplicate@test.com", "user3@test.com"];
       const result = await createBatchAuthorizedUsers(emails);
 
       expect(result.ok).toBe(true);
+      assertOk(result);
       expect(result.data.successful).toHaveLength(2);
       expect(result.data.failed).toHaveLength(1);
       expect(result.data.failed[0].email).toBe("duplicate@test.com");
     });
 
     it("should handle response with error property", async () => {
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ error: { message: "Validation failed" } }),
-      });
+      mockFetch.mockResolvedValue(
+        makeFetchResponse({ error: { message: "Validation failed" } }),
+      );
 
       const emails = ["user1@test.com"];
       const result = await createBatchAuthorizedUsers(emails);
 
+      assertOk(result);
       expect(result.data.failed).toHaveLength(1);
       expect(result.data.failed[0].reason).toBe("Validation failed");
     });
 
     it("should handle network errors in batch", async () => {
-      global.fetch.mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const emails = ["user1@test.com", "user2@test.com"];
       const result = await createBatchAuthorizedUsers(emails);
 
+      assertOk(result);
       expect(result.data.failed).toHaveLength(2);
       expect(result.data.failed[0].reason).toBe("Network error");
     });
@@ -861,12 +844,15 @@ describe("Authorized User Tests", () => {
       const result = await createBatchAuthorizedUsers([]);
 
       expect(result.ok).toBe(true);
+      assertOk(result);
       expect(result.data.successful).toHaveLength(0);
       expect(result.data.failed).toHaveLength(0);
     });
 
     it("should handle role fetch error", async () => {
-      mockGetRoleId.mockRejectedValue(new Error("Role not found"));
+      jest
+        .mocked(getAuthorizedUserRoleIdByTitle)
+        .mockRejectedValue(new Error("Role not found"));
 
       const result = await createBatchAuthorizedUsers(["test@test.com"]);
 
@@ -881,15 +867,12 @@ describe("Authorized User Tests", () => {
     });
 
     it("should update firstName", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       const result = await updateUserInfo(1, { first: "John" });
 
       expect(result.ok).toBe(true);
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/authorized-users/1"),
         expect.objectContaining({
           method: "PUT",
@@ -899,150 +882,118 @@ describe("Authorized User Tests", () => {
     });
 
     it("should update lastName", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { last: "Doe" });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.lastName).toBe("Doe");
     });
 
     it("should update bio", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { bio: "New bio" });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.bio).toBe("New bio");
     });
 
     it("should update isEnabled", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { isEnabled: false });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.isEnabled).toBe(false);
     });
 
     it("should update isPublic", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { isPublic: true });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.isPublic).toBe(true);
     });
 
     it("should update firstTime", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { firstTime: false });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.firstTime).toBe(false);
     });
 
     it("should update linkedin", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { linkedin: "https://linkedin.com/in/user" });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.linkedin).toBe("https://linkedin.com/in/user");
     });
 
     it("should update github", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { github: "https://github.com/user" });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.github).toBe("https://github.com/user");
     });
 
     it("should update profilePhoto via photo parameter", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { photo: "https://example.com/photo.jpg" });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.profilePhoto).toBe("https://example.com/photo.jpg");
     });
 
     it("should update profilePhoto directly", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, {
         profilePhoto: "https://example.com/avatar.jpg",
       });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.profilePhoto).toBe("https://example.com/avatar.jpg");
     });
 
     it("should update roles", async () => {
-      getAuthorizedUserRoleIdByTitle
+      jest
+        .mocked(getAuthorizedUserRoleIdByTitle)
         .mockResolvedValueOnce(2)
         .mockResolvedValueOnce(3);
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, {
-        roles: ["System Admin" as any, "Content Creator" as any],
+        roles: [
+          AuthorizedUserRoleTitle.SysAdmin,
+          AuthorizedUserRoleTitle.ContentCreator,
+        ],
       });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.roles.set).toEqual([{ id: 2 }, { id: 3 }]);
     });
 
     it("should not include roles when roles array is empty", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { roles: [] });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.roles).toBeUndefined();
     });
 
     it("should handle multiple fields at once", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, {
         first: "John",
@@ -1051,7 +1002,7 @@ describe("Authorized User Tests", () => {
         isEnabled: true,
       });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.firstName).toBe("John");
       expect(body.data.lastName).toBe("Doe");
       expect(body.data.bio).toBe("Developer");
@@ -1059,20 +1010,17 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle null values", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       await updateUserInfo(1, { bio: null, linkedin: null });
 
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.bio).toBe(null);
       expect(body.data.linkedin).toBe(null);
     });
 
     it("should handle errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await updateUserInfo(1, { first: "John" });
 
@@ -1082,7 +1030,7 @@ describe("Authorized User Tests", () => {
 
     it("should log error on failure", async () => {
       const consoleError = jest.spyOn(console, "error");
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await updateUserInfo(1, { first: "John" });
 
@@ -1102,14 +1050,11 @@ describe("Authorized User Tests", () => {
       const formData = new FormData();
       formData.append("id", "1");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 1 } }),
-      });
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
       const result = await deleteAuthorizedUser(formData);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/authorized-users/1"),
         expect.objectContaining({
           method: "DELETE",
@@ -1122,41 +1067,41 @@ describe("Authorized User Tests", () => {
       const formData = new FormData();
       formData.append("id", "1");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: { message: "User not found" } }),
-      });
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ error: { message: "User not found" } }, 400),
+      );
 
       const result = await deleteAuthorizedUser(formData);
 
-      expect(result.ok).toBe(false);
-      expect(result.error).toBe("User not found");
+      expect(result).toBeDefined();
+      expect(result!.ok).toBe(false);
+      expect(result!.error).toBe("User not found");
     });
 
     it("should handle error when response.ok but has error property", async () => {
       const formData = new FormData();
       formData.append("id", "1");
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ error: { message: "Deletion failed" } }),
-      });
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ error: { message: "Deletion failed" } }),
+      );
 
       const result = await deleteAuthorizedUser(formData);
 
-      expect(result.ok).toBe(false);
-      expect(result.error).toBe("Deletion failed");
+      expect(result).toBeDefined();
+      expect(result!.ok).toBe(false);
+      expect(result!.error).toBe("Deletion failed");
     });
 
     it("should handle network errors", async () => {
       const formData = new FormData();
       formData.append("id", "1");
 
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await deleteAuthorizedUser(formData);
 
-      expect(result.error).toBe(
+      expect(result!.error).toBe(
         "Database Error: Failed to Delete Authorized User.",
       );
     });
@@ -1166,7 +1111,7 @@ describe("Authorized User Tests", () => {
       const formData = new FormData();
       formData.append("id", "1");
 
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await deleteAuthorizedUser(formData);
 

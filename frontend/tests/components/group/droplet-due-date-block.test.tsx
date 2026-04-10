@@ -1,13 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DropletDueDateBlock } from "@/components/group/droplet-due-date-block";
 import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
-import {
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  GroupSemester,
-  Tag,
-} from "@/types";
+import { GroupSemester } from "@/types";
+import { DateTime } from "luxon";
+import { makeDueDate, makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/groups", () => ({
   assignDropletDueDate: jest.fn().mockResolvedValue({ success: true }),
@@ -20,6 +16,8 @@ jest.mock("next/link", () => {
   };
 });
 
+const mockedGetGroupDueDate = jest.mocked(getGroupDueDate);
+
 describe("DropletDueDateBlock", () => {
   const mockGroup = {
     id: 1,
@@ -29,23 +27,23 @@ describe("DropletDueDateBlock", () => {
     semester: "SPRING" as GroupSemester,
   };
 
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
-    focusArea: "personal" as FocusArea,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    focusArea: "personal",
+    type: "knowledge",
+    tags: [makeTag({ id: 1, name: "React" })],
     learningObjectives: [],
-    status: "published" as DropletStatus,
-  };
+    status: "published",
+  });
 
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getGroupDueDate as jest.Mock).mockResolvedValue({ dueDate: null });
+    mockedGetGroupDueDate.mockResolvedValue({ success: false, error: null });
     // Spy on console.error but don't suppress it by default
     consoleErrorSpy = jest.spyOn(console, "error");
   });
@@ -149,9 +147,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("sets due date when API returns a valid date", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -166,7 +164,7 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("handles null due date from API", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({ dueDate: null });
+      mockedGetGroupDueDate.mockResolvedValue({ success: false, error: null });
 
       render(
         <DropletDueDateBlock
@@ -181,7 +179,7 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("handles API response without dueDate property", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({});
+      mockedGetGroupDueDate.mockResolvedValue({ success: false, error: null });
 
       render(
         <DropletDueDateBlock
@@ -274,9 +272,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("save button is enabled when due date exists", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -292,9 +290,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("calls assignDropletDueDate when save button is clicked", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -314,9 +312,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("displays 'Saved!' message after save button is clicked", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -335,9 +333,9 @@ describe("DropletDueDateBlock", () => {
 
     it("passes correct parameters to assignDropletDueDate", async () => {
       const testDate = "2024-03-20T15:00:00.000Z";
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: testDate,
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO(testDate) }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -375,9 +373,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("delete button is enabled when due date exists", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -393,9 +391,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("opens confirmation dialog when delete button is clicked", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -417,9 +415,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("renders confirmation dialog with correct buttons", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -440,9 +438,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("closes dialog when 'No, take me back' is clicked", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -467,9 +465,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("calls assignDropletDueDate with null when confirmed", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -496,9 +494,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("displays 'Removed!' message after deletion is confirmed", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -519,9 +517,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("closes dialog after removal is confirmed", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -546,9 +544,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("resets dueDate state to null after removal", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -611,9 +609,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("maintains save state after clicking save", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -634,9 +632,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("maintains remove state after removing date", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -686,9 +684,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("dialog has proper heading structure", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -725,9 +723,9 @@ describe("DropletDueDateBlock", () => {
     it("handles API error when saving due date", async () => {
       consoleErrorSpy.mockImplementation(() => {});
 
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -748,9 +746,9 @@ describe("DropletDueDateBlock", () => {
     it("handles API error when removing due date", async () => {
       consoleErrorSpy.mockImplementation(() => {});
 
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -772,9 +770,9 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("handles rapid save button clicks", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue({
-        dueDate: "2024-03-20T15:00:00.000Z",
-      });
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
 
       render(
         <DropletDueDateBlock
@@ -816,7 +814,7 @@ describe("DropletDueDateBlock", () => {
     });
 
     it("handles empty response from getGroupDueDate", async () => {
-      (getGroupDueDate as jest.Mock).mockResolvedValue(null);
+      mockedGetGroupDueDate.mockResolvedValue({ success: false, error: null });
 
       render(
         <DropletDueDateBlock

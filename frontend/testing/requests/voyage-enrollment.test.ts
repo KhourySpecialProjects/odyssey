@@ -12,6 +12,7 @@ import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
+import { requireRole } from "@/lib/auth/require-role";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -30,8 +31,26 @@ jest.mock("@/lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
 const mockUser = { email: "student@example.com" };
 const mockAuthorizedUser = { id: 42, email: "student@example.com" };
+
+// Helper: set up requireRole to return an authenticated student, and
+// fetchAPI to return a published voyage status check. Used by enrollInVoyage
+// tests that exercise the happy path or fetch-failure path.
+function mockEnrollStudentAuth() {
+  (requireRole as jest.Mock).mockResolvedValue({
+    ok: true,
+    user: { id: 42, email: "student@example.com", roles: [] },
+  });
+}
+
+function mockPublishedVoyageStatus() {
+  (fetchAPI as jest.Mock).mockResolvedValueOnce({ status: "published" });
+}
 
 describe("getVoyageEnrollment", () => {
   beforeEach(() => {
@@ -130,10 +149,11 @@ describe("enrollInVoyage", () => {
   });
 
   it("creates a new enrollment when none exists", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    mockEnrollStudentAuth();
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    mockPublishedVoyageStatus();
     // getVoyageEnrollment returns null (not enrolled)
-    (fetchAPI as jest.Mock).mockResolvedValue([]);
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
 
     const createdEnrollment = {
       id: 5,
@@ -171,15 +191,16 @@ describe("enrollInVoyage", () => {
   });
 
   it("returns existing enrollment when already enrolled (idempotent)", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    mockEnrollStudentAuth();
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    mockPublishedVoyageStatus();
     const existingEnrollment = {
       id: 5,
       enrolledAt: "2026-01-01T00:00:00.000Z",
       completionPercentage: 25,
     };
     // getVoyageEnrollment returns existing
-    (fetchAPI as jest.Mock).mockResolvedValue([existingEnrollment]);
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([existingEnrollment]);
 
     const result = await enrollInVoyage(10);
 
@@ -192,21 +213,25 @@ describe("enrollInVoyage", () => {
   });
 
   it("returns error when user is not authenticated", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(null);
+    (requireRole as jest.Mock).mockResolvedValue({
+      ok: false,
+      error: "unauthenticated",
+    });
 
     const result = await enrollInVoyage(10);
 
     expect(result).toEqual({
       ok: false,
-      error: "User not authenticated",
+      error: "unauthenticated",
       data: null,
     });
   });
 
   it("returns error when fetch fails", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    mockEnrollStudentAuth();
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    (fetchAPI as jest.Mock).mockResolvedValue([]);
+    mockPublishedVoyageStatus();
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ error: { message: "Server error" } }),

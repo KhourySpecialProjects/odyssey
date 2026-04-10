@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { EnrolledDropletsGridClient } from "@/components/dashboard/enrolled-droplets-grid-client";
 import {
+  AuthorizedUser,
   DropletStatus,
   DropletType,
   FocusArea,
@@ -10,32 +11,66 @@ import {
 } from "@/types";
 import { SearchProvider } from "@/contexts/SearchContext";
 import React from "react";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
+import { DateTime } from "luxon";
 
 jest.mock("@/components/droplets/droplet-tile", () => ({
-  DropletTile: ({ droplet }: { droplet: any }) => (
+  DropletTile: ({ droplet }: { droplet: { id: number; name: string } }) => (
     <div data-testid={`droplet-${droplet.id}`}>{droplet.name}</div>
   ),
 }));
 
 // Create a wrapper component to provide SearchContext
-const renderWithSearch = (ui: React.ReactElement, searchValue = "") => {
+const renderWithSearch = (ui: React.ReactElement) => {
   return render(<SearchProvider>{ui}</SearchProvider>);
 };
 
+// Minimal valid AuthorizedUser fixture
+function makeAuthorizedUser(
+  overrides: Partial<AuthorizedUser> = {},
+): AuthorizedUser {
+  return {
+    id: 1,
+    email: "test@example.com",
+    roles: [],
+    isEnabled: true,
+    isPublic: false,
+    linkedin: "",
+    github: "",
+    website: "",
+    firstTime: false,
+    firstName: "Test",
+    lastName: "User",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York",
+    groups: [],
+    ...overrides,
+  };
+}
+
 describe("EnrolledDropletsGridClient", () => {
-  const mockDroplets = Array.from({ length: 11 }, (_, i) => ({
-    id: i + 1,
-    name: `Droplet ${i + 1}`,
-    slug: `droplet-${i + 1}`,
-    completionPercentage: i * 10,
-    lessons: [],
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
-    learningObjectives: [] as LearningObjective[],
-    status: "published" as DropletStatus,
-    focusArea: "personal" as FocusArea,
-    isHidden: false,
-  }));
+  const mockDroplets = Array.from({ length: 11 }, (_, i) =>
+    Object.assign(
+      makeDroplet({
+        id: i + 1,
+        name: `Droplet ${i + 1}`,
+        slug: `droplet-${i + 1}`,
+        type: "knowledge" as DropletType,
+        tags: [{ id: 1, name: "React", slug: "react", droplets: [] }] as Tag[],
+        learningObjectives: [] as LearningObjective[],
+        status: "published" as DropletStatus,
+        focusArea: "personal" as FocusArea,
+        isHidden: false,
+      }),
+      { completionPercentage: i * 10 },
+    ),
+  );
 
   const mockCompletedLessonIds = [1, 2, 3];
   const mockRatingsMap = new Map([
@@ -171,24 +206,18 @@ describe("EnrolledDropletsGridClient", () => {
 
   describe("Sorting", () => {
     const sortableDroplets = [
-      {
-        ...mockDroplets[0],
-        id: 1,
-        name: "Zebra Droplet",
-        completionPercentage: 30,
-      },
-      {
-        ...mockDroplets[1],
-        id: 2,
-        name: "Apple Droplet",
-        completionPercentage: 70,
-      },
-      {
-        ...mockDroplets[2],
-        id: 3,
-        name: "Mango Droplet",
-        completionPercentage: 50,
-      },
+      Object.assign(
+        makeDroplet({ id: 1, name: "Zebra Droplet", slug: "droplet-1" }),
+        { completionPercentage: 30 },
+      ),
+      Object.assign(
+        makeDroplet({ id: 2, name: "Apple Droplet", slug: "droplet-2" }),
+        { completionPercentage: 70 },
+      ),
+      Object.assign(
+        makeDroplet({ id: 3, name: "Mango Droplet", slug: "droplet-3" }),
+        { completionPercentage: 50 },
+      ),
     ];
 
     it("sorts droplets by name in ascending order", () => {
@@ -325,37 +354,45 @@ describe("EnrolledDropletsGridClient", () => {
 
   describe("Due Date Sorting", () => {
     const dueDateDroplets = [
-      {
-        ...mockDroplets[0],
-        id: 1,
-        name: "Incomplete with Due Date",
-        completionPercentage: 50,
-      },
-      {
-        ...mockDroplets[1],
-        id: 2,
-        name: "Complete with Due Date",
-        completionPercentage: 100,
-      },
-      {
-        ...mockDroplets[2],
-        id: 3,
-        name: "Incomplete without Due Date",
-        completionPercentage: 30,
-      },
+      Object.assign(
+        makeDroplet({
+          id: 1,
+          name: "Incomplete with Due Date",
+          slug: "droplet-1",
+        }),
+        { completionPercentage: 50 },
+      ),
+      Object.assign(
+        makeDroplet({
+          id: 2,
+          name: "Complete with Due Date",
+          slug: "droplet-2",
+        }),
+        { completionPercentage: 100 },
+      ),
+      Object.assign(
+        makeDroplet({
+          id: 3,
+          name: "Incomplete without Due Date",
+          slug: "droplet-3",
+        }),
+        { completionPercentage: 30 },
+      ),
     ];
+
+    const mockAuthorizedUser = makeAuthorizedUser({ id: 1 });
 
     const dueDates = [
       {
         droplet: dueDateDroplets[0],
-        dueDate: "2024-12-31",
-        authorized_user: 1,
+        dueDate: DateTime.fromISO("2024-12-31"),
+        authorized_user: mockAuthorizedUser,
         group: mockGroup,
       },
       {
         droplet: dueDateDroplets[1],
-        dueDate: "2024-11-30",
-        authorized_user: 1,
+        dueDate: DateTime.fromISO("2024-11-30"),
+        authorized_user: mockAuthorizedUser,
         group: mockGroup,
       },
     ];
@@ -390,8 +427,8 @@ describe("EnrolledDropletsGridClient", () => {
           dueDates={[
             {
               droplet: mockDroplets[0],
-              dueDate: "2023-12-31",
-              authorized_user: 32,
+              dueDate: DateTime.fromISO("2023-12-31"),
+              authorized_user: makeAuthorizedUser({ id: 32 }),
               group: mockGroup,
             },
           ]}
@@ -419,30 +456,41 @@ describe("EnrolledDropletsGridClient", () => {
 
   describe("Filtering", () => {
     const filterableDroplets = [
-      {
-        ...mockDroplets[0],
-        id: 1,
-        type: "knowledge" as DropletType,
-        focusArea: "technical" as FocusArea,
-        tags: [
-          { id: 1, name: "React" },
-          { id: 2, name: "JavaScript" },
-        ] as Tag[],
-      },
-      {
-        ...mockDroplets[1],
-        id: 2,
-        type: "skill" as DropletType,
-        focusArea: "personal" as FocusArea,
-        tags: [{ id: 3, name: "CSS" }] as Tag[],
-      },
-      {
-        ...mockDroplets[2],
-        id: 3,
-        type: "knowledge" as DropletType,
-        focusArea: "technical" as FocusArea,
-        tags: [{ id: 4, name: "TypeScript" }] as Tag[],
-      },
+      Object.assign(
+        makeDroplet({
+          id: 1,
+          slug: "droplet-1",
+          type: "knowledge" as DropletType,
+          focusArea: "technical" as FocusArea,
+          tags: [
+            { id: 1, name: "React", slug: "react", droplets: [] },
+            { id: 2, name: "JavaScript", slug: "javascript", droplets: [] },
+          ] as Tag[],
+        }),
+        { completionPercentage: 0 },
+      ),
+      Object.assign(
+        makeDroplet({
+          id: 2,
+          slug: "droplet-2",
+          type: "skill" as DropletType,
+          focusArea: "personal" as FocusArea,
+          tags: [{ id: 3, name: "CSS", slug: "css", droplets: [] }] as Tag[],
+        }),
+        { completionPercentage: 0 },
+      ),
+      Object.assign(
+        makeDroplet({
+          id: 3,
+          slug: "droplet-3",
+          type: "knowledge" as DropletType,
+          focusArea: "technical" as FocusArea,
+          tags: [
+            { id: 4, name: "TypeScript", slug: "typescript", droplets: [] },
+          ] as Tag[],
+        }),
+        { completionPercentage: 0 },
+      ),
     ];
 
     it("renders droplets without type filter", () => {
@@ -517,7 +565,9 @@ describe("EnrolledDropletsGridClient", () => {
 
     it("handles droplets with 100% completion", () => {
       const completeDroplets = [
-        { ...mockDroplets[0], completionPercentage: 100 },
+        Object.assign(makeDroplet({ id: 1, slug: "droplet-1" }), {
+          completionPercentage: 100,
+        }),
       ];
 
       renderWithSearch(
@@ -534,7 +584,9 @@ describe("EnrolledDropletsGridClient", () => {
 
     it("handles droplets with 0% completion", () => {
       const incompleteDroplets = [
-        { ...mockDroplets[0], completionPercentage: 0 },
+        Object.assign(makeDroplet({ id: 1, slug: "droplet-1" }), {
+          completionPercentage: 0,
+        }),
       ];
 
       renderWithSearch(

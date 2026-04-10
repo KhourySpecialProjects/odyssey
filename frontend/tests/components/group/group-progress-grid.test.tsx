@@ -1,11 +1,20 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
-import { DropletStatus, DropletType, FocusArea, GroupSemester } from "@/types";
+import { GroupSemester } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  makeDroplet,
+  makeEnrollment,
+  makeLesson,
+} from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
 }));
+
+const mockedGetEnrollmentsByAuthorizedUser = jest.mocked(
+  getEnrollmentsByAuthorizedUser,
+);
 
 describe("GroupProgressGrid", () => {
   const mockGroup = {
@@ -15,34 +24,26 @@ describe("GroupProgressGrid", () => {
     isArchived: false,
     semester: "SPRING" as GroupSemester,
     droplets: [
-      {
+      makeDroplet({
         id: 1,
         name: "Test Droplet",
         isHidden: false,
-        lessons: [],
         slug: "test-droplet",
-        type: "DROPLET" as DropletType,
-        focusArea: "TEST" as FocusArea,
+        type: "knowledge",
+        focusArea: "personal",
         learningObjectives: [],
-        isArchived: false,
-        status: "ACTIVE" as DropletStatus,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
+        status: "published",
+      }),
+      makeDroplet({
         id: 2,
         name: "Test Droplet 2",
         isHidden: false,
-        lessons: [],
         slug: "test-droplet-2",
-        type: "DROPLET" as DropletType,
-        focusArea: "TEST" as FocusArea,
+        type: "knowledge",
+        focusArea: "personal",
         learningObjectives: [],
-        isArchived: false,
-        status: "ACTIVE" as DropletStatus,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+        status: "published",
+      }),
     ],
   };
 
@@ -66,11 +67,11 @@ describe("GroupProgressGrid", () => {
   });
 
   beforeEach(() => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
-      {
-        droplet: { id: 1, lessons: [{ id: 1 }] },
-        viewedLessons: [{ id: 1 }],
-      },
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      makeEnrollment({
+        droplet: makeDroplet({ id: 1, lessons: [makeLesson({ id: 1 })] }),
+        viewedLessons: [makeLesson({ id: 1 })],
+      }),
     ]);
   });
 
@@ -97,17 +98,18 @@ describe("GroupProgressGrid", () => {
   });
 
   const mockEnrollments = [
-    {
-      droplet: { id: 1, lessons: [{ id: 1 }, { id: 2 }] },
-      viewedLessons: [{ id: 1 }],
-    },
+    makeEnrollment({
+      droplet: makeDroplet({
+        id: 1,
+        lessons: [makeLesson({ id: 1 }), makeLesson({ id: 2 })],
+      }),
+      viewedLessons: [makeLesson({ id: 1 })],
+    }),
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
-      mockEnrollments,
-    );
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue(mockEnrollments);
   });
 
   it("should handle pagination correctly", () => {
