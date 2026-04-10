@@ -31,11 +31,12 @@ async function findLessonWithLock(id: number): Promise<LessonWithLock | null> {
 export default {
   async acquireLock(ctx) {
     const { id } = ctx.params;
-    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
-    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
-    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
-    // ctx.state.user is not the end-user. The trust boundary is enforced in
-    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
+    // NOTE: userId comes from the request body because Strapi receives
+    // a service-role token, not the end-user JWT — `ctx.state.user` is
+    // the service account, not the real user. The trust boundary is
+    // enforced in the Next.js Server Action layer, which resolves the
+    // userId from the authenticated session before calling this route
+    // (see frontend/lib/requests/lesson-lock.ts).
     const { userId } = ctx.request.body ?? {};
 
     if (!userId) {
@@ -105,11 +106,12 @@ export default {
 
   async releaseLock(ctx) {
     const { id } = ctx.params;
-    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
-    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
-    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
-    // ctx.state.user is not the end-user. The trust boundary is enforced in
-    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
+    // NOTE: userId comes from the request body because Strapi receives
+    // a service-role token, not the end-user JWT — `ctx.state.user` is
+    // the service account, not the real user. The trust boundary is
+    // enforced in the Next.js Server Action layer, which resolves the
+    // userId from the authenticated session before calling this route
+    // (see frontend/lib/requests/lesson-lock.ts).
     const userId = Number(ctx.query.userId);
 
     if (!userId) {
@@ -139,11 +141,12 @@ export default {
 
   async heartbeat(ctx) {
     const { id } = ctx.params;
-    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
-    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
-    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
-    // ctx.state.user is not the end-user. The trust boundary is enforced in
-    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
+    // NOTE: userId comes from the request body because Strapi receives
+    // a service-role token, not the end-user JWT — `ctx.state.user` is
+    // the service account, not the real user. The trust boundary is
+    // enforced in the Next.js Server Action layer, which resolves the
+    // userId from the authenticated session before calling this route
+    // (see frontend/lib/requests/lesson-lock.ts).
     const { userId } = ctx.request.body ?? {};
 
     if (!userId) {

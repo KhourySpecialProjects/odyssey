@@ -278,7 +278,7 @@ export async function createVoyageWithNodes(data: {
   const validated = parseResult.data;
 
   try {
-    // Phase 1: create the voyage record
+    // Step 1: create the voyage record
     const slug = generateSlug(validated.name);
     const voyageBody: Record<string, unknown> = {
       name: validated.name,
@@ -314,7 +314,7 @@ export async function createVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: create voyage nodes
+    // Step 2: create voyage nodes
     const nodeError = await createVoyageNodes(voyage.id, validated.nodes);
     if (nodeError) {
       // Best-effort cleanup of the orphaned voyage
@@ -416,13 +416,17 @@ export async function updateVoyageWithNodes(data: {
   isSequential?: boolean;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
   try {
     const slug = generateSlug(data.name);
 
-    // Phase 1: PUT the voyage record
+    // Step 1: PUT the voyage record
     const voyageResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${data.id}`,
       {
@@ -453,7 +457,7 @@ export async function updateVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: Delete all existing nodes for this voyage (paginated, with error checking)
+    // Step 2: Delete all existing nodes for this voyage (paginated, with error checking)
     const allNodeIds: number[] = [];
     let page = 1;
     for (;;) {
@@ -490,7 +494,7 @@ export async function updateVoyageWithNodes(data: {
       }),
     );
 
-    // Phase 3: Re-create nodes (main path first, then branches)
+    // Step 3: Re-create nodes (main path first, then branches)
     const nodeError = await createVoyageNodes(data.id, data.nodes);
     if (nodeError) return { ok: false, error: nodeError, data: null };
 

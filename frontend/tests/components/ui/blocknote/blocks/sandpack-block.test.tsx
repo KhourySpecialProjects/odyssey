@@ -241,7 +241,7 @@ describe("SandpackBlockComponent rendering", () => {
 
   // Helper to import and render the inner component directly
   // We test the rendered output by importing the file
-  // TODO(ODY-409 phase-4): BlockImplementation.render has a typed `this` context
+  // NOTE: BlockImplementation.render has a typed `this` context
   // (prosemirror NodeView internals) that cannot be called outside BlockNote's
   // runtime without `as any`. The FileActions tests below cover the real
   // rendering path via SandpackBlockContent directly.

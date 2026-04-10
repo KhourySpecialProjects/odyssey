@@ -1,7 +1,7 @@
 /**
- * Phase 2 security hardening tests for voyage.ts:
- *   - Task 1: Zod validation in createVoyageWithNodes
- *   - Task 3: Ownership checks in deleteVoyage and publishVoyage
+ * Security hardening tests for voyage.ts:
+ *   - Zod validation in createVoyageWithNodes
+ *   - Ownership checks in deleteVoyage and publishVoyage
  */
 
 import {
