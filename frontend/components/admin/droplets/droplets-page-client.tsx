@@ -38,11 +38,11 @@ const DropletAnalyticsModal = dynamic(
 );
 
 const DROPLET_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[30%]" },
-  { label: "Type", width: "w-[10%]" },
-  { label: "Focus Area", width: "w-[17%]" },
-  { label: "Tags", width: "w-[23%]" },
-  { label: "Actions", width: "w-[20%]" },
+  { label: "Title", width: "w-[32%]" },
+  { label: "Type", width: "w-[13%]" },
+  { label: "Focus Area", width: "w-[13%]" },
+  { label: "Tags", width: "w-[26%]" },
+  { label: "Actions", width: "w-[16%]" },
 ];
 
 // ——— Tag display config ———
@@ -113,6 +113,30 @@ const FILTER_FOCUS_AREA_OPTIONS = [
 
 const TYPE_VALUES = new Set(["knowledge", "skill"]);
 const FOCUS_AREA_VALUES = new Set(["personal", "technical", "professional"]);
+
+// ——— TagsCell ———
+function TagsCell({ tags }: { tags: { id: number; name: string }[] }) {
+  return (
+    <div className="flex flex-wrap gap-[5px]">
+      {tags.map((tag) => {
+        const colors = getTagColors(tag.name);
+        return (
+          <Badge
+            key={tag.id}
+            variant="outline"
+            className={cn(
+              "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+              colors.bg,
+              colors.text,
+            )}
+          >
+            {tag.name}
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
 
 // ——— DropletTableRow ———
 function DropletTableRow({ droplet }: { droplet: Droplet }) {
@@ -196,24 +220,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
 
         {/* Tags */}
         <td className="h-[56px] px-6 py-[11px]">
-          <div className="flex flex-wrap gap-[5px]">
-            {droplet.tags?.map((tag) => {
-              const colors = getTagColors(tag.name);
-              return (
-                <Badge
-                  key={tag.id}
-                  variant="outline"
-                  className={cn(
-                    "rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
-                    colors.bg,
-                    colors.text,
-                  )}
-                >
-                  {tag.name}
-                </Badge>
-              );
-            })}
-          </div>
+          <TagsCell tags={droplet.tags ?? []} />
         </td>
 
         {/* Actions */}

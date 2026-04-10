@@ -31,8 +31,7 @@ export function Search() {
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
       className="w-full md:w-[560px]"
-      inputClassName="h-9 text-sm bg-white dark:bg-slate-800"
-      iconClassName="h-4 w-4"
+      inputClassName="h-9"
     />
   );
 }
