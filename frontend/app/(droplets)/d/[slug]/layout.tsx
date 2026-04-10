@@ -1,4 +1,4 @@
-import Sidebar from "@/components/droplets/sidebar";
+import { DropletLayoutShell } from "@/components/droplets/droplet-layout-shell";
 import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
@@ -48,9 +48,9 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (user?.email) {
     authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-    const enrollments = await getCachedEnrollmentsWithLessonIds(
-      authorizedUser.id,
-    );
+    const enrollments = authorizedUser
+      ? await getCachedEnrollmentsWithLessonIds(authorizedUser.id)
+      : [];
 
     const currentEnrollment = enrollments.find(
       (enrollment) => enrollment.droplet?.id === droplet.id,
@@ -69,15 +69,14 @@ export default async function RootLayout({ params, children }: Props) {
       .includes(authorizedUser?.id);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Sidebar
-        author={isAuthor || false}
-        user={user}
-        droplet={droplet}
-        completedLessonIds={completedLessonIds}
-        enrollmentId={enrollmentId}
-      />
-      <main className="w-full flex-1">{children}</main>
-    </div>
+    <DropletLayoutShell
+      author={isAuthor || false}
+      user={user}
+      droplet={droplet}
+      completedLessonIds={completedLessonIds}
+      enrollmentId={enrollmentId}
+    >
+      {children}
+    </DropletLayoutShell>
   );
 }

@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "voyage_node_completions",
+  "info": {
+    "singularName": "voyage-node-completion",
+    "pluralName": "voyage-node-completions",
+    "displayName": "VoyageNodeCompletion"
+  },
+  "options": { "draftAndPublish": false },
+  "pluginOptions": {},
+  "attributes": {
+    "completedAt": { "type": "datetime", "required": true },
+    "authorizedUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "voyageNode": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage-node.voyage-node"
+    },
+    "voyageEnrollment": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage-enrollment.voyage-enrollment"
+    }
+  }
+}

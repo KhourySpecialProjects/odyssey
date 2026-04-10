@@ -1,10 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Droplet, Lesson } from "@/types";
-import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
+import { IconArrowLeft, IconArrowRight, IconLock } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
+import { markLessonAsComplete } from "@/lib/requests/lesson";
 import {
   isLessonQuizCompleted,
   markLessonQuizCompleted,
@@ -19,13 +20,17 @@ export default function DropletFooter({
   droplet,
   enrollmentId,
   currentLessonId,
+  completedLessonIds = [],
 }: {
   droplet: Pick<Droplet, "slug" | "lessons">;
   enrollmentId?: string;
   currentLessonId?: number;
+  completedLessonIds?: number[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [canProceed, setCanProceed] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleNextClick = async () => {
     if (enrollmentId && currentLessonId && droplet.lessons) {
@@ -37,6 +42,20 @@ export default function DropletFooter({
         allDropletLessonIds,
       );
     }
+  };
+
+  const handleMarkAsComplete = () => {
+    if (!enrollmentId || !currentLessonId) return;
+    startTransition(async () => {
+      const success = await markLessonAsComplete(
+        enrollmentId,
+        completedLessonIds,
+        currentLessonId,
+      );
+      if (success) {
+        await router.refresh();
+      }
+    });
   };
 
   useEffect(() => {
@@ -57,6 +76,7 @@ export default function DropletFooter({
         setCanProceed(false);
         return;
       }
+
       const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
         (question) => {
           const resultBadge = question.textContent;
@@ -89,8 +109,9 @@ export default function DropletFooter({
   let next: PaginationProps | null = null;
 
   const pathSegments = pathname.split("/");
+  const isOnLesson = pathSegments.length > 3;
 
-  if (pathSegments.length > 3) {
+  if (isOnLesson) {
     const lessonSlug = pathname.split("/").at(-1);
     if (!lessonSlug) return null;
     const lessonSlugs = droplet.lessons.map((l: Lesson) => l.slug);
@@ -129,41 +150,50 @@ export default function DropletFooter({
     };
   }
 
+  const isCompleted =
+    currentLessonId !== undefined &&
+    completedLessonIds.includes(currentLessonId);
+
   return (
     <div className="justify-left flex w-full flex-col">
-      <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-2 pb-2 md:flex-row md:justify-between xl:w-full">
+      <div className="mt-2 flex w-full flex-row items-center justify-between gap-2 pb-12">
         {previous ? (
           <PaginationLinkWrapper link={previous.link} canProceed={true}>
-            <div className="rounded-full bg-sky-100 p-2 dark:bg-sky-700">
-              <ArrowLeftIcon />
-            </div>
-            <div>
-              <p className="font-bold">Previous</p>
-              <p className="text-sm">{previous.name}</p>
-            </div>
+            <IconArrowLeft className="h-4 w-4" />
+            Previous
           </PaginationLinkWrapper>
         ) : (
           <div className="flex-1"></div>
         )}
 
-        {next ? (
-          <PaginationLinkWrapper
-            link={next.link}
-            className="float-right text-right"
-            canProceed={canProceed}
-            onClick={handleNextClick}
-          >
-            <div>
-              <p className="font-bold">Next</p>
-              <p className="text-sm">{next.name}</p>
-            </div>
-            <div className="rounded-full bg-sky-100 p-2 dark:bg-sky-700">
-              <ArrowRightIcon />
-            </div>
-          </PaginationLinkWrapper>
-        ) : (
-          <div className="flex-1"></div>
-        )}
+        <div className="flex items-center gap-2">
+          {isOnLesson && enrollmentId && (
+            <button
+              onClick={handleMarkAsComplete}
+              disabled={isPending || isCompleted || !canProceed}
+              className="flex h-10 items-center justify-center rounded-lg border border-[#2D7597] bg-[#2D7597] px-4 text-sm font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:pointer-events-none disabled:opacity-50"
+            >
+              {isPending
+                ? "Saving..."
+                : isCompleted
+                  ? "Completed"
+                  : "Mark as complete"}
+            </button>
+          )}
+
+          {next ? (
+            <PaginationLinkWrapper
+              link={next.link}
+              canProceed={canProceed}
+              onClick={handleNextClick}
+            >
+              Next
+              <IconArrowRight className="h-4 w-4" />
+            </PaginationLinkWrapper>
+          ) : (
+            <div className="flex-1"></div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -194,25 +224,17 @@ const PaginationLinkWrapper = ({
   return canProceed ? (
     <button
       onClick={handleClick}
-      className="w-full flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 text-left leading-tight transition-colors hover:bg-sky-100 dark:bg-sky-800 dark:hover:bg-sky-700"
+      className={cn(
+        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+        className,
+      )}
     >
-      <div
-        className={cn(
-          "inline-flex h-full items-center gap-3 text-sky-700 dark:text-sky-100",
-          className,
-        )}
-      >
-        {children}
-      </div>
+      {children}
     </button>
   ) : (
-    <div className="flex-1 rounded-md border border-red-200 bg-red-50 p-4 leading-tight transition-colors dark:bg-red-800">
-      <div className="flex h-full items-center justify-center gap-3 text-red-700 dark:text-red-50">
-        Answer all quiz questions correctly to move on
-        <div className="rounded-full bg-red-100 p-2 dark:bg-red-700 dark:text-white">
-          <LockIcon />
-        </div>
-      </div>
+    <div className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] opacity-40 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+      <IconLock className="h-4 w-4" />
+      Complete all quizzes to proceed
     </div>
   );
 };

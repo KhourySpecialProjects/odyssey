@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Star } from "lucide-react";
+import { IconStar, IconStarFilled } from "@tabler/icons-react";
 import {
   changeEnrollmentRating,
   calculateDropletAverageRating,
@@ -101,14 +101,14 @@ const StarRating: React.FC<StarRatingProps> = ({
                     x2="100%"
                     y2="0%"
                   >
-                    <stop offset={`${fillPercentage}%`} stopColor="#ffc107" />
+                    <stop offset={`${fillPercentage}%`} stopColor="#2D7597" />
                     <stop offset={`${fillPercentage}%`} stopColor="#e4e5e9" />
                   </linearGradient>
                 </defs>
                 <path
                   d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
                   fill={`url(#${gradientIds[index]})`}
-                  stroke={ratingValue <= rating ? "#ffc107" : "#e4e5e9"}
+                  stroke={ratingValue <= rating ? "#2D7597" : "#e4e5e9"}
                 />
               </svg>
             </label>
@@ -126,6 +126,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       <div className="flex space-x-1">
         {[...Array(5)].map((_, index) => {
           const ratingValue = index + 1;
+          const isActive = ratingValue <= (hover || rating);
           return (
             <label key={index} className="cursor-pointer">
               <input
@@ -135,15 +136,21 @@ const StarRating: React.FC<StarRatingProps> = ({
                 checked={ratingValue == rating}
                 onChange={() => handleRatingClick(ratingValue)}
               />
-              <Star
-                onMouseEnter={() => setHover(ratingValue)}
-                onMouseLeave={() => setHover(0)}
-                fill={ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"}
-                stroke={
-                  ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"
-                }
-                className="h-8 w-8"
-              />
+              {isActive ? (
+                <IconStarFilled
+                  onMouseEnter={() => setHover(ratingValue)}
+                  onMouseLeave={() => setHover(0)}
+                  className="h-8 w-8"
+                  style={{ color: "#2D7597" }}
+                />
+              ) : (
+                <IconStar
+                  onMouseEnter={() => setHover(ratingValue)}
+                  onMouseLeave={() => setHover(0)}
+                  className="h-8 w-8 text-slate-300"
+                  stroke={1.8}
+                />
+              )}
             </label>
           );
         })}

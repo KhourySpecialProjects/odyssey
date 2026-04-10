@@ -15,8 +15,7 @@ describe("DropletNameInput", () => {
   it("applies correct heading styling", () => {
     const { container } = render(<DropletNameInput {...mockProps} />);
     expect(container.querySelector("h1")).toHaveClass(
-      "text-6xl",
-      "font-black",
+      "font-bold",
       "text-slate-900",
     );
   });
@@ -24,6 +23,6 @@ describe("DropletNameInput", () => {
   it("applies correct container styling", () => {
     const { container } = render(<DropletNameInput {...mockProps} />);
     const editor = container.querySelector(".tiptap");
-    expect(editor).toHaveClass("hover:shadow", "focus:shadow-lg");
+    expect(editor).toHaveClass("outline-none", "cursor-text");
   });
 });

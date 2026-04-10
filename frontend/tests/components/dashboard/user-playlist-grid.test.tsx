@@ -60,7 +60,7 @@ describe("UserPlaylistsGrid", () => {
   it("displays a message when no playlists are found", async () => {
     render(await UserPlaylistsGrid({}));
 
-    expect(screen.getByText("No Saved Playlists")).toBeInTheDocument();
+    expect(screen.getByText("No saved playlists")).toBeInTheDocument();
     expect(
       screen.getByText(
         "You haven't saved any playlists yet. Browse the explore page to find playlists to save.",

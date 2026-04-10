@@ -78,16 +78,18 @@ export default async function EditPlaylistPage({ params }: Props) {
   );
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-slate-100 px-24 pt-12 dark:bg-slate-800">
-      <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-        Edit Playlist
-      </h1>
-      <PlaylistForm
-        userId={authUser.id}
-        droplets={availableDroplets}
-        author={authUser}
-        existingPlaylist={playlist}
-      />
+    <div className="bg-white px-4 pt-4 pb-8 md:px-[300px] md:pt-8 md:pb-16 dark:bg-zinc-950">
+      <div className="flex w-full flex-col">
+        <h1 className="mb-7 text-4xl font-semibold text-black dark:text-white">
+          Edit Playlist
+        </h1>
+        <PlaylistForm
+          userId={authUser.id}
+          droplets={availableDroplets}
+          author={authUser}
+          existingPlaylist={playlist}
+        />
+      </div>
     </div>
   );
 }

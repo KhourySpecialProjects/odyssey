@@ -720,7 +720,7 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[818px]"
+          className="max-w-[700px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

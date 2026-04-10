@@ -7,6 +7,7 @@ export async function FriendSentRequests() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
   const authUser = await getCachedUserSocial(user.email);
+  if (!authUser) return notFound();
   const sentRequests = authUser.sent_requests
     .filter(
       (friend) =>

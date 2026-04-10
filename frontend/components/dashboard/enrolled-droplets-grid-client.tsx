@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AuthorizedUser, Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { PageNav } from "../ui/page-nav";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSearch } from "@/contexts/SearchContext";
 
 const ITEMS_PER_PAGE = 9;
@@ -186,10 +186,11 @@ export function EnrolledDropletsGridClient({
           />
         ))}
       </ul>
-      <PageNav
+      <AdminPagination
         currentPage={currentPage}
-        updatePage={setCurrentPage}
         totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        variant="standalone"
       />
     </>
   );

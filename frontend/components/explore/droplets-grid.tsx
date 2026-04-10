@@ -1,9 +1,6 @@
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconDroplet } from "@tabler/icons-react";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { DropletTile } from "../droplets/droplet-tile";
@@ -65,12 +62,16 @@ export async function DropletsGrid({
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-        <MessageHeader subtitle="No Results" title="No Droplets Found" />
-        <MessageDescription>
-          There are no droplets that match those filters.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconDroplet
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No droplets found"
+        message="There are no droplets that match those filters."
+      />
     );
   }
 
@@ -84,9 +85,16 @@ export async function DropletsGrid({
     );
     if (completedDroplets.length === 0) {
       return (
-        <div className="text-black dark:text-slate-300">
-          You haven&apos;t completed any Droplets yet.
-        </div>
+        <EmptyState
+          icon={
+            <IconDroplet
+              className="h-7 w-7 text-[#475569] dark:text-slate-400"
+              stroke={1.5}
+            />
+          }
+          title="No completed droplets"
+          message="You haven't completed any droplets yet."
+        />
       );
     }
     return (

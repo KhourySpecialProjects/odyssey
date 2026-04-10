@@ -9,7 +9,8 @@ describe("Progress", () => {
 
   it("shows correct progress value", () => {
     const { container } = render(<Progress value={50} />);
-    const indicator = container.querySelector('[class*="bg-slate-900"]');
+    // Indicator is the direct child of the root (ProgressPrimitive.Indicator)
+    const indicator = container.firstChild?.firstChild as HTMLElement;
     expect(indicator).toHaveStyle({ transform: "translateX(-50%)" });
   });
 

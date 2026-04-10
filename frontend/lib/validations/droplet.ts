@@ -28,6 +28,14 @@ export const DropletSchema = z.object({
       url: z.string().url(),
     })
     .array(),
+  datasets: z
+    .object({
+      name: z.string(),
+      url: z.string(),
+      fileType: z.string(),
+      fileSize: z.number(),
+    })
+    .array(),
   overview: z.string(),
   description: z.string(),
   lessons: z

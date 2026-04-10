@@ -48,6 +48,8 @@ describe("DropletName", () => {
   it("sanitizes HTML and updates name correctly", () => {
     render(<DropletName startingName="Initial Name" dropletId={1} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Edit title" }));
+
     const input = screen.getByTestId("name-input");
     const htmlContent = "<p>New Name&nbsp;with spaces</p>";
 
@@ -65,6 +67,8 @@ describe("DropletName", () => {
   it("trims whitespace from name", () => {
     render(<DropletName startingName="Initial Name" dropletId={1} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Edit title" }));
+
     const input = screen.getByTestId("name-input");
 
     fireEvent.input(input, {
@@ -80,6 +84,8 @@ describe("DropletName", () => {
 
   it("generates proper slug from name", () => {
     render(<DropletName startingName="Initial Name" dropletId={1} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit title" }));
 
     const input = screen.getByTestId("name-input");
 

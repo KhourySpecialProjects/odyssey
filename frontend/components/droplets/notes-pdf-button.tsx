@@ -1,5 +1,5 @@
 "use client";
-import { FileTextIcon } from "lucide-react";
+import { IconFileText } from "@tabler/icons-react";
 
 export function NotesPdfButton({
   pdfBytes,
@@ -25,10 +25,10 @@ export function NotesPdfButton({
   return (
     <button
       onClick={handleDownload}
-      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white ${noNotes ? "light:text-black bg-slate-300 dark:text-black" : "bg-sky-600 hover:bg-sky-700"} rounded-md`}
       disabled={noNotes}
+      className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#2D7597] bg-[#2D7597] px-4 text-sm font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78] disabled:pointer-events-none disabled:opacity-50"
     >
-      <FileTextIcon className="h-4 w-4" />
+      <IconFileText className="h-4 w-4" stroke={1.8} />
       Download Notes as PDF
     </button>
   );

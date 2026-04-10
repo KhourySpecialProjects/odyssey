@@ -63,6 +63,18 @@ jest.mock("@/lib/requests/lesson", () => ({
   deleteLesson: jest.fn(),
 }));
 
+const mockUseEditingLock = jest.fn().mockReturnValue({
+  isLocked: true,
+  isOwnLock: true,
+  lockedBy: null,
+  isLoading: false,
+  error: null,
+  release: jest.fn(),
+});
+jest.mock("@/hooks/useEditingLock", () => ({
+  useEditingLock: (...args: unknown[]) => mockUseEditingLock(...args),
+}));
+
 jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn(),
 }));
@@ -132,10 +144,10 @@ describe("LessonRenderer", () => {
   });
 
   describe("Initial Rendering", () => {
-    it("renders lesson name input", () => {
+    it("renders lesson name as heading", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("renders all blocks", () => {
@@ -148,7 +160,9 @@ describe("LessonRenderer", () => {
     it("renders Change URL button", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
     });
 
     it("renders delete lesson button", () => {
@@ -173,10 +187,7 @@ describe("LessonRenderer", () => {
     it("initializes with lesson name", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      const nameInput = screen.getByTestId(
-        "lesson-name-field",
-      ) as HTMLInputElement;
-      expect(nameInput.defaultValue).toContain("Test Lesson");
+      expect(screen.getByText("Test Lesson")).toBeInTheDocument();
     });
   });
 
@@ -184,6 +195,7 @@ describe("LessonRenderer", () => {
     it("updates lesson name on input change", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
     });
@@ -196,6 +208,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
     });
@@ -207,6 +220,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
       const nameField = screen.getByTestId("lesson-name-field");
       fireEvent.change(nameField, { target: { value: "New Name" } });
 
@@ -218,7 +232,7 @@ describe("LessonRenderer", () => {
     it("opens slug change popup when Change URL is clicked", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
       expect(
@@ -229,7 +243,7 @@ describe("LessonRenderer", () => {
     it("closes popup when Cancel is clicked", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
       fireEvent.click(screen.getByText("Cancel"));
 
       expect(screen.queryByText("Enter New URL Slug")).not.toBeInTheDocument();
@@ -238,7 +252,7 @@ describe("LessonRenderer", () => {
     it("updates slug input value", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText(
         "e.g., my-new-url-slug",
@@ -253,7 +267,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
       fireEvent.click(screen.getByText("Confirm"));
 
       expect(updateLesson).not.toHaveBeenCalled();
@@ -267,7 +281,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "   " } });
@@ -286,7 +300,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "new-custom-slug" } });
@@ -315,7 +329,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "existing-slug" } });
@@ -336,7 +350,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "new-slug" } });
@@ -357,7 +371,7 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
       fireEvent.change(slugInput, { target: { value: "  trimmed-slug  " } });
@@ -437,7 +451,7 @@ describe("LessonRenderer", () => {
         <LessonRenderer lesson={emptyLesson} dropletSlug="test-droplet" />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles lesson with single block", () => {
@@ -597,7 +611,7 @@ describe("LessonRenderer", () => {
         <LessonRenderer lesson={longNameLesson} dropletSlug="test-droplet" />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles lesson with special characters in name", () => {
@@ -613,7 +627,7 @@ describe("LessonRenderer", () => {
         />,
       );
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
 
     it("handles blocks without id", () => {
@@ -634,25 +648,24 @@ describe("LessonRenderer", () => {
     it("handles empty dropletSlug", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="" />);
 
-      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     });
   });
 
   describe("Styling", () => {
-    it("applies correct classes to lesson name input", () => {
+    it("applies correct classes to lesson name input when editing", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      fireEvent.click(screen.getByLabelText("Edit lesson title"));
+
       const nameInput = screen.getByTestId("lesson-name-input");
-      expect(nameInput).toHaveClass("mb-3");
-      expect(nameInput).toHaveClass("w-[700px]");
-      expect(nameInput).toHaveClass("max-w-2xl");
-      expect(nameInput).toHaveClass("text-center");
+      expect(nameInput).toHaveClass("w-full");
     });
 
     it("confirm button has correct styling", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const confirmButton = screen.getByText("Confirm");
       expect(confirmButton).toHaveClass("bg-sky-600");
@@ -661,24 +674,24 @@ describe("LessonRenderer", () => {
     });
 
     it("popup has correct styling classes", () => {
-      const { container } = render(
-        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
-      );
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
-      const popup = container.querySelector(".fixed.inset-0");
-      expect(popup).toHaveClass("bg-black");
-      expect(popup).toHaveClass("bg-opacity-50");
+      // Dialog renders in a portal outside container, query from document
+      const popup = document.querySelector(".fixed.inset-0");
       expect(popup).toHaveClass("z-50");
+      expect(popup).toHaveClass("bg-black/80");
     });
 
     it("applies dark mode classes to popup", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
-      const popupContent = screen.getByText("Enter New URL Slug").parentElement;
+      // "Enter New URL Slug" is in DialogTitle > DialogHeader > DialogContent
+      const popupContent =
+        screen.getByText("Enter New URL Slug").parentElement?.parentElement;
       expect(popupContent).toHaveClass("dark:bg-slate-900");
     });
   });
@@ -687,7 +700,7 @@ describe("LessonRenderer", () => {
     it("popup input has placeholder", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       const input = screen.getByPlaceholderText("e.g., my-new-url-slug");
       expect(input).toBeInTheDocument();
@@ -696,16 +709,114 @@ describe("LessonRenderer", () => {
     it("buttons have descriptive text", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
       expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
     });
 
     it("popup has heading", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
       expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
+    });
+  });
+
+  describe("Editing Lock", () => {
+    it("shows lock banner when locked by another user", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: false,
+        lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByText(/Jane Doe/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/is currently editing this lesson/),
+      ).toBeInTheDocument();
+    });
+
+    it("hides action buttons when locked by another user", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: false,
+        lockedBy: { id: 99, firstName: "Jane", lastName: "Doe" },
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.queryByText("Change URL")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("delete-lesson-button"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows loading state while acquiring lock", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: false,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: true,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByText("Checking editing access..."),
+      ).toBeInTheDocument();
+    });
+
+    it("shows edit controls when user holds the lock", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: true,
+        isOwnLock: true,
+        lockedBy: null,
+        isLoading: false,
+        error: null,
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByRole("button", { name: "Change URL" }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
+      expect(
+        screen.queryByText(/is currently editing/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows error banner when lock acquisition fails", () => {
+      mockUseEditingLock.mockReturnValue({
+        isLocked: false,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: false,
+        error: "Could not resolve your user account",
+        release: jest.fn(),
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.getByText(/Unable to acquire editing lock/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Could not resolve your user account/),
+      ).toBeInTheDocument();
     });
   });
 });

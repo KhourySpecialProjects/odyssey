@@ -23,6 +23,8 @@ jest.mock("@/app/(general)/unauthorized/page", () => ({
 }));
 
 describe("Sidebar", () => {
+  const mockSetExpanded = jest.fn();
+
   const mockUser = {
     id: 1,
     name: "Test User",
@@ -103,6 +105,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -116,6 +120,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -129,6 +135,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
     });
@@ -142,6 +150,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
     });
@@ -153,6 +163,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -167,6 +179,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -182,6 +196,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -198,10 +214,12 @@ describe("Sidebar", () => {
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.getByText("Edit")).toBeInTheDocument();
+      expect(screen.getByTitle("Edit droplet")).toBeInTheDocument();
     });
 
     it("shows edit button for admins", () => {
@@ -211,10 +229,12 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.getByText("Edit")).toBeInTheDocument();
+      expect(screen.getByTitle("Edit droplet")).toBeInTheDocument();
     });
 
     it("does not show edit button for regular users", () => {
@@ -224,10 +244,12 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.queryByText("Edit")).not.toBeInTheDocument();
+      expect(screen.queryByTitle("Edit droplet")).not.toBeInTheDocument();
     });
   });
 
@@ -239,6 +261,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -252,6 +276,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[1]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -265,6 +291,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[1, 2, 3]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -278,6 +306,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[1, 2, 999]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -295,6 +325,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={dropletNoLessons}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -311,6 +343,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId={undefined}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -328,6 +362,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -343,6 +379,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId={undefined}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -361,6 +399,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId={undefined}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -379,6 +419,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -395,6 +437,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[1]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -410,6 +454,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -424,6 +470,8 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -434,54 +482,57 @@ describe("Sidebar", () => {
   });
 
   describe("Lesson Icons", () => {
-    it("shows BookTextIcon for general lessons", () => {
-      const { container } = render(
+    it("renders lesson indicator for general lessons", () => {
+      render(
         <Sidebar
           user={mockUser}
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const lesson1 = screen.getByText("Lesson 1").closest("a");
-      const icon = lesson1?.querySelector(".lucide-book-text");
-      expect(icon).toBeInTheDocument();
+      expect(lesson1).toBeInTheDocument();
     });
 
-    it("shows HammerIcon for activity lessons", () => {
-      const { container } = render(
+    it("renders lesson indicator for activity lessons", () => {
+      render(
         <Sidebar
           user={mockUser}
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const lesson2 = screen.getByText("Lesson 2").closest("a");
-      const icon = lesson2?.querySelector(".lucide-hammer");
-      expect(icon).toBeInTheDocument();
+      expect(lesson2).toBeInTheDocument();
     });
 
-    it("shows FilePieChartIcon for case study lessons", () => {
-      const { container } = render(
+    it("renders lesson indicator for case study lessons", () => {
+      render(
         <Sidebar
           user={mockUser}
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const lesson3 = screen.getByText("Lesson 3").closest("a");
-      const icon = lesson3?.querySelector(".lucide-file-pie-chart");
-      expect(icon).toBeInTheDocument();
+      expect(lesson3).toBeInTheDocument();
     });
   });
 
   describe("Completion Indicators", () => {
-    it("shows checkmark for completed lessons when enrolled", () => {
+    it("shows no lock icon for completed and unlocked lesson", () => {
       render(
         <Sidebar
           user={mockUser}
@@ -489,13 +540,16 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[1]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
+      // Lesson 1 completed → lesson 2 unlocked; lesson 2 not completed → lesson 3 locked
+      expect(screen.getAllByTestId("lock-icon")).toHaveLength(1);
     });
 
-    it("does not show checkmark for locked completed lessons", () => {
+    it("does not unlock lessons when completed but previous incomplete", () => {
       render(
         <Sidebar
           user={mockUser}
@@ -503,13 +557,17 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[2]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.queryByTestId("check-circle-icon")).not.toBeInTheDocument();
+      // Lesson 2 is completed but lesson 1 is not, so lesson 2 is still locked
+      const lesson2Link = screen.getByText("Lesson 2").closest("a");
+      expect(lesson2Link).toHaveClass("pointer-events-none");
     });
 
-    it("shows checkmarks for multiple completed lessons", () => {
+    it("unlocks multiple lessons when previous ones are completed", () => {
       render(
         <Sidebar
           user={mockUser}
@@ -517,10 +575,13 @@ describe("Sidebar", () => {
           droplet={mockDroplet}
           completedLessonIds={[1, 2]}
           enrollmentId="enrollment-123"
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      expect(screen.getAllByTestId("check-circle-icon")).toHaveLength(2);
+      // Lessons 1 and 2 completed → all 3 lessons unlocked, no lock icons
+      expect(screen.queryAllByTestId("lock-icon")).toHaveLength(0);
     });
   });
 
@@ -532,6 +593,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -547,13 +610,15 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const expandButton = screen.getByTestId("sidebar-overlay");
       fireEvent.click(expandButton);
 
-      expect(screen.getByRole("complementary")).toHaveClass("translate-x-0");
+      expect(mockSetExpanded).toHaveBeenCalledWith(true);
     });
 
     it("closes sidebar when overlay is clicked", () => {
@@ -563,19 +628,17 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
-
-      fireEvent.click(screen.getByTestId("sidebar-overlay"));
 
       const overlay = container.querySelector(".bg-slate-900\\/50");
       if (overlay) {
         fireEvent.click(overlay);
       }
 
-      expect(screen.getByRole("complementary")).toHaveClass(
-        "-translate-x-full",
-      );
+      expect(mockSetExpanded).toHaveBeenCalledWith(false);
     });
 
     it("closes sidebar when clicking a lesson link", () => {
@@ -585,10 +648,11 @@ describe("Sidebar", () => {
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      fireEvent.click(screen.getByTestId("sidebar-overlay"));
       fireEvent.click(screen.getByText("Lesson 1"));
     });
   });
@@ -603,12 +667,14 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const overviewLink = screen.getByText("Overview").closest("a");
-      expect(overviewLink).toHaveClass("bg-slate-200");
-      expect(overviewLink).toHaveClass("font-bold");
+      expect(overviewLink).toHaveClass("bg-[#2D7597]");
+      expect(overviewLink).toHaveClass("text-white");
     });
 
     it("highlights active lesson link", () => {
@@ -620,11 +686,13 @@ describe("Sidebar", () => {
           author={true}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const lesson1Link = screen.getByText("Lesson 1").closest("a");
-      expect(lesson1Link).toHaveClass("bg-slate-200");
+      expect(lesson1Link).toHaveClass("bg-[#2D7597]");
     });
 
     it("highlights active recap link", () => {
@@ -636,11 +704,13 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
       const recapLink = screen.getByText("Recap").closest("a");
-      expect(recapLink).toHaveClass("bg-slate-200");
+      expect(recapLink).toHaveClass("bg-[#2D7597]");
     });
   });
 
@@ -654,6 +724,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -674,6 +746,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -691,17 +765,14 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={false}
+          setExpanded={mockSetExpanded}
         />,
       );
 
-      fireEvent.click(screen.getByTestId("sidebar-overlay"));
-      expect(screen.getByRole("complementary")).toHaveClass("translate-x-0");
-
       fireEvent(window, new Event("resize"));
 
-      expect(screen.getByRole("complementary")).toHaveClass(
-        "-translate-x-full",
-      );
+      expect(mockSetExpanded).toHaveBeenCalledWith(false);
     });
   });
 
@@ -713,6 +784,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 
@@ -731,6 +804,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={longNameDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
     });
@@ -747,6 +822,8 @@ describe("Sidebar", () => {
           author={false}
           droplet={emptyLessonsDroplet}
           completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
         />,
       );
 

@@ -45,6 +45,7 @@ export default async function Page({ params }: Props) {
   if (!currentUser || !currentUser?.email) return notFound();
 
   const authUser = await getCachedUser(currentUser.email);
+  if (!authUser) return notFound();
   const enrollments = await getCachedEnrollmentsWithLessonIds(authUser.id);
 
   const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);

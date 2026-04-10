@@ -17,7 +17,16 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 export async function fetchAnnouncements(
   user: AuthorizedUser,
   page?: number,
-): Promise<Announcement[]> {
+  roles?: string[],
+): Promise<{
+  data: Announcement[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    pageCount: number;
+    total: number;
+  };
+}> {
   try {
     // Extract friend IDs from the user's friendships (already populated on authUser)
     const friendIds = (user.friendships || [])
@@ -112,9 +121,9 @@ export async function fetchAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated"],
-      filters: {
-        $or: orFilters,
-      },
+      filters: roles?.length
+        ? { $and: [{ $or: orFilters }, { type: { $in: roles } }] }
+        : { $or: orFilters },
       populate: {
         authorized_user: {
           fields: [
@@ -185,7 +194,15 @@ export async function fetchAnnouncements(
       },
     );
     const data = await response.json();
-    return flattenAttributes(data.data);
+    return {
+      data: flattenAttributes(data.data),
+      pagination: data.meta?.pagination ?? {
+        page: 1,
+        pageSize: 25,
+        pageCount: 1,
+        total: 0,
+      },
+    };
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");

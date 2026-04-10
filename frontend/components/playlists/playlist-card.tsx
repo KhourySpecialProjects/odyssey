@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { getDueDateBadgeColor } from "@/lib/utils";
-import { Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
+import { IconArchive, IconArchiveOff } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
@@ -36,6 +37,8 @@ interface PlaylistCardProps {
   timeZone?: string;
   dashboardPage?: boolean;
   isArchived?: boolean;
+  linkPrefix?: string;
+  statsOverride?: string;
 }
 
 export function PlaylistCard({
@@ -45,6 +48,8 @@ export function PlaylistCard({
   timeZone,
   dashboardPage,
   isArchived,
+  linkPrefix,
+  statsOverride,
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   async function changeVisibility() {
@@ -71,11 +76,6 @@ export function PlaylistCard({
   const [isTextClamped, setIsTextClamped] = useState(false);
   const textRef = useRef(null);
   const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
-  const lessonCount =
-    playlist.droplets?.reduce(
-      (total, droplet) => total + (droplet.lessons?.length ?? 0),
-      0,
-    ) ?? 0;
   const strippedDescription = playlist.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -91,7 +91,11 @@ export function PlaylistCard({
     }
   }, [strippedDescription, descriptionExpanded]);
 
-  const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
+  const linkTo = linkPrefix
+    ? `${linkPrefix}/${playlist.slug}`
+    : toDraft
+      ? `/draft/p/${playlist.slug}`
+      : `/p/${playlist.slug}`;
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
@@ -107,7 +111,7 @@ export function PlaylistCard({
   return (
     <Link
       href={linkTo}
-      className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+      className="inline-block h-full w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
       <div className="p-6">
         <div>
@@ -142,9 +146,15 @@ export function PlaylistCard({
             {playlist.name}
           </div>
 
-          <p className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
-            Droplets: {dropletCount} &nbsp;&nbsp;&nbsp;&nbsp; Lessons:{" "}
-            {lessonCount}
+          <p className="pt-2 text-sm text-slate-500 dark:text-slate-400">
+            {statsOverride ?? (
+              <>
+                <span className="font-semibold text-slate-900 dark:text-slate-200">
+                  {dropletCount}
+                </span>{" "}
+                {dropletCount === 1 ? "droplet" : "droplets"}
+              </>
+            )}
           </p>
           <div>
             {strippedDescription &&
@@ -192,18 +202,25 @@ export function PlaylistCard({
         <div className="flex justify-end p-2">
           <Button
             size="sm"
+            aria-label={isArchived ? "Unarchive" : "Archive"}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               changeVisibility();
             }}
-            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+            className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
           >
             <div className="group relative">
               {isArchived ? (
-                <ArchiveRestore className="text-purple-500" />
+                <IconArchiveOff
+                  className="h-5 w-5 text-black dark:text-white"
+                  stroke={1.8}
+                />
               ) : (
-                <Archive className="text-purple-500" />
+                <IconArchive
+                  className="h-5 w-5 text-black dark:text-white"
+                  stroke={1.8}
+                />
               )}
               <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {isArchived ? "Unarchive" : "Archive"}

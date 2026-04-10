@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { NoteTypeTitle } from "@/lib/globals";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface NotesFilterProps {
   onFilterChange: (selectedColors: NoteTypeTitle[]) => void;
@@ -13,27 +13,27 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
     {
       value: NoteTypeTitle.Pink,
       label: "Pink",
-      color: "bg-[#f9a8d4] dark:text-black",
+      switchColor: "peer-checked:bg-[#f9a8d4]",
     },
     {
       value: NoteTypeTitle.Orange,
       label: "Orange",
-      color: "bg-[#fbd38d] dark:text-black",
+      switchColor: "peer-checked:bg-[#fbd38d]",
     },
     {
       value: NoteTypeTitle.Yellow,
       label: "Yellow",
-      color: "bg-[#fff300] dark:text-black",
+      switchColor: "peer-checked:bg-[#fff300]",
     },
     {
       value: NoteTypeTitle.Green,
       label: "Green",
-      color: "bg-[#86efac] dark:text-black",
+      switchColor: "peer-checked:bg-[#86efac]",
     },
     {
       value: NoteTypeTitle.Blue,
       label: "Blue",
-      color: "bg-[#93c5fd] dark:text-black",
+      switchColor: "peer-checked:bg-[#93c5fd]",
     },
   ] as const;
 
@@ -51,24 +51,24 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
   };
 
   return (
-    <div className="space-y-2 pt-4">
+    <div className="space-y-3">
       {colorOptions.map((color) => (
         <div
           key={color.value}
-          className={`flex items-center space-x-2 rounded-md p-1 ${color.color}`}
+          className="flex items-center justify-between gap-2"
         >
-          <Checkbox
-            id={color.value}
-            checked={selectedColors.includes(color.value)}
-            onCheckedChange={() => toggleRole(color.value)}
-            className="border-slate-700 focus-visible:ring-slate-700 data-[state=checked]:border-slate-900 data-[state=checked]:bg-slate-900 dark:border-slate-800"
-          />
           <label
             htmlFor={color.value}
-            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium text-slate-700 dark:text-slate-300"
           >
             {color.label}
           </label>
+          <Switch
+            id={color.value}
+            checked={selectedColors.includes(color.value)}
+            onCheckedChange={() => toggleRole(color.value)}
+            className={color.switchColor}
+          />
         </div>
       ))}
     </div>
