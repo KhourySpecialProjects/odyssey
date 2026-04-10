@@ -26,8 +26,6 @@ const tabs = [
   { id: "voyages", label: "Voyages" },
 ] as const;
 
-type TabId = (typeof tabs)[number]["id"];
-
 export function MyContentTabs({
   droplets,
   playlists,
