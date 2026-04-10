@@ -127,15 +127,11 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
-  const initialSubmissionState: { error: string | null | unknown } = {
-    error: null,
-  };
-
-  const [submissionState, setSubmissionState] = useState(
-    initialSubmissionState,
-  );
+  const [submissionState, setSubmissionState] = useState<{
+    error: string | null;
+  }>({ error: null });
   const router = useRouter();
-  const [isSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
     existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
@@ -147,15 +143,7 @@ export function GroupManagementForm({
     existingGroup?.voyages?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
   const [hasChanges, setHasChanges] = useState(false);
-
   const [isOpen, setIsOpen] = useState(false);
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
-  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -212,7 +200,7 @@ export function GroupManagementForm({
   }, [form]);
 
   useEffect(() => {
-    setSubmissionState(initialSubmissionState);
+    setSubmissionState({ error: null });
   }, [hasChanges]);
 
   const handleCancel = () => {
@@ -233,7 +221,7 @@ export function GroupManagementForm({
       return;
     }
     setSubmissionState({ error: null });
-    setIsOpen(true);
+    setIsSubmitting(true);
     try {
       const updateGroupData = {
         groupName: data.groupName,
@@ -276,8 +264,14 @@ export function GroupManagementForm({
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
       }
+      setIsOpen(true);
     } catch (error) {
       console.error("Failed to update group", error);
+      setSubmissionState({
+        error: "Failed to save group. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -304,7 +298,9 @@ export function GroupManagementForm({
       }
     } catch (error) {
       console.error("Failed to make group announcement: ", error);
-      setSubmissionState({ error: error });
+      setSubmissionState({
+        error: "Failed to share announcement. Please try again.",
+      });
     }
   };
 
@@ -598,12 +594,12 @@ export function GroupManagementForm({
         {submissionState.error && (
           <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
             <p className="text-sm font-medium text-red-800 dark:text-red-200">
-              {submissionState.error as string}
+              {submissionState.error}
             </p>
           </div>
         )}
 
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-[825px]">
             <DialogHeader>
               <DialogTitle>

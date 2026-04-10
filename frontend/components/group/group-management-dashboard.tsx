@@ -115,7 +115,6 @@ export function GroupDashboard({
                 {paginatedDroplets?.map((droplet) => (
                   <div key={droplet.id} className="h-full w-full">
                     <GroupDropletTile
-                      key={droplet.id}
                       droplet={droplet}
                       dueDate={
                         dueDates?.find(

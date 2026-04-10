@@ -192,6 +192,7 @@ export async function enrollInVoyageDirect(
 
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
     revalidateTag(CACHE_TAGS.allVoyageEnrollments);
+    revalidateTag(CACHE_TAGS.voyages);
 
     return {
       ok: true,
