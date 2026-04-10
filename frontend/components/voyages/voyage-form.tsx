@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Playlist } from "@/types";
-import { createVoyageWithNodes } from "@/lib/requests/voyage";
+import { Playlist, Voyage } from "@/types";
+import {
+  createVoyageWithNodes,
+  updateVoyageWithNodes,
+} from "@/lib/requests/voyage";
 import { VoyageTreeMap, TreeNode } from "@/components/voyages/voyage-tree-map";
 import {
   ChevronUpIcon,
@@ -30,17 +33,45 @@ interface SelectedNode {
 interface VoyageFormProps {
   playlists: Playlist[];
   authorId: number;
+  voyage?: Voyage;
 }
 
-export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
+function initNodesFromVoyage(voyage: Voyage): SelectedNode[] {
+  const nodes = voyage.voyage_nodes ?? [];
+  // Build a lookup from node ID → playlist ID for resolving parentPlaylistId
+  const nodeIdToPlaylistId = new Map<number, number>();
+  for (const n of nodes) {
+    if (n.playlist?.id) nodeIdToPlaylistId.set(n.id, n.playlist.id);
+  }
+
+  return nodes.map((n) => ({
+    playlistId: n.playlist?.id ?? 0,
+    name: n.playlist?.name ?? n.label,
+    slug: n.playlist?.slug ?? "",
+    dropletCount: n.playlist?.droplets?.length ?? 0,
+    isMainPath: n.isMainPath,
+    branchType: n.branchType,
+    parentPlaylistId: n.parentNode?.id
+      ? nodeIdToPlaylistId.get(n.parentNode.id) ?? null
+      : null,
+    orderIndex: n.orderIndex,
+  }));
+}
+
+export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const isEditing = !!voyage;
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(voyage?.name ?? "");
+  const [description, setDescription] = useState(voyage?.description ?? "");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>([]);
-  const [isSequential, setIsSequential] = useState(false);
+  const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>(
+    voyage ? initNodesFromVoyage(voyage) : [],
+  );
+  const [isSequential, setIsSequential] = useState(
+    voyage?.isSequential ?? false,
+  );
   const [error, setError] = useState("");
 
   const availablePlaylists = useMemo(
@@ -198,9 +229,13 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
         branchType: node.branchType,
         parentId: node.parentPlaylistId,
         orderIndex: node.orderIndex,
-        status: "available",
+        status: isSequential
+          ? node.isMainPath && node.orderIndex === 0
+            ? "available"
+            : "locked"
+          : "available",
       })),
-    [selectedNodes],
+    [selectedNodes, isSequential],
   );
 
   // Sort for display: main-path nodes first (by orderIndex), then branch nodes grouped under parent
@@ -234,24 +269,38 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
     }
 
     startTransition(async () => {
-      const result = await createVoyageWithNodes({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        status,
-        isSequential,
-        nodes: selectedNodes.map((n) => ({
-          playlistId: n.playlistId,
-          isMainPath: n.isMainPath,
-          branchType: n.branchType,
-          parentPlaylistId: n.parentPlaylistId,
-          orderIndex: n.orderIndex,
-          label: n.name,
-        })),
-        authorId,
-      });
+      const nodePayload = selectedNodes.map((n) => ({
+        playlistId: n.playlistId,
+        isMainPath: n.isMainPath,
+        branchType: n.branchType,
+        parentPlaylistId: n.parentPlaylistId,
+        orderIndex: n.orderIndex,
+        label: n.name,
+      }));
+
+      const result = isEditing
+        ? await updateVoyageWithNodes({
+            id: voyage.id,
+            name: name.trim(),
+            description: description.trim() || undefined,
+            status,
+            isSequential,
+            nodes: nodePayload,
+          })
+        : await createVoyageWithNodes({
+            name: name.trim(),
+            description: description.trim() || undefined,
+            status,
+            isSequential,
+            nodes: nodePayload,
+            authorId,
+          });
 
       if (!result.ok) {
-        setError(result.error || "Failed to create voyage.");
+        setError(
+          result.error ||
+            `Failed to ${isEditing ? "update" : "create"} voyage.`,
+        );
         return;
       }
 
@@ -533,7 +582,10 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             disabled={isPending}
             className="flex-1"
           >
-            {isPending ? "Publishing..." : "Publish Voyage"}
+            {isPending && isEditing && "Updating..."}
+            {isPending && !isEditing && "Publishing..."}
+            {!isPending && isEditing && "Update & Publish"}
+            {!isPending && !isEditing && "Publish Voyage"}
           </Button>
           <Button
             type="button"
@@ -542,7 +594,9 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             disabled={isPending}
             className="flex-1"
           >
-            {isPending ? "Saving..." : "Save as Draft"}
+            {isPending && "Saving..."}
+            {!isPending && isEditing && "Save Changes"}
+            {!isPending && !isEditing && "Save as Draft"}
           </Button>
         </div>
       </div>
