@@ -22,6 +22,8 @@ import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
+import { getCurrentUser } from "@/lib/auth/session";
+import { checkRateLimit } from "@/lib/import/rate-limiter";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -253,19 +255,26 @@ async function createLinearIssue(
 ) {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || "placeholder",
-    dangerouslyAllowBrowser: true,
   });
 
-  // AI-generate the Acceptance Criteria, Steps to Reproduce, and Impact sections
+  // Rate-limit the AI call (gracefully falls back to placeholder on limit)
   let generatedSections = "";
-  try {
-    const msg = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `You are a technical project manager writing a Linear bug ticket. Based on the bug description and page below, generate the following three sections in Markdown. Output only the three sections with no preamble or explanation.
+  const user = await getCurrentUser();
+  const rateLimited =
+    user?.email &&
+    !checkRateLimit(user.email, user.roles ?? [], "bug-report").allowed;
+
+  if (rateLimited) {
+    // Skip AI — use placeholder sections below
+  } else {
+    try {
+      const msg = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `You are a technical project manager writing a Linear bug ticket. Based on the bug description and page below, generate the following three sections in Markdown. Output only the three sections with no preamble or explanation.
 
 ## Acceptance Criteria
 - How do we know it's done?
@@ -279,16 +288,20 @@ async function createLinearIssue(
 
 Bug description: "${formData.description}"
 Page: "${formData.path}"`,
-        },
-      ],
-    });
-    generatedSections =
-      msg.content[0].type === "text" ? msg.content[0].text : "";
-  } catch (err) {
-    console.error(
-      "Anthropic generation failed, using placeholder sections:",
-      err,
-    );
+          },
+        ],
+      });
+      generatedSections =
+        msg.content[0].type === "text" ? msg.content[0].text : "";
+    } catch (err) {
+      console.error(
+        "Anthropic generation failed, using placeholder sections:",
+        err,
+      );
+    }
+  }
+
+  if (!generatedSections) {
     generatedSections = `## Acceptance Criteria
 - How do we know it's done?
 - [ ] [criteria #1]
