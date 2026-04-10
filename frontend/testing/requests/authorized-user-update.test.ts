@@ -1,5 +1,5 @@
 /**
- * Security tests for updateUserInfo — Task 2+3 of ODY-409 Phase 1.
+ * Security tests for updateUserInfo.
  *
  * Covers:
  *  1. Unauthenticated caller is rejected.

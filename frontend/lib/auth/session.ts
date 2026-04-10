@@ -14,7 +14,7 @@ import { AuthorizedUserRoleTitle } from "../globals";
  * The explicit flag prevents accidental activation in staging environments
  * that may have NODE_ENV=development set incorrectly. Developers who use
  * the role switcher locally must add ENABLE_DEV_ROLE_OVERRIDE=true to
- * their local .env. See ODY-409 for context.
+ * their local .env.
  *
  * Exported so it can be unit-tested in isolation.
  */

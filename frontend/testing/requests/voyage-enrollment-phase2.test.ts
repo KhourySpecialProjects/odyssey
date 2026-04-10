@@ -1,15 +1,12 @@
 /**
- * Phase 2 security tests for enrollInVoyage.
+ * Security tests for the enrollInVoyage draft-voyage gate.
  *
- * Verifies that the draft voyage enrollment bypass (SEV-1) is fixed:
+ * Verifies the SEV-1 fix:
  * - Unauthenticated users are blocked.
  * - Students cannot enroll in draft voyages.
  * - Students can enroll in published voyages.
  * - Non-existent voyages return not_found.
  * - SysAdmin and Faculty can enroll in draft voyages for testing purposes.
- *
- * These tests live in a NEW file to avoid conflicts with the existing
- * testing/requests/voyage-enrollment.test.ts (other session constraint).
  */
 
 import { enrollInVoyage } from "@/lib/requests/voyage-enrollment";
@@ -99,7 +96,7 @@ function mockedRequireRole() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("enrollInVoyage — Phase 2 security (draft bypass fix)", () => {
+describe("enrollInVoyage — draft bypass security fix", () => {
   let mockedFetch: ReturnType<typeof mockGlobalFetch>;
 
   beforeEach(() => {

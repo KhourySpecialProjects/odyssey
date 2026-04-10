@@ -178,7 +178,7 @@ export async function createVoyageWithNodes(data: {
   const validated = parseResult.data;
 
   try {
-    // Phase 1: create the voyage record
+    // Step 1: create the voyage record
     const slug = validated.name
       .toLowerCase()
       .trim()
@@ -223,7 +223,7 @@ export async function createVoyageWithNodes(data: {
     };
     const voyageId = voyage.id;
 
-    // Phase 2: create voyage nodes — main path first, then branches
+    // Step 2: create voyage nodes — main path first, then branches
     const mainNodes = validated.nodes.filter((n) => n.isMainPath);
     const branchNodes = validated.nodes.filter((n) => !n.isMainPath);
 
