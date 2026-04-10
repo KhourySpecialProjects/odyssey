@@ -10,6 +10,7 @@ jest.mock("@/lib/auth/azure", () => ({
     nuid: "12345",
     isActive: true,
   }),
+  getUserPhoto: jest.fn().mockResolvedValue(null),
 }));
 
 jest.mock("@/lib/requests/authorized-user", () => ({
@@ -92,7 +93,7 @@ describe("options", () => {
         const account = {
           access_token: "test-token",
           providerAccountId: "1",
-          provider: "test" as const,
+          provider: "azure-ad" as const,
           type: "oauth" as const,
         };
 
