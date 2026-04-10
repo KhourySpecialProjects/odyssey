@@ -1114,9 +1114,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
           slug: "v2-lesson",
           orderIndex: 0,
           blocksVersion: "v2",
-          blocksV2: [
-            { id: "abc", type: "paragraph", props: {}, children: [] },
-          ],
+          blocksV2: [{ id: "abc", type: "paragraph", props: {}, children: [] }],
           blocks: [],
         }),
       ],
