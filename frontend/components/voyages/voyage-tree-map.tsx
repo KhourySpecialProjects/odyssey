@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
-import { VoyageTreeIsland } from "./voyage-tree-island";
+import { VoyageTreeIsland, ISLAND_SVG_DIMENSIONS } from "./voyage-tree-island";
 
 export interface TreeNode {
   id: number;
@@ -19,11 +19,36 @@ interface VoyageTreeMapProps {
   nodes: TreeNode[];
 }
 
-const MAIN_SIZE = 150;
-const BRANCH_SIZE = 130;
-const H_GAP = 100;
-const V_GAP = 140;
-const PADDING = 100;
+// Default desktop sizes. On narrower containers these scale down proportionally
+// so multi-branch rows stay within the viewport.
+const DEFAULT_MAIN_SIZE = 260;
+const DEFAULT_BRANCH_SIZE = 210;
+const DEFAULT_H_GAP = 80;
+const DEFAULT_V_GAP = 160;
+const PADDING = 60;
+const MIN_MAIN_SIZE = 140;
+const MIN_BRANCH_SIZE = 110;
+const MIN_H_GAP = 24;
+
+/** Compute layout sizes that fit within the container, accounting for
+ *  the widest branch row in the tree. */
+function computeLayoutSizes(containerWidth: number, maxBranches: number) {
+  // Available width for a branch row after padding.
+  const usable = Math.max(containerWidth - PADDING * 2, 0);
+  // Desktop ideal width for the widest branch row.
+  const idealBranchRow =
+    maxBranches > 0
+      ? maxBranches * DEFAULT_BRANCH_SIZE + (maxBranches - 1) * DEFAULT_H_GAP
+      : DEFAULT_MAIN_SIZE;
+  const scale = usable > 0 ? Math.min(1, usable / idealBranchRow) : 1;
+
+  const MAIN_SIZE = Math.max(DEFAULT_MAIN_SIZE * scale, MIN_MAIN_SIZE);
+  const BRANCH_SIZE = Math.max(DEFAULT_BRANCH_SIZE * scale, MIN_BRANCH_SIZE);
+  const H_GAP = Math.max(DEFAULT_H_GAP * scale, MIN_H_GAP);
+  const V_GAP = DEFAULT_V_GAP;
+
+  return { MAIN_SIZE, BRANCH_SIZE, H_GAP, V_GAP };
+}
 
 interface LayoutNode {
   node: TreeNode;
@@ -58,7 +83,9 @@ function buildTree(nodes: TreeNode[]): LayoutNode[] {
 function assignPositions(
   roots: LayoutNode[],
   containerWidth: number,
+  sizes: ReturnType<typeof computeLayoutSizes>,
 ): { all: LayoutNode[]; height: number } {
+  const { MAIN_SIZE, BRANCH_SIZE, H_GAP, V_GAP } = sizes;
   const all: LayoutNode[] = [];
   let y = PADDING;
   const cx = containerWidth / 2;
@@ -90,17 +117,18 @@ function assignPositions(
   return { all, height: y + PADDING };
 }
 
-/** Smooth bezier from bottom of parent to top of child */
+/** Smooth bezier from bottom of parent to top of child, anchored to the
+ *  rendered SVG geometry (not the layout box) so the line meets the island. */
 function bezierPath(
   px: number,
   py: number,
   cx: number,
   cy: number,
-  parentSize: number,
-  childSize: number,
+  parentVisibleHeight: number,
+  childVisibleHeight: number,
 ): string {
-  const sy = py + parentSize * 0.4;
-  const ey = cy - childSize * 0.4;
+  const sy = py + parentVisibleHeight / 2;
+  const ey = cy - childVisibleHeight / 2;
   const my = (sy + ey) / 2;
   return `M ${px} ${sy} C ${px} ${my}, ${cx} ${my}, ${cx} ${ey}`;
 }
@@ -123,10 +151,27 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
   }, []);
 
   const tree = useMemo(() => buildTree(nodes), [nodes]);
-  const { all: layoutNodes, height: totalHeight } = useMemo(
-    () => assignPositions(tree, containerWidth),
-    [tree, containerWidth],
+
+  // Widest branch row drives the responsive scale.
+  const maxBranches = useMemo(
+    () => tree.reduce((max, root) => Math.max(max, root.children.length), 0),
+    [tree],
   );
+
+  const sizes = useMemo(
+    () => computeLayoutSizes(containerWidth, maxBranches),
+    [containerWidth, maxBranches],
+  );
+
+  const { all: layoutNodes, height: totalHeight } = useMemo(
+    () => assignPositions(tree, containerWidth, sizes),
+    [tree, containerWidth, sizes],
+  );
+
+  // Scale SVG visible heights by the same ratio used for layout sizing.
+  const svgScale = sizes.MAIN_SIZE / DEFAULT_MAIN_SIZE;
+  const mainVisibleHeight = ISLAND_SVG_DIMENSIONS.main.height * svgScale;
+  const branchVisibleHeight = ISLAND_SVG_DIMENSIONS.branch.height * svgScale;
 
   // Build connectors
   const connectors = useMemo(() => {
@@ -135,8 +180,8 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
       py: number;
       cx: number;
       cy: number;
-      pSize: number;
-      cSize: number;
+      pVisible: number;
+      cVisible: number;
       key: string;
     }[] = [];
     const mainLayout = layoutNodes.filter((n) => n.node.isMainPath);
@@ -151,8 +196,8 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
         py: from.y,
         cx: to.x,
         cy: to.y,
-        pSize: MAIN_SIZE,
-        cSize: MAIN_SIZE,
+        pVisible: mainVisibleHeight,
+        cVisible: mainVisibleHeight,
         key: `m${from.node.id}-m${to.node.id}`,
       });
     }
@@ -165,15 +210,15 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
           py: layout.y,
           cx: child.x,
           cy: child.y,
-          pSize: MAIN_SIZE,
-          cSize: BRANCH_SIZE,
+          pVisible: mainVisibleHeight,
+          cVisible: branchVisibleHeight,
           key: `m${layout.node.id}-b${child.node.id}`,
         });
       }
     }
 
     return lines;
-  }, [layoutNodes]);
+  }, [layoutNodes, mainVisibleHeight, branchVisibleHeight]);
 
   const ready = containerWidth > 0;
   let mainStep = 0;
@@ -197,10 +242,10 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
             aria-hidden="true"
             style={{ zIndex: 1 }}
           >
-            {connectors.map(({ px, py, cx, cy, pSize, cSize, key }) => (
+            {connectors.map(({ px, py, cx, cy, pVisible, cVisible, key }) => (
               <path
                 key={key}
-                d={bezierPath(px, py, cx, cy, pSize, cSize)}
+                d={bezierPath(px, py, cx, cy, pVisible, cVisible)}
                 stroke="rgba(45,106,79,0.3)"
                 strokeWidth="2.5"
                 fill="none"
@@ -212,7 +257,7 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
           {layoutNodes.map((layout) => {
             const isMain = layout.node.isMainPath;
             if (isMain) mainStep++;
-            const size = isMain ? MAIN_SIZE : BRANCH_SIZE;
+            const size = isMain ? sizes.MAIN_SIZE : sizes.BRANCH_SIZE;
 
             return (
               <div
@@ -248,6 +293,7 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
                   size={isMain ? "main" : "branch"}
                   status={layout.node.status}
                   stepNumber={isMain ? mainStep : undefined}
+                  scale={svgScale}
                 />
               </div>
             );
