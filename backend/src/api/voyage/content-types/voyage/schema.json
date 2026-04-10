@@ -33,6 +33,12 @@
       "relation": "oneToMany",
       "target": "api::voyage-node.voyage-node",
       "mappedBy": "voyage"
+    },
+    "groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "voyages"
     }
   }
 }

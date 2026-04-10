@@ -5,13 +5,15 @@ import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 import {
   getCachedUserDashboardFull,
   getCachedUserGroups,
+  getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { UserGroups } from "./user-groups";
 import { EmptyState } from "@/components/ui/empty-state";
-import { IconUsers, IconArchive } from "@tabler/icons-react";
+import { IconUsers, IconArchive, IconMap } from "@tabler/icons-react";
 import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
+import { VoyageCard } from "@/components/voyages/voyage-card";
 
 export async function MyContent({
   searchParams,
@@ -42,6 +44,10 @@ export async function MyContent({
   );
   const archivedGroups = allGroups.filter((group) =>
     group.users_archived?.some((user) => user.id === authorizedUser.id),
+  );
+
+  const voyageEnrollments = await getCachedVoyageEnrollmentsByUser(
+    authorizedUser.id,
   );
 
   return (
@@ -104,6 +110,28 @@ export async function MyContent({
               sortKey={sortKey}
             />
           </>
+        ) : contentType === "voyages" ? (
+          (() => {
+            const validEnrollments = voyageEnrollments.filter((e) => e.voyage);
+            return validEnrollments.length === 0 ? (
+              <EmptyState
+                icon={
+                  <IconMap
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No enrolled voyages"
+                message="You haven't enrolled in any voyages yet."
+              />
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {validEnrollments.map((enrollment) => (
+                  <VoyageCard key={enrollment.id} voyage={enrollment.voyage!} />
+                ))}
+              </div>
+            );
+          })()
         ) : contentType === "favorited" ? (
           <FavoriteDropletsGrid sortKey={sortKey} />
         ) : null}

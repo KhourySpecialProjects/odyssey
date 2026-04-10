@@ -14,6 +14,7 @@ jest.mock("@/lib/auth/session", () => ({
 jest.mock("@/lib/requests/cached", () => ({
   getCachedUserDashboardFull: jest.fn(),
   getCachedUserGroups: jest.fn(),
+  getCachedVoyageEnrollmentsByUser: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock("next/navigation", () => ({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
@@ -21,9 +21,9 @@ interface MyContentTabsProps {
 }
 
 const tabs = [
-  { id: "droplets", label: "My Droplets" },
-  { id: "playlists", label: "My Playlists" },
-  { id: "voyages", label: "My Voyages" },
+  { id: "droplets", label: "Droplets" },
+  { id: "playlists", label: "Playlists" },
+  { id: "voyages", label: "Voyages" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -35,7 +35,11 @@ export function MyContentTabs({
   showPlaylists,
   showVoyages,
 }: MyContentTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("droplets");
+  const tabIds = tabs.map((t) => t.id);
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(tabIds).withDefault("droplets"),
+  );
 
   const visibleTabs = tabs.filter(
     (t) =>

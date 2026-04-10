@@ -7,6 +7,7 @@ interface FilterSelectorProps {
   droplets: number;
   playlists: number;
   groups: number;
+  voyages: number;
   archived: number;
   favorited: number;
 }
@@ -15,12 +16,14 @@ export function FilterSelector({
   droplets,
   playlists,
   groups,
+  voyages,
   archived,
   favorited,
 }: FilterSelectorProps) {
   const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
+    { name: `Voyages (${voyages})`, value: "voyages" },
     { name: `Groups (${groups})`, value: "groups" },
     { name: `Archived (${archived})`, value: "archived" },
     { name: `Favorited (${favorited})`, value: "favorited" },
