@@ -1,5 +1,12 @@
 import Link from "next/link";
 
+// Rendered SVG dimensions — shared with voyage-tree-map so connectors can
+// anchor to actual island geometry, not the (larger) layout box.
+export const ISLAND_SVG_DIMENSIONS = {
+  main: { width: 200, height: 180 },
+  branch: { width: 160, height: 145 },
+} as const;
+
 interface VoyageTreeIslandProps {
   label: string;
   slug?: string;
@@ -7,18 +14,23 @@ interface VoyageTreeIslandProps {
   size: "main" | "branch";
   status?: "completed" | "available" | "locked";
   stepNumber?: number;
+  /** Visual scale factor for responsive sizing (1 = default). */
+  scale?: number;
 }
 
 function IslandSvg({
   size,
   status,
+  scale = 1,
 }: {
   size: "main" | "branch";
   status: string;
+  scale?: number;
 }) {
   const isLocked = status === "locked";
-  const w = size === "main" ? 200 : 160;
-  const h = size === "main" ? 180 : 145;
+  const base = ISLAND_SVG_DIMENSIONS[size];
+  const w = base.width * scale;
+  const h = base.height * scale;
 
   return (
     <svg
@@ -360,6 +372,7 @@ export function VoyageTreeIsland({
   size,
   status = "available",
   stepNumber,
+  scale = 1,
 }: VoyageTreeIslandProps) {
   const isMain = size === "main";
   const isLocked = status === "locked";
@@ -390,7 +403,7 @@ export function VoyageTreeIsland({
         {/* Lock icon */}
         {isLocked && <LockIcon />}
 
-        <IslandSvg size={size} status={status} />
+        <IslandSvg size={size} status={status} scale={scale} />
       </div>
 
       {/* Label */}
