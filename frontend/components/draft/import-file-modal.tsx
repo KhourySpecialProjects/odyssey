@@ -605,6 +605,17 @@ const SortableSectionCard = memo(function SortableSectionCard({
     }
   }
 
+  function handlePreviewSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const selectedText = sel.toString().trim();
+    if (selectedText.length < 3) return;
+    const start = section.markdownContent.indexOf(selectedText);
+    if (start === -1) return;
+    setSelectionRange({ start, end: start + selectedText.length });
+    if (!showPromptToolbar) setShowPromptToolbar(true);
+  }
+
   function handleTextareaBlur(e: React.FocusEvent) {
     // If focus is moving to the prompt toolbar, keep it open
     if (
@@ -853,15 +864,14 @@ const SortableSectionCard = memo(function SortableSectionCard({
                     </button>
                   </div>
                 </div>
-              ) : isEditing ? (
-                /* Edit mode with custom prompt toolbar (Task 5) */
+              ) : (
+                /* Edit / Preview mode with shared AI prompt toolbar */
                 <div className="relative">
                   {showPromptToolbar && (
                     <div
                       ref={toolbarRef}
                       onMouseDown={(e) => {
-                        // Prevent ALL toolbar clicks from stealing focus from textarea.
-                        // This preserves the text selection highlight in the textarea.
+                        // Prevent toolbar clicks from stealing focus/selection.
                         e.preventDefault();
                       }}
                       className="absolute top-0 right-0 left-0 z-10 flex flex-col gap-1 rounded-t-md border-b border-slate-300 bg-white p-2 shadow-md dark:border-slate-600 dark:bg-slate-800"
@@ -922,53 +932,60 @@ const SortableSectionCard = memo(function SortableSectionCard({
                       </div>
                     </div>
                   )}
-                  <textarea
-                    ref={textareaRef}
-                    value={section.markdownContent}
-                    onChange={(e) => onContentChange(e.target.value)}
-                    onMouseUp={handleSelectionChange}
-                    onKeyUp={handleSelectionChange}
-                    onBlur={handleTextareaBlur}
-                    className={cn(
-                      "h-64 w-full resize-none bg-transparent p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none selection:bg-blue-200 dark:text-slate-300 dark:selection:bg-blue-800",
-                      showPromptToolbar && "pt-16",
-                    )}
-                    aria-label="Edit lesson content"
-                  />
-                </div>
-              ) : (
-                /* Preview mode */
-                cleanContent && (
-                  <div className="max-h-72 overflow-y-auto p-3">
-                    <Suspense
-                      fallback={
-                        <p className="text-xs text-slate-400">
-                          Loading preview...
-                        </p>
-                      }
-                    >
-                      <div className={PROSE_CLASSES}>
-                        <Markdown
-                          components={{
-                            img: ({ src, alt }) => {
-                              const blobUrl = src && imageBlobUrls.get(src);
-                              if (!blobUrl) return null;
-                              return (
-                                <img
-                                  src={blobUrl}
-                                  alt={alt || "Extracted image"}
-                                  className="my-2 max-h-48 rounded border border-slate-200 dark:border-slate-600"
-                                />
-                              );
-                            },
-                          }}
+                  {isEditing ? (
+                    <textarea
+                      ref={textareaRef}
+                      value={section.markdownContent}
+                      onChange={(e) => onContentChange(e.target.value)}
+                      onMouseUp={handleSelectionChange}
+                      onKeyUp={handleSelectionChange}
+                      onBlur={handleTextareaBlur}
+                      className={cn(
+                        "h-64 w-full resize-none bg-transparent p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none selection:bg-blue-200 dark:text-slate-300 dark:selection:bg-blue-800",
+                        showPromptToolbar && "pt-16",
+                      )}
+                      aria-label="Edit lesson content"
+                    />
+                  ) : (
+                    cleanContent && (
+                      <div
+                        className={cn(
+                          "max-h-72 overflow-y-auto p-3",
+                          showPromptToolbar && "pt-16",
+                        )}
+                        onMouseUp={handlePreviewSelection}
+                      >
+                        <Suspense
+                          fallback={
+                            <p className="text-xs text-slate-400">
+                              Loading preview...
+                            </p>
+                          }
                         >
-                          {cleanContent}
-                        </Markdown>
+                          <div className={PROSE_CLASSES}>
+                            <Markdown
+                              components={{
+                                img: ({ src, alt }) => {
+                                  const blobUrl = src && imageBlobUrls.get(src);
+                                  if (!blobUrl) return null;
+                                  return (
+                                    <img
+                                      src={blobUrl}
+                                      alt={alt || "Extracted image"}
+                                      className="my-2 max-h-48 rounded border border-slate-200 dark:border-slate-600"
+                                    />
+                                  );
+                                },
+                              }}
+                            >
+                              {cleanContent}
+                            </Markdown>
+                          </div>
+                        </Suspense>
                       </div>
-                    </Suspense>
-                  </div>
-                )
+                    )
+                  )}
+                </div>
               )}
             </div>
           )}

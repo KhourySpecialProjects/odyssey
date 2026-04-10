@@ -10,6 +10,34 @@ interface TextItem {
   fontName?: string;
 }
 
+// pdfjs-dist uses private class fields (#field) that break when webpack/SWC
+// transpile them. Load from CDN via webpackIgnore to bypass bundler processing.
+// cdn.jsdelivr.net is already allowed in the CSP script-src and connect-src.
+const PDFJS_CDN = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/build";
+
+let cachedWorkerUrl: string | null = null;
+
+async function loadPdfJs(): Promise<typeof import("pdfjs-dist")> {
+  const pdfjsLib: typeof import("pdfjs-dist") = await import(
+    /* webpackIgnore: true */ `${PDFJS_CDN}/pdf.min.mjs`
+  );
+
+  if (typeof window !== "undefined" && !cachedWorkerUrl) {
+    // Fetch worker and create blob URL to satisfy CSP worker-src 'self' blob:
+    const res = await fetch(`${PDFJS_CDN}/pdf.worker.min.mjs`);
+    const blob = new Blob([await res.text()], {
+      type: "application/javascript",
+    });
+    cachedWorkerUrl = URL.createObjectURL(blob);
+  }
+
+  if (cachedWorkerUrl) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = cachedWorkerUrl;
+  }
+
+  return pdfjsLib;
+}
+
 /**
  * Extract formatted markdown from a PDF file using pdfjs-dist.
  * Maps font sizes to heading levels, detects bold, extracts images and links.
@@ -25,14 +53,7 @@ export async function extractTextFromPDF(file: File): Promise<{
     );
   }
 
-  const pdfjsLib = await import("pdfjs-dist");
-
-  if (typeof window !== "undefined") {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url,
-    ).toString();
-  }
+  const pdfjsLib = await loadPdfJs();
 
   const arrayBuffer = await file.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
