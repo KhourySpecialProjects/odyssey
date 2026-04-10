@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CheckIcon, X } from "lucide-react";
+import { CheckIcon, Plus } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -16,7 +16,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AuthorizedUser } from "@/types";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { cn } from "@/lib/utils";
@@ -54,11 +53,6 @@ export function UserMultiSelect({
     });
   }, [users, search]);
 
-  const selectedUsers = useMemo(
-    () => users.filter((u) => selectedIds.includes(u.id)),
-    [users, selectedIds],
-  );
-
   const getUserLabel = (user: AuthorizedUser) =>
     user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`
@@ -71,45 +65,10 @@ export function UserMultiSelect({
           type="button"
           role="combobox"
           variant="outline"
-          className={cn(
-            "h-auto min-h-10 w-full justify-start rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-800",
-          )}
+          className="h-9 w-9 border-none bg-transparent p-0 text-[#344054] shadow-none transition-colors hover:bg-transparent hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-100"
+          aria-label={placeholder}
         >
-          {selectedUsers.length > 0 ? (
-            <div className="flex w-full flex-wrap items-center justify-start gap-1">
-              {selectedUsers.map((user) => (
-                <Badge
-                  variant="outline"
-                  key={user.id}
-                  className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-normal text-slate-800"
-                >
-                  {getUserLabel(user)}
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onChange(selectedIds.filter((id) => id !== user.id));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onChange(selectedIds.filter((id) => id !== user.id));
-                      }
-                    }}
-                    className="ml-0.5 cursor-pointer rounded-full hover:opacity-70"
-                  >
-                    <X className="h-3 w-3" />
-                  </span>
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="font-normal text-[#121216] dark:text-slate-500">
-              {placeholder}
-            </p>
-          )}
+          <Plus className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">

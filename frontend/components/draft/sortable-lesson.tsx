@@ -80,7 +80,7 @@ export function SortableLesson({
           className="flex flex-grow"
           passHref
         >
-          <span className="pl-2 text-base leading-none font-medium">
+          <span className="pl-2 text-sm leading-none font-medium">
             {lesson.name}
           </span>
         </Link>

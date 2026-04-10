@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
+import { DraftTour, TOUR_KEY } from "./draft-tour";
 import { Droplet, User } from "@/types";
 
 interface DraftLayoutShellProps {
@@ -34,15 +35,31 @@ export function DraftLayoutShell({
   children,
 }: DraftLayoutShellProps) {
   const [expanded, setExpanded] = useState(true);
+  const [tourRun, setTourRun] = useState(false);
+
+  useEffect(() => {
+    const completed = localStorage.getItem(TOUR_KEY);
+    if (!completed) {
+      const t = setTimeout(() => setTourRun(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  const restartTour = () => {
+    localStorage.removeItem(TOUR_KEY);
+    setTourRun(true);
+  };
 
   return (
     <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
+      <DraftTour run={tourRun} setRun={setTourRun} />
       <Sidebar
         droplet={droplet}
         user={user}
         availableDroplets={availableDroplets}
         expanded={expanded}
         setExpanded={setExpanded}
+        onRestartTour={restartTour}
       />
       <main
         className={cn(
