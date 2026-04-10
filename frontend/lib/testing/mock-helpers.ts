@@ -10,6 +10,7 @@
 
 import { DateTime } from "luxon";
 import type {
+  AuthorizedUser,
   Droplet,
   DropletDifficulty,
   DueDate,
@@ -184,16 +185,55 @@ export function makeLesson(overrides: Partial<Lesson> = {}): Lesson {
 }
 
 // ---------------------------------------------------------------------------
+// AuthorizedUser test factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a minimal valid AuthorizedUser fixture with sensible defaults.
+ * Pass overrides to customise specific fields for the test at hand.
+ *
+ * Note: `id: 0` is a falsy id — useful for testing "authorized user not found"
+ * branches where the code checks `if (!authorizedUser?.id)`.
+ */
+export function makeAuthorizedUser(
+  overrides: Partial<AuthorizedUser> = {},
+): AuthorizedUser {
+  return {
+    id: 1,
+    email: "user@example.com",
+    roles: [],
+    isEnabled: true,
+    isPublic: false,
+    linkedin: "",
+    github: "",
+    website: "",
+    firstTime: false,
+    firstName: "Test",
+    lastName: "User",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York",
+    groups: [],
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Group test factory (minimal, for use in DueDate fixtures)
 // ---------------------------------------------------------------------------
 
-function makeGroup(overrides: Partial<Group> = {}): Group {
+export function makeGroup(overrides: Partial<Group> = {}): Group {
   return {
     id: 1,
     groupName: "Test Group",
     slug: "test-group",
     isArchived: false,
-    semester: "SPRING" as GroupSemester,
+    semester: "Spring 2025" as GroupSemester,
     ...overrides,
   };
 }
