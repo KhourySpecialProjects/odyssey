@@ -7,6 +7,14 @@ import { useRouter } from "next/navigation";
 import { cn, htmlToText } from "@/lib/utils";
 import { IconPencil, IconLink } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -490,37 +498,35 @@ export function LessonRenderer({
         )}
       </div>
 
-      {isPopupOpen && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
-            <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
-              Enter New URL Slug
-            </h3>
-            <input
-              type="text"
-              value={newSlugInput}
-              onChange={(e) => setNewSlugInput(e.target.value)}
-              placeholder="e.g., my-new-url-slug"
-              className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
-            />
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsPopupOpen(false)}
-                className="dark:border-slate-600 dark:text-slate-50"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRegenerateSlug}
-                className="bg-sky-600 text-white hover:bg-sky-700"
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
+        <DialogContent className="max-w-md dark:bg-slate-900">
+          <DialogHeader>
+            <DialogTitle>Enter New URL Slug</DialogTitle>
+          </DialogHeader>
+          <Input
+            type="text"
+            value={newSlugInput}
+            onChange={(e) => setNewSlugInput(e.target.value)}
+            placeholder="e.g., my-new-url-slug"
+            autoFocus
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsPopupOpen(false)}
+              className="dark:border-slate-600 dark:text-slate-50"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRegenerateSlug}
+              className="bg-sky-600 text-white hover:bg-sky-700"
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {!isReadOnly && shouldShowEditorToggle && (
         <div className="mb-4 px-10 md:px-40">
@@ -548,8 +554,8 @@ export function LessonRenderer({
             <button
               onClick={async () => {
                 if (editorVersion === "v2") return;
+                debounceUpdate.flush();
                 hasSetVersionRef.current = true;
-                debounceUpdateV2.flush();
                 await updateLesson(lesson.id, {
                   blocksVersion: "v2",
                   blocksV2: null,

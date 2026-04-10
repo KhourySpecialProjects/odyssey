@@ -1,17 +1,26 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
+import Link from "@tiptap/extension-link";
+import { useCallback, useEffect } from "react";
 
 export function DropletOverviewInput({
   initialContent,
   updateContent,
+  editorActionsRef,
+  onIsLinkChange,
 }: {
   initialContent: string;
   updateContent: (content: string) => void;
+  editorActionsRef?: React.MutableRefObject<{
+    setLink: () => void;
+    unsetLink: () => void;
+  } | null>;
+  onIsLinkChange?: (isLink: boolean) => void;
 }) {
   const editor = useEditor({
     editable: true,
@@ -24,6 +33,16 @@ export function DropletOverviewInput({
           "before:content-[attr(data-placeholder)] before:text-[#121216] before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
       }),
       Text,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          target: "_blank",
+          rel: "noopener noreferrer nofollow",
+        },
+        autolink: true,
+        defaultProtocol: "https",
+        protocols: ["http", "https"],
+      }),
     ],
 
     onUpdate: ({ editor }) => {
@@ -39,6 +58,61 @@ export function DropletOverviewInput({
     },
     immediatelyRender: false,
   });
+
+  const setLink = useCallback(() => {
+    if (!editor) return;
+
+    const previousUrl = editor.getAttributes("link").href as string | undefined;
+    let url = window.prompt("URL", previousUrl || "");
+
+    if (url === null) {
+      return;
+    }
+
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+
+    if (!url.match(/^https?:\/\//)) {
+      url = "https://" + url;
+    }
+
+    try {
+      editor.chain().focus().setLink({ href: url }).run();
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error ? e.message : "Failed to set link";
+      alert(errorMessage);
+    }
+  }, [editor]);
+
+  const editorState = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx?.editor) {
+        return { isLink: false };
+      }
+      return {
+        isLink: ctx.editor.isActive("link"),
+      };
+    },
+  });
+
+  useEffect(() => {
+    if (!editor || !editorActionsRef) return;
+    editorActionsRef.current = {
+      setLink,
+      unsetLink: () => editor.chain().focus().unsetLink().run(),
+    };
+    return () => {
+      editorActionsRef.current = null;
+    };
+  }, [editor, setLink, editorActionsRef]);
+
+  useEffect(() => {
+    onIsLinkChange?.(editorState?.isLink ?? false);
+  }, [editorState?.isLink, onIsLinkChange]);
 
   if (!editor) {
     return null;

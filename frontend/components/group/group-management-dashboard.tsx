@@ -138,7 +138,11 @@ export function GroupDashboard({
                   variant="outline"
                   onClick={handlePrevPage}
                   disabled={currentPage === 0}
-                  className={`${currentPage === 0 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                  className={cn(
+                    currentPage === 0
+                      ? "invisible"
+                      : "visible dark:bg-slate-300 dark:text-black",
+                  )}
                 >
                   Previous
                 </Button>
@@ -147,7 +151,11 @@ export function GroupDashboard({
                   variant="outline"
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages - 1}
-                  className={`${currentPage === totalPages - 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                  className={cn(
+                    currentPage === totalPages - 1
+                      ? "invisible"
+                      : "visible dark:bg-slate-300 dark:text-black",
+                  )}
                 >
                   Next
                 </Button>

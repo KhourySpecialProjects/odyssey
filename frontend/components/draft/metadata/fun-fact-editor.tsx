@@ -87,6 +87,7 @@ export function FunFactEditor({
             <button
               onClick={handleDeleteFact}
               disabled={isDeleteLoading}
+              aria-label="Delete fact"
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 transition-colors hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50 dark:border-red-800 dark:bg-slate-700 dark:text-red-400 dark:hover:bg-red-950"
             >
               {isDeleteLoading ? (
