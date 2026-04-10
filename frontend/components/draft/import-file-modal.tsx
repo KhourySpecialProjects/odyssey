@@ -532,6 +532,7 @@ interface SortableSectionCardProps {
   imageBlobUrls: Map<string, string>;
 }
 
+const MIN_SELECTION_LENGTH = 3;
 const PROSE_CLASSES =
   "prose prose-sm dark:prose-invert prose-headings:mt-2 prose-headings:mb-1 prose-h1:text-base prose-h2:text-sm prose-h3:text-sm prose-p:my-1 prose-p:text-xs prose-p:leading-relaxed prose-ul:my-1 prose-ul:text-xs prose-ol:my-1 prose-ol:text-xs prose-li:my-0 prose-strong:font-semibold max-w-none";
 
@@ -609,7 +610,7 @@ const SortableSectionCard = memo(function SortableSectionCard({
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
     const selectedText = sel.toString().trim();
-    if (selectedText.length < 3) return;
+    if (selectedText.length < MIN_SELECTION_LENGTH) return;
     const start = section.markdownContent.indexOf(selectedText);
     if (start === -1) return;
     setSelectionRange({ start, end: start + selectedText.length });

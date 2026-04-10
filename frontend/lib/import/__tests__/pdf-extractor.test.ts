@@ -17,7 +17,7 @@ jest.mock(
 
 // Mock fetch for the worker blob download
 global.fetch = jest.fn().mockResolvedValue({
-  text: () => Promise.resolve("// worker stub"),
+  blob: () => Promise.resolve(new Blob(["// worker stub"])),
 }) as unknown as typeof fetch;
 
 // Mock URL.createObjectURL
@@ -61,7 +61,13 @@ function makeFile(name: string, size = 1000): File {
 
 describe("extractTextFromPDF", () => {
   beforeEach(() => {
-    mockGetDocument.mockReset();
+    jest.clearAllMocks();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      blob: () => Promise.resolve(new Blob(["// worker stub"])),
+    });
+    (global.URL.createObjectURL as jest.Mock).mockReturnValue(
+      "blob:worker-stub",
+    );
   });
 
   it("throws an error for files larger than 25MB", async () => {

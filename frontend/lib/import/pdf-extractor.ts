@@ -18,20 +18,21 @@ const PDFJS_CDN = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/build";
 let cachedWorkerUrl: string | null = null;
 
 async function loadPdfJs(): Promise<typeof import("pdfjs-dist")> {
-  const pdfjsLib: typeof import("pdfjs-dist") = await import(
-    /* webpackIgnore: true */ `${PDFJS_CDN}/pdf.min.mjs`
-  );
+  const needsWorker = typeof window !== "undefined" && !cachedWorkerUrl;
 
-  if (typeof window !== "undefined" && !cachedWorkerUrl) {
-    // Fetch worker and create blob URL to satisfy CSP worker-src 'self' blob:
-    const res = await fetch(`${PDFJS_CDN}/pdf.worker.min.mjs`);
-    const blob = new Blob([await res.text()], {
-      type: "application/javascript",
-    });
-    cachedWorkerUrl = URL.createObjectURL(blob);
-  }
+  // Fetch library and worker in parallel on first load
+  const [pdfjsLib, workerBlob] = await Promise.all([
+    import(/* webpackIgnore: true */ `${PDFJS_CDN}/pdf.min.mjs`) as Promise<
+      typeof import("pdfjs-dist")
+    >,
+    needsWorker
+      ? fetch(`${PDFJS_CDN}/pdf.worker.min.mjs`).then((r) => r.blob())
+      : null,
+  ]);
 
-  if (cachedWorkerUrl) {
+  if (workerBlob) {
+    // Blob URL lives for the session — never revoked so the worker can reload.
+    cachedWorkerUrl = URL.createObjectURL(workerBlob);
     pdfjsLib.GlobalWorkerOptions.workerSrc = cachedWorkerUrl;
   }
 
