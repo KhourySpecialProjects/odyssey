@@ -62,7 +62,7 @@ export function AdminTable({
                 {columns.map((col, i) => (
                   <th
                     key={i}
-                    className={`h-[55px] ${i === 0 ? "py-3 pr-6 pl-[30px]" : "px-6 py-3"} text-left text-[16px] font-medium text-[#667085] dark:text-slate-400`}
+                    className={`h-[55px] ${i === 0 ? "py-3 pr-6 pl-[30px]" : "px-6 py-3"} text-left text-[15px] font-medium text-[#667085] dark:text-slate-400`}
                   >
                     {col.label}
                   </th>

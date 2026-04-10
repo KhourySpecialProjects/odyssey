@@ -30,7 +30,7 @@ export function SearchBar({
       {/* Search icon — 20px from left edge */}
       <IconSearch
         className={cn(
-          "pointer-events-none absolute left-5 h-5 w-5 flex-shrink-0 text-[#667085]",
+          "pointer-events-none absolute left-4 h-4 w-4 flex-shrink-0 text-[#667085]",
           iconClassName,
         )}
         stroke={1.8}
@@ -42,9 +42,9 @@ export function SearchBar({
         onChange={onChange}
         placeholder={placeholder}
         className={cn(
-          "h-11 w-full rounded-[30px] border border-[#D0D5DD] bg-[#FCFCFD] dark:border-slate-700 dark:bg-slate-800",
-          "pr-2 pl-11",
-          "text-base text-slate-900 placeholder:font-normal placeholder:text-[#667085] dark:text-white dark:placeholder:text-slate-500",
+          "h-10 w-full rounded-[30px] border border-[#D0D5DD] bg-white dark:border-slate-700 dark:bg-slate-800",
+          "pr-2 pl-9",
+          "text-[15px] text-slate-900 placeholder:font-normal placeholder:text-[#667085] dark:text-white dark:placeholder:text-slate-500",
           inputClassName,
           "transition-colors outline-none focus:border-[#2D7597] focus:ring-0",
           "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
