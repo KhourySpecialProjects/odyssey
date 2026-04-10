@@ -1,8 +1,4 @@
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   getCachedUserDashboardFull,
@@ -11,6 +7,7 @@ import {
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { IconHeart } from "@tabler/icons-react";
 
 export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
@@ -48,12 +45,16 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8">
-        <MessageHeader subtitle="No Results" title="No Favorited Droplets" />
-        <MessageDescription>
-          You haven&apos;t favorited any Droplets yet.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconHeart
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No favorited droplets"
+        message="You haven't favorited any droplets yet."
+      />
     );
   }
 

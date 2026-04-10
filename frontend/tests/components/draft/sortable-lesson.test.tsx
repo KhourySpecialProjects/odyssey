@@ -126,7 +126,7 @@ describe("SortableLesson", () => {
         pathname={`/draft/d/test-droplet/test-lesson`}
       />,
     );
-    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    const activeDiv = container.querySelector(".bg-\\[\\#287697\\]\\/10");
     expect(activeDiv).toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe("SortableLesson", () => {
       />,
     );
 
-    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    const activeDiv = container.querySelector(".bg-\\[\\#287697\\]\\/10");
     expect(activeDiv).not.toBeInTheDocument();
   });
 
@@ -204,7 +204,7 @@ describe("SortableLesson", () => {
       />,
     );
 
-    const activeDiv = container.querySelector(".bg-\\[\\#2D7597\\]");
+    const activeDiv = container.querySelector(".bg-\\[\\#287697\\]\\/10");
     expect(activeDiv).toBeInTheDocument();
   });
 });
