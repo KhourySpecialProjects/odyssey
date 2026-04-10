@@ -111,27 +111,26 @@ export async function MyContent({
             />
           </>
         ) : contentType === "voyages" ? (
-          (() => {
-            const validEnrollments = voyageEnrollments.filter((e) => e.voyage);
-            return validEnrollments.length === 0 ? (
-              <EmptyState
-                icon={
-                  <IconMap
-                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
-                    stroke={1.5}
-                  />
-                }
-                title="No enrolled voyages"
-                message="You haven't enrolled in any voyages yet."
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {validEnrollments.map((enrollment) => (
+          voyageEnrollments.filter((e) => e.voyage).length === 0 ? (
+            <EmptyState
+              icon={
+                <IconMap
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No enrolled voyages"
+              message="You haven't enrolled in any voyages yet."
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {voyageEnrollments
+                .filter((e) => e.voyage)
+                .map((enrollment) => (
                   <VoyageCard key={enrollment.id} voyage={enrollment.voyage!} />
                 ))}
-              </div>
-            );
-          })()
+            </div>
+          )
         ) : contentType === "favorited" ? (
           <FavoriteDropletsGrid sortKey={sortKey} />
         ) : null}

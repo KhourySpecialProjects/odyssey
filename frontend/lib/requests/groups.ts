@@ -3,13 +3,7 @@
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
-import {
-  getAuthorizedUserByEmail,
-  getAuthorizedUsersByEmails,
-  createAuthorizedUser,
-} from "./authorized-user";
-import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
-import { AuthorizedUserRoleTitle } from "../globals";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
@@ -567,44 +561,6 @@ export async function updateGroup(
   revalidateTag(CACHE_TAGS.userDashboard);
 
   return result;
-}
-
-async function ensureAuthorizedUsers(
-  emails: string[],
-): Promise<Array<{ id: number; email: string }>> {
-  if (emails.length === 0) return [];
-
-  const existingUsers = await getAuthorizedUsersByEmails(emails);
-
-  const existingEmailSet = new Set(
-    existingUsers.map((u) => u.email.toLowerCase()),
-  );
-  const missingEmails = emails.filter(
-    (e) => !existingEmailSet.has(e.toLowerCase()),
-  );
-
-  if (missingEmails.length > 0) {
-    const roleID = await getAuthorizedUserRoleIdByTitle(
-      AuthorizedUserRoleTitle.User,
-    );
-    await Promise.all(
-      missingEmails.map(async (email) => {
-        try {
-          const formData = new FormData();
-          formData.append("email", email);
-          formData.append("isEnabled", "true");
-          await createAuthorizedUser(formData, roleID);
-        } catch (error) {
-          console.error(`Failed to create user: ${email}`, error);
-        }
-      }),
-    );
-
-    const newUsers = await getAuthorizedUsersByEmails(missingEmails);
-    existingUsers.push(...newUsers);
-  }
-
-  return existingUsers.map((u) => ({ id: u.id, email: u.email }));
 }
 
 export async function enrollUsers(group: Group) {
