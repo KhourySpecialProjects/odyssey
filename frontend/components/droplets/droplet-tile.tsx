@@ -119,11 +119,9 @@ export function DropletTile({
   }
 
   const getCompletionBadgeColor = () => {
-    if (completionPercentage === 0)
-      return "bg-red-100 text-red-800 border-red-200";
-    if (completionPercentage < 100)
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    if (completionPercentage === 0) return "border-red-400 text-red-600";
+    if (completionPercentage < 100) return "border-amber-400 text-amber-600";
+    return "border-emerald-400 text-emerald-600";
   };
 
   async function changeVisibility() {
@@ -400,7 +398,13 @@ ${
               )}
 
               {isEnrolled && dropletLessonIds.length > 0 && (
-                <Badge className={getCompletionBadgeColor()} variant="outline">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "pointer-events-none rounded-[16px] border bg-white px-[9px] py-[4px] text-[14px] leading-[18px] font-medium dark:bg-transparent",
+                    getCompletionBadgeColor(),
+                  )}
+                >
                   {completionPercentage}% Complete
                 </Badge>
               )}
@@ -441,7 +445,7 @@ ${
               {droplet.difficulty && (
                 <Badge
                   className={cn(
-                    "pointer-events-none",
+                    "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
                     getDifficultyBadgeColor(droplet.difficulty),
                   )}
                   variant="outline"

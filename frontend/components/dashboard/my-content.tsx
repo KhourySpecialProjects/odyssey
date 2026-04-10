@@ -7,12 +7,9 @@ import {
   getCachedUserGroups,
 } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { UserGroups } from "./user-groups";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconUsers, IconArchive } from "@tabler/icons-react";
 import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
 
@@ -63,15 +60,16 @@ export async function MyContent({
         ) : contentType === "groups" ? (
           <>
             {activeGroups.length === 0 && (
-              <Message className="mb-8">
-                <MessageHeader
-                  subtitle="No Results"
-                  title="No Enrolled Groups"
-                />
-                <MessageDescription>
-                  You haven&apos;t enrolled in any Groups yet.
-                </MessageDescription>
-              </Message>
+              <EmptyState
+                icon={
+                  <IconUsers
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No enrolled groups"
+                message="You haven't enrolled in any groups yet."
+              />
             )}
             <UserGroups
               activeGroups={activeGroups}
@@ -89,15 +87,16 @@ export async function MyContent({
             <hr className="pb-2" />
             <div className="pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
-              <Message className="mb-8">
-                <MessageHeader
-                  subtitle="No Results"
-                  title="No Archived Groups"
-                />
-                <MessageDescription>
-                  You haven&apos;t archived any Groups yet.
-                </MessageDescription>
-              </Message>
+              <EmptyState
+                icon={
+                  <IconArchive
+                    className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                    stroke={1.5}
+                  />
+                }
+                title="No archived groups"
+                message="You haven't archived any groups yet."
+              />
             )}
             <UserGroups
               activeGroups={archivedGroups}

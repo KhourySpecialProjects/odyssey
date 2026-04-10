@@ -65,12 +65,10 @@ export function DropletOverviewInput({
     const previousUrl = editor.getAttributes("link").href as string | undefined;
     let url = window.prompt("URL", previousUrl || "");
 
-    // cancelled
     if (url === null) {
       return;
     }
 
-    // empty
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
@@ -80,7 +78,6 @@ export function DropletOverviewInput({
       url = "https://" + url;
     }
 
-    // update link
     try {
       editor.chain().focus().setLink({ href: url }).run();
     } catch (e) {
@@ -102,15 +99,15 @@ export function DropletOverviewInput({
     },
   });
 
-  // Wire up actions ref and isLink callback for parent use
   useEffect(() => {
-    if (!editor) return;
-    if (editorActionsRef) {
-      editorActionsRef.current = {
-        setLink,
-        unsetLink: () => editor.chain().focus().unsetLink().run(),
-      };
-    }
+    if (!editor || !editorActionsRef) return;
+    editorActionsRef.current = {
+      setLink,
+      unsetLink: () => editor.chain().focus().unsetLink().run(),
+    };
+    return () => {
+      editorActionsRef.current = null;
+    };
   }, [editor, setLink, editorActionsRef]);
 
   useEffect(() => {

@@ -38,9 +38,15 @@ export function Authors({
 
   return (
     <section className="w-full">
-      <h2 className="pt-4 pb-4 text-2xl font-bold text-slate-900 dark:text-white">
-        Author(s)
-      </h2>
+      <div className="flex w-full items-center justify-between pt-4 pb-4">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Author(s)
+        </h2>
+        <UserMultiSelect
+          selectedIds={currentSelectedIds}
+          onChange={handleSelectionChange}
+        />
+      </div>
 
       {selectedUsers.length > 0 && (
         <ul className="mb-4 flex flex-col gap-3">
@@ -65,10 +71,6 @@ export function Authors({
         </ul>
       )}
 
-      <UserMultiSelect
-        selectedIds={currentSelectedIds}
-        onChange={handleSelectionChange}
-      />
       {error && <div className="mt-2 text-red-500">{error}</div>}
     </section>
   );

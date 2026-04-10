@@ -42,7 +42,7 @@ export function ExpandableEditor({
   };
 
   return (
-    <div className="w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
+    <div className="w-full rounded-md border border-[#D0D5DD] p-4 dark:border-slate-600">
       <div className="mb-4 flex w-full flex-row items-center justify-between">
         <h2 className="text-lg">Expandable Block</h2>
         <Trash2Icon

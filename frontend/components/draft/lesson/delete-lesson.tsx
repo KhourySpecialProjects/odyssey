@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import { IconTrash } from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -35,14 +42,21 @@ export function DeleteLessonButton({
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-        >
-          Delete Lesson
-        </Button>
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <button
+                className="flex items-center justify-center rounded-md p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400"
+                aria-label="Delete lesson"
+              >
+                <IconTrash className="h-5 w-5" stroke={1.8} />
+              </button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Delete lesson</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className={isDeleting ? "opacity-50" : ""}>
         <DialogHeader>
           <DialogTitle>Delete Lesson</DialogTitle>

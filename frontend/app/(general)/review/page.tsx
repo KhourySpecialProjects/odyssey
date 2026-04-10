@@ -4,14 +4,10 @@ import { isAuthorizedUserAdmin, isContentEditor } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import { getInReviewDroplets } from "@/lib/requests/droplet";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconClipboardList } from "@tabler/icons-react";
 
 export const metadata: Metadata = {
   title: "Review",
@@ -31,27 +27,27 @@ export default async function CreateRoute() {
 
   return (
     <>
-      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
-        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
-          To Review
-        </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
-          Look over draft droplets that have been submitted for review.
-        </p>
-      </div>
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-[56px] md:py-8">
+        <div className="mb-6">
+          <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
+            To Review
+          </h1>
+          <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
+            Look over draft droplets that have been submitted for review.
+          </p>
+        </div>
 
-      <div className="s mx-auto mb-8 w-full max-w-5xl px-4 xl:p-0">
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!drafts || drafts.length === 0 ? (
-          <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-            <MessageHeader
-              subtitle="No Results"
-              title="No Droplets In Review"
-            />
-            <MessageDescription>
-              No draft droplets are currently submitted for review.
-            </MessageDescription>
-          </Message>
+          <EmptyState
+            icon={
+              <IconClipboardList
+                className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                stroke={1.5}
+              />
+            }
+            title="Nothing to review"
+            message="No draft droplets are currently submitted for review."
+          />
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

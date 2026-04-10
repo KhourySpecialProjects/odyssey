@@ -4,12 +4,9 @@ import {
   getCachedEnrollmentsFavorites,
   getCachedUserDueDates,
 } from "@/lib/requests/cached";
-import {
-  Message,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
 import { UserPlaylistsClient } from "./user-playlists-client";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconArchive } from "@tabler/icons-react";
 import { Lesson, Playlist } from "@/types";
 
 export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
@@ -51,12 +48,16 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
 
   if (!allArchivedPlaylists || allArchivedPlaylists.length === 0) {
     return (
-      <Message className="mb-8">
-        <MessageHeader subtitle="No Results" title="No Archived Playlists" />
-        <MessageDescription>
-          You haven&apos;t archived any Playlists yet.
-        </MessageDescription>
-      </Message>
+      <EmptyState
+        icon={
+          <IconArchive
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No archived playlists"
+        message="You haven't archived any playlists yet."
+      />
     );
   }
 

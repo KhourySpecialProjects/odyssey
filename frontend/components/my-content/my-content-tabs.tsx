@@ -9,6 +9,8 @@ import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { VoyageCard } from "@/components/voyages/voyage-card";
 import { Droplet, Playlist, Voyage } from "@/types";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconDroplet, IconLayoutList, IconMap } from "@tabler/icons-react";
 
 interface MyContentTabsProps {
   droplets: Droplet[];
@@ -110,9 +112,16 @@ export function MyContentTabs({
       <div className="mt-6">
         {activeTab === "droplets" &&
           (droplets.length === 0 ? (
-            <p className="text-lg text-[#475569] dark:text-slate-400">
-              No droplets found.
-            </p>
+            <EmptyState
+              icon={
+                <IconDroplet
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No droplets yet"
+              message="Create a new droplet to get started."
+            />
           ) : (
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {droplets.map((droplet) => (
@@ -124,9 +133,16 @@ export function MyContentTabs({
         {activeTab === "playlists" &&
           showPlaylists &&
           (playlists.length === 0 ? (
-            <p className="text-lg text-[#475569] dark:text-slate-400">
-              No playlists found.
-            </p>
+            <EmptyState
+              icon={
+                <IconLayoutList
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No playlists yet"
+              message="Create a new playlist to get started."
+            />
           ) : (
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {playlists.map((playlist) => (
@@ -142,9 +158,16 @@ export function MyContentTabs({
         {activeTab === "voyages" &&
           showVoyages &&
           (voyages.length === 0 ? (
-            <p className="text-lg text-[#475569] dark:text-slate-400">
-              No voyages found.
-            </p>
+            <EmptyState
+              icon={
+                <IconMap
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No voyages yet"
+              message="Create a new voyage to get started."
+            />
           ) : (
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {voyages.map((voyage) => (

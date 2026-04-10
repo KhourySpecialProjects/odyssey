@@ -421,7 +421,7 @@ function SubmitButton() {
       {pending ? (
         <IconLoader2 className="mr-2 animate-spin" />
       ) : (
-        <IconCornerDownLeft className="mr-2" />
+        <IconCornerDownLeft className="h-4 w-4" stroke={1.8} />
       )}
     </button>
   );
