@@ -1,4 +1,13 @@
-const POSTHOG_PROJECT_ID = "53063";
+function getProjectId(): string {
+  const id = process.env.POSTHOG_PROJECT_ID;
+  if (!id) {
+    throw new Error(
+      "POSTHOG_PROJECT_ID environment variable is not set. " +
+        "Set it in .env.local (see .env.example).",
+    );
+  }
+  return id;
+}
 
 function getPostHogConfig() {
   const apiKey = process.env.POSTHOG_API_KEY;
@@ -26,16 +35,13 @@ async function runHogQLQuery(query: string): Promise<any[][] | null> {
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const res = await fetch(
-      `${host}/api/projects/${POSTHOG_PROJECT_ID}/query/`,
-      {
-        method: "POST",
-        headers: getHeaders(apiKey),
-        body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
-        cache: "no-store",
-        signal: controller.signal,
-      },
-    );
+    const res = await fetch(`${host}/api/projects/${getProjectId()}/query/`, {
+      method: "POST",
+      headers: getHeaders(apiKey),
+      body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
     clearTimeout(timeout);
 
     if (!res.ok) {
@@ -79,7 +85,7 @@ async function getInsightsList(): Promise<any | null> {
   }
 
   const headers = getHeaders(apiKey);
-  const listUrl = `${host}/api/projects/${POSTHOG_PROJECT_ID}/insights/`;
+  const listUrl = `${host}/api/projects/${getProjectId()}/insights/`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -131,7 +137,7 @@ async function fetchInsightByName(
   }
 
   const headers = getHeaders(apiKey);
-  const insightUrl = `${host}/api/projects/${POSTHOG_PROJECT_ID}/insights/${matched.id}/`;
+  const insightUrl = `${host}/api/projects/${getProjectId()}/insights/${matched.id}/`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
