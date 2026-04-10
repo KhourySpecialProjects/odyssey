@@ -20,7 +20,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
 
   // Fallback for users who haven't re-logged since the Strapi photo sync was deployed
   const sessionImage =
-    session?.user?.email === author?.email
+    session?.user?.email?.toLowerCase() === author?.email?.toLowerCase()
       ? session?.user?.image ?? undefined
       : undefined;
 

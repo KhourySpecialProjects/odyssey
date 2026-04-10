@@ -5,7 +5,7 @@ import GitHubProvider from "next-auth/providers/github";
 import { fetchIsAuthorizedUser as fetchIsAuthorized } from "../requests/authorized-user";
 import { fetchAPI } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
-import { uploadImage } from "../actions";
+import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -18,7 +18,7 @@ async function syncAzureProfilePhoto(
   const photoBuffer = await getUserPhoto(accessToken);
   if (!photoBuffer) return null;
 
-  const file = new File([photoBuffer], "profile-photo.jpg", {
+  const file = new File([new Uint8Array(photoBuffer)], "profile-photo.jpg", {
     type: "image/jpeg",
   });
   const formData = new FormData();
@@ -27,6 +27,7 @@ async function syncAzureProfilePhoto(
   if (!uploadResult.ok || !uploadResult.url) return null;
 
   const profilePhoto = uploadResult.url;
+  const fileName = profilePhoto.split("/").pop()!;
   try {
     const res = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -41,10 +42,12 @@ async function syncAzureProfilePhoto(
     );
     if (!res.ok) {
       console.error("Strapi profile photo save failed:", res.status);
+      await deleteImage(fileName).catch(() => {});
       return null;
     }
   } catch (err) {
     console.error("Failed to save profile photo to Strapi:", err);
+    await deleteImage(fileName).catch(() => {});
     return null;
   }
 
@@ -86,8 +89,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, profile }) {
       // Add extra properties to the JWT token
       if (user) {
+        const isAzure = account?.provider === "azure-ad";
+
         const [graphProfile, [authorizedUser]] = await Promise.all([
-          getUserProfile(account?.access_token as string),
+          isAzure
+            ? getUserProfile(account.access_token as string)
+            : Promise.resolve(null),
           fetchAPI<
             {
               id: number;
@@ -107,7 +114,7 @@ export const authOptions: NextAuthOptions = {
 
         const profilePhoto =
           authorizedUser.profilePhoto ||
-          (account?.provider === "azure-ad" && account.access_token
+          (isAzure && account.access_token
             ? await syncAzureProfilePhoto(
                 account.access_token,
                 authorizedUser.id,
@@ -118,7 +125,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           image: profilePhoto || user.image,
-          nuid: graphProfile.nuid,
+          nuid: graphProfile?.nuid,
           isActive: true,
           roles: authorizedUser.roles.map(
             (elem) => elem.title as AuthorizedUserRoleTitle,

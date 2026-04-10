@@ -31,7 +31,6 @@ export async function DropletsGrid({
   let enrolledDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
   let archivedDropletIds: number[] = [];
-  let favoritedDropletIds: number[] = [];
 
   let enrollments: Enrollment[] = [];
   let dueDates: DueDate[] = [];
