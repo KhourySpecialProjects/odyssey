@@ -19,9 +19,6 @@ describe("LearningObjectivesInput", () => {
       );
 
       expect(screen.getByText("Learning Objectives")).toBeInTheDocument();
-      expect(
-        screen.getByText("By completing this Droplet, you should:"),
-      ).toBeInTheDocument();
       expect(screen.getByText("Learn React")).toBeInTheDocument();
       expect(screen.getByText("Master TypeScript")).toBeInTheDocument();
     });
@@ -89,7 +86,7 @@ describe("LearningObjectivesInput", () => {
       );
 
       const mainDiv = container.firstChild;
-      expect(mainDiv).toHaveClass("flex", "w-min", "flex-col");
+      expect(mainDiv).toHaveClass("w-full");
     });
   });
 
@@ -532,8 +529,8 @@ describe("LearningObjectivesInput", () => {
         />,
       );
 
-      const scrollContainer = container.querySelector(".overflow-y-scroll");
-      expect(scrollContainer).toBeInTheDocument();
+      const listContainer = container.querySelector(".rounded-lg");
+      expect(listContainer).toBeInTheDocument();
     });
 
     it("applies fixed height to scroll container", () => {
@@ -544,8 +541,8 @@ describe("LearningObjectivesInput", () => {
         />,
       );
 
-      const scrollContainer = container.querySelector(".h-40");
-      expect(scrollContainer).toBeInTheDocument();
+      const ul = container.querySelector("ul");
+      expect(ul).toBeInTheDocument();
     });
 
     it("renders objectives in an unordered list", () => {

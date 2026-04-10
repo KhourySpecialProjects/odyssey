@@ -43,7 +43,7 @@ interface DatasetUploadProps {
   datasets: Dataset[];
 }
 
-export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
+export function DatasetUpload({ datasets }: DatasetUploadProps) {
   const [uploadState, setUploadState] = useState<UploadState>({
     status: "idle",
   });
@@ -129,7 +129,7 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
   const handleConfirmUpload = async () => {
     if (uploadState.status !== "preview") return;
 
-    const { file, parsed, format } = uploadState;
+    const { file, format } = uploadState;
 
     setUploadState({ status: "uploading" });
 
@@ -148,14 +148,9 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
     // 2. Create the dataset record in Strapi
     const createResult = await createDataset({
       name: file.name,
-      format,
-      fileUrl: uploadResult.url,
+      url: uploadResult.url,
+      fileType: format,
       fileSize: file.size,
-      rowCount: parsed.rowCount,
-      columnCount: parsed.columnCount,
-      columnNames: parsed.columnNames,
-      columnTypes: parsed.columnTypes,
-      droplet: dropletId,
     });
 
     if (!createResult.ok || !createResult.data) {

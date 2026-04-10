@@ -94,13 +94,9 @@ describe("DatasetUpload", () => {
       {
         id: 1,
         name: "test.csv",
-        format: "csv",
-        fileUrl: "https://example.com/test.csv",
+        url: "https://example.com/test.csv",
+        fileType: "csv",
         fileSize: 1024,
-        rowCount: 100,
-        columnCount: 3,
-        columnNames: ["a", "b", "c"],
-        columnTypes: ["string", "number", "string"],
       },
     ];
     render(<DatasetUpload dropletId={1} datasets={datasets} />);
@@ -111,13 +107,9 @@ describe("DatasetUpload", () => {
     const fiveDatasets: Dataset[] = Array.from({ length: 5 }, (_, i) => ({
       id: i + 1,
       name: `dataset${i + 1}.csv`,
-      format: "csv" as const,
-      fileUrl: `https://example.com/dataset${i + 1}.csv`,
+      url: `https://example.com/dataset${i + 1}.csv`,
+      fileType: "csv",
       fileSize: 1024,
-      rowCount: 100,
-      columnCount: 2,
-      columnNames: ["a", "b"],
-      columnTypes: ["string", "number"],
     }));
     render(<DatasetUpload dropletId={1} datasets={fiveDatasets} />);
     expect(
@@ -212,13 +204,9 @@ describe("DatasetUpload", () => {
       data: {
         id: 42,
         name: "data.csv",
-        format: "csv",
-        fileUrl: "https://example.com/uploaded.csv",
+        url: "https://example.com/uploaded.csv",
+        fileType: "csv",
         fileSize: 100,
-        rowCount: 2,
-        columnCount: 2,
-        columnNames: ["name", "age"],
-        columnTypes: ["string", "number"],
       },
       error: null,
     });
@@ -259,9 +247,8 @@ describe("DatasetUpload", () => {
       expect(uploadDataset).toHaveBeenCalled();
       expect(createDataset).toHaveBeenCalledWith(
         expect.objectContaining({
-          droplet: 1,
-          format: "csv",
-          fileUrl: "https://example.com/uploaded.csv",
+          fileType: "csv",
+          url: "https://example.com/uploaded.csv",
         }),
       );
     });

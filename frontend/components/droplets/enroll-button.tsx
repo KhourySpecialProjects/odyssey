@@ -1,10 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { createEnrollment, deleteEnrollment } from "@/lib/requests/enrollment";
 import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
 import { Droplet, Enrollment } from "@/types";
-import { ArrowRightIcon } from "lucide-react";
+import { IconArrowRight } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useTransition, useEffect } from "react";
 import { toast } from "sonner";
@@ -161,27 +160,28 @@ export function EnrollButton({
     <div className="flex gap-2">
       {isEnrolled ? (
         <>
-          <Button
-            size="lg"
-            after={<ArrowRightIcon />}
+          <button
             onClick={handleContinue}
-            className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
+            className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#2D7597] bg-[#2D7597] px-4 text-sm font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78]"
           >
             Continue
-          </Button>
-          <Button size="lg" onClick={unenroll} variant="secondary">
+            <IconArrowRight className="h-4 w-4" />
+          </button>
+          <button
+            onClick={unenroll}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          >
             Unenroll
-          </Button>
+          </button>
         </>
       ) : (
-        <Button
-          size="lg"
-          after={<ArrowRightIcon />}
+        <button
           onClick={enroll}
-          className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
+          className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#2D7597] bg-[#2D7597] px-4 text-sm font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#255e78]"
         >
           Enroll and Continue
-        </Button>
+          <IconArrowRight className="h-4 w-4" />
+        </button>
       )}
     </div>
   );

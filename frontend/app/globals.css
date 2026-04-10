@@ -25,9 +25,21 @@
   }
 }
 
-::selection {
+*:not(.ProseMirror):not(.ProseMirror *)::selection {
   background: rgb(0, 120, 215); /* Blue highlight */
   color: white;
+}
+
+/* Fix invisible text in the last selected table cell during cell selection.
+   ProseMirror places the native browser selection in the head cell, and
+   macOS defaults ::selection color to white (HighlightText). The .selectedCell
+   ::after overlay (z-index 2) covers the blue ::selection background, leaving
+   white text on a white cell background. Override to keep text readable. */
+.ProseMirror .selectedCell::selection,
+.ProseMirror .selectedCell *::selection {
+  background: transparent !important;
+  color: currentColor !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 @keyframes slideInFromRight {

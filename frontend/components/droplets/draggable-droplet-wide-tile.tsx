@@ -1,6 +1,7 @@
 import { Droplet, Tag } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
 import { cn, uppercaseFirstChar, getDifficultyBadgeColor } from "@/lib/utils";
+import { getTagColors } from "@/lib/tag-colors";
 import { Plus, XCircleIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -61,41 +62,61 @@ export default function DraggableDropletWideTile({
         </div>
       )}
 
-      <div
-        className={cn(
-          "group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800",
-        )}
-      >
-        <div className="flex items-center p-4">
-          <div className="flex flex-1 flex-col justify-end gap-2">
-            <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+      <div className="group relative flex-1 overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+        <div className="flex items-center p-3">
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="flex flex-row flex-wrap gap-1.5">
               {droplet.status === "draft" && (
-                <Badge variant="destructive">Draft</Badge>
+                <span className="inline-flex items-center rounded-[16px] bg-slate-200 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-slate-600 opacity-90 dark:bg-slate-600 dark:text-slate-300">
+                  Draft
+                </span>
               )}
-              <Badge variant="default" className="dark:bg-purple-800">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                  getTagColors(droplet.focusArea).bg,
+                  getTagColors(droplet.focusArea).text,
+                )}
+              >
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
               <Badge
-                variant="secondary"
-                className="dark:bg-slate-700 dark:text-white"
+                variant="outline"
+                className={cn(
+                  "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                  getTagColors(droplet.type).bg,
+                  getTagColors(droplet.type).text,
+                )}
               >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
               {droplet.tags?.map((tag: Tag) => (
-                <Badge key={tag.id} variant="outline">
+                <Badge
+                  key={tag.id}
+                  variant="outline"
+                  className={cn(
+                    "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    getTagColors(tag.name).bg,
+                    getTagColors(tag.name).text,
+                  )}
+                >
                   {tag.name}
                 </Badge>
               ))}
               {droplet.difficulty && (
                 <Badge
+                  className={cn(
+                    "pointer-events-none rounded-[16px] border-0 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium",
+                    getDifficultyBadgeColor(droplet.difficulty),
+                  )}
                   variant="outline"
-                  className={getDifficultyBadgeColor(droplet.difficulty)}
                 >
                   {uppercaseFirstChar(droplet.difficulty)}
                 </Badge>
               )}
             </div>
-            <span className="block w-full place-self-end pt-2 pl-1 text-xl font-black text-slate-950 dark:text-slate-300">
+            <span className="block w-full text-base font-bold text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>

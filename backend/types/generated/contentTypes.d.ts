@@ -1373,6 +1373,12 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::highlight.highlight'
     >;
+    lockedAt: Attribute.DateTime;
+    lockedBy: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
     name: Attribute.String &
       Attribute.Required &
       Attribute.SetMinMaxLength<{
@@ -1563,6 +1569,207 @@ export interface ApiTagTag extends Schema.CollectionType {
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<'api::tag.tag', 'oneToOne', 'admin::user'> &
       Attribute.Private;
+  };
+}
+
+export interface ApiVoyageEnrollmentVoyageEnrollment
+  extends Schema.CollectionType {
+  collectionName: 'voyage_enrollments';
+  info: {
+    displayName: 'VoyageEnrollment';
+    pluralName: 'voyage-enrollments';
+    singularName: 'voyage-enrollment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorizedUser: Attribute.Relation<
+      'api::voyage-enrollment.voyage-enrollment',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    completionPercentage: Attribute.Decimal &
+      Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 0;
+        },
+        number
+      > &
+      Attribute.DefaultTo<0>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage-enrollment.voyage-enrollment',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    enrolledAt: Attribute.DateTime & Attribute.Required;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage-enrollment.voyage-enrollment',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyage: Attribute.Relation<
+      'api::voyage-enrollment.voyage-enrollment',
+      'manyToOne',
+      'api::voyage.voyage'
+    >;
+  };
+}
+
+export interface ApiVoyageNodeCompletionVoyageNodeCompletion
+  extends Schema.CollectionType {
+  collectionName: 'voyage_node_completions';
+  info: {
+    displayName: 'VoyageNodeCompletion';
+    pluralName: 'voyage-node-completions';
+    singularName: 'voyage-node-completion';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorizedUser: Attribute.Relation<
+      'api::voyage-node-completion.voyage-node-completion',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    completedAt: Attribute.DateTime & Attribute.Required;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage-node-completion.voyage-node-completion',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage-node-completion.voyage-node-completion',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyageEnrollment: Attribute.Relation<
+      'api::voyage-node-completion.voyage-node-completion',
+      'manyToOne',
+      'api::voyage-enrollment.voyage-enrollment'
+    >;
+    voyageNode: Attribute.Relation<
+      'api::voyage-node-completion.voyage-node-completion',
+      'manyToOne',
+      'api::voyage-node.voyage-node'
+    >;
+  };
+}
+
+export interface ApiVoyageNodeVoyageNode extends Schema.CollectionType {
+  collectionName: 'voyage_nodes';
+  info: {
+    displayName: 'VoyageNode';
+    pluralName: 'voyage-nodes';
+    singularName: 'voyage-node';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    branchType: Attribute.Enumeration<['required', 'optional']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'required'>;
+    childNodes: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'oneToMany',
+      'api::voyage-node.voyage-node'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    isMainPath: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
+    label: Attribute.String & Attribute.Required;
+    nodeType: Attribute.Enumeration<['playlist', 'checkpoint']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'playlist'>;
+    orderIndex: Attribute.Integer & Attribute.Required;
+    parentNode: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'manyToOne',
+      'api::voyage-node.voyage-node'
+    >;
+    playlist: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'manyToOne',
+      'api::playlist.playlist'
+    >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyage: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'manyToOne',
+      'api::voyage.voyage'
+    >;
+  };
+}
+
+export interface ApiVoyageVoyage extends Schema.CollectionType {
+  collectionName: 'voyages';
+  info: {
+    displayName: 'Voyage';
+    pluralName: 'voyages';
+    singularName: 'voyage';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    authors: Attribute.Relation<
+      'api::voyage.voyage',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    description: Attribute.Text;
+    isSequential: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    publishedAt: Attribute.DateTime;
+    slug: Attribute.UID<'api::voyage.voyage', 'name'> & Attribute.Required;
+    status: Attribute.Enumeration<['draft', 'published']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'draft'>;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    voyage_nodes: Attribute.Relation<
+      'api::voyage.voyage',
+      'oneToMany',
+      'api::voyage-node.voyage-node'
+    >;
   };
 }
 
@@ -2021,6 +2228,10 @@ declare module '@strapi/types' {
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
       'api::tag.tag': ApiTagTag;
+      'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
+      'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;
+      'api::voyage-node.voyage-node': ApiVoyageNodeVoyageNode;
+      'api::voyage.voyage': ApiVoyageVoyage;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

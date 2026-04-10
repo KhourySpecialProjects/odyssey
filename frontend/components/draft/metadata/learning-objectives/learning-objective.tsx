@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { GoalIcon, Trash2Icon } from "lucide-react";
+import { IconTarget, IconTrash } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useOffClick } from "../hooks/useOffClick";
@@ -35,7 +35,7 @@ export function LearningObjectiveDisplay({
       onClick={() => (open ? null : setOpen(true))}
       ref={ref}
     >
-      <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
+      <IconTarget className="mr-0.5 h-5 w-5 shrink-0" stroke={1.8} />
 
       {open ? (
         <div className="inline-flex w-full items-center justify-between space-x-1.5">
@@ -58,7 +58,7 @@ export function LearningObjectiveDisplay({
             type="button"
             onClick={remove}
           >
-            <Trash2Icon />
+            <IconTrash className="h-4 w-4" stroke={1.8} />
           </Button>
         </div>
       ) : (

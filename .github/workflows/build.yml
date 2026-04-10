@@ -19,7 +19,7 @@ on:
 
 jobs:
   frontend-build:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
       - name: Checkout repository
@@ -45,7 +45,7 @@ jobs:
           npm run build
         
   backend-build:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
       - name: Checkout repository

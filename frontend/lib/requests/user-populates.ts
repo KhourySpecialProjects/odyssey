@@ -20,7 +20,9 @@ export const USER_POPULATES = {
   },
   profile: {
     fields: PROFILE_FIELDS,
-    populate: {},
+    populate: {
+      roles: { fields: ["id", "title"] },
+    },
   },
   social: {
     fields: PROFILE_FIELDS,

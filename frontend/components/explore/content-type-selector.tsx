@@ -6,18 +6,18 @@ import { Button } from "../ui/button";
 export function ContentTypeSelector({
   droplets,
   playlists,
+  voyages,
 }: {
-  droplets?: number;
-  playlists?: number;
+  droplets: number;
+  playlists: number;
+  voyages?: number;
 }) {
   const contentTypes = [
+    { name: `Droplets (${droplets})`, value: "droplets" },
+    { name: `Playlists (${playlists})`, value: "playlists" },
     {
-      name: droplets !== undefined ? `Droplets (${droplets})` : "Droplets",
-      value: "droplets",
-    },
-    {
-      name: playlists !== undefined ? `Playlists (${playlists})` : "Playlists",
-      value: "playlists",
+      name: `Voyages${voyages !== undefined ? ` (${voyages})` : ""}`,
+      value: "voyages",
     },
   ];
   const router = useRouter();
@@ -32,7 +32,7 @@ export function ContentTypeSelector({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
       {contentTypes.map((type) => (
         <Button
           key={type.value}

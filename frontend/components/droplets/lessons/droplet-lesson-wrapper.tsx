@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Droplet, Lesson, User, AuthorizedUser, Note } from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 import DropletFooter from "../footer";
 
 interface DropletLessonWrapperProps {
@@ -62,9 +62,7 @@ export function DropletLessonWrapper({
   return (
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
-        <div
-          className={`flex w-full flex-col items-center justify-center pr-10 pl-10 md:min-w-[500px] xl:pl-0`}
-        >
+        <div className="flex w-full flex-col px-40 pt-6">
           <LessonRenderer
             lesson={lesson}
             droplet={droplet}
@@ -81,20 +79,22 @@ export function DropletLessonWrapper({
             droplet={droplet}
             enrollmentId={enrollmentId}
             currentLessonId={lesson.id}
+            completedLessonIds={completedLessonIds}
           />
         </div>
         {enrollmentId && (
           <>
             <div
               className={cn(
-                "absolute inset-y-0 right-0 min-w-[375px] border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800",
-                "sliding-notes-bar z-10 overflow-y-hidden",
+                "fixed top-[107px] right-0 min-w-[375px] border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
+                "sliding-notes-bar z-40 overflow-y-auto",
+                "h-[calc(100vh-107px)]",
                 expanded ? "visible" : "invisible",
               )}
             >
               <div className="flex items-center justify-end border-b border-slate-200 p-4 dark:border-slate-500">
                 <button onClick={() => setExpanded(false)}>
-                  <X className="h-5 w-5" />
+                  <IconX className="h-5 w-5" />
                 </button>
               </div>
               <div>

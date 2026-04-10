@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { extractTextFromPDF } from "../pdf-extractor";
 
 // Mock pdfjs-dist dynamic import

@@ -7,6 +7,7 @@ export async function BlockedUsers() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
   const authUser = await getCachedUserSocial(user.email);
+  if (!authUser) return notFound();
   const blockedUsers = authUser.blocked;
 
   return (

@@ -24,15 +24,18 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Map dataset format to badge color class. */
-function formatBadgeClass(format: Dataset["format"]): string {
-  switch (format) {
+/** Map dataset file type to badge color class. */
+function formatBadgeClass(fileType: string): string {
+  switch (fileType.toLowerCase()) {
     case "csv":
       return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
     case "json":
       return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
     case "xlsx":
+    case "xls":
       return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800";
+    default:
+      return "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800";
   }
 }
 
@@ -110,10 +113,6 @@ export function DatasetList({ datasets, onDelete }: DatasetListProps) {
                 {dataset.name}
               </p>
               <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>{dataset.rowCount.toLocaleString()} rows</span>
-                <span aria-hidden>·</span>
-                <span>{dataset.columnCount} cols</span>
-                <span aria-hidden>·</span>
                 <span>{formatFileSize(dataset.fileSize)}</span>
               </div>
             </div>
@@ -123,10 +122,10 @@ export function DatasetList({ datasets, onDelete }: DatasetListProps) {
               variant="outline"
               className={cn(
                 "shrink-0 text-xs",
-                formatBadgeClass(dataset.format),
+                formatBadgeClass(dataset.fileType),
               )}
             >
-              {dataset.format.toUpperCase()}
+              {dataset.fileType.toUpperCase()}
             </Badge>
 
             {/* Delete button */}

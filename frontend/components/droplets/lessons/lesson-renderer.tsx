@@ -15,8 +15,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
@@ -32,10 +31,11 @@ import {
 } from "@/lib/requests/highlights";
 import { Block } from "@/types";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
-import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import { HighlightDropdown } from "./highlight-dropdown";
+import { HighlightHintBanner } from "./highlight-hint-banner";
 import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import { DatasetProvider } from "@/lib/contexts/dataset-context";
@@ -94,8 +94,6 @@ export function LessonRenderer({
   expanded,
   setExpanded,
 }: LessonRendererProps) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const lessonContentRef = useRef<HTMLDivElement>(null);
   const firedMilestones = useRef<Set<number>>(new Set());
@@ -129,46 +127,9 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
-  const [canProceed, setCanProceed] = useState(false);
   const [activeBlock, setActiveBlock] = useState<number | undefined>(
     displayBlocks[0]?.id,
   );
-
-  useEffect(() => {
-    const checkQuizAnswers = () => {
-      const questions = document.querySelectorAll('[role="question"]');
-      if (!questions) {
-        setCanProceed(true);
-        return;
-      }
-      const completedQuizQuestions =
-        document.querySelectorAll('[role="status"]');
-      if (questions.length !== completedQuizQuestions.length) {
-        setCanProceed(false);
-        return;
-      }
-
-      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
-        (question) => {
-          const resultBadge = question.textContent;
-          return resultBadge?.toLowerCase().includes("right");
-        },
-      );
-
-      setCanProceed(allAnsweredCorrectly);
-    };
-
-    checkQuizAnswers();
-    const observer = new MutationObserver(checkQuizAnswers);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "id"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
@@ -332,99 +293,48 @@ export function LessonRenderer({
     );
   }
 
-  async function handleMarkAsComplete() {
-    if (!enrollmentId) {
-      return;
-    }
-
-    posthog.capture("mark_as_complete_clicked", {
-      lesson_id: lesson.id,
-      lesson_name: lesson.name,
-      droplet_id: droplet.id,
-      enrollment_id: enrollmentId,
-      user_id: authUser?.id,
-      page: window.location.pathname,
-      timestamp: new Date().toISOString(),
-    });
-
-    startTransition(async () => {
-      const success = await markLessonAsComplete(
-        enrollmentId,
-        completedLessonIds,
-        lesson.id,
-      );
-      if (success) {
-        completedLessonIds.push(lesson.id);
-
-        posthog.capture("lesson_completed", {
-          lesson_id: lesson.id,
-          lesson_name: lesson.name,
-          droplet_id: droplet.id,
-          enrollment_id: enrollmentId,
-          user_id: authUser?.id,
-          page: window.location.pathname,
-          timestamp: new Date().toISOString(),
-        });
-
-        await router.refresh();
-      }
-    });
-  }
-
   return (
-    <div
-      ref={lessonContentRef}
-      className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]"
-    >
-      <div className="relative mx-auto w-full max-w-2xl xl:py-8">
-        <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
+    <div ref={lessonContentRef} className="w-full pt-6 pb-8">
+      {(enrollmentId || author) && (
+        <HighlightDropdown
+          setExpanded={setExpanded}
+          expanded={expanded}
+          isActive={true}
+        />
+      )}
+      <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
+        {lesson.name}
+      </h1>
 
-        <DatasetProvider datasets={droplet.datasets ?? []}>
-          <PyodideProvider>
-            <div className="mt-8 space-y-2">
-              {displayBlocks.map((b: Block, i: number) => (
-                <LessonBlockRenderer
-                  key={i}
-                  block={b}
-                  lessonId={lesson.id}
-                  dropletId={droplet.id}
-                  dropletName={droplet.name}
-                  lessonName={lesson.name}
-                  userId={authUser?.id}
-                  highlights={highlights}
-                  onHighlight={handleHighlight}
-                  onDeleteHighlight={handleDeleteHighlight}
-                  onNote={handleCreateNote}
-                  enrollmentId={enrollmentId}
-                  expanded={expanded}
-                  setExpanded={setExpanded}
-                  activeBlock={activeBlock}
-                  setActiveBlock={(id: number) => setActiveBlock(id)}
-                  author={author}
-                />
-              ))}
-            </div>
-          </PyodideProvider>
-        </DatasetProvider>
-        <div className="mt-8 flex items-center justify-between">
-          <button
-            onClick={handleMarkAsComplete}
-            disabled={
-              isPending ||
-              !enrollmentId ||
-              completedLessonIds.includes(lesson.id) ||
-              !canProceed
-            }
-            className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
-          >
-            {isPending
-              ? "Marking as complete..."
-              : completedLessonIds.includes(lesson.id)
-                ? "Completed"
-                : "Mark as complete"}
-          </button>
-        </div>
-      </div>
+      {enrollmentId && !author && <HighlightHintBanner />}
+
+      <DatasetProvider datasets={droplet.datasets ?? []}>
+        <PyodideProvider>
+          <div className="mt-8 space-y-2">
+            {displayBlocks.map((b: Block, i: number) => (
+              <LessonBlockRenderer
+                key={i}
+                block={b}
+                lessonId={lesson.id}
+                dropletId={droplet.id}
+                dropletName={droplet.name}
+                lessonName={lesson.name}
+                userId={authUser?.id}
+                highlights={highlights}
+                onHighlight={handleHighlight}
+                onDeleteHighlight={handleDeleteHighlight}
+                onNote={handleCreateNote}
+                enrollmentId={enrollmentId}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                activeBlock={activeBlock}
+                setActiveBlock={(id: number) => setActiveBlock(id)}
+                author={author}
+              />
+            ))}
+          </div>
+        </PyodideProvider>
+      </DatasetProvider>
     </div>
   );
 }

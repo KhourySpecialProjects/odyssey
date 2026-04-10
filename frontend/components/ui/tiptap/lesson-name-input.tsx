@@ -4,15 +4,18 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import Heading from "@tiptap/extension-heading";
+import { useEffect } from "react";
 
 export function LessonNameInput({
   initialContent,
   updateContent,
   className,
+  onBlur,
 }: {
   initialContent: string;
   updateContent: (content: string) => void;
   className: string;
+  onBlur?: () => void;
 }) {
   const editor = useEditor({
     extensions: [
@@ -20,7 +23,8 @@ export function LessonNameInput({
       Heading.configure({
         levels: [1],
         HTMLAttributes: {
-          class: "text-6xl font-extrabold text-balance",
+          class:
+            "text-[2.5rem] font-bold text-balance text-slate-900 dark:text-white",
         },
       }),
       Text,
@@ -30,14 +34,25 @@ export function LessonNameInput({
       (updateContent as (content: string) => void)(editor.getHTML());
     },
 
+    onBlur: () => {
+      onBlur?.();
+    },
+
     content: initialContent,
     editorProps: {
       attributes: {
-        class: "hover:shadow focus:shadow-lg outline-none rounded-md px-4 py-2",
+        class:
+          "rounded-md px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:focus-visible:ring-slate-300",
       },
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (editor) {
+      editor.commands.focus("end");
+    }
+  }, [editor]);
 
   return (
     <EditorContent

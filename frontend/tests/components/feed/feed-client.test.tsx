@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { fetchAnnouncements } from "@/lib/requests/feed";
@@ -8,26 +8,9 @@ jest.mock("@/lib/requests/feed", () => ({
 }));
 
 describe("FeedClient", () => {
-  const mockIntersectionObserver = jest.fn();
-  let intersectionObserverCallback: (
-    entries: { isIntersecting: boolean }[],
-  ) => void;
-
   beforeEach(() => {
     jest.clearAllMocks();
-
     (fetchAnnouncements as jest.Mock).mockReset();
-
-    mockIntersectionObserver.mockReset();
-    mockIntersectionObserver.mockImplementation((callback) => {
-      intersectionObserverCallback = callback;
-      return {
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-        disconnect: jest.fn(),
-      };
-    });
-    window.IntersectionObserver = mockIntersectionObserver;
     jest.useRealTimers();
     jest.spyOn(console, "error").mockRestore();
   });
@@ -71,6 +54,15 @@ describe("FeedClient", () => {
     }));
   };
 
+  const mockPage = (
+    announcements: Announcement[],
+    pageCount = 1,
+    page = 1,
+  ) => ({
+    data: announcements,
+    pagination: { page, pageSize: 25, pageCount, total: announcements.length },
+  });
+
   it("renders initial loading state", () => {
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
     const loadingSpinner = screen.getByTestId("loading-spinner");
@@ -86,50 +78,41 @@ describe("FeedClient", () => {
   it("loads and displays initial announcements", async () => {
     const mockInitialAnnouncements = generateMockAnnouncements(20);
     (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
-      mockInitialAnnouncements,
+      mockPage(mockInitialAnnouncements),
     );
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    // expect(screen.getAllByText(/Announcement/)).toHaveLength(20);
-    expect(fetchAnnouncements).toHaveBeenCalledWith(mockAuthUser, 1);
+    expect(fetchAnnouncements).toHaveBeenCalledWith(mockAuthUser, 1, [
+      "droplet",
+    ]);
   });
 
-  it("loads more announcements when scrolling to bottom", async () => {
+  it("loads next page when page changes", async () => {
     const mockInitialAnnouncements = generateMockAnnouncements(20);
     const mockNextAnnouncements = generateMockAnnouncements(10, 20);
 
     (fetchAnnouncements as jest.Mock)
-      .mockResolvedValueOnce(mockInitialAnnouncements)
-      .mockResolvedValueOnce(mockNextAnnouncements);
+      .mockResolvedValueOnce(mockPage(mockInitialAnnouncements, 2, 1))
+      .mockResolvedValueOnce(mockPage(mockNextAnnouncements, 2, 2));
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    act(() => {
-      intersectionObserverCallback([{ isIntersecting: true }]);
-    });
-
-    // // expect(screen.getAllByText(/Announcement/)).toHaveLength(30);
     // expect(fetchAnnouncements).toHaveBeenCalledTimes(2);
     // expect(fetchAnnouncements).toHaveBeenLastCalledWith(mockAuthUser, 2);
   });
 
-  it("shows no more announcements message when all are loaded", async () => {
+  it("does not show pagination when on a single page", async () => {
     const mockInitialAnnouncements = generateMockAnnouncements(10);
-    const mockEmptyNextPage: Announcement[] = [];
 
-    (fetchAnnouncements as jest.Mock)
-      .mockResolvedValueOnce(mockInitialAnnouncements)
-      .mockResolvedValueOnce(mockEmptyNextPage);
+    (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+      mockPage(mockInitialAnnouncements, 1),
+    );
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    act(() => {
-      intersectionObserverCallback([{ isIntersecting: true }]);
-    });
-
     await waitFor(() => {
-      expect(screen.getByText("No more announcements")).toBeInTheDocument();
+      expect(screen.queryByText(/prev/i)).not.toBeInTheDocument();
     });
   });
 
@@ -149,7 +132,9 @@ describe("FeedClient", () => {
       },
     ];
 
-    (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(mixedAnnouncements);
+    (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+      mockPage(mixedAnnouncements),
+    );
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 

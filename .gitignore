@@ -12,6 +12,12 @@ frontend/providers/PHProvider.tsx
 # Claude Code audit log
 .claude/bash-audit.log
 
+# Claude Code worktrees (temporary agent working dirs)
+.claude/worktrees/
+
+# Playwright MCP logs
+.playwright-mcp/
+
 # personal agent settings (each developer has their own)
 .claude/settings.local.json
 .claude/.env

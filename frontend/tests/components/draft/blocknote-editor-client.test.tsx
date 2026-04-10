@@ -11,45 +11,15 @@ jest.mock("@/components/ui/blocknote/blocks/column-break-block", () => ({
   ColumnBreak: jest.fn(() => ({ type: "column-break" })),
 }));
 
-jest.mock("react-syntax-highlighter", () => ({
-  Light: jest.fn(({ children }: any) => <div>{children}</div>),
+jest.mock("@uiw/react-codemirror", () => ({
+  __esModule: true,
+  default: ({ value }: any) => <div>{value}</div>,
 }));
 
-jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
-  atomOneDark: {},
-  githubGist: {},
+jest.mock("@uiw/codemirror-theme-github", () => ({
+  githubLight: {},
+  githubDark: {},
 }));
-
-// Mock language imports
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/javascript",
-  () => ({}),
-);
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/typescript",
-  () => ({}),
-);
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/python",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/java", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/cpp", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/c", () => ({}));
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/csharp",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/php", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/ruby", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/bash", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/go", () => ({}));
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/rust", () => ({}));
-jest.mock(
-  "react-syntax-highlighter/dist/esm/languages/hljs/kotlin",
-  () => ({}),
-);
-jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
 
 // Mock all BlockNote dependencies
 jest.mock("@blocknote/core", () => ({
