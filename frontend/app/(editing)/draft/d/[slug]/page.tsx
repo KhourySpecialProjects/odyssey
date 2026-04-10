@@ -13,6 +13,10 @@ import { Authors } from "@/components/draft/metadata/authors";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import Anthropic from "@anthropic-ai/sdk";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
@@ -63,6 +67,17 @@ export default async function Droplet({ params }: Props) {
 
   const generateFunFact = async () => {
     "use server";
+
+    if (user?.email) {
+      const { allowed, retryAfterMs } = checkRateLimit(
+        user.email,
+        user.roles ?? [],
+        "fun-fact",
+      );
+      if (!allowed) {
+        throw new Error(formatRateLimitError(retryAfterMs ?? 0));
+      }
+    }
 
     try {
       const anthropic = new Anthropic({

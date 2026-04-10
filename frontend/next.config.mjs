@@ -2,7 +2,6 @@ import pkg from "./package.json" with { type: "json" };
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["pdfjs-dist"],
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
   },
