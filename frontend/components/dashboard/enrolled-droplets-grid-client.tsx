@@ -21,6 +21,7 @@ interface EnrolledDropletsGridClientProps {
   focusArea?: string | string[];
   difficulty?: string | string[];
   currentUser?: AuthorizedUser;
+  isAdmin?: boolean;
 }
 
 export function EnrolledDropletsGridClient({
@@ -36,6 +37,7 @@ export function EnrolledDropletsGridClient({
   focusArea,
   difficulty,
   currentUser,
+  isAdmin,
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { searchQuery } = useSearch();
@@ -183,6 +185,7 @@ export function EnrolledDropletsGridClient({
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""
             }
+            isAdmin={isAdmin}
           />
         ))}
       </ul>

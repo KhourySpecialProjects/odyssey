@@ -27,7 +27,9 @@ export default async function CheckPermission({ params, children }: Props) {
     getDropletBySlug<Droplet>(p.slug, {
       fields: ["*"],
       populate: {
-        authorized_users: { populate: "*" },
+        authorized_users: {
+          fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+        },
         learningObjectives: { populate: "*" },
         lessons: { populate: "*" },
         tags: { populate: "*" },

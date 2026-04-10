@@ -118,6 +118,9 @@ export default async function ExplorePage({
         postrequisites: {
           fields: ["name"],
         },
+        usersFavorited: {
+          fields: ["id"],
+        },
       },
       fields: ["*"],
     }),

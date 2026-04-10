@@ -81,7 +81,9 @@ export const getCachedDraftDropletBySlug = cache((slug: string) =>
   getDropletBySlug(slug, {
     fields: ["*"],
     populate: {
-      authorized_users: { populate: "*" },
+      authorized_users: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
