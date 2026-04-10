@@ -143,6 +143,14 @@ export function GroupManagementForm({
   );
   const [hasChanges, setHasChanges] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [savedGroup, setSavedGroup] = useState<{
+    id: number;
+    name: string;
+  } | null>(
+    existingGroup
+      ? { id: existingGroup.id, name: existingGroup.groupName }
+      : null,
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -262,6 +270,7 @@ export function GroupManagementForm({
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
+        setSavedGroup({ id: newGroup.id, name: data.groupName });
       }
       setIsOpen(true);
     } catch (error) {
@@ -286,15 +295,10 @@ export function GroupManagementForm({
   const handleGroupPost = async () => {
     setIsOpen(false);
     try {
-      if (existingGroup) {
-        await createGroupAnnouncement(
-          existingGroup.groupName,
-          existingGroup.id,
-        );
-        router.push("/g/dashboard?tab=creator");
-      } else {
-        router.push("/g/dashboard?tab=creator");
+      if (savedGroup) {
+        await createGroupAnnouncement(savedGroup.name, savedGroup.id);
       }
+      router.push("/g/dashboard?tab=creator");
     } catch (error) {
       console.error("Failed to make group announcement: ", error);
       setSubmissionState({

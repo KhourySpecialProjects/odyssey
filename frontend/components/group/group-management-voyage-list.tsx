@@ -27,6 +27,7 @@ const VoyageItem = ({
     <div className="relative flex items-start gap-3">
       <div className="flex flex-col gap-1 pt-4">
         <button
+          type="button"
           onClick={() => moveVoyageUp(index)}
           disabled={index === 0}
           className={cn(
@@ -39,6 +40,7 @@ const VoyageItem = ({
           <ChevronUp className="h-4 w-4" />
         </button>
         <button
+          type="button"
           onClick={() => moveVoyageDown(index)}
           disabled={index === totalVoyages - 1}
           className={cn(
@@ -75,7 +77,7 @@ const VoyageItem = ({
             variant="ghost"
             size="sm"
             onClick={() => onRemove(voyage.id)}
-            className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
+            className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500 focus-visible:opacity-100"
           >
             <XCircleIcon className="h-5 w-5" />
           </Button>
