@@ -24,3 +24,18 @@ export async function getUserProfile(
     throw new Error("Failed to fetch user profile");
   }
 }
+
+export async function getUserPhoto(
+  accessToken: string,
+): Promise<Buffer | null> {
+  try {
+    const response = await fetch(
+      "https://graph.microsoft.com/v1.0/me/photos/120x120/$value",
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!response.ok) return null;
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}

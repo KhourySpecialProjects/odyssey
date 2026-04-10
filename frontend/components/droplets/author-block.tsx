@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User2Icon, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import { AuthorizedUser } from "@/types";
 import { Button } from "../ui/button";
@@ -15,6 +16,13 @@ interface AuthorCardProps {
 
 export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+
+  // Fallback for users who haven't re-logged since the Strapi photo sync was deployed
+  const sessionImage =
+    session?.user?.email === author?.email
+      ? session?.user?.image ?? undefined
+      : undefined;
 
   const handleClick = () => {
     router.push(
@@ -49,7 +57,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
       )}
 
       <Avatar variant="round" className="shrink-0 border border-sky-800">
-        <AvatarImage src={author?.profilePhoto || undefined} />
+        <AvatarImage src={author?.profilePhoto || sessionImage} />
         <AvatarFallback>
           {author?.firstName && author?.lastName ? (
             author.firstName[0] + author.lastName[0]
