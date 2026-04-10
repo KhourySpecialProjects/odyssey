@@ -157,7 +157,7 @@ export function DropletFiltersButton({
         </div>
 
         {/* DROPLET_FILTERS: Focus Area, Type, Difficulty */}
-        {DROPLET_FILTERS.map((filter, i) => (
+        {DROPLET_FILTERS.map((filter) => (
           <div key={filter.name}>
             <Separator />
             <div className="px-4 py-3">
