@@ -674,16 +674,14 @@ describe("LessonRenderer", () => {
     });
 
     it("popup has correct styling classes", () => {
-      const { container } = render(
-        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
-      );
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
       fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
-      const popup = container.querySelector(".fixed.inset-0");
-      expect(popup).toHaveClass("bg-black");
-      expect(popup).toHaveClass("bg-opacity-50");
+      // Dialog renders in a portal outside container, query from document
+      const popup = document.querySelector(".fixed.inset-0");
       expect(popup).toHaveClass("z-50");
+      expect(popup).toHaveClass("bg-black/80");
     });
 
     it("applies dark mode classes to popup", () => {
@@ -691,7 +689,9 @@ describe("LessonRenderer", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
 
-      const popupContent = screen.getByText("Enter New URL Slug").parentElement;
+      // "Enter New URL Slug" is in DialogTitle > DialogHeader > DialogContent
+      const popupContent =
+        screen.getByText("Enter New URL Slug").parentElement?.parentElement;
       expect(popupContent).toHaveClass("dark:bg-slate-900");
     });
   });
