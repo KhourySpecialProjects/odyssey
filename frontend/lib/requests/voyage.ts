@@ -5,25 +5,8 @@ import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
-import { getCachedUser } from "./cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-
-async function requireAdminOrFaculty() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return false;
-  const user = await getCachedUser(session.user.email);
-  if (!user?.roles) return false;
-  const titles = user.roles.map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => (typeof r === "string" ? r : r.title) as string,
-  );
-  return (
-    titles.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    titles.includes(AuthorizedUserRoleTitle.Faculty)
-  );
-}
+import { requireRole } from "@/lib/auth/require-role";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -277,7 +260,11 @@ export async function createVoyageWithNodes(data: {
   authorId?: number;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
   try {
@@ -349,7 +336,11 @@ export async function createVoyageWithNodes(data: {
  * Publishes a draft Voyage by setting its status to "published".
  */
 export async function publishVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized" };
   }
   try {
@@ -490,7 +481,11 @@ export async function updateVoyageWithNodes(data: {
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
   try {

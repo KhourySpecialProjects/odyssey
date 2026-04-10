@@ -31,41 +31,85 @@ async function findLessonWithLock(id: number): Promise<LessonWithLock | null> {
 export default {
   async acquireLock(ctx) {
     const { id } = ctx.params;
+    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
+    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
+    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
+    // ctx.state.user is not the end-user. The trust boundary is enforced in
+    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
     const { userId } = ctx.request.body ?? {};
 
     if (!userId) {
       return ctx.badRequest("userId is required");
     }
 
-    const lesson = await findLessonWithLock(id);
-    if (!lesson) {
-      return ctx.notFound("Lesson not found");
+    // Atomic compare-and-swap via a serialized database transaction.
+    // strapi.db.transaction() wraps the callback in a Knex transaction:
+    // — queries through strapi.db.query() inside the callback automatically
+    //   participate via the async-storage transaction context;
+    // — the transaction commits on return and rolls back on throw.
+    //
+    // This eliminates the TOCTOU race where two concurrent POST /lock calls
+    // could both pass the "is it locked?" check before either writes.
+    // Reference: @strapi/database/dist/index.js — Database.transaction()
+    // and transactionCtx (async-local-storage based transaction propagation).
+    try {
+      const result = await getStrapi().db.transaction(async () => {
+        // Re-fetch inside the transaction. Because transactionCtx is active,
+        // strapi.db.query() calls here run within the same Knex transaction.
+        const lesson = (await getStrapi()
+          .db.query("api::lesson.lesson")
+          .findOne({
+            where: { id },
+            populate: { lockedBy: true },
+          })) as LessonWithLock | null;
+
+        if (!lesson) return { status: 404 as const };
+
+        const currentHolder = lesson.lockedBy?.id ?? null;
+        const lockedAt = lesson.lockedAt ?? null;
+        const stale = isLockStale(lockedAt);
+
+        if (currentHolder && currentHolder !== userId && !stale) {
+          return {
+            status: 409 as const,
+            lockedBy: lesson.lockedBy,
+            lockedAt,
+          };
+        }
+
+        await getStrapi().db.query("api::lesson.lesson").update({
+          where: { id },
+          data: { lockedBy: userId, lockedAt: new Date().toISOString() },
+        });
+
+        return { status: 200 as const };
+      });
+
+      if (result.status === 404) return ctx.notFound("Lesson not found");
+      if (result.status === 409) {
+        ctx.status = 409;
+        ctx.body = {
+          error: "Lesson is locked",
+          lockedBy: (result as { lockedBy: unknown }).lockedBy,
+          lockedAt: (result as { lockedAt: string | null }).lockedAt,
+        };
+        return;
+      }
+
+      ctx.body = { locked: true, lockedBy: userId };
+    } catch (err) {
+      getStrapi().log.error("acquireLock transaction failed", err);
+      return ctx.internalServerError("Failed to acquire lock");
     }
-
-    // Check if already locked by another user and not stale
-    if (
-      lesson.lockedBy &&
-      lesson.lockedBy.id !== userId &&
-      !isLockStale(lesson.lockedAt)
-    ) {
-      ctx.status = 409;
-      ctx.body = {
-        error: "Lesson is locked",
-        lockedBy: lesson.lockedBy,
-        lockedAt: lesson.lockedAt,
-      };
-      return;
-    }
-
-    await getStrapi().entityService.update("api::lesson.lesson", id, {
-      data: { lockedBy: userId, lockedAt: new Date().toISOString() },
-    });
-
-    ctx.body = { locked: true, lockedBy: userId };
   },
 
   async releaseLock(ctx) {
     const { id } = ctx.params;
+    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
+    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
+    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
+    // ctx.state.user is not the end-user. The trust boundary is enforced in
+    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
     const userId = Number(ctx.query.userId);
 
     if (!userId) {
@@ -95,6 +139,11 @@ export default {
 
   async heartbeat(ctx) {
     const { id } = ctx.params;
+    // TODO(phase-3): read userId from ctx.state.user once user-JWT passthrough
+    // lands (ODY-409 Phase 3 Strapi permission migration). Today every
+    // frontend→Strapi call uses STRAPI_ACCESS_TOKEN (service role), so
+    // ctx.state.user is not the end-user. The trust boundary is enforced in
+    // the Next.js Server Action layer (see frontend/lib/requests/lesson-lock.ts).
     const { userId } = ctx.request.body ?? {};
 
     if (!userId) {

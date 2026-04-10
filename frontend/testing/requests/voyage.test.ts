@@ -2,8 +2,7 @@ import { createVoyageWithNodes } from "@/lib/requests/voyage";
 import { flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { getServerSession } from "next-auth";
-import { getCachedUser } from "@/lib/requests/cached";
+import { requireRole } from "@/lib/auth/require-role";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -14,33 +13,22 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
-jest.mock("next-auth/next", () => ({
-  getServerSession: jest.fn(),
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
 }));
-
-jest.mock("next-auth", () => ({
-  getServerSession: jest.fn(),
-}));
-
-jest.mock("@/lib/auth/options", () => ({
-  authOptions: {},
-}));
-
-jest.mock("@/lib/requests/cached", () => ({
-  getCachedUser: jest.fn(),
-}));
-
-const mockAdminUser = {
-  id: 1,
-  email: "admin@example.com",
-  roles: [{ title: "System Admin" }],
-};
 
 function mockAuthorized() {
-  (getServerSession as jest.Mock).mockResolvedValue({
-    user: { email: "admin@example.com" },
+  (requireRole as jest.Mock).mockResolvedValue({
+    ok: true,
+    user: { id: 1, email: "admin@example.com", roles: ["System Admin"] },
   });
-  (getCachedUser as jest.Mock).mockResolvedValue(mockAdminUser);
+}
+
+function mockUnauthorized() {
+  (requireRole as jest.Mock).mockResolvedValue({
+    ok: false,
+    error: "unauthenticated",
+  });
 }
 
 describe("createVoyageWithNodes", () => {
@@ -49,7 +37,7 @@ describe("createVoyageWithNodes", () => {
   });
 
   it("returns Unauthorized when user is not admin or faculty", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue(null);
+    mockUnauthorized();
 
     const result = await createVoyageWithNodes({
       name: "Test Voyage",
