@@ -786,16 +786,11 @@ describe("Groups Tests", () => {
         initialMembers: {
           admins: [10, 11],
           managers: [12],
-          members: ["member1@northeastern.edu", "member2@northeastern.edu"],
+          memberIds: [20, 21],
         },
         droplets: [1, 2],
         playlists: [3, 4],
       };
-
-      getAuthorizedUsersByEmails.mockResolvedValueOnce([
-        { id: 20, email: "member1@northeastern.edu" },
-        { id: 21, email: "member2@northeastern.edu" },
-      ]);
 
       const mockCreatedGroup = {
         id: 123,
@@ -811,11 +806,6 @@ describe("Groups Tests", () => {
 
       expect(result).toEqual(mockCreatedGroup);
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-
-      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
-        "member1@northeastern.edu",
-        "member2@northeastern.edu",
-      ]);
 
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         options: {
@@ -876,46 +866,23 @@ describe("Groups Tests", () => {
       expect(requestBody.data).not.toHaveProperty("playlists");
     });
 
-    it("should create new authorized users for non-existing emails", async () => {
+    it("should create a group with memberIds", async () => {
       const authorizedUserId = 5;
       const groupData = {
         groupName: "Test Group",
         initialMembers: {
-          members: ["existing@northeastern.edu", "new@northeastern.edu"],
+          memberIds: [30, 31],
         },
       };
-
-      // First batch lookup returns only the existing user
-      getAuthorizedUsersByEmails.mockResolvedValueOnce([
-        { id: 30, email: "existing@northeastern.edu" },
-      ]);
-
-      // createAuthorizedUser succeeds for the missing email
-      createAuthorizedUser.mockResolvedValueOnce({ ok: true });
-
-      // Second batch lookup (for newly created users) returns the new user
-      getAuthorizedUsersByEmails.mockResolvedValueOnce([
-        { id: 31, email: "new@northeastern.edu" },
-      ]);
 
       fetchAPI.mockResolvedValueOnce({ id: 125, groupName: "Test Group" });
 
       await createGroup(authorizedUserId, groupData);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
-        "existing@northeastern.edu",
-        "new@northeastern.edu",
-      ]);
-      expect(createAuthorizedUser).toHaveBeenCalled();
-      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
-        "new@northeastern.edu",
-      ]);
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
-      expect(requestBody.data.members.set).toEqual(
-        expect.arrayContaining([{ id: 30 }, { id: 31 }]),
-      );
+      expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
     });
 
     it("should handle errors during group creation", async () => {
@@ -1089,10 +1056,7 @@ describe("Groups Tests", () => {
         isArchived: true,
         admins: [10, 11],
         managers: [12],
-        members: [
-          { id: 20, email: "member1@northeastern.edu" },
-          { email: "member2@northeastern.edu" },
-        ],
+        memberIds: [20, 21],
         droplets: [
           { id: 1, name: "Droplet 1" },
           { id: 2, name: "Droplet 2" },
@@ -1102,11 +1066,6 @@ describe("Groups Tests", () => {
           { id: 4, name: "Playlist 2" },
         ],
       };
-
-      getAuthorizedUsersByEmails.mockResolvedValueOnce([
-        { id: 20, email: "member1@northeastern.edu" },
-        { id: 21, email: "member2@northeastern.edu" },
-      ]);
 
       const mockUpdatedGroup = {
         id: 1,
@@ -1121,11 +1080,6 @@ describe("Groups Tests", () => {
       const result = await updateGroup(groupId, updateData);
 
       expect(result).toEqual(mockUpdatedGroup);
-
-      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
-        "member1@northeastern.edu",
-        "member2@northeastern.edu",
-      ]);
 
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
@@ -1182,11 +1136,11 @@ describe("Groups Tests", () => {
       expect(requestBody.data).not.toHaveProperty("playlists");
     });
 
-    it("should handle empty members array", async () => {
+    it("should handle empty memberIds array", async () => {
       const groupId = 1;
       const updateData = {
         groupName: "Updated Group",
-        members: [],
+        memberIds: [],
       };
 
       fetchAPI.mockResolvedValueOnce({ id: 1, groupName: "Updated Group" });
@@ -1202,19 +1156,11 @@ describe("Groups Tests", () => {
       expect(requestBody.data.members.set).toEqual([]);
     });
 
-    it("should handle members with only email addresses", async () => {
+    it("should handle memberIds with multiple users", async () => {
       const groupId = 1;
       const updateData = {
-        members: [
-          { email: "email1@northeastern.edu" },
-          { email: "email2@northeastern.edu" },
-        ],
+        memberIds: [101, 102],
       };
-
-      getAuthorizedUsersByEmails.mockResolvedValueOnce([
-        { id: 101, email: "email1@northeastern.edu" },
-        { id: 102, email: "email2@northeastern.edu" },
-      ]);
 
       fetchAPI.mockResolvedValueOnce({ id: 1 });
 

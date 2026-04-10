@@ -31,8 +31,9 @@ describe("ContentSelector", () => {
       <FilterSelector
         droplets={1}
         playlists={1}
-        archived={1}
         groups={1}
+        voyages={0}
+        archived={1}
         favorited={0}
       />,
     );

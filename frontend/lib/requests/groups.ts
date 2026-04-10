@@ -3,18 +3,13 @@
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
-import {
-  getAuthorizedUserByEmail,
-  getAuthorizedUsersByEmails,
-  createAuthorizedUser,
-} from "./authorized-user";
-import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
-import { AuthorizedUserRoleTitle } from "../globals";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
 import { createEnrollmentDirect } from "./enrollment";
+import { enrollInVoyageDirect } from "./voyage-enrollment";
 import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -157,6 +152,9 @@ export async function getGroupByID(
             fields: ["id", "name", "slug", "type", "focusArea", "difficulty"],
           },
         },
+        fields: ["id", "name", "slug"],
+      },
+      voyages: {
         fields: ["id", "name", "slug"],
       },
     },
@@ -331,10 +329,11 @@ export async function createGroup(
     initialMembers?: {
       admins?: number[];
       managers?: number[];
-      members?: string[];
+      memberIds?: number[];
     };
     droplets?: number[];
     playlists?: number[];
+    voyages?: number[];
   },
 ): Promise<Group> {
   const path = `/groups`;
@@ -345,20 +344,8 @@ export async function createGroup(
     initialMembers,
     droplets,
     playlists,
+    voyages,
   } = data;
-
-  const processMembers = async (emails?: string[]) => {
-    if (!emails || emails.length === 0) return undefined;
-    const authorizedMembers = await ensureAuthorizedUsers(emails);
-    return authorizedMembers.map((member) => ({ id: member.id }));
-  };
-
-  const [processedAdmins, processedManagers, processedMembers] =
-    await Promise.all([
-      initialMembers?.admins,
-      initialMembers?.managers,
-      processMembers(initialMembers?.members),
-    ]);
 
   // Build the creation data object
   const createData = {
@@ -367,20 +354,25 @@ export async function createGroup(
     semester,
     slug: `${groupName.replace(/\s+/g, "-").toLowerCase()}-${Math.floor(Math.random() * 90000) + 10000}`,
     creator: authorizedUserId,
-    ...(processedAdmins && {
-      admins: { set: processedAdmins },
+    ...(initialMembers?.admins && {
+      admins: { set: initialMembers.admins },
     }),
-    ...(processedManagers && {
-      managers: { set: processedManagers },
+    ...(initialMembers?.managers && {
+      managers: { set: initialMembers.managers },
     }),
-    ...(processedMembers && {
-      members: { set: processedMembers },
+    ...(initialMembers?.memberIds && {
+      members: {
+        set: initialMembers.memberIds.map((id) => ({ id })),
+      },
     }),
     ...(droplets && {
       droplets: { connect: droplets.map((id) => ({ id })) },
     }),
     ...(playlists && {
       playlists: { connect: playlists.map((id) => ({ id })) },
+    }),
+    ...(voyages && {
+      voyages: { connect: voyages.map((id) => ({ id })) },
     }),
   };
   const result = await fetchAPI<Group>(path, {
@@ -439,6 +431,10 @@ export async function getGroupBySlugV2(
         },
         sort: "name:asc",
       },
+      voyages: {
+        fields: ["id", "name", "slug", "status"],
+        sort: "name:asc",
+      },
     },
     fields = ["*", "dropletDueDates"],
   }: StrapiRequestParams = {},
@@ -469,12 +465,7 @@ export async function updateGroup(
     isArchived?: boolean;
     admins?: number[];
     managers?: number[];
-    members?: Array<{
-      email: string | null;
-      roles?: string[];
-      isActive?: boolean;
-      id?: number;
-    }>;
+    memberIds?: number[];
     droplets?: Array<{
       id: number;
       name?: string;
@@ -500,6 +491,11 @@ export async function updateGroup(
         name?: string;
       }>;
     }>;
+    voyages?: Array<{
+      id: number;
+      name?: string;
+      slug?: string;
+    }>;
   },
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
@@ -523,13 +519,9 @@ export async function updateGroup(
     };
   }
 
-  if (data.members) {
-    const authorizedMembers = await ensureAuthorizedUsers(
-      data.members.map((m) => m.email).filter((e): e is string => e != null),
-    );
-
+  if (data.memberIds) {
     dataToSend.members = {
-      set: authorizedMembers.map((member) => ({ id: member.id })),
+      set: data.memberIds.map((id) => ({ id })),
     };
   }
 
@@ -549,6 +541,14 @@ export async function updateGroup(
     };
   }
 
+  if (data.voyages) {
+    dataToSend.voyages = {
+      set: data.voyages.map((voyage) => ({
+        id: voyage.id,
+      })),
+    };
+  }
+
   const result = await fetchAPI<Group>(path, {
     options: {
       method: "PUT",
@@ -561,44 +561,6 @@ export async function updateGroup(
   revalidateTag(CACHE_TAGS.userDashboard);
 
   return result;
-}
-
-async function ensureAuthorizedUsers(
-  emails: string[],
-): Promise<Array<{ id: number; email: string }>> {
-  if (emails.length === 0) return [];
-
-  const existingUsers = await getAuthorizedUsersByEmails(emails);
-
-  const existingEmailSet = new Set(
-    existingUsers.map((u) => u.email.toLowerCase()),
-  );
-  const missingEmails = emails.filter(
-    (e) => !existingEmailSet.has(e.toLowerCase()),
-  );
-
-  if (missingEmails.length > 0) {
-    const roleID = await getAuthorizedUserRoleIdByTitle(
-      AuthorizedUserRoleTitle.User,
-    );
-    await Promise.all(
-      missingEmails.map(async (email) => {
-        try {
-          const formData = new FormData();
-          formData.append("email", email);
-          formData.append("isEnabled", "true");
-          await createAuthorizedUser(formData, roleID);
-        } catch (error) {
-          console.error(`Failed to create user: ${email}`, error);
-        }
-      }),
-    );
-
-    const newUsers = await getAuthorizedUsersByEmails(missingEmails);
-    existingUsers.push(...newUsers);
-  }
-
-  return existingUsers.map((u) => ({ id: u.id, email: u.email }));
 }
 
 export async function enrollUsers(group: Group) {
@@ -681,6 +643,22 @@ export async function enrollUsers(group: Group) {
               await enrollInPlaylist(playlist.id, member.id);
             } catch (error) {
               const msg = `Failed to enroll user ${member.id} in playlist ${playlist.id}`;
+              console.error(msg, error);
+              failures.push(msg);
+            }
+          });
+        }
+      }
+    }
+
+    if (group.voyages && group.voyages.length > 0) {
+      for (const member of group.members || []) {
+        for (const voyage of group.voyages || []) {
+          allTasks.push(async () => {
+            try {
+              await enrollInVoyageDirect(member.id, voyage.id);
+            } catch (error) {
+              const msg = `Failed to enroll user ${member.id} in voyage ${voyage.id}`;
               console.error(msg, error);
               failures.push(msg);
             }

@@ -151,6 +151,65 @@ export async function enrollInVoyage(voyageId: number) {
 }
 
 /**
+ * Enrolls a specific user in a voyage by ID.
+ * Idempotent: if already enrolled, silently succeeds.
+ * Used by group enrollment to enroll arbitrary members.
+ */
+export async function enrollInVoyageDirect(
+  authorizedUserId: number,
+  voyageId: number,
+) {
+  try {
+    const existing = await getVoyageEnrollment(authorizedUserId, voyageId);
+    if (existing) {
+      return { ok: true, error: null, data: existing };
+    }
+
+    const response = await fetch(`${STRAPI_API_URL}/api/voyage-enrollments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        data: {
+          authorizedUser: authorizedUserId,
+          voyage: voyageId,
+          enrolledAt: new Date().toISOString(),
+        },
+      }),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to enroll in voyage",
+        data: null,
+      };
+    }
+
+    revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
+    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
+    revalidateTag(CACHE_TAGS.voyages);
+
+    return {
+      ok: true,
+      error: null,
+      data: flattenAttributes(responseData.data),
+    };
+  } catch (err) {
+    console.error("Error in enrollInVoyageDirect:", err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to enroll in voyage.",
+      data: null,
+    };
+  }
+}
+
+/**
  * Unenrolls the current user from a voyage.
  * No-op if the user is not enrolled.
  */

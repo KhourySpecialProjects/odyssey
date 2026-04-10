@@ -1262,6 +1262,11 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    voyages: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::voyage.voyage'
+    >;
   };
 }
 
@@ -1749,6 +1754,11 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
     > &
       Attribute.Private;
     description: Attribute.Text;
+    groups: Attribute.Relation<
+      'api::voyage.voyage',
+      'manyToMany',
+      'api::group.group'
+    >;
     isSequential: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

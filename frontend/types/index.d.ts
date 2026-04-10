@@ -352,6 +352,7 @@ export type Group = {
   members?: AuthorizedUser[];
   droplets?: Droplet[];
   playlists?: Playlist[];
+  voyages?: Voyage[];
   users_archived?: AuthorizedUser[];
 };
 
