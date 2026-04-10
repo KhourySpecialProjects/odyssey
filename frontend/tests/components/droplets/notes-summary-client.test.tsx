@@ -1,28 +1,22 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NotesSummaryClient } from "@/components/droplets/notes-summary-client";
-import {
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  HighlightColor,
-  Tag,
-} from "@/types";
+import { HighlightColor, Tag } from "@/types";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 import { DateTime } from "luxon";
 
 describe("NotesSummaryClient", () => {
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
-    focusArea: "personal" as FocusArea,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    focusArea: "personal",
+    type: "knowledge",
+    tags: [{ id: 1, name: "React", slug: "react", droplets: [] }] as Tag[],
     learningObjectives: [],
-    status: "published" as DropletStatus,
-  };
+    status: "published",
+  });
   const mockProps = {
-    index: 0,
     dropletHighlights: [
       {
         id: 1,

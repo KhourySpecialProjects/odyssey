@@ -2,13 +2,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { KudosButton } from "@/components/feed/kudos-button";
 import { giveKudos } from "@/lib/kudos";
 import { toast } from "sonner";
-import {
-  AuthorizedUser,
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  Tag,
-} from "@/types";
+import { AuthorizedUser } from "@/types";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/kudos", () => ({
   giveKudos: jest.fn(),
@@ -39,17 +34,17 @@ const mockAuthUser: AuthorizedUser = {
   timeZone: "America/New_York",
   groups: [],
 };
-const mockDroplet = {
+const mockDroplet = makeDroplet({
   id: 1,
   name: "Test Droplet",
   slug: "test-droplet",
   isHidden: false,
-  focusArea: "personal" as FocusArea,
-  type: "knowledge" as DropletType,
-  tags: [{ id: 1, name: "React" }] as Tag[],
+  focusArea: "personal",
+  type: "knowledge",
+  tags: [{ id: 1, slug: "react", name: "React", droplets: [] }],
   learningObjectives: [],
-  status: "published" as DropletStatus,
-};
+  status: "published",
+});
 const mockAnnouncement = {
   id: 1,
   type: "droplet" as const,
@@ -83,7 +78,7 @@ describe("KudosButton", () => {
   it("renders kudos count when kudos exist", () => {
     const announcementWithKudos = {
       ...mockAnnouncement,
-      kudosGiven: [{ id: 1, email: "user@test.com" }],
+      kudosGiven: [{ ...mockAuthUser, id: 1, email: "user@test.com" }],
     };
 
     render(
@@ -101,7 +96,7 @@ describe("KudosButton", () => {
   it("shows correct aria-label when kudos already given", () => {
     const announcementWithUserKudos = {
       ...mockAnnouncement,
-      kudosGiven: [{ id: 1, email: "test@test.com" }],
+      kudosGiven: [{ ...mockAuthUser, id: 1, email: "test@test.com" }],
     };
 
     render(
@@ -119,7 +114,7 @@ describe("KudosButton", () => {
   });
 
   it("handles failed kudos submission", async () => {
-    (giveKudos as jest.Mock).mockResolvedValue({ success: false });
+    jest.mocked(giveKudos).mockResolvedValue({ success: false });
 
     render(
       <KudosButton
@@ -137,7 +132,7 @@ describe("KudosButton", () => {
   });
 
   it("handles successful kudos submission", async () => {
-    (giveKudos as jest.Mock).mockResolvedValue({ success: true });
+    jest.mocked(giveKudos).mockResolvedValue({ success: true });
 
     render(
       <KudosButton
@@ -157,7 +152,7 @@ describe("KudosButton", () => {
   it("disables button when kudos already given", () => {
     const announcementWithUserKudos = {
       ...mockAnnouncement,
-      kudosGiven: [{ id: 1, email: "test@test.com" }],
+      kudosGiven: [{ ...mockAuthUser, id: 1, email: "test@test.com" }],
     };
 
     render(

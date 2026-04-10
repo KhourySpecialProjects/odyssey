@@ -9,8 +9,7 @@ import {
   duplicateLessonToDroplet,
 } from "@/lib/requests/lesson";
 import { revalidateTag } from "next/cache";
-
-global.fetch = jest.fn();
+import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -31,14 +30,16 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 }));
 
 describe("Lesson API Functions", () => {
+  let fetchMock: jest.MockedFunction<typeof fetch>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = jest.fn();
+    fetchMock = mockGlobalFetch();
   });
 
   describe("addLesson", () => {
     it("successfully creates a lesson and revalidates enrollment caches", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -50,7 +51,7 @@ describe("Lesson API Functions", () => {
               },
             },
           }),
-      });
+      } as Response);
 
       const result = await addLesson({
         name: "Test Lesson",
@@ -58,7 +59,7 @@ describe("Lesson API Functions", () => {
         orderIndex: 0,
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({
           method: "POST",
@@ -95,7 +96,7 @@ describe("Lesson API Functions", () => {
         },
       ];
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -107,7 +108,7 @@ describe("Lesson API Functions", () => {
               },
             },
           }),
-      });
+      } as Response);
 
       const result = await addLesson({
         name: "Test Lesson",
@@ -118,11 +119,11 @@ describe("Lesson API Functions", () => {
       });
 
       // Check that fetch was called
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
       // Parse the actual body that was sent
-      const callArgs = global.fetch.mock.calls[0];
-      const actualBody = JSON.parse(callArgs[1].body);
+      const callArgs = fetchMock.mock.calls[0];
+      const actualBody = JSON.parse(callArgs[1]?.body as string);
 
       // Check the structure instead of exact match
       expect(actualBody.data).toMatchObject({
@@ -145,10 +146,10 @@ describe("Lesson API Functions", () => {
         { id: "1", type: "paragraph", props: {}, children: [] },
       ];
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await addLesson({
         name: "Test",
@@ -157,18 +158,18 @@ describe("Lesson API Functions", () => {
         blocksV2: mockBlocks,
       });
 
-      const callArgs = global.fetch.mock.calls[0];
-      const actualBody = JSON.parse(callArgs[1].body);
+      const callArgs = fetchMock.mock.calls[0];
+      const actualBody = JSON.parse(callArgs[1]?.body as string);
 
       expect(actualBody.data.blocksVersion).toBe("v2");
       expect(actualBody.data.blocksV2).toEqual(mockBlocks);
     });
 
     it("creates lesson with empty blocks array when no blocksV2", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await addLesson({
         name: "Test",
@@ -176,8 +177,8 @@ describe("Lesson API Functions", () => {
         orderIndex: 0,
       });
 
-      const callArgs = global.fetch.mock.calls[0];
-      const actualBody = JSON.parse(callArgs[1].body);
+      const callArgs = fetchMock.mock.calls[0];
+      const actualBody = JSON.parse(callArgs[1]?.body as string);
 
       expect(actualBody.data.blocks).toEqual([]);
       expect(actualBody.data).not.toHaveProperty("blocksV2");
@@ -188,10 +189,10 @@ describe("Lesson API Functions", () => {
         { id: "1", type: "paragraph", props: {}, children: [] },
       ];
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await addLesson({
         name: "Test",
@@ -200,7 +201,7 @@ describe("Lesson API Functions", () => {
         blocksV2: mockBlocks,
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           body: expect.stringContaining('"blocksVersion":"v2"'),
@@ -209,10 +210,10 @@ describe("Lesson API Functions", () => {
     });
 
     it("handles lesson creation failure", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: false,
         json: () => Promise.resolve({ error: { message: "Creation failed" } }),
-      });
+      } as Response);
 
       const result = await addLesson({
         name: "Test Lesson",
@@ -229,7 +230,7 @@ describe("Lesson API Functions", () => {
     });
 
     it("handles network errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await addLesson({
         name: "Test Lesson",
@@ -244,10 +245,10 @@ describe("Lesson API Functions", () => {
     });
 
     it("creates lesson with empty blocks array when no blocksV2", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await addLesson({
         name: "Test",
@@ -255,7 +256,7 @@ describe("Lesson API Functions", () => {
         orderIndex: 0,
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           body: expect.stringContaining('"blocks":[]'),
@@ -270,10 +271,10 @@ describe("Lesson API Functions", () => {
         { id: "1", type: "heading", props: {}, children: [] },
       ];
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 123 } }),
-      });
+      } as Response);
 
       const result = await updateLesson(123, {
         name: "Updated",
@@ -281,7 +282,7 @@ describe("Lesson API Functions", () => {
         blocksVersion: "v2",
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons/123"),
         expect.objectContaining({
           method: "PUT",
@@ -294,29 +295,31 @@ describe("Lesson API Functions", () => {
     });
 
     it("strips IDs from blocks when updating", async () => {
-      const blocksWithIds = [
+      const blocksWithIds: {
+        __component: "droplets.generic";
+        id?: number;
+        content: string;
+      }[] = [
         {
-          id: "block-1",
-          type: "paragraph",
+          __component: "droplets.generic" as const,
+          id: 1,
           content: "test",
         },
       ];
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 123 } }),
-      });
+      } as Response);
 
       await updateLesson(123, { blocks: blocksWithIds });
 
-      const callBody = JSON.parse(
-        global.fetch.mock.calls[0][1].body, // Remove 'as jest.Mock'
-      );
+      const callBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
       expect(callBody.data.blocks[0]).not.toHaveProperty("id");
     });
 
     it("handles update failure", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -325,7 +328,7 @@ describe("Lesson API Functions", () => {
               details: { errors: [{ path: ["name"] }] },
             },
           }),
-      });
+      } as Response);
 
       const result = await updateLesson(123, { name: "Invalid Name" });
       expect(result).toEqual({
@@ -337,10 +340,10 @@ describe("Lesson API Functions", () => {
     });
 
     it("revalidates paths when reload option is true", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await updateLesson(123, { name: "Test" }, { reload: true });
 
@@ -349,16 +352,14 @@ describe("Lesson API Functions", () => {
     });
 
     it("supports regenerateSlug option", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 123 } }),
-      });
+      } as Response);
 
       await updateLesson(123, { name: "New Name" }, { regenerateSlug: true });
 
-      const callBody = JSON.parse(
-        global.fetch.mock.calls[0][1].body, // Remove 'as jest.Mock'
-      );
+      const callBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
       expect(callBody.data.regenerateSlug).toBe(true);
     });
   });
@@ -413,10 +414,10 @@ describe("Lesson API Functions", () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       const result = await markLessonAsComplete("enrollment-1", [1, 2], 3);
 
@@ -425,10 +426,10 @@ describe("Lesson API Functions", () => {
     });
 
     it("handles errors when marking as complete", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: false,
         json: () => Promise.resolve({ error: "Failed" }),
-      });
+      } as Response);
 
       const result = await markLessonAsComplete("enrollment-1", [1, 2], 3);
       expect(result).toBe(false);
@@ -445,10 +446,10 @@ describe("Lesson API Functions", () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
 
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       const result = await completeLesson(1, [1, 2, 3]);
       expect(result).toEqual({ success: true });
@@ -456,7 +457,7 @@ describe("Lesson API Functions", () => {
     });
 
     it("handles errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await completeLesson(1, [1, 2, 3]);
       expect(result).toEqual({
@@ -469,10 +470,10 @@ describe("Lesson API Functions", () => {
 
   describe("deleteLesson", () => {
     it("successfully deletes a lesson", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       const result = await deleteLesson(123);
       expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
@@ -480,10 +481,10 @@ describe("Lesson API Functions", () => {
     });
 
     it("skips revalidation when revalidate is false", async () => {
-      global.fetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
-      });
+      } as Response);
 
       await deleteLesson(123, false);
       expect(revalidateTag).not.toHaveBeenCalled();
@@ -513,22 +514,22 @@ describe("Lesson API Functions", () => {
         },
       };
 
-      global.fetch
+      fetchMock
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve(mockV2Lesson),
-        })
+        } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ data: { id: 2 } }),
-        });
+        } as Response);
 
       const result = await duplicateLessonToDroplet(1, 2, 0);
 
       expect(result.ok).toBe(true);
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({
           method: "POST",

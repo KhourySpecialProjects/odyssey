@@ -156,6 +156,9 @@ describe("createVoyageWithNodes", () => {
   it("returns error if voyage POST fails", async () => {
     mockAuthorized();
 
+    const createdVoyage = { id: 99, name: "Bad Voyage", slug: "bad-voyage" };
+    (flattenAttributes as jest.Mock).mockReturnValueOnce(createdVoyage);
+
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ error: { message: "Validation failed" } }),
@@ -163,7 +166,16 @@ describe("createVoyageWithNodes", () => {
 
     const result = await createVoyageWithNodes({
       name: "Bad Voyage",
-      nodes: [],
+      nodes: [
+        {
+          playlistId: 5,
+          label: "Intro",
+          isMainPath: true,
+          branchType: "required",
+          parentPlaylistId: null,
+          orderIndex: 0,
+        },
+      ],
     });
 
     expect(result).toEqual({
@@ -223,32 +235,9 @@ describe("createVoyageWithNodes", () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it("creates voyage with no nodes successfully", async () => {
-    mockAuthorized();
-
-    const createdVoyage = {
-      id: 99,
-      name: "Empty Voyage",
-      slug: "empty-voyage",
-    };
-    (flattenAttributes as jest.Mock).mockReturnValueOnce(createdVoyage);
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: createdVoyage }),
-    });
-
-    const result = await createVoyageWithNodes({
-      name: "Empty Voyage",
-      nodes: [],
-    });
-
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
-    expect(result).toEqual({
-      ok: true,
-      error: null,
-      data: createdVoyage,
-    });
-  });
+  // Empty-nodes support was removed when VoyageTreeSchema added the
+  // nodes.min(1) constraint. A voyage must have at least one playlist
+  // to be meaningful, and the form UI now enforces this too. See
+  // voyage-phase2.test.ts for the new validation path coverage.
+  it.skip("creates voyage with no nodes successfully (superseded)", () => {});
 });

@@ -1,52 +1,54 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AddDropletDialog } from "@/components/group/add-droplet-dialog";
 import { getDroplets } from "@/lib/requests/droplet";
-import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/droplet", () => ({
   getDroplets: jest.fn(),
 }));
 
+const mockedGetDroplets = jest.mocked(getDroplets);
+
 describe("AddDropletDialog", () => {
   const mockDroplets = [
-    {
+    makeDroplet({
       id: 1,
       name: "Droplet 1",
       slug: "test-droplet",
       isHidden: false,
-      focusArea: "personal" as FocusArea,
-      type: "knowledge" as DropletType,
-      tags: [{ id: 1, name: "React" }] as Tag[],
+      focusArea: "personal",
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
       learningObjectives: [],
-      status: "published" as DropletStatus,
-    },
-    {
+      status: "published",
+    }),
+    makeDroplet({
       id: 1,
       name: "Droplet 2",
       slug: "test-droplet",
       isHidden: false,
-      focusArea: "personal" as FocusArea,
-      type: "knowledge" as DropletType,
-      tags: [{ id: 1, name: "React" }] as Tag[],
+      focusArea: "personal",
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
       learningObjectives: [],
-      status: "published" as DropletStatus,
-    },
-    {
+      status: "published",
+    }),
+    makeDroplet({
       id: 1,
       name: "Another Droplet",
       slug: "test-droplet",
       isHidden: false,
-      focusArea: "personal" as FocusArea,
-      type: "knowledge" as DropletType,
-      tags: [{ id: 1, name: "React" }] as Tag[],
+      focusArea: "personal",
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
       learningObjectives: [],
-      status: "published" as DropletStatus,
-    },
+      status: "published",
+    }),
   ];
   const mockOnAddDroplets = jest.fn();
 
   beforeEach(() => {
-    (getDroplets as jest.Mock).mockResolvedValue(mockDroplets);
+    mockedGetDroplets.mockResolvedValue(mockDroplets);
   });
 
   it("renders add droplet button", () => {
@@ -60,22 +62,22 @@ describe("AddDropletDialog", () => {
   });
 
   const mockCurrentDroplets = [
-    {
+    makeDroplet({
       id: 4,
       name: "Current Droplet",
       slug: "test-droplet",
       isHidden: false,
-      focusArea: "personal" as FocusArea,
-      type: "knowledge" as DropletType,
-      tags: [{ id: 1, name: "React" }] as Tag[],
+      focusArea: "personal",
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
       learningObjectives: [],
-      status: "published" as DropletStatus,
-    },
+      status: "published",
+    }),
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getDroplets as jest.Mock).mockResolvedValue(mockDroplets);
+    mockedGetDroplets.mockResolvedValue(mockDroplets);
   });
 
   it("renders add droplet button", () => {
