@@ -388,7 +388,7 @@ export function VoyageTreeIsland({
         {/* Step number badge */}
         {stepNumber && (
           <div
-            className="absolute -top-1 left-0 z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-md"
+            className="absolute top-1/2 -left-10 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-bold text-white shadow-md"
             style={{ backgroundColor: isLocked ? "#475569" : "#297496" }}
           >
             {stepNumber}

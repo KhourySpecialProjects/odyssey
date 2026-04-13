@@ -356,36 +356,34 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
             />
           </div>
 
-          {/* Search results */}
-          {searchQuery.length > 0 && (
-            <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-              {availablePlaylists.length === 0 ? (
-                <p className="px-4 py-3 text-sm text-slate-500">
-                  No playlists found.
-                </p>
-              ) : (
-                availablePlaylists.slice(0, 10).map((playlist) => (
-                  <button
-                    key={playlist.id}
-                    type="button"
-                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
-                    onClick={() => addPlaylist(playlist)}
-                    disabled={isPending}
-                  >
-                    <span className="truncate font-medium">
-                      {playlist.name}
+          {/* Available playlists */}
+          <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            {availablePlaylists.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-slate-500">
+                {searchQuery
+                  ? "No playlists found."
+                  : "All playlists have been added."}
+              </p>
+            ) : (
+              availablePlaylists.map((playlist) => (
+                <button
+                  key={playlist.id}
+                  type="button"
+                  className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                  onClick={() => addPlaylist(playlist)}
+                  disabled={isPending}
+                >
+                  <span className="truncate font-medium">{playlist.name}</span>
+                  <div className="ml-2 flex flex-shrink-0 items-center gap-1 text-slate-400">
+                    <span className="text-xs">
+                      {playlist.droplets?.length ?? 0} droplets
                     </span>
-                    <div className="ml-2 flex flex-shrink-0 items-center gap-1 text-slate-400">
-                      <span className="text-xs">
-                        {playlist.droplets?.length ?? 0} droplets
-                      </span>
-                      <PlusIcon className="h-4 w-4 text-[#297496]" />
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
+                    <PlusIcon className="h-4 w-4 text-[#297496]" />
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
 
           {/* Selected islands list */}
           {sortedForDisplay.length > 0 ? (
@@ -544,7 +542,7 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
             </div>
           ) : (
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              Search above to add playlists as islands.
+              Select playlists above to add them as islands.
             </p>
           )}
         </div>
