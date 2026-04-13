@@ -155,6 +155,29 @@ describe("extractTextFromPDF", () => {
     await expect(extractTextFromPDF(file)).rejects.toThrow("no pages");
   });
 
+  it("deduplicates overlapping text items at the same position", async () => {
+    // Simulate a PDF that renders "Hello" twice at the same (x, y)
+    const mockDoc = makeMockDoc([
+      [
+        makeItem("Hello", 12, 50, 700),
+        makeItem("Hello", 12, 50, 700), // duplicate at same position
+        makeItem("World", 12, 150, 700), // different X — not a duplicate
+      ],
+    ]);
+
+    mockGetDocument.mockReturnValue({
+      promise: Promise.resolve(mockDoc),
+    });
+
+    const file = makeFile("dup.pdf");
+    const result = await extractTextFromPDF(file);
+
+    // "Hello" should appear only once, "World" should still be present
+    const helloCount = (result.text.match(/Hello/g) || []).length;
+    expect(helloCount).toBe(1);
+    expect(result.text).toContain("World");
+  });
+
   it("extracts text in correct page order", async () => {
     const mockDoc = makeMockDoc([
       [makeItem("First page", 12, 50, 700)],

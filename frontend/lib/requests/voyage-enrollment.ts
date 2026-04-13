@@ -86,6 +86,57 @@ export async function getVoyageEnrollmentsByUser(
 }
 
 /**
+ * Fetches voyage enrollments for multiple members filtered to specific voyages
+ * in a single paginated Strapi query. Used by the group progress grid.
+ */
+export async function getVoyageEnrollmentsForGroupMembers(
+  memberIds: number[],
+  voyageIds: number[],
+): Promise<VoyageEnrollment[]> {
+  if (memberIds.length === 0 || voyageIds.length === 0) return [];
+
+  const pageSize = 250;
+  let page = 1;
+  let allEnrollments: VoyageEnrollment[] = [];
+
+  while (true) {
+    const enrollmentsPage = await fetchAPI<VoyageEnrollment[]>(
+      "/voyage-enrollments",
+      {
+        urlParams: {
+          filters: {
+            $and: [
+              { authorizedUser: { id: { $in: memberIds } } },
+              { voyage: { id: { $in: voyageIds } } },
+            ],
+          },
+          populate: {
+            authorizedUser: { fields: ["id"] },
+            voyage: { fields: ["id"] },
+          },
+          fields: ["id", "completionPercentage"],
+          pagination: { page, pageSize },
+        },
+        next: {
+          tags: [
+            ...memberIds.map((id) => CACHE_TAGS.voyageEnrollments(id)),
+            CACHE_TAGS.allVoyageEnrollments,
+          ],
+          revalidate: 900,
+        },
+      },
+    );
+
+    if (!enrollmentsPage || enrollmentsPage.length === 0) break;
+    allEnrollments = allEnrollments.concat(enrollmentsPage);
+    if (enrollmentsPage.length < pageSize) break;
+    page++;
+  }
+
+  return allEnrollments;
+}
+
+/**
  * Enrolls the current user in a voyage.
  * Idempotent: if already enrolled, returns the existing enrollment.
  */

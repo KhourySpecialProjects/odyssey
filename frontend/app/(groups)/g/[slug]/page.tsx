@@ -12,6 +12,7 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
+import { getVoyageEnrollmentsForGroupMembers } from "@/lib/requests/voyage-enrollment";
 import { AuthorizedUser, DueDate } from "@/types";
 import { DateTime } from "luxon";
 
@@ -77,16 +78,28 @@ export default async function GroupDetailPage({ params }: Props) {
     string,
     { completionPercentage: number; completionDate: Date | undefined }
   > = {};
+  const voyageStatuses: Record<string, { completionPercentage: number }> = {};
+
+  const voyageDropletIds =
+    group.voyages?.flatMap(
+      (v) =>
+        v.voyage_nodes?.flatMap(
+          (n) => n.playlist?.droplets?.map((d) => d.id) || [],
+        ) || [],
+    ) || [];
 
   const allDropletIds = [
     ...new Set([
       ...(group.droplets?.map((d) => d.id) || []),
       ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) ||
         []),
+      ...voyageDropletIds,
     ]),
   ];
 
-  if (group.members && allDropletIds.length > 0) {
+  const voyageIds = group.voyages?.map((v) => v.id) || [];
+
+  if (group.members && (allDropletIds.length > 0 || voyageIds.length > 0)) {
     sortedMembers = [...group.members].sort((a, b) => {
       const aValue = a.lastName || a.email;
       const bValue = b.lastName || b.email;
@@ -96,10 +109,14 @@ export default async function GroupDetailPage({ params }: Props) {
     try {
       const memberIds = sortedMembers.map((m) => m.id);
 
-      const allEnrollments = await getEnrollmentsForGroupMembers(
-        memberIds,
-        allDropletIds,
-      );
+      const [allEnrollments, voyageEnrollments] = await Promise.all([
+        allDropletIds.length > 0
+          ? getEnrollmentsForGroupMembers(memberIds, allDropletIds)
+          : Promise.resolve([]),
+        voyageIds.length > 0
+          ? getVoyageEnrollmentsForGroupMembers(memberIds, voyageIds)
+          : Promise.resolve([]),
+      ]);
 
       allEnrollments.forEach((enrollment) => {
         if (!enrollment.droplet || !enrollment.authorizedUser) return;
@@ -123,6 +140,14 @@ export default async function GroupDetailPage({ params }: Props) {
         if (enrollment.completionDate) {
           completionStatuses[key].completionDate = enrollment.completionDate;
         }
+      });
+
+      voyageEnrollments.forEach((enrollment) => {
+        if (!enrollment.authorizedUser || !enrollment.voyage) return;
+        const key = `${enrollment.authorizedUser.id}-${enrollment.voyage.id}`;
+        voyageStatuses[key] = {
+          completionPercentage: enrollment.completionPercentage ?? 0,
+        };
       });
     } catch (error) {
       console.error("Error fetching completion statuses:", error);
@@ -193,21 +218,20 @@ export default async function GroupDetailPage({ params }: Props) {
               />
             </>
           )}
-
-          <Separator />
-
-          <ContentSection title="">
-            <GroupDashboard
-              group={group}
-              canEdit={canEdit}
-              authUser={authorizedUser}
-              dueDates={dueDates}
-              statuses={completionStatuses}
-              data-testid="group-edit-controls"
-            />
-          </ContentSection>
         </div>
       </div>
+
+      <Separator />
+
+      <GroupDashboard
+        group={group}
+        canEdit={canEdit}
+        authUser={authorizedUser}
+        dueDates={dueDates}
+        statuses={completionStatuses}
+        voyageStatuses={voyageStatuses}
+        data-testid="group-edit-controls"
+      />
     </div>
   );
 }

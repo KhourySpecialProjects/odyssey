@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Voyage } from "@/types";
 import { getVoyages } from "@/lib/requests/voyage";
@@ -71,7 +71,7 @@ export function AddVoyageDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Voyage
         </Button>
       </DialogTrigger>
@@ -114,7 +114,7 @@ export function AddVoyageDialog({
                   onClick={() => handleAddVoyage(voyage)}
                   data-testid="addVoyage"
                 >
-                  <PlusCircle className="h-6 w-6 text-green-700" />
+                  <Plus className="h-6 w-6 text-green-700" />
                 </Button>
               </div>
             ))}
