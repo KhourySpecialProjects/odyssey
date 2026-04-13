@@ -49,7 +49,7 @@ export const getCalloutSlashMenuItems = (
     "warning",
     "Warning",
     ["warning", "warn", "alert"],
-    "Pink warning callout",
+    "Highlight common mistakes or pitfalls to avoid",
     createElement(TriangleAlert, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -57,7 +57,7 @@ export const getCalloutSlashMenuItems = (
     "question",
     "Question",
     ["question", "q", "help"],
-    "Blue question callout",
+    "Pose a thought-provoking question for students to consider",
     createElement(CircleHelp, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -65,7 +65,7 @@ export const getCalloutSlashMenuItems = (
     "important",
     "Important",
     ["important", "imp", "key"],
-    "Orange important callout",
+    "Emphasize key concepts or must-know information",
     createElement(CircleAlert, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -73,7 +73,7 @@ export const getCalloutSlashMenuItems = (
     "definition",
     "Definition",
     ["definition", "def", "define"],
-    "Green definition callout",
+    "Define a term, concept, or technical vocabulary",
     createElement(BookOpenText, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -81,7 +81,7 @@ export const getCalloutSlashMenuItems = (
     "more-information",
     "More Information",
     ["more", "info", "more information", "additional"],
-    "Purple info callout",
+    "Add optional deeper context for curious students",
     createElement(BadgeInfo, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -89,7 +89,7 @@ export const getCalloutSlashMenuItems = (
     "caution",
     "Caution",
     ["caution", "careful", "watch"],
-    "Yellow caution callout",
+    "Warn about something that could cause errors or confusion",
     createElement(Bell, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
@@ -97,7 +97,7 @@ export const getCalloutSlashMenuItems = (
     "default",
     "Default Callout",
     ["callout", "default", "note"],
-    "Gray default callout",
+    "General-purpose callout for notes or asides",
     createElement(Pin, { className: "h-4 w-4" }),
   ),
 ];
@@ -124,7 +124,7 @@ export const getQuizSlashMenuItems = (
     },
     aliases: ["true false", "tf", "quiz tf", "true/false", "quiz"],
     group: "Quizzes",
-    subtext: "Create a true/false question",
+    subtext: "Quick comprehension check with a true or false answer",
   },
   {
     title: "Open-Ended Quiz",
@@ -146,7 +146,7 @@ export const getQuizSlashMenuItems = (
     },
     aliases: ["open ended", "open", "essay", "free response", "quiz open"],
     group: "Quizzes",
-    subtext: "Create an open-ended question",
+    subtext: "Free-response question where students type their own answer",
   },
   {
     title: "Multiple Choice Quiz",
@@ -171,7 +171,7 @@ export const getQuizSlashMenuItems = (
     },
     aliases: ["multiple choice", "mc", "quiz mc", "mcq"],
     group: "Quizzes",
-    subtext: "Create a multiple choice question",
+    subtext: "Question with selectable answer options — great for assessments",
   },
 ];
 
@@ -205,7 +205,7 @@ export const getLatexSlashMenuItems = (
     },
     aliases: ["latex", "math", "formula", "equation"],
     group: "Math",
-    subtext: "Insert LaTeX math formula block",
+    subtext: "Use for equations, formulas, or mathematical notation",
   },
 ];
 
@@ -234,7 +234,8 @@ export const getCodeSlashMenuItems = (
     },
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
-    subtext: "Display code with syntax highlighting",
+    subtext:
+      "Show read-only code examples with syntax highlighting and optional execution",
   },
 ];
 
@@ -260,9 +261,10 @@ export const getNotebookCodeSlashMenuItems = (
         "after",
       );
     },
-    aliases: ["notebook", "jupyter", "python", "colab"],
-    group: "Data Science",
-    subtext: "Interactive Python notebook cell with Pyodide",
+    aliases: ["notebook", "jupyter", "python", "colab", "dataset"],
+    group: "Code",
+    subtext:
+      "Jupyter-like cell where students write and run Python — only block that can use uploaded datasets",
   },
 ];
 
@@ -303,7 +305,8 @@ export const getSandpackSlashMenuItems = (
       "codepen",
     ],
     group: "Code",
-    subtext: "Interactive code sandbox with live preview",
+    subtext:
+      "Live HTML/CSS/JS sandbox with real-time preview — ideal for web dev lessons",
   },
 ];
 
@@ -322,7 +325,7 @@ export const getSlideBreakSlashMenuItems = (
     },
     aliases: ["slide", "break", "presentation", "page break", "divider"],
     group: "Presentation",
-    subtext: "Start a new presentation slide",
+    subtext: "Insert a divider to start a new slide in presentation mode",
   },
 ];
 
@@ -341,6 +344,7 @@ export const getColumnBreakSlashMenuItems = (
     },
     aliases: ["column", "col break", "split column", "column break"],
     group: "Presentation",
-    subtext: "Split content between left and right columns",
+    subtext:
+      "Split content into two columns — use within a slide for side-by-side layout",
   },
 ];

@@ -181,10 +181,11 @@ describe("DatasetUpload", () => {
       capturedOnDrop!([], rejected);
     });
 
+    const { toast } = require("sonner");
     await waitFor(() => {
-      expect(
-        screen.getByText(/file is too large|exceeds the 25mb/i),
-      ).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringMatching(/file is too large/i),
+      );
     });
   });
 

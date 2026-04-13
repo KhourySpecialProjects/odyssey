@@ -35,6 +35,7 @@ const nextConfig = {
       static: 180,
     },
     serverActions: {
+      bodySizeLimit: "30mb",
       allowedOrigins: [
         "localhost:3000",
         "dev2.khouryodyssey.org",
