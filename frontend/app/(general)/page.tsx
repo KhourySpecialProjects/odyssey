@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
 import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
+import { cn } from "@/lib/utils";
 
 const outlineLinkCls =
   "inline-flex items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] py-[10px] text-sm font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700";
@@ -21,7 +22,12 @@ export default async function HomeRoute() {
         <p className="mb-4 text-sm font-semibold tracking-widest text-sky-600 uppercase">
           Khoury College
         </p>
-        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+        <div
+          className={cn(
+            "grid grid-cols-1 items-stretch gap-4",
+            user && droplet && "lg:grid-cols-2",
+          )}
+        >
           {/* Left: hero text */}
           <div>
             <h1

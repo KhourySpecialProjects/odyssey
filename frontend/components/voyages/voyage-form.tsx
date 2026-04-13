@@ -6,6 +6,7 @@ import {
   useMemo,
   useCallback,
   useRef,
+  useEffect,
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -65,11 +66,20 @@ function initNodesFromVoyage(voyage: Voyage): SelectedNode[] {
   }));
 }
 
-function SectionLabel({ children }: { children: ReactNode }) {
+function SectionLabel({
+  children,
+  htmlFor,
+}: {
+  children: ReactNode;
+  htmlFor?: string;
+}) {
   return (
-    <div className="py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white">
+    <label
+      htmlFor={htmlFor}
+      className="block py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white"
+    >
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -90,6 +100,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (blurTimer.current) clearTimeout(blurTimer.current);
+    };
+  }, []);
 
   const availablePlaylists = useMemo(
     () =>
@@ -329,7 +345,7 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
     <div className="flex w-full flex-col gap-8 lg:flex-row">
       <div className="flex w-full flex-col gap-6 lg:w-1/2">
         <div className="flex flex-col gap-2">
-          <SectionLabel>
+          <SectionLabel htmlFor="voyage-name">
             Voyage Name <span className="text-red-500">*</span>
           </SectionLabel>
           <Input
@@ -342,7 +358,7 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <SectionLabel>Description</SectionLabel>
+          <SectionLabel htmlFor="voyage-description">Description</SectionLabel>
           <textarea
             id="voyage-description"
             className="min-h-[100px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"

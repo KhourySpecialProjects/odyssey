@@ -535,6 +535,7 @@ describe("MyContent", () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
       expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
+      expect(screen.getByTestId("archived-playlists-grid")).toBeInTheDocument();
     });
 
     it("renders archived droplets grid", async () => {
