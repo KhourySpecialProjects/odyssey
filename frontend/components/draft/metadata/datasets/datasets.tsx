@@ -118,22 +118,22 @@ export function Datasets({
         return;
       }
 
-      startTransition(async () => {
-        const response = await createDataset({
-          name: file.name,
-          format: ext as "csv" | "json" | "xlsx",
-          fileUrl: result.url!,
-          fileSize: file.size,
-          droplet: dropletId,
-        });
+      const response = await createDataset({
+        name: file.name,
+        format: ext as "csv" | "json" | "xlsx",
+        fileUrl: result.url!,
+        fileSize: file.size,
+        droplet: dropletId,
+      });
 
-        if (!response.ok) {
-          await deleteDatasetFile(result.url!);
-          toast.error("Failed to save dataset.");
-          return;
-        }
+      if (!response.ok) {
+        await deleteDatasetFile(result.url!);
+        toast.error("Failed to save dataset.");
+        return;
+      }
 
-        toast.success(`"${file.name}" uploaded.`);
+      toast.success(`"${file.name}" uploaded.`);
+      startTransition(() => {
         router.refresh();
       });
     } catch (err) {
@@ -178,7 +178,13 @@ export function Datasets({
         </h2>
         <Tooltip>
           <TooltipTrigger asChild>
-            <IconInfoCircle className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" />
+            <button
+              type="button"
+              aria-label="Dataset help"
+              className="inline-flex"
+            >
+              <IconInfoCircle className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" />
+            </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-xs">
             <p>
@@ -242,7 +248,7 @@ export function Datasets({
         <input
           ref={inputRef}
           type="file"
-          accept=".csv,.json,.xlsx,.xls"
+          accept=".csv,.json,.xlsx"
           className="hidden"
           onChange={onFileChange}
         />

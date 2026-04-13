@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DatasetUpload } from "@/components/draft/dataset/dataset-upload";
+import { toast } from "sonner";
 import { Dataset } from "@/types";
 
 // Mock the Server Actions
@@ -181,7 +182,6 @@ describe("DatasetUpload", () => {
       capturedOnDrop!([], rejected);
     });
 
-    const { toast } = require("sonner");
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
         expect.stringMatching(/file is too large/i),
@@ -258,7 +258,6 @@ describe("DatasetUpload", () => {
   it("shows error toast when upload fails", async () => {
     const { parseDatasetFile } = require("@/lib/dataset-parser");
     const { uploadDataset } = require("@/lib/actions");
-    const { toast } = require("sonner");
 
     (parseDatasetFile as jest.Mock).mockResolvedValue(mockParsedDataset);
     (uploadDataset as jest.Mock).mockResolvedValue({

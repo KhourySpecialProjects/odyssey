@@ -235,7 +235,7 @@ export const getCodeSlashMenuItems = (
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
     subtext:
-      "Show read-only code examples with syntax highlighting and optional execution",
+      "Editable code block with syntax highlighting and optional execution",
   },
 ];
 

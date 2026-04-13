@@ -4,7 +4,10 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Dataset } from "@/types";
 import { parseDatasetFile, ParsedDataset } from "@/lib/dataset-parser";
-import { uploadDataset } from "@/lib/actions";
+import {
+  uploadDataset,
+  deleteDataset as deleteDatasetFile,
+} from "@/lib/actions";
 import { createDataset } from "@/lib/requests/dataset";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,14 +76,12 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
         const firstError = firstRejected.errors[0];
         if (firstError?.code === "file-too-large") {
           toast.error("File is too large. Maximum file size is 25 MB.");
-          setUploadState({ status: "idle" });
         } else {
-          setUploadState({
-            status: "error",
-            message:
-              "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
-          });
+          toast.error(
+            "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
+          );
         }
+        setUploadState({ status: "idle" });
         return;
       }
 
@@ -168,6 +169,7 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
       });
 
       if (!createResult.ok || !createResult.data) {
+        await deleteDatasetFile(uploadResult.url).catch(() => {});
         toast.error(
           createResult.error ?? "Failed to save dataset. Please try again.",
         );
