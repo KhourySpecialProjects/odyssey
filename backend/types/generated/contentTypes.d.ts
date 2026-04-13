@@ -784,7 +784,14 @@ export interface ApiDatasetDataset extends Schema.CollectionType {
       'api::droplet.droplet'
     > &
       Attribute.Required;
-    fileSize: Attribute.Integer;
+    fileSize: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 104857600;
+          min: 0;
+        },
+        number
+      >;
     fileUrl: Attribute.String & Attribute.Required;
     format: Attribute.Enumeration<['csv', 'json', 'xlsx']> & Attribute.Required;
     name: Attribute.String &

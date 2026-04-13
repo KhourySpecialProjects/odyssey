@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { DropletBlock } from "@/components/admin/droplets/droplet-block";
-import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 jest.mock("sonner", () => ({
   toast: {
@@ -26,17 +26,17 @@ jest.mock("react-dom", () => ({
 }));
 
 describe("DropletBlock", () => {
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
-    focusArea: "frontend" as FocusArea,
-    type: "lesson" as DropletType,
-    status: "published" as DropletStatus,
+    focusArea: "technical",
+    type: "knowledge",
+    status: "published",
     learningObjectives: [],
     tags: [],
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -49,7 +49,7 @@ describe("DropletBlock", () => {
     });
 
     it("shows (Hidden) text when droplet is hidden", () => {
-      const hiddenDroplet = { ...mockDroplet, isHidden: true };
+      const hiddenDroplet = makeDroplet({ ...mockDroplet, isHidden: true });
       render(<DropletBlock droplet={hiddenDroplet} />);
       expect(screen.getByText("Test Droplet (Hidden)")).toBeInTheDocument();
     });
@@ -77,7 +77,7 @@ describe("DropletBlock", () => {
       });
 
       it('shows "Show Droplet" button when droplet is hidden', () => {
-        const hiddenDroplet = { ...mockDroplet, isHidden: true };
+        const hiddenDroplet = makeDroplet({ ...mockDroplet, isHidden: true });
         render(<DropletBlock droplet={hiddenDroplet} />);
         expect(
           screen.getByRole("button", { name: /show droplet/i }),
@@ -107,37 +107,37 @@ describe("DropletBlock", () => {
 
     describe("Different Droplet Properties", () => {
       it("renders droplet with different focus areas", () => {
-        const backendDroplet = {
+        const backendDroplet = makeDroplet({
           ...mockDroplet,
-          focusArea: "backend" as FocusArea,
-        };
+          focusArea: "professional",
+        });
         render(<DropletBlock droplet={backendDroplet} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("renders droplet with different types", () => {
-        const projectDroplet = {
+        const projectDroplet = makeDroplet({
           ...mockDroplet,
-          type: "project" as DropletType,
-        };
+          type: "skill",
+        });
         render(<DropletBlock droplet={projectDroplet} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("renders droplet with different statuses", () => {
-        const draftDroplet = {
+        const draftDroplet = makeDroplet({
           ...mockDroplet,
-          status: "draft" as DropletStatus,
-        };
+          status: "draft",
+        });
         render(<DropletBlock droplet={draftDroplet} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("renders droplet with long name", () => {
-        const longNameDroplet = {
+        const longNameDroplet = makeDroplet({
           ...mockDroplet,
           name: "This is a very long droplet name that should still render correctly",
-        };
+        });
         render(<DropletBlock droplet={longNameDroplet} />);
         expect(
           screen.getByText(
@@ -147,10 +147,10 @@ describe("DropletBlock", () => {
       });
 
       it("renders droplet with special characters in name", () => {
-        const specialNameDroplet = {
+        const specialNameDroplet = makeDroplet({
           ...mockDroplet,
           name: "Test & Special <Droplet>",
-        };
+        });
         render(<DropletBlock droplet={specialNameDroplet} />);
         expect(
           screen.getByText("Test & Special <Droplet>"),
@@ -158,23 +158,23 @@ describe("DropletBlock", () => {
       });
 
       it("renders droplet with tags", () => {
-        const dropletWithTags = {
+        const dropletWithTags = makeDroplet({
           ...mockDroplet,
           tags: [
-            { id: 1, name: "Tag 1" } as any,
-            { id: 2, name: "Tag 2" } as any,
-          ] as any,
-        };
+            { id: 1, name: "Tag 1", slug: "tag-1", droplets: [] },
+            { id: 2, name: "Tag 2", slug: "tag-2", droplets: [] },
+          ],
+        });
 
         render(<DropletBlock droplet={dropletWithTags} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("renders droplet without tags", () => {
-        const dropletWithoutTags = {
+        const dropletWithoutTags = makeDroplet({
           ...mockDroplet,
-          tags: undefined as any,
-        };
+          tags: undefined,
+        });
 
         render(<DropletBlock droplet={dropletWithoutTags} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
@@ -184,7 +184,9 @@ describe("DropletBlock", () => {
     describe("Link Generation", () => {
       it("generates correct draft link for different slugs", () => {
         const { container } = render(
-          <DropletBlock droplet={{ ...mockDroplet, slug: "my-custom-slug" }} />,
+          <DropletBlock
+            droplet={makeDroplet({ ...mockDroplet, slug: "my-custom-slug" })}
+          />,
         );
         const link = container.querySelector(
           'a[href="/draft/d/my-custom-slug"]',
@@ -195,7 +197,10 @@ describe("DropletBlock", () => {
       it("handles slug with special characters", () => {
         const { container } = render(
           <DropletBlock
-            droplet={{ ...mockDroplet, slug: "slug-with-numbers-123" }}
+            droplet={makeDroplet({
+              ...mockDroplet,
+              slug: "slug-with-numbers-123",
+            })}
           />,
         );
         const link = container.querySelector(
@@ -221,7 +226,7 @@ describe("DropletBlock", () => {
       });
 
       it("updates isHidden input value for hidden droplet", () => {
-        const hiddenDroplet = { ...mockDroplet, isHidden: true };
+        const hiddenDroplet = makeDroplet({ ...mockDroplet, isHidden: true });
         const { container } = render(<DropletBlock droplet={hiddenDroplet} />);
         const isHiddenInput = container.querySelector('input[name="isHidden"]');
         expect(isHiddenInput).toHaveAttribute("value", "false"); // Will be toggled to false
@@ -245,7 +250,7 @@ describe("DropletBlock", () => {
       });
 
       it("applies link variant to Show button", () => {
-        const hiddenDroplet = { ...mockDroplet, isHidden: true };
+        const hiddenDroplet = makeDroplet({ ...mockDroplet, isHidden: true });
         render(<DropletBlock droplet={hiddenDroplet} />);
         const showButton = screen.getByRole("button", {
           name: /show droplet/i,
@@ -256,41 +261,41 @@ describe("DropletBlock", () => {
 
     describe("Edge Cases", () => {
       it("handles droplet with undefined learning objectives", () => {
-        const dropletWithUndefinedObjectives = {
+        const dropletWithUndefinedObjectives = makeDroplet({
           ...mockDroplet,
-          learningObjectives: undefined as any,
-        };
+          learningObjectives: undefined,
+        });
         render(<DropletBlock droplet={dropletWithUndefinedObjectives} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("handles droplet with undefined lessons", () => {
-        const dropletWithUndefinedLessons = {
+        const dropletWithUndefinedLessons = makeDroplet({
           ...mockDroplet,
-          lessons: undefined as any,
-        };
+          lessons: undefined,
+        });
         render(<DropletBlock droplet={dropletWithUndefinedLessons} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
       it("renders correctly with minimal droplet data", () => {
-        const minimalDroplet = {
+        const minimalDroplet = makeDroplet({
           id: 999,
           name: "Minimal Droplet",
           slug: "minimal",
           isHidden: false,
-          focusArea: "frontend" as FocusArea,
-          type: "lesson" as DropletType,
-          status: "published" as DropletStatus,
+          focusArea: "technical",
+          type: "knowledge",
+          status: "published",
           learningObjectives: [],
           tags: [],
-        };
+        });
         render(<DropletBlock droplet={minimalDroplet} />);
         expect(screen.getByText("Minimal Droplet")).toBeInTheDocument();
       });
 
       it("handles droplet with empty string name", () => {
-        const emptyNameDroplet = { ...mockDroplet, name: "" };
+        const emptyNameDroplet = makeDroplet({ ...mockDroplet, name: "" });
         render(<DropletBlock droplet={emptyNameDroplet} />);
         // Should render without crashing
         expect(

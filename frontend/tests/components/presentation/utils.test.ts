@@ -139,7 +139,9 @@ describe("splitBlocksIntoSlides — column-break behavior", () => {
     expect(twoColSlide!.blocks.length).toBe(3);
     // The column-break block is preserved in the slide's blocks array
     const hasColumnBreak = twoColSlide!.blocks.some(
-      (b) => b.content === COLUMN_BREAK_MARKER,
+      (b) =>
+        b.__component === "droplets.generic" &&
+        b.content === COLUMN_BREAK_MARKER,
     );
     expect(hasColumnBreak).toBe(true);
   });

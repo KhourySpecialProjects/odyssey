@@ -1,5 +1,6 @@
 "use server";
 
+import { requireRole } from "@/lib/auth/require-role";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -39,14 +40,17 @@ export async function getCurrentAuthorizedUserId(): Promise<number | null> {
   return authorizedUser.id;
 }
 
-export async function acquireLessonLock(
-  lessonId: number,
-  userId: number,
-): Promise<{
+export async function acquireLessonLock(lessonId: number): Promise<{
   success: boolean;
   error?: string;
   lockedBy?: LockStatus["lockedBy"];
 }> {
+  const auth = await requireRole([]);
+  if (!auth.ok) {
+    return { success: false, error: auth.error };
+  }
+  const userId = auth.user.id;
+
   const res = await fetch(`${STRAPI_API_URL}/lessons/${lessonId}/lock`, {
     method: "POST",
     headers: strapiHeaders(),
@@ -70,20 +74,22 @@ export async function acquireLessonLock(
   return { success: false, error: "Failed to acquire lock" };
 }
 
-export async function releaseLessonLock(
-  lessonId: number,
-  userId: number,
-): Promise<void> {
+export async function releaseLessonLock(lessonId: number): Promise<void> {
+  const auth = await requireRole([]);
+  if (!auth.ok) return;
+  const userId = auth.user.id;
+
   await fetch(`${STRAPI_API_URL}/lessons/${lessonId}/lock?userId=${userId}`, {
     method: "DELETE",
     headers: strapiHeaders(),
   });
 }
 
-export async function heartbeatLessonLock(
-  lessonId: number,
-  userId: number,
-): Promise<boolean> {
+export async function heartbeatLessonLock(lessonId: number): Promise<boolean> {
+  const auth = await requireRole([]);
+  if (!auth.ok) return false;
+  const userId = auth.user.id;
+
   const res = await fetch(
     `${STRAPI_API_URL}/lessons/${lessonId}/lock/heartbeat`,
     {

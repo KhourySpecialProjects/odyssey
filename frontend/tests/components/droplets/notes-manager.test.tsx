@@ -7,13 +7,18 @@ import {
 } from "@testing-library/react";
 import { NotesManager } from "@/components/droplets/notes-manager";
 import {
+  AuthorizedUser,
   DropletStatus,
   DropletType,
+  Enrollment,
   FocusArea,
+  Highlight,
   HighlightColor,
+  Note,
   Tag,
 } from "@/types";
 import { PDFDocument } from "pdf-lib";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 jest.mock("pdf-lib", () => ({
   PDFDocument: {
@@ -28,7 +33,11 @@ jest.mock("@/components/droplets/notes-summary-client", () => ({
     enrollment,
     onSelectionChange,
     selectedDropletIds,
-  }: any) => (
+  }: {
+    enrollment: Enrollment;
+    onSelectionChange: (id: number, checked: boolean) => void;
+    selectedDropletIds: Set<number>;
+  }) => (
     <div data-testid={`notes-summary-${enrollment.droplet.id}`}>
       <input
         type="checkbox"
@@ -44,7 +53,7 @@ jest.mock("@/components/droplets/notes-summary-client", () => ({
 }));
 
 jest.mock("@/components/droplets/notes-pdf-button", () => ({
-  NotesPdfButton: ({ pdfBytes, name, noNotes }: any) => (
+  NotesPdfButton: ({ noNotes }: { noNotes: boolean }) => (
     <button data-testid="pdf-button" disabled={noNotes}>
       Download PDF
     </button>
@@ -55,22 +64,87 @@ jest.mock("@/components/droplets/lessons/note-taking/note-summary", () => ({
   NoteSummary: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
 }));
 
+// ---------------------------------------------------------------------------
+// Local fixture factories
+// ---------------------------------------------------------------------------
+
+function makeAuthorizedUser(
+  overrides: Partial<AuthorizedUser> = {},
+): AuthorizedUser {
+  return {
+    id: 1,
+    email: "test@example.com",
+    roles: [],
+    isEnabled: true,
+    isPublic: false,
+    linkedin: "",
+    github: "",
+    website: "",
+    firstTime: false,
+    firstName: "Test",
+    lastName: "User",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York",
+    groups: [],
+    ...overrides,
+  };
+}
+
+function makeNote(overrides: Partial<Note> = {}): Note {
+  return {
+    id: 1,
+    content: "Test note content",
+    positionY: 0,
+    lesson: {
+      id: 1,
+      name: "Test Lesson",
+      slug: "test-lesson",
+      type: "general",
+      blocks: [],
+      droplets: [],
+      notes: "",
+      orderIndex: 0,
+    },
+    enrollment: null as unknown as Enrollment, // back-ref not needed for these tests
+    ...overrides,
+  };
+}
+
+function makeHighlight(overrides: Partial<Highlight> = {}): Highlight {
+  return {
+    id: 1,
+    text: "Test highlight text",
+    position: { start: 0, end: 10 },
+    color: "#f9a8d4" as HighlightColor,
+    blockId: 1,
+    ...overrides,
+  };
+}
+
 describe("NotesManager", () => {
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
     focusArea: "personal" as FocusArea,
     type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    tags: [{ id: 1, name: "React", slug: "react", droplets: [] }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-  };
+  });
 
-  const mockEnrollment = {
+  const mockAuthorizedUser = makeAuthorizedUser({ id: 1 });
+
+  const mockEnrollment: Enrollment = {
     id: "1",
-    authorizedUser: { id: 1 } as any,
+    authorizedUser: mockAuthorizedUser,
     droplet: mockDroplet,
     viewedLessons: [],
     isComplete: false,
@@ -93,8 +167,8 @@ describe("NotesManager", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (PDFDocument.create as jest.Mock).mockResolvedValue(mockPdfDoc);
-    (PDFDocument.load as jest.Mock).mockResolvedValue(mockLoadedPdf);
+    jest.mocked(PDFDocument.create).mockResolvedValue(mockPdfDoc as never);
+    jest.mocked(PDFDocument.load).mockResolvedValue(mockLoadedPdf as never);
     mockPdfDoc.save.mockResolvedValue(new Uint8Array([4, 5, 6]));
   });
 
@@ -102,7 +176,9 @@ describe("NotesManager", () => {
     it("renders title and description", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [], highlights: [{ id: 1 } as any] }],
+        allNotes: [
+          { dropletId: 1, notes: [], highlights: [makeHighlight({ id: 1 })] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -117,7 +193,9 @@ describe("NotesManager", () => {
     it("renders Select All button", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [], highlights: [{ id: 1 } as any] }],
+        allNotes: [
+          { dropletId: 1, notes: [], highlights: [makeHighlight({ id: 1 })] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -129,7 +207,9 @@ describe("NotesManager", () => {
     it("renders Deselect All button", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [], highlights: [{ id: 1 } as any] }],
+        allNotes: [
+          { dropletId: 1, notes: [], highlights: [makeHighlight({ id: 1 })] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -141,7 +221,9 @@ describe("NotesManager", () => {
     it("renders instruction text", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [], highlights: [{ id: 1 } as any] }],
+        allNotes: [
+          { dropletId: 1, notes: [], highlights: [makeHighlight({ id: 1 })] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -155,13 +237,13 @@ describe("NotesManager", () => {
 
   describe("Filtering Logic", () => {
     it("only shows enrollments with notes or highlights", () => {
-      const enrollmentWithContent = {
+      const enrollmentWithContent: Enrollment = {
         ...mockEnrollment,
         id: "1",
         droplet: { ...mockDroplet, id: 1, name: "Has Content" },
       };
 
-      const enrollmentWithoutContent = {
+      const enrollmentWithoutContent: Enrollment = {
         ...mockEnrollment,
         id: "2",
         droplet: { ...mockDroplet, id: 2, name: "No Content" },
@@ -170,7 +252,7 @@ describe("NotesManager", () => {
       const props = {
         enrollments: [enrollmentWithContent, enrollmentWithoutContent],
         allNotes: [
-          { dropletId: 1, notes: [{ id: 1 } as any], highlights: [] },
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
           { dropletId: 2, notes: [], highlights: [] },
         ],
         initialPdfBytes: new Uint8Array(),
@@ -185,7 +267,9 @@ describe("NotesManager", () => {
     it("shows enrollment with only notes", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -197,7 +281,9 @@ describe("NotesManager", () => {
     it("shows enrollment with only highlights", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [], highlights: [{ id: 1 } as any] }],
+        allNotes: [
+          { dropletId: 1, notes: [], highlights: [makeHighlight({ id: 1 })] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -235,8 +321,8 @@ describe("NotesManager", () => {
           },
         ],
         allNotes: [
-          { dropletId: 1, notes: [{ id: 1 } as any], highlights: [] },
-          { dropletId: 2, notes: [{ id: 2 } as any], highlights: [] },
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+          { dropletId: 2, notes: [makeNote({ id: 2 })], highlights: [] },
         ],
         initialPdfBytes: new Uint8Array(),
       };
@@ -266,7 +352,9 @@ describe("NotesManager", () => {
             droplet: { ...mockDroplet, id: 1, name: "Droplet 1" },
           },
         ],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -298,7 +386,9 @@ describe("NotesManager", () => {
     it("updates selection when checkbox is clicked", async () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -318,7 +408,9 @@ describe("NotesManager", () => {
     it("deselects when checkbox is clicked again", async () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -352,11 +444,13 @@ describe("NotesManager", () => {
           ),
       };
 
-      (PDFDocument.create as jest.Mock).mockResolvedValue(slowPdfDoc);
+      jest.mocked(PDFDocument.create).mockResolvedValue(slowPdfDoc as never);
 
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -374,13 +468,15 @@ describe("NotesManager", () => {
 
     it("handles PDF generation errors gracefully", async () => {
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-      (PDFDocument.create as jest.Mock).mockRejectedValue(
-        new Error("PDF Error"),
-      );
+      jest
+        .mocked(PDFDocument.create)
+        .mockRejectedValue(new Error("PDF Error") as never);
 
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -443,8 +539,12 @@ describe("NotesManager", () => {
           },
         ],
         allNotes: [
-          { dropletId: 1, notes: [{ id: 1 } as any], highlights: [] },
-          { dropletId: 2, notes: [], highlights: [{ id: 1 } as any] },
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+          {
+            dropletId: 2,
+            notes: [],
+            highlights: [makeHighlight({ id: 1 })],
+          },
         ],
         initialPdfBytes: new Uint8Array(),
       };
@@ -470,7 +570,7 @@ describe("NotesManager", () => {
           },
         ],
         allNotes: [
-          { dropletId: 1, notes: [{ id: 1 } as any], highlights: [] },
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
           { dropletId: 2, notes: [], highlights: [] },
         ],
         initialPdfBytes: new Uint8Array(),
@@ -494,7 +594,9 @@ describe("NotesManager", () => {
     it("Select All button has correct width", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -507,7 +609,9 @@ describe("NotesManager", () => {
     it("Deselect All button has correct width", () => {
       const props = {
         enrollments: [mockEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 
@@ -525,8 +629,8 @@ describe("NotesManager", () => {
         allNotes: [
           {
             dropletId: 1,
-            notes: [{ id: 1 } as any],
-            highlights: [{ id: 1 } as any],
+            notes: [makeNote({ id: 1 })],
+            highlights: [makeHighlight({ id: 1 })],
           },
         ],
         initialPdfBytes: new Uint8Array(),
@@ -538,14 +642,16 @@ describe("NotesManager", () => {
     });
 
     it("handles very long droplet names", () => {
-      const longNameEnrollment = {
+      const longNameEnrollment: Enrollment = {
         ...mockEnrollment,
         droplet: { ...mockDroplet, name: "A".repeat(200) },
       };
 
       const props = {
         enrollments: [longNameEnrollment],
-        allNotes: [{ dropletId: 1, notes: [{ id: 1 } as any], highlights: [] }],
+        allNotes: [
+          { dropletId: 1, notes: [makeNote({ id: 1 })], highlights: [] },
+        ],
         initialPdfBytes: new Uint8Array(),
       };
 

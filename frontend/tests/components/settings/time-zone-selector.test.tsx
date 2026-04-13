@@ -19,6 +19,8 @@ describe("TimeZoneSelector", () => {
       target: { value: "Europe/London" },
     });
 
-    expect(setTimeZone).toHaveBeenCalledWith("Europe/London", 1);
+    // setTimeZone resolves userId from the authenticated session — see
+    // docs/agent/learnings/strapi-service-token-trust-boundary.md.
+    expect(setTimeZone).toHaveBeenCalledWith("Europe/London");
   });
 });

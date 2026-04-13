@@ -5,25 +5,9 @@ import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
-import { getCachedUser } from "./cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-
-async function requireAdminOrFaculty() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return false;
-  const user = await getCachedUser(session.user.email);
-  if (!user?.roles) return false;
-  const titles = user.roles.map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => (typeof r === "string" ? r : r.title) as string,
-  );
-  return (
-    titles.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    titles.includes(AuthorizedUserRoleTitle.Faculty)
-  );
-}
+import { requireRole } from "@/lib/auth/require-role";
+import { VoyageTreeSchema } from "@/lib/validations/voyage";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -277,16 +261,29 @@ export async function createVoyageWithNodes(data: {
   authorId?: number;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
+
+  // Validate the incoming tree before touching Strapi. Catches circular refs,
+  // orphan parents, branch limits, and empty names before any network I/O.
+  const parseResult = VoyageTreeSchema.safeParse(data);
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+  const validated = parseResult.data;
+
   try {
-    // Phase 1: create the voyage record
-    const slug = generateSlug(data.name);
+    // Step 1: create the voyage record
+    const slug = generateSlug(validated.name);
     const voyageBody: Record<string, unknown> = {
-      name: data.name,
+      name: validated.name,
       slug,
-      description: data.description ?? "",
+      description: validated.description ?? "",
       status: data.status ?? "draft",
       isSequential: data.isSequential ?? false,
     };
@@ -317,8 +314,8 @@ export async function createVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: create voyage nodes
-    const nodeError = await createVoyageNodes(voyage.id, data.nodes);
+    // Step 2: create voyage nodes
+    const nodeError = await createVoyageNodes(voyage.id, validated.nodes);
     if (nodeError) {
       // Best-effort cleanup of the orphaned voyage
       await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyage.id}`, {
@@ -347,11 +344,37 @@ export async function createVoyageWithNodes(data: {
 
 /**
  * Publishes a draft Voyage by setting its status to "published".
+ * Faculty can only publish their own voyages; SysAdmin can publish any.
  */
 export async function publishVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized" };
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
+    return { ok: false, error: "unauthenticated" };
   }
+
+  // SEV-2 ownership check: admins can publish any voyage; faculty only their own.
+  const isAdmin = auth.user.roles.some(
+    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
+  );
+  if (!isAdmin) {
+    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
+      urlParams: {
+        populate: { authors: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found" };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(auth.user.id)) {
+      return { ok: false, error: "forbidden" };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
@@ -393,13 +416,25 @@ export async function updateVoyageWithNodes(data: {
   isSequential?: boolean;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
+
+  // Validate the incoming tree before touching Strapi. This prevents
+  // deleting existing nodes only to fail during re-creation.
+  const parseResult = VoyageTreeSchema.safeParse(data);
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+
   try {
     const slug = generateSlug(data.name);
 
-    // Phase 1: PUT the voyage record
+    // Step 1: PUT the voyage record
     const voyageResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${data.id}`,
       {
@@ -430,7 +465,7 @@ export async function updateVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: Delete all existing nodes for this voyage (paginated, with error checking)
+    // Step 2: Delete all existing nodes for this voyage (paginated, with error checking)
     const allNodeIds: number[] = [];
     let page = 1;
     for (;;) {
@@ -467,7 +502,7 @@ export async function updateVoyageWithNodes(data: {
       }),
     );
 
-    // Phase 3: Re-create nodes (main path first, then branches)
+    // Step 3: Re-create nodes (main path first, then branches)
     const nodeError = await createVoyageNodes(data.id, data.nodes);
     if (nodeError) return { ok: false, error: nodeError, data: null };
 
@@ -486,13 +521,39 @@ export async function updateVoyageWithNodes(data: {
 
 /**
  * Deletes a Voyage by ID.
+ * Faculty can only delete their own voyages; SysAdmin can delete any.
  * @param id The ID of the Voyage to delete.
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized", data: null };
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
+    return { ok: false, error: "unauthenticated", data: null };
   }
+
+  // SEV-2 ownership check: admins can delete any voyage; faculty only their own.
+  const isAdmin = auth.user.roles.some(
+    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
+  );
+  if (!isAdmin) {
+    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
+      urlParams: {
+        populate: { authors: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found", data: null };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(auth.user.id)) {
+      return { ok: false, error: "forbidden", data: null };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,

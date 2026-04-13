@@ -1,5 +1,5 @@
 import { DropletClient } from "@/components/admin/droplets/droplet-client";
-import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
+import { Tag } from "@/types";
 import {
   render,
   screen,
@@ -7,10 +7,10 @@ import {
   act,
   waitFor,
 } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/components/admin/droplets/droplet-block", () => ({
-  DropletBlock: ({ droplet }: { droplet: any }) => (
+  DropletBlock: ({ droplet }: { droplet: { id: number; name: string } }) => (
     <div data-testid={`droplet-${droplet.id}`}>{droplet.name}</div>
   ),
 }));
@@ -20,26 +20,28 @@ jest.mock("lodash", () => {
   const actual = jest.requireActual("lodash");
   return {
     ...actual,
-    debounce: (fn: any) => {
+    debounce: (fn: () => void) => {
       const debounced = fn;
-      debounced.cancel = jest.fn();
+      (debounced as { cancel?: jest.Mock }).cancel = jest.fn();
       return debounced;
     },
   };
 });
 
 describe("DropletClient", () => {
-  const mockDroplets = Array.from({ length: 15 }, (_, i) => ({
-    id: i + 1,
-    name: `Droplet ${i + 1}`,
-    slug: `droplet-${i + 1}`,
-    isHidden: false,
-    focusArea: "personal" as FocusArea,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
-    learningObjectives: [],
-    status: "published" as DropletStatus,
-  }));
+  const mockDroplets = Array.from({ length: 15 }, (_, i) =>
+    makeDroplet({
+      id: i + 1,
+      name: `Droplet ${i + 1}`,
+      slug: `droplet-${i + 1}`,
+      isHidden: false,
+      focusArea: "personal",
+      type: "knowledge",
+      tags: [{ id: 1, name: "React", slug: "react", droplets: [] }] as Tag[],
+      learningObjectives: [],
+      status: "published",
+    }),
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -179,10 +181,10 @@ describe("DropletClient", () => {
   describe("Search Functionality", () => {
     it("filters droplets based on search input", async () => {
       const searchableDroplets = [
-        { ...mockDroplets[0], id: 1, name: "React Basics" },
-        { ...mockDroplets[1], id: 2, name: "TypeScript Advanced" },
-        { ...mockDroplets[2], id: 3, name: "React Hooks" },
-        { ...mockDroplets[3], id: 4, name: "Node.js Backend" },
+        makeDroplet({ ...mockDroplets[0], id: 1, name: "React Basics" }),
+        makeDroplet({ ...mockDroplets[1], id: 2, name: "TypeScript Advanced" }),
+        makeDroplet({ ...mockDroplets[2], id: 3, name: "React Hooks" }),
+        makeDroplet({ ...mockDroplets[3], id: 4, name: "Node.js Backend" }),
       ];
 
       render(<DropletClient droplets={searchableDroplets} />);
@@ -224,8 +226,8 @@ describe("DropletClient", () => {
 
     it("handles case-insensitive search", async () => {
       const searchableDroplets = [
-        { ...mockDroplets[0], id: 1, name: "React Basics" },
-        { ...mockDroplets[1], id: 2, name: "TypeScript Advanced" },
+        makeDroplet({ ...mockDroplets[0], id: 1, name: "React Basics" }),
+        makeDroplet({ ...mockDroplets[1], id: 2, name: "TypeScript Advanced" }),
       ];
 
       render(<DropletClient droplets={searchableDroplets} />);
@@ -312,9 +314,9 @@ describe("DropletClient", () => {
 
     it("handles partial matches", async () => {
       const searchableDroplets = [
-        { ...mockDroplets[0], id: 1, name: "React Basics" },
-        { ...mockDroplets[1], id: 2, name: "React Advanced" },
-        { ...mockDroplets[2], id: 3, name: "TypeScript" },
+        makeDroplet({ ...mockDroplets[0], id: 1, name: "React Basics" }),
+        makeDroplet({ ...mockDroplets[1], id: 2, name: "React Advanced" }),
+        makeDroplet({ ...mockDroplets[2], id: 3, name: "TypeScript" }),
       ];
 
       render(<DropletClient droplets={searchableDroplets} />);
@@ -334,9 +336,9 @@ describe("DropletClient", () => {
 
     it("handles search with special characters", async () => {
       const searchableDroplets = [
-        { ...mockDroplets[0], id: 1, name: "C++ Basics" },
-        { ...mockDroplets[1], id: 2, name: "C# Advanced" },
-        { ...mockDroplets[2], id: 3, name: "JavaScript" },
+        makeDroplet({ ...mockDroplets[0], id: 1, name: "C++ Basics" }),
+        makeDroplet({ ...mockDroplets[1], id: 2, name: "C# Advanced" }),
+        makeDroplet({ ...mockDroplets[2], id: 3, name: "JavaScript" }),
       ];
 
       render(<DropletClient droplets={searchableDroplets} />);
@@ -383,11 +385,13 @@ describe("DropletClient", () => {
 
   describe("Search and Pagination Integration", () => {
     it("paginates search results correctly", async () => {
-      const manyDroplets = Array.from({ length: 25 }, (_, i) => ({
-        ...mockDroplets[0],
-        id: i + 1,
-        name: `React Tutorial ${i + 1}`,
-      }));
+      const manyDroplets = Array.from({ length: 25 }, (_, i) =>
+        makeDroplet({
+          ...mockDroplets[0],
+          id: i + 1,
+          name: `React Tutorial ${i + 1}`,
+        }),
+      );
 
       render(<DropletClient droplets={manyDroplets} />);
 
@@ -432,8 +436,8 @@ describe("DropletClient", () => {
   describe("Edge Cases", () => {
     it("handles droplets with undefined names gracefully", async () => {
       const dropletsWithUndefinedName = [
-        { ...mockDroplets[0], name: undefined as any },
-        { ...mockDroplets[1], name: "Valid Droplet" },
+        makeDroplet({ ...mockDroplets[0], name: undefined }),
+        makeDroplet({ ...mockDroplets[1], name: "Valid Droplet" }),
       ];
 
       render(<DropletClient droplets={dropletsWithUndefinedName} />);
@@ -443,10 +447,10 @@ describe("DropletClient", () => {
     });
 
     it("handles very long droplet names", () => {
-      const longNameDroplet = {
+      const longNameDroplet = makeDroplet({
         ...mockDroplets[0],
         name: "A".repeat(200),
-      };
+      });
 
       render(<DropletClient droplets={[longNameDroplet]} />);
 

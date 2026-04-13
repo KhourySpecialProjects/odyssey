@@ -1,30 +1,21 @@
 import { DropletList } from "@/components/group/group-management-droplet-list";
-import {
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  LearningObjective,
-  Tag,
-} from "@/types";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 describe("DropletList", () => {
-  const mockDroplets = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Droplet ${i + 1}`,
-    slug: `droplet-${i + 1}`,
-    completionPercentage: i * 10,
-    lessons: Array.from({ length: i + 1 }, (_, j) => ({
-      id: j + 1,
-      name: `Lesson ${j + 1}`,
-    })) as any,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
-    learningObjectives: [] as LearningObjective[],
-    status: "published" as DropletStatus,
-    focusArea: "personal" as FocusArea,
-    isHidden: false,
-  }));
+  const mockDroplets = Array.from({ length: 12 }, (_, i) =>
+    makeDroplet({
+      id: i + 1,
+      name: `Droplet ${i + 1}`,
+      slug: `droplet-${i + 1}`,
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
+      learningObjectives: [],
+      status: "published",
+      focusArea: "personal",
+      isHidden: false,
+    }),
+  );
 
   const mockDropletWithDescription = {
     ...mockDroplets[0],

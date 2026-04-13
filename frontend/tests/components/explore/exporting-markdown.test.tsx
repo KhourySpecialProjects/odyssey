@@ -54,6 +54,7 @@ describe("Export Droplet to Markdown", () => {
     overview: "A test overview",
     type: "skill",
     focusArea: "technical",
+    difficulty: "beginner",
     tags: [
       { id: 1, slug: "javascript", name: "JavaScript", droplets: [] },
       { id: 2, slug: "react", name: "React", droplets: [] },

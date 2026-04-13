@@ -69,7 +69,11 @@ describe("EnvironmentBanner", () => {
 
   it("renders role switcher when user is logged in (dev mode)", async () => {
     process.env.NEXT_PUBLIC_APP_ENV = "development";
-    process.env.NODE_ENV = "development";
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+      configurable: true,
+    });
 
     render(await EnvironmentBanner({}));
 
@@ -79,7 +83,11 @@ describe("EnvironmentBanner", () => {
 
   it("hides role switcher outside dev mode", async () => {
     process.env.NEXT_PUBLIC_APP_ENV = "staging";
-    process.env.NODE_ENV = "production";
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+      configurable: true,
+    });
 
     render(await EnvironmentBanner({}));
 
