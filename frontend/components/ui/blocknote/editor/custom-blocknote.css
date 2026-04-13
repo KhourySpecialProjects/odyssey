@@ -209,17 +209,33 @@
 
 /* Heading sizes — BlockNote defaults (3em/2em/1.3em) are too aggressive.
    Scale them down to a tighter, document-friendly hierarchy. */
-[data-content-type=heading]              { --level: 1.875em !important; }
-[data-content-type=heading][data-level="2"] { --level: 1.5em !important; }
-[data-content-type=heading][data-level="3"] { --level: 1.2em !important; }
+[data-content-type="heading"] {
+  --level: 1.875em !important;
+}
+[data-content-type="heading"][data-level="2"] {
+  --level: 1.5em !important;
+}
+[data-content-type="heading"][data-level="3"] {
+  --level: 1.2em !important;
+}
 
 /* Placeholder text color — match overview page input text (#121216 light, slate-300 dark) */
-.bn-editor .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
-.bn-editor .bn-block-content[data-is-only-empty-block] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+.bn-editor
+  .bn-block-content[data-is-empty-and-focused]
+  .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
+.bn-editor
+  .bn-block-content[data-is-only-empty-block]
+  .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
   color: #121216;
 }
 
-.dark .bn-editor .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
-.dark .bn-editor .bn-block-content[data-is-only-empty-block] .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+.dark
+  .bn-editor
+  .bn-block-content[data-is-empty-and-focused]
+  .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before,
+.dark
+  .bn-editor
+  .bn-block-content[data-is-only-empty-block]
+  .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
   color: rgb(203 213 225); /* slate-300 */
 }

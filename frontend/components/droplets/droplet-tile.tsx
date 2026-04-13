@@ -522,7 +522,7 @@ ${
                   e.stopPropagation();
                   exportDropletMarkdown();
                 }}
-                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-900`}
+                className={`${isAdmin ? "visible" : "invisible"} bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent`}
               >
                 <div className="group relative">
                   <IconDownload

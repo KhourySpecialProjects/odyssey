@@ -75,6 +75,7 @@ export async function MyContent({
                 }
                 title="No enrolled groups"
                 message="You haven't enrolled in any groups yet."
+                className="min-h-[calc(100vh-var(--header-h)-196px)]"
               />
             )}
             <UserGroups
@@ -87,11 +88,9 @@ export async function MyContent({
           <>
             <div className="pb-2 text-xl font-bold">Droplets</div>
             <ArchivedDropletsGrid sortKey={sortKey} />
-            <hr className="pb-2" />
-            <div className="pb-2 text-xl font-bold">Playlists</div>
+            <div className="mt-6 pb-2 text-xl font-bold">Playlists</div>
             <ArchivedPlaylistsGrid sortKey={sortKey} />
-            <hr className="pb-2" />
-            <div className="pb-2 text-xl font-bold">Groups</div>
+            <div className="mt-6 pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
               <EmptyState
                 icon={
@@ -121,6 +120,7 @@ export async function MyContent({
               }
               title="No enrolled voyages"
               message="You haven't enrolled in any voyages yet."
+              className="min-h-[calc(100vh-var(--header-h)-196px)]"
             />
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

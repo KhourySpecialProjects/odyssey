@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback } from "react";
+import {
+  useState,
+  useTransition,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Playlist, Voyage } from "@/types";
 import { cn } from "@/lib/utils";
 import {
@@ -59,6 +66,23 @@ function initNodesFromVoyage(voyage: Voyage): SelectedNode[] {
   }));
 }
 
+function SectionLabel({
+  children,
+  htmlFor,
+}: {
+  children: ReactNode;
+  htmlFor?: string;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white"
+    >
+      {children}
+    </label>
+  );
+}
+
 export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -73,7 +97,15 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
   const [isSequential, setIsSequential] = useState(
     voyage?.isSequential ?? false,
   );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (blurTimer.current) clearTimeout(blurTimer.current);
+    };
+  }, []);
 
   const availablePlaylists = useMemo(
     () =>
@@ -311,13 +343,11 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
 
   return (
     <div className="flex w-full flex-col gap-8 lg:flex-row">
-      {/* Left: Form panel */}
       <div className="flex w-full flex-col gap-6 lg:w-1/2">
-        {/* Name */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="voyage-name">
+          <SectionLabel htmlFor="voyage-name">
             Voyage Name <span className="text-red-500">*</span>
-          </Label>
+          </SectionLabel>
           <Input
             id="voyage-name"
             placeholder="e.g. Introduction to Machine Learning"
@@ -327,9 +357,8 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
           />
         </div>
 
-        {/* Description */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="voyage-description">Description</Label>
+          <SectionLabel htmlFor="voyage-description">Description</SectionLabel>
           <textarea
             id="voyage-description"
             className="min-h-[100px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
@@ -340,11 +369,9 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
           />
         </div>
 
-        {/* Playlist picker */}
         <div className="flex flex-col gap-3">
-          <Label>Islands (Playlists)</Label>
+          <SectionLabel>Islands (Playlists)</SectionLabel>
 
-          {/* Search input */}
           <div className="relative">
             <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -352,40 +379,52 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
               placeholder="Search public playlists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (blurTimer.current) clearTimeout(blurTimer.current);
+                setIsSearchFocused(true);
+              }}
+              onBlur={() => {
+                blurTimer.current = setTimeout(
+                  () => setIsSearchFocused(false),
+                  150,
+                );
+              }}
               disabled={isPending}
             />
           </div>
 
-          {/* Available playlists */}
-          <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-            {availablePlaylists.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-500">
-                {searchQuery
-                  ? "No playlists found."
-                  : "All playlists have been added."}
-              </p>
-            ) : (
-              availablePlaylists.map((playlist) => (
-                <button
-                  key={playlist.id}
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
-                  onClick={() => addPlaylist(playlist)}
-                  disabled={isPending}
-                >
-                  <span className="truncate font-medium">{playlist.name}</span>
-                  <div className="ml-2 flex flex-shrink-0 items-center gap-1 text-slate-400">
-                    <span className="text-xs">
-                      {playlist.droplets?.length ?? 0} droplets
+          {isSearchFocused && (
+            <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+              {availablePlaylists.length === 0 ? (
+                <p className="px-4 py-3 text-sm text-slate-500">
+                  {searchQuery
+                    ? "No playlists found."
+                    : "All playlists have been added."}
+                </p>
+              ) : (
+                availablePlaylists.map((playlist) => (
+                  <button
+                    key={playlist.id}
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                    onClick={() => addPlaylist(playlist)}
+                    disabled={isPending}
+                  >
+                    <span className="truncate font-medium">
+                      {playlist.name}
                     </span>
-                    <PlusIcon className="h-4 w-4 text-[#297496]" />
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+                    <div className="ml-2 flex flex-shrink-0 items-center gap-1 text-slate-400">
+                      <span className="text-xs">
+                        {playlist.droplets?.length ?? 0} droplets
+                      </span>
+                      <PlusIcon className="h-4 w-4 text-[#297496]" />
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
 
-          {/* Selected islands list */}
           {sortedForDisplay.length > 0 ? (
             <div className="space-y-1">
               {sortedForDisplay.map((node) => {
@@ -547,14 +586,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
           )}
         </div>
 
-        {/* Error */}
         {error && (
           <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </p>
         )}
 
-        {/* Sequential progression toggle */}
         <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
           <input
             type="checkbox"
@@ -573,19 +610,7 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
           </div>
         </label>
 
-        {/* Action buttons */}
         <div className="flex gap-3">
-          <Button
-            type="button"
-            onClick={() => handleSubmit("published")}
-            disabled={isPending}
-            className="flex-1"
-          >
-            {isPending && isEditing && "Updating..."}
-            {isPending && !isEditing && "Publishing..."}
-            {!isPending && isEditing && "Update & Publish"}
-            {!isPending && !isEditing && "Publish Voyage"}
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -597,15 +622,23 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
             {!isPending && isEditing && "Save Changes"}
             {!isPending && !isEditing && "Save as Draft"}
           </Button>
+          <Button
+            type="button"
+            onClick={() => handleSubmit("published")}
+            disabled={isPending}
+            className="flex-1 bg-[#2D7597] text-white hover:bg-[#255e78]"
+          >
+            {isPending && isEditing && "Updating..."}
+            {isPending && !isEditing && "Publishing..."}
+            {!isPending && isEditing && "Update & Publish"}
+            {!isPending && !isEditing && "Publish Voyage"}
+          </Button>
         </div>
       </div>
 
-      {/* Right: Live tree preview */}
       <div className="w-full lg:w-1/2">
         <div className="sticky top-8">
-          <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Live Preview
-          </h3>
+          <SectionLabel>Live Preview</SectionLabel>
           <VoyageTreeMap nodes={treeNodes} />
         </div>
       </div>

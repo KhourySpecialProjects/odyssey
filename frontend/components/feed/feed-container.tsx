@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
 import { AuthorizedUser } from "@/types";
 import { FriendRequests } from "../friends/friend-requests";
 import { Button } from "../ui/button";
@@ -59,7 +59,10 @@ export function FeedContainer({
       </nav>
 
       {/* Content row: center + right column */}
-      <div className="flex items-start md:ml-[260px]">
+      <div
+        className="flex items-stretch md:ml-[260px]"
+        style={{ "--header-h": `${headerHeight}px` } as React.CSSProperties}
+      >
         {/* Center */}
         <div
           className="min-w-0 flex-1"
@@ -76,11 +79,8 @@ export function FeedContainer({
         </div>
 
         {/* Right column — normal flow */}
-        <div className="hidden w-[280px] shrink-0 p-4 pt-6 md:block">
-          <div
-            className="overflow-hidden rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
-            style={{ minHeight: `calc(100vh - ${headerHeight + 48}px)` }}
-          >
+        <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 md:flex">
+          <div className="flex-1 overflow-hidden rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="p-5">
               <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
                 Friend Requests

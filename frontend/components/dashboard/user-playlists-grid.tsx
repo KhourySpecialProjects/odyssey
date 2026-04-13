@@ -61,6 +61,7 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
         }
         title="No saved playlists"
         message="You haven't saved any playlists yet. Browse the explore page to find playlists to save."
+        className="min-h-[calc(100vh-var(--header-h)-196px)]"
       />
     );
   }
