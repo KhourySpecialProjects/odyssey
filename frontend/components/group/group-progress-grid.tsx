@@ -34,14 +34,10 @@ interface GroupProgressGridProps {
     string,
     { completionPercentage: number; completionDate: Date | undefined }
   >;
-  voyageStatuses: Record<string, { completionPercentage: number }>;
+  voyageStatuses?: Record<string, { completionPercentage: number }>;
 }
 
-export function GroupProgressGrid({
-  group,
-  statuses,
-  voyageStatuses,
-}: GroupProgressGridProps) {
+export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const [selectedValue, setSelectedValue] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 4;

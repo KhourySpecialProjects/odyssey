@@ -29,10 +29,8 @@ interface UserMultiSelectProps {
 export function UserMultiSelect({
   selectedIds,
   onChange,
-  placeholder = "Select users...",
 }: UserMultiSelectProps) {
   const [users, setUsers] = useState<AuthorizedUser[]>([]);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -41,17 +39,6 @@ export function UserMultiSelect({
     };
     fetchUsers();
   }, []);
-
-  const filteredUsers = useMemo(() => {
-    const searchLower = search.toLowerCase();
-    return users.filter((user) => {
-      const fullName = `${user.firstName} ${user.lastName}`
-        .toLowerCase()
-        .trim();
-      const email = user.email.toLowerCase();
-      return fullName.includes(searchLower) || email.includes(searchLower);
-    });
-  }, [users, search]);
 
   const selectedUsers = useMemo(
     () => users.filter((u) => selectedIds.includes(u.id)),
