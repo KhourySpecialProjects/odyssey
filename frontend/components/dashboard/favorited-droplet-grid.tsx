@@ -54,6 +54,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
         }
         title="No favorited droplets"
         message="You haven't favorited any droplets yet."
+        className="min-h-[calc(100vh-var(--header-h)-196px)]"
       />
     );
   }

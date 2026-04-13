@@ -1,16 +1,24 @@
 import { type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export function EmptyState({
   icon,
   title,
   message,
+  className,
 }: {
   icon: ReactNode;
   title: string;
   message: string;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-[#D0D5DD] py-16 text-center dark:border-slate-600">
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center rounded-xl border border-[#D0D5DD] py-16 text-center dark:border-slate-600",
+        className,
+      )}
+    >
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#D0D5DD] bg-[#fcfcfd] dark:border-slate-600 dark:bg-slate-800">
         {icon}
       </div>

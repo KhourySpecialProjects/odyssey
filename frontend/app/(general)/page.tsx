@@ -6,6 +6,9 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
 import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
 
+const outlineLinkCls =
+  "inline-flex items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] py-[10px] text-sm font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700";
+
 export default async function HomeRoute() {
   const user = await getCurrentUser();
 
@@ -13,42 +16,34 @@ export default async function HomeRoute() {
   const droplet = droplets[Math.floor(Math.random() * droplets.length)];
 
   return (
-    <GradientBackground className="flex-grow">
-      <div className="isolate px-6 lg:px-8">
-        <div
-          className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-          aria-hidden="true"
-        >
-          <div
-            className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-            style={{
-              clipPath:
-                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-            }}
-          ></div>
-        </div>
-
-        <div className="mx-auto max-w-2xl py-0 lg:py-4">
-          <div className="text-center">
+    <GradientBackground className="px-12 lg:px-24">
+      <div className="mx-auto max-w-5xl">
+        <p className="mb-4 text-sm font-semibold tracking-widest text-sky-600 uppercase">
+          Khoury College
+        </p>
+        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+          {/* Left: hero text */}
+          <div>
             <h1
-              className="text-4xl font-black tracking-tight text-balance text-slate-900 sm:text-6xl dark:text-white"
+              className="text-4xl leading-tight font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white"
               role="heading"
             >
-              Reinforce Your Learning and Fuel Your Future
+              Reinforce Your
+              <br />
+              Learning.
             </h1>
-            <p className="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-300">
-              Odyssey is a new platform designed to provide on-demand access to
-              modern knowledge and skills pertinent to {"today's"} undergraduate
-              Khoury students.
+            <p className="mt-6 text-base leading-7 text-slate-600 dark:text-slate-400">
+              On-demand knowledge and skills for {"today's"} Khoury students.
+              Bite-sized, modern, and built for you.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-x-6 gap-y-3 md:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
                 size="lg"
-                className="dark:border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-black"
+                className="bg-[#2D7597] text-white hover:bg-[#255e78]"
                 after={<ArrowRightIcon />}
                 asChild
               >
-                <Link href="/explore">Explore</Link>
+                <Link href="/explore">Start Exploring</Link>
               </Button>
               {user?.roles?.some(
                 (role) =>
@@ -56,14 +51,9 @@ export default async function HomeRoute() {
                   role === "Faculty" ||
                   role === "System Admin",
               ) && (
-                <Button
-                  size="lg"
-                  className="bg-sky-200 text-slate-900 hover:bg-sky-300 dark:bg-blue-400 dark:text-slate-900 dark:hover:bg-blue-500"
-                  after={<ArrowRightIcon />}
-                  asChild
-                >
-                  <Link href="/my-content">Create a Droplet</Link>
-                </Button>
+                <Link href="/my-content" className={outlineLinkCls}>
+                  Create a Droplet <ArrowRightIcon className="h-4 w-4" />
+                </Link>
               )}
               {user?.roles?.some((role) => role === "User") &&
                 !user?.roles?.some(
@@ -72,41 +62,24 @@ export default async function HomeRoute() {
                     role === "Faculty" ||
                     role === "System Admin",
                 ) && (
-                  <Button
-                    size="lg"
-                    className="bg-sky-200 text-slate-900 hover:bg-sky-300 dark:bg-blue-400 dark:text-slate-900 dark:hover:bg-blue-500"
-                    after={<ArrowRightIcon />}
-                    asChild
-                  >
-                    <Link href="/creation-request">Request Creation Role</Link>
-                  </Button>
+                  <Link href="/creation-request" className={outlineLinkCls}>
+                    Request Creation Role <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
                 )}
               {!user && (
-                <Button
-                  size="lg"
-                  className="dark:bg-black dark:text-white dark:hover:text-black"
-                  after={<ArrowRightIcon />}
-                  asChild
-                >
-                  <Link href="/request-access">Request Access</Link>
-                </Button>
+                <Link href="/request-access" className={outlineLinkCls}>
+                  Request Access <ArrowRightIcon className="h-4 w-4" />
+                </Link>
               )}
             </div>
-            {user && droplet && <FunFact droplet={droplet} />}
           </div>
-        </div>
 
-        <div
-          className="absolute inset-x-0 top-[calc(100%-18rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-40rem)]"
-          aria-hidden="true"
-        >
-          <div
-            className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
-            style={{
-              clipPath:
-                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-            }}
-          ></div>
+          {/* Right: Fun Fact card */}
+          {user && droplet && (
+            <div className="h-full">
+              <FunFact droplet={droplet} />
+            </div>
+          )}
         </div>
       </div>
     </GradientBackground>

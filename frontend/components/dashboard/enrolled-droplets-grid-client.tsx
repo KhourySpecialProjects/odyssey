@@ -166,7 +166,7 @@ export function EnrolledDropletsGridClient({
 
   return (
     <>
-      <ul className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
         {paginatedDroplets.map((droplet) => (
           <DropletTile
             key={droplet.id}

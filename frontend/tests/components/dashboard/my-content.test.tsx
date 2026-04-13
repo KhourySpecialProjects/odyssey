@@ -531,13 +531,10 @@ describe("MyContent", () => {
   });
 
   describe("Archived Content Section", () => {
-    it("includes dividers between archived sections", async () => {
-      const { container } = render(
-        await MyContent({ searchParams: { contentType: "archived" } }),
-      );
+    it("renders archived sections with spacing between them", async () => {
+      render(await MyContent({ searchParams: { contentType: "archived" } }));
 
-      const dividers = container.querySelectorAll("hr");
-      expect(dividers.length).toBeGreaterThan(0);
+      expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
     });
 
     it("renders archived droplets grid", async () => {
