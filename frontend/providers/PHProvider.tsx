@@ -50,12 +50,20 @@ function PostHogIdentify() {
   return null;
 }
 
+const isLocal = process.env.NEXT_PUBLIC_APP_ENV === "local";
+
 export function PHProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    if (isLocal) return;
+
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     });
   }, []);
+
+  if (isLocal) {
+    return <>{children}</>;
+  }
 
   return (
     <PostHogProvider client={posthog}>

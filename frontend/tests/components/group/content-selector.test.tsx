@@ -23,6 +23,7 @@ describe("ContentSelector", () => {
         archived={1}
         groups={1}
         favorited={0}
+        voyages={0}
       />,
     );
     expect(screen.getByText(/droplets/i)).toBeInTheDocument();
@@ -42,6 +43,7 @@ describe("ContentSelector", () => {
         archived={1}
         groups={1}
         favorited={0}
+        voyages={0}
       />,
     );
     expect(screen.getByText(/playlists/i).parentElement).toHaveClass(

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ProfileContent } from "@/app/(general)/prof/[username]/profile-content";
 import { AuthorizedUser, Enrollment, Announcement } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { mock } from "node:test";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 // Mock Next.js navigation hooks
 const mockPush = jest.fn();
@@ -56,7 +56,7 @@ describe("ProfileContent - Additional Coverage", () => {
     timeZone: "America/New_York",
     groups: [],
     droplets: [
-      {
+      makeDroplet({
         id: 1,
         name: "Test Created Droplet",
         slug: "test-created",
@@ -67,7 +67,7 @@ describe("ProfileContent - Additional Coverage", () => {
         type: "knowledge",
         focusArea: "technical",
         learningObjectives: [],
-      },
+      }),
     ],
   };
 
@@ -75,7 +75,7 @@ describe("ProfileContent - Additional Coverage", () => {
     {
       id: "1",
       authorizedUser: mockUserData,
-      droplet: {
+      droplet: makeDroplet({
         id: 2,
         name: "Test Completed Droplet",
         slug: "test-completed",
@@ -87,7 +87,7 @@ describe("ProfileContent - Additional Coverage", () => {
         focusArea: "personal",
         learningObjectives: [],
         lessons: [],
-      },
+      }),
       viewedLessons: [],
       isComplete: true,
       rating: 4,
@@ -520,7 +520,7 @@ describe("ProfileContent - Additional Coverage", () => {
           {
             id: "2",
             authorizedUser: mockUserData,
-            droplet: {
+            droplet: makeDroplet({
               id: 3,
               name: "Second Completed Droplet",
               slug: "second-completed",
@@ -532,7 +532,7 @@ describe("ProfileContent - Additional Coverage", () => {
               focusArea: "personal",
               learningObjectives: [],
               lessons: [],
-            },
+            }),
             viewedLessons: [],
             isComplete: true,
             rating: 5,
@@ -566,19 +566,19 @@ describe("ProfileContent - Additional Coverage", () => {
           ...mockUserData,
           droplets: [
             ...(mockUserData.droplets || []),
-            {
+            makeDroplet({
               id: 4,
               name: "Second Created Droplet",
               slug: "second-created",
               description: "<p>Second created description</p>",
               averageRating: 3.5,
               isHidden: false,
-              status: "published" as const,
-              type: "knowledge" as const,
-              focusArea: "technical" as const,
+              status: "published",
+              type: "knowledge",
+              focusArea: "technical",
               learningObjectives: [],
               lessons: [],
-            },
+            }),
           ],
         };
 
@@ -607,7 +607,7 @@ describe("ProfileContent - Additional Coverage", () => {
             {
               id: "3",
               authorizedUser: mockUserData,
-              droplet: {
+              droplet: makeDroplet({
                 id: 5,
                 name: "Incomplete Droplet",
                 slug: "incomplete",
@@ -619,7 +619,7 @@ describe("ProfileContent - Additional Coverage", () => {
                 focusArea: "personal",
                 learningObjectives: [],
                 lessons: [],
-              },
+              }),
               viewedLessons: [],
               isComplete: false,
               rating: 0,
@@ -680,7 +680,7 @@ describe("ProfileContent - Additional Coverage", () => {
               {
                 id: "4",
                 authorizedUser: mockUserData,
-                droplet: {
+                droplet: makeDroplet({
                   id: 6,
                   name: "Incomplete",
                   slug: "incomplete",
@@ -692,7 +692,7 @@ describe("ProfileContent - Additional Coverage", () => {
                   focusArea: "personal",
                   learningObjectives: [],
                   lessons: [],
-                },
+                }),
                 viewedLessons: [],
                 isComplete: false,
                 rating: 0,

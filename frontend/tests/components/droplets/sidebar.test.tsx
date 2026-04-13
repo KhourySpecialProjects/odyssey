@@ -673,8 +673,8 @@ describe("Sidebar", () => {
       );
 
       const overviewLink = screen.getByText("Overview").closest("a");
-      expect(overviewLink).toHaveClass("bg-[#2D7597]");
-      expect(overviewLink).toHaveClass("text-white");
+      expect(overviewLink).toHaveClass("bg-[#287697]/10");
+      expect(overviewLink).toHaveClass("text-[#287697]");
     });
 
     it("highlights active lesson link", () => {
@@ -692,7 +692,7 @@ describe("Sidebar", () => {
       );
 
       const lesson1Link = screen.getByText("Lesson 1").closest("a");
-      expect(lesson1Link).toHaveClass("bg-[#2D7597]");
+      expect(lesson1Link).toHaveClass("bg-[#287697]/10");
     });
 
     it("highlights active recap link", () => {
@@ -710,7 +710,7 @@ describe("Sidebar", () => {
       );
 
       const recapLink = screen.getByText("Recap").closest("a");
-      expect(recapLink).toHaveClass("bg-[#2D7597]");
+      expect(recapLink).toHaveClass("bg-[#287697]/10");
     });
   });
 

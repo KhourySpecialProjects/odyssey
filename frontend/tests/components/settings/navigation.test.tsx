@@ -26,6 +26,6 @@ describe("SettingsNavigation", () => {
 
   it("highlights current path", () => {
     render(<SettingsNavigation items={mockItems} />);
-    expect(screen.getByText("Profile")).toHaveClass("text-sky-600");
+    expect(screen.getByText("Profile")).toHaveClass("text-[#287697]");
   });
 });

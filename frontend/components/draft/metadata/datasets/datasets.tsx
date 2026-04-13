@@ -12,8 +12,19 @@ import {
   deleteDataset as deleteDatasetRecord,
 } from "@/lib/requests/dataset";
 import { toast } from "sonner";
-import { IconUpload, IconFile, IconTrash } from "@tabler/icons-react";
+import {
+  IconUpload,
+  IconFile,
+  IconTrash,
+  IconInfoCircle,
+} from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { MAX_DATASET_FILE_SIZE } from "@/lib/validations/dataset";
 
 const MAX_DATASETS = 5;
 
@@ -84,18 +95,29 @@ export function Datasets({
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    const result = await uploadDataset(formData);
-
-    if (!result.ok || !result.url) {
-      toast.error(result.error ?? "Upload failed.");
+    if (file.size > MAX_DATASET_FILE_SIZE) {
+      toast.error("File is too large. Maximum file size is 25 MB.");
       return;
     }
 
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!["csv", "json", "xlsx"].includes(ext)) {
+      toast.error(
+        "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
+      );
+      return;
+    }
 
-    startTransition(async () => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await uploadDataset(formData);
+
+      if (!result.ok || !result.url) {
+        toast.error(result.error ?? "Upload failed.");
+        return;
+      }
+
       const response = await createDataset({
         name: file.name,
         format: ext as "csv" | "json" | "xlsx",
@@ -111,8 +133,13 @@ export function Datasets({
       }
 
       toast.success(`"${file.name}" uploaded.`);
-      router.refresh();
-    });
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err) {
+      console.error("Dataset upload failed:", err);
+      toast.error("Upload failed. Please try again.");
+    }
   }
 
   async function handleRemove(dataset: Dataset) {
@@ -145,9 +172,30 @@ export function Datasets({
 
   return (
     <section className="w-full">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-        Datasets
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Datasets
+        </h2>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Dataset help"
+              className="inline-flex"
+            >
+              <IconInfoCircle className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            <p>
+              Upload data files (CSV, JSON, or XLSX) for students to explore.
+              Datasets can only be used inside Notebook Code blocks (the
+              Jupyter-like Python cells). They are automatically available to
+              import and query in any notebook cell within this droplet.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
       <div className="mt-1 flex items-center justify-between">
         <p className="text-slate-600 dark:text-slate-300">
           Upload data files for use in notebook code blocks (CSV, JSON, or XLSX)
@@ -200,7 +248,7 @@ export function Datasets({
         <input
           ref={inputRef}
           type="file"
-          accept=".csv,.json,.xlsx,.xls"
+          accept=".csv,.json,.xlsx"
           className="hidden"
           onChange={onFileChange}
         />

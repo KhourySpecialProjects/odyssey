@@ -165,7 +165,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
       roles: selectedRoles,
     });
 
-    if (result.success) {
+    if (result.ok) {
       setUser((prev) => ({
         ...prev,
         firstName: formData.get("firstName") as string,
@@ -186,7 +186,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
     setUser((u) => ({ ...u, isEnabled: next }));
     try {
       const result = await updateUserInfo(user.id, { isEnabled: next });
-      if (!result.success) {
+      if (!result.ok) {
         setUser((u) => ({ ...u, isEnabled: prev }));
         toast.error("Failed to update user access");
       }
@@ -508,7 +508,7 @@ function UserMobileCard({ user: initialUser }: { user: AuthorizedUser }) {
       bio: formData.get("bio") as string,
       roles: selectedRoles,
     });
-    if (result.success) {
+    if (result.ok) {
       setUser((prev) => ({
         ...prev,
         firstName: formData.get("firstName") as string,
@@ -529,7 +529,7 @@ function UserMobileCard({ user: initialUser }: { user: AuthorizedUser }) {
     setUser((u) => ({ ...u, isEnabled: next }));
     try {
       const result = await updateUserInfo(user.id, { isEnabled: next });
-      if (!result.success) {
+      if (!result.ok) {
         setUser((u) => ({ ...u, isEnabled: prev }));
         toast.error("Failed to update user access");
       }

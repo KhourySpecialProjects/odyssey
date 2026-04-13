@@ -1,13 +1,36 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { DateTime } from "luxon";
-import {
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  GroupSemester,
-  Tag,
-} from "@/types";
+import { AuthorizedUser, GroupSemester, TimeZone } from "@/types";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
+
+function makeAuthorizedUser(
+  overrides: Partial<AuthorizedUser> = {},
+): AuthorizedUser {
+  return {
+    id: 1,
+    email: "user@example.com",
+    roles: [],
+    isEnabled: true,
+    isPublic: false,
+    linkedin: "",
+    github: "",
+    website: "",
+    firstTime: false,
+    firstName: "Test",
+    lastName: "User",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York" as TimeZone,
+    groups: [],
+    ...overrides,
+  };
+}
 
 describe("DueDateAnnouncements", () => {
   const mockGroup = {
@@ -18,58 +41,53 @@ describe("DueDateAnnouncements", () => {
     semester: "SPRING" as GroupSemester,
   };
   const tomorrow = DateTime.local().plus({ days: 1 }).toISO();
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
-    focusArea: "personal" as FocusArea,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    focusArea: "personal",
+    type: "knowledge",
+    tags: [makeTag({ id: 1, name: "React" })],
     learningObjectives: [],
-    status: "published" as DropletStatus,
-  };
+    status: "published",
+  });
+  const mockAuthUser = makeAuthorizedUser({ id: 1 });
   const mockDueDates = [
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
     {
-      id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
-      authorized_user: 1,
+      authorized_user: mockAuthUser,
       group: mockGroup,
     },
   ];

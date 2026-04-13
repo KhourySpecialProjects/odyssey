@@ -73,6 +73,7 @@ export async function EnrolledDropletsGrid({
         }
         title="No enrolled droplets"
         message="You haven't enrolled in any droplets yet."
+        className="min-h-[calc(100vh-var(--header-h)-196px)]"
       />
     );
   }

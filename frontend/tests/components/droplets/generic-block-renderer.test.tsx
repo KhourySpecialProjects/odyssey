@@ -38,14 +38,21 @@ describe("GenericBlockRenderer", () => {
     jest.clearAllMocks();
 
     // JSDOM does not implement Range.prototype.getBoundingClientRect
-    Range.prototype.getBoundingClientRect = jest.fn(() => ({
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-      width: 0,
-      height: 0,
-    }));
+    function makeDOMRect(overrides: Partial<DOMRect> = {}): DOMRect {
+      return {
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+        ...overrides,
+      };
+    }
+    Range.prototype.getBoundingClientRect = jest.fn(() => makeDOMRect());
 
     (katex.renderToString as jest.Mock).mockImplementation(
       (latex) => `<span class="katex-rendered">${latex}</span>`,

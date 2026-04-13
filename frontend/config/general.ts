@@ -16,15 +16,11 @@ export const getMainNav = (user: User) => {
   const mainNav = [
     {
       href: "/feed",
-      label: "Feed",
+      label: "Activity",
     },
     {
       href: "/explore",
       label: "Explore",
-    },
-    {
-      href: "/dashboard",
-      label: "Dashboard",
     },
     {
       href: "/g/dashboard?tab=member",

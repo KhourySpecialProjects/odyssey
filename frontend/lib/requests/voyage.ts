@@ -1,32 +1,123 @@
 "use server";
 
+import qs from "qs";
 import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
-import { getCachedUser } from "./cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-
-async function requireAdminOrFaculty() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return false;
-  const user = await getCachedUser(session.user.email);
-  if (!user?.roles) return false;
-  const titles = user.roles.map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => (typeof r === "string" ? r : r.title) as string,
-  );
-  return (
-    titles.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    titles.includes(AuthorizedUserRoleTitle.Faculty)
-  );
-}
+import { requireRole } from "@/lib/auth/require-role";
+import { VoyageTreeSchema } from "@/lib/validations/voyage";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function strapiHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+  };
+}
+
+async function postNode(
+  nodeBody: Record<string, unknown>,
+): Promise<{ ok: boolean; error: string | null; nodeId: number | null }> {
+  const response = await fetch(
+    `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes`,
+    {
+      method: "POST",
+      headers: strapiHeaders(),
+      body: JSON.stringify({ data: nodeBody }),
+    },
+  );
+
+  const data = await response.json();
+  if (!response.ok || data.error) {
+    return {
+      ok: false,
+      error: data.error?.message || "Failed to create voyage node",
+      nodeId: null,
+    };
+  }
+
+  const node = flattenAttributes(data.data) as { id: number };
+  return { ok: true, error: null, nodeId: node.id };
+}
+
+interface NodeInput {
+  playlistId: number;
+  label: string;
+  isMainPath: boolean;
+  branchType: "required" | "optional";
+  parentPlaylistId: number | null;
+  orderIndex: number;
+}
+
+/**
+ * Creates voyage nodes in two phases: main path first, then branches.
+ * Returns an error string on failure, or null on success.
+ */
+async function createVoyageNodes(
+  voyageId: number,
+  nodes: NodeInput[],
+): Promise<string | null> {
+  const mainNodes = nodes.filter((n) => n.isMainPath);
+  const branchNodes = nodes.filter((n) => !n.isMainPath);
+  const playlistIdToNodeId = new Map<number, number>();
+
+  // Main path nodes must be sequential (branches reference their IDs)
+  for (const node of mainNodes) {
+    const { ok, error, nodeId } = await postNode({
+      voyage: voyageId,
+      playlist: node.playlistId,
+      label: node.label,
+      isMainPath: true,
+      branchType: node.branchType,
+      nodeType: "playlist",
+      orderIndex: node.orderIndex,
+    });
+
+    if (!ok) return error;
+    playlistIdToNodeId.set(node.playlistId, nodeId!);
+  }
+
+  // Branch nodes resolve parent by playlistId -> Strapi node ID
+  for (const node of branchNodes) {
+    const parentNodeId =
+      node.parentPlaylistId != null
+        ? playlistIdToNodeId.get(node.parentPlaylistId) ?? null
+        : null;
+
+    if (parentNodeId === null && node.parentPlaylistId != null) {
+      return `Branch node "${node.label}" references unknown parent playlist.`;
+    }
+
+    const nodeBody: Record<string, unknown> = {
+      voyage: voyageId,
+      playlist: node.playlistId,
+      label: node.label,
+      isMainPath: false,
+      branchType: node.branchType,
+      nodeType: "playlist",
+      orderIndex: node.orderIndex,
+    };
+    if (parentNodeId != null) nodeBody.parentNode = parentNodeId;
+
+    const { ok, error } = await postNode(nodeBody);
+    if (!ok) return error;
+  }
+
+  return null;
+}
 
 /**
  * Gets all published voyages with their voyage_nodes populated.
@@ -168,29 +259,31 @@ export async function createVoyageWithNodes(data: {
   status?: "draft" | "published";
   isSequential?: boolean;
   authorId?: number;
-  nodes: {
-    playlistId: number;
-    label: string;
-    isMainPath: boolean;
-    branchType: "required" | "optional";
-    parentPlaylistId: number | null;
-    orderIndex: number;
-  }[];
+  nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
+
+  // Validate the incoming tree before touching Strapi. Catches circular refs,
+  // orphan parents, branch limits, and empty names before any network I/O.
+  const parseResult = VoyageTreeSchema.safeParse(data);
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+  const validated = parseResult.data;
+
   try {
-    // Phase 1: create the voyage record
-    const slug = data.name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    // Step 1: create the voyage record
+    const slug = generateSlug(validated.name);
     const voyageBody: Record<string, unknown> = {
-      name: data.name,
+      name: validated.name,
       slug,
-      description: data.description ?? "",
+      description: validated.description ?? "",
       status: data.status ?? "draft",
       isSequential: data.isSequential ?? false,
     };
@@ -202,17 +295,13 @@ export async function createVoyageWithNodes(data: {
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
+        headers: strapiHeaders(),
         body: JSON.stringify({ data: voyageBody }),
       },
     );
 
     const voyageData = await voyageResponse.json();
-
-    if (!voyageResponse.ok || (voyageResponse.ok && voyageData.error)) {
+    if (!voyageResponse.ok || voyageData.error) {
       return {
         ok: false,
         error: voyageData.error?.message || "Failed to create voyage",
@@ -224,119 +313,20 @@ export async function createVoyageWithNodes(data: {
       id: number;
       slug: string;
     };
-    const voyageId = voyage.id;
 
-    // Phase 2: create voyage nodes — main path first, then branches
-    const mainNodes = data.nodes.filter((n) => n.isMainPath);
-    const branchNodes = data.nodes.filter((n) => !n.isMainPath);
-
-    // Map from playlistId → Strapi node ID (populated while creating main nodes)
-    const playlistIdToNodeId = new Map<number, number>();
-
-    async function postNode(nodeBody: Record<string, unknown>): Promise<{
-      ok: boolean;
-      error: string | null;
-      nodeId: number | null;
-    }> {
-      const nodeResponse = await fetch(
-        `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({ data: nodeBody }),
-        },
+    // Step 2: create voyage nodes
+    const nodeError = await createVoyageNodes(voyage.id, validated.nodes);
+    if (nodeError) {
+      // Best-effort cleanup of the orphaned voyage
+      await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyage.id}`, {
+        method: "DELETE",
+        headers: strapiHeaders(),
+      }).catch(() =>
+        console.error(
+          `Failed to clean up voyage ${voyage.id} after node error`,
+        ),
       );
-
-      const nodeData = await nodeResponse.json();
-
-      if (!nodeResponse.ok || (nodeResponse.ok && nodeData.error)) {
-        return {
-          ok: false,
-          error: nodeData.error?.message || "Failed to create voyage node",
-          nodeId: null,
-        };
-      }
-
-      const node = flattenAttributes(nodeData.data) as { id: number };
-      return { ok: true, error: null, nodeId: node.id };
-    }
-
-    async function cleanupVoyage() {
-      try {
-        await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyageId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-        });
-      } catch {
-        // Best-effort cleanup — log but do not rethrow
-        console.error(`Failed to clean up voyage ${voyageId} after node error`);
-      }
-    }
-
-    // Create main path nodes
-    for (const node of mainNodes) {
-      const { ok, error, nodeId } = await postNode({
-        voyage: voyageId,
-        playlist: node.playlistId,
-        label: node.label,
-        isMainPath: true,
-        branchType: node.branchType,
-        nodeType: "playlist",
-        orderIndex: node.orderIndex,
-      });
-
-      if (!ok) {
-        await cleanupVoyage();
-        return { ok: false, error, data: null };
-      }
-
-      playlistIdToNodeId.set(node.playlistId, nodeId!);
-    }
-
-    // Create branch nodes, resolving parent by playlistId → Strapi node ID
-    for (const node of branchNodes) {
-      const parentNodeId =
-        node.parentPlaylistId != null
-          ? playlistIdToNodeId.get(node.parentPlaylistId) ?? null
-          : null;
-
-      if (parentNodeId === null && node.parentPlaylistId != null) {
-        await cleanupVoyage();
-        return {
-          ok: false,
-          error: `Branch node "${node.label}" references unknown parent playlist.`,
-          data: null,
-        };
-      }
-
-      const nodeBody: Record<string, unknown> = {
-        voyage: voyageId,
-        playlist: node.playlistId,
-        label: node.label,
-        isMainPath: false,
-        branchType: node.branchType,
-        nodeType: "playlist",
-        orderIndex: node.orderIndex,
-      };
-
-      if (parentNodeId != null) {
-        nodeBody.parentNode = parentNodeId;
-      }
-
-      const { ok, error, nodeId } = await postNode(nodeBody);
-
-      if (!ok) {
-        await cleanupVoyage();
-        return { ok: false, error, data: null };
-      }
-
-      playlistIdToNodeId.set(node.playlistId, nodeId!);
+      return { ok: false, error: nodeError, data: null };
     }
 
     revalidateTag(CACHE_TAGS.voyages);
@@ -354,20 +344,43 @@ export async function createVoyageWithNodes(data: {
 
 /**
  * Publishes a draft Voyage by setting its status to "published".
+ * Faculty can only publish their own voyages; SysAdmin can publish any.
  */
 export async function publishVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized" };
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
+    return { ok: false, error: "unauthenticated" };
   }
+
+  // SEV-2 ownership check: admins can publish any voyage; faculty only their own.
+  const isAdmin = auth.user.roles.some(
+    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
+  );
+  if (!isAdmin) {
+    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
+      urlParams: {
+        populate: { authors: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found" };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(auth.user.id)) {
+      return { ok: false, error: "forbidden" };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
+        headers: strapiHeaders(),
         body: JSON.stringify({ data: { status: "published" } }),
       },
     );
@@ -390,23 +403,163 @@ export async function publishVoyage(id: number) {
 }
 
 /**
+ * Updates an existing Voyage and its tree-structured nodes. Faculty/Admin only.
+ *
+ * Strategy: PUT the voyage record, DELETE all existing nodes, then re-create
+ * nodes from scratch using the same two-phase approach as creation.
+ */
+export async function updateVoyageWithNodes(data: {
+  id: number;
+  name: string;
+  description?: string;
+  status?: "draft" | "published";
+  isSequential?: boolean;
+  nodes: NodeInput[];
+}) {
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
+    return { ok: false, error: "Unauthorized", data: null };
+  }
+
+  // Validate the incoming tree before touching Strapi. This prevents
+  // deleting existing nodes only to fail during re-creation.
+  const parseResult = VoyageTreeSchema.safeParse(data);
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+
+  try {
+    const slug = generateSlug(data.name);
+
+    // Step 1: PUT the voyage record
+    const voyageResponse = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${data.id}`,
+      {
+        method: "PUT",
+        headers: strapiHeaders(),
+        body: JSON.stringify({
+          data: {
+            name: data.name,
+            slug,
+            description: data.description ?? "",
+            status: data.status ?? "draft",
+            isSequential: data.isSequential ?? false,
+          },
+        }),
+      },
+    );
+
+    const voyageJson = await voyageResponse.json();
+    if (!voyageResponse.ok || voyageJson.error) {
+      return {
+        ok: false,
+        error: voyageJson.error?.message || "Failed to update voyage",
+        data: null,
+      };
+    }
+    const voyage = flattenAttributes(voyageJson.data) as {
+      id: number;
+      slug: string;
+    };
+
+    // Step 2: Delete all existing nodes for this voyage (paginated, with error checking)
+    const allNodeIds: number[] = [];
+    let page = 1;
+    for (;;) {
+      const query = qs.stringify({
+        filters: { voyage: { id: { $eq: data.id } } },
+        pagination: { page, pageSize: 100 },
+        fields: ["id"],
+      });
+      const nodesPage = await fetchAPI(`/api/voyage-nodes?${query}`, {
+        next: { tags: [CACHE_TAGS.voyages] },
+      });
+      if (Array.isArray(nodesPage)) {
+        allNodeIds.push(...nodesPage.map((n: { id: number }) => n.id));
+      }
+      // fetchAPI auto-flattens, so pagination meta comes from the raw response;
+      // break after one page if we got fewer than pageSize results
+      if (!Array.isArray(nodesPage) || nodesPage.length < 100) break;
+      page++;
+    }
+
+    await Promise.all(
+      allNodeIds.map(async (nodeId) => {
+        const res = await fetch(
+          `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          },
+        );
+        if (!res.ok) {
+          throw new Error(`Failed to delete voyage-node ${nodeId}`);
+        }
+        return res;
+      }),
+    );
+
+    // Step 3: Re-create nodes (main path first, then branches)
+    const nodeError = await createVoyageNodes(data.id, data.nodes);
+    if (nodeError) return { ok: false, error: nodeError, data: null };
+
+    revalidateTag(CACHE_TAGS.voyages);
+    revalidateTag(CACHE_TAGS.userContent);
+    return { ok: true, error: null, data: voyage };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update voyage.",
+      data: null,
+    };
+  }
+}
+
+/**
  * Deletes a Voyage by ID.
+ * Faculty can only delete their own voyages; SysAdmin can delete any.
  * @param id The ID of the Voyage to delete.
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized", data: null };
+  const auth = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!auth.ok) {
+    return { ok: false, error: "unauthenticated", data: null };
   }
+
+  // SEV-2 ownership check: admins can delete any voyage; faculty only their own.
+  const isAdmin = auth.user.roles.some(
+    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
+  );
+  if (!isAdmin) {
+    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
+      urlParams: {
+        populate: { authors: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found", data: null };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(auth.user.id)) {
+      return { ok: false, error: "forbidden", data: null };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
       {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
+        headers: strapiHeaders(),
       },
     );
 

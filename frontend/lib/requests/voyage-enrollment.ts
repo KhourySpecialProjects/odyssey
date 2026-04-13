@@ -6,6 +6,8 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "./cached";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -139,17 +141,52 @@ export async function getVoyageEnrollmentsForGroupMembers(
 /**
  * Enrolls the current user in a voyage.
  * Idempotent: if already enrolled, returns the existing enrollment.
+ * Blocks enrollment in draft voyages unless the caller is SysAdmin or Faculty.
  */
 export async function enrollInVoyage(voyageId: number) {
   try {
-    const user = await getCurrentUser();
-    if (!user?.email) {
-      return { ok: false, error: "User not authenticated", data: null };
+    // Step 1: Authenticate the caller and capture their roles.
+    const gate = await requireRole([]);
+    if (!gate.ok) {
+      return { ok: false, error: gate.error, data: null };
     }
+    const { user: gateUser } = gate;
 
-    const authorizedUser = await getCachedUser(user.email);
+    const authorizedUser = await getCachedUser(gateUser.email);
     if (!authorizedUser?.id) {
       return { ok: false, error: "Authorized user not found", data: null };
+    }
+
+    // Step 2: Verify the voyage is published before allowing enrollment.
+    // Required because we hit Strapi with a service token (see
+    // docs/agent/learnings/strapi-service-token-trust-boundary.md), so the
+    // backend can't enforce this — the Next.js layer is the trust boundary.
+    const voyage = await fetchAPI<{ status?: string } | null>(
+      `/voyages/${voyageId}`,
+      {
+        urlParams: {
+          fields: ["id", "status"],
+        },
+        // Fresh fetch — don't serve a stale "published" from cache if
+        // the voyage was just unpublished.
+        cache: "no-store",
+      },
+    );
+
+    if (!voyage) {
+      return { ok: false, error: "not_found", data: null };
+    }
+
+    if (voyage.status !== "published") {
+      const isStaff = gateUser.roles.some(
+        (r) =>
+          r === AuthorizedUserRoleTitle.SysAdmin ||
+          r === AuthorizedUserRoleTitle.Faculty,
+      );
+      if (!isStaff) {
+        return { ok: false, error: "forbidden", data: null };
+      }
+      // Staff can enroll in drafts for testing purposes
     }
 
     const existing = await getVoyageEnrollment(authorizedUser.id, voyageId);

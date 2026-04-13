@@ -1,29 +1,23 @@
 "use client";
 
-import { useState, useLayoutEffect, useEffect, useRef } from "react";
-import { AnnouncementTypeTitle } from "@/lib/globals";
-import { FeedClient } from "./feed-client";
-import { AnnouncementType, AuthorizedUser } from "@/types";
-import { cn } from "@/lib/utils";
+import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { AuthorizedUser } from "@/types";
 import { FriendRequests } from "../friends/friend-requests";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { FeedLeftNav } from "./feed-left-nav";
 
-const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
-  { value: AnnouncementTypeTitle.System, label: "System" },
-  { value: AnnouncementTypeTitle.Droplet, label: "Droplet" },
-  { value: AnnouncementTypeTitle.Playlist, label: "Playlist" },
-  { value: AnnouncementTypeTitle.Group, label: "Group" },
-  { value: AnnouncementTypeTitle.Friend, label: "Friend" },
-  { value: AnnouncementTypeTitle.Kudos, label: "Kudos" },
-];
-
-export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
-  const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
-    Object.values(AnnouncementTypeTitle),
-  );
+export function FeedContainer({
+  authUser,
+  isFeedTab,
+  children,
+}: {
+  authUser: AuthorizedUser;
+  isFeedTab: boolean;
+  children: React.ReactNode;
+}) {
   const [headerHeight, setHeaderHeight] = useState(69);
-  const sidebarRef = useRef<HTMLElement>(null);
+  const leftRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
     const update = () => {
@@ -36,103 +30,81 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
   }, []);
 
   useEffect(() => {
-    const updateBottom = () => {
-      if (!sidebarRef.current) return;
+    const update = () => {
       const footer = document.querySelector<HTMLElement>("footer");
       if (!footer) return;
       const footerTop = footer.getBoundingClientRect().top;
       const bottom = Math.max(0, window.innerHeight - footerTop);
-      sidebarRef.current.style.bottom = `${bottom}px`;
+      if (leftRef.current) leftRef.current.style.bottom = `${bottom}px`;
     };
-    updateBottom();
-    window.addEventListener("scroll", updateBottom, { passive: true });
-    window.addEventListener("resize", updateBottom);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
     return () => {
-      window.removeEventListener("scroll", updateBottom);
-      window.removeEventListener("resize", updateBottom);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
     };
   }, []);
 
-  const toggleRole = (role: AnnouncementTypeTitle) => {
-    setSelectedRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
-    );
-  };
-
   return (
     <>
-      {/* Sticky sidebar — same style as AdminNav, stops at footer */}
+      {/* Left sidebar — fixed */}
       <nav
-        ref={sidebarRef}
-        aria-label="Friend requests"
-        className="fixed left-0 z-40 hidden w-64 flex-col border-r border-[#D0D5DD] bg-[#FCFCFD] md:flex dark:border-slate-700 dark:bg-slate-900"
+        ref={leftRef}
+        aria-label="Content navigation"
+        className="fixed left-0 z-40 hidden w-[260px] border-r border-[#D0D5DD] bg-[#FCFCFD] md:block dark:border-slate-700 dark:bg-slate-900"
         style={{ top: headerHeight }}
       >
-        <div className="flex h-full flex-col overflow-hidden px-6 pt-10 pb-6">
-          <h2 className="mb-3 shrink-0 text-xl font-bold text-black dark:text-white">
-            Friend Requests
-          </h2>
-          <Link
-            href="/settings/friends"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mb-4 block shrink-0"
-          >
-            <Button className="w-full rounded-full bg-[#287697] hover:bg-[#1f6080]">
-              Manage Friends
-            </Button>
-          </Link>
-          <div className="min-h-0 flex-1">
-            <FriendRequests
-              noProfile={true}
-              friendsPerPage={5}
-              authUser={authUser}
-              showTitle={false}
-            />
-          </div>
-        </div>
+        <FeedLeftNav />
       </nav>
 
-      <div className="flex h-[calc(100vh-69px)] flex-col px-6 py-4 md:py-8 md:pr-[80px] md:pl-[calc(16rem+80px)]">
-        {/* Greeting */}
-        <div className="mb-3 shrink-0">
-          <h1 className="text-4xl font-semibold text-black dark:text-white">
-            Hi, {authUser.firstName || "there"}!
-          </h1>
-          <p className="mt-3 text-sm text-[#475569] md:text-[20px] dark:text-slate-400">
-            Check out what&apos;s happening right now.
-          </p>
+      {/* Content row: center + right column */}
+      <div
+        className="flex items-stretch md:ml-[260px]"
+        style={{ "--header-h": `${headerHeight}px` } as React.CSSProperties}
+      >
+        {/* Center */}
+        <div
+          className="min-w-0 flex-1"
+          style={
+            isFeedTab
+              ? {
+                  height: `calc(100vh - ${headerHeight}px)`,
+                  overflow: "hidden",
+                }
+              : { minHeight: `calc(100vh - ${headerHeight}px)` }
+          }
+        >
+          {children}
         </div>
 
-        {/* Filter pills */}
-        <div className="mt-2 mb-2 flex shrink-0 flex-wrap gap-2 md:mt-3 md:mb-4">
-          {FILTER_OPTIONS.map((option) => {
-            const isActive = selectedRoles.includes(option.value);
-            return (
-              <button
-                key={option.value}
-                onClick={() => toggleRole(option.value)}
-                className={cn(
-                  "rounded-full border-[1.5px] px-3 py-0.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "border-[#287697] text-[#287697] hover:bg-[#287697]/10"
-                    : "border-[#D0D5DD] text-neutral-500 hover:bg-neutral-100 dark:border-slate-700 dark:hover:bg-slate-800",
-                )}
+        {/* Right column — normal flow */}
+        <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 md:flex">
+          <div className="flex-1 overflow-hidden rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="p-5">
+              <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
+                Friend Requests
+              </h2>
+              <Button
+                asChild
+                className="mb-4 w-full rounded-full bg-[#287697] hover:bg-[#1f6080]"
               >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Feed */}
-        <div className="min-h-0 flex-1">
-          <FeedClient
-            selectedRoles={selectedRoles.map(
-              (role) => role.toLowerCase() as AnnouncementType,
-            )}
-            authUser={authUser}
-          />
+                <Link
+                  href="/settings/friends"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Manage Friends
+                </Link>
+              </Button>
+              <FriendRequests
+                noProfile={true}
+                friendsPerPage={5}
+                authUser={authUser}
+                showTitle={false}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </>

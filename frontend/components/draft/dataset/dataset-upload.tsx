@@ -4,7 +4,10 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Dataset } from "@/types";
 import { parseDatasetFile, ParsedDataset } from "@/lib/dataset-parser";
-import { uploadDataset } from "@/lib/actions";
+import {
+  uploadDataset,
+  deleteDataset as deleteDatasetFile,
+} from "@/lib/actions";
 import { createDataset } from "@/lib/requests/dataset";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +56,14 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles?: unknown[]) => {
+      // Reject oversized files immediately
+      const dropped = acceptedFiles[0];
+      if (dropped && dropped.size > MAX_DATASET_FILE_SIZE) {
+        toast.error("File is too large. Maximum file size is 25 MB.");
+        setUploadState({ status: "idle" });
+        return;
+      }
+
       // Handle rejected files (size or type)
       if (
         rejectedFiles &&
@@ -64,17 +75,13 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
         )[0];
         const firstError = firstRejected.errors[0];
         if (firstError?.code === "file-too-large") {
-          setUploadState({
-            status: "error",
-            message: "File is too large. Maximum file size is 25 MB.",
-          });
+          toast.error("File is too large. Maximum file size is 25 MB.");
         } else {
-          setUploadState({
-            status: "error",
-            message:
-              "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
-          });
+          toast.error(
+            "Unsupported file type. Please upload a CSV, JSON, or XLSX file.",
+          );
         }
+        setUploadState({ status: "idle" });
         return;
       }
 
@@ -131,40 +138,55 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
 
     const { file, format } = uploadState;
 
+    if (file.size > MAX_DATASET_FILE_SIZE) {
+      toast.error("File is too large. Maximum file size is 25 MB.");
+      setUploadState({ status: "idle" });
+      return;
+    }
+
     setUploadState({ status: "uploading" });
 
-    // 1. Upload the file to S3
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      // 1. Upload the file to S3
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const uploadResult = await uploadDataset(formData);
+      const uploadResult = await uploadDataset(formData);
 
-    if (!uploadResult.ok || !uploadResult.url) {
-      toast.error(uploadResult.error ?? "Upload failed. Please try again.");
+      if (!uploadResult.ok || !uploadResult.url) {
+        toast.error(uploadResult.error ?? "Upload failed. Please try again.");
+        setUploadState({ status: "idle" });
+        return;
+      }
+
+      // 2. Create the dataset record in Strapi
+      const createResult = await createDataset({
+        name: file.name,
+        fileUrl: uploadResult.url,
+        format,
+        fileSize: file.size,
+        droplet: dropletId,
+      });
+
+      if (!createResult.ok || !createResult.data) {
+        await deleteDatasetFile(uploadResult.url).catch(() => {});
+        toast.error(
+          createResult.error ?? "Failed to save dataset. Please try again.",
+        );
+        setUploadState({ status: "idle" });
+        return;
+      }
+
+      toast.success(`"${file.name}" uploaded successfully.`);
+      setLocalDatasets((prev) => [...prev, createResult.data!]);
       setUploadState({ status: "idle" });
-      return;
-    }
-
-    // 2. Create the dataset record in Strapi
-    const createResult = await createDataset({
-      name: file.name,
-      fileUrl: uploadResult.url,
-      format,
-      fileSize: file.size,
-      droplet: dropletId,
-    });
-
-    if (!createResult.ok || !createResult.data) {
+    } catch (err) {
+      console.error("Dataset upload failed:", err);
       toast.error(
-        createResult.error ?? "Failed to save dataset. Please try again.",
+        "Upload failed. The file may be too large — maximum size is 25 MB.",
       );
       setUploadState({ status: "idle" });
-      return;
     }
-
-    toast.success(`"${file.name}" uploaded successfully.`);
-    setLocalDatasets((prev) => [...prev, createResult.data!]);
-    setUploadState({ status: "idle" });
   };
 
   const handleCancel = () => {

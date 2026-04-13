@@ -38,7 +38,7 @@ export function useEditingLock(lessonId: number) {
     clearTimeout(heartbeatRef.current);
     clearTimeout(pollRef.current);
     const uid = userIdRef.current;
-    if (uid) await releaseLessonLock(lessonId, uid);
+    if (uid) await releaseLessonLock(lessonId);
     setState({
       isLocked: false,
       isOwnLock: false,
@@ -57,7 +57,7 @@ export function useEditingLock(lessonId: number) {
       const tick = async () => {
         const uid = userIdRef.current;
         if (!uid || !mountedRef.current) return;
-        const ok = await heartbeatLessonLock(lessonId, uid);
+        const ok = await heartbeatLessonLock(lessonId);
         if (!mountedRef.current) return;
         if (!ok) {
           // Lock was lost — switch to polling
@@ -87,7 +87,7 @@ export function useEditingLock(lessonId: number) {
         if (!mountedRef.current) return;
 
         if (!status.isLocked) {
-          const result = await acquireLessonLock(lessonId, uid);
+          const result = await acquireLessonLock(lessonId);
           if (!mountedRef.current) return;
           if (result.success) {
             setState({
@@ -128,7 +128,7 @@ export function useEditingLock(lessonId: number) {
         return;
       }
 
-      const result = await acquireLessonLock(lessonId, userId);
+      const result = await acquireLessonLock(lessonId);
       if (!mountedRef.current) return;
 
       if (result.success) {
@@ -159,7 +159,7 @@ export function useEditingLock(lessonId: number) {
       clearTimeout(heartbeatRef.current);
       clearTimeout(pollRef.current);
       const uid = userIdRef.current;
-      if (uid) releaseLessonLock(lessonId, uid);
+      if (uid) releaseLessonLock(lessonId);
     };
   }, [lessonId]);
 

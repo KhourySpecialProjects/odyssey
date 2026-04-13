@@ -178,7 +178,7 @@ export function SocialForms({
               const updateResult = await updateUserInfo(authorizedUser.id, {
                 profilePhoto: response.url,
               });
-              if (updateResult.success) {
+              if (updateResult.ok) {
                 toast.success("Profile photo updated successfully");
               } else {
                 console.error(updateResult.error);
@@ -233,7 +233,7 @@ export function SocialForms({
             const result = await updateUserInfo(authorizedUser.id, {
               bio: bio,
             });
-            if (result.success) {
+            if (result.ok) {
               setBioValue(bio);
               toast.success("Bio updated successfully");
             } else {
@@ -275,7 +275,7 @@ export function SocialForms({
             const result = await updateUserInfo(authorizedUser.id, {
               linkedin: linkedin,
             });
-            if (result.success) {
+            if (result.ok) {
               setLinkedinValue(linkedin);
               toast.success("LinkedIn URL updated successfully");
             } else {
@@ -318,7 +318,7 @@ export function SocialForms({
             const result = await updateUserInfo(authorizedUser.id, {
               github: github,
             });
-            if (result.success) {
+            if (result.ok) {
               setGithubValue(github);
               toast.success("GitHub URL updated successfully");
             } else {
@@ -361,7 +361,7 @@ export function SocialForms({
             const result = await updateUserInfo(authorizedUser.id, {
               website: website,
             });
-            if (result.success) {
+            if (result.ok) {
               setWebsiteValue(website);
               toast.success("Website URL updated successfully");
             } else {

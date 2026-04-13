@@ -1,12 +1,23 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback } from "react";
+import {
+  useState,
+  useTransition,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Playlist } from "@/types";
-import { createVoyageWithNodes } from "@/lib/requests/voyage";
+import { Playlist, Voyage } from "@/types";
+import { cn } from "@/lib/utils";
+import {
+  createVoyageWithNodes,
+  updateVoyageWithNodes,
+} from "@/lib/requests/voyage";
 import { VoyageTreeMap, TreeNode } from "@/components/voyages/voyage-tree-map";
 import {
   ChevronUpIcon,
@@ -30,18 +41,71 @@ interface SelectedNode {
 interface VoyageFormProps {
   playlists: Playlist[];
   authorId: number;
+  voyage?: Voyage;
 }
 
-export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
+function initNodesFromVoyage(voyage: Voyage): SelectedNode[] {
+  const nodes = voyage.voyage_nodes ?? [];
+  // Build a lookup from node ID → playlist ID for resolving parentPlaylistId
+  const nodeIdToPlaylistId = new Map<number, number>();
+  for (const n of nodes) {
+    if (n.playlist?.id) nodeIdToPlaylistId.set(n.id, n.playlist.id);
+  }
+
+  return nodes.map((n) => ({
+    playlistId: n.playlist?.id ?? 0,
+    name: n.playlist?.name ?? n.label,
+    slug: n.playlist?.slug ?? "",
+    dropletCount: n.playlist?.droplets?.length ?? 0,
+    isMainPath: n.isMainPath,
+    branchType: n.branchType,
+    parentPlaylistId: n.parentNode?.id
+      ? nodeIdToPlaylistId.get(n.parentNode.id) ?? null
+      : null,
+    orderIndex: n.orderIndex,
+  }));
+}
+
+function SectionLabel({
+  children,
+  htmlFor,
+}: {
+  children: ReactNode;
+  htmlFor?: string;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block py-0.5 pb-2 text-xl font-bold text-slate-900 dark:text-white"
+    >
+      {children}
+    </label>
+  );
+}
+
+export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const isEditing = !!voyage;
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(voyage?.name ?? "");
+  const [description, setDescription] = useState(voyage?.description ?? "");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>([]);
-  const [isSequential, setIsSequential] = useState(false);
+  const [selectedNodes, setSelectedNodes] = useState<SelectedNode[]>(
+    voyage ? initNodesFromVoyage(voyage) : [],
+  );
+  const [isSequential, setIsSequential] = useState(
+    voyage?.isSequential ?? false,
+  );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (blurTimer.current) clearTimeout(blurTimer.current);
+    };
+  }, []);
 
   const availablePlaylists = useMemo(
     () =>
@@ -198,9 +262,13 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
         branchType: node.branchType,
         parentId: node.parentPlaylistId,
         orderIndex: node.orderIndex,
-        status: "available",
+        status: isSequential
+          ? node.isMainPath && node.orderIndex === 0
+            ? "available"
+            : "locked"
+          : "available",
       })),
-    [selectedNodes],
+    [selectedNodes, isSequential],
   );
 
   // Sort for display: main-path nodes first (by orderIndex), then branch nodes grouped under parent
@@ -234,24 +302,38 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
     }
 
     startTransition(async () => {
-      const result = await createVoyageWithNodes({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        status,
-        isSequential,
-        nodes: selectedNodes.map((n) => ({
-          playlistId: n.playlistId,
-          isMainPath: n.isMainPath,
-          branchType: n.branchType,
-          parentPlaylistId: n.parentPlaylistId,
-          orderIndex: n.orderIndex,
-          label: n.name,
-        })),
-        authorId,
-      });
+      const nodePayload = selectedNodes.map((n) => ({
+        playlistId: n.playlistId,
+        isMainPath: n.isMainPath,
+        branchType: n.branchType,
+        parentPlaylistId: n.parentPlaylistId,
+        orderIndex: n.orderIndex,
+        label: n.name,
+      }));
+
+      const result = isEditing
+        ? await updateVoyageWithNodes({
+            id: voyage.id,
+            name: name.trim(),
+            description: description.trim() || undefined,
+            status,
+            isSequential,
+            nodes: nodePayload,
+          })
+        : await createVoyageWithNodes({
+            name: name.trim(),
+            description: description.trim() || undefined,
+            status,
+            isSequential,
+            nodes: nodePayload,
+            authorId,
+          });
 
       if (!result.ok) {
-        setError(result.error || "Failed to create voyage.");
+        setError(
+          result.error ||
+            `Failed to ${isEditing ? "update" : "create"} voyage.`,
+        );
         return;
       }
 
@@ -261,13 +343,11 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
 
   return (
     <div className="flex w-full flex-col gap-8 lg:flex-row">
-      {/* Left: Form panel */}
       <div className="flex w-full flex-col gap-6 lg:w-1/2">
-        {/* Name */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="voyage-name">
+          <SectionLabel htmlFor="voyage-name">
             Voyage Name <span className="text-red-500">*</span>
-          </Label>
+          </SectionLabel>
           <Input
             id="voyage-name"
             placeholder="e.g. Introduction to Machine Learning"
@@ -277,9 +357,8 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
           />
         </div>
 
-        {/* Description */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="voyage-description">Description</Label>
+          <SectionLabel htmlFor="voyage-description">Description</SectionLabel>
           <textarea
             id="voyage-description"
             className="min-h-[100px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
@@ -290,11 +369,9 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
           />
         </div>
 
-        {/* Playlist picker */}
         <div className="flex flex-col gap-3">
-          <Label>Islands (Playlists)</Label>
+          <SectionLabel>Islands (Playlists)</SectionLabel>
 
-          {/* Search input */}
           <div className="relative">
             <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -302,19 +379,30 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
               placeholder="Search public playlists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (blurTimer.current) clearTimeout(blurTimer.current);
+                setIsSearchFocused(true);
+              }}
+              onBlur={() => {
+                blurTimer.current = setTimeout(
+                  () => setIsSearchFocused(false),
+                  150,
+                );
+              }}
               disabled={isPending}
             />
           </div>
 
-          {/* Search results */}
-          {searchQuery.length > 0 && (
+          {isSearchFocused && (
             <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
               {availablePlaylists.length === 0 ? (
                 <p className="px-4 py-3 text-sm text-slate-500">
-                  No playlists found.
+                  {searchQuery
+                    ? "No playlists found."
+                    : "All playlists have been added."}
                 </p>
               ) : (
-                availablePlaylists.slice(0, 10).map((playlist) => (
+                availablePlaylists.map((playlist) => (
                   <button
                     key={playlist.id}
                     type="button"
@@ -337,7 +425,6 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             </div>
           )}
 
-          {/* Selected islands list */}
           {sortedForDisplay.length > 0 ? (
             <div className="space-y-1">
               {sortedForDisplay.map((node) => {
@@ -346,12 +433,12 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                 return (
                   <div key={node.playlistId} className={isBranch ? "ml-6" : ""}>
                     <div
-                      className={[
+                      className={cn(
                         "flex flex-col gap-2 rounded-md border px-3 py-2",
                         isBranch
                           ? "border-l-2 border-dashed border-slate-300 bg-slate-50/60 dark:border-slate-600 dark:bg-slate-800/40"
                           : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800",
-                      ].join(" ")}
+                      )}
                     >
                       {/* Top row: badge + name + reorder + remove */}
                       <div className="flex items-center gap-2">
@@ -459,12 +546,12 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                                   setBranchType(node.playlistId, "required")
                                 }
                                 disabled={isPending}
-                                className={[
+                                className={cn(
                                   "px-2 py-0.5 text-xs font-medium transition-colors",
                                   node.branchType === "required"
                                     ? "bg-blue-600 text-white"
                                     : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                ].join(" ")}
+                                )}
                               >
                                 Required
                               </button>
@@ -474,12 +561,12 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
                                   setBranchType(node.playlistId, "optional")
                                 }
                                 disabled={isPending}
-                                className={[
+                                className={cn(
                                   "px-2 py-0.5 text-xs font-medium transition-colors",
                                   node.branchType === "optional"
                                     ? "bg-yellow-500 text-white"
                                     : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                ].join(" ")}
+                                )}
                               >
                                 Optional
                               </button>
@@ -494,19 +581,17 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             </div>
           ) : (
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              Search above to add playlists as islands.
+              Select playlists above to add them as islands.
             </p>
           )}
         </div>
 
-        {/* Error */}
         {error && (
           <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </p>
         )}
 
-        {/* Sequential progression toggle */}
         <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
           <input
             type="checkbox"
@@ -525,16 +610,7 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
           </div>
         </label>
 
-        {/* Action buttons */}
         <div className="flex gap-3">
-          <Button
-            type="button"
-            onClick={() => handleSubmit("published")}
-            disabled={isPending}
-            className="flex-1"
-          >
-            {isPending ? "Publishing..." : "Publish Voyage"}
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -542,17 +618,27 @@ export function VoyageForm({ playlists, authorId }: VoyageFormProps) {
             disabled={isPending}
             className="flex-1"
           >
-            {isPending ? "Saving..." : "Save as Draft"}
+            {isPending && "Saving..."}
+            {!isPending && isEditing && "Save Changes"}
+            {!isPending && !isEditing && "Save as Draft"}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => handleSubmit("published")}
+            disabled={isPending}
+            className="flex-1 bg-[#2D7597] text-white hover:bg-[#255e78]"
+          >
+            {isPending && isEditing && "Updating..."}
+            {isPending && !isEditing && "Publishing..."}
+            {!isPending && isEditing && "Update & Publish"}
+            {!isPending && !isEditing && "Publish Voyage"}
           </Button>
         </div>
       </div>
 
-      {/* Right: Live tree preview */}
       <div className="w-full lg:w-1/2">
         <div className="sticky top-8">
-          <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Live Preview
-          </h3>
+          <SectionLabel>Live Preview</SectionLabel>
           <VoyageTreeMap nodes={treeNodes} />
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   Droplet,
   Lesson,
 } from "@/types";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 // Mock the XLSX library
 jest.mock("xlsx-js-style", () => ({
@@ -25,6 +26,7 @@ jest.mock("xlsx-js-style", () => ({
 
 // Import the mocked modules
 import * as XLSX from "xlsx-js-style";
+import type { WorkBook } from "xlsx-js-style";
 
 const mockAuthUser1: AuthorizedUser = {
   id: 1,
@@ -117,31 +119,31 @@ const mockLesson2: Lesson = {
   orderIndex: 1,
 };
 
-const mockDroplet1: Droplet = {
+const mockDroplet1: Droplet = makeDroplet({
   id: 1,
   name: "Test Droplet 1",
   slug: "test-droplet-1",
   isHidden: false,
-  focusArea: "personal" as FocusArea,
-  type: "knowledge" as DropletType,
-  tags: [{ id: 1, name: "React" }] as Tag[],
+  focusArea: "personal",
+  type: "knowledge",
+  tags: [makeTag({ id: 1, name: "React" })],
   learningObjectives: [],
-  status: "published" as DropletStatus,
+  status: "published",
   lessons: [mockLesson1, mockLesson2],
-};
+});
 
-const mockDroplet2: Droplet = {
+const mockDroplet2: Droplet = makeDroplet({
   id: 2,
   name: "Test Droplet 2",
   slug: "test-droplet-2",
   isHidden: false,
-  focusArea: "professional" as FocusArea,
-  type: "skill" as DropletType,
-  tags: [{ id: 2, name: "TypeScript" }] as Tag[],
+  focusArea: "professional",
+  type: "skill",
+  tags: [makeTag({ id: 2, name: "TypeScript" })],
   learningObjectives: [],
-  status: "published" as DropletStatus,
+  status: "published",
   lessons: [mockLesson1],
-};
+});
 
 const mockGroup: Group = {
   id: 1,
@@ -179,20 +181,21 @@ describe("GroupProgressGrid Excel Export", () => {
     jest.clearAllMocks();
 
     // Mock XLSX functions
-    (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue({
+    jest.mocked(XLSX.utils.aoa_to_sheet).mockReturnValue({
       "!ref": "A1:D4",
     });
-    (XLSX.utils.decode_range as jest.Mock).mockReturnValue({
+    jest.mocked(XLSX.utils.decode_range).mockReturnValue({
       s: { r: 0, c: 0 },
       e: { r: 3, c: 3 },
     });
-    (XLSX.utils.encode_cell as jest.Mock).mockImplementation(({ r, c }) => {
+    jest.mocked(XLSX.utils.encode_cell).mockImplementation(({ r, c }) => {
       const col = String.fromCharCode(65 + c);
       return `${col}${r + 1}`;
     });
-    (XLSX.utils.book_new as jest.Mock).mockReturnValue({});
-    (XLSX.utils.book_append_sheet as jest.Mock).mockReturnValue({});
-    (XLSX.writeFile as jest.Mock).mockImplementation(() => {});
+    const mockWorkbook: WorkBook = { Sheets: {}, SheetNames: [] };
+    jest.mocked(XLSX.utils.book_new).mockReturnValue(mockWorkbook);
+    jest.mocked(XLSX.utils.book_append_sheet).mockReturnValue(undefined);
+    jest.mocked(XLSX.writeFile).mockImplementation(() => {});
 
     // Mock Date to return a consistent timestamp
     jest.useFakeTimers();
@@ -238,12 +241,12 @@ describe("GroupProgressGrid Excel Export", () => {
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
     expect(XLSX.utils.book_new).toHaveBeenCalled();
     expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
-      {},
+      expect.any(Object),
       expect.any(Object),
       "Progress",
     );
     expect(XLSX.writeFile).toHaveBeenCalledWith(
-      {},
+      expect.any(Object),
       "Test_Group_progress_report_1_15_2025.xlsx",
     );
   });
@@ -389,7 +392,7 @@ describe("GroupProgressGrid Excel Export", () => {
       F4: { v: "" }, // completion date column
     };
 
-    (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue(mockWorksheet);
+    jest.mocked(XLSX.utils.aoa_to_sheet).mockReturnValue(mockWorksheet);
 
     render(
       <GroupProgressGrid
@@ -466,7 +469,7 @@ describe("GroupProgressGrid Excel Export", () => {
       .mockImplementation(() => {});
 
     // Mock XLSX to throw an error
-    (XLSX.utils.aoa_to_sheet as jest.Mock).mockImplementation(() => {
+    jest.mocked(XLSX.utils.aoa_to_sheet).mockImplementation(() => {
       throw new Error("XLSX error");
     });
 
@@ -509,7 +512,7 @@ describe("GroupProgressGrid Excel Export", () => {
     fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
-      {},
+      expect.any(Object),
       "Test_Group_progress_report_1_15_2025.xlsx",
     );
   });
@@ -527,7 +530,7 @@ describe("GroupProgressGrid Excel Export", () => {
     fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
-      {},
+      expect.any(Object),
       expect.any(Object),
       "Progress",
     );
@@ -687,7 +690,7 @@ describe("GroupProgressGrid Excel Export", () => {
     fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
-      {},
+      expect.any(Object),
       "Test_Group_With_Spaces_progress_report_1_15_2025.xlsx",
     );
   });

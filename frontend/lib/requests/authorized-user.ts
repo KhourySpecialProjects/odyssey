@@ -4,12 +4,17 @@ import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { revalidateTag } from "next/cache";
 import qs from "qs";
-import { AuthorizedUserSchema } from "../validations/authorized-user";
+import {
+  AuthorizedUserSchema,
+  UpdateUserInfoSchema,
+  UpdateUserInfoSelfSchema,
+} from "../validations/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { CACHE_TAGS } from "../cache-tags";
 import { USER_POPULATES } from "./user-populates";
 import { getCurrentUser } from "../auth/session";
+import { requireRole } from "../auth/require-role";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -531,7 +536,36 @@ export async function updateUserInfo(
     photo?: string | null;
     website?: string | null;
   },
-) {
+): Promise<{ ok: boolean; error?: unknown; data: null }> {
+  // --- Auth gate ---
+  const auth = await requireRole([]); // any authenticated user
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+  const isSelf = auth.user.id === userId;
+  const isAdmin = auth.user.roles.some(
+    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
+  );
+  if (!isSelf && !isAdmin) {
+    return { ok: false, error: "forbidden", data: null };
+  }
+
+  // --- Input validation ---
+  // For non-admins editing self: use the restricted schema (.strict() rejects
+  // admin-only fields like roles/isEnabled).  For admins: use the full schema.
+  const parseResult = isAdmin
+    ? UpdateUserInfoSchema.safeParse(updates)
+    : UpdateUserInfoSelfSchema.safeParse(updates);
+
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+
+  // parseResult.data has been stripped/validated.  For self-only users the
+  // .strict() schema has already rejected any admin-only fields; for admins the
+  // .strip() schema has removed unknown keys.
+  const safeUpdates = parseResult.data;
+
   try {
     const {
       first,
@@ -546,14 +580,15 @@ export async function updateUserInfo(
       github,
       photo,
       website,
-    } = updates;
+    } = safeUpdates as typeof updates; // cast: Zod output shape matches input
     const roleIds = roles
       ? await Promise.all(
           roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
         )
       : [];
 
-    const data: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = {}; // Strapi body is untyped by design
 
     if (first !== undefined) data.firstName = first;
     if (last !== undefined) data.lastName = last;
@@ -561,7 +596,7 @@ export async function updateUserInfo(
     if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
     if (isPublic !== undefined) data.isPublic = isPublic;
-    if (firstTime !== undefined) data.firstTime = updates.firstTime;
+    if (firstTime !== undefined) data.firstTime = firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
     if (website !== undefined) data.website = website;
@@ -585,10 +620,10 @@ export async function updateUserInfo(
     );
     revalidateTag(CACHE_TAGS.users);
     revalidateTag(CACHE_TAGS.authors);
-    return { success: true };
+    return { ok: true, data: null };
   } catch (error) {
     console.error("Error updating user info:", error);
-    return { success: false, error };
+    return { ok: false, error, data: null };
   }
 }
 

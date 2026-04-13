@@ -27,6 +27,8 @@ export function PostHogProvider({
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_APP_ENV === "local") return;
+
     // Initialize PostHog (only once)
     if (typeof window !== "undefined" && !window.posthog) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {

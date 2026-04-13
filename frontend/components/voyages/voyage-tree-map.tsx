@@ -118,7 +118,11 @@ function assignPositions(
 }
 
 /** Smooth bezier from bottom of parent to top of child, anchored to the
- *  rendered SVG geometry (not the layout box) so the line meets the island. */
+ *  rendered SVG geometry (not the layout box) so the line meets the island.
+ *  A top offset prevents the line from overlapping the palm tree canopy. */
+const TREE_CANOPY_OFFSET = 45;
+const LABEL_BELOW_OFFSET = 40;
+
 function bezierPath(
   px: number,
   py: number,
@@ -127,8 +131,8 @@ function bezierPath(
   parentVisibleHeight: number,
   childVisibleHeight: number,
 ): string {
-  const sy = py + parentVisibleHeight / 2;
-  const ey = cy - childVisibleHeight / 2;
+  const sy = py + parentVisibleHeight / 2 + LABEL_BELOW_OFFSET;
+  const ey = cy - childVisibleHeight / 2 - TREE_CANOPY_OFFSET;
   const my = (sy + ey) / 2;
   return `M ${px} ${sy} C ${px} ${my}, ${cx} ${my}, ${cx} ${ey}`;
 }

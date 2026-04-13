@@ -14,6 +14,13 @@ import {
 } from "@/lib/voyage-progress";
 import { VoyageNode, VoyageEnrollment } from "@/types";
 import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 
 type Props = {
@@ -148,14 +155,14 @@ export default async function VoyagePage({ params }: Props) {
                 </p>
               )}
 
-              {/* Publish / Enroll / Continue button */}
-              <div className="mt-4">
+              {/* Publish / Enroll / Continue + Edit button */}
+              <div className="mt-4 flex items-center gap-2">
                 {canPublish ? (
                   <VoyagePublishButton voyageId={voyage.id} />
                 ) : !isAuthenticated ? (
                   <Link
                     href="/api/auth/signin"
-                    className="block w-full rounded-lg bg-[#297496] px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition-colors hover:bg-[#1e5a73] dark:text-slate-200"
+                    className="block rounded-lg bg-[#297496] px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition-colors hover:bg-[#1e5a73] dark:text-slate-200"
                   >
                     Sign in to enroll
                   </Link>
@@ -167,6 +174,38 @@ export default async function VoyagePage({ params }: Props) {
                     firstIncompleteSlug={firstIncompleteSlug}
                   />
                 ) : null}
+
+                {isStaff && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          aria-label="Edit voyage"
+                          asChild
+                        >
+                          <Link href={`/draft/v/${voyage.slug}`}>
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              />
+                            </svg>
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit voyage</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
 
               {/* Progress bar — only shown when enrolled */}
