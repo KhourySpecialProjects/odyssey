@@ -150,7 +150,9 @@ describe("voyage-enrollment-branches — markVoyageNodeComplete authorized user 
       roles: [],
       isActive: true,
     });
-    mockedGetCachedUser.mockResolvedValue(makeAuthorizedUser({ id: 0 }));
+    mockedGetCachedUser.mockResolvedValue(
+      null as unknown as Awaited<ReturnType<typeof getCachedUser>>,
+    );
 
     const result = await markVoyageNodeComplete(1, 2);
 

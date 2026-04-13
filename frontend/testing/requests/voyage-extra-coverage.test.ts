@@ -32,7 +32,6 @@ import {
   getMockedFetchAPI,
   mockGlobalFetch,
   makeFetchResponse,
-  assertOk,
 } from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
@@ -67,17 +66,6 @@ function mockAsAdmin(userId = 1) {
       id: userId,
       email: "admin@example.com",
       roles: [AuthorizedUserRoleTitle.SysAdmin],
-    },
-  });
-}
-
-function mockAsFaculty(userId = 42) {
-  getMockedRequireRole().mockResolvedValue({
-    ok: true,
-    user: {
-      id: userId,
-      email: "faculty@example.com",
-      roles: [AuthorizedUserRoleTitle.Faculty],
     },
   });
 }

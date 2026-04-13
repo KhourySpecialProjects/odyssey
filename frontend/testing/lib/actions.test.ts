@@ -68,9 +68,13 @@ jest.mock("@anthropic-ai/sdk", () => {
   }));
 });
 
-const { redirect } = require("next/navigation");
-const { revalidatePath, revalidateTag } = require("next/cache");
-const { requireRole } = require("@/lib/auth/require-role");
+import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
+import { requireRole } from "@/lib/auth/require-role";
+
+const mockedRedirect = jest.mocked(redirect);
+const mockedRevalidateTag = jest.mocked(revalidateTag);
+const mockedRequireRole = jest.mocked(requireRole);
 
 describe("Server Actions", () => {
   let mockS3Send: jest.Mock;
@@ -94,7 +98,7 @@ describe("Server Actions", () => {
     }));
 
     // Default: allow any authenticated user (overridden in specific auth tests)
-    requireRole.mockResolvedValue({
+    mockedRequireRole.mockResolvedValue({
       ok: true,
       user: {
         id: 1,
@@ -198,7 +202,7 @@ describe("Server Actions", () => {
 
   describe("setTimeZone", () => {
     it("returns unauthenticated when there is no session", async () => {
-      requireRole.mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: false,
         error: "unauthenticated",
       });
@@ -210,7 +214,7 @@ describe("Server Actions", () => {
     });
 
     it("successfully updates timezone using the session user's id", async () => {
-      requireRole.mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: true,
         user: { id: 42, email: "user@northeastern.edu", roles: [] },
       });
@@ -427,7 +431,7 @@ describe("Server Actions", () => {
           method: "POST",
         }),
       );
-      expect(redirect).toHaveBeenCalledWith("/");
+      expect(mockedRedirect).toHaveBeenCalledWith("/");
     });
 
     it("handles API error when ok is false", async () => {
@@ -589,7 +593,7 @@ describe("Server Actions", () => {
 
   describe("deleteReport", () => {
     it("returns unauthenticated when there is no session", async () => {
-      requireRole.mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: false,
         error: "unauthenticated",
       });
@@ -601,7 +605,10 @@ describe("Server Actions", () => {
     });
 
     it("returns forbidden when caller is not an admin", async () => {
-      requireRole.mockResolvedValueOnce({ ok: false, error: "forbidden" });
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "forbidden",
+      });
 
       const result = await deleteReport("456");
 
@@ -623,7 +630,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("reports");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("reports");
       expect(result).toEqual({ success: true });
     });
 
@@ -814,8 +821,8 @@ describe("Server Actions", () => {
       const result = await approveCreationRequest("123", 1);
 
       expect(result).toEqual({ ok: true, error: null, data: null });
-      expect(revalidateTag).toHaveBeenCalledWith("users");
-      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("users");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(global.fetch).toHaveBeenCalledTimes(4);
     });
 
@@ -1043,7 +1050,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(result).toEqual({ ok: true, error: null, data: null });
     });
 

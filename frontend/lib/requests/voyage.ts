@@ -423,6 +423,14 @@ export async function updateVoyageWithNodes(data: {
   if (!auth.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
+
+  // Validate the incoming tree before touching Strapi. This prevents
+  // deleting existing nodes only to fail during re-creation.
+  const parseResult = VoyageTreeSchema.safeParse(data);
+  if (!parseResult.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+
   try {
     const slug = generateSlug(data.name);
 

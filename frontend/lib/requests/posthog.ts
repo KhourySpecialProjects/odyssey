@@ -85,12 +85,12 @@ async function getInsightsList(): Promise<any | null> {
   }
 
   const headers = getHeaders(apiKey);
-  const listUrl = `${host}/api/projects/${getProjectId()}/insights/`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
+    const listUrl = `${host}/api/projects/${getProjectId()}/insights/`;
     const listRes = await fetch(listUrl, {
       method: "GET",
       headers,
@@ -137,12 +137,12 @@ async function fetchInsightByName(
   }
 
   const headers = getHeaders(apiKey);
-  const insightUrl = `${host}/api/projects/${getProjectId()}/insights/${matched.id}/`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
+    const insightUrl = `${host}/api/projects/${getProjectId()}/insights/${matched.id}/`;
     const insightRes = await fetch(insightUrl, {
       method: "GET",
       headers,

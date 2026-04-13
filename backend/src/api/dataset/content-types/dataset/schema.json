@@ -28,6 +28,7 @@
     },
     "fileSize": {
       "type": "integer",
+      "min": 0,
       "max": 104857600
     },
     "rowCount": {

@@ -351,9 +351,10 @@ describe("parseMarkdownToBlockNote — additional coverage", () => {
 
       expect(types).toContain("heading");
       expect(types).toContain("paragraph");
-      // The IMPORT_IMG_ placeholder is rendered as a paragraph by the
-      // current parser; image-block conversion happens at a later stage
-      // (post-import) outside parseMarkdownToBlockNote's responsibility.
+      // The ![image](IMPORT_IMG_<uuid>) markdown is NOT converted to an
+      // image block here — parseMarkdownToBlockNote keeps it as inline
+      // content within a paragraph. Actual image-block conversion is a
+      // separate post-import step outside this function's scope.
       expect(result.blocks.length).toBeGreaterThan(0);
     });
   });

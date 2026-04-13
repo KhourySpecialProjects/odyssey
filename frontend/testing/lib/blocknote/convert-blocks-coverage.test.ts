@@ -1341,16 +1341,17 @@ describe("inline content styles", () => {
   });
 
   it("handles inline content items with no type (returns empty string)", () => {
-    const result = convertBlockNoteToV1Blocks([
-      makeBlock({
-        type: "paragraph",
-        content: [{ type: "link", text: "click", styles: {} }],
-      }),
-    ]);
     // "link" type items are not "text" so produce "" — the paragraph may still emit
-    // but with empty content, which could be treated as empty paragraph
-    // No throw expected
-    expect(() => result).not.toThrow();
+    // but with empty content, which could be treated as empty paragraph.
+    // Wrapped in expect() to verify no exception is thrown during conversion.
+    expect(() =>
+      convertBlockNoteToV1Blocks([
+        makeBlock({
+          type: "paragraph",
+          content: [{ type: "link", text: "click", styles: {} }],
+        }),
+      ]),
+    ).not.toThrow();
   });
 
   it("handles text node with undefined text property", () => {

@@ -44,9 +44,8 @@ import {
   publishDraftToOriginal,
   favoriteDroplet,
   updateDropletLearningObjective,
-  getDroplets,
-  getDropletById,
 } from "@/lib/requests/droplet";
+import type { DropletDifficulty, LearningObjective, Resource } from "@/types";
 import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
@@ -857,7 +856,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     const draftDroplet = makeDroplet({
       id: 1,
       name: "[EDIT] Draft",
-      difficulty: null as any,
+      difficulty: null as unknown as DropletDifficulty,
       lessons: [],
     });
     const originalDroplet = makeDroplet({
@@ -963,7 +962,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
   });
 
   it("updates enrollments to point to original droplet (lines 1087-1114)", async () => {
-    const deleteLesson = getMockedDeleteLesson();
+    getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
 
@@ -1021,7 +1020,10 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
       name: "[EDIT] Droplet",
       difficulty: "beginner",
       // learningObjectives as plain strings (edge case path)
-      learningObjectives: ["Objective string A", "Objective string B"] as any,
+      learningObjectives: [
+        "Objective string A",
+        "Objective string B",
+      ] as unknown as LearningObjective[],
       lessons: [],
     });
     const originalDroplet = makeDroplet({
@@ -1099,7 +1101,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
   });
 
   it("handles v2 lessons in the creation loop (lines 1195-1198)", async () => {
-    const deleteLesson = getMockedDeleteLesson();
+    getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
 
@@ -1166,7 +1168,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
       postrequisites: [postreq],
       nextSteps: [
         { id: 99, __component: "droplets.link", url: "https://example.com" },
-      ] as any,
+      ] as unknown as Resource[],
       lessons: [],
     });
     const originalDroplet = makeDroplet({

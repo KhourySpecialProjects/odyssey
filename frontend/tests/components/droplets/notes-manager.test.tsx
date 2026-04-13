@@ -53,15 +53,7 @@ jest.mock("@/components/droplets/notes-summary-client", () => ({
 }));
 
 jest.mock("@/components/droplets/notes-pdf-button", () => ({
-  NotesPdfButton: ({
-    pdfBytes,
-    name,
-    noNotes,
-  }: {
-    pdfBytes: Uint8Array | null;
-    name: string;
-    noNotes: boolean;
-  }) => (
+  NotesPdfButton: ({ noNotes }: { noNotes: boolean }) => (
     <button data-testid="pdf-button" disabled={noNotes}>
       Download PDF
     </button>

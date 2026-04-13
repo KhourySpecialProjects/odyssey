@@ -788,6 +788,7 @@ export interface ApiDatasetDataset extends Schema.CollectionType {
       Attribute.SetMinMax<
         {
           max: 104857600;
+          min: 0;
         },
         number
       >;

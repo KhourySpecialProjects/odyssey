@@ -17,6 +17,9 @@ import {
   makeFetchResponse,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import type { User } from "@/types";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -36,17 +39,12 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 const mockedRevalidateTag = jest.mocked(revalidateTag);
 
-// Lazy imports so mocks are in place before first use
 function getGetCurrentUser() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return jest.mocked(require("@/lib/auth/session").getCurrentUser);
+  return jest.mocked(getCurrentUser);
 }
 
 function getGetAuthorizedUserByEmail() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return jest.mocked(
-    require("@/lib/requests/authorized-user").getAuthorizedUserByEmail,
-  );
+  return jest.mocked(getAuthorizedUserByEmail);
 }
 
 describe("highlights requests — coverage", () => {
@@ -253,7 +251,11 @@ describe("highlights requests — coverage", () => {
     it("fetches highlights for a lesson when user is authenticated", async () => {
       const getCurrentUser = getGetCurrentUser();
       const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({ email: "alice@example.com" });
+      getCurrentUser.mockResolvedValueOnce({
+        email: "alice@example.com",
+        roles: [],
+        isActive: true,
+      } as User);
       getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 11 });
 
       const responseBody = { data: [{ id: 1, text: "note" }] };
@@ -274,7 +276,11 @@ describe("highlights requests — coverage", () => {
 
     it("throws when current user has no email", async () => {
       const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce({ email: null });
+      getCurrentUser.mockResolvedValueOnce({
+        email: null,
+        roles: [],
+        isActive: true,
+      } as User);
 
       await expect(getHighlightsForLesson(3)).rejects.toThrow(
         "No email identified",
@@ -283,7 +289,7 @@ describe("highlights requests — coverage", () => {
 
     it("throws when current user is null", async () => {
       const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce(null);
+      getCurrentUser.mockResolvedValueOnce(undefined);
 
       await expect(getHighlightsForLesson(3)).rejects.toThrow(
         "No email identified",
@@ -293,7 +299,11 @@ describe("highlights requests — coverage", () => {
     it("uses authorized user id for cache tag", async () => {
       const getCurrentUser = getGetCurrentUser();
       const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({ email: "bob@example.com" });
+      getCurrentUser.mockResolvedValueOnce({
+        email: "bob@example.com",
+        roles: [],
+        isActive: true,
+      } as User);
       getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 22 });
 
       mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));

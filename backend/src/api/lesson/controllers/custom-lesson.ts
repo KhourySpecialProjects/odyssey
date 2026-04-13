@@ -37,10 +37,10 @@ export default {
     // enforced in the Next.js Server Action layer, which resolves the
     // userId from the authenticated session before calling this route
     // (see frontend/lib/requests/lesson-lock.ts).
-    const { userId } = ctx.request.body ?? {};
+    const userId = Number((ctx.request.body ?? {}).userId);
 
-    if (!userId) {
-      return ctx.badRequest("userId is required");
+    if (!userId || Number.isNaN(userId)) {
+      return ctx.badRequest("userId is required and must be a number");
     }
 
     // Atomic compare-and-swap via a serialized database transaction.
@@ -147,10 +147,10 @@ export default {
     // enforced in the Next.js Server Action layer, which resolves the
     // userId from the authenticated session before calling this route
     // (see frontend/lib/requests/lesson-lock.ts).
-    const { userId } = ctx.request.body ?? {};
+    const userId = Number((ctx.request.body ?? {}).userId);
 
-    if (!userId) {
-      return ctx.badRequest("userId is required");
+    if (!userId || Number.isNaN(userId)) {
+      return ctx.badRequest("userId is required and must be a number");
     }
 
     const lesson = await findLessonWithLock(id);
