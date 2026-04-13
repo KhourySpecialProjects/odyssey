@@ -613,10 +613,10 @@ export function BlockNoteEditorClient({
                 ...quizItems,
                 ...latexItems,
                 ...codeItems,
+                ...notebookCodeItems,
                 ...sandpackItems,
                 ...slideBreakItems,
                 ...columnBreakItems,
-                ...notebookCodeItems,
               ];
 
               return allItems.filter(

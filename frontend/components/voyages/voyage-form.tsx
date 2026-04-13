@@ -381,10 +381,12 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
             <div className="max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
               {availablePlaylists.length === 0 ? (
                 <p className="px-4 py-3 text-sm text-slate-500">
-                  No playlists found.
+                  {searchQuery
+                    ? "No playlists found."
+                    : "All playlists have been added."}
                 </p>
               ) : (
-                availablePlaylists.slice(0, 10).map((playlist) => (
+                availablePlaylists.map((playlist) => (
                   <button
                     key={playlist.id}
                     type="button"
@@ -563,7 +565,7 @@ export function VoyageForm({ playlists, authorId, voyage }: VoyageFormProps) {
             </div>
           ) : (
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              Search above to add playlists as islands.
+              Select playlists above to add them as islands.
             </p>
           )}
         </div>
