@@ -10,7 +10,6 @@
  */
 
 import { enrollInVoyage } from "@/lib/requests/voyage-enrollment";
-import { fetchAPI } from "@/lib/utils";
 import { requireRole } from "@/lib/auth/require-role";
 import { getCachedUser } from "@/lib/requests/cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";

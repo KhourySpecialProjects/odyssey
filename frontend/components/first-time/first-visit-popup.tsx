@@ -102,7 +102,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           last: lastName,
           bio: bio,
         });
-        await setTimeZone(timeZone + "  ");
+        await setTimeZone(timeZone);
         await createSystemAnnouncement(
           "Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!",
           user,

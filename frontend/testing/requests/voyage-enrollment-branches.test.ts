@@ -16,8 +16,6 @@ import {
   markVoyageNodeComplete,
   checkAndCompleteVoyageNode,
 } from "@/lib/requests/voyage-enrollment";
-import { CACHE_TAGS } from "@/lib/cache-tags";
-import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
 import { requireRole } from "@/lib/auth/require-role";
@@ -25,7 +23,6 @@ import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import {
   getMockedFetchAPI,
   mockGlobalFetch,
-  makeFetchResponse,
   makeAuthorizedUser,
 } from "@/lib/testing/mock-helpers";
 

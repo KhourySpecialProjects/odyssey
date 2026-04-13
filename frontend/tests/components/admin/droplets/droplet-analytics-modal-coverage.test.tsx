@@ -10,7 +10,7 @@
  *   - Uses makeDroplet() from shared helpers
  */
 
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DropletAnalyticsModal } from "@/components/admin/droplets/droplet-analytics-modal";
 import { getDropletAnalytics } from "@/lib/requests/droplet-analytics";

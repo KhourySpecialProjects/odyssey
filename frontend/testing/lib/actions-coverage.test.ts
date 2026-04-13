@@ -139,6 +139,24 @@ jest.mock("@/lib/auth/require-role", () => ({
   requireRole: jest.fn(),
 }));
 
+// getCurrentUser is invoked inside createLinearIssue for rate limiting.
+// Return a stable test user so checkRateLimit can resolve without hitting
+// NextAuth's getServerSession.
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn().mockResolvedValue({
+    id: 1,
+    email: "reporter@example.com",
+    roles: [],
+  }),
+  isDevRoleOverrideEnabled: jest.fn(() => false),
+}));
+
+// Rate limiter must allow by default so the Anthropic path actually runs.
+// Individual tests can override via jest.mocked(checkRateLimit) if needed.
+jest.mock("@/lib/import/rate-limiter", () => ({
+  checkRateLimit: jest.fn(() => ({ allowed: true, remaining: 10 })),
+}));
+
 jest.mock("@/lib/utils", () => ({
   flattenAttributes: jest.fn((x: unknown) => x),
   fetchAPI: jest.fn(),

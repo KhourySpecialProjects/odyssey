@@ -32,6 +32,15 @@ import {
   getCachedVoyageEnrollment,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getUserGroups, getUserDueDates } from "@/lib/requests/groups";
+import { getLessonBySlug } from "@/lib/requests/lesson";
+import { getDropletBySlug } from "@/lib/requests/droplet";
+import {
+  getVoyageEnrollment,
+  getVoyageEnrollmentsByUser,
+} from "@/lib/requests/voyage-enrollment";
 
 // ─── module mocks ────────────────────────────────────────────────────────────
 // Every module that cached.ts imports must be mocked to avoid real network calls.
@@ -62,93 +71,75 @@ jest.mock("@/lib/requests/voyage-enrollment", () => ({
   getVoyageEnrollmentsByUser: jest.fn(),
 }));
 
-// ─── typed accessors ─────────────────────────────────────────────────────────
+// ─── typed mocked references ────────────────────────────────────────────────
 
-function getMockedGetAuthorizedUserByEmail() {
-  return jest.mocked(
-    require("@/lib/requests/authorized-user")
-      .getAuthorizedUserByEmail as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetEnrollmentsByAuthorizedUser() {
-  return jest.mocked(
-    require("@/lib/requests/enrollment")
-      .getEnrollmentsByAuthorizedUser as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetUserGroups() {
-  return jest.mocked(
-    require("@/lib/requests/groups").getUserGroups as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetUserDueDates() {
-  return jest.mocked(
-    require("@/lib/requests/groups").getUserDueDates as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetLessonBySlug() {
-  return jest.mocked(
-    require("@/lib/requests/lesson").getLessonBySlug as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetDropletBySlug() {
-  return jest.mocked(
-    require("@/lib/requests/droplet")
-      .getDropletBySlug as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetVoyageEnrollment() {
-  return jest.mocked(
-    require("@/lib/requests/voyage-enrollment")
-      .getVoyageEnrollment as () => Promise<unknown>,
-  );
-}
-
-function getMockedGetVoyageEnrollmentsByUser() {
-  return jest.mocked(
-    require("@/lib/requests/voyage-enrollment")
-      .getVoyageEnrollmentsByUser as () => Promise<unknown>,
-  );
-}
+const mockedGetAuthorizedUserByEmail = jest.mocked(getAuthorizedUserByEmail);
+const mockedGetEnrollmentsByAuthorizedUser = jest.mocked(
+  getEnrollmentsByAuthorizedUser,
+);
+const mockedGetUserGroups = jest.mocked(getUserGroups);
+const mockedGetUserDueDates = jest.mocked(getUserDueDates);
+const mockedGetLessonBySlug = jest.mocked(getLessonBySlug);
+const mockedGetDropletBySlug = jest.mocked(getDropletBySlug);
+const mockedGetVoyageEnrollment = jest.mocked(getVoyageEnrollment);
+const mockedGetVoyageEnrollmentsByUser = jest.mocked(
+  getVoyageEnrollmentsByUser,
+);
 
 // ─── fixtures ─────────────────────────────────────────────────────────────────
+// Tests only assert on the fields below; the full types are much wider.
+
+import type {
+  AuthorizedUser,
+  Enrollment,
+  Group,
+  DueDate,
+  Lesson,
+  Droplet,
+  VoyageEnrollment,
+} from "@/types";
 
 const MOCK_USER = {
   id: 1,
   email: "user@example.com",
   firstName: "Test",
   lastName: "User",
-};
+} as unknown as AuthorizedUser;
 
-const MOCK_ENROLLMENTS = [{ id: "enroll-1", isComplete: false }];
+const MOCK_ENROLLMENTS = [
+  { id: "enroll-1", isComplete: false },
+] as unknown as Enrollment[];
 const MOCK_LESSON = {
   id: 10,
   slug: "intro-to-python",
   name: "Intro to Python",
-};
-const MOCK_DROPLET = { id: 5, slug: "python-basics", name: "Python Basics" };
-const MOCK_GROUPS = [{ id: 3, groupName: "CS4500" }];
-const MOCK_DUE_DATES = [{ id: 7, dueDate: "2024-05-01" }];
-const MOCK_VOYAGE_ENROLLMENT = { id: 20, completionPercentage: 50 };
+} as unknown as Lesson;
+const MOCK_DROPLET = {
+  id: 5,
+  slug: "python-basics",
+  name: "Python Basics",
+} as unknown as Droplet;
+const MOCK_GROUPS = [{ id: 3, groupName: "CS4500" }] as unknown as Group[];
+const MOCK_DUE_DATES = [
+  { id: 7, dueDate: "2024-05-01" },
+] as unknown as DueDate[];
+const MOCK_VOYAGE_ENROLLMENT = {
+  id: 20,
+  completionPercentage: 50,
+} as unknown as VoyageEnrollment;
 
 // ─── tests ────────────────────────────────────────────────────────────────────
 
 describe("cached.ts — getCachedUser", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetAuthorizedUserByEmail().mockResolvedValue(MOCK_USER);
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(MOCK_USER);
   });
 
   it("delegates to getAuthorizedUserByEmail with email", async () => {
     const result = await getCachedUser("user@example.com");
 
-    expect(getMockedGetAuthorizedUserByEmail()).toHaveBeenCalledWith(
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledWith(
       "user@example.com",
       expect.anything(), // USER_POPULATES.profile
       expect.anything(), // CACHE_TAGS.users
@@ -157,7 +148,9 @@ describe("cached.ts — getCachedUser", () => {
   });
 
   it("returns null when user does not exist", async () => {
-    getMockedGetAuthorizedUserByEmail().mockResolvedValue(null);
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(
+      null as unknown as AuthorizedUser,
+    );
 
     const result = await getCachedUser("nobody@example.com");
 
@@ -171,7 +164,9 @@ describe("cached.ts — getCachedUserSocial", () => {
   });
 
   it("returns undefined when getCachedUser returns undefined", async () => {
-    getMockedGetAuthorizedUserByEmail().mockResolvedValue(undefined);
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(
+      undefined as unknown as AuthorizedUser,
+    );
 
     const result = await getCachedUserSocial("ghost@example.com");
 
@@ -180,16 +175,16 @@ describe("cached.ts — getCachedUserSocial", () => {
 
   it("calls getAuthorizedUserByEmail twice: once for profile, once for social", async () => {
     // First call (getCachedUser) returns the user; second call (social) returns social data
-    getMockedGetAuthorizedUserByEmail()
+    mockedGetAuthorizedUserByEmail
       .mockResolvedValueOnce(MOCK_USER)
       .mockResolvedValueOnce({
         ...MOCK_USER,
-        linkedIn: "https://linkedin.com/in/test",
-      });
+        linkedin: "https://linkedin.com/in/test",
+      } as unknown as AuthorizedUser);
 
     const result = await getCachedUserSocial("user@example.com");
 
-    expect(getMockedGetAuthorizedUserByEmail()).toHaveBeenCalledTimes(2);
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledTimes(2);
     expect(result).toMatchObject({ id: 1 });
   });
 });
@@ -197,13 +192,13 @@ describe("cached.ts — getCachedUserSocial", () => {
 describe("cached.ts — getCachedUserCreation", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetAuthorizedUserByEmail().mockResolvedValue(MOCK_USER);
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(MOCK_USER);
   });
 
   it("delegates to getAuthorizedUserByEmail with creation populate", async () => {
     const result = await getCachedUserCreation("user@example.com");
 
-    expect(getMockedGetAuthorizedUserByEmail()).toHaveBeenCalledWith(
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledWith(
       "user@example.com",
       expect.anything(),
       expect.anything(),
@@ -215,20 +210,18 @@ describe("cached.ts — getCachedUserCreation", () => {
 describe("cached.ts — getCachedEnrollments", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetEnrollmentsByAuthorizedUser().mockResolvedValue(
-      MOCK_ENROLLMENTS,
-    );
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue(MOCK_ENROLLMENTS);
   });
 
   it("delegates to getEnrollmentsByAuthorizedUser with userId", async () => {
     const result = await getCachedEnrollments(42);
 
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(42);
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(42);
     expect(result).toEqual(MOCK_ENROLLMENTS);
   });
 
   it("returns empty array when user has no enrollments", async () => {
-    getMockedGetEnrollmentsByAuthorizedUser().mockResolvedValue([]);
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue([]);
 
     const result = await getCachedEnrollments(99);
 
@@ -239,15 +232,13 @@ describe("cached.ts — getCachedEnrollments", () => {
 describe("cached.ts — getCachedEnrollmentsWithLessonIds", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetEnrollmentsByAuthorizedUser().mockResolvedValue(
-      MOCK_ENROLLMENTS,
-    );
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue(MOCK_ENROLLMENTS);
   });
 
   it("delegates to getEnrollmentsByAuthorizedUser with lessonIds populate option", async () => {
     const result = await getCachedEnrollmentsWithLessonIds(42);
 
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(
       42,
       expect.objectContaining({ populate: expect.anything() }),
     );
@@ -258,15 +249,13 @@ describe("cached.ts — getCachedEnrollmentsWithLessonIds", () => {
 describe("cached.ts — getCachedEnrollmentsDashboard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetEnrollmentsByAuthorizedUser().mockResolvedValue(
-      MOCK_ENROLLMENTS,
-    );
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue(MOCK_ENROLLMENTS);
   });
 
   it("delegates to getEnrollmentsByAuthorizedUser with dashboard populate option", async () => {
     const result = await getCachedEnrollmentsDashboard(42);
 
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(
       42,
       expect.objectContaining({ populate: expect.anything() }),
     );
@@ -277,15 +266,13 @@ describe("cached.ts — getCachedEnrollmentsDashboard", () => {
 describe("cached.ts — getCachedEnrollmentsFavorites", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetEnrollmentsByAuthorizedUser().mockResolvedValue(
-      MOCK_ENROLLMENTS,
-    );
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue(MOCK_ENROLLMENTS);
   });
 
   it("delegates to getEnrollmentsByAuthorizedUser with favorites populate option", async () => {
     const result = await getCachedEnrollmentsFavorites(42);
 
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(
       42,
       expect.objectContaining({ populate: expect.anything() }),
     );
@@ -296,13 +283,13 @@ describe("cached.ts — getCachedEnrollmentsFavorites", () => {
 describe("cached.ts — getCachedUserDashboardFull", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetAuthorizedUserByEmail().mockResolvedValue(MOCK_USER);
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(MOCK_USER);
   });
 
   it("delegates to getAuthorizedUserByEmail with dashboardFull populate", async () => {
     const result = await getCachedUserDashboardFull("user@example.com");
 
-    expect(getMockedGetAuthorizedUserByEmail()).toHaveBeenCalledWith(
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledWith(
       "user@example.com",
       expect.anything(),
       expect.anything(),
@@ -314,18 +301,18 @@ describe("cached.ts — getCachedUserDashboardFull", () => {
 describe("cached.ts — getCachedUserGroups", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetUserGroups().mockResolvedValue(MOCK_GROUPS);
+    mockedGetUserGroups.mockResolvedValue(MOCK_GROUPS);
   });
 
   it("delegates to getUserGroups with authorizedUserId", async () => {
     const result = await getCachedUserGroups(42);
 
-    expect(getMockedGetUserGroups()).toHaveBeenCalledWith(42);
+    expect(mockedGetUserGroups).toHaveBeenCalledWith(42);
     expect(result).toEqual(MOCK_GROUPS);
   });
 
   it("returns empty array when user has no groups", async () => {
-    getMockedGetUserGroups().mockResolvedValue([]);
+    mockedGetUserGroups.mockResolvedValue([]);
 
     const result = await getCachedUserGroups(99);
 
@@ -336,13 +323,13 @@ describe("cached.ts — getCachedUserGroups", () => {
 describe("cached.ts — getCachedUserDueDates", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetUserDueDates().mockResolvedValue(MOCK_DUE_DATES);
+    mockedGetUserDueDates.mockResolvedValue(MOCK_DUE_DATES);
   });
 
   it("delegates to getUserDueDates with authorizedUserId", async () => {
     const result = await getCachedUserDueDates(42);
 
-    expect(getMockedGetUserDueDates()).toHaveBeenCalledWith(42);
+    expect(mockedGetUserDueDates).toHaveBeenCalledWith(42);
     expect(result).toEqual(MOCK_DUE_DATES);
   });
 });
@@ -350,18 +337,18 @@ describe("cached.ts — getCachedUserDueDates", () => {
 describe("cached.ts — getCachedLessonBySlug", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetLessonBySlug().mockResolvedValue(MOCK_LESSON);
+    mockedGetLessonBySlug.mockResolvedValue(MOCK_LESSON);
   });
 
   it("delegates to getLessonBySlug with the slug", async () => {
     const result = await getCachedLessonBySlug("intro-to-python");
 
-    expect(getMockedGetLessonBySlug()).toHaveBeenCalledWith("intro-to-python");
+    expect(mockedGetLessonBySlug).toHaveBeenCalledWith("intro-to-python");
     expect(result).toEqual(MOCK_LESSON);
   });
 
   it("returns null when lesson does not exist", async () => {
-    getMockedGetLessonBySlug().mockResolvedValue(null);
+    mockedGetLessonBySlug.mockResolvedValue(null as unknown as Lesson);
 
     const result = await getCachedLessonBySlug("nonexistent-slug");
 
@@ -372,13 +359,13 @@ describe("cached.ts — getCachedLessonBySlug", () => {
 describe("cached.ts — getCachedDraftDropletBySlug", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetDropletBySlug().mockResolvedValue(MOCK_DROPLET);
+    mockedGetDropletBySlug.mockResolvedValue(MOCK_DROPLET);
   });
 
   it("delegates to getDropletBySlug with the slug and draft populate options", async () => {
     const result = await getCachedDraftDropletBySlug("python-basics");
 
-    expect(getMockedGetDropletBySlug()).toHaveBeenCalledWith(
+    expect(mockedGetDropletBySlug).toHaveBeenCalledWith(
       "python-basics",
       expect.objectContaining({
         populate: expect.objectContaining({
@@ -394,13 +381,13 @@ describe("cached.ts — getCachedDraftDropletBySlug", () => {
 describe("cached.ts — getCachedDropletBySlug", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetDropletBySlug().mockResolvedValue(MOCK_DROPLET);
+    mockedGetDropletBySlug.mockResolvedValue(MOCK_DROPLET);
   });
 
   it("delegates to getDropletBySlug with the slug and public populate options", async () => {
     const result = await getCachedDropletBySlug("python-basics");
 
-    expect(getMockedGetDropletBySlug()).toHaveBeenCalledWith(
+    expect(mockedGetDropletBySlug).toHaveBeenCalledWith(
       "python-basics",
       expect.objectContaining({
         populate: expect.objectContaining({
@@ -413,7 +400,7 @@ describe("cached.ts — getCachedDropletBySlug", () => {
   });
 
   it("returns null when droplet does not exist", async () => {
-    getMockedGetDropletBySlug().mockResolvedValue(null);
+    mockedGetDropletBySlug.mockResolvedValue(null as unknown as Droplet);
 
     const result = await getCachedDropletBySlug("nonexistent");
 
@@ -424,18 +411,18 @@ describe("cached.ts — getCachedDropletBySlug", () => {
 describe("cached.ts — getCachedVoyageEnrollment", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetVoyageEnrollment().mockResolvedValue(MOCK_VOYAGE_ENROLLMENT);
+    mockedGetVoyageEnrollment.mockResolvedValue(MOCK_VOYAGE_ENROLLMENT);
   });
 
   it("delegates to getVoyageEnrollment with authorizedUserId and voyageId", async () => {
     const result = await getCachedVoyageEnrollment(42, 10);
 
-    expect(getMockedGetVoyageEnrollment()).toHaveBeenCalledWith(42, 10);
+    expect(mockedGetVoyageEnrollment).toHaveBeenCalledWith(42, 10);
     expect(result).toEqual(MOCK_VOYAGE_ENROLLMENT);
   });
 
   it("returns null when enrollment does not exist", async () => {
-    getMockedGetVoyageEnrollment().mockResolvedValue(null);
+    mockedGetVoyageEnrollment.mockResolvedValue(null);
 
     const result = await getCachedVoyageEnrollment(42, 999);
 
@@ -446,7 +433,7 @@ describe("cached.ts — getCachedVoyageEnrollment", () => {
 describe("cached.ts — getCachedVoyageEnrollmentsByUser", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getMockedGetVoyageEnrollmentsByUser().mockResolvedValue([
+    mockedGetVoyageEnrollmentsByUser.mockResolvedValue([
       MOCK_VOYAGE_ENROLLMENT,
     ]);
   });
@@ -454,12 +441,12 @@ describe("cached.ts — getCachedVoyageEnrollmentsByUser", () => {
   it("delegates to getVoyageEnrollmentsByUser with authorizedUserId", async () => {
     const result = await getCachedVoyageEnrollmentsByUser(42);
 
-    expect(getMockedGetVoyageEnrollmentsByUser()).toHaveBeenCalledWith(42);
+    expect(mockedGetVoyageEnrollmentsByUser).toHaveBeenCalledWith(42);
     expect(result).toEqual([MOCK_VOYAGE_ENROLLMENT]);
   });
 
   it("returns empty array when user has no voyage enrollments", async () => {
-    getMockedGetVoyageEnrollmentsByUser().mockResolvedValue([]);
+    mockedGetVoyageEnrollmentsByUser.mockResolvedValue([]);
 
     const result = await getCachedVoyageEnrollmentsByUser(99);
 
@@ -485,7 +472,7 @@ describe("cached.ts — getCachedVoyageEnrollmentsByUser", () => {
 describe("cached.ts — React.cache deduplication (within a single call context)", () => {
   it("getCachedLessonBySlug: same-arg concurrent calls both return the mocked lesson", async () => {
     jest.clearAllMocks();
-    getMockedGetLessonBySlug().mockResolvedValue(MOCK_LESSON);
+    mockedGetLessonBySlug.mockResolvedValue(MOCK_LESSON);
 
     const [r1, r2] = await Promise.all([
       getCachedLessonBySlug("some-slug"),
@@ -499,9 +486,9 @@ describe("cached.ts — React.cache deduplication (within a single call context)
 
   it("getCachedEnrollments: different userId args each call the underlying function", async () => {
     jest.clearAllMocks();
-    getMockedGetEnrollmentsByAuthorizedUser()
-      .mockResolvedValueOnce([{ id: "e-1" }])
-      .mockResolvedValueOnce([{ id: "e-2" }]);
+    mockedGetEnrollmentsByAuthorizedUser
+      .mockResolvedValueOnce([{ id: "e-1" }] as unknown as Enrollment[])
+      .mockResolvedValueOnce([{ id: "e-2" }] as unknown as Enrollment[]);
 
     const [r1, r2] = await Promise.all([
       getCachedEnrollments(100),
@@ -509,8 +496,8 @@ describe("cached.ts — React.cache deduplication (within a single call context)
     ]);
 
     // Each distinct userId reaches the underlying mock
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(100);
-    expect(getMockedGetEnrollmentsByAuthorizedUser()).toHaveBeenCalledWith(200);
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(100);
+    expect(mockedGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(200);
     // Results are distinct because the mock returns different values per call
     expect(r1).toEqual([{ id: "e-1" }]);
     expect(r2).toEqual([{ id: "e-2" }]);

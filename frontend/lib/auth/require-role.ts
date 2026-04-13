@@ -26,43 +26,47 @@ export type RequireRoleResult =
 export async function requireRole(
   allowed: AuthorizedUserRoleTitle[],
 ): Promise<RequireRoleResult> {
-  // Step 1: Get the session. If no email, caller is unauthenticated.
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser?.email) {
+  try {
+    // Step 1: Get the session. If no email, caller is unauthenticated.
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser?.email) {
+      return { ok: false, error: "unauthenticated" };
+    }
+
+    // Step 2: Resolve the authorized user from Strapi.
+    const user = await getCachedUser(sessionUser.email);
+    if (!user?.id) {
+      return { ok: false, error: "unauthenticated" };
+    }
+
+    // Step 3: Extract role titles. Roles can be strings or objects with .title
+    // (same pattern as requireAdminOrFaculty in voyage.ts:17-20).
+    const roleTitles: AuthorizedUserRoleTitle[] = (user.roles ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (r: any) =>
+        (typeof r === "string" ? r : r.title) as AuthorizedUserRoleTitle,
+    );
+
+    // Step 4: Empty allowed array means "any authenticated user".
+    if (allowed.length === 0) {
+      return {
+        ok: true,
+        user: { id: user.id, email: sessionUser.email, roles: roleTitles },
+      };
+    }
+
+    // Step 5: Check if any of the user's roles intersect with the allowed set.
+    const hasRole = roleTitles.some((title) => allowed.includes(title));
+    if (hasRole) {
+      return {
+        ok: true,
+        user: { id: user.id, email: sessionUser.email, roles: roleTitles },
+      };
+    }
+
+    // Step 6: Authenticated but not permitted.
+    return { ok: false, error: "forbidden" };
+  } catch {
     return { ok: false, error: "unauthenticated" };
   }
-
-  // Step 2: Resolve the authorized user from Strapi.
-  const user = await getCachedUser(sessionUser.email);
-  if (!user?.id) {
-    return { ok: false, error: "unauthenticated" };
-  }
-
-  // Step 3: Extract role titles. Roles can be strings or objects with .title
-  // (same pattern as requireAdminOrFaculty in voyage.ts:17-20).
-  const roleTitles: AuthorizedUserRoleTitle[] = (user.roles ?? []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) =>
-      (typeof r === "string" ? r : r.title) as AuthorizedUserRoleTitle,
-  );
-
-  // Step 4: Empty allowed array means "any authenticated user".
-  if (allowed.length === 0) {
-    return {
-      ok: true,
-      user: { id: user.id, email: sessionUser.email, roles: roleTitles },
-    };
-  }
-
-  // Step 5: Check if any of the user's roles intersect with the allowed set.
-  const hasRole = roleTitles.some((title) => allowed.includes(title));
-  if (hasRole) {
-    return {
-      ok: true,
-      user: { id: user.id, email: sessionUser.email, roles: roleTitles },
-    };
-  }
-
-  // Step 6: Authenticated but not permitted.
-  return { ok: false, error: "forbidden" };
 }

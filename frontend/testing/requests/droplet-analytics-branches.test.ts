@@ -216,7 +216,9 @@ describe("droplet-analytics-branches — lessonViewCounts.get ?? 0 in loop (line
 
 // ---------------------------------------------------------------------------
 // Line 202 — lessonViewCounts.get(lesson.id) ?? 0 in lessonCompletion mapping
-// This fires when a lesson was never viewed (count stays at 0 in the Map).
+// The map is pre-seeded with 0 for every lesson ID, so Map.get returns the
+// stored 0 (not undefined). The ?? 0 fallback does not trigger here; the
+// count is 0 because no enrollment viewed the lesson.
 // ---------------------------------------------------------------------------
 
 describe("droplet-analytics-branches — lessonCompletion ?? 0 (line 202)", () => {
@@ -351,11 +353,12 @@ describe("droplet-analytics-branches — phData.get(??) ?? 0 for missing buckets
 
 // ---------------------------------------------------------------------------
 // Line 225 — lessonViewCounts.get(lesson.id) ?? 0 in fallback scroll depth
-// Fires when the lesson has no recorded views (count stays at 0 in map),
-// meaning the fallback "viewed" variable is 0.
+// The map is pre-seeded with 0 for every lesson ID, so Map.get returns the
+// stored 0 (not undefined). The ?? 0 fallback does not trigger; the "viewed"
+// variable is 0 because no enrollment viewed the lesson.
 // ---------------------------------------------------------------------------
 
-describe("droplet-analytics-branches — fallback scroll depth ?? 0 for unviewed lesson (line 225)", () => {
+describe("droplet-analytics-branches — fallback scroll depth with 0 views for unviewed lesson (line 225)", () => {
   it("uses 0 views for fallback when lesson was never viewed", async () => {
     setupCountCalls(10, 4, 0, 0);
 
@@ -387,7 +390,7 @@ describe("droplet-analytics-branches — fallback scroll depth ?? 0 for unviewed
 
     const depth = result.scrollDepth[0];
     expect(depth.estimated).toBe(true);
-    // viewed = 0 (never seen), so ?? 0 fires and p25 = 0
+    // viewed = 0 (map pre-seeded with 0, not a ?? 0 fallback), so p25 = 0
     expect(depth.points.find((p) => p.label === "25%")).toEqual({
       label: "25%",
       count: 0,

@@ -19,6 +19,13 @@
  */
 
 import { autoFormatSlides } from "@/lib/actions/auto-format-slides";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
+import { getCurrentUser } from "@/lib/auth/session";
+import type { User } from "@/types";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 // ─── module mocks ────────────────────────────────────────────────────────────
 
@@ -97,27 +104,9 @@ function getMockAPIErrorClass(): new (
   return jest.requireMock("@anthropic-ai/sdk").default.__MockAPIError;
 }
 
-function getCheckRateLimit() {
-  return jest.mocked(
-    require("@/lib/import/rate-limiter").checkRateLimit as (
-      ...args: unknown[]
-    ) => { allowed: boolean; retryAfterMs?: number },
-  );
-}
-
-function getFormatRateLimitError() {
-  return jest.mocked(
-    require("@/lib/import/rate-limiter").formatRateLimitError as (
-      ms: number,
-    ) => string,
-  );
-}
-
-function getCurrentUser() {
-  return jest.mocked(
-    require("@/lib/auth/session").getCurrentUser as () => Promise<unknown>,
-  );
-}
+const mockedCheckRateLimit = jest.mocked(checkRateLimit);
+const mockedFormatRateLimitError = jest.mocked(formatRateLimitError);
+const mockedGetCurrentUser = jest.mocked(getCurrentUser);
 
 // ─── fixtures ────────────────────────────────────────────────────────────────
 
@@ -168,12 +157,13 @@ describe("autoFormatSlides", () => {
     };
 
     // Default: authenticated user with no rate limit
-    getCurrentUser().mockResolvedValue({
+    mockedGetCurrentUser.mockResolvedValue({
       email: "user@example.com",
       roles: [],
-    });
-    getCheckRateLimit().mockReturnValue({ allowed: true });
-    getFormatRateLimitError().mockReturnValue(
+      isActive: true,
+    } as User);
+    mockedCheckRateLimit.mockReturnValue({ allowed: true });
+    mockedFormatRateLimitError.mockReturnValue(
       "Rate limit reached. Try again in 60 minutes.",
     );
   });
@@ -447,7 +437,7 @@ describe("autoFormatSlides", () => {
   // ── auth / rate-limit guards ─────────────────────────────────────────────────
 
   it("returns error when user is not signed in", async () => {
-    getCurrentUser().mockResolvedValue(undefined);
+    mockedGetCurrentUser.mockResolvedValue(undefined);
 
     const result = await autoFormatSlides(BLOCK_SUMMARIES);
 
@@ -458,7 +448,10 @@ describe("autoFormatSlides", () => {
   });
 
   it("returns error when user has no email", async () => {
-    getCurrentUser().mockResolvedValue({ roles: [] }); // no email
+    mockedGetCurrentUser.mockResolvedValue({
+      roles: [],
+      isActive: true,
+    } as User); // no email
 
     const result = await autoFormatSlides(BLOCK_SUMMARIES);
 
@@ -469,11 +462,11 @@ describe("autoFormatSlides", () => {
   });
 
   it("returns rate limit error when checkRateLimit returns { allowed: false }", async () => {
-    getCheckRateLimit().mockReturnValue({
+    mockedCheckRateLimit.mockReturnValue({
       allowed: false,
       retryAfterMs: 3600000,
     });
-    getFormatRateLimitError().mockReturnValue(
+    mockedFormatRateLimitError.mockReturnValue(
       "Rate limit reached. Try again in 60 minutes.",
     );
 
@@ -488,10 +481,11 @@ describe("autoFormatSlides", () => {
   });
 
   it("passes user email and roles to checkRateLimit", async () => {
-    getCurrentUser().mockResolvedValue({
+    mockedGetCurrentUser.mockResolvedValue({
       email: "faculty@example.com",
-      roles: ["faculty"],
-    });
+      roles: [AuthorizedUserRoleTitle.Faculty],
+      isActive: true,
+    } as User);
     getMockedAnthropicConstructor().mockImplementation(() => ({
       messages: {
         create: jest.fn().mockResolvedValue(makeSdkResponse("[]")),
@@ -500,9 +494,9 @@ describe("autoFormatSlides", () => {
 
     await autoFormatSlides(BLOCK_SUMMARIES);
 
-    expect(getCheckRateLimit()).toHaveBeenCalledWith(
+    expect(mockedCheckRateLimit).toHaveBeenCalledWith(
       "faculty@example.com",
-      ["faculty"],
+      [AuthorizedUserRoleTitle.Faculty],
       "auto-format",
     );
   });

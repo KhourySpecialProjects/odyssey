@@ -71,20 +71,28 @@ export function mockGlobalFetch(): jest.MockedFunction<typeof fetch> {
  */
 export function makeFetchResponse(body: unknown, status = 200): Response {
   const jsonBody = JSON.stringify(body);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   if (typeof (globalThis as any).Response === "function") {
     return new (globalThis as any).Response(jsonBody, {
       status,
       headers: { "Content-Type": "application/json" },
     });
   }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   // Fallback: plain object matching the Response properties production code uses.
+  const hdrs =
+    typeof Headers === "function"
+      ? new Headers({ "Content-Type": "application/json" })
+      : ({
+          get: (k: string) =>
+            k === "Content-Type" ? "application/json" : null,
+        } as unknown as Headers);
   return {
     ok: status >= 200 && status < 300,
     status,
     json: async () => JSON.parse(jsonBody),
     text: async () => jsonBody,
-    headers: new Headers({ "Content-Type": "application/json" }),
+    headers: hdrs,
   } as unknown as Response;
 }
 

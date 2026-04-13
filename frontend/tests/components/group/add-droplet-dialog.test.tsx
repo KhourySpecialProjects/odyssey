@@ -14,7 +14,7 @@ describe("AddDropletDialog", () => {
     makeDroplet({
       id: 1,
       name: "Droplet 1",
-      slug: "test-droplet",
+      slug: "test-droplet-1",
       isHidden: false,
       focusArea: "personal",
       type: "knowledge",
@@ -23,9 +23,9 @@ describe("AddDropletDialog", () => {
       status: "published",
     }),
     makeDroplet({
-      id: 1,
+      id: 2,
       name: "Droplet 2",
-      slug: "test-droplet",
+      slug: "test-droplet-2",
       isHidden: false,
       focusArea: "personal",
       type: "knowledge",
@@ -34,9 +34,9 @@ describe("AddDropletDialog", () => {
       status: "published",
     }),
     makeDroplet({
-      id: 1,
+      id: 3,
       name: "Another Droplet",
-      slug: "test-droplet",
+      slug: "test-droplet-3",
       isHidden: false,
       focusArea: "personal",
       type: "knowledge",

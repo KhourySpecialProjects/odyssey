@@ -5,6 +5,8 @@ import {
   getLessonLockStatus,
   getCurrentAuthorizedUserId,
 } from "@/lib/requests/lesson-lock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/require-role";
 
 global.fetch = jest.fn();
 
@@ -37,13 +39,15 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+const mockedRequireRole = jest.mocked(requireRole);
+const mockedGetCurrentUser = jest.mocked(getCurrentUser);
+
 describe("Lesson Lock API Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (global.fetch as jest.Mock).mockReset();
+    jest.mocked(global.fetch).mockReset();
     // Restore the default authenticated mock after clearAllMocks
-    const { requireRole } = require("@/lib/auth/require-role");
-    (requireRole as jest.Mock).mockResolvedValue({
+    mockedRequireRole.mockResolvedValue({
       ok: true,
       user: { id: 42, email: "test@northeastern.edu", roles: [] },
     });
@@ -56,8 +60,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns null when not authenticated", async () => {
-      const { getCurrentUser } = require("@/lib/auth/session");
-      getCurrentUser.mockResolvedValueOnce(null);
+      mockedGetCurrentUser.mockResolvedValueOnce(undefined);
 
       const id = await getCurrentAuthorizedUserId();
       expect(id).toBeNull();
@@ -66,10 +69,10 @@ describe("Lesson Lock API Functions", () => {
 
   describe("acquireLessonLock", () => {
     it("returns success when lock is acquired", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ locked: true, lockedBy: 42 }),
-      });
+      } as unknown as Response);
 
       const result = await acquireLessonLock(1);
 
@@ -84,10 +87,10 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("resolves userId from session (not from caller)", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({}),
-      });
+      } as unknown as Response);
 
       await acquireLessonLock(1);
 
@@ -101,7 +104,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns lockedBy info on 409 conflict", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 409,
         json: () =>
@@ -109,7 +112,7 @@ describe("Lesson Lock API Functions", () => {
             error: "Lesson is locked",
             lockedBy: { id: 99, firstName: "Other", lastName: "User" },
           }),
-      });
+      } as unknown as Response);
 
       const result = await acquireLessonLock(1);
 
@@ -123,10 +126,10 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns generic error on non-409 failure", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
-      });
+      } as unknown as Response);
 
       const result = await acquireLessonLock(1);
 
@@ -135,8 +138,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns { success: false, error: 'unauthenticated' } when not authenticated", async () => {
-      const { requireRole } = require("@/lib/auth/require-role");
-      (requireRole as jest.Mock).mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: false,
         error: "unauthenticated",
       });
@@ -151,7 +153,9 @@ describe("Lesson Lock API Functions", () => {
 
   describe("releaseLessonLock", () => {
     it("calls DELETE with userId query param from session", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
+      jest.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+      } as unknown as Response);
 
       await releaseLessonLock(1);
 
@@ -162,8 +166,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("does not call fetch when not authenticated", async () => {
-      const { requireRole } = require("@/lib/auth/require-role");
-      (requireRole as jest.Mock).mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: false,
         error: "unauthenticated",
       });
@@ -176,7 +179,9 @@ describe("Lesson Lock API Functions", () => {
 
   describe("heartbeatLessonLock", () => {
     it("returns true on success", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
+      jest.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+      } as unknown as Response);
 
       const result = await heartbeatLessonLock(1);
 
@@ -191,11 +196,11 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns false on failure", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
         statusText: "Server Error",
-      });
+      } as unknown as Response);
 
       const result = await heartbeatLessonLock(1);
 
@@ -203,8 +208,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns false when not authenticated", async () => {
-      const { requireRole } = require("@/lib/auth/require-role");
-      (requireRole as jest.Mock).mockResolvedValueOnce({
+      mockedRequireRole.mockResolvedValueOnce({
         ok: false,
         error: "unauthenticated",
       });
@@ -218,7 +222,7 @@ describe("Lesson Lock API Functions", () => {
 
   describe("getLessonLockStatus", () => {
     it("returns lock status when locked", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -226,7 +230,7 @@ describe("Lesson Lock API Functions", () => {
             lockedBy: { id: 99, firstName: "Other", lastName: "User" },
             lockedAt: "2026-04-08T12:00:00.000Z",
           }),
-      });
+      } as unknown as Response);
 
       const result = await getLessonLockStatus(1);
 
@@ -235,7 +239,7 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns unlocked status when not locked", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      jest.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -243,7 +247,7 @@ describe("Lesson Lock API Functions", () => {
             lockedBy: null,
             lockedAt: null,
           }),
-      });
+      } as unknown as Response);
 
       const result = await getLessonLockStatus(1);
 
@@ -252,7 +256,9 @@ describe("Lesson Lock API Functions", () => {
     });
 
     it("returns default unlocked on fetch failure", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
+      jest.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+      } as unknown as Response);
 
       const result = await getLessonLockStatus(1);
 
