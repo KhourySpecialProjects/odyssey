@@ -41,6 +41,15 @@ const TAB_LABELS: Record<string, string> = {
   favorited: "Favorited",
 };
 
+const TAB_DESCRIPTIONS: Record<string, string> = {
+  droplets: "View and manage your enrolled droplets.",
+  playlists: "View and manage your saved playlists.",
+  voyages: "View and manage your learning voyages.",
+  groups: "View and manage your groups.",
+  archived: "View and manage your archived content.",
+  favorited: "View and manage your favorited droplets.",
+};
+
 export default async function FeedPage({ searchParams }: Props) {
   const params = await searchParams;
   const rawTab = (params?.tab as string) || "feed";
@@ -84,7 +93,7 @@ export default async function FeedPage({ searchParams }: Props) {
                   {TAB_LABELS[tab]}
                 </h1>
                 <p className="mt-1 text-sm text-[#475569] md:text-base dark:text-slate-400">
-                  View and manage your enrolled content
+                  {TAB_DESCRIPTIONS[tab] || "View and manage your content."}
                 </p>
               </div>
 
