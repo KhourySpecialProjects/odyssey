@@ -157,10 +157,10 @@ describe("FriendSearch", () => {
       expect(input).toHaveAttribute("type", "search");
     });
 
-    it("renders input with correct width classes", () => {
+    it("renders input with correct styling", () => {
       render(<FriendSearch {...defaultProps} />);
       const input = screen.getByPlaceholderText("Search...");
-      expect(input).toHaveClass("w-[300px]", "md:w-[500px]");
+      expect(input).toHaveClass("w-full", "rounded-[30px]");
     });
 
     it("does not show dropdown initially", () => {
@@ -434,30 +434,30 @@ describe("FriendSearch", () => {
       expect(screen.queryByTitle("John Doe")).not.toBeInTheDocument();
     });
 
-    it("applies focus shadow when input is focused", () => {
+    it("applies focus border when input is focused", () => {
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
       fireEvent.focus(searchInput);
 
-      expect(searchInput).toHaveClass("shadow-[0px_0px_16px_rgb(29,58,138)]");
+      expect(searchInput).toHaveClass("focus:border-[#2D7597]");
     });
 
-    it("applies unfocused shadow by default", () => {
+    it("has correct border by default", () => {
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      expect(searchInput).toHaveClass("shadow-[0px_0px_8px_rgb(29,58,138)]");
+      expect(searchInput).toHaveClass("border-[#D0D5DD]");
     });
 
-    it("removes focus shadow when input loses focus", () => {
+    it("retains focus border class after blur", () => {
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
       fireEvent.focus(searchInput);
       fireEvent.blur(searchInput);
 
-      expect(searchInput).toHaveClass("shadow-[0px_0px_8px_rgb(29,58,138)]");
+      expect(searchInput).toHaveClass("border-[#D0D5DD]");
     });
   });
 
@@ -539,11 +539,11 @@ describe("FriendSearch", () => {
 
       const searchInput = screen.getByPlaceholderText("Search...");
       await typeAndSearch(searchInput, "John");
-      fireEvent.mouseEnter(searchInput);
+      fireEvent.mouseEnter(container.querySelector(".relative.mb-6")!);
 
       await waitFor(() => {
         const dropdown = container.querySelector(".absolute.z-50");
-        expect(dropdown).toHaveClass("left-1/2", "-translate-x-1/2");
+        expect(dropdown).toHaveClass("left-0", "w-full");
       });
     });
 
@@ -553,11 +553,11 @@ describe("FriendSearch", () => {
 
       const searchInput = screen.getByPlaceholderText("Search...");
       await typeAndSearch(searchInput, "John");
-      fireEvent.mouseEnter(searchInput);
+      fireEvent.mouseEnter(container.querySelector(".relative.mb-6")!);
 
       await waitFor(() => {
         const dropdown = container.querySelector(".absolute.z-50");
-        expect(dropdown).toHaveClass("w-screen", "md:max-w-[600px]");
+        expect(dropdown).toHaveClass("w-full");
       });
     });
 
@@ -586,7 +586,7 @@ describe("FriendSearch", () => {
       await waitFor(() => {
         const dropdown = container.querySelector(".absolute.z-50");
         expect(dropdown).toHaveClass(
-          "dark:border-slate-500",
+          "dark:border-slate-700",
           "dark:bg-slate-800",
         );
       });

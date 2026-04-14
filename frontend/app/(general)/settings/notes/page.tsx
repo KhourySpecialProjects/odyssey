@@ -102,10 +102,18 @@ export default async function NotesPage() {
   const initialPdfBytes = await pdfDoc.save();
 
   return (
-    <NotesManager
-      enrollments={enrollments}
-      allNotes={allNotes ? allNotes : []}
-      initialPdfBytes={initialPdfBytes}
-    />
+    <div className="flex w-full flex-col">
+      <h1 className="mb-2 text-4xl font-semibold text-black dark:text-white">
+        Notes
+      </h1>
+      <p className="mb-8 text-base text-slate-500 dark:text-slate-400">
+        A collection of notes and highlights you have created.
+      </p>
+      <NotesManager
+        enrollments={enrollments}
+        allNotes={allNotes ? allNotes : []}
+        initialPdfBytes={initialPdfBytes}
+      />
+    </div>
   );
 }

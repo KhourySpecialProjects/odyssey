@@ -26,6 +26,7 @@ describe("SettingsNavigation", () => {
 
   it("highlights current path", () => {
     render(<SettingsNavigation items={mockItems} />);
-    expect(screen.getByText("Profile")).toHaveClass("text-[#287697]");
+    const activeLink = screen.getByText("Profile").closest("a");
+    expect(activeLink).toHaveClass("text-[#287697]");
   });
 });

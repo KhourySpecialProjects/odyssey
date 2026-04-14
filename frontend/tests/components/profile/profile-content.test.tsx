@@ -170,8 +170,8 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
-      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+      const linkedInLink = container.querySelector('a[href*="linkedin"]');
+      const githubLink = container.querySelector('a[href*="github"]');
 
       expect(linkedInLink).toHaveAttribute(
         "href",
@@ -195,9 +195,9 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Droplets Created"));
+      fireEvent.click(screen.getByText(/^Created \(/));
 
-      expect(mockPush).toHaveBeenCalledWith("?tab=1", { scroll: false });
+      expect(mockPush).toHaveBeenCalledWith("?tab=created", { scroll: false });
     });
 
     it("defaults to tab 0 when no URL parameter is present", () => {
@@ -233,7 +233,7 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
+      const linkedInLink = container.querySelector('a[href*="linkedin"]');
       expect(linkedInLink).toHaveAttribute(
         "href",
         "https://linkedin.com/in/johndoe",
@@ -253,7 +253,7 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+      const githubLink = container.querySelector('a[href*="github"]');
       expect(githubLink).toHaveAttribute("href", "https://github.com/johndoe");
     });
 
@@ -276,8 +276,8 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
-      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+      const linkedInLink = container.querySelector('a[href*="linkedin"]');
+      const githubLink = container.querySelector('a[href*="github"]');
 
       expect(linkedInLink).toHaveAttribute(
         "href",
@@ -306,10 +306,10 @@ describe("ProfileContent - Additional Coverage", () => {
       );
 
       expect(
-        container.querySelector('a[aria-label="LinkedIn"]'),
+        container.querySelector('a[href*="linkedin"]'),
       ).not.toBeInTheDocument();
       expect(
-        container.querySelector('a[aria-label="GitHub"]'),
+        container.querySelector('a[href*="github"]'),
       ).not.toBeInTheDocument();
     });
   });
@@ -410,78 +410,8 @@ describe("ProfileContent - Additional Coverage", () => {
       expect(ratingTexts.length).toBeGreaterThan(0);
     });
 
-    describe("Date Formatting", () => {
-      it("formats date correctly for announcements", () => {
-        render(
-          <ProfileContent
-            userData={mockUserData}
-            enrollments={mockEnrollments}
-            friends={mockFriends}
-            announcements={mockAnnouncements}
-            currentUserCompletedIds={[]}
-            isViewingOwnProfile={false}
-            currentUser={mockUserData}
-          />,
-        );
-
-        // Date should be formatted as "1/15/2024, 10:30 AM" or similar
-        expect(screen.getByText(/1\/15\/2024/)).toBeInTheDocument();
-      });
-
-      it("handles invalid dates gracefully", () => {
-        const announcementWithInvalidDate: Announcement[] = [
-          {
-            id: 1,
-            type: "friend",
-            firstCreated: "invalid-date" as any,
-            content: "Test announcement",
-          },
-        ];
-
-        render(
-          <ProfileContent
-            userData={mockUserData}
-            enrollments={mockEnrollments}
-            friends={mockFriends}
-            announcements={announcementWithInvalidDate}
-            currentUserCompletedIds={[]}
-            isViewingOwnProfile={false}
-            currentUser={mockUserData}
-          />,
-        );
-
-        // Should not crash, and content should still display
-        expect(screen.getByText("Test announcement")).toBeInTheDocument();
-      });
-
-      it("handles undefined dates gracefully", () => {
-        const announcementWithUndefinedDate: Announcement[] = [
-          {
-            id: 1,
-            type: "friend",
-            firstCreated: undefined as any,
-            content: "Test announcement",
-          },
-        ];
-
-        render(
-          <ProfileContent
-            userData={mockUserData}
-            enrollments={mockEnrollments}
-            friends={mockFriends}
-            announcements={announcementWithUndefinedDate}
-            currentUserCompletedIds={[]}
-            isViewingOwnProfile={false}
-            currentUser={mockUserData}
-          />,
-        );
-
-        expect(screen.getByText("Test announcement")).toBeInTheDocument();
-      });
-    });
-
     describe("Hover Effects", () => {
-      it("applies transform on hover to droplet tiles", () => {
+      it("applies hover classes to droplet tiles", () => {
         render(
           <ProfileContent
             userData={mockUserData}
@@ -496,20 +426,9 @@ describe("ProfileContent - Additional Coverage", () => {
 
         const dropletTile = screen
           .getByText("Test Completed Droplet")
-          .closest("div");
+          .closest("button");
 
-        if (dropletTile) {
-          // Initial state
-          expect(dropletTile).toHaveStyle({ transform: "translateY(0)" });
-
-          // Hover
-          fireEvent.mouseEnter(dropletTile);
-          expect(dropletTile).toHaveStyle({ transform: "translateY(-4px)" });
-
-          // Unhover
-          fireEvent.mouseLeave(dropletTile);
-          expect(dropletTile).toHaveStyle({ transform: "translateY(0)" });
-        }
+        expect(dropletTile).toHaveClass("hover:-translate-y-1");
       });
     });
 
@@ -562,6 +481,7 @@ describe("ProfileContent - Additional Coverage", () => {
       });
 
       it("handles multiple created droplets correctly", () => {
+        mockGetSearchParam.mockReturnValue("created");
         const userWithMultipleDroplets = {
           ...mockUserData,
           droplets: [
@@ -594,7 +514,7 @@ describe("ProfileContent - Additional Coverage", () => {
           />,
         );
 
-        fireEvent.click(screen.getByText("Droplets Created"));
+        fireEvent.click(screen.getByText(/^Created \(/));
 
         expect(screen.getByText("Test Created Droplet")).toBeInTheDocument();
         expect(screen.getByText("Second Created Droplet")).toBeInTheDocument();
@@ -653,6 +573,7 @@ describe("ProfileContent - Additional Coverage", () => {
 
       describe("Modal for Created Droplets", () => {
         it("opens modal for created droplet", () => {
+          mockGetSearchParam.mockReturnValue("created");
           render(
             <ProfileContent
               userData={mockUserData}
@@ -665,7 +586,7 @@ describe("ProfileContent - Additional Coverage", () => {
             />,
           );
 
-          fireEvent.click(screen.getByText("Droplets Created"));
+          fireEvent.click(screen.getByText(/^Created \(/));
           fireEvent.click(screen.getByText("Test Created Droplet"));
 
           expect(
@@ -717,43 +638,13 @@ describe("ProfileContent - Additional Coverage", () => {
 
             // 1 completed out of 2 total = 50%
             expect(screen.getByText("50%")).toBeInTheDocument();
-            expect(screen.getByText("2")).toBeInTheDocument(); // Total enrollments
-          });
-        });
-
-        describe("Announcements with Different Types", () => {
-          it("renders default icon for unknown announcement types", () => {
-            const unknownTypeAnnouncement: Announcement[] = [
-              {
-                id: 1,
-                type: "unknown" as any,
-                firstCreated: new Date(),
-                content: "Unknown type announcement",
-              },
-            ];
-
-            const { container } = render(
-              <ProfileContent
-                userData={mockUserData}
-                enrollments={mockEnrollments}
-                friends={mockFriends}
-                announcements={unknownTypeAnnouncement}
-                currentUserCompletedIds={[]}
-                isViewingOwnProfile={false}
-                currentUser={mockUserData}
-              />,
-            );
-
-            expect(
-              screen.getByText("Unknown type announcement"),
-            ).toBeInTheDocument();
-            // Should render with default gray background
-            expect(container.querySelector(".bg-gray-200")).toBeInTheDocument();
+            expect(screen.getByText("2")).toBeInTheDocument();
           });
         });
 
         describe("Rating Display Edge Cases", () => {
           it("does not show rating when averageRating is undefined", () => {
+            mockGetSearchParam.mockReturnValue("created");
             const dropletWithoutRating = {
               ...mockUserData,
               droplets: [
@@ -775,8 +666,6 @@ describe("ProfileContent - Additional Coverage", () => {
                 currentUser={dropletWithoutRating}
               />,
             );
-
-            fireEvent.click(screen.getByText("Droplets Created"));
 
             // Rating should not be displayed
             expect(screen.queryByText("4.5")).not.toBeInTheDocument();

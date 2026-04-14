@@ -3,6 +3,8 @@ import { FriendBlock } from "./friend-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { fetchFriends } from "@/lib/requests/friends";
+import { EmptyState } from "@/components/ui/empty-state";
+import { UsersIcon } from "lucide-react";
 
 export async function Friends() {
   const user = await getCurrentUser();
@@ -13,25 +15,24 @@ export async function Friends() {
   const friends = await fetchFriends(authUser);
 
   return (
-    <section className="md:mt-4">
-      <h1 className="font-bold">Friends</h1>
-      <p>A list of your friends.</p>
-
-      <div className="mt-4 rounded-md bg-slate-100 p-1 md:p-4 dark:bg-slate-800">
-        {friends.length > 0 ? (
-          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-            {friends.map((friendship) => (
-              <FriendBlock
-                user={authUser}
-                friend={friendship}
-                key={friendship.id}
-              />
-            ))}
-          </ul>
-        ) : (
-          <p>You have no friends &#58;&#40; </p>
-        )}
-      </div>
+    <section>
+      {friends.length > 0 ? (
+        <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+          {friends.map((friendship) => (
+            <FriendBlock
+              user={authUser}
+              friend={friendship}
+              key={friendship.id}
+            />
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          icon={<UsersIcon className="h-6 w-6 text-[#667085]" />}
+          title="No friends yet"
+          message="Search for people to add as friends."
+        />
+      )}
     </section>
   );
 }

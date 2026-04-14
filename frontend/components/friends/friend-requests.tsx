@@ -4,7 +4,8 @@ import { FriendRequestBlock } from "./friend-request-block";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 import { useState } from "react";
 import { AuthorizedUser } from "@/types";
-import { Separator } from "../ui/separator";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconUserPlus } from "@tabler/icons-react";
 
 export function FriendRequests({
   noProfile,
@@ -46,22 +47,15 @@ export function FriendRequests({
 
   return (
     <div className="flex h-full flex-col">
-      <section className={`flex h-full flex-col ${noProfile ? "" : "md:mt-4"}`}>
-        {showTitle &&
-          (noProfile ? (
-            <div className="absolute -top-[40px] left-1/2 w-full -translate-x-1/2 transform">
-              <h1 className="text-center text-xl font-bold">Friend Requests</h1>
-            </div>
-          ) : (
-            <div>
-              <h1 className="font-bold">Friend Requests</h1>
-              <p>A list of your pending friend requests.</p>
-              {noProfile && <Separator className="mt-2 dark:bg-slate-600" />}
-            </div>
-          ))}
+      <section className="flex h-full flex-col">
+        {showTitle && noProfile && (
+          <div className="absolute -top-[40px] left-1/2 w-full -translate-x-1/2 transform">
+            <h1 className="text-center text-xl font-bold">Friend Requests</h1>
+          </div>
+        )}
 
         <div
-          className={`min-h-0 flex-1 overflow-y-auto rounded-md p-1 ${noProfile ? "" : "mt-4 bg-slate-100 md:p-4 dark:bg-slate-800"}`}
+          className={`min-h-0 flex-1 overflow-y-auto rounded-md ${noProfile ? "p-1" : ""}`}
         >
           {friendRequests.length > 0 ? (
             <ul className="grid auto-cols-auto grid-cols-1 space-y-2 divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
@@ -82,9 +76,16 @@ export function FriendRequests({
                   ))}
             </ul>
           ) : (
-            <p className="text-left text-sm text-[#475569] dark:text-slate-400">
-              You have no friend requests
-            </p>
+            <EmptyState
+              icon={
+                <IconUserPlus
+                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                  stroke={1.5}
+                />
+              }
+              title="No friend requests"
+              message="You don't have any pending friend requests."
+            />
           )}
         </div>
         {totalPages > 1 && (

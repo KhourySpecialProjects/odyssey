@@ -6,20 +6,24 @@ import { Switch } from "@/components/ui/switch";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/actions";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, User } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
-import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
 import Link from "next/link";
+import { UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials, condenseRoleTitles } from "@/lib/utils";
 
 export function SocialForms({
   authorizedUser,
+  user,
 }: {
   authorizedUser: AuthorizedUser;
+  user: User;
 }) {
   const [open, setOpen] = useState(false);
   const [bioValue, setBioValue] = useState(authorizedUser?.bio || "");
@@ -34,6 +38,7 @@ export function SocialForms({
     authorizedUser?.profilePhoto || "",
   );
   const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isPublicProfile, setIsPublicProfile] = useState(
     authorizedUser?.isPublic || false,
@@ -72,376 +77,267 @@ export function SocialForms({
     }
   };
 
-  const FileUpload = ({
-    file,
-    setFile,
-    imagePreview,
-  }: {
-    file: File | null;
-    setFile: (file: File | null) => void;
-    imagePreview: string | null;
-  }) => {
-    const [isDragging, setIsDragging] = useState(false);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const compressedFile = await compressImage(file);
+      setProfileFile(compressedFile);
+      setProfileImage(URL.createObjectURL(compressedFile));
+    }
+  };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file && file.type.startsWith("image/")) {
-        const compressedFile = await compressImage(file);
-        setFile(compressedFile);
-      }
-    };
+  const handleRemovePhoto = async () => {
+    setProfileImage("");
+    setProfileFile(null);
+    if (authorizedUser) {
+      await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
+      toast.success("Profile photo removed");
+    }
+  };
 
-    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(false);
+  const handleSaveAll = async () => {
+    if (!authorizedUser?.id) return;
+    setIsSaving(true);
 
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith("image/")) {
-        const compressedFile = await compressImage(file);
-        setFile(compressedFile);
+    // Validate URLs
+    if (linkedinValue && !isValidLinkedinUrl(linkedinValue)) {
+      toast.error("Please enter a valid LinkedIn profile URL");
+      setIsSaving(false);
+      return;
+    }
+    if (githubValue && !isValidGithubUrl(githubValue)) {
+      toast.error("Please enter a valid GitHub profile URL");
+      setIsSaving(false);
+      return;
+    }
+    if (websiteValue && !isValidWebsiteUrl(websiteValue)) {
+      toast.error("Please enter a valid website URL");
+      setIsSaving(false);
+      return;
+    }
+
+    // Upload photo if changed
+    if (profileFile) {
+      const formData = new FormData();
+      formData.append("image", profileFile as Blob);
+      const response = await uploadImage(formData);
+      if (response.ok && response.url) {
+        setProfileImage(response.url);
+        await updateUserInfo(authorizedUser.id, {
+          profilePhoto: response.url,
+        });
+        setProfileFile(null);
       } else {
-        toast.error("Please upload a valid image file");
+        toast.error("Failed to upload photo");
+        setIsSaving(false);
+        return;
       }
-    };
+    }
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(true);
-    };
+    // Save all fields
+    const result = await updateUserInfo(authorizedUser.id, {
+      bio: bioValue,
+      linkedin: linkedinValue,
+      github: githubValue,
+      website: websiteValue,
+    });
 
-    const handleDragLeave = () => {
-      setIsDragging(false);
-    };
+    if (result.ok) {
+      toast.success("Profile updated successfully");
+    } else {
+      toast.error("Failed to update profile");
+    }
 
-    const handleRemoveFile = () => {
-      setFile(null);
-    };
+    setIsSaving(false);
+  };
 
-    return (
-      <div
-        className={`flex w-[64%] cursor-pointer flex-col items-center rounded-lg border-2 p-6 ${isDragging ? "border-blue-300 bg-blue-50 dark:bg-slate-800" : "border-dashed border-gray-300 dark:border-slate-500"}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-      >
-        {imagePreview ? (
-          <img
-            src={imagePreview}
-            alt="Profile"
-            className="mb-4 h-32 w-32 rounded-full border object-cover"
-          />
-        ) : (
-          <p className="mb-4 text-gray-500 dark:text-slate-400">
-            Drag & drop to update your profile photo here
-          </p>
-        )}
+  return (
+    <div className="space-y-8">
+      {/* Profile section — Figma exact layout */}
+      <div className="flex items-start gap-6">
+        {/* Avatar */}
+        <Avatar variant="round" size="xl">
+          <AvatarImage src={profileImage || user?.image || undefined} />
+          <AvatarFallback className="text-2xl">
+            {user?.name ? (
+              getInitials(user.name)
+            ) : (
+              <User2Icon className="h-8 w-8" />
+            )}
+          </AvatarFallback>
+        </Avatar>
 
-        <label className="cursor-pointer rounded bg-blue-500 px-4 py-2 text-white">
-          {file || profileImage ? "Change Photo" : "Upload Photo"}
-          <input
-            name="profilePhoto"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-
-        {file && (
-          <div className="mt-4 flex w-full items-center justify-between">
-            <span className="flex-grow truncate">{file.name}</span>
+        {/* Info + buttons column */}
+        <div className="min-w-0 flex-1">
+          {/* Name, NUID, Role(s) — evenly distributed */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-2xl text-black dark:text-white">
+                {user?.name}
+              </p>
+              <Link
+                href={`mailto:${user?.email}`}
+                className="text-lg text-[#475569] underline hover:text-slate-700 dark:text-slate-400"
+              >
+                {user?.email}
+              </Link>
+            </div>
+            <div>
+              {user?.nuid && (
+                <>
+                  <p className="text-2xl text-black dark:text-white">NUID</p>
+                  <p className="text-lg text-[#475569] dark:text-slate-400">
+                    {user.nuid}
+                  </p>
+                </>
+              )}
+            </div>
+            <div>
+              <p className="text-2xl text-black dark:text-white">Role(s)</p>
+              <p className="text-lg text-[#475569] dark:text-slate-400">
+                {condenseRoleTitles(user.roles)}
+              </p>
+            </div>
+          </div>
+          {/* Upload / Remove pill buttons */}
+          <div className="mt-5 flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md bg-[#287697] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1f6080]">
+              <UploadIcon className="h-4 w-4" />
+              Upload
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
             <button
               type="button"
-              className="ml-2 rounded bg-red-500 px-2 py-1 text-white"
-              onClick={handleRemoveFile}
+              onClick={handleRemovePhoto}
+              disabled={!profileImage}
+              className="rounded-md border border-[#D0D5DD] px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
             >
               Remove
             </button>
           </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <>
-      <form
-        action={async () => {
-          if (profileFile && authorizedUser?.id) {
-            const newFormData: FormData = new FormData();
-            newFormData.append("image", profileFile as Blob);
-
-            const response = await uploadImage(newFormData);
-
-            if (response.ok && response.url) {
-              setProfileImage(response.url);
-              const updateResult = await updateUserInfo(authorizedUser.id, {
-                profilePhoto: response.url,
-              });
-              if (updateResult.ok) {
-                toast.success("Profile photo updated successfully");
-              } else {
-                console.error(updateResult.error);
-                toast.error("Failed to update profile photo");
-              }
-            } else {
-              console.error(response.error);
-              toast.error("Failed to upload photo");
-            }
-          }
-        }}
-        className="flex flex-row items-center gap-4 px-6 py-4"
-      >
-        <FileUpload
-          file={profileFile}
-          setFile={(file) => {
-            setProfileFile(file);
-            if (file) {
-              setProfileImage(URL.createObjectURL(file));
-            } else {
-              setProfileImage(null);
-            }
-          }}
-          imagePreview={profileImage}
-        />
-        <div className="flex flex-col gap-2">
-          <Button
-            type="submit"
-            className="min-w-[50px] whitespace-normal"
-            disabled={!profileFile}
-          >
-            Save Photo
-          </Button>
-          <Button
-            onClick={async () => {
-              setProfileImage("");
-              if (authorizedUser) {
-                await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
-              }
-            }}
-            className="min-w-[50px] bg-red-500 whitespace-normal hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
-            disabled={!profileImage}
-          >
-            Remove Photo
-          </Button>
         </div>
-      </form>
-      <form
-        action={async (formData: FormData) => {
-          const bio = formData.get("bio") as string;
-          if (authorizedUser?.id) {
-            const result = await updateUserInfo(authorizedUser.id, {
-              bio: bio,
-            });
-            if (result.ok) {
-              setBioValue(bio);
-              toast.success("Bio updated successfully");
-            } else {
-              toast.error("Failed to update bio");
-            }
-          }
-        }}
-        className="flex flex-row items-center gap-4 px-6 py-4"
-      >
-        <div className="mr-5 w-[12%] sm:mr-0">Bio:</div>
+      </div>
+
+      {/* Bio */}
+      <div>
+        <label className="mb-2 block text-xl font-bold text-slate-900 dark:text-white">
+          Bio
+        </label>
         <Textarea
           name="bio"
           value={bioValue}
           onChange={(e) => setBioValue(e.target.value)}
           placeholder="Enter your bio"
-          className="w-[50%]"
+          className="min-h-[120px] border-[#D0D5DD] dark:border-slate-700"
         />
-        <Button
-          type="submit"
-          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
-        >
-          Save Bio
-        </Button>
-        <Button
-          type="submit"
-          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
-        >
-          <Check className="h-5 w-5" />
-        </Button>
-      </form>
-      <form
-        action={async (formData: FormData) => {
-          const linkedin = formData.get("linkedin") as string;
-          if (!isValidLinkedinUrl(linkedin) && linkedin !== "") {
-            toast.error("Please enter a valid LinkedIn profile URL");
-            return;
-          }
-          if (authorizedUser?.id) {
-            const result = await updateUserInfo(authorizedUser.id, {
-              linkedin: linkedin,
-            });
-            if (result.ok) {
-              setLinkedinValue(linkedin);
-              toast.success("LinkedIn URL updated successfully");
-            } else {
-              toast.error("Not a valid LinkedIn URL");
-            }
-          }
-        }}
-        className="flex flex-row items-center gap-4 px-6 py-4"
-      >
-        <div className="mr-5 w-[12%] sm:mr-0">LinkedIn:</div>
-        <Input
-          name="linkedin"
-          value={linkedinValue}
-          onChange={(e) => setLinkedinValue(e.target.value)}
-          placeholder="Enter your LinkedIn url"
-          className="w-[50%]"
-        />
-        <Button
-          type="submit"
-          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
-        >
-          Save LinkedIn
-        </Button>
-        <Button
-          type="submit"
-          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
-        >
-          <Check className="h-5 w-5" />
-        </Button>
-      </form>
+      </div>
 
-      <form
-        action={async (formData: FormData) => {
-          const github = formData.get("github") as string;
-          if (!isValidGithubUrl(github) && github !== "") {
-            toast.error("Please enter a valid GitHub profile URL");
-            return;
-          }
-          if (authorizedUser?.id) {
-            const result = await updateUserInfo(authorizedUser.id, {
-              github: github,
-            });
-            if (result.ok) {
-              setGithubValue(github);
-              toast.success("GitHub URL updated successfully");
-            } else {
-              toast.error("Not a valid GitHub URL");
-            }
-          }
-        }}
-        className="flex flex-row items-center gap-4 px-6 py-4"
-      >
-        {" "}
-        <div className="mr-5 w-[12%] sm:mr-0">GitHub:</div>
-        <Input
-          name="github"
-          value={githubValue}
-          onChange={(e) => setGithubValue(e.target.value)}
-          placeholder="Enter your GitHub url"
-          className="w-[50%]"
-        />
-        <Button
-          type="submit"
-          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
-        >
-          Save GitHub
-        </Button>
-        <Button
-          type="submit"
-          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
-        >
-          <Check className="h-5 w-5" />
-        </Button>
-      </form>
-      <form
-        action={async (formData: FormData) => {
-          const website = formData.get("website") as string;
-          if (!isValidWebsiteUrl(website) && website !== "") {
-            toast.error("Please enter a valid website URL");
-            return;
-          }
-          if (authorizedUser?.id) {
-            const result = await updateUserInfo(authorizedUser.id, {
-              website: website,
-            });
-            if (result.ok) {
-              setWebsiteValue(website);
-              toast.success("Website URL updated successfully");
-            } else {
-              toast.error("Not a valid Website URL");
-            }
-          }
-        }}
-        className="flex flex-row items-center gap-4 px-6 py-4"
-      >
-        {" "}
-        <div className="mr-5 w-[12%] sm:mr-0">Website:</div>
-        <Input
-          name="website"
-          value={websiteValue}
-          onChange={(e) => setWebsiteValue(e.target.value)}
-          placeholder="Enter your personal website url"
-          className="w-[50%]"
-        />
-        <Button
-          type="submit"
-          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
-        >
-          Save Website
-        </Button>
-        <Button
-          type="submit"
-          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
-        >
-          <Check className="h-5 w-5" />
-        </Button>
-      </form>
-      <TimeZoneSelector
-        currentZone={authorizedUser.timeZone?.trim()}
-        userId={authorizedUser.id}
-      ></TimeZoneSelector>
-      <div className="mx-6 mt-6 mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <label className="mb-1 block">Show my profile publicly</label>
-          </div>
-          <Switch
-            checked={isPublicProfile}
-            onCheckedChange={updatePublicProfile}
+      {/* LinkedIn & GitHub — side by side */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-xl font-bold text-slate-900 dark:text-white">
+            LinkedIn
+          </label>
+          <Input
+            name="linkedin"
+            value={linkedinValue}
+            onChange={(e) => setLinkedinValue(e.target.value)}
+            placeholder="Enter your LinkedIn url"
+            className="border-[#D0D5DD] dark:border-slate-700"
           />
         </div>
+        <div>
+          <label className="mb-2 block text-xl font-bold text-slate-900 dark:text-white">
+            GitHub
+          </label>
+          <Input
+            name="github"
+            value={githubValue}
+            onChange={(e) => setGithubValue(e.target.value)}
+            placeholder="Enter your GitHub url"
+            className="border-[#D0D5DD] dark:border-slate-700"
+          />
+        </div>
+      </div>
 
-        {isPublicProfile && (
-          <div className="mt-3 text-sm text-gray-600 dark:text-slate-300">
-            Your profile is now visible to the public. Others can view your
-            information at{" "}
-            <Link
-              href={`/prof/${authorizedUser.email.substring(
-                0,
-                authorizedUser.email.indexOf("@"),
-              )}`}
-              className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
-            >
-              khouryodyssey.org/prof/
-              {authorizedUser.email.substring(
-                0,
-                authorizedUser.email.indexOf("@"),
-              )}
-            </Link>
-            .{" "}
-            <ContentCopyIcon
-              onClick={() => {
-                const profileLink = `khouryodyssey.org/prof/${authorizedUser.email.substring(
-                  0,
-                  authorizedUser.email.indexOf("@"),
-                )}`;
-                toast.success("Profile link copied to clipboard");
-                navigator.clipboard.writeText(profileLink);
-              }}
-              className="cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
-              fontSize="small"
+      {/* Website & Time Zone — side by side */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-xl font-bold text-slate-900 dark:text-white">
+            Website
+          </label>
+          <Input
+            name="website"
+            value={websiteValue}
+            onChange={(e) => setWebsiteValue(e.target.value)}
+            placeholder="Enter your website url"
+            className="border-[#D0D5DD] dark:border-slate-700"
+          />
+        </div>
+        <TimeZoneSelector
+          currentZone={authorizedUser.timeZone?.trim()}
+          userId={authorizedUser.id}
+        />
+      </div>
+
+      {/* Public profile toggle + Save button — same row, opposite sides */}
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-4">
+            <label className="block text-base">Show my profile publicly</label>
+            <Switch
+              checked={isPublicProfile}
+              onCheckedChange={updatePublicProfile}
             />
           </div>
-        )}
+          {isPublicProfile && (
+            <div className="text-sm text-gray-600 dark:text-slate-300">
+              Your profile is visible at{" "}
+              <Link
+                href={`/prof/${authorizedUser.email.substring(
+                  0,
+                  authorizedUser.email.indexOf("@"),
+                )}`}
+                className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
+              >
+                khouryodyssey.org/prof/
+                {authorizedUser.email.substring(
+                  0,
+                  authorizedUser.email.indexOf("@"),
+                )}
+              </Link>{" "}
+              <ContentCopyIcon
+                onClick={() => {
+                  const profileLink = `khouryodyssey.org/prof/${authorizedUser.email.substring(
+                    0,
+                    authorizedUser.email.indexOf("@"),
+                  )}`;
+                  toast.success("Profile link copied to clipboard");
+                  navigator.clipboard.writeText(profileLink);
+                }}
+                className="cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
+                fontSize="small"
+              />
+            </div>
+          )}
+        </div>
+        <Button
+          type="button"
+          onClick={handleSaveAll}
+          disabled={isSaving}
+          className="bg-[#287697] text-white hover:bg-[#1f6080]"
+        >
+          {isSaving && <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />}
+          Save Changes
+        </Button>
       </div>
-      <div className="p-4">
+
+      <div>
         <ProfileBlock
           user={authorizedUser}
           otherUser={authorizedUser}
@@ -449,6 +345,6 @@ export function SocialForms({
           setIsOpen={setOpen}
         />
       </div>
-    </>
+    </div>
   );
 }

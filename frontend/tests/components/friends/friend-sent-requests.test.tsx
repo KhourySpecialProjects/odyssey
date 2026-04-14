@@ -41,7 +41,7 @@ describe("FriendSentRequests", () => {
     (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     await render(await FriendSentRequests());
-    expect(screen.getByText("You have no sent requests")).toBeInTheDocument();
+    expect(screen.getByText("No sent requests")).toBeInTheDocument();
   });
 
   describe("FriendSentRequests", () => {

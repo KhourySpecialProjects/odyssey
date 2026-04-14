@@ -2,6 +2,7 @@ import { SettingsNavigation } from "@/components/settings/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { NavItem } from "@/types";
 import { notFound } from "next/navigation";
+import { PencilIcon, UsersIcon, StickyNoteIcon } from "lucide-react";
 
 export default async function SettingsLayout({
   children,
@@ -15,24 +16,26 @@ export default async function SettingsLayout({
     {
       href: "/settings",
       label: "General",
+      icon: <PencilIcon className="h-4 w-4" />,
     },
     {
       href: "/settings/friends",
       label: "Friends",
+      icon: <UsersIcon className="h-4 w-4" />,
     },
     {
       href: "/settings/notes",
       label: "Notes",
+      icon: <StickyNoteIcon className="h-4 w-4" />,
     },
   ];
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col gap-4 bg-slate-50 p-4 md:gap-8 md:p-10 dark:bg-slate-950">
-      <div className="mx-auto grid w-full max-w-6xl items-start gap-6 pt-8 md:grid-cols-[180px_1fr] lg:grid-cols-[150px_1fr]">
-        <SettingsNavigation items={navItems} />
-
-        <div className="grid gap-6">{children}</div>
-      </div>
+    <div className="flex min-h-screen">
+      <SettingsNavigation items={navItems} />
+      <main className="min-w-0 flex-1 overflow-auto bg-white px-4 pt-4 pb-8 md:px-12 md:pt-8 md:pb-16 md:pl-80 dark:bg-zinc-950">
+        {children}
+      </main>
     </div>
   );
 }

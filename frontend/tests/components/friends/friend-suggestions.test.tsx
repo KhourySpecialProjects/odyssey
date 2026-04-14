@@ -48,8 +48,6 @@ describe("FriendSuggestions", () => {
     (fetchSuggestionsById as jest.Mock).mockResolvedValue([]);
 
     await render(await FriendSuggestions({ user: mockUser }));
-    expect(
-      screen.getByText("There are no friend suggestions."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("No suggestions")).toBeInTheDocument();
   });
 });

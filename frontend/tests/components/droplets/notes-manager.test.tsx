@@ -184,10 +184,8 @@ describe("NotesManager", () => {
 
       render(<NotesManager {...props} />);
 
-      expect(screen.getByText("Saved Notes")).toBeInTheDocument();
-      expect(
-        screen.getByText(/collection of notes and highlights/),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Select All")).toBeInTheDocument();
+      expect(screen.getByText("Deselect All")).toBeInTheDocument();
     });
 
     it("renders Select All button", () => {
@@ -230,7 +228,7 @@ describe("NotesManager", () => {
       render(<NotesManager {...props} />);
 
       expect(
-        screen.getByText(/Use the check boxes to select which notes/),
+        screen.getByText(/Use the checkboxes to select which notes/),
       ).toBeInTheDocument();
     });
   });
@@ -506,7 +504,7 @@ describe("NotesManager", () => {
 
       render(<NotesManager {...props} />);
 
-      expect(screen.getByText("Saved Notes")).toBeInTheDocument();
+      expect(screen.getByText("No notes yet")).toBeInTheDocument();
       expect(screen.queryByTestId(/notes-summary-/)).not.toBeInTheDocument();
     });
 
@@ -603,10 +601,10 @@ describe("NotesManager", () => {
       render(<NotesManager {...props} />);
 
       const selectButton = screen.getByText("Select All");
-      expect(selectButton).toHaveClass("w-24");
+      expect(selectButton).toHaveClass("border-[#D0D5DD]");
     });
 
-    it("Deselect All button has correct width", () => {
+    it("Deselect All button has correct styling", () => {
       const props = {
         enrollments: [mockEnrollment],
         allNotes: [
@@ -618,7 +616,7 @@ describe("NotesManager", () => {
       render(<NotesManager {...props} />);
 
       const deselectButton = screen.getByText("Deselect All");
-      expect(deselectButton).toHaveClass("w-24");
+      expect(deselectButton).toHaveClass("border-[#D0D5DD]");
     });
   });
 
