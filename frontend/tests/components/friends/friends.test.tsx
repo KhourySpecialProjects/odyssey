@@ -72,7 +72,7 @@ describe("Friends", () => {
     (fetchFriends as jest.Mock).mockResolvedValue([]);
 
     await render(await Friends());
-    expect(screen.getByText("No friends yet")).toBeInTheDocument();
+    expect(screen.getByText("You have no friends :(")).toBeInTheDocument();
     expect(
       screen.getByText("Search for people to add as friends."),
     ).toBeInTheDocument();

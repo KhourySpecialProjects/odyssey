@@ -414,7 +414,7 @@ export function ProfileContent({
                     stroke={1.5}
                   />
                 }
-                title="No friends yet"
+                title="You have no friends :("
                 message="This user hasn't added any friends."
               />
             ))}

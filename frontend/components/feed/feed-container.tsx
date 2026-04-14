@@ -168,7 +168,7 @@ export function FeedContainer({
                 </ul>
               ) : (
                 <p className="text-center text-sm text-[#667085] dark:text-slate-400">
-                  No friends yet
+                  You have no friends :(
                 </p>
               )}
             </div>
