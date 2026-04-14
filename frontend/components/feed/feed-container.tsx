@@ -2,10 +2,12 @@
 
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
 import { AuthorizedUser } from "@/types";
-import { FriendRequests } from "../friends/friend-requests";
+import { FriendRequestFeedBlock } from "../friends/friend-request-feed-block";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { FeedLeftNav } from "./feed-left-nav";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export function FeedContainer({
   authUser,
@@ -46,6 +48,18 @@ export function FeedContainer({
     };
   }, []);
 
+  // Get pending requests (filtered for blocked)
+  const pendingRequests = (authUser.received_requests || []).filter(
+    (req) =>
+      !authUser.blocked?.some((b) => b.id === req.id) &&
+      !authUser.was_blocked?.some((b) => b.id === req.id),
+  );
+
+  // Get friends from friendships
+  const friendUsers = (authUser.friendships || [])
+    .flatMap((f) => f.authorized_users || [])
+    .filter((u) => u.id !== authUser.id);
+
   return (
     <>
       {/* Left sidebar — fixed */}
@@ -78,31 +92,85 @@ export function FeedContainer({
           {children}
         </div>
 
-        {/* Right column — normal flow */}
+        {/* Right column — Friends sidebar */}
         <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 md:flex">
-          <div className="flex-1 overflow-hidden rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex-1 overflow-y-auto rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="p-5">
               <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
-                Friend Requests
+                Friends
               </h2>
               <Button
                 asChild
+                size="sm"
                 className="mb-4 w-full rounded-full bg-[#287697] hover:bg-[#1f6080]"
               >
-                <Link
-                  href="/settings/friends"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Manage Friends
-                </Link>
+                <Link href="/settings/friends">Manage Friends</Link>
               </Button>
-              <FriendRequests
-                noProfile={true}
-                friendsPerPage={5}
-                authUser={authUser}
-                showTitle={false}
-              />
+
+              {/* Pending requests — only show if any exist */}
+              {pendingRequests.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase dark:text-slate-400">
+                    Pending Requests ({pendingRequests.length})
+                  </p>
+                  <ul className="space-y-2">
+                    {pendingRequests.slice(0, 3).map((request) => (
+                      <FriendRequestFeedBlock
+                        user={authUser}
+                        request={request}
+                        key={request.id}
+                      />
+                    ))}
+                  </ul>
+                  {pendingRequests.length > 3 && (
+                    <Link
+                      href="/settings/friends?tab=recieved_requests"
+                      className="mt-2 block text-center text-xs text-[#287697] hover:underline"
+                    >
+                      View all {pendingRequests.length} requests
+                    </Link>
+                  )}
+                  <div className="mt-3 border-t border-[#D0D5DD] dark:border-slate-700" />
+                </div>
+              )}
+
+              {/* Friends list */}
+              {friendUsers.length > 0 ? (
+                <ul className="space-y-1">
+                  {friendUsers.slice(0, 10).map((friend) => (
+                    <li key={friend.id}>
+                      <Link
+                        href={`/prof/${friend.email?.replace("@northeastern.edu", "")}`}
+                        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        <Avatar variant="round" size="xs">
+                          <AvatarImage src={friend.profilePhoto || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {getInitials(
+                              `${friend.firstName} ${friend.lastName}`,
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate text-sm text-[#344054] dark:text-slate-300">
+                          {friend.firstName} {friend.lastName}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                  {friendUsers.length > 10 && (
+                    <Link
+                      href="/settings/friends"
+                      className="mt-1 block text-center text-xs text-[#287697] hover:underline"
+                    >
+                      View all {friendUsers.length} friends
+                    </Link>
+                  )}
+                </ul>
+              ) : (
+                <p className="text-center text-sm text-[#667085] dark:text-slate-400">
+                  No friends yet
+                </p>
+              )}
             </div>
           </div>
         </div>
