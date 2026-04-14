@@ -20,6 +20,7 @@ interface RenderGroupDashboardProps {
     string,
     { completionPercentage: number; completionDate: Date | undefined }
   >;
+  voyageStatuses: Record<string, { completionPercentage: number }>;
 }
 
 export function GroupDashboard({
@@ -28,6 +29,7 @@ export function GroupDashboard({
   authUser,
   dueDates,
   statuses,
+  voyageStatuses,
 }: RenderGroupDashboardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 6;
@@ -222,17 +224,18 @@ export function GroupDashboard({
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
             {((group.droplets && group.droplets.length > 0) ||
-              (group.playlists && group.playlists.length > 0)) &&
+              (group.playlists && group.playlists.length > 0) ||
+              (group.voyages && group.voyages.length > 0)) &&
             group.members &&
             group.members.length > 0 ? (
-              <div className="flex flex-row items-start overflow-x-auto">
-                <div key={group.id}>
-                  <GroupProgressGrid group={group} statuses={statuses} />
-                </div>
-              </div>
+              <GroupProgressGrid
+                group={group}
+                statuses={statuses}
+                voyageStatuses={voyageStatuses}
+              />
             ) : (
               <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                No droplets or members have been added to this group yet.
+                No content or members have been added to this group yet.
               </div>
             )}
           </ContentSection>

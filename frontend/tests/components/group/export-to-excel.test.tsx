@@ -207,25 +207,35 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("renders the export button", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
     // Wait for the component to load and render
-    await screen.findByText("Download as Excel");
+    await screen.findByText("Export");
 
-    expect(screen.getByText("Download as Excel")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /download as excel/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Export")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /export/i })).toBeInTheDocument();
   });
 
   it("calls XLSX functions when export button is clicked", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
     // Wait for the component to load
-    await screen.findByText("Download as Excel");
+    await screen.findByText("Export");
 
     // Click the export button
-    fireEvent.click(screen.getByText("Download as Excel"));
+    fireEvent.click(screen.getByText("Export"));
 
     // Verify XLSX functions were called
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
@@ -242,10 +252,16 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("creates correct data structure for Excel export with completion date columns", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Check that aoa_to_sheet was called with the correct data structure including completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -269,10 +285,16 @@ describe("GroupProgressGrid Excel Export", () => {
       members: [],
     };
 
-    render(<GroupProgressGrid group={groupWithNoMembers} statuses={{}} />);
+    render(
+      <GroupProgressGrid
+        group={groupWithNoMembers}
+        statuses={{}}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Should still call XLSX functions but with only header row (including completion date columns)
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -293,10 +315,16 @@ describe("GroupProgressGrid Excel Export", () => {
       droplets: [],
     };
 
-    render(<GroupProgressGrid group={groupWithNoDroplets} statuses={{}} />);
+    render(
+      <GroupProgressGrid
+        group={groupWithNoDroplets}
+        statuses={{}}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Should still call XLSX functions but with only member columns
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -308,10 +336,16 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("uses N/A when user has no first or last name", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
@@ -360,10 +394,16 @@ describe("GroupProgressGrid Excel Export", () => {
 
     jest.mocked(XLSX.utils.aoa_to_sheet).mockReturnValue(mockWorksheet);
 
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Verify that styling was applied to the worksheet
     expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:F4");
@@ -371,10 +411,16 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("handles completion status from statuses prop correctly", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // The completion status should come from the statuses prop with completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -399,10 +445,16 @@ describe("GroupProgressGrid Excel Export", () => {
       droplets: [],
     };
 
-    render(<GroupProgressGrid group={emptyGroup} statuses={{}} />);
+    render(
+      <GroupProgressGrid
+        group={emptyGroup}
+        statuses={{}}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Should call XLSX functions with minimal data
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -421,12 +473,18 @@ describe("GroupProgressGrid Excel Export", () => {
       throw new Error("XLSX error");
     });
 
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
+    await screen.findByText("Export");
 
     // Click the export button - this should not crash the component
-    fireEvent.click(screen.getByText("Download as Excel"));
+    fireEvent.click(screen.getByText("Export"));
 
     // Verify the error was logged
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -435,17 +493,23 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     // Verify the component is still functional after the error
-    expect(screen.getByText("Download as Excel")).toBeInTheDocument();
+    expect(screen.getByText("Export")).toBeInTheDocument();
 
     // Clean up
     consoleSpy.mockRestore();
   });
 
   it("exports with correct filename including group name and date", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
       expect.any(Object),
@@ -454,10 +518,16 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("creates workbook with correct sheet name", async () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
       expect.any(Object),
@@ -479,10 +549,16 @@ describe("GroupProgressGrid Excel Export", () => {
       // Missing "1-2", "2-1", "3-1", "3-2"
     };
 
-    render(<GroupProgressGrid group={mockGroup} statuses={partialStatuses} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={partialStatuses}
+        voyageStatuses={{}}
+      />,
+    );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Missing statuses should default to 0 with empty completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -523,11 +599,15 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(
-      <GroupProgressGrid group={mockGroup} statuses={statusesWithDates} />,
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={statusesWithDates}
+        voyageStatuses={{}}
+      />,
     );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Should show completion dates only for 100% completion
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -569,11 +649,12 @@ describe("GroupProgressGrid Excel Export", () => {
       <GroupProgressGrid
         group={mockGroup}
         statuses={statusesWithUndefinedDates}
+        voyageStatuses={{}}
       />,
     );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     // Should show empty completion dates for 100% completion without dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -598,11 +679,15 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(
-      <GroupProgressGrid group={groupWithSpaces} statuses={mockStatuses} />,
+      <GroupProgressGrid
+        group={groupWithSpaces}
+        statuses={mockStatuses}
+        voyageStatuses={{}}
+      />,
     );
 
-    await screen.findByText("Download as Excel");
-    fireEvent.click(screen.getByText("Download as Excel"));
+    await screen.findByText("Export");
+    fireEvent.click(screen.getByText("Export"));
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
       expect.any(Object),

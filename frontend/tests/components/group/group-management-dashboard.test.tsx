@@ -156,6 +156,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -171,6 +172,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -187,6 +189,7 @@ describe("GroupDashboard", () => {
           authUser={adminUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -203,6 +206,7 @@ describe("GroupDashboard", () => {
           authUser={regularUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -219,6 +223,7 @@ describe("GroupDashboard", () => {
           authUser={regularUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -235,6 +240,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -251,6 +257,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -267,6 +274,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={mockDueDates}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -283,6 +291,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -301,6 +310,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -317,6 +327,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -332,6 +343,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -349,6 +361,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -371,6 +384,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -396,6 +410,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -417,6 +432,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -434,6 +450,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -450,6 +467,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -467,6 +485,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -486,6 +505,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -510,6 +530,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[playlistDueDate]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -530,6 +551,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -550,6 +572,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -566,12 +589,13 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
       expect(
         screen.getByText(
-          "No droplets or members have been added to this group yet.",
+          "No content or members have been added to this group yet.",
         ),
       ).toBeInTheDocument();
     });
@@ -586,12 +610,13 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
       expect(
         screen.getByText(
-          "No droplets or members have been added to this group yet.",
+          "No content or members have been added to this group yet.",
         ),
       ).toBeInTheDocument();
     });
@@ -610,6 +635,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -649,6 +675,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -665,6 +692,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -681,6 +709,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -704,6 +733,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -731,6 +761,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -745,6 +776,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -759,6 +791,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -774,6 +807,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -790,6 +824,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -806,6 +841,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 

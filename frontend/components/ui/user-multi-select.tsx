@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CheckIcon, Plus } from "lucide-react";
+import { CheckIcon, Plus, X } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -29,7 +29,63 @@ interface UserMultiSelectProps {
 export function UserMultiSelect({
   selectedIds,
   onChange,
-  placeholder = "Select users...",
+}: UserMultiSelectProps) {
+  const [users, setUsers] = useState<AuthorizedUser[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const fetchedUsers = await fetchAuthorizedUsers();
+      setUsers(fetchedUsers);
+    };
+    fetchUsers();
+  }, []);
+
+  const selectedUsers = useMemo(
+    () => users.filter((u) => selectedIds.includes(u.id)),
+    [users, selectedIds],
+  );
+
+  const getUserLabel = (user: AuthorizedUser) =>
+    user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email;
+
+  return (
+    <div className="space-y-2">
+      {selectedUsers.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedUsers.map((user) => (
+            <span
+              key={user.id}
+              className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-sm text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
+            >
+              {getUserLabel(user)}
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(selectedIds.filter((id) => id !== user.id))
+                }
+                className="ml-0.5 rounded-full p-0.5 hover:bg-sky-100 dark:hover:bg-sky-800"
+                aria-label={`Remove ${getUserLabel(user)}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Standalone picker button that opens a user search popover.
+ * Intended to be placed in the header next to "Bulk Add".
+ */
+export function UserPickerButton({
+  selectedIds,
+  onChange,
+  placeholder = "Add user",
 }: UserMultiSelectProps) {
   const [users, setUsers] = useState<AuthorizedUser[]>([]);
   const [search, setSearch] = useState("");
@@ -65,10 +121,11 @@ export function UserMultiSelect({
           type="button"
           role="combobox"
           variant="outline"
-          className="h-9 w-9 border-none bg-transparent p-0 text-[#344054] shadow-none transition-colors hover:bg-transparent hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-100"
+          size="sm"
           aria-label={placeholder}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="mr-1 h-4 w-4" />
+          Add
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">

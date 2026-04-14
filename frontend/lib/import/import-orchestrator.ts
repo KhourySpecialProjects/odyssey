@@ -91,8 +91,12 @@ export function sectionsToLessons(
   sections: ImportSection[],
 ): Array<{ title: string; blocks: CustomBlockNoteBlock[] }> {
   return sections.map((section) => {
-    const markdownWithTitle = section.markdownContent.trim()
-      ? `# ${section.title}\n\n${section.markdownContent}`
+    const content = stripLeadingTitle(
+      section.markdownContent.trim(),
+      section.title,
+    );
+    const markdownWithTitle = content
+      ? `# ${section.title}\n\n${content}`
       : `# ${section.title}`;
 
     const { blocks } = parseMarkdownToBlockNote(markdownWithTitle);
@@ -102,6 +106,39 @@ export function sectionsToLessons(
       blocks,
     };
   });
+}
+
+/**
+ * Remove the first line of content if it duplicates the section title.
+ * Handles headings (# Title), bold items (* **Title**), or plain text matches.
+ */
+function stripLeadingTitle(content: string, title: string): string {
+  if (!content || !title) return content;
+
+  const lines = content.split("\n");
+  const firstLine = lines[0].trim();
+  const normalizedTitle = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
+
+  // Strip markdown syntax to get plain text of first line
+  const plainFirst = firstLine
+    .replace(/^#{1,6}\s+/, "") // headings
+    .replace(/^\*\s+/, "") // list items
+    .replace(/^-\s+/, "") // list items
+    .replace(/\*{1,3}/g, "") // bold/italic
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
+
+  if (plainFirst === normalizedTitle) {
+    // Remove the first line and any leading blank lines after it
+    return lines.slice(1).join("\n").replace(/^\n+/, "").trim();
+  }
+
+  return content;
 }
 
 function getFileExtension(fileName: string): string {

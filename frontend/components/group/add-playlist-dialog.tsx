@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Playlist } from "@/types";
 import { getPlaylists } from "@/lib/requests/playlist";
@@ -63,7 +63,7 @@ export function AddPlaylistDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Playlist
         </Button>
       </DialogTrigger>
@@ -112,7 +112,7 @@ export function AddPlaylistDialog({
                   onClick={() => handleAddPlaylist(playlist)}
                   data-testid="addPlaylist"
                 >
-                  <PlusCircle className="h-6 w-6 text-green-700" />
+                  <Plus className="h-6 w-6 text-green-700" />
                 </Button>
               </div>
             ))}

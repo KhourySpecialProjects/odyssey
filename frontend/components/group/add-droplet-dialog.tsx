@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Droplet } from "@/types";
 import { GroupDropletTile } from "./group-droplet-tile";
@@ -63,7 +63,7 @@ export function AddDropletDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Droplet
         </Button>
       </DialogTrigger>
@@ -85,10 +85,10 @@ export function AddDropletDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-1/2 right-4 z-10 -translate-y-1/2"
+                  className="absolute top-2 right-2 z-10"
                   onClick={() => handleAddDroplet(droplet)}
                 >
-                  <PlusCircle className="h-6 w-6 text-green-700" />
+                  <Plus className="h-6 w-6 text-black dark:text-white" />
                 </Button>
               </div>
             ))}
