@@ -15,7 +15,7 @@ export const originalNav = [
 export const getMainNav = (user: User) => {
   const mainNav = [
     {
-      href: "/feed",
+      href: "/activity",
       label: "Activity",
     },
     {
