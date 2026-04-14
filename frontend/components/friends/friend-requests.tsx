@@ -4,7 +4,6 @@ import { FriendRequestBlock } from "./friend-request-block";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 import { useState } from "react";
 import { AuthorizedUser } from "@/types";
-import { Separator } from "../ui/separator";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconUserPlus } from "@tabler/icons-react";
 

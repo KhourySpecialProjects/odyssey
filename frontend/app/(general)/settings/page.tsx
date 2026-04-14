@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { SocialForms } from "@/app/(general)/settings/social-forms";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getInitials, condenseRoleTitles } from "@/lib/utils";
-import { User2Icon } from "lucide-react";
 import { getCachedUser } from "@/lib/requests/cached";
 import { AuthorizedUser } from "@/types";
 
@@ -30,7 +26,7 @@ export default async function Settings() {
         Your personal profile information.
       </p>
 
-      <SocialForms authorizedUser={authorizedUser} user={user} />
+      <SocialForms authorizedUser={authorizedUser} user={user!} />
 
       <p className="mt-8 text-base text-slate-900 dark:text-slate-300">
         To make changes, update your{" "}
