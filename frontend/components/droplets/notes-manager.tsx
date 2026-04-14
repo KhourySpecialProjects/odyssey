@@ -6,6 +6,8 @@ import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "./lessons/note-taking/note-summary";
 import { Enrollment, Highlight, Note } from "@/types";
 import { Button } from "../ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconNotes } from "@tabler/icons-react";
 
 export function NotesManager({
   enrollments,
@@ -100,19 +102,46 @@ export function NotesManager({
     );
   });
 
+  if (filteredEnrollments.length === 0) {
+    return (
+      <EmptyState
+        icon={
+          <IconNotes
+            className="h-7 w-7 text-[#475569] dark:text-slate-400"
+            stroke={1.5}
+          />
+        }
+        title="No notes yet"
+        message="Notes and highlights you create while learning will appear here."
+      />
+    );
+  }
+
   return (
-    <>
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-6xl font-black text-slate-900 dark:text-white">
-          Saved Notes
-        </h1>
-        <p className="pb-2 dark:text-slate-300">
-          A collection of notes and highlights that you have created
-        </p>
-        <hr></hr>
-        <section className="pt-8">
+    <div className="space-y-6">
+      {/* Actions bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSelectAll}
+            size="sm"
+            variant="outline"
+            className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:text-slate-300"
+          >
+            Select All
+          </Button>
+          <Button
+            onClick={handleDeselectAll}
+            size="sm"
+            variant="outline"
+            className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:text-slate-300"
+          >
+            Deselect All
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
           {isGenerating ? (
-            <div className="text-sm text-slate-500">Generating PDF...</div>
+            <span className="text-sm text-[#667085]">Generating PDF...</span>
           ) : (
             <NotesPdfButton
               pdfBytes={pdfBytes}
@@ -124,21 +153,15 @@ export function NotesManager({
               }
             />
           )}
-        </section>
-        <p className="pt-2 text-sm dark:text-slate-300">
-          Use the check boxes to select which notes you would like included in
-          the PDF
-        </p>
+        </div>
       </div>
-      <div className="flex flex-row gap-2">
-        <Button onClick={handleSelectAll} className="w-24">
-          Select All
-        </Button>
-        <Button onClick={handleDeselectAll} className="w-24">
-          Deselect All
-        </Button>
-      </div>
-      <div className="mx-auto w-full space-y-4">
+
+      <p className="text-sm text-[#667085] dark:text-slate-400">
+        Use the checkboxes to select which notes to include in the PDF export.
+      </p>
+
+      {/* Notes list */}
+      <div className="space-y-4">
         {filteredEnrollments.map((enrollment) => {
           const dropletData = allNotes.find(
             (data) => data.dropletId === enrollment.droplet.id,
@@ -149,17 +172,16 @@ export function NotesManager({
           return (
             <NotesSummaryClient
               key={enrollment.id}
-              // Remove index prop
               dropletHighlights={dropletData.highlights}
               dropletNotes={dropletData.notes}
               enrollment={enrollment}
-              allNotes={allNotes} // Keep the full array
+              allNotes={allNotes}
               onSelectionChange={handleSelectionChange}
               selectedDropletIds={selectedDropletIds}
             />
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

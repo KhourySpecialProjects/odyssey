@@ -45,11 +45,21 @@ const config: Config = {
         border: {
           to: { "--border-angle": "360deg" },
         },
+        sail: {
+          "0%": { transform: "translateY(0) rotate(0deg)" },
+          "15%": { transform: "translateY(-6px) rotate(1.2deg)" },
+          "30%": { transform: "translateY(-2px) rotate(-0.5deg)" },
+          "50%": { transform: "translateY(-9px) rotate(1.8deg)" },
+          "70%": { transform: "translateY(-3px) rotate(-0.8deg)" },
+          "85%": { transform: "translateY(-7px) rotate(0.6deg)" },
+          "100%": { transform: "translateY(0) rotate(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         border: "border 2s linear infinite",
+        sail: "sail 6s ease-in-out infinite",
       },
     },
   },

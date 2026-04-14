@@ -2,6 +2,8 @@
 
 import { AuthorizedUser } from "@/types";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconUserPlus } from "@tabler/icons-react";
 
 export function RequestsPopup({
   user,
@@ -18,9 +20,9 @@ export function RequestsPopup({
     <div className="relative flex flex-col">
       <h1 className="font-bold">Friend Requests</h1>
       <p>A list of your friend requests.</p>
-      <div className="mt-4 rounded-md bg-slate-100 p-4">
+      <div className="mt-4 rounded-md p-4">
         {friendships.length > 0 ? (
-          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700">
             {showPopup
               ? friendships.map((friendship) => (
                   <FriendRequestFeedBlock
@@ -40,7 +42,16 @@ export function RequestsPopup({
                   ))}
           </ul>
         ) : (
-          <p>You have no friends</p>
+          <EmptyState
+            icon={
+              <IconUserPlus
+                className="h-7 w-7 text-[#475569] dark:text-slate-400"
+                stroke={1.5}
+              />
+            }
+            title="No friend requests"
+            message="You don't have any pending friend requests."
+          />
         )}
       </div>
     </div>

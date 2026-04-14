@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
 import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
-import { cn } from "@/lib/utils";
+import { AnimatedSailboat } from "@/components/ui/animated-sailboat";
 
 const outlineLinkCls =
   "inline-flex items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] py-[10px] text-sm font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700";
@@ -18,17 +18,9 @@ export default async function HomeRoute() {
 
   return (
     <GradientBackground className="px-12 lg:px-24">
-      <div className="mx-auto max-w-5xl">
-        <p className="mb-4 text-sm font-semibold tracking-widest text-sky-600 uppercase">
-          Khoury College
-        </p>
-        <div
-          className={cn(
-            "grid grid-cols-1 items-stretch gap-4",
-            user && droplet && "lg:grid-cols-2",
-          )}
-        >
-          {/* Left: hero text */}
+      <div className="mx-auto max-w-6xl">
+        {/* Top row: hero text left, sailboat right */}
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
           <div>
             <h1
               className="text-4xl leading-tight font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white"
@@ -39,8 +31,9 @@ export default async function HomeRoute() {
               Learning.
             </h1>
             <p className="mt-6 text-base leading-7 text-slate-600 dark:text-slate-400">
-              On-demand knowledge and skills for {"today's"} Khoury students.
-              Bite-sized, modern, and built for you.
+              Chart your course through Khoury College. Explore bite-sized
+              droplets of knowledge, navigate learning voyages, and discover
+              skills to carry you forward.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
@@ -80,13 +73,18 @@ export default async function HomeRoute() {
             </div>
           </div>
 
-          {/* Right: Fun Fact card */}
-          {user && droplet && (
-            <div className="h-full">
-              <FunFact droplet={droplet} />
-            </div>
-          )}
+          {/* Right: Animated Odyssey sailboat */}
+          <div className="hidden items-center justify-center lg:flex">
+            <AnimatedSailboat />
+          </div>
         </div>
+
+        {/* Fun Fact — full width below */}
+        {user && droplet && (
+          <div className="mt-8">
+            <FunFact droplet={droplet} />
+          </div>
+        )}
       </div>
     </GradientBackground>
   );

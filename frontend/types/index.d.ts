@@ -119,6 +119,7 @@ export type NavItem = {
   href: string;
   label: string;
   isHidden?: boolean;
+  icon?: React.ReactNode;
 };
 
 export type GeneralConfig = {
