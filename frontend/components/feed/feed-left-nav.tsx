@@ -8,7 +8,6 @@ import {
   IconLayoutList,
   IconMap,
   IconNews,
-  IconUsers,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +16,7 @@ const TABS = [
   { value: "droplets", label: "Droplets", Icon: IconDroplet },
   { value: "playlists", label: "Playlists", Icon: IconLayoutList },
   { value: "voyages", label: "Voyages", Icon: IconMap },
-  { value: "groups", label: "Groups", Icon: IconUsers },
+
   { value: "archived", label: "Archived", Icon: IconArchive },
   { value: "favorited", label: "Favorited", Icon: IconHeart },
 ];

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
@@ -12,6 +13,10 @@ const outlineLinkCls =
 
 export default async function HomeRoute() {
   const user = await getCurrentUser();
+
+  if (user?.email) {
+    redirect("/activity");
+  }
 
   const droplets = await getRandomFunFactDroplet();
   const droplet = droplets[Math.floor(Math.random() * droplets.length)];

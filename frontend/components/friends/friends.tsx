@@ -29,7 +29,7 @@ export async function Friends() {
       ) : (
         <EmptyState
           icon={<UsersIcon className="h-6 w-6 text-[#667085]" />}
-          title="No friends yet"
+          title="You have no friends :("
           message="Search for people to add as friends."
         />
       )}

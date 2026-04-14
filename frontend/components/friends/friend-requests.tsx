@@ -75,7 +75,7 @@ export function FriendRequests({
                     />
                   ))}
             </ul>
-          ) : (
+          ) : noProfile ? null : (
             <EmptyState
               icon={
                 <IconUserPlus
