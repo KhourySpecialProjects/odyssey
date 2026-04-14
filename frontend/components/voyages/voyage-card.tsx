@@ -7,11 +7,26 @@ interface VoyageCardProps {
 
 export function VoyageCard({ voyage }: VoyageCardProps) {
   const nodes = voyage.voyage_nodes ?? [];
-  const playlistCount = nodes.filter((n) => n.isMainPath).length;
-  const dropletCount = nodes.reduce(
-    (acc, n) => acc + (n.playlist?.droplets?.length ?? 0),
-    0,
-  );
+
+  // Count playlist nodes vs claimed droplet nodes vs unclaimed placeholders
+  const playlistNodeCount = nodes.filter(
+    (n) => n.nodeType === "playlist",
+  ).length;
+  const claimedDropletCount = nodes.filter(
+    (n) => n.nodeType === "droplet" && n.claimStatus !== "unclaimed",
+  ).length;
+  const unclaimedCount = nodes.filter(
+    (n) => n.nodeType === "droplet" && n.claimStatus === "unclaimed",
+  ).length;
+
+  // Total droplets: droplets inside playlists + standalone droplet nodes (1 each)
+  const dropletCount =
+    nodes.reduce(
+      (acc, n) =>
+        acc +
+        (n.nodeType === "playlist" ? n.playlist?.droplets?.length ?? 0 : 0),
+      0,
+    ) + claimedDropletCount;
 
   return (
     <Link
@@ -33,8 +48,22 @@ export function VoyageCard({ voyage }: VoyageCardProps) {
           </p>
         )}
         <p className="mt-auto pt-2 text-sm text-slate-500 dark:text-slate-400">
-          {playlistCount} {playlistCount === 1 ? "playlist" : "playlists"}{" "}
-          &middot; {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
+          {playlistNodeCount > 0 && (
+            <>
+              {playlistNodeCount}{" "}
+              {playlistNodeCount === 1 ? "playlist" : "playlists"}
+            </>
+          )}
+          {playlistNodeCount > 0 && dropletCount > 0 && <> &middot; </>}
+          {dropletCount > 0 && (
+            <>
+              {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
+            </>
+          )}
+          {unclaimedCount > 0 && <> &middot; {unclaimedCount} unclaimed</>}
+          {playlistNodeCount === 0 &&
+            dropletCount === 0 &&
+            unclaimedCount === 0 && <>No content yet</>}
         </p>
       </div>
     </Link>

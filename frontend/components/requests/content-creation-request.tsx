@@ -11,18 +11,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Sparkles, Lightbulb } from "lucide-react";
+import { Sparkles, Lightbulb, MapPin } from "lucide-react";
 import { AuthorizedUser } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+type ContentCreatorRequestFormProps = {
+  user: AuthorizedUser | undefined;
+  voyageNodeId?: number;
+  voyageName?: string;
+  nodeLabel?: string;
+};
+
 export function ContentCreatorRequestForm({
   user,
-}: {
-  user: AuthorizedUser | undefined;
-}) {
+  voyageNodeId,
+  voyageName,
+  nodeLabel,
+}: ContentCreatorRequestFormProps) {
+  const hasVoyageContext =
+    voyageNodeId !== undefined &&
+    voyageName !== undefined &&
+    nodeLabel !== undefined;
+
+  const defaultIdeas = hasVoyageContext
+    ? `I'd like to write the droplet for '${nodeLabel}' in the voyage '${voyageName}'`
+    : "";
+
   const [motivation, setMotivation] = useState("");
-  const [ideas, setIdeas] = useState("");
+  const [ideas, setIdeas] = useState(defaultIdeas);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -39,6 +56,7 @@ export function ContentCreatorRequestForm({
         motivation,
         dropletIdea: ideas,
         user: user.id,
+        ...(hasVoyageContext ? { voyageNodeId } : {}),
       });
 
       if (result.ok) {
@@ -80,6 +98,18 @@ export function ContentCreatorRequestForm({
 
         <CardContent>
           <div className="space-y-6">
+            {/* Voyage context banner */}
+            {hasVoyageContext && (
+              <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950">
+                <MapPin className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  You&apos;re applying to contribute to{" "}
+                  <span className="font-semibold">{voyageName}</span> &mdash;{" "}
+                  <span className="font-semibold">{nodeLabel}</span>
+                </p>
+              </div>
+            )}
+
             {/* Motivation Section */}
             <div className="space-y-3">
               <div className="flex items-start gap-2">

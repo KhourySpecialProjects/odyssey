@@ -249,14 +249,16 @@ describe("voyage-enrollment-branches — checkAndCompleteVoyageNode: no voyage n
   it("returns early when no voyage nodes reference the playlist", async () => {
     // playlists containing droplet 5
     mockedFetchAPI.mockResolvedValueOnce([{ id: 99 }]);
-    // voyage nodes for playlist 99 → empty
+    // voyage nodes for playlist 99 → empty (checkPlaylistVoyageNode early return)
+    mockedFetchAPI.mockResolvedValueOnce([]);
+    // checkDropletVoyageNode: no voyage nodes directly reference this droplet
     mockedFetchAPI.mockResolvedValueOnce([]);
 
     // Should resolve without error and without making further calls
     await expect(checkAndCompleteVoyageNode(5, 1)).resolves.toBeUndefined();
 
-    // Only 2 fetchAPI calls (playlists + voyage-nodes) — no further progress
-    expect(mockedFetchAPI).toHaveBeenCalledTimes(2);
+    // 3 fetchAPI calls: playlists + playlist voyage-nodes + droplet voyage-nodes
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -272,11 +274,13 @@ describe("voyage-enrollment-branches — checkAndCompleteVoyageNode: no droplets
     mockedFetchAPI.mockResolvedValueOnce([{ id: 200, voyage: { id: 10 } }]);
     // playlistDroplets: playlist exists but no droplets field → ?? []
     mockedFetchAPI.mockResolvedValueOnce([{ id: 88 }]); // no droplets property
+    // checkDropletVoyageNode: no voyage nodes directly reference this droplet
+    mockedFetchAPI.mockResolvedValueOnce([]);
 
     await expect(checkAndCompleteVoyageNode(7, 1)).resolves.toBeUndefined();
 
-    // Stopped after fetching playlist droplets (3 calls total)
-    expect(mockedFetchAPI).toHaveBeenCalledTimes(3);
+    // 4 calls: playlists, playlist voyage-nodes, playlist droplets, droplet voyage-nodes
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(4);
   });
 
   it("returns early when playlist droplets array is empty", async () => {
@@ -284,10 +288,13 @@ describe("voyage-enrollment-branches — checkAndCompleteVoyageNode: no droplets
     mockedFetchAPI.mockResolvedValueOnce([{ id: 200, voyage: { id: 10 } }]);
     // playlistDroplets[0].droplets is an empty array
     mockedFetchAPI.mockResolvedValueOnce([{ id: 88, droplets: [] }]);
+    // checkDropletVoyageNode: no voyage nodes directly reference this droplet
+    mockedFetchAPI.mockResolvedValueOnce([]);
 
     await expect(checkAndCompleteVoyageNode(7, 1)).resolves.toBeUndefined();
 
-    expect(mockedFetchAPI).toHaveBeenCalledTimes(3);
+    // 4 calls: playlists, playlist voyage-nodes, playlist droplets, droplet voyage-nodes
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -312,12 +319,14 @@ describe("voyage-enrollment-branches — checkAndCompleteVoyageNode: node with n
     mockedFetchAPI.mockResolvedValueOnce([{ id: 1000 }]);
     // existing completions for node 301
     mockedFetchAPI.mockResolvedValueOnce([{ id: 2000 }]); // already complete → skip markVoyageNodeComplete
+    // checkDropletVoyageNode: no voyage nodes directly reference this droplet
+    mockedFetchAPI.mockResolvedValueOnce([]);
 
     await expect(checkAndCompleteVoyageNode(3, 1)).resolves.toBeUndefined();
 
-    // Should have made calls past the "skip" — node 300 was skipped
-    // The node without voyage.id should not generate a voyage-enrollments lookup
-    expect(mockedFetchAPI).toHaveBeenCalledTimes(6);
+    // 7 calls: playlists, playlist voyage-nodes, playlist droplets,
+    // completed-enrollments, voyage-enrollments, existing-completions, droplet voyage-nodes
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(7);
   });
 
   it("skips node where voyage is undefined entirely", async () => {
@@ -329,11 +338,13 @@ describe("voyage-enrollment-branches — checkAndCompleteVoyageNode: node with n
     mockedFetchAPI.mockResolvedValueOnce([{ id: 55, droplets: [{ id: 10 }] }]);
     // completedEnrollments
     mockedFetchAPI.mockResolvedValueOnce([{ id: 901 }]);
+    // checkDropletVoyageNode: no voyage nodes directly reference this droplet
+    mockedFetchAPI.mockResolvedValueOnce([]);
 
     await expect(checkAndCompleteVoyageNode(10, 2)).resolves.toBeUndefined();
 
-    // 4 calls: playlists, voyage-nodes, playlist-droplets, completed-enrollments
-    // No further calls because the single node was skipped
-    expect(mockedFetchAPI).toHaveBeenCalledTimes(4);
+    // 5 calls: playlists, voyage-nodes, playlist-droplets, completed-enrollments,
+    // droplet voyage-nodes (single node skipped due to no voyage.id)
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(5);
   });
 });

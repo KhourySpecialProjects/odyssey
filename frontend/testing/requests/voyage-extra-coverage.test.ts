@@ -73,20 +73,24 @@ function mockAsAdmin(userId = 1) {
 /** A minimal valid main-path node for createVoyageWithNodes. */
 function makeMainNode(
   overrides: Partial<{
+    localId: string;
     playlistId: number;
     label: string;
     orderIndex: number;
   }> = {},
 ) {
-  return {
+  const base = {
+    localId: "local-1",
+    nodeType: "playlist" as const,
     playlistId: 1,
+    dropletId: null,
     label: "Intro",
     isMainPath: true,
     branchType: "required" as const,
-    parentPlaylistId: null,
+    parentLocalId: null,
     orderIndex: 0,
-    ...overrides,
   };
+  return { ...base, ...overrides };
 }
 
 // ---------------------------------------------------------------------------
@@ -344,13 +348,16 @@ describe("createVoyageWithNodes — branch node POST failure", () => {
     const result = await createVoyageWithNodes({
       name: "Voyage",
       nodes: [
-        makeMainNode({ playlistId: 5, label: "Main" }),
+        makeMainNode({ localId: "local-5", playlistId: 5, label: "Main" }),
         {
+          localId: "local-20",
+          nodeType: "playlist" as const,
           playlistId: 20,
+          dropletId: null,
           label: "Branch",
           isMainPath: false,
-          branchType: "optional",
-          parentPlaylistId: 5, // valid parent
+          branchType: "optional" as const,
+          parentLocalId: "local-5", // valid parent
           orderIndex: 1,
         },
       ],

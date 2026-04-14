@@ -1,8 +1,9 @@
-import { VoyageNode } from "@/types";
+import { Droplet, VoyageNode } from "@/types";
 import {
   computeNodeStatuses,
   computeCompletionPercentage,
   findFirstIncompleteNode,
+  isCompletableNode,
 } from "@/lib/voyage-progress";
 
 // ---------------------------------------------------------------------------
@@ -355,5 +356,234 @@ describe("findFirstIncompleteNode", () => {
     const result = findFirstIncompleteNode([main1, branch], new Set([1]));
     // main1 completed, no more main nodes -> null
     expect(result).toBeNull();
+  });
+
+  it("skips placeholder droplet nodes (no droplet linked)", () => {
+    const main1 = makeMainNode(1, 0);
+    const placeholder = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      // droplet is undefined — placeholder
+    });
+    const main3 = makeMainNode(3, 2);
+
+    // Complete main1; placeholder is not completable, should be skipped
+    const result = findFirstIncompleteNode(
+      [main1, placeholder, main3],
+      new Set([1]),
+    );
+    expect(result?.id).toBe(3);
+  });
+
+  it("skips draft droplet nodes", () => {
+    const main1 = makeMainNode(1, 0);
+    const draftDropletNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "draft" } as Partial<Droplet> as Droplet,
+    });
+    const main3 = makeMainNode(3, 2);
+
+    const result = findFirstIncompleteNode(
+      [main1, draftDropletNode, main3],
+      new Set([1]),
+    );
+    expect(result?.id).toBe(3);
+  });
+
+  it("returns a published droplet node as first incomplete when not skipped", () => {
+    const main1 = makeMainNode(1, 0);
+    const publishedDropletNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "published" } as Partial<Droplet> as Droplet,
+    });
+
+    const result = findFirstIncompleteNode(
+      [main1, publishedDropletNode],
+      new Set([1]),
+    );
+    expect(result?.id).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isCompletableNode
+// ---------------------------------------------------------------------------
+
+describe("isCompletableNode", () => {
+  it("returns true for playlist nodes (always have content)", () => {
+    const node = makeMainNode(1, 0, { nodeType: "playlist" });
+    expect(isCompletableNode(node)).toBe(true);
+  });
+
+  it("returns true for droplet nodes with a published droplet", () => {
+    const node = makeMainNode(1, 0, {
+      nodeType: "droplet",
+      droplet: { id: 1, status: "published" } as Partial<Droplet> as Droplet,
+    });
+    expect(isCompletableNode(node)).toBe(true);
+  });
+
+  it("returns false for droplet nodes with a draft droplet", () => {
+    const node = makeMainNode(1, 0, {
+      nodeType: "droplet",
+      droplet: { id: 1, status: "draft" } as Partial<Droplet> as Droplet,
+    });
+    expect(isCompletableNode(node)).toBe(false);
+  });
+
+  it("returns false for droplet nodes with an edit droplet", () => {
+    const node = makeMainNode(1, 0, {
+      nodeType: "droplet",
+      droplet: { id: 1, status: "edit" } as Partial<Droplet> as Droplet,
+    });
+    expect(isCompletableNode(node)).toBe(false);
+  });
+
+  it("returns false for placeholder droplet nodes (no droplet linked)", () => {
+    const node = makeMainNode(1, 0, {
+      nodeType: "droplet",
+      // no droplet field
+    });
+    expect(isCompletableNode(node)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeNodeStatuses — droplet node cases
+// ---------------------------------------------------------------------------
+
+describe("computeNodeStatuses — droplet node behavior", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("placeholder droplet node does NOT block next main node", () => {
+    const main1 = makeMainNode(1, 0);
+    const placeholder = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      // no droplet — placeholder
+    });
+    const main3 = makeMainNode(3, 2);
+
+    // main1 completed; placeholder is non-completable, should not block main3
+    const statuses = computeNodeStatuses(
+      [main1, placeholder, main3],
+      new Set([1]),
+    );
+
+    expect(statuses.get(2)).toBe("available");
+    expect(statuses.get(3)).toBe("available");
+  });
+
+  it("draft droplet node does NOT block next main node", () => {
+    const main1 = makeMainNode(1, 0);
+    const draftNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "draft" } as Partial<Droplet> as Droplet,
+    });
+    const main3 = makeMainNode(3, 2);
+
+    const statuses = computeNodeStatuses(
+      [main1, draftNode, main3],
+      new Set([1]),
+    );
+
+    expect(statuses.get(2)).toBe("available");
+    expect(statuses.get(3)).toBe("available");
+  });
+
+  it("published droplet node DOES block next main node when incomplete", () => {
+    const main1 = makeMainNode(1, 0);
+    const publishedNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "published" } as Partial<Droplet> as Droplet,
+    });
+    const main3 = makeMainNode(3, 2);
+
+    // main1 completed but published droplet node not completed
+    const statuses = computeNodeStatuses(
+      [main1, publishedNode, main3],
+      new Set([1]),
+    );
+
+    expect(statuses.get(2)).toBe("available");
+    expect(statuses.get(3)).toBe("locked");
+  });
+
+  it("placeholder required branch does NOT block next main node", () => {
+    const main1 = makeMainNode(1, 0);
+    const placeholder = makeBranchNode(10, main1, {
+      nodeType: "droplet",
+      branchType: "required",
+      // no droplet — placeholder
+    });
+    main1.childNodes = [placeholder];
+    const main2 = makeMainNode(2, 1);
+
+    // main1 completed; placeholder required branch is non-completable, should not block
+    const statuses = computeNodeStatuses(
+      [main1, placeholder, main2],
+      new Set([1]),
+    );
+
+    expect(statuses.get(10)).toBe("available");
+    expect(statuses.get(2)).toBe("available");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeCompletionPercentage — droplet node cases
+// ---------------------------------------------------------------------------
+
+describe("computeCompletionPercentage — droplet node behavior", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("excludes placeholder droplet nodes from the denominator", () => {
+    const main1 = makeMainNode(1, 0);
+    const placeholder = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      // no droplet
+    });
+
+    // Only main1 counts; completing it => 100%
+    const pct = computeCompletionPercentage([main1, placeholder], new Set([1]));
+    expect(pct).toBe(100);
+  });
+
+  it("excludes draft droplet nodes from the denominator", () => {
+    const main1 = makeMainNode(1, 0);
+    const draftNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "draft" } as Partial<Droplet> as Droplet,
+    });
+
+    const pct = computeCompletionPercentage([main1, draftNode], new Set([1]));
+    expect(pct).toBe(100);
+  });
+
+  it("includes published droplet nodes in the denominator", () => {
+    const main1 = makeMainNode(1, 0);
+    const publishedNode = makeMainNode(2, 1, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "published" } as Partial<Droplet> as Droplet,
+    });
+
+    // main1 completed but publishedNode not -> 50%
+    const pct = computeCompletionPercentage(
+      [main1, publishedNode],
+      new Set([1]),
+    );
+    expect(pct).toBe(50);
+  });
+
+  it("returns 0 when all completable nodes are placeholders and none completed", () => {
+    const placeholder = makeMainNode(1, 0, {
+      nodeType: "droplet",
+      // no droplet
+    });
+
+    const pct = computeCompletionPercentage([placeholder], new Set());
+    expect(pct).toBe(0);
   });
 });

@@ -104,7 +104,7 @@ describe("VoyageEnrollButton", () => {
           voyageId={1}
           enrollment={inProgressEnrollment}
           completionPercentage={40}
-          firstIncompleteSlug="my-playlist"
+          firstIncompleteHref="/p/my-playlist"
         />,
       );
 
@@ -119,7 +119,7 @@ describe("VoyageEnrollButton", () => {
           voyageId={1}
           enrollment={inProgressEnrollment}
           completionPercentage={40}
-          firstIncompleteSlug="my-playlist"
+          firstIncompleteHref="/p/my-playlist"
         />,
       );
 
@@ -133,7 +133,7 @@ describe("VoyageEnrollButton", () => {
           voyageId={1}
           enrollment={inProgressEnrollment}
           completionPercentage={40}
-          firstIncompleteSlug="my-playlist"
+          firstIncompleteHref="/p/my-playlist"
         />,
       );
 

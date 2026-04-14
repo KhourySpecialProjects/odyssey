@@ -6,6 +6,7 @@ import {
   getVoyageNodeCompletions,
   markVoyageNodeComplete,
   checkAndCompleteVoyageNode,
+  checkDropletVoyageNode,
 } from "@/lib/requests/voyage-enrollment";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
@@ -37,20 +38,10 @@ jest.mock("@/lib/auth/require-role", () => ({
 
 const mockUser = { email: "student@example.com" };
 const mockAuthorizedUser = { id: 42, email: "student@example.com" };
-
-// Helper: set up requireRole to return an authenticated student, and
-// fetchAPI to return a published voyage status check. Used by enrollInVoyage
-// tests that exercise the happy path or fetch-failure path.
-function mockEnrollStudentAuth() {
-  (requireRole as jest.Mock).mockResolvedValue({
-    ok: true,
-    user: { id: 42, email: "student@example.com", roles: [] },
-  });
-}
-
-function mockPublishedVoyageStatus() {
-  (fetchAPI as jest.Mock).mockResolvedValueOnce({ status: "published" });
-}
+const mockRequireRoleOk = {
+  ok: true as const,
+  user: { id: 42, email: "student@example.com", roles: [] as never[] },
+};
 
 describe("getVoyageEnrollment", () => {
   beforeEach(() => {
@@ -149,9 +140,13 @@ describe("enrollInVoyage", () => {
   });
 
   it("creates a new enrollment when none exists", async () => {
-    mockEnrollStudentAuth();
+    (requireRole as jest.Mock).mockResolvedValue(mockRequireRoleOk);
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    mockPublishedVoyageStatus();
+    // voyage status check — published voyage
+    (fetchAPI as jest.Mock).mockResolvedValueOnce({
+      id: 10,
+      status: "published",
+    });
     // getVoyageEnrollment returns null (not enrolled)
     (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
 
@@ -191,14 +186,18 @@ describe("enrollInVoyage", () => {
   });
 
   it("returns existing enrollment when already enrolled (idempotent)", async () => {
-    mockEnrollStudentAuth();
+    (requireRole as jest.Mock).mockResolvedValue(mockRequireRoleOk);
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    mockPublishedVoyageStatus();
     const existingEnrollment = {
       id: 5,
       enrolledAt: "2026-01-01T00:00:00.000Z",
       completionPercentage: 25,
     };
+    // voyage status check — published voyage
+    (fetchAPI as jest.Mock).mockResolvedValueOnce({
+      id: 10,
+      status: "published",
+    });
     // getVoyageEnrollment returns existing
     (fetchAPI as jest.Mock).mockResolvedValueOnce([existingEnrollment]);
 
@@ -228,9 +227,14 @@ describe("enrollInVoyage", () => {
   });
 
   it("returns error when fetch fails", async () => {
-    mockEnrollStudentAuth();
+    (requireRole as jest.Mock).mockResolvedValue(mockRequireRoleOk);
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    mockPublishedVoyageStatus();
+    // voyage status check — published voyage
+    (fetchAPI as jest.Mock).mockResolvedValueOnce({
+      id: 10,
+      status: "published",
+    });
+    // getVoyageEnrollment returns null (not enrolled)
     (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
@@ -691,5 +695,188 @@ describe("checkAndCompleteVoyageNode", () => {
     (fetchAPI as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
 
     await expect(checkAndCompleteVoyageNode(20, 42)).resolves.not.toThrow();
+  });
+});
+
+describe("checkDropletVoyageNode", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("marks a direct-droplet voyage node complete when droplet enrollment is complete", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+
+    // 1. GET voyage nodes where nodeType = "droplet" and droplet.id = 55
+    const mockVoyageNodes = [{ id: 11, voyage: { id: 10 } }];
+    (fetchAPI as jest.Mock).mockResolvedValueOnce(mockVoyageNodes);
+
+    // 2. GET voyage enrollment for user in that voyage
+    const mockEnrollment = {
+      id: 5,
+      enrolledAt: "2026-01-01T00:00:00.000Z",
+      completionPercentage: 0,
+      voyage: { id: 10 },
+    };
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([mockEnrollment]);
+
+    // 3. GET existing completion for node (none = not yet completed)
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    // Inside markVoyageNodeComplete:
+    // 4. enrollmentCheck
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([{ id: 5 }]);
+    // 5. existing completion check (idempotent)
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    // POST create completion
+    const createdCompletion = {
+      id: 99,
+      completedAt: "2026-04-08T00:00:00.000Z",
+    };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: createdCompletion }),
+    });
+
+    // 6. GET enrollment for voyage id (inside markVoyageNodeComplete)
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([mockEnrollment]);
+
+    // 7. GET voyage nodes for percentage calc
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([
+      { id: 11, branchType: "required" },
+      { id: 12, branchType: "required" },
+    ]);
+
+    // 8. GET existing completions for percentage
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([{ voyageNode: { id: 11 } }]);
+
+    // PUT enrollment percentage
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: { ...mockEnrollment, completionPercentage: 50 },
+        }),
+    });
+    (flattenAttributes as jest.Mock).mockReturnValue(createdCompletion);
+
+    await expect(checkDropletVoyageNode(55, 42)).resolves.not.toThrow();
+
+    // Verify voyage nodes were queried with droplet filter and nodeType filter
+    expect(fetchAPI).toHaveBeenCalledWith(
+      "/voyage-nodes",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({
+          filters: {
+            $and: [
+              { nodeType: { $eq: "droplet" } },
+              { droplet: { id: { $eq: 55 } } },
+            ],
+          },
+        }),
+      }),
+    );
+  });
+
+  it("is a no-op when no voyage node directly references the droplet", async () => {
+    // No voyage nodes found
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    await checkDropletVoyageNode(999, 42);
+
+    // No further fetches should happen
+    expect(fetchAPI).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when user is not enrolled in the voyage", async () => {
+    // 1. GET voyage nodes — finds one
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([
+      { id: 11, voyage: { id: 10 } },
+    ]);
+
+    // 2. GET voyage enrollment — not enrolled
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    await checkDropletVoyageNode(55, 42);
+
+    // Should NOT create a completion
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when the node is already completed", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+
+    // 1. GET voyage nodes
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([
+      { id: 11, voyage: { id: 10 } },
+    ]);
+
+    // 2. GET voyage enrollment
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([
+      {
+        id: 5,
+        enrolledAt: "2026-01-01T00:00:00.000Z",
+        completionPercentage: 50,
+      },
+    ]);
+
+    // 3. GET existing completion — already completed
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([
+      { id: 99, voyageNode: { id: 11 } },
+    ]);
+
+    await checkDropletVoyageNode(55, 42);
+
+    // Should NOT create another completion
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("does not throw when an error occurs (try-catch wrapping)", async () => {
+    (fetchAPI as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
+
+    await expect(checkDropletVoyageNode(55, 42)).resolves.not.toThrow();
+  });
+});
+
+describe("checkAndCompleteVoyageNode calls both playlist and droplet checks", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("calls both playlist and droplet node checks", async () => {
+    // Playlist check: no playlists contain this droplet
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    // Droplet node check: no voyage nodes directly reference this droplet
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+
+    await checkAndCompleteVoyageNode(20, 42);
+
+    // fetchAPI called twice: once for playlists, once for voyage-nodes (droplet check)
+    expect(fetchAPI).toHaveBeenCalledTimes(2);
+    expect(fetchAPI).toHaveBeenCalledWith(
+      "/playlists",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({
+          filters: { droplets: { id: { $eq: 20 } } },
+        }),
+      }),
+    );
+    expect(fetchAPI).toHaveBeenCalledWith(
+      "/voyage-nodes",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({
+          filters: {
+            $and: [
+              { nodeType: { $eq: "droplet" } },
+              { droplet: { id: { $eq: 20 } } },
+            ],
+          },
+        }),
+      }),
+    );
   });
 });

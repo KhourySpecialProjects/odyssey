@@ -11,14 +11,14 @@ interface VoyageEnrollButtonProps {
   voyageId: number;
   enrollment: VoyageEnrollment | null;
   completionPercentage: number;
-  firstIncompleteSlug?: string;
+  firstIncompleteHref?: string;
 }
 
 export function VoyageEnrollButton({
   voyageId,
   enrollment,
   completionPercentage,
-  firstIncompleteSlug,
+  firstIncompleteHref,
 }: VoyageEnrollButtonProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -56,8 +56,8 @@ export function VoyageEnrollButton({
         </Button>
       )}
 
-      {isEnrolled && !isCompleted && firstIncompleteSlug && (
-        <Link href={`/p/${firstIncompleteSlug}`}>
+      {isEnrolled && !isCompleted && firstIncompleteHref && (
+        <Link href={firstIncompleteHref}>
           <Button
             variant="outline"
             className="border-[#297496] text-[#297496] hover:bg-[#297496]/10"

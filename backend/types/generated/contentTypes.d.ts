@@ -753,6 +753,11 @@ export interface ApiCreationRequestCreationRequest
       'oneToOne',
       'api::authorized-user.authorized-user'
     >;
+    voyageNode: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'manyToOne',
+      'api::voyage-node.voyage-node'
+    >;
   };
 }
 
@@ -1697,6 +1702,12 @@ export interface ApiVoyageNodeVoyageNode extends Schema.CollectionType {
       'oneToMany',
       'api::voyage-node.voyage-node'
     >;
+    claimedBy: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    claimStatus: Attribute.Enumeration<['unclaimed', 'claimed', 'authored']>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::voyage-node.voyage-node',
@@ -1704,11 +1715,16 @@ export interface ApiVoyageNodeVoyageNode extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::voyage-node.voyage-node',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
     isMainPath: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
     label: Attribute.String & Attribute.Required;
-    nodeType: Attribute.Enumeration<['playlist', 'checkpoint']> &
+    nodeType: Attribute.Enumeration<['playlist', 'droplet']> &
       Attribute.Required &
       Attribute.DefaultTo<'playlist'>;
     orderIndex: Attribute.Integer & Attribute.Required;

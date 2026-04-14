@@ -16,22 +16,280 @@ interface VoyageTreeIslandProps {
   stepNumber?: number;
   /** Visual scale factor for responsive sizing (1 = default). */
   scale?: number;
+  href?: string;
+  nodeType?: "playlist" | "droplet";
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
 }
 
 function IslandSvg({
   size,
   status,
   scale = 1,
+  nodeType = "playlist",
+  claimStatus,
 }: {
   size: "main" | "branch";
   status: string;
   scale?: number;
+  nodeType?: "playlist" | "droplet";
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
 }) {
   const isLocked = status === "locked";
   const base = ISLAND_SVG_DIMENSIONS[size];
   const w = base.width * scale;
   const h = base.height * scale;
 
+  // Droplet node — placeholder (unclaimed): dashed gray outline island with "?" icon
+  if (nodeType === "droplet" && claimStatus === "unclaimed") {
+    return (
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 200 180"
+        fill="none"
+        className="block"
+      >
+        {/* Dashed water ring */}
+        <ellipse
+          cx="100"
+          cy="140"
+          rx="74"
+          ry="21"
+          stroke="#94a3b8"
+          strokeWidth="2"
+          strokeDasharray="6 4"
+          fill="none"
+          opacity={0.5}
+        />
+        {/* Dashed island outline */}
+        <ellipse
+          cx="100"
+          cy="120"
+          rx="58"
+          ry="24"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          strokeDasharray="8 5"
+          fill="#f1f5f9"
+          opacity={0.8}
+        />
+        {/* "?" icon */}
+        <text
+          x="100"
+          y="108"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="28"
+          fontWeight="bold"
+          fill="#94a3b8"
+        >
+          ?
+        </text>
+        {/* Available glow */}
+        {status === "available" && (
+          <ellipse
+            cx="100"
+            cy="120"
+            rx="70"
+            ry="30"
+            stroke="#60a5fa"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.35}
+          />
+        )}
+      </svg>
+    );
+  }
+
+  // Droplet node — claimed (in progress): teal island, partially colored, pencil icon
+  if (nodeType === "droplet" && claimStatus === "claimed") {
+    return (
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 200 180"
+        fill="none"
+        className="block"
+      >
+        {/* Ocean water ring */}
+        <ellipse
+          cx="100"
+          cy="140"
+          rx="74"
+          ry="21"
+          fill="#0e7490"
+          opacity={0.2}
+        />
+        {/* Sand ring */}
+        <ellipse cx="100" cy="124" rx="66" ry="28" fill="#e0f2fe" />
+        {/* Teal island surface — half filled to show "in progress" */}
+        <ellipse
+          cx="100"
+          cy="120"
+          rx="58"
+          ry="24"
+          fill="#0e7490"
+          opacity={0.35}
+        />
+        <ellipse
+          cx="100"
+          cy="120"
+          rx="58"
+          ry="24"
+          fill="none"
+          stroke="#0e7490"
+          strokeWidth="2"
+        />
+        {/* Pencil icon */}
+        <path
+          d="M92 106 L104 94 L112 102 L100 114 Z"
+          fill="#0e7490"
+          opacity={0.85}
+        />
+        <path d="M104 94 L108 90 L116 98 L112 102 Z" fill="#0369a1" />
+        <path d="M92 106 L90 112 L96 110 Z" fill="#0e7490" opacity={0.7} />
+        {/* Available glow */}
+        {status === "available" && (
+          <ellipse
+            cx="100"
+            cy="120"
+            rx="70"
+            ry="30"
+            stroke="#60a5fa"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.35}
+          />
+        )}
+        {/* Completed ring */}
+        {status === "completed" && (
+          <ellipse
+            cx="100"
+            cy="120"
+            rx="70"
+            ry="30"
+            stroke="#22c55e"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.35}
+          />
+        )}
+      </svg>
+    );
+  }
+
+  // Droplet node — published (authored or with published droplet): teal rock/boulder island
+  if (nodeType === "droplet") {
+    return (
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 200 180"
+        fill="none"
+        className="block"
+      >
+        {isLocked ? (
+          <>
+            {/* Water shadow */}
+            <ellipse
+              cx="100"
+              cy="140"
+              rx="60"
+              ry="16"
+              fill="#94a3b8"
+              opacity={0.15}
+            />
+            {/* Rock — locked */}
+            <path
+              d="M55 125 Q52 138 58 144 Q75 154 100 155 Q125 154 142 144 Q148 138 145 125 Z"
+              fill="#4a5568"
+            />
+            <ellipse cx="100" cy="124" rx="46" ry="20" fill="#64748b" />
+            <ellipse cx="100" cy="122" rx="40" ry="16" fill="#718096" />
+          </>
+        ) : (
+          <>
+            {/* Ocean water ring */}
+            <ellipse
+              cx="100"
+              cy="140"
+              rx="70"
+              ry="20"
+              fill="#0e7490"
+              opacity={0.25}
+            />
+            <ellipse
+              cx="100"
+              cy="138"
+              rx="62"
+              ry="17"
+              fill="#0e7490"
+              opacity={0.15}
+            />
+            {/* Sand ring */}
+            <ellipse cx="100" cy="126" rx="54" ry="22" fill="#cffafe" />
+            {/* Teal boulder surface */}
+            <ellipse cx="100" cy="122" rx="46" ry="19" fill="#0e7490" />
+            {/* Highlight */}
+            <ellipse
+              cx="92"
+              cy="116"
+              rx="26"
+              ry="10"
+              fill="#22d3ee"
+              opacity={0.35}
+            />
+            {/* Small rock details */}
+            <ellipse
+              cx="74"
+              cy="126"
+              rx="10"
+              ry="7"
+              fill="#0891b2"
+              opacity={0.6}
+            />
+            <ellipse
+              cx="128"
+              cy="124"
+              rx="8"
+              ry="6"
+              fill="#0891b2"
+              opacity={0.5}
+            />
+          </>
+        )}
+        {/* Available glow ring */}
+        {status === "available" && (
+          <ellipse
+            cx="100"
+            cy="122"
+            rx="62"
+            ry="26"
+            stroke="#60a5fa"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.35}
+          />
+        )}
+        {/* Completed ring */}
+        {status === "completed" && (
+          <ellipse
+            cx="100"
+            cy="122"
+            rx="62"
+            ry="26"
+            stroke="#22c55e"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.35}
+          />
+        )}
+      </svg>
+    );
+  }
+
+  // Default: playlist island (existing rendering)
   return (
     <svg
       width={w}
@@ -373,10 +631,45 @@ export function VoyageTreeIsland({
   status = "available",
   stepNumber,
   scale = 1,
+  href: hrefProp,
+  nodeType = "playlist",
+  claimStatus,
 }: VoyageTreeIslandProps) {
   const isMain = size === "main";
   const isLocked = status === "locked";
   const isCompleted = status === "completed";
+  const isDropletNode = nodeType === "droplet";
+  const isUnclaimed = claimStatus === "unclaimed";
+  const isClaimed = claimStatus === "claimed";
+
+  // Compute subtitle text based on node type and claim state
+  let subtitleText: string | null = null;
+  if (isDropletNode && isUnclaimed) {
+    subtitleText = "Become author!";
+  } else if (isDropletNode && isClaimed) {
+    subtitleText = "In Progress";
+  } else if (isDropletNode) {
+    subtitleText = "1 droplet";
+  } else if (dropletCount !== undefined) {
+    subtitleText = `${dropletCount} ${dropletCount === 1 ? "droplet" : "droplets"}`;
+  }
+
+  // Subtitle color: teal for unclaimed/claimed droplet nodes
+  const subtitleColorClass = isDropletNode
+    ? isUnclaimed
+      ? "text-slate-400"
+      : isClaimed
+        ? "text-cyan-600 dark:text-cyan-400"
+        : isCompleted
+          ? "text-green-700 dark:text-green-400"
+          : isLocked
+            ? "text-slate-400"
+            : "text-cyan-700 dark:text-cyan-300"
+    : isCompleted
+      ? "text-green-700 dark:text-green-400"
+      : isLocked
+        ? "text-slate-400"
+        : "text-slate-600 dark:text-slate-300";
 
   const content = (
     <div
@@ -388,7 +681,7 @@ export function VoyageTreeIsland({
         {/* Step number badge */}
         {stepNumber && (
           <div
-            className="absolute top-1/2 -left-10 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-bold text-white shadow-md"
+            className="absolute -top-1 left-0 z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-md"
             style={{ backgroundColor: isLocked ? "#475569" : "#297496" }}
           >
             {stepNumber}
@@ -403,7 +696,13 @@ export function VoyageTreeIsland({
         {/* Lock icon */}
         {isLocked && <LockIcon />}
 
-        <IslandSvg size={size} status={status} scale={scale} />
+        <IslandSvg
+          size={size}
+          status={status}
+          scale={scale}
+          nodeType={nodeType}
+          claimStatus={claimStatus}
+        />
       </div>
 
       {/* Label */}
@@ -420,17 +719,11 @@ export function VoyageTreeIsland({
       </div>
 
       {/* Subtitle */}
-      {dropletCount !== undefined && (
+      {subtitleText !== null && (
         <div
-          className={`mt-1 text-center text-xs font-semibold ${
-            isCompleted
-              ? "text-green-700 dark:text-green-400"
-              : isLocked
-                ? "text-slate-400"
-                : "text-slate-600 dark:text-slate-300"
-          }`}
+          className={`mt-1 text-center text-xs font-semibold ${subtitleColorClass}`}
         >
-          {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
+          {subtitleText}
         </div>
       )}
 
@@ -448,8 +741,12 @@ export function VoyageTreeIsland({
     </div>
   );
 
-  if (slug && !isLocked) {
-    return <Link href={`/p/${slug}`}>{content}</Link>;
+  // Resolve href: explicit prop takes priority, then derive from slug + nodeType
+  const resolvedHref =
+    hrefProp ?? (slug ? (isDropletNode ? `/d/${slug}` : `/p/${slug}`) : null);
+
+  if (resolvedHref && !isLocked) {
+    return <Link href={resolvedHref}>{content}</Link>;
   }
 
   return content;

@@ -119,7 +119,6 @@ export type NavItem = {
   href: string;
   label: string;
   isHidden?: boolean;
-  icon?: React.ReactNode;
 };
 
 export type GeneralConfig = {
@@ -474,11 +473,14 @@ export interface VoyageNode {
   id: number;
   isMainPath: boolean;
   branchType: "required" | "optional";
-  nodeType: "playlist" | "checkpoint";
+  nodeType: "playlist" | "droplet";
   orderIndex: number;
   label: string;
   voyage?: Voyage;
   playlist?: Playlist;
+  droplet?: Droplet;
+  claimedBy?: AuthorizedUser;
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
   parentNode?: VoyageNode | null;
   childNodes?: VoyageNode[];
 }
