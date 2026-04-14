@@ -15,8 +15,8 @@ import { getCachedUserSocial } from "@/lib/requests/cached";
 import { getTags } from "@/lib/requests/tag";
 
 export const metadata: Metadata = {
-  title: "Feed",
-  description: "Your personalized feed and content dashboard.",
+  title: "Activity",
+  description: "Your personalized activity and content dashboard.",
 };
 
 type Props = {

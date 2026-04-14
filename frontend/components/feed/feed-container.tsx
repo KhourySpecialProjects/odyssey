@@ -115,11 +115,12 @@ export function FeedContainer({
                   </p>
                   <ul className="space-y-2">
                     {pendingRequests.slice(0, 3).map((request) => (
-                      <FriendRequestFeedBlock
-                        user={authUser}
-                        request={request}
-                        key={request.id}
-                      />
+                      <li key={request.id}>
+                        <FriendRequestFeedBlock
+                          user={authUser}
+                          request={request}
+                        />
+                      </li>
                     ))}
                   </ul>
                   {pendingRequests.length > 3 && (
@@ -136,27 +137,31 @@ export function FeedContainer({
 
               {/* Friends list */}
               {friendUsers.length > 0 ? (
-                <ul className="space-y-1">
-                  {friendUsers.slice(0, 10).map((friend) => (
-                    <li key={friend.id}>
-                      <Link
-                        href={`/prof/${friend.email?.replace("@northeastern.edu", "")}`}
-                        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-                      >
-                        <Avatar variant="round" size="xs">
-                          <AvatarImage src={friend.profilePhoto || undefined} />
-                          <AvatarFallback className="text-[10px]">
-                            {getInitials(
-                              `${friend.firstName} ${friend.lastName}`,
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="truncate text-sm text-[#344054] dark:text-slate-300">
-                          {friend.firstName} {friend.lastName}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                <>
+                  <ul className="space-y-1">
+                    {friendUsers.slice(0, 10).map((friend) => (
+                      <li key={friend.id}>
+                        <Link
+                          href={`/prof/${friend.email?.replace("@northeastern.edu", "")}`}
+                          className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                        >
+                          <Avatar variant="round" size="xs">
+                            <AvatarImage
+                              src={friend.profilePhoto || undefined}
+                            />
+                            <AvatarFallback className="text-[10px]">
+                              {getInitials(
+                                `${friend.firstName} ${friend.lastName}`,
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate text-sm text-[#344054] dark:text-slate-300">
+                            {friend.firstName} {friend.lastName}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                   {friendUsers.length > 10 && (
                     <Link
                       href="/settings/friends"
@@ -165,7 +170,7 @@ export function FeedContainer({
                       View all {friendUsers.length} friends
                     </Link>
                   )}
-                </ul>
+                </>
               ) : (
                 <p className="text-center text-sm text-[#667085] dark:text-slate-400">
                   You have no friends :(
