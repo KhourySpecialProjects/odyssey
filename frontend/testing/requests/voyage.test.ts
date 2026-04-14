@@ -234,10 +234,4 @@ describe("createVoyageWithNodes", () => {
     });
     expect(revalidateTag).not.toHaveBeenCalled();
   });
-
-  // Empty-nodes support was removed when VoyageTreeSchema added the
-  // nodes.min(1) constraint. A voyage must have at least one playlist
-  // to be meaningful, and the form UI now enforces this too. See
-  // voyage-phase2.test.ts for the new validation path coverage.
-  it.skip("creates voyage with no nodes successfully (superseded)", () => {});
 });

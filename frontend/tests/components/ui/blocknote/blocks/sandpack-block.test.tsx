@@ -239,17 +239,26 @@ describe("SandpackBlockComponent rendering", () => {
     jest.restoreAllMocks();
   });
 
-  // Helper to import and render the inner component directly
-  // We test the rendered output by importing the file
-  // NOTE: BlockImplementation.render has a typed `this` context
-  // (prosemirror NodeView internals) that cannot be called outside BlockNote's
-  // runtime without `as any`. The FileActions tests below cover the real
-  // rendering path via SandpackBlockContent directly.
-  it.skip("shows template selector in author mode", async () => {
-    // Skipped: calling blockSpec.implementation.render(block, editor) directly
-    // triggers a TS2684 'this' context error because BlockSpec is typed for
-    // internal BlockNote/prosemirror use. Use SandpackBlockContent directly
-    // (see FileActions describe block) for render testing instead.
+  it("shows template selector in author mode", async () => {
+    const { SandpackBlockContent } = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+
+    const editor = { isEditable: true, updateBlock: jest.fn() };
+    const block = {
+      id: "block-123",
+      type: "sandpack-block",
+      props: {
+        template: "vanilla",
+        files: "{}",
+        showPreview: true,
+        editable: true,
+      },
+    };
+
+    render(<SandpackBlockContent block={block} editor={editor} />);
+
+    expect(screen.getByTestId("template-selector")).toBeInTheDocument();
   });
 });
 
