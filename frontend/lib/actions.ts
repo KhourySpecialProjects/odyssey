@@ -17,6 +17,7 @@ import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createAuthorizedUser } from "./requests/authorized-user";
 import { claimNodeForUser } from "./requests/voyage-enrollment";
+import { requireRole } from "./auth/require-role";
 import { creationRequestSchema } from "./validations/creation-request";
 import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
@@ -170,10 +171,16 @@ export async function deleteImage(fileName: string) {
   }
 }
 
-export async function setTimeZone(zone: string, userId: number) {
+export async function setTimeZone(zone: string) {
+  const auth = await requireRole([]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+  const { user } = auth;
+
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      `${STRAPI_API_URL}/api/authorized-users/${user.id}`,
       {
         method: "PUT",
         headers: {

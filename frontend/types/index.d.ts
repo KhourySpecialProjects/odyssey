@@ -455,6 +455,7 @@ export type CreationRequest = {
   motivation: String;
   dropletIdea: String;
   user: AuthorizedUser;
+  voyageNode?: VoyageNode;
 };
 
 export interface Voyage {

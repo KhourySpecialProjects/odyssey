@@ -132,7 +132,15 @@ export default async function VoyagePage({ params }: Props) {
   const firstIncompleteNode = isEnrolled
     ? findFirstIncompleteNode(voyageNodes, completedNodeIds)
     : null;
-  const firstIncompleteSlug = firstIncompleteNode?.playlist?.slug ?? undefined;
+  const firstIncompleteHref = firstIncompleteNode
+    ? firstIncompleteNode.nodeType === "droplet"
+      ? firstIncompleteNode.droplet?.slug
+        ? `/d/${firstIncompleteNode.droplet.slug}`
+        : `/v/${voyage.slug}/unclaimed/${firstIncompleteNode.id}`
+      : firstIncompleteNode.playlist?.slug
+        ? `/p/${firstIncompleteNode.playlist.slug}`
+        : "#"
+    : undefined;
 
   const totalDroplets = treeNodes.reduce(
     (sum, n) => sum + (n.dropletCount ?? 0),
@@ -185,7 +193,7 @@ export default async function VoyagePage({ params }: Props) {
                     voyageId={voyage.id}
                     enrollment={enrollment}
                     completionPercentage={completionPercentage}
-                    firstIncompleteSlug={firstIncompleteSlug}
+                    firstIncompleteHref={firstIncompleteHref}
                   />
                 ) : null}
 
@@ -281,7 +289,9 @@ export default async function VoyagePage({ params }: Props) {
                           ? main.slug
                             ? `/d/${main.slug}`
                             : `/v/${voyage.slug}/unclaimed/${main.id}`
-                          : `/p/${main.slug ?? ""}`;
+                          : main.slug
+                            ? `/p/${main.slug}`
+                            : "#";
 
                         const nodeSubtitle = isPlaceholder
                           ? "Become author!"
@@ -386,7 +396,9 @@ export default async function VoyagePage({ params }: Props) {
                             ? branch.slug
                               ? `/d/${branch.slug}`
                               : `/v/${voyage.slug}/unclaimed/${branch.id}`
-                            : `/p/${branch.slug ?? ""}`;
+                            : branch.slug
+                              ? `/p/${branch.slug}`
+                              : "#";
                           const branchSubtitle = branchIsPlaceholder
                             ? "Become author!"
                             : branchIsDroplet
