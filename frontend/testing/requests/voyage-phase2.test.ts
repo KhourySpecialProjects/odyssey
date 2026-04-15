@@ -78,20 +78,26 @@ function mockUnauthenticated() {
 /** A minimal valid node that satisfies VoyageTreeSchema node requirements. */
 function makeValidNode(
   overrides: Partial<{
-    playlistId: number;
+    localId: string;
+    nodeType: "playlist" | "droplet";
+    playlistId: number | null;
+    dropletId: number | null;
     label: string;
     isMainPath: boolean;
     branchType: "required" | "optional";
-    parentPlaylistId: number | null;
+    parentLocalId: string | null;
     orderIndex: number;
   }> = {},
 ) {
   return {
+    localId: "local-1",
+    nodeType: "playlist" as const,
     playlistId: 1,
+    dropletId: null,
     label: "Intro",
     isMainPath: true,
     branchType: "required" as const,
-    parentPlaylistId: null,
+    parentLocalId: null,
     orderIndex: 0,
     ...overrides,
   };
@@ -140,8 +146,9 @@ describe("createVoyageWithNodes — Zod validation (Task 1)", () => {
       name: "Circular Voyage",
       nodes: [
         makeValidNode({
+          localId: "self-ref",
           playlistId: 5,
-          parentPlaylistId: 5, // self-reference
+          parentLocalId: "self-ref", // self-reference
           isMainPath: false,
         }),
       ],
@@ -151,7 +158,7 @@ describe("createVoyageWithNodes — Zod validation (Task 1)", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a branch node whose parentPlaylistId does not exist in the nodes list (orphan)", async () => {
+  it("rejects a branch node whose parentLocalId does not exist in the nodes list (orphan)", async () => {
     mockAsAdmin();
 
     const result = await createVoyageWithNodes({
@@ -159,7 +166,7 @@ describe("createVoyageWithNodes — Zod validation (Task 1)", () => {
       nodes: [
         makeValidNode({
           playlistId: 10,
-          parentPlaylistId: 999, // 999 is not in the list
+          parentLocalId: "nonexistent-id", // not in the list
           isMainPath: false,
         }),
       ],

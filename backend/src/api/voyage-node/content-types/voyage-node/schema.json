@@ -22,7 +22,7 @@
     },
     "nodeType": {
       "type": "enumeration",
-      "enum": ["playlist", "checkpoint"],
+      "enum": ["playlist", "droplet"],
       "required": true,
       "default": "playlist"
     },
@@ -44,6 +44,20 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::playlist.playlist"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "claimedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "claimStatus": {
+      "type": "enumeration",
+      "enum": ["unclaimed", "claimed", "authored"]
     },
     "parentNode": {
       "type": "relation",

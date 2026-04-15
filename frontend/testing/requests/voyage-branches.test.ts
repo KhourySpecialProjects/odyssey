@@ -73,14 +73,17 @@ function makeFacultyAuth(userId = 10) {
   };
 }
 
-// Minimal valid node for createVoyageWithNodes
+// Minimal valid node for createVoyageWithNodes (new NodeInput shape)
 function makeMainNode(playlistId: number, orderIndex = 0) {
   return {
+    localId: `local-${playlistId}`,
+    nodeType: "playlist" as const,
     playlistId,
+    dropletId: null,
     label: `Node ${playlistId}`,
     isMainPath: true,
     branchType: "required" as const,
-    parentPlaylistId: null,
+    parentLocalId: null,
     orderIndex,
   };
 }
@@ -91,11 +94,15 @@ function makeBranchNode(
   orderIndex = 1,
 ) {
   return {
+    localId: `local-branch-${playlistId}`,
+    nodeType: "playlist" as const,
     playlistId,
+    dropletId: null,
     label: `Branch ${playlistId}`,
     isMainPath: false,
     branchType: "optional" as const,
-    parentPlaylistId,
+    parentLocalId:
+      parentPlaylistId != null ? `local-${parentPlaylistId}` : null,
     orderIndex,
   };
 }

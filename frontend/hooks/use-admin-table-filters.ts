@@ -35,6 +35,8 @@ interface UseAdminTableFiltersReturn<T> {
   hasActiveFilters: boolean;
 }
 
+const ALWAYS_PASS = () => true;
+
 export function useAdminTableFilters<T>(
   config: UseAdminTableFiltersConfig<T>,
 ): UseAdminTableFiltersReturn<T> {
@@ -42,7 +44,7 @@ export function useAdminTableFilters<T>(
     items,
     searchFn,
     sortFn,
-    filterFn = () => true,
+    filterFn = ALWAYS_PASS,
     defaultSort = "name-asc",
     itemsPerPage = 8,
   } = config;

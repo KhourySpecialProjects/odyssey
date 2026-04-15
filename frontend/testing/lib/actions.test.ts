@@ -812,6 +812,13 @@ describe("Server Actions", () => {
         json: () => Promise.resolve({ data: { id: 1 } }),
       });
 
+      // Mock fetching creation request (check for voyageNode)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ data: { attributes: { voyageNode: null } } }),
+      });
+
       // Mock deleting creation request
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -823,7 +830,7 @@ describe("Server Actions", () => {
       expect(result).toEqual({ ok: true, error: null, data: null });
       expect(mockedRevalidateTag).toHaveBeenCalledWith("users");
       expect(mockedRevalidateTag).toHaveBeenCalledWith("creation-requests");
-      expect(global.fetch).toHaveBeenCalledTimes(4);
+      expect(global.fetch).toHaveBeenCalledTimes(5);
     });
 
     it("skips role update if user already has Content Creator role", async () => {
@@ -851,6 +858,13 @@ describe("Server Actions", () => {
           }),
       });
 
+      // Mock fetching creation request (check for voyageNode)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ data: { attributes: { voyageNode: null } } }),
+      });
+
       // Mock deleting creation request (skips role update)
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -860,7 +874,7 @@ describe("Server Actions", () => {
       const result = await approveCreationRequest("123", 1);
 
       expect(result).toEqual({ ok: true, error: null, data: null });
-      expect(global.fetch).toHaveBeenCalledTimes(3); // No role update call
+      expect(global.fetch).toHaveBeenCalledTimes(4); // No role update call
     });
 
     it("handles failure to fetch user data", async () => {
@@ -999,6 +1013,14 @@ describe("Server Actions", () => {
         json: () => Promise.resolve({ data: [{ id: 2 }] }),
       });
 
+      // Mock fetching creation request (check for voyageNode)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ data: { attributes: { voyageNode: null } } }),
+      });
+
+      // Mock DELETE fails
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
       });

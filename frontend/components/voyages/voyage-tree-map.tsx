@@ -4,15 +4,18 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { VoyageTreeIsland, ISLAND_SVG_DIMENSIONS } from "./voyage-tree-island";
 
 export interface TreeNode {
-  id: number;
+  id: number | string;
   label: string;
   slug?: string;
+  href?: string;
   dropletCount?: number;
   isMainPath: boolean;
   branchType: "required" | "optional";
-  parentId?: number | null;
+  parentId?: number | string | null;
   orderIndex: number;
   status?: "completed" | "available" | "locked";
+  nodeType: "playlist" | "droplet";
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
 }
 
 interface VoyageTreeMapProps {
@@ -63,7 +66,7 @@ function buildTree(nodes: TreeNode[]): LayoutNode[] {
     .filter((n) => n.isMainPath)
     .sort((a, b) => a.orderIndex - b.orderIndex);
 
-  const getBranches = (parentId: number) =>
+  const getBranches = (parentId: number | string) =>
     nodes
       .filter((n) => !n.isMainPath && n.parentId === parentId)
       .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -119,9 +122,10 @@ function assignPositions(
 
 /** Smooth bezier from bottom of parent to top of child, anchored to the
  *  rendered SVG geometry (not the layout box) so the line meets the island.
- *  A top offset prevents the line from overlapping the palm tree canopy. */
+ *  A top offset prevents the line from overlapping the palm tree canopy.
+ *  A bottom offset pushes the start below the label + subtitle text. */
 const TREE_CANOPY_OFFSET = 45;
-const LABEL_BELOW_OFFSET = 40;
+const LABEL_BELOW_OFFSET = 55;
 
 function bezierPath(
   px: number,
@@ -293,11 +297,14 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
                 <VoyageTreeIsland
                   label={layout.node.label}
                   slug={layout.node.slug}
+                  href={layout.node.href}
                   dropletCount={layout.node.dropletCount}
                   size={isMain ? "main" : "branch"}
                   status={layout.node.status}
                   stepNumber={isMain ? mainStep : undefined}
                   scale={svgScale}
+                  nodeType={layout.node.nodeType}
+                  claimStatus={layout.node.claimStatus}
                 />
               </div>
             );

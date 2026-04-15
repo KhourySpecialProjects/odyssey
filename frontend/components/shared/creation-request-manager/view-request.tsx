@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Check, X, Lightbulb, Sparkles } from "lucide-react";
+import { Check, X, Lightbulb, Sparkles, MapPin } from "lucide-react";
 import { CreationRequest } from "@/types";
 import { approveCreationRequest, deleteCreationRequest } from "@/lib/actions";
 import { toast } from "sonner";
@@ -121,6 +121,35 @@ export function CreationRequestModal({
               </p>
             </div>
           </div>
+
+          {/* Voyage Node Context (when request is tied to a specific node) */}
+          {request.voyageNode && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-black dark:text-white" />
+                <h3 className="text-lg font-semibold text-black dark:text-white">
+                  Voyage Node
+                </h3>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  This application is tied to voyage node:{" "}
+                  <span className="font-semibold">
+                    {request.voyageNode.label}
+                  </span>
+                  {request.voyageNode.voyage && (
+                    <>
+                      {" "}
+                      in{" "}
+                      <span className="font-semibold">
+                        {request.voyageNode.voyage.name}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex gap-3 sm:gap-3">

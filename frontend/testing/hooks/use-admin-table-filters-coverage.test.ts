@@ -11,6 +11,11 @@
  * debounced function fires synchronously. This is the standard pattern
  * for unit-testing debounced React hooks and lets every test run in
  * real time without timer manipulation.
+ *
+ * IMPORTANT: Config objects must be built OUTSIDE the renderHook
+ * callback. Calling defaultConfig() inside the callback creates a new
+ * object on every React render cycle, which prevents act() from
+ * settling under Node 24 + jest 29 + React 18.
  */
 
 // Mock lodash/debounce so the search-debounce fires synchronously.
@@ -84,21 +89,13 @@ function defaultConfig(
 // Tests
 // ---------------------------------------------------------------------------
 
-// SKIPPED: even with lodash/debounce mocked synchronously, the
-// renderHook + this hook combo causes a runaway Node process (9+
-// minutes CPU, 1.8 GB RAM, no exit). The crash is in the V8 microtask
-// queue — likely a jest 29 + React 18 + Node 24 interaction, not
-// something this test code can fix. The hook itself works fine in
-// production. Tracked as a follow-up; needs jest/node version pinning
-// or a different test runner to investigate further.
-describe.skip("useAdminTableFilters", () => {
+describe("useAdminTableFilters", () => {
   // ── Initial state ────────────────────────────────────────────────────────
 
   describe("initial state", () => {
     it("returns all items sorted by default on first render", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.searchTerm).toBe("");
       expect(result.current.draftSortBy).toBe("name-asc");
@@ -108,34 +105,30 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("calculates totalPages correctly", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       // 10 items, 8 per page → 2 pages
       expect(result.current.totalPages).toBe(2);
     });
 
     it("returns only the first page of items", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.pageItems).toHaveLength(8);
     });
 
     it("uses defaultSort prop as initial sort value", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ defaultSort: "name-desc" })),
-      );
+      const config = defaultConfig({ defaultSort: "name-desc" });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.draftSortBy).toBe("name-desc");
     });
 
     it("respects custom itemsPerPage", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ itemsPerPage: 3 })),
-      );
+      const config = defaultConfig({ itemsPerPage: 3 });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.pageItems).toHaveLength(3);
       expect(result.current.totalPages).toBe(4); // ceil(10/3) = 4
@@ -146,9 +139,8 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("empty items", () => {
     it("handles an empty items array without errors", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ items: [] })),
-      );
+      const config = defaultConfig({ items: [] });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.pageItems).toHaveLength(0);
       expect(result.current.totalPages).toBe(0);
@@ -159,9 +151,8 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("pagination", () => {
     it("setCurrentPage navigates to a different page", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setCurrentPage(2);
@@ -176,9 +167,8 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("search", () => {
     it("updates searchTerm immediately on input", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.handleSearch(makeEvent("al"));
@@ -189,9 +179,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("filters items when search input changes", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.handleSearch(makeEvent("alpha"));
@@ -202,9 +191,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("resets to page 1 after search completes", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       // Navigate away from page 1 first
       act(() => {
@@ -219,9 +207,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("returns empty results when search matches nothing", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.handleSearch(makeEvent("zzz_no_match"));
@@ -232,9 +219,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("clears search when empty string is entered", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       // Search then clear
       act(() => {
@@ -253,9 +239,8 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("sort", () => {
     it("setDraftSortBy updates draftSortBy without affecting active sort", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setDraftSortBy("name-desc");
@@ -267,9 +252,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleSortApply commits the draft sort and re-sorts items", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setDraftSortBy("name-desc");
@@ -283,9 +267,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleSortApply resets to page 1", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig()),
-      );
+      const config = defaultConfig();
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setCurrentPage(2);
@@ -302,9 +285,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleSortReset reverts to defaultSort", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ defaultSort: "name-asc" })),
-      );
+      const config = defaultConfig({ defaultSort: "name-asc" });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setDraftSortBy("name-desc");
@@ -326,9 +308,8 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("filter", () => {
     it("toggleDraftFilter adds a value not already in draftFilters", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.toggleDraftFilter("A");
@@ -338,9 +319,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("toggleDraftFilter removes a value already in draftFilters", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.toggleDraftFilter("A");
@@ -354,9 +334,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleFilterApply commits draftFilters and filters items", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.toggleDraftFilter("A");
@@ -371,9 +350,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleFilterApply resets pagination to page 1", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.setCurrentPage(2);
@@ -390,9 +368,8 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("handleFilterReset clears all filters and shows all items", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.toggleDraftFilter("A");
@@ -411,17 +388,15 @@ describe.skip("useAdminTableFilters", () => {
     });
 
     it("hasActiveFilters is false when no filters are applied", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       expect(result.current.hasActiveFilters).toBe(false);
     });
 
     it("can toggle multiple filters independently", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters(defaultConfig({ filterFn })),
-      );
+      const config = defaultConfig({ filterFn });
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
       act(() => {
         result.current.toggleDraftFilter("A");
@@ -467,15 +442,14 @@ describe.skip("useAdminTableFilters", () => {
 
   describe("filterFn default (no filterFn provided)", () => {
     it("works without filterFn config — all items pass through", () => {
-      const { result } = renderHook(() =>
-        useAdminTableFilters({
-          items: ITEMS,
-          searchFn,
-          sortFn,
-        }),
-      );
+      const config = {
+        items: ITEMS,
+        searchFn,
+        sortFn,
+      };
+      const { result } = renderHook(() => useAdminTableFilters(config));
 
-      // No filterFn: default is () => true, so all items pass
+      // No filterFn: default is ALWAYS_PASS, so all items pass
       expect(result.current.pageItems).toHaveLength(8);
     });
   });

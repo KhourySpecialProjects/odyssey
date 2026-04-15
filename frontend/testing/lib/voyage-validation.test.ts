@@ -1,16 +1,19 @@
 import { voyageSchema, VoyageTreeSchema } from "@/lib/validations/voyage";
 
-// Helper: build a minimal valid node
+// Helper: build a minimal valid node using localId-based identity
 const makeNode = (
-  playlistId: number,
-  parentPlaylistId: number | null = null,
+  localId: string,
+  parentLocalId: string | null = null,
   orderIndex: number = 0,
 ) => ({
-  playlistId,
-  label: `Island ${playlistId}`,
-  isMainPath: parentPlaylistId === null,
+  localId,
+  nodeType: "playlist" as const,
+  playlistId: parseInt(localId.replace(/\D/g, "") || "1"),
+  dropletId: null,
+  label: `Island ${localId}`,
+  isMainPath: parentLocalId === null,
   branchType: "required" as const,
-  parentPlaylistId,
+  parentLocalId,
   orderIndex,
 });
 
@@ -19,7 +22,7 @@ describe("VoyageTreeSchema", () => {
     it("rejects empty name", () => {
       const result = VoyageTreeSchema.safeParse({
         name: "",
-        nodes: [makeNode(1)],
+        nodes: [makeNode("1")],
       });
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -30,7 +33,7 @@ describe("VoyageTreeSchema", () => {
     it("accepts a valid name", () => {
       const result = VoyageTreeSchema.safeParse({
         name: "ML Fundamentals",
-        nodes: [makeNode(1)],
+        nodes: [makeNode("1")],
       });
       expect(result.success).toBe(true);
     });
@@ -52,7 +55,7 @@ describe("VoyageTreeSchema", () => {
     it("accepts a single main node", () => {
       const result = VoyageTreeSchema.safeParse({
         name: "Test Voyage",
-        nodes: [makeNode(1)],
+        nodes: [makeNode("1")],
       });
       expect(result.success).toBe(true);
     });
@@ -61,7 +64,7 @@ describe("VoyageTreeSchema", () => {
   describe("max 8 main path nodes", () => {
     it("accepts exactly 8 main nodes", () => {
       const nodes = Array.from({ length: 8 }, (_, i) =>
-        makeNode(i + 1, null, i),
+        makeNode(String(i + 1), null, i),
       );
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(true);
@@ -69,7 +72,7 @@ describe("VoyageTreeSchema", () => {
 
     it("rejects 9 main nodes", () => {
       const nodes = Array.from({ length: 9 }, (_, i) =>
-        makeNode(i + 1, null, i),
+        makeNode(String(i + 1), null, i),
       );
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(false);
@@ -83,11 +86,11 @@ describe("VoyageTreeSchema", () => {
   describe("max 4 branches per parent", () => {
     it("accepts exactly 4 branches on one parent", () => {
       const nodes = [
-        makeNode(1, null, 0), // main node, playlistId=1
-        makeNode(2, 1, 0),
-        makeNode(3, 1, 1),
-        makeNode(4, 1, 2),
-        makeNode(5, 1, 3),
+        makeNode("1", null, 0), // main node, localId="1"
+        makeNode("2", "1", 0),
+        makeNode("3", "1", 1),
+        makeNode("4", "1", 2),
+        makeNode("5", "1", 3),
       ];
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(true);
@@ -95,12 +98,12 @@ describe("VoyageTreeSchema", () => {
 
     it("rejects 5 branches on one parent", () => {
       const nodes = [
-        makeNode(1, null, 0),
-        makeNode(2, 1, 0),
-        makeNode(3, 1, 1),
-        makeNode(4, 1, 2),
-        makeNode(5, 1, 3),
-        makeNode(6, 1, 4),
+        makeNode("1", null, 0),
+        makeNode("2", "1", 0),
+        makeNode("3", "1", 1),
+        makeNode("4", "1", 2),
+        makeNode("5", "1", 3),
+        makeNode("6", "1", 4),
       ];
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(false);
@@ -112,18 +115,18 @@ describe("VoyageTreeSchema", () => {
 
     it("allows 4 branches on each of multiple parents", () => {
       const nodes = [
-        makeNode(1, null, 0),
-        makeNode(2, null, 1),
+        makeNode("1", null, 0),
+        makeNode("2", null, 1),
         // 4 branches on node 1
-        makeNode(10, 1, 0),
-        makeNode(11, 1, 1),
-        makeNode(12, 1, 2),
-        makeNode(13, 1, 3),
+        makeNode("10", "1", 0),
+        makeNode("11", "1", 1),
+        makeNode("12", "1", 2),
+        makeNode("13", "1", 3),
         // 4 branches on node 2
-        makeNode(20, 2, 0),
-        makeNode(21, 2, 1),
-        makeNode(22, 2, 2),
-        makeNode(23, 2, 3),
+        makeNode("20", "2", 0),
+        makeNode("21", "2", 1),
+        makeNode("22", "2", 2),
+        makeNode("23", "2", 3),
       ];
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(true);
@@ -132,14 +135,17 @@ describe("VoyageTreeSchema", () => {
 
   describe("no circular references", () => {
     it("rejects a node that is its own parent", () => {
-      // node with playlistId=1 has parentPlaylistId=1 (self-reference)
+      // node with localId="node-a" has parentLocalId="node-a" (self-reference)
       const nodes = [
         {
+          localId: "node-a",
+          nodeType: "playlist" as const,
           playlistId: 1,
+          dropletId: null,
           label: "Self-referencing",
           isMainPath: false,
           branchType: "required" as const,
-          parentPlaylistId: 1,
+          parentLocalId: "node-a",
           orderIndex: 0,
         },
       ];
@@ -152,12 +158,12 @@ describe("VoyageTreeSchema", () => {
     });
   });
 
-  describe("valid parentPlaylistId for branch nodes", () => {
-    it("rejects a branch node whose parentPlaylistId does not exist", () => {
+  describe("valid parentLocalId for branch nodes", () => {
+    it("rejects a branch node whose parentLocalId does not exist", () => {
       const nodes = [
-        makeNode(1, null, 0),
-        // parentPlaylistId=999 doesn't exist in the nodes list
-        makeNode(2, 999, 0),
+        makeNode("1", null, 0),
+        // parentLocalId="999" doesn't exist in the nodes list
+        makeNode("2", "999", 0),
       ];
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(false);
@@ -167,8 +173,8 @@ describe("VoyageTreeSchema", () => {
       }
     });
 
-    it("accepts a branch node whose parentPlaylistId exists", () => {
-      const nodes = [makeNode(1, null, 0), makeNode(2, 1, 0)];
+    it("accepts a branch node whose parentLocalId exists", () => {
+      const nodes = [makeNode("1", null, 0), makeNode("2", "1", 0)];
       const result = VoyageTreeSchema.safeParse({ name: "Test", nodes });
       expect(result.success).toBe(true);
     });
@@ -178,7 +184,7 @@ describe("VoyageTreeSchema", () => {
     it("accepts no description", () => {
       const result = VoyageTreeSchema.safeParse({
         name: "Test Voyage",
-        nodes: [makeNode(1)],
+        nodes: [makeNode("1")],
       });
       expect(result.success).toBe(true);
     });
@@ -187,7 +193,100 @@ describe("VoyageTreeSchema", () => {
       const result = VoyageTreeSchema.safeParse({
         name: "Test Voyage",
         description: "Learn the basics.",
-        nodes: [makeNode(1)],
+        nodes: [makeNode("1")],
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("droplet node support", () => {
+    it("accepts a droplet node with a dropletId", () => {
+      const result = VoyageTreeSchema.safeParse({
+        name: "Test Voyage",
+        nodes: [
+          {
+            localId: "node-1",
+            nodeType: "droplet" as const,
+            playlistId: null,
+            dropletId: 42,
+            label: "My Droplet",
+            isMainPath: true,
+            branchType: "required" as const,
+            parentLocalId: null,
+            orderIndex: 0,
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts a placeholder droplet node (no dropletId)", () => {
+      const result = VoyageTreeSchema.safeParse({
+        name: "Test Voyage",
+        nodes: [
+          {
+            localId: "node-1",
+            nodeType: "droplet" as const,
+            playlistId: null,
+            dropletId: null,
+            label: "Unclaimed Placeholder",
+            isMainPath: true,
+            branchType: "required" as const,
+            parentLocalId: null,
+            orderIndex: 0,
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects a playlist node with a null playlistId", () => {
+      const result = VoyageTreeSchema.safeParse({
+        name: "Test Voyage",
+        nodes: [
+          {
+            localId: "node-1",
+            nodeType: "playlist" as const,
+            playlistId: null,
+            dropletId: null,
+            label: "Missing Playlist",
+            isMainPath: true,
+            branchType: "required" as const,
+            parentLocalId: null,
+            orderIndex: 0,
+          },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("accepts mixed playlist and droplet nodes", () => {
+      const result = VoyageTreeSchema.safeParse({
+        name: "Mixed Voyage",
+        nodes: [
+          {
+            localId: "playlist-node",
+            nodeType: "playlist" as const,
+            playlistId: 1,
+            dropletId: null,
+            label: "Playlist Island",
+            isMainPath: true,
+            branchType: "required" as const,
+            parentLocalId: null,
+            orderIndex: 0,
+          },
+          {
+            localId: "droplet-node",
+            nodeType: "droplet" as const,
+            playlistId: null,
+            dropletId: 99,
+            label: "Droplet Island",
+            isMainPath: true,
+            branchType: "required" as const,
+            parentLocalId: null,
+            orderIndex: 1,
+          },
+        ],
       });
       expect(result.success).toBe(true);
     });
@@ -196,10 +295,10 @@ describe("VoyageTreeSchema", () => {
 
 // Legacy schema still works for backwards compatibility
 describe("voyageSchema (legacy)", () => {
-  it("validates legacy playlists-based structure", () => {
+  it("validates localId-based structure", () => {
     const result = voyageSchema.safeParse({
       name: "ML Fundamentals",
-      nodes: [makeNode(1)],
+      nodes: [makeNode("1")],
     });
     expect(result.success).toBe(true);
   });
@@ -207,7 +306,7 @@ describe("voyageSchema (legacy)", () => {
   it("rejects empty name", () => {
     const result = voyageSchema.safeParse({
       name: "",
-      nodes: [makeNode(1)],
+      nodes: [makeNode("1")],
     });
     expect(result.success).toBe(false);
   });

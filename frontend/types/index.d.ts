@@ -455,6 +455,7 @@ export type CreationRequest = {
   motivation: String;
   dropletIdea: String;
   user: AuthorizedUser;
+  voyageNode?: VoyageNode;
 };
 
 export interface Voyage {
@@ -474,11 +475,14 @@ export interface VoyageNode {
   id: number;
   isMainPath: boolean;
   branchType: "required" | "optional";
-  nodeType: "playlist" | "checkpoint";
+  nodeType: "playlist" | "droplet";
   orderIndex: number;
   label: string;
   voyage?: Voyage;
   playlist?: Playlist;
+  droplet?: Droplet;
+  claimedBy?: AuthorizedUser;
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
   parentNode?: VoyageNode | null;
   childNodes?: VoyageNode[];
 }

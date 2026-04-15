@@ -5,8 +5,8 @@ import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { VoyageTreeSchema } from "@/lib/validations/voyage";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
@@ -54,11 +54,14 @@ async function postNode(
 }
 
 interface NodeInput {
-  playlistId: number;
+  localId: string;
+  nodeType: "playlist" | "droplet";
+  playlistId: number | null;
+  dropletId: number | null;
   label: string;
   isMainPath: boolean;
   branchType: "required" | "optional";
-  parentPlaylistId: number | null;
+  parentLocalId: string | null;
   orderIndex: number;
 }
 
@@ -70,46 +73,67 @@ async function createVoyageNodes(
   voyageId: number,
   nodes: NodeInput[],
 ): Promise<string | null> {
-  const mainNodes = nodes.filter((n) => n.isMainPath);
-  const branchNodes = nodes.filter((n) => !n.isMainPath);
-  const playlistIdToNodeId = new Map<number, number>();
+  const mainNodes = nodes.filter((n) => n.parentLocalId === null);
+  const branchNodes = nodes.filter((n) => n.parentLocalId !== null);
+  const localIdToNodeId = new Map<string, number>();
 
   // Main path nodes must be sequential (branches reference their IDs)
   for (const node of mainNodes) {
-    const { ok, error, nodeId } = await postNode({
+    const nodeBody: Record<string, unknown> = {
       voyage: voyageId,
-      playlist: node.playlistId,
       label: node.label,
       isMainPath: true,
       branchType: node.branchType,
-      nodeType: "playlist",
+      nodeType: node.nodeType,
       orderIndex: node.orderIndex,
-    });
+    };
 
+    if (node.nodeType === "playlist") {
+      nodeBody.playlist = node.playlistId;
+    } else {
+      // droplet node
+      if (node.dropletId != null) {
+        nodeBody.droplet = node.dropletId;
+      } else {
+        nodeBody.claimStatus = "unclaimed";
+      }
+    }
+
+    const { ok, error, nodeId } = await postNode(nodeBody);
     if (!ok) return error;
-    playlistIdToNodeId.set(node.playlistId, nodeId!);
+    localIdToNodeId.set(node.localId, nodeId!);
   }
 
-  // Branch nodes resolve parent by playlistId -> Strapi node ID
+  // Branch nodes resolve parent by localId -> Strapi node ID
   for (const node of branchNodes) {
     const parentNodeId =
-      node.parentPlaylistId != null
-        ? playlistIdToNodeId.get(node.parentPlaylistId) ?? null
+      node.parentLocalId != null
+        ? localIdToNodeId.get(node.parentLocalId) ?? null
         : null;
 
-    if (parentNodeId === null && node.parentPlaylistId != null) {
-      return `Branch node "${node.label}" references unknown parent playlist.`;
+    if (parentNodeId === null && node.parentLocalId != null) {
+      return `Branch node "${node.label}" references unknown parent.`;
     }
 
     const nodeBody: Record<string, unknown> = {
       voyage: voyageId,
-      playlist: node.playlistId,
       label: node.label,
       isMainPath: false,
       branchType: node.branchType,
-      nodeType: "playlist",
+      nodeType: node.nodeType,
       orderIndex: node.orderIndex,
     };
+
+    if (node.nodeType === "playlist") {
+      nodeBody.playlist = node.playlistId;
+    } else {
+      if (node.dropletId != null) {
+        nodeBody.droplet = node.dropletId;
+      } else {
+        nodeBody.claimStatus = "unclaimed";
+      }
+    }
+
     if (parentNodeId != null) nodeBody.parentNode = parentNodeId;
 
     const { ok, error } = await postNode(nodeBody);
@@ -131,12 +155,21 @@ export async function getVoyages(): Promise<Voyage[]> {
     },
     populate: {
       voyage_nodes: {
-        fields: ["id", "isMainPath", "branchType", "orderIndex", "label"],
+        fields: [
+          "id",
+          "isMainPath",
+          "branchType",
+          "orderIndex",
+          "label",
+          "nodeType",
+          "claimStatus",
+        ],
         populate: {
           playlist: {
             fields: ["id", "slug", "name"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "slug", "name", "status"] },
           parentNode: { fields: ["id"] },
         },
       },
@@ -170,12 +203,13 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
         fields: ["id", "firstName", "email"],
       },
       voyage_nodes: {
-        fields: ["id", "isMainPath"],
+        fields: ["id", "isMainPath", "nodeType", "claimStatus"],
         populate: {
           playlist: {
             fields: ["id"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "status"] },
         },
       },
     },
@@ -261,29 +295,30 @@ export async function createVoyageWithNodes(data: {
   authorId?: number;
   nodes: NodeInput[];
 }) {
-  const auth = await requireRole([
+  const gate = await requireRole([
     AuthorizedUserRoleTitle.SysAdmin,
     AuthorizedUserRoleTitle.Faculty,
   ]);
-  if (!auth.ok) {
+  if (!gate.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
 
-  // Validate the incoming tree before touching Strapi. Catches circular refs,
-  // orphan parents, branch limits, and empty names before any network I/O.
-  const parseResult = VoyageTreeSchema.safeParse(data);
-  if (!parseResult.success) {
+  const parsed = VoyageTreeSchema.safeParse({
+    name: data.name,
+    description: data.description,
+    nodes: data.nodes,
+  });
+  if (!parsed.success) {
     return { ok: false, error: "invalid_input", data: null };
   }
-  const validated = parseResult.data;
 
   try {
-    // Step 1: create the voyage record
-    const slug = generateSlug(validated.name);
+    // Phase 1: create the voyage record
+    const slug = generateSlug(data.name);
     const voyageBody: Record<string, unknown> = {
-      name: validated.name,
+      name: data.name,
       slug,
-      description: validated.description ?? "",
+      description: data.description ?? "",
       status: data.status ?? "draft",
       isSequential: data.isSequential ?? false,
     };
@@ -302,9 +337,18 @@ export async function createVoyageWithNodes(data: {
 
     const voyageData = await voyageResponse.json();
     if (!voyageResponse.ok || voyageData.error) {
+      const msg = voyageData.error?.message || "Failed to create voyage";
+      const isUnique =
+        msg.toLowerCase().includes("unique") ||
+        voyageData.error?.details?.errors?.some(
+          (e: { path: string[] }) =>
+            e.path?.includes("slug") || e.path?.includes("name"),
+        );
       return {
         ok: false,
-        error: voyageData.error?.message || "Failed to create voyage",
+        error: isUnique
+          ? "A voyage with this name already exists. Please choose a different name."
+          : msg,
         data: null,
       };
     }
@@ -314,8 +358,8 @@ export async function createVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Step 2: create voyage nodes
-    const nodeError = await createVoyageNodes(voyage.id, validated.nodes);
+    // Phase 2: create voyage nodes
+    const nodeError = await createVoyageNodes(voyage.id, data.nodes);
     if (nodeError) {
       // Best-effort cleanup of the orphaned voyage
       await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyage.id}`, {
@@ -344,33 +388,32 @@ export async function createVoyageWithNodes(data: {
 
 /**
  * Publishes a draft Voyage by setting its status to "published".
- * Faculty can only publish their own voyages; SysAdmin can publish any.
  */
 export async function publishVoyage(id: number) {
-  const auth = await requireRole([
+  const gate = await requireRole([
     AuthorizedUserRoleTitle.SysAdmin,
     AuthorizedUserRoleTitle.Faculty,
   ]);
-  if (!auth.ok) {
-    return { ok: false, error: "unauthenticated" };
+  if (!gate.ok) {
+    return { ok: false, error: gate.error };
   }
 
-  // SEV-2 ownership check: admins can publish any voyage; faculty only their own.
-  const isAdmin = auth.user.roles.some(
-    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
-  );
+  const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
+
   if (!isAdmin) {
-    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
-      urlParams: {
-        populate: { authors: { fields: ["id"] } },
-      },
+    // Faculty: verify ownership
+    const voyage = await fetchAPI<{
+      id: number;
+      authors?: { id: number }[];
+    } | null>(`/voyages/${id}`, {
+      urlParams: { populate: { authors: { fields: ["id"] } } },
       next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
     });
     if (!voyage) {
       return { ok: false, error: "not_found" };
     }
     const authorIds = voyage.authors?.map((a) => a.id) ?? [];
-    if (!authorIds.includes(auth.user.id)) {
+    if (!authorIds.includes(gate.user.id)) {
       return { ok: false, error: "forbidden" };
     }
   }
@@ -416,25 +459,17 @@ export async function updateVoyageWithNodes(data: {
   isSequential?: boolean;
   nodes: NodeInput[];
 }) {
-  const auth = await requireRole([
+  const updateGate = await requireRole([
     AuthorizedUserRoleTitle.SysAdmin,
     AuthorizedUserRoleTitle.Faculty,
   ]);
-  if (!auth.ok) {
+  if (!updateGate.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
-
-  // Validate the incoming tree before touching Strapi. This prevents
-  // deleting existing nodes only to fail during re-creation.
-  const parseResult = VoyageTreeSchema.safeParse(data);
-  if (!parseResult.success) {
-    return { ok: false, error: "invalid_input", data: null };
-  }
-
   try {
     const slug = generateSlug(data.name);
 
-    // Step 1: PUT the voyage record
+    // Phase 1: PUT the voyage record
     const voyageResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${data.id}`,
       {
@@ -465,7 +500,7 @@ export async function updateVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Step 2: Delete all existing nodes for this voyage (paginated, with error checking)
+    // Phase 2: Delete all existing nodes for this voyage (paginated, with error checking)
     const allNodeIds: number[] = [];
     let page = 1;
     for (;;) {
@@ -502,7 +537,7 @@ export async function updateVoyageWithNodes(data: {
       }),
     );
 
-    // Step 3: Re-create nodes (main path first, then branches)
+    // Phase 3: Re-create nodes (main path first, then branches)
     const nodeError = await createVoyageNodes(data.id, data.nodes);
     if (nodeError) return { ok: false, error: nodeError, data: null };
 
@@ -521,35 +556,34 @@ export async function updateVoyageWithNodes(data: {
 
 /**
  * Deletes a Voyage by ID.
- * Faculty can only delete their own voyages; SysAdmin can delete any.
  * @param id The ID of the Voyage to delete.
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
-  const auth = await requireRole([
+  const gate = await requireRole([
     AuthorizedUserRoleTitle.SysAdmin,
     AuthorizedUserRoleTitle.Faculty,
   ]);
-  if (!auth.ok) {
-    return { ok: false, error: "unauthenticated", data: null };
+  if (!gate.ok) {
+    return { ok: false, error: gate.error, data: null };
   }
 
-  // SEV-2 ownership check: admins can delete any voyage; faculty only their own.
-  const isAdmin = auth.user.roles.some(
-    (r) => r === AuthorizedUserRoleTitle.SysAdmin,
-  );
+  const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
+
   if (!isAdmin) {
-    const voyage = await fetchAPI<Voyage | null>(`/voyages/${id}`, {
-      urlParams: {
-        populate: { authors: { fields: ["id"] } },
-      },
+    // Faculty: verify ownership
+    const voyage = await fetchAPI<{
+      id: number;
+      authors?: { id: number }[];
+    } | null>(`/voyages/${id}`, {
+      urlParams: { populate: { authors: { fields: ["id"] } } },
       next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
     });
     if (!voyage) {
       return { ok: false, error: "not_found", data: null };
     }
     const authorIds = voyage.authors?.map((a) => a.id) ?? [];
-    if (!authorIds.includes(auth.user.id)) {
+    if (!authorIds.includes(gate.user.id)) {
       return { ok: false, error: "forbidden", data: null };
     }
   }

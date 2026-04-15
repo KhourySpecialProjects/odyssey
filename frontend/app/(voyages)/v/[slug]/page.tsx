@@ -91,17 +91,31 @@ export default async function VoyagePage({ params }: Props) {
   };
 
   // Map VoyageNode[] to TreeNode[] for VoyageTreeMap
-  const treeNodes: TreeNode[] = voyageNodes.map((node) => ({
-    id: node.id,
-    label: node.label,
-    slug: node.playlist?.slug,
-    dropletCount: node.playlist?.droplets?.length,
-    isMainPath: node.isMainPath,
-    branchType: node.branchType,
-    parentId: node.parentNode?.id ?? null,
-    orderIndex: node.orderIndex,
-    status: getNodeStatus(node),
-  }));
+  const treeNodes: TreeNode[] = voyageNodes.map((node) => {
+    const isDropletNode = node.nodeType === "droplet";
+    const slug = isDropletNode ? node.droplet?.slug : node.playlist?.slug;
+    const dropletCount = isDropletNode
+      ? undefined
+      : node.playlist?.droplets?.length;
+    const href =
+      isDropletNode && !slug
+        ? `/v/${voyage.slug}/unclaimed/${node.id}`
+        : undefined;
+    return {
+      id: node.id,
+      label: node.label,
+      slug,
+      href,
+      dropletCount,
+      isMainPath: node.isMainPath,
+      branchType: node.branchType,
+      parentId: node.parentNode?.id ?? null,
+      orderIndex: node.orderIndex,
+      status: getNodeStatus(node),
+      nodeType: node.nodeType,
+      claimStatus: node.claimStatus,
+    };
+  });
 
   // Completion metrics (only meaningful when enrolled)
   const completionPercentage = isEnrolled
@@ -118,7 +132,15 @@ export default async function VoyagePage({ params }: Props) {
   const firstIncompleteNode = isEnrolled
     ? findFirstIncompleteNode(voyageNodes, completedNodeIds)
     : null;
-  const firstIncompleteSlug = firstIncompleteNode?.playlist?.slug ?? undefined;
+  const firstIncompleteHref = firstIncompleteNode
+    ? firstIncompleteNode.nodeType === "droplet"
+      ? firstIncompleteNode.droplet?.slug
+        ? `/d/${firstIncompleteNode.droplet.slug}`
+        : `/v/${voyage.slug}/unclaimed/${firstIncompleteNode.id}`
+      : firstIncompleteNode.playlist?.slug
+        ? `/p/${firstIncompleteNode.playlist.slug}`
+        : "#"
+    : undefined;
 
   const totalDroplets = treeNodes.reduce(
     (sum, n) => sum + (n.dropletCount ?? 0),
@@ -171,7 +193,7 @@ export default async function VoyagePage({ params }: Props) {
                     voyageId={voyage.id}
                     enrollment={enrollment}
                     completionPercentage={completionPercentage}
-                    firstIncompleteSlug={firstIncompleteSlug}
+                    firstIncompleteHref={firstIncompleteHref}
                   />
                 ) : null}
 
@@ -257,6 +279,27 @@ export default async function VoyagePage({ params }: Props) {
                         const mainStatus = main.status ?? "available";
                         const isLocked = mainStatus === "locked";
                         const isCompleted = mainStatus === "completed";
+                        const isDroplet = main.nodeType === "droplet";
+                        const isPlaceholder =
+                          isDroplet && main.claimStatus === "unclaimed";
+                        const isClaimed =
+                          isDroplet && main.claimStatus === "claimed";
+
+                        const nodeHref = isDroplet
+                          ? main.slug
+                            ? `/d/${main.slug}`
+                            : `/v/${voyage.slug}/unclaimed/${main.id}`
+                          : main.slug
+                            ? `/p/${main.slug}`
+                            : "#";
+
+                        const nodeSubtitle = isPlaceholder
+                          ? "Become author!"
+                          : isClaimed
+                            ? "In Progress"
+                            : isDroplet
+                              ? "1 droplet"
+                              : `${main.dropletCount ?? 0} droplets`;
 
                         const mainNode = (
                           <div key={main.id}>
@@ -269,8 +312,10 @@ export default async function VoyagePage({ params }: Props) {
                                   <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">
                                     {main.label}
                                   </p>
-                                  <p className="text-xs text-slate-400">
-                                    {main.dropletCount ?? 0} droplets
+                                  <p
+                                    className={`text-xs ${isPlaceholder ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}
+                                  >
+                                    {nodeSubtitle}
                                   </p>
                                 </div>
                                 <svg
@@ -292,12 +337,18 @@ export default async function VoyagePage({ params }: Props) {
                               </div>
                             ) : (
                               <Link
-                                href={`/p/${main.slug ?? ""}`}
+                                href={nodeHref}
                                 className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 transition-all hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
                               >
                                 <div
                                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                                  style={{ backgroundColor: "#297496" }}
+                                  style={{
+                                    backgroundColor: isPlaceholder
+                                      ? "#d97706"
+                                      : isDroplet
+                                        ? "#0e7490"
+                                        : "#297496",
+                                  }}
                                 >
                                   {isCompleted ? "✓" : step}
                                 </div>
@@ -305,8 +356,10 @@ export default async function VoyagePage({ params }: Props) {
                                   <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                                     {main.label}
                                   </p>
-                                  <p className="text-xs text-slate-400">
-                                    {main.dropletCount ?? 0} droplets
+                                  <p
+                                    className={`text-xs ${isPlaceholder ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}
+                                  >
+                                    {nodeSubtitle}
                                   </p>
                                 </div>
                                 {isCompleted && (
@@ -335,6 +388,22 @@ export default async function VoyagePage({ params }: Props) {
                           const branchStatus = branch.status ?? "available";
                           const branchLocked = branchStatus === "locked";
                           const branchCompleted = branchStatus === "completed";
+                          const branchIsDroplet = branch.nodeType === "droplet";
+                          const branchIsPlaceholder =
+                            branchIsDroplet &&
+                            branch.claimStatus === "unclaimed";
+                          const branchHref = branchIsDroplet
+                            ? branch.slug
+                              ? `/d/${branch.slug}`
+                              : `/v/${voyage.slug}/unclaimed/${branch.id}`
+                            : branch.slug
+                              ? `/p/${branch.slug}`
+                              : "#";
+                          const branchSubtitle = branchIsPlaceholder
+                            ? "Become author!"
+                            : branchIsDroplet
+                              ? "1 droplet"
+                              : `${branch.dropletCount ?? 0} droplets`;
 
                           return branchLocked ? (
                             <div
@@ -345,8 +414,10 @@ export default async function VoyagePage({ params }: Props) {
                                 <p className="truncate text-xs font-medium text-slate-500 dark:text-slate-400">
                                   {branch.label}
                                 </p>
-                                <p className="text-[10px] text-slate-400">
-                                  {branch.dropletCount ?? 0} droplets
+                                <p
+                                  className={`text-[10px] ${branchIsPlaceholder ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}
+                                >
+                                  {branchSubtitle}
                                 </p>
                               </div>
                               <span
@@ -364,15 +435,17 @@ export default async function VoyagePage({ params }: Props) {
                           ) : (
                             <Link
                               key={branch.id}
-                              href={`/p/${branch.slug ?? ""}`}
+                              href={branchHref}
                               className="ml-5 flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-1.5 transition-all hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/50"
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
                                   {branch.label}
                                 </p>
-                                <p className="text-[10px] text-slate-400">
-                                  {branch.dropletCount ?? 0} droplets
+                                <p
+                                  className={`text-[10px] ${branchIsPlaceholder ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}
+                                >
+                                  {branchSubtitle}
                                 </p>
                               </div>
                               {branchCompleted && (

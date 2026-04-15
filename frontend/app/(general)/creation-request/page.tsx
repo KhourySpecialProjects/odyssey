@@ -6,7 +6,11 @@ import { getCachedUser } from "@/lib/requests/cached";
 import { fetchCreationRequestByUser } from "@/lib/actions";
 import { notFound } from "next/navigation";
 
-export default async function RequestContentCreatorRole() {
+export default async function RequestContentCreatorRole({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
 
@@ -24,9 +28,26 @@ export default async function RequestContentCreatorRole() {
     );
   }
 
+  const params = (await searchParams) ?? {};
+  const rawVoyageNodeId = params["voyageNodeId"];
+  const voyageNodeId = rawVoyageNodeId
+    ? parseInt(String(rawVoyageNodeId), 10) || undefined
+    : undefined;
+  const voyageName = params["voyageName"]
+    ? String(params["voyageName"])
+    : undefined;
+  const nodeLabel = params["nodeLabel"]
+    ? String(params["nodeLabel"])
+    : undefined;
+
   return (
     <GradientBackground>
-      <ContentCreatorRequestForm user={authUser} />
+      <ContentCreatorRequestForm
+        user={authUser}
+        voyageNodeId={voyageNodeId}
+        voyageName={voyageName}
+        nodeLabel={nodeLabel}
+      />
     </GradientBackground>
   );
 }
