@@ -30,6 +30,10 @@ export function Authors({
   }, []);
 
   const handleSelectionChange = (newSelectedIds: number[]) => {
+    // Prevent removing yourself as author
+    if (currentUserId && !newSelectedIds.includes(currentUserId)) {
+      return;
+    }
     setCurrentSelectedIds(newSelectedIds);
     handleChange({ authorized_users: newSelectedIds });
   };
