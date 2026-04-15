@@ -46,6 +46,7 @@ describe("Sidebar", () => {
     name: "Test Droplet",
     slug: "test-droplet",
     status: "published" as const, // Add this
+    presentationEnabled: true,
     lessons: [
       {
         orderIndex: 0,

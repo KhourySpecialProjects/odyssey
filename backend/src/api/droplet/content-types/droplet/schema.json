@@ -177,6 +177,10 @@
       "relation": "oneToMany",
       "target": "api::dataset.dataset",
       "mappedBy": "droplet"
+    },
+    "presentationEnabled": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

@@ -50,6 +50,11 @@ export default async function PresentationPage({ params }: Props) {
 
   if (!isAdmin && !isAuthor && !isEnrolled) return notFound();
 
+  // Block presentation if not enabled by the creator
+  if (!droplet.presentationEnabled) {
+    return <NoPresentationWarning dropletSlug={slug} reason="disabled" />;
+  }
+
   const tags = [
     uppercaseFirstChar(droplet.focusArea),
     uppercaseFirstChar(droplet.type),
@@ -133,7 +138,7 @@ async function LessonContentLoader({
     .map((l) => l.name);
 
   if (nonEmptySlides.length === 0) {
-    return <NoPresentationWarning dropletSlug={slug} />;
+    return <NoPresentationWarning dropletSlug={slug} reason="no-slides" />;
   }
 
   return (

@@ -48,7 +48,10 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "lessons" | "status" | "id">;
+  droplet: Pick<
+    Droplet,
+    "name" | "slug" | "lessons" | "status" | "id" | "presentationEnabled"
+  >;
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
   expanded: boolean;
@@ -63,7 +66,10 @@ export default function Sidebar({
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
-  const canPresent = isEnrolled && (droplet.lessons?.length ?? 0) > 0;
+  const canPresent =
+    isEnrolled &&
+    (droplet.lessons?.length ?? 0) > 0 &&
+    droplet.presentationEnabled;
 
   const activeLinkClasses =
     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors bg-[#287697]/10 text-[#287697] dark:bg-[#287697]/20 dark:text-[#4AABCF]";
@@ -263,13 +269,15 @@ export default function Sidebar({
                         <button
                           aria-disabled="true"
                           onClick={(e) => e.preventDefault()}
-                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                          className="cursor-not-allowed p-2 text-slate-300 dark:text-slate-700"
                         >
                           <IconPresentation className="h-5 w-5" />
                         </button>
                       )}
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Present</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {canPresent ? "Present" : "Presentation not available"}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <button

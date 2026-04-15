@@ -2,7 +2,7 @@
 
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, isAuthorizedUserAdmin } from "../utils";
 import { revalidateTag } from "next/cache";
 import { deleteLesson } from "./lesson";
 import { DropletSchema } from "../validations/droplet";
@@ -296,6 +296,9 @@ export async function updateDroplet(
       ...(data.authorized_users && { authorized_users: data.authorized_users }),
       ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
+      ...(data.presentationEnabled !== undefined && {
+        presentationEnabled: data.presentationEnabled,
+      }),
       ...(data.learningObjectives && {
         learningObjectives: data.learningObjectives.map((obj) => ({
           objective: obj,
@@ -364,6 +367,32 @@ export async function updateDroplet(
       data: null,
     };
   }
+}
+
+export async function togglePresentationEnabled(
+  dropletId: number,
+  enabled: boolean,
+) {
+  const user = await getCurrentUser();
+  if (!user?.email) {
+    return { ok: false, error: "Unauthorized", data: null };
+  }
+
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const droplet = await getDropletById(dropletId, {
+    fields: ["id"],
+    populate: { authorized_users: { fields: ["id"] } },
+  });
+
+  const isAuthor =
+    droplet.authorized_users?.some(
+      (u: { id: number }) => u.id === authorizedUser.id,
+    ) ?? false;
+  if (!isAuthor && !isAuthorizedUserAdmin(user.roles)) {
+    return { ok: false, error: "Forbidden", data: null };
+  }
+
+  return updateDroplet(dropletId, { presentationEnabled: enabled });
 }
 
 export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {

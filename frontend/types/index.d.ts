@@ -251,6 +251,7 @@ export type Droplet = {
   averageRating?: number;
   usersFavorited?: AuthorizedUser[];
   datasets?: Dataset[];
+  presentationEnabled?: boolean;
 };
 
 export type QuizAnswerOption = {
