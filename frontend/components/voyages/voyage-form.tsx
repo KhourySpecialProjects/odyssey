@@ -1,6 +1,16 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback } from "react";
+import {
+  useState,
+  useTransition,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
+import {
+  VoyageFormTour,
+  VOYAGE_TOUR_KEY,
+} from "@/components/voyages/voyage-form-tour";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +118,17 @@ export function VoyageForm({
     voyage?.isSequential ?? false,
   );
   const [error, setError] = useState("");
+
+  // Spotlight tour
+  const [runTour, setRunTour] = useState(false);
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      !localStorage.getItem(VOYAGE_TOUR_KEY)
+    ) {
+      setRunTour(true);
+    }
+  }, []);
 
   const availablePlaylists = useMemo(
     () =>
@@ -432,10 +453,24 @@ export function VoyageForm({
 
   return (
     <div className="flex w-full flex-col gap-8 lg:flex-row">
+      <VoyageFormTour run={runTour} setRun={setRunTour} />
       {/* Left: Form panel */}
       <div className="flex w-full flex-col gap-6 lg:w-1/2">
+        {/* Tour trigger */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem(VOYAGE_TOUR_KEY);
+              setRunTour(true);
+            }}
+            className="text-xs text-slate-400 transition-colors hover:text-[#297496]"
+          >
+            Take a tour
+          </button>
+        </div>
         {/* Name */}
-        <div className="flex flex-col gap-2">
+        <div id="tour-voyage-name" className="flex flex-col gap-2">
           <Label htmlFor="voyage-name">
             Voyage Name <span className="text-red-500">*</span>
           </Label>
@@ -466,6 +501,7 @@ export function VoyageForm({
           <Label>Islands</Label>
 
           {/* Node type selector */}
+          <div id="tour-node-type-tabs"></div>
           <div className="flex overflow-hidden rounded-md border border-slate-200 dark:border-slate-600">
             <button
               type="button"
@@ -641,6 +677,7 @@ export function VoyageForm({
           )}
 
           {/* Selected islands list */}
+          <div id="tour-node-list"></div>
           {sortedForDisplay.length > 0 ? (
             <div className="space-y-1">
               {sortedForDisplay.map((node) => {
@@ -834,6 +871,7 @@ export function VoyageForm({
         )}
 
         {/* Sequential progression toggle */}
+        <div id="tour-sequential-toggle"></div>
         <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
           <input
             type="checkbox"
@@ -853,6 +891,7 @@ export function VoyageForm({
         </label>
 
         {/* Action buttons */}
+        <div id="tour-publish-buttons"></div>
         <div className="flex gap-3">
           <Button
             type="button"
@@ -880,7 +919,7 @@ export function VoyageForm({
       </div>
 
       {/* Right: Live tree preview */}
-      <div className="w-full lg:w-1/2">
+      <div id="tour-preview" className="w-full lg:w-1/2">
         <div className="sticky top-8">
           <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
             Live Preview

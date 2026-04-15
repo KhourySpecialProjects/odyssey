@@ -23,8 +23,8 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
     const d = driver({
       showProgress: true,
       animate: true,
-      overlayColor: "rgba(0,0,0,0.4)",
-      overlayOpacity: 0.4,
+      overlayColor: "rgba(0,0,0,0.75)",
+      overlayOpacity: 0.75,
       smoothScroll: true,
       allowClose: true,
       stagePadding: 6,
@@ -45,9 +45,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
       steps: [
         {
           popover: {
-            title: "Welcome to Voyage Builder",
+            title: "Let's build a Voyage!",
             description:
-              "Voyages are structured learning paths made of islands. Each island can be a playlist, a droplet, or a placeholder for someone to claim. Let's walk through the tools.",
+              "A voyage is a learning path your students follow, island by island. You can mix playlists, individual droplets, and even leave spots open for others to contribute.",
             side: "over",
             align: "center",
           },
@@ -55,9 +55,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
         {
           element: "#tour-voyage-name",
           popover: {
-            title: "Voyage Name",
+            title: "Name your Voyage",
             description:
-              "Give your voyage a descriptive name. This is what students will see when browsing voyages.",
+              "Pick something students will recognize. This shows up on the explore page and their dashboard.",
             side: "bottom",
             align: "start",
           },
@@ -65,9 +65,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
         {
           element: "#tour-node-type-tabs",
           popover: {
-            title: "Island Types",
+            title: "Islands",
             description:
-              "Choose what type of island to add:\n\n• Playlist — a collection of droplets\n• Droplet — a single learning unit\n• Placeholder — an empty spot for someone to claim and write",
+              "Each island is one stop on the journey. Use the Playlist tab to add a group of droplets, the Droplet tab to add a single piece of content, or the Placeholder tab to leave a spot for someone else to claim and write.",
             side: "bottom",
             align: "center",
           },
@@ -75,9 +75,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
         {
           element: "#tour-node-list",
           popover: {
-            title: "Your Islands",
+            title: "Build your path",
             description:
-              "Islands appear here as you add them. Drag the grip handle to reorder main path islands. Use 'Branches from' to create optional side paths.",
+              "Your islands show up here as you add them. Reorder them with the arrows, or use the Branches from dropdown to create optional side paths.",
             side: "right",
             align: "start",
           },
@@ -85,9 +85,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
         {
           element: "#tour-sequential-toggle",
           popover: {
-            title: "Sequential Progression",
+            title: "Sequential progression",
             description:
-              "When enabled, students must complete each island before unlocking the next. Placeholder islands are skipped automatically.",
+              "Turn this on if you want students to go through islands one at a time. They need to finish each stop before the next one unlocks. Placeholders are skipped automatically.",
             side: "top",
             align: "start",
           },
@@ -97,7 +97,7 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
           popover: {
             title: "Live Preview",
             description:
-              "See how your voyage tree looks in real-time as you build it. The preview updates as you add, remove, and reorder islands.",
+              "This preview updates as you go. Add an island and watch it appear on the map. This is the same tree view students will see.",
             side: "left",
             align: "start",
           },
@@ -105,9 +105,9 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
         {
           element: "#tour-publish-buttons",
           popover: {
-            title: "Save & Publish",
+            title: "Save and Publish",
             description:
-              "Save as draft to continue editing later, or publish to make the voyage available to students. You can always edit after publishing.",
+              "Click Save as Draft if you are still working on it, or Publish Voyage to make it live. You can always come back and edit.",
             side: "top",
             align: "center",
           },

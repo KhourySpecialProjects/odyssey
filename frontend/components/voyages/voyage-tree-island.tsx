@@ -44,7 +44,12 @@ function IslandSvg({
   const w = base.width * scale;
   const h = base.height * scale;
 
-  if (nodeType === "droplet" && claimStatus === "unclaimed") {
+  // Unclaimed and claimed (in progress) both use the same puddle SVG
+  // The subtitle text differentiates them ("Become author!" vs "In Progress")
+  if (
+    nodeType === "droplet" &&
+    (claimStatus === "unclaimed" || claimStatus === "claimed")
+  ) {
     return (
       <svg
         width={w}
@@ -99,30 +104,7 @@ function IslandSvg({
     );
   }
 
-  // Claimed (in progress): just an orange dashed ring — placeholder for rethinking
-  if (nodeType === "droplet" && claimStatus === "claimed") {
-    return (
-      <svg
-        width={w}
-        height={h}
-        viewBox="0 0 200 180"
-        fill="none"
-        className="block"
-      >
-        {/* Orange dashed ring */}
-        <path
-          d={PUDDLE_OUTER_PATH}
-          stroke="#f59e0b"
-          strokeWidth="3"
-          strokeDasharray="10 6"
-          fill="none"
-          opacity={0.5}
-        />
-      </svg>
-    );
-  }
-
-  // Droplet node — published: full teal spill with water drop
+  // Droplet node — published: full teal puddle with water drop
   if (nodeType === "droplet") {
     return (
       <svg
@@ -147,28 +129,28 @@ function IslandSvg({
         ) : (
           <>
             {/* Outer spill glow */}
-            <path d={PUDDLE_OUTER_PATH} fill="#0e7490" opacity={0.08} />
+            <path d={PUDDLE_OUTER_PATH} fill="#297496" opacity={0.08} />
             {/* Main spill */}
             <path d={PUDDLE_INNER_PATH} fill="#cffafe" />
-            <path d={PUDDLE_INNER_PATH} fill="#0e7490" opacity={0.3} />
+            <path d={PUDDLE_INNER_PATH} fill="#297496" opacity={0.3} />
             {/* Organic ripple lines */}
             <path
               d="M60 134 C72 126 92 122 112 124 C132 126 148 132 150 138"
-              stroke="#0e7490"
+              stroke="#297496"
               strokeWidth="1.5"
               fill="none"
               opacity={0.3}
             />
             <path
               d="M74 136 C84 130 102 128 120 130 C134 132 142 136 140 139"
-              stroke="#0e7490"
+              stroke="#297496"
               strokeWidth="1"
               fill="none"
               opacity={0.2}
             />
             <path
               d="M88 137 C96 134 108 133 118 135"
-              stroke="#0e7490"
+              stroke="#297496"
               strokeWidth="0.8"
               fill="none"
               opacity={0.15}
@@ -176,7 +158,7 @@ function IslandSvg({
             {/* Water drop */}
             <path
               d="M100 82 C100 82 91 96 91 103 C91 108 95 112 100 112 C105 112 109 108 109 103 C109 96 100 82 100 82Z"
-              fill="#0e7490"
+              fill="#297496"
               opacity={0.7}
             />
             {/* Drop highlight */}
@@ -188,10 +170,10 @@ function IslandSvg({
               opacity={0.6}
             />
             {/* Splash dots */}
-            <circle cx="80" cy="122" r="2.5" fill="#0e7490" opacity={0.25} />
-            <circle cx="124" cy="124" r="2" fill="#0e7490" opacity={0.2} />
-            <circle cx="68" cy="140" r="1.5" fill="#0e7490" opacity={0.15} />
-            <circle cx="136" cy="142" r="1.5" fill="#0e7490" opacity={0.12} />
+            <circle cx="80" cy="122" r="2.5" fill="#297496" opacity={0.25} />
+            <circle cx="124" cy="124" r="2" fill="#297496" opacity={0.2} />
+            <circle cx="68" cy="140" r="1.5" fill="#297496" opacity={0.15} />
+            <circle cx="136" cy="142" r="1.5" fill="#297496" opacity={0.12} />
             {status === "completed" && (
               <path
                 d={PUDDLE_OUTER_PATH}
@@ -582,21 +564,11 @@ export function VoyageTreeIsland({
   }
 
   // Subtitle color: teal for unclaimed/claimed droplet nodes
-  const subtitleColorClass = isDropletNode
-    ? isUnclaimed
+  const subtitleColorClass = isCompleted
+    ? "text-green-700 dark:text-green-400"
+    : isLocked
       ? "text-slate-400"
-      : isClaimed
-        ? "text-cyan-600 dark:text-cyan-400"
-        : isCompleted
-          ? "text-green-700 dark:text-green-400"
-          : isLocked
-            ? "text-slate-400"
-            : "text-cyan-700 dark:text-cyan-300"
-    : isCompleted
-      ? "text-green-700 dark:text-green-400"
-      : isLocked
-        ? "text-slate-400"
-        : "text-slate-600 dark:text-slate-300";
+      : "text-slate-600 dark:text-slate-300";
 
   const content = (
     <div
@@ -635,11 +607,11 @@ export function VoyageTreeIsland({
       {/* Label */}
       <div className="-mt-1 flex justify-center">
         <span
-          className={`rounded-lg px-3 py-1.5 font-bold shadow-sm ${
+          className={`rounded-lg border border-slate-100 px-3 py-1.5 font-bold shadow ${
             isMain
               ? "max-w-[200px] bg-white text-sm dark:bg-slate-800"
               : "max-w-[160px] bg-white text-xs dark:bg-slate-800"
-          } ${isLocked ? "opacity-60" : ""} text-slate-900 dark:text-slate-100`}
+          } ${isLocked ? "opacity-60" : ""} text-slate-900 dark:border-slate-700 dark:text-slate-100`}
         >
           {label}
         </span>
