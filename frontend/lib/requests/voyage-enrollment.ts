@@ -864,6 +864,11 @@ export async function claimNodeForUser(
 
   for (let attempt = 0; attempt < 5; attempt++) {
     finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
+    const slug = finalName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
     const createRes = await fetch(`${STRAPI_API_URL}/api/droplets`, {
       method: "POST",
       headers: {
@@ -873,12 +878,15 @@ export async function claimNodeForUser(
       body: JSON.stringify({
         data: {
           name: finalName,
+          slug,
           type: "knowledge",
           focusArea: "technical",
           difficulty: "beginner",
           status: "draft",
           isHidden: true,
-          learningObjectives: [{ objective: "TBD" }],
+          learningObjectives: [
+            { __component: "droplets.learning-objective", objective: "TBD" },
+          ],
           authorized_users: { connect: [userId] },
         },
       }),

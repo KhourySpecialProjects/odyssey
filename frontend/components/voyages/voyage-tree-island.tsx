@@ -7,6 +7,11 @@ export const ISLAND_SVG_DIMENSIONS = {
   branch: { width: 160, height: 145 },
 } as const;
 
+const PUDDLE_OUTER_PATH =
+  "M28 138 C30 132 42 126 62 124 C72 123 78 120 90 122 C102 124 108 121 120 122 C140 124 158 128 168 134 C174 138 172 146 160 150 C148 154 132 156 116 157 C100 158 82 158 66 156 C48 154 34 148 28 142 Z";
+const PUDDLE_INNER_PATH =
+  "M42 139 C44 134 56 130 72 128 C82 127 90 126 100 127 C112 128 122 126 134 128 C148 130 156 134 156 139 C156 144 146 148 132 150 C118 152 98 152 82 151 C62 150 46 146 42 142 Z";
+
 interface VoyageTreeIslandProps {
   label: string;
   slug?: string;
@@ -39,7 +44,6 @@ function IslandSvg({
   const w = base.width * scale;
   const h = base.height * scale;
 
-  // Droplet node — placeholder (unclaimed): dashed gray outline island with "?" icon
   if (nodeType === "droplet" && claimStatus === "unclaimed") {
     return (
       <svg
@@ -49,60 +53,53 @@ function IslandSvg({
         fill="none"
         className="block"
       >
-        {/* Dashed water ring */}
-        <ellipse
-          cx="100"
-          cy="140"
-          rx="74"
-          ry="21"
+        {/* Three water drops above puddle */}
+        <path
+          d="M100 56 C100 56 94 66 94 71 C94 74.3 96.7 77 100 77 C103.3 77 106 74.3 106 71 C106 66 100 56 100 56Z"
           stroke="#94a3b8"
-          strokeWidth="2"
-          strokeDasharray="6 4"
+          strokeWidth="3"
           fill="none"
-          opacity={0.5}
+          opacity={0.4}
         />
-        {/* Dashed island outline */}
-        <ellipse
-          cx="100"
-          cy="120"
-          rx="58"
-          ry="24"
+        <path
+          d="M78 76 C78 76 73 84 73 88 C73 90.8 75.2 93 78 93 C80.8 93 83 90.8 83 88 C83 84 78 76 78 76Z"
           stroke="#94a3b8"
           strokeWidth="2.5"
-          strokeDasharray="8 5"
-          fill="#f1f5f9"
-          opacity={0.8}
+          fill="none"
+          opacity={0.35}
         />
-        {/* "?" icon */}
-        <text
-          x="100"
-          y="108"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="28"
-          fontWeight="bold"
-          fill="#94a3b8"
-        >
-          ?
-        </text>
-        {/* Available glow */}
+        <path
+          d="M122 76 C122 76 117 84 117 88 C117 90.8 119.2 93 122 93 C124.8 93 127 90.8 127 88 C127 84 122 76 122 76Z"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          fill="none"
+          opacity={0.35}
+        />
+        {/* Puddle — dashed outline */}
+        <path
+          d={PUDDLE_OUTER_PATH}
+          stroke="#94a3b8"
+          strokeWidth="3"
+          strokeDasharray="8 5"
+          fill="none"
+          opacity={0.35}
+        />
+        {/* Inner puddle fill */}
+        <path d={PUDDLE_INNER_PATH} fill="#e2e8f0" opacity={0.4} />
         {status === "available" && (
-          <ellipse
-            cx="100"
-            cy="120"
-            rx="70"
-            ry="30"
+          <path
+            d={PUDDLE_OUTER_PATH}
             stroke="#60a5fa"
             strokeWidth="2.5"
             fill="none"
-            opacity={0.35}
+            opacity={0.25}
           />
         )}
       </svg>
     );
   }
 
-  // Droplet node — claimed (in progress): teal island, partially colored, pencil icon
+  // Claimed (in progress): just an orange dashed ring — placeholder for rethinking
   if (nodeType === "droplet" && claimStatus === "claimed") {
     return (
       <svg
@@ -112,74 +109,20 @@ function IslandSvg({
         fill="none"
         className="block"
       >
-        {/* Ocean water ring */}
-        <ellipse
-          cx="100"
-          cy="140"
-          rx="74"
-          ry="21"
-          fill="#0e7490"
-          opacity={0.2}
-        />
-        {/* Sand ring */}
-        <ellipse cx="100" cy="124" rx="66" ry="28" fill="#e0f2fe" />
-        {/* Teal island surface — half filled to show "in progress" */}
-        <ellipse
-          cx="100"
-          cy="120"
-          rx="58"
-          ry="24"
-          fill="#0e7490"
-          opacity={0.35}
-        />
-        <ellipse
-          cx="100"
-          cy="120"
-          rx="58"
-          ry="24"
-          fill="none"
-          stroke="#0e7490"
-          strokeWidth="2"
-        />
-        {/* Pencil icon */}
+        {/* Orange dashed ring */}
         <path
-          d="M92 106 L104 94 L112 102 L100 114 Z"
-          fill="#0e7490"
-          opacity={0.85}
+          d={PUDDLE_OUTER_PATH}
+          stroke="#f59e0b"
+          strokeWidth="3"
+          strokeDasharray="10 6"
+          fill="none"
+          opacity={0.5}
         />
-        <path d="M104 94 L108 90 L116 98 L112 102 Z" fill="#0369a1" />
-        <path d="M92 106 L90 112 L96 110 Z" fill="#0e7490" opacity={0.7} />
-        {/* Available glow */}
-        {status === "available" && (
-          <ellipse
-            cx="100"
-            cy="120"
-            rx="70"
-            ry="30"
-            stroke="#60a5fa"
-            strokeWidth="2.5"
-            fill="none"
-            opacity={0.35}
-          />
-        )}
-        {/* Completed ring */}
-        {status === "completed" && (
-          <ellipse
-            cx="100"
-            cy="120"
-            rx="70"
-            ry="30"
-            stroke="#22c55e"
-            strokeWidth="2.5"
-            fill="none"
-            opacity={0.35}
-          />
-        )}
       </svg>
     );
   }
 
-  // Droplet node — published (authored or with published droplet): teal rock/boulder island
+  // Droplet node — published: full teal spill with water drop
   if (nodeType === "droplet") {
     return (
       <svg
@@ -191,98 +134,82 @@ function IslandSvg({
       >
         {isLocked ? (
           <>
-            {/* Water shadow */}
-            <ellipse
-              cx="100"
-              cy="140"
-              rx="60"
-              ry="16"
-              fill="#94a3b8"
-              opacity={0.15}
-            />
-            {/* Rock — locked */}
+            {/* Locked spill — gray */}
+            <path d={PUDDLE_INNER_PATH} fill="#94a3b8" opacity={0.15} />
             <path
-              d="M55 125 Q52 138 58 144 Q75 154 100 155 Q125 154 142 144 Q148 138 145 125 Z"
-              fill="#4a5568"
+              d="M65 132 C75 126 95 124 115 126 C130 128 142 132 145 136"
+              stroke="#94a3b8"
+              strokeWidth="1"
+              fill="none"
+              opacity={0.1}
             />
-            <ellipse cx="100" cy="124" rx="46" ry="20" fill="#64748b" />
-            <ellipse cx="100" cy="122" rx="40" ry="16" fill="#718096" />
           </>
         ) : (
           <>
-            {/* Ocean water ring */}
-            <ellipse
-              cx="100"
-              cy="140"
-              rx="70"
-              ry="20"
-              fill="#0e7490"
-              opacity={0.25}
+            {/* Outer spill glow */}
+            <path d={PUDDLE_OUTER_PATH} fill="#0e7490" opacity={0.08} />
+            {/* Main spill */}
+            <path d={PUDDLE_INNER_PATH} fill="#cffafe" />
+            <path d={PUDDLE_INNER_PATH} fill="#0e7490" opacity={0.3} />
+            {/* Organic ripple lines */}
+            <path
+              d="M60 134 C72 126 92 122 112 124 C132 126 148 132 150 138"
+              stroke="#0e7490"
+              strokeWidth="1.5"
+              fill="none"
+              opacity={0.3}
             />
-            <ellipse
-              cx="100"
-              cy="138"
-              rx="62"
-              ry="17"
-              fill="#0e7490"
+            <path
+              d="M74 136 C84 130 102 128 120 130 C134 132 142 136 140 139"
+              stroke="#0e7490"
+              strokeWidth="1"
+              fill="none"
+              opacity={0.2}
+            />
+            <path
+              d="M88 137 C96 134 108 133 118 135"
+              stroke="#0e7490"
+              strokeWidth="0.8"
+              fill="none"
               opacity={0.15}
             />
-            {/* Sand ring */}
-            <ellipse cx="100" cy="126" rx="54" ry="22" fill="#cffafe" />
-            {/* Teal boulder surface */}
-            <ellipse cx="100" cy="122" rx="46" ry="19" fill="#0e7490" />
-            {/* Highlight */}
-            <ellipse
-              cx="92"
-              cy="116"
-              rx="26"
-              ry="10"
-              fill="#22d3ee"
-              opacity={0.35}
+            {/* Water drop */}
+            <path
+              d="M100 82 C100 82 91 96 91 103 C91 108 95 112 100 112 C105 112 109 108 109 103 C109 96 100 82 100 82Z"
+              fill="#0e7490"
+              opacity={0.7}
             />
-            {/* Small rock details */}
-            <ellipse
-              cx="74"
-              cy="126"
-              rx="10"
-              ry="7"
-              fill="#0891b2"
+            {/* Drop highlight */}
+            <path
+              d="M96 105 C96 102 98 99 100 97"
+              stroke="#cffafe"
+              strokeWidth="1.5"
+              strokeLinecap="round"
               opacity={0.6}
             />
-            <ellipse
-              cx="128"
-              cy="124"
-              rx="8"
-              ry="6"
-              fill="#0891b2"
-              opacity={0.5}
-            />
+            {/* Splash dots */}
+            <circle cx="80" cy="122" r="2.5" fill="#0e7490" opacity={0.25} />
+            <circle cx="124" cy="124" r="2" fill="#0e7490" opacity={0.2} />
+            <circle cx="68" cy="140" r="1.5" fill="#0e7490" opacity={0.15} />
+            <circle cx="136" cy="142" r="1.5" fill="#0e7490" opacity={0.12} />
+            {status === "completed" && (
+              <path
+                d={PUDDLE_OUTER_PATH}
+                stroke="#22c55e"
+                strokeWidth="2.5"
+                fill="none"
+                opacity={0.4}
+              />
+            )}
           </>
         )}
-        {/* Available glow ring */}
-        {status === "available" && (
-          <ellipse
-            cx="100"
-            cy="122"
-            rx="62"
-            ry="26"
+        {status === "available" && !isLocked && (
+          <path
+            d={PUDDLE_OUTER_PATH}
             stroke="#60a5fa"
             strokeWidth="2.5"
             fill="none"
-            opacity={0.35}
-          />
-        )}
-        {/* Completed ring */}
-        {status === "completed" && (
-          <ellipse
-            cx="100"
-            cy="122"
-            rx="62"
-            ry="26"
-            stroke="#22c55e"
-            strokeWidth="2.5"
-            fill="none"
-            opacity={0.35}
+            opacity={0.3}
           />
         )}
       </svg>

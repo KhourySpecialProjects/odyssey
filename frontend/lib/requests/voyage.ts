@@ -155,12 +155,21 @@ export async function getVoyages(): Promise<Voyage[]> {
     },
     populate: {
       voyage_nodes: {
-        fields: ["id", "isMainPath", "branchType", "orderIndex", "label"],
+        fields: [
+          "id",
+          "isMainPath",
+          "branchType",
+          "orderIndex",
+          "label",
+          "nodeType",
+          "claimStatus",
+        ],
         populate: {
           playlist: {
             fields: ["id", "slug", "name"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "slug", "name", "status"] },
           parentNode: { fields: ["id"] },
         },
       },
@@ -194,12 +203,13 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
         fields: ["id", "firstName", "email"],
       },
       voyage_nodes: {
-        fields: ["id", "isMainPath"],
+        fields: ["id", "isMainPath", "nodeType", "claimStatus"],
         populate: {
           playlist: {
             fields: ["id"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "status"] },
         },
       },
     },

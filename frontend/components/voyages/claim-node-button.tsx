@@ -25,7 +25,7 @@ export function ClaimNodeButton({
       if (mode === "claim") {
         const result = await claimVoyageDropletNode(voyageNodeId);
         if (result.ok && "data" in result && result.data?.dropletSlug) {
-          router.push(`/d/${result.data.dropletSlug}`);
+          router.push(`/draft/d/${result.data.dropletSlug}`);
         } else if (!result.ok) {
           console.error("Failed to claim node:", result.error);
         }
