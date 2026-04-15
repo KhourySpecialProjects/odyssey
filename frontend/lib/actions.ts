@@ -17,7 +17,6 @@ import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createAuthorizedUser } from "./requests/authorized-user";
 import { claimNodeForUser } from "./requests/voyage-enrollment";
-import { requireRole } from "./auth/require-role";
 import { creationRequestSchema } from "./validations/creation-request";
 import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
@@ -26,6 +25,8 @@ import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/import/rate-limiter";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -207,6 +208,11 @@ export async function setTimeZone(zone: string) {
 }
 
 export async function deleteReport(id: string) {
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+
   const response = await fetch(`${STRAPI_API_URL}/api/reports/${id}`, {
     method: "DELETE",
     headers: {
@@ -612,7 +618,6 @@ export async function approveCreationRequest(
       try {
         await claimNodeForUser(voyageNodeId, userId);
       } catch (claimErr) {
-        // Claim failure should not prevent the role from being granted
         console.error(
           "Failed to auto-claim voyage node after approval:",
           claimErr,
@@ -688,11 +693,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
           },
           voyageNode: {
             fields: ["id", "label"],
-            populate: {
-              voyage: {
-                fields: ["name"],
-              },
-            },
+            populate: { voyage: { fields: ["name"] } },
           },
         },
         pagination: {

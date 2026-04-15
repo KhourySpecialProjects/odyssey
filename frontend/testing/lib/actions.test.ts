@@ -19,11 +19,16 @@ import {
   fetchCreationRequestByUser,
 } from "@/lib/actions";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 global.fetch = jest.fn();
 
 jest.mock("@/lib/requests/authorized-user", () => ({
   createAuthorizedUser: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
 }));
 
 jest.mock("next/cache", () => ({
@@ -63,8 +68,13 @@ jest.mock("@anthropic-ai/sdk", () => {
   }));
 });
 
-const { redirect } = require("next/navigation");
-const { revalidatePath, revalidateTag } = require("next/cache");
+import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
+import { requireRole } from "@/lib/auth/require-role";
+
+const mockedRedirect = jest.mocked(redirect);
+const mockedRevalidateTag = jest.mocked(revalidateTag);
+const mockedRequireRole = jest.mocked(requireRole);
 
 describe("Server Actions", () => {
   let mockS3Send: jest.Mock;
@@ -86,6 +96,16 @@ describe("Server Actions", () => {
     (S3Client as jest.Mock).mockImplementation(() => ({
       send: mockS3Send,
     }));
+
+    // Default: allow any authenticated user (overridden in specific auth tests)
+    mockedRequireRole.mockResolvedValue({
+      ok: true,
+      user: {
+        id: 1,
+        email: "admin@northeastern.edu",
+        roles: [AuthorizedUserRoleTitle.SysAdmin],
+      },
+    });
   });
 
   afterEach(() => {
@@ -181,16 +201,33 @@ describe("Server Actions", () => {
   });
 
   describe("setTimeZone", () => {
-    it("successfully updates timezone", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
+    it("returns unauthenticated when there is no session", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
       });
 
-      const result = await setTimeZone("America/New_York", 1);
+      const result = await setTimeZone("America/New_York");
 
+      expect(result).toEqual({ ok: false, error: "unauthenticated" });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("successfully updates timezone using the session user's id", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 42 } }),
+      });
+
+      const result = await setTimeZone("America/New_York");
+
+      // Must use the session user's id (42), NOT any caller-supplied id
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/1"),
+        expect.stringContaining("/api/authorized-users/42"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
@@ -208,10 +245,9 @@ describe("Server Actions", () => {
         ok: false,
       });
 
-      const result = await setTimeZone("America/Los_Angeles", 1);
+      const result = await setTimeZone("America/Los_Angeles");
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result).toEqual(expect.objectContaining({ success: false }));
     });
 
     it("handles fetch exception", async () => {
@@ -219,7 +255,7 @@ describe("Server Actions", () => {
         new Error("Network error"),
       );
 
-      const result = await setTimeZone("America/Chicago", 1);
+      const result = await setTimeZone("America/Chicago");
 
       expect(result).toEqual({
         success: false,
@@ -233,7 +269,7 @@ describe("Server Actions", () => {
         new Error("Network error"),
       );
 
-      await setTimeZone("America/Denver", 1);
+      await setTimeZone("America/Denver");
 
       expect(consoleError).toHaveBeenCalledWith(
         "Error updating timezone:",
@@ -395,7 +431,7 @@ describe("Server Actions", () => {
           method: "POST",
         }),
       );
-      expect(redirect).toHaveBeenCalledWith("/");
+      expect(mockedRedirect).toHaveBeenCalledWith("/");
     });
 
     it("handles API error when ok is false", async () => {
@@ -556,7 +592,31 @@ describe("Server Actions", () => {
   });
 
   describe("deleteReport", () => {
-    it("successfully deletes report and revalidates path", async () => {
+    it("returns unauthenticated when there is no session", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      const result = await deleteReport("456");
+
+      expect(result).toEqual({ ok: false, error: "unauthenticated" });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("returns forbidden when caller is not an admin", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "forbidden",
+      });
+
+      const result = await deleteReport("456");
+
+      expect(result).toEqual({ ok: false, error: "forbidden" });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("successfully deletes report when caller is admin", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: {} }),
@@ -570,7 +630,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("reports");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("reports");
       expect(result).toEqual({ success: true });
     });
 
@@ -768,8 +828,8 @@ describe("Server Actions", () => {
       const result = await approveCreationRequest("123", 1);
 
       expect(result).toEqual({ ok: true, error: null, data: null });
-      expect(revalidateTag).toHaveBeenCalledWith("users");
-      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("users");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(global.fetch).toHaveBeenCalledTimes(5);
     });
 
@@ -1012,7 +1072,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
+      expect(mockedRevalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(result).toEqual({ ok: true, error: null, data: null });
     });
 
