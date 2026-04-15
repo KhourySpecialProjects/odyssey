@@ -641,11 +641,17 @@ describe("Feed tests", () => {
     beforeEach(() => {
       global.fetch.mockReset();
       revalidateTag.mockReset();
+      const { fetchAPI } = require("../../lib/utils");
+      fetchAPI.mockReset();
     });
 
     it("should successfully create a system announcement and revalidate", async () => {
       const mockAuthUser = { id: 5, email: "admin@northeastern.edu" };
       const content = "System maintenance scheduled";
+
+      // Mock fetchAPI to return no existing announcements (duplicate check)
+      const { fetchAPI } = require("../../lib/utils");
+      fetchAPI.mockResolvedValueOnce([]);
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
