@@ -128,7 +128,7 @@ export function UserPickerButton({
           Add
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[400px] p-0" align="end" side="bottom">
         <Command>
           <CommandInput
             placeholder="Search users..."
@@ -142,7 +142,7 @@ export function UserPickerButton({
                 return (
                   <CommandItem
                     key={user.id}
-                    value={`${user.firstName} ${user.lastName} ${user.email}`}
+                    value={`${user.firstName ?? ""} ${user.lastName ?? ""} ${user.email}`.trim()}
                     onSelect={() => {
                       const newSelected = isSelected
                         ? selectedIds.filter((id) => id !== user.id)

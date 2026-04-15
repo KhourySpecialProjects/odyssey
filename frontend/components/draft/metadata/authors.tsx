@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import { UserMultiSelect } from "@/components/ui/user-multi-select";
+import { UserPickerButton } from "@/components/ui/user-multi-select";
 import { AuthorizedUser } from "@/types";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { AuthorCard } from "@/components/droplets/author-block";
@@ -10,9 +10,11 @@ import { AuthorCard } from "@/components/droplets/author-block";
 export function Authors({
   dropletId,
   selectedIds: initialSelectedIds,
+  currentUserId,
 }: {
   dropletId: number;
   selectedIds: number[];
+  currentUserId?: number;
 }) {
   const { error, handleChange } = useDropletUpdate(dropletId);
   const [currentSelectedIds, setCurrentSelectedIds] =
@@ -28,13 +30,17 @@ export function Authors({
   }, []);
 
   const handleSelectionChange = (newSelectedIds: number[]) => {
+    // Prevent removing yourself as author
+    if (currentUserId && !newSelectedIds.includes(currentUserId)) {
+      return;
+    }
     setCurrentSelectedIds(newSelectedIds);
     handleChange({ authorized_users: newSelectedIds });
   };
 
-  const selectedUsers = users.filter((user) =>
-    currentSelectedIds.includes(user.id),
-  );
+  const selectedUsers = currentSelectedIds
+    .map((id) => users.find((u) => u.id === id))
+    .filter((u): u is AuthorizedUser => u !== undefined);
 
   return (
     <section className="w-full">
@@ -42,9 +48,10 @@ export function Authors({
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           Author(s)
         </h2>
-        <UserMultiSelect
+        <UserPickerButton
           selectedIds={currentSelectedIds}
           onChange={handleSelectionChange}
+          placeholder="Add author"
         />
       </div>
 
@@ -59,12 +66,16 @@ export function Authors({
                 author={user}
                 {...user}
                 inDraft={true}
-                onRemove={() => {
-                  const newSelectedIds = currentSelectedIds.filter(
-                    (id) => id !== user.id,
-                  );
-                  handleSelectionChange(newSelectedIds);
-                }}
+                onRemove={
+                  user.id === currentUserId
+                    ? undefined
+                    : () => {
+                        const newSelectedIds = currentSelectedIds.filter(
+                          (id) => id !== user.id,
+                        );
+                        handleSelectionChange(newSelectedIds);
+                      }
+                }
               />
             </li>
           ))}
