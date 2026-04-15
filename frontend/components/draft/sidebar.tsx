@@ -689,7 +689,10 @@ export function Sidebar({
                 role="switch"
                 aria-checked={presentationEnabled}
                 aria-label="Toggle presentation mode for viewers"
-                disabled={!hasSlideBreaks || isTogglingPresentation}
+                disabled={
+                  isTogglingPresentation ||
+                  (!hasSlideBreaks && !presentationEnabled)
+                }
                 onClick={handleTogglePresentation}
                 className={cn(
                   "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
