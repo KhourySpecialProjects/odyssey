@@ -501,8 +501,10 @@ export function VoyageForm({
           <Label>Islands</Label>
 
           {/* Node type selector */}
-          <div id="tour-node-type-tabs"></div>
-          <div className="flex overflow-hidden rounded-md border border-slate-200 dark:border-slate-600">
+          <div
+            id="tour-node-type-tabs"
+            className="flex overflow-hidden rounded-md border border-slate-200 dark:border-slate-600"
+          >
             <button
               type="button"
               onClick={() => {
@@ -677,190 +679,196 @@ export function VoyageForm({
           )}
 
           {/* Selected islands list */}
-          <div id="tour-node-list"></div>
-          {sortedForDisplay.length > 0 ? (
-            <div className="space-y-1">
-              {sortedForDisplay.map((node) => {
-                const isBranch = !node.isMainPath;
-                const isPlaceholder =
-                  node.nodeType === "droplet" && !node.dropletId;
+          <div id="tour-node-list">
+            {sortedForDisplay.length > 0 ? (
+              <div className="space-y-1">
+                {sortedForDisplay.map((node) => {
+                  const isBranch = !node.isMainPath;
+                  const isPlaceholder =
+                    node.nodeType === "droplet" && !node.dropletId;
 
-                return (
-                  <div key={node.localId} className={isBranch ? "ml-6" : ""}>
-                    <div
-                      className={cn(
-                        "flex flex-col gap-2 rounded-md border px-3 py-2",
-                        isBranch
-                          ? "border-l-2 border-dashed border-slate-300 bg-slate-50/60 dark:border-slate-600 dark:bg-slate-800/40"
-                          : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800",
-                      )}
-                    >
-                      {/* Top row: badge + name + reorder + remove */}
-                      <div className="flex items-center gap-2">
-                        {/* Order badge (main path only) */}
-                        {!isBranch && (
-                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#297496] text-xs font-bold text-white">
-                            {node.orderIndex + 1}
-                          </div>
+                  return (
+                    <div key={node.localId} className={isBranch ? "ml-6" : ""}>
+                      <div
+                        className={cn(
+                          "flex flex-col gap-2 rounded-md border px-3 py-2",
+                          isBranch
+                            ? "border-l-2 border-dashed border-slate-300 bg-slate-50/60 dark:border-slate-600 dark:bg-slate-800/40"
+                            : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800",
                         )}
-
-                        {/* Branch indicator */}
-                        {isBranch && <div className="h-4 w-4 flex-shrink-0" />}
-
-                        {/* Node type icon */}
-                        <div className="flex-shrink-0 text-slate-400">
-                          {node.nodeType === "playlist" ? (
-                            <BookOpenIcon className="h-4 w-4" />
-                          ) : isPlaceholder ? (
-                            <CircleDashedIcon className="h-4 w-4 text-amber-500" />
-                          ) : (
-                            <DropletIcon className="h-4 w-4 text-sky-500" />
+                      >
+                        {/* Top row: badge + name + reorder + remove */}
+                        <div className="flex items-center gap-2">
+                          {/* Order badge (main path only) */}
+                          {!isBranch && (
+                            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#297496] text-xs font-bold text-white">
+                              {node.orderIndex + 1}
+                            </div>
                           )}
-                        </div>
 
-                        {/* Name + count */}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {node.name}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {isPlaceholder ? (
-                              <span className="text-amber-600 dark:text-amber-400">
-                                Placeholder — waiting to be claimed
-                              </span>
-                            ) : node.nodeType === "droplet" ? (
-                              "1 droplet"
+                          {/* Branch indicator */}
+                          {isBranch && (
+                            <div className="h-4 w-4 flex-shrink-0" />
+                          )}
+
+                          {/* Node type icon */}
+                          <div className="flex-shrink-0 text-slate-400">
+                            {node.nodeType === "playlist" ? (
+                              <BookOpenIcon className="h-4 w-4" />
+                            ) : isPlaceholder ? (
+                              <CircleDashedIcon className="h-4 w-4 text-amber-500" />
                             ) : (
-                              <>
-                                {node.dropletCount}{" "}
-                                {node.dropletCount === 1
-                                  ? "droplet"
-                                  : "droplets"}
-                              </>
+                              <DropletIcon className="h-4 w-4 text-sky-500" />
                             )}
-                          </p>
-                        </div>
-
-                        {/* Reorder arrows (main path only) */}
-                        {!isBranch && (
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={() => moveUp(node.localId)}
-                              disabled={node.orderIndex === 0 || isPending}
-                              className="rounded p-0.5 text-slate-400 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"
-                              aria-label="Move up"
-                            >
-                              <ChevronUpIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveDown(node.localId)}
-                              disabled={
-                                node.orderIndex === mainPathNodes.length - 1 ||
-                                isPending
-                              }
-                              className="rounded p-0.5 text-slate-400 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"
-                              aria-label="Move down"
-                            >
-                              <ChevronDownIcon className="h-4 w-4" />
-                            </button>
                           </div>
-                        )}
 
-                        {/* Remove button */}
-                        <button
-                          type="button"
-                          onClick={() => removeNode(node.localId)}
-                          disabled={isPending}
-                          className="rounded p-0.5 text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
-                          aria-label="Remove island"
-                        >
-                          <XIcon className="h-4 w-4" />
-                        </button>
-                      </div>
+                          {/* Name + count */}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {node.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {isPlaceholder ? (
+                                <span className="text-amber-600 dark:text-amber-400">
+                                  Placeholder — waiting to be claimed
+                                </span>
+                              ) : node.nodeType === "droplet" ? (
+                                "1 droplet"
+                              ) : (
+                                <>
+                                  {node.dropletCount}{" "}
+                                  {node.dropletCount === 1
+                                    ? "droplet"
+                                    : "droplets"}
+                                </>
+                              )}
+                            </p>
+                          </div>
 
-                      {/* Bottom row: branch controls */}
-                      <div className="flex flex-col gap-2">
-                        {/* "Branches from" select */}
-                        <div className="flex items-center gap-1.5">
-                          <label className="shrink-0 text-xs text-slate-500">
-                            Branches from
-                          </label>
-                          <select
-                            value={node.parentLocalId ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setParent(node.localId, val === "" ? null : val);
-                            }}
-                            disabled={isPending}
-                            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
-                          >
-                            <option value="">None (main path)</option>
-                            {mainPathNodes
-                              .filter((m) => m.localId !== node.localId)
-                              .sort((a, b) => a.orderIndex - b.orderIndex)
-                              .map((m) => (
-                                <option key={m.localId} value={m.localId}>
-                                  {m.orderIndex + 1}. {m.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-                        {/* "Type" toggle (branch nodes only) */}
-                        {isBranch && (
-                          <div className="flex items-center gap-1.5">
-                            <label className="text-xs text-slate-500">
-                              Type
-                            </label>
-                            <div className="flex overflow-hidden rounded border border-slate-200 dark:border-slate-600">
+                          {/* Reorder arrows (main path only) */}
+                          {!isBranch && (
+                            <div className="flex gap-1">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setBranchType(node.localId, "required")
-                                }
-                                disabled={isPending}
-                                className={cn(
-                                  "px-2 py-0.5 text-xs font-medium transition-colors",
-                                  node.branchType === "required"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                )}
+                                onClick={() => moveUp(node.localId)}
+                                disabled={node.orderIndex === 0 || isPending}
+                                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"
+                                aria-label="Move up"
                               >
-                                Required
+                                <ChevronUpIcon className="h-4 w-4" />
                               </button>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setBranchType(node.localId, "optional")
+                                onClick={() => moveDown(node.localId)}
+                                disabled={
+                                  node.orderIndex ===
+                                    mainPathNodes.length - 1 || isPending
                                 }
-                                disabled={isPending}
-                                className={cn(
-                                  "px-2 py-0.5 text-xs font-medium transition-colors",
-                                  node.branchType === "optional"
-                                    ? "bg-yellow-500 text-white"
-                                    : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
-                                )}
+                                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"
+                                aria-label="Move down"
                               >
-                                Optional
+                                <ChevronDownIcon className="h-4 w-4" />
                               </button>
                             </div>
+                          )}
+
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={() => removeNode(node.localId)}
+                            disabled={isPending}
+                            className="rounded p-0.5 text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                            aria-label="Remove island"
+                          >
+                            <XIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Bottom row: branch controls */}
+                        <div className="flex flex-col gap-2">
+                          {/* "Branches from" select */}
+                          <div className="flex items-center gap-1.5">
+                            <label className="shrink-0 text-xs text-slate-500">
+                              Branches from
+                            </label>
+                            <select
+                              value={node.parentLocalId ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setParent(
+                                  node.localId,
+                                  val === "" ? null : val,
+                                );
+                              }}
+                              disabled={isPending}
+                              className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:ring-1 focus:ring-slate-400 focus:outline-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                            >
+                              <option value="">None (main path)</option>
+                              {mainPathNodes
+                                .filter((m) => m.localId !== node.localId)
+                                .sort((a, b) => a.orderIndex - b.orderIndex)
+                                .map((m) => (
+                                  <option key={m.localId} value={m.localId}>
+                                    {m.orderIndex + 1}. {m.name}
+                                  </option>
+                                ))}
+                            </select>
                           </div>
-                        )}
+
+                          {/* "Type" toggle (branch nodes only) */}
+                          {isBranch && (
+                            <div className="flex items-center gap-1.5">
+                              <label className="text-xs text-slate-500">
+                                Type
+                              </label>
+                              <div className="flex overflow-hidden rounded border border-slate-200 dark:border-slate-600">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setBranchType(node.localId, "required")
+                                  }
+                                  disabled={isPending}
+                                  className={cn(
+                                    "px-2 py-0.5 text-xs font-medium transition-colors",
+                                    node.branchType === "required"
+                                      ? "bg-blue-600 text-white"
+                                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
+                                  )}
+                                >
+                                  Required
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setBranchType(node.localId, "optional")
+                                  }
+                                  disabled={isPending}
+                                  className={cn(
+                                    "px-2 py-0.5 text-xs font-medium transition-colors",
+                                    node.branchType === "optional"
+                                      ? "bg-yellow-500 text-white"
+                                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
+                                  )}
+                                >
+                                  Optional
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              {nodeMode === "placeholder"
-                ? "Enter a label above and click Add to create a placeholder droplet for someone to claim."
-                : "Search above to add islands."}
-            </p>
-          )}
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                {nodeMode === "placeholder"
+                  ? "Enter a label above and click Add to create a placeholder droplet for someone to claim."
+                  : "Search above to add islands."}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Error */}
@@ -871,8 +879,10 @@ export function VoyageForm({
         )}
 
         {/* Sequential progression toggle */}
-        <div id="tour-sequential-toggle"></div>
-        <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
+        <label
+          id="tour-sequential-toggle"
+          className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700"
+        >
           <input
             type="checkbox"
             checked={isSequential}
@@ -891,8 +901,7 @@ export function VoyageForm({
         </label>
 
         {/* Action buttons */}
-        <div id="tour-publish-buttons"></div>
-        <div className="flex gap-3">
+        <div id="tour-publish-buttons" className="flex gap-3">
           <Button
             type="button"
             onClick={() => handleSubmit("published")}
