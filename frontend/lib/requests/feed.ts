@@ -427,6 +427,25 @@ export async function createSystemAnnouncement(
   authUser: AuthorizedUser,
 ) {
   try {
+    // Skip if this exact system announcement already exists for this user
+    const existing = await fetchAPI<{ id: number }[]>("/announcements", {
+      urlParams: {
+        filters: {
+          $and: [
+            { authorized_user: { id: { $eq: authUser.id } } },
+            { type: { $eq: "system" } },
+            { content: { $eq: content } },
+          ],
+        },
+        fields: ["id"],
+        pagination: { pageSize: 1, page: 1 },
+      },
+      cache: "no-store",
+    });
+    if (existing.length > 0) {
+      return { success: true };
+    }
+
     const curDate = new Date();
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements",
