@@ -120,10 +120,17 @@ export function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAutoFormatting, setIsAutoFormatting] = useState(false);
-  const [hasAutoFormatted, setHasAutoFormatted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(`auto-formatted-${droplet.id}`) === "true";
+  const MAX_AUTO_FORMATS = 10;
+  const [autoFormatCount, setAutoFormatCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return (
+      parseInt(
+        localStorage.getItem(`auto-format-count-${droplet.id}`) || "0",
+        10,
+      ) || 0
+    );
   });
+  const hasAutoFormatted = autoFormatCount >= MAX_AUTO_FORMATS;
   const [showAutoFormatConfirm, setShowAutoFormatConfirm] = useState(false);
   const [presentationEnabled, setPresentationEnabled] = useState(
     () => droplet.presentationEnabled ?? false,
@@ -280,8 +287,9 @@ export function Sidebar({
         }),
       );
 
-      setHasAutoFormatted(true);
-      localStorage.setItem(`auto-formatted-${droplet.id}`, "true");
+      const newCount = autoFormatCount + 1;
+      setAutoFormatCount(newCount);
+      localStorage.setItem(`auto-format-count-${droplet.id}`, String(newCount));
       toast.success(
         `Auto-formatted: ${result.operations.filter((o) => o.type === "insert-slide-break").length} slide breaks inserted`,
       );
@@ -478,8 +486,8 @@ export function Sidebar({
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {hasAutoFormatted
-                        ? "Slide breaks already generated"
-                        : "Generate slide breaks"}
+                        ? "Auto-format limit reached (10/10)"
+                        : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -599,8 +607,9 @@ export function Sidebar({
                   </AlertDialogHeader>
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
                     <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                      This action can only be used once per droplet. You can
-                      manually adjust slide breaks afterward.
+                      You have {MAX_AUTO_FORMATS - autoFormatCount} use
+                      {MAX_AUTO_FORMATS - autoFormatCount === 1 ? "" : "s"}{" "}
+                      remaining. You can manually adjust slide breaks afterward.
                     </p>
                   </div>
                   <AlertDialogFooter>
