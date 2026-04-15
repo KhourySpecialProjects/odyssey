@@ -50,6 +50,16 @@ export default async function PresentationPage({ params }: Props) {
 
   if (!isAdmin && !isAuthor && !isEnrolled) return notFound();
 
+  // Block presentation if not enabled by the creator
+  if (!droplet.presentationEnabled) {
+    return (
+      <NoPresentationWarning
+        dropletSlug={slug}
+        isAuthorOrAdmin={isAdmin || isAuthor}
+      />
+    );
+  }
+
   const tags = [
     uppercaseFirstChar(droplet.focusArea),
     uppercaseFirstChar(droplet.type),
@@ -98,6 +108,7 @@ export default async function PresentationPage({ params }: Props) {
         tags={tags}
         sortedLessons={sortedLessons}
         lessonNames={lessonNames}
+        isAuthorOrAdmin={isAdmin || isAuthor}
       />
     </Suspense>
   );
@@ -110,6 +121,7 @@ async function LessonContentLoader({
   tags,
   sortedLessons,
   lessonNames,
+  isAuthorOrAdmin,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   droplet: any;
@@ -117,6 +129,7 @@ async function LessonContentLoader({
   tags: string[];
   sortedLessons: { slug: string; name: string }[];
   lessonNames: string[];
+  isAuthorOrAdmin: boolean;
 }) {
   const lessonContents: Lesson[] = await Promise.all(
     sortedLessons.map((l) => getCachedLessonBySlug(l.slug)),
@@ -133,7 +146,12 @@ async function LessonContentLoader({
     .map((l) => l.name);
 
   if (nonEmptySlides.length === 0) {
-    return <NoPresentationWarning dropletSlug={slug} />;
+    return (
+      <NoPresentationWarning
+        dropletSlug={slug}
+        isAuthorOrAdmin={isAuthorOrAdmin}
+      />
+    );
   }
 
   return (

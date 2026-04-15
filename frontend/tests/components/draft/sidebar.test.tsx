@@ -107,6 +107,7 @@ describe("Sidebar", () => {
     type: "knowledge" as DropletType,
     focusArea: "personal" as FocusArea,
     isHidden: false,
+    presentationEnabled: false,
     learningObjectives: [],
     inReview: false,
     afterReview: undefined,

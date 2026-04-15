@@ -20,7 +20,7 @@ export function DropletDescriptionInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-[#121216] before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
+          "before:content-[attr(data-placeholder)] before:text-slate-400 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none dark:before:text-slate-500",
       }),
       Text,
     ],
@@ -33,7 +33,7 @@ export function DropletDescriptionInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-800 border-[#D0D5DD] dark:text-slate-300 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
+          "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-900 border-[#D0D5DD] dark:text-slate-200 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
       },
     },
     immediatelyRender: false,

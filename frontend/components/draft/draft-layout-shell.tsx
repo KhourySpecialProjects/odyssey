@@ -23,6 +23,7 @@ interface DraftLayoutShellProps {
     | "type"
     | "originalDropletId"
     | "difficulty"
+    | "presentationEnabled"
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   children: React.ReactNode;

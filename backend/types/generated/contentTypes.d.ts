@@ -969,6 +969,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    presentationEnabled: Attribute.Boolean & Attribute.DefaultTo<false>;
     publishedAt: Attribute.DateTime;
     reviewDroplet: Attribute.Relation<
       'api::droplet.droplet',

@@ -92,7 +92,7 @@ export function MultiSelect({
                     <Badge
                       variant="outline"
                       key={option.id}
-                      className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-normal text-slate-800"
+                      className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-normal text-slate-800 dark:bg-slate-700 dark:text-slate-200"
                     >
                       {option.name}
                       <span

@@ -296,6 +296,9 @@ export async function updateDroplet(
       ...(data.authorized_users && { authorized_users: data.authorized_users }),
       ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
+      ...(data.presentationEnabled !== undefined && {
+        presentationEnabled: data.presentationEnabled,
+      }),
       ...(data.learningObjectives && {
         learningObjectives: data.learningObjectives.map((obj) => ({
           objective: obj,
@@ -364,6 +367,13 @@ export async function updateDroplet(
       data: null,
     };
   }
+}
+
+export async function togglePresentationEnabled(
+  dropletId: number,
+  enabled: boolean,
+) {
+  return updateDroplet(dropletId, { presentationEnabled: enabled });
 }
 
 export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {

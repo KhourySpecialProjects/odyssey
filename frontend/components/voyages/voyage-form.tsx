@@ -906,7 +906,7 @@ export function VoyageForm({
             type="button"
             onClick={() => handleSubmit("published")}
             disabled={isPending}
-            className="flex-1 bg-[#297496] hover:bg-[#225f7a]"
+            className="flex-1 bg-[#297496] text-white hover:bg-[#225f7a] dark:bg-[#297496] dark:text-white dark:hover:bg-[#225f7a]"
           >
             {isPending && isEditing && "Updating..."}
             {isPending && !isEditing && "Publishing..."}
@@ -918,7 +918,7 @@ export function VoyageForm({
             variant="outline"
             onClick={() => handleSubmit("draft")}
             disabled={isPending}
-            className="flex-1 border-[#297496] text-[#297496] hover:bg-[#297496]/10"
+            className="flex-1 border-[#297496] text-[#297496] hover:bg-[#297496]/10 dark:border-[#4AABCF] dark:bg-transparent dark:text-[#4AABCF] dark:hover:bg-[#297496]/20"
           >
             {isPending && "Saving..."}
             {!isPending && isEditing && "Save Changes"}
