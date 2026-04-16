@@ -462,7 +462,9 @@ function LessonBlockRenderer({
           <CollapsibleContent className="mt-4 border-t border-t-slate-200 pt-3 dark:border-slate-500">
             <div
               className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit max-w-none dark:text-slate-300"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content) }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(block.content),
+              }}
             ></div>
           </CollapsibleContent>
         </Collapsible>
