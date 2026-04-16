@@ -128,42 +128,54 @@ export function useEditingLock(lessonId: number) {
     };
 
     const init = async () => {
-      const userId = await getCurrentAuthorizedUserId();
-      if (!mountedRef.current) return;
-      userIdRef.current = userId;
+      try {
+        const userId = await getCurrentAuthorizedUserId();
+        if (!mountedRef.current) return;
+        userIdRef.current = userId;
 
-      if (!userId) {
-        setState({
-          isLocked: false,
-          isOwnLock: false,
-          lockedBy: null,
-          isLoading: false,
-          error: "Could not resolve your user account",
-        });
-        return;
-      }
+        if (!userId) {
+          setState({
+            isLocked: false,
+            isOwnLock: false,
+            lockedBy: null,
+            isLoading: false,
+            error: "Could not resolve your user account",
+          });
+          return;
+        }
 
-      const result = await acquireLessonLock(lessonId);
-      if (!mountedRef.current) return;
+        const result = await acquireLessonLock(lessonId);
+        if (!mountedRef.current) return;
 
-      if (result.success) {
-        setState({
-          isLocked: true,
-          isOwnLock: true,
-          lockedBy: null,
-          isLoading: false,
-          error: null,
-        });
-        startHeartbeat();
-      } else {
-        setState({
-          isLocked: true,
-          isOwnLock: false,
-          lockedBy: result.lockedBy ?? null,
-          isLoading: false,
-          error: result.lockedBy ? null : result.error ?? null,
-        });
-        startPolling();
+        if (result.success) {
+          setState({
+            isLocked: true,
+            isOwnLock: true,
+            lockedBy: null,
+            isLoading: false,
+            error: null,
+          });
+          startHeartbeat();
+        } else {
+          setState({
+            isLocked: true,
+            isOwnLock: false,
+            lockedBy: result.lockedBy ?? null,
+            isLoading: false,
+            error: result.lockedBy ? null : result.error ?? null,
+          });
+          startPolling();
+        }
+      } catch {
+        if (mountedRef.current) {
+          setState({
+            isLocked: false,
+            isOwnLock: false,
+            lockedBy: null,
+            isLoading: false,
+            error: "Failed to initialize editing lock",
+          });
+        }
       }
     };
 
