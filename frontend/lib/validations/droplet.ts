@@ -19,6 +19,7 @@ export const DropletSchema = z.object({
   difficulty: z.enum(difficulties),
   tagIds: z.number().array(),
   isHidden: z.boolean().optional(),
+  presentationEnabled: z.boolean().optional(),
   learningObjectives: z.string().min(2).max(200).array(),
   prerequisiteIds: z.number().array(),
   postrequisiteIds: z.number().array(),

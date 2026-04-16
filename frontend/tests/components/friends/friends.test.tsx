@@ -50,7 +50,6 @@ describe("Friends", () => {
 
     const { container } = await render(await Friends());
 
-    expect(screen.getByText("Friends")).toBeInTheDocument();
     expect(container.querySelector("ul")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
   });
@@ -74,20 +73,8 @@ describe("Friends", () => {
 
     await render(await Friends());
     expect(screen.getByText("You have no friends :(")).toBeInTheDocument();
-  });
-
-  it("renders section header and description", async () => {
-    const mockAuthUser = {
-      id: 1,
-      email: "test@example.com",
-    };
-
-    (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
-    (fetchFriends as jest.Mock).mockResolvedValue([]);
-
-    await render(await Friends());
-
-    expect(screen.getByText("Friends")).toBeInTheDocument();
-    expect(screen.getByText("A list of your friends.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Search for people to add as friends."),
+    ).toBeInTheDocument();
   });
 });

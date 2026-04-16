@@ -128,6 +128,6 @@ describe("FriendRequests", () => {
       />,
     );
 
-    expect(getByText("You have no friend requests")).toBeInTheDocument();
+    expect(getByText("No friend requests")).toBeInTheDocument();
   });
 });

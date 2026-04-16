@@ -10,7 +10,7 @@ jest.mock("next/navigation", () => ({
 
 // Mock updateUserInfo to avoid "use server" issues in tests
 jest.mock("@/lib/requests/authorized-user", () => ({
-  updateUserInfo: jest.fn().mockResolvedValue({ success: true }),
+  updateUserInfo: jest.fn().mockResolvedValue({ ok: true, data: null }),
   createAuthorizedUser: jest.fn().mockResolvedValue({ ok: true }),
   createBatchAuthorizedUsers: jest
     .fn()

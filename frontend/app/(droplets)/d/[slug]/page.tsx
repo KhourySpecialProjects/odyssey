@@ -137,7 +137,7 @@ export default async function DropletRoute({ params }: Props) {
 
               <div className="mt-4 w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-8 dark:border-slate-500 dark:bg-slate-800">
                 <div
-                  className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300"
+                  className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit max-w-none dark:text-slate-300"
                   dangerouslySetInnerHTML={{
                     __html: createDOMPurifier.sanitize(droplet.overview),
                   }}

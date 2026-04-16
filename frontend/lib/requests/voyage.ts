@@ -5,25 +5,9 @@ import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
-import { getCachedUser } from "./cached";
+import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-
-async function requireAdminOrFaculty() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return false;
-  const user = await getCachedUser(session.user.email);
-  if (!user?.roles) return false;
-  const titles = user.roles.map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => (typeof r === "string" ? r : r.title) as string,
-  );
-  return (
-    titles.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    titles.includes(AuthorizedUserRoleTitle.Faculty)
-  );
-}
+import { VoyageTreeSchema } from "@/lib/validations/voyage";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -70,11 +54,14 @@ async function postNode(
 }
 
 interface NodeInput {
-  playlistId: number;
+  localId: string;
+  nodeType: "playlist" | "droplet";
+  playlistId: number | null;
+  dropletId: number | null;
   label: string;
   isMainPath: boolean;
   branchType: "required" | "optional";
-  parentPlaylistId: number | null;
+  parentLocalId: string | null;
   orderIndex: number;
 }
 
@@ -86,46 +73,67 @@ async function createVoyageNodes(
   voyageId: number,
   nodes: NodeInput[],
 ): Promise<string | null> {
-  const mainNodes = nodes.filter((n) => n.isMainPath);
-  const branchNodes = nodes.filter((n) => !n.isMainPath);
-  const playlistIdToNodeId = new Map<number, number>();
+  const mainNodes = nodes.filter((n) => n.parentLocalId === null);
+  const branchNodes = nodes.filter((n) => n.parentLocalId !== null);
+  const localIdToNodeId = new Map<string, number>();
 
   // Main path nodes must be sequential (branches reference their IDs)
   for (const node of mainNodes) {
-    const { ok, error, nodeId } = await postNode({
+    const nodeBody: Record<string, unknown> = {
       voyage: voyageId,
-      playlist: node.playlistId,
       label: node.label,
       isMainPath: true,
       branchType: node.branchType,
-      nodeType: "playlist",
+      nodeType: node.nodeType,
       orderIndex: node.orderIndex,
-    });
+    };
 
+    if (node.nodeType === "playlist") {
+      nodeBody.playlist = node.playlistId;
+    } else {
+      // droplet node
+      if (node.dropletId != null) {
+        nodeBody.droplet = node.dropletId;
+      } else {
+        nodeBody.claimStatus = "unclaimed";
+      }
+    }
+
+    const { ok, error, nodeId } = await postNode(nodeBody);
     if (!ok) return error;
-    playlistIdToNodeId.set(node.playlistId, nodeId!);
+    localIdToNodeId.set(node.localId, nodeId!);
   }
 
-  // Branch nodes resolve parent by playlistId -> Strapi node ID
+  // Branch nodes resolve parent by localId -> Strapi node ID
   for (const node of branchNodes) {
     const parentNodeId =
-      node.parentPlaylistId != null
-        ? playlistIdToNodeId.get(node.parentPlaylistId) ?? null
+      node.parentLocalId != null
+        ? localIdToNodeId.get(node.parentLocalId) ?? null
         : null;
 
-    if (parentNodeId === null && node.parentPlaylistId != null) {
-      return `Branch node "${node.label}" references unknown parent playlist.`;
+    if (parentNodeId === null && node.parentLocalId != null) {
+      return `Branch node "${node.label}" references unknown parent.`;
     }
 
     const nodeBody: Record<string, unknown> = {
       voyage: voyageId,
-      playlist: node.playlistId,
       label: node.label,
       isMainPath: false,
       branchType: node.branchType,
-      nodeType: "playlist",
+      nodeType: node.nodeType,
       orderIndex: node.orderIndex,
     };
+
+    if (node.nodeType === "playlist") {
+      nodeBody.playlist = node.playlistId;
+    } else {
+      if (node.dropletId != null) {
+        nodeBody.droplet = node.dropletId;
+      } else {
+        nodeBody.claimStatus = "unclaimed";
+      }
+    }
+
     if (parentNodeId != null) nodeBody.parentNode = parentNodeId;
 
     const { ok, error } = await postNode(nodeBody);
@@ -147,12 +155,21 @@ export async function getVoyages(): Promise<Voyage[]> {
     },
     populate: {
       voyage_nodes: {
-        fields: ["id", "isMainPath", "branchType", "orderIndex", "label"],
+        fields: [
+          "id",
+          "isMainPath",
+          "branchType",
+          "orderIndex",
+          "label",
+          "nodeType",
+          "claimStatus",
+        ],
         populate: {
           playlist: {
             fields: ["id", "slug", "name"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "slug", "name", "status"] },
           parentNode: { fields: ["id"] },
         },
       },
@@ -186,12 +203,13 @@ export async function getVoyagesAdmin(): Promise<Voyage[]> {
         fields: ["id", "firstName", "email"],
       },
       voyage_nodes: {
-        fields: ["id", "isMainPath"],
+        fields: ["id", "isMainPath", "nodeType", "claimStatus"],
         populate: {
           playlist: {
             fields: ["id"],
             populate: { droplets: { fields: ["id"] } },
           },
+          droplet: { fields: ["id", "status"] },
         },
       },
     },
@@ -277,9 +295,23 @@ export async function createVoyageWithNodes(data: {
   authorId?: number;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const gate = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!gate.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
+
+  const parsed = VoyageTreeSchema.safeParse({
+    name: data.name,
+    description: data.description,
+    nodes: data.nodes,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "invalid_input", data: null };
+  }
+
   try {
     // Phase 1: create the voyage record
     const slug = generateSlug(data.name);
@@ -305,9 +337,18 @@ export async function createVoyageWithNodes(data: {
 
     const voyageData = await voyageResponse.json();
     if (!voyageResponse.ok || voyageData.error) {
+      const msg = voyageData.error?.message || "Failed to create voyage";
+      const isUnique =
+        msg.toLowerCase().includes("unique") ||
+        voyageData.error?.details?.errors?.some(
+          (e: { path: string[] }) =>
+            e.path?.includes("slug") || e.path?.includes("name"),
+        );
       return {
         ok: false,
-        error: voyageData.error?.message || "Failed to create voyage",
+        error: isUnique
+          ? "A voyage with this name already exists. Please choose a different name."
+          : msg,
         data: null,
       };
     }
@@ -349,9 +390,34 @@ export async function createVoyageWithNodes(data: {
  * Publishes a draft Voyage by setting its status to "published".
  */
 export async function publishVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized" };
+  const gate = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!gate.ok) {
+    return { ok: false, error: gate.error };
   }
+
+  const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
+
+  if (!isAdmin) {
+    // Faculty: verify ownership
+    const voyage = await fetchAPI<{
+      id: number;
+      authors?: { id: number }[];
+    } | null>(`/voyages/${id}`, {
+      urlParams: { populate: { authors: { fields: ["id"] } } },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found" };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(gate.user.id)) {
+      return { ok: false, error: "forbidden" };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
@@ -393,7 +459,11 @@ export async function updateVoyageWithNodes(data: {
   isSequential?: boolean;
   nodes: NodeInput[];
 }) {
-  if (!(await requireAdminOrFaculty())) {
+  const updateGate = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!updateGate.ok) {
     return { ok: false, error: "Unauthorized", data: null };
   }
   try {
@@ -490,9 +560,34 @@ export async function updateVoyageWithNodes(data: {
  * @returns Success/failure result.
  */
 export async function deleteVoyage(id: number) {
-  if (!(await requireAdminOrFaculty())) {
-    return { ok: false, error: "Unauthorized", data: null };
+  const gate = await requireRole([
+    AuthorizedUserRoleTitle.SysAdmin,
+    AuthorizedUserRoleTitle.Faculty,
+  ]);
+  if (!gate.ok) {
+    return { ok: false, error: gate.error, data: null };
   }
+
+  const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
+
+  if (!isAdmin) {
+    // Faculty: verify ownership
+    const voyage = await fetchAPI<{
+      id: number;
+      authors?: { id: number }[];
+    } | null>(`/voyages/${id}`, {
+      urlParams: { populate: { authors: { fields: ["id"] } } },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
+    if (!voyage) {
+      return { ok: false, error: "not_found", data: null };
+    }
+    const authorIds = voyage.authors?.map((a) => a.id) ?? [];
+    if (!authorIds.includes(gate.user.id)) {
+      return { ok: false, error: "forbidden", data: null };
+    }
+  }
+
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,

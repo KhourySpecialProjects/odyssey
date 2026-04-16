@@ -53,27 +53,26 @@ interface TimeZoneSelectorProps {
 
 export default function TimeZoneSelector({
   currentZone,
-  userId,
 }: TimeZoneSelectorProps) {
   const [selectedTimeZone, setSelectedTimeZone] = useState(currentZone);
   const handleChange = async (zone: string) => {
-    await setTimeZone(zone, userId);
+    await setTimeZone(zone);
     setSelectedTimeZone(zone);
     toast.success("Time zone updated successfully!");
   };
 
   return (
-    <div className="flex flex-row items-center gap-4 px-6 py-4">
-      <div className="w-[12%]">
-        <label className="mb-1 block">Time Zone:</label>
-      </div>
+    <div>
+      <label className="mb-2 block text-xl font-bold text-slate-900 dark:text-white">
+        Time Zone
+      </label>
       <select
-        className="w-[50%] rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-800 dark:bg-black dark:text-white"
+        className="w-full rounded-md border border-[#D0D5DD] px-3 py-2 text-sm focus:ring-2 focus:ring-[#287697] focus:outline-none dark:border-slate-700 dark:bg-black dark:text-white"
         value={selectedTimeZone}
         onChange={(e) => handleChange(e.target.value)}
       >
         <option value="" disabled>
-          Choose a time zone...
+          Choose a time zone
         </option>
         {timeZones.map((tz) => (
           <option key={tz} value={tz}>

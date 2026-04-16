@@ -23,6 +23,11 @@
       "relation": "oneToOne",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "creationRequest"
+    },
+    "voyageNode": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::voyage-node.voyage-node"
     }
   }
 }

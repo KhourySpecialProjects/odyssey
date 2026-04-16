@@ -40,6 +40,7 @@ describe("ContentActionButton", () => {
     status: "draft",
     type: "knowledge",
     focusArea: "personal",
+    difficulty: "beginner",
     isHidden: false,
     learningObjectives: [],
     inReview: false,

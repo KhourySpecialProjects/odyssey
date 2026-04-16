@@ -7,6 +7,11 @@ export const ISLAND_SVG_DIMENSIONS = {
   branch: { width: 160, height: 145 },
 } as const;
 
+const PUDDLE_OUTER_PATH =
+  "M28 138 C30 132 42 126 62 124 C72 123 78 120 90 122 C102 124 108 121 120 122 C140 124 158 128 168 134 C174 138 172 146 160 150 C148 154 132 156 116 157 C100 158 82 158 66 156 C48 154 34 148 28 142 Z";
+const PUDDLE_INNER_PATH =
+  "M42 139 C44 134 56 130 72 128 C82 127 90 126 100 127 C112 128 122 126 134 128 C148 130 156 134 156 139 C156 144 146 148 132 150 C118 152 98 152 82 151 C62 150 46 146 42 142 Z";
+
 interface VoyageTreeIslandProps {
   label: string;
   slug?: string;
@@ -16,22 +21,184 @@ interface VoyageTreeIslandProps {
   stepNumber?: number;
   /** Visual scale factor for responsive sizing (1 = default). */
   scale?: number;
+  href?: string;
+  nodeType?: "playlist" | "droplet";
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
 }
 
 function IslandSvg({
   size,
   status,
   scale = 1,
+  nodeType = "playlist",
+  claimStatus,
 }: {
   size: "main" | "branch";
   status: string;
   scale?: number;
+  nodeType?: "playlist" | "droplet";
+  claimStatus?: "unclaimed" | "claimed" | "authored" | null;
 }) {
   const isLocked = status === "locked";
   const base = ISLAND_SVG_DIMENSIONS[size];
   const w = base.width * scale;
   const h = base.height * scale;
 
+  // Unclaimed and claimed (in progress) both use the same puddle SVG
+  // The subtitle text differentiates them ("Become author!" vs "In Progress")
+  if (
+    nodeType === "droplet" &&
+    (claimStatus === "unclaimed" || claimStatus === "claimed")
+  ) {
+    return (
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 200 180"
+        fill="none"
+        className="block"
+      >
+        {/* Three water drops above puddle */}
+        <path
+          d="M100 56 C100 56 94 66 94 71 C94 74.3 96.7 77 100 77 C103.3 77 106 74.3 106 71 C106 66 100 56 100 56Z"
+          stroke="#94a3b8"
+          strokeWidth="3"
+          fill="none"
+          opacity={0.4}
+        />
+        <path
+          d="M78 76 C78 76 73 84 73 88 C73 90.8 75.2 93 78 93 C80.8 93 83 90.8 83 88 C83 84 78 76 78 76Z"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          fill="none"
+          opacity={0.35}
+        />
+        <path
+          d="M122 76 C122 76 117 84 117 88 C117 90.8 119.2 93 122 93 C124.8 93 127 90.8 127 88 C127 84 122 76 122 76Z"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          fill="none"
+          opacity={0.35}
+        />
+        {/* Puddle — dashed outline */}
+        <path
+          d={PUDDLE_OUTER_PATH}
+          stroke="#94a3b8"
+          strokeWidth="3"
+          strokeDasharray="8 5"
+          fill="none"
+          opacity={0.35}
+        />
+        {/* Inner puddle fill */}
+        <path d={PUDDLE_INNER_PATH} fill="#e2e8f0" opacity={0.4} />
+        {status === "available" && (
+          <path
+            d={PUDDLE_OUTER_PATH}
+            stroke="#60a5fa"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.25}
+          />
+        )}
+      </svg>
+    );
+  }
+
+  // Droplet node — published: full teal puddle with water drop
+  if (nodeType === "droplet") {
+    return (
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 200 180"
+        fill="none"
+        className="block"
+      >
+        {isLocked ? (
+          <>
+            {/* Locked spill — gray */}
+            <path d={PUDDLE_INNER_PATH} fill="#94a3b8" opacity={0.15} />
+            <path
+              d="M65 132 C75 126 95 124 115 126 C130 128 142 132 145 136"
+              stroke="#94a3b8"
+              strokeWidth="1"
+              fill="none"
+              opacity={0.1}
+            />
+          </>
+        ) : (
+          <>
+            {/* Outer spill glow */}
+            <path d={PUDDLE_OUTER_PATH} fill="#297496" opacity={0.08} />
+            {/* Main spill */}
+            <path d={PUDDLE_INNER_PATH} fill="#cffafe" />
+            <path d={PUDDLE_INNER_PATH} fill="#297496" opacity={0.3} />
+            {/* Organic ripple lines */}
+            <path
+              d="M60 134 C72 126 92 122 112 124 C132 126 148 132 150 138"
+              stroke="#297496"
+              strokeWidth="1.5"
+              fill="none"
+              opacity={0.3}
+            />
+            <path
+              d="M74 136 C84 130 102 128 120 130 C134 132 142 136 140 139"
+              stroke="#297496"
+              strokeWidth="1"
+              fill="none"
+              opacity={0.2}
+            />
+            <path
+              d="M88 137 C96 134 108 133 118 135"
+              stroke="#297496"
+              strokeWidth="0.8"
+              fill="none"
+              opacity={0.15}
+            />
+            {/* Water drop */}
+            <path
+              d="M100 82 C100 82 91 96 91 103 C91 108 95 112 100 112 C105 112 109 108 109 103 C109 96 100 82 100 82Z"
+              fill="#297496"
+              opacity={0.7}
+            />
+            {/* Drop highlight */}
+            <path
+              d="M96 105 C96 102 98 99 100 97"
+              stroke="#cffafe"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              opacity={0.6}
+            />
+            {/* Splash dots */}
+            <circle cx="80" cy="122" r="2.5" fill="#297496" opacity={0.25} />
+            <circle cx="124" cy="124" r="2" fill="#297496" opacity={0.2} />
+            <circle cx="68" cy="140" r="1.5" fill="#297496" opacity={0.15} />
+            <circle cx="136" cy="142" r="1.5" fill="#297496" opacity={0.12} />
+            {status === "completed" && (
+              <path
+                d={PUDDLE_OUTER_PATH}
+                stroke="#22c55e"
+                strokeWidth="2.5"
+                fill="none"
+                opacity={0.4}
+              />
+            )}
+          </>
+        )}
+        {status === "available" && !isLocked && (
+          <path
+            d={PUDDLE_OUTER_PATH}
+            stroke="#60a5fa"
+            strokeWidth="2.5"
+            fill="none"
+            opacity={0.3}
+          />
+        )}
+      </svg>
+    );
+  }
+
+  // Default: playlist island (existing rendering)
   return (
     <svg
       width={w}
@@ -373,10 +540,35 @@ export function VoyageTreeIsland({
   status = "available",
   stepNumber,
   scale = 1,
+  href: hrefProp,
+  nodeType = "playlist",
+  claimStatus,
 }: VoyageTreeIslandProps) {
   const isMain = size === "main";
   const isLocked = status === "locked";
   const isCompleted = status === "completed";
+  const isDropletNode = nodeType === "droplet";
+  const isUnclaimed = claimStatus === "unclaimed";
+  const isClaimed = claimStatus === "claimed";
+
+  // Compute subtitle text based on node type and claim state
+  let subtitleText: string | null = null;
+  if (isDropletNode && isUnclaimed) {
+    subtitleText = "Become author!";
+  } else if (isDropletNode && isClaimed) {
+    subtitleText = "In Progress";
+  } else if (isDropletNode) {
+    subtitleText = "1 droplet";
+  } else if (dropletCount !== undefined) {
+    subtitleText = `${dropletCount} ${dropletCount === 1 ? "droplet" : "droplets"}`;
+  }
+
+  // Subtitle color: teal for unclaimed/claimed droplet nodes
+  const subtitleColorClass = isCompleted
+    ? "text-green-700 dark:text-green-400"
+    : isLocked
+      ? "text-slate-400"
+      : "text-slate-600 dark:text-slate-300";
 
   const content = (
     <div
@@ -403,34 +595,34 @@ export function VoyageTreeIsland({
         {/* Lock icon */}
         {isLocked && <LockIcon />}
 
-        <IslandSvg size={size} status={status} scale={scale} />
+        <IslandSvg
+          size={size}
+          status={status}
+          scale={scale}
+          nodeType={nodeType}
+          claimStatus={claimStatus}
+        />
       </div>
 
       {/* Label */}
       <div className="-mt-1 flex justify-center">
         <span
-          className={`rounded-lg px-3 py-1.5 font-bold shadow-sm ${
+          className={`rounded-lg border border-slate-100 px-3 py-1.5 font-bold shadow ${
             isMain
               ? "max-w-[200px] bg-white text-sm dark:bg-slate-800"
               : "max-w-[160px] bg-white text-xs dark:bg-slate-800"
-          } ${isLocked ? "opacity-60" : ""} text-slate-900 dark:text-slate-100`}
+          } ${isLocked ? "opacity-60" : ""} text-slate-900 dark:border-slate-700 dark:text-slate-100`}
         >
           {label}
         </span>
       </div>
 
       {/* Subtitle */}
-      {dropletCount !== undefined && (
+      {subtitleText !== null && (
         <div
-          className={`mt-1 text-center text-xs font-semibold ${
-            isCompleted
-              ? "text-green-700 dark:text-green-400"
-              : isLocked
-                ? "text-slate-400"
-                : "text-slate-600 dark:text-slate-300"
-          }`}
+          className={`mt-1 text-center text-xs font-semibold ${subtitleColorClass}`}
         >
-          {dropletCount} {dropletCount === 1 ? "droplet" : "droplets"}
+          {subtitleText}
         </div>
       )}
 
@@ -448,8 +640,12 @@ export function VoyageTreeIsland({
     </div>
   );
 
-  if (slug && !isLocked) {
-    return <Link href={`/p/${slug}`}>{content}</Link>;
+  // Resolve href: explicit prop takes priority, then derive from slug + nodeType
+  const resolvedHref =
+    hrefProp ?? (slug ? (isDropletNode ? `/d/${slug}` : `/p/${slug}`) : null);
+
+  if (resolvedHref && !isLocked) {
+    return <Link href={resolvedHref}>{content}</Link>;
   }
 
   return content;

@@ -20,7 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserMultiSelect } from "@/components/ui/user-multi-select";
+import {
+  UserMultiSelect,
+  UserPickerButton,
+} from "@/components/ui/user-multi-select";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DropletList } from "@/components/group/group-management-droplet-list";
@@ -414,13 +417,20 @@ export function GroupManagementForm({
                   <div className="text-xl font-bold text-slate-900 dark:text-white">
                     Administrators
                   </div>
-                  <BulkAddUsersDialog
-                    label="Administrators"
-                    existingIds={field.value}
-                    onAddUsers={(newIds) =>
-                      field.onChange([...field.value, ...newIds])
-                    }
-                  />
+                  <div className="flex items-center gap-2">
+                    <UserPickerButton
+                      selectedIds={field.value}
+                      onChange={field.onChange}
+                      placeholder="Add administrator"
+                    />
+                    <BulkAddUsersDialog
+                      label="Administrators"
+                      existingIds={field.value}
+                      onAddUsers={(newIds) =>
+                        field.onChange([...field.value, ...newIds])
+                      }
+                    />
+                  </div>
                 </div>
                 <FormControl>
                   <UserMultiSelect
@@ -443,13 +453,20 @@ export function GroupManagementForm({
                   <div className="text-xl font-bold text-slate-900 dark:text-white">
                     Members
                   </div>
-                  <BulkAddUsersDialog
-                    label="Members"
-                    existingIds={field.value}
-                    onAddUsers={(newIds) =>
-                      field.onChange([...field.value, ...newIds])
-                    }
-                  />
+                  <div className="flex items-center gap-2">
+                    <UserPickerButton
+                      selectedIds={field.value}
+                      onChange={field.onChange}
+                      placeholder="Add member"
+                    />
+                    <BulkAddUsersDialog
+                      label="Members"
+                      existingIds={field.value}
+                      onAddUsers={(newIds) =>
+                        field.onChange([...field.value, ...newIds])
+                      }
+                    />
+                  </div>
                 </div>
                 <FormControl>
                   <UserMultiSelect

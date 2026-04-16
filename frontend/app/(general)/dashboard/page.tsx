@@ -17,5 +17,5 @@ export default async function DashboardRoute({ searchParams }: Props) {
   if (!params.has("tab")) {
     params.set("tab", "droplets");
   }
-  redirect(`/feed?${params.toString()}`);
+  redirect(`/activity?${params.toString()}`);
 }

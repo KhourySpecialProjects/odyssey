@@ -715,7 +715,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           onMouseUp={() => handleMouseUp()}
           onMouseDown={(e) => handleMouseDown(e)}
           onClick={handleContentClick}
-          className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit select-text dark:text-slate-300"
+          className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit max-w-none select-text dark:text-slate-300"
           dangerouslySetInnerHTML={{
             __html: DOMPurify.sanitize(nonTableContent),
           }}

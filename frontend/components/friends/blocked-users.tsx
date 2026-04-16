@@ -2,6 +2,8 @@ import { getCachedUserSocial } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { BlockedUsersBlock } from "./blocked-users-block";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconBan } from "@tabler/icons-react";
 
 export async function BlockedUsers() {
   const user = await getCurrentUser();
@@ -11,25 +13,25 @@ export async function BlockedUsers() {
   const blockedUsers = authUser.blocked;
 
   return (
-    <section className="md:mt-4">
-      <h1 className="font-bold">Blocked Users</h1>
-      <p>A list of people you have blocked.</p>
-
-      <div className="mt-4 rounded-md bg-slate-100 p-1 md:p-4 dark:bg-slate-800">
-        {blockedUsers.length > 0 ? (
-          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-            {blockedUsers.map((block) => (
-              <BlockedUsersBlock
-                user={authUser}
-                blocked={block}
-                key={block.id}
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="dark:text-slate-300">You have no blocked users</p>
-        )}
-      </div>
+    <section>
+      {blockedUsers.length > 0 ? (
+        <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+          {blockedUsers.map((block) => (
+            <BlockedUsersBlock user={authUser} blocked={block} key={block.id} />
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          icon={
+            <IconBan
+              className="h-7 w-7 text-[#475569] dark:text-slate-400"
+              stroke={1.5}
+            />
+          }
+          title="No blocked users"
+          message="You haven't blocked anyone."
+        />
+      )}
     </section>
   );
 }

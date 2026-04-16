@@ -701,37 +701,19 @@ describe("Playlist tests", () => {
   });
 
   describe("getPlaylistById", () => {
+    // getPlaylistById uses fetchAPI (auto-flattens Strapi responses),
+    // so these tests mock fetchAPI directly and expect the flat shape.
     it("should return the playlist corresponding to a given id", async () => {
       const mockPlaylist = {
         id: 1,
-        attributes: {
-          name: "Test Playlist",
-          slug: "test-playlist",
-          isPublic: true,
-          droplets: [],
-        },
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: true,
+        droplets: [],
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            data: {
-              id: 1,
-              attributes: {
-                name: "Test Playlist",
-                slug: "test-playlist",
-                isPublic: true,
-                droplets: [],
-              },
-            },
-          }),
-      });
-
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce({
-        data: mockPlaylist,
-      });
+      fetchAPI.mockResolvedValueOnce(mockPlaylist);
 
       const result = await getPlaylistById(1);
 
@@ -739,9 +721,10 @@ describe("Playlist tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      global.fetch = jest
-        .fn()
-        .mockRejectedValue(new Error("Failed to fetch playlist by id."));
+      fetchAPI.mockReset();
+      fetchAPI.mockRejectedValueOnce(
+        new Error("Failed to fetch playlist by id."),
+      );
       await expect(getPlaylistById(1)).rejects.toThrow(
         "Failed to fetch playlist by id.",
       );

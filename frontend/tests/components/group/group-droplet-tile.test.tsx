@@ -1,20 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { DateTime } from "luxon";
-import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 describe("GroupDropletTile", () => {
-  const mockDroplet = {
+  const mockDroplet = makeDroplet({
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
     isHidden: false,
-    focusArea: "Personal" as FocusArea,
-    type: "Knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    focusArea: "personal",
+    type: "knowledge",
+    tags: [makeTag({ id: 1, name: "React" })],
     learningObjectives: [],
-    status: "published" as DropletStatus,
-  };
+    status: "published",
+  });
 
   it("renders droplet information", () => {
     render(<GroupDropletTile droplet={mockDroplet} />);

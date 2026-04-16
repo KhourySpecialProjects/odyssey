@@ -434,6 +434,25 @@ export async function getGroupBySlugV2(
       voyages: {
         fields: ["id", "name", "slug", "status"],
         sort: "name:asc",
+        populate: {
+          voyage_nodes: {
+            fields: [
+              "id",
+              "label",
+              "orderIndex",
+              "isMainPath",
+              "branchType",
+              "nodeType",
+            ],
+            populate: {
+              playlist: {
+                fields: ["id", "name", "slug"],
+                populate: { droplets: { fields: ["id", "name", "slug"] } },
+              },
+            },
+            sort: "orderIndex:asc",
+          },
+        },
       },
     },
     fields = ["*", "dropletDueDates"],

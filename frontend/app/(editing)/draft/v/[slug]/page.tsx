@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
 import { getPlaylists } from "@/lib/requests/playlist";
+import { getDroplets } from "@/lib/requests/droplet";
 import { getVoyageBySlug } from "@/lib/requests/voyage";
 import { VoyageForm } from "@/components/voyages/voyage-form";
 import { getCachedUser } from "@/lib/requests/cached";
@@ -21,16 +22,23 @@ export default async function EditVoyagePage({ params }: Props) {
 
   const { slug } = await params;
 
-  const [authUser, voyage, publicPlaylists] = await Promise.all([
-    getCachedUser(user.email),
-    getVoyageBySlug(slug, { includeDrafts: true }),
-    getPlaylists({
-      filters: { isPublic: true },
-      populate: { droplets: { fields: ["id"] } },
-      fields: ["id", "name", "slug"],
-      sort: ["name:asc"],
-    }),
-  ]);
+  const [authUser, voyage, publicPlaylists, publishedDroplets] =
+    await Promise.all([
+      getCachedUser(user.email),
+      getVoyageBySlug(slug, { includeDrafts: true }),
+      getPlaylists({
+        filters: { isPublic: true },
+        populate: { droplets: { fields: ["id"] } },
+        fields: ["id", "name", "slug"],
+        sort: ["name:asc"],
+      }),
+      getDroplets({
+        filters: { status: "published", isHidden: false },
+        fields: ["id", "name", "slug"],
+        populate: {},
+        sort: ["name:asc"],
+      }),
+    ]);
 
   if (!authUser || !voyage) return notFound();
 
@@ -42,6 +50,7 @@ export default async function EditVoyagePage({ params }: Props) {
       <div className="w-full max-w-6xl">
         <VoyageForm
           playlists={publicPlaylists}
+          droplets={publishedDroplets}
           authorId={authUser.id}
           voyage={voyage}
         />

@@ -1,6 +1,9 @@
 import { updateDropletFunFact, getDroplets } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
-import { getCachedDraftDropletBySlug } from "@/lib/requests/cached";
+import {
+  getCachedDraftDropletBySlug,
+  getCachedUser,
+} from "@/lib/requests/cached";
 import { stripHtmlTags } from "@/lib/utils";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
@@ -47,6 +50,8 @@ export default async function Droplet({ params }: Props) {
   if (!user) {
     return notFound();
   }
+
+  const authUser = user.email ? await getCachedUser(user.email) : null;
 
   const [droplet, droplets, tags] = await Promise.all([
     getCachedDraftDropletBySlug(p.slug),
@@ -160,7 +165,9 @@ export default async function Droplet({ params }: Props) {
           ) : null}
 
           {droplet.status === "published" && (
-            <div className="p-2">This droplet is currently live</div>
+            <div className="p-2 dark:text-slate-200">
+              This droplet is currently live
+            </div>
           )}
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
@@ -182,6 +189,7 @@ export default async function Droplet({ params }: Props) {
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
+            currentUserId={authUser?.id}
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

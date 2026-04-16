@@ -8,7 +8,10 @@ import { Droplet, User } from "@/types";
 interface DropletLayoutShellProps {
   user: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "lessons" | "status" | "id">;
+  droplet: Pick<
+    Droplet,
+    "name" | "slug" | "lessons" | "status" | "id" | "presentationEnabled"
+  >;
   completedLessonIds: number[];
   enrollmentId?: string;
   children: React.ReactNode;

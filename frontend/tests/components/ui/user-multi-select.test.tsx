@@ -1,151 +1,144 @@
 import { render, fireEvent, waitFor, screen } from "@testing-library/react";
-import { UserMultiSelect } from "@/components/ui/user-multi-select";
+import {
+  UserMultiSelect,
+  UserPickerButton,
+} from "@/components/ui/user-multi-select";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
 jest.mock("@/lib/requests/authorized-user", () => ({
   fetchAuthorizedUsers: jest.fn(),
 }));
 
+const mockUsers = [
+  {
+    id: 1,
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@example.com",
+  },
+  {
+    id: 2,
+    firstName: "Jane",
+    lastName: "Smith",
+    email: "jane.smith@example.com",
+  },
+];
+
 describe("UserMultiSelect", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     (fetchAuthorizedUsers as jest.Mock).mockResolvedValue(mockUsers);
   });
-  const mockUsers = [
-    {
-      id: 1,
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-    },
-    {
-      id: 2,
-      firstName: "Jane",
-      lastName: "Smith",
-      email: "jane.smith@example.com",
-    },
-  ];
 
-  it("renders select button", () => {
-    const { getByRole } = render(
-      <UserMultiSelect selectedIds={[]} onChange={() => {}} />,
-    );
-
-    expect(getByRole("combobox")).toBeInTheDocument();
+  it("renders nothing when no users are selected", () => {
+    render(<UserMultiSelect selectedIds={[]} onChange={() => {}} />);
+    expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
   });
 
-  it("renders button when users are selected", async () => {
-    const { getByRole } = render(
-      <UserMultiSelect selectedIds={[1]} onChange={() => {}} />,
-    );
+  it("renders chips for selected users", async () => {
+    render(<UserMultiSelect selectedIds={[1]} onChange={() => {}} />);
 
-    expect(getByRole("combobox")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
   });
 
-  it("handles user selection", async () => {
+  it("renders remove button on chips", async () => {
+    render(<UserMultiSelect selectedIds={[1]} onChange={() => {}} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /remove john doe/i }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("calls onChange when removing a user chip", async () => {
     const handleChange = jest.fn();
-    const { getByRole, getByText } = render(
-      <UserMultiSelect selectedIds={[]} onChange={handleChange} />,
-    );
-
-    fireEvent.click(getByRole("combobox"));
-
-    await waitFor(() => {
-      fireEvent.click(getByText("John Doe"));
-      expect(handleChange).toHaveBeenCalledWith([1]);
-    });
-  });
-
-  it("shows empty state when no users match search", async () => {
-    const { getByRole, getByPlaceholderText, getByText } = render(
-      <UserMultiSelect selectedIds={[]} onChange={() => {}} />,
-    );
-
-    fireEvent.click(getByRole("combobox"));
-
-    await waitFor(() => {
-      const searchInput = getByPlaceholderText("Search users...");
-      fireEvent.change(searchInput, { target: { value: "NonexistentUser" } });
-
-      expect(getByText("No users found.")).toBeInTheDocument();
-    });
-  });
-
-  describe("UserMultiSelect", () => {
-    const mockUsers = [
-      {
-        id: 1,
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com",
-      },
-      {
-        id: 2,
-        firstName: "Jane",
-        lastName: "Smith",
-        email: "jane.smith@example.com",
-      },
-    ];
-
-    it("handles user selection and deselection", async () => {
-      const mockOnChange = jest.fn();
-
-      render(<UserMultiSelect selectedIds={[]} onChange={mockOnChange} />);
-
-      fireEvent.click(screen.getByRole("combobox"));
-
-      await screen.findByText("John Doe");
-
-      fireEvent.click(screen.getByText("John Doe"));
-      expect(mockOnChange).toHaveBeenCalledWith([1]);
-    });
-  });
-
-  const mockOnChange = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should add user to selection when clicked", async () => {
-    render(<UserMultiSelect selectedIds={[]} onChange={mockOnChange} />);
-
-    const button = screen.getByRole("combobox");
-    fireEvent.click(button);
+    render(<UserMultiSelect selectedIds={[1, 2]} onChange={handleChange} />);
 
     await waitFor(() => {
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
 
-    const userItem = screen.getByText("John Doe");
-    fireEvent.click(userItem);
+    fireEvent.click(screen.getByRole("button", { name: /remove john doe/i }));
+    expect(handleChange).toHaveBeenCalledWith([2]);
+  });
+});
 
-    expect(mockOnChange).toHaveBeenCalledWith([1]);
+describe("UserPickerButton", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (fetchAuthorizedUsers as jest.Mock).mockResolvedValue(mockUsers);
   });
 
-  it("should remove user from selection when clicked again", async () => {
-    render(<UserMultiSelect selectedIds={[1]} onChange={mockOnChange} />);
+  it("renders the add button", () => {
+    render(<UserPickerButton selectedIds={[]} onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+  });
 
-    const button = screen.getByRole("combobox");
-    fireEvent.click(button);
+  it("opens popover and shows users", async () => {
+    render(<UserPickerButton selectedIds={[]} onChange={() => {}} />);
+
+    fireEvent.click(screen.getByRole("combobox"));
 
     await waitFor(() => {
-      expect(screen.getAllByText("John Doe")[0]).toBeInTheDocument();
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
     });
   });
 
-  it("should handle multiple selections", async () => {
-    render(<UserMultiSelect selectedIds={[1]} onChange={mockOnChange} />);
+  it("calls onChange when selecting a user", async () => {
+    const handleChange = jest.fn();
+    render(<UserPickerButton selectedIds={[]} onChange={handleChange} />);
 
-    const button = screen.getByRole("combobox");
-    fireEvent.click(button);
+    fireEvent.click(screen.getByRole("combobox"));
+
+    await waitFor(() => {
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("John Doe"));
+    expect(handleChange).toHaveBeenCalledWith([1]);
+  });
+
+  it("calls onChange when deselecting a user", async () => {
+    const handleChange = jest.fn();
+    render(<UserPickerButton selectedIds={[1]} onChange={handleChange} />);
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    await waitFor(() => {
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("John Doe"));
+    expect(handleChange).toHaveBeenCalledWith([]);
+  });
+
+  it("handles multiple selections", async () => {
+    const handleChange = jest.fn();
+    render(<UserPickerButton selectedIds={[1]} onChange={handleChange} />);
+
+    fireEvent.click(screen.getByRole("combobox"));
 
     await waitFor(() => {
       expect(screen.getByText("Jane Smith")).toBeInTheDocument();
     });
 
-    const secondUser = screen.getByText("Jane Smith");
-    fireEvent.click(secondUser);
+    fireEvent.click(screen.getByText("Jane Smith"));
+    expect(handleChange).toHaveBeenCalledWith([1, 2]);
+  });
 
-    expect(mockOnChange).toHaveBeenCalledWith([1, 2]);
+  it("shows empty state when no users match search", async () => {
+    render(<UserPickerButton selectedIds={[]} onChange={() => {}} />);
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText("Search users...");
+      fireEvent.change(searchInput, { target: { value: "NonexistentUser" } });
+      expect(screen.getByText("No users found.")).toBeInTheDocument();
+    });
   });
 });

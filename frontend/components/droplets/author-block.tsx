@@ -44,17 +44,20 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
           : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
       }`}
     >
-      {inDraft && onRemove && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRemove}
-          className="h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          aria-label="Remove author"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
+      {inDraft &&
+        (onRemove ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemove}
+            className="h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+            aria-label="Remove author"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        ) : (
+          <div className="h-8 w-8 shrink-0" />
+        ))}
 
       <Avatar variant="round" className="shrink-0 border border-sky-800">
         <AvatarImage src={author?.profilePhoto || sessionImage} />

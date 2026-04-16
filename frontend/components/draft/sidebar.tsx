@@ -71,6 +71,7 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { togglePresentationEnabled } from "@/lib/requests/droplet";
 
 import { MantineProvider } from "@mantine/core";
 
@@ -98,6 +99,7 @@ export function Sidebar({
     | "type"
     | "originalDropletId"
     | "difficulty"
+    | "presentationEnabled"
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   expanded: boolean;
@@ -118,11 +120,22 @@ export function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAutoFormatting, setIsAutoFormatting] = useState(false);
-  const [hasAutoFormatted, setHasAutoFormatted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(`auto-formatted-${droplet.id}`) === "true";
+  const MAX_AUTO_FORMATS = 10;
+  const [autoFormatCount, setAutoFormatCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return (
+      parseInt(
+        localStorage.getItem(`auto-format-count-${droplet.id}`) || "0",
+        10,
+      ) || 0
+    );
   });
+  const hasAutoFormatted = autoFormatCount >= MAX_AUTO_FORMATS;
   const [showAutoFormatConfirm, setShowAutoFormatConfirm] = useState(false);
+  const [presentationEnabled, setPresentationEnabled] = useState(
+    () => droplet.presentationEnabled ?? false,
+  );
+  const [isTogglingPresentation, setIsTogglingPresentation] = useState(false);
   const lessons = (dropletLessons || [])
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -274,8 +287,9 @@ export function Sidebar({
         }),
       );
 
-      setHasAutoFormatted(true);
-      localStorage.setItem(`auto-formatted-${droplet.id}`, "true");
+      const newCount = autoFormatCount + 1;
+      setAutoFormatCount(newCount);
+      localStorage.setItem(`auto-format-count-${droplet.id}`, String(newCount));
       toast.success(
         `Auto-formatted: ${result.operations.filter((o) => o.type === "insert-slide-break").length} slide breaks inserted`,
       );
@@ -284,6 +298,30 @@ export function Sidebar({
       toast.error("Failed to auto-format slides");
     } finally {
       setIsAutoFormatting(false);
+    }
+  };
+
+  const handleTogglePresentation = async () => {
+    const newValue = !presentationEnabled;
+    setIsTogglingPresentation(true);
+    setPresentationEnabled(newValue);
+    try {
+      const result = await togglePresentationEnabled(droplet.id, newValue);
+      if (!result.ok) {
+        setPresentationEnabled(!newValue);
+        toast.error("Failed to update presentation setting");
+      } else {
+        toast.success(
+          newValue
+            ? "Presentation enabled for viewers"
+            : "Presentation disabled for viewers",
+        );
+      }
+    } catch {
+      setPresentationEnabled(!newValue);
+      toast.error("Failed to update presentation setting");
+    } finally {
+      setIsTogglingPresentation(false);
     }
   };
 
@@ -448,8 +486,8 @@ export function Sidebar({
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {hasAutoFormatted
-                        ? "Slide breaks already generated"
-                        : "Generate slide breaks"}
+                        ? "Auto-format limit reached (10/10)"
+                        : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -478,8 +516,8 @@ export function Sidebar({
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {hasSlideBreaks
-                        ? "Present as slides"
-                        : "Add slide breaks to enable presentation mode"}
+                        ? "Preview presentation"
+                        : "Add slide breaks to preview presentation"}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -569,8 +607,9 @@ export function Sidebar({
                   </AlertDialogHeader>
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
                     <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                      This action can only be used once per droplet. You can
-                      manually adjust slide breaks afterward.
+                      You have {MAX_AUTO_FORMATS - autoFormatCount} use
+                      {MAX_AUTO_FORMATS - autoFormatCount === 1 ? "" : "s"}{" "}
+                      remaining. You can manually adjust slide breaks afterward.
                     </p>
                   </div>
                   <AlertDialogFooter>
@@ -636,6 +675,49 @@ export function Sidebar({
             id="tour-bottom-actions"
             className="border-t border-slate-200 p-3 dark:border-slate-700"
           >
+            <div className="mb-3 flex items-center justify-between px-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                      <IconPresentation className="h-3.5 w-3.5" />
+                      Presentation
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {!hasSlideBreaks
+                      ? "Add slide breaks first to enable presentation for viewers"
+                      : presentationEnabled
+                        ? "Viewers can access presentation mode"
+                        : "Viewers cannot access presentation mode"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={presentationEnabled}
+                aria-label="Toggle presentation mode for viewers"
+                disabled={
+                  isTogglingPresentation ||
+                  (!hasSlideBreaks && !presentationEnabled)
+                }
+                onClick={handleTogglePresentation}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                  presentationEnabled
+                    ? "bg-indigo-500"
+                    : "bg-slate-200 dark:bg-slate-700",
+                )}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform",
+                    presentationEnabled ? "translate-x-4" : "translate-x-0",
+                  )}
+                />
+              </button>
+            </div>
             <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={

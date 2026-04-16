@@ -329,7 +329,7 @@ function groupItemsIntoLines(items: TextItem[]): TextItem[][] {
       currentLine.push(item);
     } else {
       currentLine.sort((a, b) => a.transform[4] - b.transform[4]);
-      lines.push(currentLine);
+      lines.push(deduplicateLineItems(currentLine));
       currentLine = [item];
       currentY = y;
     }
@@ -337,10 +337,37 @@ function groupItemsIntoLines(items: TextItem[]): TextItem[][] {
 
   if (currentLine.length > 0) {
     currentLine.sort((a, b) => a.transform[4] - b.transform[4]);
-    lines.push(currentLine);
+    lines.push(deduplicateLineItems(currentLine));
   }
 
   return lines;
+}
+
+/**
+ * Remove duplicate text items within a line.
+ * PDFs often render the same text twice at the same position (shadow text,
+ * accessibility layers, font substitution artifacts). Two items are considered
+ * duplicates when their X coordinates are within a font-size-based tolerance
+ * and their trimmed text is identical.
+ */
+function deduplicateLineItems(items: TextItem[]): TextItem[] {
+  if (items.length <= 1) return items;
+
+  const result: TextItem[] = [items[0]];
+  for (let i = 1; i < items.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = items[i];
+    const fontSize = Math.abs(curr.transform[3]) || 12;
+    const xTolerance = fontSize * 0.5;
+
+    const samePosition =
+      Math.abs(curr.transform[4] - prev.transform[4]) < xTolerance;
+    const sameText = curr.str.trim() === prev.str.trim();
+
+    if (samePosition && sameText) continue;
+    result.push(curr);
+  }
+  return result;
 }
 
 function computeMedian(values: number[]): number {

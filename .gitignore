@@ -44,4 +44,4 @@ docker-compose.playwright.yml
 # Strapi auto-generated docs (regenerated on schema changes)
 backend/src/extensions/documentation/documentation/
 
-*/auth.json
+*/auth.json.next/

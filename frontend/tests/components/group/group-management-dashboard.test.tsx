@@ -1,15 +1,36 @@
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  DropletStatus,
-  DropletType,
-  FocusArea,
-  GroupSemester,
-  LearningObjective,
-  Tag,
-  TimeZone,
-} from "@/types";
+import { AuthorizedUser, GroupSemester, TimeZone } from "@/types";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
+import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
+
+function makeAuthorizedUser(
+  overrides: Partial<AuthorizedUser> = {},
+): AuthorizedUser {
+  return {
+    id: 1,
+    email: "user@example.com",
+    roles: [],
+    isEnabled: true,
+    isPublic: false,
+    linkedin: "",
+    github: "",
+    website: "",
+    firstTime: false,
+    firstName: "Test",
+    lastName: "User",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York" as TimeZone,
+    groups: [],
+    ...overrides,
+  };
+}
 
 const mockReplace = jest.fn();
 let mockSearchParams = new URLSearchParams();
@@ -71,42 +92,29 @@ describe("GroupDashboard", () => {
     playlists: [],
   };
 
-  const mockAuthUser = {
+  const mockAuthUser = makeAuthorizedUser({
     id: 1,
     email: "user@example.com",
-    isEnabled: true,
-    roles: [],
     linkedin: "https://www.linkedin.com/",
     github: "https://www.github.com/",
     firstName: "first",
     lastName: "last",
     bio: "bio",
-    firstTime: false,
-    friendships: [],
-    sent_requests: [],
-    received_requests: [],
-    profilePhoto: "",
-    blocked: [],
-    was_blocked: [],
-    timeZone: "America/New_York" as TimeZone,
-    isPublic: false,
-    website: "",
-    groups: [],
-  };
+  });
 
-  const mockDroplets = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Droplet ${i + 1}`,
-    slug: `droplet-${i + 1}`,
-    completionPercentage: i * 10,
-    lessons: [],
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
-    learningObjectives: [] as LearningObjective[],
-    status: "published" as DropletStatus,
-    focusArea: "personal" as FocusArea,
-    isHidden: false,
-  }));
+  const mockDroplets = Array.from({ length: 12 }, (_, i) =>
+    makeDroplet({
+      id: i + 1,
+      name: `Droplet ${i + 1}`,
+      slug: `droplet-${i + 1}`,
+      type: "knowledge",
+      tags: [makeTag({ id: 1, name: "React" })],
+      learningObjectives: [],
+      status: "published",
+      focusArea: "personal",
+      isHidden: false,
+    }),
+  );
 
   const mockPlaylists: any[] = [
     {
@@ -129,7 +137,7 @@ describe("GroupDashboard", () => {
     {
       droplet: mockDroplets[0],
       dueDate: "2023-12-31",
-      authorized_user: 32,
+      authorized_user: makeAuthorizedUser({ id: 32 }),
       group: mockGroup,
     },
   ];
@@ -148,6 +156,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -163,6 +172,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -179,6 +189,7 @@ describe("GroupDashboard", () => {
           authUser={adminUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -195,6 +206,7 @@ describe("GroupDashboard", () => {
           authUser={regularUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -211,6 +223,7 @@ describe("GroupDashboard", () => {
           authUser={regularUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -227,6 +240,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -243,6 +257,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -259,6 +274,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={mockDueDates}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -270,11 +286,12 @@ describe("GroupDashboard", () => {
 
       render(
         <GroupDashboard
-          group={groupNoDroplets as any}
+          group={groupNoDroplets}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -293,6 +310,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -309,6 +327,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -324,6 +343,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -341,6 +361,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -363,6 +384,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -388,6 +410,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -409,6 +432,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -426,6 +450,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -442,6 +467,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -459,6 +485,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -473,11 +500,12 @@ describe("GroupDashboard", () => {
 
       render(
         <GroupDashboard
-          group={groupNoPlaylists as any}
+          group={groupNoPlaylists}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -491,7 +519,7 @@ describe("GroupDashboard", () => {
       const playlistDueDate = {
         playlist: mockPlaylists[0],
         dueDate: "2024-01-15",
-        authorized_user: 1,
+        authorized_user: makeAuthorizedUser({ id: 1 }),
         group: mockGroup,
       };
 
@@ -502,6 +530,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[playlistDueDate]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -522,6 +551,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -542,6 +572,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -558,12 +589,13 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
       expect(
         screen.getByText(
-          "No droplets or members have been added to this group yet.",
+          "No content or members have been added to this group yet.",
         ),
       ).toBeInTheDocument();
     });
@@ -578,12 +610,13 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
       expect(
         screen.getByText(
-          "No droplets or members have been added to this group yet.",
+          "No content or members have been added to this group yet.",
         ),
       ).toBeInTheDocument();
     });
@@ -602,6 +635,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -641,6 +675,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -657,6 +692,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -673,6 +709,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -696,6 +733,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -718,11 +756,12 @@ describe("GroupDashboard", () => {
 
       render(
         <GroupDashboard
-          group={groupNoAdmins as any}
+          group={groupNoAdmins}
           canEdit={false}
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -737,6 +776,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -751,6 +791,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -766,6 +807,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -782,6 +824,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 
@@ -798,6 +841,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={{}}
+          voyageStatuses={{}}
         />,
       );
 

@@ -16,6 +16,7 @@ import { Buffer } from "node:buffer";
 import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createAuthorizedUser } from "./requests/authorized-user";
+import { claimNodeForUser } from "./requests/voyage-enrollment";
 import { creationRequestSchema } from "./validations/creation-request";
 import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
@@ -24,6 +25,8 @@ import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/import/rate-limiter";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -169,10 +172,16 @@ export async function deleteImage(fileName: string) {
   }
 }
 
-export async function setTimeZone(zone: string, userId: number) {
+export async function setTimeZone(zone: string) {
+  const auth = await requireRole([]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+  const { user } = auth;
+
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      `${STRAPI_API_URL}/api/authorized-users/${user.id}`,
       {
         method: "PUT",
         headers: {
@@ -199,6 +208,11 @@ export async function setTimeZone(zone: string, userId: number) {
 }
 
 export async function deleteReport(id: string) {
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error };
+  }
+
   const response = await fetch(`${STRAPI_API_URL}/api/reports/${id}`, {
     method: "DELETE",
     headers: {
@@ -427,9 +441,16 @@ export async function createCreationRequest(
   formData: z.infer<typeof creationRequestSchema>,
 ) {
   try {
+    // Map form field voyageNodeId to Strapi relation field voyageNode
+    const { voyageNodeId, ...rest } = formData;
+    const strapiData = {
+      ...rest,
+      ...(voyageNodeId ? { voyageNode: voyageNodeId } : {}),
+    };
+
     const response = await fetch(STRAPI_API_URL + "/api/creation-requests", {
       method: "POST",
-      body: JSON.stringify({ data: formData }),
+      body: JSON.stringify({ data: strapiData }),
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
@@ -552,6 +573,25 @@ export async function approveCreationRequest(
       }
     }
 
+    // Fetch the creation request to check for a linked voyageNode before deleting
+    const requestQuery = qs.stringify({
+      populate: { voyageNode: { fields: ["id"] } },
+    });
+    const requestResponse = await fetch(
+      `${STRAPI_API_URL}/api/creation-requests/${requestId}?${requestQuery}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+    const requestData = requestResponse.ok
+      ? await requestResponse.json()
+      : null;
+    const voyageNodeId: number | null =
+      requestData?.data?.attributes?.voyageNode?.data?.id ?? null;
+
     // Delete the creation request after approval
     const deleteResponse = await fetch(
       `${STRAPI_API_URL}/api/creation-requests/${requestId}`,
@@ -573,9 +613,22 @@ export async function approveCreationRequest(
       };
     }
 
+    // If the request was tied to a voyage node, auto-claim it for the applicant
+    if (voyageNodeId !== null) {
+      try {
+        await claimNodeForUser(voyageNodeId, userId);
+      } catch (claimErr) {
+        console.error(
+          "Failed to auto-claim voyage node after approval:",
+          claimErr,
+        );
+      }
+    }
+
     revalidateTag(CACHE_TAGS.users);
     revalidateTag(CACHE_TAGS.creationRequests);
     revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.voyages);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);
@@ -637,6 +690,10 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
         populate: {
           user: {
             fields: ["firstName", "lastName", "email", "id"],
+          },
+          voyageNode: {
+            fields: ["id", "label"],
+            populate: { voyage: { fields: ["name"] } },
           },
         },
         pagination: {

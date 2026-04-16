@@ -38,6 +38,7 @@ export default ({ env }) => ({
   },
   upload: {
     config: {
+      sizeLimit: 100 * 1024 * 1024,
       provider: "aws-s3",
       providerOptions: {
         baseUrl: env("AWS_CDN_URL"),

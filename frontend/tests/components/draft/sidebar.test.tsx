@@ -107,6 +107,7 @@ describe("Sidebar", () => {
     type: "knowledge" as DropletType,
     focusArea: "personal" as FocusArea,
     isHidden: false,
+    presentationEnabled: false,
     learningObjectives: [],
     inReview: false,
     afterReview: undefined,
@@ -134,6 +135,7 @@ describe("Sidebar", () => {
   const defaultProps = {
     expanded: true,
     setExpanded: jest.fn(),
+    onRestartTour: jest.fn(),
   };
 
   it("renders droplet name and lessons", () => {

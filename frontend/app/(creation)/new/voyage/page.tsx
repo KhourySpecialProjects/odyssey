@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
 import { getPlaylists } from "@/lib/requests/playlist";
+import { getDroplets } from "@/lib/requests/droplet";
 import { VoyageForm } from "@/components/voyages/voyage-form";
 import { getCachedUser } from "@/lib/requests/cached";
 
@@ -16,7 +17,7 @@ export default async function NewVoyage() {
     redirect("/explore");
   }
 
-  const [authUser, publicPlaylists] = await Promise.all([
+  const [authUser, publicPlaylists, publishedDroplets] = await Promise.all([
     getCachedUser(user.email),
     getPlaylists({
       filters: { isPublic: true },
@@ -26,6 +27,12 @@ export default async function NewVoyage() {
         },
       },
       fields: ["id", "name", "slug"],
+      sort: ["name:asc"],
+    }),
+    getDroplets({
+      filters: { status: "published", isHidden: false },
+      fields: ["id", "name", "slug"],
+      populate: {},
       sort: ["name:asc"],
     }),
   ]);
@@ -40,7 +47,11 @@ export default async function NewVoyage() {
         Create New Voyage
       </h1>
       <div className="w-full max-w-6xl">
-        <VoyageForm playlists={publicPlaylists} authorId={authUser.id} />
+        <VoyageForm
+          playlists={publicPlaylists}
+          droplets={publishedDroplets}
+          authorId={authUser.id}
+        />
       </div>
     </div>
   );

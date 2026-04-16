@@ -30,6 +30,18 @@ jest.mock("@/lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
+jest.mock("@/lib/validations/voyage", () => ({
+  VoyageTreeSchema: {
+    safeParse: jest.fn((input: unknown) => ({ success: true, data: input })),
+  },
+}));
+
+import { requireRole } from "@/lib/auth/require-role";
+
 const mockAdminUser = {
   id: 1,
   email: "admin@example.com",
@@ -37,6 +49,10 @@ const mockAdminUser = {
 };
 
 function mockAuthorized() {
+  (requireRole as jest.Mock).mockResolvedValue({
+    ok: true,
+    user: { email: "admin@example.com", roles: ["System Admin"] },
+  });
   (getServerSession as jest.Mock).mockResolvedValue({
     user: { email: "admin@example.com" },
   });
@@ -49,6 +65,10 @@ describe("createVoyageWithNodes", () => {
   });
 
   it("returns Unauthorized when user is not admin or faculty", async () => {
+    (requireRole as jest.Mock).mockResolvedValue({
+      ok: false,
+      error: "unauthenticated",
+    });
     (getServerSession as jest.Mock).mockResolvedValue(null);
 
     const result = await createVoyageWithNodes({
@@ -99,27 +119,36 @@ describe("createVoyageWithNodes", () => {
       authorId: 1,
       nodes: [
         {
+          localId: "local-1",
+          nodeType: "playlist",
           playlistId: 5,
+          dropletId: null,
           label: "Intro",
           isMainPath: true,
           branchType: "required",
-          parentPlaylistId: null,
+          parentLocalId: null,
           orderIndex: 0,
         },
         {
+          localId: "local-2",
+          nodeType: "playlist",
           playlistId: 6,
+          dropletId: null,
           label: "Core",
           isMainPath: true,
           branchType: "required",
-          parentPlaylistId: null,
+          parentLocalId: null,
           orderIndex: 1,
         },
         {
+          localId: "local-3",
+          nodeType: "playlist",
           playlistId: 7,
+          dropletId: null,
           label: "Extra",
           isMainPath: false,
           branchType: "optional",
-          parentPlaylistId: 5, // branch off playlist 5 → Strapi node id 10
+          parentLocalId: "local-1", // branch off local-1 → Strapi node id 10
           orderIndex: 0,
         },
       ],
@@ -145,7 +174,7 @@ describe("createVoyageWithNodes", () => {
       }),
     );
 
-    // Branch node created with parentNode set to Strapi ID of playlist 5's node (id 10)
+    // Branch node created with parentNode set to Strapi ID of local-1's node (id 10)
     expect(global.fetch).toHaveBeenNthCalledWith(
       4,
       expect.stringContaining("/api/voyage-nodes"),
@@ -157,6 +186,122 @@ describe("createVoyageWithNodes", () => {
 
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent);
+
+    expect(result).toEqual({
+      ok: true,
+      error: null,
+      data: createdVoyage,
+    });
+  });
+
+  it("creates a voyage with a droplet node", async () => {
+    mockAuthorized();
+
+    const createdVoyage = {
+      id: 100,
+      name: "Droplet Voyage",
+      slug: "droplet-voyage",
+    };
+    const dropletNode = { id: 30, label: "My Droplet", isMainPath: true };
+
+    (flattenAttributes as jest.Mock)
+      .mockReturnValueOnce(createdVoyage)
+      .mockReturnValueOnce(dropletNode);
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: createdVoyage }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: dropletNode }),
+      });
+
+    const result = await createVoyageWithNodes({
+      name: "Droplet Voyage",
+      nodes: [
+        {
+          localId: "droplet-local-1",
+          nodeType: "droplet",
+          playlistId: null,
+          dropletId: 42,
+          label: "My Droplet",
+          isMainPath: true,
+          branchType: "required",
+          parentLocalId: null,
+          orderIndex: 0,
+        },
+      ],
+    });
+
+    // Droplet node created with droplet relation
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("/api/voyage-nodes"),
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"droplet":42'),
+      }),
+    );
+
+    expect(result).toEqual({ ok: true, error: null, data: createdVoyage });
+  });
+
+  it("creates a voyage with a placeholder droplet node (no dropletId)", async () => {
+    mockAuthorized();
+
+    const createdVoyage = {
+      id: 101,
+      name: "Placeholder Voyage",
+      slug: "placeholder-voyage",
+    };
+    const placeholderNode = {
+      id: 31,
+      label: "Unclaimed",
+      isMainPath: true,
+    };
+
+    (flattenAttributes as jest.Mock)
+      .mockReturnValueOnce(createdVoyage)
+      .mockReturnValueOnce(placeholderNode);
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: createdVoyage }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: placeholderNode }),
+      });
+
+    const result = await createVoyageWithNodes({
+      name: "Placeholder Voyage",
+      nodes: [
+        {
+          localId: "placeholder-local-1",
+          nodeType: "droplet",
+          playlistId: null,
+          dropletId: null,
+          label: "Unclaimed",
+          isMainPath: true,
+          branchType: "required",
+          parentLocalId: null,
+          orderIndex: 0,
+        },
+      ],
+    });
+
+    // Placeholder node sent with claimStatus unclaimed
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("/api/voyage-nodes"),
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"claimStatus":"unclaimed"'),
+      }),
+    );
 
     expect(result).toEqual({
       ok: true,
@@ -211,11 +356,14 @@ describe("createVoyageWithNodes", () => {
       name: "Test Voyage",
       nodes: [
         {
+          localId: "local-1",
+          nodeType: "playlist",
           playlistId: 5,
+          dropletId: null,
           label: "Intro",
           isMainPath: true,
           branchType: "required",
-          parentPlaylistId: null,
+          parentLocalId: null,
           orderIndex: 0,
         },
       ],

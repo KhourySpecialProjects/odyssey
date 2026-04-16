@@ -5,6 +5,7 @@ import { addLesson } from "@/lib/requests/lesson";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
+import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
@@ -127,9 +128,11 @@ function openMarkdownImport() {
 
 describe("AddLesson", () => {
   const mockDroplet = {
-    id: 1,
-    name: "Test Droplet",
-    slug: "test-droplet",
+    ...makeDroplet({
+      id: 1,
+      name: "Test Droplet",
+      slug: "test-droplet",
+    }),
     lessons: [
       {
         id: 1,
@@ -155,10 +158,15 @@ describe("AddLesson", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue({
+    jest.mocked(useRouter).mockReturnValue({
       push: mockPush,
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      replace: jest.fn(),
+      prefetch: jest.fn(),
     });
-    (addLesson as jest.Mock).mockResolvedValue({
+    jest.mocked(addLesson).mockResolvedValue({
       ok: true,
       data: {
         id: 2,
@@ -261,12 +269,12 @@ describe("AddLesson", () => {
         },
       ];
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Imported Lesson",
         blocks: mockBlocks,
       });
 
-      (addLesson as jest.Mock).mockResolvedValue({
+      jest.mocked(addLesson).mockResolvedValue({
         ok: true,
         data: {
           id: 3,
@@ -318,12 +326,12 @@ describe("AddLesson", () => {
         },
       ];
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Imported Lesson",
         blocks: mockBlocks,
       });
 
-      (addLesson as jest.Mock).mockResolvedValue({
+      jest.mocked(addLesson).mockResolvedValue({
         ok: true,
         data: {
           id: 3,
@@ -352,12 +360,12 @@ describe("AddLesson", () => {
     });
 
     it("shows error toast when import fails", async () => {
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Imported Lesson",
         blocks: [],
       });
 
-      (addLesson as jest.Mock).mockResolvedValue({
+      jest.mocked(addLesson).mockResolvedValue({
         ok: false,
         error: "Failed to create lesson",
         data: null,
@@ -381,12 +389,12 @@ describe("AddLesson", () => {
         { id: "1", type: "paragraph", props: {}, children: [] },
       ];
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Imported Lesson",
         blocks: mockBlocks,
       });
 
-      (addLesson as jest.Mock).mockResolvedValue({
+      jest.mocked(addLesson).mockResolvedValue({
         ok: true,
         data: {
           id: 3,
@@ -419,12 +427,12 @@ describe("AddLesson", () => {
         { id: "1", type: "paragraph", props: {}, children: [] },
       ];
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Imported Lesson",
         blocks: mockBlocks,
       });
 
-      (addLesson as jest.Mock).mockResolvedValue({
+      jest.mocked(addLesson).mockResolvedValue({
         ok: true,
         data: {
           id: 3,
@@ -459,7 +467,7 @@ describe("AddLesson", () => {
     });
 
     it("handles markdown parsing errors gracefully", async () => {
-      (parseMarkdownToBlockNote as jest.Mock).mockImplementation(() => {
+      jest.mocked(parseMarkdownToBlockNote).mockImplementation(() => {
         throw new Error("Parse error");
       });
 
@@ -548,11 +556,15 @@ describe("AddLesson", () => {
   describe("Edge Cases", () => {
     it("handles droplet with no lessons for import", async () => {
       const dropletNoLessons = {
-        ...mockDroplet,
+        ...makeDroplet({
+          id: 1,
+          name: "Test Droplet",
+          slug: "test-droplet",
+        }),
         lessons: undefined,
       };
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Test",
         blocks: [],
       });
@@ -582,15 +594,19 @@ describe("AddLesson", () => {
 
     it("calculates correct orderIndex for import", async () => {
       const dropletWithLessons = {
-        ...mockDroplet,
+        ...makeDroplet({
+          id: 1,
+          name: "Test Droplet",
+          slug: "test-droplet",
+        }),
         lessons: [
-          { ...mockDroplet.lessons[0], id: 1 },
-          { ...mockDroplet.lessons[0], id: 2 },
-          { ...mockDroplet.lessons[0], id: 3 },
+          { ...mockDroplet.lessons![0], id: 1 },
+          { ...mockDroplet.lessons![0], id: 2 },
+          { ...mockDroplet.lessons![0], id: 3 },
         ],
       };
 
-      (parseMarkdownToBlockNote as jest.Mock).mockReturnValue({
+      jest.mocked(parseMarkdownToBlockNote).mockReturnValue({
         title: "Test",
         blocks: [],
       });

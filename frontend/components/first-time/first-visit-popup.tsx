@@ -69,6 +69,7 @@ const timeZones = [
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
@@ -82,6 +83,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   }, [user]);
 
   const handleClose = async () => {
+    if (isSubmitting) return;
     if (!firstName.trim()) {
       toast.error("Please enter your first name before continuing");
       return;
@@ -94,6 +96,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
       toast.error("Please select your time zone before continuing");
       return;
     }
+    setIsSubmitting(true);
     try {
       if (user) {
         await updateUserInfo(user.id, { firstTime: false });
@@ -102,7 +105,8 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           last: lastName,
           bio: bio,
         });
-        await setTimeZone(timeZone + "  ", user.id);
+        await setTimeZone(timeZone);
+        // createSystemAnnouncement checks server-side for existing announcements
         await createSystemAnnouncement(
           "Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!",
           user,
@@ -124,6 +128,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
       }
     } catch {
       console.error("Failed to save your information. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -217,7 +222,9 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-          <Button onClick={() => handleClose()}>Start Exploring</Button>
+          <Button onClick={() => handleClose()} disabled={isSubmitting}>
+            {isSubmitting ? "Setting up..." : "Start Exploring"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

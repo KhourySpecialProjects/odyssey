@@ -61,7 +61,7 @@ async function buildPPTXFile(
     zip.file(`ppt/slides/slide${index + 1}.xml`, buildSlideXML(slide));
   });
   const content = await zip.generateAsync({ type: "uint8array" });
-  return new File([content], filename);
+  return new File([new Uint8Array(content)], filename);
 }
 
 beforeEach(() => {
@@ -71,7 +71,7 @@ beforeEach(() => {
 describe("extractTextFromPPTX", () => {
   it("throws for files larger than 25MB", async () => {
     const largeContent = new Uint8Array(26 * 1024 * 1024).fill(65);
-    const file = new File([largeContent], "large.pptx");
+    const file = new File([new Uint8Array(largeContent)], "large.pptx");
     await expect(extractTextFromPPTX(file)).rejects.toThrow(
       "File is too large",
     );
@@ -142,7 +142,7 @@ describe("extractTextFromPPTX", () => {
     const zip = new JSZip();
     zip.file("ppt/presentation.xml", "<presentation/>");
     const content = await zip.generateAsync({ type: "uint8array" });
-    const file = new File([content], "noslides.pptx");
+    const file = new File([new Uint8Array(content)], "noslides.pptx");
 
     await expect(extractTextFromPPTX(file)).rejects.toThrow("No slides found");
   });
@@ -176,7 +176,7 @@ describe("extractTextFromPPTX", () => {
 
     zip.file("ppt/slides/slide1.xml", slideXML);
     const content = await zip.generateAsync({ type: "uint8array" });
-    const file = new File([content], "notitle.pptx");
+    const file = new File([new Uint8Array(content)], "notitle.pptx");
 
     const result = await extractTextFromPPTX(file);
     expect(result.text).toContain("Just body text here");

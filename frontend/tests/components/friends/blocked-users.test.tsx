@@ -45,7 +45,7 @@ describe("BlockedUsers", () => {
     (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     await render(await BlockedUsers());
-    expect(screen.getByText("You have no blocked users")).toBeInTheDocument();
+    expect(screen.getByText("No blocked users")).toBeInTheDocument();
   });
 
   it("calls notFound when user is not found", async () => {
