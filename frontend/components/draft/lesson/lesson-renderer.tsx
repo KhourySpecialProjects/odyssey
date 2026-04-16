@@ -206,7 +206,7 @@ export function LessonRenderer({
     if (editorVersion !== "v1") return;
     debounceUpdate(blocks);
     return () => {
-      debounceUpdate.cancel();
+      debounceUpdate.flush();
     };
   }, [blocks, debounceUpdate, editorVersion]);
 

@@ -40,6 +40,7 @@ import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import dynamic from "next/dynamic";
+import DOMPurify from "isomorphic-dompurify";
 
 const SandpackViewer = dynamic(
   () =>
@@ -461,7 +462,7 @@ function LessonBlockRenderer({
           <CollapsibleContent className="mt-4 border-t border-t-slate-200 pt-3 dark:border-slate-500">
             <div
               className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit max-w-none dark:text-slate-300"
-              dangerouslySetInnerHTML={{ __html: block.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content) }}
             ></div>
           </CollapsibleContent>
         </Collapsible>

@@ -109,6 +109,12 @@ export function useEditingLock(lessonId: number) {
               startHeartbeat();
               return;
             }
+            // Acquire failed (race with another editor) — update state
+            setState((prev) => ({
+              ...prev,
+              lockedBy: result.lockedBy ?? prev.lockedBy,
+              isLoading: false,
+            }));
           } else {
             // Only update state if lockedBy actually changed
             setState((prev) => {
