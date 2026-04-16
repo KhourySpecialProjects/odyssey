@@ -55,23 +55,31 @@ export function useEditingLock(lessonId: number) {
     const startHeartbeat = () => {
       clearTimeout(heartbeatRef.current);
       const tick = async () => {
-        const uid = userIdRef.current;
-        if (!uid || !mountedRef.current) return;
-        const ok = await heartbeatLessonLock(lessonId);
-        if (!mountedRef.current) return;
-        if (!ok) {
-          // Lock was lost — switch to polling
-          setState({
-            isLocked: true,
-            isOwnLock: false,
-            lockedBy: null,
-            isLoading: false,
-            error: null,
-          });
-          startPolling();
-          return;
+        try {
+          const uid = userIdRef.current;
+          if (!uid || !mountedRef.current) return;
+          const ok = await heartbeatLessonLock(lessonId);
+          if (!mountedRef.current) return;
+          if (!ok) {
+            // Lock was lost — switch to polling
+            setState({
+              isLocked: true,
+              isOwnLock: false,
+              lockedBy: null,
+              isLoading: false,
+              error: null,
+            });
+            startPolling();
+            return;
+          }
+          heartbeatRef.current = setTimeout(tick, HEARTBEAT_INTERVAL);
+        } catch {
+          // Server action failed (network error, server restart, etc.)
+          // Schedule a retry instead of leaving an unhandled rejection
+          if (mountedRef.current) {
+            heartbeatRef.current = setTimeout(tick, HEARTBEAT_INTERVAL);
+          }
         }
-        heartbeatRef.current = setTimeout(tick, HEARTBEAT_INTERVAL);
       };
       heartbeatRef.current = setTimeout(tick, HEARTBEAT_INTERVAL);
     };
@@ -79,35 +87,42 @@ export function useEditingLock(lessonId: number) {
     const startPolling = () => {
       clearTimeout(pollRef.current);
       const tick = async () => {
-        if (!mountedRef.current) return;
-        const uid = userIdRef.current;
-        if (!uid) return;
-
-        const status = await getLessonLockStatus(lessonId);
-        if (!mountedRef.current) return;
-
-        if (!status.isLocked) {
-          const result = await acquireLessonLock(lessonId);
+        try {
           if (!mountedRef.current) return;
-          if (result.success) {
-            setState({
-              isLocked: true,
-              isOwnLock: true,
-              lockedBy: null,
-              isLoading: false,
-              error: null,
+          const uid = userIdRef.current;
+          if (!uid) return;
+
+          const status = await getLessonLockStatus(lessonId);
+          if (!mountedRef.current) return;
+
+          if (!status.isLocked) {
+            const result = await acquireLessonLock(lessonId);
+            if (!mountedRef.current) return;
+            if (result.success) {
+              setState({
+                isLocked: true,
+                isOwnLock: true,
+                lockedBy: null,
+                isLoading: false,
+                error: null,
+              });
+              startHeartbeat();
+              return;
+            }
+          } else {
+            // Only update state if lockedBy actually changed
+            setState((prev) => {
+              if (prev.lockedBy?.id === status.lockedBy?.id) return prev;
+              return { ...prev, lockedBy: status.lockedBy };
             });
-            startHeartbeat();
-            return;
           }
-        } else {
-          // Only update state if lockedBy actually changed
-          setState((prev) => {
-            if (prev.lockedBy?.id === status.lockedBy?.id) return prev;
-            return { ...prev, lockedBy: status.lockedBy };
-          });
+          pollRef.current = setTimeout(tick, POLL_INTERVAL);
+        } catch {
+          // Server action failed — retry on next interval
+          if (mountedRef.current) {
+            pollRef.current = setTimeout(tick, POLL_INTERVAL);
+          }
         }
-        pollRef.current = setTimeout(tick, POLL_INTERVAL);
       };
       pollRef.current = setTimeout(tick, POLL_INTERVAL);
     };
@@ -159,7 +174,7 @@ export function useEditingLock(lessonId: number) {
       clearTimeout(heartbeatRef.current);
       clearTimeout(pollRef.current);
       const uid = userIdRef.current;
-      if (uid) releaseLessonLock(lessonId);
+      if (uid) releaseLessonLock(lessonId).catch(() => {});
     };
   }, [lessonId]);
 

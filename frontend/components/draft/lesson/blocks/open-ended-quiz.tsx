@@ -68,7 +68,7 @@ export function OpenEndedQuizEditor({
   };
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full">
       <div className="flex w-full flex-row items-center justify-between p-4">
         <h2 className="text-lg">Open Ended Quiz</h2>
         <Trash2Icon
