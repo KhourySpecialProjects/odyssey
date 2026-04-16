@@ -31,7 +31,11 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "@/types";
 import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { toast } from "sonner";
-import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
+import {
+  deleteLesson,
+  updateLesson,
+  revalidateLesson,
+} from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
 import { BlockNoteEditor } from "./blocknote-editor";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
@@ -130,9 +134,11 @@ export function LessonRenderer({
 
   const updateBlocksBackend = useCallback(
     async (blocks: Block[]) => {
-      const response = await updateLesson(lesson.id, {
-        blocks: blocks as unknown as BaseBlock[],
-      });
+      const response = await updateLesson(
+        lesson.id,
+        { blocks: blocks as unknown as BaseBlock[] },
+        { skipRevalidation: true },
+      );
 
       if (!response || response.error || !response.ok) {
         return;
@@ -143,10 +149,11 @@ export function LessonRenderer({
 
   const updateBlocksV2Backend = useCallback(
     async (blocksV2: unknown) => {
-      const response = await updateLesson(lesson.id, {
-        blocksV2,
-        blocksVersion: "v2",
-      });
+      const response = await updateLesson(
+        lesson.id,
+        { blocksV2, blocksVersion: "v2" },
+        { skipRevalidation: true },
+      );
 
       if (!response || response.error || !response.ok) {
         return;
@@ -156,7 +163,7 @@ export function LessonRenderer({
   );
 
   const debounceUpdateV2 = useMemo(
-    () => debounce(updateBlocksV2Backend, 1000, { maxWait: 3000 }),
+    () => debounce(updateBlocksV2Backend, 1500, { maxWait: 4000 }),
     [updateBlocksV2Backend],
   );
 
@@ -183,15 +190,23 @@ export function LessonRenderer({
   );
 
   const debounceUpdate = useMemo(
-    () => debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
+    () => debounce(updateBlocksBackend, 1500, { maxWait: 4000 }),
     [updateBlocksBackend],
   );
+
+  // Revalidate lesson cache once when leaving the editor,
+  // so navigating back serves fresh data from Strapi.
+  useEffect(() => {
+    return () => {
+      revalidateLesson().catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     if (editorVersion !== "v1") return;
     debounceUpdate(blocks);
     return () => {
-      debounceUpdate.cancel();
+      debounceUpdate.flush();
     };
   }, [blocks, debounceUpdate, editorVersion]);
 

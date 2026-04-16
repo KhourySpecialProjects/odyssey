@@ -62,7 +62,12 @@ export function DropletLessonWrapper({
   return (
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
-        <div className="flex w-full flex-col px-40 pt-6">
+        <div
+          className={cn(
+            "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
+            expanded && "pr-[415px]",
+          )}
+        >
           <LessonRenderer
             lesson={lesson}
             droplet={droplet}
