@@ -61,6 +61,7 @@ jest.mock("@/components/draft/lesson/delete-lesson", () => ({
 jest.mock("@/lib/requests/lesson", () => ({
   updateLesson: jest.fn(),
   deleteLesson: jest.fn(),
+  revalidateLesson: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockUseEditingLock = jest.fn().mockReturnValue({
