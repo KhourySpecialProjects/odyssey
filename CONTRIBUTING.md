@@ -4,6 +4,8 @@ This guide explains the Claude Code development workflow used on Odyssey. Read t
 
 ## First-Time Setup
 
+**Fastest path: run `/onboard` inside Claude Code.** It installs dependencies, copies `.env` templates, brings up Docker services, registers the user-scoped MCP servers, and hands you a punch list of the few items only you can do (OAuth clicks and secrets from a teammate). The rest of this section documents the same steps for anyone setting up without Claude.
+
 Project-scoped plugins (typescript-lsp, code-simplifier, superpowers) come pre-installed with the repo. You only need to set up the user-scoped MCP servers — both use OAuth, no tokens to manage:
 
 **Linear MCP** — fetch and create tickets directly from Claude:
