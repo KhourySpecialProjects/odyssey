@@ -22,7 +22,11 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(resolved)) {
     if (key === "tab" || value === undefined) continue;
-    params.set(key, Array.isArray(value) ? value.join(",") : value);
+    if (Array.isArray(value)) {
+      value.forEach((entry) => params.append(key, entry));
+    } else {
+      params.set(key, value);
+    }
   }
   const qs = params.toString();
   redirect(qs ? `${basePath}?${qs}` : basePath);
