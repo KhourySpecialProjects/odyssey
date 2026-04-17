@@ -25,7 +25,7 @@ export function ArchiveButton({
     >
       <div className="group relative">
         <Icon className="h-5 w-5 text-black dark:text-white" stroke={1.8} />
-        <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+        <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
           {label}
         </span>
       </div>

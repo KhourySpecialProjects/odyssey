@@ -56,6 +56,21 @@ export const VoyageTreeSchema = z
       }
     }
 
+    // Branch nodes must point to a main-path parent — nested branches are
+    // not supported (the deletion code assumes a flat main/branch structure).
+    const nodeByLocalId = new Map(data.nodes.map((n) => [n.localId, n]));
+    for (const node of data.nodes) {
+      if (node.parentLocalId === null) continue;
+      const parent = nodeByLocalId.get(node.parentLocalId);
+      if (parent && !parent.isMainPath) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Node "${node.label}" has a branch parent; branches must attach to a main-path node`,
+          path: ["nodes"],
+        });
+      }
+    }
+
     // Max 8 main path nodes (parentLocalId === null)
     const mainNodes = data.nodes.filter((n) => n.parentLocalId === null);
     if (mainNodes.length > 8) {

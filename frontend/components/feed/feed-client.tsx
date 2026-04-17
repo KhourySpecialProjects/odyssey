@@ -9,6 +9,7 @@ import {
   markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Tab = "unread" | "read";
 
@@ -61,6 +62,7 @@ export function FeedClient({
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await markAnnouncementRead(id);
     if (!result.success) {
+      toast.error("Failed to mark as read");
       setRefreshKey((k) => k + 1);
     }
   };
@@ -69,6 +71,7 @@ export function FeedClient({
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await markAnnouncementUnread(id);
     if (!result.success) {
+      toast.error("Failed to mark as unread");
       setRefreshKey((k) => k + 1);
     }
   };

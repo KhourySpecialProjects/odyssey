@@ -26,15 +26,16 @@ export async function ActivityTabContent({ contentType, searchParams }: Props) {
 
   const tagOptions =
     contentType === "droplets"
-      ? await getTags({ populate: { droplets: { fields: ["id"] } } }).then(
-          (tags) =>
-            tags
-              .filter((t) =>
-                t.droplets?.some(
-                  (d) => !d.isHidden && d.status === "published",
-                ),
-              )
-              .map((t) => ({ label: t.name, value: t.slug })),
+      ? await getTags({
+          populate: {
+            droplets: { fields: ["id", "isHidden", "status"] },
+          },
+        }).then((tags) =>
+          tags
+            .filter((t) =>
+              t.droplets?.some((d) => !d.isHidden && d.status === "published"),
+            )
+            .map((t) => ({ label: t.name, value: t.slug })),
         )
       : [];
 

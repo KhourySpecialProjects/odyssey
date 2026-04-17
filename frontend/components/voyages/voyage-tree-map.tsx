@@ -47,8 +47,11 @@ function computeLayoutSizes(containerWidth: number, maxBranches: number) {
   // the spacing between branch centers.
   const idealBranchRow =
     maxBranches > 0
-      ? (maxBranches + 1) * DEFAULT_BRANCH_SIZE +
-        (maxBranches - 1) * DEFAULT_H_GAP
+      ? Math.max(
+          (maxBranches + 1) * DEFAULT_BRANCH_SIZE +
+            (maxBranches - 1) * DEFAULT_H_GAP,
+          2 * DEFAULT_MAIN_SIZE,
+        )
       : 2 * DEFAULT_MAIN_SIZE;
   const scale = usable > 0 ? Math.min(1, usable / idealBranchRow) : 1;
 

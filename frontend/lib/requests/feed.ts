@@ -7,6 +7,8 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { getCurrentUser } from "../auth/session";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -576,6 +578,9 @@ export async function createSystemBroadcast(content: string) {
  */
 export async function markAnnouncementRead(id: number) {
   try {
+    const ownership = await assertAnnouncementOwnership(id);
+    if (!ownership.ok) return { success: false, error: ownership.error };
+
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
       {
@@ -608,6 +613,9 @@ export async function markAnnouncementRead(id: number) {
  */
 export async function markAnnouncementUnread(id: number) {
   try {
+    const ownership = await assertAnnouncementOwnership(id);
+    if (!ownership.ok) return { success: false, error: ownership.error };
+
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
       {
@@ -632,6 +640,48 @@ export async function markAnnouncementUnread(id: number) {
     console.error("Error marking announcement as unread:", error);
     return { success: false, error };
   }
+}
+
+/**
+ * Verifies that the current authenticated user is the authorized_user on the
+ * announcement identified by `id`. Broadcasts (authorized_user = null) are
+ * rejected because their `readAt` column is shared across all recipients —
+ * marking one read would hide it from everyone. Per-user read state for
+ * broadcasts requires a schema change (join table) not yet in place.
+ */
+async function assertAnnouncementOwnership(
+  id: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user?.email) return { ok: false, error: "Not authenticated" };
+
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  if (!authorizedUser) return { ok: false, error: "Not authorized" };
+
+  const announcement = await fetchAPI<{
+    id: number;
+    authorized_user?: { id: number } | null;
+  }>(`/announcements/${id}`, {
+    urlParams: {
+      fields: ["id"],
+      populate: { authorized_user: { fields: ["id"] } },
+    },
+    next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
+  });
+
+  if (!announcement) return { ok: false, error: "Announcement not found" };
+
+  const ownerId = announcement.authorized_user?.id;
+  if (ownerId == null) {
+    return {
+      ok: false,
+      error: "Broadcast announcements cannot be marked read",
+    };
+  }
+  if (ownerId !== authorizedUser.id) {
+    return { ok: false, error: "Not authorized" };
+  }
+  return { ok: true };
 }
 
 /**
