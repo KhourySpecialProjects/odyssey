@@ -11,14 +11,22 @@ const SUBHEADINGS: Record<string, string> = {
   "/activity/archived": "View and manage your archived content.",
 };
 
-export function ActivityGreeting({ firstName }: { firstName?: string | null }) {
+export function ActivityGreeting({
+  firstName,
+  firstTime,
+}: {
+  firstName?: string | null;
+  firstTime?: boolean;
+}) {
   const pathname = usePathname();
   const subheading = SUBHEADINGS[pathname] || "View and manage your content.";
+  const name = firstName || "there";
+  const greeting = firstTime ? `Hi, ${name}!` : `Welcome back, ${name}!`;
 
   return (
     <div className="mb-5 shrink-0">
       <h1 className="text-3xl font-semibold text-black dark:text-white">
-        Hi, {firstName || "there"}!
+        {greeting}
       </h1>
       <p className="mt-1 text-sm text-[#475569] md:text-base dark:text-slate-400">
         {subheading}

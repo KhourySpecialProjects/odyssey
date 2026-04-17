@@ -18,7 +18,10 @@ export default async function ActivityLayout({
     <div className="w-full">
       <FeedContainer authUser={authUser}>
         <div className="flex h-full flex-col px-4 py-6 md:px-8">
-          <ActivityGreeting firstName={authUser.firstName} />
+          <ActivityGreeting
+            firstName={authUser.firstName}
+            firstTime={authUser.firstTime}
+          />
           <div className="min-h-0 flex-1">{children}</div>
         </div>
       </FeedContainer>

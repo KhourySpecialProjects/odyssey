@@ -22,11 +22,17 @@ const VALUE_BY_SLUG = new Map(
   FILTER_VALUES.map((v) => [v.toLowerCase(), v as AnnouncementTypeTitle]),
 );
 
+// Uses "." as the separator (not "," so URLSearchParams doesn't %2C-encode it).
+// None of the filter values contain a dot, so this is safe.
+const FILTER_SEPARATOR = ".";
+
 function parseFilters(raw: string | null): AnnouncementTypeTitle[] {
   if (raw === null) return FILTER_VALUES;
   if (raw === "") return [];
+  // Backward-compat: accept "," too for shared links created before the
+  // separator change.
   const parts = raw
-    .split(",")
+    .split(/[.,]/)
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   const matched = parts
@@ -54,7 +60,10 @@ export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
       if (isAll) {
         params.delete("filters");
       } else {
-        params.set("filters", next.map((v) => v.toLowerCase()).join(","));
+        params.set(
+          "filters",
+          next.map((v) => v.toLowerCase()).join(FILTER_SEPARATOR),
+        );
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });

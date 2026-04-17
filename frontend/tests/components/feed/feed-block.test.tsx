@@ -346,7 +346,6 @@ describe("FeedBlock", () => {
 
       expect(screen.getAllByText("Jane Smith").length).toBeGreaterThan(0);
       expect(screen.getByText(/has given you kudos for/)).toBeInTheDocument();
-      // expect(screen.getByText("completing React Basics")).toBeInTheDocument();
     });
 
     it("opens profile dialog when clicking on name in kudos", async () => {
@@ -362,11 +361,10 @@ describe("FeedBlock", () => {
 
       const nameElement = screen
         .getAllByText("Jane Smith")
-        .find((el) => el.classList.contains("cursor-pointer"))!;
+        .find((el) => el.classList.contains("cursor-pointer"));
+      expect(nameElement).toBeDefined();
 
-      // Use fireEvent to avoid pointer-events issue
-      fireEvent.click(nameElement);
-
+      fireEvent.click(nameElement!);
       expect(nameElement).toHaveClass("cursor-pointer");
     });
 
