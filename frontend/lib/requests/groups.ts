@@ -1073,15 +1073,29 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const requestBody = {
-      data: {
-        users_archived: archiveState
-          ? { connect: [{ id: authorizedUser.id }] }
-          : { disconnect: [{ id: authorizedUser.id }] },
-      },
-    };
+    const [authorizedUser, fullGroup] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      fetchAPI<Group>(`/groups/${group.id}`, {
+        urlParams: {
+          populate: {
+            creator: { fields: ["id"] },
+            admins: { fields: ["id"] },
+          },
+        },
+        next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
+      }),
+    ]);
+
+    const isAuthor =
+      fullGroup.creator?.id === authorizedUser.id ||
+      fullGroup.admins?.some((a) => a.id === authorizedUser.id);
+    if (!isAuthor) {
+      return {
+        success: false,
+        error: "Only group authors can archive this group",
+      };
+    }
 
     const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
       method: "PUT",
@@ -1089,14 +1103,11 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ data: { isArchived: archiveState } }),
     });
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      console.error("Archive group error response:", responseText);
-      console.error("Response status:", response.status);
+      console.error("Archive group error:", await response.text());
       throw new Error("Failed to archive group");
     }
 

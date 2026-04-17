@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
-import { IconArchive, IconArchiveOff } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
-import { Button } from "../ui/button";
+import { ArchiveButton } from "../ui/archive-button";
 import { toast } from "sonner";
 import { archivePlaylist } from "@/lib/requests/playlist";
 import { Playlist } from "@/types";
@@ -39,6 +38,7 @@ interface PlaylistCardProps {
   isArchived?: boolean;
   linkPrefix?: string;
   statsOverride?: string;
+  isCreator?: boolean;
 }
 
 export function PlaylistCard({
@@ -50,6 +50,7 @@ export function PlaylistCard({
   isArchived,
   linkPrefix,
   statsOverride,
+  isCreator,
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   async function changeVisibility() {
@@ -111,9 +112,9 @@ export function PlaylistCard({
   return (
     <Link
       href={linkTo}
-      className="inline-block h-full w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+      className="flex h-full w-full flex-col rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
-      <div className="p-6">
+      <div className="flex-1 p-6">
         <div>
           <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
@@ -198,35 +199,12 @@ export function PlaylistCard({
           </div>
         </div>
       </div>
-      {dashboardPage && (
-        <div className="flex justify-end p-2">
-          <Button
-            size="sm"
-            aria-label={isArchived ? "Unarchive" : "Archive"}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              changeVisibility();
-            }}
-            className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-          >
-            <div className="group relative">
-              {isArchived ? (
-                <IconArchiveOff
-                  className="h-5 w-5 text-black dark:text-white"
-                  stroke={1.8}
-                />
-              ) : (
-                <IconArchive
-                  className="h-5 w-5 text-black dark:text-white"
-                  stroke={1.8}
-                />
-              )}
-              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {isArchived ? "Unarchive" : "Archive"}
-              </span>
-            </div>
-          </Button>
+      {dashboardPage && isCreator && (
+        <div className="mt-auto flex justify-end p-2">
+          <ArchiveButton
+            isArchived={isArchived ?? false}
+            onToggle={changeVisibility}
+          />
         </div>
       )}
     </Link>

@@ -344,7 +344,13 @@ describe("DropletTile", () => {
 
   describe("Archive Functionality", () => {
     it("shows archive button when isArchived is false", () => {
-      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+        />,
+      );
 
       expect(
         screen.getByRole("button", { name: "Archive" }),
@@ -352,7 +358,13 @@ describe("DropletTile", () => {
     });
 
     it("shows unarchive button when isArchived is true", () => {
-      render(<DropletTile droplet={mockDroplet} isArchived={true} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={true}
+          isCreator={true}
+        />,
+      );
 
       expect(
         screen.getByRole("button", { name: "Unarchive" }),
@@ -362,7 +374,13 @@ describe("DropletTile", () => {
     it("handles successful archive", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
 
-      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+        />,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -377,7 +395,13 @@ describe("DropletTile", () => {
     it("handles successful unarchive", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
 
-      render(<DropletTile droplet={mockDroplet} isArchived={true} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={true}
+          isCreator={true}
+        />,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: "Unarchive" }));
 
@@ -392,7 +416,13 @@ describe("DropletTile", () => {
     it("handles archive failure", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: false });
 
-      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+        />,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -407,7 +437,13 @@ describe("DropletTile", () => {
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
       (archiveDroplet as jest.Mock).mockRejectedValue(new Error("Failed"));
 
-      render(<DropletTile droplet={mockDroplet} isArchived={false} />);
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+        />,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
@@ -423,7 +459,11 @@ describe("DropletTile", () => {
 
     it("prevents link navigation when clicking archive button", async () => {
       const { container } = render(
-        <DropletTile droplet={mockDroplet} isArchived={false} />,
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+        />,
       );
 
       const button = screen.getByRole("button", { name: "Archive" });

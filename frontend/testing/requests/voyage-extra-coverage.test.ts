@@ -112,7 +112,10 @@ describe("getVoyages", () => {
     expect(result).toEqual(mockVoyages);
     expect(getMockedFetchAPI()).toHaveBeenCalledWith("/voyages", {
       urlParams: expect.objectContaining({
-        filters: { status: { $eq: "published" } },
+        filters: {
+          status: { $eq: "published" },
+          isArchived: { $eq: false },
+        },
         sort: ["name:asc"],
         populate: expect.objectContaining({
           voyage_nodes: expect.any(Object),

@@ -149,7 +149,7 @@ describe("FeedBlock", () => {
         />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-sky-500/5");
     });
 
     it("renders correct background color for playlist type", () => {
@@ -162,7 +162,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={playlistAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-emerald-500/5");
     });
 
     it("renders correct background color for group type", () => {
@@ -175,7 +175,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={groupAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-purple-500/5");
     });
 
     it("renders correct background color for friend type", () => {
@@ -188,7 +188,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={friendAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-amber-500/5");
     });
 
     it("renders correct background color for kudos type", () => {
@@ -201,7 +201,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-fuchsia-500/5");
     });
 
     it("renders correct background color for system type", () => {
@@ -214,7 +214,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={systemAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("bg-[#FCFCFD]");
+      expect(container).toHaveClass("bg-slate-500/5");
     });
   });
 
@@ -344,7 +344,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
 
-      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+      expect(screen.getAllByText("Jane Smith").length).toBeGreaterThan(0);
       expect(screen.getByText(/has given you kudos for/)).toBeInTheDocument();
       // expect(screen.getByText("completing React Basics")).toBeInTheDocument();
     });
@@ -360,7 +360,9 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
 
-      const nameElement = screen.getByText("Jane Smith");
+      const nameElement = screen
+        .getAllByText("Jane Smith")
+        .find((el) => el.classList.contains("cursor-pointer"))!;
 
       // Use fireEvent to avoid pointer-events issue
       fireEvent.click(nameElement);
@@ -551,7 +553,7 @@ describe("FeedBlock", () => {
         />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-sky-500/10");
     });
 
     it("includes dark mode background for playlist", () => {
@@ -564,7 +566,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={playlistAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-emerald-500/10");
     });
 
     it("includes dark mode background for group", () => {
@@ -577,7 +579,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={groupAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-purple-500/10");
     });
 
     it("includes dark mode background for friend", () => {
@@ -589,7 +591,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={friendAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-amber-500/10");
     });
 
     it("includes dark mode background for kudos", () => {
@@ -602,7 +604,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-fuchsia-500/10");
     });
 
     it("includes dark mode background for system", () => {
@@ -614,7 +616,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={systemAnnouncement} authUser={mockUser} />,
       );
       const container = screen.getByRole("listitem");
-      expect(container).toHaveClass("dark:bg-slate-800");
+      expect(container).toHaveClass("dark:bg-slate-500/10");
     });
 
     it("includes dark mode text color", () => {
@@ -640,7 +642,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
 
-      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+      expect(screen.getAllByText("Jane Smith").length).toBeGreaterThan(0);
     });
 
     it("splits content on 'for' to get kudos task", () => {

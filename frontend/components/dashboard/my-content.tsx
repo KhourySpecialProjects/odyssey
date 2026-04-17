@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { IconUsers, IconArchive, IconMap } from "@tabler/icons-react";
 import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
+import { ArchivedVoyagesGrid } from "./archived-voyages-grid";
 import { VoyageCard } from "@/components/voyages/voyage-card";
 
 export async function MyContent({
@@ -39,8 +40,7 @@ export async function MyContent({
   );
   const activeGroups = allGroups.filter(
     (group) =>
-      !group.users_archived?.some((user) => user.id === authorizedUser.id) &&
-      !group.isArchived,
+      !group.users_archived?.some((user) => user.id === authorizedUser.id),
   );
   const archivedGroups = allGroups.filter((group) =>
     group.users_archived?.some((user) => user.id === authorizedUser.id),
@@ -90,6 +90,8 @@ export async function MyContent({
             <ArchivedDropletsGrid sortKey={sortKey} />
             <div className="mt-6 pb-2 text-xl font-bold">Playlists</div>
             <ArchivedPlaylistsGrid sortKey={sortKey} />
+            <div className="mt-6 pb-2 text-xl font-bold">Voyages</div>
+            <ArchivedVoyagesGrid />
             <div className="mt-6 pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
               <EmptyState

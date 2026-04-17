@@ -104,6 +104,7 @@ export async function PlaylistsGrid({
     <SortedPlaylistsGrid
       playlistsWithCompletion={playlistsWithCompletion}
       dueDates={dueDates}
+      currentUserId={authorizedUser?.id}
     />
   );
 }

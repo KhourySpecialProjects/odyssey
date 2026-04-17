@@ -104,7 +104,7 @@ export default async function ExplorePage({
           fields: ["*"],
         },
         authorized_users: {
-          fields: ["firstName", "lastName", "email"],
+          fields: ["id", "firstName", "lastName", "email"],
         },
         learningObjectives: {
           fields: ["objective"],
@@ -135,6 +135,9 @@ export default async function ExplorePage({
               fields: ["id", "name", "slug"],
             },
           },
+        },
+        authorized_users: {
+          fields: ["id"],
         },
       },
     }),

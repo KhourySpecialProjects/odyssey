@@ -72,6 +72,7 @@ export function UserPlaylistsClient({
                 data-testid={`playlist-card-${index}`}
                 dashboardPage={dashboardPage}
                 isArchived={isArchived}
+                isCreator={true}
               />
             ))}
           </div>
@@ -99,6 +100,7 @@ export function UserPlaylistsClient({
                 }
                 dashboardPage={dashboardPage}
                 isArchived={isArchived}
+                isCreator={true}
               />
             ))}
           </div>

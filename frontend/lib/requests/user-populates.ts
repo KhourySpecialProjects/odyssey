@@ -88,10 +88,11 @@ export const USER_POPULATES = {
           "type",
           "focusArea",
           "difficulty",
+          "isHidden",
         ],
       },
       created_playlists: {
-        fields: ["id", "name", "slug", "isPublic"],
+        fields: ["id", "name", "slug", "isPublic", "isArchived"],
         populate: {
           droplets: {
             fields: ["id", "name", "slug"],

@@ -29,6 +29,11 @@
     "isPublic": {
       "type": "boolean"
     },
+    "isArchived": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
     "description": {
       "type": "text"
     },
