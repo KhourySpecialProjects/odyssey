@@ -309,6 +309,7 @@ export interface Playlist {
   }[];
   authors?: AuthorizedUser[];
   users_archived?: AuthorizedUser[];
+  isArchived?: boolean;
 }
 
 export type PlaylistListResponse = {
@@ -391,6 +392,7 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
+  readAt?: string | null;
 };
 
 export type Note = {
@@ -466,6 +468,7 @@ export interface Voyage {
   description: string;
   status: "draft" | "published";
   isSequential: boolean;
+  isArchived?: boolean;
   authors?: AuthorizedUser[];
   voyage_nodes?: VoyageNode[];
   createdAt?: string;

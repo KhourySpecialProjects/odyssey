@@ -12,9 +12,14 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn().mockResolvedValue({ id: 1 }),
   getCachedUserDashboardFull: jest.fn(),
   getCachedUserGroups: jest.fn(),
   getCachedVoyageEnrollmentsByUser: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock("@/lib/requests/voyage", () => ({
+  getArchivedVoyagesForAuthor: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -50,6 +55,12 @@ jest.mock("@/components/dashboard/archived-droplets-grid", () => ({
 jest.mock("@/components/dashboard/archived-playlists-grid", () => ({
   ArchivedPlaylistsGrid: ({ sortKey }: { sortKey?: string }) => (
     <div data-testid="archived-playlists-grid">Archived Playlists Grid</div>
+  ),
+}));
+
+jest.mock("@/components/dashboard/archived-voyages-grid", () => ({
+  ArchivedVoyagesGrid: () => (
+    <div data-testid="archived-voyages-grid">Archived Voyages Grid</div>
   ),
 }));
 
@@ -224,8 +235,8 @@ describe("MyContent", () => {
     it("filters active groups correctly", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      // Should show 1 active group (only group 1 is active and not user-archived)
-      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+      // Groups 1 and 3: user is a member and hasn't removed them from their list
+      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
 
     it("filters archived groups correctly", async () => {
@@ -252,14 +263,14 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
 
-    it("excludes system archived groups from active groups", async () => {
+    it("keeps system-archived groups in the member's active list", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      // System archived group (id: 3) should not be in active groups
-      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+      // Group 3 (isArchived=true) still appears for members who haven't removed it
+      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
 
     it("filters groups correctly when user is member of multiple groups", async () => {

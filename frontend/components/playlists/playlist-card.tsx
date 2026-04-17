@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
-import { IconArchive, IconArchiveOff } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
-import { Button } from "../ui/button";
+import { ArchiveButton } from "../ui/archive-button";
 import { toast } from "sonner";
 import { archivePlaylist } from "@/lib/requests/playlist";
 import { Playlist } from "@/types";
@@ -39,6 +39,7 @@ interface PlaylistCardProps {
   isArchived?: boolean;
   linkPrefix?: string;
   statsOverride?: string;
+  isCreator?: boolean;
 }
 
 export function PlaylistCard({
@@ -50,24 +51,37 @@ export function PlaylistCard({
   isArchived,
   linkPrefix,
   statsOverride,
+  isCreator,
 }: PlaylistCardProps) {
+  const router = useRouter();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  // Optimistic local archived state so the icon flips immediately on click.
+  // Re-syncs with the `isArchived` prop whenever the parent re-renders with
+  // fresh data from the server (e.g., after router.refresh()).
+  const [localArchived, setLocalArchived] = useState(!!isArchived);
+  useEffect(() => {
+    setLocalArchived(!!isArchived);
+  }, [isArchived]);
+
   async function changeVisibility() {
+    const nextArchived = !localArchived;
+    setLocalArchived(nextArchived);
     try {
-      const result = await archivePlaylist(
-        playlist as Playlist,
-        isArchived ? false : true,
-      );
+      const result = await archivePlaylist(playlist as Playlist, nextArchived);
       if (result.success) {
         toast.success(
-          isArchived
-            ? `${playlist.name} is now unarchived!`
-            : `${playlist.name} is now archived!`,
+          nextArchived
+            ? `${playlist.name} is now archived!`
+            : `${playlist.name} is now unarchived!`,
         );
+        // Pull fresh server data so the card moves between tabs.
+        router.refresh();
       } else {
+        setLocalArchived(!nextArchived);
         toast.error("Failed to update playlist visibility");
       }
     } catch (error) {
+      setLocalArchived(!nextArchived);
       toast.error("An error occurred while updating the playlist");
       console.error(error);
     }
@@ -109,11 +123,13 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    <Link
-      href={linkTo}
-      className="inline-block h-full w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
-    >
-      <div className="p-6">
+    <div className="group relative flex h-full w-full flex-col rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <Link
+        href={linkTo}
+        aria-label={playlist.name}
+        className="absolute inset-0 z-0 rounded-lg"
+      />
+      <div className="pointer-events-none relative z-10 flex-1 p-6">
         <div>
           <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
@@ -176,7 +192,7 @@ export function PlaylistCard({
                         e.preventDefault();
                         setDescriptionExpanded(true);
                       }}
-                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      className="pointer-events-auto text-left text-sm text-sky-700 dark:text-sky-500"
                     >
                       See More
                     </button>
@@ -188,7 +204,7 @@ export function PlaylistCard({
                         e.preventDefault();
                         setDescriptionExpanded(false);
                       }}
-                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      className="pointer-events-auto text-left text-sm text-sky-700 dark:text-sky-500"
                     >
                       See Less
                     </button>
@@ -198,37 +214,14 @@ export function PlaylistCard({
           </div>
         </div>
       </div>
-      {dashboardPage && (
-        <div className="flex justify-end p-2">
-          <Button
-            size="sm"
-            aria-label={isArchived ? "Unarchive" : "Archive"}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              changeVisibility();
-            }}
-            className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-          >
-            <div className="group relative">
-              {isArchived ? (
-                <IconArchiveOff
-                  className="h-5 w-5 text-black dark:text-white"
-                  stroke={1.8}
-                />
-              ) : (
-                <IconArchive
-                  className="h-5 w-5 text-black dark:text-white"
-                  stroke={1.8}
-                />
-              )}
-              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {isArchived ? "Unarchive" : "Archive"}
-              </span>
-            </div>
-          </Button>
+      {dashboardPage && isCreator && (
+        <div className="relative z-10 mt-auto flex justify-end p-2">
+          <ArchiveButton
+            isArchived={localArchived}
+            onToggle={changeVisibility}
+          />
         </div>
       )}
-    </Link>
+    </div>
   );
 }

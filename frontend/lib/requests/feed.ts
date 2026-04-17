@@ -5,6 +5,10 @@ import qs from "qs";
 import { flattenAttributes, fetchAPI } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { getCurrentUser } from "../auth/session";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -18,6 +22,7 @@ export async function fetchAnnouncements(
   user: AuthorizedUser,
   page?: number,
   roles?: string[],
+  options?: { archived?: boolean },
 ): Promise<{
   data: Announcement[];
   pagination: {
@@ -27,6 +32,7 @@ export async function fetchAnnouncements(
     total: number;
   };
 }> {
+  const archived = options?.archived ?? false;
   try {
     // Extract friend IDs from the user's friendships (already populated on authUser)
     const friendIds = (user.friendships || [])
@@ -118,12 +124,22 @@ export async function fetchAnnouncements(
       ],
     });
 
+    const readAtFilter = archived
+      ? { readAt: { $notNull: true } }
+      : { readAt: { $null: true } };
+
+    const baseFilters = {
+      $and: [{ $or: orFilters }, readAtFilter],
+    };
+
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
-      fields: ["id", "type", "content", "firstCreated"],
+      fields: ["id", "type", "content", "firstCreated", "readAt"],
       filters: roles?.length
-        ? { $and: [{ $or: orFilters }, { type: { $in: roles } }] }
-        : { $or: orFilters },
+        ? {
+            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: roles } }],
+          }
+        : baseFilters,
       populate: {
         authorized_user: {
           fields: [
@@ -193,9 +209,13 @@ export async function fetchAnnouncements(
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
+    if (!response.ok) {
+      throw new Error(`Strapi returned ${response.status} for /announcements`);
+    }
     const data = await response.json();
+    const flattened = flattenAttributes(data.data);
     return {
-      data: flattenAttributes(data.data),
+      data: Array.isArray(flattened) ? flattened : [],
       pagination: data.meta?.pagination ?? {
         page: 1,
         pageSize: 25,
@@ -426,6 +446,22 @@ export async function createSystemAnnouncement(
   content: string,
   authUser: AuthorizedUser,
 ) {
+  // Defensive guard: refuse to create an orphaned announcement (one with no
+  // authorized_user). Orphans are broadcast to every user's feed, so a bad
+  // call here would show duplicate system messages to the entire platform.
+  // TypeScript guarantees the signature, but we've had runtime cases where
+  // the caller passed a partially-hydrated user object with id=undefined.
+  if (!authUser?.id) {
+    console.error("createSystemAnnouncement: refusing to create orphan", {
+      content,
+      authUser,
+    });
+    return {
+      success: false,
+      error: "Invalid authUser — announcement not created",
+    };
+  }
+
   try {
     // Skip if this exact system announcement already exists for this user
     const existing = await fetchAPI<{ id: number }[]>("/announcements", {
@@ -476,6 +512,193 @@ export async function createSystemAnnouncement(
   } catch (error) {
     console.error("Error:", error);
     return { success: false, error };
+  }
+}
+
+/**
+ * Create a system announcement broadcast to ALL users.
+ * Unlike createSystemAnnouncement (which targets a single user), this one
+ * creates a record with authorized_user = null, which the feed query
+ * treats as globally visible.
+ *
+ * Admin-only.
+ */
+export async function createSystemBroadcast(content: string) {
+  // Gate first — don't leak existence/validation details to non-admins.
+  const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!gate.ok) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return { success: false, error: "Content is required" };
+  }
+  if (trimmed.length > 1000) {
+    return { success: false, error: "Content is too long (max 1000 chars)" };
+  }
+
+  try {
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            content: trimmed,
+            firstCreated: new Date().toISOString(),
+            type: "system",
+            // authorized_user intentionally omitted → null → broadcast
+          },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("createSystemBroadcast failed:", await response.text());
+      return { success: false, error: "Failed to create broadcast" };
+    }
+
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("Error creating broadcast:", error);
+    return { success: false, error: "Unexpected error" };
+  }
+}
+
+/**
+ * Mark an announcement as read — sets its readAt timestamp so it
+ * disappears from the Unread feed and shows in Read.
+ * Idempotent: re-marking an already-read announcement refreshes readAt.
+ */
+export async function markAnnouncementRead(id: number) {
+  try {
+    const ownership = await assertAnnouncementOwnership(id);
+    if (!ownership.ok) return { success: false, error: ownership.error };
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          data: { readAt: new Date().toISOString() },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to mark announcement as read (${response.status})`,
+      );
+    }
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking announcement as read:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Mark an announcement as unread — clears its readAt so it shows in
+ * the Unread feed again.
+ */
+export async function markAnnouncementUnread(id: number) {
+  try {
+    const ownership = await assertAnnouncementOwnership(id);
+    if (!ownership.ok) return { success: false, error: ownership.error };
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          data: { readAt: null },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to mark announcement as unread (${response.status})`,
+      );
+    }
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking announcement as unread:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Verifies that the current authenticated user is the authorized_user on the
+ * announcement identified by `id`. Broadcasts (authorized_user = null) are
+ * rejected because their `readAt` column is shared across all recipients —
+ * marking one read would hide it from everyone. Per-user read state for
+ * broadcasts requires a schema change (join table) not yet in place.
+ */
+async function assertAnnouncementOwnership(
+  id: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user?.email) return { ok: false, error: "Not authenticated" };
+
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  if (!authorizedUser) return { ok: false, error: "Not authorized" };
+
+  const announcement = await fetchAPI<{
+    id: number;
+    authorized_user?: { id: number } | null;
+  }>(`/announcements/${id}`, {
+    urlParams: {
+      fields: ["id"],
+      populate: { authorized_user: { fields: ["id"] } },
+    },
+    next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
+  });
+
+  if (!announcement) return { ok: false, error: "Announcement not found" };
+
+  const ownerId = announcement.authorized_user?.id;
+  if (ownerId == null) {
+    return {
+      ok: false,
+      error: "Broadcast announcements cannot be marked read",
+    };
+  }
+  if (ownerId !== authorizedUser.id) {
+    return { ok: false, error: "Not authorized" };
+  }
+  return { ok: true };
+}
+
+/**
+ * Count unread (non-archived) announcements for the current user.
+ * Used for the nav badge.
+ */
+export async function getUnreadAnnouncementCount(
+  user: AuthorizedUser,
+): Promise<number> {
+  try {
+    const { pagination } = await fetchAnnouncements(user, 1, undefined, {
+      archived: false,
+    });
+    return pagination.total;
+  } catch (error) {
+    console.error("Error fetching unread count:", error);
+    return 0;
   }
 }
 

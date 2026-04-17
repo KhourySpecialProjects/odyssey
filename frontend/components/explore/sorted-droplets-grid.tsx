@@ -169,6 +169,13 @@ export function SortedDropletsGrid({
                   ) ?? false
                 : false
             }
+            isCreator={
+              currentUserId
+                ? droplet.authorized_users?.some(
+                    (user) => user.id === currentUserId,
+                  ) ?? false
+                : false
+            }
           />
         ))}
       </ul>

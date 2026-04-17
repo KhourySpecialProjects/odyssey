@@ -432,6 +432,39 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
   }
 }
 
+export async function setDropletHidden(dropletId: number, hidden: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) return { success: false, error: "Not authenticated" };
+
+    const [authorizedUser, droplet] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      getDropletById(dropletId, {
+        populate: { authorized_users: { fields: ["id"] } },
+      }),
+    ]);
+    const isAuthor = droplet.authorized_users?.some(
+      (u) => u.id === authorizedUser.id,
+    );
+    const isAdmin = isAuthorizedUserAdmin(user.roles);
+    if (!isAuthor && !isAdmin) {
+      return {
+        success: false,
+        error: "Not authorized to modify droplet visibility",
+      };
+    }
+
+    const result = await updateDroplet(dropletId, { isHidden: hidden });
+    if (!result.ok) {
+      return { success: false, error: result.error };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting droplet hidden:", error);
+    return { success: false, error };
+  }
+}
+
 export async function createNewTag(tag: string) {
   try {
     const response = await fetch(`${STRAPI_API_URL}/api/tags`, {

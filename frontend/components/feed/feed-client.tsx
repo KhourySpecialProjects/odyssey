@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
-import { fetchAnnouncements } from "@/lib/requests/feed";
+import {
+  fetchAnnouncements,
+  markAnnouncementRead,
+  markAnnouncementUnread,
+} from "@/lib/requests/feed";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+type Tab = "unread" | "read";
 
 export function FeedClient({
   selectedRoles,
@@ -12,16 +20,24 @@ export function FeedClient({
   selectedRoles: AnnouncementType[];
   authUser: AuthorizedUser;
 }) {
+  const [tab, setTab] = useState<Tab>("unread");
   const [currentPage, setCurrentPage] = useState(1);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedRoles]);
+  }, [selectedRoles, tab]);
 
   useEffect(() => {
+    if (selectedRoles.length === 0) {
+      setAnnouncements([]);
+      setTotalPages(1);
+      setIsLoading(false);
+      return;
+    }
     const load = async () => {
       setIsLoading(true);
       try {
@@ -29,8 +45,9 @@ export function FeedClient({
           authUser,
           currentPage,
           selectedRoles,
+          { archived: tab === "read" },
         );
-        setAnnouncements(data);
+        setAnnouncements(Array.isArray(data) ? data : []);
         setTotalPages(pagination.pageCount);
       } catch (error) {
         console.error("Error loading initial announcements:", error);
@@ -39,10 +56,53 @@ export function FeedClient({
       }
     };
     load();
-  }, [authUser, currentPage, selectedRoles]);
+  }, [authUser, currentPage, selectedRoles, tab, refreshKey]);
+
+  const handleMarkRead = async (id: number) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    const result = await markAnnouncementRead(id);
+    if (!result.success) {
+      toast.error("Failed to mark as read");
+      setRefreshKey((k) => k + 1);
+    }
+  };
+
+  const handleMarkUnread = async (id: number) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    const result = await markAnnouncementUnread(id);
+    if (!result.success) {
+      toast.error("Failed to mark as unread");
+      setRefreshKey((k) => k + 1);
+    }
+  };
+
+  const tabButtonClass = (active: boolean) =>
+    cn(
+      "flex-1 border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+      active
+        ? "border-[#2D7597] text-[#2D7597]"
+        : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
+    );
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex border-b border-neutral-200 dark:border-neutral-700">
+        <button
+          type="button"
+          className={tabButtonClass(tab === "unread")}
+          onClick={() => setTab("unread")}
+        >
+          Unread
+        </button>
+        <button
+          type="button"
+          className={tabButtonClass(tab === "read")}
+          onClick={() => setTab("read")}
+        >
+          Read
+        </button>
+      </div>
+
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -53,18 +113,22 @@ export function FeedClient({
             />
           </div>
         ) : announcements.length > 0 ? (
-          <ul className="grid grid-cols-1 gap-3">
+          <ul className="grid grid-cols-1 gap-3 p-1">
             {announcements.map((post) => (
               <FeedBlock
                 key={post.id}
                 announcement={post}
                 authUser={authUser}
+                onMarkRead={tab === "unread" ? handleMarkRead : undefined}
+                onMarkUnread={tab === "read" ? handleMarkUnread : undefined}
               />
             ))}
           </ul>
         ) : (
           <p className="py-8 text-center text-slate-500">
-            No announcements found
+            {tab === "unread"
+              ? "No unread announcements"
+              : "No read announcements"}
           </p>
         )}
       </div>

@@ -19,7 +19,7 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  */
 export async function getPlaylists({
   sort = ["name:asc"],
-  filters = { isPublic: true },
+  filters = { isPublic: true, isArchived: { $eq: false } },
   pagination = { pageSize: 250, page: 1 },
   populate = {
     droplets: {
@@ -34,11 +34,16 @@ export async function getPlaylists({
     },
   },
   fields = ["id", "name", "slug", "isPublic"],
-}: StrapiRequestParams = {}): Promise<Playlist[]> {
+  includeArchived = false,
+}: StrapiRequestParams & { includeArchived?: boolean } = {}): Promise<
+  Playlist[]
+> {
   const path = `/playlists`;
   const urlParams = {
     sort,
-    filters,
+    filters: includeArchived
+      ? filters
+      : { ...filters, isArchived: { $eq: false } },
     populate,
     fields,
     pagination,
@@ -138,10 +143,7 @@ export async function updatePlaylist(
       description: data.description,
       isPublic: data.isPublic,
       droplets: {
-        set: data.droplets, // 'set' replaces all existing relationships
-      },
-      authorized_users: {
-        set: [data.userId], // ensure author remains connected
+        set: data.droplets,
       },
       slug: data.slug,
       regenerateSlug: false,
@@ -198,15 +200,12 @@ export async function createPlaylist(data: {
       name: data.name,
       description: data.description,
       authors: {
-        set: [data.author.id],
+        connect: [data.author.id],
       },
       slug: tempSlug, // this gets overwritten by Strapi
       isPublic: data.isPublic,
       droplets: {
         connect: data.droplets,
-      },
-      authorized_users: {
-        connect: [data.userId],
       },
     };
 
@@ -286,15 +285,31 @@ export async function archivePlaylist(
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const requestBody = {
-      data: {
-        users_archived: archiveState
-          ? { connect: [{ id: authorizedUser.id }] }
-          : { disconnect: [{ id: authorizedUser.id }] },
-      },
-    };
+    const [authorizedUser, fullPlaylist] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      getPlaylistById<Pick<Playlist, "id"> & { authors?: { id: number }[] }>(
+        playlist.id,
+        { populate: { authors: { fields: ["id"] } } },
+      ),
+    ]);
+
+    if (!authorizedUser) {
+      return { success: false, error: "Authorized user not found" };
+    }
+    if (!fullPlaylist) {
+      return { success: false, error: "Playlist not found" };
+    }
+
+    const isAuthor = fullPlaylist.authors?.some(
+      (a) => a.id === authorizedUser.id,
+    );
+    if (!isAuthor) {
+      return {
+        success: false,
+        error: "Only authors can archive this playlist",
+      };
+    }
 
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`,
@@ -304,15 +319,12 @@ export async function archivePlaylist(
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ data: { isArchived: archiveState } }),
       },
     );
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      console.error("Archive playlist error response:", responseText);
-      console.error("Response status:", response.status);
+      console.error("Archive playlist error:", await response.text());
       throw new Error("Failed to archive playlist");
     }
 

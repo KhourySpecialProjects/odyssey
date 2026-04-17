@@ -189,7 +189,17 @@ describe("archivePlaylist", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ id: 5 });
   });
 
+  const mockAuthorFetch = () =>
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: { id: 10, attributes: { authors: { data: [{ id: 5 }] } } },
+        }),
+    });
+
   it("successfully archives a playlist and revalidates", async () => {
+    mockAuthorFetch();
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
@@ -209,6 +219,7 @@ describe("archivePlaylist", () => {
   });
 
   it("successfully unarchives a playlist and revalidates", async () => {
+    mockAuthorFetch();
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
@@ -228,6 +239,7 @@ describe("archivePlaylist", () => {
   });
 
   it("does not revalidate on failure", async () => {
+    mockAuthorFetch();
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       text: () => Promise.resolve("Bad Request"),
@@ -245,5 +257,26 @@ describe("archivePlaylist", () => {
 
     expect(result).toEqual({ success: false, error: expect.any(Error) });
     expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-authors", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: { id: 10, attributes: { authors: { data: [{ id: 99 }] } } },
+        }),
+    });
+
+    const mockPlaylist = {
+      id: 10,
+      name: "Test Playlist",
+      slug: "test-playlist",
+      isPublic: true,
+      duration: "short" as const,
+    };
+    const result = await archivePlaylist(mockPlaylist, true);
+
+    expect(result.success).toBe(false);
   });
 });

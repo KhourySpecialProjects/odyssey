@@ -1,23 +1,30 @@
 "use client";
 
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { IconUserPlus } from "@tabler/icons-react";
 import { AuthorizedUser } from "@/types";
 import { FriendRequestFeedBlock } from "../friends/friend-request-feed-block";
-import { Button } from "../ui/button";
 import Link from "next/link";
 import { FeedLeftNav } from "./feed-left-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
 
 export function FeedContainer({
   authUser,
-  isFeedTab,
   children,
 }: {
   authUser: AuthorizedUser;
-  isFeedTab: boolean;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isFeedTab = pathname === "/activity";
   const [headerHeight, setHeaderHeight] = useState(69);
   const leftRef = useRef<HTMLElement>(null);
 
@@ -94,18 +101,26 @@ export function FeedContainer({
 
         {/* Right column — Friends sidebar */}
         <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 md:flex">
-          <div className="flex-1 overflow-y-auto rounded-2xl border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex-1 overflow-y-auto rounded-[8px] border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="p-5">
-              <h2 className="mb-3 text-base font-semibold text-black dark:text-white">
-                Friends
-              </h2>
-              <Button
-                asChild
-                size="sm"
-                className="mb-4 w-full rounded-full bg-[#287697] hover:bg-[#1f6080]"
-              >
-                <Link href="/settings/friends">Manage Friends</Link>
-              </Button>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-black dark:text-white">
+                  Friends
+                </h2>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="Friend actions"
+                    className="rounded-full p-1.5 text-[#475569] hover:bg-slate-100 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-800"
+                  >
+                    <IconUserPlus className="h-4 w-4" stroke={1.75} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/friends">Manage Friends</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
               {/* Pending requests — only show if any exist */}
               {pendingRequests.length > 0 && (

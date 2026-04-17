@@ -2036,7 +2036,15 @@ describe("archiveGroup", () => {
     getAuthorizedUserByEmail.mockResolvedValue({ id: 5 });
   });
 
+  const mockCreatorFetch = () =>
+    fetchAPI.mockResolvedValueOnce({
+      id: 10,
+      creator: { id: 5 },
+      admins: [],
+    });
+
   it("successfully archives a group and revalidates", async () => {
+    mockCreatorFetch();
     global.fetch.mockResolvedValueOnce({
       ok: true,
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
@@ -2050,6 +2058,7 @@ describe("archiveGroup", () => {
   });
 
   it("successfully unarchives a group and revalidates", async () => {
+    mockCreatorFetch();
     global.fetch.mockResolvedValueOnce({
       ok: true,
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
@@ -2063,6 +2072,7 @@ describe("archiveGroup", () => {
   });
 
   it("does not revalidate on failure", async () => {
+    mockCreatorFetch();
     global.fetch.mockResolvedValueOnce({
       ok: false,
       text: () => Promise.resolve("Bad Request"),

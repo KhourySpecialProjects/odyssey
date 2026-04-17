@@ -20,29 +20,39 @@ export interface TreeNode {
 
 interface VoyageTreeMapProps {
   nodes: TreeNode[];
+  /** Horizontal center ratio for islands (0–1). 0.5 centers, >0.5 shifts right. */
+  centerOffsetRatio?: number;
 }
 
 // Default desktop sizes. On narrower containers these scale down proportionally
 // so multi-branch rows stay within the viewport.
 const DEFAULT_MAIN_SIZE = 260;
 const DEFAULT_BRANCH_SIZE = 210;
-const DEFAULT_H_GAP = 80;
-const DEFAULT_V_GAP = 160;
+const DEFAULT_H_GAP = 100;
+const DEFAULT_V_GAP = 180;
 const PADDING = 60;
 const MIN_MAIN_SIZE = 140;
 const MIN_BRANCH_SIZE = 110;
-const MIN_H_GAP = 24;
+const MIN_H_GAP = 32;
 
 /** Compute layout sizes that fit within the container, accounting for
- *  the widest branch row in the tree. */
+ *  the widest branch row in the tree. Sizing is based on the full
+ *  container width (symmetric); horizontal placement is clamped
+ *  separately in assignPositions so the tree can shift right without
+ *  overflowing. */
 function computeLayoutSizes(containerWidth: number, maxBranches: number) {
-  // Available width for a branch row after padding.
   const usable = Math.max(containerWidth - PADDING * 2, 0);
-  // Desktop ideal width for the widest branch row.
+  // Each island div is rendered at width = size × 2 (to fit label bleed),
+  // so the effective row width includes one extra island's worth on top of
+  // the spacing between branch centers.
   const idealBranchRow =
     maxBranches > 0
-      ? maxBranches * DEFAULT_BRANCH_SIZE + (maxBranches - 1) * DEFAULT_H_GAP
-      : DEFAULT_MAIN_SIZE;
+      ? Math.max(
+          (maxBranches + 1) * DEFAULT_BRANCH_SIZE +
+            (maxBranches - 1) * DEFAULT_H_GAP,
+          2 * DEFAULT_MAIN_SIZE,
+        )
+      : 2 * DEFAULT_MAIN_SIZE;
   const scale = usable > 0 ? Math.min(1, usable / idealBranchRow) : 1;
 
   const MAIN_SIZE = Math.max(DEFAULT_MAIN_SIZE * scale, MIN_MAIN_SIZE);
@@ -82,16 +92,37 @@ function buildTree(nodes: TreeNode[]): LayoutNode[] {
   });
 }
 
-/** Assign positions: top-down centered, branches spread horizontally below parent */
+/** Assign positions: top-down, branches spread horizontally below parent.
+ *  cx is clamped so the widest rendered row (main island or branch row,
+ *  each rendered at size × 2 width) stays within the container — the
+ *  tree shifts toward centerOffsetRatio as far as it can without
+ *  overflowing. */
 function assignPositions(
   roots: LayoutNode[],
   containerWidth: number,
   sizes: ReturnType<typeof computeLayoutSizes>,
+  centerOffsetRatio = 0.5,
 ): { all: LayoutNode[]; height: number } {
   const { MAIN_SIZE, BRANCH_SIZE, H_GAP, V_GAP } = sizes;
   const all: LayoutNode[] = [];
   let y = PADDING;
-  const cx = containerWidth / 2;
+
+  const maxBranches = roots.reduce((m, r) => Math.max(m, r.children.length), 0);
+  const mainHalfWidth = MAIN_SIZE;
+  const branchRowHalfWidth =
+    maxBranches > 0
+      ? (maxBranches * BRANCH_SIZE + (maxBranches - 1) * H_GAP) / 2 +
+        BRANCH_SIZE / 2
+      : 0;
+  const widestHalf = Math.max(mainHalfWidth, branchRowHalfWidth);
+  const minCx = widestHalf + PADDING;
+  const maxCx = containerWidth - widestHalf - PADDING;
+  const desiredCx = containerWidth * centerOffsetRatio;
+  // When the widest row plus padding doesn't fit, fall back to centering.
+  const cx =
+    minCx > maxCx
+      ? containerWidth / 2
+      : Math.min(Math.max(desiredCx, minCx), maxCx);
 
   for (const root of roots) {
     root.x = cx;
@@ -141,7 +172,10 @@ function bezierPath(
   return `M ${px} ${sy} C ${px} ${my}, ${cx} ${my}, ${cx} ${ey}`;
 }
 
-export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
+export function VoyageTreeMap({
+  nodes,
+  centerOffsetRatio = 0.5,
+}: VoyageTreeMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -172,8 +206,8 @@ export function VoyageTreeMap({ nodes }: VoyageTreeMapProps) {
   );
 
   const { all: layoutNodes, height: totalHeight } = useMemo(
-    () => assignPositions(tree, containerWidth, sizes),
-    [tree, containerWidth, sizes],
+    () => assignPositions(tree, containerWidth, sizes, centerOffsetRatio),
+    [tree, containerWidth, sizes, centerOffsetRatio],
   );
 
   // Scale SVG visible heights by the same ratio used for layout sizing.

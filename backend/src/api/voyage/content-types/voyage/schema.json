@@ -28,6 +28,10 @@
       "default": false,
       "required": true
     },
+    "isArchived": {
+      "type": "boolean",
+      "default": false
+    },
     "voyage_nodes": {
       "type": "relation",
       "relation": "oneToMany",

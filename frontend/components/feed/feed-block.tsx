@@ -9,9 +9,13 @@ import {
   PartyPopper,
   UsersRound,
   Info,
+  Check,
+  RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
+import { feedColorFor } from "@/lib/feed-colors";
+import { cn } from "@/lib/utils";
 
 interface ParsedContent {
   userName?: string | null;
@@ -23,9 +27,13 @@ interface ParsedContent {
 export function FeedBlock({
   announcement,
   authUser,
+  onMarkRead,
+  onMarkUnread,
 }: {
   announcement: Announcement;
   authUser: AuthorizedUser;
+  onMarkRead?: (id: number) => void | Promise<void>;
+  onMarkUnread?: (id: number) => void | Promise<void>;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [playlistPopupOpen, setPlaylistPopupOpen] = useState(false);
@@ -60,6 +68,27 @@ export function FeedBlock({
   };
 
   const config = announcementConfig[announcement.type];
+  const colors = feedColorFor(announcement.type);
+
+  const entityName = (() => {
+    switch (announcement.type) {
+      case "droplet":
+        return announcement.droplet?.name;
+      case "playlist":
+        return announcement.playlist?.name;
+      case "group":
+        return announcement.group?.groupName;
+      case "friend":
+      case "kudos": {
+        const u = announcement.authorized_user;
+        if (!u) return null;
+        const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+        return name || u.email || null;
+      }
+      default:
+        return null;
+    }
+  })();
 
   function formatDate(dateInput: string | Date | undefined) {
     if (!dateInput) return "";
@@ -336,10 +365,52 @@ export function FeedBlock({
 
   return (
     <>
-      <li className="relative flex flex-col gap-3 rounded-[8px] border border-[#D0D5DD] bg-[#FCFCFD] p-4 dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-          {config.icon}
-          <span className="text-sm font-semibold">{config.label}</span>
+      <li
+        className={cn(
+          "relative flex flex-col gap-3 rounded-[8px] border p-4",
+          colors.card,
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center justify-between gap-2 font-semibold",
+            colors.accent,
+          )}
+        >
+          <div className="flex items-center gap-2">
+            {config.icon}
+            <span className="text-sm">{config.label}</span>
+            {entityName && (
+              <>
+                <span className="text-sm opacity-60">·</span>
+                <span className="truncate text-sm font-medium">
+                  {entityName}
+                </span>
+              </>
+            )}
+          </div>
+          {onMarkRead && (
+            <button
+              type="button"
+              onClick={() => onMarkRead(announcement.id)}
+              aria-label="Mark as read"
+              title="Mark as read"
+              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            >
+              <Check size={16} />
+            </button>
+          )}
+          {onMarkUnread && (
+            <button
+              type="button"
+              onClick={() => onMarkUnread(announcement.id)}
+              aria-label="Mark as unread"
+              title="Mark as unread"
+              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            >
+              <RotateCcw size={16} />
+            </button>
+          )}
         </div>
         <div className="min-w-0">
           {hasStructuredData()

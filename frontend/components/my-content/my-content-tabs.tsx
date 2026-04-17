@@ -19,6 +19,7 @@ interface MyContentTabsProps {
   voyages: Voyage[];
   showPlaylists: boolean;
   showVoyages: boolean;
+  currentUserId?: number;
 }
 
 const tabs = [
@@ -33,6 +34,7 @@ export function MyContentTabs({
   voyages,
   showPlaylists,
   showVoyages,
+  currentUserId,
 }: MyContentTabsProps) {
   const tabIds = tabs.map((t) => t.id);
   const [activeTab, setActiveTab] = useQueryState(
@@ -139,7 +141,13 @@ export function MyContentTabs({
           ) : (
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {droplets.map((droplet) => (
-                <DropletTile key={droplet.id} droplet={droplet} />
+                <DropletTile
+                  key={droplet.id}
+                  droplet={droplet}
+                  isArchived={droplet.isHidden ?? false}
+                  isCreator={true}
+                  creatorArchive={true}
+                />
               ))}
             </ul>
           ))}
@@ -164,6 +172,9 @@ export function MyContentTabs({
                   key={playlist.id}
                   playlist={playlist}
                   toDraft={true}
+                  dashboardPage={true}
+                  isCreator={true}
+                  isArchived={playlist.isArchived ?? false}
                 />
               ))}
             </ul>
@@ -186,7 +197,17 @@ export function MyContentTabs({
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {voyages.map((voyage) => (
                 <li key={voyage.id}>
-                  <VoyageCard voyage={voyage} />
+                  <VoyageCard
+                    voyage={voyage}
+                    isArchived={voyage.isArchived ?? false}
+                    isCreator={
+                      currentUserId
+                        ? voyage.authors?.some((a) => a.id === currentUserId) ??
+                          false
+                        : false
+                    }
+                    dashboardPage={true}
+                  />
                 </li>
               ))}
             </ul>
