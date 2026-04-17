@@ -5,6 +5,8 @@ import qs from "qs";
 import { flattenAttributes, fetchAPI } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -504,6 +506,61 @@ export async function createSystemAnnouncement(
   } catch (error) {
     console.error("Error:", error);
     return { success: false, error };
+  }
+}
+
+/**
+ * Create a system announcement broadcast to ALL users.
+ * Unlike createSystemAnnouncement (which targets a single user), this one
+ * creates a record with authorized_user = null, which the feed query
+ * treats as globally visible.
+ *
+ * Admin-only.
+ */
+export async function createSystemBroadcast(content: string) {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return { success: false, error: "Content is required" };
+  }
+  if (trimmed.length > 1000) {
+    return { success: false, error: "Content is too long (max 1000 chars)" };
+  }
+
+  const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!gate.ok) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            content: trimmed,
+            firstCreated: new Date().toISOString(),
+            type: "system",
+            // authorized_user intentionally omitted → null → broadcast
+          },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("createSystemBroadcast failed:", await response.text());
+      return { success: false, error: "Failed to create broadcast" };
+    }
+
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("Error creating broadcast:", error);
+    return { success: false, error: "Unexpected error" };
   }
 }
 
