@@ -18,6 +18,7 @@ export async function fetchAnnouncements(
   user: AuthorizedUser,
   page?: number,
   roles?: string[],
+  options?: { archived?: boolean },
 ): Promise<{
   data: Announcement[];
   pagination: {
@@ -27,6 +28,7 @@ export async function fetchAnnouncements(
     total: number;
   };
 }> {
+  const archived = options?.archived ?? false;
   try {
     // Extract friend IDs from the user's friendships (already populated on authUser)
     const friendIds = (user.friendships || [])
@@ -118,12 +120,22 @@ export async function fetchAnnouncements(
       ],
     });
 
+    const readAtFilter = archived
+      ? { readAt: { $notNull: true } }
+      : { readAt: { $null: true } };
+
+    const baseFilters = {
+      $and: [{ $or: orFilters }, readAtFilter],
+    };
+
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
-      fields: ["id", "type", "content", "firstCreated"],
+      fields: ["id", "type", "content", "firstCreated", "readAt"],
       filters: roles?.length
-        ? { $and: [{ $or: orFilters }, { type: { $in: roles } }] }
-        : { $or: orFilters },
+        ? {
+            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: roles } }],
+          }
+        : baseFilters,
       populate: {
         authorized_user: {
           fields: [
@@ -476,6 +488,89 @@ export async function createSystemAnnouncement(
   } catch (error) {
     console.error("Error:", error);
     return { success: false, error };
+  }
+}
+
+/**
+ * Mark an announcement as read — sets its readAt timestamp so it
+ * disappears from the Unread feed and shows in Read.
+ * Idempotent: re-marking an already-read announcement refreshes readAt.
+ */
+export async function markAnnouncementRead(id: number) {
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          data: { readAt: new Date().toISOString() },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to mark announcement as read (${response.status})`,
+      );
+    }
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking announcement as read:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Mark an announcement as unread — clears its readAt so it shows in
+ * the Unread feed again.
+ */
+export async function markAnnouncementUnread(id: number) {
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          data: { readAt: null },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to mark announcement as unread (${response.status})`,
+      );
+    }
+    revalidateTag(CACHE_TAGS.announcements);
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking announcement as unread:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Count unread (non-archived) announcements for the current user.
+ * Used for the nav badge.
+ */
+export async function getUnreadAnnouncementCount(
+  user: AuthorizedUser,
+): Promise<number> {
+  try {
+    const { pagination } = await fetchAnnouncements(user, 1, undefined, {
+      archived: false,
+    });
+    return pagination.total;
+  } catch (error) {
+    console.error("Error fetching unread count:", error);
+    return 0;
   }
 }
 
