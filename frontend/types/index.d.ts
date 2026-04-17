@@ -392,6 +392,7 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
+  readAt?: string | null;
 };
 
 export type Note = {

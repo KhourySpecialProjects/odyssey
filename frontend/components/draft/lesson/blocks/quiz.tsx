@@ -89,7 +89,7 @@ export function QuizEditor({
     questions[0]?.answerOptions?.[0]?.content === "True";
 
   return (
-    <div className="w-full max-w-2xl pb-4">
+    <div className="w-full pb-4">
       <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
         <h2 className="text-lg">
           {isTrueFalse ? "True/False Quiz" : "Multiple Choice Quiz"}

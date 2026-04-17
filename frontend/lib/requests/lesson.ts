@@ -157,9 +157,14 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
-  options: { reload?: boolean; regenerateSlug?: boolean } = {
+  options: {
+    reload?: boolean;
+    regenerateSlug?: boolean;
+    skipRevalidation?: boolean;
+  } = {
     reload: false,
     regenerateSlug: false,
+    skipRevalidation: false,
   },
 ) {
   try {
@@ -195,9 +200,11 @@ export async function updateLesson(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    revalidateTag(CACHE_TAGS.droplets);
-    revalidateTag(CACHE_TAGS.lesson);
-    revalidateTag(CACHE_TAGS.allEnrollments);
+    if (!options.skipRevalidation) {
+      revalidateTag(CACHE_TAGS.droplets);
+      revalidateTag(CACHE_TAGS.lesson);
+      revalidateTag(CACHE_TAGS.allEnrollments);
+    }
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {

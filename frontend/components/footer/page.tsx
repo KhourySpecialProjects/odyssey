@@ -11,70 +11,72 @@ export default async function Footer() {
   const linkStyles =
     "text-xs font-regular md:text-base text-white hover:scale-105";
   return (
-    <footer className="relative z-50 flex w-full flex-col items-center bg-[#83C1E1] dark:bg-[#3A6B85]">
-      <Wave
-        fill="#2F5569"
-        paused={false}
-        style={{ display: "flex" }}
-        options={{
-          height: 2,
-          amplitude: 20,
-          speed: 0.15,
-          points: 3,
-        }}
-        className="bg-transparent dark:bg-transparent"
-      />
+    <footer className="relative z-50 w-full scale-x-80 bg-[#83C1E1] md:scale-x-100 dark:bg-[#3A6B85]">
+      <div className="flex w-full flex-col items-center">
+        <Wave
+          fill="#2F5569"
+          paused={false}
+          style={{ display: "flex" }}
+          options={{
+            height: 2,
+            amplitude: 20,
+            speed: 0.15,
+            points: 3,
+          }}
+          className="bg-transparent dark:bg-transparent"
+        />
 
-      <div className="-my-24 flex h-[150px] w-full flex-row justify-between bg-[#2F5569] px-6 pb-6 md:px-16">
-        <div className="flex w-1/2 flex-row justify-start gap-4 md:w-1/4">
-          <Separator
-            orientation={"vertical"}
-            className="h-full w-[1.5px] bg-slate-200 dark:bg-slate-200"
-          />
-          <div className="flex flex-col items-center justify-between py-2">
-            <Link className={linkStyles} href="/about">
-              About Odyssey
-            </Link>
-            <Link className={linkStyles} href="/features">
-              Features
-            </Link>
-            <Link className={linkStyles} href="/contributors">
-              Contributors
-            </Link>
-          </div>
-        </div>
-        <div className="hidden w-1/2 items-center justify-center md:flex">
-          <Link href="/">
-            <Image
-              src={"/circular_logo.svg"}
-              alt="Khoury Odyssey Logo"
-              width={100}
-              height={100}
-              priority
-              className="hover:scale-105"
+        <div className="-my-24 flex h-[150px] w-full flex-row justify-between bg-[#2F5569] px-6 pb-6 md:px-16">
+          <div className="flex w-1/2 flex-row justify-start gap-4 md:w-1/4">
+            <Separator
+              orientation={"vertical"}
+              className="h-full w-[1.5px] bg-slate-200 dark:bg-slate-200"
             />
-          </Link>
-        </div>
-        <div className="flex w-1/2 flex-col items-end justify-center gap-3 md:w-1/4">
-          <div className="flex flex-row items-center gap-2">
-            <Link
-              href="https://github.com/KhourySpecialProjects/odyssey"
-              role="link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <div className="flex flex-col items-center justify-between py-2">
+              <Link className={linkStyles} href="/about">
+                About Odyssey
+              </Link>
+              <Link className={linkStyles} href="/features">
+                Features
+              </Link>
+              <Link className={linkStyles} href="/contributors">
+                Contributors
+              </Link>
+            </div>
+          </div>
+          <div className="hidden w-1/2 items-center justify-center md:flex">
+            <Link href="/">
               <Image
-                src={"/github.svg"}
-                alt="Odyssey Github Repo"
-                width={40}
-                height={40}
+                src={"/circular_logo.svg"}
+                alt="Khoury Odyssey Logo"
+                width={100}
+                height={100}
                 priority
                 className="hover:scale-105"
               />
             </Link>
-            <DarkMode className="" />
           </div>
-          <ReportBugButton user={user} />
+          <div className="flex w-1/2 flex-col items-end justify-center gap-3 md:w-1/4">
+            <div className="flex flex-row items-center gap-2">
+              <Link
+                href="https://github.com/KhourySpecialProjects/odyssey"
+                role="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  src={"/github.svg"}
+                  alt="Odyssey Github Repo"
+                  width={40}
+                  height={40}
+                  priority
+                  className="hover:scale-105"
+                />
+              </Link>
+              <DarkMode className="" />
+            </div>
+            <ReportBugButton user={user} />
+          </div>
         </div>
       </div>
     </footer>

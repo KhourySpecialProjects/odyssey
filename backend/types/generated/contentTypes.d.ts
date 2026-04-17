@@ -464,6 +464,7 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'manyToOne',
       'api::playlist.playlist'
     >;
+    readAt: Attribute.DateTime;
     type: Attribute.Enumeration<
       ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
     > &

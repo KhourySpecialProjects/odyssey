@@ -55,9 +55,7 @@ export default function RootLayout({
                     </div>
 
                     <main className="flex-grow">{children}</main>
-                    <div className="scale-x-80 md:scale-x-100">
-                      <Footer />
-                    </div>
+                    <Footer />
                   </div>
                   <Suspense fallback={null}>
                     <FirstVisitPopupLoader />
