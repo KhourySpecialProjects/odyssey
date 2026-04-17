@@ -123,11 +123,13 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    <Link
-      href={linkTo}
-      className="flex h-full w-full flex-col rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
-    >
-      <div className="flex-1 p-6">
+    <div className="group relative flex h-full w-full flex-col rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <Link
+        href={linkTo}
+        aria-label={playlist.name}
+        className="absolute inset-0 z-0 rounded-lg"
+      />
+      <div className="pointer-events-none relative z-10 flex-1 p-6">
         <div>
           <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
@@ -190,7 +192,7 @@ export function PlaylistCard({
                         e.preventDefault();
                         setDescriptionExpanded(true);
                       }}
-                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      className="pointer-events-auto text-left text-sm text-sky-700 dark:text-sky-500"
                     >
                       See More
                     </button>
@@ -202,7 +204,7 @@ export function PlaylistCard({
                         e.preventDefault();
                         setDescriptionExpanded(false);
                       }}
-                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      className="pointer-events-auto text-left text-sm text-sky-700 dark:text-sky-500"
                     >
                       See Less
                     </button>
@@ -213,13 +215,13 @@ export function PlaylistCard({
         </div>
       </div>
       {dashboardPage && isCreator && (
-        <div className="mt-auto flex justify-end p-2">
+        <div className="relative z-10 mt-auto flex justify-end p-2">
           <ArchiveButton
             isArchived={localArchived}
             onToggle={changeVisibility}
           />
         </div>
       )}
-    </Link>
+    </div>
   );
 }

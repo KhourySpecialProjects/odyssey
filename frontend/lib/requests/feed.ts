@@ -205,6 +205,9 @@ export async function fetchAnnouncements(
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
+    if (!response.ok) {
+      throw new Error(`Strapi returned ${response.status} for /announcements`);
+    }
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
     return {
