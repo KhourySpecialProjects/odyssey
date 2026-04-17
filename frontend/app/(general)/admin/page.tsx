@@ -10,6 +10,7 @@ import { ActiveUsersChart } from "@/components/admin/charts/active-users-chart";
 import { AvgSessionDurationChart } from "@/components/admin/charts/avg-session-duration-chart";
 import { UniquePageviewBarChart } from "@/components/admin/charts/unique-pageview-chart";
 import { MobileChartTabs } from "@/components/admin/charts/mobile-chart-tabs";
+import { BroadcastAnnouncementButton } from "@/components/admin/broadcast-announcement-button";
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 
 export const dynamic = "force-dynamic";
@@ -177,7 +178,7 @@ export default function Page() {
   return (
     <div className="w-full px-4 py-4 md:px-[56px] md:py-8">
       {/* Page header — renders immediately */}
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
             Admin
@@ -186,6 +187,7 @@ export default function Page() {
             View Odyssey statistics and edit existing information.
           </p>
         </div>
+        <BroadcastAnnouncementButton />
       </div>
 
       {/* Top row: stat cards + pageviews — streams in */}
