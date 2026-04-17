@@ -606,15 +606,16 @@ export function VoyageTreeIsland({
 
       {/* Label */}
       <div className="-mt-1 flex justify-center">
-        <span
-          className={`rounded-lg border border-slate-100 px-3 py-1.5 font-bold shadow ${
+        <div
+          title={label}
+          className={`truncate rounded-lg border border-slate-100 px-3 py-1.5 text-center font-bold shadow ${
             isMain
-              ? "max-w-[200px] bg-white text-sm dark:bg-slate-800"
-              : "max-w-[160px] bg-white text-xs dark:bg-slate-800"
+              ? "w-[200px] bg-white text-sm dark:bg-slate-800"
+              : "w-[160px] bg-white text-xs dark:bg-slate-800"
           } ${isLocked ? "opacity-60" : ""} text-slate-900 dark:border-slate-700 dark:text-slate-100`}
         >
           {label}
-        </span>
+        </div>
       </div>
 
       {/* Subtitle */}

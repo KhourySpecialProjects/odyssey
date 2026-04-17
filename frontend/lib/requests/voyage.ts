@@ -1,6 +1,5 @@
 "use server";
 
-import qs from "qs";
 import { Voyage } from "@/types";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
@@ -251,6 +250,8 @@ export async function getVoyageBySlug(
               droplets: { fields: ["id"] },
             },
           },
+          droplet: { fields: ["id", "name", "slug", "status"] },
+          claimedBy: { fields: ["id"] },
           parentNode: { fields: ["id"] },
         },
         sort: ["orderIndex:asc"],
@@ -500,42 +501,51 @@ export async function updateVoyageWithNodes(data: {
       slug: string;
     };
 
-    // Phase 2: Delete all existing nodes for this voyage (paginated, with error checking)
-    const allNodeIds: number[] = [];
+    // Phase 2: Delete all existing nodes for this voyage. fetchAPI prepends
+    // `/api` to the path, so the path here must be `/voyage-nodes`, NOT
+    // `/api/voyage-nodes` (that would double-prefix and 404).
+    const branchNodeIds: number[] = [];
+    const mainNodeIds: number[] = [];
     let page = 1;
     for (;;) {
-      const query = qs.stringify({
-        filters: { voyage: { id: { $eq: data.id } } },
-        pagination: { page, pageSize: 100 },
-        fields: ["id"],
-      });
-      const nodesPage = await fetchAPI(`/api/voyage-nodes?${query}`, {
-        next: { tags: [CACHE_TAGS.voyages] },
-      });
-      if (Array.isArray(nodesPage)) {
-        allNodeIds.push(...nodesPage.map((n: { id: number }) => n.id));
+      const nodesPage = await fetchAPI<{ id: number; isMainPath: boolean }[]>(
+        `/voyage-nodes`,
+        {
+          urlParams: {
+            filters: { voyage: { id: { $eq: data.id } } },
+            pagination: { page, pageSize: 100 },
+            fields: ["id", "isMainPath"],
+          },
+          next: { tags: [CACHE_TAGS.voyages] },
+        },
+      );
+      if (!Array.isArray(nodesPage)) break;
+      for (const n of nodesPage) {
+        if (n.isMainPath) mainNodeIds.push(n.id);
+        else branchNodeIds.push(n.id);
       }
-      // fetchAPI auto-flattens, so pagination meta comes from the raw response;
-      // break after one page if we got fewer than pageSize results
-      if (!Array.isArray(nodesPage) || nodesPage.length < 100) break;
+      if (nodesPage.length < 100) break;
       page++;
     }
 
-    await Promise.all(
-      allNodeIds.map(async (nodeId) => {
-        const res = await fetch(
-          `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-          },
-        );
-        if (!res.ok) {
-          throw new Error(`Failed to delete voyage-node ${nodeId}`);
-        }
-        return res;
-      }),
-    );
+    const deleteNode = async (nodeId: number) => {
+      const res = await fetch(
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+        },
+      );
+      // 404 = already deleted, treat as success.
+      if (!res.ok && res.status !== 404) {
+        throw new Error(`Failed to delete voyage-node ${nodeId}`);
+      }
+    };
+
+    // Branches hold parentNode FKs pointing to main nodes — delete branches
+    // first so main deletes never race against a live child FK.
+    await Promise.all(branchNodeIds.map(deleteNode));
+    await Promise.all(mainNodeIds.map(deleteNode));
 
     // Phase 3: Re-create nodes (main path first, then branches)
     const nodeError = await createVoyageNodes(data.id, data.nodes);
@@ -546,9 +556,10 @@ export async function updateVoyageWithNodes(data: {
     return { ok: true, error: null, data: voyage };
   } catch (err) {
     console.error(err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return {
       ok: false,
-      error: "Database Error: Failed to update voyage.",
+      error: `Database Error: ${message}`,
       data: null,
     };
   }
