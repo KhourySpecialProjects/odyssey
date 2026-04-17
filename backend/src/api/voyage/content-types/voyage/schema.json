@@ -30,8 +30,7 @@
     },
     "isArchived": {
       "type": "boolean",
-      "default": false,
-      "required": true
+      "default": false
     },
     "voyage_nodes": {
       "type": "relation",

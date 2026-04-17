@@ -1,7 +1,11 @@
 "use server";
 
 import { Voyage } from "@/types";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  isAuthorizedUserAdmin,
+} from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -677,8 +681,12 @@ export async function archiveVoyage(voyageId: number, archiveState: boolean) {
     ]);
 
     const isAuthor = voyage.authors?.some((a) => a.id === authorizedUser.id);
-    if (!isAuthor) {
-      return { success: false, error: "Only authors can archive this voyage" };
+    const isAdmin = isAuthorizedUserAdmin(user.roles);
+    if (!isAuthor && !isAdmin) {
+      return {
+        success: false,
+        error: "Only authors or admins can archive this voyage",
+      };
     }
 
     const response = await fetch(

@@ -31,8 +31,7 @@
     },
     "isArchived": {
       "type": "boolean",
-      "default": false,
-      "required": true
+      "default": false
     },
     "description": {
       "type": "text"

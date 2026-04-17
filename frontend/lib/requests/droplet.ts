@@ -448,7 +448,10 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
     );
     const isAdmin = isAuthorizedUserAdmin(user.roles);
     if (!isAuthor && !isAdmin) {
-      return { success: false, error: "Not authorized to archive droplet" };
+      return {
+        success: false,
+        error: "Not authorized to modify droplet visibility",
+      };
     }
 
     const result = await updateDroplet(dropletId, { isHidden: hidden });

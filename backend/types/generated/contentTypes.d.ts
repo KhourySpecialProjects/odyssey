@@ -1509,9 +1509,7 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
-    isArchived: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isPublic: Attribute.Boolean;
     name: Attribute.String & Attribute.Required;
     publishedAt: Attribute.DateTime;

@@ -10,6 +10,7 @@ export async function ArchivedVoyagesGrid() {
   if (!user?.email) return null;
 
   const authorizedUser = await getCachedUser(user.email);
+  if (!authorizedUser) return null;
   const voyages = await getArchivedVoyagesForAuthor(authorizedUser.id);
 
   if (!voyages || voyages.length === 0) {

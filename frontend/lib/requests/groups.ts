@@ -1081,19 +1081,22 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
           populate: {
             creator: { fields: ["id"] },
             admins: { fields: ["id"] },
+            managers: { fields: ["id"] },
           },
         },
         next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
       }),
     ]);
 
-    const isAuthor =
+    const canArchive =
       fullGroup.creator?.id === authorizedUser.id ||
-      fullGroup.admins?.some((a) => a.id === authorizedUser.id);
-    if (!isAuthor) {
+      fullGroup.admins?.some((a) => a.id === authorizedUser.id) ||
+      fullGroup.managers?.some((m) => m.id === authorizedUser.id);
+    if (!canArchive) {
       return {
         success: false,
-        error: "Only group authors can archive this group",
+        error:
+          "Only group creators, admins, or managers can archive this group",
       };
     }
 

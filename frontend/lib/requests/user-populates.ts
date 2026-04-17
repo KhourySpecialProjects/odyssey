@@ -66,6 +66,7 @@ export const USER_POPULATES = {
     fields: PROFILE_FIELDS,
     populate: {
       playlists: {
+        fields: ["id", "name", "slug", "isPublic", "isArchived"],
         populate: {
           droplets: {
             populate: { lessons: { fields: ["id", "name", "slug"] } },
