@@ -438,6 +438,22 @@ export async function createSystemAnnouncement(
   content: string,
   authUser: AuthorizedUser,
 ) {
+  // Defensive guard: refuse to create an orphaned announcement (one with no
+  // authorized_user). Orphans are broadcast to every user's feed, so a bad
+  // call here would show duplicate system messages to the entire platform.
+  // TypeScript guarantees the signature, but we've had runtime cases where
+  // the caller passed a partially-hydrated user object with id=undefined.
+  if (!authUser?.id) {
+    console.error("createSystemAnnouncement: refusing to create orphan", {
+      content,
+      authUser,
+    });
+    return {
+      success: false,
+      error: "Invalid authUser — announcement not created",
+    };
+  }
+
   try {
     // Skip if this exact system announcement already exists for this user
     const existing = await fetchAPI<{ id: number }[]>("/announcements", {
