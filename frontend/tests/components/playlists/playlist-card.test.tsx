@@ -3,6 +3,17 @@ import userEvent from "@testing-library/user-event";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { DateTime } from "luxon";
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
+
 describe("PlaylistCard", () => {
   const mockPlaylist = {
     id: 1,

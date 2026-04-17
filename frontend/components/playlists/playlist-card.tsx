@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { IconArchive, IconArchiveOff } from "@tabler/icons-react";
@@ -51,23 +52,35 @@ export function PlaylistCard({
   linkPrefix,
   statsOverride,
 }: PlaylistCardProps) {
+  const router = useRouter();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  // Optimistic local archived state so the icon flips immediately on click.
+  // Re-syncs with the `isArchived` prop whenever the parent re-renders with
+  // fresh data from the server (e.g., after router.refresh()).
+  const [localArchived, setLocalArchived] = useState(!!isArchived);
+  useEffect(() => {
+    setLocalArchived(!!isArchived);
+  }, [isArchived]);
+
   async function changeVisibility() {
+    const nextArchived = !localArchived;
+    setLocalArchived(nextArchived);
     try {
-      const result = await archivePlaylist(
-        playlist as Playlist,
-        isArchived ? false : true,
-      );
+      const result = await archivePlaylist(playlist as Playlist, nextArchived);
       if (result.success) {
         toast.success(
-          isArchived
-            ? `${playlist.name} is now unarchived!`
-            : `${playlist.name} is now archived!`,
+          nextArchived
+            ? `${playlist.name} is now archived!`
+            : `${playlist.name} is now unarchived!`,
         );
+        // Pull fresh server data so the card moves between tabs.
+        router.refresh();
       } else {
+        setLocalArchived(!nextArchived);
         toast.error("Failed to update playlist visibility");
       }
     } catch (error) {
+      setLocalArchived(!nextArchived);
       toast.error("An error occurred while updating the playlist");
       console.error(error);
     }
@@ -202,7 +215,7 @@ export function PlaylistCard({
         <div className="flex justify-end p-2">
           <Button
             size="sm"
-            aria-label={isArchived ? "Unarchive" : "Archive"}
+            aria-label={localArchived ? "Unarchive" : "Archive"}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -211,7 +224,7 @@ export function PlaylistCard({
             className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
           >
             <div className="group relative">
-              {isArchived ? (
+              {localArchived ? (
                 <IconArchiveOff
                   className="h-5 w-5 text-black dark:text-white"
                   stroke={1.8}
@@ -223,7 +236,7 @@ export function PlaylistCard({
                 />
               )}
               <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {isArchived ? "Unarchive" : "Archive"}
+                {localArchived ? "Unarchive" : "Archive"}
               </span>
             </div>
           </Button>
