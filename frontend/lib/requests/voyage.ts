@@ -680,6 +680,13 @@ export async function archiveVoyage(voyageId: number, archiveState: boolean) {
       }),
     ]);
 
+    if (!authorizedUser) {
+      return { success: false, error: "Authorized user not found" };
+    }
+    if (!voyage) {
+      return { success: false, error: "Voyage not found" };
+    }
+
     const isAuthor = voyage.authors?.some((a) => a.id === authorizedUser.id);
     const isAdmin = isAuthorizedUserAdmin(user.roles);
     if (!isAuthor && !isAdmin) {

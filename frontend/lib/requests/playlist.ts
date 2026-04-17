@@ -294,6 +294,13 @@ export async function archivePlaylist(
       ),
     ]);
 
+    if (!authorizedUser) {
+      return { success: false, error: "Authorized user not found" };
+    }
+    if (!fullPlaylist) {
+      return { success: false, error: "Playlist not found" };
+    }
+
     const isAuthor = fullPlaylist.authors?.some(
       (a) => a.id === authorizedUser.id,
     );
