@@ -56,3 +56,6 @@ node_modules/
 */auth.json
 **/auth.json
 
+
+# Local backups from maintenance scripts — never commit
+/scripts/backups/

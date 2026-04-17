@@ -37,11 +37,11 @@ export function BroadcastAnnouncementButton() {
     try {
       const result = await createSystemBroadcast(trimmed);
       if (result.success) {
-        toast.success("Broadcast sent to all users");
+        toast.success("Announcement posted");
         setContent("");
         setOpen(false);
       } else {
-        toast.error(result.error || "Failed to send broadcast");
+        toast.error(result.error || "Could not post announcement");
       }
     } finally {
       setIsSubmitting(false);
@@ -53,22 +53,21 @@ export function BroadcastAnnouncementButton() {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Megaphone className="h-4 w-4" />
-          Broadcast System Message
+          Post Announcement
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Broadcast system message</DialogTitle>
+          <DialogTitle>Post an announcement</DialogTitle>
           <DialogDescription>
-            Sends a system announcement visible to every user on the platform.
-            This cannot be undone from the UI — to remove it, use the Strapi
-            admin.
+            Everyone on Odyssey will see this in their feed. To remove it later,
+            use the Strapi admin.
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="e.g. New feature launched! Check out the redesigned activity page."
+          placeholder="What do you want to tell everyone?"
           rows={5}
           maxLength={MAX_LEN}
           disabled={isSubmitting}
@@ -89,7 +88,7 @@ export function BroadcastAnnouncementButton() {
             onClick={handleSubmit}
             disabled={isSubmitting || !content.trim()}
           >
-            {isSubmitting ? "Sending…" : "Send to everyone"}
+            {isSubmitting ? "Posting…" : "Post"}
           </Button>
         </DialogFooter>
       </DialogContent>
