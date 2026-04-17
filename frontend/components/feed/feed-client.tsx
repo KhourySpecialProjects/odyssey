@@ -46,7 +46,7 @@ export function FeedClient({
           selectedRoles,
           { archived: tab === "read" },
         );
-        setAnnouncements(data);
+        setAnnouncements(Array.isArray(data) ? data : []);
         setTotalPages(pagination.pageCount);
       } catch (error) {
         console.error("Error loading initial announcements:", error);
