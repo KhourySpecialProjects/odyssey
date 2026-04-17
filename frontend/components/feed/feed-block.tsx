@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
+import { feedColorFor } from "@/lib/feed-colors";
+import { cn } from "@/lib/utils";
 
 interface ParsedContent {
   userName?: string | null;
@@ -60,6 +62,27 @@ export function FeedBlock({
   };
 
   const config = announcementConfig[announcement.type];
+  const colors = feedColorFor(announcement.type);
+
+  const entityName = (() => {
+    switch (announcement.type) {
+      case "droplet":
+        return announcement.droplet?.name;
+      case "playlist":
+        return announcement.playlist?.name;
+      case "group":
+        return announcement.group?.groupName;
+      case "friend":
+      case "kudos": {
+        const u = announcement.authorized_user;
+        if (!u) return null;
+        const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+        return name || u.email || null;
+      }
+      default:
+        return null;
+    }
+  })();
 
   function formatDate(dateInput: string | Date | undefined) {
     if (!dateInput) return "";
@@ -336,10 +359,23 @@ export function FeedBlock({
 
   return (
     <>
-      <li className="relative flex flex-col gap-3 rounded-[8px] border border-[#D0D5DD] bg-[#FCFCFD] p-4 dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+      <li
+        className={cn(
+          "relative flex flex-col gap-3 rounded-[8px] border p-4",
+          colors.card,
+        )}
+      >
+        <div
+          className={cn("flex items-center gap-2 font-semibold", colors.accent)}
+        >
           {config.icon}
-          <span className="text-sm font-semibold">{config.label}</span>
+          <span className="text-sm">{config.label}</span>
+          {entityName && (
+            <>
+              <span className="text-sm opacity-60">·</span>
+              <span className="truncate text-sm font-medium">{entityName}</span>
+            </>
+          )}
         </div>
         <div className="min-w-0">
           {hasStructuredData()

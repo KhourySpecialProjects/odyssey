@@ -22,6 +22,12 @@ export function FeedClient({
   }, [selectedRoles]);
 
   useEffect(() => {
+    if (selectedRoles.length === 0) {
+      setAnnouncements([]);
+      setTotalPages(1);
+      setIsLoading(false);
+      return;
+    }
     const load = async () => {
       setIsLoading(true);
       try {
