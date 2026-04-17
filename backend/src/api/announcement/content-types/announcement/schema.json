@@ -62,6 +62,9 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "mappedBy": "gaveKudos"
+    },
+    "readAt": {
+      "type": "datetime"
     }
   }
 }
