@@ -186,6 +186,13 @@ export function EnrolledDropletsGridClient({
                 ?.dueDate || ""
             }
             isAdmin={isAdmin}
+            isCreator={
+              currentUser
+                ? droplet.authorized_users?.some(
+                    (user) => user.id === currentUser.id,
+                  ) ?? false
+                : false
+            }
           />
         ))}
       </ul>

@@ -83,9 +83,12 @@ describe("FeedClient", () => {
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    expect(fetchAnnouncements).toHaveBeenCalledWith(mockAuthUser, 1, [
-      "droplet",
-    ]);
+    expect(fetchAnnouncements).toHaveBeenCalledWith(
+      mockAuthUser,
+      1,
+      ["droplet"],
+      { archived: false },
+    );
   });
 
   it("loads next page when page changes", async () => {
@@ -168,7 +171,7 @@ describe("FeedClient", () => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("No announcements found")).toBeInTheDocument();
+    expect(screen.getByText("No unread announcements")).toBeInTheDocument();
 
     consoleSpy.mockRestore();
   });

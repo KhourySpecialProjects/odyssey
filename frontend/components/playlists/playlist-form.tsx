@@ -87,7 +87,7 @@ export function PlaylistForm({
     if (!playlist) return;
     try {
       await createPlaylistAnnouncement(playlist.name, playlist.id);
-      router.push("/my-content");
+      router.push("/my-content?tab=playlists");
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
       setError("Failed to post announcement. Please try again.");
@@ -314,7 +314,7 @@ export function PlaylistForm({
               className="border-[#D0D5DD] text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
               onClick={() => {
                 setIsOpen(false);
-                router.push("/my-content");
+                router.push("/my-content?tab=playlists");
               }}
             >
               Not Now

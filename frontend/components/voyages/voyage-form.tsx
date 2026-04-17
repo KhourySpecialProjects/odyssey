@@ -32,6 +32,7 @@ import {
   BookOpenIcon,
   DropletIcon,
   CircleDashedIcon,
+  HelpCircleIcon,
 } from "lucide-react";
 
 type NodeMode = "playlist" | "droplet" | "placeholder";
@@ -157,6 +158,21 @@ export function VoyageForm({
     () => selectedNodes.filter((n) => n.isMainPath),
     [selectedNodes],
   );
+
+  // Branch count per main-path parent — used to hide "full" parents (≥4)
+  // from the "Branches from" dropdown, matching the Zod validation cap.
+  const branchCountsByParent = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const n of selectedNodes) {
+      if (!n.isMainPath && n.parentLocalId) {
+        counts.set(n.parentLocalId, (counts.get(n.parentLocalId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [selectedNodes]);
+
+  // Zod caps main-path islands at 8 — disable add buttons once that's hit.
+  const mainAtCap = mainPathNodes.length >= 8;
 
   const addPlaylist = useCallback((playlist: Playlist) => {
     const dropletCount = playlist.droplets?.length ?? 0;
@@ -447,7 +463,11 @@ export function VoyageForm({
         return;
       }
 
-      router.push(`/v/${result.data?.slug}`);
+      const target =
+        status === "draft"
+          ? `/draft/v/${result.data?.slug}`
+          : `/v/${result.data?.slug}`;
+      router.push(target);
     });
   }
 
@@ -455,18 +475,23 @@ export function VoyageForm({
     <div className="flex w-full flex-col gap-8 lg:flex-row">
       <VoyageFormTour run={runTour} setRun={setRunTour} />
       {/* Left: Form panel */}
-      <div className="flex w-full flex-col gap-6 lg:w-1/2">
-        {/* Tour trigger */}
-        <div className="flex justify-end">
+      <div className="flex w-full flex-col gap-6 lg:w-2/5">
+        {/* Title + tour trigger */}
+        <div className="flex items-center gap-3">
+          <h1 className="text-4xl font-semibold text-black dark:text-white">
+            {isEditing ? "Edit Voyage" : "Create New Voyage"}
+          </h1>
           <button
             type="button"
             onClick={() => {
               localStorage.removeItem(VOYAGE_TOUR_KEY);
               setRunTour(true);
             }}
-            className="text-xs text-slate-400 transition-colors hover:text-[#297496]"
+            aria-label="Take a tour"
+            title="Take a tour"
+            className="text-slate-400 transition-colors hover:text-[#297496]"
           >
-            Take a tour
+            <HelpCircleIcon className="h-5 w-5" />
           </button>
         </div>
         {/* Name */}
@@ -498,7 +523,14 @@ export function VoyageForm({
 
         {/* Node picker */}
         <div className="flex flex-col gap-3">
-          <Label>Islands</Label>
+          <div className="flex items-baseline justify-between">
+            <Label>Islands</Label>
+            {mainAtCap && (
+              <span className="text-xs text-amber-600 dark:text-amber-400">
+                Max 8 main islands reached
+              </span>
+            )}
+          </div>
 
           {/* Node type selector */}
           <div
@@ -588,7 +620,7 @@ export function VoyageForm({
                       type="button"
                       className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
                       onClick={() => addPlaylist(playlist)}
-                      disabled={isPending}
+                      disabled={isPending || mainAtCap}
                     >
                       <span className="truncate font-medium">
                         {playlist.name}
@@ -634,7 +666,7 @@ export function VoyageForm({
                       type="button"
                       className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
                       onClick={() => addDroplet(droplet)}
-                      disabled={isPending}
+                      disabled={isPending || mainAtCap}
                     >
                       <span className="truncate font-medium">
                         {droplet.name}
@@ -669,7 +701,7 @@ export function VoyageForm({
                 type="button"
                 variant="outline"
                 onClick={addPlaceholder}
-                disabled={isPending || !placeholderLabel.trim()}
+                disabled={isPending || !placeholderLabel.trim() || mainAtCap}
                 className="shrink-0"
               >
                 <PlusIcon className="h-4 w-4" />
@@ -806,6 +838,17 @@ export function VoyageForm({
                               <option value="">None (main path)</option>
                               {mainPathNodes
                                 .filter((m) => m.localId !== node.localId)
+                                .filter((m) => {
+                                  // Keep the currently-selected parent visible
+                                  // even if it's now "full"; otherwise hide
+                                  // parents that already have 4 branches.
+                                  const count =
+                                    branchCountsByParent.get(m.localId) ?? 0;
+                                  return (
+                                    node.parentLocalId === m.localId ||
+                                    count < 4
+                                  );
+                                })
                                 .sort((a, b) => a.orderIndex - b.orderIndex)
                                 .map((m) => (
                                   <option key={m.localId} value={m.localId}>
@@ -928,7 +971,7 @@ export function VoyageForm({
       </div>
 
       {/* Right: Live tree preview */}
-      <div id="tour-preview" className="w-full lg:w-1/2">
+      <div id="tour-preview" className="w-full lg:w-3/5">
         <div className="sticky top-8">
           <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
             Live Preview

@@ -359,7 +359,6 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
 
-      // Click the clickable instance (body, not the plain header label)
       const nameElement = screen
         .getAllByText("Jane Smith")
         .find((el) => el.classList.contains("cursor-pointer"));

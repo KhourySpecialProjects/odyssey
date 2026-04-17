@@ -1,11 +1,42 @@
+"use client";
+
 import Link from "next/link";
 import { Voyage } from "@/types";
+import { ArchiveButton } from "@/components/ui/archive-button";
+import { toast } from "sonner";
+import { archiveVoyage } from "@/lib/requests/voyage";
 
 interface VoyageCardProps {
   voyage: Voyage;
+  isArchived?: boolean;
+  isCreator?: boolean;
+  dashboardPage?: boolean;
 }
 
-export function VoyageCard({ voyage }: VoyageCardProps) {
+export function VoyageCard({
+  voyage,
+  isArchived,
+  isCreator,
+  dashboardPage,
+}: VoyageCardProps) {
+  async function changeVisibility() {
+    try {
+      const result = await archiveVoyage(voyage.id, !isArchived);
+      if (result.success) {
+        toast.success(
+          isArchived
+            ? `${voyage.name} is now unarchived!`
+            : `${voyage.name} is now archived!`,
+        );
+      } else {
+        toast.error("Failed to update voyage visibility");
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating the voyage");
+      console.error(error);
+    }
+  }
+
   const nodes = voyage.voyage_nodes ?? [];
 
   // Count playlist nodes vs claimed droplet nodes vs unclaimed placeholders
@@ -31,9 +62,9 @@ export function VoyageCard({ voyage }: VoyageCardProps) {
   return (
     <Link
       href={`/v/${voyage.slug}`}
-      className="group inline-block h-full w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+      className="group flex h-full w-full flex-col rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
-      <div className="flex h-full flex-col p-6">
+      <div className="flex flex-1 flex-col p-6">
         {voyage.status === "draft" && (
           <span className="mb-1 inline-flex w-fit items-center rounded-[16px] bg-slate-200 px-[9px] py-[4px] text-xs leading-[18px] font-semibold text-slate-600 opacity-90 dark:bg-slate-600 dark:text-slate-300">
             Draft
@@ -66,6 +97,14 @@ export function VoyageCard({ voyage }: VoyageCardProps) {
             unclaimedCount === 0 && <>No content yet</>}
         </p>
       </div>
+      {dashboardPage && isCreator && (
+        <div className="mt-auto flex justify-end p-2">
+          <ArchiveButton
+            isArchived={isArchived ?? false}
+            onToggle={changeVisibility}
+          />
+        </div>
+      )}
     </Link>
   );
 }

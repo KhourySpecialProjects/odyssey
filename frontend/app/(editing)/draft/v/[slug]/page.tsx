@@ -43,11 +43,8 @@ export default async function EditVoyagePage({ params }: Props) {
   if (!authUser || !voyage) return notFound();
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-white px-4 pt-12 md:px-12 dark:bg-slate-900">
-      <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-        Edit Voyage
-      </h1>
-      <div className="w-full max-w-6xl">
+    <div className="flex min-h-screen w-full flex-col bg-white px-4 pt-12 pb-16 md:px-12 dark:bg-slate-900">
+      <div className="mx-auto w-full max-w-[1600px]">
         <VoyageForm
           playlists={publicPlaylists}
           droplets={publishedDroplets}
