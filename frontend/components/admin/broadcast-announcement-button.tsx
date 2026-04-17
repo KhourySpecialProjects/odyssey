@@ -74,7 +74,7 @@ export function BroadcastAnnouncementButton() {
           className="resize-none"
         />
         <p className="text-right text-xs text-slate-500 dark:text-slate-400">
-          {content.trim().length} / {MAX_LEN}
+          {content.length} / {MAX_LEN}
         </p>
         <DialogFooter>
           <Button

@@ -518,17 +518,18 @@ export async function createSystemAnnouncement(
  * Admin-only.
  */
 export async function createSystemBroadcast(content: string) {
+  // Gate first — don't leak existence/validation details to non-admins.
+  const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!gate.ok) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const trimmed = content.trim();
   if (!trimmed) {
     return { success: false, error: "Content is required" };
   }
   if (trimmed.length > 1000) {
     return { success: false, error: "Content is too long (max 1000 chars)" };
-  }
-
-  const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
-  if (!gate.ok) {
-    return { success: false, error: "Unauthorized" };
   }
 
   try {
