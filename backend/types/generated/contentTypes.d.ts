@@ -1509,6 +1509,7 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isPublic: Attribute.Boolean;
     name: Attribute.String & Attribute.Required;
     publishedAt: Attribute.DateTime;
@@ -1784,6 +1785,9 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
+    isArchived: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
     isSequential: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

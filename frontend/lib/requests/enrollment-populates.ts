@@ -39,6 +39,7 @@ export const ENROLLMENT_POPULATES = {
         lessons: { fields: ["id", "name", "slug"] },
         tags: { fields: ["id", "name", "slug"] },
         usersFavorited: { fields: ["id"] },
+        authorized_users: { fields: ["id"] },
       },
       fields: [
         "id",

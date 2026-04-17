@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 import { AnnouncementType, AuthorizedUser } from "@/types";
 import { cn } from "@/lib/utils";
+import { feedColorFor } from "@/lib/feed-colors";
 import { FeedClient } from "./feed-client";
 
 const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
@@ -15,33 +17,66 @@ const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
   { value: AnnouncementTypeTitle.Kudos, label: "Kudos" },
 ];
 
+const FILTER_VALUES = Object.values(AnnouncementTypeTitle);
+const VALUE_BY_SLUG = new Map(
+  FILTER_VALUES.map((v) => [v.toLowerCase(), v as AnnouncementTypeTitle]),
+);
+
+function parseFilters(raw: string | null): AnnouncementTypeTitle[] {
+  if (raw === null) return FILTER_VALUES;
+  if (raw === "") return [];
+  const parts = raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  const matched = parts
+    .map((slug) => VALUE_BY_SLUG.get(slug))
+    .filter((v): v is AnnouncementTypeTitle => Boolean(v));
+  return Array.from(new Set(matched));
+}
+
 export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
-  const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
-    Object.values(AnnouncementTypeTitle),
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const selectedRoles = useMemo(
+    () => parseFilters(searchParams.get("filters")),
+    [searchParams],
+  );
+
+  const setSelected = useCallback(
+    (next: AnnouncementTypeTitle[]) => {
+      const params = new URLSearchParams(searchParams);
+      const isAll =
+        next.length === FILTER_VALUES.length &&
+        FILTER_VALUES.every((v) => next.includes(v));
+      if (isAll) {
+        params.delete("filters");
+      } else {
+        params.set("filters", next.map((v) => v.toLowerCase()).join(","));
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [router, pathname, searchParams],
   );
 
   const toggleRole = (role: AnnouncementTypeTitle) => {
-    setSelectedRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+    setSelected(
+      selectedRoles.includes(role)
+        ? selectedRoles.filter((r) => r !== role)
+        : [...selectedRoles, role],
     );
   };
 
   return (
-    <div className="flex h-full flex-col px-4 py-6 md:px-8">
-      {/* Greeting */}
-      <div className="mb-5 shrink-0">
-        <h1 className="text-3xl font-semibold text-black dark:text-white">
-          Hi, {authUser.firstName || "there"}!
-        </h1>
-        <p className="mt-1 text-sm text-[#475569] md:text-base dark:text-slate-400">
-          Check out what&apos;s happening right now.
-        </p>
-      </div>
-
+    <div className="flex h-full flex-col">
       {/* Filter pills */}
       <div className="mb-4 flex shrink-0 flex-wrap gap-2">
         {FILTER_OPTIONS.map((option) => {
           const isActive = selectedRoles.includes(option.value);
+          const colors = feedColorFor(option.value);
           return (
             <button
               key={option.value}
@@ -50,9 +85,7 @@ export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
               onClick={() => toggleRole(option.value)}
               className={cn(
                 "rounded-full border-[1.5px] px-3 py-0.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "border-[#287697] text-[#287697] hover:bg-[#287697]/10"
-                  : "border-[#D0D5DD] text-neutral-500 hover:bg-neutral-100 dark:border-slate-700 dark:hover:bg-slate-800",
+                isActive ? colors.pillActive : colors.pillInactive,
               )}
             >
               {option.label}

@@ -11,9 +11,11 @@ const ITEMS_PER_PAGE = 9;
 export function SortedPlaylistsGrid({
   playlistsWithCompletion,
   dueDates,
+  currentUserId,
 }: {
   playlistsWithCompletion: Playlist[];
   dueDates?: DueDate[];
+  currentUserId?: number;
 }) {
   const { searchQuery } = useSearch();
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,6 +47,15 @@ export function SortedPlaylistsGrid({
             dueDate={
               dueDates?.find((dueDate) => dueDate.playlist?.id === playlist.id)
                 ?.dueDate || ""
+            }
+            dashboardPage={true}
+            isArchived={playlist.isArchived ?? false}
+            isCreator={
+              currentUserId
+                ? playlist.authorized_users?.some(
+                    (user) => user.id === currentUserId,
+                  ) ?? false
+                : false
             }
           />
         ))}

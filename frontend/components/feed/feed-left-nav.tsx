@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   IconArchive,
   IconDroplet,
@@ -12,39 +13,27 @@ import {
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { value: "feed", label: "Feed", Icon: IconNews },
-  { value: "droplets", label: "Droplets", Icon: IconDroplet },
-  { value: "playlists", label: "Playlists", Icon: IconLayoutList },
-  { value: "voyages", label: "Voyages", Icon: IconMap },
-
-  { value: "archived", label: "Archived", Icon: IconArchive },
-  { value: "favorited", label: "Favorited", Icon: IconHeart },
+  { href: "/activity", label: "My Feed", Icon: IconNews },
+  { href: "/activity/droplets", label: "My Droplets", Icon: IconDroplet },
+  { href: "/activity/playlists", label: "My Playlists", Icon: IconLayoutList },
+  { href: "/activity/voyages", label: "My Voyages", Icon: IconMap },
+  { href: "/activity/favorited", label: "My Favorited", Icon: IconHeart },
+  { href: "/activity/archived", label: "Archived", Icon: IconArchive },
 ];
 
 export function FeedLeftNav() {
-  const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") || "feed";
-
-  const navigate = (tab: string) => {
-    if (tab === activeTab) return;
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
-    router.push(`${pathname}?${params.toString()}`);
-  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden py-6">
-      {/* Tab navigation */}
       <nav aria-label="Content sections" className="flex-1">
         <ul className="space-y-0.5 px-3">
-          {TABS.map(({ value, label, Icon }) => {
-            const isActive = activeTab === value;
+          {TABS.map(({ href, label, Icon }) => {
+            const isActive = pathname === href;
             return (
-              <li key={value}>
-                <button
-                  onClick={() => navigate(value)}
+              <li key={href}>
+                <Link
+                  href={href}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
@@ -63,7 +52,7 @@ export function FeedLeftNav() {
                     stroke={1.75}
                   />
                   {label}
-                </button>
+                </Link>
               </li>
             );
           })}

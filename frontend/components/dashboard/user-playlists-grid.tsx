@@ -42,15 +42,10 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     },
   );
 
-  const activePlaylists = allPlaylists.filter(
-    (playlist) =>
-      !playlist.users_archived?.some((user) => user.id === authorizedUser.id),
-  );
+  const publicPlaylists = allPlaylists.filter((p: Playlist) => p.isPublic);
+  const customPlaylists = allPlaylists.filter((p: Playlist) => !p.isPublic);
 
-  const publicPlaylists = activePlaylists.filter((p: Playlist) => p.isPublic);
-  const customPlaylists = activePlaylists.filter((p: Playlist) => !p.isPublic);
-
-  if (!activePlaylists || activePlaylists.length === 0) {
+  if (!allPlaylists || allPlaylists.length === 0) {
     return (
       <EmptyState
         icon={

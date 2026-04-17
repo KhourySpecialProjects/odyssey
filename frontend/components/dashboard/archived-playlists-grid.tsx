@@ -42,8 +42,8 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     },
   );
 
-  const allArchivedPlaylists = allPlaylists.filter((playlist) =>
-    playlist.users_archived?.some((user) => user.id === authorizedUser.id),
+  const allArchivedPlaylists = allPlaylists.filter(
+    (playlist) => playlist.isArchived,
   );
 
   if (!allArchivedPlaylists || allArchivedPlaylists.length === 0) {

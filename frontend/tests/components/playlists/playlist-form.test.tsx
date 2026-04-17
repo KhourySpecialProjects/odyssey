@@ -715,7 +715,9 @@ describe("PlaylistForm", () => {
           "Test Playlist",
           1,
         );
-        expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+        expect(mockRouter.push).toHaveBeenCalledWith(
+          "/my-content?tab=playlists",
+        );
       });
     });
 
@@ -753,7 +755,9 @@ describe("PlaylistForm", () => {
 
       await waitFor(() => {
         expect(createPlaylistAnnouncement).not.toHaveBeenCalled();
-        expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+        expect(mockRouter.push).toHaveBeenCalledWith(
+          "/my-content?tab=playlists",
+        );
       });
     });
 

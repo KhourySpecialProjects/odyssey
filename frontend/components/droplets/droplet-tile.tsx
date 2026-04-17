@@ -22,14 +22,10 @@ import {
   archiveDroplet,
   favoriteDroplet,
   getDropletBySlug,
+  setDropletHidden,
 } from "@/lib/requests/droplet";
-import {
-  IconArchive,
-  IconArchiveOff,
-  IconDownload,
-  IconHeart,
-  IconHeartFilled,
-} from "@tabler/icons-react";
+import { IconDownload, IconHeart, IconHeartFilled } from "@tabler/icons-react";
+import { ArchiveButton } from "../ui/archive-button";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -41,6 +37,8 @@ interface DropletTileProps {
   isFavorited?: boolean;
   dueDate?: string;
   isAdmin?: boolean;
+  isCreator?: boolean;
+  creatorArchive?: boolean;
 }
 
 export function DropletTile({
@@ -53,6 +51,8 @@ export function DropletTile({
   isFavorited: initialIsFavorited,
   dueDate,
   isAdmin,
+  isCreator,
+  creatorArchive,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
@@ -126,7 +126,9 @@ export function DropletTile({
 
   async function changeVisibility() {
     try {
-      const result = await archiveDroplet(droplet, isArchived ? false : true);
+      const result = creatorArchive
+        ? await setDropletHidden(droplet.id, !isArchived)
+        : await archiveDroplet(droplet, isArchived ? false : true);
       if (result.success) {
         toast.success(
           isArchived
@@ -537,33 +539,12 @@ ${
 
               {typeof isArchived === "boolean" && (
                 <>
-                  <Button
-                    size="sm"
-                    aria-label={isArchived ? "Unarchive" : "Archive"}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      changeVisibility();
-                    }}
-                    className="bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-                  >
-                    <div className="group relative">
-                      {isArchived ? (
-                        <IconArchiveOff
-                          className="h-5 w-5 text-black dark:text-white"
-                          stroke={1.8}
-                        />
-                      ) : (
-                        <IconArchive
-                          className="h-5 w-5 text-black dark:text-white"
-                          stroke={1.8}
-                        />
-                      )}
-                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                        {isArchived ? "Unarchive" : "Archive"}
-                      </span>
-                    </div>
-                  </Button>
+                  {isCreator && (
+                    <ArchiveButton
+                      isArchived={isArchived}
+                      onToggle={changeVisibility}
+                    />
+                  )}
                   <Button
                     size="sm"
                     aria-label="Favorite"

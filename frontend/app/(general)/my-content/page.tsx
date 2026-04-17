@@ -57,6 +57,7 @@ export default async function CreateRoute() {
         voyages={voyages}
         showPlaylists={showPlaylists}
         showVoyages={isAdminOrFaculty}
+        currentUserId={authorizedUser.id}
       />
     </div>
   );

@@ -1,21 +1,29 @@
 import { redirect } from "next/navigation";
 
+const TAB_TO_PATH: Record<string, string> = {
+  feed: "/activity",
+  droplets: "/activity/droplets",
+  playlists: "/activity/playlists",
+  voyages: "/activity/voyages",
+  archived: "/activity/archived",
+  favorited: "/activity/favorited",
+};
+
 type Props = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export default async function DashboardRoute({ searchParams }: Props) {
+  const resolved = (await searchParams) ?? {};
+  const tabValue = resolved.tab;
+  const tab = Array.isArray(tabValue) ? tabValue[0] : tabValue;
+  const basePath = (tab && TAB_TO_PATH[tab]) || "/activity/droplets";
+
   const params = new URLSearchParams();
-  const resolved = await searchParams;
-  if (resolved) {
-    for (const [key, value] of Object.entries(resolved)) {
-      if (value !== undefined) {
-        params.set(key, Array.isArray(value) ? value.join(",") : value);
-      }
-    }
+  for (const [key, value] of Object.entries(resolved)) {
+    if (key === "tab" || value === undefined) continue;
+    params.set(key, Array.isArray(value) ? value.join(",") : value);
   }
-  if (!params.has("tab")) {
-    params.set("tab", "droplets");
-  }
-  redirect(`/activity?${params.toString()}`);
+  const qs = params.toString();
+  redirect(qs ? `${basePath}?${qs}` : basePath);
 }
