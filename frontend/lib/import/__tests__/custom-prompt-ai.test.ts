@@ -131,7 +131,7 @@ describe("customPromptAI", () => {
     expect(result.result).toBe("Improved text here");
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "claude-3-haiku-20240307",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1024,
       }),
     );
