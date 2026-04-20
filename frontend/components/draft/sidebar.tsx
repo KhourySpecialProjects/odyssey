@@ -5,6 +5,7 @@ import {
   cn,
   getPath,
   isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
   isContentCreator,
   isContentEditor,
 } from "@/lib/utils";
@@ -377,9 +378,10 @@ export function Sidebar({
   const showActionButton = droplet.status !== "published" && !droplet.inReview;
   const isAdmin = isAuthorizedUserAdmin(user.roles);
   const isEditor = isContentEditor(user.roles);
+  const isFaculty = isAuthorizedUserFaculty(user.roles);
   const isCreator = isContentCreator(user.roles);
   const actionButtonProps =
-    showActionButton && (isAdmin || isEditor)
+    showActionButton && (isAdmin || isEditor || isFaculty)
       ? {
           actionType: (droplet.originalDropletId
             ? "publishDraft"

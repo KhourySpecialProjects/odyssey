@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <ThemeClientProvider>
           <AuthSessionProvider>
             <PHProvider>
