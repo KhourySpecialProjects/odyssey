@@ -7,6 +7,10 @@ import katex from "katex";
 import { Block, CustomBlockNoteBlock } from "@/types";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
+import {
+  isAutolinkFalsePositive,
+  isSafeLinkHref,
+} from "@/lib/blocknote/autolink-filter";
 
 type BlockNoteTextStyles = {
   bold?: boolean;
@@ -20,6 +24,10 @@ type BlockNoteInlineContent = {
   type?: string;
   text?: string;
   styles?: BlockNoteTextStyles;
+  // Present when type === "link": an auto-linked or user-inserted link node
+  // wraps its text in `content`.
+  href?: string;
+  content?: BlockNoteInlineContent[];
 };
 
 // Strapi Blocks text node (minimal subset we care about)
@@ -99,6 +107,22 @@ function convertInlineContentToHtml(
           const text = contentItem.text ?? "";
           return renderTextWithStyles(text, contentItem.styles);
         }
+        if (contentItem.type === "link") {
+          const inner = convertInlineContentToHtml(contentItem.content ?? []);
+          if (!inner) return "";
+          const linkText = (contentItem.content ?? [])
+            .map((c) => c.text ?? "")
+            .join("");
+          const rawHref = contentItem.href ?? "";
+          if (
+            isAutolinkFalsePositive(linkText, rawHref) ||
+            !isSafeLinkHref(rawHref)
+          ) {
+            return inner;
+          }
+          const href = escapeHtml(rawHref);
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+        }
         return "";
       })
       .join("") || ""
@@ -109,7 +133,10 @@ function convertInlineContentToHtml(
 function convertInlineContentToStrapiBlocks(
   inlineContent: BlockNoteInlineContent[],
 ): StrapiBlocksTextNode[] {
-  return inlineContent.map((contentItem) => {
+  return inlineContent.flatMap((contentItem) => {
+    if (contentItem.type === "link") {
+      return convertInlineContentToStrapiBlocks(contentItem.content ?? []);
+    }
     const text = contentItem.text ?? "";
 
     const node: StrapiBlocksTextNode = {
@@ -126,7 +153,7 @@ function convertInlineContentToStrapiBlocks(
       // LaTeX is kept as plain text – rendered later by block renderers
     }
 
-    return node;
+    return [node];
   });
 }
 
@@ -139,6 +166,9 @@ function convertInlineContentToText(
       .map((contentItem) => {
         if (contentItem.type === "text") {
           return contentItem.text ?? "";
+        }
+        if (contentItem.type === "link") {
+          return convertInlineContentToText(contentItem.content ?? []);
         }
         return "";
       })
