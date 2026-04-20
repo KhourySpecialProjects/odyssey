@@ -72,14 +72,29 @@
 }
 
 /* BlockNote ships no default styling for link marks. Render them as standard
-   blue underlined links inside the editor. */
+   blue underlined links inside the editor, with hover/focus states so
+   keyboard users get a visible indicator. */
 .bn-inline-content a {
   color: #2563eb;
   text-decoration: underline;
   cursor: pointer;
 }
+.bn-inline-content a:hover {
+  color: #1d4ed8;
+}
+.bn-inline-content a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 .dark .bn-inline-content a {
   color: #60a5fa;
+}
+.dark .bn-inline-content a:hover {
+  color: #93c5fd;
+}
+.dark .bn-inline-content a:focus-visible {
+  outline-color: #60a5fa;
 }
 
 /* NOTE: Link button used to be hidden from the formatting toolbar here. We

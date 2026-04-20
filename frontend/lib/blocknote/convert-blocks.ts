@@ -135,6 +135,11 @@ function convertInlineContentToStrapiBlocks(
 ): StrapiBlocksTextNode[] {
   return inlineContent.flatMap((contentItem) => {
     if (contentItem.type === "link") {
+      // Strapi Blocks output is consumed by callout rendering (see line ~301
+      // in this file), which doesn't render clickable anchors — so links are
+      // intentionally flattened to their visible text and the href is
+      // dropped. The HTML conversion path (`convertInlineContentToHtml`)
+      // preserves links as `<a>` tags for generic/block rendering.
       return convertInlineContentToStrapiBlocks(contentItem.content ?? []);
     }
     const text = contentItem.text ?? "";

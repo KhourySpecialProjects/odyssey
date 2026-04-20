@@ -146,12 +146,16 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 /* Tailwind Typography renders inline <code> with ::before/::after pseudo-
    elements that insert literal backticks around the text. We style code
    pills ourselves (Slack/Notion-like), so kill the backticks and apply the
-   same pill styling as the BlockNote editor for visual consistency. */
-.prose :where(code):not(:where([class~="not-prose"] *))::before,
-.prose :where(code):not(:where([class~="not-prose"] *))::after {
+   same pill styling as the BlockNote editor for visual consistency.
+   Scoped to inline <code> only — `:not(:where(pre *))` excludes fenced
+   code-block content so highlight.js / <pre><code> output stays untouched. */
+.prose
+  :where(code):not(:where([class~="not-prose"] *)):not(:where(pre *))::before,
+.prose
+  :where(code):not(:where([class~="not-prose"] *)):not(:where(pre *))::after {
   content: none !important;
 }
-.prose :where(code):not(:where([class~="not-prose"] *)) {
+.prose :where(code):not(:where([class~="not-prose"] *)):not(:where(pre *)) {
   padding: 0.15em 0.35em;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
@@ -160,7 +164,9 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   color: #e01e5a;
   font-weight: inherit;
 }
-.dark .prose :where(code):not(:where([class~="not-prose"] *)) {
+.dark
+  .prose
+  :where(code):not(:where([class~="not-prose"] *)):not(:where(pre *)) {
   border-color: #4a4a4a;
   background-color: #2d2d2d;
   color: #e06b85;

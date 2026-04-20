@@ -394,5 +394,24 @@ describe("Sidebar", () => {
         screen.queryByTestId("content-action-button"),
       ).not.toBeInTheDocument();
     });
+
+    it("uses publishDraft actionType when the droplet is a draft revision", () => {
+      render(
+        <Sidebar
+          user={
+            {
+              ...mockUser,
+              roles: [AuthorizedUserRoleTitle.SysAdmin],
+            } as any
+          }
+          droplet={{ ...mockDroplet, originalDropletId: 42 } as any}
+          availableDroplets={[]}
+          {...defaultProps}
+        />,
+      );
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "publishDraft");
+      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    });
   });
 });

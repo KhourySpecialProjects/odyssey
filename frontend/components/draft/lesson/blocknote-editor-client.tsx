@@ -92,7 +92,10 @@ const MarkdownLinkInputRule = Extension.create({
     if (!linkMarkType) return [];
     return [
       markInputRule({
-        find: /\[([^\]]+)\]\((\S+)\)$/,
+        // Match either a plain URL containing no parens or a URL with a
+        // single balanced `(...)` pair (e.g. Wikipedia article anchors).
+        // Guards against losing the final `)` of an unbalanced-paren URL.
+        find: /\[([^\]]+)\]\(([^\s()]+(?:\([^\s()]*\)[^\s()]*)?)\)$/,
         type: linkMarkType,
         // Returning `false` aborts the rule (unsafe or missing href). The
         // cast is because TipTap's type declares `getAttributes` as a
@@ -252,7 +255,6 @@ export function BlockNoteEditorClient({
       }
     });
     if (changed) view.dispatch(tr);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
   // Intercept Tab in tables at the DOM level to prevent block nesting
