@@ -122,7 +122,7 @@ describe("sectionsToLessons", () => {
     expect(lessons[0].blocks).toEqual(mockBlocks);
   });
 
-  it("prepends section title as H1 when calling parseMarkdownToBlockNote", () => {
+  it("passes content body to parseMarkdownToBlockNote without prepending the title", () => {
     parseMarkdownToBlockNote.mockReturnValue({ title: "T", blocks: [] });
 
     const sections: ImportSection[] = [
@@ -136,9 +136,7 @@ describe("sectionsToLessons", () => {
 
     sectionsToLessons(sections);
 
-    expect(parseMarkdownToBlockNote).toHaveBeenCalledWith(
-      "# My Title\n\nSome content",
-    );
+    expect(parseMarkdownToBlockNote).toHaveBeenCalledWith("Some content");
   });
 
   it("handles sections with empty markdown content", () => {
@@ -155,7 +153,7 @@ describe("sectionsToLessons", () => {
 
     sectionsToLessons(sections);
 
-    expect(parseMarkdownToBlockNote).toHaveBeenCalledWith("# Title Only");
+    expect(parseMarkdownToBlockNote).toHaveBeenCalledWith("");
   });
 
   it("returns empty array for empty sections input", () => {
