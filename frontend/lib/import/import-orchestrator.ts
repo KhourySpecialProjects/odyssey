@@ -66,7 +66,10 @@ export async function extractRawText(file: File): Promise<{
 export function cleanSections(sections: ImportSection[]): ImportSection[] {
   return sections.map((s) => ({
     ...s,
-    markdownContent: cleanMarkdown(s.markdownContent),
+    markdownContent: stripLeadingTitle(
+      cleanMarkdown(s.markdownContent),
+      s.title,
+    ),
   }));
 }
 
@@ -95,11 +98,8 @@ export function sectionsToLessons(
       section.markdownContent.trim(),
       section.title,
     );
-    const markdownWithTitle = content
-      ? `# ${section.title}\n\n${content}`
-      : `# ${section.title}`;
 
-    const { blocks } = parseMarkdownToBlockNote(markdownWithTitle);
+    const { blocks } = parseMarkdownToBlockNote(content);
 
     return {
       title: section.title,
