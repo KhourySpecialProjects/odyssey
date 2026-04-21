@@ -69,7 +69,7 @@ export default function Sidebar({
   const canPresent =
     isEnrolled &&
     (droplet.lessons?.length ?? 0) > 0 &&
-    droplet.presentationEnabled;
+    droplet.presentationEnabled !== false;
 
   const activeLinkClasses =
     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors bg-[#287697]/10 text-[#287697] dark:bg-[#287697]/20 dark:text-[#4AABCF]";
