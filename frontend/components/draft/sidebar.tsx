@@ -681,17 +681,18 @@ export function Sidebar({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <label
+                      id="presentation-toggle-label"
+                      className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400"
+                    >
                       <IconPresentation className="h-3.5 w-3.5" />
                       Presentation
                     </label>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    {!hasSlideBreaks
-                      ? "Add slide breaks first to enable presentation for viewers"
-                      : presentationEnabled
-                        ? "Viewers can access presentation mode"
-                        : "Viewers cannot access presentation mode"}
+                    {presentationEnabled
+                      ? "Viewers can access presentation mode"
+                      : "Viewers cannot access presentation mode"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -699,11 +700,8 @@ export function Sidebar({
                 type="button"
                 role="switch"
                 aria-checked={presentationEnabled}
-                aria-label="Toggle presentation mode for viewers"
-                disabled={
-                  isTogglingPresentation ||
-                  (!hasSlideBreaks && !presentationEnabled)
-                }
+                aria-labelledby="presentation-toggle-label"
+                disabled={isTogglingPresentation}
                 onClick={handleTogglePresentation}
                 className={cn(
                   "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
