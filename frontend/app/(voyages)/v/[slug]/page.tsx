@@ -491,7 +491,14 @@ export default async function VoyagePage({ params }: Props) {
           {/* Right: Map (takes remaining space) */}
           <div className="min-w-0 flex-1">
             {treeNodes.length > 0 ? (
-              <VoyageTreeMap nodes={treeNodes} />
+              <div>
+                <h2 className="mb-4 text-center text-3xl font-bold tracking-tight text-slate-800 italic sm:text-4xl dark:text-slate-100">
+                  Start your Voyage
+                </h2>
+                <div className="pt-32">
+                  <VoyageTreeMap nodes={treeNodes} />
+                </div>
+              </div>
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-slate-600">
                 No playlists added to this voyage yet.
