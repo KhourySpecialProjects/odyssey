@@ -106,12 +106,12 @@ DATABASE_USERNAME=<user>
 DATABASE_PASSWORD=<password>
 DATABASE_SSL=false
 
-#Notifications (prod only — leave empty locally)
+#Notifications (prod only, leave empty locally)
 SLACK_WEBHOOK_URL=
 ```
 
 > **`SLACK_WEBHOOK_URL`**: the live webhook only fires against prod. Leave
-> this empty for local and dev — the backend skips the notification call
+> this empty for local and dev. The backend skips the notification call
 > when it's unset. The real value lives in **AWS Secrets Manager** (ask a
 > team member if you actually need to test the notification path from a
 > non-prod environment).
@@ -130,16 +130,18 @@ DATABASE_NAME=<YOU_CHOOSE>
 DATABASE_USERNAME=<YOU_CHOOSE>
 DATABASE_PASSWORD=<YOU_CHOOSE>
 
-POSTGRES_USER=${DATABASE_USERNAME}
-POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-POSTGRES_DB=${DATABASE_NAME}
+# Must match DATABASE_* values above. docker-compose does NOT expand ${...}
+# references in env_file, so write the concrete values here.
+POSTGRES_USER=<same as DATABASE_USERNAME>
+POSTGRES_PASSWORD=<same as DATABASE_PASSWORD>
+POSTGRES_DB=<same as DATABASE_NAME>
 ```
 
-Where you see **`<YOU_CHOOSE>`**, set whatever values you see fit. For simplicity, I set them to the values corresponding to **`<dbname>`**, **`<user>`**, and **`<password>`** from the previous step.
+Where you see **`<YOU_CHOOSE>`**, set whatever values you see fit. For simplicity, I set them to the values corresponding to **`<dbname>`**, **`<user>`**, and **`<password>`** from the previous step. Then copy the same three values into the `POSTGRES_*` lines. They must match.
 
-The reason we set these twice is that the environment variables in **.docker.env** are meant to overwrite the environment variables set in **.env**. 
+In case you were wondering why we set these twice: the two files are for different runtimes. `backend/.env` is what the backend reads when you run it outside Docker (like `npm run dev`), where postgres lives at `127.0.0.1`. `backend/.docker.env` gets loaded on top of it by docker-compose, so its values win inside the container. That's where we set `DATABASE_HOST=strapiDB` (the service name on the docker network) and the `POSTGRES_*` vars that tell the postgres container what user and DB to create on first boot.
 
-We specifically need **`DATABASE_HOST`** to be **strapiDB** and all of the variables beginning with **`POSTGRES`** to be set to the same values as we set to the variables beginning with **`DATABASE`** for docker compose to containerize the application correctly
+This is also why `DATABASE_HOST` has to be `strapiDB` here, and why the `POSTGRES_*` values have to match the `DATABASE_*` values above. If they don't match, the backend and postgres containers disagree on credentials and you just get connection errors when the stack starts.
 
 #### b. Frontend
 
@@ -205,7 +207,7 @@ There are two options: using data from the development server or starting from s
 
 Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev.data.khouryodyssey.org](https://dev.data.khouryodyssey.org). 
 
-Once you are signed up through strapi. Request for a current team member to send you the SQL startup file (it should be named `data.sql`). Place it in the `initdb/` directory. When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file.
+Once you are signed up through Strapi, request the SQL startup file (named `data.sql`) from a current team member and place it in the `initdb/` directory. When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file.
 
 If you want to know how/why this works, simply ask a team member. (Hint: it has something to do with the `pg_dump` command in posgresql).
 
@@ -221,7 +223,7 @@ docker exec -it strapi npx strapi admin:create-user \
 
 > Strapi requires at least 8 characters, one uppercase, one lowercase, and one number/symbol.
 
-Then log in at [localhost:1337/admin](http://localhost:1337/admin) with those credentials. This account only exists in your local database — it won't affect production.
+Then log in at [localhost:1337/admin](http://localhost:1337/admin) with those credentials. This account only exists in your local database, so it won't affect production.
 
 #### Starting From Scratch
 
@@ -333,9 +335,9 @@ This likely means you forgot to install the necessary dependencies. From both th
 To contribute to Odyssey's source code:
 
 - Create a new branch off of the `develop` branch. We use three branch prefixes depending on the type of change:
-  - `feature/` — new features
-  - `improvement/` — enhancements to existing features
-  - `bug/` — bug fixes
+  - `feature/` for new features
+  - `improvement/` for enhancements to existing features
+  - `bug/` for bug fixes
 - For the branch name itself, copy the auto-generated branch name from the Linear ticket (typically formatted `ody-###-short-description`). Prepend it with the appropriate prefix.
   - Example: `git checkout -b improvement/ody-444-lesson-editor-changes-saved-right-italic`
 - Make your changes and commit them: `git commit -m 'Add new feature'`

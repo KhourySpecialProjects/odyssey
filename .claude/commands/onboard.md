@@ -85,7 +85,7 @@ overwrite a contributor's existing env:
 
 Note: the `protect-files.sh` hook blocks `Edit`/`Write` on `.env*` files but
 does not block `cp` via Bash. If a copy is blocked anyway, record MANUAL:
-"copy the template manually". Do NOT fill in any values — secrets come from a
+"copy the template manually". Do NOT fill in any values. Secrets come from a
 teammate. List the empty keys across both `.env.local` and `backend/.env` in
 the MANUAL punch list.
 
@@ -104,7 +104,7 @@ docker info > /dev/null 2>&1
 
   1. **Optional seed data.** If `initdb/data.sql` exists, postgres will seed it
      on first boot. If it doesn't, ask whether the contributor has a `data.sql`
-     from a previous teammate — if yes, tell them to drop it in `initdb/` and
+     from a previous teammate. If yes, tell them to drop it in `initdb/` and
      run `/onboard` again. If no, proceed with an empty DB (they can register
      as a Strapi admin via the web UI on first boot).
 
@@ -118,7 +118,7 @@ docker info > /dev/null 2>&1
 
   3. **If they used `data.sql`,** they can't log in as the prod admins (those
      users exist in the dump but not with their credentials). Offer to create
-     a local admin for them — if they say yes, prompt for name/email/password
+     a local admin for them. If they say yes, prompt for name/email/password
      and run:
 
      ```bash
@@ -127,7 +127,7 @@ docker info > /dev/null 2>&1
        --email="$E" --password="$P"
      ```
 
-  4. **Mint an API token** (manual — UI only). Record MANUAL:
+  4. **Mint an API token** (manual, UI only). Record MANUAL:
      "log in at http://localhost:1337/admin → Settings → API Tokens → Create
      new API Token (Unlimited / Full access) → paste the token as
      `STRAPI_ACCESS_TOKEN` in `frontend/.docker.env`, then
@@ -220,17 +220,17 @@ Manual steps remaining
    - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_* , AWS_REGION
    - POSTHOG_API_KEY, POSTHOG_PROJECT_ID, NEXT_PUBLIC_POSTHOG_KEY
    - ANTHROPIC_API_KEY
-   - STRAPI_ACCESS_TOKEN (generated from the local Strapi UI, see step 5)
+   - STRAPI_ACCESS_TOKEN (minted in the local Strapi UI, see item 5 below)
 4. Fill in backend/.env values from a teammate (or from AWS Secrets Manager
    if you have access):
    APP_KEYS, API_TOKEN_SALT, ADMIN_JWT_SECRET, TRANSFER_TOKEN_SALT, JWT_SECRET,
    AWS_S3_* (upload creds), DATABASE_* (or use the docker defaults).
-   Leave SLACK_WEBHOOK_URL empty locally — it's prod-only.
+   Leave SLACK_WEBHOOK_URL empty locally. It's prod-only.
 5. Mint a Strapi API token at http://localhost:1337/admin → Settings → API
    Tokens → Create new. Paste it as STRAPI_ACCESS_TOKEN in
    frontend/.docker.env, then `docker compose up -d` again.
-6. (If you used data.sql) Create a local Strapi admin so you can log in —
-   see step 4.3 above.
+6. (If you used data.sql) Create a local Strapi admin so you can log in.
+   See step 4.3 above.
 
 You're ready once the items above are done. Run `npm run dev` to start
 the frontend + backend together, or `/ci` to re-verify.
