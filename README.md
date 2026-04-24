@@ -50,6 +50,14 @@ The `develop` branch of the repository contains the most up-to-date code that wi
 git clone -b develop https://github.com/KhourySpecialProjects/odyssey.git
 ```
 
+> **Using Claude Code?** Most of the setup below (installing dependencies,
+> copying env templates, starting docker, installing plugins and MCPs) is
+> automated by the `/onboard` slash command. Run it from inside the cloned
+> repo and follow the manual punch list it prints at the end (OAuth clicks +
+> secret values you still need to get from a teammate). The sections below
+> are the manual equivalent if you're not using Claude Code or prefer to go
+> step-by-step.
+
 
 ### 3. Environment Variables
 
@@ -67,9 +75,9 @@ This will install all of the local dependencies in you local version so that whe
 
 Open the cloned repository in your IDE of choice (Most common is VSCode)
 
-Navigate to **.env.example** and change the filename to **.env** 
+In the **backend** directory, copy **.env.example** to a new file named **.env** (keep the example committed so the next dev has it).
 
-fill in the database section with the following, replacing **`<dbname>`, `<user>`,** and **`<password>`** with anything you see fit. In my local development, I set **`<dbname>`** as **strapi** and **`<user>`** as **strapi_user.** 
+Fill in the database section with the following, replacing **`<dbname>`, `<user>`,** and **`<password>`** with anything you see fit. In my local development, I set **`<dbname>`** as **strapi** and **`<user>`** as **strapi_user.**
 
 ```bash
 HOST=0.0.0.0
@@ -78,6 +86,7 @@ APP_KEYS=
 API_TOKEN_SALT=
 ADMIN_JWT_SECRET=
 TRANSFER_TOKEN_SALT=
+JWT_SECRET=
 
 #AWS Object Storage
 AWS_CDN_URL=
@@ -96,11 +105,23 @@ DATABASE_NAME=<dbname>
 DATABASE_USERNAME=<user>
 DATABASE_PASSWORD=<password>
 DATABASE_SSL=false
+
+#Notifications (prod only, leave empty locally)
+SLACK_WEBHOOK_URL=
 ```
 
-For the environment variables not set, request them from another team member.
+> **`SLACK_WEBHOOK_URL`**: the live webhook only fires against prod. Leave
+> this empty for local and dev. The backend skips the notification call
+> when it's unset. The real value lives in **AWS Secrets Manager** (ask a
+> team member if you actually need to test the notification path from a
+> non-prod environment).
 
-Navigate to **.docker.env.example** and create a copy of the file. Name it **.docker.env** 
+For the remaining secret values (`APP_KEYS`, `API_TOKEN_SALT`,
+`ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`, `AWS_S3_*`),
+request them from another team member or pull them from AWS Secrets Manager
+if you have access.
+
+Copy **.docker.env.example** to a new file named **.docker.env** in the same **backend** directory.
 
 ```bash
 #Database
@@ -109,26 +130,29 @@ DATABASE_NAME=<YOU_CHOOSE>
 DATABASE_USERNAME=<YOU_CHOOSE>
 DATABASE_PASSWORD=<YOU_CHOOSE>
 
-POSTGRES_USER=${DATABASE_USERNAME}
-POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-POSTGRES_DB=${DATABASE_NAME}
+# Must match DATABASE_* values above. docker-compose does NOT expand ${...}
+# references in env_file, so write the concrete values here.
+POSTGRES_USER=<same as DATABASE_USERNAME>
+POSTGRES_PASSWORD=<same as DATABASE_PASSWORD>
+POSTGRES_DB=<same as DATABASE_NAME>
 ```
 
-Where you see **`<YOU_CHOOSE>`**, set whatever values you see fit. For simplicity, I set them to the values corresponding to **`<dbname>`**, **`<user>`**, and **`<password>`** from the previous step.
+Where you see **`<YOU_CHOOSE>`**, set whatever values you see fit. For simplicity, I set them to the values corresponding to **`<dbname>`**, **`<user>`**, and **`<password>`** from the previous step. Then copy the same three values into the `POSTGRES_*` lines. They must match.
 
-The reason we set these twice is that the environment variables in **.docker.env** are meant to overwrite the environment variables set in **.env**. 
+In case you were wondering why we set these twice: the two files are for different runtimes. `backend/.env` is what the backend reads when you run it outside Docker (like `npm run dev`), where postgres lives at `127.0.0.1`. `backend/.docker.env` gets loaded on top of it by docker-compose, so its values win inside the container. That's where we set `DATABASE_HOST=strapiDB` (the service name on the docker network) and the `POSTGRES_*` vars that tell the postgres container what user and DB to create on first boot.
 
-We specifically need **`DATABASE_HOST`** to be **strapiDB** and all of the variables beginning with **`POSTGRES`** to be set to the same values as we set to the variables beginning with **`DATABASE`** for docker compose to containerize the application correctly
+This is also why `DATABASE_HOST` has to be `strapiDB` here, and why the `POSTGRES_*` values have to match the `DATABASE_*` values above. If they don't match, the backend and postgres containers disagree on credentials and you just get connection errors when the stack starts.
 
 #### b. Frontend
 
-Navigate to the frontend directory
+Navigate to the frontend directory.
 
-Navigate to the **.env.example** file and rename it to **.env.local** 
+Copy the **.env.example** file to a new file named **.env.local** (keep the example committed).
 
 The file should look roughly like this:
 
 ```bash
+# Auth (NextAuth)
 AZURE_AD_CLIENT_ID=
 AZURE_AD_CLIENT_SECRET=
 AZURE_AD_TENANT_ID=
@@ -136,23 +160,32 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 NEXTAUTH_SECRET=
 
+# App
 APP_URL=
-DO_CDN_URL=
-
-NEXT_PUBLIC_POSTHOG_KEY=
-NEXT_PUBLIC_POSTHOG_HOST=
 NEXT_PUBLIC_APP_ENV=local
 
+# PostHog analytics
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=
+POSTHOG_API_KEY=
+POSTHOG_PROJECT_ID=
+
+# Strapi (server + client)
 STRAPI_API_URL=http://localhost:1337
+NEXT_PUBLIC_STRAPI_API_URL=http://localhost:1337
 STRAPI_ACCESS_TOKEN=
 
+# AWS S3 (media)
 AWS_CDN_URL=
 AWS_S3_BUCKET_NAME=
 AWS_S3_BUCKET_ROOT=
-AWS_S3_BUCKET_REGION=
+AWS_S3_BUCKET_URL=
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
-AWS_S3_BUCKET_URL=
+
+# BlockNote AI (droplet editor assistant)
+ANTHROPIC_API_KEY=
 ```
 
 Request all other fields from a team member, leaving `STRAPI_ACCESS_TOKEN`
@@ -161,7 +194,7 @@ Request all other fields from a team member, leaving `STRAPI_ACCESS_TOKEN`
 Like before, these fields are sensitive as they connect to the same services as our production version does, so it is important not to store these anywhere except in your local development environment.
 
 
-Now navigate to the **.docker.env.example** in the same **frontend** directory and rename it to **.docker.env**
+Now copy the **.docker.env.example** in the same **frontend** directory to a new file named **.docker.env**.
 
 Leave this file unchanged for now, we’ll generate the API key in **Step 5**
 
@@ -172,11 +205,25 @@ There are two options: using data from the development server or starting from s
 
 #### Using Old Data
 
-Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev2.data.khouryodyssey.org](http://dev2.data.khouryodyssey.org). 
+Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev.data.khouryodyssey.org](https://dev.data.khouryodyssey.org). 
 
-Once you are signed up through strapi. Request for a current team member to send you the SQL startup file (it should be named `data.sql`). When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file. 
+Once you are signed up through Strapi, request the SQL startup file (named `data.sql`) from a current team member and place it in the `initdb/` directory. When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file.
 
 If you want to know how/why this works, simply ask a team member. (Hint: it has something to do with the `pg_dump` command in posgresql).
+
+##### Making yourself a Strapi admin
+
+The `data.sql` dump includes the admin users from the production Strapi. If you don't already have a prod admin account, you won't be able to log in to the local Admin Panel after the seed. Once the `strapi` container is running (after **Step 5**), create a local admin for yourself from a new terminal:
+
+```bash
+docker exec -it strapi npx strapi admin:create-user \
+  --firstname='Your' --lastname='Name' \
+  --email='you@northeastern.edu' --password='YourLocalPassword1!'
+```
+
+> Strapi requires at least 8 characters, one uppercase, one lowercase, and one number/symbol.
+
+Then log in at [localhost:1337/admin](http://localhost:1337/admin) with those credentials. This account only exists in your local database, so it won't affect production.
 
 #### Starting From Scratch
 
@@ -250,7 +297,7 @@ Copy the token that was created for you. The Token in the screenshot above will 
 Navigate back to **.docker.env** in the frontend directory and paste into the file like so, replacing **`<your_token>`** with your token
 
 ```bash
-STRAPI_API_URL=http://host.docker.internal:1337
+NEXT_PUBLIC_STRAPI_API_URL=http://host.docker.internal:1337
 STRAPI_ACCESS_TOKEN=<your_token>
 ```
 
@@ -265,7 +312,7 @@ docker compose up
 Your application should now be running correctly!
 
 
-### 7. FAQ
+### 6. FAQ
 
 #### I want to start over from scratch with my data, what do I do?
 
@@ -287,13 +334,18 @@ This likely means you forgot to install the necessary dependencies. From both th
 
 To contribute to Odyssey's source code:
 
-- Create a new branch off of the `develop` branch: `git checkout -b feature/[description]`, where `[description]` is a concise name for the feature being implemented
+- Create a new branch off of the `develop` branch. We use three branch prefixes depending on the type of change:
+  - `feature/` for new features
+  - `improvement/` for enhancements to existing features
+  - `bug/` for bug fixes
+- For the branch name itself, copy the auto-generated branch name from the Linear ticket (typically formatted `ody-###-short-description`). Prepend it with the appropriate prefix.
+  - Example: `git checkout -b improvement/ody-444-lesson-editor-changes-saved-right-italic`
 - Make your changes and commit them: `git commit -m 'Add new feature'`
-- Push to the branch: `git push origin feature/[description]`
+- Push to the branch: `git push origin <your-branch-name>`
 - Submit a pull request to the `develop` branch
 
 ## Contributors
 
 Sponsor: [@MarkFontenot](https://github.com/MarkFontenot)
 
-This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), Chase Houser ([@chouser63](https://github.com/chouser63)), Gillian Palmer ([@gpalmer27](https://github.com/gpalmer27)), Johan Almanzar ([@JAlazer](https://github.com/JAlazer)), Wesley Chapman ([@chapman-w](https://github.com/chapman-w)), Darius Saadat ([@DSCoder555](https://github.com/DSCoder555)), William Gadala ([@wjgadala](https://github.com/wjgadala)), and Martin Hema ([@martin0he](https://github.com/martin0he)).
+This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), Chase Houser ([@chouser63](https://github.com/chouser63)), Gillian Palmer ([@gpalmer27](https://github.com/gpalmer27)), Johan Almanzar ([@JAlazer](https://github.com/JAlazer)), Wesley Chapman ([@chapman-w](https://github.com/chapman-w)), Darius Saadat ([@DSCoder555](https://github.com/DSCoder555)), William Gadala ([@wjgadala](https://github.com/wjgadala)), Martin Hema ([@martin0he](https://github.com/martin0he)), Ricardo Landeros ([@RightNxw](https://github.com/RightNxw)), Ashley Yoon ([@ashleyoon](https://github.com/ashleyoon)), and Abrar Nafiu ([@abrarnafiu](https://github.com/abrarnafiu)).
