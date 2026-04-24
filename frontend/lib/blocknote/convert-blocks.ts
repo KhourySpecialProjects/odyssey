@@ -596,6 +596,14 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "divider": {
+      return {
+        __component: "droplets.generic",
+        id: blockId,
+        content: "<hr />",
+      };
+    }
+
     default:
       return null;
   }

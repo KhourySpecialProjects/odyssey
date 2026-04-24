@@ -273,3 +273,21 @@
   .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
   color: rgb(203 213 225); /* slate-300 */
 }
+
+/* ODY-441: BlockNote's NumberedListIndexingPlugin sets `--index` via JS, but
+   skips items nested inside non-list parents — leaving just "." without the
+   number. Fall back to a native CSS counter so the marker always renders. */
+.bn-block-group {
+  counter-reset: ody-bn-list;
+}
+.bn-block-content[data-content-type="numberedListItem"] {
+  counter-increment: ody-bn-list;
+}
+.bn-block-outer:not([data-prev-type])
+  > .bn-block
+  > .bn-block-content[data-content-type="numberedListItem"]::before,
+.bn-block-outer[data-prev-type="numberedListItem"]
+  > .bn-block
+  > .bn-block-content[data-content-type="numberedListItem"]::before {
+  content: counter(ody-bn-list) "." !important;
+}

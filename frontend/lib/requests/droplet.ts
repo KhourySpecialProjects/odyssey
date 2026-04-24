@@ -141,6 +141,7 @@ export async function getRandomFunFactDroplet({
   filters = {
     isHidden: false,
     funFact: { $ne: null },
+    status: "published",
   },
   pagination = { pageSize: 1000, page: 1 },
   populate,
