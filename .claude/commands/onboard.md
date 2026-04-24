@@ -65,23 +65,32 @@ continue to later steps).
 
 ### 3. Create `.env` files from templates
 
-- **frontend** — if `frontend/.env.local` does NOT exist and
-  `frontend/.env.example` does, copy it:
+Four template files are checked in. For each pair, copy the `*.example` to the
+runtime filename ONLY if the runtime file does not already exist. Do not
+overwrite a contributor's existing env:
 
-  ```bash
-  cp frontend/.env.example frontend/.env.local
-  ```
+| Template (committed)           | Runtime (gitignored)   |
+| ------------------------------ | ---------------------- |
+| `frontend/.env.example`        | `frontend/.env.local`  |
+| `frontend/.docker.env.example` | `frontend/.docker.env` |
+| `backend/.env.example`         | `backend/.env`         |
+| `backend/.docker.env.example`  | `backend/.docker.env`  |
 
-  Note: the `protect-files.sh` hook blocks `Edit`/`Write` on `.env*` files but
-  does not block `cp` via Bash. If the copy is blocked anyway, record MANUAL:
-  "copy frontend/.env.example → frontend/.env.local manually". Do NOT fill in
-  any values — every key in the template must be filled in by the contributor
-  with secrets from a teammate. List the empty keys in the MANUAL punch list.
+```bash
+[ ! -f frontend/.env.local ]   && cp frontend/.env.example        frontend/.env.local
+[ ! -f frontend/.docker.env ]  && cp frontend/.docker.env.example frontend/.docker.env
+[ ! -f backend/.env ]          && cp backend/.env.example         backend/.env
+[ ! -f backend/.docker.env ]   && cp backend/.docker.env.example  backend/.docker.env
+```
 
-- **backend** — there is no `backend/.env.example` checked in. The backend
-  reads env from a deploy-time secrets mount (`backend/set_env.sh`). For local
-  dev, record MANUAL: "ask a teammate for `backend/.env` contents (DB URL,
-  admin JWT secret, API token salt, app keys)".
+Note: the `protect-files.sh` hook blocks `Edit`/`Write` on `.env*` files but
+does not block `cp` via Bash. If a copy is blocked anyway, record MANUAL:
+"copy the template manually". Do NOT fill in any values — secrets come from a
+teammate. List the empty keys across both `.env.local` and `backend/.env` in
+the MANUAL punch list.
+
+The `backend/.docker.env` and `frontend/.docker.env` files contain overrides
+applied by docker-compose; see README §3 and §5 for what goes in them.
 
 ### 4. Docker — bring up local services
 
@@ -90,14 +99,39 @@ docker info > /dev/null 2>&1
 ```
 
 - If that fails, Docker Desktop isn't running. Record MANUAL: "start Docker
-  Desktop", then skip the next sub-step.
-- If it succeeds, bring services up in the background:
+  Desktop", then skip the rest of this step.
+- If it succeeds:
 
-  ```bash
-  docker compose up -d
-  ```
+  1. **Optional seed data.** If `initdb/data.sql` exists, postgres will seed it
+     on first boot. If it doesn't, ask whether the contributor has a `data.sql`
+     from a previous teammate — if yes, tell them to drop it in `initdb/` and
+     run `/onboard` again. If no, proceed with an empty DB (they can register
+     as a Strapi admin via the web UI on first boot).
 
-  Report which containers are running via `docker compose ps`.
+  2. **Start the stack:**
+
+     ```bash
+     docker compose up -d
+     ```
+
+     Report which containers are running via `docker compose ps`.
+
+  3. **If they used `data.sql`,** they can't log in as the prod admins (those
+     users exist in the dump but not with their credentials). Offer to create
+     a local admin for them — if they say yes, prompt for name/email/password
+     and run:
+
+     ```bash
+     docker exec -i strapi npx strapi admin:create-user \
+       --firstname="$F" --lastname="$L" \
+       --email="$E" --password="$P"
+     ```
+
+  4. **Mint an API token** (manual — UI only). Record MANUAL:
+     "log in at http://localhost:1337/admin → Settings → API Tokens → Create
+     new API Token (Unlimited / Full access) → paste the token as
+     `STRAPI_ACCESS_TOKEN` in `frontend/.docker.env`, then
+     `docker compose up -d` again to pick it up."
 
 ### 5. Verify project-scoped plugins (install any that are missing)
 
@@ -183,11 +217,22 @@ Manual steps remaining
    - AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET, AZURE_AD_TENANT_ID
    - GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
    - NEXTAUTH_SECRET
-   - STRAPI_ACCESS_TOKEN
-   - … (full list)
-4. Get backend/.env contents from a teammate (no checked-in template)
+   - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_* , AWS_REGION
+   - POSTHOG_API_KEY, POSTHOG_PROJECT_ID, NEXT_PUBLIC_POSTHOG_KEY
+   - ANTHROPIC_API_KEY
+   - STRAPI_ACCESS_TOKEN (generated from the local Strapi UI, see step 5)
+4. Fill in backend/.env values from a teammate (or from AWS Secrets Manager
+   if you have access):
+   APP_KEYS, API_TOKEN_SALT, ADMIN_JWT_SECRET, TRANSFER_TOKEN_SALT, JWT_SECRET,
+   AWS_S3_* (upload creds), DATABASE_* (or use the docker defaults).
+   Leave SLACK_WEBHOOK_URL empty locally — it's prod-only.
+5. Mint a Strapi API token at http://localhost:1337/admin → Settings → API
+   Tokens → Create new. Paste it as STRAPI_ACCESS_TOKEN in
+   frontend/.docker.env, then `docker compose up -d` again.
+6. (If you used data.sql) Create a local Strapi admin so you can log in —
+   see step 4.3 above.
 
-You're ready once the four items above are done. Run `npm run dev` to start
+You're ready once the items above are done. Run `npm run dev` to start
 the frontend + backend together, or `/ci` to re-verify.
 ```
 
