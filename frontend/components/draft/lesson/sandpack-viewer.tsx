@@ -13,17 +13,12 @@ import {
 import {
   SandpackTemplate,
   TEMPLATE_LABELS,
+  TEMPLATE_DOCS,
   CustomFileExplorer,
   ReadOnlySandpackEditor,
   validateSandpackFilename,
   MAX_FILES,
 } from "@/components/ui/blocknote/blocks/sandpack-block-content";
-
-const TEMPLATE_DOCS: Record<SandpackTemplate, string> = {
-  vanilla: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-  react: "https://react.dev",
-  "react-ts": "https://www.typescriptlang.org/docs/",
-};
 import {
   Tooltip,
   TooltipContent,

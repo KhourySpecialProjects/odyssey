@@ -139,7 +139,7 @@ export const TEMPLATE_LABELS: Record<SandpackTemplate, string> = {
   "react-ts": "React + TypeScript",
 };
 
-const TEMPLATE_DOCS: Record<SandpackTemplate, string> = {
+export const TEMPLATE_DOCS: Record<SandpackTemplate, string> = {
   vanilla: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
   react: "https://react.dev",
   "react-ts": "https://www.typescriptlang.org/docs/",
@@ -207,10 +207,15 @@ function SandpackFileCommands({
   addFileCommandRef,
 }: SandpackFileCommandsProps) {
   const { sandpack } = useSandpack();
-  addFileCommandRef.current = (filename: string) => {
-    sandpack.addFile(filename, "");
-    sandpack.setActiveFile(filename);
-  };
+  useEffect(() => {
+    addFileCommandRef.current = (filename: string) => {
+      sandpack.addFile(filename, "");
+      sandpack.setActiveFile(filename);
+    };
+    return () => {
+      addFileCommandRef.current = null;
+    };
+  }, [sandpack, addFileCommandRef]);
   return null;
 }
 
@@ -551,6 +556,27 @@ export function SandpackBlockContent({
   }, [block.props.files]);
   const fileCount = Object.keys(parsedFiles).length;
 
+  // Break the echo loop between Sandpack internal state and block.props.files.
+  // `handleFilesChange` records its own writes in `lastSyncedFilesJsonRef`;
+  // when `block.props.files` differs from that (template change, reset, initial
+  // load), we re-initialize Sandpack by bumping `sandpackKey`. Between external
+  // updates, Sandpack owns file state and its `files` prop stays frozen, so
+  // add/rename/delete no longer triggers a bundler recompile.
+  const lastSyncedFilesJsonRef = useRef<string>(block.props.files || "{}");
+  const [sandpackKey, setSandpackKey] = useState(0);
+  const [initialFiles, setInitialFiles] = useState<Record<string, string>>(
+    () => parsedFiles,
+  );
+
+  useEffect(() => {
+    const currentJson = block.props.files || "{}";
+    if (currentJson !== lastSyncedFilesJsonRef.current) {
+      lastSyncedFilesJsonRef.current = currentJson;
+      setInitialFiles(parsedFiles);
+      setSandpackKey((k) => k + 1);
+    }
+  }, [block.props.files, parsedFiles]);
+
   const parsedLockedFiles: string[] = React.useMemo(() => {
     try {
       const parsed = JSON.parse(block.props.lockedFiles || "[]");
@@ -605,9 +631,12 @@ export function SandpackBlockContent({
 
     const hasCustomFiles = Object.keys(parsedFiles).length > 0;
     const currentDefaults = TEMPLATE_DEFAULTS[currentTemplate];
+    const defaultKeys = Object.keys(currentDefaults);
+    const fileKeys = Object.keys(parsedFiles);
     const isDefaultFiles =
       !hasCustomFiles ||
-      JSON.stringify(parsedFiles) === JSON.stringify(currentDefaults);
+      (fileKeys.length === defaultKeys.length &&
+        defaultKeys.every((k) => parsedFiles[k] === currentDefaults[k]));
 
     if (!isDefaultFiles) {
       const confirmed = window.confirm(
@@ -622,6 +651,7 @@ export function SandpackBlockContent({
           ...block.props,
           template: newTemplate,
           files: JSON.stringify(TEMPLATE_DEFAULTS[newTemplate]),
+          lockedFiles: "[]",
         },
       });
     } catch (error) {
@@ -658,6 +688,7 @@ export function SandpackBlockContent({
     const currentEditor = editor;
     saveTimerRef.current = setTimeout(() => {
       saveTimerRef.current = null;
+      lastSyncedFilesJsonRef.current = newFilesJson;
       try {
         currentEditor.updateBlock(currentBlock, {
           props: { ...currentBlock.props, files: newFilesJson },
@@ -886,8 +917,9 @@ export function SandpackBlockContent({
 
   const sandpackInner = (
     <SandpackBlockInner
+      key={sandpackKey}
       template={currentTemplate}
-      files={parsedFiles}
+      files={initialFiles}
       showPreview={currentShowPreview}
       showFileExplorer={showFileExplorer}
       editable={currentEditable}
