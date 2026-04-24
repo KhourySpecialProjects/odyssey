@@ -181,6 +181,49 @@ function convertInlineContentToText(
   );
 }
 
+// BlockNote stores Tab-indented content as nested `children` on a parent
+// block. Without this recursive render path, indented paragraphs/headings
+// disappear from preview and published droplets.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderBlockNoteBlockAsHtml(block: any): string {
+  const inline = (block.content ?? []) as BlockNoteInlineContent[];
+  const text = convertInlineContentToHtml(inline);
+
+  let ownHtml = "";
+  switch (block.type) {
+    case "paragraph":
+    case "quote":
+      ownHtml = text ? `<p>${text}</p>` : "";
+      break;
+    case "heading": {
+      const level = Number(block.props?.level) || 1;
+      ownHtml = text ? `<h${level}>${text}</h${level}>` : "";
+      break;
+    }
+    case "bulletListItem":
+      return `<ul class="list-disc list-outside ml-6 my-2 space-y-1">${convertBulletListItem(block, 0)}</ul>`;
+    case "numberedListItem":
+      return `<ol class="list-decimal list-outside ml-6 my-2 space-y-1">${convertNumberedListItem(block, 0)}</ol>`;
+    default:
+      return "";
+  }
+
+  return ownHtml + renderBlockNoteChildrenAsHtml(block.children ?? []);
+}
+
+function renderBlockNoteChildrenAsHtml(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children: any[],
+): string {
+  if (!Array.isArray(children) || children.length === 0) return "";
+  const inner = children
+    .map(renderBlockNoteBlockAsHtml)
+    .filter((s) => s.length > 0)
+    .join("");
+  if (!inner) return "";
+  return `<div class="pl-4 border-l-2 border-slate-200 dark:border-slate-700 my-1">${inner}</div>`;
+}
+
 // Helper function to convert a numbered list item and its children recursively
 function convertNumberedListItem(
   item: BlockNoteListItem,
@@ -277,15 +320,19 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const textContent = convertInlineContentToHtml(inlineContent);
 
       const headingLevel = Number(blockAny.props?.level) || 1;
-      const htmlContent =
+      const ownHtml =
         blockAny.type === "heading"
           ? `<h${headingLevel}>${textContent}</h${headingLevel}>`
           : `<p>${textContent}</p>`;
 
+      const childrenHtml = renderBlockNoteChildrenAsHtml(
+        blockAny.children ?? [],
+      );
+
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: htmlContent,
+        content: ownHtml + childrenHtml,
       };
     }
 
@@ -694,11 +741,7 @@ export function convertBlockNoteToV1Blocks(
       }
 
       const paragraphsHtml = paragraphBlocks
-        .map((p) => {
-          const pInlineContent = (p.content ?? []) as BlockNoteInlineContent[];
-          const pTextContent = convertInlineContentToHtml(pInlineContent);
-          return pTextContent ? `<p>${pTextContent}</p>` : "";
-        })
+        .map((p) => renderBlockNoteBlockAsHtml(p))
         .filter(Boolean)
         .join("");
 
@@ -723,12 +766,17 @@ export function convertBlockNoteToV1Blocks(
     if (blockAny.type === "quote") {
       const quoteContent = (blockAny.content ?? []) as BlockNoteInlineContent[];
       const textContent = convertInlineContentToHtml(quoteContent);
-      if (textContent) {
+      const childrenHtml = renderBlockNoteChildrenAsHtml(
+        blockAny.children ?? [],
+      );
+      const combined =
+        (textContent ? `<p>${textContent}</p>` : "") + childrenHtml;
+      if (combined) {
         const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : i;
         processedBlocks.push({
           __component: "droplets.generic",
           id: blockId,
-          content: `<p>${textContent}</p>`,
+          content: combined,
         });
       }
       i++;
