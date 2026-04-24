@@ -16,6 +16,12 @@ import {
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { blockNoteSchema } from "@/lib/blocknote/schema";
+import {
+  isAutolinkFalsePositive,
+  isSafeLinkHref,
+} from "@/lib/blocknote/autolink-filter";
+import { Extension, markInputRule } from "@tiptap/core";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { addRowAfter, goToNextCell, isInTable } from "prosemirror-tables";
 import { useTheme } from "next-themes";
 import {
@@ -43,6 +49,68 @@ const SlideOverflowContext = createContext<Set<string>>(new Set());
 export const useSlideOverflow = () => useContext(SlideOverflowContext);
 
 const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
+
+// Removes link marks that are clearly autolink false-positives. See
+// `lib/blocknote/autolink-filter.ts` for the heuristic. Manual links —
+// where the visible text differs from the href — are always preserved.
+const StripSpuriousAutolinks = Extension.create({
+  name: "stripSpuriousAutolinks",
+  addProseMirrorPlugins() {
+    const linkMarkType = this.editor.schema.marks.link;
+    if (!linkMarkType) return [];
+    return [
+      new Plugin({
+        key: new PluginKey("stripSpuriousAutolinks"),
+        appendTransaction: (transactions, _oldState, newState) => {
+          if (!transactions.some((t) => t.docChanged)) return null;
+          const tr = newState.tr;
+          let changed = false;
+          newState.doc.descendants((node, pos) => {
+            if (!node.isText) return;
+            const linkMark = node.marks.find((m) => m.type === linkMarkType);
+            if (!linkMark) return;
+            const href = (linkMark.attrs as { href?: string }).href ?? "";
+            if (isAutolinkFalsePositive(node.text ?? "", href)) {
+              tr.removeMark(pos, pos + node.nodeSize, linkMarkType);
+              changed = true;
+            }
+          });
+          return changed ? tr : null;
+        },
+      }),
+    ];
+  },
+});
+
+// Markdown-style link shortcut: typing `[text](url)` wraps "text" in a link
+// mark with href=url. Fires on the closing paren. URIs with unsafe schemes
+// (javascript:, data:, etc.) are rejected so the mark isn't applied.
+const MarkdownLinkInputRule = Extension.create({
+  name: "markdownLinkInputRule",
+  addInputRules() {
+    const linkMarkType = this.editor.schema.marks.link;
+    if (!linkMarkType) return [];
+    return [
+      markInputRule({
+        // Match either a plain URL containing no parens or a URL with a
+        // single balanced `(...)` pair (e.g. Wikipedia article anchors).
+        // Guards against losing the final `)` of an unbalanced-paren URL.
+        find: /\[([^\]]+)\]\(([^\s()]+(?:\([^\s()]*\)[^\s()]*)?)\)$/,
+        type: linkMarkType,
+        // Returning `false` aborts the rule (unsafe or missing href). The
+        // cast is because TipTap's type declares `getAttributes` as a
+        // function returning Record<string, any>, but runtime supports the
+        // `false | null` short-circuit shown in `markInputRule` source.
+        getAttributes: ((match: RegExpMatchArray) => {
+          const href = match[2];
+          if (!isSafeLinkHref(href)) return false;
+          return { href };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+      }),
+    ];
+  },
+});
 
 const CUSTOM_BLOCK_TYPES = new Set([
   "latex",
@@ -138,6 +206,16 @@ export function BlockNoteEditorClient({
       headers: false,
       cellTextColor: false,
     },
+    // Additional TipTap extensions layered on top of BlockNote's defaults.
+    // The cast is required because BlockNote ships a nested @tiptap/core,
+    // so types from our top-level @tiptap/core don't line up.
+    _tiptapOptions: {
+      extensions: [
+        StripSpuriousAutolinks,
+        MarkdownLinkInputRule,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any,
+    },
   });
 
   const [documentBlocks, setDocumentBlocks] = useState<
@@ -153,6 +231,31 @@ export function BlockNoteEditorClient({
 
     return () => clearTimeout(timer);
   }, []);
+
+  // One-time cleanup of spurious autolink marks loaded from initialContent.
+  // The StripSpuriousAutolinks plugin only fires on doc-changing transactions,
+  // so link marks already present when the editor mounts (legacy autolinked
+  // filenames like "app.py") aren't touched otherwise.
+  useEffect(() => {
+    if (!editor) return;
+    const view = editor.prosemirrorView;
+    if (!view) return;
+    const linkMarkType = view.state.schema.marks.link;
+    if (!linkMarkType) return;
+    const tr = view.state.tr;
+    let changed = false;
+    view.state.doc.descendants((node, pos) => {
+      if (!node.isText) return;
+      const linkMark = node.marks.find((m) => m.type === linkMarkType);
+      if (!linkMark) return;
+      const href = (linkMark.attrs as { href?: string }).href ?? "";
+      if (isAutolinkFalsePositive(node.text ?? "", href)) {
+        tr.removeMark(pos, pos + node.nodeSize, linkMarkType);
+        changed = true;
+      }
+    });
+    if (changed) view.dispatch(tr);
+  }, [editor]);
 
   // Intercept Tab in tables at the DOM level to prevent block nesting
   useEffect(() => {

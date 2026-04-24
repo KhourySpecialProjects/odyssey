@@ -605,7 +605,7 @@ export function LessonRenderer({
       ) : (
         <div className="mt-8 w-full px-10 md:px-40">
           <div className="w-full min-w-[300px] md:min-w-[700px]">
-            <p className="mb-4 text-base text-slate-600 dark:text-slate-300">
+            <p className="mb-4 text-right text-sm text-slate-400 italic dark:text-slate-400">
               Changes saved automatically
             </p>
             <DatasetProvider datasets={datasets}>

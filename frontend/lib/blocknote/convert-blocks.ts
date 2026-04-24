@@ -7,6 +7,10 @@ import katex from "katex";
 import { Block, CustomBlockNoteBlock } from "@/types";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
+import {
+  isAutolinkFalsePositive,
+  isSafeLinkHref,
+} from "@/lib/blocknote/autolink-filter";
 
 type BlockNoteTextStyles = {
   bold?: boolean;
@@ -20,6 +24,10 @@ type BlockNoteInlineContent = {
   type?: string;
   text?: string;
   styles?: BlockNoteTextStyles;
+  // Present when type === "link": an auto-linked or user-inserted link node
+  // wraps its text in `content`.
+  href?: string;
+  content?: BlockNoteInlineContent[];
 };
 
 // Strapi Blocks text node (minimal subset we care about)
@@ -99,6 +107,22 @@ function convertInlineContentToHtml(
           const text = contentItem.text ?? "";
           return renderTextWithStyles(text, contentItem.styles);
         }
+        if (contentItem.type === "link") {
+          const inner = convertInlineContentToHtml(contentItem.content ?? []);
+          if (!inner) return "";
+          const linkText = (contentItem.content ?? [])
+            .map((c) => c.text ?? "")
+            .join("");
+          const rawHref = contentItem.href ?? "";
+          if (
+            isAutolinkFalsePositive(linkText, rawHref) ||
+            !isSafeLinkHref(rawHref)
+          ) {
+            return inner;
+          }
+          const href = escapeHtml(rawHref);
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+        }
         return "";
       })
       .join("") || ""
@@ -109,7 +133,15 @@ function convertInlineContentToHtml(
 function convertInlineContentToStrapiBlocks(
   inlineContent: BlockNoteInlineContent[],
 ): StrapiBlocksTextNode[] {
-  return inlineContent.map((contentItem) => {
+  return inlineContent.flatMap((contentItem) => {
+    if (contentItem.type === "link") {
+      // Strapi Blocks output is consumed by callout rendering (see line ~301
+      // in this file), which doesn't render clickable anchors — so links are
+      // intentionally flattened to their visible text and the href is
+      // dropped. The HTML conversion path (`convertInlineContentToHtml`)
+      // preserves links as `<a>` tags for generic/block rendering.
+      return convertInlineContentToStrapiBlocks(contentItem.content ?? []);
+    }
     const text = contentItem.text ?? "";
 
     const node: StrapiBlocksTextNode = {
@@ -126,7 +158,7 @@ function convertInlineContentToStrapiBlocks(
       // LaTeX is kept as plain text – rendered later by block renderers
     }
 
-    return node;
+    return [node];
   });
 }
 
@@ -140,10 +172,56 @@ function convertInlineContentToText(
         if (contentItem.type === "text") {
           return contentItem.text ?? "";
         }
+        if (contentItem.type === "link") {
+          return convertInlineContentToText(contentItem.content ?? []);
+        }
         return "";
       })
       .join("") || ""
   );
+}
+
+// BlockNote stores Tab-indented content as nested `children` on a parent
+// block. Without this recursive render path, indented paragraphs/headings
+// disappear from preview and published droplets.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderBlockNoteBlockAsHtml(block: any): string {
+  const inline = (block.content ?? []) as BlockNoteInlineContent[];
+  const text = convertInlineContentToHtml(inline);
+
+  let ownHtml = "";
+  switch (block.type) {
+    case "paragraph":
+    case "quote":
+      ownHtml = text ? `<p>${text}</p>` : "";
+      break;
+    case "heading": {
+      const level = Number(block.props?.level) || 1;
+      ownHtml = text ? `<h${level}>${text}</h${level}>` : "";
+      break;
+    }
+    case "bulletListItem":
+      return `<ul class="list-disc list-outside ml-6 my-2 space-y-1">${convertBulletListItem(block, 0)}</ul>`;
+    case "numberedListItem":
+      return `<ol class="list-decimal list-outside ml-6 my-2 space-y-1">${convertNumberedListItem(block, 0)}</ol>`;
+    default:
+      return "";
+  }
+
+  return ownHtml + renderBlockNoteChildrenAsHtml(block.children ?? []);
+}
+
+function renderBlockNoteChildrenAsHtml(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children: any[],
+): string {
+  if (!Array.isArray(children) || children.length === 0) return "";
+  const inner = children
+    .map(renderBlockNoteBlockAsHtml)
+    .filter((s) => s.length > 0)
+    .join("");
+  if (!inner) return "";
+  return `<div class="pl-4 border-l-2 border-slate-200 dark:border-slate-700 my-1">${inner}</div>`;
 }
 
 // Helper function to convert a numbered list item and its children recursively
@@ -242,15 +320,19 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const textContent = convertInlineContentToHtml(inlineContent);
 
       const headingLevel = Number(blockAny.props?.level) || 1;
-      const htmlContent =
+      const ownHtml =
         blockAny.type === "heading"
           ? `<h${headingLevel}>${textContent}</h${headingLevel}>`
           : `<p>${textContent}</p>`;
 
+      const childrenHtml = renderBlockNoteChildrenAsHtml(
+        blockAny.children ?? [],
+      );
+
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: htmlContent,
+        content: ownHtml + childrenHtml,
       };
     }
 
@@ -561,6 +643,14 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "divider": {
+      return {
+        __component: "droplets.generic",
+        id: blockId,
+        content: "<hr />",
+      };
+    }
+
     default:
       return null;
   }
@@ -659,11 +749,7 @@ export function convertBlockNoteToV1Blocks(
       }
 
       const paragraphsHtml = paragraphBlocks
-        .map((p) => {
-          const pInlineContent = (p.content ?? []) as BlockNoteInlineContent[];
-          const pTextContent = convertInlineContentToHtml(pInlineContent);
-          return pTextContent ? `<p>${pTextContent}</p>` : "";
-        })
+        .map((p) => renderBlockNoteBlockAsHtml(p))
         .filter(Boolean)
         .join("");
 
@@ -688,12 +774,17 @@ export function convertBlockNoteToV1Blocks(
     if (blockAny.type === "quote") {
       const quoteContent = (blockAny.content ?? []) as BlockNoteInlineContent[];
       const textContent = convertInlineContentToHtml(quoteContent);
-      if (textContent) {
+      const childrenHtml = renderBlockNoteChildrenAsHtml(
+        blockAny.children ?? [],
+      );
+      const combined =
+        (textContent ? `<p>${textContent}</p>` : "") + childrenHtml;
+      if (combined) {
         const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : i;
         processedBlocks.push({
           __component: "droplets.generic",
           id: blockId,
-          content: `<p>${textContent}</p>`,
+          content: combined,
         });
       }
       i++;

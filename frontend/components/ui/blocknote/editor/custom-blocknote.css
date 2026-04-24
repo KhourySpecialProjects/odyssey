@@ -59,14 +59,48 @@
   position: relative !important;
 }
 
-/* Hide link button in BlockNote formatting toolbar */
-.blocknote-no-link .bn-formatting-toolbar button[aria-label*="link" i],
-.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Link" i],
-.blocknote-no-link .bn-formatting-toolbar button[title*="link" i],
-.blocknote-no-link .bn-formatting-toolbar button[title*="Link" i],
-.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Create link" i] {
-  display: none !important;
+/* BlockNote sets an inline `white-space: normal` on `.bn-block-content`, which
+   inherits into CodeMirror and collapses leading indentation in readOnly code
+   previews. Restore CodeMirror's own `pre`/`break-spaces` behavior. */
+.bn-block-content .cm-content,
+.bn-block-content .cm-line {
+  white-space: pre !important;
 }
+.bn-block-content .cm-content.cm-lineWrapping,
+.bn-block-content .cm-lineWrapping .cm-line {
+  white-space: break-spaces !important;
+}
+
+/* BlockNote ships no default styling for link marks. Render them as standard
+   blue underlined links inside the editor, with hover/focus states so
+   keyboard users get a visible indicator. */
+.bn-inline-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.bn-inline-content a:hover {
+  color: #1d4ed8;
+}
+.bn-inline-content a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.dark .bn-inline-content a {
+  color: #60a5fa;
+}
+.dark .bn-inline-content a:hover {
+  color: #93c5fd;
+}
+.dark .bn-inline-content a:focus-visible {
+  outline-color: #60a5fa;
+}
+
+/* NOTE: Link button used to be hidden from the formatting toolbar here. We
+   now allow link creation so users can wrap selected text in a link and so
+   the link hover toolbar ("Edit link") can surface. The `.blocknote-no-link`
+   wrapper class is retained for existing tests and any future scoping needs. */
 
 /* Slack-style inline code: border, background, rounded corners */
 .bn-inline-content code {
@@ -238,4 +272,17 @@
   .bn-block-content[data-is-only-empty-block]
   .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
   color: rgb(203 213 225); /* slate-300 */
+}
+
+/* ODY-441: BlockNote's NumberedListIndexingPlugin sets `--index` via JS, but
+   skips items nested inside non-list parents — leaving just "." without the
+   number. Fall back to a native CSS counter so the marker always renders. */
+.bn-block-group {
+  counter-reset: ody-bn-list;
+}
+.bn-block-content[data-content-type="numberedListItem"] {
+  counter-increment: ody-bn-list;
+}
+.bn-block-content[data-content-type="numberedListItem"]::before {
+  content: counter(ody-bn-list) "." !important;
 }

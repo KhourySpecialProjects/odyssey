@@ -28,9 +28,23 @@ jest.mock("@/components/draft/add-lesson", () => ({
   AddLesson: () => <div data-testid="add-lesson" />,
 }));
 
-// Mock the ContentActionButton component to avoid complex setup
+// Mock the ContentActionButton component to avoid complex setup.
+// Surface the actionType and buttonText so permission tests can assert on
+// which button (Publish vs Review) the sidebar hands to a given user role.
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
-  ContentActionButton: () => <div data-testid="content-action-button" />,
+  ContentActionButton: ({
+    actionType,
+    buttonText,
+  }: {
+    actionType: string;
+    buttonText: string;
+  }) => (
+    <div
+      data-testid="content-action-button"
+      data-action-type={actionType}
+      data-button-text={buttonText}
+    />
+  ),
 }));
 
 describe("Sidebar", () => {
@@ -333,5 +347,71 @@ describe("Sidebar", () => {
     );
 
     expect(screen.getByText("Overview")).toBeInTheDocument();
+  });
+
+  describe("publish button permissions", () => {
+    const renderWithRoles = (roles: AuthorizedUserRoleTitle[]) =>
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles } as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+        />,
+      );
+
+    it("shows Publish button for SysAdmin", () => {
+      renderWithRoles([AuthorizedUserRoleTitle.SysAdmin]);
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "publish");
+      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    });
+
+    it("shows Publish button for ContentEditor", () => {
+      renderWithRoles([AuthorizedUserRoleTitle.ContentEditor]);
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "publish");
+      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    });
+
+    it("shows Publish button for Faculty", () => {
+      renderWithRoles([AuthorizedUserRoleTitle.Faculty]);
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "publish");
+      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    });
+
+    it("shows Review button for ContentCreator (no direct publish)", () => {
+      renderWithRoles([AuthorizedUserRoleTitle.ContentCreator]);
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "requestReview");
+      expect(btn).toHaveAttribute("data-button-text", "Review");
+    });
+
+    it("shows no action button for User role", () => {
+      renderWithRoles([AuthorizedUserRoleTitle.User]);
+      expect(
+        screen.queryByTestId("content-action-button"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("uses publishDraft actionType when the droplet is a draft revision", () => {
+      render(
+        <Sidebar
+          user={
+            {
+              ...mockUser,
+              roles: [AuthorizedUserRoleTitle.SysAdmin],
+            } as any
+          }
+          droplet={{ ...mockDroplet, originalDropletId: 42 } as any}
+          availableDroplets={[]}
+          {...defaultProps}
+        />,
+      );
+      const btn = screen.getByTestId("content-action-button");
+      expect(btn).toHaveAttribute("data-action-type", "publishDraft");
+      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    });
   });
 });

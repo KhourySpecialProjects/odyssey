@@ -1,5 +1,32 @@
 import pkg from "./package.json" with { type: "json" };
 
+// Derive CSP-safe origins from the S3/CDN env vars so the config follows the
+// actual bucket (any region) or a CloudFront distribution without edits.
+function originFromEnv(value) {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+const datasetOrigins = [
+  originFromEnv(process.env.AWS_S3_BUCKET_URL),
+  originFromEnv(process.env.AWS_CDN_URL),
+].filter(Boolean);
+
+const connectSrc = [
+  "'self'",
+  "https://app.posthog.com",
+  "https://*.posthog.com",
+  "https://strapi.odyssey.khoury.northeastern.edu",
+  "https://emkc.org",
+  "https://cdn.jsdelivr.net",
+  "https://*.codesandbox.io",
+  ...datasetOrigins,
+].join(" ");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
@@ -53,7 +80,7 @@ const nextConfig = {
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com https://cdn.jsdelivr.net;
-              connect-src 'self' https://app.posthog.com https://*.posthog.com https://strapi.odyssey.khoury.northeastern.edu https://emkc.org https://cdn.jsdelivr.net https://*.codesandbox.io;
+              connect-src ${connectSrc};
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' data:;

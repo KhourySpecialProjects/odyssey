@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
+import { Compass } from "lucide-react";
 import { VoyageTreeIsland, ISLAND_SVG_DIMENSIONS } from "./voyage-tree-island";
 
 export interface TreeNode {
@@ -264,6 +265,27 @@ export function VoyageTreeMap({
 
   const ready = containerWidth > 0;
   let mainStep = 0;
+
+  if (nodes.length === 0) {
+    return (
+      <div
+        ref={containerRef}
+        className="flex min-h-[400px] w-full flex-col items-center justify-center gap-3 p-8 text-center"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:ring-slate-700">
+          <Compass className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            Your voyage map will appear here
+          </p>
+          <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+            Add a playlist or droplet to start charting islands.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

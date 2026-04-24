@@ -85,7 +85,7 @@ ${text}`;
 
   try {
     const msg = await client.messages.create({
-      model: "claude-3-haiku-20240307",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
@@ -93,7 +93,7 @@ ${text}`;
     const responseText =
       msg.content[0].type === "text" ? msg.content[0].text : "";
 
-    const parsed = JSON.parse(responseText) as SplitResponse;
+    const parsed = JSON.parse(extractJson(responseText)) as SplitResponse;
 
     if (
       !parsed.lessons ||
@@ -142,6 +142,20 @@ ${text}`;
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`AI splitting failed: ${message}`);
   }
+}
+
+// Strip markdown code fences and locate the JSON object/array. Handles
+// responses like ```json\n{...}\n``` or prose preamble before the JSON.
+function extractJson(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const candidate = (fenced ? fenced[1] : text).trim();
+  const firstBrace = candidate.search(/[{[]/);
+  if (firstBrace === -1) return candidate;
+  const open = candidate[firstBrace];
+  const close = open === "{" ? "}" : "]";
+  const lastBrace = candidate.lastIndexOf(close);
+  if (lastBrace <= firstBrace) return candidate;
+  return candidate.slice(firstBrace, lastBrace + 1);
 }
 
 /**

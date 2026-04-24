@@ -50,8 +50,10 @@ export default async function PresentationPage({ params }: Props) {
 
   if (!isAdmin && !isAuthor && !isEnrolled) return notFound();
 
-  // Block presentation if not enabled by the creator
-  if (!droplet.presentationEnabled) {
+  // Block presentation if the author explicitly disabled it.
+  // Legacy droplets (`presentationEnabled == null`) fall through so they keep
+  // working; new droplets default to `false` and require an explicit opt-in.
+  if (droplet.presentationEnabled === false) {
     return <NoPresentationWarning dropletSlug={slug} reason="disabled" />;
   }
 
