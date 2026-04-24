@@ -14,9 +14,9 @@ already set up, skip it, and only act on the remaining gaps.
 
 The canonical human-readable reference for this process is
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md) (workflow) and
-[`README.md`](../../README.md) (installation, including screenshots of the
-Strapi admin panel). Point the contributor at those if they want the long
-form.
+[`README.md`](../../README.md) §3 and §5 (installation, including screenshots
+of the Strapi admin panel). Point the contributor at those if they want the
+long form.
 
 ## Opening message to the user
 
@@ -29,7 +29,8 @@ Before running anything, tell the contributor:
 > - OAuth for the Linear MCP server (browser prompt)
 > - OAuth for the Figma MCP server (via `/mcp`)
 > - Secret env values only a teammate can share (Azure AD / GitHub OAuth
->   client credentials, NextAuth secret, AWS keys, PostHog keys, etc.)
+>   client credentials, NextAuth secret, AWS keys, PostHog keys, Anthropic
+>   API key, etc.)
 > - **Generating a Strapi API token** — requires logging into the local
 >   Strapi admin at `http://localhost:1337` and clicking through the UI.
 >   I'll walk you through it at the end.
@@ -79,18 +80,28 @@ continue to later steps).
 
 ### 3. Create `.env` files from templates
 
-Four files total: two for backend, two for frontend. For each, copy the
-`.env*.example` → target if the target does NOT already exist. The
-`protect-files.sh` hook blocks `Edit`/`Write` on `.env*` files but does not
-block `cp` via Bash. If any copy is blocked anyway, record MANUAL for it.
-**Never fill in values** — the contributor fills them from a teammate.
+Four template files are checked in. For each pair, copy the `*.example` to
+the runtime filename ONLY if the runtime file does not already exist. Do not
+overwrite a contributor's existing env:
 
-| Source                         | Target                 | Purpose                                      |
+| Template (committed)           | Runtime (gitignored)   | Purpose                                      |
 | ------------------------------ | ---------------------- | -------------------------------------------- |
-| `backend/.env.example`         | `backend/.env`         | Host-run Strapi (Postgres, JWT, S3, keys)    |
-| `backend/.docker.env.example`  | `backend/.docker.env`  | Docker overrides (`DATABASE_HOST=strapiDB`)  |
 | `frontend/.env.example`        | `frontend/.env.local`  | Next.js local dev (Azure AD, GitHub, Strapi) |
 | `frontend/.docker.env.example` | `frontend/.docker.env` | Frontend in Docker (Strapi URL + token)      |
+| `backend/.env.example`         | `backend/.env`         | Host-run Strapi (Postgres, JWT, S3, keys)    |
+| `backend/.docker.env.example`  | `backend/.docker.env`  | Docker overrides (`DATABASE_HOST=strapiDB`)  |
+
+```bash
+[ ! -f frontend/.env.local ]  && cp frontend/.env.example        frontend/.env.local
+[ ! -f frontend/.docker.env ] && cp frontend/.docker.env.example frontend/.docker.env
+[ ! -f backend/.env ]         && cp backend/.env.example         backend/.env
+[ ! -f backend/.docker.env ]  && cp backend/.docker.env.example  backend/.docker.env
+```
+
+Note: the `protect-files.sh` hook blocks `Edit`/`Write` on `.env*` files but
+does not block `cp` via Bash. If any copy is blocked anyway, record MANUAL
+for that file. **Never fill in values** — every key in the template must be
+filled in by the contributor with secrets from a teammate.
 
 For each copied file, list the empty keys in the MANUAL punch list so the
 contributor knows exactly what to fill in and from whom.
@@ -98,8 +109,9 @@ contributor knows exactly what to fill in and from whom.
 **Backend `.env`** — the contributor chooses their own values for the
 database block (`DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` —
 e.g. `strapi`, `strapi_user`, any password). The rest (`APP_KEYS`,
-`API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, all `AWS_*`
-keys) must come from a teammate.
+`API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`,
+all `AWS_S3_*` upload creds) must come from a teammate. Leave
+`SLACK_WEBHOOK_URL` empty locally — it's prod-only.
 
 **Backend `.docker.env`** — `DATABASE_HOST` MUST be `strapiDB` (the docker
 service name). `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` should
@@ -107,18 +119,20 @@ match the `DATABASE_*` values from `backend/.env` so the Postgres container
 initializes with the credentials Strapi will use to connect.
 
 **Frontend `.env.local`** — needs Azure AD (`AZURE_AD_CLIENT_ID`,
-`_CLIENT_SECRET`, `_TENANT_ID`), GitHub OAuth (`GITHUB_CLIENT_ID`,
-`_CLIENT_SECRET`), `NEXTAUTH_SECRET`, PostHog (`NEXT_PUBLIC_POSTHOG_KEY`,
-`NEXT_PUBLIC_POSTHOG_HOST`), AWS S3 (all `AWS_*` keys), and
-`STRAPI_ACCESS_TOKEN` (generated in Step 7 below). All except
-`STRAPI_ACCESS_TOKEN` come from a teammate.
+`AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID`), GitHub OAuth
+(`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`), `NEXTAUTH_SECRET`, PostHog
+(`POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`, `NEXT_PUBLIC_POSTHOG_KEY`,
+`NEXT_PUBLIC_POSTHOG_HOST`), Anthropic (`ANTHROPIC_API_KEY`), AWS S3
+(`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_*`,
+`AWS_REGION`), and `STRAPI_ACCESS_TOKEN` (generated in Step 6 below). All
+except `STRAPI_ACCESS_TOKEN` come from a teammate.
 
-**Frontend `.docker.env`** — leave blank for now; populated in Step 7 after
-the Strapi token is generated. Final contents will be:
+**Frontend `.docker.env`** — populated in Step 6 after the Strapi token is
+generated. Final contents will be:
 
 ```bash
 STRAPI_API_URL=http://host.docker.internal:1337
-STRAPI_ACCESS_TOKEN=<token from step 7>
+STRAPI_ACCESS_TOKEN=<token from step 6>
 ```
 
 ### 4. Docker — bring up local services
@@ -141,8 +155,9 @@ docker info > /dev/null 2>&1
   run — can take 30–60s).
 
 Note: Strapi will not serve API traffic until the database is seeded AND
-authorized user roles exist (Step 6). On a fresh volume, `http://localhost:1337`
-will redirect to the Strapi admin registration page — that's expected.
+authorized user roles exist (Step 5). On a fresh volume,
+`http://localhost:1337` will redirect to the Strapi admin registration page
+— that's expected.
 
 ### 5. Database seeding — two paths
 
@@ -161,6 +176,15 @@ for them.
    re-run. Tell the contributor: "If you need to re-seed, delete the
    `odyssey_strapi-data` volume in Docker Desktop, then `docker compose up`
    again."
+4. **You can't log in as the prod admins locally** (those users exist in
+   the dump but not with their credentials). Offer to create a local admin
+   for them. If they say yes, prompt for name/email/password and run:
+
+   ```bash
+   docker exec -i strapi npx strapi admin:create-user \
+     --firstname="$F" --lastname="$L" \
+     --email="$E" --password="$P"
+   ```
 
 #### Option B — Start from scratch
 
@@ -181,10 +205,10 @@ to open the README):
 
 ```
 MANUAL: Generate the Strapi API token
-  1. Open http://localhost:1337 in your browser.
+  1. Open http://localhost:1337/admin in your browser.
   2. Log in as admin:
-     - Prod-data path: use your dev.data.khouryodyssey.org admin account.
-     - Scratch path:   the admin you registered in Step 5.
+     - Prod-data path:   the local admin you created in Step 5.4.
+     - Scratch path:     the admin you registered in Step 5.1.
   3. Bottom-left gear icon → Settings.
   4. Under "Global Settings" → API Tokens.
   5. Top-right "Create new API Token".
@@ -199,7 +223,7 @@ MANUAL: Generate the Strapi API token
   9. Restart Docker so the frontend picks it up:
      docker compose down && docker compose up -d
 
-  Screenshots of each step: see README.md Section 5 "API Key".
+  Screenshots of each step: see README.md §5 "API Key".
 ```
 
 ### 7. Verify project-scoped plugins (install any that are missing)
@@ -272,9 +296,9 @@ Odyssey Onboarding
 ══════════════════
 ✓ Tooling — git 2.45, node 20.11.1, npm 10.2.4, docker 24.0.7, jq 1.7, claude 1.x
 ⤳ Dependencies — node_modules already present (skipped)
-✓ backend/.env           — created from template (7 values need filling)
-✓ backend/.docker.env    — created from template (3 values need filling)
-✓ frontend/.env.local    — created from template (15 values need filling)
+✓ backend/.env           — created from template (values need filling)
+✓ backend/.docker.env    — created from template (values need filling)
+✓ frontend/.env.local    — created from template (values need filling)
 ✓ frontend/.docker.env   — created from template (token pending Step 6)
 ✓ Docker — 3 containers running (strapiDB, strapi, …)
 ✓ Plugins — typescript-lsp, code-simplifier, superpowers
@@ -285,26 +309,29 @@ Odyssey Onboarding
 Manual steps remaining
 ──────────────────────
 1. Fill env values (get from teammate):
-   - backend/.env: APP_KEYS, API_TOKEN_SALT, ADMIN_JWT_SECRET, TRANSFER_TOKEN_SALT,
-     AWS_CDN_URL, AWS_CDN_ROOT_PATH, AWS_S3_ACCESS_KEY, AWS_S3_SECRET_KEY,
-     AWS_S3_REGION, AWS_S3_ENDPOINT, AWS_S3_BUCKET
+   - backend/.env: APP_KEYS, API_TOKEN_SALT, ADMIN_JWT_SECRET,
+     TRANSFER_TOKEN_SALT, JWT_SECRET, AWS_S3_* (or use docker defaults).
+     Leave SLACK_WEBHOOK_URL empty locally — it's prod-only.
    - frontend/.env.local: AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET,
      AZURE_AD_TENANT_ID, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
-     NEXTAUTH_SECRET, NEXT_PUBLIC_POSTHOG_KEY, NEXT_PUBLIC_POSTHOG_HOST,
-     AWS_* (all 7), APP_URL, DO_CDN_URL
+     NEXTAUTH_SECRET, POSTHOG_API_KEY, POSTHOG_PROJECT_ID,
+     NEXT_PUBLIC_POSTHOG_KEY, ANTHROPIC_API_KEY, AWS_* (all),
+     APP_URL, DO_CDN_URL.
 
 2. Seed the database — pick one:
    A) Prod data: get signed up at dev2.data.khouryodyssey.org, then request
-      data.sql from a teammate and drop it in initdb/
+      data.sql from a teammate, drop it in initdb/, then optionally create
+      a local admin via `docker exec -i strapi npx strapi admin:create-user`.
    B) From scratch: register at localhost:1337, add Authorized User Roles
-      via Strapi admin (see README.md Section 4 screenshots), add yourself
-      as an Authorized User
+      via Strapi admin (see README.md §4 screenshots), add yourself as an
+      Authorized User.
 
 3. Generate the Strapi API token (click-through — no CLI equivalent):
-   localhost:1337 → log in → Settings → API Tokens → Create new → Full access
-   → Save → copy token → paste into both frontend/.env.local (STRAPI_ACCESS_TOKEN)
-   AND frontend/.docker.env (STRAPI_ACCESS_TOKEN + STRAPI_API_URL=http://host.docker.internal:1337)
-   → docker compose down && docker compose up -d
+   localhost:1337/admin → log in → Settings → API Tokens → Create new →
+   Full access → Save → copy token → paste into both frontend/.env.local
+   (STRAPI_ACCESS_TOKEN) AND frontend/.docker.env (STRAPI_ACCESS_TOKEN +
+   STRAPI_API_URL=http://host.docker.internal:1337) →
+   docker compose down && docker compose up -d
 
 4. Authenticate Linear MCP — browser OAuth (or /mcp → linear → Authenticate)
 

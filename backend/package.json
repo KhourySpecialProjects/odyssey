@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "A Strapi application",
   "scripts": {
     "dev": "strapi develop",
@@ -10,7 +10,7 @@
     "strapi": "strapi"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1030.0",
+    "@aws-sdk/client-s3": "^3.1032.0",
     "@ckeditor/strapi-plugin-ckeditor": "^0.0.11",
     "@strapi/plugin-cloud": "^4.22.0",
     "@strapi/plugin-documentation": "^4.22.0",
