@@ -283,11 +283,6 @@
 .bn-block-content[data-content-type="numberedListItem"] {
   counter-increment: ody-bn-list;
 }
-.bn-block-outer:not([data-prev-type])
-  > .bn-block
-  > .bn-block-content[data-content-type="numberedListItem"]::before,
-.bn-block-outer[data-prev-type="numberedListItem"]
-  > .bn-block
-  > .bn-block-content[data-content-type="numberedListItem"]::before {
+.bn-block-content[data-content-type="numberedListItem"]::before {
   content: counter(ody-bn-list) "." !important;
 }
