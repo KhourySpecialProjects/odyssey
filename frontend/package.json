@@ -117,7 +117,7 @@
     "isomorphic-dompurify": "^2.19.0",
     "jest": "^29.7.0",
     "jszip": "^3.10.1",
-    "katex": "^0.16.21",
+    "katex": "^0.16.45",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "lowlight": "^3.3.0",
