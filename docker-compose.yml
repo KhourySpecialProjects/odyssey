@@ -53,10 +53,25 @@ services:
       - ./frontend/.docker.env
     environment:
       - WATCHPACK_POLLING=true
+      # PISTON_API_URL / JUDGE0_API_URL / JUDGE0_API_KEY come from
+      # frontend/.env.local. Judge0 wins if both are set.
     ports:
       - 3000:3000
     depends_on:
       - strapi
+      - piston
+    networks:
+      - frontend
+
+  piston:
+    container_name: piston
+    image: ghcr.io/engineer-man/piston:latest
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - piston-data:/piston
+    ports:
+      - "127.0.0.1:2000:2000"
     networks:
       - frontend
 
@@ -64,6 +79,7 @@ volumes:
   strapi-data:
   frontend_node_modules:
   frontend_cache:
+  piston-data:
 
 networks:
   frontend:
