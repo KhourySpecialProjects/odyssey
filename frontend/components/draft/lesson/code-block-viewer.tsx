@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeEditor } from "@/components/ui/code-editor";
-
-const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
+import { executeCode } from "@/lib/code-execution";
 
 const LANGUAGE_LABELS: Record<string, string> = {
   javascript: "JavaScript",
@@ -22,68 +21,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
   rust: "Rust",
   kotlin: "Kotlin",
   swift: "Swift",
-};
-
-const executePistonCode = async (
-  language: string,
-  code: string,
-  fileName: string,
-  pistonLanguageName: string,
-) => {
-  try {
-    const response = await fetch(PISTON_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        language: pistonLanguageName,
-        version: "*",
-        files: [{ name: fileName, content: code }],
-        stdin: "",
-        args: [],
-        compile_timeout: 10000,
-        run_timeout: 3000,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.compile && result.compile.code !== 0) {
-      return {
-        success: false,
-        output:
-          result.compile.stderr ||
-          result.compile.output ||
-          "Compilation failed",
-      };
-    }
-
-    if (result.run.code !== 0 && result.run.stderr) {
-      return {
-        success: false,
-        output: result.run.stderr,
-      };
-    }
-
-    const output =
-      result.run.stdout ||
-      result.run.output ||
-      "Code executed successfully (no output)";
-    return {
-      success: true,
-      output: output.trim(),
-    };
-  } catch (error: unknown) {
-    return {
-      success: false,
-      output: `Execution error: ${error instanceof Error ? error.message : String(error)}`,
-    };
-  }
 };
 
 interface CodeBlockViewerProps {
@@ -113,50 +50,7 @@ export function CodeBlockViewer({
     setExecutionSuccess(true);
 
     try {
-      // Map language to Piston language name
-      const pistonLanguageMap: Record<string, string> = {
-        javascript: "javascript",
-        typescript: "typescript",
-        python: "python",
-        java: "java",
-        cpp: "c++",
-        c: "c",
-        csharp: "csharp",
-        php: "php",
-        ruby: "ruby",
-        bash: "bash",
-        go: "go",
-        rust: "rust",
-        kotlin: "kotlin",
-        swift: "swift",
-      };
-
-      // Get proper file name for language
-      const fileNames: Record<string, string> = {
-        javascript: "index.js",
-        typescript: "index.ts",
-        python: "main.py",
-        java: "Main.java",
-        cpp: "main.cpp",
-        c: "main.c",
-        csharp: "Main.cs",
-        php: "index.php",
-        ruby: "main.rb",
-        bash: "script.sh",
-        go: "main.go",
-        rust: "main.rs",
-        kotlin: "Main.kt",
-        swift: "main.swift",
-      };
-
-      const pistonLanguage = pistonLanguageMap[language] || language;
-      const fileName = fileNames[language] || "main.txt";
-      const result = await executePistonCode(
-        language,
-        code,
-        fileName,
-        pistonLanguage,
-      );
+      const result = await executeCode(language, code);
       setOutput(result.output);
       setExecutionSuccess(result.success);
     } catch (error: unknown) {
