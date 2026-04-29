@@ -72,8 +72,7 @@ async function executeViaProxy(
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      const msg =
-        body?.error ?? `Execution service error (${response.status})`;
+      const msg = body?.error ?? `Execution service error (${response.status})`;
       return { success: false, output: msg };
     }
 
