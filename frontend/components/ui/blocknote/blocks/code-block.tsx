@@ -5,11 +5,7 @@ import { useState, useEffect, ErrorInfo } from "react";
 import React from "react";
 import { Play, Edit, Lock, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { CodeEditor } from "@/components/ui/code-editor";
-
-// Server-side proxy. Browser never calls Piston directly — see
-// frontend/app/api/run-code/route.ts. Python is executed in-browser via
-// Pyodide and never hits the network.
-const RUN_CODE_URL = "/api/run-code";
+import { executeCode } from "@/lib/code-execution";
 
 // Languages supported by both Piston and CodeMirror
 const SUPPORTED_LANGUAGES = {
@@ -81,94 +77,6 @@ function getPlaceholder(language: string): string {
   return "// Write your code here";
 }
 
-type ExecResult = { success: boolean; output: string };
-
-async function executePython(code: string): Promise<ExecResult> {
-  try {
-    const { runPython } = await import("@/lib/pyodide/runtime");
-    const result = await runPython(code);
-    if (result.error) {
-      return { success: false, output: result.error.trim() };
-    }
-    const out =
-      (result.stdout || "").trim() || "Code executed successfully (no output)";
-    return { success: true, output: out };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, output: `Execution error: ${msg}` };
-  }
-}
-
-async function executeViaProxy(
-  language: string,
-  code: string,
-): Promise<ExecResult> {
-  const langConfig = allLanguages.find((l) => l.value === language);
-  if (!langConfig || !langConfig.pistonName) {
-    return {
-      success: false,
-      output: `Language ${language} is not supported for execution`,
-    };
-  }
-
-  try {
-    const response = await fetch(RUN_CODE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        language: langConfig.pistonName,
-        code,
-        fileName: langConfig.fileName,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      const msg = body?.error ?? `Execution service error (${response.status})`;
-      return { success: false, output: msg };
-    }
-
-    const result = await response.json();
-
-    if (result.compile && result.compile.code !== 0) {
-      return {
-        success: false,
-        output:
-          result.compile.stderr ||
-          result.compile.output ||
-          "Compilation failed",
-      };
-    }
-
-    // Treat any non-zero run exit as a failure so silent failures
-    // (exit(1) with no stderr) aren't shown as success in green.
-    if (result.run && result.run.code !== 0) {
-      const errOut =
-        (result.run.stderr || "").trim() ||
-        (result.run.output || "").trim() ||
-        (result.run.stdout || "").trim() ||
-        `Process exited with code ${result.run.code}`;
-      return { success: false, output: errOut };
-    }
-
-    const output =
-      result.run?.stdout ||
-      result.run?.output ||
-      "Code executed successfully (no output)";
-    return { success: true, output: String(output).trim() };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, output: `Execution error: ${msg}` };
-  }
-}
-
-async function executeCode(
-  language: string,
-  code: string,
-): Promise<ExecResult> {
-  if (language === "python") return executePython(code);
-  return executeViaProxy(language, code);
-}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CodeBlockComponent = ({ block, editor }: any) => {
   const [isEditing, setIsEditing] = useState(false);
