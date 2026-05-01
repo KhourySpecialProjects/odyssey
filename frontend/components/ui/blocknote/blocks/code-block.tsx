@@ -5,9 +5,7 @@ import { useState, useEffect, ErrorInfo } from "react";
 import React from "react";
 import { Play, Edit, Lock, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { CodeEditor } from "@/components/ui/code-editor";
-
-// Piston API configuration - calling directly
-const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
+import { executeCode } from "@/lib/code-execution";
 
 // Languages supported by both Piston and CodeMirror
 const SUPPORTED_LANGUAGES = {
@@ -79,79 +77,6 @@ function getPlaceholder(language: string): string {
   return "// Write your code here";
 }
 
-const executePistonCode = async (language: string, code: string) => {
-  const langConfig = allLanguages.find((l) => l.value === language);
-  if (!langConfig || !langConfig.pistonName) {
-    return {
-      success: false,
-      output: `Language ${language} is not supported for execution`,
-    };
-  }
-
-  try {
-    const response = await fetch(PISTON_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        language: langConfig.pistonName,
-        version: "*",
-        files: [
-          {
-            name: langConfig.fileName,
-            content: code,
-          },
-        ],
-        stdin: "",
-        args: [],
-        compile_timeout: 10000,
-        run_timeout: 3000,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // Handle compilation errors
-    if (result.compile && result.compile.code !== 0) {
-      return {
-        success: false,
-        output:
-          result.compile.stderr ||
-          result.compile.output ||
-          "Compilation failed",
-      };
-    }
-
-    // Handle runtime errors
-    if (result.run.code !== 0 && result.run.stderr) {
-      return {
-        success: false,
-        output: result.run.stderr,
-      };
-    }
-
-    // Return successful output
-    const output =
-      result.run.stdout ||
-      result.run.output ||
-      "Code executed successfully (no output)";
-    return {
-      success: true,
-      output: output.trim(),
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    return {
-      success: false,
-      output: `Execution error: ${error.message}`,
-    };
-  }
-};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CodeBlockComponent = ({ block, editor }: any) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -213,7 +138,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
     setExecutionSuccess(true);
 
     try {
-      const result = await executePistonCode(block.props.language, code);
+      const result = await executeCode(block.props.language, code);
       setOutput(result.output);
       setExecutionSuccess(result.success);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
