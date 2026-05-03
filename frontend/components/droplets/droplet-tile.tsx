@@ -39,6 +39,7 @@ interface DropletTileProps {
   isAdmin?: boolean;
   isCreator?: boolean;
   creatorArchive?: boolean;
+  showCreatedDate?: boolean;
 }
 
 export function DropletTile({
@@ -53,6 +54,7 @@ export function DropletTile({
   isAdmin,
   isCreator,
   creatorArchive,
+  showCreatedDate = false,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
@@ -503,7 +505,7 @@ ${
           </div>
 
           <div className="flex w-full flex-nowrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center">
+            <div className="flex min-w-0 items-center gap-2">
               {droplet.averageRating && droplet.averageRating != 0.0 ? (
                 <div className="max-w-full origin-left scale-[0.55]">
                   <StarRating
@@ -514,9 +516,19 @@ ${
                   />
                 </div>
               ) : null}
+              {showCreatedDate && droplet.createdAt && (
+                <span className="flex flex-col text-xs text-slate-400 dark:text-slate-400">
+                  <span>Created on</span>
+                  <span>
+                    {DateTime.fromISO(droplet.createdAt).toFormat(
+                      "MMM d, yyyy",
+                    )}
+                  </span>
+                </span>
+              )}
             </div>
 
-            <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+            <div className="ml-2 flex flex-shrink-0 items-center gap-1">
               <Button
                 size="sm"
                 onClick={(e) => {
