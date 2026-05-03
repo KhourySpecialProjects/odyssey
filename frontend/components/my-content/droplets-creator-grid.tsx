@@ -13,19 +13,10 @@ import {
   dropletMatchesFilters,
   DropletFilterParams,
 } from "@/components/my-content/apply-sort-filter";
-import { CREATOR_DEFAULT_SORT } from "@/components/my-content/sort-filter-options";
-
-// URL params that apply only to the droplets tab
-const DROPLET_PARAM_KEYS = [
-  "tab",
-  "q",
-  "sort",
-  "status",
-  "visibility",
-  "focusArea",
-  "type",
-  "difficulty",
-];
+import {
+  CREATOR_DEFAULT_SORT,
+  TAB_ALLOWED_PARAMS,
+} from "@/components/my-content/sort-filter-options";
 
 interface DropletsCreatorGridProps {
   droplets: Droplet[];
@@ -60,16 +51,9 @@ export function DropletsCreatorGrid({ droplets }: DropletsCreatorGridProps) {
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams);
-    // Keep only non-filter params
-    [
-      "q",
-      "sort",
-      "status",
-      "visibility",
-      "focusArea",
-      "type",
-      "difficulty",
-    ].forEach((key) => params.delete(key));
+    TAB_ALLOWED_PARAMS.droplets
+      .filter((key) => key !== "tab")
+      .forEach((key) => params.delete(key));
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -124,5 +108,3 @@ export function DropletsCreatorGrid({ droplets }: DropletsCreatorGridProps) {
     </ul>
   );
 }
-
-export { DROPLET_PARAM_KEYS };

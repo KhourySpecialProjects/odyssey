@@ -13,7 +13,10 @@ import {
   voyageMatchesFilters,
   VoyageFilterParams,
 } from "@/components/my-content/apply-sort-filter";
-import { CREATOR_DEFAULT_SORT } from "@/components/my-content/sort-filter-options";
+import {
+  CREATOR_DEFAULT_SORT,
+  TAB_ALLOWED_PARAMS,
+} from "@/components/my-content/sort-filter-options";
 
 interface VoyagesCreatorGridProps {
   voyages: Voyage[];
@@ -46,7 +49,9 @@ export function VoyagesCreatorGrid({
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams);
-    ["q", "sort", "visibility"].forEach((key) => params.delete(key));
+    TAB_ALLOWED_PARAMS.voyages
+      .filter((key) => key !== "tab")
+      .forEach((key) => params.delete(key));
     router.push(`${pathname}?${params.toString()}`);
   };
 

@@ -11,6 +11,7 @@ import { MyContentToolbar } from "@/components/my-content/my-content-toolbar";
 import { DropletsCreatorGrid } from "@/components/my-content/droplets-creator-grid";
 import { PlaylistsCreatorGrid } from "@/components/my-content/playlists-creator-grid";
 import { VoyagesCreatorGrid } from "@/components/my-content/voyages-creator-grid";
+import { TAB_ALLOWED_PARAMS } from "@/components/my-content/sort-filter-options";
 
 interface MyContentTabsProps {
   droplets: Droplet[];
@@ -26,22 +27,6 @@ const tabs = [
   { id: "playlists", label: "Playlists" },
   { id: "voyages", label: "Voyages" },
 ] as const;
-
-// Params allowed on each tab (used to clear stale params on tab switch)
-const TAB_ALLOWED_PARAMS: Record<string, string[]> = {
-  droplets: [
-    "tab",
-    "q",
-    "sort",
-    "status",
-    "visibility",
-    "focusArea",
-    "type",
-    "difficulty",
-  ],
-  playlists: ["tab", "q", "sort", "visibility", "public"],
-  voyages: ["tab", "q", "sort", "visibility"],
-};
 
 export function MyContentTabs({
   droplets,

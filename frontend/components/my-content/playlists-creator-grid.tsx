@@ -13,7 +13,10 @@ import {
   playlistMatchesFilters,
   PlaylistFilterParams,
 } from "@/components/my-content/apply-sort-filter";
-import { CREATOR_DEFAULT_SORT } from "@/components/my-content/sort-filter-options";
+import {
+  CREATOR_DEFAULT_SORT,
+  TAB_ALLOWED_PARAMS,
+} from "@/components/my-content/sort-filter-options";
 
 interface PlaylistsCreatorGridProps {
   playlists: Playlist[];
@@ -43,7 +46,9 @@ export function PlaylistsCreatorGrid({ playlists }: PlaylistsCreatorGridProps) {
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams);
-    ["q", "sort", "visibility", "public"].forEach((key) => params.delete(key));
+    TAB_ALLOWED_PARAMS.playlists
+      .filter((key) => key !== "tab")
+      .forEach((key) => params.delete(key));
     router.push(`${pathname}?${params.toString()}`);
   };
 

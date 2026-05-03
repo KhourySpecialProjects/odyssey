@@ -103,3 +103,23 @@ export const VOYAGE_CREATOR_FILTERS: {
     options: VISIBILITY_OPTIONS,
   },
 ];
+
+// Allowed URL params per tab — used by tab switching (to clear stale params)
+// and by each grid's clearFilters handler
+export const TAB_ALLOWED_PARAMS: Record<
+  "droplets" | "playlists" | "voyages",
+  string[]
+> = {
+  droplets: [
+    "tab",
+    "q",
+    "sort",
+    "status",
+    "visibility",
+    "focusArea",
+    "type",
+    "difficulty",
+  ],
+  playlists: ["tab", "q", "sort", "visibility", "public"],
+  voyages: ["tab", "q", "sort", "visibility"],
+};
