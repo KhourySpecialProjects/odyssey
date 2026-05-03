@@ -2,6 +2,7 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon } from "lucide-react";
 import React from "react";
+import { QuizRichTextInput } from "./quiz-rich-text-input";
 
 export const TrueFalseQuiz = createReactBlockSpec(
   {
@@ -22,11 +23,9 @@ export const TrueFalseQuiz = createReactBlockSpec(
     render: (props) => {
       const { question, correctAnswer } = props.block.props;
 
-      const handleQuestionChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>,
-      ) => {
+      const handleQuestionChange = (html: string) => {
         props.editor.updateBlock(props.block, {
-          props: { question: e.target.value },
+          props: { question: html },
         });
       };
 
@@ -59,11 +58,10 @@ export const TrueFalseQuiz = createReactBlockSpec(
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Question:
               </label>
-              <textarea
+              <QuizRichTextInput
                 value={question}
                 onChange={handleQuestionChange}
-                placeholder="Nothing here yet..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                minHeight="80px"
               />
             </div>
 

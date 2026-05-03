@@ -2,6 +2,7 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon, PlusIcon, XIcon } from "lucide-react";
 import React from "react";
+import { QuizRichTextInput } from "./quiz-rich-text-input";
 
 interface AnswerOption {
   id: string;
@@ -51,17 +52,15 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         ];
       }
 
-      const handleQuestionChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>,
-      ) => {
+      const handleQuestionChange = (html: string) => {
         props.editor.updateBlock(props.block, {
-          props: { question: e.target.value },
+          props: { question: html },
         });
       };
 
-      const handleOptionTextChange = (id: string, text: string) => {
+      const handleOptionTextChange = (id: string, html: string) => {
         const updatedOptions = options.map((opt: AnswerOption) =>
-          opt.id === id ? { ...opt, text } : opt,
+          opt.id === id ? { ...opt, text: html } : opt,
         );
         props.editor.updateBlock(props.block, {
           props: {
@@ -133,11 +132,10 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Question:
               </label>
-              <textarea
+              <QuizRichTextInput
                 value={question}
                 onChange={handleQuestionChange}
-                placeholder="Nothing here yet..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                minHeight="80px"
               />
             </div>
 
@@ -159,14 +157,16 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                     />
 
                     {/* Option text */}
-                    <textarea
-                      value={option.text}
-                      onChange={(e) =>
-                        handleOptionTextChange(option.id, e.target.value)
-                      }
-                      placeholder={`Option ${index + 1}`}
-                      className="resize-vertical min-h-[60px] flex-1 rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                    />
+                    <div className="flex-1">
+                      <QuizRichTextInput
+                        key={option.id}
+                        value={option.text}
+                        onChange={(html) =>
+                          handleOptionTextChange(option.id, html)
+                        }
+                        minHeight="60px"
+                      />
+                    </div>
 
                     {/* Delete option button */}
                     {options.length > 2 && (
