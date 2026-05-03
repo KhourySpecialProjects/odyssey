@@ -173,7 +173,7 @@ export function QuizQuestionBlock({
     <>
       <div
         role="question"
-        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit prose-pre:my-2 dark:text-slate-300"
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit prose-pre:my-2 prose-pre:text-base dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.content) }}
       ></div>
 
@@ -219,7 +219,7 @@ export function QuizQuestionBlock({
                     return selectedAnswer ? (
                       <li key={id}>
                         <div
-                          className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
+                          className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
                           dangerouslySetInnerHTML={{
                             __html: DOMPurify.sanitize(selectedAnswer.content),
                           }}
@@ -275,7 +275,7 @@ export function QuizQuestionBlock({
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
                               <div
-                                className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
+                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
                                 dangerouslySetInnerHTML={{
                                   __html: DOMPurify.sanitize(answer.content),
                                 }}
@@ -310,7 +310,7 @@ export function QuizQuestionBlock({
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
                               <div
-                                className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
+                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
                                 dangerouslySetInnerHTML={{
                                   __html: DOMPurify.sanitize(answer.content),
                                 }}
