@@ -1,17 +1,17 @@
 "use client";
 
-import { useQueryState, parseAsStringLiteral } from "nuqs";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { DropletTile } from "@/components/droplets/droplet-tile";
-import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { VoyageCard } from "@/components/voyages/voyage-card";
 import { Droplet, Playlist, Voyage } from "@/types";
 import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/ui/empty-state";
-import { IconDroplet, IconLayoutList, IconMap } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
+import { MyContentToolbar } from "@/components/my-content/my-content-toolbar";
+import { DropletsCreatorGrid } from "@/components/my-content/droplets-creator-grid";
+import { PlaylistsCreatorGrid } from "@/components/my-content/playlists-creator-grid";
+import { VoyagesCreatorGrid } from "@/components/my-content/voyages-creator-grid";
+import { TAB_ALLOWED_PARAMS } from "@/components/my-content/sort-filter-options";
 
 interface MyContentTabsProps {
   droplets: Droplet[];
@@ -37,10 +37,14 @@ export function MyContentTabs({
   currentUserId,
 }: MyContentTabsProps) {
   const tabIds = tabs.map((t) => t.id);
-  const [activeTab, setActiveTab] = useQueryState(
-    "tab",
-    parseAsStringLiteral(tabIds).withDefault("droplets"),
-  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const rawTab = searchParams.get("tab");
+  const activeTab = tabIds.includes(rawTab as (typeof tabIds)[number])
+    ? (rawTab as (typeof tabIds)[number])
+    : "droplets";
 
   const visibleTabs = useMemo(
     () =>
@@ -56,9 +60,32 @@ export function MyContentTabs({
   useEffect(() => {
     const ids = visibleTabs.map((t) => t.id);
     if (!ids.includes(activeTab)) {
-      setActiveTab(ids[0] ?? "droplets");
+      const fallbackTab = (ids[0] ?? "droplets") as (typeof tabIds)[number];
+      const allowed = TAB_ALLOWED_PARAMS[fallbackTab] ?? [];
+      const params = new URLSearchParams();
+      allowed.forEach((key) => {
+        const value = searchParams.get(key);
+        if (value !== null) params.set(key, value);
+      });
+      params.set("tab", fallbackTab);
+      router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [activeTab, visibleTabs, setActiveTab]);
+  }, [activeTab, visibleTabs, searchParams, pathname, router]);
+
+  const handleTabChange = (newTab: (typeof tabIds)[number]) => {
+    const allowed = TAB_ALLOWED_PARAMS[newTab] ?? [];
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Remove params not applicable to the new tab
+    Array.from(params.keys()).forEach((key) => {
+      if (!allowed.includes(key)) {
+        params.delete(key);
+      }
+    });
+
+    params.set("tab", newTab);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="w-full">
@@ -75,7 +102,7 @@ export function MyContentTabs({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
                   "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                   activeTab === tab.id
@@ -124,94 +151,26 @@ export function MyContentTabs({
         )}
       </div>
 
+      {/* Toolbar: search + filters + sort */}
+      <div className="mt-4">
+        <MyContentToolbar
+          tab={activeTab as "droplets" | "playlists" | "voyages"}
+        />
+      </div>
+
       {/* Tab content */}
       <div className="mt-6">
-        {activeTab === "droplets" &&
-          (droplets.length === 0 ? (
-            <EmptyState
-              icon={
-                <IconDroplet
-                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
-                  stroke={1.5}
-                />
-              }
-              title="No droplets yet"
-              message="Create a new droplet to get started."
-            />
-          ) : (
-            <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {droplets.map((droplet) => (
-                <DropletTile
-                  key={droplet.id}
-                  droplet={droplet}
-                  isArchived={droplet.isHidden ?? false}
-                  isCreator={true}
-                  creatorArchive={true}
-                />
-              ))}
-            </ul>
-          ))}
+        {activeTab === "droplets" && (
+          <DropletsCreatorGrid droplets={droplets} />
+        )}
 
-        {activeTab === "playlists" &&
-          showPlaylists &&
-          (playlists.length === 0 ? (
-            <EmptyState
-              icon={
-                <IconLayoutList
-                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
-                  stroke={1.5}
-                />
-              }
-              title="No playlists yet"
-              message="Create a new playlist to get started."
-            />
-          ) : (
-            <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {playlists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  toDraft={true}
-                  dashboardPage={true}
-                  isCreator={true}
-                  isArchived={playlist.isArchived ?? false}
-                />
-              ))}
-            </ul>
-          ))}
+        {activeTab === "playlists" && showPlaylists && (
+          <PlaylistsCreatorGrid playlists={playlists} />
+        )}
 
-        {activeTab === "voyages" &&
-          showVoyages &&
-          (voyages.length === 0 ? (
-            <EmptyState
-              icon={
-                <IconMap
-                  className="h-7 w-7 text-[#475569] dark:text-slate-400"
-                  stroke={1.5}
-                />
-              }
-              title="No voyages yet"
-              message="Create a new voyage to get started."
-            />
-          ) : (
-            <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {voyages.map((voyage) => (
-                <li key={voyage.id}>
-                  <VoyageCard
-                    voyage={voyage}
-                    isArchived={voyage.isArchived ?? false}
-                    isCreator={
-                      currentUserId
-                        ? voyage.authors?.some((a) => a.id === currentUserId) ??
-                          false
-                        : false
-                    }
-                    dashboardPage={true}
-                  />
-                </li>
-              ))}
-            </ul>
-          ))}
+        {activeTab === "voyages" && showVoyages && (
+          <VoyagesCreatorGrid voyages={voyages} currentUserId={currentUserId} />
+        )}
       </div>
     </div>
   );

@@ -121,6 +121,8 @@ export type SortFilterItem = {
     | "name:desc"
     | "createdAt:asc"
     | "createdAt:desc"
+    | "updatedAt:asc"
+    | "updatedAt:desc"
     | "completion:asc"
     | "completion:desc"
     | "rating:asc"
