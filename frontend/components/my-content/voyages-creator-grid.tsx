@@ -44,7 +44,6 @@ export function VoyagesCreatorGrid({
     return sorted
       .filter((v) => matchesSearch(v, q))
       .filter((v) => voyageMatchesFilters(v, filterParams));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voyages, sortKey, q, searchParams]);
 
   const clearFilters = () => {

@@ -41,7 +41,6 @@ export function PlaylistsCreatorGrid({ playlists }: PlaylistsCreatorGridProps) {
     return sorted
       .filter((p) => matchesSearch(p, q))
       .filter((p) => playlistMatchesFilters(p, filterParams));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playlists, sortKey, q, searchParams]);
 
   const clearFilters = () => {

@@ -45,8 +45,6 @@ export function DropletsCreatorGrid({ droplets }: DropletsCreatorGridProps) {
     return sorted
       .filter((d) => matchesSearch(d, q))
       .filter((d) => dropletMatchesFilters(d, filterParams));
-    // filterParams is rebuilt each render from searchParams — stable via useMemo dep below
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [droplets, sortKey, q, searchParams]);
 
   const clearFilters = () => {
