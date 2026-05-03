@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
+import { isTrueFalseQuestion } from "@/lib/utils";
 
 interface QuizEditorProps {
   block: Extract<Block, { __component: "droplets.quiz" }>;
@@ -23,8 +24,7 @@ export function QuizEditor({
     let question = null;
     // Check if this is a True/False quiz
     const isTrueFalse =
-      questions.length > 0 &&
-      questions[0]?.answerOptions?.[0]?.content === "True";
+      questions.length > 0 && isTrueFalseQuestion(questions[0]);
 
     if (isTrueFalse) {
       const newQuestion: QuizQuestion = {
@@ -85,8 +85,7 @@ export function QuizEditor({
 
   // Determine quiz type safely
   const isTrueFalse =
-    questions.length > 0 &&
-    questions[0]?.answerOptions?.[0]?.content === "True";
+    questions.length > 0 && isTrueFalseQuestion(questions[0]);
 
   return (
     <div className="w-full pb-4">

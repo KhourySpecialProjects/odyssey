@@ -13,6 +13,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import DOMPurify from "isomorphic-dompurify";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -172,8 +173,8 @@ export function QuizQuestionBlock({
     <>
       <div
         role="question"
-        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300"
-        dangerouslySetInnerHTML={{ __html: question.content }}
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit prose-pre:my-2 dark:text-slate-300"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.content) }}
       ></div>
 
       {showResult ? (
@@ -216,12 +217,14 @@ export function QuizQuestionBlock({
                       (opt) => String(opt.id) === id,
                     );
                     return selectedAnswer ? (
-                      <li
-                        key={id}
-                        dangerouslySetInnerHTML={{
-                          __html: selectedAnswer.content,
-                        }}
-                      />
+                      <li key={id}>
+                        <div
+                          className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(selectedAnswer.content),
+                          }}
+                        />
+                      </li>
                     ) : null;
                   })}
                 </ul>
@@ -271,9 +274,10 @@ export function QuizQuestionBlock({
                               />
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
-                              <span
+                              <div
+                                className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
                                 dangerouslySetInnerHTML={{
-                                  __html: answer.content,
+                                  __html: DOMPurify.sanitize(answer.content),
                                 }}
                               />
                             </FormLabel>
@@ -305,9 +309,10 @@ export function QuizQuestionBlock({
                               />
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
-                              <span
+                              <div
+                                className="prose prose-sm prose-code:text-inherit prose-p:my-0 max-w-none dark:text-slate-300"
                                 dangerouslySetInnerHTML={{
-                                  __html: answer.content,
+                                  __html: DOMPurify.sanitize(answer.content),
                                 }}
                               />
                             </FormLabel>
