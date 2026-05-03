@@ -60,8 +60,14 @@ export function MyContentTabs({
   useEffect(() => {
     const ids = visibleTabs.map((t) => t.id);
     if (!ids.includes(activeTab)) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", ids[0] ?? "droplets");
+      const fallbackTab = (ids[0] ?? "droplets") as (typeof tabIds)[number];
+      const allowed = TAB_ALLOWED_PARAMS[fallbackTab] ?? [];
+      const params = new URLSearchParams();
+      allowed.forEach((key) => {
+        const value = searchParams.get(key);
+        if (value !== null) params.set(key, value);
+      });
+      params.set("tab", fallbackTab);
       router.replace(`${pathname}?${params.toString()}`);
     }
   }, [activeTab, visibleTabs, searchParams, pathname, router]);

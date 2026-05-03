@@ -84,7 +84,7 @@ export const PLAYLIST_CREATOR_FILTERS: {
   },
   {
     name: "public",
-    label: "Availability",
+    label: "Public/Private",
     options: [
       { label: "Public", value: "public" },
       { label: "Private", value: "private" },
