@@ -6,6 +6,7 @@ import {
 } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { getCachedUserCreation } from "@/lib/requests/cached";
 import { getVoyagesAdmin } from "@/lib/requests/voyage";
 import { MyContentTabs } from "@/components/my-content/my-content-tabs";
@@ -51,14 +52,16 @@ export default async function CreateRoute() {
         </p>
       </div>
 
-      <MyContentTabs
-        droplets={authorizedUser.droplets ?? []}
-        playlists={playlists ?? []}
-        voyages={voyages}
-        showPlaylists={showPlaylists}
-        showVoyages={isAdminOrFaculty}
-        currentUserId={authorizedUser.id}
-      />
+      <Suspense fallback={null}>
+        <MyContentTabs
+          droplets={authorizedUser.droplets ?? []}
+          playlists={playlists ?? []}
+          voyages={voyages}
+          showPlaylists={showPlaylists}
+          showVoyages={isAdminOrFaculty}
+          currentUserId={authorizedUser.id}
+        />
+      </Suspense>
     </div>
   );
 }

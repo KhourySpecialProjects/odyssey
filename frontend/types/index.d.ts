@@ -252,6 +252,8 @@ export type Droplet = {
   usersFavorited?: AuthorizedUser[];
   datasets?: Dataset[];
   presentationEnabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type QuizAnswerOption = {
@@ -310,6 +312,8 @@ export interface Playlist {
   authors?: AuthorizedUser[];
   users_archived?: AuthorizedUser[];
   isArchived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type PlaylistListResponse = {
