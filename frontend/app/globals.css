@@ -183,6 +183,25 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   border-color: #30363d;
 }
 
+/* github.css was designed for #ffffff — three of its token colors fall
+   below 4.5:1 contrast on our #f6f8fa background. These are GitHub's
+   own updated accessible values from their current light syntax theme. */
+.hljs-built_in,
+.hljs-symbol {
+  color: #953800; /* was #e36209 (3.1:1) → now 6.3:1 */
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: #116329; /* was #22863a (4.1:1) → now 7.0:1 */
+}
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  color: #57606a; /* was #6a737d (4.1:1) → now 5.4:1 */
+}
+
 /* driver.js tour — custom popover styling */
 .draft-tour-popover.driver-popover {
   border-radius: 12px;
