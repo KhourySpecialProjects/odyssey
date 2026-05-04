@@ -177,10 +177,12 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 .prose pre {
   background-color: #f6f8fa;
   border: 1px solid #e1e4e8;
+  color: #24292e; /* Typography's --tw-prose-pre-code defaults to light gray for dark bg; override for our light bg */
 }
 .dark .prose pre {
   background-color: #161b22;
   border-color: #30363d;
+  color: #c9d1d9; /* Restore readable light text for dark background */
 }
 
 /* github.css was designed for #ffffff — three of its token colors fall
