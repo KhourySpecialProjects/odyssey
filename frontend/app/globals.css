@@ -79,8 +79,8 @@
 }
 
 /* Specific fix for callout bullet list items in dark mode */
-.dark .pt-3.pl-3 * {
-  color: #334155 !important;
+.dark .callout-bullet-list li {
+  color: #334155;
 }
 
 /* Dark background for sky-50 elements */

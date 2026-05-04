@@ -223,7 +223,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           codeBlock.classList.remove("language-plaintext");
         }
       });
-      hljs.highlightAll();
+      contentRef.current.querySelectorAll("pre code").forEach((block) => {
+        hljs.highlightElement(block as HTMLElement);
+      });
 
       const preBlocks = contentRef.current.querySelectorAll("pre");
 
@@ -233,26 +235,26 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         const lines = (code.textContent?.match(/\n/g) || []).length + 1;
 
-        const lineNumbers = document.createElement("div");
-        lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50 select-none";
-
-        const lineContainer = document.createElement("div");
-        lineContainer.className = "pt-3 pl-3";
-
-        for (let i = 1; i <= lines; i++) {
-          const line = document.createElement("span");
-          line.className = "text-right pr-2 leading-5 block";
-          line.style.paddingTop = "0.15rem";
-          line.style.paddingBottom = "0.18rem";
-          line.textContent = `${i}`;
-          lineContainer.appendChild(line);
-        }
-
-        lineNumbers.appendChild(lineContainer);
+        // Read the pre's actual computed padding-top so the gutter aligns
+        // with the first line of code regardless of what Typography sets.
         pre.style.position = "relative";
         pre.style.paddingLeft = "3rem";
-        pre.style.paddingTop = "0rem";
+        const paddingTop = getComputedStyle(pre).paddingTop;
+
+        const lineNumbers = document.createElement("div");
+        lineNumbers.className =
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-sm border-r border-gray-200 bg-gray-100 text-gray-400 select-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
+        lineNumbers.style.paddingTop = paddingTop;
+
+        for (let i = 1; i <= lines; i++) {
+          const line = document.createElement("div");
+          line.className = "pr-2 text-right font-mono";
+          line.style.lineHeight = "1.25rem";
+          line.style.height = "1.25rem";
+          line.textContent = `${i}`;
+          lineNumbers.appendChild(line);
+        }
+
         pre.insertBefore(lineNumbers, pre.firstChild);
       });
       const blockHighlights = highlights.filter((h) => {
@@ -716,9 +718,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           onMouseDown={(e) => handleMouseDown(e)}
           onClick={handleContentClick}
           className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit max-w-none select-text dark:text-slate-300"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(nonTableContent),
-          }}
         ></div>
       )}
 
