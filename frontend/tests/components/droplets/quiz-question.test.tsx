@@ -506,10 +506,9 @@ describe("QuizQuestionBlock - formatted content (ODY-445)", () => {
 
   it("strips dangerous XSS content from question stem via DOMPurify.sanitize", () => {
     // Access the mock spy via requireMock (safe after hoisting)
-    const DOMPurify =
-      jest.requireMock<{ default: { sanitize: jest.Mock } }>(
-        "isomorphic-dompurify",
-      ).default;
+    const DOMPurify = jest.requireMock<{ default: { sanitize: jest.Mock } }>(
+      "isomorphic-dompurify",
+    ).default;
 
     // Override the mock to simulate DOMPurify stripping <script> tags
     DOMPurify.sanitize.mockImplementation((html: string) =>

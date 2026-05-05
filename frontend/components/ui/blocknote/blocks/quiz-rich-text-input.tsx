@@ -74,7 +74,7 @@ export function QuizRichTextInput({
     if (value?.trim()) {
       editor.commands.setContent(value, false);
     }
-  }, [editor]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editor]); // intentional: one-shot init, value prop is not reactive
 
   return (
     <div

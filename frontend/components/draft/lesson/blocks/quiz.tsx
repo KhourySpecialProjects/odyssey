@@ -84,8 +84,7 @@ export function QuizEditor({
   };
 
   // Determine quiz type safely
-  const isTrueFalse =
-    questions.length > 0 && isTrueFalseQuestion(questions[0]);
+  const isTrueFalse = questions.length > 0 && isTrueFalseQuestion(questions[0]);
 
   return (
     <div className="w-full pb-4">

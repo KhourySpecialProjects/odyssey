@@ -13,61 +13,42 @@ describe("stripHtmlTags", () => {
 describe("isTrueFalseQuestion", () => {
   it("returns true for plain 'True'/'False' answers", () => {
     const question = {
-      answerOptions: [
-        { content: "True" },
-        { content: "False" },
-      ],
+      answerOptions: [{ content: "True" }, { content: "False" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(true);
   });
 
   it("returns true when TipTap wraps values in <p> tags", () => {
     const question = {
-      answerOptions: [
-        { content: "<p>True</p>" },
-        { content: "<p>False</p>" },
-      ],
+      answerOptions: [{ content: "<p>True</p>" }, { content: "<p>False</p>" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(true);
   });
 
   it("returns true for lowercase 'true'/'false'", () => {
     const question = {
-      answerOptions: [
-        { content: "true" },
-        { content: "false" },
-      ],
+      answerOptions: [{ content: "true" }, { content: "false" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(true);
   });
 
   it("returns true when options are in swapped order (False first)", () => {
     const question = {
-      answerOptions: [
-        { content: "False" },
-        { content: "True" },
-      ],
+      answerOptions: [{ content: "False" }, { content: "True" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(true);
   });
 
   it("returns false for a three-option MCQ", () => {
     const question = {
-      answerOptions: [
-        { content: "A" },
-        { content: "B" },
-        { content: "C" },
-      ],
+      answerOptions: [{ content: "A" }, { content: "B" }, { content: "C" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(false);
   });
 
   it("returns false for a two-option MCQ whose values are not true/false", () => {
     const question = {
-      answerOptions: [
-        { content: "Yes" },
-        { content: "No" },
-      ],
+      answerOptions: [{ content: "Yes" }, { content: "No" }],
     };
     expect(isTrueFalseQuestion(question)).toBe(false);
   });

@@ -147,7 +147,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                 Answer Options:
               </label>
               <div className="space-y-3">
-                {options.map((option: AnswerOption, index: number) => (
+                {options.map((option: AnswerOption) => (
                   <div key={option.id} className="flex items-start gap-2">
                     {/* Checkbox for correct answer */}
                     <input
