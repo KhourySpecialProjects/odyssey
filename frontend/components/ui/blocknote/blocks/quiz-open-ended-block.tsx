@@ -45,7 +45,9 @@ export const OpenEndedQuiz = createReactBlockSpec(
         <div className="w-full rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800">
           {/* Header */}
           <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
-            <h2 className="text-lg">Open-Ended Quiz</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-black dark:text-white">
+              Open-Ended Quiz
+            </h2>
             <Trash2Icon
               className="cursor-pointer text-red-600 hover:text-red-700"
               onClick={handleDelete}
