@@ -233,20 +233,29 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         const code = pre.querySelector("code");
         if (!code) return;
 
-        const lines = (code.textContent?.match(/\n/g) || []).length + 1;
+        const rawLines = code.textContent?.split("\n") ?? [];
+        if (rawLines[rawLines.length - 1] === "") rawLines.pop();
+        const lineCount = rawLines.length;
 
-        // Read the pre's actual computed padding-top so the gutter aligns
-        // with the first line of code regardless of what Typography sets.
+        // Force code line-height to match gutter — prose-lg sets ~1.777
+        // which causes lines to drift out of sync with the 1.25rem gutter.
+        code.style.lineHeight = "1.25rem";
+        code.style.display = "block";
+        code.style.padding = "0";
+        code.style.margin = "0";
+
         pre.style.position = "relative";
+        pre.style.paddingTop = "0.75rem";
+        pre.style.paddingBottom = "0.75rem";
         pre.style.paddingLeft = "3rem";
-        const paddingTop = getComputedStyle(pre).paddingTop;
+        pre.style.paddingRight = "1rem";
 
         const lineNumbers = document.createElement("div");
         lineNumbers.className =
           "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-sm border-r border-gray-200 bg-gray-100 text-gray-400 select-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
-        lineNumbers.style.paddingTop = paddingTop;
+        lineNumbers.style.paddingTop = "0.75rem";
 
-        for (let i = 1; i <= lines; i++) {
+        for (let i = 1; i <= lineCount; i++) {
           const line = document.createElement("div");
           line.className = "pr-2 text-right font-mono";
           line.style.lineHeight = "1.25rem";
