@@ -28,11 +28,9 @@ export const OpenEndedQuiz = createReactBlockSpec(
         });
       };
 
-      const handleCorrectAnswerChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>,
-      ) => {
+      const handleCorrectAnswerChange = (html: string) => {
         props.editor.updateBlock(props.block, {
-          props: { correctAnswer: e.target.value },
+          props: { correctAnswer: html },
         });
       };
 
@@ -73,15 +71,14 @@ export const OpenEndedQuiz = createReactBlockSpec(
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Correct Answer:
               </label>
-              <textarea
+              <QuizRichTextInput
                 value={correctAnswer}
                 onChange={handleCorrectAnswerChange}
                 placeholder="Enter the correct answer..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Student answers will be checked for exact match
-                (case-insensitive)
+                (case-insensitive, HTML stripped)
               </p>
             </div>
           </div>
