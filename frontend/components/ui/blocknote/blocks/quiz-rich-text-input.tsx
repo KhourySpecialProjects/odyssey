@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
@@ -10,6 +11,20 @@ import { all, createLowlight } from "lowlight";
 
 // createLowlight(all) is expensive — keep it outside the component.
 const lowlight = createLowlight(all);
+
+// Insert two spaces on Tab inside a code block; fall through elsewhere so
+// the browser's normal focus-advancement behaviour is preserved.
+const TabHandler = Extension.create({
+  name: "tabHandler",
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => {
+        if (!this.editor.isActive("codeBlock")) return false;
+        return this.editor.commands.insertContent("  ");
+      },
+    };
+  },
+});
 
 // BASE_EXTENSIONS is stable across renders. TipTap reconfigures the editor
 // when the extensions array changes identity, causing position errors.
@@ -32,6 +47,7 @@ const BASE_EXTENSIONS = [
     defaultLanguage: "python",
     HTMLAttributes: { class: "hljs" },
   }),
+  TabHandler,
 ];
 
 interface QuizRichTextInputProps {
