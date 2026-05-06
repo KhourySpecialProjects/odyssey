@@ -1,9 +1,9 @@
+/* Light mode: github light theme. Dark mode tokens are overridden below. */
+@import "highlight.js/styles/github.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Light mode: github light theme. Dark mode tokens are overridden below. */
-@import "highlight.js/styles/github.css";
 
 :root {
   --foreground-rgb: 0, 0, 0;
