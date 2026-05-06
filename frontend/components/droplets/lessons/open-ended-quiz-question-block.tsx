@@ -3,6 +3,8 @@ import { OpenEndedQuizQuestion } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { RenderedContent } from "@/components/ui/rendered-content";
+import { stripHtmlTags } from "@/lib/utils";
 import { ArrowLeftIcon } from "lucide-react";
 import posthog from "posthog-js";
 declare global {
@@ -50,7 +52,7 @@ export function OpenEndedQuizQuestionBlock({
   const checkAnswer = () => {
     const isAnswerCorrect =
       userAnswer.trim().toLowerCase() ===
-      question.correctAnswer.trim().toLowerCase();
+      stripHtmlTags(question.correctAnswer).trim().toLowerCase();
     setIsCorrect(isAnswerCorrect);
 
     if (!isAnswerCorrect) {
@@ -99,9 +101,9 @@ export function OpenEndedQuizQuestionBlock({
 
   return (
     <>
-      <div
-        className="prose prose-sky prose-table:text-left prose-p:text-center dark:text-slate-300"
-        dangerouslySetInnerHTML={{ __html: question.content }}
+      <RenderedContent
+        html={question.content}
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit prose-pre:my-2 prose-pre:text-base dark:text-slate-300"
       />
 
       {showResult ? (
@@ -138,9 +140,11 @@ export function OpenEndedQuizQuestionBlock({
         </div>
       ) : revealAnswer ? (
         <>
-          <p className="mt-4 pb-2 font-medium">
-            Correct Answer: {question.correctAnswer}
-          </p>
+          <p className="mt-4 pb-2 font-medium">Correct Answer:</p>
+          <RenderedContent
+            html={question.correctAnswer}
+            className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
+          />
           <Button
             before={<ArrowLeftIcon />}
             variant="outline"

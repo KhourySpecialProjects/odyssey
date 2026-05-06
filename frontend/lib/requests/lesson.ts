@@ -195,8 +195,11 @@ export async function updateLesson(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      const errorPath = responseData.error.details.errors[0].path[0];
-      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      const firstError = responseData.error?.details?.errors?.[0];
+      const errorPath = firstError?.path?.[0];
+      const errorMessage = errorPath
+        ? `${responseData.error.message} (${errorPath})`
+        : responseData.error?.message ?? "Failed to update lesson.";
       return { ok: false, error: errorMessage, data: null };
     }
 

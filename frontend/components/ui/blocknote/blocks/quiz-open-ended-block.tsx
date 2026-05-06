@@ -2,6 +2,7 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon } from "lucide-react";
 import React from "react";
+import { QuizRichTextInput } from "./quiz-rich-text-input";
 
 export const OpenEndedQuiz = createReactBlockSpec(
   {
@@ -21,19 +22,15 @@ export const OpenEndedQuiz = createReactBlockSpec(
     render: (props) => {
       const { question, correctAnswer } = props.block.props;
 
-      const handleQuestionChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>,
-      ) => {
+      const handleQuestionChange = (html: string) => {
         props.editor.updateBlock(props.block, {
-          props: { question: e.target.value },
+          props: { question: html },
         });
       };
 
-      const handleCorrectAnswerChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>,
-      ) => {
+      const handleCorrectAnswerChange = (html: string) => {
         props.editor.updateBlock(props.block, {
-          props: { correctAnswer: e.target.value },
+          props: { correctAnswer: html },
         });
       };
 
@@ -45,7 +42,9 @@ export const OpenEndedQuiz = createReactBlockSpec(
         <div className="w-full rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800">
           {/* Header */}
           <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
-            <h2 className="text-lg">Open-Ended Quiz</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-black dark:text-white">
+              Open-Ended Quiz
+            </h2>
             <Trash2Icon
               className="cursor-pointer text-red-600 hover:text-red-700"
               onClick={handleDelete}
@@ -60,11 +59,10 @@ export const OpenEndedQuiz = createReactBlockSpec(
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Question:
               </label>
-              <textarea
+              <QuizRichTextInput
                 value={question}
                 onChange={handleQuestionChange}
                 placeholder="Nothing here yet..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
             </div>
 
@@ -73,15 +71,14 @@ export const OpenEndedQuiz = createReactBlockSpec(
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Correct Answer:
               </label>
-              <textarea
+              <QuizRichTextInput
                 value={correctAnswer}
                 onChange={handleCorrectAnswerChange}
                 placeholder="Enter the correct answer..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Student answers will be checked for exact match
-                (case-insensitive)
+                (case-insensitive, HTML stripped)
               </p>
             </div>
           </div>

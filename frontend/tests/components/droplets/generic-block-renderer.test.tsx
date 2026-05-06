@@ -6,6 +6,7 @@ import { Highlight, HighlightColor } from "@/types";
 
 jest.mock("highlight.js", () => ({
   highlightAll: jest.fn(),
+  highlightElement: jest.fn(),
 }));
 
 jest.mock("katex", () => ({
@@ -273,7 +274,7 @@ describe("GenericBlockRenderer", () => {
           }}
         />,
       );
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      expect(hljs.highlightElement).toHaveBeenCalled();
     });
 
     it("removes language-plaintext class from code blocks", () => {
@@ -348,7 +349,7 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      expect(hljs.highlightElement).toHaveBeenCalled();
     });
   });
 
@@ -1440,7 +1441,7 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      expect(hljs.highlightElement).toHaveBeenCalled();
     });
   });
 });

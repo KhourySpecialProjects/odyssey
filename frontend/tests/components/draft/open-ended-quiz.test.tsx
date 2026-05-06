@@ -73,7 +73,8 @@ describe("OpenEndedQuizEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId("update-content-button"));
+    // First update-content-button belongs to the question editor
+    fireEvent.click(screen.getAllByTestId("update-content-button")[0]);
 
     expect(mockUpdateBlock).toHaveBeenCalledWith({
       __component: "droplets.open-ended-quiz",
@@ -87,7 +88,7 @@ describe("OpenEndedQuizEditor", () => {
     });
   });
 
-  it("updates correct answer when textarea changes", () => {
+  it("updates correct answer when TipTap editor changes", () => {
     render(
       <OpenEndedQuizEditor
         block={mockBlock}
@@ -96,8 +97,8 @@ describe("OpenEndedQuizEditor", () => {
       />,
     );
 
-    const textarea = screen.getByRole("textbox");
-    fireEvent.change(textarea, { target: { value: "New answer" } });
+    // Second update-content-button belongs to the correct answer editor
+    fireEvent.click(screen.getAllByTestId("update-content-button")[1]);
 
     expect(mockUpdateBlock).toHaveBeenCalledWith({
       __component: "droplets.open-ended-quiz",
@@ -105,7 +106,7 @@ describe("OpenEndedQuizEditor", () => {
         {
           id: 1,
           content: "Test question",
-          correctAnswer: "New answer",
+          correctAnswer: "Updated content",
         },
       ],
     });
