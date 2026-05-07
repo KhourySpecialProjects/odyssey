@@ -149,7 +149,7 @@
     "react-markdown": "^10.1.0",
     "react-tabs": "^6.1.0",
     "react-wavify": "^1.11.1",
-    "recharts": "^2.15.0",
+    "recharts": "^3.8.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
