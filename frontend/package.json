@@ -62,7 +62,7 @@
     "@mantine/hooks": "^8.3.6",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@mui/icons-material": "^7.3.4",
-    "@mui/material": "^7.3.4",
+    "@mui/material": "^9.0.0",
     "@mui/x-date-pickers": "^7.27.0",
     "@nextui-org/table": "^2.2.8",
     "@radix-ui/react-accordion": "^1.2.12",
