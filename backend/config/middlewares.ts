@@ -1,4 +1,7 @@
 export default [
+  // First in the chain so its timing covers every other middleware.
+  // No-ops unless PERF_PROBE=1.
+  "global::request-timing",
   {
     name: "strapi::security",
     config: {
