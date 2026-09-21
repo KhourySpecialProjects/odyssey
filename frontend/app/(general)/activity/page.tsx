@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { FeedCenterContent } from "@/components/feed/feed-center-content";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
+import { setProbeLabel } from "@/lib/perf/probe";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default async function FeedPage({ searchParams }: Props) {
+  setProbeLabel("/activity");
   const params = await searchParams;
   const tab = params?.tab;
   if (typeof tab === "string" && LEGACY_TAB_REDIRECTS[tab]) {

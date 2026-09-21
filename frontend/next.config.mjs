@@ -56,6 +56,13 @@ const nextConfig = {
       },
     ],
   },
+  // With PERF_PROBE=1, Next logs every server-side fetch with its data-cache
+  // status ("(cache skip)" / "(cache hit)"). This is the authoritative answer
+  // on cache behaviour; the probe's `likelyCacheHit` is only a timing
+  // heuristic. Dev-server only — Next ignores this in production builds.
+  ...(process.env.PERF_PROBE === "1" && {
+    logging: { fetches: { fullUrl: true } },
+  }),
   experimental: {
     staleTimes: {
       dynamic: 0,

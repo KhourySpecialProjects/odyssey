@@ -13,6 +13,8 @@ import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import Footer from "@/components/footer/page";
 import { Suspense } from "react";
 import { HeaderWrapper } from "@/components/header/header-wrapper";
+import { NavTimingProbe } from "@/components/debug/nav-timing-probe";
+import { PerfProbe } from "@/components/debug/perf-probe";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -60,6 +62,8 @@ export default function RootLayout({
                   <Suspense fallback={null}>
                     <FirstVisitPopupLoader />
                   </Suspense>
+                  <NavTimingProbe />
+                  <PerfProbe />
                 </NuqsAdapter>
               </TooltipProvider>
             </PHProvider>

@@ -9,6 +9,7 @@ import {
 import { JSONContent } from "@tiptap/react";
 import type { BlockNode, TextNode } from "@/types/strapi";
 import type { DropletDifficulty } from "@/types";
+import { isProbeEnabled, markProbeStart, recordCall } from "@/lib/perf/probe";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -105,7 +106,12 @@ export async function fetchAPI<T>(
     const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
 
+    const probing = isProbeEnabled();
+    if (probing) markProbeStart();
+    const startedAt = probing ? performance.now() : 0;
+
     const response = await fetch(requestUrl, mergedOptions);
+    const fetchedAt = probing ? performance.now() : 0;
 
     if (!response.ok) {
       console.error("Response status:", response.status);
@@ -115,7 +121,35 @@ export async function fetchAPI<T>(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    // When probing we read the body as text first so we can measure its real
+    // uncompressed size, then parse it ourselves. Otherwise take the normal
+    // response.json() path so the probe adds zero overhead when disabled.
+    let data;
+    if (probing) {
+      const body = await response.text();
+      const endedAt = performance.now();
+
+      recordCall({
+        path,
+        queryLength: queryString.length,
+        ms: Math.round((endedAt - startedAt) * 10) / 10,
+        bytes: Buffer.byteLength(body, "utf8"),
+        status: response.status,
+        startedAt,
+        fetchedAt,
+        endedAt,
+        cacheMode: config.cache
+          ? config.cache
+          : config.next?.revalidate !== undefined
+            ? `revalidate=${config.next.revalidate}`
+            : "default",
+        tags: config.next?.tags ?? [],
+      });
+
+      data = JSON.parse(body);
+    } else {
+      data = await response.json();
+    }
 
     if (
       config.flattenResponse ||

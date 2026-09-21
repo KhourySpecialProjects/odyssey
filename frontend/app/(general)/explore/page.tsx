@@ -19,6 +19,7 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { getVoyages } from "@/lib/requests/voyage";
 import { SearchProvider } from "@/contexts/SearchContext";
+import { setProbeLabel } from "@/lib/perf/probe";
 
 export const metadata: Metadata = {
   title: "Explore",
@@ -31,6 +32,7 @@ export default async function ExplorePage({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  setProbeLabel("/explore");
   const {
     sort,
     type,

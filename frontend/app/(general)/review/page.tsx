@@ -8,6 +8,7 @@ import { Metadata } from "next";
 import { getInReviewDroplets } from "@/lib/requests/droplet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconClipboardList } from "@tabler/icons-react";
+import { setProbeLabel } from "@/lib/perf/probe";
 
 export const metadata: Metadata = {
   title: "Review",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateRoute() {
+  setProbeLabel("/review");
   const user = await getCurrentUser();
   if (
     !user ||

@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { IconUsers } from "@tabler/icons-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { setProbeLabel } from "@/lib/perf/probe";
 
 type GroupWithRole = {
   group: Group;
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export default async function GroupsPage({ searchParams }: Props) {
+  setProbeLabel("/g/dashboard");
   const params = await searchParams;
   if (!params) {
     redirect("/dashboard");
