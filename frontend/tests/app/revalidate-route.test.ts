@@ -72,6 +72,77 @@ describe("POST /api/revalidate", () => {
     }
   });
 
+  // Deletes bypass the backend's field gate, so the route must widen the
+  // authorized-user tag set to match what Odyssey's own deleteAuthorizedUser
+  // clears. Without `users`/`authors`, a user deleted in the Strapi admin
+  // lingers in creator/editor lists for up to an hour (those are tagged
+  // `revalidate: 3600`).
+  it.each(["afterDelete", "afterDeleteMany"])(
+    "widens the authorized-user tag set on %s",
+    async (event) => {
+      const request = makeRequest({
+        headers: { "x-revalidate-secret": "test-secret" },
+        body: { model: "api::authorized-user.authorized-user", event },
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      const expectedTags = [
+        CACHE_TAGS.allGroups,
+        CACHE_TAGS.userDashboard,
+        CACHE_TAGS.users,
+        CACHE_TAGS.authors,
+      ];
+
+      expect(response.status).toBe(200);
+      expect(json.revalidated).toEqual(expectedTags);
+      expect(mockedRevalidateTag).toHaveBeenCalledTimes(expectedTags.length);
+      for (const tag of expectedTags) {
+        expect(mockedRevalidateTag).toHaveBeenCalledWith(tag);
+      }
+    },
+  );
+
+  it("keeps the narrow authorized-user tag set on a gated update", async () => {
+    const request = makeRequest({
+      headers: { "x-revalidate-secret": "test-secret" },
+      body: {
+        model: "api::authorized-user.authorized-user",
+        event: "afterUpdate",
+      },
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.revalidated).toEqual([
+      CACHE_TAGS.allGroups,
+      CACHE_TAGS.userDashboard,
+    ]);
+    expect(mockedRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
+  });
+
+  it("logs the unconfigured warning only once across repeated requests", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    delete process.env.REVALIDATE_SECRET;
+
+    const make = () => makeRequest({ body: { model: "api::group.group" } });
+
+    // The 503 branch runs before any auth check, so anonymous callers can
+    // reach it — logging per request would be a free log-flood vector.
+    const first = await POST(make());
+    const second = await POST(make());
+    const third = await POST(make());
+
+    expect(first.status).toBe(503);
+    expect(second.status).toBe(503);
+    expect(third.status).toBe(503);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
+  });
+
   it("returns 401 and does not revalidate when the secret is wrong", async () => {
     const request = makeRequest({
       headers: { "x-revalidate-secret": "wrong-secret" },

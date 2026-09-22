@@ -28,15 +28,30 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(expectedBuf, providedBuf);
 }
 
+// The 503 branch below runs before any secret check, so it is reachable by
+// anonymous callers — and `/api` is not covered by `middleware.ts`. Logging
+// per request would let anyone flood the logs for free, so warn only on the
+// first occurrence. Reset whenever the secret appears, so a later
+// misconfiguration still gets reported once.
+let warnedUnconfigured = false;
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.REVALIDATE_SECRET) {
-      console.error("Revalidation not configured: REVALIDATE_SECRET is unset");
+      if (!warnedUnconfigured) {
+        console.warn(
+          "Revalidation not configured: REVALIDATE_SECRET is unset. " +
+            "Strapi-admin edits will fall back to the 900s TTL. " +
+            "This warning is logged once per process.",
+        );
+        warnedUnconfigured = true;
+      }
       return NextResponse.json(
         { error: "Revalidation not configured" },
         { status: 503, headers: { "Cache-Control": "no-store" } },
       );
     }
+    warnedUnconfigured = false;
 
     if (!isAuthorized(request)) {
       return NextResponse.json(
@@ -55,7 +70,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { model } = (body ?? {}) as { model?: unknown };
+    const { model, event } = (body ?? {}) as {
+      model?: unknown;
+      event?: unknown;
+    };
     if (typeof model !== "string") {
       return NextResponse.json(
         { error: "Invalid model" },
@@ -63,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tags = getTagsForModel(model);
+    const tags = getTagsForModel(model, event);
     if (tags.length === 0) {
       return NextResponse.json(
         { revalidated: [] },
