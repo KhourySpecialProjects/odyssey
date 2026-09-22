@@ -1,6 +1,8 @@
 "use server";
 
 import qs from "qs";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserAdminRoles } from "@/lib/globals";
 import { fetchAuthorizedUsersMetadata } from "./authorized-user";
 import { fetchEnrollmentMetadata } from "./enrollment";
 
@@ -71,6 +73,14 @@ export interface AdminDashboardStats {
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  // This file is "use server", so this function is an independently callable
+  // POST endpoint — the /admin layout gate does not run for it. Guard first,
+  // before any protected data is queried.
+  const gate = await requireRole(AuthorizedUserAdminRoles);
+  // gate.error is a constant ("unauthenticated" | "forbidden"), never PII, and
+  // Next replaces the message with an opaque digest in production.
+  if (!gate.ok) throw new Error(`Unauthorized: ${gate.error}`);
+
   const cutoff = daysAgo(30);
 
   const [
