@@ -3,9 +3,7 @@ import { getCachedUser, getCachedUserGroups } from "@/lib/requests/cached";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
 import { redirect } from "next/navigation";
-import { GroupCard } from "@/components/group/group-card";
-import { Suspense } from "react";
-import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { PaginatedGroupsGrid } from "./paginated-groups-grid";
 import { IconUsers } from "@tabler/icons-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -120,24 +118,12 @@ export default async function GroupsPage({ searchParams }: Props) {
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
-              <Suspense fallback={<DropletsSkeleton />}>
-                <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {groupsByRole[tab as keyof typeof groupsByRole].map(
-                    ({ group, role }) => (
-                      <div key={`group-${group.id}`} className="h-full">
-                        <GroupCard
-                          key={group.id}
-                          group={group}
-                          role={role}
-                          roleColors={roleColors}
-                          isArchived={false}
-                          dashboardPage={false}
-                        />
-                      </div>
-                    ),
-                  )}
-                </div>
-              </Suspense>
+              <PaginatedGroupsGrid
+                // Remount on tab change so the page resets to 1.
+                key={String(tab)}
+                groups={groupsByRole[tab as keyof typeof groupsByRole]}
+                roleColors={roleColors}
+              />
             ) : (
               <EmptyState
                 icon={
