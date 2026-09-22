@@ -19,6 +19,8 @@
 # HOW TO ADD A NEW PROTECTION:
 #   - To block by filename:  add a glob pattern to BASENAME_PATTERNS
 #   - To block by full path: add a glob pattern to PATH_PATTERNS
+#   - To EXEMPT a file that a block pattern would otherwise catch:
+#       add a glob pattern to ALLOW_BASENAME_PATTERNS
 #   Bash glob syntax applies (* = any chars, ? = one char).
 #
 # ─── Protected filename patterns (matched against basename only) ──────────────
@@ -26,8 +28,19 @@
 #   Basename matching means "frontend/.env.local" and "backend/.env"
 #   are both caught by ".env*" without needing to know the full path.
 #
+# ─── Exemptions (checked FIRST — an exempt file is always allowed) ───────────
+#
+#   Committed template files that look like protected files but contain no
+#   real secrets. These are documentation, and CLAUDE.md explicitly treats
+#   them as agent-editable. Without this carve-out, ".env*" below catches
+#   ".env.example" too, which blocks legitimate documentation edits.
+#
+ALLOW_BASENAME_PATTERNS=(
+    "*.env.example"          # .env.example, .docker.env.example, ...
+)
+
 BASENAME_PATTERNS=(
-    ".env*"                  # all environment files
+    ".env*"                  # all environment files (except the exemptions above)
     "docker-compose*.yml"    # Docker Compose configs
     "docker-compose*.yaml"
     "package-lock.json"      # lock files should not be hand-edited
@@ -56,6 +69,13 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 BASENAME=$(basename "$FILE_PATH")
+
+# Exemptions win over every block pattern below.
+for pattern in "${ALLOW_BASENAME_PATTERNS[@]}"; do
+    if [[ "$BASENAME" == $pattern ]]; then
+        exit 0
+    fi
+done
 
 for pattern in "${BASENAME_PATTERNS[@]}"; do
     if [[ "$BASENAME" == $pattern ]]; then
