@@ -1,4 +1,5 @@
 import { notifyRevalidate } from './lib/revalidate';
+import { isGated, touchesGroupRelations } from './lib/group-relations';
 
 // Models watched by the global revalidation subscriber below. Phase 1 covers
 // exactly what's needed to fix the reported bug (group deletes, and the
@@ -7,60 +8,10 @@ import { notifyRevalidate } from './lib/revalidate';
 // in `frontend/lib/revalidation-map.ts`.
 const WATCHED_MODELS = ['api::group.group', 'api::authorized-user.authorized-user'];
 
-// `authorized-user` fields that are group-relevant. Editing any of these
-// changes group membership/admin status and must invalidate group tags.
-// Verified against backend/src/api/authorized-user/content-types/authorized-user/schema.json —
-// this is the authorized-user side of every group relation:
-//   groupAdmin (manyToMany, inverse: group.admins)
-//   groupManager (manyToMany, inverse: group.managers)
-//   groupsCreated (oneToMany, inverse: group.creator)
-//   groups (manyToMany, inverse: group.members)
-//   archived_groups (manyToMany, inverse: group.users_archived)
-// Note `users_archived` is the *group* side, not this side — the
-// authorized-user field is `archived_groups`. Easy to get backwards.
-const GROUP_RELEVANT_FIELDS = [
-  'groupAdmin',
-  'groupManager',
-  'groupsCreated',
-  'groups',
-  'archived_groups',
-];
-
-/**
- * Field gate for `authorized-user` writes (Settled Decision 1, ODY-474).
- *
- * `authorized-user` is written far more often than `group` — every friend
- * request, block, and sign-in PUTs to this model (see
- * `frontend/lib/requests/friends.ts`). Notifying on every one of those
- * writes would invalidate the global `groups`/`user-dashboard` tags
- * constantly, which is the exact thundering-herd problem this gate exists to
- * prevent. So for create/update events, only notify when the write actually
- * touches a group-relevant field.
- *
- * `params.data` is an object for `create`/`update`/`updateMany`, but an
- * *array* of entries for `createMany` — normalize to an array so the field
- * check works for both.
- *
- * Deletes are different: `afterDelete`/`afterDeleteMany` carry no
- * `params.data` at all (Strapi v4 only gives `where` on delete events), and
- * deleting a user unambiguously changes group membership — so callers should
- * treat deletes as unconditionally group-relevant rather than calling this.
- */
-function touchesGroupRelations(event: {
-  params?: { data?: Record<string, unknown> | Record<string, unknown>[] };
-}): boolean {
-  const data = event.params?.data;
-  if (!data) return false;
-  const entries = Array.isArray(data) ? data : [data];
-  return entries.some((entry) =>
-    GROUP_RELEVANT_FIELDS.some((field) => field in entry)
-  );
-}
-
-/** True if `model` requires the authorized-user field gate before notifying. */
-function isGated(model: string): boolean {
-  return model === 'api::authorized-user.authorized-user';
-}
+// The field gate itself lives in ./lib/group-relations — a pure module with
+// no `strapi` global, so it can be unit tested (see
+// frontend/testing/backend/group-relations.test.ts). It is the subtlest
+// logic here and has regressed once already.
 
 export default {
   /**
