@@ -417,7 +417,7 @@ describe("Groups Tests", () => {
             ],
           },
           fields: ["id", "groupName", "slug", "semester", "isArchived"],
-          pagination: { pageSize: 25, page: 1 },
+          pagination: { pageSize: 100, page: 1 },
         }),
         next: { tags: ["groups"], revalidate: 900 },
       });
