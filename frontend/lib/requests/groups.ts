@@ -11,6 +11,7 @@ import { getCurrentUser } from "../auth/session";
 import { createEnrollmentDirect } from "./enrollment";
 import { enrollInVoyageDirect } from "./voyage-enrollment";
 import { CACHE_TAGS } from "../cache-tags";
+import { requireRole } from "@/lib/auth/require-role";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -261,6 +262,20 @@ export async function getUserGroups(
   }
 
   return allGroups;
+}
+
+/**
+ * Clears the caller's cached group list so /g/dashboard reads Strapi now
+ * instead of waiting out the 900s TTL. Identity comes from the session, never
+ * from the client. Invalidates only the caller's per-user tag.
+ */
+export async function refreshUserGroups(): Promise<
+  { ok: true } | { ok: false; error: "unauthenticated" | "forbidden" }
+> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error };
+  revalidateTag(CACHE_TAGS.userGroups(gate.user.id));
+  return { ok: true };
 }
 
 /**

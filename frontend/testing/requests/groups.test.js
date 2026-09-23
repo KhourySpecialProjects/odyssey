@@ -3,6 +3,7 @@ const {
   getGroupBySlug,
   getGroupByID,
   getUserGroups,
+  refreshUserGroups,
   updateGroupMembers,
   addGroupMembers,
   removeGroupMembers,
@@ -72,6 +73,11 @@ jest.mock("../../lib/requests/authorized-user-roles", () => ({
 const { getCurrentUser } = require("@/lib/auth/session");
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
+}));
+
+const { requireRole } = require("@/lib/auth/require-role");
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
 }));
 
 jest.mock("next/cache", () => ({
@@ -458,6 +464,102 @@ describe("Groups Tests", () => {
       await expect(getUserGroups(authorizedUserId)).rejects.toThrow(
         "Failed to fetch user groups",
       );
+    });
+
+    // Guards ODY-484 Refresh: every page fetched by getUserGroups must carry the per-user tag,
+    // or refreshUserGroups() only clears some pages (see ODY-485's page loop). The mock
+    // deliberately serves a full first page sized from the request's pageSize and then an
+    // empty page, so a future page loop (ODY-485) fetches more than once and this test can
+    // catch a page that's missing the tag.
+    describe("every-call tag safeguard", () => {
+      afterEach(() => {
+        fetchAPI.mockReset();
+      });
+
+      it("should tag every fetchAPI call with the caller's per-user tag", async () => {
+        const authorizedUserId = 5;
+        let served = 0;
+        fetchAPI.mockImplementation(async (_path, opts) => {
+          const size = opts?.urlParams?.pagination?.pageSize ?? 25;
+          return served++ === 0
+            ? Array.from({ length: size }, (_, i) => ({ id: i + 1 }))
+            : [];
+        });
+
+        await getUserGroups(authorizedUserId);
+
+        expect(fetchAPI.mock.calls.length).toBeGreaterThan(0);
+        expect(
+          fetchAPI.mock.calls.every(
+            ([, opts]) =>
+              opts?.next?.tags?.includes("user-groups-5") &&
+              opts.next.tags.includes("groups"),
+          ),
+        ).toBe(true);
+      });
+
+      it("should tag every fetchAPI call with the caller's per-user tag when an explicit page is requested (ODY-485 explicit-page path)", async () => {
+        const authorizedUserId = 5;
+        let served = 0;
+        fetchAPI.mockImplementation(async (_path, opts) => {
+          const size = opts?.urlParams?.pagination?.pageSize ?? 25;
+          return served++ === 0
+            ? Array.from({ length: size }, (_, i) => ({ id: i + 1 }))
+            : [];
+        });
+
+        await getUserGroups(authorizedUserId, {
+          pagination: { page: 2, pageSize: 25 },
+        });
+
+        expect(fetchAPI.mock.calls.length).toBeGreaterThan(0);
+        expect(
+          fetchAPI.mock.calls.every(
+            ([, opts]) =>
+              opts?.next?.tags?.includes("user-groups-5") &&
+              opts.next.tags.includes("groups"),
+          ),
+        ).toBe(true);
+      });
+    });
+  });
+
+  describe("refreshUserGroups", () => {
+    it("invalidates the caller's per-user tag when authenticated", async () => {
+      requireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 7, email: "a@b.c", roles: [] },
+      });
+
+      const result = await refreshUserGroups();
+
+      expect(result).toEqual({ ok: true });
+      expect(revalidateTag).toHaveBeenCalledTimes(1);
+      expect(revalidateTag).toHaveBeenCalledWith("user-groups-7");
+      expect(revalidateTag).not.toHaveBeenCalledWith("groups");
+    });
+
+    it("returns the auth error and invalidates nothing when unauthenticated", async () => {
+      requireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      const result = await refreshUserGroups();
+
+      expect(result).toEqual({ ok: false, error: "unauthenticated" });
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
+
+    it("calls requireRole with an empty allowed-roles array", async () => {
+      requireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 7, email: "a@b.c", roles: [] },
+      });
+
+      await refreshUserGroups();
+
+      expect(requireRole).toHaveBeenCalledWith([]);
     });
   });
 
