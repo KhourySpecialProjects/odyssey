@@ -402,6 +402,16 @@ export async function createAuthorizedUser(
   formData: FormData,
   roleID?: number,
 ) {
+  // --- Auth gate ---
+  // Every export in this "use server" module is a callable endpoint, so the
+  // caller-supplied `roleID` is attacker-controlled input. Without this gate a
+  // signed-in user could invoke this action directly and mint an account
+  // holding any role, including System Admin.
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+
   if (roleID === undefined) {
     roleID = await getAuthorizedUserRoleIdByTitle(AuthorizedUserRoleTitle.User);
   }
@@ -454,6 +464,12 @@ export async function createAuthorizedUser(
 }
 
 export async function createBatchAuthorizedUsers(emails: string[]) {
+  // --- Auth gate --- bulk-provisioning accounts is a System Admin operation.
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+
   try {
     const roleID = await getAuthorizedUserRoleIdByTitle(
       AuthorizedUserRoleTitle.User,
@@ -635,6 +651,15 @@ const DeleteAuthorizedUser = AuthorizedUserSchema.omit({
   isEnabled: true,
 });
 export async function deleteAuthorizedUser(formData: FormData) {
+  // --- Auth gate ---
+  // Unguarded, this let any caller delete any account by id. It also enabled
+  // the delete-then-recreate escalation: remove your own record, then call
+  // createAuthorizedUser with a privileged roleID for the same email.
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+
   const { id } = DeleteAuthorizedUser.parse({
     id: formData.get("id"),
   });
@@ -655,11 +680,18 @@ export async function deleteAuthorizedUser(formData: FormData) {
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Delete Authorized User." };
+    return {
+      ok: false,
+      error: "Database Error: Failed to Delete Authorized User.",
+      data: null,
+    };
   }
 
   revalidateTag(CACHE_TAGS.users);
   revalidateTag(CACHE_TAGS.authors);
+  // Previously fell through with no return, so callers checking `res.ok`
+  // dereferenced undefined on the success path.
+  return { ok: true, error: null, data: null };
 }
 
 // fetching content editors

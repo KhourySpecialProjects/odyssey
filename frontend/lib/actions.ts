@@ -486,6 +486,15 @@ export async function approveCreationRequest(
   requestId: string,
   userId: number,
 ) {
+  // --- Auth gate ---
+  // This grants the Content Creator role to whatever `userId` it is handed.
+  // Unguarded, a signed-in user could approve their own pending request — or
+  // pass their own id outright — and self-promote past the review process.
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+
   try {
     // First, get the current user with their roles
     const userResponse = await fetch(
