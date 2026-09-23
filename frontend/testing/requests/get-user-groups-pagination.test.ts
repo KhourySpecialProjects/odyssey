@@ -115,11 +115,48 @@ describe("getUserGroups — pagination", () => {
 
     await getUserGroups(42);
 
+    expect(mockedFetchAPI).toHaveBeenCalledTimes(2);
     for (const [, config] of mockedFetchAPI.mock.calls) {
       expect((config as { next: { tags: string[] } }).next.tags).toEqual([
         CACHE_TAGS.allGroups,
+        CACHE_TAGS.userGroups(42),
       ]);
     }
+  });
+
+  // refreshUserGroups invalidates CACHE_TAGS.userGroups(userId). If any page
+  // of the list is missing that tag, Refresh would clear some pages and leave
+  // others stale, so the per-user tag must be on every request.
+  it("scopes the refresh tag to the requesting user on every page", async () => {
+    mockedFetchAPI
+      .mockResolvedValueOnce(makeGroupPage(PAGE_SIZE, 1))
+      .mockResolvedValueOnce(makeGroupPage(PAGE_SIZE, 101))
+      .mockResolvedValueOnce(makeGroupPage(3, 201));
+
+    await getUserGroups(7);
+
+    const tagsPerCall = mockedFetchAPI.mock.calls.map(
+      ([, config]) => (config as { next: { tags: string[] } }).next.tags,
+    );
+    expect(tagsPerCall).toHaveLength(3);
+    for (const tags of tagsPerCall) {
+      expect(tags).toContain(CACHE_TAGS.userGroups(7));
+      expect(tags).not.toContain(CACHE_TAGS.userGroups(42));
+    }
+  });
+
+  it("tags an explicitly requested page with the refresh tag", async () => {
+    mockedFetchAPI.mockResolvedValueOnce(makeGroupPage(10, 1));
+
+    await getUserGroups(42, { pagination: { pageSize: 10, page: 3 } });
+
+    const config = mockedFetchAPI.mock.calls[0][1] as {
+      next: { tags: string[]; revalidate: number };
+    };
+    expect(config.next).toEqual({
+      tags: [CACHE_TAGS.allGroups, CACHE_TAGS.userGroups(42)],
+      revalidate: 900,
+    });
   });
 
   it("applies the role filter on every page", async () => {

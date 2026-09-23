@@ -226,11 +226,18 @@ export async function getUserGroups(
     fields,
   };
 
+  // Every page carries the per-user tag so refreshUserGroups can invalidate
+  // the whole paginated list for this user, not just one page of it.
+  const cacheOptions = {
+    tags: [CACHE_TAGS.allGroups, CACHE_TAGS.userGroups(authorizedUserId)],
+    revalidate: 900,
+  };
+
   // An explicitly requested page is returned as-is.
   if (pagination) {
     return await fetchAPI<Group[]>(path, {
       urlParams: { ...baseParams, pagination },
-      next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+      next: cacheOptions,
     });
   }
 
@@ -244,7 +251,7 @@ export async function getUserGroups(
   while (true) {
     const groupPage = await fetchAPI<Group[]>(path, {
       urlParams: { ...baseParams, pagination: { pageSize, page } },
-      next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+      next: cacheOptions,
     });
 
     if (!groupPage || groupPage.length === 0) break;

@@ -22,8 +22,14 @@ export function PaginatedGroupsGrid({ groups, roleColors }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE);
-  // Clamp so a shrinking list can never strand the view on an empty page.
+  // Clamp so a shrinking list (e.g. after Refresh) can never strand the view
+  // on an empty page.
   const safePage = Math.min(currentPage, Math.max(totalPages, 1));
+  // Persist the clamp so state matches what's shown. Otherwise a later refresh
+  // that restores groups would jump back to the old page on its own.
+  if (safePage !== currentPage) {
+    setCurrentPage(safePage);
+  }
   const startIndex = (safePage - 1) * GROUPS_PER_PAGE;
   const visibleGroups = groups.slice(startIndex, startIndex + GROUPS_PER_PAGE);
 

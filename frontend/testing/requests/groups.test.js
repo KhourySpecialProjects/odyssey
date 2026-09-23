@@ -419,7 +419,7 @@ describe("Groups Tests", () => {
           fields: ["id", "groupName", "slug", "semester", "isArchived"],
           pagination: { pageSize: 100, page: 1 },
         }),
-        next: { tags: ["groups"], revalidate: 900 },
+        next: { tags: ["groups", "user-groups-5"], revalidate: 900 },
       });
     });
 
@@ -446,7 +446,7 @@ describe("Groups Tests", () => {
           },
           pagination: { pageSize: 50, page: 2 },
         }),
-        next: { tags: ["groups"], revalidate: 900 },
+        next: { tags: ["groups", "user-groups-5"], revalidate: 900 },
       });
     });
 
