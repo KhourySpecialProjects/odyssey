@@ -382,7 +382,7 @@ export async function createVoyageWithNodes(data: {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: voyage };
   } catch (err) {
     console.error(err);
@@ -445,7 +445,7 @@ export async function publishVoyage(id: number) {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null };
   } catch (err) {
     console.error(err);
@@ -559,7 +559,7 @@ export async function updateVoyageWithNodes(data: {
     if (nodeError) return { ok: false, error: nodeError, data: null };
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: voyage };
   } catch (err) {
     console.error(err);
@@ -622,7 +622,7 @@ export async function deleteVoyage(id: number) {
     const data = await response.json();
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: flattenAttributes(data.data) };
   } catch (err) {
     console.error(err);
@@ -710,8 +710,8 @@ export async function archiveVoyage(voyageId: number, archiveState: boolean) {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving voyage:", error);

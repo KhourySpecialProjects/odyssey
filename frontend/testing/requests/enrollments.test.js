@@ -938,6 +938,7 @@ describe("Enrollment Tests", () => {
           id: "123",
           viewedLessons: [{ id: 1 }, { id: 2 }],
           isComplete: true,
+          completionDate: "2026-01-01T00:00:00.000Z",
         },
       ]);
 
@@ -949,6 +950,75 @@ describe("Enrollment Tests", () => {
       await updateViewedLessons("123", 3, [1, 2, 3]);
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("records completionDate when the droplet is newly completed", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: "123",
+          viewedLessons: [{ id: 1 }, { id: 2 }],
+          isComplete: false,
+        },
+      ]);
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: {} }),
+      });
+
+      await updateViewedLessons("123", 3, [1, 2, 3]);
+
+      const completionBody = JSON.parse(global.fetch.mock.calls[1][1].body);
+      expect(completionBody.data.isComplete).toBe(true);
+      expect(completionBody.data.completionDate).toBeDefined();
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("backfills completionDate for an already-complete enrollment missing one", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: "123",
+          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
+          isComplete: true,
+          completionDate: null,
+        },
+      ]);
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: {} }),
+      });
+
+      const result = await updateViewedLessons("123", 3, [1, 2, 3]);
+
+      // Lesson already viewed, so the only PUT is the completion backfill
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data.completionDate).toBeDefined();
+      expect(result.alreadyViewed).toBe(true);
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("keeps an existing completionDate", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: "123",
+          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
+          isComplete: true,
+          completionDate: "2026-01-01T00:00:00.000Z",
+        },
+      ]);
+
+      await updateViewedLessons("123", 3, [1, 2, 3]);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles unauthenticated user", async () => {

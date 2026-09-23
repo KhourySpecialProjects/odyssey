@@ -142,6 +142,85 @@ describe("DropletFooter", () => {
     });
   });
 
+  describe("Mark as complete", () => {
+    it("records the view through updateViewedLessons with all droplet lesson ids", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      (updateViewedLessons as jest.Mock).mockResolvedValue({ success: true });
+      const mockRefresh = jest.fn();
+      (useRouter as jest.Mock).mockReturnValue({
+        push: mockPush,
+        refresh: mockRefresh,
+      });
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+          completedLessonIds={[1, 2]}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Mark as complete"));
+
+      await waitFor(() =>
+        expect(updateViewedLessons).toHaveBeenCalledWith("42", 3, [1, 2, 3]),
+      );
+      // The action's revalidateTag re-renders the route; no extra refresh.
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Next navigation", () => {
+    it("navigates to the next lesson without waiting for the progress save", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      // Never resolves: navigation must not depend on the save finishing.
+      (updateViewedLessons as jest.Mock).mockReturnValue(new Promise(() => {}));
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={1}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/lesson-2"),
+      );
+      expect(updateViewedLessons).toHaveBeenCalledWith("42", 1, [1, 2, 3]);
+    });
+
+    it("waits for the save before opening the recap from the last lesson", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      let resolveSave: (value: unknown) => void = () => {};
+      (updateViewedLessons as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+      );
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+      await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
+      expect(mockPush).not.toHaveBeenCalled();
+
+      resolveSave({ success: true });
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/recap"),
+      );
+    });
+  });
+
   describe("Quiz Validation - With Quizzes", () => {
     it("blocks proceeding when quiz questions are unanswered", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");

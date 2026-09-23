@@ -269,7 +269,7 @@ export async function updateGroupMembers(
   });
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
   return result;
 }
 
@@ -382,7 +382,7 @@ export async function createGroup(
     },
   });
   revalidateTag(CACHE_TAGS.allGroups);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -577,7 +577,7 @@ export async function updateGroup(
 
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -1061,7 +1061,7 @@ export async function deleteGroup(id: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1116,7 +1116,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);

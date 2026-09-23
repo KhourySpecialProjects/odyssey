@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCachedUser, getCachedUserGroups } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { getCachedUserGroups } from "@/lib/requests/cached";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
 import { redirect } from "next/navigation";
@@ -32,12 +33,12 @@ export default async function GroupsPage({ searchParams }: Props) {
     redirect("/unauthorized");
   }
 
-  const authorizedUser = await getCachedUser(user.email);
-  if (!authorizedUser) {
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) {
     redirect("/unauthorized");
   }
 
-  const allGroups = await getCachedUserGroups(authorizedUser.id);
+  const allGroups = await getCachedUserGroups(userId);
   const groupsByRole: Record<string, GroupWithRole[]> = {
     creator: [],
     admin: [],
@@ -46,16 +47,16 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   allGroups.forEach((group) => {
-    if (group.creator?.id === authorizedUser.id) {
+    if (group.creator?.id === userId) {
       groupsByRole.creator.push({ group, role: "creator" });
     }
-    if (group.admins?.some((admin) => admin.id === authorizedUser.id)) {
+    if (group.admins?.some((admin) => admin.id === userId)) {
       groupsByRole.admin.push({ group, role: "admin" });
     }
-    if (group.managers?.some((manager) => manager.id === authorizedUser.id)) {
+    if (group.managers?.some((manager) => manager.id === userId)) {
       groupsByRole.manager.push({ group, role: "manager" });
     }
-    if (group.members?.some((member) => member.id === authorizedUser.id)) {
+    if (group.members?.some((member) => member.id === userId)) {
       groupsByRole.member.push({ group, role: "member" });
     }
   });

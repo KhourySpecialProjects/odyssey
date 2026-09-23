@@ -16,11 +16,15 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  * Gets the desired lesson by its unique slug.
  * @param slug The unique slug of the desired lesson.
  * @param options Strapi query modifiers.
+ * @param fresh Skip the data cache. The draft lesson editor must always load
+ * the latest saved content: its autosaves skip revalidation, so a cached copy
+ * could be stale after a reload and then be autosaved over newer content.
  * @returns The lesson.
  */
 export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   slug: string,
   { sort, filters, fields = ["*"] }: StrapiRequestParams = {},
+  { fresh = false }: { fresh?: boolean } = {},
 ): Promise<T> {
   const path = `/lessons`;
   const urlParams = {
@@ -42,9 +46,15 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
     },
   };
 
+  // Tagged with `lesson` only: this returns lesson fields + blocks and no
+  // droplet data, so droplet-level mutations (ratings, metadata autosave)
+  // must not flush every lesson page. Every mutation that changes lesson
+  // data revalidates `lesson` (see cache-tags.ts).
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.droplets, CACHE_TAGS.lesson], revalidate: 900 },
+    ...(fresh
+      ? { cache: "no-store" as const }
+      : { next: { tags: [CACHE_TAGS.lesson], revalidate: 900 } }),
   }).then((lessons) => lessons[0]);
 }
 

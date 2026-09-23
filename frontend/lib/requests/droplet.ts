@@ -191,8 +191,12 @@ export async function updateDropletAverageRating(
     if (!response.ok) {
       throw new Error("Failed to update average rating");
     }
-    revalidateTag(CACHE_TAGS.droplets);
-    revalidateTag(CACHE_TAGS.allEnrollments);
+    // Intentionally no revalidation. This only writes the aggregate
+    // averageRating, which may be up to the 900s TTL stale for everyone.
+    // Flushing `droplets` + the global enrollments sweep here emptied the
+    // explore/droplet/dashboard caches for every user on every rating. The
+    // rater's own rating (and isComplete) is refreshed by
+    // changeEnrollmentRating via the per-user enrollments tag.
     return { success: true };
   } catch (error) {
     console.error("Error updating average rating:", error);
@@ -266,11 +270,14 @@ export async function deepDeleteDroplet(id: number) {
 
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
+    // Lessons were deleted above with revalidate=false; getLessonBySlug is
+    // tagged only with `lesson`, so flush it here.
+    revalidateTag(CACHE_TAGS.lesson);
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -351,13 +358,33 @@ export async function updateDroplet(
       return { ok: false, error: errorMessage, data: null };
     }
 
+    // Draft saves (the editor autosaves on a 1s debounce) skip sweeps for
+    // caches that can never contain a status="draft" droplet:
+    //  - playlists / user-dashboard: every playlist droplet picker only offers
+    //    published droplets, and no app flow moves a droplet back to "draft".
+    //  - groups: the group droplet picker excludes drafts.
+    //  - authors: creator lists only hold droplet ids, so they change only
+    //    when authorized_users changes.
+    // Still swept: droplets (the editor reads through it), enrollments
+    // (/d/[slug] has no status gate, so drafts can have enrollments), and
+    // user-content (every co-author's /my-content lists the draft).
+    // A save that sets `status` always gets the full sweep, since the
+    // previous status is unknown here.
+    const isDraftSave =
+      data.status === undefined &&
+      responseData.data?.attributes?.status === "draft";
+
     revalidateTag(CACHE_TAGS.droplets);
-    revalidateTag(CACHE_TAGS.authors);
+    if (!isDraftSave || data.authorized_users) {
+      revalidateTag(CACHE_TAGS.authors);
+    }
     revalidateTag(CACHE_TAGS.allEnrollments);
-    revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    if (!isDraftSave) {
+      revalidateTag(CACHE_TAGS.playlists);
+      revalidateTag(CACHE_TAGS.allGroups);
+      revalidateTag(CACHE_TAGS.allUserDashboards);
+    }
+    revalidateTag(CACHE_TAGS.allUserContent);
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -575,7 +602,9 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     }
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
-    revalidateTag(CACHE_TAGS.userContent);
+    // The creator is the new droplet's only author, and a brand-new droplet
+    // isn't in anyone's playlists, so only their /my-content changes.
+    revalidateTag(CACHE_TAGS.userContent(author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -932,7 +961,11 @@ export async function duplicateDroplet(dropletId: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.allEnrollments);
-    revalidateTag(CACHE_TAGS.userContent);
+    // The new draft shows up on /my-content for exactly its authors (the
+    // original's authors plus the current user); it isn't in any playlist.
+    for (const authorId of authorIds) {
+      revalidateTag(CACHE_TAGS.userContent(authorId));
+    }
 
     return {
       ok: true,
@@ -1331,10 +1364,32 @@ export async function publishDraftToOriginal(
       revalidateTag(CACHE_TAGS.playlists);
       revalidateTag(CACHE_TAGS.allEnrollments);
       revalidateTag(CACHE_TAGS.allGroups);
-      revalidateTag(CACHE_TAGS.userContent);
-      revalidateTag(CACHE_TAGS.userDashboard);
+      revalidateTag(CACHE_TAGS.allUserContent);
+      revalidateTag(CACHE_TAGS.allUserDashboards);
     }
   }
+}
+
+/**
+ * Gets the ids of the Droplets a user has favorited.
+ * @param userId The authorized user's id.
+ * @returns The favorited Droplet ids.
+ */
+export async function getFavoritedDropletIds(
+  userId: number,
+): Promise<number[]> {
+  const [user] = await fetchAPI<{ dropletsFavorited?: { id: number }[] }[]>(
+    "/authorized-users",
+    {
+      urlParams: {
+        filters: { id: { $eq: userId } },
+        fields: ["id"],
+        populate: { dropletsFavorited: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.favorites(userId)], revalidate: 900 },
+    },
+  );
+  return user?.dropletsFavorited?.map((d) => d.id) ?? [];
 }
 
 export async function favoriteDroplet(
@@ -1403,7 +1458,10 @@ export async function favoriteDroplet(
       throw new Error("Failed to update favorite status");
     }
 
-    revalidateTag(CACHE_TAGS.droplets);
+    // Per-user only: favorite state is read through getFavoritedDropletIds
+    // (explore) and the per-user enrollments favorites preset, so the global
+    // droplets cache doesn't need to be flushed for everyone.
+    revalidateTag(CACHE_TAGS.favorites(authorizedUser.id));
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {

@@ -517,7 +517,7 @@ export async function updateViewedLessons(
         viewedLessons: { fields: ["id"] },
         droplet: { fields: ["id"] },
       },
-      fields: ["id", "isComplete"],
+      fields: ["id", "isComplete", "completionDate"],
     });
 
     const currentViewedIds =
@@ -557,7 +557,14 @@ export async function updateViewedLessons(
       finalViewedIds.includes(id),
     );
 
-    if (isNowComplete && !enrollment.isComplete) {
+    // Completion date is recorded here rather than during page render:
+    // revalidateTag throws during render, which left the cache stale and
+    // re-ran the write on every view. Also backfills enrollments that were
+    // marked complete before completionDate was tracked.
+    const needsCompletionUpdate =
+      isNowComplete && (!enrollment.isComplete || !enrollment.completionDate);
+
+    if (needsCompletionUpdate) {
       await fetch(
         `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
         {
@@ -569,13 +576,16 @@ export async function updateViewedLessons(
           body: JSON.stringify({
             data: {
               isComplete: true,
+              ...(enrollment.completionDate
+                ? {}
+                : { completionDate: new Date() }),
             },
           }),
         },
       );
     }
     const alreadyViewed = currentViewedIds.includes(lessonId);
-    if (!alreadyViewed || (isNowComplete && !enrollment.isComplete)) {
+    if (!alreadyViewed || needsCompletionUpdate) {
       revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     }
 

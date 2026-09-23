@@ -6,6 +6,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { ProfileContent } from "./profile-content";
 import { PrivateProfileError } from "./private-profile-error";
@@ -19,19 +20,22 @@ export default async function PublicProfilePage({
 
   try {
     const userEmail = username + "@northeastern.edu";
-    const [currentUser, userData] = await Promise.all([
-      getCurrentUser(),
-      getAuthorizedUserByEmail(userEmail, {
-        fields: [...USER_POPULATES.social.fields],
-        populate: {
-          ...USER_POPULATES.social.populate,
-          droplets: {
-            fields: ["id", "name", "slug", "description", "averageRating"],
-          },
-        },
-      }) as Promise<AuthorizedUser>,
-    ]);
+    const currentUser = await getCurrentUser();
     const isViewingOwnProfile = currentUser?.email === userEmail;
+
+    // The viewer's own data depends only on the session, so start it now
+    // instead of after the profile's data. It never rejects.
+    const viewerDataPromise = getViewerData(currentUser, isViewingOwnProfile);
+
+    const userData = (await getAuthorizedUserByEmail(userEmail, {
+      fields: [...USER_POPULATES.social.fields],
+      populate: {
+        ...USER_POPULATES.social.populate,
+        droplets: {
+          fields: ["id", "name", "slug", "description", "averageRating"],
+        },
+      },
+    })) as AuthorizedUser;
 
     if (
       !userData.isPublic &&
@@ -42,7 +46,12 @@ export default async function PublicProfilePage({
     }
 
     // Fetch profile data
-    const [enrollments, friends, announcements] = await Promise.all([
+    const [
+      enrollments,
+      friends,
+      announcements,
+      { currentUserData, currentUserCompletedIds },
+    ] = await Promise.all([
       getEnrollmentsByAuthorizedUser(userData.id, {
         populate: {
           viewedLessons: {
@@ -59,40 +68,8 @@ export default async function PublicProfilePage({
       }),
       fetchFriends(userData),
       fetchUserAnnouncements(userData.id),
+      viewerDataPromise,
     ]);
-
-    // Get current user data if logged in and not viewing own profile
-    let currentUserCompletedIds: number[] = [];
-    let currentUserData: AuthorizedUser | null = null;
-
-    if (currentUser?.email) {
-      try {
-        const maybeUserData = await getCachedUserSocial(currentUser.email);
-        if (!maybeUserData || typeof maybeUserData.id !== "number") {
-          throw new Error("Current user data is missing a valid id");
-        }
-        currentUserData = maybeUserData;
-
-        if (!isViewingOwnProfile) {
-          const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
-            currentUserData.id,
-            {
-              populate: {
-                droplet: {
-                  fields: ["id"],
-                },
-              },
-            },
-          );
-
-          currentUserCompletedIds = (currentUserEnrollments || [])
-            .filter((enrollment: Enrollment) => enrollment.isComplete)
-            .map((enrollment: Enrollment) => enrollment.droplet.id);
-        }
-      } catch (error) {
-        console.error("Error fetching current user data:", error);
-      }
-    }
 
     return (
       <ProfileContent
@@ -120,5 +97,50 @@ export default async function PublicProfilePage({
         </div>
       </div>
     );
+  }
+}
+
+/**
+ * Loads the signed-in viewer's social data and, when viewing someone else's
+ * profile, the ids of droplets the viewer has completed. Errors are logged
+ * and yield empty data so the profile still renders.
+ */
+async function getViewerData(
+  currentUser: Awaited<ReturnType<typeof getCurrentUser>>,
+  isViewingOwnProfile: boolean,
+): Promise<{
+  currentUserData: AuthorizedUser | null;
+  currentUserCompletedIds: number[];
+}> {
+  const empty = { currentUserData: null, currentUserCompletedIds: [] };
+  if (!currentUser?.email) return empty;
+
+  try {
+    const currentUserId = await getAuthorizedUserId(currentUser);
+    const [maybeUserData, currentUserEnrollments] = await Promise.all([
+      getCachedUserSocial(currentUser.email),
+      !isViewingOwnProfile && currentUserId
+        ? getEnrollmentsByAuthorizedUser(currentUserId, {
+            populate: {
+              droplet: {
+                fields: ["id"],
+              },
+            },
+          })
+        : [],
+    ]);
+    if (!maybeUserData || typeof maybeUserData.id !== "number") {
+      throw new Error("Current user data is missing a valid id");
+    }
+
+    return {
+      currentUserData: maybeUserData,
+      currentUserCompletedIds: (currentUserEnrollments || [])
+        .filter((enrollment: Enrollment) => enrollment.isComplete)
+        .map((enrollment: Enrollment) => enrollment.droplet.id),
+    };
+  } catch (error) {
+    console.error("Error fetching current user data:", error);
+    return empty;
   }
 }

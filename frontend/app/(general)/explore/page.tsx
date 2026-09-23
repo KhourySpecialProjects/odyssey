@@ -20,6 +20,25 @@ import { getPlaylists } from "@/lib/requests/playlist";
 import { getVoyages } from "@/lib/requests/voyage";
 import { SearchProvider } from "@/contexts/SearchContext";
 
+// Fields read by DropletTile / SortedDropletsGrid. Keep in sync with those
+// components; full lesson content is never needed for tiles.
+const DROPLET_TILE_FIELDS = [
+  "name",
+  "slug",
+  "type",
+  "focusArea",
+  "difficulty",
+  "description",
+  "averageRating",
+  "status",
+  "createdAt",
+];
+const DROPLET_TILE_POPULATE = {
+  lessons: { fields: ["id"] },
+  tags: { fields: ["name", "slug"] },
+  authorized_users: { fields: ["id"] },
+};
+
 export const metadata: Metadata = {
   title: "Explore",
   description: "Discover content on Khoury Odyssey.",
@@ -39,108 +58,57 @@ export default async function ExplorePage({
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
+  const dropletFilters = {
+    $and: [
+      { status: { $eq: "published" } },
+      { isHidden: false },
+      type
+        ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
+        : {},
+      focusArea
+        ? {
+            $or: focusArea
+              .split(",")
+              .map((val) => ({ focusArea: { $eq: val } })),
+          }
+        : {},
+      tags
+        ? {
+            $or: tags
+              .split(",")
+              .map((val) => ({ tags: { slug: { $eq: val } } })),
+          }
+        : {},
+    ],
+  };
+  const playlistFilters = { $and: [{ isPublic: true }] };
+
+  // Only the active tab needs full tile data; the other tabs only feed the
+  // counts in ContentTypeSelector, so they fetch ids alone.
   const [droplets, playlists, voyages] = await Promise.all([
-    getDroplets({
-      filters: {
-        $and: [
-          { status: { $eq: "published" } },
-          { isHidden: false },
-          type
-            ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
-            : {},
-          focusArea
-            ? {
-                $or: focusArea
-                  .split(",")
-                  .map((val) => ({ focusArea: { $eq: val } })),
-              }
-            : {},
-          tags
-            ? {
-                $or: tags
-                  .split(",")
-                  .map((val) => ({ tags: { slug: { $eq: val } } })),
-              }
-            : {},
-        ],
-      },
-      populate: {
-        lessons: {
-          fields: ["*"],
+    contentType === "droplets"
+      ? getDroplets({
+          filters: dropletFilters,
+          fields: DROPLET_TILE_FIELDS,
+          populate: DROPLET_TILE_POPULATE,
+        })
+      : getDroplets({ filters: dropletFilters, fields: ["id"], populate: {} }),
+    contentType === "playlists"
+      ? getPlaylists({
+          filters: playlistFilters,
           populate: {
-            blocks: {
-              on: {
-                "droplets.generic": {
-                  populate: "*",
-                },
-                "droplets.expandable": {
-                  populate: "*",
-                },
-                "droplets.callout": {
-                  populate: "*",
-                },
-                "droplets.video": {
-                  populate: "*",
-                },
-                "droplets.quiz": {
-                  populate: {
-                    questions: {
-                      populate: {
-                        answerOptions: true,
-                      },
-                    },
-                  },
-                },
-                "droplets.open-ended-quiz": {
-                  populate: {
-                    questions: true,
-                  },
-                },
-              },
+            droplets: {
+              fields: ["id"],
+              populate: { lessons: { fields: ["id"] } },
             },
+            authorized_users: { fields: ["id"] },
           },
-        },
-        tags: {
-          fields: ["*"],
-        },
-        authorized_users: {
-          fields: ["id", "firstName", "lastName", "email"],
-        },
-        learningObjectives: {
-          fields: ["objective"],
-        },
-        nextSteps: {
-          fields: ["label", "url"],
-        },
-        prerequisites: {
-          fields: ["name"],
-        },
-        postrequisites: {
-          fields: ["name"],
-        },
-        usersFavorited: {
+        })
+      : getPlaylists({
+          filters: playlistFilters,
           fields: ["id"],
-        },
-      },
-      fields: ["*"],
-    }),
-    getPlaylists({
-      filters: {
-        $and: [{ isPublic: true }],
-      },
-      populate: {
-        droplets: {
-          populate: {
-            lessons: {
-              fields: ["id", "name", "slug"],
-            },
-          },
-        },
-        authorized_users: {
-          fields: ["id"],
-        },
-      },
-    }),
+          populate: {},
+        }),
     getVoyages(),
   ]);
 

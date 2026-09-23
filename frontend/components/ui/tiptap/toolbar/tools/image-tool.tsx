@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/popover";
 import { uploadImage } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import imageCompression from "browser-image-compression";
 import { toast } from "sonner";
 import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
 
@@ -102,6 +101,18 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
   );
 }
 
+// Cache the dynamic import so the library is only fetched on first upload
+let _compressionModule: Promise<
+  typeof import("browser-image-compression")
+> | null = null;
+
+async function getCompressionModule() {
+  if (!_compressionModule) {
+    _compressionModule = import("browser-image-compression");
+  }
+  return (await _compressionModule).default;
+}
+
 const compressImage = async (imageFile: File) => {
   const options = {
     maxSizeMB: 1,
@@ -109,6 +120,7 @@ const compressImage = async (imageFile: File) => {
     useWebWorker: true,
   };
   try {
+    const imageCompression = await getCompressionModule();
     return await imageCompression(imageFile, options);
   } catch (error) {
     console.error("Error compressing image:", error);

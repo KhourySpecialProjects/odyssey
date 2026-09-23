@@ -5,7 +5,6 @@ import { IconArrowLeft, IconArrowRight, IconLock } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
-import { markLessonAsComplete } from "@/lib/requests/lesson";
 import {
   isLessonQuizCompleted,
   markLessonQuizCompleted,
@@ -28,7 +27,6 @@ export default function DropletFooter({
   completedLessonIds?: number[];
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [canProceed, setCanProceed] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -45,15 +43,20 @@ export default function DropletFooter({
   };
 
   const handleMarkAsComplete = () => {
-    if (!enrollmentId || !currentLessonId) return;
+    if (!enrollmentId || !currentLessonId || !droplet.lessons) return;
+    const allDropletLessonIds = droplet.lessons.map((l) => l.id);
     startTransition(async () => {
-      const success = await markLessonAsComplete(
+      // Same action as "Next" so finishing the last lesson here also records
+      // the droplet's completion (isComplete + completionDate).
+      const { success } = await updateViewedLessons(
         enrollmentId,
-        completedLessonIds,
         currentLessonId,
+        allDropletLessonIds,
       );
-      if (success) {
-        await router.refresh();
+      // No router.refresh(): the action's revalidateTag already re-renders
+      // the route, and a refresh here would be a second full server render.
+      if (!success) {
+        console.error("Failed to mark lesson as complete");
       }
     });
   };
@@ -186,6 +189,9 @@ export default function DropletFooter({
               link={next.link}
               canProceed={canProceed}
               onClick={handleNextClick}
+              // The recap page shows the droplet as completed based on this
+              // save, so wait for it there; lesson-to-lesson navigates first.
+              awaitOnClick={next.link.endsWith("/recap")}
             >
               Next
               <IconArrowRight className="h-4 w-4" />
@@ -205,18 +211,27 @@ const PaginationLinkWrapper = ({
   children,
   canProceed,
   onClick,
+  awaitOnClick = false,
 }: {
   link: string;
   className?: string;
   children: React.ReactNode;
   canProceed: boolean;
   onClick?: () => Promise<void>;
+  awaitOnClick?: boolean;
 }) => {
   const router = useRouter();
 
   const handleClick = async () => {
-    if (onClick) {
+    if (onClick && awaitOnClick) {
       await onClick();
+    } else if (onClick) {
+      // Navigate right away and let the save finish in the background. Next
+      // keeps executing the pending Server Action and refreshes the new route
+      // once it completes, so progress shown there catches up.
+      onClick().catch((error) =>
+        console.error("Failed to save lesson progress:", error),
+      );
     }
     router.push(link);
   };

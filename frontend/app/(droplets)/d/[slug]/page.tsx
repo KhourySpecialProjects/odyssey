@@ -13,8 +13,8 @@ import { IconTarget, IconBook2 } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import {
-  getCachedUser,
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
 } from "@/lib/requests/cached";
@@ -41,24 +41,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRoute({ params }: Props) {
   const p = await params;
-  const [droplet, user] = await Promise.all([
+  const user = await getCurrentUser();
+  const userId = await getAuthorizedUserId(user);
+  const [droplet, enrollments] = await Promise.all([
     getCachedDropletBySlug(p.slug),
-    getCurrentUser(),
+    userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
   if (!droplet) return notFound();
 
-  let isEnrolled = false;
-
-  if (user?.email) {
-    const authorizedUser = await getCachedUser(user.email);
-
-    const enrollments = await getCachedEnrollmentsWithLessonIds(
-      authorizedUser.id,
-    );
-    isEnrolled = enrollments.some(
-      (e) => e.droplet && e.droplet.id === droplet.id,
-    );
-  }
+  const isEnrolled = enrollments.some(
+    (e) => e.droplet && e.droplet.id === droplet.id,
+  );
 
   return (
     <>

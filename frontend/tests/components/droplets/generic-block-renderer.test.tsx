@@ -1,11 +1,16 @@
 import { render, fireEvent, screen, waitFor } from "@testing-library/react";
 import GenericBlockRenderer from "@/components/droplets/lessons/generic-block-renderer";
-import hljs from "highlight.js";
+import hljs from "highlight.js/lib/core";
 import katex from "katex";
 import { Highlight, HighlightColor } from "@/types";
 
-jest.mock("highlight.js", () => ({
-  highlightAll: jest.fn(),
+// The renderer lazy-loads ./highlighter, which configures highlight.js/lib/core
+jest.mock("highlight.js/lib/core", () => ({
+  __esModule: true,
+  default: {
+    highlightAll: jest.fn(),
+    registerLanguage: jest.fn(),
+  },
 }));
 
 jest.mock("katex", () => ({
@@ -262,7 +267,7 @@ describe("GenericBlockRenderer", () => {
   });
 
   describe("Code Block Processing", () => {
-    it("applies syntax highlighting to code blocks", () => {
+    it("applies syntax highlighting to code blocks", async () => {
       render(
         <GenericBlockRenderer
           {...defaultProps}
@@ -273,7 +278,18 @@ describe("GenericBlockRenderer", () => {
           }}
         />,
       );
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
+    });
+
+    it("does not run syntax highlighting when there are no code blocks", async () => {
+      render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>No code here</p>" }}
+        />,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(hljs.highlightAll).not.toHaveBeenCalled();
     });
 
     it("removes language-plaintext class from code blocks", () => {
@@ -337,7 +353,7 @@ describe("GenericBlockRenderer", () => {
       expect(lineNumbers.length).toBe(0);
     });
 
-    it("handles code blocks with single line", () => {
+    it("handles code blocks with single line", async () => {
       render(
         <GenericBlockRenderer
           {...defaultProps}
@@ -348,7 +364,7 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
     });
   });
 
@@ -1303,6 +1319,31 @@ describe("GenericBlockRenderer", () => {
 
       expect(screen.getByText("Test content")).toBeInTheDocument();
     });
+
+    it("does not highlight a block that unmounts before highlight.js loads", async () => {
+      // Fresh module registry so the lazily-loaded highlighter isn't cached yet
+      await jest.isolateModulesAsync(async () => {
+        // "pure" skips RTL's auto-cleanup hooks, which can't be registered here
+        const { render: freshRender } = await import(
+          "@testing-library/react/pure"
+        );
+        const { default: FreshRenderer } = await import(
+          "@/components/droplets/lessons/generic-block-renderer"
+        );
+        const { default: freshHljs } = await import("highlight.js/lib/core");
+
+        const { unmount } = freshRender(
+          <FreshRenderer
+            {...defaultProps}
+            block={{ id: 1, content: "<pre><code>const x = 1;</code></pre>" }}
+          />,
+        );
+        unmount();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(freshHljs.highlightAll).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("Complex Highlighting Scenarios", () => {
@@ -1418,7 +1459,7 @@ describe("GenericBlockRenderer", () => {
       expect(document.createTreeWalker).toHaveBeenCalled();
     });
 
-    it("handles code blocks with highlights", () => {
+    it("handles code blocks with highlights", async () => {
       const highlights: Highlight[] = [
         {
           id: 1,
@@ -1440,7 +1481,7 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      expect(hljs.highlightAll).toHaveBeenCalled();
+      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
     });
   });
 });

@@ -5,6 +5,8 @@ import { DueDate, Playlist } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { PlaylistCard } from "../playlists/playlist-card";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { useSortKey } from "@/hooks/use-sort-key";
+import { sortPlaylists } from "@/lib/playlist-sort";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -14,28 +16,31 @@ export function UserPlaylistsClient({
   dueDates,
   isArchived,
   dashboardPage,
+  sortKey,
 }: {
   customPlaylists: Playlist[];
   publicPlaylists: Playlist[];
   dueDates: DueDate[];
   isArchived?: boolean;
   dashboardPage?: boolean;
+  sortKey?: string;
 }) {
   const { searchQuery } = useSearch();
+  const activeSortKey = useSortKey(sortKey);
   const [customPage, setCustomPage] = useState(1);
   const [publicPage, setPublicPage] = useState(1);
 
   const filteredPublic = useMemo(() => {
-    return publicPlaylists.filter((playlist) =>
+    return sortPlaylists(publicPlaylists, activeSortKey).filter((playlist) =>
       playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [publicPlaylists, searchQuery]);
+  }, [publicPlaylists, activeSortKey, searchQuery]);
 
   const filteredCustom = useMemo(() => {
-    return customPlaylists.filter((playlist) =>
+    return sortPlaylists(customPlaylists, activeSortKey).filter((playlist) =>
       playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [customPlaylists, searchQuery]);
+  }, [customPlaylists, activeSortKey, searchQuery]);
 
   useEffect(() => {
     setPublicPage(1);

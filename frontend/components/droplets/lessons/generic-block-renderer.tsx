@@ -1,13 +1,34 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import hljs from "highlight.js";
+import type { HLJSApi } from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
 import { SelectionToolbar } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
+
+// highlight.js is only fetched once a block actually renders code. The loaded
+// instance is shared by every block so later renders highlight synchronously.
+let loadedHljs: HLJSApi | null = null;
+let hljsPromise: Promise<HLJSApi> | null = null;
+
+function loadHljs(): Promise<HLJSApi> {
+  if (!hljsPromise) {
+    hljsPromise = import("./highlighter")
+      .then((mod) => {
+        loadedHljs = mod.default;
+        return mod.default;
+      })
+      .catch((error) => {
+        // Allow a later render to retry (e.g. after a transient chunk failure)
+        hljsPromise = null;
+        throw error;
+      });
+  }
+  return hljsPromise;
+}
 
 interface Block {
   content: string;
@@ -178,13 +199,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     : block.content;
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    if (contentRef.current) {
-      const processedContent = processLatex(nonTableContent);
-      contentRef.current.innerHTML = DOMPurify.sanitize(processedContent);
+    const container = contentRef.current;
+    if (!container) return;
 
-      const inlineLatexElements =
-        contentRef.current.querySelectorAll(".katex-inline");
+    // highlight.js rewrites each code element's markup, so it must run before
+    // line numbers and saved highlights are applied. Until it has loaded, the
+    // content renders without it and re-renders once it arrives.
+    const renderContent = (hljs: HLJSApi | null) => {
+      const processedContent = processLatex(nonTableContent);
+      container.innerHTML = DOMPurify.sanitize(processedContent);
+
+      const inlineLatexElements = container.querySelectorAll(".katex-inline");
       inlineLatexElements.forEach((element) => {
         const latex = element.textContent || "";
         try {
@@ -199,8 +224,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
 
-      const blockLatexElements =
-        contentRef.current.querySelectorAll(".katex-block");
+      const blockLatexElements = container.querySelectorAll(".katex-block");
       blockLatexElements.forEach((element) => {
         const latex = decodeURIComponent(
           element.getAttribute("data-latex") || "",
@@ -217,15 +241,19 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
 
-      const codeBlocks = contentRef.current.querySelectorAll("pre code");
+      const codeBlocks = container.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
         if (codeBlock.classList.contains("language-plaintext")) {
           codeBlock.classList.remove("language-plaintext");
         }
       });
-      hljs.highlightAll();
+      // highlightAll is page-wide, so this also covers code in sibling blocks
+      // that don't highlight themselves (e.g. v1 callouts).
+      const pageHasCode =
+        codeBlocks.length > 0 || document.querySelector("pre code") !== null;
+      if (pageHasCode) hljs?.highlightAll();
 
-      const preBlocks = contentRef.current.querySelectorAll("pre");
+      const preBlocks = container.querySelectorAll("pre");
 
       preBlocks.forEach((pre) => {
         const code = pre.querySelector("code");
@@ -274,7 +302,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       sortedHighlights.forEach((highlight) => {
         const walker = document.createTreeWalker(
-          contentRef.current!,
+          container,
           NodeFilter.SHOW_TEXT,
         );
 
@@ -332,7 +360,25 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           );
         }
       });
-    }
+
+      return pageHasCode;
+    };
+
+    const hasCodeBlocks = renderContent(loadedHljs);
+    if (!hasCodeBlocks || loadedHljs) return;
+
+    let cancelled = false;
+    loadHljs()
+      .then((hljs) => {
+        // Skip if the content changed or the block unmounted while loading
+        if (!cancelled && contentRef.current === container) {
+          renderContent(hljs);
+        }
+      })
+      .catch((e) => console.error("Failed to load syntax highlighting:", e));
+    return () => {
+      cancelled = true;
+    };
   }, [
     nonTableContent,
     highlights,

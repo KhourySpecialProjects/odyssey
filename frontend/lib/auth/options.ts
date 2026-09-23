@@ -122,6 +122,9 @@ export const authOptions: NextAuthOptions = {
             : null);
 
         token.user = {
+          // Stored so pages can start id-keyed fetches without first looking
+          // the user up by email (see lib/auth/current-user-id.ts).
+          id: authorizedUser.id,
           name: user.name,
           email: user.email,
           image: profilePhoto || user.image,

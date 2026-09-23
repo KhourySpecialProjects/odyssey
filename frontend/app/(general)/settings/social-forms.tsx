@@ -3,7 +3,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser, User } from "@/types";
@@ -14,7 +13,7 @@ import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
 import Link from "next/link";
-import { UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
+import { CopyIcon, UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 
@@ -311,7 +310,7 @@ export function SocialForms({
                   authorizedUser.email.indexOf("@"),
                 )}
               </Link>{" "}
-              <ContentCopyIcon
+              <CopyIcon
                 onClick={() => {
                   const profileLink = `khouryodyssey.org/prof/${authorizedUser.email.substring(
                     0,
@@ -320,8 +319,7 @@ export function SocialForms({
                   toast.success("Profile link copied to clipboard");
                   navigator.clipboard.writeText(profileLink);
                 }}
-                className="cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
-                fontSize="small"
+                className="inline-block h-5 w-5 cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
               />
             </div>
           )}

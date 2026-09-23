@@ -5,6 +5,7 @@ import {
   archivePlaylist,
 } from "@/lib/requests/playlist";
 import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -46,6 +47,24 @@ describe("createPlaylist", () => {
       error: null,
       data: mockPlaylistData,
     });
+  });
+
+  it("scopes /my-content and /dashboard invalidation to the author", async () => {
+    jest.clearAllMocks();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: mockPlaylistData }),
+    });
+
+    await createPlaylist(mockPlaylistData);
+
+    // A new playlist has one author and no enrollees yet
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent(123));
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userDashboard(123));
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
+    expect(revalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.allUserDashboards,
+    );
   });
 
   it("handles playlist creation failure", async () => {

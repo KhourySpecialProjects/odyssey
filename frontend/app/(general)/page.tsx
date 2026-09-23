@@ -1,26 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
-import { FunFact } from "@/components/droplets/fun-fact";
-import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
 import { AnimatedSailboat } from "@/components/ui/animated-sailboat";
 
 const outlineLinkCls =
   "inline-flex items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] py-[10px] text-sm font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700";
 
-export default async function HomeRoute() {
-  const user = await getCurrentUser();
-
-  if (user?.email) {
-    redirect("/activity");
-  }
-
-  const droplets = await getRandomFunFactDroplet();
-  const droplet = droplets[Math.floor(Math.random() * droplets.length)];
-
+// Signed-in users are redirected to /activity by middleware.ts, so this only
+// ever renders the anonymous view and needs no session or data.
+export default function HomeRoute() {
   return (
     <GradientBackground className="px-12 lg:px-24">
       <div className="mx-auto max-w-6xl">
@@ -49,32 +38,9 @@ export default async function HomeRoute() {
               >
                 <Link href="/explore">Start Exploring</Link>
               </Button>
-              {user?.roles?.some(
-                (role) =>
-                  role === "Content Creator" ||
-                  role === "Faculty" ||
-                  role === "System Admin",
-              ) && (
-                <Link href="/my-content" className={outlineLinkCls}>
-                  Create a Droplet <ArrowRightIcon className="h-4 w-4" />
-                </Link>
-              )}
-              {user?.roles?.some((role) => role === "User") &&
-                !user?.roles?.some(
-                  (role) =>
-                    role === "Content Creator" ||
-                    role === "Faculty" ||
-                    role === "System Admin",
-                ) && (
-                  <Link href="/creation-request" className={outlineLinkCls}>
-                    Request Creation Role <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                )}
-              {!user && (
-                <Link href="/request-access" className={outlineLinkCls}>
-                  Request Access <ArrowRightIcon className="h-4 w-4" />
-                </Link>
-              )}
+              <Link href="/request-access" className={outlineLinkCls}>
+                Request Access <ArrowRightIcon className="h-4 w-4" />
+              </Link>
             </div>
           </div>
 
@@ -83,13 +49,6 @@ export default async function HomeRoute() {
             <AnimatedSailboat />
           </div>
         </div>
-
-        {/* Fun Fact — full width below */}
-        {user && droplet && (
-          <div className="mt-8">
-            <FunFact droplet={droplet} />
-          </div>
-        )}
       </div>
     </GradientBackground>
   );

@@ -62,12 +62,10 @@ export function DropletFiltersButton({
   const currentSort = searchParams.get("sort") || defaultSort.slug;
   const setSort = (value: string) => {
     const params = new URLSearchParams(searchParams);
-    if (value !== defaultSort.slug) {
-      params.set("sort", value);
-    } else {
-      params.delete("sort");
-    }
-    router.push(`${pathname}?${params.toString()}`);
+    // Sorting is client-side (see useSortKey), so skip the server render.
+    // The param is always set so the grid can tell it from the server value.
+    params.set("sort", value);
+    window.history.pushState(null, "", `${pathname}?${params.toString()}`);
   };
 
   const clearAll = () => {

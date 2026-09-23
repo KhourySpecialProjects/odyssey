@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { wedgesTW } from "@lemonsqueezy/wedges";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   safelist: [
@@ -14,7 +14,6 @@ const config: Config = {
     "./ui/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
-    "node_modules/@lemonsqueezy/wedges/dist/**/*.{js,ts,jsx,tsx}",
   ],
   prefix: "",
   theme: {
@@ -26,6 +25,34 @@ const config: Config = {
       },
     },
     extend: {
+      // Formerly provided by the @lemonsqueezy/wedges plugin; kept so
+      // existing `xs:`, `text-5xl`+, and theme-color classes render the same.
+      screens: {
+        xs: "480px",
+      },
+      fontSize: {
+        "5xl": ["3rem", { lineHeight: "3.5rem", letterSpacing: "-0.075rem" }],
+        "6xl": [
+          "3.75rem",
+          { lineHeight: "4.5rem", letterSpacing: "-0.09375rem" },
+        ],
+        "7xl": ["4.5rem", { lineHeight: "5rem", letterSpacing: "-0.1125rem" }],
+        "8xl": ["6rem", { lineHeight: "6.5rem", letterSpacing: "-0.15rem" }],
+        "9xl": ["8rem", { lineHeight: "8rem", letterSpacing: "-0.2rem" }],
+      },
+      // Values live in app/globals.css (light on :root, dark on .dark)
+      colors: {
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        primary: {
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          300: "hsl(var(--primary-300) / <alpha-value>)",
+          500: "hsl(var(--primary-500) / <alpha-value>)",
+          600: "hsl(var(--primary-600) / <alpha-value>)",
+        },
+        secondary: "hsl(var(--secondary) / <alpha-value>)",
+        destructive: "hsl(var(--destructive) / <alpha-value>)",
+      },
       spacing: {
         40: "10rem",
         56: "14rem",
@@ -65,7 +92,11 @@ const config: Config = {
     },
   },
   plugins: [
-    wedgesTW(),
+    // `light:` variant (next-themes puts `light`/`dark` on <html>), formerly
+    // provided by the @lemonsqueezy/wedges plugin.
+    plugin(({ addVariant }) => {
+      addVariant("light", "&:is(.light *)");
+    }),
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),

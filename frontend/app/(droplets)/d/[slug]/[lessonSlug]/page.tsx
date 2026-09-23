@@ -5,9 +5,12 @@ import {
   getCachedDropletBySlug,
   getCachedLessonBySlug,
 } from "@/lib/requests/cached";
-import { updateCompletionDate } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
+import { getHighlightsByAuthorizedUserAndLesson } from "@/lib/requests/highlights";
 import { notFound } from "next/navigation";
+import { Highlight, Note } from "@/types";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
 type Props = {
@@ -33,20 +36,31 @@ export default async function Page({ params }: Props) {
   const p = await params;
   const { slug, lessonSlug } = p;
 
-  const [droplet, lesson, currentUser] = await Promise.all([
-    getCachedDropletBySlug(slug),
-    getCachedLessonBySlug(lessonSlug),
-    getCurrentUser(),
-  ]);
+  const currentUser = await getCurrentUser();
+  if (!currentUser || !currentUser?.email) return notFound();
+  const userId = await getAuthorizedUserId(currentUser);
+  if (!userId) return notFound();
+
+  // Notes and highlights are keyed by lesson slug so they load alongside the
+  // lesson. A failed read shows none instead of failing the whole lesson.
+  const [droplet, lesson, authUser, enrollments, notes, highlights] =
+    await Promise.all([
+      getCachedDropletBySlug(slug),
+      getCachedLessonBySlug(lessonSlug),
+      getCachedUser(currentUser.email),
+      getCachedEnrollmentsWithLessonIds(userId),
+      getNotesByAuthorizedUserAndLesson(userId, lessonSlug).catch(
+        (): Note[] => [],
+      ),
+      getHighlightsByAuthorizedUserAndLesson(userId, lessonSlug).catch(
+        (): Highlight[] => [],
+      ),
+    ]);
 
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
 
-  if (!currentUser || !currentUser?.email) return notFound();
-
-  const authUser = await getCachedUser(currentUser.email);
-  if (!authUser) return notFound();
-  const enrollments = await getCachedEnrollmentsWithLessonIds(authUser.id);
+  if (!droplet || !lesson || !authUser) return notFound();
 
   const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
@@ -54,12 +68,6 @@ export default async function Page({ params }: Props) {
     enrollmentId = enrollment.id;
     completedLessonIds =
       enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
-    if (
-      completedLessonIds.length === enrollment.droplet.lessons?.length &&
-      !enrollment.completionDate
-    ) {
-      await updateCompletionDate(enrollment.id);
-    }
   }
 
   const isAuthor =
@@ -69,7 +77,9 @@ export default async function Page({ params }: Props) {
   return (
     <div className="flex h-full w-full flex-row">
       <div className="w-full">
+        {/* Keyed by lesson so notes/highlight state never carries over */}
         <DropletLessonWrapper
+          key={lesson.id}
           lesson={lesson}
           droplet={droplet}
           enrollmentId={enrollmentId}
@@ -78,6 +88,8 @@ export default async function Page({ params }: Props) {
           author={isAuthor || false}
           authUser={authUser}
           userId={authUser.id}
+          initialNotes={notes ?? []}
+          initialHighlights={highlights ?? []}
         />
       </div>
     </div>
