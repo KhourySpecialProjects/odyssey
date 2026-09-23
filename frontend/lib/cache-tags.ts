@@ -79,6 +79,9 @@
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
  *                 (friend requests, blocked users, friendships)
+ * user-groups     Per-user tag "user-groups-{userId}": refreshUserGroups        900s
+ *                 (manual refresh on /g/dashboard). Also swept by the global
+ *                 "groups" tag, since getUserGroups carries both.
  */
 
 export const CACHE_TAGS = {
@@ -109,4 +112,5 @@ export const CACHE_TAGS = {
   friendships: (userId: number) => `friendships-${userId}`,
   notes: (userId: number) => `notes-${userId}`,
   highlights: (userId: number) => `highlights-${userId}`,
+  userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
 };
