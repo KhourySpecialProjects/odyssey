@@ -4,6 +4,7 @@ import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
 import { PlusIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { RefreshGroupsButton } from "@/components/group/refresh-groups-button";
 import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
@@ -61,16 +62,19 @@ export function GroupsSelector() {
         ))}
       </div>
 
-      {canCreateGroup && (
-        <Button
-          size="sm"
-          after={<PlusIcon />}
-          onClick={() => router.push("/g/management")}
-          className="bg-[#287697] text-white hover:bg-[#1f6080]"
-        >
-          Create Group
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        <RefreshGroupsButton />
+        {canCreateGroup && (
+          <Button
+            size="sm"
+            after={<PlusIcon />}
+            onClick={() => router.push("/g/management")}
+            className="bg-[#287697] text-white hover:bg-[#1f6080]"
+          >
+            Create Group
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
