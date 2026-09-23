@@ -467,22 +467,60 @@ describe("Groups Tests", () => {
     });
 
     // Guards ODY-484 Refresh: every page fetched by getUserGroups must carry the per-user tag,
-    // or refreshUserGroups() only clears some pages (see ODY-485's page loop).
-    it("should tag every fetchAPI call with the caller's per-user tag", async () => {
-      const authorizedUserId = 5;
+    // or refreshUserGroups() only clears some pages (see ODY-485's page loop). The mock
+    // deliberately serves a full first page sized from the request's pageSize and then an
+    // empty page, so a future page loop (ODY-485) fetches more than once and this test can
+    // catch a page that's missing the tag.
+    describe("every-call tag safeguard", () => {
+      afterEach(() => {
+        fetchAPI.mockReset();
+      });
 
-      fetchAPI.mockResolvedValueOnce([]);
+      it("should tag every fetchAPI call with the caller's per-user tag", async () => {
+        const authorizedUserId = 5;
+        let served = 0;
+        fetchAPI.mockImplementation(async (_path, opts) => {
+          const size = opts?.urlParams?.pagination?.pageSize ?? 25;
+          return served++ === 0
+            ? Array.from({ length: size }, (_, i) => ({ id: i + 1 }))
+            : [];
+        });
 
-      await getUserGroups(authorizedUserId);
+        await getUserGroups(authorizedUserId);
 
-      expect(fetchAPI.mock.calls.length).toBeGreaterThan(0);
-      expect(
-        fetchAPI.mock.calls.every(
-          ([, opts]) =>
-            opts?.next?.tags?.includes("user-groups-5") &&
-            opts.next.tags.includes("groups"),
-        ),
-      ).toBe(true);
+        expect(fetchAPI.mock.calls.length).toBeGreaterThan(0);
+        expect(
+          fetchAPI.mock.calls.every(
+            ([, opts]) =>
+              opts?.next?.tags?.includes("user-groups-5") &&
+              opts.next.tags.includes("groups"),
+          ),
+        ).toBe(true);
+      });
+
+      it("should tag every fetchAPI call with the caller's per-user tag when an explicit page is requested (ODY-485 explicit-page path)", async () => {
+        const authorizedUserId = 5;
+        let served = 0;
+        fetchAPI.mockImplementation(async (_path, opts) => {
+          const size = opts?.urlParams?.pagination?.pageSize ?? 25;
+          return served++ === 0
+            ? Array.from({ length: size }, (_, i) => ({ id: i + 1 }))
+            : [];
+        });
+
+        await getUserGroups(authorizedUserId, {
+          pagination: { page: 2, pageSize: 25 },
+        });
+
+        expect(fetchAPI.mock.calls.length).toBeGreaterThan(0);
+        expect(
+          fetchAPI.mock.calls.every(
+            ([, opts]) =>
+              opts?.next?.tags?.includes("user-groups-5") &&
+              opts.next.tags.includes("groups"),
+          ),
+        ).toBe(true);
+      });
     });
   });
 
