@@ -3,6 +3,8 @@
 import qs from "qs";
 import { fetchAuthorizedUsersMetadata } from "./authorized-user";
 import { fetchEnrollmentMetadata } from "./enrollment";
+import { requireRole } from "@/lib/auth/require-role";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -71,6 +73,13 @@ export interface AdminDashboardStats {
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  // This file is "use server", so this function is a public endpoint — the
+  // admin layout's guard does not run for direct calls. Gate before querying.
+  const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!gate.ok) {
+    throw new Error("Unauthorized");
+  }
+
   const cutoff = daysAgo(30);
 
   const [
