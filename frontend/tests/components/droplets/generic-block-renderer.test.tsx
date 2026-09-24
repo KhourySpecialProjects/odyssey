@@ -473,6 +473,25 @@ describe("GenericBlockRenderer", () => {
       expect(lineNumbers.length).toBeGreaterThan(0);
     });
 
+    it("gives the line-number gutter its own dark-mode colour", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<pre><code>a\nb</code></pre>" }}
+        />,
+      );
+
+      // globals.css no longer recolours it (that rule keyed on pt-3/pl-3)
+      const gutter = container
+        .querySelector(".text-right")!
+        .closest(".absolute");
+      expect(gutter).toHaveClass(
+        "bg-slate-50",
+        "text-slate-500",
+        "dark:text-slate-700",
+      );
+    });
+
     it("skips line number generation for pre blocks without code", () => {
       const { container } = render(
         <GenericBlockRenderer

@@ -90,30 +90,28 @@
   color: #334155;
 }
 
-/* Fix for invisible text in dark mode */
+/* Fix for invisible text in dark mode. pre and plain code get white text,
+   but their contents only inherit it, so anything with its own colour keeps
+   it: highlight.js tokens (github-dark theme), code-block line numbers. In
+   sky callouts everything is white except code blocks, for the same reason. */
 .dark .prose blockquote,
 .dark .prose blockquote *,
 .dark .bg-sky-50,
-.dark .bg-sky-50 *,
+.dark .bg-sky-50 :not(pre, pre *),
 .dark pre,
-.dark pre *,
-.dark code,
-.dark code *,
-.dark .hljs,
-.dark .hljs * {
+.dark code:not(.hljs) {
   color: white;
 }
 
 /* Lesson code blocks before highlight.js arrives (it loads lazily): apply the
-   github-dark block styles up front so a block doesn't grow and change
-   background at the moment it gets highlighted. Once highlighted, the
-   `pre code.hljs` / `.hljs` theme rules take over with the same values. */
+   `pre code.hljs` block layout up front so a block doesn't grow at the moment
+   it gets highlighted. Colours need nothing here: highlighted or not, the
+   code is transparent on the prose pre background and inherits its text
+   colour (prose-code:text-inherit outranks the theme's .hljs colours). */
 .lesson-block-content pre code:not(.hljs) {
   display: block;
   overflow-x: auto;
   padding: 1em;
-  color: #c9d1d9;
-  background: #0d1117;
 }
 
 /* Prevent the global dark-mode color override from breaking Sandpack/CodeMirror syntax highlighting */
@@ -124,14 +122,10 @@
   color: unset;
 }
 
-/* Specific fix for callout bullet list items in dark mode */
-.dark .pt-3.pl-3 * {
-  color: #334155 !important;
-}
-
-/* Dark background for sky-50 elements */
-.dark .bg-sky-50,
-.dark [class*="bg-sky-50"] {
+/* Dark background for sky-50 elements (callouts). Exact class only: a
+   substring match also caught bg-sky-500 (checked checkboxes, buttons,
+   progress bars). */
+.dark .bg-sky-50 {
   background-color: rgb(15 23 42) !important;
 }
 

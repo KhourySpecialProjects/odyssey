@@ -264,9 +264,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         const lines = (code.textContent?.match(/\n/g) || []).length + 1;
 
+        // Light gutter in both themes; darker numbers in dark mode (formerly
+        // a globals.css rule keyed on this element's pt-3/pl-3 classes)
         const lineNumbers = document.createElement("div");
         lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50 select-none";
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 dark:text-slate-700 text-sm border-r border-slate-300 bg-slate-50 select-none";
 
         const lineContainer = document.createElement("div");
         lineContainer.className = "pt-3 pl-3";
