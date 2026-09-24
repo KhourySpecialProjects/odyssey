@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import pkg from "./package.json" with { type: "json" };
 
 // Derive CSP-safe origins from the S3/CDN env vars so the config follows the
@@ -34,8 +33,6 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
   },
   reactStrictMode: true,
-  // Fixes Next.js 15 ignoring repeat revalidateTag() calls — see cache-handler.js
-  cacheHandler: fileURLToPath(new URL("./cache-handler.js", import.meta.url)),
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.

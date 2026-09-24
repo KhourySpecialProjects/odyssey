@@ -45,5 +45,3 @@ docker-compose.playwright.yml
 backend/src/extensions/documentation/documentation/
 
 */auth.json.next/
-.agents/
-.codex/
