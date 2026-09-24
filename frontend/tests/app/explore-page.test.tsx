@@ -57,6 +57,31 @@ describe("Explore page content type", () => {
     );
   });
 
+  it("filters droplets by the selected difficulties, alongside the other filters", async () => {
+    await renderPage({ difficulty: "beginner,advanced", type: "skill" });
+
+    const { filters } = (getDroplets as jest.Mock).mock.calls[0][0];
+    expect(filters.$and).toEqual(
+      expect.arrayContaining([
+        { status: { $eq: "published" } },
+        { $or: [{ type: { $eq: "skill" } }] },
+        {
+          $or: [
+            { difficulty: { $eq: "beginner" } },
+            { difficulty: { $eq: "advanced" } },
+          ],
+        },
+      ]),
+    );
+  });
+
+  it("doesn't filter by difficulty when none is selected", async () => {
+    await renderPage({});
+
+    const { filters } = (getDroplets as jest.Mock).mock.calls[0][0];
+    expect(JSON.stringify(filters)).not.toContain("difficulty");
+  });
+
   it("shows playlists with full data when requested", async () => {
     await renderPage({ contentType: "playlists" });
 
