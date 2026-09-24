@@ -136,8 +136,10 @@ function GroupArchiveControls({
       `${group.groupName} restored for all members.`,
     );
 
+  // Outline + explicit purple text so labels stay readable against the card's
+  // slate-50/slate-800 background (the default variant's white text blended in).
   const buttonClassName =
-    "bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
+    "border-purple-300 bg-white text-purple-700 hover:bg-purple-50 hover:text-purple-800 dark:border-purple-400/60 dark:bg-slate-900 dark:text-purple-300 dark:hover:bg-slate-700 dark:hover:text-purple-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
   // Active tabs (member/admin/manager/creator): every card gets an archive
   // control.
@@ -145,6 +147,7 @@ function GroupArchiveControls({
     if (!archiveState.canManage) {
       return (
         <Button
+          variant="outline"
           size="sm"
           aria-label="Archive group"
           aria-busy={isPending}
@@ -166,6 +169,7 @@ function GroupArchiveControls({
           <DropdownMenuTrigger asChild>
             <Button
               ref={archiveMenuTriggerRef}
+              variant="outline"
               size="sm"
               aria-label="Archive options"
               aria-busy={isPending}
@@ -251,6 +255,7 @@ function GroupArchiveControls({
       <>
         <Button
           ref={unarchiveAllTriggerRef}
+          variant="outline"
           size="sm"
           aria-busy={isPending}
           aria-disabled={isPending}
@@ -306,6 +311,7 @@ function GroupArchiveControls({
   // Archived only for this viewer.
   return (
     <Button
+      variant="outline"
       size="sm"
       aria-busy={isPending}
       aria-disabled={isPending}
