@@ -381,11 +381,11 @@ describe("Sidebar", () => {
       expect(btn).toHaveAttribute("data-button-text", "Publish");
     });
 
-    it("shows Review button for ContentCreator (no direct publish)", () => {
+    it("shows Submit for review button for ContentCreator (no direct publish)", () => {
       renderWithRoles([AuthorizedUserRoleTitle.ContentCreator]);
       const btn = screen.getByTestId("content-action-button");
       expect(btn).toHaveAttribute("data-action-type", "requestReview");
-      expect(btn).toHaveAttribute("data-button-text", "Review");
+      expect(btn).toHaveAttribute("data-button-text", "Submit for review");
     });
 
     it("shows no action button for User role", () => {
