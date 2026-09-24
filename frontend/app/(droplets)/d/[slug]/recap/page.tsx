@@ -23,6 +23,8 @@ import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { redirect } from "next/navigation";
 import { Confetti } from "./confetti";
+import { CompletionBackfill } from "@/components/droplets/completion-backfill";
+import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
 
 type Props = {
   params: Promise<Params>;
@@ -109,6 +111,9 @@ export default async function DropletRecapRoute({ params }: Props) {
 
   return (
     <>
+      {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
+        <CompletionBackfill enrollmentId={enrollment.id} />
+      )}
       {enrollment &&
         enrollment.viewedLessons.length ===
           enrollment.droplet.lessons?.length &&

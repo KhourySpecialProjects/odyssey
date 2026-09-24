@@ -108,7 +108,11 @@ let _compressionModule: Promise<
 
 async function getCompressionModule() {
   if (!_compressionModule) {
-    _compressionModule = import("browser-image-compression");
+    _compressionModule = import("browser-image-compression").catch((error) => {
+      // Allow a later upload to retry (e.g. after a transient chunk failure)
+      _compressionModule = null;
+      throw error;
+    });
   }
   return (await _compressionModule).default;
 }

@@ -44,11 +44,11 @@ export function UserPlaylistsClient({
 
   useEffect(() => {
     setPublicPage(1);
-  }, [publicPlaylists, searchQuery]);
+  }, [publicPlaylists, searchQuery, activeSortKey]);
 
   useEffect(() => {
     setCustomPage(1);
-  }, [customPlaylists, searchQuery]);
+  }, [customPlaylists, searchQuery, activeSortKey]);
 
   const customTotalPages = Math.ceil(filteredCustom.length / ITEMS_PER_PAGE);
   const paginatedCustom = filteredCustom.slice(

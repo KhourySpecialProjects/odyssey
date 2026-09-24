@@ -153,10 +153,10 @@ export function EnrolledDropletsGridClient({
     return filtered;
   }, [sortedDroplets, type, focusArea, difficulty, tags, searchQuery]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or the sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [type, focusArea, difficulty, tags, searchQuery]);
+  }, [type, focusArea, difficulty, tags, searchQuery, sortKey]);
 
   // Step 3: Paginate
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);

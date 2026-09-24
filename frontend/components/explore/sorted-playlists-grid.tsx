@@ -34,7 +34,7 @@ export function SortedPlaylistsGrid({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [playlistsWithCompletion, searchQuery]);
+  }, [playlistsWithCompletion, searchQuery, activeSortKey]);
 
   const totalPages = Math.ceil(filteredPlaylists.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

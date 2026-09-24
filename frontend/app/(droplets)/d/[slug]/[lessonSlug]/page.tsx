@@ -12,6 +12,8 @@ import { getHighlightsByAuthorizedUserAndLesson } from "@/lib/requests/highlight
 import { notFound } from "next/navigation";
 import { Highlight, Note } from "@/types";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
+import { CompletionBackfill } from "@/components/droplets/completion-backfill";
+import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
 
 type Props = {
   params: Promise<Params>;
@@ -76,6 +78,9 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="flex h-full w-full flex-row">
+      {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
+        <CompletionBackfill enrollmentId={enrollment.id} />
+      )}
       <div className="w-full">
         {/* Keyed by lesson so notes/highlight state never carries over */}
         <DropletLessonWrapper

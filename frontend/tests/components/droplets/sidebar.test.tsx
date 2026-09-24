@@ -3,6 +3,8 @@ import Sidebar from "@/components/droplets/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Block, Droplet, Lesson } from "@/types";
+import { act } from "@testing-library/react";
+import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
@@ -283,6 +285,30 @@ describe("Sidebar", () => {
       );
 
       expect(screen.getByText("33% complete")).toBeInTheDocument();
+    });
+
+    it("counts lessons marked viewed in this session before the save lands", () => {
+      useViewedLessonsStore.setState({ pendingViewedIds: [] });
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[1]}
+          enrollmentId="42"
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+      const lesson3Link = () => screen.getAllByText("Lesson 3")[0].closest("a");
+      expect(lesson3Link()).toHaveClass("pointer-events-none");
+
+      // "Next" on lesson 2 marks it viewed while its save is still running
+      act(() => useViewedLessonsStore.getState().markViewed(2));
+
+      expect(screen.getByText("67% complete")).toBeInTheDocument();
+      expect(lesson3Link()).not.toHaveClass("pointer-events-none");
+      useViewedLessonsStore.setState({ pendingViewedIds: [] });
     });
 
     it("shows 100% when all lessons completed", () => {

@@ -71,7 +71,11 @@ export function DropletDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <DateTimePicker onChange={handleInputChange} date={dueDate} />
+        <DateTimePicker
+          onChange={handleInputChange}
+          date={dueDate}
+          aria-label={`Due date for ${currentDroplet.name}`}
+        />
         <div className="flex flex-col gap-2">
           <Button
             onClick={() => {

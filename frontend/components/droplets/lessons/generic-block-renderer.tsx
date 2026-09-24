@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import type { HLJSApi } from "highlight.js";
+import type * as Highlighter from "./highlighter";
 import { Highlight, HighlightColor } from "@/types";
 import { SelectionToolbar } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
@@ -9,25 +9,27 @@ import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
 
-// highlight.js is only fetched once a block actually renders code. The loaded
-// instance is shared by every block so later renders highlight synchronously.
-let loadedHljs: HLJSApi | null = null;
-let hljsPromise: Promise<HLJSApi> | null = null;
+type HighlighterModule = typeof Highlighter;
 
-function loadHljs(): Promise<HLJSApi> {
-  if (!hljsPromise) {
-    hljsPromise = import("./highlighter")
+// highlight.js is only fetched once a block actually renders code. The loaded
+// module is shared by every block so later renders highlight synchronously.
+let loadedHighlighter: HighlighterModule | null = null;
+let highlighterPromise: Promise<HighlighterModule> | null = null;
+
+function loadHighlighter(): Promise<HighlighterModule> {
+  if (!highlighterPromise) {
+    highlighterPromise = import("./highlighter")
       .then((mod) => {
-        loadedHljs = mod.default;
-        return mod.default;
+        loadedHighlighter = mod;
+        return mod;
       })
       .catch((error) => {
         // Allow a later render to retry (e.g. after a transient chunk failure)
-        hljsPromise = null;
+        highlighterPromise = null;
         throw error;
       });
   }
-  return hljsPromise;
+  return highlighterPromise;
 }
 
 interface Block {
@@ -203,9 +205,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     if (!container) return;
 
     // highlight.js rewrites each code element's markup, so it must run before
-    // line numbers and saved highlights are applied. Until it has loaded, the
-    // content renders without it and re-renders once it arrives.
-    const renderContent = (hljs: HLJSApi | null) => {
+    // line numbers and saved highlights are applied. Until it (and any language
+    // grammar the page's code needs) has loaded, the content renders without it
+    // and re-renders once it arrives.
+    const renderContent = (highlighter: HighlighterModule | null) => {
       const processedContent = processLatex(nonTableContent);
       container.innerHTML = DOMPurify.sanitize(processedContent);
 
@@ -247,11 +250,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           codeBlock.classList.remove("language-plaintext");
         }
       });
-      // highlightAll is page-wide, so this also covers code in sibling blocks
+      // Highlighting is page-wide, so this also covers code in sibling blocks
       // that don't highlight themselves (e.g. v1 callouts).
       const pageHasCode =
         codeBlocks.length > 0 || document.querySelector("pre code") !== null;
-      if (pageHasCode) hljs?.highlightAll();
+      if (pageHasCode) highlighter?.highlightCodeBlocks(document);
 
       const preBlocks = container.querySelectorAll("pre");
 
@@ -364,15 +367,27 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return pageHasCode;
     };
 
-    const hasCodeBlocks = renderContent(loadedHljs);
-    if (!hasCodeBlocks || loadedHljs) return;
+    const highlighter = loadedHighlighter;
+    const hasCodeBlocks = renderContent(highlighter);
+    if (!hasCodeBlocks) return;
 
+    // Load highlight.js on first use, plus any language grammars the page's
+    // code needs that aren't bundled with it. Re-render once highlight.js first
+    // arrives, or later only if a newly loaded grammar is now usable.
     let cancelled = false;
-    loadHljs()
-      .then((hljs) => {
+    const ready: Promise<HighlighterModule | null> = highlighter
+      ? highlighter
+          .loadLanguages(document)
+          .then((loaded) => (loaded ? highlighter : null))
+      : loadHighlighter().then(async (loaded) => {
+          await loaded.loadLanguages(document);
+          return loaded;
+        });
+    ready
+      .then((loaded) => {
         // Skip if the content changed or the block unmounted while loading
-        if (!cancelled && contentRef.current === container) {
-          renderContent(hljs);
+        if (loaded && !cancelled && contentRef.current === container) {
+          renderContent(loaded);
         }
       })
       .catch((e) => console.error("Failed to load syntax highlighting:", e));

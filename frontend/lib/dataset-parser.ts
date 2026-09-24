@@ -230,7 +230,13 @@ export async function parseExcel(file: File): Promise<ParsedDataset> {
     throw new Error("Failed to read Excel file");
   }
 
-  const XLSX = await import("xlsx-js-style");
+  let XLSX: typeof import("xlsx-js-style");
+  try {
+    XLSX = await import("xlsx-js-style");
+  } catch {
+    // Lazy chunk failed to load (network blip, or a deploy replaced it)
+    throw new Error("Couldn't load the Excel reader. Please try again.");
+  }
 
   let workbook: WorkBook;
   try {

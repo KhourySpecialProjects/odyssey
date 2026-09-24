@@ -310,7 +310,9 @@ export function SocialForms({
                   authorizedUser.email.indexOf("@"),
                 )}
               </Link>{" "}
-              <CopyIcon
+              <button
+                type="button"
+                aria-label="Copy profile link"
                 onClick={() => {
                   const profileLink = `khouryodyssey.org/prof/${authorizedUser.email.substring(
                     0,
@@ -319,8 +321,10 @@ export function SocialForms({
                   toast.success("Profile link copied to clipboard");
                   navigator.clipboard.writeText(profileLink);
                 }}
-                className="inline-block h-5 w-5 cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
-              />
+                className="inline-block cursor-pointer align-middle text-gray-600 hover:text-gray-800 dark:text-slate-300"
+              >
+                <CopyIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
             </div>
           )}
         </div>

@@ -4,14 +4,14 @@ import hljs from "highlight.js/lib/core";
 import katex from "katex";
 import { Highlight, HighlightColor } from "@/types";
 
-// The renderer lazy-loads ./highlighter, which configures highlight.js/lib/core
-jest.mock("highlight.js/lib/core", () => ({
-  __esModule: true,
-  default: {
-    highlightAll: jest.fn(),
-    registerLanguage: jest.fn(),
-  },
-}));
+// The renderer lazy-loads ./highlighter, which configures the real
+// highlight.js/lib/core (shared with this file) and fetches grammars on demand.
+// Lets a test make the haskell grammar's lazy chunk fail to load.
+let mockHaskellChunkFails = false;
+jest.mock("highlight.js/lib/languages/haskell", () => {
+  if (mockHaskellChunkFails) throw new Error("Loading chunk haskell failed");
+  return jest.requireActual("highlight.js/lib/languages/haskell");
+});
 
 jest.mock("katex", () => ({
   renderToString: jest.fn(),
@@ -268,7 +268,7 @@ describe("GenericBlockRenderer", () => {
 
   describe("Code Block Processing", () => {
     it("applies syntax highlighting to code blocks", async () => {
-      render(
+      const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}
           block={{
@@ -278,10 +278,19 @@ describe("GenericBlockRenderer", () => {
           }}
         />,
       );
-      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(container.querySelector("code")).toHaveAttribute(
+          "data-highlighted",
+          "yes",
+        ),
+      );
+      expect(container.querySelector("code .hljs-keyword")).toHaveTextContent(
+        "const",
+      );
     });
 
     it("does not run syntax highlighting when there are no code blocks", async () => {
+      const highlightElement = jest.spyOn(hljs, "highlightElement");
       render(
         <GenericBlockRenderer
           {...defaultProps}
@@ -289,7 +298,133 @@ describe("GenericBlockRenderer", () => {
         />,
       );
       await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(hljs.highlightAll).not.toHaveBeenCalled();
+      expect(highlightElement).not.toHaveBeenCalled();
+    });
+
+    it("loads a language that isn't bundled and highlights it", async () => {
+      expect(hljs.getLanguage("scheme")).toBeUndefined();
+
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{
+            id: 1,
+            content:
+              '<pre><code class="language-scheme">(define (square x) (* x x))</code></pre>',
+          }}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(container.querySelector("code")).toHaveAttribute(
+          "data-highlighted",
+          "yes",
+        ),
+      );
+      expect(hljs.getLanguage("scheme")).toBeDefined();
+      expect(container.querySelector("code")).toHaveClass("language-scheme");
+      expect(container.querySelector("code .hljs-built_in")).toHaveTextContent(
+        "define",
+      );
+    });
+
+    it("leaves an unknown language unhighlighted without stopping later blocks", async () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{
+            id: 1,
+            content:
+              '<pre><code class="language-notareallanguage">foo bar</code></pre>' +
+              '<pre><code class="language-python">def f():\n    return 1</code></pre>',
+          }}
+        />,
+      );
+
+      // Query fresh each time: the block re-renders once highlight.js loads
+      const codeBlocks = () => container.querySelectorAll("code");
+      await waitFor(() =>
+        expect(codeBlocks()[1]).toHaveAttribute("data-highlighted", "yes"),
+      );
+      expect(codeBlocks()[0]).not.toHaveAttribute("data-highlighted");
+      expect(codeBlocks()[0]).toHaveTextContent("foo bar");
+    });
+
+    it("keeps highlighting other blocks when one block fails", async () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      jest.spyOn(hljs, "highlightElement").mockImplementationOnce(() => {
+        throw new Error("highlight failed");
+      });
+
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{
+            id: 1,
+            content:
+              '<pre><code class="language-javascript">const a = 1;</code></pre>' +
+              '<pre><code class="language-python">b = 2</code></pre>',
+          }}
+        />,
+      );
+
+      const codeBlocks = () => container.querySelectorAll("code");
+      await waitFor(() =>
+        expect(codeBlocks()[1]).toHaveAttribute("data-highlighted", "yes"),
+      );
+      expect(codeBlocks()[0]).not.toHaveAttribute("data-highlighted");
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to highlight code block:",
+        expect.any(Error),
+      );
+    });
+
+    it("retries a language whose grammar failed to load on a later render", async () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const block = {
+        id: 1,
+        content:
+          '<pre><code class="language-haskell">main = putStrLn "hi"</code></pre>',
+      };
+
+      mockHaskellChunkFails = true;
+      const { container, rerender } = render(
+        <GenericBlockRenderer {...defaultProps} block={block} />,
+      );
+      await waitFor(() =>
+        expect(consoleError).toHaveBeenCalledWith(
+          'Failed to load syntax highlighting for "haskell":',
+          expect.any(Error),
+        ),
+      );
+      expect(hljs.getLanguage("haskell")).toBeUndefined();
+      expect(container.querySelector("code")).not.toHaveAttribute(
+        "data-highlighted",
+      );
+
+      // The failure isn't cached, so the next render fetches the grammar again
+      mockHaskellChunkFails = false;
+      rerender(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={block}
+          highlights={[]}
+        />,
+      );
+      await waitFor(() =>
+        expect(container.querySelector("code")).toHaveAttribute(
+          "data-highlighted",
+          "yes",
+        ),
+      );
+      expect(hljs.getLanguage("haskell")).toBeDefined();
+      expect(container.querySelector("code .hljs-string")).toHaveTextContent(
+        '"hi"',
+      );
     });
 
     it("removes language-plaintext class from code blocks", () => {
@@ -354,7 +489,7 @@ describe("GenericBlockRenderer", () => {
     });
 
     it("handles code blocks with single line", async () => {
-      render(
+      const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}
           block={{
@@ -364,7 +499,12 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(container.querySelector("code")).toHaveAttribute(
+          "data-highlighted",
+          "yes",
+        ),
+      );
     });
   });
 
@@ -1330,18 +1470,21 @@ describe("GenericBlockRenderer", () => {
         const { default: FreshRenderer } = await import(
           "@/components/droplets/lessons/generic-block-renderer"
         );
-        const { default: freshHljs } = await import("highlight.js/lib/core");
 
-        const { unmount } = freshRender(
+        const { container, unmount } = freshRender(
           <FreshRenderer
             {...defaultProps}
             block={{ id: 1, content: "<pre><code>const x = 1;</code></pre>" }}
           />,
         );
+        const content = container.querySelector(".prose")!;
+        const code = content.querySelector("code");
         unmount();
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(freshHljs.highlightAll).not.toHaveBeenCalled();
+        // Re-rendering the detached block would have replaced its markup
+        expect(content.querySelector("code")).toBe(code);
+        expect(code).not.toHaveAttribute("data-highlighted");
       });
     });
   });
@@ -1470,7 +1613,7 @@ describe("GenericBlockRenderer", () => {
         },
       ];
 
-      render(
+      const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}
           block={{
@@ -1481,7 +1624,12 @@ describe("GenericBlockRenderer", () => {
         />,
       );
 
-      await waitFor(() => expect(hljs.highlightAll).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(container.querySelector("code")).toHaveAttribute(
+          "data-highlighted",
+          "yes",
+        ),
+      );
     });
   });
 });

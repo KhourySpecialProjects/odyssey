@@ -43,6 +43,9 @@ export const metadata: Metadata = {
   title: "Explore",
   description: "Discover content on Khoury Odyssey.",
 };
+const CONTENT_TYPES = ["droplets", "playlists", "voyages"] as const;
+type ContentType = (typeof CONTENT_TYPES)[number];
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export default async function ExplorePage({
@@ -55,8 +58,13 @@ export default async function ExplorePage({
     type,
     focusArea,
     tags,
-    contentType = "droplets",
+    contentType: rawContentType,
   } = (await searchParams) as { [key: string]: string };
+  // Anything but the three known tabs (e.g. a stale or hand-edited URL) shows
+  // droplets; otherwise the fetch and render branches below would disagree.
+  const contentType = CONTENT_TYPES.includes(rawContentType as ContentType)
+    ? (rawContentType as ContentType)
+    : "droplets";
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   const dropletFilters = {
     $and: [

@@ -10,6 +10,7 @@ const {
   createEnrollmentFromEmail,
   deleteEnrollment,
   updateViewedLessons,
+  recordMissingCompletion,
   updateCompletionDate,
 } = require("../../lib/requests/enrollment");
 
@@ -311,11 +312,16 @@ describe("Enrollment Tests", () => {
   });
 
   describe("changeEnrollmentRating", () => {
+    const owned = (overrides = {}) => [
+      { id: 24, completionDate: null, authorizedUser: { id: 1 }, ...overrides },
+    ];
+
     it("should successfully update enrollment rating", async () => {
       getCurrentUser.mockResolvedValue({
         email: "test@northeastern.edu",
       });
       getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce(owned());
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -326,6 +332,41 @@ describe("Enrollment Tests", () => {
 
       expect(result).toEqual({ success: true });
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body).data;
+      expect(body).toEqual(
+        expect.objectContaining({ rating: 3, isComplete: true }),
+      );
+      // Rating completes the droplet, so it records when
+      expect(body.completionDate).toEqual(expect.any(String));
+    });
+
+    it("keeps an existing completionDate", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@northeastern.edu" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce(
+        owned({ completionDate: "2025-01-01T00:00:00.000Z" }),
+      );
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 24 } }),
+      });
+
+      await changeEnrollmentRating(3, "24");
+
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body).data;
+      expect(body).toEqual({ rating: 3, isComplete: true });
+    });
+
+    it("rejects an enrollment that belongs to another user", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@northeastern.edu" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce(owned({ authorizedUser: { id: 2 } }));
+
+      const result = await changeEnrollmentRating(3, "24");
+
+      expect(result.success).toBe(false);
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle unauthenticated user", async () => {
@@ -352,6 +393,8 @@ describe("Enrollment Tests", () => {
       getCurrentUser.mockResolvedValue({
         email: "test@northeastern.edu",
       });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce(owned());
 
       global.fetch.mockResolvedValueOnce({
         ok: false,
@@ -370,6 +413,8 @@ describe("Enrollment Tests", () => {
       getCurrentUser.mockResolvedValue({
         email: "test@northeastern.edu",
       });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce(owned());
 
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
@@ -835,188 +880,166 @@ describe("Enrollment Tests", () => {
   });
 
   describe("updateViewedLessons", () => {
-    it("adds lesson when not already viewed", async () => {
+    // Enrollment 123 belongs to authorized user 1; its droplet has lessons 1-4.
+    const enrollment = (overrides = {}) => ({
+      id: "123",
+      viewedLessons: [{ id: 1 }, { id: 2 }],
+      isComplete: false,
+      completionDate: null,
+      authorizedUser: { id: 1 },
+      droplet: { id: 9, lessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] },
+      ...overrides,
+    });
+    const stored = (viewedIds, extra = {}) => ({
+      ok: true,
+      json: async () => ({
+        data: {
+          id: "123",
+          isComplete: false,
+          completionDate: null,
+          viewedLessons: viewedIds.map((id) => ({ id })),
+          ...extra,
+        },
+      }),
+    });
+    const bodyOf = (call) => JSON.parse(call[1].body).data;
+
+    beforeEach(() => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }],
-          isComplete: false,
-        },
-      ]);
+    });
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
+    it("adds the lesson with a relation connect instead of rewriting the list", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
 
       const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
-      expect(result.success).toBe(true);
-      expect(result.alreadyViewed).toBe(false);
+      expect(result).toEqual({ success: true, alreadyViewed: false });
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const [url, init] = global.fetch.mock.calls[0];
+      expect(url).toContain("/api/enrollments/123?");
+      expect(decodeURIComponent(url)).toContain(
+        "populate[viewedLessons][fields][0]=id",
+      );
+      expect(init.method).toBe("PUT");
+      expect(bodyOf(global.fetch.mock.calls[0])).toEqual({
+        viewedLessons: { connect: [3] },
+      });
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
-    it("does not update when lesson already viewed but not completing", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
-          isComplete: false,
-        },
-      ]);
+    it("judges completion on the list Strapi returns, including a concurrent save's lesson", async () => {
+      // Read showed [1, 2]; while saving 4, another save stored 3.
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch
+        .mockResolvedValueOnce(stored([1, 2, 3, 4]))
+        .mockResolvedValueOnce(stored([1, 2, 3, 4], { isComplete: true }));
 
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
+      const result = await updateViewedLessons("123", 4, [1, 2, 3, 4]);
+
+      expect(result.success).toBe(true);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      const completion = bodyOf(global.fetch.mock.calls[1]);
+      expect(completion.isComplete).toBe(true);
+      expect(completion.completionDate).toEqual(expect.any(String));
+    });
+
+    it("does not mark complete while the stored list is still missing a lesson", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+      await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps an existing completionDate when marking complete", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        enrollment({ viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }] }),
+      ]);
+      global.fetch
+        .mockResolvedValueOnce(
+          stored([1, 2, 3, 4], { completionDate: "2025-01-01T00:00:00.000Z" }),
+        )
+        .mockResolvedValueOnce(stored([1, 2, 3, 4], { isComplete: true }));
+
+      await updateViewedLessons("123", 4, [1, 2, 3, 4]);
+
+      expect(bodyOf(global.fetch.mock.calls[1])).toEqual({ isComplete: true });
+    });
+
+    it("uses the droplet's own lesson list over the caller's", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        enrollment({
+          droplet: { id: 9, lessons: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+        }),
+      ]);
+      global.fetch
+        .mockResolvedValueOnce(stored([1, 2, 3]))
+        .mockResolvedValueOnce(stored([1, 2, 3], { isComplete: true }));
+
+      await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(bodyOf(global.fetch.mock.calls[1]).isComplete).toBe(true);
+    });
+
+    it("writes nothing when the lesson was already viewed and the droplet isn't complete", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        enrollment({ viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }] }),
+      ]);
 
       const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
-      expect(result.alreadyViewed).toBe(true);
-      expect(result.success).toBe(true);
-      // Not completing (4 not viewed) and already viewed, so no revalidation
+      expect(result).toEqual({ success: true, alreadyViewed: true });
+      expect(global.fetch).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
     });
 
-    it("revalidates when lesson already viewed but completion is newly detected", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    it("marks complete when every lesson was already viewed but completion wasn't recorded", async () => {
       fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
-          isComplete: false,
-        },
+        enrollment({
+          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+        }),
       ]);
+      global.fetch.mockResolvedValueOnce(
+        stored([1, 2, 3, 4], { isComplete: true }),
+      );
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
-
-      const result = await updateViewedLessons("123", 3, [1, 2, 3]);
+      const result = await updateViewedLessons("123", 4, [1, 2, 3, 4]);
 
       expect(result.alreadyViewed).toBe(true);
-      expect(result.success).toBe(true);
-      // Even though lesson was already viewed, completion changed so cache must refresh
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
-    });
-
-    it("marks complete when all lessons viewed", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }],
-          isComplete: false,
-        },
-      ]);
-
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ data: {} }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ data: {} }),
-        });
-
-      await updateViewedLessons("123", 3, [1, 2, 3]);
-
-      expect(global.fetch).toHaveBeenCalledTimes(2);
-    });
-
-    it("does not mark complete when already complete", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }],
-          isComplete: true,
-          completionDate: "2026-01-01T00:00:00.000Z",
-        },
-      ]);
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
-
-      await updateViewedLessons("123", 3, [1, 2, 3]);
-
       expect(global.fetch).toHaveBeenCalledTimes(1);
-    });
-
-    it("records completionDate when the droplet is newly completed", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }],
-          isComplete: false,
-        },
-      ]);
-
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
-
-      await updateViewedLessons("123", 3, [1, 2, 3]);
-
-      const completionBody = JSON.parse(global.fetch.mock.calls[1][1].body);
-      expect(completionBody.data.isComplete).toBe(true);
-      expect(completionBody.data.completionDate).toBeDefined();
+      const body = bodyOf(global.fetch.mock.calls[0]);
+      expect(body.isComplete).toBe(true);
+      expect(body.completionDate).toEqual(expect.any(String));
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
-    it("backfills completionDate for an already-complete enrollment missing one", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    it("does nothing for an enrollment that is already complete with a date", async () => {
       fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
+        enrollment({
+          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
           isComplete: true,
-          completionDate: null,
-        },
+          completionDate: "2025-01-01T00:00:00.000Z",
+        }),
       ]);
 
-      global.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: {} }),
-      });
+      await updateViewedLessons("123", 4, [1, 2, 3, 4]);
 
-      const result = await updateViewedLessons("123", 3, [1, 2, 3]);
-
-      // Lesson already viewed, so the only PUT is the completion backfill
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-      expect(body.data.completionDate).toBeDefined();
-      expect(result.alreadyViewed).toBe(true);
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
-    it("keeps an existing completionDate", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    it("rejects an enrollment that belongs to another user", async () => {
       fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
-          isComplete: true,
-          completionDate: "2026-01-01T00:00:00.000Z",
-        },
+        enrollment({ authorizedUser: { id: 2 } }),
       ]);
 
-      await updateViewedLessons("123", 3, [1, 2, 3]);
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
+      expect(result.success).toBe(false);
       expect(global.fetch).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
     });
@@ -1024,46 +1047,104 @@ describe("Enrollment Tests", () => {
     it("handles unauthenticated user", async () => {
       getCurrentUser.mockResolvedValue(null);
 
-      const result = await updateViewedLessons("123", 3, [1, 2, 3]);
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to update viewed lessons");
-      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
-    it("handles API error", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      fetchAPI.mockResolvedValueOnce([
-        {
-          id: "123",
-          viewedLessons: [],
-          isComplete: false,
-        },
-      ]);
+    it("reports failure when the save is rejected", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-      });
-
-      const result = await updateViewedLessons("123", 1, [1, 2]);
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
       expect(result.success).toBe(false);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles network errors", async () => {
-      const consoleError = jest.spyOn(console, "error");
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      fetchAPI.mockRejectedValueOnce(new Error("Network error"));
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const result = await updateViewedLessons("123", 1, [1, 2]);
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
       expect(result.success).toBe(false);
-      expect(consoleError).toHaveBeenCalledWith(
-        "Error updating viewed lessons:",
-        expect.any(Error),
-      );
       expect(revalidateTag).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("recordMissingCompletion", () => {
+    const enrollment = (overrides = {}) => ({
+      id: "123",
+      viewedLessons: [{ id: 1 }, { id: 2 }],
+      isComplete: false,
+      completionDate: null,
+      authorizedUser: { id: 1 },
+      droplet: { id: 9, lessons: [{ id: 1 }, { id: 2 }] },
+      ...overrides,
+    });
+    const ok = { ok: true, json: async () => ({ data: { id: "123" } }) };
+
+    beforeEach(() => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    });
+
+    it("marks an all-viewed enrollment complete with a date", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(ok);
+
+      const result = await recordMissingCompletion("123");
+
+      expect(result).toEqual({ success: true, updated: true });
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body).data;
+      expect(body.isComplete).toBe(true);
+      expect(body.completionDate).toEqual(expect.any(String));
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("adds a date to an enrollment marked complete by rating", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        enrollment({ viewedLessons: [{ id: 1 }], isComplete: true }),
+      ]);
+      global.fetch.mockResolvedValueOnce(ok);
+
+      const result = await recordMissingCompletion("123");
+
+      expect(result.updated).toBe(true);
+    });
+
+    it("leaves complete-with-date and unfinished enrollments alone", async () => {
+      fetchAPI
+        .mockResolvedValueOnce([
+          enrollment({
+            isComplete: true,
+            completionDate: "2025-01-01T00:00:00.000Z",
+          }),
+        ])
+        .mockResolvedValueOnce([enrollment({ viewedLessons: [{ id: 1 }] })]);
+
+      expect(await recordMissingCompletion("123")).toEqual({
+        success: true,
+        updated: false,
+      });
+      expect(await recordMissingCompletion("123")).toEqual({
+        success: true,
+        updated: false,
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects an enrollment that belongs to another user", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        enrollment({ authorizedUser: { id: 2 } }),
+      ]);
+
+      const result = await recordMissingCompletion("123");
+
+      expect(result).toEqual({ success: false, updated: false });
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 
