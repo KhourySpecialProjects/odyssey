@@ -75,6 +75,19 @@ describe("Explore search", () => {
     expect(window.location.search).toBe("?q=python");
   });
 
+  it("shows close matches for a misspelled search, and says so", () => {
+    setUrl("?q=pyhton");
+    renderDroplets([
+      { id: 1, name: "Intro to Python", completionPercentage: 0 },
+      { id: 2, name: "Resumes", completionPercentage: 0 },
+    ] as unknown as Array<Droplet & { completionPercentage: number }>);
+
+    expect(shown("droplet")).toEqual(["Intro to Python"]);
+    expect(
+      screen.getByText("No exact matches for “pyhton”. Showing close matches."),
+    ).toBeInTheDocument();
+  });
+
   it("matches droplet descriptions and tag names, every word somewhere", async () => {
     setUrl("?q=pandas%20beginner");
     renderDroplets([

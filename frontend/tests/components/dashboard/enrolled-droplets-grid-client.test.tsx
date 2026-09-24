@@ -9,7 +9,7 @@ import {
   LearningObjective,
   Tag,
 } from "@/types";
-import { SearchProvider } from "@/contexts/SearchContext";
+import { SearchProvider, useSearch } from "@/contexts/SearchContext";
 import React from "react";
 import { makeDroplet } from "@/lib/testing/mock-helpers";
 import { DateTime } from "luxon";
@@ -88,6 +88,38 @@ describe("EnrolledDropletsGridClient", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("Search", () => {
+    // Types into the shared search box's state, as <Search> does
+    function SetQuery({ query }: { query: string }) {
+      const { setSearchQuery } = useSearch();
+      React.useEffect(() => setSearchQuery(query), [query, setSearchQuery]);
+      return null;
+    }
+
+    it("finds droplets despite a spelling mistake, and says it's showing close matches", () => {
+      renderWithSearch(
+        <>
+          <SetQuery query="pyhton" />
+          <EnrolledDropletsGridClient
+            dropletsWithCompletion={[
+              { ...mockDroplets[0], name: "Python Basics" },
+              { ...mockDroplets[1], name: "Web Design" },
+            ]}
+            completedLessonIds={mockCompletedLessonIds}
+            isArchived={false}
+            ratingsMap={mockRatingsMap}
+          />
+        </>,
+      );
+
+      expect(screen.getByText("Python Basics")).toBeInTheDocument();
+      expect(screen.queryByText("Web Design")).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "No exact matches for “pyhton”. Showing close matches.",
+      );
+    });
   });
 
   describe("Basic Rendering", () => {

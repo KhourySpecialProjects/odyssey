@@ -1,5 +1,6 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Voyage } from "@/types";
@@ -9,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { IconMap } from "@tabler/icons-react";
 import {
   applySort,
-  matchesSearch,
   voyageMatchesFilters,
   VoyageFilterParams,
 } from "@/components/my-content/apply-sort-filter";
@@ -41,9 +41,13 @@ export function VoyagesCreatorGrid({
 
   const filtered = useMemo(() => {
     const sorted = applySort(voyages, sortKey);
-    return sorted
-      .filter((v) => matchesSearch(v, q))
-      .filter((v) => voyageMatchesFilters(v, filterParams));
+    // Search after the filters, so close matches (typos) are only tried
+    // when nothing shown matches exactly
+    return searchItems(
+      sorted.filter((v) => voyageMatchesFilters(v, filterParams)),
+      q,
+      (v) => [v.name, v.description],
+    ).items;
   }, [voyages, sortKey, q, searchParams]);
 
   const clearFilters = () => {

@@ -1,6 +1,5 @@
 import {
   applySort,
-  matchesSearch,
   dropletMatchesFilters,
   playlistMatchesFilters,
   voyageMatchesFilters,
@@ -124,32 +123,7 @@ describe("applySort", () => {
   });
 });
 
-describe("matchesSearch", () => {
-  it("returns true for exact match", () => {
-    expect(matchesSearch({ name: "Hello World" }, "Hello World")).toBe(true);
-  });
-
-  it("is case-insensitive", () => {
-    expect(matchesSearch({ name: "Hello World" }, "hello")).toBe(true);
-    expect(matchesSearch({ name: "hello world" }, "HELLO")).toBe(true);
-  });
-
-  it("returns true for substring match", () => {
-    expect(matchesSearch({ name: "Introduction to Python" }, "Python")).toBe(
-      true,
-    );
-  });
-
-  it("returns false when no match", () => {
-    expect(matchesSearch({ name: "Introduction to Python" }, "Java")).toBe(
-      false,
-    );
-  });
-
-  it("returns true when query is empty", () => {
-    expect(matchesSearch({ name: "Anything" }, "")).toBe(true);
-  });
-});
+// Search matching is tested in tests/lib/search.test.ts
 
 describe("dropletMatchesFilters", () => {
   it("returns true when no filters active", () => {

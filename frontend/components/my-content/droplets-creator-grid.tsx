@@ -1,5 +1,6 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Droplet } from "@/types";
@@ -9,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { IconDroplet } from "@tabler/icons-react";
 import {
   applySort,
-  matchesSearch,
   dropletMatchesFilters,
   DropletFilterParams,
 } from "@/components/my-content/apply-sort-filter";
@@ -42,9 +42,13 @@ export function DropletsCreatorGrid({ droplets }: DropletsCreatorGridProps) {
 
   const filtered = useMemo(() => {
     const sorted = applySort(droplets, sortKey);
-    return sorted
-      .filter((d) => matchesSearch(d, q))
-      .filter((d) => dropletMatchesFilters(d, filterParams));
+    // Search after the filters, so close matches (typos) are only tried
+    // when nothing shown matches exactly
+    return searchItems(
+      sorted.filter((d) => dropletMatchesFilters(d, filterParams)),
+      q,
+      (d) => [d.name, d.description],
+    ).items;
   }, [droplets, sortKey, q, searchParams]);
 
   const clearFilters = () => {

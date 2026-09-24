@@ -1,5 +1,6 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Playlist } from "@/types";
@@ -9,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { IconLayoutList } from "@tabler/icons-react";
 import {
   applySort,
-  matchesSearch,
   playlistMatchesFilters,
   PlaylistFilterParams,
 } from "@/components/my-content/apply-sort-filter";
@@ -38,9 +38,13 @@ export function PlaylistsCreatorGrid({ playlists }: PlaylistsCreatorGridProps) {
 
   const filtered = useMemo(() => {
     const sorted = applySort(playlists, sortKey);
-    return sorted
-      .filter((p) => matchesSearch(p, q))
-      .filter((p) => playlistMatchesFilters(p, filterParams));
+    // Search after the filters, so close matches (typos) are only tried
+    // when nothing shown matches exactly
+    return searchItems(
+      sorted.filter((p) => playlistMatchesFilters(p, filterParams)),
+      q,
+      (p) => [p.name, p.description],
+    ).items;
   }, [playlists, sortKey, q, searchParams]);
 
   const clearFilters = () => {

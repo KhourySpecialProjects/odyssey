@@ -36,16 +36,6 @@ export function applySort<T extends WithName & WithDates>(
   return sorted;
 }
 
-/**
- * Case-insensitive substring search on item.name.
- * Returns true when query is empty.
- */
-export function matchesSearch(item: WithName, query: string): boolean {
-  const trimmed = query.trim();
-  if (!trimmed) return true;
-  return item.name.toLowerCase().includes(trimmed.toLowerCase());
-}
-
 // Filter param shapes — values are multi-select arrays (OR within, AND across)
 export type DropletFilterParams = {
   status?: string[];

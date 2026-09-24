@@ -62,20 +62,6 @@ export function getInitials(name: string): string {
 }
 
 /**
- * Client-side search match: every word of the query appears (case-
- * insensitively) in at least one of the fields. An empty query matches all.
- */
-export function matchesSearch(
-  query: string,
-  fields: Array<string | null | undefined>,
-): boolean {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return true;
-  const haystack = fields.filter(Boolean).map((f) => f!.toLowerCase());
-  return words.every((word) => haystack.some((field) => field.includes(word)));
-}
-
-/**
  * Lesson content sits under the lesson title (the page's h1), so its h1s are
  * rendered as h2s: one h1 per page, and content headings stay smaller than
  * the title.

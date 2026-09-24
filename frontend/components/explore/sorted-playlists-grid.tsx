@@ -7,7 +7,8 @@ import { useMemo } from "react";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
 import { useUrlPage } from "@/hooks/use-url-page";
-import { matchesSearch } from "@/lib/utils";
+import { searchItems } from "@/lib/search";
+import { CloseMatchesNote } from "@/components/ui/close-matches-note";
 import { NoSearchResults } from "./no-search-results";
 import { sortPlaylists } from "@/lib/playlist-sort";
 
@@ -27,12 +28,15 @@ export function SortedPlaylistsGrid({
   const { searchQuery } = useSearch();
   const activeSortKey = useSortKey(sortKey);
 
-  const filteredPlaylists = useMemo(() => {
-    return sortPlaylists(playlistsWithCompletion, activeSortKey).filter(
-      (playlist) =>
-        matchesSearch(searchQuery, [playlist.name, playlist.description]),
-    );
-  }, [playlistsWithCompletion, activeSortKey, searchQuery]);
+  const { items: filteredPlaylists, approximate } = useMemo(
+    () =>
+      searchItems(
+        sortPlaylists(playlistsWithCompletion, activeSortKey),
+        searchQuery,
+        (playlist) => [playlist.name, playlist.description],
+      ),
+    [playlistsWithCompletion, activeSortKey, searchQuery],
+  );
 
   const totalPages = Math.ceil(filteredPlaylists.length / ITEMS_PER_PAGE);
   const [currentPage, setCurrentPage] = useUrlPage(
@@ -51,6 +55,7 @@ export function SortedPlaylistsGrid({
 
   return (
     <section>
+      {approximate && <CloseMatchesNote query={searchQuery} />}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {paginatedPlaylists.map((playlist) => (
           <PlaylistCard

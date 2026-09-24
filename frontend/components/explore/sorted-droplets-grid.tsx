@@ -12,7 +12,8 @@ import { useSearch } from "@/contexts/SearchContext";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
 import { useUrlPage } from "@/hooks/use-url-page";
-import { matchesSearch } from "@/lib/utils";
+import { searchItems } from "@/lib/search";
+import { CloseMatchesNote } from "@/components/ui/close-matches-note";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -121,15 +122,15 @@ export function SortedDropletsGrid({
 
   const { searchQuery } = useSearch();
 
-  const filteredDroplets = useMemo(() => {
-    return sortedDroplets.filter((droplet) =>
-      matchesSearch(searchQuery, [
+  const { items: filteredDroplets, approximate } = useMemo(
+    () =>
+      searchItems(sortedDroplets, searchQuery, (droplet) => [
         droplet.name,
         droplet.description,
         ...(droplet.tags ?? []).map((tag) => tag.name),
       ]),
-    );
-  }, [sortedDroplets, searchQuery]);
+    [sortedDroplets, searchQuery],
+  );
 
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
   const [currentPage, setCurrentPage] = useUrlPage(
@@ -158,6 +159,7 @@ export function SortedDropletsGrid({
 
   return (
     <>
+      {approximate && <CloseMatchesNote query={searchQuery} />}
       <ul className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {paginatedDroplets.map((droplet) => (
           <DropletTile

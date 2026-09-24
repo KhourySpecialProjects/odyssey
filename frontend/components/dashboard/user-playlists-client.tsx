@@ -1,5 +1,7 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
+import { CloseMatchesNote } from "@/components/ui/close-matches-note";
 import { useSearch } from "@/contexts/SearchContext";
 import { DueDate, Playlist } from "@/types";
 import { useEffect, useMemo, useState } from "react";
@@ -30,17 +32,34 @@ export function UserPlaylistsClient({
   const [customPage, setCustomPage] = useState(1);
   const [publicPage, setPublicPage] = useState(1);
 
-  const filteredPublic = useMemo(() => {
-    return sortPlaylists(publicPlaylists, activeSortKey).filter((playlist) =>
-      playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const { filteredPublic, filteredCustom, approximate } = useMemo(() => {
+    const fields = (playlist: Playlist) => [
+      playlist.name,
+      playlist.description,
+    ];
+    const pub = searchItems(
+      sortPlaylists(publicPlaylists, activeSortKey),
+      searchQuery,
+      fields,
     );
-  }, [publicPlaylists, activeSortKey, searchQuery]);
-
-  const filteredCustom = useMemo(() => {
-    return sortPlaylists(customPlaylists, activeSortKey).filter((playlist) =>
-      playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    const custom = searchItems(
+      sortPlaylists(customPlaylists, activeSortKey),
+      searchQuery,
+      fields,
     );
-  }, [customPlaylists, activeSortKey, searchQuery]);
+    // One decision for the page: close matches only when neither list has
+    // an exact match
+    const exactSomewhere = [pub, custom].some(
+      (result) => !result.approximate && result.items.length > 0,
+    );
+    const shown = (result: typeof pub) =>
+      exactSomewhere && result.approximate ? [] : result.items;
+    return {
+      filteredPublic: shown(pub),
+      filteredCustom: shown(custom),
+      approximate: !exactSomewhere && (pub.approximate || custom.approximate),
+    };
+  }, [publicPlaylists, customPlaylists, activeSortKey, searchQuery]);
 
   useEffect(() => {
     setPublicPage(1);
@@ -64,6 +83,7 @@ export function UserPlaylistsClient({
 
   return (
     <div className="space-y-8 pb-4">
+      {approximate && <CloseMatchesNote query={searchQuery} />}
       {filteredCustom.length > 0 && (
         <section>
           <h2 className="mb-4 text-xl font-semibold dark:text-slate-300">

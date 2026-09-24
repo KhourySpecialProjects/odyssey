@@ -1,5 +1,6 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
 import {
   useState,
   useTransition,
@@ -131,25 +132,34 @@ export function VoyageForm({
     }
   }, []);
 
+  // Name search tolerates typos (lib/search), within what isn't picked yet
   const availablePlaylists = useMemo(
     () =>
-      playlists.filter(
-        (p) =>
-          !selectedNodes.some(
-            (n) => n.nodeType === "playlist" && n.playlistId === p.id,
-          ) && p.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
+      searchItems(
+        playlists.filter(
+          (p) =>
+            !selectedNodes.some(
+              (n) => n.nodeType === "playlist" && n.playlistId === p.id,
+            ),
+        ),
+        searchQuery,
+        (p) => [p.name],
+      ).items,
     [playlists, selectedNodes, searchQuery],
   );
 
   const availableDroplets = useMemo(
     () =>
-      droplets.filter(
-        (d) =>
-          !selectedNodes.some(
-            (n) => n.nodeType === "droplet" && n.dropletId === d.id,
-          ) && d.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
+      searchItems(
+        droplets.filter(
+          (d) =>
+            !selectedNodes.some(
+              (n) => n.nodeType === "droplet" && n.dropletId === d.id,
+            ),
+        ),
+        searchQuery,
+        (d) => [d.name],
+      ).items,
     [droplets, selectedNodes, searchQuery],
   );
 

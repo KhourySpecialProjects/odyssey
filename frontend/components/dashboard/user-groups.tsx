@@ -1,4 +1,6 @@
 "use client";
+import { searchItems } from "@/lib/search";
+import { CloseMatchesNote } from "@/components/ui/close-matches-note";
 import { Group } from "@/types";
 import { GroupCard } from "../group/group-card";
 import { useSearch } from "@/contexts/SearchContext";
@@ -16,11 +18,14 @@ export function UserGroups({
 }) {
   const { searchQuery } = useSearch();
   const sortKey = useSortKey(serverSortKey);
-  const filteredGroups = useMemo(() => {
-    return activeGroups.filter((group) =>
-      group.groupName.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [activeGroups, searchQuery]);
+  const { items: filteredGroups, approximate } = useMemo(
+    () =>
+      searchItems(activeGroups, searchQuery, (group) => [
+        group.groupName,
+        group.description,
+      ]),
+    [activeGroups, searchQuery],
+  );
 
   if (sortKey) {
     const [field, direction] = sortKey.split(":");
@@ -34,18 +39,21 @@ export function UserGroups({
   }
 
   return (
-    <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {filteredGroups.map((group) => (
-        <div key={`group-${group.id}`} className="h-full pb-2">
-          <GroupCard
-            key={group.id}
-            group={group}
-            role={"member"}
-            isArchived={isArchived}
-            dashboardPage={true}
-          />
-        </div>
-      ))}
-    </div>
+    <>
+      {approximate && <CloseMatchesNote query={searchQuery} />}
+      <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredGroups.map((group) => (
+          <div key={`group-${group.id}`} className="h-full pb-2">
+            <GroupCard
+              key={group.id}
+              group={group}
+              role={"member"}
+              isArchived={isArchived}
+              dashboardPage={true}
+            />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

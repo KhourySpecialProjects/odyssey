@@ -1,5 +1,7 @@
 "use client";
 
+import { searchItems } from "@/lib/search";
+import { CloseMatchesNote } from "@/components/ui/close-matches-note";
 import { useEffect, useMemo, useState } from "react";
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
@@ -108,7 +110,7 @@ export function EnrolledDropletsGridClient({
   }, [dropletsWithCompletion, sortKey, ratingsMap, dueDates]);
 
   // Step 2: Apply filters (type, focusArea, tags, search)
-  const filteredDroplets = useMemo(() => {
+  const { items: filteredDroplets, approximate } = useMemo(() => {
     let filtered = sortedDroplets;
 
     // Filter by type
@@ -143,14 +145,13 @@ export function EnrolledDropletsGridClient({
       });
     }
 
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter((droplet) =>
-        droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    }
-
-    return filtered;
+    // Search last, so close matches (typos) are only tried when nothing
+    // left after the filters matches exactly
+    return searchItems(filtered, searchQuery, (droplet) => [
+      droplet.name,
+      droplet.description,
+      ...(droplet.tags ?? []).map((tag) => tag.name),
+    ]);
   }, [sortedDroplets, type, focusArea, difficulty, tags, searchQuery]);
 
   // Reset to page 1 when filters or the sort change
@@ -168,6 +169,7 @@ export function EnrolledDropletsGridClient({
 
   return (
     <>
+      {approximate && <CloseMatchesNote query={searchQuery} />}
       <ul className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
         {paginatedDroplets.map((droplet) => (
           <DropletTile
