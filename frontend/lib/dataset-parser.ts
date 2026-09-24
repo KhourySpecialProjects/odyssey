@@ -115,7 +115,7 @@ export async function parseCSV(file: File): Promise<ParsedDataset> {
     Papa = (await import("papaparse")).default;
   } catch {
     // Lazy chunk failed to load (network blip, or a deploy replaced it)
-    throw new Error("Failed to load CSV support");
+    throw new Error("Failed to load CSV support. Please try again.");
   }
 
   const result = Papa.parse<Record<string, string>>(text, {
@@ -241,7 +241,7 @@ export async function parseExcel(file: File): Promise<ParsedDataset> {
     XLSX = await import("xlsx-js-style");
   } catch {
     // Lazy chunk failed to load (network blip, or a deploy replaced it)
-    throw new Error("Failed to load Excel support");
+    throw new Error("Failed to load Excel support. Please try again.");
   }
 
   let workbook: WorkBook;

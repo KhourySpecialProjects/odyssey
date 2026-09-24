@@ -21,6 +21,9 @@ jest.mock("@/lib/requests/enrollment", () => ({
   updateViewedLessons: jest.fn(),
 }));
 
+// Restored before each test (one test swaps in a throwing markViewed)
+const initialViewedLessonsState = useViewedLessonsStore.getState();
+
 describe("DropletFooter", () => {
   const mockDroplet = {
     slug: "test-droplet",
@@ -37,7 +40,10 @@ describe("DropletFooter", () => {
       push: mockPush,
       refresh: mockRefresh,
     });
-    useViewedLessonsStore.setState({ pendingViewedIds: [] });
+    useViewedLessonsStore.setState({
+      ...initialViewedLessonsState,
+      pendingViewedIds: [],
+    });
     (updateViewedLessons as jest.Mock).mockResolvedValue({});
 
     // Clear any existing quiz elements
@@ -203,6 +209,33 @@ describe("DropletFooter", () => {
         ),
       );
     });
+
+    it("tells the user when the call itself fails instead of crashing the page", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      // Network drop, or a redeploy removed the Server Action
+      (updateViewedLessons as jest.Mock).mockRejectedValue(
+        new Error("Failed to fetch"),
+      );
+      jest.spyOn(console, "error").mockImplementation(() => {});
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={1}
+        />,
+      );
+      fireEvent.click(screen.getByText("Mark as complete"));
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to mark lesson as complete",
+        ),
+      );
+      expect(
+        screen.getByRole("button", { name: "Mark as complete" }),
+      ).toBeEnabled();
+    });
   });
 
   describe("Next navigation", () => {
@@ -254,6 +287,35 @@ describe("DropletFooter", () => {
       await waitFor(() =>
         expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/recap"),
       );
+    });
+
+    it("re-enables Next and stays put when the recap save throws", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      // Anything unexpected in the save (it handles a failed request itself)
+      useViewedLessonsStore.setState({
+        markViewed: () => {
+          throw new Error("boom");
+        },
+      });
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+        />,
+      );
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to save lesson progress",
+        ),
+      );
+      expect(mockPush).not.toHaveBeenCalled();
+      // The user can try again
+      expect(screen.getByRole("button", { name: /next/i })).toBeEnabled();
     });
 
     const clickNextFromLesson1 = (props: Record<string, unknown> = {}) => {

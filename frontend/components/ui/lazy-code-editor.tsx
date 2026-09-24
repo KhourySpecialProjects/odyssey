@@ -12,9 +12,13 @@ type CodeEditorProps = ComponentProps<typeof CodeEditor>;
 const FallbackPropsContext = createContext<CodeEditorProps>({ value: "" });
 
 // Plain-text stand-in drawn like the CodeMirror editor so nothing jumps when it
-// loads: 13px monospace (CodeMirror's `monospace`, not Tailwind's font-mono
-// stack), 1.4 line height, 4px vertical padding, and the same line-number
-// gutter (28px + 1px border, then 6px before the code) and placeholder text.
+// loads. Matches CodeEditor (github themes, no fold gutter) as rendered: 13px
+// monospace (CodeMirror's `monospace`, not Tailwind's font-mono stack), 1.4
+// line height, 4px vertical padding, code 6px after the gutter, #888
+// placeholder. Gutter: numbers right-aligned with 5px/3px padding and at least
+// 20px wide, so it widens with the digit count like CodeMirror's; line 1 has
+// the active-line highlight; a 1px border in light mode only (dark mode uses
+// CodeMirror's base gutter colours, which githubDark doesn't override).
 function CodeEditorFallback() {
   const {
     value,
@@ -26,24 +30,32 @@ function CodeEditorFallback() {
   return (
     <div
       className={cn(
-        "flex overflow-x-auto bg-white py-1 font-[monospace] text-[13px] leading-[1.4] text-[#24292e] dark:bg-[#0d1117] dark:text-[#c9d1d9]",
+        "flex overflow-x-auto bg-white font-[monospace] text-[13px] leading-[1.4] text-[#24292e] dark:bg-[#0d1117] dark:text-[#c9d1d9]",
         className,
       )}
       style={{ minHeight }}
     >
       <div
         aria-hidden="true"
-        className="w-[29px] shrink-0 border-r border-[#ddd] pr-[3px] text-right text-[#6e7781] select-none dark:border-slate-700"
+        className="shrink-0 border-r border-[#ddd] py-1 text-right text-[#6e7781] select-none dark:border-r-0 dark:bg-[#333338] dark:text-[#ccc]"
       >
         {Array.from({ length: lineCount }, (_, i) => (
-          <div key={i}>{i + 1}</div>
+          <div
+            key={i}
+            className={cn(
+              "min-w-[20px] pr-[3px] pl-[5px]",
+              i === 0 && "bg-[#e2f2ff] dark:bg-[#36334280]",
+            )}
+          >
+            {i + 1}
+          </div>
         ))}
       </div>
-      <pre className="m-0 flex-1 bg-transparent pr-2 pl-[6px] font-[inherit] whitespace-pre text-inherit">
+      {/* The dark: colours repeat what's inherited because globals.css sets
+          `.dark pre, .dark pre *` to white */}
+      <pre className="m-0 flex-1 bg-transparent py-1 pr-[2px] pl-[6px] font-[inherit] whitespace-pre text-inherit dark:text-[#c9d1d9]">
         {value || (
-          <span className="text-slate-400 dark:text-slate-500">
-            {placeholder}
-          </span>
+          <span className="text-[#888] dark:text-[#888]">{placeholder}</span>
         )}
       </pre>
     </div>

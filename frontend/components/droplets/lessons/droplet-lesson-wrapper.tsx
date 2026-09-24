@@ -25,7 +25,7 @@ const NotesBar = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div role="status">
+      <div>
         <div className="mt-5 mb-10 flex items-center justify-between px-8 pl-12">
           <h1 className="text-2xl font-extrabold">My Notes</h1>
           <span
@@ -35,7 +35,9 @@ const NotesBar = dynamic(
             <IconPlus className="h-4 w-4" />
           </span>
         </div>
-        <div className="flex items-center justify-center py-12">
+        {/* Only the spinner is the live region, so screen readers announce
+            "Loading notes" rather than the heading as well */}
+        <div role="status" className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
           <span className="sr-only">Loading notes</span>
         </div>

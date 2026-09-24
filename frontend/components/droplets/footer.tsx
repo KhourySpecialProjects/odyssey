@@ -94,11 +94,13 @@ export default function DropletFooter({
     startTransition(async () => {
       // Same action as "Next" so finishing the last lesson here also records
       // the droplet's completion (isComplete + completionDate).
+      // A rejected call (network drop, redeployed action) is a failure too;
+      // left uncaught it would reach the lesson's error boundary
       const { success } = await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
-      );
+      ).catch(() => ({ success: false as const }));
       // No router.refresh(): the action's revalidateTag already re-renders
       // the route, and a refresh here would be a second full server render.
       if (!success) {
@@ -271,9 +273,18 @@ const PaginationLinkWrapper = ({
 
   const handleClick = async () => {
     if (onClick && awaitOnClick) {
-      // Same "Saving..." feedback as "Mark as complete" while the save runs
+      // Same "Saving..." feedback as "Mark as complete" while the save runs.
+      // It stays on until the next page replaces this one.
       setIsSaving(true);
-      await onClick();
+      try {
+        await onClick();
+      } catch (error) {
+        // Stay on the lesson with the button usable so the user can retry
+        console.error("Failed to save lesson progress:", error);
+        toast.error("Failed to save lesson progress");
+        setIsSaving(false);
+        return;
+      }
     } else if (onClick) {
       // Navigate right away; the save finishes in the background and onClick
       // handles its own result (see saveInBackground).

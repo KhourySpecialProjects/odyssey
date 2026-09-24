@@ -53,15 +53,17 @@ export default function DateTimePicker({
   };
 
   return (
-    // The app's standard text field, so light/dark styling, height and focus
-    // match the other inputs
+    // The app's standard text field, so light/dark styling and height match
+    // the other inputs. Input's own focus style is only a border change (none
+    // in dark mode), so this field adds Button's focus ring to stay visible
+    // on the due-date cards. Widens from sm, where the row has room.
     <Input
       type="datetime-local"
       data-testid="picker"
       aria-label={ariaLabel}
       value={inputValue}
       onChange={handleChange}
-      className="w-52 sm:w-60"
+      className="w-52 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 sm:w-60 dark:focus-visible:ring-slate-300"
     />
   );
 }
