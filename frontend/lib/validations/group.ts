@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const SetGroupArchivedForMeSchema = z.object({
+  groupId: z.number().int().positive(),
+  archived: z.boolean(),
+});
+
 export const GroupSchema = z.object({
   id: z.number(),
   groupName: z.string().min(1, "Group name is required"),

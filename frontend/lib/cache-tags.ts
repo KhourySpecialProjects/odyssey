@@ -32,8 +32,8 @@
  *                 enrollInPlaylist, updateDroplet,
  *                 publishDraftToOriginal
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
- *                 deleteGroup, archiveGroup, deletePlaylist,
- *                 updateDroplet
+ *                 deleteGroup, archiveGroup, setGroupArchivedForMe,
+ *                 deletePlaylist, updateDroplet
  * authors         createDroplet, updateDroplet, deepDeleteDroplet,          900s
  *                 duplicateDroplet, publishDraftToOriginal,
  *                 deletePlaylist, deleteGroup, approveCreationRequest,

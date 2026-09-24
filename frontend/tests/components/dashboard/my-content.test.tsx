@@ -73,16 +73,14 @@ jest.mock("@/components/dashboard/favorited-droplet-grid", () => ({
 jest.mock("@/components/dashboard/user-groups", () => ({
   UserGroups: ({
     activeGroups,
-    isArchived,
+    viewerId,
     sortKey,
   }: {
     activeGroups: any[];
-    isArchived: boolean;
+    viewerId: number;
     sortKey?: string;
   }) => (
-    <div data-testid={isArchived ? "archived-groups" : "active-groups"}>
-      User Groups ({activeGroups.length})
-    </div>
+    <div data-testid="user-groups">User Groups ({activeGroups.length})</div>
   ),
 }));
 
@@ -189,7 +187,7 @@ describe("MyContent", () => {
     it("renders groups grid when contentType is groups", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByTestId("active-groups")).toBeInTheDocument();
+      expect(screen.getByTestId("user-groups")).toBeInTheDocument();
     });
 
     it("renders the archived section when contentType is archived", async () => {
@@ -197,7 +195,7 @@ describe("MyContent", () => {
 
       expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
       expect(screen.getByTestId("archived-playlists-grid")).toBeInTheDocument();
-      expect(screen.getByTestId("archived-groups")).toBeInTheDocument();
+      expect(screen.getByTestId("user-groups")).toBeInTheDocument();
     });
 
     it("renders the favorited grid when contentType is favorited", async () => {
@@ -235,15 +233,17 @@ describe("MyContent", () => {
     it("filters active groups correctly", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      // Groups 1 and 3: user is a member and hasn't removed them from their list
-      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
+      // Only group 1 is active: group 2 is archived for this user, and
+      // group 3 is archived for everyone (isArchived: true).
+      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
     });
 
     it("filters archived groups correctly", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
-      // Should show 1 archived group (group 2 is user-archived)
-      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+      // Group 2 (personally archived) and group 3 (isArchived: true) both
+      // count as effectively archived.
+      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
 
     it("filters out groups where user is not a member", async () => {
@@ -263,13 +263,26 @@ describe("MyContent", () => {
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
+      // Group 4 is filtered out for membership, leaving only group 1 active
+      // (group 2 is personally archived, group 3 is isArchived: true).
+      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
     });
 
-    it("keeps system-archived groups in the member's active list", async () => {
+    it("moves groups archived for everyone (isArchived: true) out of the active list", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
-      // Group 3 (isArchived=true) still appears for members who haven't removed it
+      // Group 3 has isArchived: true and an empty users_archived. Under the
+      // hybrid rule (ODY-494), the group-level flag alone is enough to make
+      // it effectively archived, so it drops out of the active list even
+      // though this member never archived it personally.
+      expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+    });
+
+    it("puts a group with isArchived: true and empty users_archived in the archived list", async () => {
+      render(await MyContent({ searchParams: { contentType: "archived" } }));
+
+      // Group 2 (personal archive) + Group 3 (isArchived: true, no personal
+      // archive) both land in the Archived section.
       expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
 
@@ -431,7 +444,7 @@ describe("MyContent", () => {
         }),
       );
 
-      expect(screen.getByTestId("active-groups")).toBeInTheDocument();
+      expect(screen.getByTestId("user-groups")).toBeInTheDocument();
     });
   });
 
@@ -564,7 +577,7 @@ describe("MyContent", () => {
     it("renders archived groups section", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
-      expect(screen.getByTestId("archived-groups")).toBeInTheDocument();
+      expect(screen.getByTestId("user-groups")).toBeInTheDocument();
     });
 
     it("renders all archived sections in correct order", async () => {

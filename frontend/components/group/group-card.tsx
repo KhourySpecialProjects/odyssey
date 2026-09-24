@@ -1,46 +1,332 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Archive, ArchiveRestore, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
-import { archiveGroup } from "@/lib/requests/groups";
+import { archiveGroup, setGroupArchivedForMe } from "@/lib/requests/groups";
+import { GroupArchiveState } from "@/lib/group-archive";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type GroupCardProps = {
   group: Group;
   role: "creator" | "admin" | "manager" | "member";
   roleColors?: Record<string, string>;
-  isArchived: boolean;
-  dashboardPage: boolean;
+  archiveState?: GroupArchiveState;
 };
+
+/**
+ * Stops a synthetic event from reaching the card's wrapping `<Link>`. Radix
+ * portals (DropdownMenu, AlertDialog) render outside the anchor in the DOM,
+ * but React synthetic events still bubble through the React tree, so every
+ * interactive control here needs this guard. (ODY-494 Design Decision 7)
+ *
+ * Only stops propagation — never calls `preventDefault()`. Radix's own
+ * click handlers (e.g. `AlertDialogCancel`'s close, `DropdownMenu`'s open
+ * toggle) are composed with ours via `composeEventHandlers`, which skips
+ * Radix's default behavior whenever `event.defaultPrevented` is true. A
+ * `preventDefault()` here would silently break those controls. Use this for
+ * portalled Radix content (menu content/items, dialog buttons), which sits
+ * outside the anchor in the DOM so only synthetic bubbling matters.
+ */
+function stopLinkNavigation(e: { stopPropagation(): void }) {
+  e.stopPropagation();
+}
+
+/**
+ * For buttons rendered *inside* the card's `<a>` in the DOM. Stopping
+ * propagation keeps the click away from Next's `Link` handler, but the
+ * anchor's native activation would still navigate (full page load) unless the
+ * default is prevented too. Safe on the DropdownMenuTrigger because Radix
+ * opens it on pointerdown/keydown, not click.
+ */
+function blockLinkActivation(e: {
+  preventDefault(): void;
+  stopPropagation(): void;
+}) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+type ConfirmDialog = "archive-all" | "unarchive-all" | null;
+
+function GroupArchiveControls({
+  group,
+  archiveState,
+}: {
+  group: Group;
+  archiveState: GroupArchiveState;
+}) {
+  const [isPending, setIsPending] = useState(false);
+  // Synchronous in-flight guard, same pattern as RefreshGroupsButton
+  // (ODY-484 Design Decision 5/6): aria-disabled is presentational only, so
+  // repeat clicks are actually blocked with this ref instead of `disabled`,
+  // which would drop keyboard focus.
+  const isPendingRef = useRef(false);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>(null);
+  // Neither AlertDialog below has an AlertDialogTrigger (they're opened from
+  // a DropdownMenuItem or from a plain Button, not directly), so Radix has
+  // no trigger element to return focus to on close and would otherwise drop
+  // focus to <body>. These refs let onCloseAutoFocus send focus back to the
+  // control that opened each dialog.
+  const archiveMenuTriggerRef = useRef<HTMLButtonElement>(null);
+  const unarchiveAllTriggerRef = useRef<HTMLButtonElement>(null);
+
+  async function runAction(
+    action: () => Promise<{ success: boolean; error?: unknown }>,
+    successMessage: string,
+  ) {
+    if (isPendingRef.current) return;
+    isPendingRef.current = true;
+    setIsPending(true);
+    try {
+      const result = await action();
+      if (result.success) {
+        toast.success(successMessage);
+      } else {
+        toast.error(`Couldn't update ${group.groupName}. Please try again.`);
+      }
+    } catch {
+      toast.error(`Couldn't update ${group.groupName}. Please try again.`);
+    } finally {
+      isPendingRef.current = false;
+      setIsPending(false);
+    }
+  }
+
+  const archiveForMe = () =>
+    runAction(
+      () => setGroupArchivedForMe(group.id, true),
+      `${group.groupName} archived. Find it in the Archived tab.`,
+    );
+
+  const unarchiveForMe = () =>
+    runAction(
+      () => setGroupArchivedForMe(group.id, false),
+      `${group.groupName} unarchived.`,
+    );
+
+  const archiveForAll = () =>
+    runAction(
+      () => archiveGroup(group, true),
+      `${group.groupName} archived for all members.`,
+    );
+
+  const unarchiveForAll = () =>
+    runAction(
+      () => archiveGroup(group, false),
+      `${group.groupName} restored for all members.`,
+    );
+
+  const buttonClassName =
+    "bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
+
+  // Active tabs (member/admin/manager/creator): every card gets an archive
+  // control.
+  if (!archiveState.isEffectivelyArchived) {
+    if (!archiveState.canManage) {
+      return (
+        <Button
+          size="sm"
+          aria-label="Archive group"
+          aria-busy={isPending}
+          aria-disabled={isPending}
+          className={buttonClassName}
+          onClick={(e) => {
+            blockLinkActivation(e);
+            archiveForMe();
+          }}
+        >
+          <Archive className="text-purple-500" />
+        </Button>
+      );
+    }
+
+    return (
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              ref={archiveMenuTriggerRef}
+              size="sm"
+              aria-label="Archive options"
+              aria-busy={isPending}
+              aria-disabled={isPending}
+              className={buttonClassName}
+              onClick={blockLinkActivation}
+            >
+              <Archive className="text-purple-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent onClick={stopLinkNavigation}>
+            {/*
+              onSelect fires on a Radix-internal CustomEvent, not the click
+              itself — calling preventDefault/stopPropagation on it would
+              keep the menu open (Radix's documented way to cancel a
+              select) rather than stop Link navigation. The underlying
+              click already bubbles up to DropdownMenuContent's onClick
+              above, which is where Link navigation is actually blocked.
+            */}
+            <DropdownMenuItem onSelect={archiveForMe}>
+              Archive for me
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                if (isPendingRef.current) return;
+                setConfirmDialog("archive-all");
+              }}
+            >
+              Archive for all members
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog
+          open={confirmDialog === "archive-all"}
+          onOpenChange={(open) => !open && setConfirmDialog(null)}
+        >
+          <AlertDialogContent
+            onClick={stopLinkNavigation}
+            onCloseAutoFocus={(e) => {
+              e.preventDefault();
+              archiveMenuTriggerRef.current?.focus();
+            }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive for all members?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This hides {group.groupName} for every member. Any group admin
+                can undo this from the Archived tab.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={stopLinkNavigation}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  stopLinkNavigation(e);
+                  setConfirmDialog(null);
+                  archiveForAll();
+                }}
+              >
+                Archive for all members
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
+
+  // Archived tab.
+  if (archiveState.archivedForEveryone) {
+    if (!archiveState.canManage) {
+      return (
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          Archived by a group admin
+        </span>
+      );
+    }
+
+    return (
+      <>
+        <Button
+          ref={unarchiveAllTriggerRef}
+          size="sm"
+          aria-busy={isPending}
+          aria-disabled={isPending}
+          className={buttonClassName}
+          onClick={(e) => {
+            blockLinkActivation(e);
+            if (isPendingRef.current) return;
+            setConfirmDialog("unarchive-all");
+          }}
+        >
+          <ArchiveRestore className="text-purple-500" />
+          Unarchive for all members
+        </Button>
+
+        <AlertDialog
+          open={confirmDialog === "unarchive-all"}
+          onOpenChange={(open) => !open && setConfirmDialog(null)}
+        >
+          <AlertDialogContent
+            onClick={stopLinkNavigation}
+            onCloseAutoFocus={(e) => {
+              e.preventDefault();
+              unarchiveAllTriggerRef.current?.focus();
+            }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unarchive for all members?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This also restores {group.groupName} for anyone who archived it
+                themselves.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={stopLinkNavigation}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  stopLinkNavigation(e);
+                  setConfirmDialog(null);
+                  unarchiveForAll();
+                }}
+              >
+                Unarchive for all members
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
+
+  // Archived only for this viewer.
+  return (
+    <Button
+      size="sm"
+      aria-busy={isPending}
+      aria-disabled={isPending}
+      className={buttonClassName}
+      onClick={(e) => {
+        blockLinkActivation(e);
+        unarchiveForMe();
+      }}
+    >
+      <ArchiveRestore className="text-purple-500" />
+      Unarchive
+    </Button>
+  );
+}
 
 export function GroupCard({
   group,
   role,
   roleColors,
-  isArchived,
-  dashboardPage,
+  archiveState,
 }: GroupCardProps) {
-  async function changeVisibility() {
-    try {
-      const result = await archiveGroup(group, isArchived ? false : true);
-      if (result.success) {
-        toast.success(
-          isArchived
-            ? `${group.groupName} is now unarchived!`
-            : `${group.groupName} is now archived!`,
-        );
-      } else {
-        toast.error("Failed to update group visibility");
-      }
-    } catch (error) {
-      toast.error("An error occurred while updating the group");
-      console.error(error);
-    }
-  }
-
   return (
     <Link
       href={`/g/${group.slug}`}
@@ -96,34 +382,15 @@ export function GroupCard({
             </div>
           </div>
 
-          {/* Bottom section with archive button */}
-          {dashboardPage && (
+          {/* Bottom section with archive controls */}
+          {archiveState && (
             <div className="flex items-center justify-between gap-2">
-              {/* Left side - empty for alignment */}
               <div className="flex items-center"></div>
-
-              {/* Right side - archive button */}
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    changeVisibility();
-                  }}
-                  className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
-                >
-                  <div className="group relative">
-                    {isArchived ? (
-                      <ArchiveRestore className="text-purple-500" />
-                    ) : (
-                      <Archive className="text-purple-500" />
-                    )}
-                    <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      {isArchived ? "Unarchive" : "Archive"}
-                    </span>
-                  </div>
-                </Button>
+                <GroupArchiveControls
+                  group={group}
+                  archiveState={archiveState}
+                />
               </div>
             </div>
           )}

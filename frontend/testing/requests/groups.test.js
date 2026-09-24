@@ -22,6 +22,7 @@ const {
   getGroupDueDates,
   getUserDueDates,
   archiveGroup,
+  setGroupArchivedForMe,
 } = require("../../lib/requests/groups");
 
 const { fetchAPI } = require("../../lib/utils");
@@ -2157,9 +2158,14 @@ describe("archiveGroup", () => {
 
     expect(result).toEqual({ success: true });
     expect(revalidateTag).toHaveBeenCalledWith("groups");
+
+    const [, fetchOptions] = global.fetch.mock.calls[0];
+    const body = JSON.parse(fetchOptions.body);
+    expect(body).toEqual({ data: { isArchived: true } });
+    expect(body.data).not.toHaveProperty("users_archived");
   });
 
-  it("successfully unarchives a group and revalidates", async () => {
+  it("successfully unarchives a group, clears users_archived, and revalidates", async () => {
     mockCreatorFetch();
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -2171,6 +2177,12 @@ describe("archiveGroup", () => {
 
     expect(result).toEqual({ success: true });
     expect(revalidateTag).toHaveBeenCalledWith("groups");
+
+    const [, fetchOptions] = global.fetch.mock.calls[0];
+    const body = JSON.parse(fetchOptions.body);
+    expect(body).toEqual({
+      data: { isArchived: false, users_archived: { set: [] } },
+    });
   });
 
   it("does not revalidate on failure", async () => {
@@ -2185,6 +2197,202 @@ describe("archiveGroup", () => {
     const result = await archiveGroup(mockGroup, true);
 
     expect(result).toEqual({ success: false, error: expect.any(Error) });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+describe("setGroupArchivedForMe", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockParticipantFetch = () =>
+    fetchAPI.mockResolvedValueOnce({
+      id: 10,
+      creator: { id: 1 },
+      admins: [{ id: 2 }],
+      managers: [{ id: 3 }],
+      members: [{ id: 5 }],
+    });
+
+  it("returns unauthenticated and makes no request when the caller is unauthenticated", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: false,
+      error: "unauthenticated",
+    });
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({ success: false, error: "unauthenticated" });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns forbidden and makes no PUT when the caller has no role in the group", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 99, email: "outsider@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({ success: false, error: "forbidden" });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("archives the group for a plain member and revalidates", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({ success: true });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/groups/10"),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          data: { users_archived: { connect: [5] } },
+        }),
+      }),
+    );
+    expect(revalidateTag).toHaveBeenCalledWith("groups");
+  });
+
+  it("unarchives (disconnects) the caller when archived is false", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    const result = await setGroupArchivedForMe(10, false);
+
+    expect(result).toEqual({ success: true });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/groups/10"),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          data: { users_archived: { disconnect: [5] } },
+        }),
+      }),
+    );
+    expect(revalidateTag).toHaveBeenCalledWith("groups");
+  });
+
+  it("uses the session user id from requireRole, never a client-supplied id", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 2, email: "admin@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    await setGroupArchivedForMe(10, true);
+
+    const [, fetchOptions] = global.fetch.mock.calls[0];
+    const body = JSON.parse(fetchOptions.body);
+    expect(body.data.users_archived.connect).toEqual([2]);
+  });
+
+  it("returns a failure and does not revalidate when Strapi rejects the PUT", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+    global.fetch.mockResolvedValueOnce({ ok: false, status: 400 });
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to update archive state",
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns a failure and does not revalidate when fetchAPI throws (e.g. Strapi 4xx/5xx)", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+    fetchAPI.mockRejectedValueOnce(new Error("Strapi request failed"));
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to update archive state",
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns a failure and does not revalidate when the PUT fetch rejects (network error)", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+    mockParticipantFetch();
+    global.fetch.mockRejectedValueOnce(new Error("Network error"));
+
+    const result = await setGroupArchivedForMe(10, true);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to update archive state",
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns invalid input and makes no request for a non-integer groupId", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+
+    const result = await setGroupArchivedForMe(1.5, true);
+
+    expect(result).toEqual({ success: false, error: "invalid input" });
+    expect(fetchAPI).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns invalid input and makes no request for a non-positive groupId", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+
+    const result = await setGroupArchivedForMe(-1, true);
+
+    expect(result).toEqual({ success: false, error: "invalid input" });
+    expect(fetchAPI).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns invalid input and makes no request when archived is not a boolean", async () => {
+    requireRole.mockResolvedValueOnce({
+      ok: true,
+      user: { id: 5, email: "member@example.com", roles: [] },
+    });
+
+    const result = await setGroupArchivedForMe(10, "true");
+
+    expect(result).toEqual({ success: false, error: "invalid input" });
+    expect(fetchAPI).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
