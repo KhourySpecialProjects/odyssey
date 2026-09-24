@@ -24,20 +24,19 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and tag Docker image
-        run: |
-          cd ./frontend
-          docker build \
-            --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
-            --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }} \
-            -t ${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest \
-            -f ecs.dev.Dockerfile .
+      - name: Set up Blacksmith Docker builder
+        uses: useblacksmith/setup-docker-builder@v1
 
-
-      - name: Push Docker image to ECR 
-        run: |
-          docker tag ${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
+      - name: Build and push Docker image to ECR
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: ./frontend
+          file: ./frontend/ecs.dev.Dockerfile
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
+          build-args: |
+            NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
 
       - name: Download existing ECS task definition
         id: get-td
@@ -93,16 +92,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         
-      - name: Build and tag Docker image
-        run: |
-          cd ./backend
-          docker build -t ${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest -f ecs.dev.Dockerfile .
-        
-        
-      - name: Push Docker image to ECR
-        run: |
-          docker tag ${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
+      - name: Set up Blacksmith Docker builder
+        uses: useblacksmith/setup-docker-builder@v1
+
+      - name: Build and push Docker image to ECR
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: ./backend
+          file: ./backend/ecs.dev.Dockerfile   
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest      
 
       - name: Download existing ECS task definition
         id: get-td
