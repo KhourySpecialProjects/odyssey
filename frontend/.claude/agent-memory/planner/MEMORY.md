@@ -1,0 +1,1 @@
+- [ODY-282 logging plan](project_ody-282-logging.md) — final: traceparent once per render via React cache(), backend jest; blocked by ODY-499
