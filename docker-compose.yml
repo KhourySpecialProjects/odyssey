@@ -10,13 +10,7 @@ services:
       - ./backend/.env
       - ./backend/.docker.env
     volumes:
-      - ./backend/config:/opt/app/config
-      - ./backend/types:/opt/app/types
-      - ./backend/src:/opt/app/src
-      - ./backend/package.json:/opt/package.json
-      - ./backend/yarn.lock:/opt/yarn.lock
-      - ./backend/.env:/opt/app/.env
-      - ./backend/public/uploads:/opt/app/public/uploads
+      - ./backend/public/uploads:/opt/app/public/uploads   # keep only persistent data
     ports:
       - 1337:1337
     depends_on:
