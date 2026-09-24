@@ -5,6 +5,7 @@ import {
   act,
   screen,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { StarRating } from "@/components/ui/rating-stars";
 import {
   changeEnrollmentRating,
@@ -14,11 +15,59 @@ import {
 jest.mock("@/lib/requests/enrollment", () => ({
   changeEnrollmentRating: jest.fn(),
   getEnrollByID: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/droplet", () => ({
+  updateDropletAverageRating: jest.fn(),
 }));
 
 describe("StarRating", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("Keyboard and screen reader access", () => {
+    it("exposes the stars as one labelled radio group with a label per star", () => {
+      (getEnrollByID as jest.Mock).mockResolvedValue({ rating: 0 });
+      render(<StarRating value={0} enrollmentID="123" average={false} />);
+
+      const group = screen.getByRole("radiogroup", { name: "Rating" });
+      const radios = screen.getAllByRole("radio");
+      expect(radios.map((r) => r.getAttribute("aria-label"))).toEqual([
+        "1 star",
+        "2 stars",
+        "3 stars",
+        "4 stars",
+        "5 stars",
+      ]);
+      // One group, so Tab enters it once and arrow keys move between stars
+      expect(new Set(radios.map((r) => r.getAttribute("name"))).size).toBe(1);
+      radios.forEach((r) => {
+        expect(group).toContainElement(r);
+        // Visually hidden but still focusable (`hidden` removed it entirely)
+        expect(r).toHaveClass("sr-only");
+        expect(r).not.toHaveClass("hidden");
+      });
+    });
+
+    it("can be reached with Tab and rated with the keyboard", async () => {
+      const user = userEvent.setup();
+      (getEnrollByID as jest.Mock).mockResolvedValue({
+        rating: 0,
+        droplet: { id: 9 },
+      });
+      (changeEnrollmentRating as jest.Mock).mockResolvedValue({});
+      render(<StarRating value={0} enrollmentID="123" average={false} />);
+
+      await user.tab();
+      expect(screen.getByRole("radio", { name: "1 star" })).toHaveFocus();
+
+      await user.keyboard("{ArrowRight}");
+      await waitFor(() =>
+        expect(changeEnrollmentRating).toHaveBeenCalledWith(2, "123"),
+      );
+    });
   });
 
   it("renders correct number of stars", () => {

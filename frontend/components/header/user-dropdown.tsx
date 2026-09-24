@@ -24,7 +24,14 @@ export function UserDropdown({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <div className="light:text-slate-600 group flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm antialiased transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
+        {/* A real button so it's in the tab order and can carry the menu's
+            aria-haspopup/aria-expanded; the greeting is hidden below sm, so
+            the name comes from aria-label */}
+        <button
+          type="button"
+          aria-label="Account menu"
+          className="light:text-slate-600 group flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm antialiased transition-colors duration-100 select-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none dark:hover:bg-white/5 dark:focus-visible:ring-slate-300"
+        >
           <div className="inline-flex flex-row items-center justify-between">
             <Avatar variant="round" size="xs">
               <AvatarImage
@@ -43,7 +50,7 @@ export function UserDropdown({
             </span>
           </div>
           <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mb-3 min-w-[220px]">
         <DropdownMenuLabel className="font-normal">

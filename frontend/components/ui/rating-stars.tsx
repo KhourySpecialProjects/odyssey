@@ -123,31 +123,40 @@ const StarRating: React.FC<StarRatingProps> = ({
     );
   } else {
     return (
-      <div className="flex space-x-1">
+      // Native radios (visually hidden, still focusable) sharing one name:
+      // Tab enters the group once, arrow keys pick a star, and the focused
+      // star gets a ring
+      <div role="radiogroup" aria-label="Rating" className="flex space-x-1">
         {[...Array(5)].map((_, index) => {
           const ratingValue = index + 1;
           const isActive = ratingValue <= (hover || rating);
+          const starClass =
+            "h-8 w-8 rounded-sm peer-focus-visible:ring-2 peer-focus-visible:ring-[#2D7597] peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-950";
           return (
             <label key={index} className="cursor-pointer">
               <input
                 type="radio"
-                className="hidden"
+                name={`rating-${uniqueId}`}
+                aria-label={`${ratingValue} ${ratingValue === 1 ? "star" : "stars"}`}
+                className="peer sr-only"
                 value={ratingValue}
                 checked={ratingValue == rating}
                 onChange={() => handleRatingClick(ratingValue)}
               />
               {isActive ? (
                 <IconStarFilled
+                  aria-hidden="true"
                   onMouseEnter={() => setHover(ratingValue)}
                   onMouseLeave={() => setHover(0)}
-                  className="h-8 w-8"
+                  className={starClass}
                   style={{ color: "#2D7597" }}
                 />
               ) : (
                 <IconStar
+                  aria-hidden="true"
                   onMouseEnter={() => setHover(ratingValue)}
                   onMouseLeave={() => setHover(0)}
-                  className="h-8 w-8 text-slate-300"
+                  className={`${starClass} text-slate-300`}
                   stroke={1.8}
                 />
               )}

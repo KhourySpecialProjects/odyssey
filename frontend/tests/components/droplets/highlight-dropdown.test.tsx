@@ -1,5 +1,6 @@
 import { HighlightDropdown } from "@/components/droplets/lessons/highlight-dropdown";
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 describe("HighlightDropdown", () => {
   const mockProps = {
@@ -10,6 +11,26 @@ describe("HighlightDropdown", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("Keyboard access", () => {
+    it("toggles the notes panel from the keyboard and reports its state", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<HighlightDropdown {...mockProps} />);
+
+      const toggle = screen.getByRole("button", { name: "Notes" });
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+      toggle.focus();
+      await user.keyboard("{Enter}");
+      expect(mockProps.setExpanded).toHaveBeenCalledWith(true);
+
+      rerender(<HighlightDropdown {...mockProps} expanded={true} />);
+      expect(screen.getByRole("button", { name: "Notes" })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+    });
   });
 
   describe("Component Rendering", () => {

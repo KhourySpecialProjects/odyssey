@@ -59,13 +59,16 @@ export function HighlightDropdown({
       </div>
 
       {/* Notes bar toggle */}
-      <div
+      <button
+        type="button"
+        aria-label="Notes"
+        aria-expanded={expanded}
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
-        className={`${btnClass} z-50`}
+        className={`${btnClass} z-50 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300 dark:focus-visible:ring-offset-slate-950`}
         onClick={() => setExpanded(!expanded)}
       >
-        <IconNotes className="h-5 w-5" />
-      </div>
+        <IconNotes className="h-5 w-5" aria-hidden="true" />
+      </button>
     </div>,
     document.body,
   );

@@ -849,7 +849,7 @@ describe("GenericBlockRenderer", () => {
       });
 
       const pinkButton = screen.getByTitle("Highlight Pink");
-      fireEvent.mouseDown(pinkButton);
+      fireEvent.click(pinkButton);
 
       // After clicking a color button the toolbar dismisses itself
       await waitFor(() => {
@@ -952,7 +952,7 @@ describe("GenericBlockRenderer", () => {
       });
 
       const deleteButton = screen.getByTitle("Remove highlight");
-      fireEvent.mouseDown(deleteButton);
+      fireEvent.click(deleteButton);
 
       expect(deleteButton).not.toBeInTheDocument();
     });
@@ -971,7 +971,7 @@ describe("GenericBlockRenderer", () => {
       });
 
       const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
+      fireEvent.click(noteButton);
 
       expect(defaultProps.onNote).toHaveBeenCalled();
     });
@@ -993,7 +993,7 @@ describe("GenericBlockRenderer", () => {
       });
 
       const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
+      fireEvent.click(noteButton);
 
       expect(defaultProps.onNote).toHaveBeenCalledWith(
         expect.any(Number),
@@ -1019,7 +1019,7 @@ describe("GenericBlockRenderer", () => {
       });
 
       const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
+      fireEvent.click(noteButton);
 
       expect(defaultProps.onNote).toHaveBeenCalledWith(
         expect.any(Number),

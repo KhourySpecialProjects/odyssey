@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { UserDropdown } from "@/components/header/user-dropdown";
 import { TimeZone } from "@/types";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -8,10 +9,22 @@ jest.mock("next-auth/react", () => ({
   signOut: jest.fn(),
 }));
 
+// Forwards refs and props like the real Link, so Radix menu items built on
+// it (asChild) can be focused
 jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
+  const { forwardRef } = jest.requireActual("react");
+  const MockLink = forwardRef(
+    (
+      { children, href, ...props }: { children: React.ReactNode; href: string },
+      ref: React.Ref<HTMLAnchorElement>,
+    ) => (
+      <a ref={ref} href={href} {...props}>
+        {children}
+      </a>
+    ),
+  );
+  MockLink.displayName = "MockLink";
+  return MockLink;
 });
 
 describe("UserDropdown", () => {
@@ -47,6 +60,25 @@ describe("UserDropdown", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("Keyboard access", () => {
+    it("is a named button in the tab order that opens the menu with Enter", async () => {
+      const user = userEvent.setup();
+      render(
+        <UserDropdown user={mockUser} authorizedUser={mockAuthorizedUser} />,
+      );
+
+      const trigger = screen.getByRole("button", { name: "Account menu" });
+      await user.tab();
+      expect(trigger).toHaveFocus();
+
+      await user.keyboard("{Enter}");
+      expect(
+        await screen.findByRole("menuitem", { name: /settings/i }),
+      ).toBeInTheDocument();
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+    });
   });
 
   describe("Rendering", () => {

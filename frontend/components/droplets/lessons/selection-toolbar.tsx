@@ -66,10 +66,10 @@ export function SelectionToolbar({
         <button
           key={color}
           title={`Highlight ${label}`}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            onApplyColor(color);
-          }}
+          // preventDefault keeps the text selection; the action runs on
+          // click so Enter and Space work too
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onApplyColor(color)}
           className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
             selectedColor === color ? "ring-2 ring-[#2D7597] ring-offset-1" : ""
           }`}
@@ -79,10 +79,8 @@ export function SelectionToolbar({
       <div className="mx-0.5 h-4 w-px bg-slate-200" />
       <button
         title="Add note"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          onNote();
-        }}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onNote()}
         className="rounded p-0.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       >
         <IconNotebook className="h-4 w-4" />
@@ -90,10 +88,8 @@ export function SelectionToolbar({
       {isOnHighlight && (
         <button
           title="Remove highlight"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            onDelete();
-          }}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onDelete()}
           className="rounded p-0.5 text-red-400 hover:bg-red-50 hover:text-red-600"
         >
           <IconTrash className="h-4 w-4" />
