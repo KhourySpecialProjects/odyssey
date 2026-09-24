@@ -37,19 +37,21 @@ export function ContentActionButton({
     let errorMessage = "";
     let redirectPath: string | null = null;
     let shouldReload = false;
-    const publishResult = await publishDraftToOriginal(
-      droplet.id,
-      droplet.originalDropletId || 0,
-    );
 
     try {
       switch (actionType) {
-        case "publishDraft":
+        case "publishDraft": {
           if (!droplet.originalDropletId) {
             toast.error("No original droplet linked");
             return;
           }
 
+          // Overwrites the live droplet and deletes this draft, so it must
+          // only run for this action (never for review requests)
+          const publishResult = await publishDraftToOriginal(
+            droplet.id,
+            droplet.originalDropletId,
+          );
           if (!publishResult.ok) {
             throw new Error(publishResult.error || "Failed to publish draft");
           }
@@ -57,6 +59,7 @@ export function ContentActionButton({
           toast.success("Changes published successfully!");
           router.push(`/d/${publishResult.slug}`);
           return;
+        }
 
         case "publish":
           response = await updateDroplet(

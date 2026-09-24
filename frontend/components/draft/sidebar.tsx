@@ -387,7 +387,10 @@ export function Sidebar({
           buttonText: "Publish",
         }
       : showActionButton && isCreator
-        ? { actionType: "requestReview" as const, buttonText: "Review" }
+        ? {
+            actionType: "requestReview" as const,
+            buttonText: "Submit for review",
+          }
         : null;
 
   return (
@@ -714,7 +717,9 @@ export function Sidebar({
                 />
               </button>
             </div>
-            <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
+            {/* Wraps so a long action label ("Submit for review") gets its
+                own full-width row instead of overflowing the sidebar */}
+            <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={
                   pathname.startsWith(`/draft/d/${droplet.slug}/`)
