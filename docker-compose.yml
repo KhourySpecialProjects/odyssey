@@ -38,17 +38,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_cache:/app/.next
     env_file:
       - ./frontend/.env.local
       - ./frontend/.docker.env
     environment:
       - WATCHPACK_POLLING=true
-      # PISTON_API_URL / JUDGE0_API_URL / JUDGE0_API_KEY come from
-      # frontend/.env.local. Judge0 wins if both are set.
     ports:
       - 3000:3000
     depends_on:
@@ -71,8 +65,6 @@ services:
 
 volumes:
   strapi-data:
-  frontend_node_modules:
-  frontend_cache:
   piston-data:
 
 networks:
