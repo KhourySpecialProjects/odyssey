@@ -104,6 +104,18 @@
   color: white;
 }
 
+/* Lesson code blocks before highlight.js arrives (it loads lazily): apply the
+   github-dark block styles up front so a block doesn't grow and change
+   background at the moment it gets highlighted. Once highlighted, the
+   `pre code.hljs` / `.hljs` theme rules take over with the same values. */
+.lesson-block-content pre code:not(.hljs) {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  color: #c9d1d9;
+  background: #0d1117;
+}
+
 /* Prevent the global dark-mode color override from breaking Sandpack/CodeMirror syntax highlighting */
 .dark .sp-wrapper pre,
 .dark .sp-wrapper pre *,

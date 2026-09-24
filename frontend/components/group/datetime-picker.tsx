@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { DateTime, Settings } from "luxon";
+import { Input } from "@/components/ui/input";
 
 /** Value format of `<input type="datetime-local">` (minute precision). */
 const INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
@@ -52,13 +53,15 @@ export default function DateTimePicker({
   };
 
   return (
-    <input
+    // The app's standard text field, so light/dark styling, height and focus
+    // match the other inputs
+    <Input
       type="datetime-local"
       data-testid="picker"
       aria-label={ariaLabel}
       value={inputValue}
       onChange={handleChange}
-      className="block w-52 rounded-md border-0 bg-slate-300 p-3 text-[0.925rem] text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none md:w-60 dark:bg-slate-700 dark:text-white"
+      className="w-52 sm:w-60"
     />
   );
 }

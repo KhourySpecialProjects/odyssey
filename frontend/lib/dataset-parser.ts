@@ -110,7 +110,13 @@ function inferCellType(value: unknown): string {
  */
 export async function parseCSV(file: File): Promise<ParsedDataset> {
   const text = await readFileAsText(file);
-  const Papa = (await import("papaparse")).default;
+  let Papa: typeof import("papaparse");
+  try {
+    Papa = (await import("papaparse")).default;
+  } catch {
+    // Lazy chunk failed to load (network blip, or a deploy replaced it)
+    throw new Error("Failed to load CSV support");
+  }
 
   const result = Papa.parse<Record<string, string>>(text, {
     header: true,
@@ -235,7 +241,7 @@ export async function parseExcel(file: File): Promise<ParsedDataset> {
     XLSX = await import("xlsx-js-style");
   } catch {
     // Lazy chunk failed to load (network blip, or a deploy replaced it)
-    throw new Error("Couldn't load the Excel reader. Please try again.");
+    throw new Error("Failed to load Excel support");
   }
 
   let workbook: WorkBook;

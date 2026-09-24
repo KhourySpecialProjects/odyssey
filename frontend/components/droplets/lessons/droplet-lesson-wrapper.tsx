@@ -13,18 +13,32 @@ import {
 } from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
-import { IconX } from "@tabler/icons-react";
+import { IconPlus, IconX } from "@tabler/icons-react";
+import { Loader2 } from "lucide-react";
 import DropletFooter from "../footer";
 
 // NotesBar pulls in TipTap/ProseMirror for every note, so it's loaded on demand.
-// The fallback matches its header row while the chunk loads.
+// The fallback matches its header row (title + "+" button, inactive until the
+// panel loads) with the app's small loading spinner below.
 const NotesBar = dynamic(
   () => import("./note-taking/notes-bar").then((mod) => mod.NotesBar),
   {
     ssr: false,
     loading: () => (
-      <div className="mt-5 mb-10 flex h-10 items-center px-8 pl-12">
-        <h1 className="text-2xl font-extrabold">My Notes</h1>
+      <div role="status">
+        <div className="mt-5 mb-10 flex items-center justify-between px-8 pl-12">
+          <h1 className="text-2xl font-extrabold">My Notes</h1>
+          <span
+            aria-hidden="true"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d0d5dd] bg-white text-[#344054] opacity-50 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]"
+          >
+            <IconPlus className="h-4 w-4" />
+          </span>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+          <span className="sr-only">Loading notes</span>
+        </div>
       </div>
     ),
   },

@@ -321,7 +321,7 @@ export function SocialForms({
                   toast.success("Profile link copied to clipboard");
                   navigator.clipboard.writeText(profileLink);
                 }}
-                className="inline-block cursor-pointer align-middle text-gray-600 hover:text-gray-800 dark:text-slate-300"
+                className="inline-block cursor-pointer rounded-sm align-middle text-gray-600 ring-offset-white hover:text-gray-800 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-slate-300 dark:ring-offset-slate-950 dark:hover:text-slate-100 dark:focus-visible:ring-slate-300"
               >
                 <CopyIcon className="h-5 w-5" aria-hidden="true" />
               </button>

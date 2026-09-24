@@ -61,7 +61,13 @@ export default function DropletFooter({
 
     if (!result.success) {
       unmarkViewed(lessonId);
-      toast.error("Couldn't save your progress on this lesson.");
+      // Usually shown after moving on, so name the lesson it's about
+      const lessonName = droplet.lessons.find((l) => l.id === lessonId)?.name;
+      toast.error(
+        lessonName
+          ? `Failed to save progress for ${lessonName}`
+          : "Failed to save lesson progress",
+      );
       return false;
     }
     return !result.alreadyViewed;
@@ -97,6 +103,7 @@ export default function DropletFooter({
       // the route, and a refresh here would be a second full server render.
       if (!success) {
         console.error("Failed to mark lesson as complete");
+        toast.error("Failed to mark lesson as complete");
       }
     });
   };
@@ -260,9 +267,12 @@ const PaginationLinkWrapper = ({
   awaitOnClick?: boolean;
 }) => {
   const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleClick = async () => {
     if (onClick && awaitOnClick) {
+      // Same "Saving..." feedback as "Mark as complete" while the save runs
+      setIsSaving(true);
       await onClick();
     } else if (onClick) {
       // Navigate right away; the save finishes in the background and onClick
@@ -277,12 +287,13 @@ const PaginationLinkWrapper = ({
   return canProceed ? (
     <button
       onClick={handleClick}
+      disabled={isSaving}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
         className,
       )}
     >
-      {children}
+      {isSaving ? "Saving..." : children}
     </button>
   ) : (
     <div className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] opacity-40 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LockKeyhole } from "lucide-react";
+import { LockIcon } from "lucide-react";
 
 export function PrivateProfileError() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export function PrivateProfileError() {
         </button>
 
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-          <LockKeyhole
+          <LockIcon
             aria-hidden="true"
             className="h-10 w-10 text-gray-500 dark:text-gray-300"
           />

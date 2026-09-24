@@ -2,8 +2,8 @@ import Image from "next/image";
 
 // Both variants are rendered and toggled with Tailwind's class-based dark mode
 // (next-themes sets `class="dark"` on <html>), so the logo is in the server
-// HTML instead of appearing after hydration. `inline` keeps the img's default
-// display so layout matches the light variant.
+// HTML instead of appearing after hydration. The dark variant uses `block` to
+// match the light one (Tailwind's preflight makes images display: block).
 export function Logo({ width, height }: { width: number; height: number }) {
   return (
     <>
@@ -21,7 +21,7 @@ export function Logo({ width, height }: { width: number; height: number }) {
         width={width}
         height={height}
         priority
-        className="hidden dark:inline"
+        className="hidden dark:block"
       />
     </>
   );

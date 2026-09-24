@@ -182,6 +182,29 @@ describe("DropletFooter", () => {
     });
   });
 
+  describe("Mark as complete failure", () => {
+    it("tells the user when the lesson can't be marked complete", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      (updateViewedLessons as jest.Mock).mockResolvedValue({ success: false });
+      jest.spyOn(console, "error").mockImplementation(() => {});
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={1}
+        />,
+      );
+      fireEvent.click(screen.getByText("Mark as complete"));
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to mark lesson as complete",
+        ),
+      );
+    });
+  });
+
   describe("Next navigation", () => {
     it("navigates to the next lesson without waiting for the progress save", async () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
@@ -224,6 +247,8 @@ describe("DropletFooter", () => {
       fireEvent.click(screen.getByText("Next").closest("button")!);
       await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
       expect(mockPush).not.toHaveBeenCalled();
+      // Same pending feedback as "Mark as complete"
+      expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
 
       resolveSave({ success: true });
       await waitFor(() =>
@@ -294,7 +319,11 @@ describe("DropletFooter", () => {
 
       clickNextFromLesson1();
 
-      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to save progress for Lesson 1",
+        ),
+      );
       expect(useViewedLessonsStore.getState().pendingViewedIds).toEqual([]);
       expect(mockRefresh).not.toHaveBeenCalled();
     });

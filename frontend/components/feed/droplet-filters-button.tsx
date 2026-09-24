@@ -23,12 +23,15 @@ interface DropletFiltersButtonProps {
   sortOptions: SortFilterItem[];
   defaultSort: SortFilterItem;
   tagOptions: TagOption[];
+  /** Placeholder while tag options load: shown but not openable. */
+  disabled?: boolean;
 }
 
 export function DropletFiltersButton({
   sortOptions,
   defaultSort,
   tagOptions,
+  disabled = false,
 }: DropletFiltersButtonProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -89,6 +92,7 @@ export function DropletFiltersButton({
         <Button
           variant="outline"
           size="sm"
+          disabled={disabled}
           className="gap-2 border-[#D0D5DD] text-[#667085] dark:border-slate-700 dark:text-slate-400"
         >
           <IconFilter className="h-4 w-4 flex-shrink-0" stroke={1.5} />
