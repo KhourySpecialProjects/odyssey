@@ -172,7 +172,7 @@ export function QuizQuestionBlock({
     <>
       <div
         role="question"
-        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300"
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:prose-invert dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 

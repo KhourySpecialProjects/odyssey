@@ -135,13 +135,40 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
       continue;
     }
 
-    // Regular paragraph (may contain inline LaTeX)
-    const paragraph = parseParagraph(trimmedLine);
-    blocks.push(paragraph);
+    // Regular paragraph (may contain inline LaTeX). As in Markdown, the lines
+    // that follow belong to it until a blank line or another block starts:
+    // imported text (e.g. from a PDF) arrives one visual line at a time.
+    const paragraphLines = [trimmedLine];
     i++;
+    while (i < lines.length && continuesParagraph(lines, i)) {
+      paragraphLines.push(lines[i].trim());
+      i++;
+    }
+    blocks.push(parseParagraph(paragraphLines.join(" ")));
   }
 
   return { title, blocks };
+}
+
+/** Whether lines[index] is more text for the paragraph above it. */
+function continuesParagraph(lines: string[], index: number): boolean {
+  const line = lines[index];
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  // Anything the main loop would turn into its own block
+  if (
+    trimmed === "---" ||
+    IMPORT_IMG_REGEX.test(trimmed) ||
+    /^#{1,6}\s/.test(trimmed) ||
+    trimmed.startsWith("%") ||
+    trimmed.startsWith("$$") ||
+    trimmed.startsWith("```") ||
+    /^\d+\.\s/.test(trimmed) ||
+    /^(\s*)[-*]\s/.test(line)
+  ) {
+    return false;
+  }
+  return !(trimmed.includes("|") && parseTable(lines, index));
 }
 
 /** Inline content: text segment or link */

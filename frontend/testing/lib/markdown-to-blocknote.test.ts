@@ -91,6 +91,61 @@ describe("parseMarkdownToBlockNote", () => {
       const result = parseMarkdownToBlockNote(markdown);
       expect(result.blocks).toHaveLength(2);
     });
+
+    const paragraphText = (block: unknown) =>
+      ((block as { content: { text?: string }[] }).content ?? [])
+        .map((c) => c.text ?? "")
+        .join("");
+
+    it("joins wrapped lines into one paragraph, like Markdown", () => {
+      // PDF text arrives one visual line at a time
+      const markdown =
+        "Data science combines programming and statistics to\n" +
+        "extract meaningful insights from data. A typical workflow\n" +
+        "follows five stages.";
+      const result = parseMarkdownToBlockNote(markdown);
+
+      expect(result.blocks).toHaveLength(1);
+      expect(paragraphText(result.blocks[0])).toBe(
+        "Data science combines programming and statistics to extract " +
+          "meaningful insights from data. A typical workflow follows five stages.",
+      );
+    });
+
+    it("ends a paragraph at a blank line or at the start of another block", () => {
+      const markdown = [
+        "Intro line one",
+        "intro line two",
+        "",
+        "Second paragraph",
+        "## A heading",
+        "Before the list",
+        "- item",
+        "After the list",
+        "%warning Careful",
+        "Last line",
+        "| A | B |",
+        "|---|---|",
+        "| 1 | 2 |",
+      ].join("\n");
+      const result = parseMarkdownToBlockNote(markdown);
+
+      expect(
+        result.blocks.map((b) =>
+          b.type === "paragraph" ? `p:${paragraphText(b)}` : b.type,
+        ),
+      ).toEqual([
+        "p:Intro line one intro line two",
+        "p:Second paragraph",
+        "heading",
+        "p:Before the list",
+        "bulletListItem",
+        "p:After the list",
+        "callout",
+        "p:Last line",
+        "table",
+      ]);
+    });
   });
 
   describe("Lists", () => {

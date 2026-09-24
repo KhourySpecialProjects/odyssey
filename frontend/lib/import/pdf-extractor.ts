@@ -212,7 +212,15 @@ export async function extractTextFromPDF(file: File): Promise<{
         return linkedText;
       });
 
-      parts.push(...markdownLines.filter(Boolean));
+      // A blank line after each paragraph's last line: the markdown parser
+      // joins consecutive lines into one paragraph, as wrapped PDF lines
+      // should be
+      const paragraphEnds = findParagraphEnds(lines);
+      markdownLines.forEach((markdownLine, index) => {
+        if (!markdownLine) return;
+        parts.push(markdownLine);
+        if (paragraphEnds.has(index)) parts.push("");
+      });
     }
 
     // Extract page image if it has embedded images
@@ -304,6 +312,40 @@ function applyLinkAnnotations(
   }
 
   return text;
+}
+
+/**
+ * Indexes of lines (top to bottom, as from groupItemsIntoLines) that end a
+ * paragraph: the space below is clearly more than the page's usual line
+ * spacing, or the line finishes a sentence well short of the text's right
+ * edge (for paragraphs set without extra space between them). The last line
+ * is never included.
+ */
+function findParagraphEnds(lines: TextItem[][]): Set<number> {
+  const ends = new Set<number>();
+  if (lines.length < 2) return ends;
+
+  const tops = lines.map((line) =>
+    Math.max(...line.map((item) => item.transform[5])),
+  );
+  const rights = lines.map((line) =>
+    Math.max(...line.map((item) => item.transform[4] + (item.width ?? 0))),
+  );
+  const gaps = tops.slice(1).map((top, i) => tops[i] - top);
+  const lineSpacing = computeMedian(gaps.filter((gap) => gap > 0));
+  const textRight = Math.max(...rights);
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    const text = lines[i]
+      .map((item) => item.str)
+      .join(" ")
+      .trim();
+    const extraSpaceBelow = gaps[i] > lineSpacing * 1.3;
+    const shortSentenceEnd =
+      /[.!?:]["')\]]?$/.test(text) && rights[i] < textRight * 0.85;
+    if (extraSpaceBelow || shortSentenceEnd) ends.add(i);
+  }
+  return ends;
 }
 
 function stripMarkdown(text: string): string {

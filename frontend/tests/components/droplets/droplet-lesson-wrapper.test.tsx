@@ -117,7 +117,7 @@ describe("DropletLessonWrapper", () => {
     expect(liveRegion).toHaveAttribute("role", "status");
     expect(liveRegion).not.toHaveTextContent("My Notes");
     expect(
-      screen.getByRole("heading", { name: "My Notes" }),
+      screen.getByRole("heading", { level: 2, name: "My Notes" }),
     ).toBeInTheDocument();
 
     expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();

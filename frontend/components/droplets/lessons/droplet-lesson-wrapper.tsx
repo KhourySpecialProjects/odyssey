@@ -27,7 +27,7 @@ const NotesBar = dynamic(
     loading: () => (
       <div>
         <div className="mt-5 mb-10 flex items-center justify-between px-8 pl-12">
-          <h1 className="text-2xl font-extrabold">My Notes</h1>
+          <h2 className="text-2xl font-extrabold">My Notes</h2>
           <span
             aria-hidden="true"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d0d5dd] bg-white text-[#344054] opacity-50 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]"

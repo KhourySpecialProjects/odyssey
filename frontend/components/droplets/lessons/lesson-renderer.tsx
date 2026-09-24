@@ -6,6 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  demoteContentH1,
   extractHeadings,
   isAuthorizedUserAdmin,
   parseSandpackFiles,
@@ -15,7 +16,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
@@ -54,6 +55,15 @@ const SandpackViewer = dynamic(
   },
 );
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+
+// Callout headings follow the rest of the lesson content: h1 is shown as h2
+// (see demoteContentH1)
+const CALLOUT_BLOCKS: ComponentProps<typeof BlocksRenderer>["blocks"] = {
+  heading: ({ children, level }) => {
+    const Tag = `h${level === 1 ? 2 : level}` as const;
+    return <Tag>{children}</Tag>;
+  },
+};
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -425,7 +435,7 @@ function LessonBlockRenderer({
 
           <div className="">
             <div className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto max-w-none text-black">
-              <BlocksRenderer content={block.content} />
+              <BlocksRenderer content={block.content} blocks={CALLOUT_BLOCKS} />
             </div>
           </div>
         </div>
@@ -440,9 +450,9 @@ function LessonBlockRenderer({
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 border-t border-t-slate-200 pt-3 dark:border-slate-500">
             <div
-              className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit max-w-none dark:text-slate-300"
+              className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit dark:prose-invert max-w-none dark:text-slate-300"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(block.content),
+                __html: DOMPurify.sanitize(demoteContentH1(block.content)),
               }}
             ></div>
           </CollapsibleContent>

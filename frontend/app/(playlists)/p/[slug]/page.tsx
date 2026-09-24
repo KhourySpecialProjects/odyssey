@@ -127,7 +127,10 @@ export default async function PlaylistPage({ params }: Props) {
     <div className="container py-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 text-center">
-          <h1 className="mb-4 text-4xl font-bold">{playlist.name}</h1>
+          {/* Same title scale as the droplet overview */}
+          <h1 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl lg:text-[2.5rem] lg:leading-normal dark:text-white">
+            {playlist.name}
+          </h1>
           <div className="mb-6 flex justify-center gap-4">
             <Badge
               variant="outline"

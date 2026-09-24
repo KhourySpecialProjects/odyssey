@@ -178,6 +178,56 @@ describe("extractTextFromPDF", () => {
     expect(result.text).toContain("World");
   });
 
+  describe("paragraphs", () => {
+    // Body text at 12pt with 14pt line spacing, 100pt wide lines
+    const bodyLine = (str: string, y: number, width = 400) => ({
+      ...makeItem(str, 12, 50, y),
+      width,
+    });
+    const extract = async (items: object[]) => {
+      mockGetDocument.mockReturnValue({
+        promise: Promise.resolve(makeMockDoc([items])),
+      });
+      const { text } = await extractTextFromPDF(makeFile("doc.pdf"));
+      return text.replace(/^--- Page 1 ---\n/, "");
+    };
+
+    it("keeps wrapped lines of a paragraph together and separates paragraphs with a blank line", async () => {
+      const text = await extract([
+        bodyLine("Data science combines programming and statistics to", 700),
+        bodyLine("extract meaningful insights from data.", 686, 250),
+        // Extra space above: a new paragraph
+        bodyLine("A typical workflow follows five stages: collect,", 660),
+        bodyLine("clean, explore, model, and communicate.", 646, 260),
+      ]);
+
+      expect(text).toBe(
+        "Data science combines programming and statistics to\n" +
+          "extract meaningful insights from data.\n" +
+          "\n" +
+          "A typical workflow follows five stages: collect,\n" +
+          "clean, explore, model, and communicate.",
+      );
+    });
+
+    it("ends a paragraph after a short line that finishes a sentence, even without extra spacing", async () => {
+      const text = await extract([
+        bodyLine("The first paragraph runs across the whole line and", 700),
+        bodyLine("ends here.", 686, 80),
+        bodyLine("The next paragraph starts straight away with no", 672),
+        bodyLine("extra spacing above it", 658, 180),
+      ]);
+
+      expect(text).toBe(
+        "The first paragraph runs across the whole line and\n" +
+          "ends here.\n" +
+          "\n" +
+          "The next paragraph starts straight away with no\n" +
+          "extra spacing above it",
+      );
+    });
+  });
+
   it("extracts text in correct page order", async () => {
     const mockDoc = makeMockDoc([
       [makeItem("First page", 12, 50, 700)],

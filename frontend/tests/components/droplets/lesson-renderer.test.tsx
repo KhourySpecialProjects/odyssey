@@ -130,6 +130,53 @@ describe("LessonRenderer (viewer)", () => {
     jest.clearAllMocks();
   });
 
+  it("keeps the lesson title the page's only h1 (content h1s become h2s)", async () => {
+    render(
+      <LessonRenderer
+        {...props}
+        lesson={
+          {
+            ...lesson,
+            blocks: [
+              {
+                id: 2,
+                __component: "droplets.expandable",
+                title: "More",
+                content: "<h1>Expandable heading</h1><p>Body</p>",
+              },
+              {
+                id: 3,
+                __component: "droplets.callout",
+                iconEnabled: false,
+                content: [
+                  {
+                    type: "heading",
+                    level: 1,
+                    children: [{ type: "text", text: "Callout heading" }],
+                  },
+                ],
+              },
+            ],
+          } as unknown as Lesson
+        }
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Test Lesson" }),
+      ).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByText("More"));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Expandable heading" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Callout heading" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+
   it("renders server-provided highlights without fetching on mount", async () => {
     render(<LessonRenderer {...props} />);
 

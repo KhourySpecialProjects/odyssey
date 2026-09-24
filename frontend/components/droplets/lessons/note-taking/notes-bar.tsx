@@ -183,7 +183,7 @@ export function NotesBar({
   return (
     <div className="">
       <div className="mt-5 mb-10 flex items-center justify-between px-8 pl-12">
-        <h1 className="text-2xl font-extrabold">My Notes</h1>
+        <h2 className="text-2xl font-extrabold">My Notes</h2>
         <button
           onClick={() => {
             const maxY =

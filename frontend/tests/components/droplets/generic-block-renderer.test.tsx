@@ -137,6 +137,30 @@ describe("GenericBlockRenderer", () => {
       expect(contentDiv).toHaveTextContent("Test content");
     });
 
+    it("shows content h1s as h2s under the lesson title", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{
+            id: 1,
+            content:
+              '<h1 id="intro">What Is Data Science?</h1><h2>Sub</h2><p>Text</p>',
+          }}
+        />,
+      );
+
+      expect(container.querySelector("h1")).toBeNull();
+      const heading = screen.getByRole("heading", {
+        level: 2,
+        name: "What Is Data Science?",
+      });
+      expect(heading).toHaveAttribute("id", "intro");
+      // Other levels are left alone
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Sub" }),
+      ).toBeInTheDocument();
+    });
+
     it("renders without enrollmentId (no selection toolbar)", () => {
       const propsWithoutEnrollment = {
         ...defaultProps,

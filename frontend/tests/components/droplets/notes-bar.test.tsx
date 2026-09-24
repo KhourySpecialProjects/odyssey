@@ -115,7 +115,10 @@ describe("NotesBar", () => {
   describe("Component Rendering", () => {
     it("renders notes bar with title", () => {
       render(<NotesBar {...defaultProps} />);
-      expect(screen.getByText("My Notes")).toBeInTheDocument();
+      // A section of the lesson page, whose h1 is the lesson title
+      expect(
+        screen.getByRole("heading", { level: 2, name: "My Notes" }),
+      ).toBeInTheDocument();
     });
 
     it("renders instruction badge", () => {

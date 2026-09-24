@@ -8,6 +8,7 @@ import { SelectionToolbar } from "./selection-toolbar";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
+import { demoteContentH1 } from "@/lib/utils";
 
 type HighlighterModule = typeof Highlighter;
 
@@ -209,7 +210,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     // grammar the page's code needs) has loaded, the content renders without it
     // and re-renders once it arrives.
     const renderContent = (highlighter: HighlighterModule | null) => {
-      const processedContent = processLatex(nonTableContent);
+      const processedContent = processLatex(demoteContentH1(nonTableContent));
       container.innerHTML = DOMPurify.sanitize(processedContent);
 
       const inlineLatexElements = container.querySelectorAll(".katex-inline");
@@ -778,7 +779,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           onMouseUp={() => handleMouseUp()}
           onMouseDown={(e) => handleMouseDown(e)}
           onClick={handleContentClick}
-          className="lesson-block-content prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit max-w-none select-text dark:text-slate-300"
+          className="lesson-block-content prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit dark:prose-invert max-w-none select-text dark:text-slate-300"
           dangerouslySetInnerHTML={{
             __html: DOMPurify.sanitize(nonTableContent),
           }}

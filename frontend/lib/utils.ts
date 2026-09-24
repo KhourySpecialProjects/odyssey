@@ -62,6 +62,15 @@ export function getInitials(name: string): string {
 }
 
 /**
+ * Lesson content sits under the lesson title (the page's h1), so its h1s are
+ * rendered as h2s: one h1 per page, and content headings stay smaller than
+ * the title.
+ */
+export function demoteContentH1(html: string): string {
+  return html.replace(/<(\/?)h1\b/gi, "<$1h2");
+}
+
+/**
  * Friend requests the user has received, leaving out users they've blocked
  * or been blocked by
  */
