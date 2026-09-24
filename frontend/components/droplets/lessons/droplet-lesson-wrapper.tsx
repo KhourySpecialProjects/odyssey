@@ -108,8 +108,10 @@ export function DropletLessonWrapper({
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
           className={cn(
-            "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
-            expanded && "pr-[415px]",
+            "flex w-full flex-col px-4 pt-6 transition-[padding] duration-300 sm:px-8 lg:px-40",
+            // The notes panel overlays the lesson below lg, so only reserve its
+            // width where there is room beside it
+            expanded && "lg:pr-[415px]",
           )}
         >
           <LessonRenderer

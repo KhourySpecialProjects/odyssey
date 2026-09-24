@@ -56,7 +56,7 @@ export default async function DropletRoute({ params }: Props) {
   return (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-        <div className="px-40">
+        <div className="px-4 sm:px-8 lg:px-40">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <Badge
               variant="outline"
@@ -111,7 +111,7 @@ export default async function DropletRoute({ params }: Props) {
               ></StarRating>
             ) : null}
           </div>
-          <h1 className="mt-6 text-[2.5rem] font-bold text-slate-900 dark:text-white">
+          <h1 className="mt-6 text-3xl font-bold text-slate-900 sm:text-4xl lg:text-[2.5rem] lg:leading-normal dark:text-white">
             {droplet.name}
           </h1>
           {droplet.description ? (
@@ -121,7 +121,7 @@ export default async function DropletRoute({ params }: Props) {
           ) : null}
         </div>
 
-        <div className="w-full space-y-10 px-40 pt-10 pb-10">
+        <div className="w-full space-y-10 px-4 pt-10 pb-10 sm:px-8 lg:px-40">
           {droplet.overview ? (
             <section>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">

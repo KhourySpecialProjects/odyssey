@@ -7,10 +7,16 @@ describe("droplet page loading skeleton", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Loading lesson");
   });
 
-  it("uses the lesson page's own container spacing so content doesn't shift", () => {
+  it("uses the lesson page's own responsive container spacing so content doesn't shift", () => {
     render(<Loading />);
-    // Matches DropletLessonWrapper's `px-40 pt-6` column, not a centred prose box
-    expect(screen.getByRole("status")).toHaveClass("w-full", "px-40", "pt-6");
-    expect(screen.getByRole("status")).not.toHaveClass("mx-auto");
+    // Matches DropletLessonWrapper: phone/tablet padding, 160px from lg up
+    expect(screen.getByRole("status")).toHaveClass(
+      "w-full",
+      "px-4",
+      "sm:px-8",
+      "lg:px-40",
+      "pt-6",
+    );
+    expect(screen.getByRole("status")).not.toHaveClass("px-40", "mx-auto");
   });
 });

@@ -129,7 +129,7 @@ export default async function DropletRecapRoute({ params }: Props) {
         )}
 
       <div className="px-4 pt-6 sm:px-8 lg:px-40">
-        <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl lg:text-[2.5rem] lg:leading-normal dark:text-white">
           Recap
         </h1>
       </div>

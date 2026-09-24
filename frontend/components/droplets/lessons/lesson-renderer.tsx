@@ -282,7 +282,7 @@ export function LessonRenderer({
           isActive={true}
         />
       )}
-      <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
+      <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl lg:text-[2.5rem] lg:leading-normal dark:text-white">
         {lesson.name}
       </h1>
 

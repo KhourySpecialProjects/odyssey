@@ -144,7 +144,7 @@ export default async function Droplet({ params }: Props) {
   return (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-        <div className="px-40">
+        <div className="px-4 sm:px-8 lg:px-40">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <ClickableBadges
               focusArea={droplet.focusArea}
@@ -190,7 +190,7 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="w-full space-y-10 px-40 pt-6">
+        <div className="w-full space-y-10 px-4 pt-6 sm:px-8 lg:px-40">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}

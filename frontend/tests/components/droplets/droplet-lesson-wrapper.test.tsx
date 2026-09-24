@@ -77,6 +77,21 @@ describe("DropletLessonWrapper", () => {
     jest.mocked(getNotesByAuthorizedUserAndLesson).mockResolvedValue([]);
   });
 
+  it("uses mobile-friendly padding and only reserves the notes panel's width from lg up", async () => {
+    render(<DropletLessonWrapper {...props} />);
+    // The column that holds the lesson and footer
+    const column = screen.getByText("Toggle notes").closest(".flex-col")!;
+    // A fixed px-40 left a 55px-wide column on phones (ODY-520)
+    expect(column).toHaveClass("px-4", "sm:px-8", "lg:px-40");
+    expect(column).not.toHaveClass("px-40");
+
+    fireEvent.click(screen.getByText("Toggle notes"));
+    expect(column).toHaveClass("lg:pr-[415px]");
+    expect(column).not.toHaveClass("pr-[415px]");
+    // Let the lazily loaded notes panel finish mounting
+    expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();
+  });
+
   it("does not mount the notes bar until the panel is opened", async () => {
     render(<DropletLessonWrapper {...props} />);
 
