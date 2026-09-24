@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getInitials } from "@/lib/utils";
+import { getInitials, getPendingFriendRequests } from "@/lib/utils";
 
 export function FeedContainer({
   authUser,
@@ -55,12 +55,7 @@ export function FeedContainer({
     };
   }, []);
 
-  // Get pending requests (filtered for blocked)
-  const pendingRequests = (authUser.received_requests || []).filter(
-    (req) =>
-      !authUser.blocked?.some((b) => b.id === req.id) &&
-      !authUser.was_blocked?.some((b) => b.id === req.id),
-  );
+  const pendingRequests = getPendingFriendRequests(authUser);
 
   // Get friends from friendships
   const friendUsers = (authUser.friendships || [])
@@ -69,19 +64,19 @@ export function FeedContainer({
 
   return (
     <>
-      {/* Left sidebar — fixed */}
+      {/* Left sidebar — fixed, from lg (FeedSectionTabs replaces it below) */}
       <nav
         ref={leftRef}
         aria-label="Content navigation"
-        className="fixed left-0 z-40 hidden w-[260px] border-r border-[#D0D5DD] bg-[#FCFCFD] md:block dark:border-slate-700 dark:bg-slate-900"
+        className="fixed left-0 z-40 hidden w-[260px] border-r border-[#D0D5DD] bg-[#FCFCFD] lg:block dark:border-slate-700 dark:bg-slate-900"
         style={{ top: headerHeight }}
       >
-        <FeedLeftNav />
+        <FeedLeftNav pendingRequestCount={pendingRequests.length} />
       </nav>
 
       {/* Content row: center + right column */}
       <div
-        className="flex items-stretch md:ml-[260px]"
+        className="flex items-stretch lg:ml-[260px]"
         style={{ "--header-h": `${headerHeight}px` } as React.CSSProperties}
       >
         {/* Center */}
@@ -99,8 +94,9 @@ export function FeedContainer({
           {children}
         </div>
 
-        {/* Right column — Friends sidebar */}
-        <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 md:flex">
+        {/* Right column — Friends sidebar, from xl so the feed keeps room
+            (the navs link to /settings/friends below that) */}
+        <div className="hidden w-[280px] shrink-0 flex-col px-4 py-6 xl:flex">
           <div className="flex-1 overflow-y-auto rounded-[8px] border border-[#D0D5DD] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="p-5">
               <div className="mb-3 flex items-center justify-between">

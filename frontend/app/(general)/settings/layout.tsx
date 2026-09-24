@@ -1,4 +1,5 @@
 import { SettingsNavigation } from "@/components/settings/navigation";
+import { SectionTabs } from "@/components/ui/section-tabs";
 import { getCurrentUser } from "@/lib/auth/session";
 import { NavItem } from "@/types";
 import { notFound } from "next/navigation";
@@ -34,6 +35,12 @@ export default async function SettingsLayout({
     <div className="flex min-h-screen">
       <SettingsNavigation items={navItems} />
       <main className="min-w-0 flex-1 overflow-auto bg-white px-4 pt-4 pb-8 md:px-12 md:pt-8 md:pb-16 md:pl-80 dark:bg-zinc-950">
+        {/* The side nav is hidden below md */}
+        <SectionTabs
+          label="Settings sections"
+          items={navItems.map(({ href, label }) => ({ href, label }))}
+          className="mb-6 md:hidden"
+        />
         {children}
       </main>
     </div>

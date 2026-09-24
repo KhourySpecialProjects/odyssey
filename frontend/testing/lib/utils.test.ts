@@ -14,12 +14,15 @@ import {
   cn,
   uppercaseFirstChar,
   getInitials,
+  getPendingFriendRequests,
   getDueDateBadgeColor,
   extractHeadings,
   youtubeUrlToEmbeddedUrl,
   embeddedUrlToYoutubeUrl,
   isContentEditor,
 } from "@/lib/utils";
+
+import { makeAuthorizedUser } from "@/lib/testing/mock-helpers";
 
 global.fetch = jest.fn();
 
@@ -667,6 +670,31 @@ describe("utils", () => {
   describe("Utils", () => {
     beforeEach(() => {
       jest.clearAllMocks();
+    });
+
+    describe("getPendingFriendRequests", () => {
+      it("returns received requests, leaving out blocked users either way", () => {
+        const alice = makeAuthorizedUser({ id: 2 });
+        const blockedByMe = makeAuthorizedUser({ id: 3 });
+        const blockedMe = makeAuthorizedUser({ id: 4 });
+        const user = makeAuthorizedUser({
+          received_requests: [alice, blockedByMe, blockedMe],
+          blocked: [blockedByMe],
+          was_blocked: [blockedMe],
+        });
+
+        expect(getPendingFriendRequests(user)).toEqual([alice]);
+      });
+
+      it("handles missing relations", () => {
+        expect(
+          getPendingFriendRequests({
+            received_requests: undefined,
+            blocked: undefined,
+            was_blocked: undefined,
+          } as never),
+        ).toEqual([]);
+      });
     });
 
     describe("getInitials", () => {

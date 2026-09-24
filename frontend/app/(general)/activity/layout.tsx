@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { ActivityGreeting } from "@/components/feed/activity-greeting";
+import { FeedSectionTabs } from "@/components/feed/feed-left-nav";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
+import { getPendingFriendRequests } from "@/lib/utils";
 
 export default async function ActivityLayout({
   children,
@@ -21,6 +23,10 @@ export default async function ActivityLayout({
           <ActivityGreeting
             firstName={authUser.firstName}
             firstTime={authUser.firstTime}
+          />
+          <FeedSectionTabs
+            pendingRequestCount={getPendingFriendRequests(authUser).length}
+            className="mb-5 shrink-0 lg:hidden"
           />
           <div className="min-h-0 flex-1">{children}</div>
         </div>

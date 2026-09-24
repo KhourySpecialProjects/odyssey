@@ -8,7 +8,7 @@ import {
 } from "@/lib/globals";
 import { JSONContent } from "@tiptap/react";
 import type { BlockNode, TextNode } from "@/types/strapi";
-import type { DropletDifficulty } from "@/types";
+import type { AuthorizedUser, DropletDifficulty } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -59,6 +59,20 @@ export function getInitials(name: string): string {
   const words = name.split(" ");
   const initials = words.map((word) => word.charAt(0).toUpperCase());
   return initials.join("");
+}
+
+/**
+ * Friend requests the user has received, leaving out users they've blocked
+ * or been blocked by
+ */
+export function getPendingFriendRequests(
+  user: Pick<AuthorizedUser, "received_requests" | "blocked" | "was_blocked">,
+): AuthorizedUser[] {
+  return (user.received_requests || []).filter(
+    (req) =>
+      !user.blocked?.some((b) => b.id === req.id) &&
+      !user.was_blocked?.some((b) => b.id === req.id),
+  );
 }
 
 export type PopulateValue =
