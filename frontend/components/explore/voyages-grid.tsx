@@ -1,13 +1,21 @@
+"use client";
+
 import { Voyage } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconMap } from "@tabler/icons-react";
 import { VoyageCard } from "@/components/voyages/voyage-card";
+import { useSearch } from "@/contexts/SearchContext";
+import { matchesSearch } from "@/lib/utils";
+import { NoSearchResults } from "./no-search-results";
 
 interface VoyagesGridProps {
   voyages: Voyage[];
 }
 
 export function VoyagesGrid({ voyages }: VoyagesGridProps) {
+  // The Explore search box applies to this tab too
+  const { searchQuery } = useSearch();
+
   if (!voyages || voyages.length === 0) {
     return (
       <EmptyState
@@ -23,9 +31,16 @@ export function VoyagesGrid({ voyages }: VoyagesGridProps) {
     );
   }
 
+  const matching = voyages.filter((voyage) =>
+    matchesSearch(searchQuery, [voyage.name, voyage.description]),
+  );
+  if (matching.length === 0) {
+    return <NoSearchResults kind="Voyages" query={searchQuery} />;
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {voyages.map((voyage) => (
+      {matching.map((voyage) => (
         <VoyageCard key={voyage.id} voyage={voyage} />
       ))}
     </div>

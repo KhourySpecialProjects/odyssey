@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { createContext, useContext, useState } from "react";
 
 type SearchContextType = {
@@ -13,7 +14,13 @@ const SearchContext = createContext<SearchContextType>({
 });
 
 export function SearchProvider({ children }: { children: React.ReactNode }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  // Starts from ?q (which <Search> keeps in sync), so reloads and shared links
+  // keep the search
+  // (null outside the App Router, e.g. in tests; see useSortKey)
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams?.get("q") ?? "",
+  );
 
   return (
     <SearchContext.Provider value={{ searchQuery, setSearchQuery }}>

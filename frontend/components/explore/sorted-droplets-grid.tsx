@@ -2,7 +2,7 @@
 
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Message,
   MessageDescription,
@@ -11,6 +11,8 @@ import {
 import { useSearch } from "@/contexts/SearchContext";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { useUrlPage } from "@/hooks/use-url-page";
+import { matchesSearch } from "@/lib/utils";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -41,7 +43,6 @@ export function SortedDropletsGrid({
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const activeSortKey = useSortKey(sortKey);
-  const [currentPage, setCurrentPage] = useState(1);
 
   const sortedDroplets = useMemo(() => {
     const sorted = [...droplets];
@@ -122,15 +123,19 @@ export function SortedDropletsGrid({
 
   const filteredDroplets = useMemo(() => {
     return sortedDroplets.filter((droplet) =>
-      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      matchesSearch(searchQuery, [
+        droplet.name,
+        droplet.description,
+        ...(droplet.tags ?? []).map((tag) => tag.name),
+      ]),
     );
   }, [sortedDroplets, searchQuery]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [sortedDroplets, searchQuery]);
-
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useUrlPage(
+    totalPages,
+    filteredDroplets,
+  );
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
   const paginatedDroplets = filteredDroplets.slice(
@@ -143,8 +148,8 @@ export function SortedDropletsGrid({
       <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
-          {searchValue
-            ? `There are no Droplets that match "${searchValue}".`
+          {searchValue || searchQuery.trim()
+            ? `There are no Droplets that match "${searchValue || searchQuery.trim()}".`
             : "There are no droplets that match those filters."}
         </MessageDescription>
       </Message>

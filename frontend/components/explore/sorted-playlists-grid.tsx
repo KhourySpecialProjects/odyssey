@@ -3,9 +3,12 @@
 import { DueDate, Playlist } from "@/types";
 import { PlaylistCard } from "../playlists/playlist-card";
 import { useSearch } from "@/contexts/SearchContext";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { useUrlPage } from "@/hooks/use-url-page";
+import { matchesSearch } from "@/lib/utils";
+import { NoSearchResults } from "./no-search-results";
 import { sortPlaylists } from "@/lib/playlist-sort";
 
 const ITEMS_PER_PAGE = 9;
@@ -22,26 +25,29 @@ export function SortedPlaylistsGrid({
   currentUserId?: number;
 }) {
   const { searchQuery } = useSearch();
-  const [currentPage, setCurrentPage] = useState(1);
   const activeSortKey = useSortKey(sortKey);
 
   const filteredPlaylists = useMemo(() => {
     return sortPlaylists(playlistsWithCompletion, activeSortKey).filter(
       (playlist) =>
-        playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        matchesSearch(searchQuery, [playlist.name, playlist.description]),
     );
   }, [playlistsWithCompletion, activeSortKey, searchQuery]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [playlistsWithCompletion, searchQuery, activeSortKey]);
-
   const totalPages = Math.ceil(filteredPlaylists.length / ITEMS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useUrlPage(
+    totalPages,
+    filteredPlaylists,
+  );
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedPlaylists = filteredPlaylists.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
+
+  if (filteredPlaylists.length === 0 && searchQuery.trim()) {
+    return <NoSearchResults kind="Playlists" query={searchQuery} />;
+  }
 
   return (
     <section>

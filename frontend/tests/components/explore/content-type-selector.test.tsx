@@ -32,6 +32,17 @@ describe("ContentTypeSelector", () => {
     );
   });
 
+  it("starts the new tab on its first page", () => {
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("contentType=droplets&page=3&q=data"),
+    );
+    render(<ContentTypeSelector droplets={0} playlists={0} />);
+    fireEvent.click(screen.getByText("Playlists (0)"));
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      "/explore?contentType=playlists&q=data",
+    );
+  });
+
   it("highlights Droplets when the URL has an unknown content type", () => {
     (useSearchParams as jest.Mock).mockReturnValue(
       new URLSearchParams("contentType=bogus"),

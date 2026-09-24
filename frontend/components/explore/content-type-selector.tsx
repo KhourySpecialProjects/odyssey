@@ -32,6 +32,8 @@ export function ContentTypeSelector({
   const createQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("contentType", value);
+    // The page number belongs to the tab being left
+    params.delete("page");
     return params.toString();
   };
 
