@@ -18,10 +18,12 @@ import {
   archiveDroplet,
   updateDropletLearningObjective,
   favoriteDroplet,
+  getFavoritedDropletIds,
 } from "@/lib/requests/droplet";
 import { deleteLesson, addLesson } from "@/lib/requests/lesson";
 import { getEnrollmentByUserAndDroplet } from "@/lib/requests/enrollment";
 import { revalidateTag } from "next/cache";
+import { fetchAPI } from "@/lib/utils";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 jest.mock("@/lib/requests/lesson", () => ({
@@ -820,6 +822,38 @@ describe("Droplet API Functions", () => {
     });
   });
 
+  describe("getFavoritedDropletIds", () => {
+    it("returns the user's favorited droplet ids under a per-user tag", async () => {
+      fetchAPI.mockResolvedValueOnce([
+        { id: 1, dropletsFavorited: [{ id: 10 }, { id: 20 }] },
+      ]);
+
+      const ids = await getFavoritedDropletIds(1);
+
+      expect(ids).toEqual([10, 20]);
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/authorized-users",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: { id: { $eq: 1 } },
+            populate: { dropletsFavorited: { fields: ["id"] } },
+          }),
+          next: { tags: ["favorites-1"], revalidate: 900 },
+        }),
+      );
+    });
+
+    it("returns an empty list when the user has no favorites", async () => {
+      fetchAPI.mockResolvedValueOnce([{ id: 1 }]);
+      expect(await getFavoritedDropletIds(1)).toEqual([]);
+    });
+
+    it("returns an empty list when the user is not found", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+      expect(await getFavoritedDropletIds(1)).toEqual([]);
+    });
+  });
+
   describe("favoriteDroplet", () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -854,8 +888,10 @@ describe("Droplet API Functions", () => {
       );
 
       expect(result).toEqual({ success: true });
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      // Favorites are per-user; the global droplets cache stays warm.
+      expect(revalidateTag).toHaveBeenCalledWith("favorites-1");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+      expect(revalidateTag).not.toHaveBeenCalledWith("droplets");
     });
 
     it("does not revalidate on failure", async () => {

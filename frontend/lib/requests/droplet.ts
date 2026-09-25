@@ -1370,6 +1370,28 @@ export async function publishDraftToOriginal(
   }
 }
 
+/**
+ * Gets the ids of the Droplets a user has favorited.
+ * @param userId The authorized user's id.
+ * @returns The favorited Droplet ids.
+ */
+export async function getFavoritedDropletIds(
+  userId: number,
+): Promise<number[]> {
+  const [user] = await fetchAPI<{ dropletsFavorited?: { id: number }[] }[]>(
+    "/authorized-users",
+    {
+      urlParams: {
+        filters: { id: { $eq: userId } },
+        fields: ["id"],
+        populate: { dropletsFavorited: { fields: ["id"] } },
+      },
+      next: { tags: [CACHE_TAGS.favorites(userId)], revalidate: 900 },
+    },
+  );
+  return user?.dropletsFavorited?.map((d) => d.id) ?? [];
+}
+
 export async function favoriteDroplet(
   droplet: Droplet,
   favoriteState: boolean,
@@ -1436,7 +1458,10 @@ export async function favoriteDroplet(
       throw new Error("Failed to update favorite status");
     }
 
-    revalidateTag(CACHE_TAGS.droplets);
+    // Per-user only: favorite state is read through getFavoritedDropletIds
+    // (explore) and the per-user enrollments favorites preset, so the global
+    // droplets cache doesn't need to be flushed for everyone.
+    revalidateTag(CACHE_TAGS.favorites(authorizedUser.id));
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {

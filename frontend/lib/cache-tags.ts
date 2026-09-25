@@ -9,8 +9,9 @@
  * droplets        createDroplet, updateDroplet, deepDeleteDroplet,          900s
  *                 duplicateDroplet, publishDraftToOriginal, addLesson,
  *                 updateLesson, deleteLesson, duplicateLessonToDroplet,
- *                 updateDropletFunFact, favoriteDroplet,
- *                 updateDropletLearningObjective
+ *                 updateDropletFunFact, updateDropletLearningObjective
+ *                 (favoriteDroplet does NOT invalidate: explore hearts read
+ *                 the per-user favorites-{userId} tag instead)
  *                 (updateDropletAverageRating does NOT invalidate: the
  *                 average is an aggregate and may be up to 900s stale; the
  *                 rater's own rating refreshes via enrollments-{userId})
@@ -116,6 +117,8 @@
  * user-groups     Per-user tag "user-groups-{userId}": refreshUserGroups        900s
  *                 (manual refresh on /g/dashboard). Also swept by the global
  *                 "groups" tag, since getUserGroups carries both.
+ * favorites      Per-user tag "favorites-{userId}"                          900s
+ *                 (getFavoritedDropletIds, explore hearts): favoriteDroplet
  */
 
 export const CACHE_TAGS = {
@@ -153,4 +156,5 @@ export const CACHE_TAGS = {
   notes: (userId: number) => `notes-${userId}`,
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
+  favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
 };
