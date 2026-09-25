@@ -97,7 +97,7 @@ jobs:
       - name: Set up Blacksmith Docker builder
         uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184
         with:
-        cache-key: odyssey/dev2-backend
+          cache-key: odyssey/dev2-backend
 
       - name: Build and push Docker image to ECR
         uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850
