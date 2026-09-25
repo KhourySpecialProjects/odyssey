@@ -25,7 +25,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Set up Blacksmith Docker builder
-        uses: useblacksmith/setup-docker-builder@9db36c9541da77b70beedd857751b4648cc3db9b
+        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184
+        with:
+          cache-key: odyssey/dev2-frontend
 
       - name: Build and push Docker image to ECR
         uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850
@@ -93,7 +95,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         
       - name: Set up Blacksmith Docker builder
-        uses: useblacksmith/setup-docker-builder@9db36c9541da77b70beedd857751b4648cc3db9b
+        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184
+        with:
+        cache-key: odyssey/dev2-backend
 
       - name: Build and push Docker image to ECR
         uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850
