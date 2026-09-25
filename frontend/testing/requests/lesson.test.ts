@@ -9,6 +9,7 @@ import {
   duplicateLessonToDroplet,
 } from "@/lib/requests/lesson";
 import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/utils", () => ({
@@ -365,6 +366,17 @@ describe("Lesson API Functions", () => {
   });
 
   describe("getLessonBySlug", () => {
+    it("bypasses the data cache when fresh is set (draft editor)", async () => {
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([{ id: 1, slug: "draft-lesson" }]);
+
+      await getLessonBySlug("draft-lesson", {}, { fresh: true });
+
+      const config = fetchAPI.mock.calls.at(-1)[1];
+      expect(config.cache).toBe("no-store");
+      expect(config.next).toBeUndefined();
+    });
+
     it("successfully fetches a lesson by slug", async () => {
       const mockLesson = {
         id: 1,
@@ -391,7 +403,8 @@ describe("Lesson API Functions", () => {
             },
           },
         }),
-        next: { tags: ["droplets", "lesson"], revalidate: 900 },
+        // lesson only: droplet-level mutations must not flush lesson pages
+        next: { tags: [CACHE_TAGS.lesson], revalidate: 900 },
       });
       expect(result).toEqual(mockLesson);
     });

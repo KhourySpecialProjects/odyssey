@@ -1,12 +1,13 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconDroplet } from "@tabler/icons-react";
-import { getCachedUser } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { getFavoritedDropletIds } from "@/lib/requests/droplet";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
@@ -31,14 +32,16 @@ export async function DropletsGrid({
 
   let enrollments: Enrollment[] = [];
   let dueDates: DueDate[] = [];
+  let favoritedDropletIds: number[] = [];
   let currentUserId: number | undefined;
 
-  if (user?.email) {
-    const authorizedUser = await getCachedUser(user.email);
-    currentUserId = authorizedUser.id;
-    [enrollments, dueDates] = await Promise.all([
-      getCachedEnrollmentsWithLessonIds(authorizedUser.id),
-      getUserDueDates(authorizedUser.id),
+  const userId = await getAuthorizedUserId(user);
+  if (userId) {
+    currentUserId = userId;
+    [enrollments, dueDates, favoritedDropletIds] = await Promise.all([
+      getCachedEnrollmentsWithLessonIds(userId),
+      getUserDueDates(userId),
+      getFavoritedDropletIds(userId),
     ]);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
@@ -132,6 +135,7 @@ export async function DropletsGrid({
       dueDates={dueDates}
       isAdmin={isAuthorizedUserAdmin(user?.roles)}
       archivedDropletIds={archivedDropletIds}
+      favoritedDropletIds={favoritedDropletIds}
       currentUserId={currentUserId}
     />
   );

@@ -1,59 +1,42 @@
 import { render, screen } from "@testing-library/react";
 import { Logo } from "@/components/header/logo";
-import { useTheme } from "next-themes";
-
-jest.mock("next-themes", () => ({
-  useTheme: jest.fn(),
-}));
 
 describe("Logo", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("renders dark logo when theme is dark", () => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: "dark",
-      resolvedTheme: "dark",
-      mounted: true,
-    });
-
+  it("renders both logo variants on the first render", () => {
     render(<Logo width={100} height={100} />);
-    const logoImage = screen.getByAltText("Khoury Odyssey Logo");
+
     // Next.js Image component transforms the src, so we check the URL parameter instead
-    expect(logoImage).toHaveAttribute(
-      "src",
-      expect.stringContaining("url=%2Flogo_dark.png"),
-    );
-  });
-
-  it("renders light logo when theme is light", () => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: "light",
-      resolvedTheme: "light",
-      mounted: true,
-    });
-
-    render(<Logo width={100} height={100} />);
-    const logoImage = screen.getByAltText("Khoury Odyssey Logo");
-    expect(logoImage).toHaveAttribute(
+    const [lightLogo, darkLogo] = screen.getAllByAltText("Khoury Odyssey Logo");
+    expect(lightLogo).toHaveAttribute(
       "src",
       expect.stringContaining("/_next/image?url=%2Flogo.png&w=256&q=75"),
     );
-  });
-
-  it("renders dark logo when resolvedTheme is dark but theme is light", () => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: "light",
-      resolvedTheme: "dark",
-      mounted: true,
-    });
-
-    render(<Logo width={100} height={100} />);
-    const logoImage = screen.getByAltText("Khoury Odyssey Logo");
-    expect(logoImage).toHaveAttribute(
+    expect(darkLogo).toHaveAttribute(
       "src",
       expect.stringContaining("url=%2Flogo_dark.png"),
     );
+  });
+
+  it("shows the light logo only outside dark mode", () => {
+    render(<Logo width={100} height={100} />);
+
+    const [lightLogo] = screen.getAllByAltText("Khoury Odyssey Logo");
+    expect(lightLogo).toHaveClass("dark:hidden");
+  });
+
+  it("shows the dark logo only in dark mode", () => {
+    render(<Logo width={100} height={100} />);
+
+    const [, darkLogo] = screen.getAllByAltText("Khoury Odyssey Logo");
+    expect(darkLogo).toHaveClass("hidden", "dark:inline");
+  });
+
+  it("passes width and height through to both images", () => {
+    render(<Logo width={165} height={45} />);
+
+    screen.getAllByAltText("Khoury Odyssey Logo").forEach((img) => {
+      expect(img).toHaveAttribute("width", "165");
+      expect(img).toHaveAttribute("height", "45");
+    });
   });
 });

@@ -13,6 +13,8 @@
  */
 
 import { updateUserInfo } from "@/lib/requests/authorized-user";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -217,5 +219,66 @@ describe("updateUserInfo — auth + validation security", () => {
     expect(global.fetch).toHaveBeenCalled();
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body.data).toEqual({});
+  });
+});
+
+describe("updateUserInfo — cache invalidation", () => {
+  const mockRevalidateTag = revalidateTag as jest.Mock;
+
+  it("self edit of firstTime only revalidates the per-user tag", async () => {
+    mockNonAdmin(42);
+
+    const result = await updateUserInfo(42, { firstTime: false });
+
+    expect(result.ok).toBe(true);
+    expect(mockRevalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.user("user@test.com"),
+    );
+    expect(mockRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
+    expect(mockRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.authors);
+  });
+
+  it("self edit of isPublic only revalidates the per-user tag", async () => {
+    mockNonAdmin(42);
+
+    await updateUserInfo(42, { isPublic: true });
+
+    expect(mockRevalidateTag).toHaveBeenCalledTimes(1);
+    expect(mockRevalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.user("user@test.com"),
+    );
+  });
+
+  it("self edit of name keeps the global users + authors sweep", async () => {
+    // Names show in the admin user list, user search, and creator lists.
+    mockNonAdmin(42);
+
+    await updateUserInfo(42, { first: "Alice", firstTime: false });
+
+    expect(mockRevalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.user("user@test.com"),
+    );
+    expect(mockRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.users);
+    expect(mockRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
+  });
+
+  it("admin editing another user sweeps globally (target email unknown)", async () => {
+    mockAdmin(1);
+
+    await updateUserInfo(99, { isPublic: false });
+
+    expect(mockRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.users);
+    expect(mockRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
+    expect(mockRevalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.user("admin@test.com"),
+    );
+  });
+
+  it("does not revalidate when the input is rejected", async () => {
+    mockNonAdmin(42);
+
+    await updateUserInfo(99, { firstTime: false });
+
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
 });

@@ -4,14 +4,20 @@
  * Targets uncovered lines 463-580:
  *   463-531  fetchAnnouncementById — happy path + error path
  *   533-582  fetchUserAnnouncements — happy path + error path + pagination
+ *   markAnnouncementRead / markAnnouncementUnread — cache invalidation scope
  */
 
 import {
   fetchAnnouncementById,
   fetchUserAnnouncements,
+  markAnnouncementRead,
+  markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { flattenAttributes } from "@/lib/utils";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import { revalidateTag } from "next/cache";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +31,14 @@ jest.mock("@/lib/utils", () => ({
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  getAuthorizedUserByEmail: jest.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -240,5 +254,89 @@ describe("fetchUserAnnouncements", () => {
     await expect(fetchUserAnnouncements(42)).rejects.toThrow(
       "Failed to fetch user announcements.",
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// markAnnouncementRead / markAnnouncementUnread — invalidation scope
+// ---------------------------------------------------------------------------
+
+describe("announcement read state invalidation", () => {
+  let fetchMock: jest.MockedFunction<typeof fetch>;
+
+  function mockOwnedAnnouncement(type: string, ownerId = 5) {
+    jest.mocked(fetchAPI).mockResolvedValueOnce({
+      id: 11,
+      type,
+      authorized_user: { id: ownerId },
+    });
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    fetchMock = mockGlobalFetch();
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 11 } }));
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest
+      .mocked(getCurrentUser)
+      .mockResolvedValue({ email: "owner@test.com" } as never);
+    jest.mocked(getAuthorizedUserByEmail).mockResolvedValue({ id: 5 } as never);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("marking a targeted system announcement read only revalidates the owner's feed", async () => {
+    mockOwnedAnnouncement("system");
+
+    const result = await markAnnouncementRead(11);
+
+    expect(result).toEqual({ success: true });
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
+  });
+
+  it("marking a targeted system announcement unread only revalidates the owner's feed", async () => {
+    mockOwnedAnnouncement("system");
+
+    const result = await markAnnouncementUnread(11);
+
+    expect(result).toEqual({ success: true });
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
+  });
+
+  it("friend announcements still sweep globally (they appear in friends' feeds)", async () => {
+    mockOwnedAnnouncement("friend");
+
+    await markAnnouncementRead(11);
+
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.announcements);
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
+  });
+
+  it("requests the announcement type in the ownership check", async () => {
+    mockOwnedAnnouncement("system");
+
+    await markAnnouncementRead(11);
+
+    expect(fetchAPI).toHaveBeenCalledWith(
+      "/announcements/11",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({ fields: ["id", "type"] }),
+      }),
+    );
+  });
+
+  it("does not revalidate when the caller doesn't own the announcement", async () => {
+    mockOwnedAnnouncement("system", 99);
+
+    const result = await markAnnouncementRead(11);
+
+    expect(result).toEqual({ success: false, error: "Not authorized" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

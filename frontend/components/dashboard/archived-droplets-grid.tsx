@@ -1,10 +1,8 @@
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconArchive } from "@tabler/icons-react";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-} from "@/lib/requests/cached";
+import { getCachedEnrollmentsFavorites } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
@@ -18,8 +16,10 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return null;
+
+  const enrollments = await getCachedEnrollmentsFavorites(userId);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);
 
@@ -71,7 +71,7 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
       isArchived={true}
       ratingsMap={ratingsMap}
       sortKey={sortKey}
-      currentUser={authorizedUser}
+      currentUserId={userId}
       isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );

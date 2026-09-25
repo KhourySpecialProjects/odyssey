@@ -31,4 +31,13 @@ describe("ContentTypeSelector", () => {
       "/explore?contentType=playlists",
     );
   });
+
+  it("highlights Droplets when the URL has an unknown content type", () => {
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("contentType=bogus"),
+    );
+    render(<ContentTypeSelector droplets={1} playlists={2} />);
+    expect(screen.getByText("Droplets (1)")).toHaveClass("bg-[#287697]");
+    expect(screen.getByText("Playlists (2)")).not.toHaveClass("bg-[#287697]");
+  });
 });

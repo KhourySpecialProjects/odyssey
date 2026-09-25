@@ -1,9 +1,6 @@
 import { RequestAccessForm } from "@/components/requests/access-request-form";
 import { GradientBackground } from "@/components/gradient-bg";
-import { authOptions } from "@/lib/auth/options";
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Request Access",
@@ -11,10 +8,8 @@ export const metadata: Metadata = {
     "Interested in learning with Khoury Odyssey? Submit an access request today!",
 };
 
-export default async function RequestAccessPage() {
-  const session = await getServerSession(authOptions);
-  if (session) return redirect("/explore");
-
+// Signed-in users are redirected to /explore by middleware.ts.
+export default function RequestAccessPage() {
   return (
     <GradientBackground>
       <>

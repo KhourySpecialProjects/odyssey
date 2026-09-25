@@ -1,7 +1,8 @@
 import { getVoyageBySlug } from "@/lib/requests/voyage";
 import { getCachedVoyageEnrollment } from "@/lib/requests/cached";
-import { getCachedUser } from "@/lib/requests/cached";
+import { getVoyageNodeCompletions } from "@/lib/requests/voyage-enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { notFound } from "next/navigation";
 import { VoyageTreeMap, TreeNode } from "@/components/voyages/voyage-tree-map";
 import { VoyageEnrollButton } from "@/components/voyages/voyage-enroll-button";
@@ -12,7 +13,7 @@ import {
   computeCompletionPercentage,
   findFirstIncompleteNode,
 } from "@/lib/voyage-progress";
-import { VoyageNode, VoyageEnrollment } from "@/types";
+import { VoyageNode } from "@/types";
 import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,22 +41,23 @@ export default async function VoyagePage({ params }: Props) {
     (isAuthorizedUserAdmin(sessionUser.roles) ||
       isAuthorizedUserFaculty(sessionUser.roles));
 
-  const voyage = await getVoyageBySlug(p.slug, { includeDrafts: isStaff });
+  const [voyage, userId] = await Promise.all([
+    getVoyageBySlug(p.slug, { includeDrafts: isStaff }),
+    getAuthorizedUserId(sessionUser),
+  ]);
 
   if (!voyage) {
     notFound();
   }
 
-  // Fetch authorized user and enrollment in parallel if logged in
-  let authUser: Awaited<ReturnType<typeof getCachedUser>> | null = null;
-  let enrollment: VoyageEnrollment | null = null;
-
-  if (sessionUser?.email) {
-    authUser = await getCachedUser(sessionUser.email);
-    if (authUser?.id) {
-      enrollment = await getCachedVoyageEnrollment(authUser.id, voyage.id);
-    }
-  }
+  // Completions only matter when enrolled, but both are cached per user, so
+  // fetch them together rather than one after the other.
+  const [enrollment, completions] = userId
+    ? await Promise.all([
+        getCachedVoyageEnrollment(userId, voyage.id),
+        getVoyageNodeCompletions(userId, voyage.id),
+      ])
+    : [null, []];
 
   const isAuthenticated = !!sessionUser;
   const isEnrolled = enrollment !== null;
@@ -64,19 +66,13 @@ export default async function VoyagePage({ params }: Props) {
 
   const voyageNodes: VoyageNode[] = voyage.voyage_nodes ?? [];
 
-  // Fetch completed node IDs for enrolled users
-  let completedNodeIds = new Set<number>();
-  if (isEnrolled && authUser?.id) {
-    const { getVoyageNodeCompletions } = await import(
-      "@/lib/requests/voyage-enrollment"
-    );
-    const completions = await getVoyageNodeCompletions(authUser.id, voyage.id);
-    completedNodeIds = new Set(
-      completions
-        .map((c) => c.voyageNode?.id)
-        .filter((id): id is number => id !== undefined),
-    );
-  }
+  const completedNodeIds = new Set<number>(
+    isEnrolled
+      ? completions
+          .map((c) => c.voyageNode?.id)
+          .filter((id): id is number => id !== undefined)
+      : [],
+  );
   const nodeStatuses =
     isEnrolled && voyage.isSequential
       ? computeNodeStatuses(voyageNodes, completedNodeIds)

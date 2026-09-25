@@ -2,7 +2,8 @@
 
 import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import qs from "qs";
+import { fetchAPI, flattenAttributes } from "../utils";
 import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 
 import { getCurrentUser } from "@/lib/auth/session";
@@ -12,9 +13,40 @@ import { Droplet } from "@/types";
 import { DropletEnrollmentSchema } from "../validations/enrollment";
 import { z } from "zod";
 import { CACHE_TAGS } from "../cache-tags";
+import { enrollmentNeedsCompletionBackfill } from "../enrollment-completion";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+/**
+ * PUTs `data` to an enrollment and returns the flattened enrollment from the
+ * response; `responseQuery` (fields/populate) shapes what comes back.
+ */
+async function putEnrollment(
+  enrollmentId: string,
+  data: Record<string, unknown>,
+  responseQuery?: Record<string, unknown>,
+): Promise<Partial<Enrollment>> {
+  const query = responseQuery
+    ? `?${qs.stringify(responseQuery, { encodeValuesOnly: true })}`
+    : "";
+  const response = await fetch(
+    `${STRAPI_API_URL}/api/enrollments/${enrollmentId}${query}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({ data }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to update enrollment: ${response.status}`);
+  }
+  const json = await response.json();
+  return flattenAttributes(json.data);
+}
 
 /**
  * Gets the first 25 enrollments matching the specified criteria, unless overridden by `options`.
@@ -163,28 +195,26 @@ export async function changeEnrollmentRating(
       throw new Error("User not authenticated");
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            rating: newRating,
-            isComplete: true,
-          },
-        }),
-      },
-    );
+    const [authorizedUser, enrollment] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      getEnrollByID(enrollmentID, {
+        populate: { authorizedUser: { fields: ["id"] } },
+        fields: ["id", "completionDate"],
+      }),
+    ]);
 
-    if (!response.ok) {
-      throw new Error("Failed to update enrollment");
+    if (!enrollment || enrollment.authorizedUser?.id !== authorizedUser?.id) {
+      throw new Error("Enrollment not found for this user");
     }
 
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    // Rating marks the droplet complete, so record when if it wasn't already
+    // (pages no longer backfill completionDate during render).
+    await putEnrollment(enrollmentID, {
+      rating: newRating,
+      isComplete: true,
+      ...(enrollment.completionDate ? {} : { completionDate: new Date() }),
+    });
+
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
 
     return { success: true };
@@ -509,73 +539,78 @@ export async function updateViewedLessons(
     if (!user?.email) {
       throw new Error("User not authenticated");
     }
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    // Get current enrollment to check current viewedLessons
-    const enrollment = await getEnrollByID(enrollmentId, {
-      populate: {
-        viewedLessons: { fields: ["id"] },
-        droplet: { fields: ["id"] },
-      },
-      fields: ["id", "isComplete"],
-    });
-
-    const currentViewedIds =
-      enrollment.viewedLessons?.map((l: Lesson) => l.id) || [];
-
-    // Only update if lesson not already viewed
-    if (!currentViewedIds.includes(lessonId)) {
-      const newViewedLessonIds = [...currentViewedIds, lessonId];
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+    const [authorizedUser, enrollment] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      getEnrollByID(enrollmentId, {
+        populate: {
+          viewedLessons: { fields: ["id"] },
+          droplet: {
+            fields: ["id"],
+            populate: { lessons: { fields: ["id"] } },
           },
-          body: JSON.stringify({
-            data: {
-              viewedLessons: newViewedLessonIds,
-            },
-          }),
+          authorizedUser: { fields: ["id"] },
         },
-      );
+        fields: ["id", "isComplete", "completionDate"],
+      }),
+    ]);
 
-      if (!response.ok) {
-        throw new Error("Failed to update viewed lessons");
-      }
+    if (!enrollment || enrollment.authorizedUser?.id !== authorizedUser?.id) {
+      throw new Error("Enrollment not found for this user");
     }
 
-    // Check completion status AFTER the if block
-    const finalViewedIds = !currentViewedIds.includes(lessonId)
-      ? [...currentViewedIds, lessonId]
-      : currentViewedIds;
+    const viewedIds = enrollment.viewedLessons?.map((l: Lesson) => l.id) || [];
+    const alreadyViewed = viewedIds.includes(lessonId);
 
-    const isNowComplete = allDropletLessonIds.every((id) =>
-      finalViewedIds.includes(id),
-    );
+    let finalViewedIds = viewedIds;
+    let isComplete: boolean | undefined = enrollment.isComplete;
+    let completionDate: Date | undefined = enrollment.completionDate;
 
-    if (isNowComplete && !enrollment.isComplete) {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+    if (!alreadyViewed) {
+      // `connect` adds this one lesson on the Strapi side. Rewriting the whole
+      // list (read, append, PUT) let two overlapping saves - e.g. "Next"
+      // clicked twice while the first save is still running - drop a lesson.
+      // The response returns the list as stored after the write, so completion
+      // below is judged on what Strapi actually holds.
+      const updated = await putEnrollment(
+        enrollmentId,
+        { viewedLessons: { connect: [lessonId] } },
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              isComplete: true,
-            },
-          }),
+          fields: ["isComplete", "completionDate"],
+          populate: { viewedLessons: { fields: ["id"] } },
         },
       );
+      finalViewedIds = updated.viewedLessons?.map((l: Lesson) => l.id) ?? [
+        ...viewedIds,
+        lessonId,
+      ];
+      isComplete = updated.isComplete;
+      completionDate = updated.completionDate;
     }
-    const alreadyViewed = currentViewedIds.includes(lessonId);
-    if (!alreadyViewed || (isNowComplete && !enrollment.isComplete)) {
+
+    // The droplet's own lesson list is authoritative; the caller's copy is only
+    // a fallback in case the relation didn't come back.
+    const dropletLessonIds =
+      enrollment.droplet?.lessons?.map((l: Lesson) => l.id) ??
+      allDropletLessonIds;
+    const isNowComplete =
+      dropletLessonIds.length > 0 &&
+      dropletLessonIds.every((id) => finalViewedIds.includes(id));
+
+    // Completion is recorded here rather than during page render
+    // (revalidateTag throws during render). Also backfills enrollments that
+    // were marked complete before completionDate was tracked.
+    const needsCompletionUpdate =
+      isNowComplete && (!isComplete || !completionDate);
+
+    if (needsCompletionUpdate) {
+      await putEnrollment(enrollmentId, {
+        isComplete: true,
+        ...(completionDate ? {} : { completionDate: new Date() }),
+      });
+    }
+
+    if (!alreadyViewed || needsCompletionUpdate) {
       revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     }
 
@@ -596,6 +631,54 @@ export async function updateViewedLessons(
   } catch (error) {
     console.error("Error updating viewed lessons:", error);
     return { success: false, error: "Failed to update viewed lessons" };
+  }
+}
+
+/**
+ * Fills in isComplete/completionDate for an enrollment that should already
+ * have them: every lesson viewed but no completion date, or marked complete
+ * (e.g. by rating) without a date. Pages used to do this during render; they
+ * now render <CompletionBackfill> for these rare legacy records instead.
+ */
+export async function recordMissingCompletion(enrollmentId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) {
+      throw new Error("User not authenticated");
+    }
+
+    const [authorizedUser, enrollment] = await Promise.all([
+      getAuthorizedUserByEmail(user.email),
+      getEnrollByID(enrollmentId, {
+        populate: {
+          viewedLessons: { fields: ["id"] },
+          droplet: {
+            fields: ["id"],
+            populate: { lessons: { fields: ["id"] } },
+          },
+          authorizedUser: { fields: ["id"] },
+        },
+        fields: ["id", "isComplete", "completionDate"],
+      }),
+    ]);
+
+    if (!enrollment || enrollment.authorizedUser?.id !== authorizedUser?.id) {
+      throw new Error("Enrollment not found for this user");
+    }
+
+    if (!enrollmentNeedsCompletionBackfill(enrollment)) {
+      return { success: true, updated: false };
+    }
+
+    await putEnrollment(enrollmentId, {
+      isComplete: true,
+      completionDate: enrollment.completionDate ?? new Date(),
+    });
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    return { success: true, updated: true };
+  } catch (error) {
+    console.error("Error recording missing completion:", error);
+    return { success: false, updated: false };
   }
 }
 

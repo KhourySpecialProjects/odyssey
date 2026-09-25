@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { NotesSummaryClient } from "./notes-summary-client";
 import { NotesPdfButton } from "./notes-pdf-button";
-import { PDFDocument } from "pdf-lib";
-import { NoteSummary } from "./lessons/note-taking/note-summary";
 import { Enrollment, Highlight, Note } from "@/types";
 import { Button } from "../ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -44,6 +42,11 @@ export function NotesManager({
   const generatePDF = async (selectedIds: Set<number>) => {
     setIsGenerating(true);
     try {
+      // Loaded on demand so pdf-lib isn't part of the page's initial bundle
+      const [{ PDFDocument }, { NoteSummary }] = await Promise.all([
+        import("pdf-lib"),
+        import("./lessons/note-taking/note-summary"),
+      ]);
       const pdfDoc = await PDFDocument.create();
 
       for (const enrollment of filteredEnrollments) {

@@ -173,8 +173,8 @@ export async function updatePlaylist(
 
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -232,8 +232,10 @@ export async function createPlaylist(data: {
     }
 
     revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    // A new playlist has one author and no enrollees yet, so only the
+    // author's /my-content and /dashboard can change.
+    revalidateTag(CACHE_TAGS.userContent(data.author.id));
+    revalidateTag(CACHE_TAGS.userDashboard(data.author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -269,8 +271,8 @@ export async function deletePlaylist(id: number) {
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -328,9 +330,11 @@ export async function archivePlaylist(
       throw new Error("Failed to archive playlist");
     }
 
+    // isArchived lives on the playlist itself, so every author's /my-content
+    // and every enrollee's /dashboard see it — keep the global sweeps.
     revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving playlist:", error);

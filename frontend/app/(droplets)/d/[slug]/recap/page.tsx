@@ -13,8 +13,8 @@ import {
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
 } from "@/lib/requests/cached";
-import { updateCompletionDate } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -23,6 +23,8 @@ import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { redirect } from "next/navigation";
 import { Confetti } from "./confetti";
+import { CompletionBackfill } from "@/components/droplets/completion-backfill";
+import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
 
 type Props = {
   params: Promise<Params>;
@@ -47,45 +49,45 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRecapRoute({ params }: Props) {
   const p = await params;
-  const [droplet, currentUser] = await Promise.all([
+  const currentUser = await getCurrentUser();
+  const [droplet, userId] = await Promise.all([
     getCachedDropletBySlug(p.slug),
-    getCurrentUser(),
+    getAuthorizedUserId(currentUser),
   ]);
   if (!droplet) {
     return notFound();
   }
 
-  if (!currentUser?.email) {
+  if (!currentUser?.email || !userId) {
     redirect(`/d/${p.slug}`);
   }
 
-  const dropletRecommendations = await getDroplets({
-    fields: ["*"],
-    filters: {
-      $and: [
-        { slug: { $nei: p.slug } },
-        droplet.tags && {
-          tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
+  const [dropletRecommendations, authUser, enrollments, highlights, notes] =
+    await Promise.all([
+      getDroplets({
+        fields: ["*"],
+        filters: {
+          $and: [
+            { slug: { $nei: p.slug } },
+            droplet.tags && {
+              tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
+            },
+            {
+              $or: [{ status: "published" }, { status: { $null: true } }],
+            },
+          ],
         },
-        {
-          $or: [{ status: "published" }, { status: { $null: true } }],
+        pagination: {
+          page: 1,
+          pageSize: 4,
         },
-      ],
-    },
-    pagination: {
-      page: 1,
-      pageSize: 4,
-    },
-    populate: { tags: { populate: "*" } },
-  });
-
-  const authUser = await getCachedUser(currentUser.email);
-
-  const [enrollments, highlights, notes] = await Promise.all([
-    getCachedEnrollmentsWithLessonIds(authUser.id),
-    getHighlightsByDroplet(authUser.id, droplet.id),
-    getNotesByDroplet(authUser.id, droplet.id),
-  ]);
+        populate: { tags: { populate: "*" } },
+      }),
+      getCachedUser(currentUser.email),
+      getCachedEnrollmentsWithLessonIds(userId),
+      getHighlightsByDroplet(userId, droplet.id),
+      getNotesByDroplet(userId, droplet.id),
+    ]);
 
   let enrollID: string = "";
   const filteredHighlights = highlights.filter(
@@ -107,16 +109,11 @@ export default async function DropletRecapRoute({ params }: Props) {
 
   const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
 
-  if (
-    enrollment &&
-    enrollment.isComplete === true &&
-    !enrollment.completionDate
-  ) {
-    await updateCompletionDate(enrollment.id);
-  }
-
   return (
     <>
+      {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
+        <CompletionBackfill enrollmentId={enrollment.id} />
+      )}
       {enrollment &&
         enrollment.viewedLessons.length ===
           enrollment.droplet.lessons?.length &&

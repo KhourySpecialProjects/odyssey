@@ -22,6 +22,7 @@ import {
   assertOk,
 } from "@/lib/testing/mock-helpers";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -102,7 +103,10 @@ describe("Authorized User Tests", () => {
             },
           }),
         }),
-        next: { tags: ["users"], revalidate: 900 },
+        next: {
+          tags: [CACHE_TAGS.users, CACHE_TAGS.user(testEmail)],
+          revalidate: 900,
+        },
       });
     });
 
@@ -118,7 +122,10 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           populate: { roles: { fields: ["title"] } },
         }),
-        next: { tags: ["users"], revalidate: 900 },
+        next: {
+          tags: [CACHE_TAGS.users, CACHE_TAGS.user(testEmail)],
+          revalidate: 900,
+        },
       });
     });
 
@@ -134,7 +141,10 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           fields: ["id", "email"],
         }),
-        next: { tags: ["users"], revalidate: 900 },
+        next: {
+          tags: [CACHE_TAGS.users, CACHE_TAGS.user(testEmail)],
+          revalidate: 900,
+        },
       });
     });
 
@@ -153,8 +163,43 @@ describe("Authorized User Tests", () => {
             isEnabled: true,
           }),
         }),
-        next: { tags: ["users"], revalidate: 900 },
+        next: {
+          tags: [CACHE_TAGS.users, CACHE_TAGS.user(testEmail)],
+          revalidate: 900,
+        },
       });
+    });
+
+    it("uses the same per-user tag regardless of email case", async () => {
+      mockedFetchAPI.mockResolvedValue([{ id: 1, email: "a.b@test.com" }]);
+
+      await getAuthorizedUserByEmail("A.B@Test.com");
+      await getAuthorizedUserByEmail("a.b@test.com");
+
+      const [, first] = mockedFetchAPI.mock.calls[0]!;
+      const [, second] = mockedFetchAPI.mock.calls[1]!;
+      expect(first.next?.tags).toEqual(second.next?.tags);
+      expect(first.next?.tags).toEqual([
+        CACHE_TAGS.users,
+        CACHE_TAGS.user("a.b@test.com"),
+      ]);
+    });
+
+    it("accepts multiple cache tags and still appends the per-user tag", async () => {
+      const testEmail = "test@northeastern.edu";
+      mockedFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+
+      await getAuthorizedUserByEmail(testEmail, {}, [
+        CACHE_TAGS.userDashboard(1),
+        CACHE_TAGS.allUserDashboards,
+      ]);
+
+      const [, config] = mockedFetchAPI.mock.calls[0]!;
+      expect(config.next?.tags).toEqual([
+        CACHE_TAGS.userDashboard(1),
+        CACHE_TAGS.allUserDashboards,
+        CACHE_TAGS.user(testEmail),
+      ]);
     });
   });
 
@@ -547,7 +592,7 @@ describe("Authorized User Tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          next: { tags: ["authors"], revalidate: 3600 },
+          next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
         }),
       );
 
@@ -622,6 +667,20 @@ describe("Authorized User Tests", () => {
       expect(result[0].email).toBe("sella.j@northeastern.edu");
       expect(result[1].email).toBe("palmer.gi@northeastern.edu");
       expect(result[2].email).toBe("chapman.w@northeastern.edu");
+    });
+
+    it("should read from the data cache under the authors tag", async () => {
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+
+      await fetchWebsiteCreators();
+
+      const init = mockFetch.mock.calls[0][1];
+      expect(init).toEqual(
+        expect.objectContaining({
+          next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
+        }),
+      );
+      expect(init).not.toHaveProperty("cache");
     });
 
     it("should handle users not in order list", async () => {

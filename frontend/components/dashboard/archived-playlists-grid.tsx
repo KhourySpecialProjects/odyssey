@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import {
   getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
@@ -13,9 +14,14 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return null;
 
-  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const [authorizedUser, enrollments, dueDates] = await Promise.all([
+    getCachedUserDashboardFull(user.email),
+    getCachedEnrollmentsFavorites(userId),
+    getCachedUserDueDates(userId),
+  ]);
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
@@ -61,20 +67,9 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     );
   }
 
-  const dueDates = await getCachedUserDueDates(authorizedUser.id);
-  if (sortKey) {
-    const [field, direction] = sortKey.split(":");
-    if (field === "name") {
-      allArchivedPlaylists?.sort((a, b) => {
-        return direction === "asc"
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
-      });
-    }
-  }
-
   return (
     <UserPlaylistsClient
+      sortKey={sortKey}
       customPlaylists={allArchivedPlaylists}
       publicPlaylists={[]}
       dueDates={dueDates}

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useEffect, useState } from "react";
 import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 
-import MUIDateTimePicker from "./datetime-picker";
+import DateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
 import { Check, Trash2Icon } from "lucide-react";
 import Link from "next/link";
@@ -71,13 +71,11 @@ export function PlaylistDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <div className="rounded-md dark:bg-slate-50">
-          <MUIDateTimePicker
-            onChange={handleInputChange}
-            date={dueDate}
-            data-testid="picker"
-          ></MUIDateTimePicker>
-        </div>
+        <DateTimePicker
+          onChange={handleInputChange}
+          date={dueDate}
+          aria-label={`Due date for ${currentPlaylist.name}`}
+        />
 
         <div className="flex flex-col gap-2">
           <Button

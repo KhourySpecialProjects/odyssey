@@ -1,11 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { DraggableTileListClient } from "@/components/droplets/draggable_tile_list_client";
 
-jest.mock("flat", () => ({
-  flatten: jest.fn((obj) => obj),
-  unflatten: jest.fn((obj) => obj),
-}));
-
 describe("DraggableTileListClient", () => {
   const mockDroplets = Array.from({ length: 7 }, (_, i) => ({
     id: i + 1,
