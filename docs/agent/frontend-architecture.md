@@ -7,7 +7,7 @@ The frontend uses Next.js 15 App Router with route groups that organize pages by
 ```
 app/
 ├── (general)/          Dashboard, explore, feed, admin, settings, friends
-│   ├── admin/          Admin panel (protected by middleware, System Admin only)
+│   ├── admin/          Admin panel (System Admin only, gated in admin/layout.tsx)
 │   ├── dashboard/      User's enrolled droplets, progress, due dates
 │   ├── explore/        Browse/search all published droplets and playlists
 │   ├── feed/           Announcements (friend, system, group, kudos, etc.)
@@ -88,7 +88,7 @@ Authentication uses NextAuth with two providers: Azure AD (Northeastern SSO) and
 2. `signIn` callback (`lib/auth/options.ts`) checks the user's email exists in the `authorized-users` Strapi collection. If not found, sign-in is rejected.
 3. `jwt` callback fetches the user's roles from Strapi and their NUID from Microsoft Graph API (Azure AD users only). These are embedded in the JWT.
 4. `session` callback populates the NextAuth session object with roles, user ID, NUID, and profile data from the JWT.
-5. Middleware (`frontend/middleware.ts`) runs on every request and protects routes: `/admin/*` requires System Admin role, `/d/*` requires any authenticated user.
+5. Middleware (`frontend/middleware.ts`) only checks that a session token exists for `/admin`, `/d`, `/activity`. Role gating happens in `app/(general)/admin/layout.tsx` (SysAdmin via `getCurrentUser`) and in each Server Action via `requireRole`.
 
 **Role hierarchy** (defined in `lib/globals.ts`):
 
