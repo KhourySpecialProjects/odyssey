@@ -67,13 +67,14 @@ describe("EnvironmentBanner", () => {
     expect(banner).toHaveClass("test-class");
   });
 
-  it("renders role switcher when user is logged in (dev mode)", async () => {
+  it("renders role switcher when the dev-role-override flag is enabled", async () => {
     process.env.NEXT_PUBLIC_APP_ENV = "development";
     Object.defineProperty(process.env, "NODE_ENV", {
       value: "development",
       writable: true,
       configurable: true,
     });
+    process.env.ENABLE_DEV_ROLE_OVERRIDE = "true";
 
     render(await EnvironmentBanner({}));
 
@@ -88,6 +89,21 @@ describe("EnvironmentBanner", () => {
       writable: true,
       configurable: true,
     });
+    process.env.ENABLE_DEV_ROLE_OVERRIDE = "true";
+
+    render(await EnvironmentBanner({}));
+
+    expect(screen.queryByTestId("role-switcher")).not.toBeInTheDocument();
+  });
+
+  it("hides role switcher in dev mode when the override flag is off", async () => {
+    process.env.NEXT_PUBLIC_APP_ENV = "development";
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+      configurable: true,
+    });
+    delete process.env.ENABLE_DEV_ROLE_OVERRIDE;
 
     render(await EnvironmentBanner({}));
 

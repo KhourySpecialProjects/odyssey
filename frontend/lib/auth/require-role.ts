@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
+import { getDevRoleOverride } from "@/lib/auth/dev-role-override";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 export type RequireRoleResult =
@@ -22,6 +23,9 @@ export type RequireRoleResult =
  *   const gate = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
  *   if (!gate.ok) return { ok: false, error: gate.error, data: null };
  *   const { user } = gate;
+ *
+ * In local dev with ENABLE_DEV_ROLE_OVERRIDE=true, the dev-role-override
+ * cookie replaces the Strapi roles (see dev-role-override.ts).
  */
 export async function requireRole(
   allowed: AuthorizedUserRoleTitle[],
@@ -47,20 +51,26 @@ export async function requireRole(
         (typeof r === "string" ? r : r.title) as AuthorizedUserRoleTitle,
     );
 
+    // Step 3.5: In local dev with ENABLE_DEV_ROLE_OVERRIDE=true, the
+    // dev-role-override cookie replaces the Strapi roles for this check.
+    // id and email always stay the real ones.
+    const override = await getDevRoleOverride();
+    const effectiveRoles = override ?? roleTitles;
+
     // Step 4: Empty allowed array means "any authenticated user".
     if (allowed.length === 0) {
       return {
         ok: true,
-        user: { id: user.id, email: sessionUser.email, roles: roleTitles },
+        user: { id: user.id, email: sessionUser.email, roles: effectiveRoles },
       };
     }
 
     // Step 5: Check if any of the user's roles intersect with the allowed set.
-    const hasRole = roleTitles.some((title) => allowed.includes(title));
+    const hasRole = effectiveRoles.some((title) => allowed.includes(title));
     if (hasRole) {
       return {
         ok: true,
-        user: { id: user.id, email: sessionUser.email, roles: roleTitles },
+        user: { id: user.id, email: sessionUser.email, roles: effectiveRoles },
       };
     }
 
