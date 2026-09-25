@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import { getDropletBySlug } from "./droplet";
+import { getDropletBySlug, getDroplets } from "./droplet";
 import { getEnrollmentsByAuthorizedUser } from "./enrollment";
 import { getLessonBySlug } from "./lesson";
 import { ENROLLMENT_POPULATES } from "./enrollment-populates";
@@ -8,6 +8,7 @@ import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
 import { CACHE_TAGS } from "../cache-tags";
 import { getCurrentUser } from "../auth/session";
+import { SLIDE_BREAK_MARKER } from "../blocknote/slide-break";
 import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
@@ -94,21 +95,84 @@ export const getCachedLessonBySlug = cache((slug: string) =>
   getLessonBySlug(slug),
 );
 
+/**
+ * The draft editor's droplet, shared by the draft layout (access check +
+ * sidebar), the overview page and the lesson page — one query per request.
+ * Fields are explicit: `populate: "*"` on lessons pulled every learner's
+ * enrollments, notes and highlights along with each lesson's full content.
+ */
 export const getCachedDraftDropletBySlug = cache((slug: string) =>
   getDropletBySlug(slug, {
-    fields: ["*"],
+    fields: [
+      "name",
+      "slug",
+      "type",
+      "focusArea",
+      "difficulty",
+      "description",
+      "overview",
+      "isHidden",
+      "status",
+      "inReview",
+      "afterReview",
+      "funFact",
+      "originalDropletId",
+      "presentationEnabled",
+    ],
     populate: {
-      authorized_users: {
-        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      // Layout access check and the Authors editor only compare ids.
+      authorized_users: { fields: ["id"] },
+      learningObjectives: { fields: ["id", "objective"] },
+      // Sidebar lesson list. Block data only feeds its slide-break check, so
+      // v1 blocks are narrowed to slide-break markers; v2 JSON can't be.
+      lessons: {
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "type",
+          "orderIndex",
+          "blocksVersion",
+          "blocksV2",
+        ],
+        populate: {
+          blocks: {
+            on: {
+              "droplets.generic": {
+                fields: ["content"],
+                filters: { content: { $eq: SLIDE_BREAK_MARKER } },
+              },
+            },
+          },
+        },
       },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: "*" },
-      postrequisites: { populate: "*" },
-      nextSteps: { fields: ["label", "url"] },
-      datasets: { fields: ["name", "url", "fileType", "fileSize"] },
+      tags: { fields: ["id", "name", "slug"] },
+      prerequisites: { fields: ["id", "name", "slug"] },
+      postrequisites: { fields: ["id", "name", "slug"] },
+      nextSteps: { fields: ["id", "label", "url"] },
+      // Datasets editor and the lesson page's notebook runtime.
+      datasets: {
+        fields: ["id", "name", "format", "fileUrl", "fileSize"],
+        sort: ["createdAt:asc"],
+      },
     },
+  }),
+);
+
+/**
+ * Published droplets the draft editor offers as choices: the sidebar's
+ * "Add Existing Lesson" picker (uses lessons) and the overview page's
+ * prerequisite / similar-droplet pickers (filter out `isHidden`). One query
+ * shared by the draft layout and overview page.
+ */
+export const getCachedDraftDropletOptions = cache(() =>
+  getDroplets({
+    filters: { status: { $eq: "published" } },
+    fields: ["id", "name", "slug", "isHidden"],
+    populate: {
+      lessons: { fields: ["id", "name", "orderIndex"] },
+    },
+    pagination: { pageSize: 250, page: 1 },
   }),
 );
 

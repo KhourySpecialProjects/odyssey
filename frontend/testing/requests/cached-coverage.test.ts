@@ -28,6 +28,7 @@ import {
   getCachedUserDueDates,
   getCachedLessonBySlug,
   getCachedDraftDropletBySlug,
+  getCachedDraftDropletOptions,
   getCachedDropletBySlug,
   getCachedVoyageEnrollment,
   getCachedVoyageEnrollmentsByUser,
@@ -37,7 +38,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserGroups, getUserDueDates } from "@/lib/requests/groups";
 import { getLessonBySlug } from "@/lib/requests/lesson";
-import { getDropletBySlug } from "@/lib/requests/droplet";
+import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
@@ -71,6 +73,7 @@ jest.mock("@/lib/requests/lesson", () => ({
 
 jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn(),
+  getDroplets: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/voyage-enrollment", () => ({
@@ -88,6 +91,7 @@ const mockedGetUserGroups = jest.mocked(getUserGroups);
 const mockedGetUserDueDates = jest.mocked(getUserDueDates);
 const mockedGetLessonBySlug = jest.mocked(getLessonBySlug);
 const mockedGetDropletBySlug = jest.mocked(getDropletBySlug);
+const mockedGetDroplets = jest.mocked(getDroplets);
 const mockedGetVoyageEnrollment = jest.mocked(getVoyageEnrollment);
 const mockedGetVoyageEnrollmentsByUser = jest.mocked(
   getVoyageEnrollmentsByUser,
@@ -437,6 +441,105 @@ describe("cached.ts — getCachedDraftDropletBySlug", () => {
       }),
     );
     expect(result).toEqual(MOCK_DROPLET);
+  });
+
+  it("never uses a wildcard populate or wildcard fields", async () => {
+    await getCachedDraftDropletBySlug("python-basics");
+
+    const query = JSON.stringify(mockedGetDropletBySlug.mock.calls[0][1]);
+    expect(query).not.toContain('"*"');
+  });
+
+  it("selects every droplet field the draft layout and pages read", async () => {
+    await getCachedDraftDropletBySlug("python-basics");
+
+    const { fields } = mockedGetDropletBySlug.mock.calls[0][1]!;
+    expect(fields).toEqual(
+      expect.arrayContaining([
+        "name",
+        "slug",
+        "type",
+        "focusArea",
+        "difficulty",
+        "description",
+        "overview",
+        "isHidden",
+        "status",
+        "inReview",
+        "afterReview",
+        "funFact",
+        "originalDropletId",
+        "presentationEnabled",
+      ]),
+    );
+  });
+
+  it("populates only the relation fields consumers read", async () => {
+    await getCachedDraftDropletBySlug("python-basics");
+
+    const { populate } = mockedGetDropletBySlug.mock.calls[0][1]!;
+    expect(populate).toEqual({
+      authorized_users: { fields: ["id"] },
+      learningObjectives: { fields: ["id", "objective"] },
+      lessons: {
+        fields: expect.arrayContaining([
+          "id",
+          "name",
+          "slug",
+          "orderIndex",
+          "blocksVersion",
+          "blocksV2",
+        ]),
+        populate: {
+          blocks: {
+            on: {
+              "droplets.generic": {
+                fields: ["content"],
+                filters: { content: { $eq: SLIDE_BREAK_MARKER } },
+              },
+            },
+          },
+        },
+      },
+      tags: { fields: ["id", "name", "slug"] },
+      prerequisites: { fields: ["id", "name", "slug"] },
+      postrequisites: { fields: ["id", "name", "slug"] },
+      nextSteps: { fields: ["id", "label", "url"] },
+      datasets: {
+        fields: ["id", "name", "format", "fileUrl", "fileSize"],
+        sort: ["createdAt:asc"],
+      },
+    });
+  });
+
+  it("does not populate learner data on lessons", async () => {
+    await getCachedDraftDropletBySlug("python-basics");
+
+    const { populate } = mockedGetDropletBySlug.mock.calls[0][1]! as {
+      populate: { lessons: { populate: Record<string, unknown> } };
+    };
+    expect(Object.keys(populate.lessons.populate)).toEqual(["blocks"]);
+  });
+});
+
+describe("cached.ts — getCachedDraftDropletOptions", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedGetDroplets.mockResolvedValue([MOCK_DROPLET]);
+  });
+
+  it("fetches published droplets with the fields the draft pickers read", async () => {
+    const result = await getCachedDraftDropletOptions();
+
+    expect(mockedGetDroplets).toHaveBeenCalledWith({
+      filters: { status: { $eq: "published" } },
+      fields: ["id", "name", "slug", "isHidden"],
+      populate: {
+        lessons: { fields: ["id", "name", "orderIndex"] },
+      },
+      pagination: { pageSize: 250, page: 1 },
+    });
+    expect(result).toEqual([MOCK_DROPLET]);
   });
 });
 

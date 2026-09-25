@@ -366,6 +366,17 @@ describe("Lesson API Functions", () => {
   });
 
   describe("getLessonBySlug", () => {
+    it("bypasses the data cache when fresh is set (draft editor)", async () => {
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([{ id: 1, slug: "draft-lesson" }]);
+
+      await getLessonBySlug("draft-lesson", {}, { fresh: true });
+
+      const config = fetchAPI.mock.calls.at(-1)[1];
+      expect(config.cache).toBe("no-store");
+      expect(config.next).toBeUndefined();
+    });
+
     it("successfully fetches a lesson by slug", async () => {
       const mockLesson = {
         id: 1,
