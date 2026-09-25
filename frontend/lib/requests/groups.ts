@@ -190,7 +190,7 @@ export async function getUserGroups(
   {
     sort = ["groupName:asc"],
     filters = {},
-    pagination = { pageSize: 25, page: 1 },
+    pagination,
     populate = {
       members: {
         fields: ["id", "email"],
@@ -212,7 +212,7 @@ export async function getUserGroups(
   }: StrapiRequestParams = {},
 ): Promise<Group[]> {
   const path = `/groups`;
-  const urlParams = {
+  const baseParams = {
     sort,
     filters: {
       ...filters,
@@ -225,16 +225,43 @@ export async function getUserGroups(
     },
     populate,
     fields,
-    pagination,
   };
 
-  return await fetchAPI<Group[]>(path, {
-    urlParams,
-    next: {
-      tags: [CACHE_TAGS.allGroups, CACHE_TAGS.userGroups(authorizedUserId)],
-      revalidate: 900,
-    },
-  });
+  // Every page carries the per-user tag so refreshUserGroups can invalidate
+  // the whole paginated list for this user, not just one page of it.
+  const cacheOptions = {
+    tags: [CACHE_TAGS.allGroups, CACHE_TAGS.userGroups(authorizedUserId)],
+    revalidate: 900,
+  };
+
+  // An explicitly requested page is returned as-is.
+  if (pagination) {
+    return await fetchAPI<Group[]>(path, {
+      urlParams: { ...baseParams, pagination },
+      next: cacheOptions,
+    });
+  }
+
+  // Otherwise walk every page. The result covers all four roles at once and
+  // callers split it by role afterwards, so a single page would silently drop
+  // groups from whichever roles sort last.
+  const pageSize = 100;
+  let page = 1;
+  let allGroups: Group[] = [];
+
+  while (true) {
+    const groupPage = await fetchAPI<Group[]>(path, {
+      urlParams: { ...baseParams, pagination: { pageSize, page } },
+      next: cacheOptions,
+    });
+
+    if (!groupPage || groupPage.length === 0) break;
+    allGroups = allGroups.concat(groupPage);
+    if (groupPage.length < pageSize) break;
+    page++;
+  }
+
+  return allGroups;
 }
 
 /**
