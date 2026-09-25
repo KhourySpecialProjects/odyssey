@@ -27,6 +27,9 @@ export default [
   },
   "strapi::logger",
   "strapi::errors",
+  // gzip JSON responses (list queries can be large). Brotli is off to keep
+  // CPU cost low on small tasks; koa-compress skips bodies under 1 KB.
+  { name: "strapi::compression", config: { br: false } },
   "strapi::cors",
   "strapi::poweredBy",
   "strapi::query",

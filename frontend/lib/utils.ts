@@ -67,6 +67,15 @@ export type PopulateValue =
       [key: string]: PopulateValue;
     };
 
+function withoutPaginationCount(urlParams?: object): object {
+  const params = (urlParams ?? {}) as { pagination?: Record<string, unknown> };
+  if (params.pagination && "withCount" in params.pagination) return params;
+  return {
+    ...params,
+    pagination: { ...params.pagination, withCount: false },
+  };
+}
+
 export async function fetchAPI<T>(
   path: string,
   config: {
@@ -97,7 +106,15 @@ export async function fetchAPI<T>(
       ...(config.next && { next: config.next }),
     };
 
-    const queryString = qs.stringify(config.urlParams, {
+    // backend/config/api.ts enables withCount globally, which costs an extra
+    // COUNT query per list request. Flattened responses drop `meta`, so skip
+    // it unless the caller asks for the raw response or sets withCount itself.
+    const shouldFlatten = config.flattenResponse !== false;
+    const urlParams = shouldFlatten
+      ? withoutPaginationCount(config.urlParams)
+      : config.urlParams;
+
+    const queryString = qs.stringify(urlParams, {
       encodeValuesOnly: true,
     });
 
@@ -117,10 +134,7 @@ export async function fetchAPI<T>(
 
     const data = await response.json();
 
-    if (
-      config.flattenResponse ||
-      typeof config.flattenResponse === "undefined"
-    ) {
+    if (shouldFlatten) {
       const temp = flattenAttributes(data.data);
       return temp;
     }

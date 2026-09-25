@@ -124,7 +124,8 @@ describe("utils", () => {
 
         expect(result).toEqual({ test: "value" });
         expect(mockFetch).toHaveBeenCalledWith(
-          "http://test.com/api/test",
+          // Flattened responses drop meta, so Strapi's COUNT query is skipped
+          "http://test.com/api/test?pagination[withCount]=false",
           expect.objectContaining({
             headers: {
               "Content-Type": "application/json",
@@ -140,6 +141,51 @@ describe("utils", () => {
         await expect(fetchAPI("/test", {})).rejects.toThrow(
           "Failed to fetch data",
         );
+      });
+
+      describe("pagination count", () => {
+        const okResponse = () =>
+          ({
+            ok: true,
+            json: () => Promise.resolve({ data: [], meta: {} }),
+          }) as unknown as Response;
+
+        it("keeps existing pagination when skipping the count", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { page: 2, pageSize: 10 } },
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[page]=2&pagination[pageSize]=10&pagination[withCount]=false",
+          );
+        });
+
+        it("keeps the count when the raw response (meta) is requested", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { pageSize: 1 } },
+            flattenResponse: false,
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[pageSize]=1",
+          );
+        });
+
+        it("respects an explicit withCount from the caller", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { withCount: true } },
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[withCount]=true",
+          );
+        });
       });
     });
 
