@@ -116,11 +116,12 @@ describe("assertOwner", () => {
     expect(assertOwner([7], user)).toEqual({ ok: true });
   });
 
-  it("does not let Faculty bypass ownership by default", () => {
-    const user = authUser({
-      id: 99,
-      roles: [AuthorizedUserRoleTitle.Faculty],
-    });
+  it.each(
+    Object.values(AuthorizedUserRoleTitle).filter(
+      (role) => role !== AuthorizedUserRoleTitle.SysAdmin,
+    ),
+  )("does not let %s bypass ownership by default", (role) => {
+    const user = authUser({ id: 99, roles: [role] });
 
     expect(assertOwner([7], user)).toEqual({ ok: false, error: "forbidden" });
   });
@@ -136,6 +137,22 @@ describe("assertOwner", () => {
         bypassRoles: [AuthorizedUserRoleTitle.Faculty],
       }),
     ).toEqual({ ok: true });
+  });
+
+  it("grants no bypass when bypassRoles is []", () => {
+    const admin = authUser({
+      id: 99,
+      roles: [AuthorizedUserRoleTitle.SysAdmin],
+    });
+    expect(assertOwner([7], admin, { bypassRoles: [] })).toEqual({
+      ok: false,
+      error: "forbidden",
+    });
+
+    const owner = authUser({ id: 7 });
+    expect(assertOwner([7], owner, { bypassRoles: [] })).toEqual({
+      ok: true,
+    });
   });
 
   it("is forbidden for a non-admin when ownerIds is undefined", () => {
@@ -172,13 +189,55 @@ describe("assertOwner", () => {
   });
 });
 
+/**
+ * Detects a leading `"use server"` directive using the TypeScript parser, so
+ * it isn't fooled by quote style or a leading comment before the directive.
+ * Falls back to a regex if `typescript` can't be required under whatever
+ * transform is running the test (e.g. a future SWC-based config). Kept as a
+ * small local function — Task 6's AST guard test may reuse this idea.
+ */
+function hasUseServerDirective(source: string): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ts = require("typescript") as typeof import("typescript");
+    const sf = ts.createSourceFile(
+      "scan.ts",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    const first = sf.statements[0];
+    return (
+      first !== undefined &&
+      ts.isExpressionStatement(first) &&
+      ts.isStringLiteral(first.expression) &&
+      first.expression.text === "use server"
+    );
+  } catch {
+    // `typescript` couldn't be imported under this transform — fall back to
+    // a regex that tolerates leading comments and either quote style.
+    return /^\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*['"]use server['"]/.test(
+      source,
+    );
+  }
+}
+
 describe("lib/auth/guards.ts", () => {
+  it('sanity check: the detector recognizes "use server" after a leading comment', () => {
+    // If this ever returns false, the test below could pass for the wrong
+    // reason (a broken detector that always returns false). Guard against
+    // that by asserting the detector actually detects a real directive.
+    expect(
+      hasUseServerDirective("// c\n'use server';\nexport async function f(){}"),
+    ).toBe(true);
+  });
+
   it('does not start with a "use server" directive', () => {
     const source = fs.readFileSync(
       path.resolve(__dirname, "../../lib/auth/guards.ts"),
       "utf-8",
     );
 
-    expect(source.trimStart().startsWith('"use server"')).toBe(false);
+    expect(hasUseServerDirective(source)).toBe(false);
   });
 });
