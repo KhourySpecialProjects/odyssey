@@ -36,6 +36,9 @@ export async function getGalleryBySlug(
     pagination,
   };
 
+  // Galleries are edited in the Strapi admin, which has no revalidation hook,
+  // so freshness is time-based only. The explicit revalidate keeps this in the
+  // Next data cache even though /features is force-dynamic.
   const galleries = await fetchAPI<Gallery[]>(path, {
     urlParams,
     next: { revalidate: 3600 },
