@@ -19,11 +19,12 @@
  *                 ↳ Per-user tag "enrollments-{userId}":
  *                   createEnrollment, createEnrollmentFromEmail,
  *                   createEnrollmentDirect, deleteEnrollment,
- *                   markLessonAsComplete, completeLesson,
  *                   archiveDroplet, togglePlaylistEnrollment,
  *                   enrollInPlaylist, changeEnrollmentRating,
  *                   updateEnrollmentFirstTime, updateViewedLessons,
- *                   updateCompletionDate, favoriteDroplet
+ *                   recordMissingCompletion, favoriteDroplet
+ *                   (markLessonAsComplete, completeLesson and
+ *                   updateCompletionDate also do, but have no callers)
  *                 ↳ Global tag "enrollments" (sweeps all users):
  *                   updateDroplet (incl. draft saves), deepDeleteDroplet,
  *                   duplicateDroplet, publishDraftToOriginal, addLesson,

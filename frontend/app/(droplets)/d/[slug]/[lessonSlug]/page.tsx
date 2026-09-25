@@ -5,10 +5,11 @@ import {
   getCachedDropletBySlug,
   getCachedLessonBySlug,
 } from "@/lib/requests/cached";
-import { updateCompletionDate } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
+import { CompletionBackfill } from "@/components/droplets/completion-backfill";
+import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
 
 type Props = {
   params: Promise<Params>;
@@ -54,12 +55,6 @@ export default async function Page({ params }: Props) {
     enrollmentId = enrollment.id;
     completedLessonIds =
       enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
-    if (
-      completedLessonIds.length === enrollment.droplet.lessons?.length &&
-      !enrollment.completionDate
-    ) {
-      await updateCompletionDate(enrollment.id);
-    }
   }
 
   const isAuthor =
@@ -68,6 +63,9 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="flex h-full w-full flex-row">
+      {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
+        <CompletionBackfill enrollmentId={enrollment.id} />
+      )}
       <div className="w-full">
         <DropletLessonWrapper
           lesson={lesson}
