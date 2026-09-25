@@ -74,8 +74,6 @@ import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
 
-import { MantineProvider } from "@mantine/core";
-
 export function Sidebar({
   user,
   droplet,
@@ -629,15 +627,13 @@ export function Sidebar({
 
               {/* Add lesson section */}
               <div id="tour-add-lesson">
-                <MantineProvider>
-                  <AddLesson
-                    droplet={droplet}
-                    onAddLesson={addLessonCallback}
-                    onAddLessons={addLessonsCallback}
-                    availableDroplets={availableDroplets}
-                    currentLessonCount={dropletLessons.length}
-                  />
-                </MantineProvider>
+                <AddLesson
+                  droplet={droplet}
+                  onAddLesson={addLessonCallback}
+                  onAddLessons={addLessonsCallback}
+                  availableDroplets={availableDroplets}
+                  currentLessonCount={dropletLessons.length}
+                />
               </div>
 
               {/* Sortable lessons list */}
