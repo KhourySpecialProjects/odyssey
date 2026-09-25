@@ -7,6 +7,7 @@ import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
 import { CACHE_TAGS } from "../cache-tags";
+import { getCurrentUser } from "../auth/session";
 import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
@@ -16,23 +17,37 @@ export const getCachedUser = cache((email: string) =>
   getAuthorizedUserByEmail(email, USER_POPULATES.profile, CACHE_TAGS.users),
 );
 
+/**
+ * Resolves the authorized-user id needed for per-user cache tags. For the
+ * signed-in user it comes from the session token, so the tagged read can start
+ * without waiting on a lookup; otherwise (or for tokens issued before the id
+ * was stored) it falls back to the request-deduplicated lookup by email.
+ */
+async function getUserIdForEmail(email: string): Promise<number | undefined> {
+  const sessionUser = await getCurrentUser();
+  if (sessionUser?.id && sessionUser.email === email) return sessionUser.id;
+  return (await getCachedUser(email))?.id;
+}
+
 export const getCachedUserSocial = cache(async (email: string) => {
-  const user = await getCachedUser(email);
-  if (!user) return undefined;
+  const userId = await getUserIdForEmail(email);
+  if (!userId) return undefined;
   return getAuthorizedUserByEmail(
     email,
     USER_POPULATES.social,
-    CACHE_TAGS.userSocial(user.id),
+    CACHE_TAGS.userSocial(userId),
   );
 });
 
-export const getCachedUserCreation = cache((email: string) =>
-  getAuthorizedUserByEmail(
-    email,
-    USER_POPULATES.creation,
-    CACHE_TAGS.userContent,
-  ),
-);
+// Two-level tags: per-user actions revalidate userContent(id); mutations that
+// touch many users' /my-content (shared droplets/playlists) sweep allUserContent.
+export const getCachedUserCreation = cache(async (email: string) => {
+  const userId = await getUserIdForEmail(email);
+  return getAuthorizedUserByEmail(email, USER_POPULATES.creation, [
+    ...(userId ? [CACHE_TAGS.userContent(userId)] : []),
+    CACHE_TAGS.allUserContent,
+  ]);
+});
 
 export const getCachedEnrollments = cache((authorizedUserId: number) =>
   getEnrollmentsByAuthorizedUser(authorizedUserId),
@@ -57,13 +72,15 @@ export const getCachedEnrollmentsFavorites = cache((authorizedUserId: number) =>
   }),
 );
 
-export const getCachedUserDashboardFull = cache((email: string) =>
-  getAuthorizedUserByEmail(
-    email,
-    USER_POPULATES.dashboardFull,
-    CACHE_TAGS.userDashboard,
-  ),
-);
+// Two-level tags: per-user actions revalidate userDashboard(id); mutations that
+// touch many users' dashboards (playlist/group/droplet edits) sweep allUserDashboards.
+export const getCachedUserDashboardFull = cache(async (email: string) => {
+  const userId = await getUserIdForEmail(email);
+  return getAuthorizedUserByEmail(email, USER_POPULATES.dashboardFull, [
+    ...(userId ? [CACHE_TAGS.userDashboard(userId)] : []),
+    CACHE_TAGS.allUserDashboards,
+  ]);
+});
 
 export const getCachedUserGroups = cache((authorizedUserId: number) =>
   getUserGroups(authorizedUserId),

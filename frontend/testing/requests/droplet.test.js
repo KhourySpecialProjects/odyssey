@@ -22,6 +22,7 @@ import {
 import { deleteLesson, addLesson } from "@/lib/requests/lesson";
 import { getEnrollmentByUserAndDroplet } from "@/lib/requests/enrollment";
 import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
@@ -593,6 +594,9 @@ describe("Droplet API Functions", () => {
       });
       expect(revalidateTag).toHaveBeenCalledWith("authors");
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      // Only the creator's /my-content changes
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent(1));
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
     });
 
     it("handles duplicate droplet name", async () => {
@@ -846,6 +850,44 @@ describe("duplicateDroplet", () => {
     expect(result.isExisting).toBe(false);
     expect(revalidateTag).toHaveBeenCalledWith("authors");
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent(5));
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
+  });
+
+  it("revalidates /my-content for every author of the new draft", async () => {
+    const { fetchAPI } = require("@/lib/utils");
+
+    // Original has a co-author (7); the current user (5) is added to the draft
+    fetchAPI.mockResolvedValueOnce({
+      id: 10,
+      name: "Original Droplet",
+      focusArea: "Science",
+      type: "standard",
+      tags: [],
+      authorized_users: [{ id: 7 }],
+      learningObjectives: [],
+      prerequisites: [],
+      postrequisites: [],
+      nextSteps: [],
+      lessons: [],
+    });
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: [] }),
+    });
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: { id: 99, attributes: { slug: "draft-new", name: "[EDIT] X" } },
+        }),
+    });
+
+    await duplicateDroplet(10);
+
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent(7));
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent(5));
   });
 
   it("returns existing draft without revalidating", async () => {

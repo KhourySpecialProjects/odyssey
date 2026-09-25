@@ -33,6 +33,7 @@ import {
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserGroups, getUserDueDates } from "@/lib/requests/groups";
 import { getLessonBySlug } from "@/lib/requests/lesson";
@@ -41,12 +42,18 @@ import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
 } from "@/lib/requests/voyage-enrollment";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 
 // ─── module mocks ────────────────────────────────────────────────────────────
 // Every module that cached.ts imports must be mocked to avoid real network calls.
 
 jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -187,6 +194,27 @@ describe("cached.ts — getCachedUserSocial", () => {
     expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledTimes(2);
     expect(result).toMatchObject({ id: 1 });
   });
+
+  it("uses the session token's id for the signed-in user without a lookup", async () => {
+    jest.mocked(getCurrentUser).mockResolvedValueOnce({
+      id: 7,
+      email: "me@example.com",
+      roles: [],
+      isActive: true,
+    });
+    mockedGetAuthorizedUserByEmail.mockResolvedValueOnce(
+      MOCK_USER as unknown as AuthorizedUser,
+    );
+
+    await getCachedUserSocial("me@example.com");
+
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledTimes(1);
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenCalledWith(
+      "me@example.com",
+      USER_POPULATES.social,
+      CACHE_TAGS.userSocial(7),
+    );
+  });
 });
 
 describe("cached.ts — getCachedUserCreation", () => {
@@ -204,6 +232,30 @@ describe("cached.ts — getCachedUserCreation", () => {
       expect.anything(),
     );
     expect(result).toEqual(MOCK_USER);
+  });
+
+  it("tags the read with the per-user and global /my-content tags", async () => {
+    await getCachedUserCreation("user@example.com");
+
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenLastCalledWith(
+      "user@example.com",
+      USER_POPULATES.creation,
+      [CACHE_TAGS.userContent(MOCK_USER.id), CACHE_TAGS.allUserContent],
+    );
+  });
+
+  it("falls back to the global tag only when the user doesn't exist", async () => {
+    mockedGetAuthorizedUserByEmail.mockResolvedValue(
+      undefined as unknown as AuthorizedUser,
+    );
+
+    await getCachedUserCreation("nobody@example.com");
+
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenLastCalledWith(
+      "nobody@example.com",
+      USER_POPULATES.creation,
+      [CACHE_TAGS.allUserContent],
+    );
   });
 });
 
@@ -295,6 +347,16 @@ describe("cached.ts — getCachedUserDashboardFull", () => {
       expect.anything(),
     );
     expect(result).toEqual(MOCK_USER);
+  });
+
+  it("tags the read with the per-user and global /dashboard tags", async () => {
+    await getCachedUserDashboardFull("user@example.com");
+
+    expect(mockedGetAuthorizedUserByEmail).toHaveBeenLastCalledWith(
+      "user@example.com",
+      USER_POPULATES.dashboardFull,
+      [CACHE_TAGS.userDashboard(MOCK_USER.id), CACHE_TAGS.allUserDashboards],
+    );
   });
 });
 

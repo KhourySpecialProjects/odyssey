@@ -199,7 +199,10 @@ export async function setTimeZone(zone: string) {
     if (!response.ok) {
       throw new Error("Failed to update timezone");
     }
-    revalidateTag(CACHE_TAGS.users);
+    // Per-user only: timeZone is read solely through getAuthorizedUserByEmail
+    // (the header's getCachedUser etc.), which carries CACHE_TAGS.user(email).
+    // No global `users` list selects it, so other users' caches stay warm.
+    revalidateTag(CACHE_TAGS.user(user.email));
     return { success: true };
   } catch (error) {
     console.error("Error updating timezone:", error);

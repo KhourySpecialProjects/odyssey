@@ -23,6 +23,9 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  * Gets the desired authorized user by its unique email.
  * @param email The unique email of the desired authorized user.
  * @param options Strapi query modifiers.
+ * @param cacheTag Tag(s) for the read. The per-user `CACHE_TAGS.user(email)`
+ *   tag is always added, so revalidating it refreshes every cached read of
+ *   this user's own record without flushing other users.
  * @returns The authorized user.
  */
 export async function getAuthorizedUserByEmail<
@@ -35,7 +38,7 @@ export async function getAuthorizedUserByEmail<
     populate = USER_POPULATES.minimal.populate,
     fields = [...USER_POPULATES.minimal.fields],
   }: StrapiRequestParams = {},
-  cacheTag: string = CACHE_TAGS.users,
+  cacheTag: string | string[] = CACHE_TAGS.users,
 ): Promise<T> {
   const path = `/authorized-users`;
   const urlParams = {
@@ -52,9 +55,14 @@ export async function getAuthorizedUserByEmail<
     },
   };
 
+  const tags = [
+    ...(Array.isArray(cacheTag) ? cacheTag : [cacheTag]),
+    CACHE_TAGS.user(email),
+  ];
+
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [cacheTag], revalidate: 900 },
+    next: { tags, revalidate: 900 },
   }).then((authorizedUsers) => authorizedUsers[0]);
 }
 
@@ -271,6 +279,10 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         page: 1,
       },
     });
+    // `authors` is swept by every role change (updateUserInfo,
+    // approveCreationRequest, deleteAuthorizedUser); the time-based revalidate
+    // covers edits made in the Strapi admin. Explicit caching keeps this in
+    // the Next data cache even though /contributors is force-dynamic.
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
@@ -336,6 +348,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       },
     });
 
+    // Same caching as fetchContentCreators.
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
@@ -637,8 +650,23 @@ export async function updateUserInfo(
         body: JSON.stringify({ data }),
       },
     );
-    revalidateTag(CACHE_TAGS.users);
-    revalidateTag(CACHE_TAGS.authors);
+    // firstTime and isPublic never appear in another user's cached view: the
+    // user lists/search (`users`) and creator lists (`authors`) don't select
+    // them, and every other read of them goes through
+    // getAuthorizedUserByEmail, which carries the per-user tag. Any other
+    // field (names, photo, links, roles, isEnabled) is visible in those lists,
+    // so it still needs the global sweep. Unknown fields default to global.
+    const SELF_ONLY_FIELDS = new Set(["firstTime", "isPublic"]);
+    const selfOnlyChange =
+      isSelf && Object.keys(data).every((key) => SELF_ONLY_FIELDS.has(key));
+
+    if (isSelf) {
+      revalidateTag(CACHE_TAGS.user(auth.user.email));
+    }
+    if (!selfOnlyChange) {
+      revalidateTag(CACHE_TAGS.users);
+      revalidateTag(CACHE_TAGS.authors);
+    }
     return { ok: true, data: null };
   } catch (error) {
     console.error("Error updating user info:", error);

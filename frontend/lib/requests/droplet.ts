@@ -269,8 +269,8 @@ export async function deepDeleteDroplet(id: number) {
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -356,8 +356,8 @@ export async function updateDroplet(
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -575,7 +575,9 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     }
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
-    revalidateTag(CACHE_TAGS.userContent);
+    // The creator is the new droplet's only author, and a brand-new droplet
+    // isn't in anyone's playlists, so only their /my-content changes.
+    revalidateTag(CACHE_TAGS.userContent(author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -932,7 +934,11 @@ export async function duplicateDroplet(dropletId: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.allEnrollments);
-    revalidateTag(CACHE_TAGS.userContent);
+    // The new draft shows up on /my-content for exactly its authors (the
+    // original's authors plus the current user); it isn't in any playlist.
+    for (const authorId of authorIds) {
+      revalidateTag(CACHE_TAGS.userContent(authorId));
+    }
 
     return {
       ok: true,
@@ -1331,8 +1337,8 @@ export async function publishDraftToOriginal(
       revalidateTag(CACHE_TAGS.playlists);
       revalidateTag(CACHE_TAGS.allEnrollments);
       revalidateTag(CACHE_TAGS.allGroups);
-      revalidateTag(CACHE_TAGS.userContent);
-      revalidateTag(CACHE_TAGS.userDashboard);
+      revalidateTag(CACHE_TAGS.allUserContent);
+      revalidateTag(CACHE_TAGS.allUserDashboards);
     }
   }
 }
