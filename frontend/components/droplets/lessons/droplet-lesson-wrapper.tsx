@@ -1,13 +1,34 @@
 "use client";
 
 import { LessonRenderer } from "./lesson-renderer";
-import { NotesBar } from "./note-taking/notes-bar";
 import { useState, useCallback, useEffect } from "react";
-import { Droplet, Lesson, User, AuthorizedUser, Note } from "@/types";
+import dynamic from "next/dynamic";
+import {
+  Droplet,
+  Lesson,
+  User,
+  AuthorizedUser,
+  Note,
+  Highlight,
+} from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
 import { IconX } from "@tabler/icons-react";
 import DropletFooter from "../footer";
+
+// NotesBar pulls in TipTap/ProseMirror for every note, so it's loaded on demand.
+// The fallback matches its header row while the chunk loads.
+const NotesBar = dynamic(
+  () => import("./note-taking/notes-bar").then((mod) => mod.NotesBar),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-5 mb-10 flex h-10 items-center px-8 pl-12">
+        <h1 className="text-2xl font-extrabold">My Notes</h1>
+      </div>
+    ),
+  },
+);
 
 interface DropletLessonWrapperProps {
   lesson: Lesson;
@@ -18,6 +39,9 @@ interface DropletLessonWrapperProps {
   author: boolean;
   authUser: AuthorizedUser;
   userId: number;
+  /** Fetched by the lesson page; refetched here only after a note is created */
+  initialNotes: Note[];
+  initialHighlights: Highlight[];
 }
 
 export function DropletLessonWrapper({
@@ -29,9 +53,17 @@ export function DropletLessonWrapper({
   author,
   authUser,
   userId,
+  initialNotes,
+  initialHighlights,
 }: DropletLessonWrapperProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [expanded, setExpanded] = useState(false);
+  // NotesBar isn't mounted until the panel is first opened, then stays mounted
+  // so its state (drag position, open editors) survives collapsing
+  const [notesBarOpened, setNotesBarOpened] = useState(false);
+  if (expanded && !notesBarOpened) {
+    setNotesBarOpened(true);
+  }
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -40,10 +72,6 @@ export function DropletLessonWrapper({
     );
     setNotes(fetchedNotes);
   }, [userId, lesson.slug]);
-
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -76,6 +104,7 @@ export function DropletLessonWrapper({
             user={user}
             author={author}
             authUser={authUser}
+            initialHighlights={initialHighlights}
             onUpdate={fetchNotes}
             expanded={expanded}
             setExpanded={setExpanded}
@@ -103,12 +132,14 @@ export function DropletLessonWrapper({
                 </button>
               </div>
               <div>
-                <NotesBar
-                  userId={userId}
-                  lesson={lesson}
-                  enrollmentId={enrollmentId}
-                  initNotes={notes}
-                />
+                {notesBarOpened && (
+                  <NotesBar
+                    userId={userId}
+                    lesson={lesson}
+                    enrollmentId={enrollmentId}
+                    initNotes={notes}
+                  />
+                )}
               </div>
             </div>
           </>

@@ -51,6 +51,8 @@ export function NotesBar({
     };
   }, [draggedNote]);
 
+  // Notes start from initNotes (fetched by the lesson page) and are only
+  // refetched after this bar's own mutations
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
       userId,
@@ -58,10 +60,6 @@ export function NotesBar({
     );
     setNotes(fetchedNotes);
   }, [userId, lesson.slug]);
-
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
 
   const handleDragMove = useCallback(
     (e: MouseEvent) => {

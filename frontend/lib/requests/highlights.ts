@@ -5,8 +5,6 @@ import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 import { CACHE_TAGS } from "../cache-tags";
 import { revalidateTag } from "next/cache";
-import { getCurrentUser } from "../auth/session";
-import { getAuthorizedUserByEmail } from "./authorized-user";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -135,24 +133,39 @@ export async function deleteHighlight(id: number, authorizedUserId: number) {
   return response.json();
 }
 
-export async function getHighlightsForLesson(lessonId: number) {
-  const user = await getCurrentUser();
-  if (!user?.email) throw new Error("No email identified");
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const response = await fetch(
-    `${STRAPI_API_URL}/api/highlights?filters[lesson][id][$eq]=${lessonId}&filters[authorized_user][id][$eq]=${authorizedUser.id}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+/**
+ * Gets one user's highlights on one lesson (the lesson viewer's initial
+ * highlights). Keyed by lesson slug, like getNotesByAuthorizedUserAndLesson,
+ * so the lesson page can fetch it in parallel with the lesson itself.
+ */
+export async function getHighlightsByAuthorizedUserAndLesson(
+  authorizedUserId: number,
+  lessonSlug: string,
+  {
+    sort,
+    pagination = { pageSize: 250, page: 1 },
+    fields = ["text", "position", "color", "blockId", "yLevel"],
+  }: StrapiRequestParams = {},
+): Promise<Highlight[]> {
+  const path = `/highlights`;
+  const urlParams = {
+    sort,
+    filters: {
+      authorized_user: {
+        id: { $eq: authorizedUserId },
       },
-      next: {
-        tags: [CACHE_TAGS.highlights(authorizedUser.id)],
-        revalidate: 900,
+      lesson: {
+        slug: { $eq: lessonSlug },
       },
     },
-  );
-  return response.json();
+    fields,
+    pagination,
+  };
+
+  return await fetchAPI<Highlight[]>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.highlights(authorizedUserId)], revalidate: 900 },
+  });
 }
 
 export async function createHighlight(highlightData: any) {
