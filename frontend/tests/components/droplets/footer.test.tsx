@@ -2,8 +2,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import DropletFooter from "@/components/droplets/footer";
 import { usePathname, useRouter } from "next/navigation";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
+import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import { toast } from "sonner";
 
 const mockPush = jest.fn();
+const mockRefresh = jest.fn();
+
+jest.mock("sonner", () => ({
+  toast: { error: jest.fn(), success: jest.fn() },
+}));
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
@@ -26,7 +33,11 @@ describe("DropletFooter", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush,
+      refresh: mockRefresh,
+    });
+    useViewedLessonsStore.setState({ pendingViewedIds: [] });
     (updateViewedLessons as jest.Mock).mockResolvedValue({});
 
     // Clear any existing quiz elements
@@ -139,6 +150,153 @@ describe("DropletFooter", () => {
       expect(
         screen.queryByText(/Answer all quiz questions/),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Mark as complete", () => {
+    it("records the view through updateViewedLessons with all droplet lesson ids", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      (updateViewedLessons as jest.Mock).mockResolvedValue({ success: true });
+      const mockRefresh = jest.fn();
+      (useRouter as jest.Mock).mockReturnValue({
+        push: mockPush,
+        refresh: mockRefresh,
+      });
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+          completedLessonIds={[1, 2]}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Mark as complete"));
+
+      await waitFor(() =>
+        expect(updateViewedLessons).toHaveBeenCalledWith("42", 3, [1, 2, 3]),
+      );
+      // The action's revalidateTag re-renders the route; no extra refresh.
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Next navigation", () => {
+    it("navigates to the next lesson without waiting for the progress save", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      // Never resolves: navigation must not depend on the save finishing.
+      (updateViewedLessons as jest.Mock).mockReturnValue(new Promise(() => {}));
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={1}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/lesson-2"),
+      );
+      expect(updateViewedLessons).toHaveBeenCalledWith("42", 1, [1, 2, 3]);
+    });
+
+    it("waits for the save before opening the recap from the last lesson", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      let resolveSave: (value: unknown) => void = () => {};
+      (updateViewedLessons as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+      );
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+      await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
+      expect(mockPush).not.toHaveBeenCalled();
+
+      resolveSave({ success: true });
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/recap"),
+      );
+    });
+
+    const clickNextFromLesson1 = (props: Record<string, unknown> = {}) => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={1}
+          {...props}
+        />,
+      );
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+    };
+
+    it("marks the lesson viewed for the sidebar before the save finishes", async () => {
+      (updateViewedLessons as jest.Mock).mockReturnValue(new Promise(() => {}));
+
+      clickNextFromLesson1();
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalled());
+      expect(useViewedLessonsStore.getState().pendingViewedIds).toEqual([1]);
+    });
+
+    it("refreshes once the background save has stored a new view", async () => {
+      (updateViewedLessons as jest.Mock).mockResolvedValue({
+        success: true,
+        alreadyViewed: false,
+      });
+
+      clickNextFromLesson1();
+
+      await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
+    });
+
+    it("doesn't refresh when the server already had the view", async () => {
+      (updateViewedLessons as jest.Mock).mockResolvedValue({
+        success: true,
+        alreadyViewed: true,
+      });
+
+      clickNextFromLesson1();
+
+      await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
+      await waitFor(() => expect(mockPush).toHaveBeenCalled());
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+
+    it("skips the save for a lesson already recorded as viewed", async () => {
+      clickNextFromLesson1({ completedLessonIds: [1] });
+
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/lesson-2"),
+      );
+      expect(updateViewedLessons).not.toHaveBeenCalled();
+    });
+
+    it("undoes the optimistic view and tells the user when the save fails", async () => {
+      (updateViewedLessons as jest.Mock).mockResolvedValue({
+        success: false,
+        error: "Failed to update viewed lessons",
+      });
+
+      clickNextFromLesson1();
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(useViewedLessonsStore.getState().pendingViewedIds).toEqual([]);
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
   });
 

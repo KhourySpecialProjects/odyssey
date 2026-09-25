@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useLayoutEffect, useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import {
@@ -36,12 +36,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { duplicateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
+import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
 
 export default function Sidebar({
   user,
   author = false,
   droplet,
-  completedLessonIds = [],
+  completedLessonIds: serverCompletedLessonIds = [],
   enrollmentId,
   expanded,
   setExpanded,
@@ -64,6 +65,16 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+
+  // The layout (and so these props) doesn't re-render on lesson-to-lesson
+  // navigation, and "Next" navigates before its save lands, so include
+  // lessons marked viewed in this session (see viewed-lessons-store).
+  const pendingViewedIds = useViewedLessonsStore((s) => s.pendingViewedIds);
+  const completedLessonIds = useMemo(
+    () =>
+      Array.from(new Set([...serverCompletedLessonIds, ...pendingViewedIds])),
+    [serverCompletedLessonIds, pendingViewedIds],
+  );
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
   const canPresent =
