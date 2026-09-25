@@ -2,6 +2,7 @@ import { ContentCreatorRequestForm } from "@/components/requests/content-creatio
 import { PendingRequestCard } from "@/components/requests/pending-request-card";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedUser } from "@/lib/requests/cached";
 import { fetchCreationRequestByUser } from "@/lib/actions";
 import { notFound } from "next/navigation";
@@ -14,11 +15,15 @@ export default async function RequestContentCreatorRole({
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
 
-  const authUser = await getCachedUser(user?.email);
-  if (!authUser) return notFound();
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return notFound();
 
   // Check if user already has a pending creation request
-  const existingRequest = await fetchCreationRequestByUser(authUser.id);
+  const [authUser, existingRequest] = await Promise.all([
+    getCachedUser(user.email),
+    fetchCreationRequestByUser(userId),
+  ]);
+  if (!authUser) return notFound();
 
   if (existingRequest) {
     return (
