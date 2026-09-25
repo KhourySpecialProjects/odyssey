@@ -42,7 +42,6 @@ export function FeedClient({
       setIsLoading(true);
       try {
         const { data, pagination } = await fetchAnnouncements(
-          authUser,
           currentPage,
           selectedRoles,
           { archived: tab === "read" },

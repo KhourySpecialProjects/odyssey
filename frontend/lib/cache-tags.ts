@@ -57,10 +57,17 @@
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
- * announcements   createFriendAnnouncement, createKudosAnnouncement,        900s
- *                 createPlaylistAnnouncement, createGroupAnnouncement,
- *                 createDropletAnnouncement, createSystemAnnouncement
- * tags            createNewTag                                              3600s
+ * announcements   Two-level tag system:                                      900s
+ *                 ↳ Global tag "announcements":
+ *                   createFriendAnnouncement, createKudosAnnouncement,
+ *                   createPlaylistAnnouncement, createGroupAnnouncement,
+ *                   createDropletAnnouncement, createSystemAnnouncement,
+ *                   createSystemBroadcast, markAnnouncementRead/Unread
+ *                   (friend/kudos only — those rows show in friends' feeds)
+ *                 ↳ Per-user tag "user-feed-{userId}" (fetchAnnouncements):
+ *                   markAnnouncementRead/Unread on a targeted system
+ *                   announcement (only its owner's feed can contain it)
+ * tags           createNewTag                                              3600s
  * due-dates       assignDropletDueDate, assignPlaylistDueDate,              900s
  *                 updateGroup, updateGroupMembers, deleteGroup,
  *                 archiveGroup (global tag only)
@@ -150,6 +157,7 @@ export const CACHE_TAGS = {
   user: (email: string) => `user-${email.trim().toLowerCase()}`,
   userContent: (userId: number) => `user-content-${userId}`, // one user's /my-content
   userDashboard: (userId: number) => `user-dashboard-${userId}`, // one user's /dashboard
+  userFeed: (userId: number) => `user-feed-${userId}`, // one user's announcement feed (read state)
   enrollments: (userId: number) => `enrollments-${userId}`,
   voyageEnrollments: (userId: number) => `voyage-enrollments-${userId}`,
   friendships: (userId: number) => `friendships-${userId}`,

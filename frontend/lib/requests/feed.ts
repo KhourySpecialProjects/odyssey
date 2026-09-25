@@ -8,22 +8,14 @@ import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { getCurrentUser } from "../auth/session";
+import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
+import { getCachedUserSocial } from "./cached";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-/**
- * Pre-computes the IDs needed for the feed query using fast, minimal queries
- * run in parallel, then queries announcements with simple $in filters
- * instead of deep nested relation joins.
- */
-export async function fetchAnnouncements(
-  user: AuthorizedUser,
-  page?: number,
-  roles?: string[],
-  options?: { archived?: boolean },
-): Promise<{
+export type FeedPage = {
   data: Announcement[];
   pagination: {
     page: number;
@@ -31,64 +23,100 @@ export async function fetchAnnouncements(
     pageCount: number;
     total: number;
   };
-}> {
-  const archived = options?.archived ?? false;
-  try {
-    // Extract friend IDs from the user's friendships (already populated on authUser)
-    const friendIds = (user.friendships || [])
-      .flatMap((f: Friendship) =>
-        (f.authorized_users || [])
-          .filter((u) => u.id !== user.id)
-          .map((u) => u.id),
-      )
-      .filter((id, i, arr) => arr.indexOf(id) === i);
+};
 
-    // Fetch group IDs, playlist IDs, and enrolled droplet IDs in parallel
-    const [groupIds, playlistIds, enrolledDropletIds] = await Promise.all([
-      fetchAPI<{ id: number }[]>("/groups", {
-        urlParams: {
-          filters: {
-            $or: [
-              { creator: { id: { $eq: user.id } } },
-              { admins: { id: { $eq: user.id } } },
-              { managers: { id: { $eq: user.id } } },
-              { members: { id: { $eq: user.id } } },
-            ],
+function friendIdsOf(
+  userId: number,
+  friendships: Friendship[] | undefined,
+): number[] {
+  return (friendships || [])
+    .flatMap((f) =>
+      (f.authorized_users || [])
+        .filter((u) => u.id !== userId)
+        .map((u) => u.id),
+    )
+    .filter((id, i, arr) => arr.indexOf(id) === i);
+}
+
+/**
+ * The signed-in user's feed. Callable from the client as a Server Action, so
+ * the viewer always comes from the session — never from arguments.
+ *
+ * Pre-computes the IDs needed for the feed query using fast, minimal queries
+ * run in parallel, then queries announcements with simple $in filters
+ * instead of deep nested relation joins.
+ */
+export async function fetchAnnouncements(
+  page?: number,
+  roles?: string[],
+  options?: { archived?: boolean },
+): Promise<FeedPage> {
+  const archived = options?.archived ?? false;
+  const sessionUser = await getCurrentUser();
+  const userId = await getAuthorizedUserId(sessionUser);
+  if (!sessionUser?.email || !userId) {
+    throw new Error("Not authenticated");
+  }
+  const email = sessionUser.email;
+  // Arguments arrive from the client unchecked.
+  const pageNumber =
+    typeof page === "number" && Number.isInteger(page) && page > 0 ? page : 1;
+  const types = Array.isArray(roles)
+    ? roles.filter((r) => typeof r === "string")
+    : undefined;
+  try {
+    // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
+    // parallel. Friends come from the social graph the activity layout already
+    // reads (request-deduped there; a Data Cache hit from a Server Action).
+    const [groupIds, playlistIds, enrolledDropletIds, friendIds] =
+      await Promise.all([
+        fetchAPI<{ id: number }[]>("/groups", {
+          urlParams: {
+            filters: {
+              $or: [
+                { creator: { id: { $eq: userId } } },
+                { admins: { id: { $eq: userId } } },
+                { managers: { id: { $eq: userId } } },
+                { members: { id: { $eq: userId } } },
+              ],
+            },
+            fields: ["id"],
+            pagination: { pageSize: 250, page: 1 },
           },
-          fields: ["id"],
-          pagination: { pageSize: 250, page: 1 },
-        },
-        next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
-      }).then((groups) => groups.map((g) => g.id)),
-      fetchAPI<{ id: number }[]>("/playlists", {
-        urlParams: {
-          filters: {
-            authorized_users: { id: { $eq: user.id } },
+          next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+        }).then((groups) => groups.map((g) => g.id)),
+        fetchAPI<{ id: number }[]>("/playlists", {
+          urlParams: {
+            filters: {
+              authorized_users: { id: { $eq: userId } },
+            },
+            fields: ["id"],
+            pagination: { pageSize: 250, page: 1 },
           },
-          fields: ["id"],
-          pagination: { pageSize: 250, page: 1 },
-        },
-        next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
-      }).then((playlists) => playlists.map((p) => p.id)),
-      fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
-        urlParams: {
-          filters: {
-            authorizedUser: { id: { $eq: user.id } },
+          next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
+        }).then((playlists) => playlists.map((p) => p.id)),
+        fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
+          urlParams: {
+            filters: {
+              authorizedUser: { id: { $eq: userId } },
+            },
+            fields: ["id"],
+            populate: { droplet: { fields: ["id"] } },
+            pagination: { pageSize: 250, page: 1 },
           },
-          fields: ["id"],
-          populate: { droplet: { fields: ["id"] } },
-          pagination: { pageSize: 250, page: 1 },
-        },
-        next: {
-          tags: [CACHE_TAGS.enrollments(user.id), CACHE_TAGS.allEnrollments],
-          revalidate: 900,
-        },
-      }).then((enrollments) =>
-        enrollments
-          .map((e) => e.droplet?.id)
-          .filter((id): id is number => id != null),
-      ),
-    ]);
+          next: {
+            tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.allEnrollments],
+            revalidate: 900,
+          },
+        }).then((enrollments) =>
+          enrollments
+            .map((e) => e.droplet?.id)
+            .filter((id): id is number => id != null),
+        ),
+        getCachedUserSocial(email).then((social) =>
+          friendIdsOf(userId, social?.friendships),
+        ),
+      ]);
 
     // Build the query with simple $in filters instead of nested relation joins
     const orFilters: any[] = [];
@@ -120,7 +148,7 @@ export async function fetchAnnouncements(
       type: "system",
       $or: [
         { authorized_user: { id: { $null: true } } },
-        { authorized_user: { id: { $eq: user.id } } },
+        { authorized_user: { id: { $eq: userId } } },
       ],
     });
 
@@ -135,9 +163,9 @@ export async function fetchAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated", "readAt"],
-      filters: roles?.length
+      filters: types?.length
         ? {
-            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: roles } }],
+            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }],
           }
         : baseFilters,
       populate: {
@@ -198,7 +226,7 @@ export async function fetchAnnouncements(
       },
       pagination: {
         pageSize: 25,
-        page: page || 1,
+        page: pageNumber,
       },
     });
 
@@ -206,7 +234,12 @@ export async function fetchAnnouncements(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
+        // Two-level: new announcements sweep the global tag; read-state
+        // changes on a user's own system announcements use userFeed(id).
+        next: {
+          tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
+          revalidate: 900,
+        },
       },
     );
     if (!response.ok) {
@@ -599,7 +632,7 @@ export async function markAnnouncementRead(id: number) {
         `Failed to mark announcement as read (${response.status})`,
       );
     }
-    revalidateTag(CACHE_TAGS.announcements);
+    revalidateReadState(ownership);
     return { success: true };
   } catch (error) {
     console.error("Error marking announcement as read:", error);
@@ -634,7 +667,7 @@ export async function markAnnouncementUnread(id: number) {
         `Failed to mark announcement as unread (${response.status})`,
       );
     }
-    revalidateTag(CACHE_TAGS.announcements);
+    revalidateReadState(ownership);
     return { success: true };
   } catch (error) {
     console.error("Error marking announcement as unread:", error);
@@ -651,7 +684,9 @@ export async function markAnnouncementUnread(id: number) {
  */
 async function assertAnnouncementOwnership(
   id: number,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; ownerId: number; type?: string } | { ok: false; error: string }
+> {
   const user = await getCurrentUser();
   if (!user?.email) return { ok: false, error: "Not authenticated" };
 
@@ -660,10 +695,11 @@ async function assertAnnouncementOwnership(
 
   const announcement = await fetchAPI<{
     id: number;
+    type?: string;
     authorized_user?: { id: number } | null;
   }>(`/announcements/${id}`, {
     urlParams: {
-      fields: ["id"],
+      fields: ["id", "type"],
       populate: { authorized_user: { fields: ["id"] } },
     },
     next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
@@ -681,18 +717,32 @@ async function assertAnnouncementOwnership(
   if (ownerId !== authorizedUser.id) {
     return { ok: false, error: "Not authorized" };
   }
-  return { ok: true };
+  return { ok: true, ownerId, type: announcement.type };
+}
+
+/**
+ * readAt lives on the announcement row, so a read-state change is visible in
+ * every feed that includes the row. A targeted system announcement is only
+ * ever in its owner's feed (fetchAnnouncements matches system rows by
+ * authorized_user = viewer; fetchUserAnnouncements excludes system), so its
+ * owner's per-user feed tag is enough. Friend/kudos rows owned by the caller
+ * appear in their friends' feeds, so those still sweep globally.
+ */
+function revalidateReadState(ownership: { ownerId: number; type?: string }) {
+  if (ownership.type === "system") {
+    revalidateTag(CACHE_TAGS.userFeed(ownership.ownerId));
+  } else {
+    revalidateTag(CACHE_TAGS.announcements);
+  }
 }
 
 /**
  * Count unread (non-archived) announcements for the current user.
  * Used for the nav badge.
  */
-export async function getUnreadAnnouncementCount(
-  user: AuthorizedUser,
-): Promise<number> {
+export async function getUnreadAnnouncementCount(): Promise<number> {
   try {
-    const { pagination } = await fetchAnnouncements(user, 1, undefined, {
+    const { pagination } = await fetchAnnouncements(1, undefined, {
       archived: false,
     });
     return pagination.total;

@@ -83,12 +83,9 @@ describe("FeedClient", () => {
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    expect(fetchAnnouncements).toHaveBeenCalledWith(
-      mockAuthUser,
-      1,
-      ["droplet"],
-      { archived: false },
-    );
+    expect(fetchAnnouncements).toHaveBeenCalledWith(1, ["droplet"], {
+      archived: false,
+    });
   });
 
   it("loads next page when page changes", async () => {
