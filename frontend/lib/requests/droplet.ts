@@ -8,6 +8,7 @@ import { deleteLesson } from "./lesson";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
+import { withAuth, assertOwner } from "../auth/guards";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
@@ -374,26 +375,20 @@ export async function togglePresentationEnabled(
   dropletId: number,
   enabled: boolean,
 ) {
-  const user = await getCurrentUser();
-  if (!user?.email) {
-    return { ok: false, error: "Unauthorized", data: null };
-  }
+  return withAuth([], async (user) => {
+    const droplet = await getDropletById(dropletId, {
+      fields: ["id"],
+      populate: { authorized_users: { fields: ["id"] } },
+    });
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const droplet = await getDropletById(dropletId, {
-    fields: ["id"],
-    populate: { authorized_users: { fields: ["id"] } },
+    const owner = assertOwner(
+      droplet?.authorized_users?.map((u) => u.id),
+      user,
+    );
+    if (!owner.ok) return { ok: false, error: owner.error, data: null };
+
+    return updateDroplet(dropletId, { presentationEnabled: enabled });
   });
-
-  const isAuthor =
-    droplet.authorized_users?.some(
-      (u: { id: number }) => u.id === authorizedUser.id,
-    ) ?? false;
-  if (!isAuthor && !isAuthorizedUserAdmin(user.roles)) {
-    return { ok: false, error: "Forbidden", data: null };
-  }
-
-  return updateDroplet(dropletId, { presentationEnabled: enabled });
 }
 
 export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
