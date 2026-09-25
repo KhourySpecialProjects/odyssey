@@ -1060,7 +1060,7 @@ describe("Authorized User Tests", () => {
           method: "DELETE",
         }),
       );
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ ok: true, error: null, data: null });
     });
 
     it("should handle API error response", async () => {
