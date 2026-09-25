@@ -30,11 +30,6 @@ jest.mock("@/lib/utils", () => ({
   getDueDateBadgeColor: jest.fn(),
 }));
 
-jest.mock("flat", () => ({
-  flatten: jest.fn((obj) => obj),
-  unflatten: jest.fn((obj) => obj),
-}));
-
 jest.mock("@/lib/requests/playlist", () => ({
   createPlaylist: jest.fn(),
   updatePlaylist: jest.fn(),
