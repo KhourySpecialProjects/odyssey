@@ -118,6 +118,7 @@ describe("requireRole dev-role-override", () => {
 
     expect(result).toEqual({ ok: false, error: "unauthenticated" });
     expect(mockedGetCachedUser).not.toHaveBeenCalled();
+    expect(mockedGetDevRoleOverride).not.toHaveBeenCalled();
   });
 
   it("stays unauthenticated when the Strapi user is missing, even with an override present", async () => {
@@ -134,5 +135,6 @@ describe("requireRole dev-role-override", () => {
     const result = await requireRole([]);
 
     expect(result).toEqual({ ok: false, error: "unauthenticated" });
+    expect(mockedGetDevRoleOverride).not.toHaveBeenCalled();
   });
 });

@@ -7,7 +7,7 @@ The frontend uses Next.js 15 App Router with route groups that organize pages by
 ```
 app/
 ├── (general)/          Dashboard, explore, feed, admin, settings, friends
-│   ├── admin/          Admin panel (protected by middleware, System Admin only)
+│   ├── admin/          Admin panel (System Admin only, gated in admin/layout.tsx)
 │   ├── dashboard/      User's enrolled droplets, progress, due dates
 │   ├── explore/        Browse/search all published droplets and playlists
 │   ├── feed/           Announcements (friend, system, group, kudos, etc.)

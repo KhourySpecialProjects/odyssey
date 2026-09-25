@@ -15,7 +15,8 @@ export type RequireRoleResult =
  *
  * @param allowed — one or more role titles the caller must have. Pass [] to
  *                  only require an authenticated session (no role gate).
- * @returns       — { ok: true, user } with the caller's Strapi id + roles, or
+ * @returns       — { ok: true, user } with the caller's Strapi id and roles
+ *                  (or the dev-override roles in local dev, see below), or
  *                  { ok: false, error } with the reason. Never throws.
  *
  * Typical usage:

@@ -31,11 +31,11 @@ export async function getDevRoleOverride(): Promise<
 > {
   if (!isDevRoleOverrideEnabled()) return null;
 
-  const cookieStore = await cookies();
-  const override = cookieStore.get("dev-role-override")?.value;
-  if (!override) return null;
-
   try {
+    const cookieStore = await cookies();
+    const override = cookieStore.get("dev-role-override")?.value;
+    if (!override) return null;
+
     const parsed = JSON.parse(decodeURIComponent(override));
     const validValues = Object.values(AuthorizedUserRoleTitle) as string[];
     if (!Array.isArray(parsed)) return null;
@@ -45,7 +45,7 @@ export async function getDevRoleOverride(): Promise<
     ) as AuthorizedUserRoleTitle[];
     return roles.length > 0 ? roles : null;
   } catch {
-    // Invalid cookie value, ignore
+    // Invalid cookie value, or cookies() threw. Ignore either way.
     return null;
   }
 }
