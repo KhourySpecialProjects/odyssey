@@ -68,6 +68,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/data-fetching.md`          | Writing or debugging data fetching, caching, or invalidation |
 | `docs/agent/testing-and-deployment.md` | Writing tests, debugging CI, or checking environments        |
 | `docs/agent/workflow.md`               | Agent design rationale and troubleshooting                   |
+| `docs/agent/performance-probe.md`      | Measuring slow page loads, Strapi query cost, or cache hits  |
 | `docs/agent/learnings/`                | Accumulated gotchas and discoveries from past sessions       |
 
 ## Skills

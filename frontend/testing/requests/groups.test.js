@@ -153,10 +153,46 @@ describe("Groups Tests", () => {
             },
           },
           fields: ["id", "groupName", "slug", "semester", "isArchived"],
-          pagination: { pageSize: 25, page: 1 },
+          pagination: { pageSize: 100, page: 1 },
         }),
         next: { tags: ["groups"], revalidate: 900 },
       });
+      // Short first page ends the walk after one request.
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should walk every page when no pagination is supplied", async () => {
+      const authorizedUserId = 5;
+      const fullPage = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        groupName: `Group ${i + 1}`,
+      }));
+      const lastPage = [{ id: 101, groupName: "Group 101" }];
+
+      fetchAPI.mockResolvedValueOnce(fullPage).mockResolvedValueOnce(lastPage);
+
+      const result = await getManagedGroups(authorizedUserId);
+
+      expect(result).toHaveLength(101);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        "/groups",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            pagination: { pageSize: 100, page: 2 },
+          }),
+        }),
+      );
+    });
+
+    it("should stop on an empty first page", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      const result = await getManagedGroups(5);
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
     });
 
     it("should handle custom parameters", async () => {
@@ -179,6 +215,8 @@ describe("Groups Tests", () => {
         }),
         next: { tags: ["groups"], revalidate: 900 },
       });
+      // Explicit pagination opts out of the walk.
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
     });
 
     it("should handle errors from fetchAPI", async () => {

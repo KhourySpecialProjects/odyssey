@@ -88,7 +88,7 @@ Authentication uses NextAuth with two providers: Azure AD (Northeastern SSO) and
 2. `signIn` callback (`lib/auth/options.ts`) checks the user's email exists in the `authorized-users` Strapi collection. If not found, sign-in is rejected.
 3. `jwt` callback fetches the user's roles from Strapi and their NUID from Microsoft Graph API (Azure AD users only). These are embedded in the JWT.
 4. `session` callback populates the NextAuth session object with roles, user ID, NUID, and profile data from the JWT.
-5. Middleware (`frontend/middleware.ts`) runs on every request and protects routes: `/admin/*` requires System Admin role, `/d/*` requires any authenticated user.
+5. Middleware (`frontend/middleware.ts`) runs on its matched routes (`/admin`, `/admin/:path*`, `/d/:path*`, `/activity`, `/activity/:path*`). Its `authorized` callback is `!!token` — **authentication only, no role check**. The System Admin gate lives in `app/(general)/admin/layout.tsx`, which calls `isAuthorizedUserAdmin` and returns `notFound()`. A layout gate protects page rendering only and does **not** run when a Server Action is invoked, so exported actions in `"use server"` files must guard themselves with `requireRole` (`lib/auth/require-role.ts`).
 
 **Role hierarchy** (defined in `lib/globals.ts`):
 

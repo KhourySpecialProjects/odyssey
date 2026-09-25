@@ -108,6 +108,10 @@ DATABASE_SSL=false
 
 #Notifications (prod only, leave empty locally)
 SLACK_WEBHOOK_URL=
+
+#Cache revalidation (leave empty to fall back to the 900s TTL)
+FRONTEND_URL=http://host.docker.internal:3000
+REVALIDATE_SECRET=
 ```
 
 > **`SLACK_WEBHOOK_URL`**: the live webhook only fires against prod. Leave
@@ -115,6 +119,14 @@ SLACK_WEBHOOK_URL=
 > when it's unset. The real value lives in **AWS Secrets Manager** (ask a
 > team member if you actually need to test the notification path from a
 > non-prod environment).
+
+> **`FRONTEND_URL`** / **`REVALIDATE_SECRET`**: when a staff member edits
+> data directly in the Strapi Content Manager, Strapi POSTs to the
+> frontend's `/api/revalidate` endpoint so the change shows up immediately
+> instead of waiting out the frontend's 900s cache TTL. `REVALIDATE_SECRET`
+> authenticates that POST and **must match exactly** between
+> `backend/.env` and `frontend/.env.local` Leaving either var empty is
+> safe. 
 
 For the remaining secret values (`APP_KEYS`, `API_TOKEN_SALT`,
 `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`, `AWS_S3_*`),
@@ -186,6 +198,9 @@ AWS_SECRET_ACCESS_KEY=
 
 # BlockNote AI (droplet editor assistant)
 ANTHROPIC_API_KEY=
+
+# Cache revalidation (must match backend/.env's REVALIDATE_SECRET exactly)
+REVALIDATE_SECRET=
 ```
 
 Request all other fields from a team member, leaving `STRAPI_ACCESS_TOKEN`
