@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import {
   getCachedDropletBySlug,
   getCachedLessonBySlug,
-  getCachedUser,
   getCachedEnrollmentsWithLessonIds,
 } from "@/lib/requests/cached";
 import {
@@ -24,29 +24,23 @@ type Props = {
 export default async function PresentationPage({ params }: Props) {
   const { slug } = await params;
 
-  const [user, droplet] = await Promise.all([
-    getCurrentUser(),
+  const user = await getCurrentUser();
+  const userId = await getAuthorizedUserId(user);
+  const [droplet, enrollments] = await Promise.all([
     getCachedDropletBySlug(slug),
+    userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
 
   if (!droplet) return notFound();
   if (!user) return notFound();
 
-  const authorizedUser = user.email ? await getCachedUser(user.email) : null;
-
   const isAdmin = isAuthorizedUserAdmin(user.roles);
   const isAuthor =
     droplet.authorized_users
       ?.map((au: { id: number }) => au.id)
-      .includes(authorizedUser?.id ?? -1) ?? false;
+      .includes(userId ?? -1) ?? false;
 
-  let isEnrolled = false;
-  if (authorizedUser) {
-    const enrollments = await getCachedEnrollmentsWithLessonIds(
-      authorizedUser.id,
-    );
-    isEnrolled = enrollments.some((e) => e.droplet?.id === droplet.id);
-  }
+  const isEnrolled = enrollments.some((e) => e.droplet?.id === droplet.id);
 
   if (!isAdmin && !isAuthor && !isEnrolled) return notFound();
 

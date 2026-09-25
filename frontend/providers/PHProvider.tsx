@@ -18,11 +18,15 @@ function PostHogIdentify() {
     if (status === "authenticated" && session?.user?.email) {
       (async () => {
         try {
-          const authUser = await getAuthorizedUserByEmail(session.user.email!);
+          // The session carries the authorized-user id; only tokens issued
+          // before it was added need the lookup (a Server Action round trip)
+          const authUserId =
+            session.user.id ??
+            (await getAuthorizedUserByEmail(session.user.email!))?.id;
           if (cancelled) return;
 
-          if (authUser?.id) {
-            ph.identify(authUser.id.toString(), {
+          if (authUserId) {
+            ph.identify(authUserId.toString(), {
               name: session.user.name,
               email: session.user.email,
               username: (session.user as any).username,
@@ -42,6 +46,7 @@ function PostHogIdentify() {
   }, [
     ph,
     status,
+    session?.user?.id,
     session?.user?.email,
     session?.user?.name,
     (session?.user as any)?.username,
