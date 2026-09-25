@@ -9,8 +9,11 @@
  * droplets        createDroplet, updateDroplet, deepDeleteDroplet,          900s
  *                 duplicateDroplet, publishDraftToOriginal, addLesson,
  *                 updateLesson, deleteLesson, duplicateLessonToDroplet,
- *                 updateDropletAverageRating, updateDropletFunFact,
- *                 favoriteDroplet, updateDropletLearningObjective
+ *                 updateDropletFunFact, favoriteDroplet,
+ *                 updateDropletLearningObjective
+ *                 (updateDropletAverageRating does NOT invalidate: the
+ *                 average is an aggregate and may be up to 900s stale; the
+ *                 rater's own rating refreshes via enrollments-{userId})
  * enrollments     Two-level tag system:                                      900s
  *                 ↳ Per-user tag "enrollments-{userId}":
  *                   createEnrollment, createEnrollmentFromEmail,
@@ -21,22 +24,23 @@
  *                   updateEnrollmentFirstTime, updateViewedLessons,
  *                   updateCompletionDate, favoriteDroplet
  *                 ↳ Global tag "enrollments" (sweeps all users):
- *                   updateDroplet, deepDeleteDroplet, duplicateDroplet,
- *                   publishDraftToOriginal, addLesson, deleteLesson,
- *                   duplicateLessonToDroplet, updateDropletAverageRating
+ *                   updateDroplet (incl. draft saves), deepDeleteDroplet,
+ *                   duplicateDroplet, publishDraftToOriginal, addLesson,
+ *                   deleteLesson, duplicateLessonToDroplet
  *                 ↳ shared by all presets: minimal, withLessonIds,
  *                   dashboard, favorites (see enrollment-populates.ts)
  * playlists       createPlaylist, updatePlaylist, deletePlaylist,           900s
  *                 archivePlaylist, togglePlaylistEnrollment,
- *                 enrollInPlaylist, updateDroplet,
+ *                 enrollInPlaylist, updateDroplet (not draft saves),
  *                 publishDraftToOriginal
  *                 (playlist reads carry authorized_users, which is how the
  *                 playlist page decides "enrolled" — so enrollment toggles
  *                 still sweep this tag)
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
  *                 deleteGroup, archiveGroup, deletePlaylist,
- *                 updateDroplet
- * authors         createDroplet, updateDroplet, deepDeleteDroplet,          900s
+ *                 updateDroplet (not draft saves)
+ * authors         createDroplet, updateDroplet (draft saves only when       900s
+ *                 authorized_users changes), deepDeleteDroplet,
  *                 duplicateDroplet, publishDraftToOriginal,
  *                 deletePlaylist, deleteGroup, approveCreationRequest,
  *                 updateUserInfo (only when name/bio/photo/links/roles/
@@ -45,7 +49,10 @@
  *                 deleteNote
  * highlights      createHighlight, deleteHighlight                          900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
- *                 duplicateLessonToDroplet, publishDraftToOriginal
+ *                 duplicateLessonToDroplet, deepDeleteDroplet,
+ *                 publishDraftToOriginal
+ *                 (getLessonBySlug carries only this tag — it returns no
+ *                 droplet data, so droplet-level mutations don't flush it)
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
@@ -89,11 +96,19 @@
  *                 ↳ Global tag "user-dashboard" (many users affected):
  *                   archivePlaylist, updatePlaylist, deletePlaylist,
  *                   createGroup, updateGroup, updateGroupMembers,
- *                   deleteGroup, archiveGroup, updateDroplet,
- *                   deepDeleteDroplet, archiveVoyage,
+ *                   deleteGroup, archiveGroup, updateDroplet (not draft
+ *                   saves), deepDeleteDroplet, archiveVoyage,
  *                   publishDraftToOriginal (via finally)
  *                 (playlists + groups on /dashboard)
- * user-social     Per-user tag "user-social-{userId}":                       900s
+ * voyage-enrollments Two-level tag system:                                   900s
+ *                 ↳ Per-user tag "voyage-enrollments-{userId}":
+ *                   enrollInVoyage, enrollInVoyageDirect,
+ *                   unenrollFromVoyage, markVoyageNodeComplete
+ *                 ↳ Global tag "voyage-enrollments": no per-user action
+ *                   sweeps it (every read also carries the per-user tag of
+ *                   each user it returns; voyage reads hold no enrollment
+ *                   data)
+ * user-social    Per-user tag "user-social-{userId}":                       900s
  *                 sendFriendRequest, acceptFriendRequest,
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
@@ -123,7 +138,7 @@ export const CACHE_TAGS = {
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)
   datasets: "datasets", // global tag for dataset metadata
   voyages: "voyages", // voyages and voyage-node records
-  allVoyageEnrollments: "voyage-enrollments", // global sweep for voyage enrollment mutations
+  allVoyageEnrollments: "voyage-enrollments", // global sweep; per-user voyage actions use voyageEnrollments(userId)
 
   // Per-user (scoped to individual user)
   // One user's own authorized-user record. Keyed by email because every

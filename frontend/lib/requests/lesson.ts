@@ -42,9 +42,13 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
     },
   };
 
+  // Tagged with `lesson` only: this returns lesson fields + blocks and no
+  // droplet data, so droplet-level mutations (ratings, metadata autosave)
+  // must not flush every lesson page. Every mutation that changes lesson
+  // data revalidates `lesson` (see cache-tags.ts).
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.droplets, CACHE_TAGS.lesson], revalidate: 900 },
+    next: { tags: [CACHE_TAGS.lesson], revalidate: 900 },
   }).then((lessons) => lessons[0]);
 }
 

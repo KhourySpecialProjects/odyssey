@@ -96,6 +96,11 @@ describe("deepDeleteDroplet", () => {
     expect(revalidateTag).toHaveBeenCalledWith("authors");
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
     expect(revalidateTag).toHaveBeenCalledWith("enrollments");
+    // Lessons are deleted with revalidate=false, and lesson pages are tagged
+    // only with `lesson`, so deepDeleteDroplet must flush it itself.
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.lesson);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
   });
 
   it("handles droplet deletion failure", async () => {
@@ -311,10 +316,9 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
     });
 
-    it("successfully updates average rating and revalidates enrollments", async () => {
+    it("updates the aggregate without flushing any shared cache", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
@@ -322,9 +326,10 @@ describe("Droplet API Functions", () => {
 
       const result = await updateDropletAverageRating(4.2, 123);
 
+      // The average may be up to the 900s TTL stale; the rater's own rating
+      // is refreshed by changeEnrollmentRating's per-user enrollments tag.
       expect(result).toEqual({ success: true });
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("does not revalidate on failure", async () => {
@@ -433,7 +438,7 @@ describe("Droplet API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith("groups");
     });
 
-    it("always revalidates droplets, authors, playlists, and groups on any successful update", async () => {
+    it("always revalidates droplets, authors, playlists, and groups on any successful non-draft update", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 123 } }),
@@ -445,6 +450,81 @@ describe("Droplet API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("groups");
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
+    });
+
+    it("draft saves skip caches that can never contain drafts", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "draft" } },
+          }),
+      });
+
+      await updateDroplet(123, { description: "autosaved" });
+
+      // Still swept: the editor's own reads, drafts' enrollments, co-authors' /my-content
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.droplets);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
+      // Skipped: playlists/groups/dashboards never contain drafts; authors
+      // only change when the author list changes
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allGroups);
+      expect(revalidateTag).not.toHaveBeenCalledWith(
+        CACHE_TAGS.allUserDashboards,
+      );
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.authors);
+    });
+
+    it("draft saves that change authorized_users still revalidate authors", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "draft" } },
+          }),
+      });
+
+      await updateDroplet(123, { authorized_users: [1, 2] });
+
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.playlists);
+    });
+
+    it("updates that set status get the full sweep even if the result is a draft", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "draft" } },
+          }),
+      });
+
+      await updateDroplet(123, { status: "draft" });
+
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allGroups);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
+    });
+
+    it("published droplet saves get the full sweep", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "published" } },
+          }),
+      });
+
+      await updateDroplet(123, { description: "edit" });
+
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allGroups);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
     });
 
     it("does not revalidate on failure", async () => {

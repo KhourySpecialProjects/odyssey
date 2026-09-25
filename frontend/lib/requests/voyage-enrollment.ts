@@ -206,9 +206,10 @@ export async function enrollInVoyage(voyageId: number) {
       };
     }
 
+    // Per-user only. Every cached voyage-enrollment read also carries the
+    // per-user tag of each user it returns (incl. the group progress grid),
+    // and voyage reads (`voyages`) contain no enrollment data or counts.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
-    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
-    revalidateTag(CACHE_TAGS.voyages);
 
     return {
       ok: true,
@@ -265,9 +266,9 @@ export async function enrollInVoyageDirect(
       };
     }
 
+    // Per-user only (see enrollInVoyage). Group enrollment calls this once
+    // per member x voyage, so global sweeps here multiplied quickly.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
-    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
-    revalidateTag(CACHE_TAGS.voyages);
 
     return {
       ok: true,
@@ -359,9 +360,9 @@ export async function unenrollFromVoyage(voyageId: number) {
 
     const data = await response.json();
 
+    // Per-user only (see enrollInVoyage). Node completions are read with the
+    // per-user tag too (getVoyageNodeCompletions).
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
-    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
-    revalidateTag(CACHE_TAGS.voyages);
 
     return { ok: true, error: null, data: flattenAttributes(data.data) };
   } catch (err) {
@@ -597,7 +598,6 @@ export async function markVoyageNodeComplete(
           await putResponse.text().catch(() => "unknown"),
         );
         revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
-        revalidateTag(CACHE_TAGS.allVoyageEnrollments);
         return {
           ok: false,
           error:
@@ -607,8 +607,9 @@ export async function markVoyageNodeComplete(
       }
     }
 
+    // Per-user only: completions and completionPercentage belong to this
+    // user, and every read that returns them carries this user's tag.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
-    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
 
     return {
       ok: true,

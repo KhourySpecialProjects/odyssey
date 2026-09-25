@@ -9,6 +9,7 @@ import {
   duplicateLessonToDroplet,
 } from "@/lib/requests/lesson";
 import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/utils", () => ({
@@ -391,7 +392,8 @@ describe("Lesson API Functions", () => {
             },
           },
         }),
-        next: { tags: ["droplets", "lesson"], revalidate: 900 },
+        // lesson only: droplet-level mutations must not flush lesson pages
+        next: { tags: [CACHE_TAGS.lesson], revalidate: 900 },
       });
       expect(result).toEqual(mockLesson);
     });
