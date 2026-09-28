@@ -1,16 +1,11 @@
 "use server";
 
 import { Voyage } from "@/types";
-import {
-  fetchAPI,
-  flattenAttributes,
-  isAuthorizedUserAdmin,
-} from "@/lib/utils";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "./authorized-user";
+import { assertOwner } from "@/lib/auth/guards";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { VoyageTreeSchema } from "@/lib/validations/voyage";
 
@@ -668,33 +663,24 @@ export async function getArchivedVoyagesForAuthor(
 }
 
 export async function archiveVoyage(voyageId: number, archiveState: boolean) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+
   try {
-    const user = await getCurrentUser();
-    if (!user?.email) return { success: false, error: "Not authenticated" };
+    const voyage = await fetchAPI<Voyage>(`/voyages/${voyageId}`, {
+      urlParams: { populate: { authors: { fields: ["id"] } } },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
 
-    const [authorizedUser, voyage] = await Promise.all([
-      getAuthorizedUserByEmail(user.email),
-      fetchAPI<Voyage>(`/voyages/${voyageId}`, {
-        urlParams: { populate: { authors: { fields: ["id"] } } },
-        next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
-      }),
-    ]);
-
-    if (!authorizedUser) {
-      return { success: false, error: "Authorized user not found" };
-    }
     if (!voyage) {
       return { success: false, error: "Voyage not found" };
     }
 
-    const isAuthor = voyage.authors?.some((a) => a.id === authorizedUser.id);
-    const isAdmin = isAuthorizedUserAdmin(user.roles);
-    if (!isAuthor && !isAdmin) {
-      return {
-        success: false,
-        error: "Only authors or admins can archive this voyage",
-      };
-    }
+    const owner = assertOwner(
+      voyage.authors?.map((a) => a.id),
+      gate.user,
+    );
+    if (!owner.ok) return { success: false, error: owner.error };
 
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyageId}`,
