@@ -67,7 +67,7 @@ If no meaningful work was done (e.g., just exploration or questions), skip this 
 
 1. Check for any remaining quality issues:
 
-   - Run: `cd frontend && npx prettier --check app components lib && npx eslint app components --ext .js,.ts,.tsx && npm test`
+   - Run: `cd frontend && npx prettier --check app components lib && npm run lint && npm test`
    - Report any remaining issues
 
 2. Check for orphaned work:

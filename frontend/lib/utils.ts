@@ -634,9 +634,10 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
           .join("") || "";
 
       switch (block.type) {
-        case "heading":
+        case "heading": {
           const level = "#".repeat(block.props.level);
           return `${level} ${text}`;
+        }
 
         case "paragraph":
           return text || "";
@@ -647,18 +648,20 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
         case "numberedListItem":
           return `1. ${text}`;
 
-        case "image":
+        case "image": {
           const imgCaption = block.props.caption || "";
           return block.props.url ? `![${imgCaption}](${block.props.url})` : "";
+        }
 
         case "video":
           return block.props.url
             ? `#### Video\n\nVideo Link: ${block.props.url}${block.props.caption ? `\n\n*${block.props.caption}*` : ""}`
             : "";
 
-        case "callout":
+        case "callout": {
           const calloutType = block.props.calloutType || "default";
           return `> **${calloutType.charAt(0).toUpperCase() + calloutType.slice(1)}**\n> \n> ${text}`;
+        }
 
         case "quiz-true-false":
           return `#### True/False Question\n\n**Q:** ${block.props.question}\n\n**Correct Answer:** ${block.props.correctAnswer ? "True" : "False"}`;
@@ -666,7 +669,7 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
         case "quiz-open-ended":
           return `#### Open-Ended Question\n\n**Q:** ${block.props.question}\n\n**Answer:** ${block.props.correctAnswer}`;
 
-        case "quiz-multiple-choice":
+        case "quiz-multiple-choice": {
           const options = block.props.options
             ?.map(
               (opt: any, idx: number) =>
@@ -674,6 +677,7 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
             )
             .join("\n");
           return `#### Multiple Choice Question\n\n**Q:** ${block.props.question}\n\n${options}`;
+        }
 
         default:
           return "";
