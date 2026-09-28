@@ -82,12 +82,18 @@ const config: Config = {
           "85%": { transform: "translateY(-7px) rotate(0.6deg)" },
           "100%": { transform: "translateY(0) rotate(0deg)" },
         },
+        // A small boat's sway; `sail` is sized for the large hero boat.
+        bob: {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "50%": { transform: "translateY(-2px) rotate(1.5deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         border: "border 2s linear infinite",
         sail: "sail 6s ease-in-out infinite",
+        bob: "bob 3.4s ease-in-out infinite",
       },
     },
   },
