@@ -14,7 +14,7 @@ const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-// Not exported: this file only allows async function exports (see guard test).
+// Not exported: "use server" files may only export functions (see guard test).
 const CLAIM_BYPASS_ROLES = [
   AuthorizedUserRoleTitle.SysAdmin,
   AuthorizedUserRoleTitle.Faculty,
