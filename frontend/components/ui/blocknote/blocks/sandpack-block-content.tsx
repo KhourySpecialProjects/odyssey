@@ -55,13 +55,17 @@ export const TEMPLATE_DEFAULTS: Record<
 </html>`,
     "/index.js": `const app = document.getElementById('app');
 
-app.innerHTML = '<p>Edit this code and see the changes in real time!</p>';
+// This writes into the <div id="app"></div> in index.html. If that div
+// isn't there, index.html is shown as-is.
+if (app) {
+  app.innerHTML = '<p>Edit this code and see the changes in real time!</p>';
 
-// Try adding more elements:
-// const btn = document.createElement('button');
-// btn.textContent = 'Click me';
-// btn.addEventListener('click', () => alert('Clicked!'));
-// app.appendChild(btn);
+  // Try adding more elements:
+  // const btn = document.createElement('button');
+  // btn.textContent = 'Click me';
+  // btn.addEventListener('click', () => alert('Clicked!'));
+  // app.appendChild(btn);
+}
 `,
     "/styles.css": `body {
   font-family: sans-serif;
