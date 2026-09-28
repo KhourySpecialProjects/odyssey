@@ -2,12 +2,13 @@
 
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, isAuthorizedUserAdmin } from "../utils";
+import { fetchAPI } from "../utils";
 import { revalidateTag } from "next/cache";
 import { deleteLesson } from "./lesson";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
+import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
@@ -456,26 +457,20 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
 }
 
 export async function setDropletHidden(dropletId: number, hidden: boolean) {
-  try {
-    const user = await getCurrentUser();
-    if (!user?.email) return { success: false, error: "Not authenticated" };
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
 
-    const [authorizedUser, droplet] = await Promise.all([
-      getAuthorizedUserByEmail(user.email),
-      getDropletById(dropletId, {
-        populate: { authorized_users: { fields: ["id"] } },
-      }),
-    ]);
-    const isAuthor = droplet.authorized_users?.some(
-      (u) => u.id === authorizedUser.id,
+  try {
+    const droplet = await getDropletById(dropletId, {
+      fields: ["id"],
+      populate: { authorized_users: { fields: ["id"] } },
+    });
+
+    const owner = assertOwner(
+      droplet?.authorized_users?.map((u) => u.id),
+      gate.user,
     );
-    const isAdmin = isAuthorizedUserAdmin(user.roles);
-    if (!isAuthor && !isAdmin) {
-      return {
-        success: false,
-        error: "Not authorized to modify droplet visibility",
-      };
-    }
+    if (!owner.ok) return { success: false, error: "forbidden" };
 
     const result = await updateDroplet(dropletId, { isHidden: hidden });
     if (!result.ok) {

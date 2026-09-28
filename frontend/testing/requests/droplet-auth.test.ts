@@ -1,5 +1,8 @@
 // Reference example for describeServerActionAuth (ODY-502). Copy this shape for ODY-503–511.
-import { togglePresentationEnabled } from "@/lib/requests/droplet";
+import {
+  togglePresentationEnabled,
+  setDropletHidden,
+} from "@/lib/requests/droplet";
 import { requireRole } from "@/lib/auth/require-role";
 import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
@@ -106,6 +109,56 @@ describe("togglePresentationEnabled: extra cases", () => {
     const result = await togglePresentationEnabled(1, true);
 
     expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+describeServerActionAuth("setDropletHidden", {
+  requireRole: mockedRequireRole,
+  invoke: () => setDropletHidden(1, true),
+  mutations: () => [fetchMock, mockedRevalidateTag],
+  denial: {
+    kind: "owner",
+    nonOwner: authFixtures.as({ id: 99 }),
+    arrange: () => {
+      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+    },
+  },
+  authorized: {
+    as: authFixtures.as({ id: 7 }),
+    arrange: () => {
+      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+      fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+    },
+    expect: (result) => {
+      expect(result.success).toBe(true);
+    },
+  },
+  expectDenied: (result, code) =>
+    expect(result).toEqual({ success: false, error: code }),
+});
+
+describe("setDropletHidden: extra cases", () => {
+  it("allows an admin to hide a droplet owned by someone else", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+
+    const result = await setDropletHidden(1, true);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("denies a droplet with no owners and runs no mutation or cache invalidation", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
+    mockedFetchAPI.mockResolvedValue(
+      makeDroplet({ id: 1, authorized_users: [] }),
+    );
+
+    const result = await setDropletHidden(1, true);
+
+    expect(result).toEqual({ success: false, error: "forbidden" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
