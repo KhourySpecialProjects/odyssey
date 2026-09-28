@@ -69,6 +69,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/testing-and-deployment.md` | Writing tests, debugging CI, or checking environments        |
 | `docs/agent/workflow.md`               | Agent design rationale and troubleshooting                   |
 | `docs/agent/learnings/`                | Accumulated gotchas and discoveries from past sessions       |
+| `docs/agent/server-action-auth.md`     | Writing or changing any "use server" export                  |
 
 ## Skills
 
