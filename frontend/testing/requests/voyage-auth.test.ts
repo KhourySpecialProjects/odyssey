@@ -1,4 +1,4 @@
-// Reference-shaped auth tests for archiveVoyage (ODY-502 Task 4).
+// Auth tests for archiveVoyage (ODY-502 Task 4).
 import { archiveVoyage } from "@/lib/requests/voyage";
 import { requireRole } from "@/lib/auth/require-role";
 import { fetchAPI } from "@/lib/utils";

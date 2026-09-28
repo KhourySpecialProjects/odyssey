@@ -14,6 +14,12 @@ const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
+// Not exported: this file only allows async function exports (see guard test).
+const CLAIM_BYPASS_ROLES = [
+  AuthorizedUserRoleTitle.SysAdmin,
+  AuthorizedUserRoleTitle.Faculty,
+] as const;
+
 /**
  * Fetches a single voyage enrollment for a specific user and voyage.
  * Returns null if no enrollment exists.
@@ -873,10 +879,7 @@ export async function claimNodeForUser(
   return withAuth([], async (user) => {
     // userId is the target of the claim, not the caller.
     const self = assertOwner(userId, user, {
-      bypassRoles: [
-        AuthorizedUserRoleTitle.SysAdmin,
-        AuthorizedUserRoleTitle.Faculty,
-      ],
+      bypassRoles: CLAIM_BYPASS_ROLES,
     });
     if (!self.ok) return { ok: false, error: self.error, data: null };
 
@@ -1007,10 +1010,7 @@ export async function unclaimVoyageDropletNode(voyageNodeId: number) {
     return { ok: false, error: "Node is not claimed" };
 
   const owner = assertOwner(node.claimedBy?.id, gate.user, {
-    bypassRoles: [
-      AuthorizedUserRoleTitle.SysAdmin,
-      AuthorizedUserRoleTitle.Faculty,
-    ],
+    bypassRoles: CLAIM_BYPASS_ROLES,
   });
   if (!owner.ok) return { ok: false, error: owner.error };
 
