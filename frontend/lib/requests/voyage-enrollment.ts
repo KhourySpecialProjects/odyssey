@@ -8,6 +8,7 @@ import { CACHE_TAGS } from "../cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "./cached";
 import { requireRole } from "@/lib/auth/require-role";
+import { withAuth, assertOwner } from "@/lib/auth/guards";
 
 const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -869,146 +870,126 @@ export async function claimNodeForUser(
   error: string | null;
   data: { dropletSlug: string } | null;
 }> {
-  // Auth: verify the caller is either the target user or a faculty/admin
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser?.email) {
-    return { ok: false, error: "Not authenticated", data: null };
-  }
-  const callerUser = await getCachedUser(sessionUser.email);
-  if (!callerUser) {
-    return { ok: false, error: "User not found", data: null };
-  }
-  const callerRoles = sessionUser.roles as AuthorizedUserRoleTitle[];
-  const isSelf = callerUser.id === userId;
-  const isPrivileged =
-    callerRoles?.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    callerRoles?.includes(AuthorizedUserRoleTitle.Faculty);
-  if (!isSelf && !isPrivileged) {
-    return {
-      ok: false,
-      error: "Not authorized to claim for this user",
-      data: null,
-    };
-  }
+  return withAuth([], async (user) => {
+    // userId is the target of the claim, not the caller.
+    const self = assertOwner(userId, user, {
+      bypassRoles: [
+        AuthorizedUserRoleTitle.SysAdmin,
+        AuthorizedUserRoleTitle.Faculty,
+      ],
+    });
+    if (!self.ok) return { ok: false, error: self.error, data: null };
 
-  const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
-    urlParams: {
-      filters: { id: { $eq: voyageNodeId } },
-      fields: ["id", "label", "nodeType", "claimStatus"],
-      populate: { voyage: { fields: ["name"] } },
-      pagination: { pageSize: 1, page: 1 },
-    },
-    next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
-  });
+    const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
+      urlParams: {
+        filters: { id: { $eq: voyageNodeId } },
+        fields: ["id", "label", "nodeType", "claimStatus"],
+        populate: { voyage: { fields: ["name"] } },
+        pagination: { pageSize: 1, page: 1 },
+      },
+      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+    });
 
-  const node = nodes[0];
-  if (!node) return { ok: false, error: "Voyage node not found", data: null };
-  if (node.nodeType !== "droplet")
-    return { ok: false, error: "Node is not a droplet node", data: null };
-  if (node.claimStatus !== "unclaimed")
-    return { ok: false, error: "Node is not unclaimed", data: null };
+    const node = nodes[0];
+    if (!node) return { ok: false, error: "Voyage node not found", data: null };
+    if (node.nodeType !== "droplet")
+      return { ok: false, error: "Node is not a droplet node", data: null };
+    if (node.claimStatus !== "unclaimed")
+      return { ok: false, error: "Node is not unclaimed", data: null };
 
-  const voyageName = node.voyage?.name ?? "Voyage";
-  const baseName = `${node.label} — ${voyageName}`;
+    const voyageName = node.voyage?.name ?? "Voyage";
+    const baseName = `${node.label} — ${voyageName}`;
 
-  let dropletData: any = null;
-  let finalName = baseName;
+    let dropletData: any = null;
+    let finalName = baseName;
 
-  for (let attempt = 0; attempt < 5; attempt++) {
-    finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
-    const slug = finalName
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    const createRes = await fetch(`${STRAPI_API_URL}/api/droplets`, {
-      method: "POST",
+    for (let attempt = 0; attempt < 5; attempt++) {
+      finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
+      const slug = finalName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const createRes = await fetch(`${STRAPI_API_URL}/api/droplets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            name: finalName,
+            slug,
+            type: "knowledge",
+            focusArea: "technical",
+            difficulty: "beginner",
+            status: "draft",
+            isHidden: true,
+            learningObjectives: [
+              {
+                __component: "droplets.learning-objective",
+                objective: "TBD",
+              },
+            ],
+            authorized_users: { connect: [userId] },
+          },
+        }),
+      });
+
+      if (createRes.ok) {
+        const raw = await createRes.json();
+        dropletData = flattenAttributes(raw.data);
+        break;
+      }
+      if (createRes.status !== 400) {
+        return { ok: false, error: "Failed to create droplet", data: null };
+      }
+    }
+
+    if (!dropletData)
+      return {
+        ok: false,
+        error: "Failed to create droplet after retries",
+        data: null,
+      };
+
+    await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
       body: JSON.stringify({
         data: {
-          name: finalName,
-          slug,
-          type: "knowledge",
-          focusArea: "technical",
-          difficulty: "beginner",
-          status: "draft",
-          isHidden: true,
-          learningObjectives: [
-            { __component: "droplets.learning-objective", objective: "TBD" },
-          ],
-          authorized_users: { connect: [userId] },
+          droplet: dropletData.id,
+          claimedBy: userId,
+          claimStatus: "claimed",
         },
       }),
     });
 
-    if (createRes.ok) {
-      const raw = await createRes.json();
-      dropletData = flattenAttributes(raw.data);
-      break;
-    }
-    if (createRes.status !== 400) {
-      return { ok: false, error: "Failed to create droplet", data: null };
-    }
-  }
+    revalidateTag(CACHE_TAGS.voyages);
+    revalidateTag(CACHE_TAGS.droplets);
 
-  if (!dropletData)
-    return {
-      ok: false,
-      error: "Failed to create droplet after retries",
-      data: null,
-    };
-
-  await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-    },
-    body: JSON.stringify({
-      data: {
-        droplet: dropletData.id,
-        claimedBy: userId,
-        claimStatus: "claimed",
-      },
-    }),
+    return { ok: true, error: null, data: { dropletSlug: dropletData.slug } };
   });
-
-  revalidateTag(CACHE_TAGS.voyages);
-  revalidateTag(CACHE_TAGS.droplets);
-
-  return { ok: true, error: null, data: { dropletSlug: dropletData.slug } };
 }
 
 export async function claimVoyageDropletNode(voyageNodeId: number) {
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser?.email) return { ok: false, error: "Not authenticated" };
-
-  const user = await getCachedUser(sessionUser.email);
-  if (!user) return { ok: false, error: "User not found" };
-
-  const roles = sessionUser.roles as AuthorizedUserRoleTitle[];
-  const hasRole = roles?.some((r) =>
+  return withAuth(
     [
       AuthorizedUserRoleTitle.ContentCreator,
       AuthorizedUserRoleTitle.ContentEditor,
       AuthorizedUserRoleTitle.Faculty,
       AuthorizedUserRoleTitle.SysAdmin,
-    ].includes(r),
+    ],
+    (user) => claimNodeForUser(voyageNodeId, user.id),
   );
-  if (!hasRole) return { ok: false, error: "Content Creator role required" };
-
-  return claimNodeForUser(voyageNodeId, user.id);
 }
 
 export async function unclaimVoyageDropletNode(voyageNodeId: number) {
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser?.email) return { ok: false, error: "Not authenticated" };
-
-  const user = await getCachedUser(sessionUser.email);
-  if (!user) return { ok: false, error: "User not found" };
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error };
 
   const nodeData = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
     urlParams: {
@@ -1025,13 +1006,13 @@ export async function unclaimVoyageDropletNode(voyageNodeId: number) {
   if (node.claimStatus !== "claimed")
     return { ok: false, error: "Node is not claimed" };
 
-  const roles = sessionUser.roles as AuthorizedUserRoleTitle[];
-  const isClaimedByUser = node.claimedBy?.id === user.id;
-  const isPrivileged =
-    roles?.includes(AuthorizedUserRoleTitle.SysAdmin) ||
-    roles?.includes(AuthorizedUserRoleTitle.Faculty);
-  if (!isClaimedByUser && !isPrivileged)
-    return { ok: false, error: "Not authorized" };
+  const owner = assertOwner(node.claimedBy?.id, gate.user, {
+    bypassRoles: [
+      AuthorizedUserRoleTitle.SysAdmin,
+      AuthorizedUserRoleTitle.Faculty,
+    ],
+  });
+  if (!owner.ok) return { ok: false, error: owner.error };
 
   await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
     method: "PUT",
