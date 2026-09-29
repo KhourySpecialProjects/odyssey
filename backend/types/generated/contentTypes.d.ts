@@ -1785,9 +1785,7 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
-    isArchived: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isSequential: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

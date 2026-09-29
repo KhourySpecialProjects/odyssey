@@ -2,6 +2,16 @@ import { QuizQuestionBlock } from "@/components/droplets/lessons/quiz-question";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+// Mock isomorphic-dompurify so tests run in jsdom without the full JSDOM window.
+// The factory must be self-contained (jest.mock hoisting), so we define the spy
+// inside the factory using jest.fn(). Access via jest.requireMock() in tests.
+jest.mock("isomorphic-dompurify", () => ({
+  __esModule: true,
+  default: {
+    sanitize: jest.fn((html: string) => html),
+  },
+}));
+
 // Mock sessionStorage for testing since it's not available in Node/Jest environment
 const mockSessionStorage = (() => {
   let store: Record<string, string> = {};
@@ -437,5 +447,105 @@ describe("QuizQuestionBlock - Session Storage", () => {
       screen.getByRole("button", { name: /check answer/i }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+describe("QuizQuestionBlock - formatted content (ODY-445)", () => {
+  const mockLessonId = 99;
+
+  beforeEach(() => {
+    mockSessionStorage.clear();
+  });
+
+  it("renders inline <code> in the question stem", () => {
+    const question = {
+      id: 10,
+      content: "<p>What does <code>print(x)</code> output?</p>",
+      answerOptions: [
+        { id: 101, content: "42", isCorrect: true },
+        { id: 102, content: "None", isCorrect: false },
+      ],
+    };
+    render(<QuizQuestionBlock question={question} lessonId={mockLessonId} />);
+    // The <code> element should be in the DOM
+    expect(document.querySelector("code")).toBeInTheDocument();
+  });
+
+  it("renders a <pre><code> block in the question stem", () => {
+    const question = {
+      id: 11,
+      content: "<pre><code>def foo():\n  return 1</code></pre>",
+      answerOptions: [
+        { id: 111, content: "1", isCorrect: true },
+        { id: 112, content: "0", isCorrect: false },
+      ],
+    };
+    render(<QuizQuestionBlock question={question} lessonId={mockLessonId} />);
+    expect(document.querySelector("pre")).toBeInTheDocument();
+    expect(document.querySelector("code")).toBeInTheDocument();
+  });
+
+  it("renders inline code inside an answer option without invalid nesting", () => {
+    const question = {
+      id: 12,
+      content: "<p>Which snippet is correct?</p>",
+      answerOptions: [
+        { id: 121, content: "<code>x = 1</code>", isCorrect: true },
+        { id: 122, content: "<code>x == 1</code>", isCorrect: false },
+      ],
+    };
+    render(<QuizQuestionBlock question={question} lessonId={mockLessonId} />);
+    // Both code elements should appear (one per answer)
+    const codeElements = document.querySelectorAll("code");
+    expect(codeElements.length).toBeGreaterThanOrEqual(2);
+    // The code elements must NOT be inside a <span> (was the old broken wrapping)
+    codeElements.forEach((el) => {
+      expect(el.closest("span")).toBeNull();
+    });
+  });
+
+  it("strips dangerous XSS content from question stem via DOMPurify.sanitize", () => {
+    // Access the mock spy via requireMock (safe after hoisting)
+    const DOMPurify = jest.requireMock<{ default: { sanitize: jest.Mock } }>(
+      "isomorphic-dompurify",
+    ).default;
+
+    // Override the mock to simulate DOMPurify stripping <script> tags
+    DOMPurify.sanitize.mockImplementation((html: string) =>
+      html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ""),
+    );
+
+    const question = {
+      id: 13,
+      content: '<p>Hello</p><script>alert("xss")</script>',
+      answerOptions: [
+        { id: 131, content: "A", isCorrect: true },
+        { id: 132, content: "B", isCorrect: false },
+      ],
+    };
+    render(<QuizQuestionBlock question={question} lessonId={mockLessonId} />);
+    // script should not be in the rendered DOM after sanitization
+    expect(document.querySelector("script")).toBeNull();
+    // DOMPurify.sanitize should have been called with the original content
+    expect(DOMPurify.sanitize).toHaveBeenCalledWith(
+      '<p>Hello</p><script>alert("xss")</script>',
+    );
+
+    // Restore default mock behaviour for other tests
+    DOMPurify.sanitize.mockImplementation((html: string) => html);
+  });
+
+  it("plain-text legacy answers still render correctly", () => {
+    const question = {
+      id: 14,
+      content: "<p>What is 1 + 1?</p>",
+      answerOptions: [
+        { id: 141, content: "2", isCorrect: true },
+        { id: 142, content: "3", isCorrect: false },
+      ],
+    };
+    render(<QuizQuestionBlock question={question} lessonId={mockLessonId} />);
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 });

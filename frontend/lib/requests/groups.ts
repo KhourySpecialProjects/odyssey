@@ -279,6 +279,20 @@ export async function refreshUserGroups(): Promise<
 }
 
 /**
+ * Clears the caller's cached group list so /g/dashboard reads Strapi now
+ * instead of waiting out the 900s TTL. Identity comes from the session, never
+ * from the client. Invalidates only the caller's per-user tag.
+ */
+export async function refreshUserGroups(): Promise<
+  { ok: true } | { ok: false; error: "unauthenticated" | "forbidden" }
+> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error };
+  revalidateTag(CACHE_TAGS.userGroups(gate.user.id));
+  return { ok: true };
+}
+
+/**
  * Updates the members of a group. Requires management permissions.
  * @param groupId The ID of the group to update
  * @param updates The member updates to apply

@@ -568,6 +568,26 @@ export const stripHtmlTags = (html: string) => {
     .trim();
 };
 
+/**
+ * Returns true if the question is a True/False quiz.
+ * Tolerates HTML wrapping (e.g. `<p>True</p>`) produced by TipTap.
+ *
+ * @param question QuizQuestion to test
+ * @returns true when exactly two options whose stripped text is "true" and "false"
+ */
+export function isTrueFalseQuestion(question: {
+  answerOptions: { content: string }[];
+}): boolean {
+  if (question.answerOptions.length !== 2) return false;
+  const texts = question.answerOptions.map((o) =>
+    stripHtmlTags(o.content).toLowerCase(),
+  );
+  return (
+    (texts[0] === "true" && texts[1] === "false") ||
+    (texts[0] === "false" && texts[1] === "true")
+  );
+}
+
 export function parseSandpackFiles(
   json: string | null | undefined,
 ): Record<string, string> {

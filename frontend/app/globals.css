@@ -1,9 +1,9 @@
+/* Light mode: github light theme. Dark mode tokens are overridden below. */
+@import "highlight.js/styles/github.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "highlight.js/styles/github-dark.css";
-/* or any other theme you prefer */
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -61,17 +61,12 @@
   color: #334155;
 }
 
-/* Fix for invisible text in dark mode */
+/* Fix for invisible text in dark mode (non-code elements only).
+   Code blocks handle their own dark-mode colors via .dark .hljs below. */
 .dark .prose blockquote,
 .dark .prose blockquote *,
 .dark .bg-sky-50,
-.dark .bg-sky-50 *,
-.dark pre,
-.dark pre *,
-.dark code,
-.dark code *,
-.dark .hljs,
-.dark .hljs * {
+.dark .bg-sky-50 * {
   color: white;
 }
 
@@ -84,8 +79,8 @@
 }
 
 /* Specific fix for callout bullet list items in dark mode */
-.dark .pt-3.pl-3 * {
-  color: #334155 !important;
+.dark .callout-bullet-list li {
+  color: #334155;
 }
 
 /* Dark background for sky-50 elements */
@@ -172,6 +167,43 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   color: #e06b85;
 }
 
+/* Fenced code block backgrounds: light by default, dark in dark mode.
+   Tailwind Typography hardcodes a dark pre background; override it here
+   so rendered lessons and quiz blocks both respect the site theme.
+   .hljs background is forced transparent so the pre background wins. */
+.hljs {
+  background: transparent;
+}
+.prose pre {
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  color: #24292e; /* Typography's --tw-prose-pre-code defaults to light gray for dark bg; override for our light bg */
+}
+.dark .prose pre {
+  background-color: #161b22;
+  border-color: #30363d;
+  color: #c9d1d9; /* Restore readable light text for dark background */
+}
+
+/* github.css was designed for #ffffff — three of its token colors fall
+   below 4.5:1 contrast on our #f6f8fa background. These are GitHub's
+   own updated accessible values from their current light syntax theme. */
+.hljs-built_in,
+.hljs-symbol {
+  color: #953800; /* was #e36209 (3.1:1) → now 6.3:1 */
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: #116329; /* was #22863a (4.1:1) → now 7.0:1 */
+}
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  color: #57606a; /* was #6a737d (4.1:1) → now 5.4:1 */
+}
+
 /* driver.js tour — custom popover styling */
 .draft-tour-popover.driver-popover {
   border-radius: 12px;
@@ -254,4 +286,85 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 
 .draft-tour-popover .driver-popover-close-btn:hover {
   color: #374151;
+}
+
+/* Dark-mode syntax highlighting: github-dark token colors.
+   These override the github.css light theme imported at the top.
+   Placed last so they win on equal specificity. */
+.dark .hljs {
+  color: #c9d1d9;
+  background: transparent;
+}
+.dark .hljs-doctag,
+.dark .hljs-keyword,
+.dark .hljs-meta .hljs-keyword,
+.dark .hljs-template-tag,
+.dark .hljs-template-variable,
+.dark .hljs-type,
+.dark .hljs-variable.language_ {
+  color: #ff7b72;
+}
+.dark .hljs-title,
+.dark .hljs-title.class_,
+.dark .hljs-title.class_.inherited__,
+.dark .hljs-title.function_ {
+  color: #d2a8ff;
+}
+.dark .hljs-attr,
+.dark .hljs-attribute,
+.dark .hljs-literal,
+.dark .hljs-meta,
+.dark .hljs-number,
+.dark .hljs-operator,
+.dark .hljs-variable,
+.dark .hljs-selector-attr,
+.dark .hljs-selector-class,
+.dark .hljs-selector-id {
+  color: #79c0ff;
+}
+.dark .hljs-regexp,
+.dark .hljs-string,
+.dark .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+.dark .hljs-built_in,
+.dark .hljs-symbol {
+  color: #ffa657;
+}
+.dark .hljs-code,
+.dark .hljs-comment,
+.dark .hljs-formula {
+  color: #8b949e;
+}
+.dark .hljs-name,
+.dark .hljs-quote,
+.dark .hljs-selector-tag,
+.dark .hljs-selector-pseudo {
+  color: #7ee787;
+}
+.dark .hljs-subst {
+  color: #c9d1d9;
+}
+.dark .hljs-section {
+  color: #1f6feb;
+  font-weight: bold;
+}
+.dark .hljs-bullet {
+  color: #f2cc60;
+}
+.dark .hljs-emphasis {
+  color: #c9d1d9;
+  font-style: italic;
+}
+.dark .hljs-strong {
+  color: #c9d1d9;
+  font-weight: bold;
+}
+.dark .hljs-addition {
+  color: #aff5b4;
+  background-color: #033a16;
+}
+.dark .hljs-deletion {
+  color: #ffdcd7;
+  background-color: #67060c;
 }

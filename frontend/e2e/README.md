@@ -18,6 +18,7 @@ e2e/
 ```
 
 Each role directory contains:
+
 - `allowed-features.spec.ts` — Pages and workflows the role CAN access
 - `blocked-features.spec.ts` — Pages and workflows the role should NOT access
 - `auth.json` — Saved authentication state (gitignored, must be generated locally)
@@ -35,6 +36,7 @@ Role-based tests require an `auth.json` file with saved session cookies. Generat
 ### Step-by-step:
 
 1. **Run the save script** for the role you need:
+
    ```bash
    cd frontend
    npm run save:user           # Opens codegen browser — log in as a regular user
@@ -54,24 +56,26 @@ Role-based tests require an `auth.json` file with saved session cookies. Generat
 
 ### Available save/load scripts:
 
-| Script                   | Role              |
-|--------------------------|-------------------|
-| `npm run save:unauth`    | Unauthorized user |
-| `npm run save:user`      | Regular user      |
-| `npm run save:contentCreator`  | Content Creator |
-| `npm run save:contentEditor`   | Content Editor  |
-| `npm run save:faculty`         | Faculty         |
-| `npm run save:systemAdmin`     | System Admin    |
+| Script                        | Role              |
+| ----------------------------- | ----------------- |
+| `npm run save:unauth`         | Unauthorized user |
+| `npm run save:user`           | Regular user      |
+| `npm run save:contentCreator` | Content Creator   |
+| `npm run save:contentEditor`  | Content Editor    |
+| `npm run save:faculty`        | Faculty           |
+| `npm run save:systemAdmin`    | System Admin      |
 
 ## Running Tests
 
 ### All E2E tests (via Docker):
+
 ```bash
 cd frontend
 npm run test:e2e
 ```
 
 ### Tests by role/category:
+
 ```bash
 npm run test:e2e-public          # Public pages (no auth needed)
 npm run test:e2e-footer          # Footer tests
@@ -84,6 +88,7 @@ npm run test:e2e-faculty         # Faculty tests
 ```
 
 ### Run locally (without Docker):
+
 ```bash
 cd frontend
 npx playwright test                          # All tests
@@ -93,11 +98,13 @@ npx playwright test --grep "Explore"         # By test name
 ```
 
 ### View test report:
+
 ```bash
 npm run e2e:show
 ```
 
 ### Generate new tests interactively:
+
 ```bash
 npm run test:codegen    # Opens Playwright codegen on dev site
 ```
@@ -112,6 +119,7 @@ npm run test:codegen    # Opens Playwright codegen on dev site
 - Use `test.use({ storageState: "e2e/<role>/auth.json" })` for authenticated tests
 
 ### Example — Navigation test:
+
 ```typescript
 import { test, expect } from "@playwright/test";
 
@@ -132,6 +140,7 @@ test.describe("My Feature Tests", () => {
 ```
 
 ### Example — Form workflow with API mock:
+
 ```typescript
 test("submit form with mocked API", async ({ page }) => {
   await page.route("*/**/api/my-endpoint", async (route) => {
@@ -152,6 +161,7 @@ test("submit form with mocked API", async ({ page }) => {
 ## Configuration
 
 Playwright config is at `frontend/playwright.config.ts`:
+
 - **Browser**: Firefox (Chromium and Safari available but commented out)
 - **Parallelism**: Full parallel, 80% workers on CI
 - **Retries**: 2 on CI, 0 locally

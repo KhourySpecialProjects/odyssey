@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TrashIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { isTrueFalseQuestion } from "@/lib/utils";
 
 interface QuizQuestionEditorProps {
   question: QuizQuestion;
@@ -73,7 +74,7 @@ export function QuizQuestionEditor({
 
       <div className="space-y-4 pt-4">
         <h5 className="font-semibold">
-          {question.answerOptions[0]?.content === "True"
+          {isTrueFalseQuestion(question)
             ? "Answer Options"
             : "Answer Options (choose multiple if applicable)"}
         </h5>
@@ -103,11 +104,7 @@ export function QuizQuestionEditor({
           ))}
         </div>
 
-        {!(
-          question.answerOptions.length === 2 &&
-          question.answerOptions[0].content === "True" &&
-          question.answerOptions[1].content === "False"
-        ) && (
+        {!isTrueFalseQuestion(question) && (
           <Button variant="outline" size="sm" onClick={addAnswer}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Answer Option

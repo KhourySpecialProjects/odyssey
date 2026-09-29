@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { OpenEndedQuizQuestion } from "@/types";
 import { TrashIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
@@ -110,16 +109,12 @@ export function OpenEndedQuizEditor({
 
             <div className="space-y-4 pt-4">
               <h5 className="font-semibold">Correct Answer</h5>
-              <Textarea
-                value={question.correctAnswer}
-                onChange={(e) =>
-                  updateQuestion(index, {
-                    ...question,
-                    correctAnswer: e.target.value,
-                  })
+              <TipTapEditor
+                initialContent={question.correctAnswer}
+                updateContent={(content) =>
+                  updateQuestion(index, { ...question, correctAnswer: content })
                 }
-                placeholder="Enter the correct answer..."
-                className="min-h-[100px]"
+                revalidate={() => {}}
               />
             </div>
           </div>
