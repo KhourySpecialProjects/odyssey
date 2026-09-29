@@ -40,7 +40,7 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
 
 - **`assertOwner`** — for record ownership. `bypassRoles` defaults to `[SysAdmin]` only; pass `[]` for no bypass at all. It returns a result and never throws.
 - **Never re-export `withAuth` from a `"use server"` file** — the re-export itself becomes a public action.
-- **Constants in a `"use server"` file must not be exported** (e.g. `CLAIM_BYPASS_ROLES` in `voyage-enrollment.ts`) — the guard test only allows `export async function`.
+- **Constants in a `"use server"` file must not be exported** (e.g. `CLAIM_BYPASS_ROLES` in `voyage-enrollment.ts`) — the guard test only allows exported function declarations.
 
 ## Caller identity
 
@@ -82,7 +82,7 @@ Reference: `testing/requests/droplet-auth.test.ts` (`togglePresentationEnabled`,
 - (c) a `PUBLIC_ACTIONS` reason is empty;
 - (d) an entry is stale — the function no longer exists, or it's guarded but still in `PENDING_AUTH`.
 
-Only `export async function` is supported. `export const`, `export {}`, `export default`, and re-exports fail as unsupported forms; type/interface exports are ignored.
+Only exported function declarations are supported. `export const`, `export { … }`, `export default <expr>`, and re-exports fail as unsupported forms; type/interface exports are ignored.
 
 **Using it:**
 
