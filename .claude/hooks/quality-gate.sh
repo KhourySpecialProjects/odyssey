@@ -3,8 +3,7 @@
 # quality-gate.sh — Stop hook for Claude Code
 #
 # Runs after every agent turn. Auto-fixes formatting on changed files.
-# ESLint is NOT run here — the frontend/root ESLint version mismatch
-# causes plugin resolution errors. Lint is checked by `npm run lint` in CI.
+# ESLint is NOT run here; use `npm run lint`.
 # Exit code 0 = let the agent proceed.
 #
 

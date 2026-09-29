@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components lib hooks types",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:failures": "jest --onlyFailures",
@@ -135,6 +135,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.55.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
@@ -147,6 +149,7 @@
     "@types/qs": "^6.9.11",
     "@types/react": "^18.2.74",
     "@types/react-dom": "^18.2.24",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^15.1.11",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.34",

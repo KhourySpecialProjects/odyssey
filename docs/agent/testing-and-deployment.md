@@ -167,7 +167,7 @@ Each role directory contains tests scoped to that role's permissions. Tests auth
 The CI pipeline runs on pull requests to `develop` and `production`:
 
 1. **Prettier** — Format check on all files
-2. **ESLint** — Lint check on `frontend/app`, `frontend/components`, `frontend/lib`
+2. **ESLint** — the frontend flat config (`frontend/eslint.config.mjs`: core recommended + Next) on `app`, `components`, `lib`, `hooks` and `types`
 3. **Jest** — All unit tests
 4. **Frontend build** — `next build` (catches TypeScript errors)
 5. **Backend build** — Strapi build
@@ -188,7 +188,7 @@ The command runs each check sequentially, reports pass/fail with relevant output
 The `quality-gate.sh` hook runs automatically after every agent turn (Stop and SubagentStop events):
 
 - Auto-fixes formatting with Prettier on all changed files
-- Does NOT run ESLint — a version mismatch between frontend and root ESLint configs causes plugin resolution errors
+- Does NOT run ESLint — use `npm run lint` to check
 - Always exits 0 (never blocks the agent)
 - Linting is checked by `npm run lint` in CI and the `/ci` command
 
