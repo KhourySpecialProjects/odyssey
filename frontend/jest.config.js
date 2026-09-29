@@ -25,7 +25,7 @@ const config = {
   ],
   moduleDirectories: ["node_modules", "<rootDir>"],
   testEnvironmentOptions: {
-    customExportConditions: ["react-native", "node", "default"],
+    customExportConditions: ["node", "default"],
   },
   globals: {
     "ts-jest": {
