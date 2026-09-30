@@ -798,7 +798,7 @@ export async function fetchAnnouncementById(id: number) {
           fields: ["id", "name", "slug"],
         },
         group: {
-          fields: ["id", "name", "slug"],
+          fields: ["id", "slug"],
         },
       },
       pagination: {

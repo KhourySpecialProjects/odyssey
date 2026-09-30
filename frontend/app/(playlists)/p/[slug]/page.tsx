@@ -48,7 +48,6 @@ export default async function PlaylistPage({ params }: Props) {
               "slug",
               "type",
               "focusArea",
-              "learningObjectives",
               "isHidden",
               "status",
             ],
@@ -58,7 +57,7 @@ export default async function PlaylistPage({ params }: Props) {
           fields: ["id"],
         },
         authors: {
-          fields: ["id", "name"],
+          fields: ["id"],
           populate: "*",
         },
       },
