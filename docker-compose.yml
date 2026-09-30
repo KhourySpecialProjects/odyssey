@@ -26,6 +26,10 @@ services:
       - frontend
 
   strapiDB:
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     container_name: strapiDB
     platform: linux/amd64 #for platform error on Apple M1 chips
     restart: unless-stopped
