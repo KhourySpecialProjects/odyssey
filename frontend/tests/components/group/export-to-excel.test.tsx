@@ -219,6 +219,12 @@ const makeNode = (
   playlist,
 });
 
+const mockDroplet4: Droplet = makeDroplet({
+  id: 4,
+  name: "Playlist Droplet 4",
+  slug: "playlist-droplet-4",
+});
+
 const playlistA = makePlaylist(10, "Playlist A", [mockDroplet2]);
 const playlistB = makePlaylist(11, "Playlist B", [mockDroplet3]);
 
@@ -921,6 +927,36 @@ describe("GroupProgressGrid Excel Export", () => {
         expect.any(Object),
         "Test_Group_progress_report_1_15_2025.xlsx",
       );
+    });
+
+    it("includes playlist droplets in All, once each, before voyage droplets", async () => {
+      const playlistC = makePlaylist(15, "Playlist C", [
+        mockDroplet4,
+        mockDroplet3,
+      ]);
+      renderContent({
+        ...groupWithContent,
+        droplets: [mockDroplet1],
+        playlists: [playlistC],
+      });
+      expect(screen.getByText("Playlist Droplet 4")).toBeInTheDocument();
+      await clickExport();
+
+      expect(exportedData()[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Test Droplet 1",
+        "Completion Date",
+        "Playlist Droplet 4",
+        "Completion Date",
+        "Voyage Droplet 3",
+        "Completion Date",
+        "Test Droplet 2",
+        "Completion Date",
+        "Voyage X - Playlist A",
+        "Voyage X - Playlist B",
+        "Voyage Y - Playlist B",
+      ]);
     });
   });
 });
