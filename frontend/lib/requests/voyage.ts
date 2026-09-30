@@ -175,7 +175,7 @@ export async function getVoyages(): Promise<Voyage[]> {
         },
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
     sort: ["name:asc"],
@@ -259,7 +259,7 @@ export async function getVoyageBySlug(
         sort: ["orderIndex:asc"],
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
     pagination: {
