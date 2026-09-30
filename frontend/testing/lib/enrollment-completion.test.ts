@@ -1,5 +1,7 @@
+import type { Enrollment } from "@/types";
 import {
   enrollmentNeedsCompletionBackfill,
+  hasDroplet,
   needsCompletionBackfill,
 } from "@/lib/enrollment-completion";
 
@@ -55,5 +57,21 @@ describe("enrollmentNeedsCompletionBackfill", () => {
         droplet: { lessons: [] },
       }),
     ).toBe(false);
+  });
+});
+
+describe("hasDroplet", () => {
+  it("returns true when the droplet is populated", () => {
+    expect(hasDroplet({ droplet: { id: 1 } } as unknown as Enrollment)).toBe(
+      true,
+    );
+  });
+
+  it("returns false when the droplet is null", () => {
+    expect(hasDroplet({ droplet: null } as unknown as Enrollment)).toBe(false);
+  });
+
+  it("returns false when the droplet is undefined", () => {
+    expect(hasDroplet({} as unknown as Enrollment)).toBe(false);
   });
 });

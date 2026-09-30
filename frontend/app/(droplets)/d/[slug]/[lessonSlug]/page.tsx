@@ -64,7 +64,7 @@ export default async function Page({ params }: Props) {
 
   if (!droplet || !lesson || !authUser) return notFound();
 
-  const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
+  const enrollment = enrollments.find((e) => e.droplet?.id === droplet.id);
 
   if (enrollment) {
     enrollmentId = enrollment.id;
