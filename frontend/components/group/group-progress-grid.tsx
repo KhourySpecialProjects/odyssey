@@ -62,28 +62,30 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
   const isShowingVoyage = selectedVoyage !== null;
 
-  // Collect voyage droplets (deduped against group droplets)
-  const voyageDroplets = useMemo(() => {
-    const groupDropletIds = new Set((group.droplets || []).map((d) => d.id));
+  // "All" droplets: loose, then playlist, then voyage, each listed once
+  const allDroplets = useMemo(() => {
     const seen = new Set<number>();
     const result: Droplet[] = [];
+    const addDroplets = (droplets: Droplet[] = []) => {
+      for (const d of droplets) {
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
+          result.push(d);
+        }
+      }
+    };
+    addDroplets(group.droplets);
+    (group.playlists || []).forEach((p) => addDroplets(p.droplets));
     (group.voyages || []).forEach((v) => {
       (v.voyage_nodes || [])
         .filter(
           (n: VoyageNode) => n.nodeType === "playlist" && n.playlist?.droplets,
         )
         .sort((a: VoyageNode, b: VoyageNode) => a.orderIndex - b.orderIndex)
-        .forEach((n: VoyageNode) => {
-          for (const d of n.playlist!.droplets!) {
-            if (!groupDropletIds.has(d.id) && !seen.has(d.id)) {
-              seen.add(d.id);
-              result.push(d);
-            }
-          }
-        });
+        .forEach((n: VoyageNode) => addDroplets(n.playlist!.droplets));
     });
     return result;
-  }, [group.droplets, group.voyages]);
+  }, [group.droplets, group.playlists, group.voyages]);
 
   const selectedPlaylist =
     isShowingVoyage || selectedValue === "all"
@@ -93,8 +95,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   // Droplet view
   const getDisplayedDroplets = () => {
     if (isShowingVoyage) return [];
-    if (selectedValue === "all")
-      return [...(group.droplets || []), ...voyageDroplets];
+    if (selectedValue === "all") return allDroplets;
     return selectedPlaylist?.droplets || [];
   };
 
