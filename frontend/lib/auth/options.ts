@@ -11,6 +11,12 @@ import { AuthorizedUserRoleTitle } from "../globals";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
+GitHubProvider({
+  clientId: process.env.GITHUB_CLIENT_ID || "",
+  clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+  issuer: "https://github.com/login/oauth",
+}),
+
 async function syncAzureProfilePhoto(
   accessToken: string,
   userId: number,
