@@ -1,3 +1,5 @@
+import type { Enrollment, EnrollmentWithDroplet } from "@/types";
+
 /**
  * Whether an enrollment is missing completion data it should have: every
  * lesson viewed but not marked complete or without a completionDate, or
@@ -34,4 +36,9 @@ export function enrollmentNeedsCompletionBackfill(
     enrollment.completionDate,
     allViewed,
   );
+}
+
+/** Type guard that drops enrollments whose droplet is null (unpublished or deleted). */
+export function hasDroplet(e: Enrollment): e is EnrollmentWithDroplet {
+  return e.droplet != null;
 }

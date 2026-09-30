@@ -4,6 +4,8 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import type { Enrollment } from "@/types";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -62,12 +64,14 @@ export default async function PlaylistPage({ params }: Props) {
         },
       },
     }),
-    userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
+    userId ? getCachedEnrollmentsWithLessonIds(userId) : ([] as Enrollment[]),
   ]);
   if (!playlist) {
     notFound();
   }
-  const enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+  const enrolledDropletIds = enrollments
+    .filter(hasDroplet)
+    .map((e) => e.droplet.id);
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||

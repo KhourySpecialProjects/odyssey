@@ -289,7 +289,7 @@ export type OpenEndedQuiz = {
 export type Enrollment = {
   id: string;
   authorizedUser: AuthorizedUser;
-  droplet: Droplet;
+  droplet: Droplet | null;
   viewedLessons: Lesson[];
   isComplete: boolean;
   rating: number;
@@ -298,6 +298,8 @@ export type Enrollment = {
   notes: Note[];
   completionDate: Date;
 };
+
+export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
 
 export interface Playlist {
   id: number;

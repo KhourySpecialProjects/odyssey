@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Enrollment, Highlight, Note } from "@/types";
+import { EnrollmentWithDroplet, Highlight, Note } from "@/types";
 import { Card } from "../ui/card";
 import Link from "next/link";
 import { NotesContainer } from "./notes-container";
@@ -18,7 +18,7 @@ export function NotesSummaryClient({
 }: {
   dropletHighlights: Highlight[];
   dropletNotes: Note[];
-  enrollment: Enrollment;
+  enrollment: EnrollmentWithDroplet;
   allNotes: {
     dropletId: number;
     notes: Note[];
