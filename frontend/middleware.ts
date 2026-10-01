@@ -46,6 +46,7 @@ export const config = {
     "/admin",
     "/admin/:path*",
     "/d/:path*",
+    "/g/:path*",
     "/activity",
     "/activity/:path*",
   ],

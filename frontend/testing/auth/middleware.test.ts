@@ -85,22 +85,26 @@ describe("middleware", () => {
   });
 
   describe("protected routes", () => {
-    it.each(["/activity", "/admin", "/admin/users", "/d/some-droplet"])(
-      "still redirects anonymous %s to sign-in",
-      async (path) => {
-        jest.mocked(getToken).mockResolvedValue(null);
+    it.each([
+      "/activity",
+      "/admin",
+      "/admin/users",
+      "/d/some-droplet",
+      "/g/some-group",
+    ])("still redirects anonymous %s to sign-in", async (path) => {
+      jest.mocked(getToken).mockResolvedValue(null);
 
-        await expect(run(path)).resolves.toEqual({
-          redirectedTo: `http://localhost:3000/api/auth/signin?callbackUrl=${encodeURIComponent(path)}`,
-        });
-      },
-    );
+      await expect(run(path)).resolves.toEqual({
+        redirectedTo: `http://localhost:3000/api/auth/signin?callbackUrl=${encodeURIComponent(path)}`,
+      });
+    });
 
     it("lets signed-in users through", async () => {
       jest.mocked(getToken).mockResolvedValue(signedInToken as never);
 
       await expect(run("/activity")).resolves.toBeUndefined();
       await expect(run("/d/some-droplet")).resolves.toBeUndefined();
+      await expect(run("/g/some-group")).resolves.toBeUndefined();
     });
   });
 
@@ -112,6 +116,7 @@ describe("middleware", () => {
       "/admin",
       "/admin/:path*",
       "/d/:path*",
+      "/g/:path*",
       "/activity",
       "/activity/:path*",
     ]);

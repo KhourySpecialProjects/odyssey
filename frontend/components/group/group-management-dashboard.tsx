@@ -50,6 +50,8 @@ export function GroupDashboard({
   };
 
   const hasVoyages = group.voyages && group.voyages.length > 0;
+  // Keep in sync with `canViewProgress` in app/(groups)/g/[slug]/page.tsx,
+  // which only sends members and progress data when this is true.
   const canViewProgress = canEdit || isAdmin;
   const tabNames = [
     "droplets",
