@@ -1,5 +1,7 @@
 # Backend Architecture (Strapi 4.22)
 
+**On `feature/strapi-v5` branches the backend is v5; see the note in `CLAUDE.md` "Critical Version Constraints". There, v5 patterns are expected, not version violations. The v4-only rules apply to `develop`.**
+
 ## Critical Constraint
 
 This is **Strapi v4.22**, not v5. The differences are breaking:

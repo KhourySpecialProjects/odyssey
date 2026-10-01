@@ -37,7 +37,7 @@ module.exports = {
         authorized_users: { fields: ['firstName', 'lastName', 'email'] },
         tags: { fields: ['name'] },
       },
-    })) as DropletWithRelations | null;
+    })) as unknown as DropletWithRelations | null;
 
     if (!droplet) return;
 
