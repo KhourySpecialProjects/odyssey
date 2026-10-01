@@ -1409,6 +1409,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'api::note.note'
     >;
     orderIndex: Attribute.Integer;
+    originalLessonId: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &

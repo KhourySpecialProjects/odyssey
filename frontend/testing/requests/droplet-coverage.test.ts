@@ -16,25 +16,24 @@
  *   670-683       duplicateDroplet — existing draft found for current user
  *   717-787       duplicateDroplet — cleanBlocks branches (quiz, open-ended, callout, generic)
  *   794-862       duplicateDroplet — lesson duplication loop (v1 + v2)
- *   960           publishDraftToOriginal — draftDroplet not found
- *   973           publishDraftToOriginal — missing difficulty guard
- *   992-1002      publishDraftToOriginal — delete lessons loop
- *   1027          publishDraftToOriginal — optional fields (focusArea/type/difficulty)
- *   1035-1040     publishDraftToOriginal — learningObjectives mapping (string + object forms)
- *   1046          publishDraftToOriginal — prerequisites
- *   1050-1051     publishDraftToOriginal — postrequisites
- *   1057-1060     publishDraftToOriginal — nextSteps cleaning
- *   1073-1074     publishDraftToOriginal — updateResult not ok
- *   1087-1114     publishDraftToOriginal — enrollment update loop
- *   1119-1154     publishDraftToOriginal — cleanBlocks helper (quiz, open-ended)
- *   1160-1231     publishDraftToOriginal — lesson creation loop (v1 + v2)
- *   1245-1246     publishDraftToOriginal — deepDelete draft
+ *   1050-1113     applyLessonSync — update / create / delete basics (in depth: publish-draft-lesson-sync.test.ts)
+ *   1189          publishDraftToOriginal — draftDroplet not found
+ *   1217-1220     publishDraftToOriginal — missing difficulty guard
+ *   1271-1278     publishDraftToOriginal — optional fields (focusArea/type/difficulty)
+ *   1284-1297     publishDraftToOriginal — learningObjectives mapping (string + object forms)
+ *   1299-1301     publishDraftToOriginal — prerequisites
+ *   1303-1307     publishDraftToOriginal — postrequisites
+ *   1309-1316     publishDraftToOriginal — nextSteps cleaning
+ *   1328-1333     publishDraftToOriginal — updateResult not ok
+ *   1342-1376     publishDraftToOriginal — enrollment update loop
+ *   1380-1389     publishDraftToOriginal — deepDelete draft
  *   1310-1320     favoriteDroplet — add user when not in list / already in list
  *   1340          favoriteDroplet — fetch update not ok
  *   1367          updateDropletLearningObjective — fetch not ok
  */
 
 import {
+  getDropletById,
   deepDeleteDroplet,
   updateDroplet,
   archiveDroplet,
@@ -45,7 +44,13 @@ import {
   favoriteDroplet,
   updateDropletLearningObjective,
 } from "@/lib/requests/droplet";
-import type { DropletDifficulty, LearningObjective, Resource } from "@/types";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import type {
+  DropletDifficulty,
+  LearningObjective,
+  Lesson,
+  Resource,
+} from "@/types";
 import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
@@ -101,6 +106,69 @@ function getMockedFetchAPI() {
 function getMockedDeleteLesson() {
   return jest.requireMock("@/lib/requests/lesson").deleteLesson;
 }
+
+// ─── getDropletById ──────────────────────────────────────────────────────────
+
+describe("droplet-coverage — getDropletById", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("reads through the data cache by default", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce(makeDroplet({ id: 7 }));
+
+    await getDropletById(7);
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/7");
+    expect(options).toEqual(
+      expect.objectContaining({
+        next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
+      }),
+    );
+    expect(options).not.toHaveProperty("cache");
+  });
+
+  it("skips the data cache when fresh is set, and never passes next with it", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce(makeDroplet({ id: 7 }));
+
+    await getDropletById(7, {}, { fresh: true });
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/7");
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
+  });
+
+  it("builds the same query whether or not the read is fresh", async () => {
+    const params = {
+      populate: { lessons: { fields: ["*"] } },
+      fields: ["name"],
+    };
+    getMockedFetchAPI().mockResolvedValue(makeDroplet({ id: 7 }));
+
+    await getDropletById(7, params);
+    await getDropletById(7, params, { fresh: true });
+
+    const [, cachedOptions] = getMockedFetchAPI().mock.calls[0];
+    const [, freshOptions] = getMockedFetchAPI().mock.calls[1];
+    expect(freshOptions.urlParams).toEqual(cachedOptions.urlParams);
+    expect(freshOptions.urlParams).toEqual(
+      expect.objectContaining({
+        populate: params.populate,
+        fields: params.fields,
+      }),
+    );
+  });
+
+  it("returns whatever fetchAPI resolves with", async () => {
+    const droplet = makeDroplet({ id: 7, name: "Fresh read" });
+    getMockedFetchAPI().mockResolvedValueOnce(droplet);
+
+    await expect(getDropletById(7, {}, { fresh: true })).resolves.toBe(droplet);
+  });
+});
 
 // ─── deepDeleteDroplet ───────────────────────────────────────────────────────
 
@@ -661,6 +729,8 @@ describe("droplet-coverage — duplicateDroplet", () => {
     const lessonBody = JSON.parse(lessonPost[1]?.body as string);
     expect(lessonBody.data.blocksV2).toBeDefined();
     expect(lessonBody.data.blocksVersion).toBe("v2");
+    // Lineage: the clone remembers which live lesson it came from
+    expect(lessonBody.data.originalLessonId).toBe(10);
   });
 
   it("creates new draft and duplicates v1 lessons with quiz blocks (lines 729-746)", async () => {
@@ -716,6 +786,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(
       lessonBody.data.blocks[0].questions[0].answerOptions[0],
     ).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(20);
   });
 
   it("creates new draft and duplicates v1 lessons with callout blocks (lines 761-781)", async () => {
@@ -766,6 +837,30 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(calloutBlock).not.toHaveProperty("id");
     expect(calloutBlock.content[0]).not.toHaveProperty("id");
     expect(calloutBlock.content[0].children[0]).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(30);
+  });
+
+  it("reads the original droplet fresh, bypassing the data cache", async () => {
+    // Direct edits to a live droplet autosave without revalidating. A cached read
+    // could clone stale content, and publishing would then revert those edits.
+    getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+    getMockedFetchAPI().mockResolvedValueOnce(
+      makeDroplet({ id: 1, name: "Original", lessons: [] }),
+    );
+    // No existing drafts
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+    // POST droplet
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 99 } }));
+
+    const result = await duplicateDroplet(1);
+
+    expect(result.ok).toBe(true);
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/1");
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
   });
 
   it("returns error when droplet POST fails (lines 702-710)", async () => {
@@ -893,7 +988,11 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     expect(result.error).toMatch(/Original droplet not found/);
   });
 
-  it("deletes original lessons and creates new ones from draft (lines 992-1002, 1160-1231)", async () => {
+  // Lesson sync in depth (ids, progress, failure order, payloads) is covered in
+  // publish-draft-lesson-sync.test.ts. These two pin the basic create/delete and
+  // update-in-place outcomes against the queued fetch order.
+
+  it("creates a draft lesson that matches no live lesson, then deletes the live lesson the draft dropped", async () => {
     const deleteLesson = getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
@@ -918,6 +1017,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
       ],
     });
 
+    // A different name and no originalLessonId, so nothing links it to the draft lesson
     const originalDroplet = makeDroplet({
       id: 2,
       slug: "my-droplet",
@@ -944,7 +1044,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     // updateDroplet (PUT) for original
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
 
-    // POST new lesson
+    // POST new lesson (the live lesson is removed through deleteLesson, not fetch)
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 300 } }));
 
     // deepDeleteDroplet inner: getDropletById + DELETE
@@ -956,10 +1056,108 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     const result = await publishDraftToOriginal(1, 2);
     expect(result.ok).toBe(true);
     expect(result.slug).toBe("my-droplet");
+
+    const postIndex = fetchMock.mock.calls.findIndex(
+      (c) =>
+        c[1]?.method === "POST" && (c[0] as string).includes("/api/lessons"),
+    );
+    expect(postIndex).toBeGreaterThan(-1);
+    expect(deleteLesson).toHaveBeenCalledTimes(1);
     expect(deleteLesson).toHaveBeenCalledWith(200, false);
+    // The new lesson is written before the old one goes away
+    expect(fetchMock.mock.invocationCallOrder[postIndex]).toBeLessThan(
+      deleteLesson.mock.invocationCallOrder[0],
+    );
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
     expect(revalidateTag).toHaveBeenCalledWith("lesson");
   });
+
+  it.each<[string, Partial<Lesson>]>([
+    ["lineage", { name: "Renamed in the draft", originalLessonId: 200 }],
+    ["name", { name: "Old Lesson" }],
+  ])(
+    "updates the live lesson in place, with no delete, when the draft lesson matches it by %s",
+    async (_how, draftLessonFields) => {
+      const deleteLesson = getMockedDeleteLesson();
+      getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
+
+      const draftDroplet = makeDroplet({
+        id: 1,
+        name: "[EDIT] My Droplet",
+        difficulty: "beginner",
+        lessons: [
+          makeLesson({
+            id: 100,
+            slug: "draft-lesson",
+            orderIndex: 0,
+            blocksVersion: "v1",
+            blocks: [
+              {
+                __component: "droplets.callout",
+                id: 88,
+                color: "blue",
+                type: "info",
+                content: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "New text" }],
+                  },
+                ],
+              },
+            ],
+            ...draftLessonFields,
+          }),
+        ],
+      });
+      const originalDroplet = makeDroplet({
+        id: 2,
+        slug: "my-droplet",
+        lessons: [
+          makeLesson({
+            id: 200,
+            name: "Old Lesson",
+            slug: "old-lesson",
+            orderIndex: 0,
+            blocks: [],
+          }),
+        ],
+      });
+
+      getMockedFetchAPI()
+        .mockResolvedValueOnce(draftDroplet)
+        .mockResolvedValueOnce(originalDroplet);
+
+      // enrollments fetch
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      // updateDroplet (PUT) for original
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
+      // PUT the live lesson in place
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 200 } }));
+      // deepDeleteDroplet inner: getDropletById + DELETE
+      getMockedFetchAPI().mockResolvedValueOnce(
+        makeDroplet({ id: 1, lessons: [] }),
+      );
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+      const result = await publishDraftToOriginal(1, 2);
+      expect(result.ok).toBe(true);
+
+      const lessonPut = fetchMock.mock.calls.find(
+        (c) =>
+          c[1]?.method === "PUT" &&
+          (c[0] as string).endsWith("/api/lessons/200"),
+      );
+      expect(lessonPut).toBeDefined();
+      const putBody = JSON.parse(lessonPut![1]?.body as string);
+      expect(putBody.data.blocks).toHaveLength(1);
+      expect(putBody.data).not.toHaveProperty("slug");
+      expect(deleteLesson).not.toHaveBeenCalled();
+      expect(fetchMock.mock.calls.some((c) => c[1]?.method === "POST")).toBe(
+        false,
+      );
+    },
+  );
 
   it("updates enrollments to point to original droplet (lines 1087-1114)", async () => {
     getMockedDeleteLesson();
@@ -1100,7 +1298,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
   });
 
-  it("handles v2 lessons in the creation loop (lines 1195-1198)", async () => {
+  it("creates a v2 lesson with its blocksV2 in the original droplet, without notes", async () => {
     getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
@@ -1151,6 +1349,9 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     const lessonBody = JSON.parse(lessonPost![1]?.body as string);
     expect(lessonBody.data.blocksV2).toBeDefined();
     expect(lessonBody.data.blocksVersion).toBe("v2");
+    expect(lessonBody.data.droplets).toEqual([2]);
+    // On an update `notes` would detach every student note, so it is never sent
+    expect(lessonBody.data).not.toHaveProperty("notes");
   });
 
   it("includes prerequisites and postrequisites in the update (lines 1046, 1050-1051)", async () => {
