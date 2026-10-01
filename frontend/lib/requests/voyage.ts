@@ -198,7 +198,6 @@ export async function getVoyages(): Promise<Voyage[]> {
 export async function getVoyagesAdmin(): Promise<Voyage[]> {
   const path = `/voyages`;
   const urlParams = {
-    publicationState: "preview",
     populate: {
       authors: {
         fields: ["id", "firstName", "email"],
@@ -238,7 +237,6 @@ export async function getVoyageBySlug(
 ): Promise<Voyage | null> {
   const path = `/voyages`;
   const urlParams = {
-    ...(includeDrafts && { publicationState: "preview" }),
     filters: {
       slug: { $eq: slug },
       ...(!includeDrafts && { status: { $eq: "published" } }),
@@ -634,7 +632,6 @@ export async function getArchivedVoyagesForAuthor(
 ): Promise<Voyage[]> {
   const path = `/voyages`;
   const urlParams = {
-    publicationState: "preview",
     filters: {
       isArchived: { $eq: true },
       authors: { id: { $eq: authorizedUserId } },

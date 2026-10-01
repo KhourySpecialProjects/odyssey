@@ -729,7 +729,7 @@ export interface ApiCreationRequestCreationRequest
     singularName: 'creation-request';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Attribute.DateTime;
@@ -741,7 +741,6 @@ export interface ApiCreationRequestCreationRequest
       Attribute.Private;
     dropletIdea: Attribute.Text;
     motivation: Attribute.Text;
-    publishedAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::creation-request.creation-request',
@@ -872,7 +871,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     singularName: 'droplet';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     afterReview: Attribute.Text;
@@ -971,7 +970,6 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     presentationEnabled: Attribute.Boolean & Attribute.DefaultTo<false>;
-    publishedAt: Attribute.DateTime;
     reviewDroplet: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',
@@ -1349,7 +1347,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
     singularName: 'lesson';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     blocks: Attribute.DynamicZone<
@@ -1409,7 +1407,6 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'api::note.note'
     >;
     orderIndex: Attribute.Integer;
-    publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
       Attribute.DefaultTo<'general'>;
@@ -1470,7 +1467,7 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     singularName: 'playlist';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     announcements: Attribute.Relation<
@@ -1512,7 +1509,6 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isPublic: Attribute.Boolean;
     name: Attribute.String & Attribute.Required;
-    publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::playlist.playlist', 'name'> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
@@ -1764,7 +1760,7 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
     singularName: 'voyage';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     authors: Attribute.Relation<
@@ -1790,7 +1786,6 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
       Attribute.Required &
       Attribute.DefaultTo<false>;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
-    publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::voyage.voyage', 'name'> & Attribute.Required;
     status: Attribute.Enumeration<['draft', 'published']> &
       Attribute.Required &

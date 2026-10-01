@@ -183,7 +183,15 @@ Strapi v4 wraps responses in `{ data: { id, attributes: { ... } } }` for single 
 
 ### Draft & Publish
 
-Droplets and Lessons use Strapi's draft/publish system (`draftAndPublish: true` in schema) for version control. Enrollments do not (`draftAndPublish: false`). Additionally, Droplet has its own application-level `status` field (draft → edit → published) to track editorial workflow, independent of Strapi's publish state. Both systems work in parallel.
+Strapi Draft & Publish is **off on every content type** (`draftAndPublish: false`), turned off in ODY-633 ahead of Strapi v5, where `status` is reserved on D&P types. Visibility is controlled only by Odyssey fields:
+
+- Droplet: `status` (draft → edit → published) and `isHidden`
+- Voyage: `status` and `isArchived`
+- Playlist: `isPublic` and `isArchived`
+
+Droplet `isHidden`/`status` and voyage `isArchived` only filter listings: `/d/[slug]` and its lesson pages stay reachable by URL (ODY-660). Voyage `status` (non-staff) and playlist `isPublic` (non-enrolled) do gate their slug pages. Lessons have no visibility field. Don't send `publicationState` or `publishedAt`. New content types must set `draftAndPublish: false`, since the admin's Content-Type Builder turns it on by default and turning it off later triggers the hard delete below.
+
+**Gotcha:** in Strapi v4, turning D&P off on a content type hard-deletes every row with `published_at IS NULL` on the next boot, before migrations run. Back-fill `published_at` first. See `scripts/ody-633/` and `docs/playbooks/strapi-prod-migration-day.md`.
 
 ## Database
 
