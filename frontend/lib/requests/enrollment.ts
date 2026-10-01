@@ -9,6 +9,7 @@ import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidateTag } from "next/cache";
+import { updateDropletAverageRating } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { DropletEnrollmentSchema } from "../validations/enrollment";
 import { z } from "zod";
@@ -198,7 +199,10 @@ export async function changeEnrollmentRating(
     const [authorizedUser, enrollment] = await Promise.all([
       getAuthorizedUserByEmail(user.email),
       getEnrollByID(enrollmentID, {
-        populate: { authorizedUser: { fields: ["id"] } },
+        populate: {
+          authorizedUser: { fields: ["id"] },
+          droplet: { fields: ["id"] },
+        },
         fields: ["id", "completionDate"],
       }),
     ]);
@@ -216,6 +220,21 @@ export async function changeEnrollmentRating(
     });
 
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+
+    // Recompute the droplet's average here so clients can't choose the value.
+    // Enrollments of unpublished/deleted droplets have no droplet. A failure
+    // must not turn the saved rating into an error.
+    if (enrollment.droplet) {
+      try {
+        const average = await calculateDropletAverageRating(enrollment.droplet);
+        await updateDropletAverageRating(average, enrollment.droplet.id);
+      } catch (averageError) {
+        console.error(
+          "Error updating droplet average rating after rating:",
+          averageError,
+        );
+      }
+    }
 
     return { success: true };
   } catch (error) {
