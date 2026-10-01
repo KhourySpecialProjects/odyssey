@@ -1,7 +1,11 @@
 "use server";
 
 import { Voyage } from "@/types";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -25,6 +29,7 @@ function strapiHeaders(): Record<string, string> {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    ...STRAPI_RESPONSE_FORMAT_HEADER,
   };
 }
 
@@ -535,7 +540,10 @@ export async function updateVoyageWithNodes(data: {
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
         {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          headers: {
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
         },
       );
       // 404 = already deleted, treat as success.
