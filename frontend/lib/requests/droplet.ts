@@ -1,6 +1,6 @@
 "use server";
 
-import { Droplet } from "@/types";
+import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 import { revalidateTag } from "next/cache";
@@ -13,6 +13,7 @@ import { withAuth, assertOwner } from "../auth/guards";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
+import { planLessonSync, type LessonSyncPlan } from "../lesson-sync";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -997,6 +998,134 @@ export async function duplicateDroplet(dropletId: number) {
   }
 }
 
+/** The message in a Strapi error response, plus the field it points at when there is one. */
+function strapiErrorMessage(body: any, fallback: string): string {
+  const message = body?.error?.message;
+  if (!message) return fallback;
+  const field = body.error.details?.errors?.[0]?.path?.[0];
+  return field ? `${message} (${field})` : message;
+}
+
+/** Sends one lesson PUT or POST. Throws Strapi's error message if the write didn't go through. */
+async function writeLesson(
+  method: "PUT" | "POST",
+  path: string,
+  data: object,
+): Promise<void> {
+  const response = await fetch(STRAPI_API_URL + path, {
+    method,
+    body: JSON.stringify({ data }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    },
+  });
+  // A gateway error page isn't JSON, so don't let a parse error hide the status
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.error) {
+    throw new Error(
+      strapiErrorMessage(body, `Strapi responded with ${response.status}`),
+    );
+  }
+}
+
+/** `lesson "Name": reason`: the part of a publish error that says which lesson failed and why. */
+function lessonFailure(lessonName: string, cause: unknown): string {
+  const reason = cause instanceof Error ? cause.message : String(cause);
+  return `lesson "${lessonName}": ${reason}`;
+}
+
+/**
+ * Writes a lesson sync plan to the original droplet (ODY-622): updates the matched
+ * lessons in place, creates the new ones, then deletes the removed ones.
+ *
+ * Deleting comes last and only runs once every update and create has succeeded, so
+ * a failure never leaves students with fewer lessons than before. Updates and
+ * creates run one at a time and stop at the first failure. Every delete is
+ * attempted before a failure is reported. Publishing again is safe after any
+ * failure: updates are idempotent, and a lesson created earlier is matched by name.
+ *
+ * Throws a message meant for the author. Not exported, so it isn't a server action.
+ */
+async function applyLessonSync(
+  plan: LessonSyncPlan,
+  originalDropletId: number,
+  draftLessons: Pick<Lesson, "id" | "slug">[],
+): Promise<void> {
+  // Send only what changed, and never slug, notes or relations: the lesson keeps
+  // its URL and everything students attached to it.
+  for (const update of plan.updates) {
+    try {
+      await writeLesson(
+        "PUT",
+        `/api/lessons/${update.liveLessonId}`,
+        update.changes,
+      );
+    } catch (error) {
+      throw new Error(
+        `Publishing stopped partway (${lessonFailure(update.name, error)}). No lessons were removed. Publish again to finish.`,
+      );
+    }
+  }
+
+  const draftSlugs = new Map<number, string>(
+    draftLessons.map((lesson): [number, string] => [lesson.id, lesson.slug]),
+  );
+  for (const create of plan.creates) {
+    // Strapi requires a slug on create, but the lesson lifecycle's beforeCreate always
+    // replaces it with one generated from the name, so this value is never stored.
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 10);
+    const placeholderSlug = `${draftSlugs.get(create.draftLessonId) ?? "lesson"}-${timestamp}-${randomSuffix}`;
+
+    try {
+      await writeLesson("POST", "/api/lessons", {
+        ...create.data,
+        slug: placeholderSlug,
+        droplets: [originalDropletId],
+      });
+    } catch (error) {
+      throw new Error(
+        `Publishing stopped partway (${lessonFailure(create.name, error)}). No lessons were removed. Publish again to finish.`,
+      );
+    }
+  }
+
+  const notRemoved: string[] = [];
+  for (const lesson of plan.deletes) {
+    try {
+      const result = await deleteLesson(lesson.liveLessonId, false);
+      // Its catch path returns { error } without ok, so anything but ok === true failed
+      if (result?.ok !== true) {
+        notRemoved.push(
+          lessonFailure(lesson.name, result?.error ?? "unknown error"),
+        );
+      }
+    } catch (error) {
+      notRemoved.push(lessonFailure(lesson.name, error));
+    }
+  }
+  if (notRemoved.length > 0) {
+    throw new Error(
+      `Publishing stopped partway (could not remove ${notRemoved.join("; ")}). Publish again to finish.`,
+    );
+  }
+}
+
+/**
+ * Publishes an [EDIT] draft over the live droplet it was cloned from (ODY-622).
+ *
+ * The live lessons are updated in place instead of being deleted and recreated, so
+ * their ids and slugs, and everything keyed to them (students' viewedLessons, notes,
+ * highlights), survive. Order of operations:
+ *  1. Read the draft and the original fresh, run the guards and plan the lesson
+ *     sync. Nothing is written yet.
+ *  2. Update the original droplet's metadata.
+ *  3. Update the matched lessons, create the new ones, then delete the removed ones.
+ *  4. Move the draft's own enrollments, then delete the draft.
+ * A failure in 2 or 3 returns { ok: false } and keeps the draft, and publishing
+ * again finishes the job.
+ */
 export async function publishDraftToOriginal(
   draftDropletId: number,
   originalDropletId: number,
@@ -1020,31 +1149,41 @@ export async function publishDraftToOriginal(
     if (!authorizedUser) throw new Error("No author identified");
     author = authorizedUser;
 
-    console.log("Fetching draft droplet...");
-    // Fetch the draft droplet with all its data
-    const draftDroplet = await getDropletById<Droplet>(draftDropletId, {
-      fields: ["*"],
+    // Both sides of the lesson sync need every lesson field (content and lineage
+    // included) with the blocks populated.
+    const lessonsPopulate = {
+      fields: ["*"], // Get all lesson fields including blocksV2, blocksVersion and originalLessonId
       populate: {
-        tags: { fields: ["id", "name"] },
-        learningObjectives: { fields: ["*"] },
-        lessons: {
-          fields: ["*"], // Get all lesson fields including blocksV2 and blocksVersion
+        blocks: {
           populate: {
-            blocks: {
-              populate: {
-                questions: {
-                  populate: ["answerOptions"],
-                },
-              },
+            questions: {
+              populate: ["answerOptions"],
             },
           },
-          sort: ["orderIndex:asc"],
         },
-        prerequisites: { fields: ["id", "name", "slug"] },
-        postrequisites: { fields: ["id", "name", "slug"] },
-        nextSteps: { fields: ["*"] },
       },
-    });
+      sort: ["orderIndex:asc"],
+    };
+
+    console.log("Fetching draft droplet...");
+    // Fetch the draft droplet with all its data. Both reads skip the data cache:
+    // lesson autosaves don't revalidate it, so a cached read could hold stale
+    // lessons and the sync would silently skip the author's latest edits.
+    const draftDroplet = await getDropletById<Droplet>(
+      draftDropletId,
+      {
+        fields: ["*"],
+        populate: {
+          tags: { fields: ["id", "name"] },
+          learningObjectives: { fields: ["*"] },
+          lessons: lessonsPopulate,
+          prerequisites: { fields: ["id", "name", "slug"] },
+          postrequisites: { fields: ["id", "name", "slug"] },
+          nextSteps: { fields: ["*"] },
+        },
+      },
+      { fresh: true },
+    );
 
     if (!draftDroplet) {
       throw new Error("Draft droplet not found");
@@ -1052,15 +1191,15 @@ export async function publishDraftToOriginal(
     console.log("Draft droplet fetched:", draftDroplet.id);
 
     console.log("Fetching original droplet...");
-    // Fetch the original droplet to get its lessons for deletion
-    const originalDroplet = await getDropletById<Droplet>(originalDropletId, {
-      fields: ["*"],
-      populate: {
-        lessons: {
-          fields: ["id", "name", "slug"],
-        },
+    // Fetch the original droplet with its lessons, to sync them with the draft's
+    const originalDroplet = await getDropletById<Droplet>(
+      originalDropletId,
+      {
+        fields: ["*"],
+        populate: { lessons: lessonsPopulate },
       },
-    });
+      { fresh: true },
+    );
 
     if (!originalDroplet) {
       throw new Error("Original droplet not found");
@@ -1081,6 +1220,35 @@ export async function publishDraftToOriginal(
       );
     }
 
+    const draftLessons = draftDroplet.lessons ?? [];
+    const originalLessons = originalDroplet.lessons ?? [];
+
+    // An empty draft would delete every live lesson, which is almost certainly a mistake
+    if (draftLessons.length === 0 && originalLessons.length > 0) {
+      throw new Error(
+        "This draft has no lessons. Add at least one lesson before publishing.",
+      );
+    }
+
+    // Decide what to update, create and delete before anything is written
+    const plan = planLessonSync(draftLessons, originalLessons);
+
+    // Strapi would reject an emptied lesson too, but only part way through publishing
+    const emptiedLesson = plan.updates.find(
+      (update) =>
+        Array.isArray(update.changes.blocks) &&
+        update.changes.blocks.length === 0,
+    );
+    if (emptiedLesson) {
+      throw new Error(
+        `Lesson "${emptiedLesson.name}" has no content. Add content or delete the lesson before publishing.`,
+      );
+    }
+
+    console.log(
+      `Lesson sync: ${plan.updates.length} to update, ${plan.unchanged.length} unchanged, ${plan.creates.length} to create, ${plan.deletes.length} to delete`,
+    );
+
     // Fetch draft enrollments before DB writes begin
     draftEnrollments = await fetch(
       `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate[authorizedUser][fields][0]=id`,
@@ -1090,26 +1258,6 @@ export async function publishDraftToOriginal(
         },
       },
     ).then((res) => res.json());
-
-    dbWritesStarted = true;
-
-    // Delete all lessons from the original droplet
-    if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
-      console.log(
-        `Deleting ${originalDroplet.lessons.length} lessons from original droplet`,
-      );
-
-      for (const lesson of originalDroplet.lessons) {
-        try {
-          console.log(`Deleting lesson ${lesson.id}...`);
-          await deleteLesson(lesson.id, false);
-          console.log(`Deleted lesson ${lesson.id}`);
-        } catch (error) {
-          console.error(`Error deleting lesson ${lesson.id}:`, error);
-          // Continue with other lessons even if one fails
-        }
-      }
-    }
 
     // Update the original droplet with draft data
     const updatedName = draftDroplet.name.replace(/^\[EDIT\]\s*/i, "");
@@ -1171,6 +1319,8 @@ export async function publishDraftToOriginal(
       "Updating original droplet with data:",
       JSON.stringify(updateData, null, 2),
     );
+    // The first write: from here on the caches are flushed even if publishing fails
+    dbWritesStarted = true;
     const updateResult = await updateDroplet(originalDropletId, updateData, {
       regenerateSlug: false,
     });
@@ -1183,6 +1333,11 @@ export async function publishDraftToOriginal(
     }
 
     console.log("Updated original droplet successfully");
+
+    // Update the matched lessons in place, create the new ones, then delete the
+    // removed ones. A failure throws before the draft's enrollments are moved or
+    // the draft is deleted, so publishing can simply be tried again.
+    await applyLessonSync(plan, originalDropletId, draftLessons);
 
     try {
       console.log("Updating enrollments to point to original droplet");
@@ -1218,127 +1373,6 @@ export async function publishDraftToOriginal(
       );
     } catch (error) {
       console.error("Error updating enrollments:", error);
-    }
-
-    // Helper function to remove ids from blocks
-    const cleanBlocks = (blocks: any[]): any[] => {
-      if (!Array.isArray(blocks)) return [];
-
-      return blocks.map((block) => {
-        const { id, ...blockWithoutId } = block;
-
-        if (block.__component === "droplets.quiz" && block.questions) {
-          return {
-            ...blockWithoutId,
-            questions: block.questions.map((q: any) => {
-              const { id: qId, ...questionWithoutId } = q;
-              return {
-                ...questionWithoutId,
-                answerOptions:
-                  q.answerOptions?.map((a: any) => {
-                    const { id: aId, ...answerWithoutId } = a;
-                    return answerWithoutId;
-                  }) || [],
-              };
-            }),
-          };
-        }
-
-        if (
-          block.__component === "droplets.open-ended-quiz" &&
-          block.questions
-        ) {
-          return {
-            ...blockWithoutId,
-            questions: block.questions.map((q: any) => {
-              const { id: qId, ...questionWithoutId } = q;
-              return questionWithoutId;
-            }),
-          };
-        }
-
-        return blockWithoutId;
-      });
-    };
-
-    // Create lessons from draft in the original droplet
-    if (draftDroplet.lessons && draftDroplet.lessons.length > 0) {
-      console.log(
-        `Creating ${draftDroplet.lessons.length} lessons in original droplet`,
-      );
-
-      // Sort lessons by orderIndex to ensure correct order
-      const sortedLessons = [...draftDroplet.lessons].sort(
-        (a, b) => a.orderIndex - b.orderIndex,
-      );
-
-      await Promise.all(
-        sortedLessons.map(async (lesson, index) => {
-          // Determine which version of blocks to use
-          const blocksVersion = lesson.blocksVersion || "v1";
-          const isV2 = blocksVersion === "v2";
-
-          console.log(
-            `Lesson: ${lesson.name}, blocksVersion: ${blocksVersion}`,
-          );
-
-          // Generate new unique slug for the lesson
-          const timestamp = Date.now();
-          const randomSuffix = Math.random().toString(36).substring(2, 10);
-
-          // Prepare lesson data based on version
-          const lessonData: any = {
-            name: lesson.name,
-            slug: `${lesson.slug}-${timestamp}-${randomSuffix}`,
-            type: lesson.type,
-            orderIndex: index,
-            blocksVersion: blocksVersion,
-            notes: lesson.notes || null,
-            droplets: [originalDropletId],
-          };
-
-          // Add the appropriate blocks field
-          if (isV2 && lesson.blocksV2) {
-            // For v2 lessons, copy the blocksV2 JSON directly
-            lessonData.blocksV2 = lesson.blocksV2;
-            console.log(
-              `Creating v2 lesson: ${lesson.name} with blocksV2 data`,
-            );
-          } else {
-            // For v1 lessons, clean the blocks array
-            const cleanedBlocks = cleanBlocks(lesson.blocks || []);
-            lessonData.blocks = cleanedBlocks;
-            console.log(
-              `Creating v1 lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
-            );
-          }
-
-          console.log(
-            `Creating lesson: ${lesson.name} with orderIndex: ${index}`,
-          );
-          const response = await fetch(STRAPI_API_URL + "/api/lessons", {
-            method: "POST",
-            body: JSON.stringify({ data: lessonData }),
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            },
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error(
-              "Failed to create lesson:",
-              JSON.stringify(errorData, null, 2),
-            );
-            throw new Error(`Failed to create lesson: ${lesson.name}`);
-          }
-
-          console.log(
-            `Successfully created lesson: ${lesson.name} with orderIndex: ${index}`,
-          );
-        }),
-      );
     }
 
     console.log("Successfully merged lessons, now deleting draft droplet");
