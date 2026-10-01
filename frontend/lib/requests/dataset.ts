@@ -1,7 +1,11 @@
 "use server";
 
 import { Dataset } from "@/types";
-import { fetchAPI, flattenAttributes } from "../utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { datasetSchema, DatasetInput } from "../validations/dataset";
@@ -48,6 +52,7 @@ export async function createDataset(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({ data: validated }),
     });
@@ -99,6 +104,7 @@ export async function deleteDataset(
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );

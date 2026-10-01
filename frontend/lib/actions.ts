@@ -20,7 +20,7 @@ import { claimNodeForUser } from "./requests/voyage-enrollment";
 import { creationRequestSchema } from "./validations/creation-request";
 import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
-import { flattenAttributes } from "@/lib/utils";
+import { flattenAttributes, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -187,6 +187,7 @@ export async function setTimeZone(zone: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -221,6 +222,7 @@ export async function deleteReport(id: string) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
   });
 
@@ -244,6 +246,7 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -391,6 +394,7 @@ export async function createAccessRequest(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -423,6 +427,7 @@ export async function deleteAccessRequest(formData: FormData) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -457,6 +462,7 @@ export async function createCreationRequest(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -506,6 +512,7 @@ export async function approveCreationRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -530,6 +537,7 @@ export async function approveCreationRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -565,6 +573,7 @@ export async function approveCreationRequest(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -595,6 +604,7 @@ export async function approveCreationRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -612,6 +622,7 @@ export async function approveCreationRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -664,6 +675,7 @@ export async function deleteCreationRequest(requestId: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -719,6 +731,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
         {
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
         },
@@ -873,6 +886,7 @@ export async function fetchCreationRequestByUser(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
       },

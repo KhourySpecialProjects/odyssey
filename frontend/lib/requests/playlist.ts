@@ -2,7 +2,7 @@
 
 import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
@@ -156,6 +156,7 @@ export async function updatePlaylist(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -216,6 +217,7 @@ export async function createPlaylist(data: {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -258,6 +260,7 @@ export async function deletePlaylist(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -320,6 +323,7 @@ export async function archivePlaylist(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: { isArchived: archiveState } }),
       },

@@ -19,6 +19,7 @@ import {
   youtubeUrlToEmbeddedUrl,
   embeddedUrlToYoutubeUrl,
   isContentEditor,
+  STRAPI_RESPONSE_FORMAT_HEADER,
 } from "@/lib/utils";
 
 global.fetch = jest.fn();
@@ -130,9 +131,23 @@ describe("utils", () => {
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer test-token",
+              "Strapi-Response-Format": "v4",
             },
           }),
         );
+      });
+
+      it("asks Strapi for the v4 response format so flattenAttributes keeps working on v5", async () => {
+        mockFetch.mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ data: [] }),
+        } as unknown as Response);
+
+        await fetchAPI("/droplets", { next: { tags: ["droplets"] } });
+
+        const [, init] = mockFetch.mock.calls[0];
+        expect(init.headers).toMatchObject(STRAPI_RESPONSE_FORMAT_HEADER);
+        expect(init.headers["Strapi-Response-Format"]).toBe("v4");
       });
 
       it("should handle API errors", async () => {

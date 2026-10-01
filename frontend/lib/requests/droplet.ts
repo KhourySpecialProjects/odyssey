@@ -2,7 +2,7 @@
 
 import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
 import { deleteLesson } from "./lesson";
 import { DropletSchema } from "../validations/droplet";
@@ -193,6 +193,7 @@ export async function updateDropletAverageRating(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -227,6 +228,7 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -273,6 +275,7 @@ export async function deepDeleteDroplet(id: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -346,6 +349,7 @@ export async function updateDroplet(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const responseData = await response.json();
@@ -448,6 +452,7 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -502,6 +507,7 @@ export async function createNewTag(tag: string) {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -592,6 +598,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -678,6 +685,7 @@ export async function duplicateDroplet(dropletId: number) {
       const existingDraftsResponse = await fetch(url, {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       });
 
@@ -794,6 +802,7 @@ export async function duplicateDroplet(dropletId: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -949,6 +958,7 @@ export async function duplicateDroplet(dropletId: number) {
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
           });
 
@@ -1018,6 +1028,7 @@ async function writeLesson(
     headers: {
       "Content-Type": "application/json",
       Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
   });
   // A gateway error page isn't JSON, so don't let a parse error hide the status
@@ -1255,6 +1266,7 @@ export async function publishDraftToOriginal(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     ).then((res) => res.json());
@@ -1352,6 +1364,7 @@ export async function publishDraftToOriginal(
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+                ...STRAPI_RESPONSE_FORMAT_HEADER,
               },
               body: JSON.stringify({
                 data: {
@@ -1452,6 +1465,7 @@ export async function favoriteDroplet(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -1489,6 +1503,7 @@ export async function favoriteDroplet(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -1546,6 +1561,7 @@ export async function updateDropletLearningObjective(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {

@@ -76,6 +76,15 @@ function withoutPaginationCount(urlParams?: object): object {
   };
 }
 
+/**
+ * Asks Strapi v5 to keep answering in the v4 response shape (`data.attributes`),
+ * which flattenAttributes relies on. Strapi v4 ignores it. Spread it into the
+ * headers of every request to Strapi.
+ */
+export const STRAPI_RESPONSE_FORMAT_HEADER = {
+  "Strapi-Response-Format": "v4",
+} as const;
+
 export async function fetchAPI<T>(
   path: string,
   config: {
@@ -100,6 +109,7 @@ export async function fetchAPI<T>(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       ...config.options,
       ...(config.cache && { cache: config.cache }),

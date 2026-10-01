@@ -2,7 +2,7 @@
 
 import { Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { CACHE_TAGS } from "../cache-tags";
 import { revalidateTag } from "next/cache";
 
@@ -123,6 +123,7 @@ export async function deleteHighlight(id: number, authorizedUserId: number) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
   });
 
@@ -174,6 +175,7 @@ export async function createHighlight(highlightData: any) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
     body: JSON.stringify({ data: highlightData.data }),
   });

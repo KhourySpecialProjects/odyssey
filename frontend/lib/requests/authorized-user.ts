@@ -1,5 +1,9 @@
 "use server";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { revalidateTag } from "next/cache";
@@ -134,7 +138,10 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       const response = await fetch(
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
         {
-          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          headers: {
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
           next: { tags: [CACHE_TAGS.users], revalidate: 900 },
         },
       );
@@ -286,7 +293,10 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
@@ -352,7 +362,10 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
@@ -395,7 +408,10 @@ export async function fetchIsAuthorizedUser(email: string) {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.users], revalidate: 900 },
       },
     );
@@ -477,6 +493,7 @@ export async function createAuthorizedUser(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -530,6 +547,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
           },
         );
@@ -663,6 +681,7 @@ export async function updateUserInfo(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data }),
       },
@@ -717,6 +736,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -766,7 +786,10 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
       {
-        headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
