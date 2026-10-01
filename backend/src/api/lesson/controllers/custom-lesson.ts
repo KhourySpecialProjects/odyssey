@@ -25,7 +25,7 @@ async function findLessonWithLock(id: number): Promise<LessonWithLock | null> {
       fields: ["lockedAt"],
       populate: { lockedBy: { fields: ["id", "firstName", "lastName"] } },
     }
-  )) as LessonWithLock | null;
+  )) as unknown as LessonWithLock | null;
 }
 
 export default {

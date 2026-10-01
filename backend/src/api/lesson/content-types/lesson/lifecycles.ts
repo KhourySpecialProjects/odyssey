@@ -27,7 +27,7 @@ module.exports = {
         'api::lesson.lesson',
         event.params.where.id,
         { fields: ['blocksV2'], populate: { blocks: true } }
-      )) as Lesson | null;
+      )) as unknown as Lesson | null;
 
       const finalBlocks = 'blocks' in data ? data.blocks : existing?.blocks;
       const finalBlocksV2 = 'blocksV2' in data ? data.blocksV2 : existing?.blocksV2;
