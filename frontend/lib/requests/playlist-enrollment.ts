@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -38,6 +39,7 @@ export async function togglePlaylistEnrollment(playlistId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -83,6 +85,7 @@ export async function enrollInPlaylist(playlistId: number, userId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {

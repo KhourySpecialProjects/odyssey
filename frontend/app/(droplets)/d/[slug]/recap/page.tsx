@@ -84,7 +84,7 @@ export default async function DropletRecapRoute({ params }: Props) {
           page: 1,
           pageSize: 4,
         },
-        populate: { tags: { populate: "*" } },
+        populate: { tags: { fields: ["name", "slug"] } },
       }),
       getCachedUser(currentUser.email),
       getCachedEnrollmentsWithLessonIds(userId),

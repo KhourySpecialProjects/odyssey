@@ -207,6 +207,7 @@ export type Lesson = {
   droplets: Droplet[];
   notes: string;
   orderIndex: number;
+  originalLessonId?: number | null; // [EDIT]-draft lessons only: id of the live lesson this was cloned from
 };
 
 export type Tag = {

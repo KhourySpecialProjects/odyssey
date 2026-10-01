@@ -9,7 +9,10 @@ import {
   isLessonQuizCompleted,
   markLessonQuizCompleted,
 } from "@/lib/quiz-storage";
-import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import {
+  useViewedLessonIds,
+  useViewedLessonsStore,
+} from "@/stores/viewed-lessons-store";
 import { toast } from "sonner";
 
 type PaginationProps = {
@@ -34,11 +37,9 @@ export default function DropletFooter({
   const [isPending, startTransition] = useTransition();
   const markViewed = useViewedLessonsStore((s) => s.markViewed);
   const unmarkViewed = useViewedLessonsStore((s) => s.unmarkViewed);
-  const pendingViewedIds = useViewedLessonsStore((s) => s.pendingViewedIds);
   // Includes lessons whose save is still in flight (see viewed-lessons-store)
-  const isViewed = (lessonId: number) =>
-    completedLessonIds.includes(lessonId) ||
-    pendingViewedIds.includes(lessonId);
+  const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
+  const isViewed = (lessonId: number) => viewedLessonIds.includes(lessonId);
 
   /**
    * Saves the current lesson as viewed. Returns true when server data changed
@@ -52,7 +53,7 @@ export default function DropletFooter({
 
     const lessonId = currentLessonId;
     // Show it as viewed in the sidebar right away; see viewed-lessons-store.
-    markViewed(lessonId);
+    markViewed(enrollmentId, lessonId);
     const result = await updateViewedLessons(
       enrollmentId,
       lessonId,
@@ -60,7 +61,7 @@ export default function DropletFooter({
     ).catch(() => ({ success: false as const }));
 
     if (!result.success) {
-      unmarkViewed(lessonId);
+      unmarkViewed(enrollmentId, lessonId);
       toast.error("Couldn't save your progress on this lesson.");
       return false;
     }

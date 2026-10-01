@@ -1,36 +1,17 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import type * as Highlighter from "./highlighter";
+import {
+  getLoadedHighlighter,
+  loadHighlighter,
+  type HighlighterModule,
+} from "./load-highlighter";
 import { Highlight, HighlightColor } from "@/types";
 import { SelectionToolbar } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
-
-type HighlighterModule = typeof Highlighter;
-
-// highlight.js is only fetched once a block actually renders code. The loaded
-// module is shared by every block so later renders highlight synchronously.
-let loadedHighlighter: HighlighterModule | null = null;
-let highlighterPromise: Promise<HighlighterModule> | null = null;
-
-function loadHighlighter(): Promise<HighlighterModule> {
-  if (!highlighterPromise) {
-    highlighterPromise = import("./highlighter")
-      .then((mod) => {
-        loadedHighlighter = mod;
-        return mod;
-      })
-      .catch((error) => {
-        // Allow a later render to retry (e.g. after a transient chunk failure)
-        highlighterPromise = null;
-        throw error;
-      });
-  }
-  return highlighterPromise;
-}
 
 interface Block {
   content: string;
@@ -374,7 +355,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return codeBlocks.length > 0;
     };
 
-    const highlighter = loadedHighlighter;
+    const highlighter = getLoadedHighlighter();
     const hasCodeBlocks = renderContent(highlighter);
     if (!hasCodeBlocks) return;
 

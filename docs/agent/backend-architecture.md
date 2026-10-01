@@ -73,7 +73,7 @@ Droplet
 ├── inReview: boolean
 ├── afterReview: text
 │
-├── lessons → many-to-many Lesson (via droplet-lesson join table with orderIndex)
+├── lessons → many-to-many Lesson (direct relation; order comes from Lesson.orderIndex)
 ├── tags → many-to-many Tag
 ├── prerequisites → many-to-many Droplet (self-referential)
 ├── postrequisites → many-to-many Droplet (inverse of prerequisites)
@@ -100,6 +100,7 @@ Lesson
 ├── blocks: dynamiczone (v1 TipTap — components: generic, video, quiz, callout, expandable, open-ended-quiz)
 ├── blocksV2: json (v2 BlockNote JSON — newer format)
 ├── orderIndex: integer (ordering within a droplet)
+├── originalLessonId: integer (set on [EDIT]-draft lessons: id of the live lesson it was cloned from)
 │
 ├── droplets → many-to-many Droplet
 ├── enrollments → many-to-many Enrollment (via viewedLessons)
@@ -194,6 +195,8 @@ Strapi Draft & Publish is **off on every content type** (`draftAndPublish: false
 Droplet `isHidden`/`status` and voyage `isArchived` only filter listings: `/d/[slug]` and its lesson pages stay reachable by URL (ODY-660). Voyage `status` (non-staff) and playlist `isPublic` (non-enrolled) do gate their slug pages. Lessons have no visibility field. Don't send `publicationState` or `publishedAt`. New content types must set `draftAndPublish: false`, since the admin's Content-Type Builder turns it on by default and turning it off later triggers the hard delete below.
 
 **Gotcha:** in Strapi v4, turning D&P off on a content type hard-deletes every row with `published_at IS NULL` on the next boot, before migrations run. Back-fill `published_at` first. See `scripts/ody-633/` and `docs/playbooks/strapi-prod-migration-day.md`.
+
+Publishing an `[EDIT]` draft (`publishDraftToOriginal`) syncs lessons in place instead of recreating them. Each draft lesson is matched to a live lesson by `originalLessonId` (recorded when `duplicateDroplet` clones the draft), then by exact name; position is never used. A matched lesson is updated with only the fields that changed, so it keeps its id and slug (even if renamed) and everything keyed to it: students' `viewedLessons`, notes and highlights. Slugs of kept lessons never change. Draft lessons with no match are created, and live lessons missing from the draft are deleted. Writes happen in this order: the droplet's metadata, lesson updates, lesson creates, lesson deletes, and only then the draft's own enrollments move and the draft is deleted. Deletes run last, after every update and create has succeeded, so a failure part way never leaves students with fewer lessons; it returns `{ ok: false }`, keeps the draft, and publishing again finishes the job.
 
 ## Database
 

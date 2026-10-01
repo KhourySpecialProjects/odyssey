@@ -1,5 +1,5 @@
 "use server";
-import { flattenAttributes } from "@/lib/utils";
+import { flattenAttributes, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { AuthorizedUser, Friendship } from "@/types";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
@@ -58,7 +58,10 @@ export async function fetchFriends(
       const response = await fetch(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
         {
-          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+          headers: {
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
           next: {
             tags: [CACHE_TAGS.friendships(authorizedUser.id)],
             revalidate: 900,
@@ -125,7 +128,10 @@ export async function getSentRequestIds(
       const response = await fetch(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
         {
-          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+          headers: {
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
           next: {
             tags: [CACHE_TAGS.friendships(requester.id)],
             revalidate: 900,
@@ -163,6 +169,7 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -178,6 +185,7 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -216,6 +224,7 @@ export async function sendFriendRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -240,6 +249,7 @@ export async function sendFriendRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -276,6 +286,7 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -312,6 +323,7 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -347,6 +359,7 @@ export async function unblockUser(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -382,6 +395,7 @@ export async function BlockUser(userId: number, requestId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -437,6 +451,7 @@ export async function removeFriend(userId: number, friendId: number) {
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -456,6 +471,7 @@ export async function removeFriend(userId: number, friendId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -523,7 +539,10 @@ export async function fetchFriendshipsById(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.friendships(userId)], revalidate: 900 },
       },
     );
@@ -582,7 +601,10 @@ export async function fetchFriendshipsByUserIds(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: {
           tags: userIds.map((id) => CACHE_TAGS.friendships(id)),
           revalidate: 900,

@@ -2,7 +2,7 @@
 
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
@@ -802,6 +802,7 @@ export async function assignDropletDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -824,6 +825,7 @@ export async function assignDropletDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -923,6 +925,7 @@ export async function assignPlaylistDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -945,6 +948,7 @@ export async function assignPlaylistDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -1094,6 +1098,7 @@ export async function deleteGroup(id: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -1150,6 +1155,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({ data: { isArchived: archiveState } }),
     });

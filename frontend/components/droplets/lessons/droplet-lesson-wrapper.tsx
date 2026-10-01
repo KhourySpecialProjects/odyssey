@@ -15,6 +15,7 @@ import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
 import { IconX } from "@tabler/icons-react";
 import DropletFooter from "../footer";
+import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
 
 // NotesBar pulls in TipTap/ProseMirror for every note, so it's loaded on demand.
 // The fallback matches its header row while the chunk loads.
@@ -56,6 +57,9 @@ export function DropletLessonWrapper({
   initialNotes,
   initialHighlights,
 }: DropletLessonWrapperProps) {
+  // Includes lessons whose save is still in flight, so the next lesson isn't
+  // shown as locked (and its quiz gate skipped) while "Next" saves.
+  const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [expanded, setExpanded] = useState(false);
   // NotesBar isn't mounted until the panel is first opened, then stays mounted
@@ -100,7 +104,7 @@ export function DropletLessonWrapper({
             lesson={lesson}
             droplet={droplet}
             enrollmentId={enrollmentId}
-            completedLessonIds={completedLessonIds}
+            completedLessonIds={viewedLessonIds}
             user={user}
             author={author}
             authUser={authUser}
@@ -113,7 +117,7 @@ export function DropletLessonWrapper({
             droplet={droplet}
             enrollmentId={enrollmentId}
             currentLessonId={lesson.id}
-            completedLessonIds={completedLessonIds}
+            completedLessonIds={viewedLessonIds}
           />
         </div>
         {enrollmentId && (

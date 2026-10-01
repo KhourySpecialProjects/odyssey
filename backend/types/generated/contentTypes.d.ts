@@ -1322,6 +1322,7 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
       }>;
     notes: Schema.Attribute.Relation<'oneToMany', 'api::note.note'>;
     orderIndex: Schema.Attribute.Integer;
+    originalLessonId: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     type: Schema.Attribute.Enumeration<

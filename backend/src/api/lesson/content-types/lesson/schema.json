@@ -88,6 +88,9 @@
     "orderIndex": {
       "type": "integer"
     },
+    "originalLessonId": {
+      "type": "integer"
+    },
     "lockedBy": {
       "type": "relation",
       "relation": "oneToOne",

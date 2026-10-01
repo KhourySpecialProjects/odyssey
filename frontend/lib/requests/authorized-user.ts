@@ -1,5 +1,9 @@
 "use server";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { revalidateTag } from "next/cache";
@@ -109,7 +113,8 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["id"],
+        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
+        sort: ["createdAt", "id"],
         fields: [
           "id",
           "email",
@@ -134,7 +139,10 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       const response = await fetch(
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
         {
-          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          headers: {
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
           next: { tags: [CACHE_TAGS.users], revalidate: 900 },
         },
       );
@@ -286,7 +294,10 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
@@ -352,7 +363,10 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
@@ -395,7 +409,10 @@ export async function fetchIsAuthorizedUser(email: string) {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.users], revalidate: 900 },
       },
     );
@@ -411,6 +428,16 @@ export async function fetchIsAuthorizedUser(email: string) {
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
+
+// Roles that may create plain User accounts. These are the roles that can
+// manage groups / reach /faculty, and they can only ever create the User role;
+// assigning any other role stays System Admin only.
+const USER_PROVISIONING_ROLES = [
+  AuthorizedUserRoleTitle.SysAdmin,
+  AuthorizedUserRoleTitle.Faculty,
+  AuthorizedUserRoleTitle.ContentCreator,
+];
+
 export async function createAuthorizedUser(
   formData: FormData,
   roleID?: number,
@@ -419,8 +446,14 @@ export async function createAuthorizedUser(
   // Every export in this "use server" module is a callable endpoint, so the
   // caller-supplied `roleID` is attacker-controlled input. Without this gate a
   // signed-in user could invoke this action directly and mint an account
-  // holding any role, including System Admin.
-  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  // holding any role, including System Admin. So an explicit `roleID` requires
+  // System Admin; without one the account gets the User role, which the
+  // provisioning roles may create.
+  const auth = await requireRole(
+    roleID === undefined
+      ? USER_PROVISIONING_ROLES
+      : [AuthorizedUserRoleTitle.SysAdmin],
+  );
   if (!auth.ok) {
     return { ok: false, error: auth.error, data: null };
   }
@@ -461,6 +494,7 @@ export async function createAuthorizedUser(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -477,8 +511,9 @@ export async function createAuthorizedUser(
 }
 
 export async function createBatchAuthorizedUsers(emails: string[]) {
-  // --- Auth gate --- bulk-provisioning accounts is a System Admin operation.
-  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  // --- Auth gate --- this always assigns the User role, so the provisioning
+  // roles may call it (no caller-chosen role to escalate with).
+  const auth = await requireRole(USER_PROVISIONING_ROLES);
   if (!auth.ok) {
     return { ok: false, error: auth.error, data: null };
   }
@@ -513,6 +548,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
           },
         );
@@ -646,6 +682,7 @@ export async function updateUserInfo(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data }),
       },
@@ -700,6 +737,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -749,7 +787,10 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
       {
-        headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
@@ -777,6 +818,11 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
 export async function resolveEmailsToUserIds(
   emails: string[],
 ): Promise<number[]> {
+  // Creates User-role accounts for missing emails, so gate on the provisioning
+  // roles. Throw: the return type has no error channel and callers catch.
+  const auth = await requireRole(USER_PROVISIONING_ROLES);
+  if (!auth.ok) throw new Error(auth.error);
+
   if (emails.length === 0) return [];
 
   const existingUsers = await getAuthorizedUsersByEmails(emails);
@@ -788,16 +834,17 @@ export async function resolveEmailsToUserIds(
   );
 
   if (missingEmails.length > 0) {
-    const roleID = await getAuthorizedUserRoleIdByTitle(
-      AuthorizedUserRoleTitle.User,
-    );
     await Promise.all(
       missingEmails.map(async (email) => {
         try {
           const formData = new FormData();
           formData.append("email", email);
           formData.append("isEnabled", "true");
-          await createAuthorizedUser(formData, roleID);
+          // No roleID: the account gets the User role.
+          const result = await createAuthorizedUser(formData);
+          if (!result.ok) {
+            console.error(`Failed to create user: ${email}`, result);
+          }
         } catch (error) {
           console.error(`Failed to create user: ${email}`, error);
         }

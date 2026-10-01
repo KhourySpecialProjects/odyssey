@@ -1,7 +1,11 @@
 "use server";
 
 import { VoyageEnrollment, VoyageNode, VoyageNodeCompletion } from "@/types";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "@/lib/utils";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
@@ -193,6 +197,7 @@ export async function enrollInVoyage(voyageId: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -253,6 +258,7 @@ export async function enrollInVoyageDirect(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -340,6 +346,7 @@ export async function unenrollFromVoyage(voyageId: number) {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
           },
         ),
@@ -353,6 +360,7 @@ export async function unenrollFromVoyage(voyageId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -494,6 +502,7 @@ export async function markVoyageNodeComplete(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -592,6 +601,7 @@ export async function markVoyageNodeComplete(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: { completionPercentage: newPercentage },
@@ -918,6 +928,7 @@ export async function claimNodeForUser(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -961,6 +972,7 @@ export async function claimNodeForUser(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -1019,6 +1031,7 @@ export async function unclaimVoyageDropletNode(voyageNodeId: number) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
     body: JSON.stringify({
       data: { droplet: null, claimedBy: null, claimStatus: "unclaimed" },
