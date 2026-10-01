@@ -16,12 +16,14 @@ import {
   createAuthorizedUser,
   createBatchAuthorizedUsers,
   deleteAuthorizedUser,
+  resolveEmailsToUserIds,
   updateUserInfo,
 } from "@/lib/requests/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
 import { requireRole } from "@/lib/auth/require-role";
 import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { fetchAPI } from "@/lib/utils";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -139,6 +141,119 @@ describe("privilege escalation — createAuthorizedUser", () => {
 
     expect(result.ok).toBe(true);
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+const FACULTY_USER = {
+  id: 10,
+  email: "prof@northeastern.edu",
+  roles: [AuthorizedUserRoleTitle.Faculty],
+};
+const CONTENT_CREATOR_USER = {
+  id: 11,
+  email: "creator@northeastern.edu",
+  roles: [AuthorizedUserRoleTitle.ContentCreator],
+};
+/** The id of the plain User role (what getAuthorizedUserRoleIdByTitle mocks). */
+const USER_ROLE_ID = 4;
+
+describe("createAuthorizedUser — plain User accounts for provisioning roles", () => {
+  it.each([
+    ["Faculty", FACULTY_USER],
+    ["Content Creator", CONTENT_CREATOR_USER],
+  ])("lets %s create a User-role account with no roleID", async (_n, user) => {
+    signInAs(user);
+    mockFetch.mockResolvedValue(makeFetchResponse({ data: { id: 7 } }));
+
+    const result = await createAuthorizedUser(userFormData());
+
+    expect(result.ok).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(mockFetch.mock.calls[0][1]?.body));
+    expect(body.data.roles).toEqual({ set: [{ id: USER_ROLE_ID }] });
+  });
+
+  it.each([
+    ["Faculty", FACULTY_USER],
+    ["Content Creator", CONTENT_CREATOR_USER],
+  ])("still rejects %s passing an explicit roleID", async (_n, user) => {
+    signInAs(user);
+
+    const result = await createAuthorizedUser(
+      userFormData(),
+      SYS_ADMIN_ROLE_ID,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("forbidden");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects an ordinary user with no roleID", async () => {
+    signInAs(ORDINARY_USER);
+
+    const result = await createAuthorizedUser(userFormData());
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("forbidden");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("createBatchAuthorizedUsers — provisioning roles", () => {
+  it("lets Faculty bulk-create User accounts", async () => {
+    signInAs(FACULTY_USER);
+    mockFetch.mockResolvedValue(makeFetchResponse({ data: { id: 7 } }));
+
+    const result = await createBatchAuthorizedUsers(["a@northeastern.edu"]);
+
+    expect(result.ok).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("resolveEmailsToUserIds", () => {
+  it("as Faculty, creates missing users with the User role and returns all ids", async () => {
+    signInAs(FACULTY_USER);
+    jest
+      .mocked(fetchAPI)
+      .mockResolvedValueOnce([{ id: 1, email: "old@northeastern.edu" }])
+      .mockResolvedValueOnce([{ id: 2, email: "new@northeastern.edu" }]);
+    mockFetch.mockResolvedValue(makeFetchResponse({ data: { id: 2 } }));
+
+    const ids = await resolveEmailsToUserIds([
+      "old@northeastern.edu",
+      "new@northeastern.edu",
+    ]);
+
+    expect(ids).toEqual([1, 2]);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(mockFetch.mock.calls[0][1]?.body));
+    expect(body.data.email).toBe("new@northeastern.edu");
+    expect(body.data.roles).toEqual({ set: [{ id: USER_ROLE_ID }] });
+  });
+
+  it("logs instead of silently dropping a failed creation", async () => {
+    signInAs(FACULTY_USER);
+    jest.mocked(fetchAPI).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    mockFetch.mockResolvedValue(
+      makeFetchResponse({ error: { message: "nope" } }, 400),
+    );
+
+    await resolveEmailsToUserIds(["new@northeastern.edu"]);
+
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it("throws for an ordinary user and makes no request", async () => {
+    signInAs(ORDINARY_USER);
+
+    await expect(
+      resolveEmailsToUserIds(["new@northeastern.edu"]),
+    ).rejects.toThrow();
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(fetchAPI).not.toHaveBeenCalled();
   });
 });
 
