@@ -626,31 +626,37 @@ export async function duplicateDroplet(dropletId: number) {
     });
     if (!author) throw new Error("No author identified");
 
-    // Fetch the original droplet with all its data
-    const originalDroplet = await getDropletById<Droplet>(dropletId, {
-      fields: ["*"],
-      populate: {
-        tags: true,
-        learningObjectives: true,
-        authorized_users: { fields: ["id"] },
-        lessons: {
-          fields: ["*"], // Add this to get all lesson fields including blocksV2 and blocksVersion
-          populate: {
-            blocks: {
-              populate: {
-                questions: {
-                  populate: ["answerOptions"],
+    // Fetch the original droplet with all its data. Read it fresh: edits made
+    // directly to a live droplet autosave without revalidating, so a cached read
+    // could clone stale content that publish would later write back.
+    const originalDroplet = await getDropletById<Droplet>(
+      dropletId,
+      {
+        fields: ["*"],
+        populate: {
+          tags: true,
+          learningObjectives: true,
+          authorized_users: { fields: ["id"] },
+          lessons: {
+            fields: ["*"], // Add this to get all lesson fields including blocksV2 and blocksVersion
+            populate: {
+              blocks: {
+                populate: {
+                  questions: {
+                    populate: ["answerOptions"],
+                  },
                 },
               },
             },
+            sort: ["orderIndex:asc"],
           },
-          sort: ["orderIndex:asc"],
+          prerequisites: true,
+          postrequisites: true,
+          nextSteps: true,
         },
-        prerequisites: true,
-        postrequisites: true,
-        nextSteps: true,
       },
-    });
+      { fresh: true },
+    );
 
     if (!originalDroplet) {
       throw new Error("Original droplet not found");
@@ -915,6 +921,9 @@ export async function duplicateDroplet(dropletId: number) {
             blocksVersion: blocksVersion,
             notes: lesson.notes || null,
             droplets: [newDropletId],
+            // Lineage: lets publish match this clone back to the live lesson it
+            // came from, so that lesson keeps its id and its students' progress.
+            originalLessonId: lesson.id,
           };
 
           // Add the appropriate blocks field

@@ -726,6 +726,8 @@ describe("droplet-coverage — duplicateDroplet", () => {
     const lessonBody = JSON.parse(lessonPost[1]?.body as string);
     expect(lessonBody.data.blocksV2).toBeDefined();
     expect(lessonBody.data.blocksVersion).toBe("v2");
+    // Lineage: the clone remembers which live lesson it came from
+    expect(lessonBody.data.originalLessonId).toBe(10);
   });
 
   it("creates new draft and duplicates v1 lessons with quiz blocks (lines 729-746)", async () => {
@@ -781,6 +783,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(
       lessonBody.data.blocks[0].questions[0].answerOptions[0],
     ).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(20);
   });
 
   it("creates new draft and duplicates v1 lessons with callout blocks (lines 761-781)", async () => {
@@ -831,6 +834,30 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(calloutBlock).not.toHaveProperty("id");
     expect(calloutBlock.content[0]).not.toHaveProperty("id");
     expect(calloutBlock.content[0].children[0]).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(30);
+  });
+
+  it("reads the original droplet fresh, bypassing the data cache", async () => {
+    // Direct edits to a live droplet autosave without revalidating. A cached read
+    // could clone stale content, and publishing would then revert those edits.
+    getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+    getMockedFetchAPI().mockResolvedValueOnce(
+      makeDroplet({ id: 1, name: "Original", lessons: [] }),
+    );
+    // No existing drafts
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+    // POST droplet
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 99 } }));
+
+    const result = await duplicateDroplet(1);
+
+    expect(result.ok).toBe(true);
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/1");
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
   });
 
   it("returns error when droplet POST fails (lines 702-710)", async () => {
