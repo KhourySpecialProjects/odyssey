@@ -35,6 +35,7 @@
  */
 
 import {
+  getDropletById,
   deepDeleteDroplet,
   updateDroplet,
   archiveDroplet,
@@ -45,6 +46,7 @@ import {
   favoriteDroplet,
   updateDropletLearningObjective,
 } from "@/lib/requests/droplet";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { DropletDifficulty, LearningObjective, Resource } from "@/types";
 import { revalidateTag } from "next/cache";
 import {
@@ -101,6 +103,69 @@ function getMockedFetchAPI() {
 function getMockedDeleteLesson() {
   return jest.requireMock("@/lib/requests/lesson").deleteLesson;
 }
+
+// ─── getDropletById ──────────────────────────────────────────────────────────
+
+describe("droplet-coverage — getDropletById", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("reads through the data cache by default", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce(makeDroplet({ id: 7 }));
+
+    await getDropletById(7);
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/7");
+    expect(options).toEqual(
+      expect.objectContaining({
+        next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
+      }),
+    );
+    expect(options).not.toHaveProperty("cache");
+  });
+
+  it("skips the data cache when fresh is set, and never passes next with it", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce(makeDroplet({ id: 7 }));
+
+    await getDropletById(7, {}, { fresh: true });
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets/7");
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
+  });
+
+  it("builds the same query whether or not the read is fresh", async () => {
+    const params = {
+      populate: { lessons: { fields: ["*"] } },
+      fields: ["name"],
+    };
+    getMockedFetchAPI().mockResolvedValue(makeDroplet({ id: 7 }));
+
+    await getDropletById(7, params);
+    await getDropletById(7, params, { fresh: true });
+
+    const [, cachedOptions] = getMockedFetchAPI().mock.calls[0];
+    const [, freshOptions] = getMockedFetchAPI().mock.calls[1];
+    expect(freshOptions.urlParams).toEqual(cachedOptions.urlParams);
+    expect(freshOptions.urlParams).toEqual(
+      expect.objectContaining({
+        populate: params.populate,
+        fields: params.fields,
+      }),
+    );
+  });
+
+  it("returns whatever fetchAPI resolves with", async () => {
+    const droplet = makeDroplet({ id: 7, name: "Fresh read" });
+    getMockedFetchAPI().mockResolvedValueOnce(droplet);
+
+    await expect(getDropletById(7, {}, { fresh: true })).resolves.toBe(droplet);
+  });
+});
 
 // ─── deepDeleteDroplet ───────────────────────────────────────────────────────
 

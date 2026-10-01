@@ -94,6 +94,14 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   }).then((droplets) => droplets[0]);
 }
 
+/**
+ * Gets the desired Droplet by its id.
+ * @param id The id of the desired Droplet.
+ * @param options Strapi query modifiers.
+ * @param fresh Skip the data cache. Publishing an edit diffs the latest saved
+ * lessons, and lesson autosaves skip revalidation, so a cached read can be stale.
+ * @returns The Droplet.
+ */
 export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   id: number,
   {
@@ -102,6 +110,7 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
     populate = { "*": true },
     fields = ["*", "isHidden", "originalDropletId"],
   }: StrapiRequestParams = {},
+  { fresh = false }: { fresh?: boolean } = {},
 ): Promise<T> {
   const path = `/droplets/${id}`;
   const urlParams = {
@@ -117,7 +126,9 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
 
   return await fetchAPI<T>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
+    ...(fresh
+      ? { cache: "no-store" as const }
+      : { next: { tags: [CACHE_TAGS.droplets], revalidate: 900 } }),
   }).then((droplet) => droplet);
 }
 
