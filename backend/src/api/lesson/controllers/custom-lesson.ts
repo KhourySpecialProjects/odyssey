@@ -1,4 +1,4 @@
-import { Strapi } from "@strapi/strapi";
+import type { Core } from "@strapi/strapi";
 
 const LOCK_TIMEOUT_MS = 60_000; // 60 seconds — lock expires if no heartbeat
 
@@ -13,8 +13,8 @@ type LessonWithLock = {
   lockedBy: { id: number; firstName: string; lastName: string } | null;
 };
 
-function getStrapi(): Strapi {
-  return (global as unknown as { strapi: Strapi }).strapi;
+function getStrapi(): Core.Strapi {
+  return (global as unknown as { strapi: Core.Strapi }).strapi;
 }
 
 async function findLessonWithLock(id: number): Promise<LessonWithLock | null> {

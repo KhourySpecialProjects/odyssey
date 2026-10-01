@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",
-    "@strapi/plugin-cloud": "5.56.0",
     "@strapi/plugin-documentation": "5.56.0",
     "@strapi/plugin-users-permissions": "5.56.0",
     "@strapi/provider-upload-aws-s3": "5.56.0",
@@ -19,7 +18,7 @@
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router-dom": "^6.0.0",
+    "react-router-dom": "^6.30.3",
     "styled-components": "^6.0.0"
   },
   "author": {
@@ -29,7 +28,7 @@
     "uuid": "1362378d-c286-4075-9d7f-dbefb5306fae"
   },
   "engines": {
-    "node": ">=18.0.0 <=20.x.x",
+    "node": ">=20.0.0 <=26.x.x",
     "npm": ">=6.0.0"
   },
   "overrides": {
@@ -37,9 +36,6 @@
       "@aws-sdk/client-s3": "$@aws-sdk/client-s3",
       "@aws-sdk/lib-storage": "^3.1032.0",
       "@aws-sdk/s3-request-presigner": "^3.1032.0"
-    },
-    "@strapi/pack-up": {
-      "vite": "5.4.21"
     },
     "@rushstack/node-core-library": {
       "ajv": "^8.18.0"
@@ -57,6 +53,5 @@
     "ws@8": "^8.21.0",
     "yaml@1": "^1.10.3"
   },
-  "license": "MIT",
-  "devDependencies": {}
+  "license": "MIT"
 }
