@@ -113,7 +113,8 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["id"],
+        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
+        sort: ["createdAt", "id"],
         fields: [
           "id",
           "email",

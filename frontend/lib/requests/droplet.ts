@@ -61,13 +61,12 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   {
     sort,
     filters,
-    populate = { "*": true },
+    populate = {},
     fields = ["*", "isHidden", "originalDropletId"],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets`;
-  const resolvedPopulate =
-    typeof populate === "object" ? populate : { populate: "*" };
+  const resolvedPopulate = typeof populate === "object" ? populate : {};
   const existingLessons =
     resolvedPopulate && typeof resolvedPopulate === "object"
       ? (resolvedPopulate as Record<string, any>).lessons ?? {}
@@ -108,7 +107,7 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   {
     sort,
     filters,
-    populate = { "*": true },
+    populate = {},
     fields = ["*", "isHidden", "originalDropletId"],
   }: StrapiRequestParams = {},
   { fresh = false }: { fresh?: boolean } = {},
