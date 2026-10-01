@@ -97,6 +97,16 @@ Only exported function declarations are supported. `export const`, `export { …
 - Inline `"use server"` closures inside Server Components aren't scanned (e.g. `app/(editing)/draft/d/[slug]/page.tsx`) — ODY-504 audits those by hand.
 - Route Handlers aren't covered (e.g. `app/api/user-activity/[userId]/route.ts`, which checks `getServerSession` directly) — ODY-509 should audit it.
 
+## Client components never call query-accepting read actions (ODY-640)
+
+A Server Action's ID is only shipped to the browser when a `"use client"` module imports it. A read action that takes `StrapiRequestParams` (or `populate`/`fields`/`filters`/`sort`) and is client-imported lets any caller pick the query, e.g. `getEnrollByID` defaults to `populate: "*"` and `getAuthorizedUserByEmail` could populate enrollments, notes and groups.
+
+**Rule:** client components never call read actions that accept Strapi query options. Pass the data down from a Server Component, or add a narrow action with a fixed query (and a guard). Never let a client trigger a derived write either: `changeEnrollmentRating` recomputes the droplet average on the server instead of the client calling `calculateDropletAverageRating` + `updateDropletAverageRating`.
+
+`testing/security/client-query-actions-guard.test.ts` enforces this. It finds exported functions in `"use server"` files whose parameters accept query options, finds `"use client"` modules under `app/`, `components/`, `providers/`, `hooks/`, `contexts/` and `stores/`, and fails when a client module imports one that isn't in `CLIENT_QUERY_ACTIONS` (`testing/security/client-query-actions-allowlist.ts`), or when an entry is stale (no longer takes query options, no longer exists, or no client imports it). Keys look like `"lib/requests/droplet.ts#getDropletBySlug": "ODY-511"`. The list may only shrink; ODY-511 drains it. Never add an entry for new code.
+
+**Known limits:** it follows only direct named imports in client modules (not helper modules, barrels, namespace imports or dynamic `import()`). The ground truth is the production build: after `next build`, an action is exposed when its ID from `.next/server/server-reference-manifest.json` appears in `.next/static/chunks/**/*.js`.
+
 ## Known gaps
 
 - `withAuth` doesn't catch handler errors — a Strapi failure inside the handler rejects the whole action (e.g. `togglePresentationEnabled`, `claimNodeForUser`).
