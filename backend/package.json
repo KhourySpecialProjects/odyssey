@@ -11,17 +11,16 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",
-    "@strapi/plugin-cloud": "^4.26.2",
-    "@strapi/plugin-documentation": "^4.26.2",
-    "@strapi/plugin-i18n": "^4.26.2",
-    "@strapi/plugin-users-permissions": "^4.26.2",
-    "@strapi/provider-upload-aws-s3": "^4.26.2",
-    "@strapi/strapi": "^4.26.2",
+    "@strapi/plugin-cloud": "5.56.0",
+    "@strapi/plugin-documentation": "5.56.0",
+    "@strapi/plugin-users-permissions": "5.56.0",
+    "@strapi/provider-upload-aws-s3": "5.56.0",
+    "@strapi/strapi": "5.56.0",
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router-dom": "5.3.4",
-    "styled-components": "5.3.3"
+    "react-router-dom": "^6.0.0",
+    "styled-components": "^6.0.0"
   },
   "author": {
     "name": "A Strapi developer"
@@ -58,5 +57,6 @@
     "ws@8": "^8.21.0",
     "yaml@1": "^1.10.3"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {}
 }
