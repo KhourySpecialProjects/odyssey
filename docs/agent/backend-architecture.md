@@ -71,7 +71,7 @@ Droplet
 ├── inReview: boolean
 ├── afterReview: text
 │
-├── lessons → many-to-many Lesson (via droplet-lesson join table with orderIndex)
+├── lessons → many-to-many Lesson (direct relation; order comes from Lesson.orderIndex)
 ├── tags → many-to-many Tag
 ├── prerequisites → many-to-many Droplet (self-referential)
 ├── postrequisites → many-to-many Droplet (inverse of prerequisites)
@@ -98,6 +98,7 @@ Lesson
 ├── blocks: dynamiczone (v1 TipTap — components: generic, video, quiz, callout, expandable, open-ended-quiz)
 ├── blocksV2: json (v2 BlockNote JSON — newer format)
 ├── orderIndex: integer (ordering within a droplet)
+├── originalLessonId: integer (set on [EDIT]-draft lessons: id of the live lesson it was cloned from)
 │
 ├── droplets → many-to-many Droplet
 ├── enrollments → many-to-many Enrollment (via viewedLessons)
@@ -184,6 +185,8 @@ Strapi v4 wraps responses in `{ data: { id, attributes: { ... } } }` for single 
 ### Draft & Publish
 
 Droplets and Lessons use Strapi's draft/publish system (`draftAndPublish: true` in schema) for version control. Enrollments do not (`draftAndPublish: false`). Additionally, Droplet has its own application-level `status` field (draft → edit → published) to track editorial workflow, independent of Strapi's publish state. Both systems work in parallel.
+
+Publishing an `[EDIT]` draft (`publishDraftToOriginal`) syncs lessons in place instead of recreating them. Each draft lesson is matched to a live lesson by `originalLessonId` (recorded when `duplicateDroplet` clones the draft), then by exact name; position is never used. A matched lesson is updated with only the fields that changed, so it keeps its id and slug (even if renamed) and everything keyed to it: students' `viewedLessons`, notes and highlights. Slugs of kept lessons never change. Draft lessons with no match are created, and live lessons missing from the draft are deleted. Writes happen in this order: the droplet's metadata, lesson updates, lesson creates, lesson deletes, and only then the draft's own enrollments move and the draft is deleted. Deletes run last, after every update and create has succeeded, so a failure part way never leaves students with fewer lessons; it returns `{ ok: false }`, keeps the draft, and publishing again finishes the job.
 
 ## Database
 
