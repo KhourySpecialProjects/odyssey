@@ -39,32 +39,14 @@ export default async function Lesson({ params }: Props) {
         populate: {
           blocks: {
             on: {
-              "droplets.generic": {
-                populate: "*",
-              },
-              "droplets.video": {
-                populate: "*",
-              },
-              "droplets.quiz": {
-                populate: {
-                  questions: {
-                    populate: { content: "*" },
-                  },
-                },
-              },
+              "droplets.generic": { fields: ["content"] },
+              "droplets.video": { fields: ["url"] },
+              "droplets.quiz": { populate: { questions: true } },
               "droplets.callout": {
-                populate: "*",
+                fields: ["content", "type", "color", "iconEnabled"],
               },
-              "droplets.expandable": {
-                populate: "*",
-              },
-              "droplets.open-ended-quiz": {
-                populate: {
-                  questions: {
-                    populate: { content: "*" },
-                  },
-                },
-              },
+              "droplets.expandable": { fields: ["title", "content"] },
+              "droplets.open-ended-quiz": { populate: { questions: true } },
             },
           },
         },

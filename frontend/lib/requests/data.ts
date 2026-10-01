@@ -15,7 +15,8 @@ export async function fetchDroplets() {
     let allDroplets: Droplet[] = [];
     while (true) {
       const query = qs.stringify({
-        sort: ["id"],
+        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
+        sort: ["createdAt", "id"],
         fields: ["id", "name", "type", "slug", "isHidden", "focusArea"],
         populate: {
           lessons: { fields: ["id", "name"] },
@@ -59,7 +60,8 @@ export async function fetchGroups() {
     let allGroups: Group[] = [];
     while (true) {
       const query = qs.stringify({
-        sort: ["id"],
+        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
+        sort: ["createdAt", "id"],
         fields: ["id", "groupName", "slug", "isArchived", "semester"],
         populate: {
           members: {
@@ -120,7 +122,8 @@ export async function fetchAccessRequests() {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["id"],
+        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
+        sort: ["createdAt", "id"],
         fields: [
           "id",
           "givenName",
@@ -168,7 +171,8 @@ export async function fetchReports() {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["id:desc"],
+        // Newest first (id stops tracking creation order on Strapi v5); id only breaks ties.
+        sort: ["createdAt:desc", "id:desc"],
         fields: [
           "id",
           "type",
