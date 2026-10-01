@@ -96,6 +96,7 @@ describe("Sidebar", () => {
     jest.clearAllMocks();
     (usePathname as jest.Mock).mockReturnValue("/d/test-droplet");
     (useRouter as jest.Mock).mockReturnValue(mockRouter); // Add this
+    useViewedLessonsStore.setState({ pendingViewed: {} });
   });
 
   // ... rest of your tests remain the same
@@ -288,7 +289,7 @@ describe("Sidebar", () => {
     });
 
     it("counts lessons marked viewed in this session before the save lands", () => {
-      useViewedLessonsStore.setState({ pendingViewedIds: [] });
+      useViewedLessonsStore.setState({ pendingViewed: {} });
       render(
         <Sidebar
           user={mockUser}
@@ -304,11 +305,28 @@ describe("Sidebar", () => {
       expect(lesson3Link()).toHaveClass("pointer-events-none");
 
       // "Next" on lesson 2 marks it viewed while its save is still running
-      act(() => useViewedLessonsStore.getState().markViewed(2));
+      act(() => useViewedLessonsStore.getState().markViewed("42", 2));
 
       expect(screen.getByText("67% complete")).toBeInTheDocument();
       expect(lesson3Link()).not.toHaveClass("pointer-events-none");
-      useViewedLessonsStore.setState({ pendingViewedIds: [] });
+      useViewedLessonsStore.setState({ pendingViewed: {} });
+    });
+
+    it("ignores lessons pending under a different enrollment", () => {
+      act(() => useViewedLessonsStore.getState().markViewed("99", 2));
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[1]}
+          enrollmentId="42"
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      expect(screen.getByText("33% complete")).toBeInTheDocument();
     });
 
     it("shows 100% when all lessons completed", () => {

@@ -37,7 +37,7 @@ describe("DropletFooter", () => {
       push: mockPush,
       refresh: mockRefresh,
     });
-    useViewedLessonsStore.setState({ pendingViewedIds: [] });
+    useViewedLessonsStore.setState({ pendingViewed: {} });
     (updateViewedLessons as jest.Mock).mockResolvedValue({});
 
     // Clear any existing quiz elements
@@ -250,7 +250,9 @@ describe("DropletFooter", () => {
       clickNextFromLesson1();
 
       await waitFor(() => expect(mockPush).toHaveBeenCalled());
-      expect(useViewedLessonsStore.getState().pendingViewedIds).toEqual([1]);
+      expect(useViewedLessonsStore.getState().pendingViewed).toEqual({
+        "42": [1],
+      });
     });
 
     it("refreshes once the background save has stored a new view", async () => {
@@ -286,6 +288,27 @@ describe("DropletFooter", () => {
       expect(updateViewedLessons).not.toHaveBeenCalled();
     });
 
+    it("still saves a lesson that was only pending under another enrollment", async () => {
+      useViewedLessonsStore.getState().markViewed("1", 1);
+
+      clickNextFromLesson1();
+
+      await waitFor(() =>
+        expect(updateViewedLessons).toHaveBeenCalledWith("42", 1, [1, 2, 3]),
+      );
+    });
+
+    it("skips the save for a lesson pending under this enrollment", async () => {
+      useViewedLessonsStore.getState().markViewed("42", 1);
+
+      clickNextFromLesson1();
+
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/lesson-2"),
+      );
+      expect(updateViewedLessons).not.toHaveBeenCalled();
+    });
+
     it("undoes the optimistic view and tells the user when the save fails", async () => {
       (updateViewedLessons as jest.Mock).mockResolvedValue({
         success: false,
@@ -295,7 +318,7 @@ describe("DropletFooter", () => {
       clickNextFromLesson1();
 
       await waitFor(() => expect(toast.error).toHaveBeenCalled());
-      expect(useViewedLessonsStore.getState().pendingViewedIds).toEqual([]);
+      expect(useViewedLessonsStore.getState().pendingViewed["42"]).toEqual([]);
       expect(mockRefresh).not.toHaveBeenCalled();
     });
   });
