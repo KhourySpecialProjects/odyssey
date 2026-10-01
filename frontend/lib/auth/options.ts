@@ -7,9 +7,41 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+/**
+ * How often the jwt callback re-checks the account id kept in the token.
+ *
+ * ODY-555 keeps the Strapi authorized-user id in the token so pages can start
+ * id-keyed fetches in parallel. An account that is deleted and re-created gets
+ * a new id, so without a re-check a session would carry a stale or dead id for
+ * up to NextAuth's 30-day rolling expiry. This bounds that window.
+ *
+ * Note: in App Router Server Components getServerSession can't write the
+ * cookie, so a refreshed token is only persisted when the client's
+ * SessionProvider calls /api/auth/session (on load and window focus). Until
+ * then each RSC request re-runs the lookup, which is normally a data-cache hit.
+ */
+const ACCOUNT_ID_RECHECK_MS = 5 * 60 * 1000;
+
+/** Looks up just the authorized-user id by email; null if no user matches. */
+async function fetchAccountId(email: string): Promise<number | null> {
+  const [match] = await fetchAPI<{ id: number }[]>("/authorized-users", {
+    urlParams: {
+      filters: { email: { $eq: email } },
+      fields: ["id"],
+      pagination: { pageSize: 1, page: 1 },
+    },
+    // Data-cached so the re-check is normally a cache hit; create/delete
+    // AuthorizedUser revalidate `users`, so an in-app delete/re-create is
+    // seen on the next check.
+    next: { revalidate: 900, tags: [CACHE_TAGS.users] },
+  });
+  return match?.id ?? null;
+}
 
 async function syncAzureProfilePhoto(
   accessToken: string,
@@ -135,6 +167,21 @@ export const authOptions: NextAuthOptions = {
             (elem) => elem.title as AuthorizedUserRoleTitle,
           ),
         };
+        token.userIdCheckedAt = Date.now();
+      } else if (
+        token.user?.email &&
+        (!token.userIdCheckedAt ||
+          Date.now() - token.userIdCheckedAt > ACCOUNT_ID_RECHECK_MS)
+      ) {
+        try {
+          const id = await fetchAccountId(token.user.email);
+          // No match: drop the id so getAuthorizedUserId falls back to the
+          // email lookup and pages take their not-found/unauthorized paths.
+          token.user = { ...token.user, id: id ?? undefined };
+          token.userIdCheckedAt = Date.now();
+        } catch (err) {
+          console.error("Failed to re-check authorized user id:", err);
+        }
       }
 
       return token;
