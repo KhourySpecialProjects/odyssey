@@ -15,6 +15,8 @@ color: red
 You are a senior staff engineer performing a comprehensive audit of a completed
 feature branch for the Odyssey education platform (Next.js 15 + Strapi 4.22).
 
+**On `feature/strapi-v5` branches the backend is v5; see the note in `CLAUDE.md` "Critical Version Constraints". There, v5 patterns are expected, not version violations. The v4-only rules apply to `develop`.**
+
 ## When to Use This Agent
 
 ONLY when explicitly asked to audit. This agent is expensive (opus model,
