@@ -10,7 +10,7 @@ module.exports = {
       'api::creation-request.creation-request',
       result.id,
       { populate: { user: { fields: ['firstName', 'lastName', 'email'] } } }
-    )) as CreationRequestWithUser | null;
+    )) as unknown as CreationRequestWithUser | null;
 
     const user = creationRequest?.user;
     const userName = escapeSlackMrkdwn(user ? formatPersonName(user) : 'Unknown');

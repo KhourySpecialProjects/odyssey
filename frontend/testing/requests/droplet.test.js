@@ -216,7 +216,7 @@ describe("Droplet API Functions", () => {
       expect(fetchAPI).toHaveBeenCalledWith("/droplets/1", {
         urlParams: expect.objectContaining({
           filters: {},
-          populate: { "*": true },
+          populate: {},
           fields: expect.arrayContaining([
             "*",
             "isHidden",

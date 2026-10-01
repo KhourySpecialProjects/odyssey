@@ -158,7 +158,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/authorized-user.ts#fetchWebsiteCreators": "ODY-509",
   "lib/requests/authorized-user.ts#getAuthorizedUserByEmail": "ODY-509",
   "lib/requests/authorized-user.ts#getAuthorizedUsersByEmails": "ODY-509",
-  "lib/requests/authorized-user.ts#resolveEmailsToUserIds": "ODY-509",
   "lib/requests/authorized-user.ts#searchAuthorizedUsers": "ODY-509",
   "lib/requests/droplet-analytics.ts#getDropletAnalytics": "ODY-509",
 

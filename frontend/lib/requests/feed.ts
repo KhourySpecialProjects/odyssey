@@ -2,7 +2,11 @@
 
 import { Announcement, AuthorizedUser, Droplet, Friendship } from "@/types";
 import qs from "qs";
-import { flattenAttributes, fetchAPI } from "../utils";
+import {
+  flattenAttributes,
+  fetchAPI,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -233,7 +237,10 @@ export async function fetchAnnouncements(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         // Two-level: new announcements sweep the global tag; read-state
         // changes on a user's own system announcements use userFeed(id).
         next: {
@@ -284,6 +291,7 @@ export async function createFriendAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -314,6 +322,7 @@ export async function createKudosAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -350,6 +359,7 @@ export async function createKudosAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -388,6 +398,7 @@ export async function createPlaylistAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -423,6 +434,7 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -458,6 +470,7 @@ export async function createDropletAnnouncement(name: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -531,6 +544,7 @@ export async function createSystemAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -587,6 +601,7 @@ export async function createSystemBroadcast(content: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -624,6 +639,7 @@ export async function markAnnouncementRead(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -659,6 +675,7 @@ export async function markAnnouncementUnread(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -810,7 +827,10 @@ export async function fetchAnnouncementById(id: number) {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
@@ -861,7 +881,10 @@ export async function fetchUserAnnouncements(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );

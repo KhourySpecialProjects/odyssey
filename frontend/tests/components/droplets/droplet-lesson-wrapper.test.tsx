@@ -1,4 +1,11 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { AuthorizedUser, Droplet, Highlight, Lesson, Note } from "@/types";
@@ -13,13 +20,18 @@ jest.mock("@/components/droplets/lessons/lesson-renderer", () => ({
     setExpanded,
     initialHighlights,
     onUpdate,
+    completedLessonIds,
   }: {
     expanded: boolean;
     setExpanded: (expanded: boolean) => void;
     initialHighlights: Highlight[];
     onUpdate: () => void;
+    completedLessonIds: number[];
   }) => (
     <div>
+      <span data-testid="renderer-completed">
+        {completedLessonIds.join(",")}
+      </span>
       <button onClick={() => setExpanded(!expanded)}>Toggle notes</button>
       <button onClick={onUpdate}>Note from highlight</button>
       <ul data-testid="highlights">
@@ -74,7 +86,26 @@ describe("DropletLessonWrapper", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useViewedLessonsStore.setState({ pendingViewed: {} });
     jest.mocked(getNotesByAuthorizedUserAndLesson).mockResolvedValue([]);
+  });
+
+  it("gives the renderer the lessons pending for this enrollment, so the next lesson isn't locked while Next saves", () => {
+    useViewedLessonsStore.getState().markViewed("5", 7);
+    useViewedLessonsStore.getState().markViewed("6", 8);
+
+    render(<DropletLessonWrapper {...props} completedLessonIds={[1]} />);
+
+    expect(screen.getByTestId("renderer-completed")).toHaveTextContent("1,7");
+  });
+
+  it("updates the renderer's lessons when a view becomes pending", () => {
+    render(<DropletLessonWrapper {...props} completedLessonIds={[1]} />);
+    expect(screen.getByTestId("renderer-completed")).toHaveTextContent(/^1$/);
+
+    act(() => useViewedLessonsStore.getState().markViewed("5", 7));
+
+    expect(screen.getByTestId("renderer-completed")).toHaveTextContent("1,7");
   });
 
   it("does not mount the notes bar until the panel is opened", async () => {

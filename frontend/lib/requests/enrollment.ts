@@ -3,7 +3,11 @@
 import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import qs from "qs";
-import { fetchAPI, flattenAttributes } from "../utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 
 import { getCurrentUser } from "@/lib/auth/session";
@@ -37,6 +41,7 @@ async function putEnrollment(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({ data }),
     },
@@ -385,6 +390,7 @@ export async function updateEnrollmentFirstTime(enrollmentId: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -426,6 +432,7 @@ export async function createEnrollmentFromEmail(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       });
       const data = await response.json();
@@ -464,6 +471,7 @@ export async function deleteEnrollment(
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
         },
       );
@@ -509,6 +517,7 @@ export async function createEnrollment(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       });
       const data = await response.json();
@@ -698,6 +707,7 @@ export async function updateCompletionDate(enrollmentID: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -737,6 +747,7 @@ export async function createEnrollmentDirect(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();

@@ -60,7 +60,6 @@ export default async function PlaylistPage({ params }: Props) {
         },
         authors: {
           fields: ["id"],
-          populate: "*",
         },
       },
     }),

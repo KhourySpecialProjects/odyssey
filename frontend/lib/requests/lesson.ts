@@ -1,7 +1,11 @@
 "use server";
 import { Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, stripHtmlTags } from "../utils";
+import {
+  fetchAPI,
+  stripHtmlTags,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { LessonSchema } from "../validations/lesson";
@@ -75,6 +79,7 @@ export async function markLessonAsComplete(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         cache: "no-store",
         body: JSON.stringify({
@@ -114,6 +119,7 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -144,6 +150,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -199,6 +206,7 @@ export async function updateLesson(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -269,6 +277,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -302,6 +311,7 @@ export async function duplicateLessonToDroplet(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -449,6 +459,7 @@ export async function duplicateLessonToDroplet(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
