@@ -518,7 +518,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: [2],
+                disconnect: ["2"],
               },
             },
           }),
@@ -572,7 +572,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["4"],
               },
             },
           }),
@@ -655,7 +655,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["4"],
               },
             },
           }),
