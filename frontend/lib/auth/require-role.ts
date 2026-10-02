@@ -6,7 +6,12 @@ import { AuthorizedUserRoleTitle } from "@/lib/globals";
 export type RequireRoleResult =
   | {
       ok: true;
-      user: { email: string; id: number; roles: AuthorizedUserRoleTitle[] };
+      user: {
+        email: string;
+        id: number;
+        documentId?: string;
+        roles: AuthorizedUserRoleTitle[];
+      };
     }
   | { ok: false; error: "unauthenticated" | "forbidden" };
 
@@ -62,7 +67,12 @@ export async function requireRole(
     if (allowed.length === 0) {
       return {
         ok: true,
-        user: { id: user.id, email: sessionUser.email, roles: effectiveRoles },
+        user: {
+          id: user.id,
+          documentId: user.documentId,
+          email: sessionUser.email,
+          roles: effectiveRoles,
+        },
       };
     }
 
@@ -71,7 +81,12 @@ export async function requireRole(
     if (hasRole) {
       return {
         ok: true,
-        user: { id: user.id, email: sessionUser.email, roles: effectiveRoles },
+        user: {
+          id: user.id,
+          documentId: user.documentId,
+          email: sessionUser.email,
+          roles: effectiveRoles,
+        },
       };
     }
 

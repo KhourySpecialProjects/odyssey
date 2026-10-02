@@ -187,7 +187,10 @@ export async function setTimeZone(zone: string) {
 
   try {
     const response = await fetch(
-      await strapiEntryUrl("authorized-users", user.id),
+      await strapiEntryUrl("authorized-users", {
+        id: user.id,
+        documentId: user.documentId,
+      }),
       {
         method: "PUT",
         headers: {
