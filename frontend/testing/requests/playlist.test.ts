@@ -118,6 +118,21 @@ describe("updatePlaylist", () => {
     });
   });
 
+  it("PUTs regenerateSlug: false inside data, the body the v5 backend allow-lists (ODY-700)", async () => {
+    (global.fetch as jest.Mock).mockClear();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: mockPlaylistData }),
+    });
+
+    await updatePlaylist(123, mockPlaylistData);
+
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(init.method).toBe("PUT");
+    expect(url).toMatch(/\/api\/playlists\/123$/);
+    expect(JSON.parse(init.body).data.regenerateSlug).toBe(false);
+  });
+
   it("handles playlist update failure", async () => {
     const mockResponse = {
       ok: false,
