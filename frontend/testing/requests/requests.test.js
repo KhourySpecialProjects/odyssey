@@ -713,11 +713,28 @@ describe("Playlist tests", () => {
       };
 
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce(mockPlaylist);
+      fetchAPI.mockResolvedValueOnce([mockPlaylist]);
 
       const result = await getPlaylistById(1);
 
       expect(result).toEqual(mockPlaylist);
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/playlists",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: { id: { $eq: 1 } },
+          }),
+        }),
+      );
+    });
+
+    it("should throw a 404-style error when no playlist matches", async () => {
+      fetchAPI.mockReset();
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await expect(getPlaylistById(1)).rejects.toThrow(
+        "Failed to fetch data: HTTP error! status: 404",
+      );
     });
 
     it("should handle fetch errors", async () => {

@@ -117,18 +117,32 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   id: number,
   { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
-  const path = `/playlists/${await resolveDocumentId("playlists", id)}`;
+  // Strapi v5 single-entry routes take a documentId, so read through the list
+  // endpoint with an id filter instead (same as getDropletById).
+  const path = `/playlists`;
   const urlParams = {
     sort,
-    filters: { ...filters },
+    filters: { ...filters, id: { $eq: id } },
     populate,
     fields,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
   };
 
-  return await fetchAPI<T>(path, {
+  const playlists = await fetchAPI<T[]>(path, {
     urlParams,
     next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
   });
+  const playlist = playlists?.[0];
+  if (!playlist) {
+    // Keep the failure a missing playlist used to produce (a 404 from /playlists/:id).
+    const error = new Error(`Failed to fetch data: HTTP error! status: 404`);
+    console.error("Fetch error:", error);
+    throw error;
+  }
+  return playlist;
 }
 
 export async function updatePlaylist(

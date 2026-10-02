@@ -177,7 +177,9 @@ describe("deletePlaylist", () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve({ data: { id: 123, attributes: { name: "Test" } } }),
+        Promise.resolve({
+          data: [{ id: 123, attributes: { name: "Test" } }],
+        }),
     });
     // Mock the DELETE fetch
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -219,7 +221,7 @@ describe("archivePlaylist", () => {
       ok: true,
       json: () =>
         Promise.resolve({
-          data: { id: 10, attributes: { authors: { data: [{ id: 5 }] } } },
+          data: [{ id: 10, attributes: { authors: { data: [{ id: 5 }] } } }],
         }),
     });
 
@@ -289,7 +291,7 @@ describe("archivePlaylist", () => {
       ok: true,
       json: () =>
         Promise.resolve({
-          data: { id: 10, attributes: { authors: { data: [{ id: 99 }] } } },
+          data: [{ id: 10, attributes: { authors: { data: [{ id: 99 }] } } }],
         }),
     });
 
@@ -441,7 +443,7 @@ describe("documentId handling (ODY-601)", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            data: { id: 10, attributes: { authors: { data: [{ id: 5 }] } } },
+            data: [{ id: 10, attributes: { authors: { data: [{ id: 5 }] } } }],
           }),
       })
       .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve("") });
