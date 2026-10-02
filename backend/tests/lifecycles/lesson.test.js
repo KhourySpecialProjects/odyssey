@@ -25,10 +25,9 @@ describe('lesson beforeCreate', () => {
     expect(lesson.slug).toMatch(/^branching-basics-/);
   });
 
-  // v5 issue: v5 fills an absent dynamic zone with `blocks: []` before
-  // beforeCreate runs, and the hook's `!data.blocks` check treats [] as
-  // present, so an empty lesson is created.
-  test.failing('throws when neither blocks nor blocksV2 is given', async () => {
+  // v5 fills an absent dynamic zone with `blocks: []` before beforeCreate
+  // runs; the hook has to treat [] as empty or an empty lesson gets created.
+  it('throws when neither blocks nor blocksV2 is given', async () => {
     await expect(create({ blocksV2: undefined })).rejects.toThrow(EMPTY_MESSAGE);
   });
 
