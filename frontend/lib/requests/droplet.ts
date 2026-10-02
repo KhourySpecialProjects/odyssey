@@ -13,6 +13,7 @@ import { withAuth, assertOwner } from "../auth/guards";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
+import { LESSON_BLOCKS_POPULATE } from "./lesson-populates";
 import { planLessonSync, type LessonSyncPlan } from "../lesson-sync";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -646,15 +647,7 @@ export async function duplicateDroplet(dropletId: number) {
           authorized_users: { fields: ["id"] },
           lessons: {
             fields: ["*"], // Add this to get all lesson fields including blocksV2 and blocksVersion
-            populate: {
-              blocks: {
-                populate: {
-                  questions: {
-                    populate: ["answerOptions"],
-                  },
-                },
-              },
-            },
+            populate: LESSON_BLOCKS_POPULATE,
             sort: ["orderIndex:asc"],
           },
           prerequisites: true,
@@ -1163,15 +1156,7 @@ export async function publishDraftToOriginal(
     // included) with the blocks populated.
     const lessonsPopulate = {
       fields: ["*"], // Get all lesson fields including blocksV2, blocksVersion and originalLessonId
-      populate: {
-        blocks: {
-          populate: {
-            questions: {
-              populate: ["answerOptions"],
-            },
-          },
-        },
-      },
+      populate: LESSON_BLOCKS_POPULATE,
       sort: ["orderIndex:asc"],
     };
 

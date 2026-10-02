@@ -10,6 +10,7 @@ import {
 } from "@/lib/requests/lesson";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/utils", () => ({
@@ -393,15 +394,7 @@ describe("Lesson API Functions", () => {
       expect(fetchAPI).toHaveBeenCalledWith("/lessons", {
         urlParams: expect.objectContaining({
           filters: { slug: "test-lesson" },
-          populate: {
-            blocks: {
-              populate: {
-                questions: {
-                  populate: ["answerOptions"],
-                },
-              },
-            },
-          },
+          populate: LESSON_BLOCKS_POPULATE,
         }),
         // lesson only: droplet-level mutations must not flush lesson pages
         next: { tags: [CACHE_TAGS.lesson], revalidate: 900 },
@@ -542,6 +535,10 @@ describe("Lesson API Functions", () => {
       expect(result.ok).toBe(true);
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments");
+      // Source GET scopes the quiz populate per component with `on`
+      expect(fetchMock.mock.calls[0][0]).toContain(
+        "populate[blocks][on][droplets.quiz][populate][questions][populate][0]=answerOptions",
+      );
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({

@@ -17,6 +17,7 @@
 
 import { publishDraftToOriginal } from "@/lib/requests/droplet";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
@@ -1101,9 +1102,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
       // Every lesson field (content, lineage) with the blocks populated, in order
       expect(options.urlParams.populate.lessons).toEqual({
         fields: ["*"],
-        populate: {
-          blocks: { populate: { questions: { populate: ["answerOptions"] } } },
-        },
+        populate: LESSON_BLOCKS_POPULATE,
         sort: ["orderIndex:asc"],
       });
     }
