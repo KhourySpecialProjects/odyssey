@@ -1516,6 +1516,45 @@ describe("Server Actions", () => {
       );
     });
 
+    it("setTimeZone passes the gate's documentId to strapiEntryUrl", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: {
+          id: 42,
+          documentId: "xyz9",
+          email: "user@northeastern.edu",
+          roles: [],
+        },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await setTimeZone("America/New_York");
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 42, documentId: "xyz9" }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/authorized-users/docxyz9",
+        expect.objectContaining({ method: "PUT" }),
+      );
+    });
+
+    it("setTimeZone passes documentId undefined when the gate lacks it", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await setTimeZone("America/New_York");
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 42, documentId: undefined }),
+      );
+    });
+
     it("setTimeZone keeps its error result when the user cannot be found", async () => {
       const consoleError = jest.spyOn(console, "error").mockImplementation();
       mockedRequireRole.mockResolvedValueOnce({

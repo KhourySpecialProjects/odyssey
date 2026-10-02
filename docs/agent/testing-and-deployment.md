@@ -13,6 +13,23 @@ cd frontend && npx jest --coverage         # Generate coverage report
 
 Config: `frontend/jest.config.js` with `jest-environment-jsdom`. Setup file: `frontend/jest.setup.ts` (imports `@testing-library/jest-dom` matchers).
 
+### Backend Tests (Strapi v5 lifecycle hooks)
+
+```bash
+npm --prefix backend test                              # All backend tests (jest --runInBand)
+npm --prefix backend test -- tests/lifecycles/droplet  # One file
+```
+
+These boot a real Strapi v5 instance per test file on a throwaway SQLite database (`backend/.tmp/test-*.db`, removed in teardown), using `better-sqlite3`. Needs no Postgres, S3 or `.env`. `better-sqlite3` is pinned to 12.9.0 because the backend Docker images are Node 20 and newer versions drop Node 20 (bump with ODY-604).
+
+- `backend/tests/helpers/strapi.js` sets the test env in code (dummy secrets, `DATABASE_CLIENT=sqlite`, `SLACK_WEBHOOK_URL`), runs `compileStrapi` + `createStrapi().load()`, mounts the server and tears it down.
+- `backend/config/env/test/plugins.ts` turns the documentation plugin off (so the boot doesn't rewrite tracked docs JSON) and uses the local upload provider.
+- `backend/tests/helpers/api-token.js` makes a full-access API token for REST tests with supertest.
+- `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
+- `test.failing` marks known issues (for example ODY-700); when one is fixed Jest reports it as failing, and it gets flipped to `it`.
+
+A run must leave `git status` clean. Not wired into CI yet (follow-up), and needs Node 20 or later.
+
 ### Test Directory Structure
 
 ```

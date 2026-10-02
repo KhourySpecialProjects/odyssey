@@ -11,7 +11,9 @@ import {
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest
     .fn()
-    .mockResolvedValue([{ id: 7, roles: [{ title: "User" }] }]),
+    .mockResolvedValue([
+      { id: 7, documentId: "abc123", roles: [{ title: "User" }] },
+    ]),
 }));
 
 jest.mock("@/lib/auth/azure", () => ({
@@ -122,6 +124,7 @@ describe("options", () => {
         expect(result).toEqual({
           user: {
             id: 7,
+            documentId: "abc123",
             name: "Test User",
             email: "test@test.com",
             image: "test.jpg",
@@ -130,6 +133,49 @@ describe("options", () => {
             roles: ["User"],
           },
         });
+      });
+    });
+
+    describe("old (pre-documentId) tokens", () => {
+      const oldToken = {
+        user: {
+          id: 7,
+          email: "test@test.com",
+          roles: ["User"],
+          isActive: true,
+        },
+      };
+
+      it("returns an old token unchanged on non-sign-in calls", async () => {
+        const before = JSON.parse(JSON.stringify(oldToken));
+
+        const result = await authOptions.callbacks!.jwt!({
+          token: oldToken,
+        } as any);
+
+        expect(result).toEqual(before);
+        expect(result).toBe(oldToken);
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+
+      it("session callback passes documentId through to session.user", async () => {
+        const token = { user: { ...oldToken.user, documentId: "abc123" } };
+
+        const result = await authOptions.callbacks!.session!({
+          session: { expires: "" },
+          token,
+        } as any);
+
+        expect(result.user).toEqual(token.user);
+      });
+
+      it("session callback accepts an old token without documentId", async () => {
+        const result = await authOptions.callbacks!.session!({
+          session: { expires: "" },
+          token: oldToken,
+        } as any);
+
+        expect(result.user).toEqual(oldToken.user);
       });
     });
 

@@ -44,14 +44,14 @@ export const authFixtures = {
   },
   /**
    * An authenticated caller with the given id. Defaults to
-   * `user${id}@northeastern.edu` and no roles; override either via
-   * `user`.
+   * `user${id}@northeastern.edu`, `doc${id}` and no roles; override via `user`.
    */
   as(user: Partial<AuthUser> & { id: number }): RequireRoleResult {
     return {
       ok: true,
       user: {
         email: `user${user.id}@northeastern.edu`,
+        documentId: `doc${user.id}`,
         roles: [],
         ...user,
       },

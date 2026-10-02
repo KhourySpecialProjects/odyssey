@@ -58,6 +58,8 @@ export type Highlight = {
 export type User = {
   /** Strapi authorized-user id. Absent on tokens issued before it was added. */
   id?: number;
+  /** Strapi v5 documentId. Absent on pre-v5 tokens. */
+  documentId?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
