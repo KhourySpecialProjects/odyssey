@@ -37,7 +37,22 @@ export default async function GroupDetailPage({ params }: Props) {
   }
 
   const isCreator = group.creator?.id === authorizedUser.id;
-  const canEdit = isCreator || isAuthorizedUserAdmin(user.roles);
+  const isSysAdmin = isAuthorizedUserAdmin(user.roles);
+  const isGroupAdmin = !!group.admins?.some((a) => a.id === authorizedUser.id);
+  const isManager = !!group.managers?.some((m) => m.id === authorizedUser.id);
+  const isMember = !!group.members?.some((m) => m.id === authorizedUser.id);
+
+  // Only people attached to the group may open it. Membership lists carry
+  // students' names and emails, so a guessable slug must not be enough.
+  if (!(isCreator || isGroupAdmin || isManager || isMember || isSysAdmin)) {
+    return notFound();
+  }
+
+  const canEdit = isCreator || isSysAdmin;
+  // Same rule GroupDashboard uses to show the Progress tab (canEdit || group
+  // admin); keep the two in sync.
+  const canViewProgress = canEdit || isGroupAdmin;
+  const totalMembers = group.members?.length || 0;
 
   const dueDates = await getGroupDueDates(group);
 
@@ -99,7 +114,14 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const voyageIds = group.voyages?.map((v) => v.id) || [];
 
-  if (group.members && (allDropletIds.length > 0 || voyageIds.length > 0)) {
+  // Student progress is likely a FERPA education record. The Progress tab was
+  // only hidden in the client UI, so the data still reached every viewer's
+  // browser; fetch and send it only to those who may see the tab.
+  if (
+    canViewProgress &&
+    group.members &&
+    (allDropletIds.length > 0 || voyageIds.length > 0)
+  ) {
     sortedMembers = [...group.members].sort((a, b) => {
       const aValue = a.lastName || a.email;
       const bValue = b.lastName || b.email;
@@ -195,7 +217,7 @@ export default async function GroupDetailPage({ params }: Props) {
                   Total Members
                 </dt>
                 <dd className="font-medium dark:text-slate-400">
-                  {group.members?.length || 0}
+                  {totalMembers}
                 </dd>
               </div>
             </dl>
@@ -224,7 +246,7 @@ export default async function GroupDetailPage({ params }: Props) {
       <Separator />
 
       <GroupDashboard
-        group={group}
+        group={canViewProgress ? group : { ...group, members: [] }}
         canEdit={canEdit}
         authUser={authorizedUser}
         dueDates={dueDates}
