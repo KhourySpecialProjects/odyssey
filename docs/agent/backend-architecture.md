@@ -65,7 +65,7 @@ Droplet
 ├── focusArea: enum [personal, professional, technical]
 ├── status: enum [draft, edit, published] (default: draft)
 ├── description: text (max 500 chars)
-├── overview: HTML (CKEditor rich text)
+├── overview: HTML (CKEditor, @_sh/strapi-plugin-ckeditor)
 ├── isHidden: boolean (default: false)
 ├── averageRating: decimal (0-5, default: 0)
 ├── funFact: text
@@ -86,6 +86,8 @@ Droplet
 ├── droplet_lessons → one-to-many DropletLesson (join table records)
 └── learningObjectives → component[] (repeatable "droplets.learning-objective")
 ```
+
+The 5 CKEditor fields (droplet `overview`; `content` on `droplets.generic`, `droplets.expandable`, `quizzes.question`, `quizzes.open-ended-question`) are HTML in `text` columns, custom field `plugin::ckeditor5.CKEditor`, presets `light`/`rich` in `backend/src/admin/app.tsx`.
 
 ### Lesson
 
