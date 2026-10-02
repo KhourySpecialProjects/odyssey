@@ -14,7 +14,7 @@ export default {
    * This gives you an opportunity to extend code.
    */
   register({ strapi }: { strapi: Core.Strapi }) {
-    // v5 rejects unknown body.data keys; the slug lifecycles read and delete this one (ODY-700).
+    // v5-only: core update rejects unknown body.data keys; the slug lifecycles read and delete this one (ODY-700).
     strapi.contentAPI.addInputParams({
       regenerateSlug: {
         schema: (z) => z.boolean().optional(),
