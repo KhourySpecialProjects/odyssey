@@ -20,7 +20,7 @@ npm --prefix backend test                              # All backend tests (jest
 npm --prefix backend test -- tests/lifecycles/droplet  # One file
 ```
 
-These boot a real Strapi v5 instance per test file on a throwaway SQLite database (`backend/.tmp/test-*.db`, removed in teardown), using `better-sqlite3`. Needs no Postgres, S3 or `.env`.
+These boot a real Strapi v5 instance per test file on a throwaway SQLite database (`backend/.tmp/test-*.db`, removed in teardown), using `better-sqlite3`. Needs no Postgres, S3 or `.env`. `better-sqlite3` is pinned to 12.9.0 because the backend Docker images are Node 20 and newer versions drop Node 20 (bump with ODY-604).
 
 - `backend/tests/helpers/strapi.js` sets the test env in code (dummy secrets, `DATABASE_CLIENT=sqlite`, `SLACK_WEBHOOK_URL`), runs `compileStrapi` + `createStrapi().load()`, mounts the server and tears it down.
 - `backend/config/env/test/plugins.ts` turns the documentation plugin off (so the boot doesn't rewrite tracked docs JSON) and uses the local upload provider.
