@@ -23,11 +23,12 @@ module.exports = {
       Boolean(data.blocksV2);
 
     if (('blocks' in data || 'blocksV2' in data) && !incomingHasContent) {
-      const existing = (await strapi.entityService.findOne(
-        'api::lesson.lesson',
-        event.params.where.id,
-        { fields: ['blocksV2'], populate: { blocks: true } }
-      )) as unknown as Lesson | null;
+      // Before hooks only know the numeric row id, so use findFirst on id.
+      const existing = (await strapi.documents('api::lesson.lesson').findFirst({
+        filters: { id: event.params.where.id },
+        fields: ['blocksV2'],
+        populate: { blocks: true },
+      })) as unknown as Lesson | null;
 
       const finalBlocks = 'blocks' in data ? data.blocks : existing?.blocks;
       const finalBlocksV2 = 'blocksV2' in data ? data.blocksV2 : existing?.blocksV2;
