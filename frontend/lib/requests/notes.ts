@@ -186,7 +186,7 @@ export async function createNote(
         lesson: await resolveDocumentId("lessons", lesson.id),
         enrollment: await resolveDocumentId("enrollments", enrollment.id),
         highlight: highlight
-          ? await resolveDocumentId("highlights", highlight.id)
+          ? await resolveDocumentId("highlights", { id: highlight.id })
           : undefined,
       };
     } catch (err) {

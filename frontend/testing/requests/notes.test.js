@@ -414,7 +414,9 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
-      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
 
       const result = await createNote(
         mockLesson,
@@ -454,7 +456,9 @@ describe("Notes Tests", () => {
       const lesson = { id: 101, documentId: "someoneElsesLesson" };
       const enrollment = { id: 201, documentId: "someoneElsesEnrollment" };
       const highlight = { id: 301, documentId: "someoneElsesHighlight" };
-      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 1 } }),
@@ -464,7 +468,7 @@ describe("Notes Tests", () => {
 
       expect(resolveDocumentId).toHaveBeenCalledWith("lessons", 101);
       expect(resolveDocumentId).toHaveBeenCalledWith("enrollments", 201);
-      expect(resolveDocumentId).toHaveBeenCalledWith("highlights", 301);
+      expect(resolveDocumentId).toHaveBeenCalledWith("highlights", { id: 301 });
       const body = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(body.data).toMatchObject({
         lesson: "doc101",
@@ -528,7 +532,9 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
-      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
 
       const result = await createNote(
         mockLesson,
