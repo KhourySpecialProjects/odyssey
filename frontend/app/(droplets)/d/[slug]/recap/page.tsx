@@ -255,7 +255,11 @@ export default async function DropletRecapRoute({ params }: Props) {
             <h2 className="mb-3 text-2xl font-bold text-slate-900 dark:text-slate-300">
               Rate this Droplet!
             </h2>
-            <StarRating value={0} enrollmentID={enrollID} average={false} />
+            <StarRating
+              value={enrollment?.rating ?? 0}
+              enrollmentID={enrollID}
+              average={false}
+            />
           </section>
         ) : null}
       </div>
