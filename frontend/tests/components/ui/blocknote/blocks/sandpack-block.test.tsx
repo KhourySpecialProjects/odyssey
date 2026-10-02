@@ -492,3 +492,43 @@ describe("FileActions", () => {
     expect(window.confirm).toHaveBeenCalledWith("Delete /index.js?");
   });
 });
+
+// ODY-439: authors often paste a whole HTML page over /index.html, which
+// drops the <div id="app"> the starter script writes into. The script used
+// to throw, and Sandpack covered the preview with its error overlay.
+describe("TEMPLATE_DEFAULTS vanilla starter script", () => {
+  let starterScript: string;
+
+  beforeAll(async () => {
+    const mod = await import(
+      "@/components/ui/blocknote/blocks/sandpack-block-content"
+    );
+    starterScript = mod.TEMPLATE_DEFAULTS.vanilla["/index.js"];
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  const runStarterScript = () => new Function(starterScript)();
+
+  it("writes its message into #app when the page has one", () => {
+    document.body.innerHTML = '<h1>Hello, World!</h1><div id="app"></div>';
+
+    runStarterScript();
+
+    expect(document.getElementById("app")?.textContent).toContain(
+      "Edit this code",
+    );
+  });
+
+  it("leaves a pasted page alone when it has no #app", () => {
+    document.body.innerHTML =
+      "<h1>Hello, browser!</h1><p>This page is plain <strong>HTML</strong>.</p>";
+
+    expect(runStarterScript).not.toThrow();
+    expect(document.body.textContent).toBe(
+      "Hello, browser!This page is plain HTML.",
+    );
+  });
+});
