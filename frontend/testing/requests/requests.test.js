@@ -402,12 +402,12 @@ describe("Droplet tests", () => {
         isHidden: false,
       };
 
-      fetchAPI.mockResolvedValue(mockDroplet);
+      fetchAPI.mockResolvedValue([mockDroplet]);
 
       const result = await getDropletById(1);
 
       expect(result).toEqual(mockDroplet);
-      expect(fetchAPI).toHaveBeenCalledWith("/droplets/1", expect.any(Object));
+      expect(fetchAPI).toHaveBeenCalledWith("/droplets", expect.any(Object));
     });
     it("should handle fetch errors", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch droplets"));

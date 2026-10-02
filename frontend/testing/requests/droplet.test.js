@@ -74,17 +74,19 @@ describe("deepDeleteDroplet", () => {
     const { fetchAPI } = require("@/lib/utils");
     const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
 
-    fetchAPI.mockResolvedValueOnce({
-      id: 123,
-      name: "Test Droplet",
-      lessons: [{ id: 1 }, { id: 2 }],
-      authorized_users: [{ id: 1 }],
-      tags: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      learningObjectives: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 123,
+        name: "Test Droplet",
+        lessons: [{ id: 1 }, { id: 2 }],
+        authorized_users: [{ id: 1 }],
+        tags: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        learningObjectives: [],
+      },
+    ]);
     deleteLessonMock.mockResolvedValue({ ok: true });
 
     global.fetch.mockResolvedValueOnce({
@@ -209,13 +211,13 @@ describe("Droplet API Functions", () => {
       };
 
       const { fetchAPI } = require("@/lib/utils");
-      fetchAPI.mockResolvedValue(mockDroplet);
+      fetchAPI.mockResolvedValue([mockDroplet]);
 
       const result = await getDropletById(1);
 
-      expect(fetchAPI).toHaveBeenCalledWith("/droplets/1", {
+      expect(fetchAPI).toHaveBeenCalledWith("/droplets", {
         urlParams: expect.objectContaining({
-          filters: {},
+          filters: { id: { $eq: 1 } },
           populate: {},
           fields: expect.arrayContaining([
             "*",
@@ -656,10 +658,10 @@ describe("Droplet API Functions", () => {
               focusArea: "Test Area",
               type: "test",
               tags: {
-                connect: [1, 2],
+                connect: ["1", "2"],
               },
               authorized_users: {
-                connect: [1],
+                connect: ["1"],
               },
               learningObjectives: [
                 { objective: "Objective 1" },
@@ -778,13 +780,15 @@ describe("Droplet API Functions", () => {
     it("successfully updates a learning objective and revalidates", async () => {
       const { fetchAPI } = require("@/lib/utils");
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce({
-        id: 123,
-        learningObjectives: [
-          { objective: "Old objective" },
-          { objective: "Keep this one" },
-        ],
-      });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: 123,
+          learningObjectives: [
+            { objective: "Old objective" },
+            { objective: "Keep this one" },
+          ],
+        },
+      ]);
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -804,10 +808,12 @@ describe("Droplet API Functions", () => {
     it("does not revalidate on failure", async () => {
       const { fetchAPI } = require("@/lib/utils");
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce({
-        id: 123,
-        learningObjectives: [{ objective: "Old objective" }],
-      });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: 123,
+          learningObjectives: [{ objective: "Old objective" }],
+        },
+      ]);
 
       global.fetch.mockResolvedValueOnce({ ok: false });
 
@@ -925,21 +931,23 @@ describe("duplicateDroplet", () => {
     const { fetchAPI } = require("@/lib/utils");
 
     // Mock getDropletById (originalDroplet fetch via fetchAPI)
-    fetchAPI.mockResolvedValueOnce({
-      id: 10,
-      name: "Original Droplet",
-      focusArea: "Science",
-      type: "standard",
-      description: "A droplet",
-      overview: "Overview",
-      tags: [],
-      authorized_users: [{ id: 5 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 10,
+        name: "Original Droplet",
+        focusArea: "Science",
+        type: "standard",
+        description: "A droplet",
+        overview: "Overview",
+        tags: [],
+        authorized_users: [{ id: 5 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
 
     // Mock draft check fetch (no existing drafts)
     global.fetch.mockResolvedValueOnce({
@@ -974,19 +982,21 @@ describe("duplicateDroplet", () => {
     const { fetchAPI } = require("@/lib/utils");
 
     // Original has a co-author (7); the current user (5) is added to the draft
-    fetchAPI.mockResolvedValueOnce({
-      id: 10,
-      name: "Original Droplet",
-      focusArea: "Science",
-      type: "standard",
-      tags: [],
-      authorized_users: [{ id: 7 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 10,
+        name: "Original Droplet",
+        focusArea: "Science",
+        type: "standard",
+        tags: [],
+        authorized_users: [{ id: 7 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -1010,21 +1020,23 @@ describe("duplicateDroplet", () => {
     const { fetchAPI } = require("@/lib/utils");
 
     // Mock getDropletById (originalDroplet fetch via fetchAPI)
-    fetchAPI.mockResolvedValueOnce({
-      id: 10,
-      name: "Original Droplet",
-      focusArea: "Science",
-      type: "standard",
-      description: "A droplet",
-      overview: "Overview",
-      tags: [],
-      authorized_users: [{ id: 5 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 10,
+        name: "Original Droplet",
+        focusArea: "Science",
+        type: "standard",
+        description: "A droplet",
+        overview: "Overview",
+        tags: [],
+        authorized_users: [{ id: 5 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
 
     // Mock draft check fetch — returns a draft where current user (id: 5) is authorized
     global.fetch.mockResolvedValueOnce({
@@ -1068,21 +1080,23 @@ describe("duplicateDroplet", () => {
     const { fetchAPI } = require("@/lib/utils");
 
     // Mock getDropletById (originalDroplet fetch via fetchAPI)
-    fetchAPI.mockResolvedValueOnce({
-      id: 10,
-      name: "Original Droplet",
-      focusArea: "Science",
-      type: "standard",
-      description: "A droplet",
-      overview: "Overview",
-      tags: [],
-      authorized_users: [{ id: 5 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 10,
+        name: "Original Droplet",
+        focusArea: "Science",
+        type: "standard",
+        description: "A droplet",
+        overview: "Overview",
+        tags: [],
+        authorized_users: [{ id: 5 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
 
     // Mock draft check fetch (no existing drafts)
     global.fetch.mockResolvedValueOnce({
@@ -1122,37 +1136,41 @@ describe("publishDraftToOriginal", () => {
     const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
 
     // First fetchAPI call: getDropletById for draft droplet
-    fetchAPI.mockResolvedValueOnce({
-      id: 20,
-      name: "[EDIT] Original Droplet",
-      focusArea: "Science",
-      type: "standard",
-      difficulty: "beginner",
-      description: "A droplet",
-      overview: "Overview",
-      slug: "edit-original-droplet",
-      tags: [],
-      authorized_users: [{ id: 5 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 20,
+        name: "[EDIT] Original Droplet",
+        focusArea: "Science",
+        type: "standard",
+        difficulty: "beginner",
+        description: "A droplet",
+        overview: "Overview",
+        slug: "edit-original-droplet",
+        tags: [],
+        authorized_users: [{ id: 5 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
 
     // Second fetchAPI call: getDropletById for original droplet
-    fetchAPI.mockResolvedValueOnce({
-      id: 10,
-      name: "Original Droplet",
-      slug: "original-droplet",
-      tags: [],
-      authorized_users: [{ id: 5 }],
-      learningObjectives: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      lessons: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 10,
+        name: "Original Droplet",
+        slug: "original-droplet",
+        tags: [],
+        authorized_users: [{ id: 5 }],
+        learningObjectives: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        lessons: [],
+      },
+    ]);
 
     // Fetch enrollments for the draft
     global.fetch.mockResolvedValueOnce({
@@ -1168,17 +1186,19 @@ describe("publishDraftToOriginal", () => {
     });
 
     // deepDeleteDroplet: fetchAPI call for getDropletById inside deepDeleteDroplet
-    fetchAPI.mockResolvedValueOnce({
-      id: 20,
-      name: "[EDIT] Original Droplet",
-      lessons: [],
-      authorized_users: [{ id: 5 }],
-      tags: [],
-      prerequisites: [],
-      postrequisites: [],
-      nextSteps: [],
-      learningObjectives: [],
-    });
+    fetchAPI.mockResolvedValueOnce([
+      {
+        id: 20,
+        name: "[EDIT] Original Droplet",
+        lessons: [],
+        authorized_users: [{ id: 5 }],
+        tags: [],
+        prerequisites: [],
+        postrequisites: [],
+        nextSteps: [],
+        learningObjectives: [],
+      },
+    ]);
 
     // deepDeleteDroplet: actual delete fetch
     global.fetch.mockResolvedValueOnce({
@@ -1210,7 +1230,7 @@ describe("publishDraftToOriginal", () => {
     const { fetchAPI } = require("@/lib/utils");
 
     // getDropletById returns null for the draft droplet
-    fetchAPI.mockResolvedValueOnce(null);
+    fetchAPI.mockResolvedValueOnce([]);
 
     const result = await publishDraftToOriginal(20, 10);
 
