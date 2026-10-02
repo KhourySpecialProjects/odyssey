@@ -5,11 +5,7 @@ module.exports = {
   async beforeCreate(event) {
     const { data } = event.params;
 
-    // Strapi v5 fills an absent dynamic zone with [] before this hook runs,
-    // so an empty array has to count as "no blocks".
-    const hasBlocks = Array.isArray(data.blocks) ? data.blocks.length > 0 : Boolean(data.blocks);
-
-    if (!hasBlocks && !data.blocksV2) {
+    if (!data.blocks && !data.blocksV2) {
       throw new Error('Lesson must have either blocks or blocksV2 content');
     }
 
