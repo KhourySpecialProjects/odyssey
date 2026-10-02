@@ -39,7 +39,14 @@ export interface DropletsExpandable extends Struct.ComponentSchema {
     icon: 'archive';
   };
   attributes: {
-    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'rich';
+        }
+      >;
     title: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
@@ -52,7 +59,14 @@ export interface DropletsGeneric extends Struct.ComponentSchema {
     icon: 'pencil';
   };
   attributes: {
-    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'rich';
+        }
+      >;
   };
 }
 
@@ -145,7 +159,13 @@ export interface QuizzesOpenEndedQuestion extends Struct.ComponentSchema {
     displayName: 'Open Ended Question';
   };
   attributes: {
-    content: Schema.Attribute.RichText;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'rich';
+        }
+      >;
     correctAnswer: Schema.Attribute.String;
   };
 }
@@ -160,7 +180,14 @@ export interface QuizzesQuestion extends Struct.ComponentSchema {
   attributes: {
     answerOptions: Schema.Attribute.Component<'quizzes.answer-option', true> &
       Schema.Attribute.Required;
-    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'rich';
+        }
+      >;
   };
 }
 

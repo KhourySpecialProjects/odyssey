@@ -77,7 +77,11 @@
       "required": true
     },
     "overview": {
-      "type": "richtext",
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": {
+        "preset": "light"
+      },
       "required": false
     },
     "nextSteps": {

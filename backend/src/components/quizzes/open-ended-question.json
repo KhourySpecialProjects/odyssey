@@ -6,7 +6,11 @@
   "options": {},
   "attributes": {
     "content": {
-      "type": "richtext"
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": {
+        "preset": "rich"
+      }
     },
     "correctAnswer": {
       "type": "string"
