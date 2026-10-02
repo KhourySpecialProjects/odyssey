@@ -5,6 +5,11 @@ import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { CACHE_TAGS } from "../cache-tags";
 import { revalidateTag } from "next/cache";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -118,7 +123,17 @@ export async function getAllHighlightsByUser(
 }
 
 export async function deleteHighlight(id: number, authorizedUserId: number) {
-  const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {
+  let url: string;
+  try {
+    url = await strapiEntryUrl("highlights", id);
+  } catch (err) {
+    // Same failure as the 404 Strapi used to return for a missing highlight.
+    if (err instanceof StrapiEntryNotFoundError) {
+      throw new Error("Failed to delete highlight");
+    }
+    throw err;
+  }
+  const response = await fetch(url, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -170,6 +185,30 @@ export async function getHighlightsByAuthorizedUserAndLesson(
 }
 
 export async function createHighlight(highlightData: any) {
+  // Strapi v5 relation writes take documentIds, not numeric ids. The numeric
+  // authorized_user stays on highlightData for the cache tag below.
+  const data = { ...highlightData.data };
+  try {
+    if (data.lesson != null) {
+      data.lesson = await resolveDocumentId("lessons", data.lesson);
+    }
+    if (data.authorized_user != null) {
+      data.authorized_user = await resolveDocumentId(
+        "authorized-users",
+        data.authorized_user,
+      );
+    }
+    if (data.note != null) {
+      data.note = await resolveDocumentId("notes", data.note);
+    }
+  } catch (err) {
+    // Same failure as Strapi rejecting a relation that does not exist.
+    if (err instanceof StrapiEntryNotFoundError) {
+      throw new Error("Failed to create highlight");
+    }
+    throw err;
+  }
+
   const response = await fetch(`${STRAPI_API_URL}/api/highlights`, {
     method: "POST",
     headers: {
@@ -177,7 +216,7 @@ export async function createHighlight(highlightData: any) {
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
-    body: JSON.stringify({ data: highlightData.data }),
+    body: JSON.stringify({ data }),
   });
 
   if (!response.ok) {
