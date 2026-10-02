@@ -2,7 +2,15 @@ const request = require('supertest');
 const { setupStrapi, teardownStrapi } = require('../helpers/strapi');
 const { createFullAccessToken } = require('../helpers/api-token');
 const { useSlackSpy } = require('../helpers/slack');
-const { DROPLET_UID, dropletData, unique } = require('../helpers/fixtures');
+const {
+  DROPLET_UID,
+  LESSON_UID,
+  USER_UID,
+  dropletData,
+  lessonData,
+  userData,
+  unique,
+} = require('../helpers/fixtures');
 
 let strapi;
 let token;
@@ -105,6 +113,36 @@ describe('droplet afterUpdate (Slack on entering edit)', () => {
     expect(sends).toHaveLength(1);
     expect(sends[0].text).toContain(name);
     expect(JSON.stringify(sends[0].blocks)).toContain(name);
+  });
+
+  it('lists the populated lessons, authors and tags in the message', async () => {
+    const lesson = await strapi
+      .documents(LESSON_UID)
+      .create({ data: lessonData({ name: unique('Populated Lesson') }) });
+    const tag = await strapi
+      .documents('api::tag.tag')
+      .create({ data: { name: unique('populated-tag'), slug: 'placeholder' } });
+    const droplet = await create({
+      lessons: [lesson.documentId],
+      tags: [tag.documentId],
+    });
+    await strapi.documents(USER_UID).create({
+      data: userData({
+        firstName: 'Radia',
+        lastName: 'Perlman',
+        droplets: [droplet.documentId],
+      }),
+    });
+    slack.reset();
+
+    await update(droplet.documentId, { status: 'edit' });
+
+    const sends = slack.sends();
+    expect(sends).toHaveLength(1);
+    const blocks = JSON.stringify(sends[0].blocks);
+    expect(blocks).toContain(lesson.name);
+    expect(blocks).toContain(tag.name);
+    expect(blocks).toContain('Radia Perlman');
   });
 
   it('links the droplet to its draft review page when FRONTEND_URL is set', async () => {
