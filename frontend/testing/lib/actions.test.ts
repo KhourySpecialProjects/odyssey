@@ -1516,7 +1516,7 @@ describe("Server Actions", () => {
       );
     });
 
-    it("setTimeZone uses the gate's documentId without a lookup", async () => {
+    it("setTimeZone passes the gate's documentId to strapiEntryUrl", async () => {
       mockedRequireRole.mockResolvedValueOnce({
         ok: true,
         user: {
@@ -1540,7 +1540,7 @@ describe("Server Actions", () => {
       );
     });
 
-    it("setTimeZone falls back to the numeric id when the gate has no documentId", async () => {
+    it("setTimeZone passes documentId undefined when the gate lacks it", async () => {
       mockedRequireRole.mockResolvedValueOnce({
         ok: true,
         user: { id: 42, email: "user@northeastern.edu", roles: [] },

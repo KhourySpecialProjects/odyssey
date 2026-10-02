@@ -147,11 +147,14 @@ describe("options", () => {
       };
 
       it("returns an old token unchanged on non-sign-in calls", async () => {
+        const before = JSON.parse(JSON.stringify(oldToken));
+
         const result = await authOptions.callbacks!.jwt!({
           token: oldToken,
         } as any);
 
-        expect(result).toEqual(oldToken);
+        expect(result).toEqual(before);
+        expect(result).toBe(oldToken);
         expect(fetchAPI).not.toHaveBeenCalled();
       });
 

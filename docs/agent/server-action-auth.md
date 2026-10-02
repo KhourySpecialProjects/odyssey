@@ -53,7 +53,7 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
   ```
 
 - Never use a client-supplied `documentId` (including on nested objects and arrays). Pass `x.id` to `strapiEntryUrl` / `resolveDocumentId(s)`, or write to the entity the action itself fetched for its check. See `data-fetching.md`, "Single entries and relations on Strapi v5".
-- `gate.user.documentId` comes from Strapi (not the client or session), so pass the gate user, not `gate.user.id`, to `strapiEntryUrl` to skip the lookup. It is optional; the numeric `id` still resolves.
+- `gate.user.documentId` comes from Strapi (not the client or session), so pass `{ id, documentId }` from the gate user (not just `gate.user.id`) to `strapiEntryUrl` to skip the lookup. It is optional; the numeric `id` still resolves.
 - `getAuthorizedUserId` (`lib/auth/current-user-id.ts`) is for Server _Components_, not Server Actions (ODY-555).
 
 ## Error codes

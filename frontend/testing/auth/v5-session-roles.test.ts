@@ -61,7 +61,7 @@ function strapiUser(title: AuthorizedUserRoleTitle) {
 
 /** Runs the real jwt -> session callbacks, as NextAuth does on sign-in. */
 async function signIn(title: AuthorizedUserRoleTitle) {
-  mockedFetchAPI.mockResolvedValueOnce([
+  mockedFetchAPI.mockResolvedValue([
     {
       id: 7,
       documentId: "abc123",
@@ -140,7 +140,11 @@ describe.each(ROLES)("signed-in %s", (title) => {
   it("carries id and documentId in the session", async () => {
     const session = await signIn(title);
 
-    expect(session.user).toMatchObject({ id: 7, documentId: "abc123" });
+    expect(session.user).toMatchObject({
+      id: 7,
+      documentId: "abc123",
+      roles: [title],
+    });
   });
 
   it("passes the gate for its own role with documentId", async () => {
@@ -148,6 +152,7 @@ describe.each(ROLES)("signed-in %s", (title) => {
       ok: true,
       user: { id: 7, documentId: "abc123", roles: [title] },
     });
+    expect(mockedGetCachedUser).toHaveBeenCalledWith(EMAIL);
   });
 
   it("is forbidden for a role it does not hold", async () => {
@@ -158,6 +163,7 @@ describe.each(ROLES)("signed-in %s", (title) => {
   });
 
   it("setTimeZone PUTs to its documentId with no lookup", async () => {
+    mockedFetchAPI.mockClear();
     const result = await setTimeZone("America/New_York");
 
     expect(result).toEqual({ success: true });
@@ -194,6 +200,34 @@ describe.each([
     expect(gate).toMatchObject({ ok: true, user: { documentId: "abc123" } });
     expect(mockedGetCachedUser).toHaveBeenCalledWith(EMAIL);
     expect(result).toEqual({ success: true });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringMatching(PUT_URL),
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });
+});
+
+describe("old session: gate user has only a numeric id", () => {
+  it("resolves documentId by id lookup and writes to it", async () => {
+    mockedGetCachedUser.mockResolvedValue({
+      id: 7,
+      email: EMAIL,
+      roles: [{ id: 1, title: AuthorizedUserRoleTitle.User }],
+    } as unknown as Awaited<ReturnType<typeof getCachedUser>>);
+    mockedFetchAPI.mockResolvedValue([{ id: 7, documentId: "abc123" }]);
+    mockedGetServerSession.mockResolvedValue(await oldSession({ id: 7 }));
+
+    const result = await setTimeZone("America/New_York");
+
+    expect(result).toEqual({ success: true });
+    expect(mockedFetchAPI).toHaveBeenCalledWith(
+      "/authorized-users",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({
+          filters: { id: { $eq: 7 } },
+        }),
+      }),
+    );
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringMatching(PUT_URL),
       expect.objectContaining({ method: "PUT" }),
