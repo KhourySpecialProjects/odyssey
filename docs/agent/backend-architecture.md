@@ -198,6 +198,19 @@ Droplet `isHidden`/`status` and voyage `isArchived` only filter listings: `/d/[s
 
 Publishing an `[EDIT]` draft (`publishDraftToOriginal`) syncs lessons in place instead of recreating them. Each draft lesson is matched to a live lesson by `originalLessonId` (recorded when `duplicateDroplet` clones the draft), then by exact name; position is never used. A matched lesson is updated with only the fields that changed, so it keeps its id and slug (even if renamed) and everything keyed to it: students' `viewedLessons`, notes and highlights. Slugs of kept lessons never change. Draft lessons with no match are created, and live lessons missing from the draft are deleted. Writes happen in this order: the droplet's metadata, lesson updates, lesson creates, lesson deletes, and only then the draft's own enrollments move and the draft is deleted. Deletes run last, after every update and create has succeeded, so a failure part way never leaves students with fewer lessons; it returns `{ ok: false }`, keeps the draft, and publishing again finishes the job.
 
+### Lifecycle hooks on Strapi v5
+
+Hooks live in `src/api/*/content-types/*/lifecycles.ts` (droplet, lesson, playlist, creation-request, access-request). They are tested against a real v5 instance (ODY-599); facts checked in the Strapi 5.56.0 source and confirmed by those tests:
+
+- **One call per operation.** With Draft & Publish off, the document service's `create`, `update` and `delete` each make one `db.query` call, so `beforeCreate`/`afterCreate`/`beforeUpdate`/`afterUpdate` fire once per operation. Nothing runs twice for a "draft" and a "published" version, so Slack sends happen once. `event.params.where.id` is still the numeric row id.
+- **Required fields are validated before `beforeCreate`.** A create without `slug` fails with `slug must be defined`, even though the hook would generate one. Required checks used to be skipped because new rows were drafts, and D&P is now off. Callers have to send a slug (any value; `generateSlug` ignores it and slugifies `name`). The tests cover this as `test.failing`.
+- **A missing dynamic zone arrives as `[]`.** v5 fills `blocks: []` before `beforeCreate`, so check `.length`, not truthiness.
+- **Unknown data keys survive** the entity validator, so `regenerateSlug` reaches `beforeUpdate` through the document service, entity service and admin, and the hook deletes it. The REST controller rejects it earlier with `400 Invalid key` (ODY-700).
+- **`strapi.entityService.findOne(uid, numericId)` still works** but is deprecated (moving off it is ODY-606). `plugin::content-manager.uid` `generateUIDField` keeps its signature, so `lib/lifecycle-utils.ts` `generateSlug` works unchanged.
+- **Slack sends are a no-op unless `NODE_ENV=production`** (`lib/slack.ts`), so tests switch it on per test and count `fetch` calls to the webhook URL.
+
+Run the backend tests with `npm --prefix backend test` (see `testing-and-deployment.md`).
+
 ## Database
 
 PostgreSQL via `DATABASE_*` env variables. Local dev uses Docker Compose (`docker-compose.yml`) with a `strapiDB` service. Production uses AWS RDS.
