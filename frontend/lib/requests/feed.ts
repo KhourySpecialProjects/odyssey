@@ -15,6 +15,7 @@ import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getCachedUserSocial } from "./cached";
+import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -281,10 +282,10 @@ export async function createFriendAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: user.id,
+            authorized_user: await resolveDocumentId("authorized-users", user),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
-            droplet: droplet.id,
+            droplet: await resolveDocumentId("droplets", droplet),
             type: "friend",
           },
         }),
@@ -316,7 +317,7 @@ export async function createKudosAnnouncement(
 ) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${announcementId}`,
+      await strapiEntryUrl("announcements", announcementId),
       {
         method: "PUT",
         headers: {
@@ -327,7 +328,7 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             kudosGiven: {
-              connect: [user],
+              connect: [await resolveDocumentId("authorized-users", user)],
             },
           },
         }),
@@ -349,9 +350,9 @@ export async function createKudosAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: user.id,
+            authorized_user: await resolveDocumentId("authorized-users", user),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
-            droplet: droplet.id,
+            droplet: await resolveDocumentId("droplets", droplet),
             firstCreated: curDate,
             type: "kudos",
           },
@@ -389,7 +390,7 @@ export async function createPlaylistAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            playlist: id,
+            playlist: await resolveDocumentId("playlists", id),
             content: `${playlistName} has been updated. Click to view this playlist!`,
             firstCreated: curDate,
             type: "playlist",
@@ -425,7 +426,7 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            group: id,
+            group: await resolveDocumentId("groups", id),
             content: `${groupName} has been updated. Click to view this group!`,
             firstCreated: curDate,
             type: "group",
@@ -461,7 +462,7 @@ export async function createDropletAnnouncement(name: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            droplet: id,
+            droplet: await resolveDocumentId("droplets", id),
             content: `${name} has been updated. Click to view this droplet!`,
             firstCreated: curDate,
             type: "droplet",
@@ -535,7 +536,10 @@ export async function createSystemAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: authUser.id,
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              authUser,
+            ),
             content: content,
             firstCreated: curDate,
             type: "system",
@@ -630,7 +634,10 @@ export async function markAnnouncementRead(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      await strapiEntryUrl("announcements", {
+        id,
+        documentId: ownership.documentId,
+      }),
       {
         method: "PUT",
         body: JSON.stringify({
@@ -666,7 +673,10 @@ export async function markAnnouncementUnread(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      await strapiEntryUrl("announcements", {
+        id,
+        documentId: ownership.documentId,
+      }),
       {
         method: "PUT",
         body: JSON.stringify({
@@ -702,7 +712,8 @@ export async function markAnnouncementUnread(id: number) {
 async function assertAnnouncementOwnership(
   id: number,
 ): Promise<
-  { ok: true; ownerId: number; type?: string } | { ok: false; error: string }
+  | { ok: true; ownerId: number; type?: string; documentId?: string }
+  | { ok: false; error: string }
 > {
   const user = await getCurrentUser();
   if (!user?.email) return { ok: false, error: "Not authenticated" };
@@ -710,14 +721,21 @@ async function assertAnnouncementOwnership(
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) return { ok: false, error: "Not authorized" };
 
-  const announcement = await fetchAPI<{
-    id: number;
-    type?: string;
-    authorized_user?: { id: number } | null;
-  }>(`/announcements/${id}`, {
+  // Filter the list endpoint by id: single-entry routes need a documentId, and
+  // this needs no lookup.
+  const [announcement] = await fetchAPI<
+    {
+      id: number;
+      documentId?: string;
+      type?: string;
+      authorized_user?: { id: number } | null;
+    }[]
+  >("/announcements", {
     urlParams: {
+      filters: { id: { $eq: id } },
       fields: ["id", "type"],
       populate: { authorized_user: { fields: ["id"] } },
+      pagination: { pageSize: 1, page: 1 },
     },
     next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
   });
@@ -734,7 +752,12 @@ async function assertAnnouncementOwnership(
   if (ownerId !== authorizedUser.id) {
     return { ok: false, error: "Not authorized" };
   }
-  return { ok: true, ownerId, type: announcement.type };
+  return {
+    ok: true,
+    ownerId,
+    type: announcement.type,
+    documentId: announcement.documentId,
+  };
 }
 
 /**
