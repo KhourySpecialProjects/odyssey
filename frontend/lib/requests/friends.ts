@@ -228,8 +228,9 @@ export async function sendFriendRequest(
   requestee: AuthorizedUser,
 ) {
   try {
+    // Both users come from the caller, so address them by numeric id only.
     const sentToResponse = await fetch(
-      await strapiEntryUrl("authorized-users", requestee),
+      await strapiEntryUrl("authorized-users", requestee.id),
       {
         method: "PUT",
         headers: {
@@ -240,7 +241,9 @@ export async function sendFriendRequest(
         body: JSON.stringify({
           data: {
             received_requests: {
-              connect: [await resolveDocumentId("authorized-users", requester)],
+              connect: [
+                await resolveDocumentId("authorized-users", requester.id),
+              ],
             },
           },
         }),
@@ -254,7 +257,7 @@ export async function sendFriendRequest(
 
     // Add requestee to requester's sent_requests
     const sentFromResponse = await fetch(
-      await strapiEntryUrl("authorized-users", requester),
+      await strapiEntryUrl("authorized-users", requester.id),
       {
         method: "PUT",
         headers: {
@@ -265,7 +268,9 @@ export async function sendFriendRequest(
         body: JSON.stringify({
           data: {
             sent_requests: {
-              connect: [await resolveDocumentId("authorized-users", requestee)],
+              connect: [
+                await resolveDocumentId("authorized-users", requestee.id),
+              ],
             },
           },
         }),

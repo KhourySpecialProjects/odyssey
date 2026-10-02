@@ -592,8 +592,8 @@ export async function updateGroup(
   if (data.semester) dataToSend.semester = data.semester;
   if (data.isArchived !== undefined) dataToSend.isArchived = data.isArchived;
 
-  // Relation values are documentIds on Strapi v5. Entities that already carry
-  // a documentId are used as-is; bare numeric ids are resolved.
+  // Relation values are documentIds on Strapi v5. These objects come from the
+  // caller, so resolve their numeric ids rather than trusting a documentId.
   if (data.admins) {
     dataToSend.admins = {
       set: await resolveDocumentIds("authorized-users", data.admins),
@@ -614,19 +614,28 @@ export async function updateGroup(
 
   if (data.droplets) {
     dataToSend.droplets = {
-      set: await resolveDocumentIds("droplets", data.droplets),
+      set: await resolveDocumentIds(
+        "droplets",
+        data.droplets.map((d) => d.id),
+      ),
     };
   }
 
   if (data.playlists) {
     dataToSend.playlists = {
-      set: await resolveDocumentIds("playlists", data.playlists),
+      set: await resolveDocumentIds(
+        "playlists",
+        data.playlists.map((p) => p.id),
+      ),
     };
   }
 
   if (data.voyages) {
     dataToSend.voyages = {
-      set: await resolveDocumentIds("voyages", data.voyages),
+      set: await resolveDocumentIds(
+        "voyages",
+        data.voyages.map((v) => v.id),
+      ),
     };
   }
 
@@ -767,18 +776,19 @@ export async function enrollUsers(group: Group) {
 
 //NEW REQUESTS FOR DUE DATE COLLECTION TYPE
 
-// Due-date relations are written as documentIds on Strapi v5. Entities that
-// already carry a documentId are used as-is (no lookup).
+// Due-date relations are written as documentIds on Strapi v5. The member,
+// group and item come from the caller of an exported Server Action, so only
+// their numeric ids are used - never a client-supplied documentId.
 async function resolveDueDateRelations(
-  member: { id: number; documentId?: string },
+  member: { id: number },
   group: Group,
   kind: "droplet" | "playlist",
   item: Droplet | Playlist,
 ) {
   const [authorized_user, itemDocId, groupDocId] = await Promise.all([
-    resolveDocumentId("authorized-users", member),
-    resolveDocumentId(kind === "droplet" ? "droplets" : "playlists", item),
-    resolveDocumentId("groups", group),
+    resolveDocumentId("authorized-users", member.id),
+    resolveDocumentId(kind === "droplet" ? "droplets" : "playlists", item.id),
+    resolveDocumentId("groups", group.id),
   ]);
   return { authorized_user, [kind]: itemDocId, group: groupDocId };
 }
@@ -1202,16 +1212,20 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     const [authorizedUser, fullGroup] = await Promise.all([
       getAuthorizedUserByEmail(user.email),
-      fetchAPI<Group>(`/groups/${await resolveDocumentId("groups", group)}`, {
-        urlParams: {
-          populate: {
-            creator: { fields: ["id"] },
-            admins: { fields: ["id"] },
-            managers: { fields: ["id"] },
+      // `group` comes from the caller, so look it up by its numeric id only.
+      fetchAPI<Group>(
+        `/groups/${await resolveDocumentId("groups", group.id)}`,
+        {
+          urlParams: {
+            populate: {
+              creator: { fields: ["id"] },
+              admins: { fields: ["id"] },
+              managers: { fields: ["id"] },
+            },
           },
+          next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
         },
-        next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
-      }),
+      ),
     ]);
 
     const canArchive =
@@ -1226,7 +1240,9 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       };
     }
 
-    const response = await fetch(await strapiEntryUrl("groups", group), {
+    // Write to the group that was just fetched and authorized against, never
+    // to a caller-supplied documentId.
+    const response = await fetch(await strapiEntryUrl("groups", fullGroup), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

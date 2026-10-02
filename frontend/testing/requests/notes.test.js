@@ -414,6 +414,7 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
+      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
 
       const result = await createNote(
         mockLesson,
@@ -435,10 +436,10 @@ describe("Notes Tests", () => {
           body: JSON.stringify({
             data: {
               content: "",
-              lesson: "docL101",
-              enrollment: "docE201",
+              lesson: "doc101",
+              enrollment: "doc201",
               positionY: Math.round(mockPosition),
-              highlight: "docH301",
+              highlight: "doc301",
             },
           }),
         }),
@@ -449,18 +450,27 @@ describe("Notes Tests", () => {
       expect(result).toEqual({ success: true });
     });
 
-    it("sends documentIds for relations, passing entities through the resolver", async () => {
-      const lesson = { id: 101, documentId: "docL101" };
-      const enrollment = { id: 201, documentId: "docE201" };
+    it("resolves relations from numeric ids only and ignores client documentIds", async () => {
+      const lesson = { id: 101, documentId: "someoneElsesLesson" };
+      const enrollment = { id: 201, documentId: "someoneElsesEnrollment" };
+      const highlight = { id: 301, documentId: "someoneElsesHighlight" };
+      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 1 } }),
       });
 
-      await createNote(lesson, enrollment, 10, 4);
+      await createNote(lesson, enrollment, 10, 4, highlight);
 
-      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", lesson);
-      expect(resolveDocumentId).toHaveBeenCalledWith("enrollments", enrollment);
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", 101);
+      expect(resolveDocumentId).toHaveBeenCalledWith("enrollments", 201);
+      expect(resolveDocumentId).toHaveBeenCalledWith("highlights", 301);
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data).toMatchObject({
+        lesson: "doc101",
+        enrollment: "doc201",
+        highlight: "doc301",
+      });
     });
 
     it("resolves numeric-only entities to documentIds", async () => {
@@ -518,6 +528,7 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
+      resolveDocumentId.mockImplementation(async (_c, ref) => `doc${ref}`);
 
       const result = await createNote(
         mockLesson,
@@ -532,8 +543,8 @@ describe("Notes Tests", () => {
           body: JSON.stringify({
             data: {
               content: "",
-              lesson: "docL101",
-              enrollment: "docE201",
+              lesson: "doc101",
+              enrollment: "doc201",
               positionY: Math.round(mockPosition),
               highlight: undefined,
             },

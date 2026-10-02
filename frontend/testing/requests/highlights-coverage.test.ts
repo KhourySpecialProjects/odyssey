@@ -383,6 +383,28 @@ describe("highlights requests — coverage", () => {
       );
     });
 
+    it("resolves relations from numeric ids only, never a client documentId", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        data: {
+          text: "k",
+          authorized_user: { id: 5, documentId: "forgedUser" },
+          lesson: "forgedLessonDoc",
+        },
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 5);
+      // A non-numeric string becomes NaN, which the helper rejects.
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", NaN);
+      expect(resolveDocumentId).not.toHaveBeenCalledWith(
+        "lessons",
+        "forgedLessonDoc",
+      );
+    });
+
     it("throws the same error when a relation cannot be resolved", async () => {
       jest
         .mocked(resolveDocumentId)

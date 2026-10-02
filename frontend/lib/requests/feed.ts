@@ -282,10 +282,13 @@ export async function createFriendAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: await resolveDocumentId("authorized-users", user),
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              user.id,
+            ),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
-            droplet: await resolveDocumentId("droplets", droplet),
+            droplet: await resolveDocumentId("droplets", droplet.id),
             type: "friend",
           },
         }),
@@ -328,7 +331,7 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             kudosGiven: {
-              connect: [await resolveDocumentId("authorized-users", user)],
+              connect: [await resolveDocumentId("authorized-users", user.id)],
             },
           },
         }),
@@ -350,9 +353,12 @@ export async function createKudosAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: await resolveDocumentId("authorized-users", user),
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              user.id,
+            ),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
-            droplet: await resolveDocumentId("droplets", droplet),
+            droplet: await resolveDocumentId("droplets", droplet.id),
             firstCreated: curDate,
             type: "kudos",
           },
@@ -538,7 +544,7 @@ export async function createSystemAnnouncement(
           data: {
             authorized_user: await resolveDocumentId(
               "authorized-users",
-              authUser,
+              authUser.id,
             ),
             content: content,
             firstCreated: curDate,

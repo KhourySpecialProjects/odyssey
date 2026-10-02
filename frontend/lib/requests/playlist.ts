@@ -163,7 +163,11 @@ export async function updatePlaylist(
     try {
       [url, dropletDocIds] = await Promise.all([
         strapiEntryUrl("playlists", id),
-        data.droplets && resolveDocumentIds("droplets", data.droplets),
+        data.droplets &&
+          resolveDocumentIds(
+            "droplets",
+            data.droplets.map((d) => d.id),
+          ),
       ]);
     } catch (error) {
       // Same result Strapi's 404 produced before
@@ -233,8 +237,11 @@ export async function createPlaylist(data: {
     let dropletDocIds: string[];
     try {
       [authorDocId, dropletDocIds] = await Promise.all([
-        resolveDocumentId("authorized-users", data.author),
-        resolveDocumentIds("droplets", data.droplets),
+        resolveDocumentId("authorized-users", data.author.id),
+        resolveDocumentIds(
+          "droplets",
+          data.droplets.map((d) => d.id),
+        ),
       ]);
     } catch (error) {
       if (error instanceof StrapiEntryNotFoundError) {
@@ -366,15 +373,18 @@ export async function archivePlaylist(
       };
     }
 
-    const response = await fetch(await strapiEntryUrl("playlists", playlist), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
+    const response = await fetch(
+      await strapiEntryUrl("playlists", fullPlaylist),
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        body: JSON.stringify({ data: { isArchived: archiveState } }),
       },
-      body: JSON.stringify({ data: { isArchived: archiveState } }),
-    });
+    );
 
     if (!response.ok) {
       console.error("Archive playlist error:", await response.text());

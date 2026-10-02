@@ -562,20 +562,40 @@ describe("Friends tests", () => {
         }),
       );
 
-      // The users are passed as entities, so no id -> documentId lookup is needed.
+      // The users come from the caller, so only their numeric ids are used.
       expect(strapiEntryUrl).toHaveBeenCalledWith(
         "authorized-users",
-        requestee,
+        requestee.id,
       );
       expect(strapiEntryUrl).toHaveBeenCalledWith(
         "authorized-users",
-        requester,
+        requester.id,
       );
 
       expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
       expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
+    });
+
+    it("ignores client-supplied documentIds on the users", async () => {
+      const requester = { id: 5, documentId: "victimRequester" };
+      const requestee = { id: 6, documentId: "victimRequestee" };
+      global.fetch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await sendFriendRequest(requester, requestee);
+
+      expect(global.fetch.mock.calls[0][0]).toMatch(
+        /\/api\/authorized-users\/doc6$/,
+      );
+      expect(global.fetch.mock.calls[1][0]).toMatch(
+        /\/api\/authorized-users\/doc5$/,
+      );
+      expect(JSON.parse(global.fetch.mock.calls[0][1].body).data).toEqual({
+        received_requests: { connect: ["doc5"] },
+      });
     });
 
     it("should handle error in updating requestee", async () => {

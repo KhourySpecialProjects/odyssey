@@ -173,8 +173,9 @@ export async function createNote(
   content?: string,
 ) {
   try {
-    // Strapi v5 relation writes take documentIds. The entities usually carry
-    // one already, in which case no lookup happens.
+    // Strapi v5 relation writes take documentIds. The entities come from the
+    // caller of an exported Server Action, so resolve their numeric ids and
+    // never trust a client-supplied documentId.
     let relations: {
       lesson: string;
       enrollment: string;
@@ -182,10 +183,10 @@ export async function createNote(
     };
     try {
       relations = {
-        lesson: await resolveDocumentId("lessons", lesson),
-        enrollment: await resolveDocumentId("enrollments", enrollment),
+        lesson: await resolveDocumentId("lessons", lesson.id),
+        enrollment: await resolveDocumentId("enrollments", enrollment.id),
         highlight: highlight
-          ? await resolveDocumentId("highlights", highlight)
+          ? await resolveDocumentId("highlights", highlight.id)
           : undefined,
       };
     } catch (err) {

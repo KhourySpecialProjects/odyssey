@@ -184,22 +184,38 @@ export async function getHighlightsByAuthorizedUserAndLesson(
   });
 }
 
+// highlightData is untyped client input. Reduce each relation to a numeric id
+// (NaN for anything else, which the helper rejects) so a client-supplied
+// documentId or object is never used to address an entry.
+function toNumericId(value: unknown): number {
+  const id =
+    value !== null && typeof value === "object"
+      ? (value as { id?: unknown }).id
+      : value;
+  return typeof id === "number" || typeof id === "string"
+    ? Number(id)
+    : Number.NaN;
+}
+
 export async function createHighlight(highlightData: any) {
   // Strapi v5 relation writes take documentIds, not numeric ids. The numeric
   // authorized_user stays on highlightData for the cache tag below.
   const data = { ...highlightData.data };
   try {
     if (data.lesson != null) {
-      data.lesson = await resolveDocumentId("lessons", data.lesson);
+      data.lesson = await resolveDocumentId(
+        "lessons",
+        toNumericId(data.lesson),
+      );
     }
     if (data.authorized_user != null) {
       data.authorized_user = await resolveDocumentId(
         "authorized-users",
-        data.authorized_user,
+        toNumericId(data.authorized_user),
       );
     }
     if (data.note != null) {
-      data.note = await resolveDocumentId("notes", data.note);
+      data.note = await resolveDocumentId("notes", toNumericId(data.note));
     }
   } catch (err) {
     // Same failure as Strapi rejecting a relation that does not exist.

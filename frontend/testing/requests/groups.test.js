@@ -2280,23 +2280,25 @@ describe("documentId handling (ODY-601)", () => {
     expect(body.data.voyages).toEqual({ connect: ["doc6"] });
   });
 
-  it("updateGroup sends documentIds and uses entity documentIds without lookup", async () => {
+  it("updateGroup resolves relations from numeric ids and ignores client documentIds", async () => {
     fetchAPI.mockResolvedValueOnce({ id: 1 });
 
     await updateGroup(1, {
       memberIds: [20],
-      droplets: [{ id: 1, documentId: "dropletDoc" }, { id: 2 }],
-      voyages: [{ id: 3 }],
+      droplets: [{ id: 1, documentId: "forgedDroplet" }, { id: 2 }],
+      playlists: [{ id: 4, documentId: "forgedPlaylist" }],
+      voyages: [{ id: 3, documentId: "forgedVoyage" }],
     });
 
     expect(fetchAPI.mock.calls[0][0]).toBe("/groups/doc1");
     const body = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
     expect(body.data.members.set).toEqual(["doc20"]);
-    expect(body.data.droplets.set).toEqual(["dropletDoc", "doc2"]);
+    expect(body.data.droplets.set).toEqual(["doc1", "doc2"]);
+    expect(body.data.playlists.set).toEqual(["doc4"]);
     expect(body.data.voyages.set).toEqual(["doc3"]);
   });
 
-  it("assignDropletDueDate sends documentIds in the create body without looking up entities that carry one", async () => {
+  it("assignDropletDueDate resolves the create body from numeric ids and ignores client documentIds", async () => {
     fetchAPI.mockResolvedValueOnce([]);
     global.fetch.mockResolvedValueOnce({ ok: true });
 
@@ -2314,9 +2316,9 @@ describe("documentId handling (ODY-601)", () => {
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body.data).toEqual({
       dueDate: "2023-12-31",
-      authorized_user: "userDoc",
-      droplet: "dropletDoc",
-      group: "groupDoc",
+      authorized_user: "doc10",
+      droplet: "doc101",
+      group: "doc1",
     });
   });
 
@@ -2380,21 +2382,31 @@ describe("documentId handling (ODY-601)", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("archiveGroup uses the group entity's documentId and does no lookup", async () => {
+  it("archiveGroup ignores a mismatched client documentId and writes to the fetched group", async () => {
     getCurrentUser.mockResolvedValue({ email: "test@example.com" });
     getAuthorizedUserByEmail.mockResolvedValue({ id: 5 });
-    fetchAPI.mockResolvedValueOnce({ id: 10, creator: { id: 5 }, admins: [] });
+    fetchAPI.mockResolvedValueOnce({
+      id: 10,
+      documentId: "fetchedGroupDoc",
+      creator: { id: 5 },
+      admins: [],
+    });
     global.fetch.mockResolvedValueOnce({ ok: true, text: async () => "" });
 
     const result = await archiveGroup(
-      { id: 10, documentId: "groupDoc", groupName: "G" },
+      { id: 10, documentId: "someoneElsesGroupDoc", groupName: "G" },
       true,
     );
 
     expect(result).toEqual({ success: true });
-    expect(fetchAPI.mock.calls[0][0]).toBe("/groups/groupDoc");
+    // The authorization read is addressed by numeric id, never the client's
+    // documentId, and the PUT goes to the row that was just authorized.
+    expect(fetchAPI.mock.calls[0][0]).toBe("/groups/doc10");
     expect(global.fetch.mock.calls[0][0]).toBe(
-      "http://test-api-url/api/groups/groupDoc",
+      "http://test-api-url/api/groups/fetchedGroupDoc",
+    );
+    expect(JSON.stringify(global.fetch.mock.calls)).not.toContain(
+      "someoneElsesGroupDoc",
     );
   });
 

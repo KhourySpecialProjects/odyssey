@@ -955,15 +955,18 @@ describe("Enrollment Tests", () => {
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
-    it("sends documentIds for all relations, using entities without a lookup", async () => {
+    it("sends documentIds for all relations, resolving the caller's entities by numeric id only", async () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       const user = { id: 1, documentId: "docU1" };
       getAuthorizedUserByEmail.mockResolvedValue(user);
       fetchAPI.mockResolvedValue([]);
-      const droplet = { ...mockDroplet, documentId: "docD1" };
-      const lessons = [{ id: 1, documentId: "docL1" }];
+      const droplet = { ...mockDroplet, documentId: "attackerDroplet" };
+      const lessons = [{ id: 1, documentId: "attackerLesson" }];
+      resolveDocumentId.mockImplementation(async (_c, ref) =>
+        typeof ref === "object" ? ref.documentId : `doc${ref}`,
+      );
       resolveDocumentIds.mockImplementationOnce(async (_c, refs) =>
-        refs.map((r) => r.documentId),
+        refs.map((r) => `doc${r}`),
       );
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -972,13 +975,15 @@ describe("Enrollment Tests", () => {
 
       await createEnrollment(droplet, lessons);
 
+      // The server-fetched user keeps its documentId; the caller's entities
+      // are reduced to numeric ids, so a forged documentId is never used.
       expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", user);
-      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", droplet);
-      expect(resolveDocumentIds).toHaveBeenCalledWith("lessons", lessons);
+      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", droplet.id);
+      expect(resolveDocumentIds).toHaveBeenCalledWith("lessons", [1]);
       expect(JSON.parse(global.fetch.mock.calls[0][1].body).data).toEqual({
         authorizedUser: "docU1",
-        droplet: "docD1",
-        viewedLessons: ["docL1"],
+        droplet: `doc${droplet.id}`,
+        viewedLessons: ["doc1"],
       });
     });
 

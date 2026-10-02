@@ -333,11 +333,14 @@ describe("Feed tests", () => {
       expect(requestBody.data.content).toContain(mockDroplet.name);
       expect(requestBody.data.type).toBe("friend");
       expect(requestBody.data.droplet).toBe(`doc${mockDroplet.id}`);
-      // Entities are passed straight through, so the helper needs no lookup.
-      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", mockDroplet);
+      // Only numeric ids are passed: the entities come from the caller.
+      expect(resolveDocumentId).toHaveBeenCalledWith(
+        "droplets",
+        mockDroplet.id,
+      );
       expect(resolveDocumentId).toHaveBeenCalledWith(
         "authorized-users",
-        mockUser,
+        mockUser.id,
       );
       expect(requestBody.data.authorized_user).toBe(`doc${mockUser.id}`);
 

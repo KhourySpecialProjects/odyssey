@@ -559,8 +559,10 @@ export async function createEnrollment(
     );
 
     if (!existing) {
-      // Strapi v5 relation writes take documentIds. The entities usually carry
-      // one already, so no lookup happens.
+      // Strapi v5 relation writes take documentIds. `droplet` and
+      // `viewedLessons` come from the caller, so pass only their numeric ids
+      // (the same id the duplicate check above used) and never a
+      // client-supplied documentId.
       let relations: {
         authorizedUser: string;
         droplet: string;
@@ -572,8 +574,11 @@ export async function createEnrollment(
             "authorized-users",
             authorizedUser,
           ),
-          droplet: await resolveDocumentId("droplets", droplet),
-          viewedLessons: await resolveDocumentIds("lessons", viewedLessons),
+          droplet: await resolveDocumentId("droplets", droplet.id),
+          viewedLessons: await resolveDocumentIds(
+            "lessons",
+            viewedLessons.map((lesson) => lesson.id),
+          ),
         };
       } catch (err) {
         // Same result as Strapi rejecting a relation that does not exist.

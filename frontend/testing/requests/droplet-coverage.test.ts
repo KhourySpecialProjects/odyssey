@@ -1497,7 +1497,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
     // PUT update
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 5 } }));
 
-    const droplet = makeDroplet({ id: 5, documentId: "docD5" });
+    const droplet = makeDroplet({ id: 5, documentId: "forgedDoc" });
     const result = await favoriteDroplet(droplet, true);
     expect(result).toEqual({ success: true });
 
@@ -1506,12 +1506,18 @@ describe("droplet-coverage — favoriteDroplet", () => {
     // Should include both original user (3) and new user (7), as documentIds
     expect(putBody.data.usersFavorited).toContain("docU3");
     expect(putBody.data.usersFavorited).toContain("7");
-    // The droplet carries its documentId, so both URLs use it without a lookup
-    expect(putCall[0]).toMatch(/\/api\/droplets\/docD5$/);
+    // The droplet comes from the caller, so both URLs are built from its
+    // numeric id; its (possibly forged) documentId is never used.
+    expect(putCall[0]).toMatch(/\/api\/droplets\/5$/);
     expect(fetchMock.mock.calls[0][0]).toMatch(
-      /\/api\/droplets\/docD5\?populate=usersFavorited$/,
+      /\/api\/droplets\/5\?populate=usersFavorited$/,
     );
-    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", droplet);
+    expect(strapiEntryUrl).toHaveBeenCalledWith(
+      "droplets",
+      5,
+      "populate=usersFavorited",
+    );
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", 5);
   });
 
   it("does not duplicate user when already in favorites (lines 1313-1315)", async () => {
@@ -1754,6 +1760,21 @@ describe("droplet-coverage — documentIds", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
     expect(body.data.authorized_users).toEqual(["doc1", "doc2"]);
     expect(body.data.lessons).toEqual(["doc5"]);
+  });
+
+  it("updateDroplet resolves lessons and datasets from numeric ids, ignoring client documentIds", async () => {
+    jest
+      .mocked(strapiEntryUrl)
+      .mockResolvedValueOnce("http://strapi/api/droplets/docD7");
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 7 } }));
+
+    await updateDroplet(7, {
+      lessons: [{ id: 5, documentId: "forgedLesson" } as any],
+      datasets: [{ id: 3, documentId: "forgedDataset" } as any],
+    });
+
+    expect(resolveDocumentIds).toHaveBeenCalledWith("lessons", [5]);
+    expect(resolveDocumentIds).toHaveBeenCalledWith("datasets", [{ id: 3 }]);
   });
 
   it("updateDroplet returns the not-found result for a missing droplet or relation", async () => {

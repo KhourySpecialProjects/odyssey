@@ -326,8 +326,9 @@ export async function deepDeleteDroplet(id: number) {
 
 /**
  * Relation values for a droplet write, as documentIds. `known` carries entities
- * the caller has already fetched (so their documentId is used without a lookup);
- * anything else is resolved from its numeric id.
+ * the server itself fetched (so their documentId is used without a lookup);
+ * everything in `data` may come from a client, so it is resolved from its
+ * numeric id only - a client-supplied documentId is never used.
  */
 async function dropletRelationData(
   data: Partial<z.infer<typeof DropletSchema>>,
@@ -358,17 +359,22 @@ async function dropletRelationData(
     );
   }
   if (data.lessons) {
-    out.lessons = await resolveDocumentIds("lessons", data.lessons);
+    out.lessons = await resolveDocumentIds(
+      "lessons",
+      data.lessons.map((lesson) => lesson.id),
+    );
   }
   if (data.datasets !== undefined) {
     // Only entries that point at a dataset are relations; anything else is sent as is.
     const isRef = (d: unknown): d is EntryRef =>
       typeof d === "number" ||
       (typeof d === "object" && d !== null && ("documentId" in d || "id" in d));
+    // Reduce each ref to its numeric id; a ref with no id is rejected.
+    const toId = (d: EntryRef) => (typeof d === "object" ? { id: d.id } : d);
     const entries = data.datasets as unknown[];
     const resolved = await resolveDocumentIds(
       "datasets",
-      entries.filter(isRef),
+      entries.filter(isRef).map(toId),
     );
     let next = 0;
     out.datasets = entries.map((d) => (isRef(d) ? resolved[next++] : d));
@@ -725,6 +731,10 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     revalidateTag(CACHE_TAGS.userContent(author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
+    // Same result as Strapi rejecting a tag or author that does not exist.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { ok: false, error: err.message, data: null };
+    }
     console.error(err);
     return {
       ok: false,
@@ -1620,13 +1630,14 @@ export async function favoriteDroplet(
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
     // Fetch the latest droplet state to minimize race conditions
-    // `droplet` usually carries its documentId, which skips the lookup. A droplet
-    // that cannot be found fails like the 404 it replaces.
+    // `droplet` comes from the caller, so address it by numeric id only (the
+    // lookup is cached after the first call). A droplet that cannot be found
+    // fails like the 404 it replaces.
     let dropletUrl: string;
     try {
       dropletUrl = await strapiEntryUrl(
         "droplets",
-        droplet,
+        droplet.id,
         "populate=usersFavorited",
       );
     } catch (error) {
@@ -1667,7 +1678,7 @@ export async function favoriteDroplet(
       );
     }
 
-    const response = await fetch(await strapiEntryUrl("droplets", droplet), {
+    const response = await fetch(await strapiEntryUrl("droplets", droplet.id), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
