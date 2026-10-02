@@ -6,6 +6,7 @@ jest.mock("@/lib/utils", () => ({
 
 import { fetchAPI } from "@/lib/utils";
 import {
+  InvalidEntryRefError,
   StrapiEntryNotFoundError,
   clearDocumentIdCache,
   resolveDocumentId,
@@ -140,10 +141,13 @@ describe("resolveDocumentId", () => {
     ["an empty string", ""],
     ["an object with no id", {}],
     ["an object with a null id", { id: null }],
-  ])("throws TypeError for %s", async (_label, ref) => {
-    await expect(
-      resolveDocumentId("droplets", ref as any),
-    ).rejects.toBeInstanceOf(TypeError);
+  ])("throws InvalidEntryRefError for %s", async (_label, ref) => {
+    const error = await resolveDocumentId("droplets", ref as any).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(InvalidEntryRefError);
+    expect(error).toBeInstanceOf(StrapiEntryNotFoundError);
+    expect(error.name).toBe("InvalidEntryRefError");
     expect(mockFetchAPI).not.toHaveBeenCalled();
   });
 
@@ -265,10 +269,12 @@ describe("resolveDocumentIds", () => {
     expect(error.message).toContain("42");
   });
 
-  it("throws TypeError for a bad ref", async () => {
-    await expect(
-      resolveDocumentIds("tags", [1, null as any]),
-    ).rejects.toBeInstanceOf(TypeError);
+  it("throws InvalidEntryRefError (a not-found error) for a bad ref", async () => {
+    const error = await resolveDocumentIds("tags", [1, null as any]).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(InvalidEntryRefError);
+    expect(error).toBeInstanceOf(StrapiEntryNotFoundError);
   });
 });
 

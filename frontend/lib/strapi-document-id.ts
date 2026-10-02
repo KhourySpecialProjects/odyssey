@@ -48,6 +48,19 @@ export class StrapiEntryNotFoundError extends Error {
   }
 }
 
+/**
+ * A ref that cannot name any entry (null, undefined, NaN, "", or an object
+ * with no id). It extends StrapiEntryNotFoundError so call sites' existing
+ * not-found handling covers it, matching the 404 Strapi used to return for an
+ * empty id.
+ */
+export class InvalidEntryRefError extends StrapiEntryNotFoundError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidEntryRefError";
+  }
+}
+
 const MAX_CACHE_ENTRIES = 5000;
 const BATCH_SIZE = 100;
 
@@ -63,7 +76,7 @@ function normalizeRef(
   ref: EntryRef,
 ): NormalizedRef {
   const bad = () =>
-    new TypeError(
+    new InvalidEntryRefError(
       `Invalid ${collection} reference: ${JSON.stringify(ref) ?? String(ref)}`,
     );
 
