@@ -17,6 +17,11 @@ import {
   makeFetchResponse,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -213,6 +218,35 @@ describe("highlights requests — coverage", () => {
       );
     });
 
+    it("deletes via the highlight documentId", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockResolvedValueOnce("http://strapi/api/highlights/docH42");
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 42 } }, 200),
+      );
+
+      await deleteHighlight(42, 7);
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith("highlights", 42);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://strapi/api/highlights/docH42",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("throws the same error when the highlight cannot be resolved", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      await expect(deleteHighlight(99, 5)).rejects.toThrow(
+        "Failed to delete highlight",
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockedRevalidateTag).not.toHaveBeenCalled();
+    });
+
     it("uses the authorizedUserId to scope the cache tag", async () => {
       mockFetch.mockResolvedValueOnce(
         makeFetchResponse({ data: { id: 1 } }, 200),
@@ -320,6 +354,66 @@ describe("highlights requests — coverage", () => {
       await expect(
         createHighlight({ data: { text: "note", authorized_user: 5 } }),
       ).rejects.toThrow("Network timeout");
+    });
+
+    it("sends documentIds for the lesson and user relations", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementationOnce(async () => "docLesson2")
+        .mockImplementationOnce(async () => "docUser5");
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        data: { text: "k", authorized_user: 5, lesson: 2 },
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", 2);
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 5);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data).toEqual({
+        text: "k",
+        authorized_user: "docUser5",
+        lesson: "docLesson2",
+      });
+      // The cache tag still uses the numeric user id.
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.highlights(5),
+      );
+    });
+
+    it("resolves relations from numeric ids only, never a client documentId", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        data: {
+          text: "k",
+          authorized_user: { id: 5, documentId: "forgedUser" },
+          lesson: "forgedLessonDoc",
+        },
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 5);
+      // A non-numeric string becomes NaN, which the helper rejects.
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", NaN);
+      expect(resolveDocumentId).not.toHaveBeenCalledWith(
+        "lessons",
+        "forgedLessonDoc",
+      );
+    });
+
+    it("throws the same error when a relation cannot be resolved", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      await expect(
+        createHighlight({ data: { text: "k", authorized_user: 5, lesson: 2 } }),
+      ).rejects.toThrow("Failed to create highlight");
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("POSTs to the correct highlights endpoint", async () => {

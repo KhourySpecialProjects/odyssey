@@ -170,7 +170,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"voyage":99'),
+        body: expect.stringContaining('"voyage":"99"'),
       }),
     );
 
@@ -180,7 +180,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"parentNode":10'),
+        body: expect.stringContaining('"parentNode":"10"'),
       }),
     );
 
@@ -241,7 +241,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"droplet":42'),
+        body: expect.stringContaining('"droplet":"42"'),
       }),
     );
 

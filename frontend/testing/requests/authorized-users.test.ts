@@ -23,6 +23,12 @@ import {
 } from "@/lib/testing/mock-helpers";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -1039,7 +1045,7 @@ describe("Authorized User Tests", () => {
       });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
-      expect(body.data.roles.set).toEqual([{ id: 2 }, { id: 3 }]);
+      expect(body.data.roles.set).toEqual(["2", "3"]);
     });
 
     it("should not include roles when roles array is empty", async () => {
@@ -1175,6 +1181,146 @@ describe("Authorized User Tests", () => {
       await deleteAuthorizedUser(formData);
 
       expect(consoleError).toHaveBeenCalled();
+    });
+  });
+
+  describe("documentIds on Strapi v5 (ODY-601)", () => {
+    const docOf = (ref: unknown) =>
+      "doc" +
+      (typeof ref === "object" && ref !== null
+        ? (ref as { id: number }).id
+        : ref);
+
+    beforeEach(() => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementation(async (_c, ref) => docOf(ref));
+      jest
+        .mocked(resolveDocumentIds)
+        .mockImplementation(async (_c, refs) => refs.map(docOf));
+      jest
+        .mocked(strapiEntryUrl)
+        .mockImplementation(
+          async (c, ref) => `http://test-api-url/api/${c}/${docOf(ref)}`,
+        );
+    });
+
+    afterEach(() => {
+      const identity = (ref: unknown) =>
+        typeof ref === "object" && ref !== null
+          ? (ref as { documentId?: string }).documentId ??
+            String((ref as { id: number }).id)
+          : String(ref);
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementation(async (_c, ref) => identity(ref));
+      jest
+        .mocked(resolveDocumentIds)
+        .mockImplementation(async (_c, refs) => refs.map(identity));
+      jest
+        .mocked(strapiEntryUrl)
+        .mockImplementation(
+          async (c, ref) => `http://test-api-url/api/${c}/${identity(ref)}`,
+        );
+    });
+
+    function userForm() {
+      const formData = new FormData();
+      formData.append("email", "new@northeastern.edu");
+      formData.append("isEnabled", "true");
+      return formData;
+    }
+
+    it("createAuthorizedUser sets the role by documentId", async () => {
+      jest.mocked(getAuthorizedUserRoleIdByTitle).mockResolvedValue(7);
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+      await createAuthorizedUser(userForm());
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data.roles).toEqual({ set: ["doc7"] });
+      expect(resolveDocumentId).toHaveBeenCalledWith(
+        "authorized-user-roles",
+        7,
+      );
+    });
+
+    it("createAuthorizedUser returns an error result when the role is missing", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("no role"));
+
+      const result = await createAuthorizedUser(userForm());
+
+      expect(result).toEqual({ ok: false, error: "no role", data: null });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("createBatchAuthorizedUsers sets the role by documentId", async () => {
+      jest.mocked(getAuthorizedUserRoleIdByTitle).mockResolvedValue(7);
+      mockFetch.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+
+      await createBatchAuthorizedUsers(["a@test.com"]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data.roles).toEqual({ set: ["doc7"] });
+    });
+
+    it("updateUserInfo targets the user's documentId and sets roles by documentId", async () => {
+      jest
+        .mocked(getAuthorizedUserRoleIdByTitle)
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(3);
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+      await updateUserInfo(1, {
+        roles: [
+          AuthorizedUserRoleTitle.SysAdmin,
+          AuthorizedUserRoleTitle.ContentCreator,
+        ],
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "http://test-api-url/api/authorized-users/doc1",
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data.roles.set).toEqual(["doc2", "doc3"]);
+    });
+
+    it("updateUserInfo still reports ok when the user no longer exists (the PUT response was never checked)", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await updateUserInfo(1, { first: "John" });
+
+      expect(result).toEqual({ ok: true, data: null });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("deleteAuthorizedUser deletes by documentId", async () => {
+      const formData = new FormData();
+      formData.append("id", "1");
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+      await deleteAuthorizedUser(formData);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "http://test-api-url/api/authorized-users/doc1",
+      );
+    });
+
+    it("deleteAuthorizedUser returns the old 404 result when the user is missing", async () => {
+      const formData = new FormData();
+      formData.append("id", "1");
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await deleteAuthorizedUser(formData);
+
+      expect(result).toEqual({ ok: false, error: "Not Found", data: null });
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 });

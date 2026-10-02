@@ -1,5 +1,10 @@
 const { flattenAttributes } = require("../../lib/utils");
 const {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+} = require("../../lib/strapi-document-id");
+const {
   fetchFriends,
   getSentRequestIds,
   acceptFriendRequest,
@@ -29,13 +34,34 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
+// Non-identity documentId mapping (5 -> "doc5") so the tests prove that URLs
+// and relation bodies carry documentIds, not numeric ids.
+const toDoc = (ref) => {
+  const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
+  return typeof v === "string" && v.startsWith("doc") ? v : `doc${v}`;
+};
+const identityRef = (ref) =>
+  ref && typeof ref === "object"
+    ? ref.documentId ?? String(ref.id)
+    : String(ref);
+
 beforeEach(() => {
+  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
+  resolveDocumentIds.mockImplementation(async (_c, refs) => refs.map(toDoc));
+  strapiEntryUrl.mockImplementation(
+    async (c, ref, q) =>
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${c}/${toDoc(ref)}${q ? `?${q}` : ""}`,
+  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
+  resolveDocumentId.mockImplementation(async (_c, ref) => identityRef(ref));
+  resolveDocumentIds.mockImplementation(async (_c, refs) =>
+    refs.map(identityRef),
+  );
 });
 
 jest.mock("next/cache", () => ({
@@ -380,7 +406,7 @@ describe("Friends tests", () => {
           }),
           body: JSON.stringify({
             data: {
-              authorized_users: [requesterId, userId],
+              authorized_users: [`doc${requesterId}`, `doc${userId}`],
             },
           }),
         }),
@@ -388,7 +414,7 @@ describe("Friends tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
-        expect.stringContaining(`/api/authorized-users/${userId}`),
+        expect.stringContaining(`/api/authorized-users/doc${userId}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -398,7 +424,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               received_requests: {
-                disconnect: [requesterId],
+                disconnect: [`doc${requesterId}`],
               },
             },
           }),
@@ -500,7 +526,7 @@ describe("Friends tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
-        expect.stringContaining(`/api/authorized-users/${requestee.id}`),
+        expect.stringContaining(`/api/authorized-users/doc${requestee.id}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -510,7 +536,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               received_requests: {
-                connect: [requester.id],
+                connect: [`doc${requester.id}`],
               },
             },
           }),
@@ -519,7 +545,7 @@ describe("Friends tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
-        expect.stringContaining(`/api/authorized-users/${requester.id}`),
+        expect.stringContaining(`/api/authorized-users/doc${requester.id}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -529,17 +555,47 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               sent_requests: {
-                connect: [requestee.id],
+                connect: [`doc${requestee.id}`],
               },
             },
           }),
         }),
       );
 
+      // The users come from the caller, so only their numeric ids are used.
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        requestee.id,
+      );
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        requester.id,
+      );
+
       expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
       expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
+    });
+
+    it("ignores client-supplied documentIds on the users", async () => {
+      const requester = { id: 5, documentId: "victimRequester" };
+      const requestee = { id: 6, documentId: "victimRequestee" };
+      global.fetch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await sendFriendRequest(requester, requestee);
+
+      expect(global.fetch.mock.calls[0][0]).toMatch(
+        /\/api\/authorized-users\/doc6$/,
+      );
+      expect(global.fetch.mock.calls[1][0]).toMatch(
+        /\/api\/authorized-users\/doc5$/,
+      );
+      expect(JSON.parse(global.fetch.mock.calls[0][1].body).data).toEqual({
+        received_requests: { connect: ["doc5"] },
+      });
     });
 
     it("should handle error in updating requestee", async () => {
@@ -625,7 +681,7 @@ describe("Friends tests", () => {
       const result = await rejectFriendRequest(userId, requesterId);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/authorized-users/${userId}`),
+        expect.stringContaining(`/api/authorized-users/doc${userId}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -635,7 +691,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               received_requests: {
-                disconnect: [requesterId],
+                disconnect: [`doc${requesterId}`],
               },
             },
           }),
@@ -705,7 +761,7 @@ describe("Friends tests", () => {
       const result = await cancelFriendRequest(userId, requesteeId);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/authorized-users/${userId}`),
+        expect.stringContaining(`/api/authorized-users/doc${userId}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -715,7 +771,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               sent_requests: {
-                disconnect: [requesteeId],
+                disconnect: [`doc${requesteeId}`],
               },
             },
           }),
@@ -785,7 +841,7 @@ describe("Friends tests", () => {
       const result = await unblockUser(userId, blockedUserId);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/authorized-users/${userId}`),
+        expect.stringContaining(`/api/authorized-users/doc${userId}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -795,7 +851,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               blocked: {
-                disconnect: [blockedUserId],
+                disconnect: [`doc${blockedUserId}`],
               },
             },
           }),
@@ -865,7 +921,7 @@ describe("Friends tests", () => {
       const result = await BlockUser(userId, userToBlockId);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/authorized-users/${userId}`),
+        expect.stringContaining(`/api/authorized-users/doc${userId}`),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -875,7 +931,7 @@ describe("Friends tests", () => {
           body: JSON.stringify({
             data: {
               blocked: {
-                connect: [userToBlockId],
+                connect: [`doc${userToBlockId}`],
               },
             },
           }),
@@ -941,7 +997,9 @@ describe("Friends tests", () => {
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            data: [{ id: 123, attributes: {} }],
+            data: [
+              { id: 123, documentId: "doc-friendship-123", attributes: {} },
+            ],
           }),
         })
         .mockResolvedValueOnce({
@@ -969,7 +1027,7 @@ describe("Friends tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
-        expect.stringContaining("/api/friendships/123"),
+        expect.stringContaining("/api/friendships/doc-friendship-123"),
         expect.objectContaining({
           method: "DELETE",
           headers: expect.objectContaining({

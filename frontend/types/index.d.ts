@@ -7,6 +7,7 @@ export type DropletType = "knowledge" | "skill";
 
 export type Dataset = {
   id: number;
+  documentId?: string;
   name: string;
   fileUrl: string;
   format: string;
@@ -34,12 +35,14 @@ export type HighlightColor =
 
 export type AuthorizedUserRole = {
   id: number;
+  documentId?: string;
   title: AuthorizedUserRoleTitle;
   authorizedUsers?: AuthorizedUser[];
 };
 
 export type Highlight = {
   id?: number;
+  documentId?: string;
   authorized_user?: AuthorizedUser;
   text: string;
   position: {
@@ -66,6 +69,7 @@ export type User = {
 export type AuthorizedUser = {
   groups: any;
   id: number;
+  documentId?: string;
   email: string;
   roles: AuthorizedUserRole[];
   isEnabled: boolean;
@@ -111,6 +115,7 @@ export type GalleryItem = {
 
 export type Gallery = {
   id: number;
+  documentId?: string;
   title?: string;
   slug: string;
   items: GalleryItem[];
@@ -198,6 +203,7 @@ export type Block =
 
 export type Lesson = {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   type: string;
@@ -212,6 +218,7 @@ export type Lesson = {
 
 export type Tag = {
   id: number;
+  documentId?: string;
   slug: string;
   name: string;
   droplets: Droplet[];
@@ -230,6 +237,7 @@ export type Resource = {
 
 export type Droplet = {
   id: number;
+  documentId?: string;
   slug: string;
   name: string;
   description?: string;
@@ -289,6 +297,7 @@ export type OpenEndedQuiz = {
 
 export type Enrollment = {
   id: string;
+  documentId?: string;
   authorizedUser: AuthorizedUser;
   droplet: Droplet | null;
   viewedLessons: Lesson[];
@@ -304,6 +313,7 @@ export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
 
 export interface Playlist {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   isPublic: boolean;
@@ -353,6 +363,7 @@ export type GroupSemester =
 
 export type Group = {
   id: number;
+  documentId?: string;
   groupName: string;
   slug: string;
   description?: string;
@@ -393,6 +404,7 @@ export type Friendship = {
 
 export type Announcement = {
   id: number;
+  documentId?: string;
   type: AnnouncementType;
   firstCreated: Date;
   content: string;
@@ -406,6 +418,7 @@ export type Announcement = {
 
 export type Note = {
   id: number;
+  documentId?: string;
   content: string;
   lesson: Lesson;
   enrollment: Enrollment;
@@ -464,6 +477,7 @@ export type DueDate = {
 
 export type CreationRequest = {
   id: number;
+  documentId?: string;
   motivation: String;
   dropletIdea: String;
   user: AuthorizedUser;
@@ -472,6 +486,7 @@ export type CreationRequest = {
 
 export interface Voyage {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   description: string;
@@ -486,6 +501,7 @@ export interface Voyage {
 
 export interface VoyageNode {
   id: number;
+  documentId?: string;
   isMainPath: boolean;
   branchType: "required" | "optional";
   nodeType: "playlist" | "droplet";
@@ -502,6 +518,7 @@ export interface VoyageNode {
 
 export interface VoyageEnrollment {
   id: number;
+  documentId?: string;
   enrolledAt: string;
   completionPercentage: number;
   authorizedUser?: AuthorizedUser;
@@ -510,6 +527,7 @@ export interface VoyageEnrollment {
 
 export interface VoyageNodeCompletion {
   id: number;
+  documentId?: string;
   completedAt: string;
   authorizedUser?: AuthorizedUser;
   voyageNode?: VoyageNode;

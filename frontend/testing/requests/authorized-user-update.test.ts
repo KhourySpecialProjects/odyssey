@@ -173,7 +173,7 @@ describe("updateUserInfo — auth + validation security", () => {
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body.data.firstName).toBe("Bob");
     expect(body.data.isEnabled).toBe(false);
-    expect(body.data.roles.set).toEqual([{ id: 2 }]);
+    expect(body.data.roles.set).toEqual(["2"]);
   });
 
   // 6 -------------------------------------------------------------------

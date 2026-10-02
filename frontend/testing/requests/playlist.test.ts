@@ -8,6 +8,12 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
@@ -171,7 +177,9 @@ describe("deletePlaylist", () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve({ data: { id: 123, attributes: { name: "Test" } } }),
+        Promise.resolve({
+          data: [{ id: 123, attributes: { name: "Test" } }],
+        }),
     });
     // Mock the DELETE fetch
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -213,7 +221,7 @@ describe("archivePlaylist", () => {
       ok: true,
       json: () =>
         Promise.resolve({
-          data: { id: 10, attributes: { authors: { data: [{ id: 5 }] } } },
+          data: [{ id: 10, attributes: { authors: { data: [{ id: 5 }] } } }],
         }),
     });
 
@@ -283,7 +291,7 @@ describe("archivePlaylist", () => {
       ok: true,
       json: () =>
         Promise.resolve({
-          data: { id: 10, attributes: { authors: { data: [{ id: 99 }] } } },
+          data: [{ id: 10, attributes: { authors: { data: [{ id: 99 }] } } }],
         }),
     });
 
@@ -297,5 +305,178 @@ describe("archivePlaylist", () => {
     const result = await archivePlaylist(mockPlaylist, true);
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("documentId handling (ODY-601)", () => {
+  const identity = (ref: any) =>
+    ref && typeof ref === "object"
+      ? ref.documentId ?? String(ref.id)
+      : String(ref);
+  const toDoc = (ref: any) =>
+    ref && typeof ref === "object" && ref.documentId
+      ? ref.documentId
+      : "doc" + (typeof ref === "object" ? ref.id : ref);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (resolveDocumentId as jest.Mock).mockImplementation(async (_c, ref) =>
+      toDoc(ref),
+    );
+    (resolveDocumentIds as jest.Mock).mockImplementation(async (_c, refs) =>
+      refs.map(toDoc),
+    );
+    (strapiEntryUrl as jest.Mock).mockImplementation(
+      async (collection, ref) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${toDoc(ref)}`,
+    );
+  });
+
+  afterEach(() => {
+    (resolveDocumentId as jest.Mock).mockImplementation(async (_c, ref) =>
+      identity(ref),
+    );
+    (resolveDocumentIds as jest.Mock).mockImplementation(async (_c, refs) =>
+      refs.map(identity),
+    );
+    (strapiEntryUrl as jest.Mock).mockImplementation(
+      async (collection, ref, query) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
+    );
+  });
+
+  const okResponse = {
+    ok: true,
+    json: () => Promise.resolve({ data: { id: 1 } }),
+  };
+
+  it("createPlaylist sends author and droplet documentIds", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(okResponse);
+
+    await createPlaylist({
+      name: "P",
+      isPublic: true,
+      description: "d",
+      droplets: [{ id: 1 }, { id: 2 }],
+      author: { id: 123 },
+      userId: 123,
+    });
+
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body.data.authors).toEqual({ connect: ["doc123"] });
+    expect(body.data.droplets).toEqual({ connect: ["doc1", "doc2"] });
+  });
+
+  it("createPlaylist returns an error result when a related entry is gone", async () => {
+    (resolveDocumentIds as jest.Mock).mockRejectedValueOnce(
+      new StrapiEntryNotFoundError("gone"),
+    );
+
+    const result = await createPlaylist({
+      name: "P",
+      isPublic: true,
+      description: "d",
+      droplets: [{ id: 1 }],
+      author: { id: 123 },
+      userId: 123,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to create playlist",
+      data: null,
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("updatePlaylist puts to the playlist documentId with droplet documentIds", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(okResponse);
+
+    await updatePlaylist(7, {
+      name: "P",
+      description: "d",
+      isPublic: true,
+      droplets: [{ id: 1 }],
+    });
+
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toMatch(/\/api\/playlists\/doc7$/);
+    expect(JSON.parse(init.body).data.droplets).toEqual({ set: ["doc1"] });
+  });
+
+  it("updatePlaylist returns the not-found result when the playlist is gone", async () => {
+    (strapiEntryUrl as jest.Mock).mockRejectedValueOnce(
+      new StrapiEntryNotFoundError("gone"),
+    );
+
+    const result = await updatePlaylist(7, {
+      name: "P",
+      description: "d",
+      isPublic: true,
+    });
+
+    expect(result).toEqual({ ok: false, error: "Not Found", data: null });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("archivePlaylist ignores a mismatched client documentId and PUTs to the fetched playlist", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue({ email: "a@b.c" });
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ id: 5 });
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [
+              {
+                id: 10,
+                documentId: "fetchedPlaylistDoc",
+                attributes: { authors: { data: [{ id: 5 }] } },
+              },
+            ],
+          }),
+      })
+      .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve("") });
+
+    const result = await archivePlaylist(
+      { id: 10, documentId: "someoneElsesPlaylistDoc" } as any,
+      true,
+    );
+
+    expect(result).toEqual({ success: true });
+    const putUrl = (global.fetch as jest.Mock).mock.calls[1][0];
+    expect(putUrl).toMatch(/\/api\/playlists\/fetchedPlaylistDoc$/);
+    expect(putUrl).not.toContain("someoneElsesPlaylistDoc");
+  });
+
+  it("createPlaylist resolves the author and droplets from numeric ids and ignores client documentIds", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(okResponse);
+
+    await createPlaylist({
+      name: "P",
+      isPublic: true,
+      description: "d",
+      droplets: [{ id: 1, documentId: "forgedDroplet" } as any],
+      author: { id: 123, documentId: "forgedAuthor" } as any,
+      userId: 123,
+    });
+
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body.data.authors).toEqual({ connect: ["doc123"] });
+    expect(body.data.droplets).toEqual({ connect: ["doc1"] });
+  });
+
+  it("updatePlaylist resolves droplets from numeric ids and ignores client documentIds", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(okResponse);
+
+    await updatePlaylist(7, {
+      name: "P",
+      description: "d",
+      isPublic: true,
+      droplets: [{ id: 1, documentId: "forgedDroplet" } as any],
+    });
+
+    const init = (global.fetch as jest.Mock).mock.calls[0][1];
+    expect(JSON.parse(init.body).data.droplets).toEqual({ set: ["doc1"] });
   });
 });
