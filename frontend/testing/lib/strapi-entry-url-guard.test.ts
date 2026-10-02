@@ -4,13 +4,20 @@ import path from "path";
 // Strapi v5 single-entry routes (/api/<collection>/:id) only accept a
 // documentId (ODY-601). Build those URLs with strapiEntryUrl(), or pass
 // `/<collection>/${await resolveDocumentId(...)}` to fetchAPI(). This test
-// flags the two forms that interpolate a raw, probably numeric, id.
+// flags the forms that interpolate or concatenate a raw, probably numeric, id.
 //
 // lib/requests/lesson-lock.ts is not exempt because it does not match either
 // rule: its routes look like `${STRAPI_API_URL}/lessons/${id}/lock`. They are
 // numeric on purpose until ODY-606.
 
-const SOURCE_DIRS = ["lib", "app", "components", "providers", "stores"];
+const SOURCE_DIRS = [
+  "lib",
+  "app",
+  "components",
+  "providers",
+  "stores",
+  "scripts",
+];
 const EXCLUDED_DIRS = new Set(["node_modules", ".next"]);
 const EXEMPT_FILES = new Set([path.join("lib", "strapi-document-id.ts")]);
 
@@ -46,9 +53,12 @@ const COLLECTIONS = [
 const RULE_1 = new RegExp(`/api/(?:${COLLECTIONS})/(?:\\$\\{|["']\\s*\\+)`);
 
 // Rule 2: a template literal that starts `/<collection>/${...}` (the fetchAPI
-// path form). Only checked in lib/** and app/api/**: page links such as
-// `/voyages/${slug}` live in components and app pages.
-const RULE_2 = new RegExp(`\`/(?:${COLLECTIONS})/\\$\\{`);
+// path form), or the concatenation form `"/<collection>/" + id`. Only checked
+// in lib/**, app/api/** and scripts/**: page links such as `/voyages/${slug}`
+// live in components and app pages.
+const RULE_2 = new RegExp(
+  `\`/(?:${COLLECTIONS})/\\$\\{|["']/(?:${COLLECTIONS})/["']\\s*\\+`,
+);
 
 // Interpolations that are already a documentId.
 const ALREADY_DOCUMENT_ID = [
@@ -59,6 +69,7 @@ const ALREADY_DOCUMENT_ID = [
 const RULE_2_DIRS = [
   path.join("lib") + path.sep,
   path.join("app", "api") + path.sep,
+  path.join("scripts") + path.sep,
 ];
 
 export type Offender = { line: number; text: string };
@@ -126,6 +137,21 @@ describe("scanSource", () => {
     expect(
       scanSource(src, path.join("app", "api", "x", "route.ts")),
     ).toHaveLength(1);
+  });
+
+  it("flags the concatenation form of the fetchAPI path in lib, app/api and scripts", () => {
+    const src = 'await fetchAPI("/lessons/" + lessonId);';
+    expect(scanSource(src, lib)).toHaveLength(1);
+    expect(
+      scanSource(src, path.join("app", "api", "x", "route.ts")),
+    ).toHaveLength(1);
+    expect(scanSource(src, path.join("scripts", "x.ts"))).toHaveLength(1);
+    expect(scanSource(src, path.join("components", "x.tsx"))).toEqual([]);
+  });
+
+  it("flags the fetchAPI path form in scripts", () => {
+    const src = "await fetchAPI(`/lessons/${lessonId}`);";
+    expect(scanSource(src, path.join("scripts", "x.ts"))).toHaveLength(1);
   });
 
   it("does not flag the fetchAPI path form in components (page links)", () => {
