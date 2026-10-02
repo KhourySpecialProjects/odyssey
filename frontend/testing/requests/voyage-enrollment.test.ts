@@ -171,7 +171,7 @@ describe("enrollInVoyage", () => {
         headers: expect.objectContaining({
           "Content-Type": "application/json",
         }),
-        body: expect.stringContaining('"voyage":10'),
+        body: expect.stringContaining('"voyage":"10"'),
       }),
     );
     expect(revalidateTag).toHaveBeenCalledWith(
@@ -510,7 +510,7 @@ describe("markVoyageNodeComplete", () => {
         headers: expect.objectContaining({
           "Content-Type": "application/json",
         }),
-        body: expect.stringContaining('"voyageNode":7'),
+        body: expect.stringContaining('"voyageNode":"7"'),
       }),
     );
 

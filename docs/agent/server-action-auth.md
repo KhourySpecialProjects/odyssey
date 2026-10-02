@@ -52,6 +52,7 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
   if (!self.ok) return { ok: false, error: self.error, data: null };
   ```
 
+- Never use a client-supplied `documentId` (including on nested objects and arrays). Pass `x.id` to `strapiEntryUrl` / `resolveDocumentId(s)`, or write to the entity the action itself fetched for its check. See `data-fetching.md`, "Single entries and relations on Strapi v5".
 - `getAuthorizedUserId` (`lib/auth/current-user-id.ts`) is for Server _Components_, not Server Actions (ODY-555).
 
 ## Error codes

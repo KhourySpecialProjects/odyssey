@@ -7,6 +7,12 @@ import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { CACHE_TAGS } from "../cache-tags";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -111,18 +117,32 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   id: number,
   { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
-  const path = `/playlists/${id}`;
+  // Strapi v5 single-entry routes take a documentId, so read through the list
+  // endpoint with an id filter instead (same as getDropletById).
+  const path = `/playlists`;
   const urlParams = {
     sort,
-    filters: { ...filters },
+    filters: { ...filters, id: { $eq: id } },
     populate,
     fields,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
   };
 
-  return await fetchAPI<T>(path, {
+  const playlists = await fetchAPI<T[]>(path, {
     urlParams,
     next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
   });
+  const playlist = playlists?.[0];
+  if (!playlist) {
+    // Keep the failure a missing playlist used to produce (a 404 from /playlists/:id).
+    const error = new Error(`Failed to fetch data: HTTP error! status: 404`);
+    console.error("Fetch error:", error);
+    throw error;
+  }
+  return playlist;
 }
 
 export async function updatePlaylist(
@@ -138,29 +158,45 @@ export async function updatePlaylist(
   },
 ) {
   try {
+    let url: string;
+    let dropletDocIds: string[] | undefined;
+    try {
+      [url, dropletDocIds] = await Promise.all([
+        strapiEntryUrl("playlists", id),
+        data.droplets &&
+          resolveDocumentIds(
+            "droplets",
+            data.droplets.map((d) => d.id),
+          ),
+      ]);
+    } catch (error) {
+      // Same result Strapi's 404 produced before
+      if (error instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: "Not Found", data: null };
+      }
+      throw error;
+    }
+
     const dataToSend = {
       name: data.name,
       description: data.description,
       isPublic: data.isPublic,
       droplets: {
-        set: data.droplets,
+        set: dropletDocIds,
       },
       slug: data.slug,
       regenerateSlug: false,
     };
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({ data: dataToSend }),
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({ data: dataToSend }),
+    });
 
     const responseData = await response.json();
 
@@ -197,16 +233,34 @@ export async function createPlaylist(data: {
 }) {
   const tempSlug = "random";
   try {
+    let authorDocId: string;
+    let dropletDocIds: string[];
+    try {
+      [authorDocId, dropletDocIds] = await Promise.all([
+        resolveDocumentId("authorized-users", data.author.id),
+        resolveDocumentIds(
+          "droplets",
+          data.droplets.map((d) => d.id),
+        ),
+      ]);
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: "Failed to create playlist", data: null };
+      }
+      throw error;
+    }
+
+    // Relation values are documentIds on Strapi v5
     const dataToSend = {
       name: data.name,
       description: data.description,
       authors: {
-        connect: [data.author.id],
+        connect: [authorDocId],
       },
       slug: tempSlug, // this gets overwritten by Strapi
       isPublic: data.isPublic,
       droplets: {
-        connect: data.droplets,
+        connect: dropletDocIds,
       },
     };
 
@@ -254,7 +308,10 @@ export async function deletePlaylist(id: number) {
     const group = await getPlaylistById(id);
 
     const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id,
+      await strapiEntryUrl("playlists", {
+        id,
+        documentId: group?.documentId,
+      }),
       {
         method: "DELETE",
         headers: {
@@ -317,7 +374,7 @@ export async function archivePlaylist(
     }
 
     const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`,
+      await strapiEntryUrl("playlists", fullPlaylist),
       {
         method: "PUT",
         headers: {

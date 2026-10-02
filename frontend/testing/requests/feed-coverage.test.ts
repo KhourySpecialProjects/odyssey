@@ -18,6 +18,7 @@ import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { strapiEntryUrl } from "@/lib/strapi-document-id";
 import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
@@ -265,11 +266,15 @@ describe("announcement read state invalidation", () => {
   let fetchMock: jest.MockedFunction<typeof fetch>;
 
   function mockOwnedAnnouncement(type: string, ownerId = 5) {
-    jest.mocked(fetchAPI).mockResolvedValueOnce({
-      id: 11,
-      type,
-      authorized_user: { id: ownerId },
-    });
+    // The ownership check filters the list endpoint by id, so it returns an array.
+    jest.mocked(fetchAPI).mockResolvedValueOnce([
+      {
+        id: 11,
+        documentId: "doc11",
+        type,
+        authorized_user: { id: ownerId },
+      },
+    ]);
   }
 
   beforeEach(() => {
@@ -323,11 +328,48 @@ describe("announcement read state invalidation", () => {
     await markAnnouncementRead(11);
 
     expect(fetchAPI).toHaveBeenCalledWith(
-      "/announcements/11",
+      "/announcements",
       expect.objectContaining({
-        urlParams: expect.objectContaining({ fields: ["id", "type"] }),
+        urlParams: expect.objectContaining({
+          filters: { id: { $eq: 11 } },
+          fields: ["id", "type"],
+        }),
       }),
     );
+  });
+
+  it("writes to the announcement's documentId taken from the ownership check, without a lookup", async () => {
+    mockOwnedAnnouncement("system");
+    jest
+      .mocked(strapiEntryUrl)
+      .mockImplementationOnce(
+        async (collection, ref) =>
+          `http://x/api/${collection}/${(ref as { documentId: string }).documentId}`,
+      );
+
+    await markAnnouncementRead(11);
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("announcements", {
+      id: 11,
+      documentId: "doc11",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://x/api/announcements/doc11",
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });
+
+  it("reports a missing announcement instead of throwing", async () => {
+    jest.mocked(fetchAPI).mockResolvedValueOnce([]);
+
+    const result = await markAnnouncementRead(11);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Announcement not found",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("does not revalidate when the caller doesn't own the announcement", async () => {

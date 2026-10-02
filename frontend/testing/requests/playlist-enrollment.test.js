@@ -8,6 +8,10 @@ const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
+const {
+  resolveDocumentId,
+  strapiEntryUrl,
+} = require("../../lib/strapi-document-id");
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
@@ -23,7 +27,19 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 global.fetch = jest.fn();
 
+// Non-identity mapping (5 -> "doc5") proves URLs and relation values are
+// documentIds, not numeric ids.
+const toDoc = (ref) => {
+  const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
+  return `doc${v}`;
+};
+
 beforeEach(() => {
+  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
+  strapiEntryUrl.mockImplementation(
+    async (c, ref) =>
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${c}/${toDoc(ref)}`,
+  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -57,14 +73,19 @@ describe("Playlist Enrollment Tests", () => {
       const result = await togglePlaylistEnrollment(99);
 
       expect(result).toEqual({ success: true });
+      // The fetched user is passed as an entity, so no id lookup is needed.
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 5 }),
+      );
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/5"),
+        expect.stringContaining("/api/authorized-users/doc5"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [99],
+                connect: ["doc99"],
               },
             },
           }),
@@ -115,13 +136,13 @@ describe("Playlist Enrollment Tests", () => {
 
       expect(result).toEqual({ success: true });
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/5"),
+        expect.stringContaining("/api/authorized-users/doc5"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: [42],
+                disconnect: ["doc42"],
               },
             },
           }),
@@ -180,13 +201,13 @@ describe("Playlist Enrollment Tests", () => {
 
       expect(result).toEqual({ success: true });
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/7"),
+        expect.stringContaining("/api/authorized-users/doc7"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [55],
+                connect: ["doc55"],
               },
             },
           }),

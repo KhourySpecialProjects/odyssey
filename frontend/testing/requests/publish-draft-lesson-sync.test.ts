@@ -25,6 +25,34 @@ import {
   makeDroplet,
 } from "@/lib/testing/mock-helpers";
 
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+} from "@/lib/strapi-document-id";
+
+// jest.resetAllMocks() also wipes the identity mock of @/lib/strapi-document-id
+// installed in jest.setup.ts, so put it back after every reset.
+function resetAllMocks() {
+  jest.resetAllMocks();
+  const identity = (ref: any): string =>
+    ref && typeof ref === "object"
+      ? ref.documentId ?? String(ref.id)
+      : String(ref);
+  jest
+    .mocked(resolveDocumentId)
+    .mockImplementation(async (_c, ref) => identity(ref));
+  jest
+    .mocked(resolveDocumentIds)
+    .mockImplementation(async (_c, refs) => refs.map(identity));
+  jest
+    .mocked(strapiEntryUrl)
+    .mockImplementation(
+      async (collection, ref, query) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
+    );
+}
+
 // ─── module mocks ────────────────────────────────────────────────────────────
 
 jest.mock("@/lib/utils", () => ({
@@ -336,8 +364,9 @@ class FakeStrapi {
 
   /** Routes fetchAPI, global.fetch and deleteLesson to this fake. */
   install(): void {
-    getMockedFetchAPI().mockImplementation(async (path: string) =>
-      this.readDroplet(path),
+    getMockedFetchAPI().mockImplementation(
+      async (path: string, options?: { urlParams?: any }) =>
+        this.readDroplet(path, options?.urlParams?.filters?.id?.$eq),
     );
     mockGlobalFetch().mockImplementation(async (input, init) => {
       const url = String(input);
@@ -357,15 +386,20 @@ class FakeStrapi {
 
   // ── fetchAPI: GET /droplets/:id with its lessons ───────────────────────────
 
-  private readDroplet(path: string): unknown {
-    const id = Number(/^\/droplets\/(\d+)$/.exec(path)?.[1]);
-    if (id !== DRAFT && id !== LIVE) {
-      throw new Error(`FakeStrapi: unexpected fetchAPI path ${path}`);
+  // getDropletById reads the list endpoint with an id filter (Strapi v5 single
+  // routes need a documentId), so the fake answers with a one-item list.
+  private readDroplet(path: string, id: number): unknown {
+    if (path !== "/droplets" || (id !== DRAFT && id !== LIVE)) {
+      throw new Error(
+        `FakeStrapi: unexpected fetchAPI path ${path} (id ${id})`,
+      );
     }
-    return clone({
-      ...(id === DRAFT ? DRAFT_DROPLET : LIVE_DROPLET),
-      lessons: this.lessonsOf(id).map((lesson) => this.attributes(lesson)),
-    });
+    return clone([
+      {
+        ...(id === DRAFT ? DRAFT_DROPLET : LIVE_DROPLET),
+        lessons: this.lessonsOf(id).map((lesson) => this.attributes(lesson)),
+      },
+    ]);
   }
 
   /** A lesson as fetchAPI returns it for fields: ["*"] with blocks populated. */
@@ -427,7 +461,7 @@ class FakeStrapi {
         });
       }
       if (/^\/api\/enrollments\/\d+$/.test(path)) {
-        this.enrollment(idIn(/(\d+)$/)).droplet = data.droplet as number;
+        this.enrollment(idIn(/(\d+)$/)).droplet = Number(data.droplet); // relation values are documentIds; the fake uses String(id)
         return makeFetchResponse({ data: {} });
       }
     }
@@ -498,7 +532,7 @@ class FakeStrapi {
     const name = data.name as string;
     const lesson = this.addLesson({
       id: this.nextLessonId++,
-      dropletId: (data.droplets as number[])[0],
+      dropletId: Number((data.droplets as string[])[0]),
       name,
       // beforeCreate always overwrites the posted slug with one generated from the name
       slug: this.uniqueSlug(name),
@@ -693,7 +727,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
     jest.spyOn(console, "warn").mockImplementation(() => {});
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -847,7 +881,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
       blocksVersion: "v2",
       blocksV2: [paragraph("bn-fresh", "Brand new")],
       slug: expect.any(String),
-      droplets: [LIVE],
+      droplets: [String(LIVE)], // a documentId (the fake uses String(id))
     });
   });
 
@@ -1090,8 +1124,14 @@ describe("publishDraftToOriginal: lesson sync", () => {
     ];
     const reads = getMockedFetchAPI().mock.calls as FetchAPICall[];
     // The first draft read is publish's own; deepDeleteDroplet reads the draft again afterwards
-    const draftRead = reads.find(([path]) => path === `/droplets/${DRAFT}`);
-    const liveReads = reads.filter(([path]) => path === `/droplets/${LIVE}`);
+    const readOf = (id: number) =>
+      reads.filter(
+        ([path, options]) =>
+          path === "/droplets" &&
+          (options.urlParams as any).filters.id.$eq === id,
+      );
+    const draftRead = readOf(DRAFT)[0];
+    const liveReads = readOf(LIVE);
     expect(draftRead).toBeDefined();
     expect(liveReads).toHaveLength(1);
 
