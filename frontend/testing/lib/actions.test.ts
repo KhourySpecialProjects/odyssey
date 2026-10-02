@@ -1635,9 +1635,7 @@ describe("Server Actions", () => {
             data: { attributes: { roles: { data: [{ id: 1 }] } } },
           }),
         )
-        .mockResolvedValueOnce(
-          ok({ data: [{ id: 2, documentId: "role2" }] }),
-        )
+        .mockResolvedValueOnce(ok({ data: [{ id: 2, documentId: "role2" }] }))
         .mockResolvedValueOnce(ok({ data: { id: 1 } }))
         .mockResolvedValueOnce(
           ok({ data: { attributes: { voyageNode: null } } }),
