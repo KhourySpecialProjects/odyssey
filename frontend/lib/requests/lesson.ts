@@ -12,6 +12,8 @@ import { LessonSchema } from "../validations/lesson";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
+import qs from "qs";
 import {
   resolveDocumentId,
   resolveDocumentIds,
@@ -40,15 +42,7 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   const urlParams = {
     sort,
     filters: { ...filters, slug },
-    populate: {
-      blocks: {
-        populate: {
-          questions: {
-            populate: ["answerOptions"],
-          },
-        },
-      },
-    },
+    populate: LESSON_BLOCKS_POPULATE,
     fields,
     pagination: {
       pageSize: 1,
@@ -323,12 +317,16 @@ export async function duplicateLessonToDroplet(
 ) {
   try {
     // Fetch the source lesson with all its data including blocksV2 and blocksVersion
+    const sourceQuery = qs.stringify(
+      { populate: LESSON_BLOCKS_POPULATE, fields: ["*"] },
+      { encodeValuesOnly: true },
+    );
     let sourceLessonUrl: string;
     try {
       sourceLessonUrl = await strapiEntryUrl(
         "lessons",
         sourceLessonId,
-        "populate[blocks][populate][questions][populate]=answerOptions&fields=*",
+        sourceQuery,
       );
     } catch (err) {
       // Same failure as the 404 Strapi used to return for a missing lesson.

@@ -949,7 +949,13 @@ export interface ApiDropletDroplet extends Struct.CollectionTypeSchema {
       Schema.Attribute.Unique;
     nextSteps: Schema.Attribute.Component<'droplets.resource', true>;
     originalDropletId: Schema.Attribute.Integer;
-    overview: Schema.Attribute.RichText;
+    overview: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'light';
+        }
+      >;
     postrequisites: Schema.Attribute.Relation<
       'manyToMany',
       'api::droplet.droplet'

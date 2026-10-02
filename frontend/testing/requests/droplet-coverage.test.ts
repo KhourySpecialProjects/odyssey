@@ -47,6 +47,7 @@ import {
   updateDropletFunFact,
 } from "@/lib/requests/droplet";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import type {
   DropletDifficulty,
   LearningObjective,
@@ -832,6 +833,16 @@ describe("droplet-coverage — duplicateDroplet", () => {
 
     const result = await duplicateDroplet(1);
     expect(result.ok).toBe(true);
+
+    // The source droplet read populates lesson blocks per component
+    const readOptions = getMockedFetchAPI().mock.calls[0][1] as {
+      urlParams: { populate: { lessons: unknown } };
+    };
+    expect(readOptions.urlParams.populate.lessons).toEqual({
+      fields: ["*"],
+      populate: LESSON_BLOCKS_POPULATE,
+      sort: ["orderIndex:asc"],
+    });
 
     const lessonPost = fetchMock.mock.calls[2];
     const lessonBody = JSON.parse(lessonPost[1]?.body as string);

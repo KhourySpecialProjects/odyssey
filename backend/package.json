@@ -11,11 +11,12 @@
     "test": "jest --runInBand"
   },
   "dependencies": {
+    "@_sh/strapi-plugin-ckeditor": "8.0.0",
     "@aws-sdk/client-s3": "^3.1030.0",
-    "@strapi/plugin-documentation": "5.56.0",
     "@strapi/plugin-users-permissions": "5.56.0",
     "@strapi/provider-upload-aws-s3": "5.56.0",
     "@strapi/strapi": "5.56.0",
+    "ckeditor5": "48.4.0",
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
