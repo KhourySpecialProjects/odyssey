@@ -207,6 +207,23 @@ import qs from "qs";
 
 `fetchAPI()` passes `urlParams` directly to `qs.stringify()` with `encodeValuesOnly: true`. The `qs` library handles the Strapi bracket notation (`filters[status][$eq]=published`) automatically.
 
+## Single entries and relations on Strapi v5
+
+Single-entry REST routes (`/api/droplets/:id`) and relation writes only accept a `documentId`. A numeric id returns 404. Callers still hold numeric ids (fetched data, the session, FormData), so `lib/strapi-document-id.ts` converts them. It is a plain server module, not `"use server"`; never import it from a client component.
+
+- **Single-entry URLs:** build them with `await strapiEntryUrl("droplets", ref, query?)`. For `fetchAPI` paths use `` `/droplets/${await resolveDocumentId("droplets", id)}` ``. `ref` can be a number, a documentId, or the entity itself. Passing an entity that has `documentId` skips the lookup.
+- **Relation writes:** every relation value in a POST/PUT body (`connect`, `disconnect`, `set`, or shorthand like `droplet: id`) must be a documentId. Use `entity.documentId` when you have the entity, otherwise `resolveDocumentIds("<target collection>", ids)`. Components and their `id`s are not relations.
+- **Filters on `id` are fine:** `filters[id][$eq]=5` still works. Plain reads by id should use the filter, since it needs no lookup.
+- **Rendering paths:** don't call the helper while a page renders or inside `unstable_cache` or `cached.ts`. Its lookup uses `cache: "no-store"`, which makes static routes dynamic. Use an `id` filter there.
+- **Not found:** the helper throws `StrapiEntryNotFoundError`. Invalid refs (null, NaN, `""`) throw `InvalidEntryRefError`, a subclass. Handle both as you would a Strapi 404.
+- **Lock routes:** `/lessons/:id/lock*` take the numeric id until ODY-606. `lesson-lock.ts` stays numeric.
+- **Guard:** `testing/lib/strapi-entry-url-guard.test.ts` fails on raw-id single-entry URLs and lists each `file:line`.
+
+Test conventions:
+
+- `jest.setup.ts` mocks the helper globally with an identity mapping (`5` becomes `"5"`, an entity gives its `documentId`), so URL assertions like `/api/droplets/5` keep passing. To prove a documentId is used, override with a non-identity mapping such as `5 -> "doc5"`. `strapi-document-id.test.ts` calls `jest.unmock` to test the real module.
+- A test file that calls `jest.resetAllMocks()` wipes that mock and must re-install the identity implementation in `beforeEach`. See `droplet-coverage.test.ts`, `publish-draft-lesson-sync.test.ts`, `groups.test.js` and `voyage-branches.test.ts`.
+
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.
