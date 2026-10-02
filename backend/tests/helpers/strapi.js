@@ -4,7 +4,7 @@ const path = require('path');
 const backendDir = path.resolve(__dirname, '..', '..');
 const dbRelativePath = path.join(
   '.tmp',
-  `test-${process.pid}-${Date.now()}-${process.env.JEST_WORKER_ID || 0}.db`
+  `test-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.db`
 );
 
 let instance = null;
@@ -50,7 +50,8 @@ async function teardownStrapi() {
   const strapi = instance;
   instance = null;
 
-  await strapi.db.connection.destroy();
+  // strapi.destroy() also closes the DB connection. Destroying the knex pool
+  // separately first raised an unhandled "aborted" rejection from tarn.
   await strapi.destroy();
 
   // Remove only this run's own test database.
