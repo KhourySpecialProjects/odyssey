@@ -354,7 +354,7 @@ describe("dataset requests", () => {
       });
 
       expect(resolveDocumentId).toHaveBeenCalledWith("droplets", 7);
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
       expect(body.data.droplet).toBe("docDroplet7");
     });
 

@@ -18,24 +18,43 @@ import { DropletEnrollmentSchema } from "../validations/enrollment";
 import { z } from "zod";
 import { CACHE_TAGS } from "../cache-tags";
 import { enrollmentNeedsCompletionBackfill } from "../enrollment-completion";
+import {
+  EntryRef,
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
+ * Builds the ref passed to the documentId helper: the caller's enrollment id,
+ * plus the fetched enrollment's documentId when we have it (skips the lookup).
+ */
+function enrollmentRef(
+  enrollmentId: string,
+  fetched?: { documentId?: string } | null,
+): EntryRef {
+  return { id: enrollmentId, documentId: fetched?.documentId };
+}
+
+/**
  * PUTs `data` to an enrollment and returns the flattened enrollment from the
  * response; `responseQuery` (fields/populate) shapes what comes back.
+ * `enrollment` is the enrollment id, or a ref carrying its documentId.
  */
 async function putEnrollment(
-  enrollmentId: string,
+  enrollment: EntryRef,
   data: Record<string, unknown>,
   responseQuery?: Record<string, unknown>,
 ): Promise<Partial<Enrollment>> {
   const query = responseQuery
-    ? `?${qs.stringify(responseQuery, { encodeValuesOnly: true })}`
-    : "";
+    ? qs.stringify(responseQuery, { encodeValuesOnly: true })
+    : undefined;
   const response = await fetch(
-    `${STRAPI_API_URL}/api/enrollments/${enrollmentId}${query}`,
+    await strapiEntryUrl("enrollments", enrollment, query),
     {
       method: "PUT",
       headers: {
@@ -214,7 +233,7 @@ export async function changeEnrollmentRating(
 
     // Rating marks the droplet complete, so record when if it wasn't already
     // (pages no longer backfill completionDate during render).
-    await putEnrollment(enrollmentID, {
+    await putEnrollment(enrollmentRef(enrollmentID, enrollment), {
       rating: newRating,
       isComplete: true,
       ...(enrollment.completionDate ? {} : { completionDate: new Date() }),
@@ -383,22 +402,29 @@ export async function updateEnrollmentFirstTime(enrollmentId: string) {
     if (!user?.email) throw new Error("User not authenticated");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            isFirstTime: false,
-          },
-        }),
+    let url: string;
+    try {
+      url = await strapiEntryUrl("enrollments", enrollmentId);
+    } catch (err) {
+      // Same failure as the 404 Strapi used to return for a missing enrollment.
+      if (err instanceof StrapiEntryNotFoundError) {
+        throw new Error("Failed to update enrollment");
+      }
+      throw err;
+    }
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          isFirstTime: false,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update enrollment");
@@ -424,10 +450,36 @@ export async function createEnrollmentFromEmail(
     );
 
     if (!existing) {
+      // Strapi v5 relation writes take documentIds.
+      let relations: {
+        droplet: string;
+        viewedLessons: string[];
+        authorizedUser: string;
+      };
+      try {
+        relations = {
+          droplet: await resolveDocumentId("droplets", formData.droplet),
+          viewedLessons: await resolveDocumentIds(
+            "lessons",
+            formData.viewedLessons,
+          ),
+          authorizedUser: await resolveDocumentId(
+            "authorized-users",
+            authorizedUser,
+          ),
+        };
+      } catch (err) {
+        // Same result as Strapi rejecting a relation that does not exist.
+        if (err instanceof StrapiEntryNotFoundError) {
+          return { ok: false, error: err.message, data: null };
+        }
+        throw err;
+      }
+
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
-          data: { ...formData, authorizedUser: authorizedUser.id },
+          data: { ...formData, ...relations },
         }),
         headers: {
           "Content-Type": "application/json",
@@ -464,8 +516,10 @@ export async function deleteEnrollment(
     );
 
     if (enrollment) {
+      // A missing enrollment throws StrapiEntryNotFoundError, which the catch
+      // below handles like the old 404 (whose body parsing also threw).
       const response = await fetch(
-        STRAPI_API_URL + "/api/enrollments/" + enrollment.id,
+        await strapiEntryUrl("enrollments", enrollment),
         {
           method: "DELETE",
           headers: {
@@ -505,14 +559,34 @@ export async function createEnrollment(
     );
 
     if (!existing) {
+      // Strapi v5 relation writes take documentIds. The entities usually carry
+      // one already, so no lookup happens.
+      let relations: {
+        authorizedUser: string;
+        droplet: string;
+        viewedLessons: string[];
+      };
+      try {
+        relations = {
+          authorizedUser: await resolveDocumentId(
+            "authorized-users",
+            authorizedUser,
+          ),
+          droplet: await resolveDocumentId("droplets", droplet),
+          viewedLessons: await resolveDocumentIds("lessons", viewedLessons),
+        };
+      } catch (err) {
+        // Same result as Strapi rejecting a relation that does not exist.
+        if (err instanceof StrapiEntryNotFoundError) {
+          return { ok: false, error: err.message, data: null };
+        }
+        throw err;
+      }
+
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
-          data: {
-            authorizedUser: authorizedUser.id,
-            droplet: droplet.id,
-            viewedLessons: viewedLessons,
-          },
+          data: relations,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -581,9 +655,15 @@ export async function updateViewedLessons(
       // clicked twice while the first save is still running - drop a lesson.
       // The response returns the list as stored after the write, so completion
       // below is judged on what Strapi actually holds.
+      const lessonDocumentId = await resolveDocumentId("lessons", {
+        id: lessonId,
+        documentId: enrollment.droplet?.lessons?.find(
+          (l: Lesson) => l.id === lessonId,
+        )?.documentId,
+      });
       const updated = await putEnrollment(
-        enrollmentId,
-        { viewedLessons: { connect: [lessonId] } },
+        enrollmentRef(enrollmentId, enrollment),
+        { viewedLessons: { connect: [lessonDocumentId] } },
         {
           fields: ["isComplete", "completionDate"],
           populate: { viewedLessons: { fields: ["id"] } },
@@ -613,7 +693,7 @@ export async function updateViewedLessons(
       isNowComplete && (!isComplete || !completionDate);
 
     if (needsCompletionUpdate) {
-      await putEnrollment(enrollmentId, {
+      await putEnrollment(enrollmentRef(enrollmentId, enrollment), {
         isComplete: true,
         ...(completionDate ? {} : { completionDate: new Date() }),
       });
@@ -679,7 +759,7 @@ export async function recordMissingCompletion(enrollmentId: string) {
       return { success: true, updated: false };
     }
 
-    await putEnrollment(enrollmentId, {
+    await putEnrollment(enrollmentRef(enrollmentId, enrollment), {
       isComplete: true,
       completionDate: enrollment.completionDate ?? new Date(),
     });
@@ -700,8 +780,10 @@ export async function updateCompletionDate(enrollmentID: string) {
     }
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
+    // A missing enrollment throws StrapiEntryNotFoundError, which the catch
+    // below turns into the same failure result the old 404 produced.
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
+      await strapiEntryUrl("enrollments", enrollmentID),
       {
         method: "PUT",
         headers: {
@@ -735,12 +817,29 @@ export async function createEnrollmentDirect(
   dropletId: number,
 ) {
   try {
+    // Strapi v5 relation writes take documentIds.
+    let relations: { authorizedUser: string; droplet: string };
+    try {
+      relations = {
+        authorizedUser: await resolveDocumentId(
+          "authorized-users",
+          authorizedUserId,
+        ),
+        droplet: await resolveDocumentId("droplets", dropletId),
+      };
+    } catch (err) {
+      // Same result as Strapi rejecting a relation that does not exist.
+      if (err instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: err.message, data: null };
+      }
+      throw err;
+    }
+
     const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
       method: "POST",
       body: JSON.stringify({
         data: {
-          authorizedUser: authorizedUserId,
-          droplet: dropletId,
+          ...relations,
           viewedLessons: [],
         },
       }),
