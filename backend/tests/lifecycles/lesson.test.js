@@ -25,11 +25,15 @@ describe('lesson beforeCreate', () => {
     expect(lesson.slug).toMatch(/^branching-basics-/);
   });
 
-  // v5 issue: v5 fills an absent dynamic zone with `blocks: []` before
-  // beforeCreate runs, and the hook's `!data.blocks` check treats [] as
-  // present, so an empty lesson is created.
-  test.failing('throws when neither blocks nor blocksV2 is given', async () => {
-    await expect(create({ blocksV2: undefined })).rejects.toThrow(EMPTY_MESSAGE);
+  // Characterization: a create with no content succeeds on v5. v5 fills an
+  // absent dynamic zone with `blocks: []` before beforeCreate runs, and the
+  // guard's `!data.blocks` treats [] as present (as it did on v4). The draft
+  // editor's "Add lesson" depends on this: addLesson sends blocks: [] and no
+  // blocksV2, creating a blank lesson that is filled in later. Do not tighten
+  // the create guard without changing that caller.
+  it('allows a create with no content (blank lesson from Add lesson)', async () => {
+    const lesson = await create({ blocksV2: undefined });
+    expect(lesson.slug).toBeTruthy();
   });
 
   it('accepts blocks without blocksV2', async () => {
@@ -37,13 +41,13 @@ describe('lesson beforeCreate', () => {
     expect(lesson.slug).toBeTruthy();
   });
 
-  // v5 issue: see the note in helpers/fixtures.js. Required-field validation
-  // runs before beforeCreate, so creating without a slug fails with
-  // "slug must be defined" instead of the hook generating it.
-  test.failing('generates the slug when the caller sends none', async () => {
+  // Contract: creates must send a slug (any value); beforeCreate replaces it.
+  // v5 validates required fields before the hook, so omitting it is rejected.
+  it('rejects a create that sends no slug', async () => {
     const { slug, ...withoutSlug } = lessonData({ name: unique('No Slug Lesson') });
-    const lesson = await strapi.documents(LESSON_UID).create({ data: withoutSlug });
-    expect(lesson.slug).toMatch(/^no-slug-lesson-/);
+    await expect(
+      strapi.documents(LESSON_UID).create({ data: withoutSlug })
+    ).rejects.toThrow('slug must be defined');
   });
 });
 

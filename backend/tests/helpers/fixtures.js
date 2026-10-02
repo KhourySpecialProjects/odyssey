@@ -8,7 +8,7 @@ const unique = (label) => `${label} ${Date.now().toString(36)}-${++counter}`;
 // create without a slug is rejected ("slug must be defined") even though the
 // hook would generate one. Fixtures send a placeholder, which the hook
 // overwrites (generateSlug ignores data.slug and slugifies the name). The
-// lifecycle tests document the missing-slug failure as test.failing.
+// lifecycle tests assert the missing-slug rejection as the contract.
 const SLUG_PLACEHOLDER = 'placeholder';
 
 const DROPLET_UID ='api::droplet.droplet';

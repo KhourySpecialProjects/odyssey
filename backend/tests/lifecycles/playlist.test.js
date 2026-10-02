@@ -29,12 +29,13 @@ describe('playlist beforeCreate', () => {
     expect(second.slug).toBe(`${first.slug}-1`);
   });
 
-  // v5 issue: required-field validation runs before beforeCreate, so a create
-  // without a slug fails with "slug must be defined" (see helpers/fixtures.js).
-  test.failing('generates the slug when the caller sends none', async () => {
+  // Contract: creates must send a slug (any value); beforeCreate replaces it.
+  // v5 validates required fields before the hook, so omitting it is rejected.
+  it('rejects a create that sends no slug', async () => {
     const { slug, ...withoutSlug } = playlistData({ name: unique('No Slug Playlist') });
-    const playlist = await strapi.documents(PLAYLIST_UID).create({ data: withoutSlug });
-    expect(playlist.slug).toMatch(/^no-slug-playlist-/);
+    await expect(
+      strapi.documents(PLAYLIST_UID).create({ data: withoutSlug })
+    ).rejects.toThrow('slug must be defined');
   });
 });
 

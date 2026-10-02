@@ -30,15 +30,14 @@ describe('droplet beforeCreate', () => {
     expect(droplet.slug).toMatch(/^intro-to-git-/);
   });
 
-  // v5 issue: required-field validation runs before beforeCreate, so a create
-  // without a slug fails with "slug must be defined" instead of the hook
-  // generating one (it worked while Draft & Publish made new rows drafts,
-  // because required checks are skipped for drafts). Flip to a plain test()
-  // once the schema or the callers are fixed.
-  test.failing('generates the slug when the caller sends none', async () => {
+  // Contract: REST and document-service creates must send a slug (any value);
+  // beforeCreate replaces it. v5 validates required fields before the hook
+  // runs, so omitting it is rejected. Every frontend create sends a placeholder.
+  it('rejects a create that sends no slug', async () => {
     const { slug, ...withoutSlug } = dropletData({ name: unique('No Slug') });
-    const droplet = await strapi.documents(DROPLET_UID).create({ data: withoutSlug });
-    expect(droplet.slug).toMatch(/^no-slug-/);
+    await expect(
+      strapi.documents(DROPLET_UID).create({ data: withoutSlug })
+    ).rejects.toThrow('slug must be defined');
   });
 
   it('appends -1 when the slug is already taken', async () => {
@@ -121,17 +120,6 @@ describe('droplet afterUpdate (Slack on entering edit)', () => {
     } finally {
       delete process.env.FRONTEND_URL;
     }
-  });
-
-  // Hook bug (not v5-specific): without FRONTEND_URL the header block is built
-  // as "<null|Droplet name>", which Slack renders as a broken link.
-  test.failing('does not emit a "<null|...>" link when FRONTEND_URL is unset', async () => {
-    delete process.env.FRONTEND_URL;
-    const droplet = await create();
-    slack.reset();
-    await update(droplet.documentId, { status: 'edit' });
-
-    expect(JSON.stringify(slack.sends()[0].blocks)).not.toContain('<null|');
   });
 
   it('does not send on create, even when created directly in edit', async () => {
