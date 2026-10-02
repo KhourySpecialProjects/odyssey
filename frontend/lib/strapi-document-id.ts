@@ -61,6 +61,10 @@ export class InvalidEntryRefError extends StrapiEntryNotFoundError {
   }
 }
 
+// Strapi's cuid2 documentIds are lowercase letters and digits. Anything else
+// would be spliced into a URL path, so refuse it.
+const DOCUMENT_ID_PATTERN = /^[A-Za-z0-9]+$/;
+
 const MAX_CACHE_ENTRIES = 5000;
 const BATCH_SIZE = 100;
 
@@ -83,7 +87,10 @@ function normalizeRef(
   if (ref === null || ref === undefined) throw bad();
 
   if (typeof ref === "object") {
-    if (ref.documentId) return { documentId: ref.documentId };
+    if (ref.documentId) {
+      if (!DOCUMENT_ID_PATTERN.test(ref.documentId)) throw bad();
+      return { documentId: ref.documentId };
+    }
     if (ref.id === null || ref.id === undefined) throw bad();
     return normalizeRef(collection, ref.id);
   }
@@ -95,6 +102,7 @@ function normalizeRef(
 
   if (ref === "") throw bad();
   if (/^\d+$/.test(ref)) return { id: Number(ref) };
+  if (!DOCUMENT_ID_PATTERN.test(ref)) throw bad();
   return { documentId: ref };
 }
 
@@ -163,9 +171,15 @@ export async function resolveDocumentIds(
 ): Promise<string[]> {
   const normalized = refs.map((ref) => normalizeRef(collection, ref));
 
+  // Collect this call's results locally. The shared cache is capped, so
+  // concurrent inserts during the awaits below could evict entries we need.
+  const resolved = new Map<number, string>();
   const toLookUp = new Set<number>();
   for (const n of normalized) {
-    if ("id" in n && !cache.has(`${collection}:${n.id}`)) toLookUp.add(n.id);
+    if (!("id" in n)) continue;
+    const cached = cache.get(`${collection}:${n.id}`);
+    if (cached) resolved.set(n.id, cached);
+    else toLookUp.add(n.id);
   }
 
   const ids = [...toLookUp];
@@ -183,12 +197,13 @@ export async function resolveDocumentIds(
     });
     for (const entry of entries ?? []) {
       if (entry?.id !== undefined && entry.documentId) {
+        resolved.set(entry.id, entry.documentId);
         remember(collection, entry.id, entry.documentId);
       }
     }
   }
 
-  const missing = ids.filter((id) => !cache.has(`${collection}:${id}`));
+  const missing = ids.filter((id) => !resolved.has(id));
   if (missing.length > 0) {
     throw new StrapiEntryNotFoundError(
       `No ${collection} entry found with id ${missing.join(", ")}`,
@@ -196,7 +211,7 @@ export async function resolveDocumentIds(
   }
 
   return normalized.map((n) =>
-    "documentId" in n ? n.documentId : cache.get(`${collection}:${n.id}`)!,
+    "documentId" in n ? n.documentId : resolved.get(n.id)!,
   );
 }
 

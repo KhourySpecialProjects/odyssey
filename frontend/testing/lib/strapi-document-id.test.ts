@@ -151,6 +151,24 @@ describe("resolveDocumentId", () => {
     expect(mockFetchAPI).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["a parent-directory string", "../x"],
+    ["a slash string", "a/b"],
+    ["a query string", "a?b=1"],
+    ["a documentId object", { documentId: "../x" }],
+    ["a documentId object with a slash", { id: 5, documentId: "a/b" }],
+  ])("rejects %s as a malformed documentId", async (_label, ref) => {
+    const error = await resolveDocumentId("droplets", ref as any).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(InvalidEntryRefError);
+    expect(error).toBeInstanceOf(StrapiEntryNotFoundError);
+    expect(mockFetchAPI).not.toHaveBeenCalled();
+    await expect(strapiEntryUrl("droplets", ref as any)).rejects.toBeInstanceOf(
+      InvalidEntryRefError,
+    );
+  });
+
   it("caps the cache and drops the oldest entry", async () => {
     mockFetchAPI.mockImplementation(async (_path: string, config: any) => [
       { documentId: `doc${config.urlParams.filters.id.$eq}` },
@@ -267,6 +285,48 @@ describe("resolveDocumentIds", () => {
 
     expect(error.message).toContain("41");
     expect(error.message).toContain("42");
+  });
+
+  it("rejects a malformed documentId in a batch", async () => {
+    await expect(
+      resolveDocumentIds("tags", ["ok1", "../x"]),
+    ).rejects.toBeInstanceOf(InvalidEntryRefError);
+    expect(mockFetchAPI).not.toHaveBeenCalled();
+  });
+
+  it("returns every result even if concurrent inserts evict cache entries mid-call", async () => {
+    // Fill the cache to capacity, then let a mid-call insert burst evict the
+    // entries this call just cached.
+    mockFetchAPI.mockImplementation(async (_path: string, config: any) => [
+      { documentId: `doc${config.urlParams.filters.id.$eq}` },
+    ]);
+    for (let i = 1; i <= 5000; i++) {
+      await resolveDocumentId("droplets", i);
+    }
+    mockFetchAPI.mockReset();
+
+    let calls = 0;
+    mockFetchAPI.mockImplementation(async (_path: string, config: any) => {
+      calls++;
+      if (calls === 1) {
+        // Cached ids 1 and 2 are read at the start of the call. Evict them
+        // (and everything else old) while the batch is in flight.
+        mockFetchAPI.mockImplementation(async (_p: string, c: any) => [
+          { documentId: `doc${c.urlParams.filters.id.$eq}` },
+        ]);
+        for (let i = 6001; i <= 11001; i++) {
+          await resolveDocumentId("droplets", i);
+        }
+      }
+      return (config.urlParams.filters.id.$in as number[]).map((id) => ({
+        id,
+        documentId: `doc${id}`,
+      }));
+    });
+
+    const result = await resolveDocumentIds("droplets", [1, 2, 20000]);
+
+    expect(result).toEqual(["doc1", "doc2", "doc20000"]);
   });
 
   it("throws InvalidEntryRefError (a not-found error) for a bad ref", async () => {
