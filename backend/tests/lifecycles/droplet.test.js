@@ -251,12 +251,8 @@ describe('droplet over REST', () => {
     expect(sends[0].text).toContain(name);
   });
 
-  // ODY-700: the REST controller rejects unknown body keys with
-  // "400 Invalid key regenerateSlug" before the lifecycle hook runs, so the
-  // frontend's regenerateSlug flag never reaches beforeUpdate over REST. When
-  // ODY-700 lands this starts passing, Jest flags it, and it becomes a plain
-  // test().
-  test.failing('PUT with regenerateSlug regenerates the slug (ODY-700)', async () => {
+  // ODY-700: v5's strict REST validation must let regenerateSlug reach beforeUpdate.
+  test('PUT with regenerateSlug regenerates the slug (ODY-700)', async () => {
     const droplet = await create();
     const res = await rest()
       .put(`/api/droplets/${droplet.documentId}`)

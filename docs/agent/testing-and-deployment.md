@@ -200,6 +200,12 @@ Use the `/ci` slash command in Claude Code:
 
 The command runs each check sequentially, reports pass/fail with relevant output, and gives a final verdict (READY TO PUSH or NOT READY TO PUSH).
 
+### Dependency audits (feature/strapi-v5, temporary)
+
+Dependabot only targets `develop`, and reads its config from `production`. At every `develop` → `feature/strapi-v5` merge and before the ODY-602 rehearsal, run `cd backend && npm audit`.
+Compare advisory names against the Decision Record in `docs/plans/ODY-701.md`, and triage any new name before merging.
+Delete this subsection when v5 merges to `develop`.
+
 ### Quality Gate Hook
 
 The `quality-gate.sh` hook runs automatically after every agent turn (Stop and SubagentStop events):
