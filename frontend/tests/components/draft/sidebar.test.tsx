@@ -30,7 +30,7 @@ jest.mock("@/components/draft/add-lesson", () => ({
 
 // Mock the ContentActionButton component to avoid complex setup.
 // Surface the actionType and buttonText so permission tests can assert on
-// which button (Publish vs Review) the sidebar hands to a given user role.
+// which buttons the sidebar hands to a given user role.
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: ({
     actionType,
@@ -349,69 +349,98 @@ describe("Sidebar", () => {
     expect(screen.getByText("Overview")).toBeInTheDocument();
   });
 
-  describe("publish button permissions", () => {
-    const renderWithRoles = (roles: AuthorizedUserRoleTitle[]) =>
+  describe("action button permissions", () => {
+    const { SysAdmin, Faculty, ContentEditor, ContentCreator, User } =
+      AuthorizedUserRoleTitle;
+
+    const draftStates = {
+      "new draft": mockDroplet,
+      "new draft in review": { ...mockDroplet, inReview: true },
+      "edit draft": { ...mockDroplet, originalDropletId: 42 },
+      "edit draft in review": {
+        ...mockDroplet,
+        originalDropletId: 42,
+        inReview: true,
+      },
+    };
+
+    // [actionType, buttonText] for each action button, in render order
+    const renderActions = (
+      roles: AuthorizedUserRoleTitle[],
+      droplet: object,
+    ) => {
       render(
         <Sidebar
           user={{ ...mockUser, roles } as any}
-          droplet={mockDroplet as any}
+          droplet={droplet as any}
           availableDroplets={[]}
           {...defaultProps}
         />,
       );
+      return screen
+        .queryAllByTestId("content-action-button")
+        .map((btn) => [
+          btn.getAttribute("data-action-type"),
+          btn.getAttribute("data-button-text"),
+        ]);
+    };
 
-    it("shows Publish button for SysAdmin", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.SysAdmin]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    const publish = ["publish", "Publish"];
+    const publishChanges = ["publishDraft", "Publish changes"];
+    const requestChanges = ["requestChanges", "Request changes"];
+    const submitForReview = ["requestReview", "Submit for review"];
+
+    it.each<[AuthorizedUserRoleTitle, keyof typeof draftStates, string[][]]>([
+      [SysAdmin, "new draft", [publish]],
+      [SysAdmin, "new draft in review", [publish, requestChanges]],
+      [SysAdmin, "edit draft", [publishChanges]],
+      [SysAdmin, "edit draft in review", [publishChanges, requestChanges]],
+      [Faculty, "new draft", [publish]],
+      [Faculty, "new draft in review", [publish, requestChanges]],
+      [Faculty, "edit draft", [publishChanges]],
+      [Faculty, "edit draft in review", [publishChanges, requestChanges]],
+      // Content Editors publish only once a draft has been submitted for review
+      [ContentEditor, "new draft", []],
+      [ContentEditor, "new draft in review", [publish, requestChanges]],
+      [ContentEditor, "edit draft", []],
+      [ContentEditor, "edit draft in review", [publishChanges, requestChanges]],
+      [ContentCreator, "new draft", [submitForReview]],
+      [ContentCreator, "new draft in review", []],
+      [ContentCreator, "edit draft", [submitForReview]],
+      [ContentCreator, "edit draft in review", []],
+      [User, "new draft", []],
+      [User, "new draft in review", []],
+      [User, "edit draft", []],
+      [User, "edit draft in review", []],
+    ])("%s, %s: %j", (role, state, expectedActions) => {
+      expect(renderActions([role], draftStates[state])).toEqual(
+        expectedActions,
+      );
     });
 
-    it("shows Publish button for ContentEditor", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.ContentEditor]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
-    });
-
-    it("shows Publish button for Faculty", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.Faculty]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
-    });
-
-    it("shows Submit for review button for ContentCreator (no direct publish)", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.ContentCreator]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "requestReview");
-      expect(btn).toHaveAttribute("data-button-text", "Submit for review");
-    });
-
-    it("shows no action button for User role", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.User]);
+    it("offers Resubmit for review once changes were requested", () => {
       expect(
-        screen.queryByTestId("content-action-button"),
-      ).not.toBeInTheDocument();
+        renderActions([ContentCreator], {
+          ...mockDroplet,
+          afterReview: "Please fix the quiz answers",
+        }),
+      ).toEqual([["requestReview", "Resubmit for review"]]);
     });
 
-    it("uses publishDraft actionType when the droplet is a draft revision", () => {
-      render(
-        <Sidebar
-          user={
-            {
-              ...mockUser,
-              roles: [AuthorizedUserRoleTitle.SysAdmin],
-            } as any
-          }
-          droplet={{ ...mockDroplet, originalDropletId: 42 } as any}
-          availableDroplets={[]}
-          {...defaultProps}
-        />,
-      );
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publishDraft");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
+    it("lets a Content Editor who is also a Content Creator submit their draft for review", () => {
+      expect(
+        renderActions([ContentEditor, ContentCreator], mockDroplet),
+      ).toEqual([submitForReview]);
+    });
+
+    it("gives an Admin who is also a Content Creator Publish instead of Submit for review", () => {
+      expect(renderActions([SysAdmin, ContentCreator], mockDroplet)).toEqual([
+        publish,
+      ]);
+    });
+
+    it("shows no action buttons on a published droplet", () => {
+      expect(renderActions([SysAdmin], mockPublishedDroplet)).toEqual([]);
     });
   });
 });
