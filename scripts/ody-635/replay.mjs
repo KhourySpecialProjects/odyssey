@@ -11,7 +11,7 @@ const TOKEN = process.env.ODY635_TOKEN;
 const WRITES = process.env.ODY635_WRITES === "1";
 const LOCK_USER_ID = process.env.ODY635_LOCK_USER_ID;
 const MISSING_DOC_ID = "ody635nonexistent000000000";
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = Number(process.env.ODY635_TIMEOUT_MS) || 30000;
 
 const catalogPath = process.argv[2];
 if (!catalogPath) {
@@ -21,6 +21,21 @@ if (!catalogPath) {
 if (!TOKEN) {
   console.error("set ODY635_TOKEN");
   process.exit(64);
+}
+
+function loadCatalog(file) {
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(file, "utf8"));
+  } catch (err) {
+    console.error(`cannot read catalog ${file}: ${err.message}`);
+    process.exit(64);
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    console.error(`usage: ${file} must be a non-empty JSON array of entries`);
+    process.exit(64);
+  }
+  return parsed;
 }
 
 const counts = { pass: 0, fail: 0, skip: 0 };
@@ -44,17 +59,21 @@ function skip(label, why) {
   console.log(`SKIP  ${label} (${why})`);
 }
 
-function abort(message, code) {
-  console.log(`ABORT ${message}`);
-  console.log(
-    `-- ${counts.pass} passed, ${counts.fail} failed, ${counts.skip} skipped before abort`,
-  );
-  process.exit(code);
+// Thrown to end the run; the top level maps it to an exit code after cleanup.
+class AbortRun extends Error {
+  constructor(message, code) {
+    super(message);
+    this.exitCode = code;
+  }
 }
 
-// Sends one request. Returns { code, body }; a connection failure aborts the run.
-async function send(method, pathAndQuery, json) {
+const interrupt = new AbortController();
+
+// Sends one request. Returns { code, body }; 401 or a connection failure throws AbortRun.
+async function send(method, pathAndQuery, json, { cleanup = false } = {}) {
   const url = `${BASE}/api${pathAndQuery}`;
+  if (interrupt.signal.aborted && !cleanup)
+    throw new AbortRun("interrupted", 130);
   try {
     const res = await fetch(url, {
       method,
@@ -64,7 +83,9 @@ async function send(method, pathAndQuery, json) {
         "Strapi-Response-Format": "v4",
       },
       ...(json !== undefined && { body: JSON.stringify(json) }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: cleanup
+        ? AbortSignal.timeout(TIMEOUT_MS)
+        : AbortSignal.any([AbortSignal.timeout(TIMEOUT_MS), interrupt.signal]),
     });
     const text = await res.text();
     let body = null;
@@ -74,15 +95,18 @@ async function send(method, pathAndQuery, json) {
       body = null;
     }
     if (res.status === 401)
-      abort(
+      throw new AbortRun(
         `401 from ${BASE} (bad ODY635_TOKEN, or a different API_TOKEN_SALT)`,
         2,
       );
     return { code: res.status, body };
   } catch (err) {
+    if (err instanceof AbortRun) throw err;
+    if (interrupt.signal.aborted && !cleanup)
+      throw new AbortRun("interrupted", 130);
     const cause =
       err?.cause?.code || err?.cause?.message || err?.message || String(err);
-    return abort(`cannot reach ${url.split("?")[0]}: ${cause}`, 3);
+    throw new AbortRun(`cannot reach ${url.split("?")[0]}: ${cause}`, 3);
   }
 }
 
@@ -99,6 +123,15 @@ async function replayRead(entry) {
 }
 
 async function replayWrite(entry) {
+  if (
+    entry.method === "POST" &&
+    entry.body?.data?.regenerateSlug !== undefined
+  ) {
+    return fail(
+      `${entry.fn} POST ${entry.path}`,
+      "create body has regenerateSlug; ODY-700 allows it on update only",
+    );
+  }
   const label = `${entry.fn} ${entry.method} ${entry.path} -> PUT /${entry.collection}/<missing>`;
   const target = withQuery(
     `/${entry.collection}/${MISSING_DOC_ID}`,
@@ -140,18 +173,31 @@ async function lockRoundTrip() {
   const release = async () => {
     if (!held) return;
     held = false;
-    const r = await send("DELETE", `${base}/lock?userId=${userId}`);
-    console.log(`-- lock release on lesson ${lessonId}: HTTP ${r.code}`);
+    try {
+      const r = await send(
+        "DELETE",
+        `${base}/lock?userId=${userId}`,
+        undefined,
+        { cleanup: true },
+      );
+      console.log(`-- lock release on lesson ${lessonId}: HTTP ${r.code}`);
+    } catch (err) {
+      console.log(
+        `-- lock release on lesson ${lessonId} FAILED: ${err.message}`,
+      );
+    }
   };
-  const onSignal = async (sig) => {
+  // Signals abort in-flight requests; the finally below releases, then the run exits 130.
+  const onSignal = (sig) => {
     console.log(`-- ${sig}; releasing lock`);
-    await release();
-    process.exit(130);
+    interrupt.abort();
   };
   process.once("SIGINT", () => onSignal("SIGINT"));
   process.once("SIGTERM", () => onSignal("SIGTERM"));
 
   try {
+    // Mark held before the POST: a DELETE with no lock is harmless, a missed release is not.
+    held = true;
     const acquire = await send("POST", `${base}/lock`, { userId });
     held = acquire.code === 200;
     if (acquire.code === 200 && acquire.body?.locked === true)
@@ -202,31 +248,49 @@ async function lockRoundTrip() {
   }
 }
 
-const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
-console.log(`-- replaying ${catalog.length} catalog entries against ${BASE}`);
+async function main() {
+  const catalog = loadCatalog(catalogPath);
+  console.log(`-- replaying ${catalog.length} catalog entries against ${BASE}`);
 
-for (const entry of catalog) {
-  if (entry.method === "GET") await replayRead(entry);
-  else if (entry.method === "POST" || entry.method === "PUT")
-    await replayWrite(entry);
-  else
-    skip(
-      `${entry.fn} ${entry.method} ${entry.path}`,
-      `${entry.method} is not replayed`,
-    );
+  for (const entry of catalog) {
+    if (entry.method === "GET") await replayRead(entry);
+    else if (entry.method === "POST" || entry.method === "PUT")
+      await replayWrite(entry);
+    else
+      skip(
+        `${entry.fn} ${entry.method} ${entry.path}`,
+        `${entry.method} is not replayed`,
+      );
+  }
+
+  if (WRITES) {
+    if (LOCK_USER_ID && Number(LOCK_USER_ID)) await lockRoundTrip();
+    else
+      skip(
+        "lock round-trip",
+        "set ODY635_LOCK_USER_ID to an authorized-user id",
+      );
+  }
+
+  console.log(
+    `-- ${counts.pass} passed, ${counts.fail} failed, ${counts.skip} skipped`,
+  );
+  if (counts.fail > 0) {
+    console.log(`${counts.fail} FAILED`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log("ALL PASSED");
 }
 
-if (WRITES) {
-  if (LOCK_USER_ID && Number(LOCK_USER_ID)) await lockRoundTrip();
-  else
-    skip("lock round-trip", "set ODY635_LOCK_USER_ID to an authorized-user id");
+// Exit codes are set (not process.exit) so piped stdout is flushed.
+try {
+  await main();
+} catch (err) {
+  if (!(err instanceof AbortRun)) throw err;
+  console.log(`ABORT ${err.message}`);
+  console.log(
+    `-- ${counts.pass} passed, ${counts.fail} failed, ${counts.skip} skipped before abort`,
+  );
+  process.exitCode = err.exitCode;
 }
-
-console.log(
-  `-- ${counts.pass} passed, ${counts.fail} failed, ${counts.skip} skipped`,
-);
-if (counts.fail > 0) {
-  console.log(`${counts.fail} FAILED`);
-  process.exit(1);
-}
-console.log("ALL PASSED");
