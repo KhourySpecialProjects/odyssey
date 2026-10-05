@@ -789,9 +789,9 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
           },
         },
       },
-      fields: ["id", "username", "email"],
+      fields: ["id", "firstName", "lastName", "email"],
       populate: {},
-      sort: ["username"],
+      sort: ["lastName"],
       pagination: {
         pageSize,
         page,

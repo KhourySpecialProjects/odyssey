@@ -806,7 +806,7 @@ export async function fetchAnnouncementById(id: number) {
         id: { $eq: id },
       },
       populate: {
-        authorized_users: {
+        authorized_user: {
           fields: [
             "id",
             "email",

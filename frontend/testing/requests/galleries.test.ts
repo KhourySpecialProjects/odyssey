@@ -25,6 +25,9 @@ describe("getGalleryBySlug", () => {
     expect(config.urlParams).toEqual(
       expect.objectContaining({ filters: { slug: { $eq: "features" } } }),
     );
+    expect(config.urlParams).toEqual(
+      expect.objectContaining({ populate: { items: true } }),
+    );
     expect(config.next).toEqual({ revalidate: 3600 });
     // `cache` and `next` are mutually exclusive in Next 15.
     expect(config).not.toHaveProperty("cache");

@@ -270,6 +270,10 @@ describe("claim / unclaim voyage node documentIds", () => {
     expect(bodyOf(fetchMock.mock.calls[0]).authorized_users).toEqual({
       connect: ["doc7"],
     });
+    // ODY-635 R4: learningObjectives is a plain component, so no __component.
+    const objectives = bodyOf(fetchMock.mock.calls[0]).learningObjectives;
+    expect(objectives).toEqual([{ objective: "TBD" }]);
+    expect(objectives[0]).not.toHaveProperty("__component");
     expect(fetchMock.mock.calls[1][0]).toMatch(/\/api\/voyage-nodes\/nodeDoc$/);
     expect(bodyOf(fetchMock.mock.calls[1])).toMatchObject({
       droplet: "dropDoc",
