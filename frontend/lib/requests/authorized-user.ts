@@ -25,6 +25,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -751,9 +752,13 @@ export async function deleteAuthorizedUser(formData: FormData) {
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
+    const body = await readJsonOrNull(response);
+    if (!response.ok || body?.error)
+      return {
+        ok: false,
+        error: body?.error?.message ?? "Failed to delete authorized user.",
+        data: null,
+      };
   } catch (err) {
     if (err instanceof StrapiEntryNotFoundError) {
       // Same result as the 404 body Strapi used to return.

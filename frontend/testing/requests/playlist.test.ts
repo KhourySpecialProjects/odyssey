@@ -6,6 +6,7 @@ import {
 } from "@/lib/requests/playlist";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { makeEmptyResponse } from "@/lib/testing/mock-helpers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
@@ -208,6 +209,31 @@ describe("deletePlaylist", () => {
     expect(revalidateTag).toHaveBeenCalledWith("playlists");
     expect(revalidateTag).toHaveBeenCalledWith("authors");
     expect(revalidateTag).toHaveBeenCalledWith("groups");
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: [{ id: 123, attributes: { name: "Test" } }],
+        }),
+    });
+    (global.fetch as jest.Mock).mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deletePlaylist(123);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(5);
+    for (const tag of [
+      CACHE_TAGS.playlists,
+      CACHE_TAGS.authors,
+      CACHE_TAGS.allGroups,
+      CACHE_TAGS.allUserContent,
+      CACHE_TAGS.allUserDashboards,
+    ]) {
+      expect(revalidateTag).toHaveBeenCalledWith(tag);
+    }
   });
 
   it("handles playlist deletion failure", async () => {

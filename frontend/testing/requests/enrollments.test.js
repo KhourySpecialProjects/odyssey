@@ -27,6 +27,8 @@ const {
   StrapiEntryNotFoundError,
 } = require("../../lib/strapi-document-id");
 const mockEnrollments = require("../mocks/enrollmentsMock");
+const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -819,6 +821,19 @@ describe("Enrollment Tests", () => {
         }),
       );
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("treats an empty 204 as success (Strapi v5)", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValue([{ id: 50, droplet: { id: 123 } }]);
+      global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+      const result = await deleteEnrollment({ droplet: 123 });
+
+      expect(result).toBeUndefined();
+      expect(revalidateTag).toHaveBeenCalledTimes(1);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.enrollments(1));
     });
 
     it("passes the fetched enrollment through, so no lookup happens", async () => {

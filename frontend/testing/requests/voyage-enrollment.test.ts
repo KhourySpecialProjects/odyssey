@@ -10,6 +10,7 @@ import {
   checkDropletVoyageNode,
 } from "@/lib/requests/voyage-enrollment";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { makeEmptyResponse } from "@/lib/testing/mock-helpers";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -339,6 +340,26 @@ describe("unenrollFromVoyage", () => {
       error: null,
       data: existingEnrollment,
     });
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([{ id: 5 }]);
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([{ id: 77 }]);
+    (flattenAttributes as jest.Mock).mockImplementationOnce((d) => d);
+    // completion DELETE, then enrollment DELETE
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(makeEmptyResponse(204))
+      .mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await unenrollFromVoyage(10);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.voyageEnrollments(42),
+    );
   });
 
   it("returns ok:true (no-op) when not enrolled", async () => {

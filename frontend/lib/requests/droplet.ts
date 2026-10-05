@@ -22,6 +22,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -302,7 +303,7 @@ export async function deepDeleteDroplet(id: number) {
       },
     });
 
-    const data = await response.json();
+    const body = await readJsonOrNull(response);
 
     if (!response.ok) {
       return { ok: false, error: "Failed to delete droplet.", data: null };
@@ -318,7 +319,7 @@ export async function deepDeleteDroplet(id: number) {
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allUserContent);
     revalidateTag(CACHE_TAGS.allUserDashboards);
-    return { ok: true, error: null, data: data.data };
+    return { ok: true, error: null, data: body?.data ?? null };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };

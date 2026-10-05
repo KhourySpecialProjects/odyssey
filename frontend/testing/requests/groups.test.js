@@ -33,6 +33,8 @@ const {
 const { createEnrollmentDirect } = require("../../lib/requests/enrollment");
 const { enrollInPlaylist } = require("../../lib/requests/playlist-enrollment");
 const { revalidateTag } = require("next/cache");
+const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
 const {
   resolveDocumentId,
   resolveDocumentIds,
@@ -2158,6 +2160,26 @@ describe("deleteGroup", () => {
     expect(result).toEqual({ ok: true, error: null, data: { id: 123 } });
     expect(revalidateTag).toHaveBeenCalledWith("authors");
     expect(revalidateTag).toHaveBeenCalledWith("groups");
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    fetchAPI.mockResolvedValueOnce([
+      { id: 123, groupName: "Test Group", members: [{ id: 10 }] },
+    ]);
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deleteGroup(123);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(4);
+    for (const tag of [
+      CACHE_TAGS.authors,
+      CACHE_TAGS.allGroups,
+      CACHE_TAGS.allDueDates,
+      CACHE_TAGS.allUserDashboards,
+    ]) {
+      expect(revalidateTag).toHaveBeenCalledWith(tag);
+    }
   });
 
   it("handles group deletion failure", async () => {

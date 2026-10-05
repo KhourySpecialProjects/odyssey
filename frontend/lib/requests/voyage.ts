@@ -20,6 +20,7 @@ import {
   type EntryRef,
   type StrapiCollection,
 } from "@/lib/strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -710,11 +711,15 @@ export async function deleteVoyage(id: number) {
       return { ok: false, error: "Failed to delete voyage.", data: null };
     }
 
-    const data = await response.json();
+    const body = await readJsonOrNull(response);
 
     revalidateTag(CACHE_TAGS.voyages);
     revalidateTag(CACHE_TAGS.allUserContent);
-    return { ok: true, error: null, data: flattenAttributes(data.data) };
+    return {
+      ok: true,
+      error: null,
+      data: flattenAttributes(body?.data ?? null),
+    };
   } catch (err) {
     console.error(err);
     return {

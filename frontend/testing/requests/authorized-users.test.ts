@@ -19,10 +19,12 @@ import {
   getMockedFetchAPI,
   mockGlobalFetch,
   makeFetchResponse,
+  makeEmptyResponse,
   assertOk,
 } from "@/lib/testing/mock-helpers";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { revalidateTag } from "next/cache";
 import {
   resolveDocumentId,
   resolveDocumentIds,
@@ -1126,6 +1128,19 @@ describe("Authorized User Tests", () => {
         }),
       );
       expect(result).toEqual({ ok: true, error: null, data: null });
+    });
+
+    it("treats an empty 204 as success (Strapi v5)", async () => {
+      const formData = new FormData();
+      formData.append("id", "1");
+      mockFetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+      const result = await deleteAuthorizedUser(formData);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      expect(revalidateTag).toHaveBeenCalledTimes(2);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.users);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
     });
 
     it("should handle API error response", async () => {

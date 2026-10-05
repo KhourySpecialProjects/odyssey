@@ -11,7 +11,7 @@ import {
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
-import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
+import { makeEmptyResponse, mockGlobalFetch } from "@/lib/testing/mock-helpers";
 import {
   resolveDocumentId,
   resolveDocumentIds,
@@ -564,6 +564,17 @@ describe("Lesson API Functions", () => {
       const result = await deleteLesson(123);
       expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
+    });
+
+    it("treats an empty 204 as success (Strapi v5)", async () => {
+      fetchMock.mockResolvedValueOnce(makeEmptyResponse(204));
+
+      const result = await deleteLesson(123);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.droplets);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.lesson);
     });
 
     it("deletes via the lesson documentId", async () => {

@@ -114,6 +114,21 @@ describe("lesson-coverage — deleteLesson error paths", () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
+  it("falls back to a default message when a non-ok body has no error field", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({}),
+    } as Response);
+
+    const result = await deleteLesson(5);
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete lesson.",
+      data: null,
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
   it("returns error object when response.ok=true but data.error is set", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,

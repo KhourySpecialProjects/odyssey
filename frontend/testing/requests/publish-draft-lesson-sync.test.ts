@@ -22,6 +22,7 @@ import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
   makeFetchResponse,
+  makeEmptyResponse,
   makeDroplet,
 } from "@/lib/testing/mock-helpers";
 
@@ -470,8 +471,14 @@ class FakeStrapi {
       return this.postLesson(data);
     }
 
+    // Strapi v5 answers every core DELETE with an empty 204
     if (method === "DELETE" && /^\/api\/droplets\/\d+$/.test(path)) {
-      return makeFetchResponse({ data: { id: idIn(/(\d+)$/) } });
+      return makeEmptyResponse(204);
+    }
+
+    if (method === "DELETE" && /^\/api\/lessons\/\d+$/.test(path)) {
+      this.removeLesson(idIn(/(\d+)$/));
+      return makeEmptyResponse(204);
     }
 
     throw new Error(`FakeStrapi: unhandled ${method} ${path}`);
@@ -621,6 +628,11 @@ class FakeStrapi {
     }
     if (!lesson) return { ok: false, error: "Not Found", data: null };
 
+    this.removeLesson(lessonId);
+    return { ok: true, error: null, data: null };
+  }
+
+  private removeLesson(lessonId: number) {
     this.lessons.delete(lessonId);
     // Strapi deletes the join rows along with the lesson
     for (const enrollment of this.enrollments) {
@@ -628,7 +640,6 @@ class FakeStrapi {
         (id) => id !== lessonId,
       );
     }
-    return { ok: true, error: null, data: null };
   }
 }
 
@@ -883,6 +894,38 @@ describe("publishDraftToOriginal: lesson sync", () => {
       slug: expect.any(String),
       droplets: [String(LIVE)], // a documentId (the fake uses String(id))
     });
+  });
+
+  it("publishes a lesson removal when Strapi answers every DELETE with an empty 204 (v5)", async () => {
+    seedLiveDroplet(fake);
+    seedDraft(fake);
+    fake.enrollments.push({
+      id: AUTHOR_ENROLLMENT,
+      droplet: DRAFT,
+      viewedLessons: [101],
+    });
+    fake.lessons.delete(fake.draftLesson("Quiz").id);
+    // Use the real deleteLesson so DELETE /api/lessons/:id reaches the fake
+    getMockedDeleteLesson().mockImplementation(
+      jest.requireActual("@/lib/requests/lesson").deleteLesson,
+    );
+
+    const result = await publishDraftToOriginal(DRAFT, LIVE);
+
+    expect(result.ok).toBe(true);
+    expect(fake.lessons.has(QUIZ)).toBe(false);
+    expect(fake.requests("DELETE", /^\/api\/lessons\/202$/)).toHaveLength(1);
+    expect(fake.progress(STUDENT)).toEqual([INTRO]);
+    expect(fake.requests("PUT", ENROLLMENT_PUT)).not.toEqual([]);
+    expect(fake.enrollment(AUTHOR_ENROLLMENT).droplet).toBe(LIVE);
+    expect(fake.draftWasDeleted()).toBe(true);
+    expect(console.error).not.toHaveBeenCalled();
+    // updateDroplet, publish's finally and deepDeleteDroplet each revalidate this tag once
+    expect(
+      jest
+        .mocked(revalidateTag)
+        .mock.calls.filter(([tag]) => tag === CACHE_TAGS.allUserDashboards),
+    ).toHaveLength(3);
   });
 
   it("writes no lesson and deletes no lesson when the draft is unchanged", async () => {

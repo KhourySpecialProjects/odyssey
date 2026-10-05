@@ -15,6 +15,7 @@ import {
   getMockedFetchAPI,
   mockGlobalFetch,
   makeFetchResponse,
+  makeEmptyResponse,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
 import {
@@ -185,6 +186,16 @@ describe("highlights requests — coverage", () => {
 
       await deleteHighlight(1, 5);
 
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.highlights(5),
+      );
+    });
+
+    it("resolves to { data: null } on an empty 204 (Strapi v5)", async () => {
+      mockFetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+      await expect(deleteHighlight(1, 5)).resolves.toEqual({ data: null });
+      expect(mockedRevalidateTag).toHaveBeenCalledTimes(1);
       expect(mockedRevalidateTag).toHaveBeenCalledWith(
         CACHE_TAGS.highlights(5),
       );

@@ -21,6 +21,7 @@ import {
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { makeEmptyResponse } from "@/lib/testing/mock-helpers";
 import {
   resolveDocumentId,
   resolveDocumentIds,
@@ -562,6 +563,21 @@ describe("Server Actions", () => {
         }),
       );
       expect(result).toBeUndefined();
+    });
+
+    it("treats an empty 204 as success (Strapi v5)", async () => {
+      const formData = new FormData();
+      formData.set("id", "123");
+      (global.fetch as jest.Mock).mockResolvedValueOnce(makeEmptyResponse(204));
+      mockedRevalidateTag.mockClear();
+
+      const result = await deleteAccessRequest(formData);
+
+      expect(result).toBeUndefined();
+      expect(mockedRevalidateTag).toHaveBeenCalledTimes(1);
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.accessRequests,
+      );
     });
 
     it("handles API error when ok is false", async () => {

@@ -25,6 +25,7 @@ import { getEnrollmentByUserAndDroplet } from "@/lib/requests/enrollment";
 import { revalidateTag } from "next/cache";
 import { fetchAPI } from "@/lib/utils";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { makeEmptyResponse } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
@@ -105,6 +106,34 @@ describe("deepDeleteDroplet", () => {
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.lesson);
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    const { fetchAPI } = require("@/lib/utils");
+    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+
+    fetchAPI.mockResolvedValueOnce([
+      { id: 123, name: "Test Droplet", lessons: [{ id: 1 }] },
+    ]);
+    deleteLessonMock.mockResolvedValue({ ok: true });
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deepDeleteDroplet(123);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(deleteLessonMock).toHaveBeenCalledWith(1, false);
+    for (const tag of [
+      CACHE_TAGS.authors,
+      CACHE_TAGS.droplets,
+      CACHE_TAGS.lesson,
+      CACHE_TAGS.allEnrollments,
+      CACHE_TAGS.playlists,
+      CACHE_TAGS.allGroups,
+      CACHE_TAGS.allUserContent,
+      CACHE_TAGS.allUserDashboards,
+    ]) {
+      expect(revalidateTag).toHaveBeenCalledWith(tag);
+    }
   });
 
   it("handles droplet deletion failure", async () => {

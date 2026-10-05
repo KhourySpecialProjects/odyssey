@@ -10,6 +10,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -284,13 +285,17 @@ export async function deleteNote(id: number, authorizedUserId: number) {
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
+    const body = await readJsonOrNull(response);
+    if (!response.ok || body?.error)
+      return {
+        ok: false,
+        error: body?.error?.message ?? "Failed to delete note.",
+        data: null,
+      };
 
     revalidateTag(CACHE_TAGS.notes(authorizedUserId));
 
-    return { ok: true, error: null, data: data.data };
+    return { ok: true, error: null, data: body?.data ?? null };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Note." };
