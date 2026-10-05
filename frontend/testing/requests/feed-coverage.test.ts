@@ -93,6 +93,11 @@ describe("fetchAnnouncementById", () => {
     expect(calledUrl).toContain("announcements?");
     // qs encodes filters: the id value 7 should appear in the query
     expect(calledUrl).toContain("7");
+    // ODY-635 R2: the schema relation is `authorized_user` (singular).
+    expect(decodeURIComponent(calledUrl)).toContain(
+      "populate[authorized_user][fields][0]=id",
+    );
+    expect(calledUrl).not.toContain("authorized_users");
 
     expect(result).toEqual(mockAnnouncement);
   });

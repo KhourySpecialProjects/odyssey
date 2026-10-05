@@ -1051,12 +1051,7 @@ export async function claimNodeForUser(
             difficulty: "beginner",
             status: "draft",
             isHidden: true,
-            learningObjectives: [
-              {
-                __component: "droplets.learning-objective",
-                objective: "TBD",
-              },
-            ],
+            learningObjectives: [{ objective: "TBD" }],
             authorized_users: { connect: [claimerDocId] },
           },
         }),
