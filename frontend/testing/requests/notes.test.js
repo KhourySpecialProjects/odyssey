@@ -16,6 +16,8 @@ const {
 } = require("../../lib/strapi-document-id");
 
 const mockNotes = require("../mocks/notesMock");
+const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -654,6 +656,16 @@ describe("deleteNote", () => {
     });
 
     expect(revalidateTag).toHaveBeenCalledWith("notes-4");
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deleteNote(1, 4);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.notes(4));
   });
 
   it("deletes via the note documentId", async () => {

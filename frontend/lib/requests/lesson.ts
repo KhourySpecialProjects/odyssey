@@ -20,6 +20,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -156,9 +157,13 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
+    const body = await readJsonOrNull(response);
+    if (!response.ok || body?.error)
+      return {
+        ok: false,
+        error: body?.error?.message ?? "Failed to delete lesson.",
+        data: null,
+      };
 
     if (revalidate) {
       revalidateTag(CACHE_TAGS.droplets);
@@ -166,7 +171,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
       revalidateTag(CACHE_TAGS.lesson);
     }
 
-    return { ok: true, error: null, data: data.data };
+    return { ok: true, error: null, data: body?.data ?? null };
   } catch (err) {
     // Same result as the 404 Strapi used to return for a missing lesson.
     if (err instanceof StrapiEntryNotFoundError) {

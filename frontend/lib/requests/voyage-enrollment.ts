@@ -20,6 +20,7 @@ import {
   type EntryRef,
   type StrapiCollection,
 } from "@/lib/strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -432,13 +433,17 @@ export async function unenrollFromVoyage(voyageId: number) {
       };
     }
 
-    const data = await response.json();
+    const body = await readJsonOrNull(response);
 
     // Per-user only (see enrollInVoyage). Node completions are read with the
     // per-user tag too (getVoyageNodeCompletions).
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
 
-    return { ok: true, error: null, data: flattenAttributes(data.data) };
+    return {
+      ok: true,
+      error: null,
+      data: flattenAttributes(body?.data ?? null),
+    };
   } catch (err) {
     console.error("Error in unenrollFromVoyage:", err);
     return {

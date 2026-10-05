@@ -6,6 +6,7 @@ import {
   fetchIsAuthorizedUser,
   fetchContentCreators,
   fetchWebsiteCreators,
+  fetchContentEditors,
   createAuthorizedUser,
   createBatchAuthorizedUsers,
   updateUserInfo,
@@ -19,10 +20,12 @@ import {
   getMockedFetchAPI,
   mockGlobalFetch,
   makeFetchResponse,
+  makeEmptyResponse,
   assertOk,
 } from "@/lib/testing/mock-helpers";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { revalidateTag } from "next/cache";
 import {
   resolveDocumentId,
   resolveDocumentIds,
@@ -725,6 +728,22 @@ describe("Authorized User Tests", () => {
     });
   });
 
+  describe("fetchContentEditors", () => {
+    it("only selects and sorts by attributes authorized-user has (ODY-635 R3)", async () => {
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+
+      await fetchContentEditors();
+
+      const url = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(url).toContain("fields[0]=id");
+      expect(url).toContain("fields[1]=firstName");
+      expect(url).toContain("fields[2]=lastName");
+      expect(url).toContain("fields[3]=email");
+      expect(url).toContain("sort[0]=lastName");
+      expect(url).not.toContain("username");
+    });
+  });
+
   describe("createAuthorizedUser", () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -1126,6 +1145,19 @@ describe("Authorized User Tests", () => {
         }),
       );
       expect(result).toEqual({ ok: true, error: null, data: null });
+    });
+
+    it("treats an empty 204 as success (Strapi v5)", async () => {
+      const formData = new FormData();
+      formData.append("id", "1");
+      mockFetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+      const result = await deleteAuthorizedUser(formData);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      expect(revalidateTag).toHaveBeenCalledTimes(2);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.users);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
     });
 
     it("should handle API error response", async () => {

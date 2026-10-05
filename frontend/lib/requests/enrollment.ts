@@ -25,6 +25,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -529,11 +530,11 @@ export async function deleteEnrollment(
           },
         },
       );
-      const data = await response.json();
+      const body = await readJsonOrNull(response);
 
-      if (!response.ok || (response.ok && data.error)) {
-        const errorPath = data.error.details.errors[0].path[0];
-        const errorMessage = `${data.error.message} (${errorPath})`;
+      if (!response.ok || body?.error) {
+        const errorPath = body.error.details.errors[0].path[0];
+        const errorMessage = `${body.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
 

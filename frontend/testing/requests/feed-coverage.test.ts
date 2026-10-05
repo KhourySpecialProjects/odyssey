@@ -64,7 +64,7 @@ describe("fetchAnnouncementById", () => {
       id: 7,
       type: "system",
       content: "Welcome message",
-      authorized_users: [],
+      authorized_user: [],
     };
 
     jest.mocked(flattenAttributes).mockReturnValueOnce(mockAnnouncement);
@@ -107,7 +107,7 @@ describe("fetchAnnouncementById", () => {
       id: 42,
       type: "droplet",
       content: "New droplet announcement",
-      authorized_users: [{ id: 1, email: "user@example.com" }],
+      authorized_user: [{ id: 1, email: "user@example.com" }],
       playlist: { id: 5, name: "Playlist A", slug: "playlist-a" },
       droplet: { id: 10, name: "Droplet X", slug: "droplet-x" },
       group: { id: 3, name: "Group Z", slug: "group-z" },

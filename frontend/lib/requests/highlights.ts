@@ -10,6 +10,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -146,7 +147,7 @@ export async function deleteHighlight(id: number, authorizedUserId: number) {
     throw new Error("Failed to delete highlight");
   }
   revalidateTag(CACHE_TAGS.highlights(authorizedUserId));
-  return response.json();
+  return (await readJsonOrNull(response)) ?? { data: null };
 }
 
 /**
