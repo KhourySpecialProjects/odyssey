@@ -6,6 +6,7 @@ import {
   fetchIsAuthorizedUser,
   fetchContentCreators,
   fetchWebsiteCreators,
+  fetchContentEditors,
   createAuthorizedUser,
   createBatchAuthorizedUsers,
   updateUserInfo,
@@ -722,6 +723,22 @@ describe("Authorized User Tests", () => {
       await expect(fetchWebsiteCreators()).rejects.toThrow(
         "Failed to fetch website creators.",
       );
+    });
+  });
+
+  describe("fetchContentEditors", () => {
+    it("only selects and sorts by attributes authorized-user has (ODY-635 R3)", async () => {
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+
+      await fetchContentEditors();
+
+      const url = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(url).toContain("fields[0]=id");
+      expect(url).toContain("fields[1]=firstName");
+      expect(url).toContain("fields[2]=lastName");
+      expect(url).toContain("fields[3]=email");
+      expect(url).toContain("sort[0]=lastName");
+      expect(url).not.toContain("username");
     });
   });
 
