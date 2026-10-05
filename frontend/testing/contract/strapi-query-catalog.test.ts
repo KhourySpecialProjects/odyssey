@@ -52,13 +52,59 @@ const records: CapturedRequest[] = [];
 let currentFn = "";
 let responder: Responder | undefined;
 
+// Captured functions that legitimately emit no Strapi request (add a reason for each).
+const EXPECTED_NO_REQUESTS: Record<string, string> = {};
+
+// Curated write flows (plan Q3 (a) plus 3 extras): each must record a write.
+const CURATED_WRITES = [
+  "authorized-user.updateUserInfo",
+  "droplet.updateDroplet",
+  "droplet.createDroplet",
+  "droplet.duplicateDroplet",
+  "droplet.publishDraftToOriginal",
+  "droplet.favoriteDroplet",
+  "enrollment.createEnrollment",
+  "enrollment.updateViewedLessons",
+  "feed.createFriendAnnouncement",
+  "groups.createGroup",
+  "groups.updateGroup",
+  "groups.assignDropletDueDate",
+  "highlights.createHighlight",
+  "lesson.updateLesson",
+  "lesson.addLesson",
+  "lesson.duplicateLessonToDroplet",
+  "notes.createNote",
+  "playlist.updatePlaylist",
+  "playlist.createPlaylist",
+  "voyage.createVoyageWithNodes",
+  "voyage-enrollment.claimNodeForUser",
+];
+
+function okResponse(payload: unknown) {
+  return {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => payload,
+    text: async () => JSON.stringify(payload),
+  };
+}
+
 function stubFetch(input: unknown, init?: RequestInit) {
   const url = new URL(String(input));
+  // Only Strapi calls are recorded; other hosts (PostHog, Graph) get an empty OK.
+  if (url.host !== "capture.invalid") return Promise.resolve(okResponse({}));
   const method = (init?.method ?? "GET").toUpperCase();
   const apiPath = url.pathname.replace(/^\/api/, "");
   const query = url.search.replace(/^\?/, "");
-  const body =
-    typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
+  let body: unknown = init?.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      // Non-JSON body: keep the raw string.
+    }
+  } else body = undefined;
   const entry: CapturedRequest = {
     fn: currentFn,
     kind: method === "GET" ? "read" : "write",
@@ -81,13 +127,7 @@ function stubFetch(input: unknown, init?: RequestInit) {
     (method === "GET"
       ? EMPTY_LIST
       : { data: { id: 1, documentId: "ody635doc", attributes: {} } });
-  return Promise.resolve({
-    ok: true,
-    status: 200,
-    statusText: "OK",
-    json: async () => payload,
-    text: async () => JSON.stringify(payload),
-  });
+  return Promise.resolve(okResponse(payload));
 }
 
 async function load(key: string) {
@@ -130,11 +170,26 @@ describe("strapi query catalog (ODY-635)", () => {
       currentFn = "strapi-document-id.resolveDocumentIds";
       await real.resolveDocumentIds(collection, [n++, n++]).catch(() => {});
     }
-  });
+  }, 30_000);
 
   afterAll(() => {
     const out = process.env.ODY635_CATALOG_OUT;
     if (out) fs.writeFileSync(out, JSON.stringify(records, null, 2));
+  });
+
+  it("records at least one request for every captured function", () => {
+    const recorded = new Set(records.map((r) => r.fn));
+    const missing = Object.entries(CAPTURED)
+      .flatMap(([key, calls]) => calls.map((c) => `${key}.${c.fn}`))
+      .filter((fn) => !recorded.has(fn) && !EXPECTED_NO_REQUESTS[fn]);
+    expect(missing).toEqual([]);
+  });
+
+  it("records a write for every curated write function", () => {
+    const writers = new Set(
+      records.filter((r) => r.kind === "write").map((r) => r.fn),
+    );
+    expect(CURATED_WRITES.filter((fn) => !writers.has(fn))).toEqual([]);
   });
 
   it("captures a sane number of requests", () => {

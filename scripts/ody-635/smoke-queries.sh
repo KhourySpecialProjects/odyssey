@@ -7,8 +7,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CATALOG="$(mktemp)"
 trap 'rm -f "$CATALOG"' EXIT
 
+if [ ! -x "$ROOT/frontend/node_modules/.bin/jest" ]; then
+  echo "FAIL  frontend/node_modules/.bin/jest not found (run: cd frontend && npm ci)" >&2
+  exit 1
+fi
+
 echo "-- capturing queries from the real request functions"
-if ! (cd "$ROOT/frontend" && ODY635_CATALOG_OUT="$CATALOG" npx jest testing/contract/strapi-query-catalog.test.ts --silent >&2); then
+if ! (cd "$ROOT/frontend" && ODY635_CATALOG_OUT="$CATALOG" npx --no-install jest testing/contract/strapi-query-catalog.test.ts --silent >&2); then
   echo "FAIL  catalog capture (the Jest capture test failed)"
   exit 1
 fi
