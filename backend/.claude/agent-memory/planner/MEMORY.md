@@ -1,1 +1,0 @@
-- [Dependabot reads default branch only](dependabot-default-branch.md) — default branch is production; dependabot.yml edits on feature branches are inert
