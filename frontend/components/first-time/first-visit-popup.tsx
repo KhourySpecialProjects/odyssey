@@ -127,7 +127,10 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           setIsOpen(false);
           router.push("/d/introduction-to-odyssey");
         } catch (err) {
-          console.error("Intro droplet not available, skipping enrollment", err);
+          console.error(
+            "Intro droplet not available, skipping enrollment",
+            err,
+          );
           setIsOpen(false);
           router.push("/explore");
         }
