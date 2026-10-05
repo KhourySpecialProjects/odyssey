@@ -3,10 +3,10 @@ import { EnrolledDropletsGrid } from "./enrolled-droplets-grid";
 import { UserPlaylistsGrid } from "./user-playlists-grid";
 import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 import {
-  getCachedUserDashboardFull,
   getCachedUserGroups,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { notFound } from "next/navigation";
 import { UserGroups } from "./user-groups";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -34,20 +34,24 @@ export async function MyContent({
     return notFound();
   }
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const allGroups = (await getCachedUserGroups(authorizedUser.id)).filter(
-    (group) => group.members?.some((member) => member.id === authorizedUser.id),
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return notFound();
+
+  // Only the groups and voyages tabs render this data; the grids for the
+  // other tabs fetch their own.
+  const needsGroups = contentType === "groups" || contentType === "archived";
+  const [userGroups, voyageEnrollments] = await Promise.all([
+    needsGroups ? getCachedUserGroups(userId) : [],
+    contentType === "voyages" ? getCachedVoyageEnrollmentsByUser(userId) : [],
+  ]);
+  const allGroups = userGroups.filter((group) =>
+    group.members?.some((member) => member.id === userId),
   );
   const activeGroups = allGroups.filter(
-    (group) =>
-      !group.users_archived?.some((user) => user.id === authorizedUser.id),
+    (group) => !group.users_archived?.some((user) => user.id === userId),
   );
   const archivedGroups = allGroups.filter((group) =>
-    group.users_archived?.some((user) => user.id === authorizedUser.id),
-  );
-
-  const voyageEnrollments = await getCachedVoyageEnrollmentsByUser(
-    authorizedUser.id,
+    group.users_archived?.some((user) => user.id === userId),
   );
 
   return (

@@ -69,11 +69,32 @@ jest.mock("react", () => ({
   useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
   cache: (fn: Function) => fn,
 }));
-// Mock the flat package
-jest.mock("flat", () => ({
-  flatten: (obj: any) => obj,
-  unflatten: (obj: any) => obj,
-}));
+
+// Identity mapping for the Strapi id -> documentId helper so existing URL
+// assertions (/api/droplets/5) keep passing without network lookups. Tests that
+// need to prove a documentId is used can override with mockImplementation
+// (e.g. 5 -> "doc5"). strapi-document-id.test.ts unmocks the real module.
+jest.mock("@/lib/strapi-document-id", () => {
+  const identity = (ref: any): string => {
+    if (ref && typeof ref === "object") {
+      return ref.documentId ?? String(ref.id);
+    }
+    return String(ref);
+  };
+  return {
+    ...jest.requireActual("@/lib/strapi-document-id"),
+    resolveDocumentId: jest.fn(async (_collection: string, ref: any) =>
+      identity(ref),
+    ),
+    resolveDocumentIds: jest.fn(async (_collection: string, refs: any[]) =>
+      refs.map(identity),
+    ),
+    strapiEntryUrl: jest.fn(
+      async (collection: string, ref: any, query?: string) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
+    ),
+  };
+});
 
 // Mock posthog-js to prevent network calls in tests
 jest.mock("posthog-js", () => ({

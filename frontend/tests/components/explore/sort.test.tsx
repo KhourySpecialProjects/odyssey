@@ -84,8 +84,35 @@ describe("Sort", () => {
 
     await userEvent.click(screen.getByRole("button"));
 
+    const pushStateSpy = jest.spyOn(window.history, "pushState");
     await userEvent.click(screen.getByText("Name Z-A"));
 
-    expect(mockRouter.push).toHaveBeenCalledWith("/explore?sort=name%3Adesc");
+    // Sorting is client-side: the URL updates without a server navigation.
+    expect(pushStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/explore?sort=name%3Adesc",
+    );
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    pushStateSpy.mockRestore();
+  });
+
+  it("keeps the sort param when the default option is chosen", async () => {
+    (usePathname as jest.Mock).mockReturnValue("/explore");
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("sort=name%3Adesc"),
+    );
+    const pushStateSpy = jest.spyOn(window.history, "pushState");
+
+    render(<Sort options={mockOptions} defaultValue={defaultValue} />);
+    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByText("Name A-Z"));
+
+    expect(pushStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/explore?sort=name%3Aasc",
+    );
+    pushStateSpy.mockRestore();
   });
 });

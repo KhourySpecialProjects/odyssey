@@ -1,52 +1,104 @@
-import { render, screen } from "@testing-library/react";
-import MUIDateTimePicker from "@/components/group/datetime-picker";
-import { DateTime } from "luxon";
+import { fireEvent, render, screen } from "@testing-library/react";
+import DateTimePicker from "@/components/group/datetime-picker";
+import { DateTime, Settings } from "luxon";
 
-describe("MUIDateTimePicker", () => {
+describe("DateTimePicker", () => {
   const mockOnChange = jest.fn();
-  const mockDate = DateTime.fromJSDate(new Date("2025-03-20T09:19:00"));
 
-  it("renders date time picker", () => {
-    render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-    expect(screen.getByTestId("picker")).toBeInTheDocument();
+  it("renders a labelled datetime-local input", () => {
+    render(<DateTimePicker date={null} onChange={mockOnChange} />);
+
+    const picker = screen.getByTestId("picker");
+    expect(picker).toHaveAttribute("type", "datetime-local");
+    expect(screen.getByLabelText("Due date")).toBe(picker);
   });
 
-  it("displays selected date", () => {
-    const mockOnChange = jest.fn();
+  it("accepts a custom accessible label", () => {
+    render(
+      <DateTimePicker
+        date={null}
+        onChange={mockOnChange}
+        aria-label="Assignment deadline"
+      />,
+    );
 
-    render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-
-    const input = screen.getByRole("textbox");
-    expect(input).toHaveValue("03/20/2025 09:19 AM");
+    expect(screen.getByLabelText("Assignment deadline")).toBeInTheDocument();
   });
 
-  jest.mock("@mui/x-date-pickers/LocalizationProvider", () => ({
-    LocalizationProvider: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-  }));
-
-  jest.mock("@mui/x-date-pickers/DateTimePicker", () => ({
-    DateTimePicker: ({ value, onChange, label }: any) => (
-      <input
-        type="datetime-local"
-        value={value?.toISO() || ""}
-        onChange={(e) => onChange(DateTime.fromISO(e.target.value))}
-        aria-label={label}
-      />
-    ),
-  }));
-
-  describe("MUIDateTimePicker", () => {
-    test("passes date value and onChange handler correctly", () => {
-      const mockDate = DateTime.fromISO("2024-03-20T15:00:00.000Z");
-      const mockOnChange = jest.fn();
-
-      render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-
-      const picker = screen.getByTestId("picker");
-      // With TZ=UTC, 15:00:00.000Z displays as 3:00 PM
-      expect(picker).toHaveValue("03/20/2024 03:00 PM");
+  it("displays the selected date in the date's own zone", () => {
+    const date = DateTime.fromISO("2024-03-20T15:00:00.000Z", {
+      zone: "America/New_York",
     });
+
+    render(<DateTimePicker date={date} onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("picker")).toHaveValue("2024-03-20T11:00");
+  });
+
+  it("is empty when date is null", () => {
+    render(<DateTimePicker date={null} onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("picker")).toHaveValue("");
+  });
+
+  it("emits a DateTime in the incoming date's zone", () => {
+    const date = DateTime.fromISO("2024-03-20T15:00:00.000Z", {
+      zone: "America/New_York",
+    });
+    render(<DateTimePicker date={date} onChange={mockOnChange} />);
+
+    fireEvent.change(screen.getByTestId("picker"), {
+      target: { value: "2024-03-21T08:30" },
+    });
+
+    expect(mockOnChange).toHaveBeenCalledTimes(1);
+    const emitted: DateTime = mockOnChange.mock.calls[0][0];
+    expect(emitted.zoneName).toBe("America/New_York");
+    expect(emitted.toISO()).toBe("2024-03-21T08:30:00.000-04:00");
+  });
+
+  it("falls back to luxon's default zone when date is null", () => {
+    const originalZone = Settings.defaultZone;
+    Settings.defaultZone = "Asia/Tokyo";
+    try {
+      render(<DateTimePicker date={null} onChange={mockOnChange} />);
+
+      fireEvent.change(screen.getByTestId("picker"), {
+        target: { value: "2024-03-21T08:30" },
+      });
+
+      const emitted: DateTime = mockOnChange.mock.calls[0][0];
+      expect(emitted.zoneName).toBe("Asia/Tokyo");
+      expect(emitted.toISO()).toBe("2024-03-21T08:30:00.000+09:00");
+    } finally {
+      Settings.defaultZone = originalZone;
+    }
+  });
+
+  it("emits null when the input is cleared", () => {
+    const date = DateTime.fromISO("2024-03-20T15:00:00.000Z");
+    render(<DateTimePicker date={date} onChange={mockOnChange} />);
+
+    fireEvent.change(screen.getByTestId("picker"), { target: { value: "" } });
+
+    expect(mockOnChange).toHaveBeenCalledWith(null);
+    expect(screen.getByTestId("picker")).toHaveValue("");
+  });
+
+  it("updates the displayed value when the date prop changes", () => {
+    const { rerender } = render(
+      <DateTimePicker date={null} onChange={mockOnChange} />,
+    );
+    expect(screen.getByTestId("picker")).toHaveValue("");
+
+    rerender(
+      <DateTimePicker
+        date={DateTime.fromISO("2025-03-20T09:19:00.000Z")}
+        onChange={mockOnChange}
+      />,
+    );
+
+    // Tests run with TZ=UTC
+    expect(screen.getByTestId("picker")).toHaveValue("2025-03-20T09:19");
   });
 });

@@ -19,6 +19,35 @@
   }
 }
 
+/* Theme colors (HSL channels) behind the `background`, `foreground`,
+   `primary`, `secondary` and `destructive` Tailwind colors, plus the page
+   base colors. Formerly injected by the @lemonsqueezy/wedges plugin. */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 12% 8%;
+    --primary: 255 80% 60%;
+    --primary-300: 255 80% 76%;
+    --primary-500: 255 80% 60%;
+    --primary-600: 255 80% 52%;
+    --secondary: 240 12% 8%;
+    --destructive: 345 90% 60%;
+  }
+
+  .dark {
+    --background: 240 12% 8%;
+    --foreground: 0 0% 100%;
+    --primary: 255 80% 68%;
+    --primary-600: 255 80% 60%;
+    --secondary: 0 0% 100%;
+  }
+
+  html {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -1,5 +1,6 @@
-import Papa from "papaparse";
-import * as XLSX from "xlsx-js-style";
+// papaparse and xlsx-js-style are imported on demand inside the parsers so
+// they're only fetched when a file is actually parsed.
+import type { WorkBook } from "xlsx-js-style";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,6 +110,7 @@ function inferCellType(value: unknown): string {
  */
 export async function parseCSV(file: File): Promise<ParsedDataset> {
   const text = await readFileAsText(file);
+  const Papa = (await import("papaparse")).default;
 
   const result = Papa.parse<Record<string, string>>(text, {
     header: true,
@@ -228,7 +230,15 @@ export async function parseExcel(file: File): Promise<ParsedDataset> {
     throw new Error("Failed to read Excel file");
   }
 
-  let workbook: XLSX.WorkBook;
+  let XLSX: typeof import("xlsx-js-style");
+  try {
+    XLSX = await import("xlsx-js-style");
+  } catch {
+    // Lazy chunk failed to load (network blip, or a deploy replaced it)
+    throw new Error("Couldn't load the Excel reader. Please try again.");
+  }
+
+  let workbook: WorkBook;
   try {
     workbook = XLSX.read(buffer, { type: "array" });
   } catch {

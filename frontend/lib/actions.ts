@@ -20,13 +20,19 @@ import { claimNodeForUser } from "./requests/voyage-enrollment";
 import { creationRequestSchema } from "./validations/creation-request";
 import { MAX_DATASET_FILE_SIZE } from "./validations/dataset";
 import qs from "qs";
-import { flattenAttributes } from "@/lib/utils";
+import { flattenAttributes, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { CACHE_TAGS } from "./cache-tags";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/import/rate-limiter";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -181,12 +187,16 @@ export async function setTimeZone(zone: string) {
 
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${user.id}`,
+      await strapiEntryUrl("authorized-users", {
+        id: user.id,
+        documentId: user.documentId,
+      }),
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -199,7 +209,10 @@ export async function setTimeZone(zone: string) {
     if (!response.ok) {
       throw new Error("Failed to update timezone");
     }
-    revalidateTag(CACHE_TAGS.users);
+    // Per-user only: timeZone is read solely through getAuthorizedUserByEmail
+    // (the header's getCachedUser etc.), which carries CACHE_TAGS.user(email).
+    // No global `users` list selects it, so other users' caches stay warm.
+    revalidateTag(CACHE_TAGS.user(user.email));
     return { success: true };
   } catch (error) {
     console.error("Error updating timezone:", error);
@@ -213,11 +226,23 @@ export async function deleteReport(id: string) {
     return { ok: false, error: auth.error };
   }
 
-  const response = await fetch(`${STRAPI_API_URL}/api/reports/${id}`, {
+  let reportUrl: string;
+  try {
+    reportUrl = await strapiEntryUrl("reports", id);
+  } catch (err) {
+    // A missing report used to come back as a 404 from Strapi.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { error: "Failed to delete report" };
+    }
+    throw err;
+  }
+
+  const response = await fetch(reportUrl, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
   });
 
@@ -241,6 +266,7 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -388,6 +414,7 @@ export async function createAccessRequest(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -413,20 +440,22 @@ export async function deleteAccessRequest(formData: FormData) {
   });
 
   try {
-    const response = await fetch(
-      STRAPI_API_URL + "/api/access-requests/" + id,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        },
+    const response = await fetch(await strapiEntryUrl("access-requests", id), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+    });
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same result as the 404 body Strapi used to return.
+      return { ok: false, error: "Not Found", data: null };
+    }
     console.error(err);
     return { error: "Database Error: Failed to delete access request." };
   }
@@ -442,10 +471,34 @@ export async function createCreationRequest(
 ) {
   try {
     // Map form field voyageNodeId to Strapi relation field voyageNode
-    const { voyageNodeId, ...rest } = formData;
+    const { voyageNodeId, user, ...rest } = formData;
+    let userDocumentId: string;
+    let voyageNodeDocumentId: string | null = null;
+    let failingRelation = "user";
+    try {
+      userDocumentId = await resolveDocumentId("authorized-users", user);
+      if (voyageNodeId) {
+        failingRelation = "voyageNode";
+        voyageNodeDocumentId = await resolveDocumentId(
+          "voyage-nodes",
+          voyageNodeId,
+        );
+      }
+    } catch (err) {
+      // Strapi used to reject a relation to a missing entry with a 400.
+      if (err instanceof StrapiEntryNotFoundError) {
+        return {
+          ok: false,
+          error: `${err.message} (${failingRelation})`,
+          data: null,
+        };
+      }
+      throw err;
+    }
     const strapiData = {
       ...rest,
-      ...(voyageNodeId ? { voyageNode: voyageNodeId } : {}),
+      user: userDocumentId,
+      ...(voyageNodeDocumentId ? { voyageNode: voyageNodeDocumentId } : {}),
     };
 
     const response = await fetch(STRAPI_API_URL + "/api/creation-requests", {
@@ -454,6 +507,7 @@ export async function createCreationRequest(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
     const data = await response.json();
@@ -486,19 +540,39 @@ export async function approveCreationRequest(
   requestId: string,
   userId: number,
 ) {
+  // --- Auth gate ---
+  // This grants the Content Creator role to whatever `userId` it is handed.
+  // Unguarded, a signed-in user could approve their own pending request — or
+  // pass their own id outright — and self-promote past the review process.
+  const auth = await requireRole([AuthorizedUserRoleTitle.SysAdmin]);
+  if (!auth.ok) {
+    return { ok: false, error: auth.error, data: null };
+  }
+
   try {
     // First, get the current user with their roles
-    const userResponse = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}?populate=roles`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-      },
-    );
+    // A missing user used to be a 404 here, handled by the !ok branch below.
+    let userUrl: string | null = null;
+    try {
+      userUrl = await strapiEntryUrl(
+        "authorized-users",
+        userId,
+        "populate=roles",
+      );
+    } catch (err) {
+      if (!(err instanceof StrapiEntryNotFoundError)) throw err;
+    }
+    const userResponse = userUrl
+      ? await fetch(userUrl, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+        })
+      : null;
 
-    if (!userResponse.ok) {
+    if (!userResponse?.ok) {
       console.error("Failed to fetch user data");
       return {
         ok: false,
@@ -518,6 +592,7 @@ export async function approveCreationRequest(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -542,28 +617,43 @@ export async function approveCreationRequest(
       };
     }
 
-    const contentCreatorRoleId = rolesData.data[0].id;
+    const contentCreatorRole = rolesData.data[0];
+    const contentCreatorRoleId = contentCreatorRole.id;
 
     // Add Content Creator role if not already present
     if (!currentRoleIds.includes(contentCreatorRoleId)) {
-      const updateResponse = await fetch(
-        `${STRAPI_API_URL}/api/authorized-users/${userId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              roles: [...currentRoleIds, contentCreatorRoleId],
+      // Relation values must be documentIds. The role entries already carry
+      // theirs (raw Strapi response); resolveDocumentIds falls back to a lookup.
+      let updateResponse: Response | null = null;
+      try {
+        const roleDocumentIds = await resolveDocumentIds(
+          "authorized-user-roles",
+          [...currentRoles, contentCreatorRole],
+        );
+        updateResponse = await fetch(
+          await strapiEntryUrl("authorized-users", userId),
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
-          }),
-        },
-      );
+            body: JSON.stringify({
+              data: {
+                roles: roleDocumentIds,
+              },
+            }),
+          },
+        );
+      } catch (err) {
+        if (!(err instanceof StrapiEntryNotFoundError)) throw err;
+      }
 
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
+      if (!updateResponse?.ok) {
+        const errorData = updateResponse
+          ? await updateResponse.json()
+          : { error: { status: 404, message: "Not Found" } };
         console.error("Failed to update user roles:", errorData);
         return {
           ok: false,
@@ -577,34 +667,47 @@ export async function approveCreationRequest(
     const requestQuery = qs.stringify({
       populate: { voyageNode: { fields: ["id"] } },
     });
-    const requestResponse = await fetch(
-      `${STRAPI_API_URL}/api/creation-requests/${requestId}?${requestQuery}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-      },
-    );
-    const requestData = requestResponse.ok
+    // A missing request used to be a 404: no linked node, then the delete below fails.
+    let requestUrl: string | null = null;
+    let deleteUrl: string | null = null;
+    try {
+      requestUrl = await strapiEntryUrl(
+        "creation-requests",
+        requestId,
+        requestQuery,
+      );
+      deleteUrl = await strapiEntryUrl("creation-requests", requestId);
+    } catch (err) {
+      if (!(err instanceof StrapiEntryNotFoundError)) throw err;
+    }
+    const requestResponse = requestUrl
+      ? await fetch(requestUrl, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+        })
+      : null;
+    const requestData = requestResponse?.ok
       ? await requestResponse.json()
       : null;
     const voyageNodeId: number | null =
       requestData?.data?.attributes?.voyageNode?.data?.id ?? null;
 
     // Delete the creation request after approval
-    const deleteResponse = await fetch(
-      `${STRAPI_API_URL}/api/creation-requests/${requestId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-      },
-    );
+    const deleteResponse = deleteUrl
+      ? await fetch(deleteUrl, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+        })
+      : null;
 
-    if (!deleteResponse.ok) {
+    if (!deleteResponse?.ok) {
       console.error("Failed to delete creation request");
       return {
         ok: false,
@@ -646,12 +749,13 @@ export async function approveCreationRequest(
 export async function deleteCreationRequest(requestId: string) {
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/creation-requests/${requestId}`,
+      await strapiEntryUrl("creation-requests", requestId),
       {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -667,6 +771,14 @@ export async function deleteCreationRequest(requestId: string) {
     revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, error: null, data: null };
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same result as the 404 the DELETE used to return.
+      return {
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      };
+    }
     console.error(err);
     return {
       ok: false,
@@ -707,6 +819,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
         {
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
         },
@@ -861,6 +974,7 @@ export async function fetchCreationRequestByUser(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
       },

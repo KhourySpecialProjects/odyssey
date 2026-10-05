@@ -1,12 +1,11 @@
 import { DropletLayoutShell } from "@/components/droplets/droplet-layout-shell";
 import {
-  getCachedUser,
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
 } from "@/lib/requests/cached";
 import { Metadata } from "next/types";
-import { AuthorizedUser } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -34,39 +33,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const [user, droplet] = await Promise.all([
-    getCurrentUser(),
+  const user = await getCurrentUser();
+  if (!user) return notFound();
+
+  const userId = await getAuthorizedUserId(user);
+  const [droplet, enrollments] = await Promise.all([
     getCachedDropletBySlug(slug),
+    userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
 
-  if (!user) return notFound();
   if (!droplet) return notFound();
 
-  let completedLessonIds: number[] = [];
-  let authorizedUser: AuthorizedUser | null = null;
-  let enrollmentId: string | undefined;
-
-  if (user?.email) {
-    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-    const enrollments = authorizedUser
-      ? await getCachedEnrollmentsWithLessonIds(authorizedUser.id)
-      : [];
-
-    const currentEnrollment = enrollments.find(
-      (enrollment) => enrollment.droplet?.id === droplet.id,
-    );
-
-    enrollmentId = currentEnrollment?.id.toString();
-
-    completedLessonIds =
-      currentEnrollment?.viewedLessons?.map((lesson) => lesson.id) || [];
-  }
+  const currentEnrollment = enrollments.find(
+    (enrollment) => enrollment.droplet?.id === droplet.id,
+  );
+  const enrollmentId = currentEnrollment?.id.toString();
+  const completedLessonIds =
+    currentEnrollment?.viewedLessons?.map((lesson) => lesson.id) || [];
 
   const isAuthor =
     droplet.authorized_users &&
-    droplet.authorized_users
-      .map((author) => author.id)
-      .includes(authorizedUser?.id);
+    droplet.authorized_users.map((author) => author.id).includes(userId);
 
   return (
     <DropletLayoutShell

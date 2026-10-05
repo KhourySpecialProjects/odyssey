@@ -1,27 +1,9 @@
-import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Droplet } from "@/types";
-import { notFound } from "next/navigation";
-
 type Props = {
-  params: Promise<Params>;
   children: React.ReactNode;
 };
 
-type Params = {
-  slug: string;
-  lessonSlug?: string;
-};
-
-export default async function RootLayout({ params, children }: Props) {
-  const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "slug" | "lessons">>(
-    p.slug,
-    {
-      fields: ["slug"],
-      populate: ["lessons"],
-    },
-  );
-  if (!droplet) return notFound();
-
+// Pass-through. The parent d/[slug] layout and the lesson page already
+// notFound() on a missing droplet/lesson, so no fetch is needed here.
+export default function RootLayout({ children }: Props) {
   return <>{children}</>;
 }

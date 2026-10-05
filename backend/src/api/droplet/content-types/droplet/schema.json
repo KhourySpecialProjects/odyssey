@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -78,12 +78,11 @@
     },
     "overview": {
       "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
       "options": {
-        "output": "HTML",
         "preset": "light"
       },
-      "required": false,
-      "customField": "plugin::ckeditor.CKEditor"
+      "required": false
     },
     "nextSteps": {
       "type": "component",

@@ -13,6 +13,11 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("@/lib/requests/cached", () => ({
+  // The grids resolve the user id via getAuthorizedUserId, which falls back to
+  // getCachedUser for tokens without an id; mirror the dashboard user here.
+  getCachedUser: jest.fn((email: string) =>
+    jest.requireMock("@/lib/requests/cached").getCachedUserDashboardFull(email),
+  ),
   getCachedUserDashboardFull: jest.fn(),
   getCachedEnrollmentsFavorites: jest.fn(),
   getCachedUserDueDates: jest.fn(),
@@ -113,6 +118,25 @@ describe("EnrolledDropletsGrid", () => {
     render(await EnrolledDropletsGrid({}));
 
     expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
+    expect(screen.getByText("Showing 1 enrolled droplets")).toBeInTheDocument();
+  });
+
+  it("skips enrollments whose droplet is null", async () => {
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([
+      { isArchived: false, droplet: null, viewedLessons: [] },
+      {
+        isArchived: false,
+        droplet: {
+          id: 1,
+          name: "Enrolled Droplet",
+          lessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],
+        },
+        viewedLessons: [],
+      },
+    ]);
+
+    render(await EnrolledDropletsGrid({}));
+
     expect(screen.getByText("Showing 1 enrolled droplets")).toBeInTheDocument();
   });
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AuthorizedUser, Droplet, DueDate } from "@/types";
+import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSearch } from "@/contexts/SearchContext";
+import { useSortKey } from "@/hooks/use-sort-key";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -20,7 +21,7 @@ interface EnrolledDropletsGridClientProps {
   type?: string | string[];
   focusArea?: string | string[];
   difficulty?: string | string[];
-  currentUser?: AuthorizedUser;
+  currentUserId?: number;
   isAdmin?: boolean;
 }
 
@@ -30,17 +31,18 @@ export function EnrolledDropletsGridClient({
   isArchived,
   isFavorited,
   dueDates,
-  sortKey,
+  sortKey: serverSortKey,
   ratingsMap,
   tags,
   type,
   focusArea,
   difficulty,
-  currentUser,
+  currentUserId,
   isAdmin,
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { searchQuery } = useSearch();
+  const sortKey = useSortKey(serverSortKey);
 
   // Step 1: Sort droplets
   const sortedDroplets = useMemo(() => {
@@ -151,10 +153,10 @@ export function EnrolledDropletsGridClient({
     return filtered;
   }, [sortedDroplets, type, focusArea, difficulty, tags, searchQuery]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or the sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [type, focusArea, difficulty, tags, searchQuery]);
+  }, [type, focusArea, difficulty, tags, searchQuery, sortKey]);
 
   // Step 3: Paginate
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
@@ -178,7 +180,7 @@ export function EnrolledDropletsGridClient({
               isFavorited !== undefined
                 ? isFavorited
                 : droplet.usersFavorited?.some(
-                    (user) => user.id === currentUser?.id,
+                    (user) => user.id === currentUserId,
                   )
             }
             dueDate={
@@ -187,9 +189,9 @@ export function EnrolledDropletsGridClient({
             }
             isAdmin={isAdmin}
             isCreator={
-              currentUser
+              currentUserId
                 ? droplet.authorized_users?.some(
-                    (user) => user.id === currentUser.id,
+                    (user) => user.id === currentUserId,
                   ) ?? false
                 : false
             }

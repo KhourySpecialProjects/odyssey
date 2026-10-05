@@ -8,7 +8,7 @@ import { Trash2Icon, Ban } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
-import { Button } from "@lemonsqueezy/wedges";
+import { Button } from "@/components/ui/button";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { BlockNode } from "@/types/strapi";
 import { revalidateLesson } from "@/lib/requests/lesson";
@@ -67,7 +67,8 @@ export function CalloutEditor({
           {block.color && !block.color.includes("sky") && (
             <div className="relative">
               <Button
-                variant="transparent"
+                variant="ghost"
+                className="rounded-lg hover:bg-slate-50 dark:hover:bg-white/10"
                 onClick={handleToggleIcon}
                 role="toggleButton"
               >

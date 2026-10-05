@@ -212,7 +212,7 @@ describe("createVoyageWithNodes — Zod validation (Task 1)", () => {
     );
 
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
   });
 
   it("returns Unauthorized when user is not authenticated (before validation)", async () => {
@@ -375,7 +375,7 @@ describe("publishVoyage — ownership check (Task 3)", () => {
 
     expect(result).toEqual({ ok: true, error: null });
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
 
     expect(getMockedFetchAPI()).toHaveBeenCalledWith(
       "/voyages/20",

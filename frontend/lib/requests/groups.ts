@@ -2,7 +2,7 @@
 
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
@@ -12,6 +12,12 @@ import { createEnrollmentDirect } from "./enrollment";
 import { enrollInVoyageDirect } from "./voyage-enrollment";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -297,19 +303,27 @@ export async function updateGroupMembers(
     disconnect?: { role: "members" | "managers" | "admins"; userIds: number[] };
   },
 ): Promise<Group> {
-  const path = `/groups/${groupId}`;
+  const path = `/groups/${await resolveDocumentId("groups", groupId)}`;
   const { connect, disconnect } = updates;
 
-  // Build the data object based on provided updates
-  const data: Record<string, { connect?: number[]; disconnect?: number[] }> =
+  // Build the data object based on provided updates. Relation values are
+  // documentIds on Strapi v5.
+  const data: Record<string, { connect?: string[]; disconnect?: string[] }> =
     {};
 
   if (connect) {
-    data[connect.role] = { connect: connect.userIds };
+    data[connect.role] = {
+      connect: await resolveDocumentIds("authorized-users", connect.userIds),
+    };
   }
 
   if (disconnect) {
-    data[disconnect.role] = { disconnect: disconnect.userIds };
+    data[disconnect.role] = {
+      disconnect: await resolveDocumentIds(
+        "authorized-users",
+        disconnect.userIds,
+      ),
+    };
   }
 
   const result = await fetchAPI<Group>(path, {
@@ -320,7 +334,7 @@ export async function updateGroupMembers(
   });
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
   return result;
 }
 
@@ -398,33 +412,40 @@ export async function createGroup(
     voyages,
   } = data;
 
-  // Build the creation data object
+  const [
+    creatorDocId,
+    adminDocIds,
+    managerDocIds,
+    memberDocIds,
+    dropletDocIds,
+    playlistDocIds,
+    voyageDocIds,
+  ] = await Promise.all([
+    resolveDocumentId("authorized-users", authorizedUserId),
+    initialMembers?.admins &&
+      resolveDocumentIds("authorized-users", initialMembers.admins),
+    initialMembers?.managers &&
+      resolveDocumentIds("authorized-users", initialMembers.managers),
+    initialMembers?.memberIds &&
+      resolveDocumentIds("authorized-users", initialMembers.memberIds),
+    droplets && resolveDocumentIds("droplets", droplets),
+    playlists && resolveDocumentIds("playlists", playlists),
+    voyages && resolveDocumentIds("voyages", voyages),
+  ]);
+
+  // Build the creation data object (relation values are documentIds)
   const createData = {
     groupName,
     description,
     semester,
     slug: `${groupName.replace(/\s+/g, "-").toLowerCase()}-${Math.floor(Math.random() * 90000) + 10000}`,
-    creator: authorizedUserId,
-    ...(initialMembers?.admins && {
-      admins: { set: initialMembers.admins },
-    }),
-    ...(initialMembers?.managers && {
-      managers: { set: initialMembers.managers },
-    }),
-    ...(initialMembers?.memberIds && {
-      members: {
-        set: initialMembers.memberIds.map((id) => ({ id })),
-      },
-    }),
-    ...(droplets && {
-      droplets: { connect: droplets.map((id) => ({ id })) },
-    }),
-    ...(playlists && {
-      playlists: { connect: playlists.map((id) => ({ id })) },
-    }),
-    ...(voyages && {
-      voyages: { connect: voyages.map((id) => ({ id })) },
-    }),
+    creator: creatorDocId,
+    ...(adminDocIds && { admins: { set: adminDocIds } }),
+    ...(managerDocIds && { managers: { set: managerDocIds } }),
+    ...(memberDocIds && { members: { set: memberDocIds } }),
+    ...(dropletDocIds && { droplets: { connect: dropletDocIds } }),
+    ...(playlistDocIds && { playlists: { connect: playlistDocIds } }),
+    ...(voyageDocIds && { voyages: { connect: voyageDocIds } }),
   };
   const result = await fetchAPI<Group>(path, {
     options: {
@@ -433,7 +454,7 @@ export async function createGroup(
     },
   });
   revalidateTag(CACHE_TAGS.allGroups);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -568,7 +589,7 @@ export async function updateGroup(
     }>;
   },
 ): Promise<Group> {
-  const path = `/groups/${groupId}`;
+  const path = `/groups/${await resolveDocumentId("groups", groupId)}`;
 
   const dataToSend: any = {};
 
@@ -577,45 +598,50 @@ export async function updateGroup(
   if (data.semester) dataToSend.semester = data.semester;
   if (data.isArchived !== undefined) dataToSend.isArchived = data.isArchived;
 
+  // Relation values are documentIds on Strapi v5. These objects come from the
+  // caller, so resolve their numeric ids rather than trusting a documentId.
   if (data.admins) {
     dataToSend.admins = {
-      set: data.admins.map((id) => ({ id })),
+      set: await resolveDocumentIds("authorized-users", data.admins),
     };
   }
 
   if (data.managers) {
     dataToSend.managers = {
-      set: data.managers.map((id) => ({ id })),
+      set: await resolveDocumentIds("authorized-users", data.managers),
     };
   }
 
   if (data.memberIds) {
     dataToSend.members = {
-      set: data.memberIds.map((id) => ({ id })),
+      set: await resolveDocumentIds("authorized-users", data.memberIds),
     };
   }
 
   if (data.droplets) {
     dataToSend.droplets = {
-      set: data.droplets.map((droplet) => ({
-        id: droplet.id,
-      })),
+      set: await resolveDocumentIds(
+        "droplets",
+        data.droplets.map((d) => d.id),
+      ),
     };
   }
 
   if (data.playlists) {
     dataToSend.playlists = {
-      set: data.playlists.map((playlist) => ({
-        id: playlist.id,
-      })),
+      set: await resolveDocumentIds(
+        "playlists",
+        data.playlists.map((p) => p.id),
+      ),
     };
   }
 
   if (data.voyages) {
     dataToSend.voyages = {
-      set: data.voyages.map((voyage) => ({
-        id: voyage.id,
-      })),
+      set: await resolveDocumentIds(
+        "voyages",
+        data.voyages.map((v) => v.id),
+      ),
     };
   }
 
@@ -628,7 +654,7 @@ export async function updateGroup(
 
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -756,6 +782,23 @@ export async function enrollUsers(group: Group) {
 
 //NEW REQUESTS FOR DUE DATE COLLECTION TYPE
 
+// Due-date relations are written as documentIds on Strapi v5. The member,
+// group and item come from the caller of an exported Server Action, so only
+// their numeric ids are used - never a client-supplied documentId.
+async function resolveDueDateRelations(
+  member: { id: number },
+  group: Group,
+  kind: "droplet" | "playlist",
+  item: Droplet | Playlist,
+) {
+  const [authorized_user, itemDocId, groupDocId] = await Promise.all([
+    resolveDocumentId("authorized-users", member.id),
+    resolveDocumentId(kind === "droplet" ? "droplets" : "playlists", item.id),
+    resolveDocumentId("groups", group.id),
+  ]);
+  return { authorized_user, [kind]: itemDocId, group: groupDocId };
+}
+
 export async function assignDropletDueDate(
   date: string | null,
   group: Group,
@@ -781,7 +824,7 @@ export async function assignDropletDueDate(
             droplet: { id: { $eq: droplet.id } },
             group: { id: { $eq: group.id } },
           },
-          fields: ["id", "dueDate"],
+          fields: ["id", "documentId", "dueDate"],
           populate: { authorized_user: { fields: ["id"] } },
           pagination: { pageSize, page },
         },
@@ -794,20 +837,24 @@ export async function assignDropletDueDate(
     }
 
     const existingMap = new Map(
-      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+      allExistingDueDates.map((dd) => [
+        dd.authorized_user?.id,
+        { id: dd.id, documentId: dd.documentId },
+      ]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
-      const existingId = existingMap.get(member.id);
+      const existing = existingMap.get(member.id);
 
-      if (existingId) {
+      if (existing) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
+          await strapiEntryUrl("due-dates", existing),
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -825,18 +872,31 @@ export async function assignDropletDueDate(
           return false;
         }
       } else {
+        let relations: Awaited<ReturnType<typeof resolveDueDateRelations>>;
+        try {
+          relations = await resolveDueDateRelations(
+            member,
+            group,
+            "droplet",
+            droplet,
+          );
+        } catch (error) {
+          if (!(error instanceof StrapiEntryNotFoundError)) throw error;
+          console.error(`Failed to add due date for user ${member.id}:`, error);
+          return false;
+        }
+
         const response = await fetch(`${STRAPI_API_URL}/api/due-dates`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
               dueDate: date,
-              authorized_user: member.id,
-              droplet: droplet.id,
-              group: group.id,
+              ...relations,
             },
           }),
         });
@@ -902,7 +962,7 @@ export async function assignPlaylistDueDate(
             playlist: { id: { $eq: playlist.id } },
             group: { id: { $eq: group.id } },
           },
-          fields: ["id", "dueDate"],
+          fields: ["id", "documentId", "dueDate"],
           populate: { authorized_user: { fields: ["id"] } },
           pagination: { pageSize, page },
         },
@@ -915,20 +975,24 @@ export async function assignPlaylistDueDate(
     }
 
     const existingMap = new Map(
-      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+      allExistingDueDates.map((dd) => [
+        dd.authorized_user?.id,
+        { id: dd.id, documentId: dd.documentId },
+      ]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
-      const existingId = existingMap.get(member.id);
+      const existing = existingMap.get(member.id);
 
-      if (existingId) {
+      if (existing) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
+          await strapiEntryUrl("due-dates", existing),
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -946,18 +1010,31 @@ export async function assignPlaylistDueDate(
           return false;
         }
       } else {
+        let relations: Awaited<ReturnType<typeof resolveDueDateRelations>>;
+        try {
+          relations = await resolveDueDateRelations(
+            member,
+            group,
+            "playlist",
+            playlist,
+          );
+        } catch (error) {
+          if (!(error instanceof StrapiEntryNotFoundError)) throw error;
+          console.error(`Failed to add due date for user ${member.id}:`, error);
+          return false;
+        }
+
         const response = await fetch(`${STRAPI_API_URL}/api/due-dates`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
               dueDate: date,
-              authorized_user: member.id,
-              playlist: playlist.id,
-              group: group.id,
+              ...relations,
             },
           }),
         });
@@ -1095,11 +1172,25 @@ export async function deleteGroup(id: number) {
   try {
     const group = await getGroupByID(id);
 
-    const response = await fetch(STRAPI_API_URL + "/api/groups/" + id, {
+    let url: string;
+    try {
+      url = await strapiEntryUrl("groups", {
+        id,
+        documentId: group?.documentId,
+      });
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: "Failed to delete group.", data: null };
+      }
+      throw error;
+    }
+
+    const response = await fetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -1112,7 +1203,7 @@ export async function deleteGroup(id: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1127,16 +1218,20 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     const [authorizedUser, fullGroup] = await Promise.all([
       getAuthorizedUserByEmail(user.email),
-      fetchAPI<Group>(`/groups/${group.id}`, {
-        urlParams: {
-          populate: {
-            creator: { fields: ["id"] },
-            admins: { fields: ["id"] },
-            managers: { fields: ["id"] },
+      // `group` comes from the caller, so look it up by its numeric id only.
+      fetchAPI<Group>(
+        `/groups/${await resolveDocumentId("groups", group.id)}`,
+        {
+          urlParams: {
+            populate: {
+              creator: { fields: ["id"] },
+              admins: { fields: ["id"] },
+              managers: { fields: ["id"] },
+            },
           },
+          next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
         },
-        next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
-      }),
+      ),
     ]);
 
     const canArchive =
@@ -1151,11 +1246,14 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       };
     }
 
-    const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
+    // Write to the group that was just fetched and authorized against, never
+    // to a caller-supplied documentId.
+    const response = await fetch(await strapiEntryUrl("groups", fullGroup), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({ data: { isArchived: archiveState } }),
     });
@@ -1167,7 +1265,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);

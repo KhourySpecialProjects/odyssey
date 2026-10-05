@@ -1,12 +1,18 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { AnnouncementTypeTitle } from "@/lib/globals";
-import { AnnouncementType, AuthorizedUser } from "@/types";
+import { AuthorizedUser } from "@/types";
 import { cn } from "@/lib/utils";
 import { feedColorFor } from "@/lib/feed-colors";
-import { FeedClient } from "./feed-client";
+import { FeedClient, InitialFeed } from "./feed-client";
+import {
+  FILTER_SEPARATOR,
+  FILTER_VALUES,
+  parseFilters,
+  toFeedRoles,
+} from "./feed-filter-params";
 
 const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
   { value: AnnouncementTypeTitle.System, label: "System" },
@@ -17,39 +23,22 @@ const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
   { value: AnnouncementTypeTitle.Kudos, label: "Kudos" },
 ];
 
-const FILTER_VALUES = Object.values(AnnouncementTypeTitle);
-const VALUE_BY_SLUG = new Map(
-  FILTER_VALUES.map((v) => [v.toLowerCase(), v as AnnouncementTypeTitle]),
-);
-
-// Uses "." as the separator (not "," so URLSearchParams doesn't %2C-encode it).
-// None of the filter values contain a dot, so this is safe.
-const FILTER_SEPARATOR = ".";
-
-function parseFilters(raw: string | null): AnnouncementTypeTitle[] {
-  if (raw === null) return FILTER_VALUES;
-  if (raw === "") return [];
-  // Backward-compat: accept "," too for shared links created before the
-  // separator change.
-  const parts = raw
-    .split(/[.,]/)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  const matched = parts
-    .map((slug) => VALUE_BY_SLUG.get(slug))
-    .filter((v): v is AnnouncementTypeTitle => Boolean(v));
-  return Array.from(new Set(matched));
-}
-
-export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
-  const router = useRouter();
+export function FeedCenterContent({
+  authUser,
+  initialFeed,
+  pending,
+}: {
+  authUser: AuthorizedUser;
+  initialFeed?: InitialFeed;
+  pending?: boolean;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const selectedRoles = useMemo(
-    () => parseFilters(searchParams.get("filters")),
-    [searchParams],
-  );
+  // Keyed on the raw param so re-renders don't hand FeedClient new arrays.
+  const rawFilters = searchParams.get("filters");
+  const selectedRoles = useMemo(() => parseFilters(rawFilters), [rawFilters]);
+  const feedRoles = useMemo(() => toFeedRoles(selectedRoles), [selectedRoles]);
 
   const setSelected = useCallback(
     (next: AnnouncementTypeTitle[]) => {
@@ -66,9 +55,15 @@ export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
         );
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // Native history updates useSearchParams without a server round trip;
+      // FeedClient fetches the new filters itself.
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     },
-    [router, pathname, searchParams],
+    [pathname, searchParams],
   );
 
   const toggleRole = (role: AnnouncementTypeTitle) => {
@@ -106,10 +101,10 @@ export function FeedCenterContent({ authUser }: { authUser: AuthorizedUser }) {
       {/* Feed */}
       <div className="min-h-0 flex-1">
         <FeedClient
-          selectedRoles={selectedRoles.map(
-            (role) => role.toLowerCase() as AnnouncementType,
-          )}
+          selectedRoles={feedRoles}
           authUser={authUser}
+          initialFeed={initialFeed}
+          pending={pending}
         />
       </div>
     </div>

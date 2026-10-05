@@ -19,16 +19,25 @@ jest.mock("@/lib/requests/groups", () => ({
   getUserDueDates: jest.fn(),
 }));
 
-// Mock the SortedPlaylistsGrid component
+// Mock the SortedPlaylistsGrid component. Sorting now happens in that client
+// component, so the mock applies the real sort to verify PlaylistsGrid passes
+// the sortKey and completion data through.
 jest.mock("@/components/explore/sorted-playlists-grid", () => ({
-  SortedPlaylistsGrid: ({ playlistsWithCompletion, dueDates }: any) => (
+  SortedPlaylistsGrid: ({
+    playlistsWithCompletion,
+    dueDates,
+    sortKey,
+  }: any) => (
     <div data-testid="sorted-playlists-grid">
-      {playlistsWithCompletion.map((playlist: any) => (
-        <div key={playlist.id} data-testid={`playlist-${playlist.id}`}>
-          <h3>{playlist.name}</h3>
-          <p>Completion: {playlist.completionPercentage.toFixed(1)}%</p>
-        </div>
-      ))}
+      {jest
+        .requireActual("@/lib/playlist-sort")
+        .sortPlaylists(playlistsWithCompletion, sortKey)
+        .map((playlist: any) => (
+          <div key={playlist.id} data-testid={`playlist-${playlist.id}`}>
+            <h3>{playlist.name}</h3>
+            <p>Completion: {playlist.completionPercentage.toFixed(1)}%</p>
+          </div>
+        ))}
       <div data-testid="due-dates-count">{dueDates.length}</div>
     </div>
   ),

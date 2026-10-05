@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import {
   AuthorizedUser,
@@ -9,6 +9,9 @@ import {
   Group,
   Droplet,
   Lesson,
+  Playlist,
+  Voyage,
+  VoyageNode,
 } from "@/types";
 import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
@@ -176,6 +179,92 @@ const mockStatuses: Record<
   "3-2": { completionPercentage: 75, completionDate: undefined }, // User 3, Droplet 2: 75%
 };
 
+// The export handler lazy-loads xlsx-js-style, so its work finishes after the
+// click; wait until the workbook is being built before asserting.
+async function clickExport() {
+  fireEvent.click(screen.getByText("Export"));
+  await waitFor(() => expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled());
+}
+
+const mockDroplet3: Droplet = makeDroplet({
+  id: 3,
+  name: "Voyage Droplet 3",
+  slug: "voyage-droplet-3",
+});
+
+const makePlaylist = (
+  id: number,
+  name: string,
+  droplets: Droplet[],
+): Playlist => ({
+  id,
+  name,
+  slug: name.toLowerCase().replace(/\W+/g, "-"),
+  isPublic: true,
+  duration: "short",
+  droplets,
+});
+
+const makeNode = (
+  id: number,
+  orderIndex: number,
+  playlist: Playlist,
+): VoyageNode => ({
+  id,
+  isMainPath: true,
+  branchType: "required",
+  nodeType: "playlist",
+  orderIndex,
+  label: `Node ${id}`,
+  playlist,
+});
+
+const mockDroplet4: Droplet = makeDroplet({
+  id: 4,
+  name: "Playlist Droplet 4",
+  slug: "playlist-droplet-4",
+});
+
+const playlistA = makePlaylist(10, "Playlist A", [mockDroplet2]);
+const playlistB = makePlaylist(11, "Playlist B", [mockDroplet3]);
+
+const makeVoyage = (id: number, name: string, nodes: VoyageNode[]): Voyage => ({
+  id,
+  name,
+  slug: name.toLowerCase().replace(/\W+/g, "-"),
+  description: "",
+  status: "published",
+  isSequential: false,
+  voyage_nodes: nodes,
+});
+
+// Nodes are deliberately out of order to prove the orderIndex sort.
+const voyageX = makeVoyage(20, "Voyage X", [
+  makeNode(1, 1, playlistB),
+  makeNode(2, 0, playlistA),
+]);
+const voyageY = makeVoyage(21, "Voyage Y", [makeNode(3, 0, playlistB)]);
+
+const groupWithContent = {
+  ...mockGroup,
+  playlists: [playlistA],
+  voyages: [voyageX, voyageY],
+};
+
+const contentStatuses = {
+  ...mockStatuses,
+  "1-3": { completionPercentage: 100, completionDate: undefined },
+};
+
+// Radix Select: stay synchronous (no findByRole), jsdom lacks scrollIntoView.
+function selectOption(name: RegExp) {
+  fireEvent.click(screen.getByRole("combobox"));
+  fireEvent.click(screen.getByRole("option", { name }));
+}
+
+const exportedData = () =>
+  jest.mocked(XLSX.utils.aoa_to_sheet).mock.calls[0][0] as unknown[][];
+
 describe("GroupProgressGrid Excel Export", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -235,7 +324,7 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Export");
 
     // Click the export button
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Verify XLSX functions were called
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
@@ -261,7 +350,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Check that aoa_to_sheet was called with the correct data structure including completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -294,7 +383,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Should still call XLSX functions but with only header row (including completion date columns)
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -324,7 +413,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Should still call XLSX functions but with only member columns
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -345,7 +434,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
@@ -403,7 +492,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Verify that styling was applied to the worksheet
     expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:F4");
@@ -420,7 +509,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // The completion status should come from the statuses prop with completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -454,7 +543,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Should call XLSX functions with minimal data
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -484,7 +573,7 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Export");
 
     // Click the export button - this should not crash the component
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Verify the error was logged
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -509,7 +598,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
       expect.any(Object),
@@ -527,7 +616,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
       expect.any(Object),
@@ -558,7 +647,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Missing statuses should default to 0 with empty completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -607,7 +696,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Should show completion dates only for 100% completion
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -654,7 +743,7 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     // Should show empty completion dates for 100% completion without dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
@@ -687,11 +776,187 @@ describe("GroupProgressGrid Excel Export", () => {
     );
 
     await screen.findByText("Export");
-    fireEvent.click(screen.getByText("Export"));
+    await clickExport();
 
     expect(XLSX.writeFile).toHaveBeenCalledWith(
       expect.any(Object),
       "Test_Group_With_Spaces_progress_report_1_15_2025.xlsx",
     );
+  });
+
+  describe("export respects selected filter", () => {
+    const renderContent = (group: typeof groupWithContent = groupWithContent) =>
+      render(
+        <GroupProgressGrid
+          group={group}
+          statuses={contentStatuses}
+          voyageStatuses={{}}
+        />,
+      );
+
+    it("exports droplets and all voyage columns for All", async () => {
+      renderContent();
+      await clickExport();
+
+      expect(exportedData()[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Test Droplet 1",
+        "Completion Date",
+        "Test Droplet 2",
+        "Completion Date",
+        "Voyage Droplet 3",
+        "Completion Date",
+        "Voyage X - Playlist A",
+        "Voyage X - Playlist B",
+        "Voyage Y - Playlist B",
+      ]);
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("keeps the All filename when a playlist is named all", async () => {
+      const named = makePlaylist(14, "all", [mockDroplet2]);
+      renderContent({ ...groupWithContent, playlists: [named] });
+      await clickExport();
+
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("exports only the selected playlist's droplets", async () => {
+      renderContent();
+      selectOption(/Playlist A/);
+      await clickExport();
+
+      const data = exportedData();
+      expect(data[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Test Droplet 2",
+        "Completion Date",
+      ]);
+      data.slice(1).forEach((row) => expect(row).toHaveLength(4));
+    });
+
+    it("exports only the selected voyage's playlist columns", async () => {
+      renderContent();
+      selectOption(/Voyage Y/);
+      await clickExport();
+
+      const data = exportedData();
+      expect(data[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Voyage Y - Playlist B",
+      ]);
+      expect(data[1]).toEqual(["user1@test.com", "John Doe", 100]);
+      expect(data[2]).toEqual(["user2@test.com", "Jane Smith", 0]);
+      expect(data[3]).toEqual(["user3@test.com", "N/A", 0]);
+    });
+
+    it("orders voyage columns by orderIndex", async () => {
+      renderContent();
+      selectOption(/Voyage X/);
+      await clickExport();
+
+      expect(exportedData()[0].slice(2)).toEqual([
+        "Voyage X - Playlist A",
+        "Voyage X - Playlist B",
+      ]);
+    });
+
+    it("exports the auto-selected first voyage when there are no droplets", async () => {
+      renderContent({ ...groupWithContent, droplets: [] });
+      await clickExport();
+
+      expect(exportedData()[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Voyage X - Playlist A",
+        "Voyage X - Playlist B",
+      ]);
+    });
+
+    it("adds the selected playlist name to the filename", async () => {
+      renderContent();
+      selectOption(/Playlist A/);
+      await clickExport();
+
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_Playlist_A_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("adds the selected voyage name to the filename", async () => {
+      renderContent();
+      selectOption(/Voyage Y/);
+      await clickExport();
+
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_Voyage_Y_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("sanitises special characters in the selection name", async () => {
+      const odd = makePlaylist(12, "Intro: Basics / Part 1?", [mockDroplet2]);
+      renderContent({ ...groupWithContent, playlists: [odd] });
+      selectOption(/Intro: Basics \/ Part 1\?/);
+      await clickExport();
+
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_Intro_Basics_Part_1_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("omits the suffix when the name sanitises to nothing", async () => {
+      const odd = makePlaylist(13, "???", [mockDroplet2]);
+      renderContent({ ...groupWithContent, playlists: [odd] });
+      selectOption(/\?\?\?/);
+      await clickExport();
+
+      expect(exportedData()[0]).toHaveLength(4);
+      expect(XLSX.writeFile).toHaveBeenCalledWith(
+        expect.any(Object),
+        "Test_Group_progress_report_1_15_2025.xlsx",
+      );
+    });
+
+    it("includes playlist droplets in All, once each, before voyage droplets", async () => {
+      const playlistC = makePlaylist(15, "Playlist C", [
+        mockDroplet4,
+        mockDroplet3,
+      ]);
+      renderContent({
+        ...groupWithContent,
+        droplets: [mockDroplet1],
+        playlists: [playlistC],
+      });
+      expect(screen.getByText("Playlist Droplet 4")).toBeInTheDocument();
+      await clickExport();
+
+      expect(exportedData()[0]).toEqual([
+        "Recorded on: 1/15/2025 15:30",
+        "",
+        "Test Droplet 1",
+        "Completion Date",
+        "Playlist Droplet 4",
+        "Completion Date",
+        "Voyage Droplet 3",
+        "Completion Date",
+        "Test Droplet 2",
+        "Completion Date",
+        "Voyage X - Playlist A",
+        "Voyage X - Playlist B",
+        "Voyage Y - Playlist B",
+      ]);
+    });
   });
 });

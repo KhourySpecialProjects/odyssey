@@ -5,30 +5,36 @@ import { PlaylistCard } from "../playlists/playlist-card";
 import { useSearch } from "@/contexts/SearchContext";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { useSortKey } from "@/hooks/use-sort-key";
+import { sortPlaylists } from "@/lib/playlist-sort";
 
 const ITEMS_PER_PAGE = 9;
 
 export function SortedPlaylistsGrid({
   playlistsWithCompletion,
+  sortKey,
   dueDates,
   currentUserId,
 }: {
   playlistsWithCompletion: Playlist[];
+  sortKey?: string;
   dueDates?: DueDate[];
   currentUserId?: number;
 }) {
   const { searchQuery } = useSearch();
   const [currentPage, setCurrentPage] = useState(1);
+  const activeSortKey = useSortKey(sortKey);
 
   const filteredPlaylists = useMemo(() => {
-    return playlistsWithCompletion.filter((playlist) =>
-      playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    return sortPlaylists(playlistsWithCompletion, activeSortKey).filter(
+      (playlist) =>
+        playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [playlistsWithCompletion, searchQuery]);
+  }, [playlistsWithCompletion, activeSortKey, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [playlistsWithCompletion, searchQuery]);
+  }, [playlistsWithCompletion, searchQuery, activeSortKey]);
 
   const totalPages = Math.ceil(filteredPlaylists.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

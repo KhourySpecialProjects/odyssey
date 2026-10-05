@@ -7,7 +7,7 @@
 import {
   getAllHighlightsByUser,
   deleteHighlight,
-  getHighlightsForLesson,
+  getHighlightsByAuthorizedUserAndLesson,
   createHighlight,
 } from "@/lib/requests/highlights";
 import { CACHE_TAGS } from "@/lib/cache-tags";
@@ -17,9 +17,11 @@ import {
   makeFetchResponse,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import type { User } from "@/types";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -29,23 +31,7 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
-jest.mock("@/lib/auth/session", () => ({
-  getCurrentUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
 const mockedRevalidateTag = jest.mocked(revalidateTag);
-
-function getGetCurrentUser() {
-  return jest.mocked(getCurrentUser);
-}
-
-function getGetAuthorizedUserByEmail() {
-  return jest.mocked(getAuthorizedUserByEmail);
-}
 
 describe("highlights requests — coverage", () => {
   let mockedFetchAPI: ReturnType<typeof getMockedFetchAPI>;
@@ -232,6 +218,35 @@ describe("highlights requests — coverage", () => {
       );
     });
 
+    it("deletes via the highlight documentId", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockResolvedValueOnce("http://strapi/api/highlights/docH42");
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 42 } }, 200),
+      );
+
+      await deleteHighlight(42, 7);
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith("highlights", 42);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://strapi/api/highlights/docH42",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("throws the same error when the highlight cannot be resolved", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      await expect(deleteHighlight(99, 5)).rejects.toThrow(
+        "Failed to delete highlight",
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockedRevalidateTag).not.toHaveBeenCalled();
+    });
+
     it("uses the authorizedUserId to scope the cache tag", async () => {
       mockFetch.mockResolvedValueOnce(
         makeFetchResponse({ data: { id: 1 } }, 200),
@@ -245,79 +260,55 @@ describe("highlights requests — coverage", () => {
     });
   });
 
-  // ── getHighlightsForLesson ──────────────────────────────────────────────────
+  // ── getHighlightsByAuthorizedUserAndLesson ──────────────────────────────────
 
-  describe("getHighlightsForLesson", () => {
-    it("fetches highlights for a lesson when user is authenticated", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({
-        email: "alice@example.com",
-        roles: [],
-        isActive: true,
-      } as User);
-      getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 11 });
+  describe("getHighlightsByAuthorizedUserAndLesson", () => {
+    it("fetches the user's highlights on a lesson by slug", async () => {
+      const mockHighlights = [
+        {
+          id: 1,
+          text: "Key idea",
+          color: "#fff300" as const,
+          position: { start: 0, end: 8 },
+          blockId: 4,
+        },
+      ];
+      mockedFetchAPI.mockResolvedValueOnce(mockHighlights);
 
-      const responseBody = { data: [{ id: 1, text: "note" }] };
-      mockFetch.mockResolvedValueOnce(makeFetchResponse(responseBody));
-
-      const result = await getHighlightsForLesson(3);
-
-      expect(result).toEqual(responseBody);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("filters[lesson][id][$eq]=3"),
-        expect.anything(),
+      const result = await getHighlightsByAuthorizedUserAndLesson(
+        11,
+        "intro-lesson",
       );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("filters[authorized_user][id][$eq]=11"),
-        expect.anything(),
-      );
-    });
 
-    it("throws when current user has no email", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce({
-        email: null,
-        roles: [],
-        isActive: true,
-      } as User);
-
-      await expect(getHighlightsForLesson(3)).rejects.toThrow(
-        "No email identified",
-      );
-    });
-
-    it("throws when current user is null", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce(undefined);
-
-      await expect(getHighlightsForLesson(3)).rejects.toThrow(
-        "No email identified",
-      );
-    });
-
-    it("uses authorized user id for cache tag", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({
-        email: "bob@example.com",
-        roles: [],
-        isActive: true,
-      } as User);
-      getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 22 });
-
-      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
-
-      await getHighlightsForLesson(5);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          next: expect.objectContaining({
-            tags: [CACHE_TAGS.highlights(22)],
-          }),
+      expect(result).toEqual(mockHighlights);
+      expect(mockedFetchAPI).toHaveBeenCalledWith("/highlights", {
+        urlParams: expect.objectContaining({
+          filters: {
+            authorized_user: { id: { $eq: 11 } },
+            lesson: { slug: { $eq: "intro-lesson" } },
+          },
+          fields: ["text", "position", "color", "blockId", "yLevel"],
+          pagination: { pageSize: 250, page: 1 },
         }),
-      );
+        next: { tags: [CACHE_TAGS.highlights(11)], revalidate: 900 },
+      });
+    });
+
+    it("reads through fetchAPI rather than raw fetch", async () => {
+      mockedFetchAPI.mockResolvedValueOnce([]);
+
+      await getHighlightsByAuthorizedUserAndLesson(22, "some-lesson");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockedFetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("propagates fetchAPI errors", async () => {
+      mockedFetchAPI.mockRejectedValueOnce(new Error("API down"));
+
+      await expect(
+        getHighlightsByAuthorizedUserAndLesson(5, "some-lesson"),
+      ).rejects.toThrow("API down");
     });
   });
 
@@ -363,6 +354,66 @@ describe("highlights requests — coverage", () => {
       await expect(
         createHighlight({ data: { text: "note", authorized_user: 5 } }),
       ).rejects.toThrow("Network timeout");
+    });
+
+    it("sends documentIds for the lesson and user relations", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementationOnce(async () => "docLesson2")
+        .mockImplementationOnce(async () => "docUser5");
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        data: { text: "k", authorized_user: 5, lesson: 2 },
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", 2);
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 5);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data).toEqual({
+        text: "k",
+        authorized_user: "docUser5",
+        lesson: "docLesson2",
+      });
+      // The cache tag still uses the numeric user id.
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.highlights(5),
+      );
+    });
+
+    it("resolves relations from numeric ids only, never a client documentId", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        data: {
+          text: "k",
+          authorized_user: { id: 5, documentId: "forgedUser" },
+          lesson: "forgedLessonDoc",
+        },
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 5);
+      // A non-numeric string becomes NaN, which the helper rejects.
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", NaN);
+      expect(resolveDocumentId).not.toHaveBeenCalledWith(
+        "lessons",
+        "forgedLessonDoc",
+      );
+    });
+
+    it("throws the same error when a relation cannot be resolved", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      await expect(
+        createHighlight({ data: { text: "k", authorized_user: 5, lesson: 2 } }),
+      ).rejects.toThrow("Failed to create highlight");
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("POSTs to the correct highlights endpoint", async () => {

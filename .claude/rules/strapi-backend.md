@@ -6,6 +6,8 @@ paths:
 
 # Strapi Backend Rules
 
+**On `feature/strapi-v5` branches the backend is v5; see the note in `CLAUDE.md` "Critical Version Constraints". The v4-only rules below apply to `develop`.**
+
 - This is Strapi v4.22. Entity Service API ONLY. Never use Document Service API (v5).
 - Numeric `id` fields. Never use `documentId`.
 - Nested response format: `{ data: { attributes: {} } }`. Never flat responses.

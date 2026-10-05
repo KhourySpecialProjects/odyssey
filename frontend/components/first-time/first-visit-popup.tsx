@@ -120,7 +120,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           const enrollData = await getEnrollmentsByAuthorizedUser(user.id);
           if (
             enrollData &&
-            !enrollData.some((enroll) => enroll.droplet.id === 43)
+            !enrollData.some((enroll) => enroll.droplet?.id === 43)
           ) {
             await createEnrollment(introDroplet, []);
           }

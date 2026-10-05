@@ -2,9 +2,14 @@
 
 import { Enrollment, Note, Lesson, Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -99,21 +104,19 @@ export async function updateNoteContent(
   authorizedUserId: number,
 ) {
   try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/notes/${noteId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            content: newContent,
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("notes", noteId), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          content: newContent,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update note content");
@@ -134,21 +137,19 @@ export async function updateNotePosition(
   authorizedUserId: number,
 ) {
   try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/notes/${noteId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            positionY: newPos,
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("notes", noteId), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          positionY: newPos,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update note content");
@@ -172,19 +173,45 @@ export async function createNote(
   content?: string,
 ) {
   try {
+    // Strapi v5 relation writes take documentIds. The entities come from the
+    // caller of an exported Server Action, so resolve their numeric ids and
+    // never trust a client-supplied documentId.
+    let relations: {
+      lesson: string;
+      enrollment: string;
+      highlight: string | undefined;
+    };
+    try {
+      relations = {
+        lesson: await resolveDocumentId("lessons", lesson.id),
+        enrollment: await resolveDocumentId("enrollments", enrollment.id),
+        highlight: highlight
+          ? await resolveDocumentId("highlights", { id: highlight.id })
+          : undefined,
+      };
+    } catch (err) {
+      if (err instanceof StrapiEntryNotFoundError) {
+        // Same as Strapi rejecting a relation that does not exist.
+        console.error("adding note failed:", err.message);
+        return { success: false, error: "Failed to add new note" };
+      }
+      throw err;
+    }
+
     const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/notes`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
           content: "",
-          lesson: lesson.id,
-          enrollment: enrollment.id,
+          lesson: relations.lesson,
+          enrollment: relations.enrollment,
           positionY: Math.round(position),
-          highlight: highlight?.id,
+          highlight: relations.highlight,
         },
       }),
     });
@@ -239,16 +266,24 @@ export async function getAllNotesByUser(
 
 export async function deleteNote(id: number, authorizedUserId: number) {
   try {
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/notes/" + id,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        },
+    let url: string;
+    try {
+      url = await strapiEntryUrl("notes", id);
+    } catch (err) {
+      // Same result as the 404 Strapi used to return for a missing note.
+      if (err instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: "Not Found", data: null };
+      }
+      throw err;
+    }
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+    });
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };

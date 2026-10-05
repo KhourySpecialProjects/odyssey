@@ -4,15 +4,22 @@ import { Voyage } from "@/types";
 import {
   fetchAPI,
   flattenAttributes,
-  isAuthorizedUserAdmin,
+  STRAPI_RESPONSE_FORMAT_HEADER,
 } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "./authorized-user";
+import { assertOwner } from "@/lib/auth/guards";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { VoyageTreeSchema } from "@/lib/validations/voyage";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+  type EntryRef,
+  type StrapiCollection,
+} from "@/lib/strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -30,12 +37,31 @@ function strapiHeaders(): Record<string, string> {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    ...STRAPI_RESPONSE_FORMAT_HEADER,
   };
 }
 
-async function postNode(
-  nodeBody: Record<string, unknown>,
-): Promise<{ ok: boolean; error: string | null; nodeId: number | null }> {
+/**
+ * Like strapiEntryUrl, but returns null when the entry no longer exists so the
+ * caller can return the same result a Strapi 404 used to produce.
+ */
+async function entryUrlOrNull(
+  collection: StrapiCollection,
+  ref: EntryRef,
+): Promise<string | null> {
+  try {
+    return await strapiEntryUrl(collection, ref);
+  } catch (error) {
+    if (error instanceof StrapiEntryNotFoundError) return null;
+    throw error;
+  }
+}
+
+async function postNode(nodeBody: Record<string, unknown>): Promise<{
+  ok: boolean;
+  error: string | null;
+  node: { id: number; documentId?: string } | null;
+}> {
   const response = await fetch(
     `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes`,
     {
@@ -50,12 +76,15 @@ async function postNode(
     return {
       ok: false,
       error: data.error?.message || "Failed to create voyage node",
-      nodeId: null,
+      node: null,
     };
   }
 
-  const node = flattenAttributes(data.data) as { id: number };
-  return { ok: true, error: null, nodeId: node.id };
+  const node = flattenAttributes(data.data) as {
+    id: number;
+    documentId?: string;
+  };
+  return { ok: true, error: null, node };
 }
 
 interface NodeInput {
@@ -75,17 +104,53 @@ interface NodeInput {
  * Returns an error string on failure, or null on success.
  */
 async function createVoyageNodes(
-  voyageId: number,
+  voyage: EntryRef,
   nodes: NodeInput[],
 ): Promise<string | null> {
   const mainNodes = nodes.filter((n) => n.parentLocalId === null);
   const branchNodes = nodes.filter((n) => n.parentLocalId !== null);
-  const localIdToNodeId = new Map<string, number>();
+  const localIdToNode = new Map<string, { id: number; documentId?: string }>();
+
+  // Relation values in node bodies are documentIds on Strapi v5.
+  let voyageDocId: string;
+  const playlistDocIds = new Map<number, string>();
+  const dropletDocIds = new Map<number, string>();
+  try {
+    const playlistIds = [
+      ...new Set(
+        nodes.flatMap((n) =>
+          n.nodeType === "playlist" && n.playlistId != null
+            ? [n.playlistId]
+            : [],
+        ),
+      ),
+    ];
+    const dropletIds = [
+      ...new Set(
+        nodes.flatMap((n) =>
+          n.nodeType !== "playlist" && n.dropletId != null ? [n.dropletId] : [],
+        ),
+      ),
+    ];
+    const [voyageDoc, playlistDocs, dropletDocs] = await Promise.all([
+      resolveDocumentId("voyages", voyage),
+      resolveDocumentIds("playlists", playlistIds),
+      resolveDocumentIds("droplets", dropletIds),
+    ]);
+    voyageDocId = voyageDoc;
+    playlistIds.forEach((id, i) => playlistDocIds.set(id, playlistDocs[i]));
+    dropletIds.forEach((id, i) => dropletDocIds.set(id, dropletDocs[i]));
+  } catch (error) {
+    if (error instanceof StrapiEntryNotFoundError) {
+      return "Failed to create voyage node";
+    }
+    throw error;
+  }
 
   // Main path nodes must be sequential (branches reference their IDs)
   for (const node of mainNodes) {
     const nodeBody: Record<string, unknown> = {
-      voyage: voyageId,
+      voyage: voyageDocId,
       label: node.label,
       isMainPath: true,
       branchType: node.branchType,
@@ -94,34 +159,35 @@ async function createVoyageNodes(
     };
 
     if (node.nodeType === "playlist") {
-      nodeBody.playlist = node.playlistId;
+      nodeBody.playlist =
+        node.playlistId == null ? null : playlistDocIds.get(node.playlistId);
     } else {
       // droplet node
       if (node.dropletId != null) {
-        nodeBody.droplet = node.dropletId;
+        nodeBody.droplet = dropletDocIds.get(node.dropletId);
       } else {
         nodeBody.claimStatus = "unclaimed";
       }
     }
 
-    const { ok, error, nodeId } = await postNode(nodeBody);
+    const { ok, error, node: created } = await postNode(nodeBody);
     if (!ok) return error;
-    localIdToNodeId.set(node.localId, nodeId!);
+    localIdToNode.set(node.localId, created!);
   }
 
   // Branch nodes resolve parent by localId -> Strapi node ID
   for (const node of branchNodes) {
-    const parentNodeId =
+    const parentNode =
       node.parentLocalId != null
-        ? localIdToNodeId.get(node.parentLocalId) ?? null
+        ? localIdToNode.get(node.parentLocalId) ?? null
         : null;
 
-    if (parentNodeId === null && node.parentLocalId != null) {
+    if (parentNode === null && node.parentLocalId != null) {
       return `Branch node "${node.label}" references unknown parent.`;
     }
 
     const nodeBody: Record<string, unknown> = {
-      voyage: voyageId,
+      voyage: voyageDocId,
       label: node.label,
       isMainPath: false,
       branchType: node.branchType,
@@ -130,16 +196,19 @@ async function createVoyageNodes(
     };
 
     if (node.nodeType === "playlist") {
-      nodeBody.playlist = node.playlistId;
+      nodeBody.playlist =
+        node.playlistId == null ? null : playlistDocIds.get(node.playlistId);
     } else {
       if (node.dropletId != null) {
-        nodeBody.droplet = node.dropletId;
+        nodeBody.droplet = dropletDocIds.get(node.dropletId);
       } else {
         nodeBody.claimStatus = "unclaimed";
       }
     }
 
-    if (parentNodeId != null) nodeBody.parentNode = parentNodeId;
+    if (parentNode != null) {
+      nodeBody.parentNode = await resolveDocumentId("voyage-nodes", parentNode);
+    }
 
     const { ok, error } = await postNode(nodeBody);
     if (!ok) return error;
@@ -180,7 +249,7 @@ export async function getVoyages(): Promise<Voyage[]> {
         },
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
     sort: ["name:asc"],
@@ -203,7 +272,6 @@ export async function getVoyages(): Promise<Voyage[]> {
 export async function getVoyagesAdmin(): Promise<Voyage[]> {
   const path = `/voyages`;
   const urlParams = {
-    publicationState: "preview",
     populate: {
       authors: {
         fields: ["id", "firstName", "email"],
@@ -243,7 +311,6 @@ export async function getVoyageBySlug(
 ): Promise<Voyage | null> {
   const path = `/voyages`;
   const urlParams = {
-    ...(includeDrafts && { publicationState: "preview" }),
     filters: {
       slug: { $eq: slug },
       ...(!includeDrafts && { status: { $eq: "published" } }),
@@ -264,7 +331,7 @@ export async function getVoyageBySlug(
         sort: ["orderIndex:asc"],
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
     pagination: {
@@ -331,7 +398,16 @@ export async function createVoyageWithNodes(data: {
       isSequential: data.isSequential ?? false,
     };
     if (data.authorId) {
-      voyageBody.authors = { connect: [data.authorId] };
+      try {
+        voyageBody.authors = {
+          connect: [await resolveDocumentId("authorized-users", data.authorId)],
+        };
+      } catch (error) {
+        if (error instanceof StrapiEntryNotFoundError) {
+          return { ok: false, error: "Failed to create voyage", data: null };
+        }
+        throw error;
+      }
     }
 
     const voyageResponse = await fetch(
@@ -363,14 +439,15 @@ export async function createVoyageWithNodes(data: {
 
     const voyage = flattenAttributes(voyageData.data) as {
       id: number;
+      documentId?: string;
       slug: string;
     };
 
     // Phase 2: create voyage nodes
-    const nodeError = await createVoyageNodes(voyage.id, data.nodes);
+    const nodeError = await createVoyageNodes(voyage, data.nodes);
     if (nodeError) {
       // Best-effort cleanup of the orphaned voyage
-      await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyage.id}`, {
+      await fetch(await strapiEntryUrl("voyages", voyage), {
         method: "DELETE",
         headers: strapiHeaders(),
       }).catch(() =>
@@ -382,7 +459,7 @@ export async function createVoyageWithNodes(data: {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: voyage };
   } catch (err) {
     console.error(err);
@@ -408,18 +485,21 @@ export async function publishVoyage(id: number) {
 
   const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
 
+  let voyageRef: EntryRef = id;
   if (!isAdmin) {
     // Faculty: verify ownership
     const voyage = await fetchAPI<{
       id: number;
+      documentId?: string;
       authors?: { id: number }[];
-    } | null>(`/voyages/${id}`, {
+    } | null>(`/voyages/${await resolveDocumentId("voyages", id)}`, {
       urlParams: { populate: { authors: { fields: ["id"] } } },
       next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
     });
     if (!voyage) {
       return { ok: false, error: "not_found" };
     }
+    voyageRef = { id, documentId: voyage.documentId };
     const authorIds = voyage.authors?.map((a) => a.id) ?? [];
     if (!authorIds.includes(gate.user.id)) {
       return { ok: false, error: "forbidden" };
@@ -427,14 +507,14 @@ export async function publishVoyage(id: number) {
   }
 
   try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
-      {
-        method: "PUT",
-        headers: strapiHeaders(),
-        body: JSON.stringify({ data: { status: "published" } }),
-      },
-    );
+    const url = await entryUrlOrNull("voyages", voyageRef);
+    if (!url) return { ok: false, error: "Not Found" };
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: strapiHeaders(),
+      body: JSON.stringify({ data: { status: "published" } }),
+    });
 
     if (!response.ok) {
       const err = await response.json();
@@ -445,7 +525,7 @@ export async function publishVoyage(id: number) {
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null };
   } catch (err) {
     console.error(err);
@@ -478,22 +558,23 @@ export async function updateVoyageWithNodes(data: {
     const slug = generateSlug(data.name);
 
     // Phase 1: PUT the voyage record
-    const voyageResponse = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${data.id}`,
-      {
-        method: "PUT",
-        headers: strapiHeaders(),
-        body: JSON.stringify({
-          data: {
-            name: data.name,
-            slug,
-            description: data.description ?? "",
-            status: data.status ?? "draft",
-            isSequential: data.isSequential ?? false,
-          },
-        }),
-      },
-    );
+    const voyageUrl = await entryUrlOrNull("voyages", data.id);
+    if (!voyageUrl) {
+      return { ok: false, error: "Not Found", data: null };
+    }
+    const voyageResponse = await fetch(voyageUrl, {
+      method: "PUT",
+      headers: strapiHeaders(),
+      body: JSON.stringify({
+        data: {
+          name: data.name,
+          slug,
+          description: data.description ?? "",
+          status: data.status ?? "draft",
+          isSequential: data.isSequential ?? false,
+        },
+      }),
+    });
 
     const voyageJson = await voyageResponse.json();
     if (!voyageResponse.ok || voyageJson.error) {
@@ -505,61 +586,66 @@ export async function updateVoyageWithNodes(data: {
     }
     const voyage = flattenAttributes(voyageJson.data) as {
       id: number;
+      documentId?: string;
       slug: string;
     };
 
     // Phase 2: Delete all existing nodes for this voyage. fetchAPI prepends
     // `/api` to the path, so the path here must be `/voyage-nodes`, NOT
     // `/api/voyage-nodes` (that would double-prefix and 404).
-    const branchNodeIds: number[] = [];
-    const mainNodeIds: number[] = [];
+    type NodeRef = { id: number; documentId?: string };
+    const branchNodes: NodeRef[] = [];
+    const mainNodes: NodeRef[] = [];
     let page = 1;
     for (;;) {
-      const nodesPage = await fetchAPI<{ id: number; isMainPath: boolean }[]>(
-        `/voyage-nodes`,
-        {
-          urlParams: {
-            filters: { voyage: { id: { $eq: data.id } } },
-            pagination: { page, pageSize: 100 },
-            fields: ["id", "isMainPath"],
-          },
-          next: { tags: [CACHE_TAGS.voyages] },
+      const nodesPage = await fetchAPI<
+        { id: number; documentId?: string; isMainPath: boolean }[]
+      >(`/voyage-nodes`, {
+        urlParams: {
+          filters: { voyage: { id: { $eq: data.id } } },
+          pagination: { page, pageSize: 100 },
+          fields: ["id", "isMainPath"],
         },
-      );
+        next: { tags: [CACHE_TAGS.voyages] },
+      });
       if (!Array.isArray(nodesPage)) break;
       for (const n of nodesPage) {
-        if (n.isMainPath) mainNodeIds.push(n.id);
-        else branchNodeIds.push(n.id);
+        const ref = { id: n.id, documentId: n.documentId };
+        if (n.isMainPath) mainNodes.push(ref);
+        else branchNodes.push(ref);
       }
       if (nodesPage.length < 100) break;
       page++;
     }
 
-    const deleteNode = async (nodeId: number) => {
-      const res = await fetch(
-        `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyage-nodes/${nodeId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+    const deleteNode = async (node: NodeRef) => {
+      // No entry = already deleted, treat as success.
+      const nodeUrl = await entryUrlOrNull("voyage-nodes", node);
+      if (!nodeUrl) return;
+      const res = await fetch(nodeUrl, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
-      );
+      });
       // 404 = already deleted, treat as success.
       if (!res.ok && res.status !== 404) {
-        throw new Error(`Failed to delete voyage-node ${nodeId}`);
+        throw new Error(`Failed to delete voyage-node ${node.id}`);
       }
     };
 
     // Branches hold parentNode FKs pointing to main nodes — delete branches
     // first so main deletes never race against a live child FK.
-    await Promise.all(branchNodeIds.map(deleteNode));
-    await Promise.all(mainNodeIds.map(deleteNode));
+    await Promise.all(branchNodes.map(deleteNode));
+    await Promise.all(mainNodes.map(deleteNode));
 
     // Phase 3: Re-create nodes (main path first, then branches)
-    const nodeError = await createVoyageNodes(data.id, data.nodes);
+    const nodeError = await createVoyageNodes(voyage, data.nodes);
     if (nodeError) return { ok: false, error: nodeError, data: null };
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: voyage };
   } catch (err) {
     console.error(err);
@@ -588,18 +674,21 @@ export async function deleteVoyage(id: number) {
 
   const isAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
 
+  let voyageRef: EntryRef = id;
   if (!isAdmin) {
     // Faculty: verify ownership
     const voyage = await fetchAPI<{
       id: number;
+      documentId?: string;
       authors?: { id: number }[];
-    } | null>(`/voyages/${id}`, {
+    } | null>(`/voyages/${await resolveDocumentId("voyages", id)}`, {
       urlParams: { populate: { authors: { fields: ["id"] } } },
       next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
     });
     if (!voyage) {
       return { ok: false, error: "not_found", data: null };
     }
+    voyageRef = { id, documentId: voyage.documentId };
     const authorIds = voyage.authors?.map((a) => a.id) ?? [];
     if (!authorIds.includes(gate.user.id)) {
       return { ok: false, error: "forbidden", data: null };
@@ -607,13 +696,15 @@ export async function deleteVoyage(id: number) {
   }
 
   try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${id}`,
-      {
-        method: "DELETE",
-        headers: strapiHeaders(),
-      },
-    );
+    const url = await entryUrlOrNull("voyages", voyageRef);
+    if (!url) {
+      return { ok: false, error: "Failed to delete voyage.", data: null };
+    }
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: strapiHeaders(),
+    });
 
     if (!response.ok) {
       return { ok: false, error: "Failed to delete voyage.", data: null };
@@ -622,7 +713,7 @@ export async function deleteVoyage(id: number) {
     const data = await response.json();
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.allUserContent);
     return { ok: true, error: null, data: flattenAttributes(data.data) };
   } catch (err) {
     console.error(err);
@@ -639,7 +730,6 @@ export async function getArchivedVoyagesForAuthor(
 ): Promise<Voyage[]> {
   const path = `/voyages`;
   const urlParams = {
-    publicationState: "preview",
     filters: {
       isArchived: { $eq: true },
       authors: { id: { $eq: authorizedUserId } },
@@ -668,50 +758,47 @@ export async function getArchivedVoyagesForAuthor(
 }
 
 export async function archiveVoyage(voyageId: number, archiveState: boolean) {
-  try {
-    const user = await getCurrentUser();
-    if (!user?.email) return { success: false, error: "Not authenticated" };
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
 
-    const [authorizedUser, voyage] = await Promise.all([
-      getAuthorizedUserByEmail(user.email),
-      fetchAPI<Voyage>(`/voyages/${voyageId}`, {
+  try {
+    const voyage = await fetchAPI<Voyage>(
+      `/voyages/${await resolveDocumentId("voyages", voyageId)}`,
+      {
         urlParams: { populate: { authors: { fields: ["id"] } } },
         next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
-      }),
-    ]);
+      },
+    );
 
-    if (!authorizedUser) {
-      return { success: false, error: "Authorized user not found" };
-    }
     if (!voyage) {
       return { success: false, error: "Voyage not found" };
     }
 
-    const isAuthor = voyage.authors?.some((a) => a.id === authorizedUser.id);
-    const isAdmin = isAuthorizedUserAdmin(user.roles);
-    if (!isAuthor && !isAdmin) {
-      return {
-        success: false,
-        error: "Only authors or admins can archive this voyage",
-      };
-    }
-
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/voyages/${voyageId}`,
-      {
-        method: "PUT",
-        headers: strapiHeaders(),
-        body: JSON.stringify({ data: { isArchived: archiveState } }),
-      },
+    const owner = assertOwner(
+      voyage.authors?.map((a) => a.id),
+      gate.user,
     );
+    if (!owner.ok) return { success: false, error: owner.error };
+
+    const url = await entryUrlOrNull("voyages", {
+      id: voyageId,
+      documentId: voyage.documentId,
+    });
+    if (!url) return { success: false, error: "Failed to archive voyage" };
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: strapiHeaders(),
+      body: JSON.stringify({ data: { isArchived: archiveState } }),
+    });
 
     if (!response.ok) {
       return { success: false, error: "Failed to archive voyage" };
     }
 
     revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving voyage:", error);

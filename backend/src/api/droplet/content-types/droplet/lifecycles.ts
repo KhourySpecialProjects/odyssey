@@ -15,11 +15,12 @@ module.exports = {
 
     // Only capture previous status when the update touches the status field.
     if ('status' in event.params.data) {
-      const existing = await strapi.entityService.findOne(
-        'api::droplet.droplet',
-        event.params.where.id,
-        { fields: ['status'] }
-      );
+      // Before hooks only know the numeric row id (event.params.where.id), not
+      // the documentId, so look the row up with findFirst filtered on id.
+      const existing = await strapi.documents('api::droplet.droplet').findFirst({
+        filters: { id: event.params.where.id },
+        fields: ['status'],
+      });
       event.state = { previousStatus: existing ? (existing.status as DropletStatus) : null };
     }
   },
@@ -31,13 +32,15 @@ module.exports = {
     // Only fire when status transitions *into* 'edit'.
     if (result.status !== 'edit' || prevStatus === 'edit' || prevStatus === undefined) return;
 
-    const droplet = (await strapi.entityService.findOne('api::droplet.droplet', result.id, {
+    // After hooks have the result's documentId, so a plain findOne works.
+    const droplet = (await strapi.documents('api::droplet.droplet').findOne({
+      documentId: result.documentId,
       populate: {
         lessons: { fields: ['name'] },
         authorized_users: { fields: ['firstName', 'lastName', 'email'] },
         tags: { fields: ['name'] },
       },
-    })) as DropletWithRelations | null;
+    })) as unknown as DropletWithRelations | null;
 
     if (!droplet) return;
 

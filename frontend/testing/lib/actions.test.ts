@@ -20,6 +20,13 @@ import {
 } from "@/lib/actions";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
 
 global.fetch = jest.fn();
 
@@ -238,6 +245,27 @@ describe("Server Actions", () => {
         }),
       );
       expect(result).toEqual({ success: true });
+    });
+
+    it("revalidates only the session user's per-user tag", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 42 } }),
+      });
+
+      await setTimeZone("America/New_York");
+
+      // timeZone is only read via getAuthorizedUserByEmail (per-user tagged),
+      // so the global users tag must not be flushed.
+      expect(mockedRevalidateTag).toHaveBeenCalledTimes(1);
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.user("user@northeastern.edu"),
+      );
+      expect(mockedRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
     });
 
     it("handles fetch response not ok", async () => {
@@ -696,7 +724,7 @@ describe("Server Actions", () => {
         expect.stringContaining("/api/creation-requests"),
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ data: formData }),
+          body: JSON.stringify({ data: { ...formData, user: "1" } }),
         }),
       );
       expect(result).toEqual({
@@ -1422,6 +1450,320 @@ describe("Server Actions", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("documentIds on Strapi v5 (ODY-601)", () => {
+    const docOf = (ref: unknown) =>
+      "doc" +
+      (typeof ref === "object" && ref !== null
+        ? (ref as { documentId?: string }).documentId ??
+          (ref as { id: number }).id
+        : ref);
+
+    const ok = (body: unknown) => ({
+      ok: true,
+      json: () => Promise.resolve(body),
+    });
+
+    beforeEach(() => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementation(async (_c, ref) => docOf(ref));
+      jest
+        .mocked(resolveDocumentIds)
+        .mockImplementation(async (_c, refs) => refs.map(docOf));
+      jest
+        .mocked(strapiEntryUrl)
+        .mockImplementation(
+          async (c, ref, q) =>
+            `http://localhost:1337/api/${c}/${docOf(ref)}${q ? `?${q}` : ""}`,
+        );
+    });
+
+    afterEach(() => {
+      const identity = (ref: unknown) =>
+        typeof ref === "object" && ref !== null
+          ? (ref as { documentId?: string }).documentId ??
+            String((ref as { id: number }).id)
+          : String(ref);
+      jest
+        .mocked(resolveDocumentId)
+        .mockImplementation(async (_c, ref) => identity(ref));
+      jest
+        .mocked(resolveDocumentIds)
+        .mockImplementation(async (_c, refs) => refs.map(identity));
+      jest
+        .mocked(strapiEntryUrl)
+        .mockImplementation(
+          async (c, ref, q) =>
+            `http://localhost:1337/api/${c}/${identity(ref)}${q ? `?${q}` : ""}`,
+        );
+    });
+
+    it("setTimeZone PUTs to the session user's documentId", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await setTimeZone("America/New_York");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/authorized-users/doc42",
+        expect.objectContaining({ method: "PUT" }),
+      );
+    });
+
+    it("setTimeZone passes the gate's documentId to strapiEntryUrl", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: {
+          id: 42,
+          documentId: "xyz9",
+          email: "user@northeastern.edu",
+          roles: [],
+        },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await setTimeZone("America/New_York");
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 42, documentId: "xyz9" }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/authorized-users/docxyz9",
+        expect.objectContaining({ method: "PUT" }),
+      );
+    });
+
+    it("setTimeZone passes documentId undefined when the gate lacks it", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await setTimeZone("America/New_York");
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 42, documentId: undefined }),
+      );
+    });
+
+    it("setTimeZone keeps its error result when the user cannot be found", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await setTimeZone("America/New_York");
+
+      expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(global.fetch).not.toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+
+    it("deleteReport DELETEs the report's documentId", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await deleteReport("456");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/reports/doc456",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("deleteReport returns the old not-ok result when the report is missing", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await deleteReport("456");
+
+      expect(result).toEqual({ error: "Failed to delete report" });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("deleteAccessRequest DELETEs the access request's documentId", async () => {
+      const formData = new FormData();
+      formData.set("id", "123");
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({ data: {} }));
+
+      await deleteAccessRequest(formData);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/access-requests/doc123",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("deleteAccessRequest returns the old 404 result when it is missing", async () => {
+      const formData = new FormData();
+      formData.set("id", "123");
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await deleteAccessRequest(formData);
+
+      expect(result).toEqual({ ok: false, error: "Not Found", data: null });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("createCreationRequest sends user and voyageNode as documentIds", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce(
+        ok({ data: { id: 1 } }),
+      );
+
+      await createCreationRequest({
+        motivation: "m",
+        dropletIdea: "d",
+        user: 1,
+        voyageNodeId: 9,
+      });
+
+      const body = JSON.parse(
+        (global.fetch as jest.Mock).mock.calls[0][1].body,
+      );
+      expect(body.data).toEqual({
+        motivation: "m",
+        dropletIdea: "d",
+        user: "doc1",
+        voyageNode: "doc9",
+      });
+      expect(body.data.voyageNodeId).toBeUndefined();
+      expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", 1);
+      expect(resolveDocumentId).toHaveBeenCalledWith("voyage-nodes", 9);
+    });
+
+    it("createCreationRequest returns an error result when the voyage node is missing", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockResolvedValueOnce("doc1")
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("no node"));
+
+      const result = await createCreationRequest({
+        motivation: "m",
+        dropletIdea: "d",
+        user: 1,
+        voyageNodeId: 9,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: "no node (voyageNode)",
+        data: null,
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("approveCreationRequest uses documentIds for URLs and the roles relation", async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(
+          ok({
+            data: { attributes: { roles: { data: [{ id: 1 }] } } },
+          }),
+        )
+        .mockResolvedValueOnce(ok({ data: [{ id: 2, documentId: "role2" }] }))
+        .mockResolvedValueOnce(ok({ data: { id: 1 } }))
+        .mockResolvedValueOnce(
+          ok({ data: { attributes: { voyageNode: null } } }),
+        )
+        .mockResolvedValueOnce(ok({}));
+
+      const result = await approveCreationRequest("123", 7);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      expect(calls[0][0]).toBe(
+        "http://localhost:1337/api/authorized-users/doc7?populate=roles",
+      );
+      expect(calls[2][0]).toBe(
+        "http://localhost:1337/api/authorized-users/doc7",
+      );
+      expect(JSON.parse(calls[2][1].body)).toEqual({
+        data: { roles: ["doc1", "docrole2"] },
+      });
+      expect(calls[3][0]).toContain("/api/creation-requests/doc123?");
+      expect(calls[4][0]).toBe(
+        "http://localhost:1337/api/creation-requests/doc123",
+      );
+    });
+
+    it("approveCreationRequest returns the old fetch-failure result when the user is missing", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await approveCreationRequest("123", 7);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to fetch user data",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith("Failed to fetch user data");
+      expect(global.fetch).not.toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+
+    it("approveCreationRequest fails the delete step when the request is missing", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(
+          ok({ data: { attributes: { roles: { data: [{ id: 2 }] } } } }),
+        )
+        .mockResolvedValueOnce(ok({ data: [{ id: 2 }] }));
+      jest
+        .mocked(strapiEntryUrl)
+        .mockImplementationOnce(async () => "http://localhost:1337/u")
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await approveCreationRequest("123", 7);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      });
+      consoleError.mockRestore();
+    });
+
+    it("deleteCreationRequest DELETEs the request's documentId", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce(ok({}));
+
+      await deleteCreationRequest("123");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:1337/api/creation-requests/doc123",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("deleteCreationRequest returns the old not-ok result when it is missing", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+      const result = await deleteCreationRequest("123");
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 });

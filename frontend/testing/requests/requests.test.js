@@ -197,7 +197,7 @@ describe("Data requests", () => {
 
       const callUrl = global.fetch.mock.calls[0][0];
 
-      expect(callUrl).toMatch(/sort%5B0%5D=id/);
+      expect(callUrl).toMatch(/sort%5B0%5D=createdAt&sort%5B1%5D=id/);
 
       expect(callUrl).toMatch(
         /fields%5B0%5D=id&fields%5B1%5D=groupName&fields%5B2%5D=slug&fields%5B3%5D=isArchived/,
@@ -402,12 +402,12 @@ describe("Droplet tests", () => {
         isHidden: false,
       };
 
-      fetchAPI.mockResolvedValue(mockDroplet);
+      fetchAPI.mockResolvedValue([mockDroplet]);
 
       const result = await getDropletById(1);
 
       expect(result).toEqual(mockDroplet);
-      expect(fetchAPI).toHaveBeenCalledWith("/droplets/1", expect.any(Object));
+      expect(fetchAPI).toHaveBeenCalledWith("/droplets", expect.any(Object));
     });
     it("should handle fetch errors", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch droplets"));
@@ -518,7 +518,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: [2],
+                disconnect: ["2"],
               },
             },
           }),
@@ -572,7 +572,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["4"],
               },
             },
           }),
@@ -655,7 +655,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["4"],
               },
             },
           }),
@@ -713,11 +713,28 @@ describe("Playlist tests", () => {
       };
 
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce(mockPlaylist);
+      fetchAPI.mockResolvedValueOnce([mockPlaylist]);
 
       const result = await getPlaylistById(1);
 
       expect(result).toEqual(mockPlaylist);
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/playlists",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: { id: { $eq: 1 } },
+          }),
+        }),
+      );
+    });
+
+    it("should throw a 404-style error when no playlist matches", async () => {
+      fetchAPI.mockReset();
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await expect(getPlaylistById(1)).rejects.toThrow(
+        "Failed to fetch data: HTTP error! status: 404",
+      );
     });
 
     it("should handle fetch errors", async () => {

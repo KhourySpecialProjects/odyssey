@@ -16,25 +16,24 @@
  *   670-683       duplicateDroplet — existing draft found for current user
  *   717-787       duplicateDroplet — cleanBlocks branches (quiz, open-ended, callout, generic)
  *   794-862       duplicateDroplet — lesson duplication loop (v1 + v2)
- *   960           publishDraftToOriginal — draftDroplet not found
- *   973           publishDraftToOriginal — missing difficulty guard
- *   992-1002      publishDraftToOriginal — delete lessons loop
- *   1027          publishDraftToOriginal — optional fields (focusArea/type/difficulty)
- *   1035-1040     publishDraftToOriginal — learningObjectives mapping (string + object forms)
- *   1046          publishDraftToOriginal — prerequisites
- *   1050-1051     publishDraftToOriginal — postrequisites
- *   1057-1060     publishDraftToOriginal — nextSteps cleaning
- *   1073-1074     publishDraftToOriginal — updateResult not ok
- *   1087-1114     publishDraftToOriginal — enrollment update loop
- *   1119-1154     publishDraftToOriginal — cleanBlocks helper (quiz, open-ended)
- *   1160-1231     publishDraftToOriginal — lesson creation loop (v1 + v2)
- *   1245-1246     publishDraftToOriginal — deepDelete draft
+ *   1050-1113     applyLessonSync — update / create / delete basics (in depth: publish-draft-lesson-sync.test.ts)
+ *   1189          publishDraftToOriginal — draftDroplet not found
+ *   1217-1220     publishDraftToOriginal — missing difficulty guard
+ *   1271-1278     publishDraftToOriginal — optional fields (focusArea/type/difficulty)
+ *   1284-1297     publishDraftToOriginal — learningObjectives mapping (string + object forms)
+ *   1299-1301     publishDraftToOriginal — prerequisites
+ *   1303-1307     publishDraftToOriginal — postrequisites
+ *   1309-1316     publishDraftToOriginal — nextSteps cleaning
+ *   1328-1333     publishDraftToOriginal — updateResult not ok
+ *   1342-1376     publishDraftToOriginal — enrollment update loop
+ *   1380-1389     publishDraftToOriginal — deepDelete draft
  *   1310-1320     favoriteDroplet — add user when not in list / already in list
  *   1340          favoriteDroplet — fetch update not ok
  *   1367          updateDropletLearningObjective — fetch not ok
  */
 
 import {
+  getDropletById,
   deepDeleteDroplet,
   updateDroplet,
   archiveDroplet,
@@ -44,8 +43,17 @@ import {
   publishDraftToOriginal,
   favoriteDroplet,
   updateDropletLearningObjective,
+  updateDropletAverageRating,
+  updateDropletFunFact,
 } from "@/lib/requests/droplet";
-import type { DropletDifficulty, LearningObjective, Resource } from "@/types";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
+import type {
+  DropletDifficulty,
+  LearningObjective,
+  Lesson,
+  Resource,
+} from "@/types";
 import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
@@ -54,6 +62,35 @@ import {
   makeDroplet,
   makeLesson,
 } from "@/lib/testing/mock-helpers";
+
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
+
+// jest.resetAllMocks() also wipes the identity mock of @/lib/strapi-document-id
+// installed in jest.setup.ts, so put it back after every reset.
+function resetAllMocks() {
+  jest.resetAllMocks();
+  const identity = (ref: any): string =>
+    ref && typeof ref === "object"
+      ? ref.documentId ?? String(ref.id)
+      : String(ref);
+  jest
+    .mocked(resolveDocumentId)
+    .mockImplementation(async (_c, ref) => identity(ref));
+  jest
+    .mocked(resolveDocumentIds)
+    .mockImplementation(async (_c, refs) => refs.map(identity));
+  jest
+    .mocked(strapiEntryUrl)
+    .mockImplementation(
+      async (collection, ref, query) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
+    );
+}
 
 // ─── module mocks ────────────────────────────────────────────────────────────
 
@@ -102,6 +139,85 @@ function getMockedDeleteLesson() {
   return jest.requireMock("@/lib/requests/lesson").deleteLesson;
 }
 
+// ─── getDropletById ──────────────────────────────────────────────────────────
+
+describe("droplet-coverage — getDropletById", () => {
+  beforeEach(() => {
+    resetAllMocks();
+  });
+
+  it("reads through the data cache by default", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce([makeDroplet({ id: 7 })]);
+
+    await getDropletById(7);
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    // Strapi v5 single-entry routes need a documentId, so this reads the list
+    // endpoint with an id filter (no lookup, safe while rendering).
+    expect(path).toBe("/droplets");
+    expect(options.urlParams).toEqual(
+      expect.objectContaining({ filters: { id: { $eq: 7 } } }),
+    );
+    expect(options).toEqual(
+      expect.objectContaining({
+        next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
+      }),
+    );
+    expect(options).not.toHaveProperty("cache");
+    expect(strapiEntryUrl).not.toHaveBeenCalled();
+    expect(resolveDocumentId).not.toHaveBeenCalled();
+  });
+
+  it("skips the data cache when fresh is set, and never passes next with it", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce([makeDroplet({ id: 7 })]);
+
+    await getDropletById(7, {}, { fresh: true });
+
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets");
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
+  });
+
+  it("builds the same query whether or not the read is fresh", async () => {
+    const params = {
+      populate: { lessons: { fields: ["*"] } },
+      fields: ["name"],
+    };
+    getMockedFetchAPI().mockResolvedValue([makeDroplet({ id: 7 })]);
+
+    await getDropletById(7, params);
+    await getDropletById(7, params, { fresh: true });
+
+    const [, cachedOptions] = getMockedFetchAPI().mock.calls[0];
+    const [, freshOptions] = getMockedFetchAPI().mock.calls[1];
+    expect(freshOptions.urlParams).toEqual(cachedOptions.urlParams);
+    expect(freshOptions.urlParams).toEqual(
+      expect.objectContaining({
+        populate: params.populate,
+        fields: params.fields,
+      }),
+    );
+  });
+
+  it("returns the first droplet fetchAPI resolves with", async () => {
+    const droplet = makeDroplet({ id: 7, name: "Fresh read" });
+    getMockedFetchAPI().mockResolvedValueOnce([droplet]);
+
+    await expect(getDropletById(7, {}, { fresh: true })).resolves.toBe(droplet);
+  });
+
+  it("keeps the failure a missing droplet used to produce", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    getMockedFetchAPI().mockResolvedValueOnce([]);
+
+    await expect(getDropletById(404)).rejects.toThrow(
+      "Failed to fetch data: HTTP error! status: 404",
+    );
+  });
+});
+
 // ─── deepDeleteDroplet ───────────────────────────────────────────────────────
 
 describe("droplet-coverage — deepDeleteDroplet", () => {
@@ -110,15 +226,15 @@ describe("droplet-coverage — deepDeleteDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
   it("returns error when DELETE response is not ok (line 263)", async () => {
     // getDropletById uses fetchAPI
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(
       makeFetchErrorResponse({ error: "forbidden" }, 403),
@@ -135,7 +251,7 @@ describe("droplet-coverage — deepDeleteDroplet", () => {
 
   it("deletes associated lessons before the droplet", async () => {
     const deleteLesson = getMockedDeleteLesson();
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         lessons: [
@@ -143,7 +259,7 @@ describe("droplet-coverage — deepDeleteDroplet", () => {
           makeLesson({ id: 11, name: "L2", slug: "l2", orderIndex: 1 }),
         ],
       }),
-    );
+    ]);
     deleteLesson.mockResolvedValue({ ok: true, error: null, data: {} });
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
@@ -174,7 +290,7 @@ describe("droplet-coverage — updateDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -244,6 +360,12 @@ describe("droplet-coverage — updateDroplet", () => {
 
   it("includes tagIds, isHidden, prerequisiteIds, postrequisiteIds in payload", async () => {
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 7 } }));
+    // Non-identity mapping: proves the relations go out as documentIds
+    jest
+      .mocked(resolveDocumentIds)
+      .mockImplementation(async (collection, refs) =>
+        refs.map((r) => `${collection}-doc${typeof r === "object" ? r.id : r}`),
+      );
 
     await updateDroplet(7, {
       tagIds: [1, 2],
@@ -265,10 +387,10 @@ describe("droplet-coverage — updateDroplet", () => {
     });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-    expect(body.data.tags).toEqual([1, 2]);
+    expect(body.data.tags).toEqual(["tags-doc1", "tags-doc2"]);
     expect(body.data.isHidden).toBe(true);
-    expect(body.data.prerequisites).toEqual([3]);
-    expect(body.data.postrequisites).toEqual([4]);
+    expect(body.data.prerequisites).toEqual(["droplets-doc3"]);
+    expect(body.data.postrequisites).toEqual(["droplets-doc4"]);
     expect(body.data.datasets).toEqual([
       {
         name: "ds",
@@ -301,7 +423,7 @@ describe("droplet-coverage — archiveDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -362,7 +484,7 @@ describe("droplet-coverage — createNewTag", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -420,7 +542,7 @@ describe("droplet-coverage — createDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -535,7 +657,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -548,14 +670,15 @@ describe("droplet-coverage — duplicateDroplet", () => {
   });
 
   it("returns error when original droplet not found (line 563)", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-    // getDropletById returns undefined/null
-    getMockedFetchAPI().mockResolvedValueOnce(undefined);
+    // getDropletById throws the 404 failure when the list comes back empty
+    getMockedFetchAPI().mockResolvedValueOnce([]);
 
     const result = await duplicateDroplet(99);
     expect(result.ok).toBe(false);
-    expect(result.error).toMatch(/Original droplet not found/);
+    expect(result.error).toMatch(/status: 404/);
   });
 
   it("continues when existing-draft check throws (line 637 inner catch)", async () => {
@@ -563,9 +686,9 @@ describe("droplet-coverage — duplicateDroplet", () => {
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
     // getDropletById (for original)
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, name: "Original", lessons: [] }),
-    );
+    ]);
 
     // The inner fetch for existing drafts throws
     fetchMock
@@ -590,9 +713,9 @@ describe("droplet-coverage — duplicateDroplet", () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, name: "Original", lessons: [] }),
-    );
+    ]);
 
     // existing drafts fetch returns a draft where user id=5 is authorized
     fetchMock.mockResolvedValueOnce(
@@ -624,7 +747,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         name: "Original",
@@ -641,7 +764,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
           }),
         ],
       }),
-    );
+    ]);
 
     // existing drafts fetch — no drafts
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
@@ -661,13 +784,15 @@ describe("droplet-coverage — duplicateDroplet", () => {
     const lessonBody = JSON.parse(lessonPost[1]?.body as string);
     expect(lessonBody.data.blocksV2).toBeDefined();
     expect(lessonBody.data.blocksVersion).toBe("v2");
+    // Lineage: the clone remembers which live lesson it came from
+    expect(lessonBody.data.originalLessonId).toBe(10);
   });
 
   it("creates new draft and duplicates v1 lessons with quiz blocks (lines 729-746)", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         name: "Original",
@@ -697,7 +822,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
           }),
         ],
       }),
-    );
+    ]);
 
     // No existing drafts
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
@@ -709,6 +834,16 @@ describe("droplet-coverage — duplicateDroplet", () => {
     const result = await duplicateDroplet(1);
     expect(result.ok).toBe(true);
 
+    // The source droplet read populates lesson blocks per component
+    const readOptions = getMockedFetchAPI().mock.calls[0][1] as {
+      urlParams: { populate: { lessons: unknown } };
+    };
+    expect(readOptions.urlParams.populate.lessons).toEqual({
+      fields: ["*"],
+      populate: LESSON_BLOCKS_POPULATE,
+      sort: ["orderIndex:asc"],
+    });
+
     const lessonPost = fetchMock.mock.calls[2];
     const lessonBody = JSON.parse(lessonPost[1]?.body as string);
     expect(lessonBody.data.blocks[0]).not.toHaveProperty("id");
@@ -716,13 +851,14 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(
       lessonBody.data.blocks[0].questions[0].answerOptions[0],
     ).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(20);
   });
 
   it("creates new draft and duplicates v1 lessons with callout blocks (lines 761-781)", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         name: "Original",
@@ -751,7 +887,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
           }),
         ],
       }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 60 } }));
@@ -766,15 +902,40 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(calloutBlock).not.toHaveProperty("id");
     expect(calloutBlock.content[0]).not.toHaveProperty("id");
     expect(calloutBlock.content[0].children[0]).not.toHaveProperty("id");
+    expect(lessonBody.data.originalLessonId).toBe(30);
+  });
+
+  it("reads the original droplet fresh, bypassing the data cache", async () => {
+    // Direct edits to a live droplet autosave without revalidating. A cached read
+    // could clone stale content, and publishing would then revert those edits.
+    getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+    getMockedFetchAPI().mockResolvedValueOnce([
+      makeDroplet({ id: 1, name: "Original", lessons: [] }),
+    ]);
+    // No existing drafts
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+    // POST droplet
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 99 } }));
+
+    const result = await duplicateDroplet(1);
+
+    expect(result.ok).toBe(true);
+    const [path, options] = getMockedFetchAPI().mock.calls[0];
+    expect(path).toBe("/droplets");
+    expect(options.urlParams.filters).toEqual({ id: { $eq: 1 } });
+    expect(options).toEqual(expect.objectContaining({ cache: "no-store" }));
+    // cache and next are mutually exclusive in Next 15: passing both breaks caching
+    expect(options).not.toHaveProperty("next");
   });
 
   it("returns error when droplet POST fails (lines 702-710)", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, name: "Original", lessons: [] }),
-    );
+    ]);
 
     // No existing drafts
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
@@ -792,7 +953,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
 
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         name: "Original",
@@ -808,7 +969,7 @@ describe("droplet-coverage — duplicateDroplet", () => {
           }),
         ],
       }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
@@ -831,22 +992,23 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
   it("returns error when draft droplet not found (line 960)", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
 
     // draftDroplet fetch returns undefined
     getMockedFetchAPI()
-      .mockResolvedValueOnce(undefined) // draftDroplet
-      .mockResolvedValueOnce(makeDroplet({ id: 2, slug: "original-slug" })); // originalDroplet
+      .mockResolvedValueOnce([]) // draftDroplet
+      .mockResolvedValueOnce([makeDroplet({ id: 2, slug: "original-slug" })]); // originalDroplet
 
     const result = await publishDraftToOriginal(1, 2);
     expect(result.ok).toBe(false);
-    expect(result.error).toMatch(/Draft droplet not found/);
+    expect(result.error).toMatch(/status: 404/);
   });
 
   it("returns error when difficulty is missing (line 973)", async () => {
@@ -868,8 +1030,8 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     // draftDroplet (call 1), originalDroplet (call 2) — both via fetchAPI
     // The difficulty check happens BEFORE the enrollments fetch, so no fetchMock needed
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     const result = await publishDraftToOriginal(1, 2);
     expect(result.ok).toBe(false);
@@ -879,21 +1041,26 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
   });
 
   it("returns error when original droplet not found", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(
+      .mockResolvedValueOnce([
         makeDroplet({ id: 1, name: "[EDIT] Draft", lessons: [] }),
-      )
-      .mockResolvedValueOnce(undefined); // originalDroplet not found
+      ])
+      .mockResolvedValueOnce([]); // originalDroplet not found
 
     const result = await publishDraftToOriginal(1, 2);
     expect(result.ok).toBe(false);
-    expect(result.error).toMatch(/Original droplet not found/);
+    expect(result.error).toMatch(/status: 404/);
   });
 
-  it("deletes original lessons and creates new ones from draft (lines 992-1002, 1160-1231)", async () => {
+  // Lesson sync in depth (ids, progress, failure order, payloads) is covered in
+  // publish-draft-lesson-sync.test.ts. These two pin the basic create/delete and
+  // update-in-place outcomes against the queued fetch order.
+
+  it("creates a draft lesson that matches no live lesson, then deletes the live lesson the draft dropped", async () => {
     const deleteLesson = getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
@@ -918,6 +1085,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
       ],
     });
 
+    // A different name and no originalLessonId, so nothing links it to the draft lesson
     const originalDroplet = makeDroplet({
       id: 2,
       slug: "my-droplet",
@@ -933,8 +1101,8 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     deleteLesson.mockResolvedValue({ ok: true, error: null, data: {} });
 
@@ -944,22 +1112,120 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     // updateDroplet (PUT) for original
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
 
-    // POST new lesson
+    // POST new lesson (the live lesson is removed through deleteLesson, not fetch)
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 300 } }));
 
     // deepDeleteDroplet inner: getDropletById + DELETE
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await publishDraftToOriginal(1, 2);
     expect(result.ok).toBe(true);
     expect(result.slug).toBe("my-droplet");
+
+    const postIndex = fetchMock.mock.calls.findIndex(
+      (c) =>
+        c[1]?.method === "POST" && (c[0] as string).includes("/api/lessons"),
+    );
+    expect(postIndex).toBeGreaterThan(-1);
+    expect(deleteLesson).toHaveBeenCalledTimes(1);
     expect(deleteLesson).toHaveBeenCalledWith(200, false);
+    // The new lesson is written before the old one goes away
+    expect(fetchMock.mock.invocationCallOrder[postIndex]).toBeLessThan(
+      deleteLesson.mock.invocationCallOrder[0],
+    );
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
     expect(revalidateTag).toHaveBeenCalledWith("lesson");
   });
+
+  it.each<[string, Partial<Lesson>]>([
+    ["lineage", { name: "Renamed in the draft", originalLessonId: 200 }],
+    ["name", { name: "Old Lesson" }],
+  ])(
+    "updates the live lesson in place, with no delete, when the draft lesson matches it by %s",
+    async (_how, draftLessonFields) => {
+      const deleteLesson = getMockedDeleteLesson();
+      getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
+
+      const draftDroplet = makeDroplet({
+        id: 1,
+        name: "[EDIT] My Droplet",
+        difficulty: "beginner",
+        lessons: [
+          makeLesson({
+            id: 100,
+            slug: "draft-lesson",
+            orderIndex: 0,
+            blocksVersion: "v1",
+            blocks: [
+              {
+                __component: "droplets.callout",
+                id: 88,
+                color: "blue",
+                type: "info",
+                content: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "New text" }],
+                  },
+                ],
+              },
+            ],
+            ...draftLessonFields,
+          }),
+        ],
+      });
+      const originalDroplet = makeDroplet({
+        id: 2,
+        slug: "my-droplet",
+        lessons: [
+          makeLesson({
+            id: 200,
+            name: "Old Lesson",
+            slug: "old-lesson",
+            orderIndex: 0,
+            blocks: [],
+          }),
+        ],
+      });
+
+      getMockedFetchAPI()
+        .mockResolvedValueOnce([draftDroplet])
+        .mockResolvedValueOnce([originalDroplet]);
+
+      // enrollments fetch
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      // updateDroplet (PUT) for original
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
+      // PUT the live lesson in place
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 200 } }));
+      // deepDeleteDroplet inner: getDropletById + DELETE
+      getMockedFetchAPI().mockResolvedValueOnce([
+        makeDroplet({ id: 1, lessons: [] }),
+      ]);
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+      const result = await publishDraftToOriginal(1, 2);
+      expect(result.ok).toBe(true);
+
+      const lessonPut = fetchMock.mock.calls.find(
+        (c) =>
+          c[1]?.method === "PUT" &&
+          (c[0] as string).endsWith("/api/lessons/200"),
+      );
+      expect(lessonPut).toBeDefined();
+      const putBody = JSON.parse(lessonPut![1]?.body as string);
+      expect(putBody.data.blocks).toHaveLength(1);
+      expect(putBody.data).not.toHaveProperty("slug");
+      expect(deleteLesson).not.toHaveBeenCalled();
+      expect(fetchMock.mock.calls.some((c) => c[1]?.method === "POST")).toBe(
+        false,
+      );
+    },
+  );
 
   it("updates enrollments to point to original droplet (lines 1087-1114)", async () => {
     getMockedDeleteLesson();
@@ -979,8 +1245,8 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     // enrollments fetch — returns 1 enrollment to migrate
     fetchMock.mockResolvedValueOnce(
@@ -994,9 +1260,9 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: {} }));
 
     // deepDeleteDroplet: getDropletById + DELETE
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -1033,16 +1299,16 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     // updateDroplet PUT
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
     // deepDeleteDroplet: getDropletById + DELETE
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -1076,8 +1342,8 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     // updateDroplet PUT — fails
@@ -1100,7 +1366,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
   });
 
-  it("handles v2 lessons in the creation loop (lines 1195-1198)", async () => {
+  it("creates a v2 lesson with its blocksV2 in the original droplet, without notes", async () => {
     getMockedDeleteLesson();
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
@@ -1123,22 +1389,23 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
     const originalDroplet = makeDroplet({
       id: 2,
+      documentId: "docDroplet2",
       slug: "droplet-slug",
       lessons: [],
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
     // POST lesson
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 66 } }));
     // deepDeleteDroplet
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -1151,14 +1418,18 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     const lessonBody = JSON.parse(lessonPost![1]?.body as string);
     expect(lessonBody.data.blocksV2).toBeDefined();
     expect(lessonBody.data.blocksVersion).toBe("v2");
+    // The original droplet carries its documentId, so no lookup is needed
+    expect(lessonBody.data.droplets).toEqual(["docDroplet2"]);
+    // On an update `notes` would detach every student note, so it is never sent
+    expect(lessonBody.data).not.toHaveProperty("notes");
   });
 
   it("includes prerequisites and postrequisites in the update (lines 1046, 1050-1051)", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
 
-    const prereq = makeDroplet({ id: 10 });
-    const postreq = makeDroplet({ id: 20 });
+    const prereq = makeDroplet({ id: 10, documentId: "docPre10" });
+    const postreq = makeDroplet({ id: 20, documentId: "docPost20" });
 
     const draftDroplet = makeDroplet({
       id: 1,
@@ -1178,15 +1449,15 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
     });
 
     getMockedFetchAPI()
-      .mockResolvedValueOnce(draftDroplet)
-      .mockResolvedValueOnce(originalDroplet);
+      .mockResolvedValueOnce([draftDroplet])
+      .mockResolvedValueOnce([originalDroplet]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 2 } }));
     // deepDeleteDroplet
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, lessons: [] }),
-    );
+    ]);
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -1197,8 +1468,9 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
         c[1]?.method === "PUT" && (c[0] as string).includes("/api/droplets/2"),
     );
     const updateBody = JSON.parse(updateCall![1]?.body as string);
-    expect(updateBody.data.prerequisites).toEqual([10]);
-    expect(updateBody.data.postrequisites).toEqual([20]);
+    // The fetched draft's entities carry documentIds, so they are sent as is
+    expect(updateBody.data.prerequisites).toEqual(["docPre10"]);
+    expect(updateBody.data.postrequisites).toEqual(["docPost20"]);
     // nextSteps should have id stripped
     expect(updateBody.data.nextSteps[0]).not.toHaveProperty("id");
     expect(updateBody.data.nextSteps[0]).toHaveProperty("__component");
@@ -1213,7 +1485,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
@@ -1227,7 +1499,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
         data: {
           id: 5,
           attributes: {
-            usersFavorited: { data: [{ id: 3 }] },
+            usersFavorited: { data: [{ id: 3, documentId: "docU3" }] },
           },
         },
       }),
@@ -1236,20 +1508,37 @@ describe("droplet-coverage — favoriteDroplet", () => {
     // PUT update
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 5 } }));
 
-    const droplet = makeDroplet({ id: 5 });
+    const droplet = makeDroplet({ id: 5, documentId: "forgedDoc" });
     const result = await favoriteDroplet(droplet, true);
     expect(result).toEqual({ success: true });
 
     const putCall = fetchMock.mock.calls[1];
     const putBody = JSON.parse(putCall[1]?.body as string);
-    // Should include both original user (3) and new user (7)
-    expect(putBody.data.usersFavorited).toContain(3);
-    expect(putBody.data.usersFavorited).toContain(7);
+    // Should include both original user (3) and new user (7), as documentIds
+    expect(putBody.data.usersFavorited).toContain("docU3");
+    expect(putBody.data.usersFavorited).toContain("7");
+    // The droplet comes from the caller, so both URLs are built from its
+    // numeric id; its (possibly forged) documentId is never used.
+    expect(putCall[0]).toMatch(/\/api\/droplets\/5$/);
+    expect(fetchMock.mock.calls[0][0]).toMatch(
+      /\/api\/droplets\/5\?populate=usersFavorited$/,
+    );
+    expect(strapiEntryUrl).toHaveBeenCalledWith(
+      "droplets",
+      5,
+      "populate=usersFavorited",
+    );
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", 5);
   });
 
   it("does not duplicate user when already in favorites (lines 1313-1315)", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 7 });
+    jest
+      .mocked(resolveDocumentIds)
+      .mockImplementationOnce(async (_c, refs) =>
+        refs.map((r) => `doc${typeof r === "object" ? r.id : r}`),
+      );
 
     // User 7 IS already in the list
     fetchMock.mockResolvedValueOnce(
@@ -1270,7 +1559,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
     expect(result).toEqual({ success: true });
 
     const putBody = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
-    expect(putBody.data.usersFavorited).toEqual([7]); // no duplicates
+    expect(putBody.data.usersFavorited).toEqual(["doc7"]); // no duplicates
   });
 
   it("removes user from favorites (unfavorite path — lines 1317-1321)", async () => {
@@ -1294,7 +1583,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
     expect(result).toEqual({ success: true });
 
     const putBody = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
-    expect(putBody.data.usersFavorited).toEqual([3]); // 7 removed
+    expect(putBody.data.usersFavorited).toEqual(["3"]); // 7 removed
   });
 
   it("returns { success: false } when fetch latest state fails", async () => {
@@ -1349,12 +1638,12 @@ describe("droplet-coverage — updateDropletLearningObjective", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    jest.resetAllMocks();
+    resetAllMocks();
     fetchMock = mockGlobalFetch();
   });
 
   it("updates a learning objective successfully", async () => {
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         learningObjectives: [
@@ -1362,7 +1651,7 @@ describe("droplet-coverage — updateDropletLearningObjective", () => {
           { id: 2, objective: "Keep this" },
         ],
       }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
@@ -1383,12 +1672,12 @@ describe("droplet-coverage — updateDropletLearningObjective", () => {
   });
 
   it("returns { success: false } when fetch is not ok (line 1367)", async () => {
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({
         id: 1,
         learningObjectives: [{ id: 1, objective: "Some objective" }],
       }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(
       makeFetchErrorResponse({ error: "failed" }, 500),
@@ -1403,16 +1692,16 @@ describe("droplet-coverage — updateDropletLearningObjective", () => {
   });
 
   it("returns { success: false } when droplet not found (line 1366)", async () => {
-    getMockedFetchAPI().mockResolvedValueOnce(undefined);
+    getMockedFetchAPI().mockResolvedValueOnce([]);
 
     const result = await updateDropletLearningObjective(1, "Old", "New");
     expect(result).toEqual({ success: false, error: expect.any(Error) });
   });
 
   it("handles empty learningObjectives gracefully", async () => {
-    getMockedFetchAPI().mockResolvedValueOnce(
+    getMockedFetchAPI().mockResolvedValueOnce([
       makeDroplet({ id: 1, learningObjectives: undefined }),
-    );
+    ]);
 
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
@@ -1420,5 +1709,216 @@ describe("droplet-coverage — updateDropletLearningObjective", () => {
     expect(result).toEqual({ success: true });
     const putBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
     expect(putBody.data.learningObjectives).toEqual([]);
+  });
+});
+
+// ─── ODY-601: documentIds in URLs and relation writes ────────────────────────
+
+describe("droplet-coverage — documentIds", () => {
+  let fetchMock: jest.MockedFunction<typeof fetch>;
+
+  beforeEach(() => {
+    resetAllMocks();
+    fetchMock = mockGlobalFetch();
+  });
+
+  const toDoc = async (_c: unknown, refs: any[]) =>
+    refs.map((r) => "doc" + (typeof r === "object" ? r.id : r));
+
+  it("deepDeleteDroplet deletes via the fetched droplet's documentId, with no lookup", async () => {
+    const droplet = makeDroplet({ id: 1, documentId: "docD1", lessons: [] });
+    getMockedFetchAPI().mockResolvedValueOnce([droplet]);
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
+
+    await deepDeleteDroplet(1);
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", droplet);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/droplets\/docD1$/);
+  });
+
+  it("deepDeleteDroplet returns the delete failure when the droplet cannot be resolved", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce([
+      makeDroplet({ id: 1, lessons: [] }),
+    ]);
+    jest
+      .mocked(strapiEntryUrl)
+      .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+    const result = await deepDeleteDroplet(1);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete droplet.",
+      data: null,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("updateDroplet PUTs to the droplet documentId and sends author, lesson relations as documentIds", async () => {
+    jest.mocked(resolveDocumentIds).mockImplementation(toDoc as any);
+    jest
+      .mocked(strapiEntryUrl)
+      .mockResolvedValueOnce("http://strapi/api/droplets/docD7");
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 7 } }));
+
+    await updateDroplet(7, {
+      authorized_users: [1, 2],
+      lessons: [{ id: 5 }],
+    });
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", 7);
+    expect(fetchMock.mock.calls[0][0]).toBe("http://strapi/api/droplets/docD7");
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(body.data.authorized_users).toEqual(["doc1", "doc2"]);
+    expect(body.data.lessons).toEqual(["doc5"]);
+  });
+
+  it("updateDroplet resolves lessons and datasets from numeric ids, ignoring client documentIds", async () => {
+    jest
+      .mocked(strapiEntryUrl)
+      .mockResolvedValueOnce("http://strapi/api/droplets/docD7");
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 7 } }));
+
+    await updateDroplet(7, {
+      lessons: [{ id: 5, documentId: "forgedLesson" } as any],
+      datasets: [{ id: 3, documentId: "forgedDataset" } as any],
+    });
+
+    expect(resolveDocumentIds).toHaveBeenCalledWith("lessons", [5]);
+    expect(resolveDocumentIds).toHaveBeenCalledWith("datasets", [{ id: 3 }]);
+  });
+
+  it("updateDroplet returns the not-found result for a missing droplet or relation", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest
+      .mocked(strapiEntryUrl)
+      .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+    expect(await updateDroplet(7, { name: "X" })).toEqual({
+      ok: false,
+      error: "Not Found",
+      data: null,
+    });
+
+    jest
+      .mocked(resolveDocumentIds)
+      .mockRejectedValueOnce(new StrapiEntryNotFoundError("no tag 9"));
+    expect(await updateDroplet(7, { tagIds: [9] })).toEqual({
+      ok: false,
+      error: "no tag 9",
+      data: null,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("updateDropletAverageRating and updateDropletFunFact use the droplet documentId URL", async () => {
+    jest
+      .mocked(strapiEntryUrl)
+      .mockResolvedValue("http://strapi/api/droplets/docD3");
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: {} }));
+
+    await updateDropletAverageRating(4.2, 3);
+    await updateDropletFunFact("fact", 3);
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", 3);
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      "http://strapi/api/droplets/docD3",
+      "http://strapi/api/droplets/docD3",
+    ]);
+  });
+
+  it("archiveDroplet PUTs to the fetched enrollment without a lookup and fails cleanly when missing", async () => {
+    getGetCurrentUser().mockResolvedValue({ email: "u@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
+    const enrollment = { id: 9, documentId: "docE9" };
+    getGetEnrollmentByUserAndDroplet().mockResolvedValue(enrollment);
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: {} }));
+
+    const ok = await archiveDroplet(makeDroplet({ id: 2 }), true);
+
+    expect(ok).toEqual({ success: true });
+    expect(strapiEntryUrl).toHaveBeenCalledWith("enrollments", enrollment);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/enrollments\/docE9$/);
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest
+      .mocked(strapiEntryUrl)
+      .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+    const missing = await archiveDroplet(makeDroplet({ id: 2 }), true);
+    expect(missing).toEqual({ success: false, error: expect.any(Error) });
+  });
+
+  it("createDroplet sends tag and author documentIds", async () => {
+    getGetCurrentUser().mockResolvedValue({ email: "u@test.com" });
+    const author = { id: 1, documentId: "docA1" };
+    getGetAuthorizedUserByEmail().mockResolvedValue(author);
+    getMockedFetchAPI().mockResolvedValueOnce([]);
+    jest.mocked(resolveDocumentIds).mockImplementation(toDoc as any);
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 3 } }));
+
+    await createDroplet({
+      name: "N",
+      focusArea: "technical",
+      type: "knowledge",
+      difficulty: "beginner",
+      tagIds: [4, 5],
+      learningObjectives: ["a"],
+    } as any);
+
+    expect(resolveDocumentId).toHaveBeenCalledWith("authorized-users", author);
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(body.data.tags).toEqual({ connect: ["doc4", "doc5"] });
+    expect(body.data.authorized_users).toEqual({ connect: ["docA1"] });
+  });
+
+  it("duplicateDroplet connects fetched entities by documentId and links lessons to the new droplet's documentId", async () => {
+    getGetCurrentUser().mockResolvedValue({ email: "u@test.com" });
+    const author = { id: 5, documentId: "docA5" };
+    getGetAuthorizedUserByEmail().mockResolvedValue(author);
+    const original = makeDroplet({
+      id: 1,
+      name: "O",
+      tags: [
+        { id: 3, documentId: "docT3", name: "t", slug: "t", droplets: [] },
+      ],
+      authorized_users: [{ id: 7, documentId: "docA7" }],
+      prerequisites: [makeDroplet({ id: 8, documentId: "docP8" })],
+      postrequisites: [makeDroplet({ id: 9, documentId: "docP9" })],
+      lessons: [makeLesson({ id: 10, name: "L", slug: "l", orderIndex: 0 })],
+    });
+    getMockedFetchAPI().mockResolvedValueOnce([original]);
+    fetchMock
+      .mockResolvedValueOnce(makeFetchResponse({ data: [] }))
+      .mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 50, documentId: "docNew50" } }),
+      )
+      .mockResolvedValueOnce(makeFetchResponse({ data: { id: 51 } }));
+
+    const result = await duplicateDroplet(1);
+
+    expect(result.ok).toBe(true);
+    const dropletBody = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
+    expect(dropletBody.data.tags).toEqual({ connect: ["docT3"] });
+    expect(dropletBody.data.authorized_users).toEqual({
+      connect: ["docA7", "docA5"],
+    });
+    expect(dropletBody.data.prerequisites).toEqual({ connect: ["docP8"] });
+    expect(dropletBody.data.postrequisites).toEqual({ connect: ["docP9"] });
+    const lessonBody = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
+    expect(lessonBody.data.droplets).toEqual(["docNew50"]);
+  });
+
+  it("updateDropletLearningObjective PUTs via the fetched droplet's documentId", async () => {
+    const droplet = makeDroplet({
+      id: 1,
+      documentId: "docD1",
+      learningObjectives: [{ id: 1, objective: "Old" }],
+    });
+    getMockedFetchAPI().mockResolvedValueOnce([droplet]);
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: {} }));
+
+    await updateDropletLearningObjective(1, "Old", "New");
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", droplet);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/droplets\/docD1$/);
   });
 });

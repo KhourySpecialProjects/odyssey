@@ -1,11 +1,10 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-} from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { getCachedEnrollmentsFavorites } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { IconHeart } from "@tabler/icons-react";
 
@@ -13,12 +12,16 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return null;
+
+  const enrollments = (await getCachedEnrollmentsFavorites(userId)).filter(
+    hasDroplet,
+  );
 
   // Fixed: Added return and compare IDs instead of objects
   const filteredEnrollments = enrollments.filter((e) =>
-    e.droplet.usersFavorited?.some((user) => user.id === authorizedUser.id),
+    e.droplet.usersFavorited?.some((user) => user.id === userId),
   );
 
   const completedLessonIds = filteredEnrollments.flatMap(
@@ -71,7 +74,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
       isFavorited={true}
       ratingsMap={ratingsMap}
       sortKey={sortKey}
-      currentUser={authorizedUser}
+      currentUserId={userId}
       isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );

@@ -7,6 +7,11 @@ const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
+const {
+  resolveDocumentId,
+  strapiEntryUrl,
+} = require("../../lib/strapi-document-id");
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
@@ -22,7 +27,19 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 global.fetch = jest.fn();
 
+// Non-identity mapping (5 -> "doc5") proves URLs and relation values are
+// documentIds, not numeric ids.
+const toDoc = (ref) => {
+  const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
+  return `doc${v}`;
+};
+
 beforeEach(() => {
+  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
+  strapiEntryUrl.mockImplementation(
+    async (c, ref) =>
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${c}/${toDoc(ref)}`,
+  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -56,14 +73,19 @@ describe("Playlist Enrollment Tests", () => {
       const result = await togglePlaylistEnrollment(99);
 
       expect(result).toEqual({ success: true });
+      // The fetched user is passed as an entity, so no id lookup is needed.
+      expect(strapiEntryUrl).toHaveBeenCalledWith(
+        "authorized-users",
+        expect.objectContaining({ id: 5 }),
+      );
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/5"),
+        expect.stringContaining("/api/authorized-users/doc5"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [99],
+                connect: ["doc99"],
               },
             },
           }),
@@ -71,6 +93,31 @@ describe("Playlist Enrollment Tests", () => {
       );
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-5");
+    });
+
+    it("scopes dashboard/user invalidation to the acting user", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@northeastern.edu" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 5, playlists: [] });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 5 } }),
+      });
+
+      await togglePlaylistEnrollment(99);
+
+      // playlists stays global: playlist reads carry authorized_users, which
+      // is how the playlist page decides "enrolled".
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      // The cached record read that decides connect/disconnect next time
+      expect(revalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.user("test@northeastern.edu"),
+      );
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userDashboard(5));
+      expect(revalidateTag).not.toHaveBeenCalledWith(
+        CACHE_TAGS.allUserDashboards,
+      );
+      // No enrollment record changes, so no global enrollments sweep
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
     });
 
     it("successfully unenrolls (disconnect) when user IS enrolled", async () => {
@@ -89,13 +136,13 @@ describe("Playlist Enrollment Tests", () => {
 
       expect(result).toEqual({ success: true });
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/5"),
+        expect.stringContaining("/api/authorized-users/doc5"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: [42],
+                disconnect: ["doc42"],
               },
             },
           }),
@@ -154,13 +201,13 @@ describe("Playlist Enrollment Tests", () => {
 
       expect(result).toEqual({ success: true });
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/7"),
+        expect.stringContaining("/api/authorized-users/doc7"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [55],
+                connect: ["doc55"],
               },
             },
           }),
@@ -168,6 +215,11 @@ describe("Playlist Enrollment Tests", () => {
       );
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-7");
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userDashboard(7));
+      expect(revalidateTag).not.toHaveBeenCalledWith(
+        CACHE_TAGS.allUserDashboards,
+      );
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
     });
 
     it("fails when API returns an error response", async () => {

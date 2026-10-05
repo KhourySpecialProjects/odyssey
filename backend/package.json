@@ -7,22 +7,21 @@
     "dev": "strapi develop",
     "start": "strapi start",
     "build": "strapi build",
-    "strapi": "strapi"
+    "strapi": "strapi",
+    "test": "jest --runInBand"
   },
   "dependencies": {
+    "@_sh/strapi-plugin-ckeditor": "8.0.0",
     "@aws-sdk/client-s3": "^3.1030.0",
-    "@ckeditor/strapi-plugin-ckeditor": "^0.0.11",
-    "@strapi/plugin-cloud": "^4.22.0",
-    "@strapi/plugin-documentation": "^4.22.0",
-    "@strapi/plugin-i18n": "^4.26.1",
-    "@strapi/plugin-users-permissions": "^4.22.0",
-    "@strapi/provider-upload-aws-s3": "^4.22.0",
-    "@strapi/strapi": "^4.22.0",
+    "@strapi/plugin-users-permissions": "5.56.0",
+    "@strapi/provider-upload-aws-s3": "5.56.0",
+    "@strapi/strapi": "5.56.0",
+    "ckeditor5": "48.4.0",
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router-dom": "5.3.4",
-    "styled-components": "5.3.3"
+    "react-router-dom": "^6.30.3",
+    "styled-components": "^6.0.0"
   },
   "author": {
     "name": "A Strapi developer"
@@ -31,8 +30,35 @@
     "uuid": "1362378d-c286-4075-9d7f-dbefb5306fae"
   },
   "engines": {
-    "node": ">=18.0.0 <=20.x.x",
+    "node": ">=20.0.0 <=26.x.x",
     "npm": ">=6.0.0"
   },
-  "license": "MIT"
+  "overrides": {
+    "@strapi/provider-upload-aws-s3": {
+      "@aws-sdk/client-s3": "$@aws-sdk/client-s3",
+      "@aws-sdk/lib-storage": "^3.1032.0",
+      "@aws-sdk/s3-request-presigner": "^3.1032.0"
+    },
+    "@rushstack/node-core-library": {
+      "ajv": "^8.18.0"
+    },
+    "@casl/ability": "^6.7.5",
+    "axios": "^1.18.0",
+    "lodash-es": "^4.18.1",
+    "minimatch@3": "^3.1.4",
+    "minimatch@9": "^9.0.7",
+    "qs": "^6.16.0",
+    "rollup": "4.62.3",
+    "sanitize-html": "2.17.5",
+    "tar@7": "^7.5.21",
+    "ws@7": "^7.5.11",
+    "ws@8": "^8.21.0",
+    "yaml@1": "^1.10.3"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "better-sqlite3": "12.9.0",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
+  }
 }

@@ -15,6 +15,7 @@ For every schema field change (add, remove, rename, change type):
 ### 1. Schema (source of truth)
 
 - [ ] `backend/src/api/{type}/content-types/{type}/schema.json` — make the change here first
+- [ ] New content types must set `"draftAndPublish": false`; toggling D&P on an existing type hard-deletes rows (see `docs/agent/backend-architecture.md` "Draft & Publish")
 
 ### 2. TypeScript Types
 

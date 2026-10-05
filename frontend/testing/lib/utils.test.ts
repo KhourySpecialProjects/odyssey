@@ -19,6 +19,7 @@ import {
   youtubeUrlToEmbeddedUrl,
   embeddedUrlToYoutubeUrl,
   isContentEditor,
+  STRAPI_RESPONSE_FORMAT_HEADER,
 } from "@/lib/utils";
 
 global.fetch = jest.fn();
@@ -124,14 +125,29 @@ describe("utils", () => {
 
         expect(result).toEqual({ test: "value" });
         expect(mockFetch).toHaveBeenCalledWith(
-          "http://test.com/api/test",
+          // Flattened responses drop meta, so Strapi's COUNT query is skipped
+          "http://test.com/api/test?pagination[withCount]=false",
           expect.objectContaining({
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer test-token",
+              "Strapi-Response-Format": "v4",
             },
           }),
         );
+      });
+
+      it("asks Strapi for the v4 response format so flattenAttributes keeps working on v5", async () => {
+        mockFetch.mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ data: [] }),
+        } as unknown as Response);
+
+        await fetchAPI("/droplets", { next: { tags: ["droplets"] } });
+
+        const [, init] = mockFetch.mock.calls[0];
+        expect(init.headers).toMatchObject(STRAPI_RESPONSE_FORMAT_HEADER);
+        expect(init.headers["Strapi-Response-Format"]).toBe("v4");
       });
 
       it("should handle API errors", async () => {
@@ -140,6 +156,51 @@ describe("utils", () => {
         await expect(fetchAPI("/test", {})).rejects.toThrow(
           "Failed to fetch data",
         );
+      });
+
+      describe("pagination count", () => {
+        const okResponse = () =>
+          ({
+            ok: true,
+            json: () => Promise.resolve({ data: [], meta: {} }),
+          }) as unknown as Response;
+
+        it("keeps existing pagination when skipping the count", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { page: 2, pageSize: 10 } },
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[page]=2&pagination[pageSize]=10&pagination[withCount]=false",
+          );
+        });
+
+        it("keeps the count when the raw response (meta) is requested", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { pageSize: 1 } },
+            flattenResponse: false,
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[pageSize]=1",
+          );
+        });
+
+        it("respects an explicit withCount from the caller", async () => {
+          mockFetch.mockResolvedValue(okResponse());
+
+          await fetchAPI("/test", {
+            urlParams: { pagination: { withCount: true } },
+          });
+
+          expect(mockFetch.mock.calls[0][0]).toBe(
+            "http://test.com/api/test?pagination[withCount]=true",
+          );
+        });
       });
     });
 

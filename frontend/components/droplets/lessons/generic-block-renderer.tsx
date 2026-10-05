@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import hljs from "highlight.js";
+import {
+  getLoadedHighlighter,
+  loadHighlighter,
+  type HighlighterModule,
+} from "./load-highlighter";
 import { Highlight, HighlightColor } from "@/types";
 import { SelectionToolbar } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
@@ -178,13 +182,18 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     : block.content;
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    if (contentRef.current) {
-      const processedContent = processLatex(nonTableContent);
-      contentRef.current.innerHTML = DOMPurify.sanitize(processedContent);
+    const container = contentRef.current;
+    if (!container) return;
 
-      const inlineLatexElements =
-        contentRef.current.querySelectorAll(".katex-inline");
+    // highlight.js rewrites each code element's markup, so it must run before
+    // line numbers and saved highlights are applied. Until it (and any language
+    // grammar the page's code needs) has loaded, the content renders without it
+    // and re-renders once it arrives.
+    const renderContent = (highlighter: HighlighterModule | null) => {
+      const processedContent = processLatex(nonTableContent);
+      container.innerHTML = DOMPurify.sanitize(processedContent);
+
+      const inlineLatexElements = container.querySelectorAll(".katex-inline");
       inlineLatexElements.forEach((element) => {
         const latex = element.textContent || "";
         try {
@@ -199,8 +208,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
 
-      const blockLatexElements =
-        contentRef.current.querySelectorAll(".katex-block");
+      const blockLatexElements = container.querySelectorAll(".katex-block");
       blockLatexElements.forEach((element) => {
         const latex = decodeURIComponent(
           element.getAttribute("data-latex") || "",
@@ -217,17 +225,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
 
-      const codeBlocks = contentRef.current.querySelectorAll("pre code");
+      const codeBlocks = container.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
         if (codeBlock.classList.contains("language-plaintext")) {
           codeBlock.classList.remove("language-plaintext");
         }
       });
-      contentRef.current.querySelectorAll("pre code").forEach((block) => {
-        hljs.highlightElement(block as HTMLElement);
-      });
+      // Scoped to this block (like RenderedContent) so a re-render of one block
+      // can't touch another block's code
+      if (codeBlocks.length > 0) highlighter?.highlightCodeBlocks(container);
 
-      const preBlocks = contentRef.current.querySelectorAll("pre");
+      const preBlocks = container.querySelectorAll("pre");
 
       preBlocks.forEach((pre) => {
         const code = pre.querySelector("code");
@@ -285,7 +293,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       sortedHighlights.forEach((highlight) => {
         const walker = document.createTreeWalker(
-          contentRef.current!,
+          container,
           NodeFilter.SHOW_TEXT,
         );
 
@@ -343,7 +351,37 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           );
         }
       });
-    }
+
+      return codeBlocks.length > 0;
+    };
+
+    const highlighter = getLoadedHighlighter();
+    const hasCodeBlocks = renderContent(highlighter);
+    if (!hasCodeBlocks) return;
+
+    // Load highlight.js on first use, plus any language grammars this block's
+    // code needs that aren't bundled with it. Re-render once highlight.js first
+    // arrives, or later only if a newly loaded grammar is now usable.
+    let cancelled = false;
+    const ready: Promise<HighlighterModule | null> = highlighter
+      ? highlighter
+          .loadLanguages(container)
+          .then((loaded) => (loaded ? highlighter : null))
+      : loadHighlighter().then(async (loaded) => {
+          await loaded.loadLanguages(container);
+          return loaded;
+        });
+    ready
+      .then((loaded) => {
+        // Skip if the content changed or the block unmounted while loading
+        if (loaded && !cancelled && contentRef.current === container) {
+          renderContent(loaded);
+        }
+      })
+      .catch((e) => console.error("Failed to load syntax highlighting:", e));
+    return () => {
+      cancelled = true;
+    };
   }, [
     nonTableContent,
     highlights,

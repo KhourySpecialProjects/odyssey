@@ -6,6 +6,8 @@ invocation: auto
 
 # Strapi v4.22 Patterns for Odyssey
 
+**On `feature/strapi-v5` branches the backend is v5; see the note in `CLAUDE.md` "Critical Version Constraints". The v4-only rules below apply to `develop`.**
+
 ## CRITICAL: v4 Only
 
 This codebase uses Strapi v4.22. NEVER use v5 patterns:

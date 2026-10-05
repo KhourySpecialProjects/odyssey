@@ -19,6 +19,7 @@ import {
   getVoyages,
   getVoyagesAdmin,
   getVoyageBySlug,
+  getArchivedVoyagesForAuthor,
   createVoyageWithNodes,
   publishVoyage,
   deleteVoyage,
@@ -145,7 +146,7 @@ describe("getVoyages", () => {
 describe("getVoyagesAdmin", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("fetches all voyages including drafts with publicationState preview", async () => {
+  it("fetches all voyages including drafts", async () => {
     const mockVoyages = [
       { id: 1, name: "Draft Voyage", status: "draft" },
       { id: 2, name: "Published Voyage", status: "published" },
@@ -157,7 +158,6 @@ describe("getVoyagesAdmin", () => {
     expect(result).toEqual(mockVoyages);
     expect(getMockedFetchAPI()).toHaveBeenCalledWith("/voyages", {
       urlParams: expect.objectContaining({
-        publicationState: "preview",
         sort: ["name:asc"],
       }),
       next: {
@@ -165,6 +165,11 @@ describe("getVoyagesAdmin", () => {
         revalidate: 0,
       },
     });
+    const urlParams = getMockedFetchAPI().mock.calls[0][1].urlParams as Record<
+      string,
+      unknown
+    >;
+    expect(urlParams).not.toHaveProperty("filters");
   });
 
   it("returns empty array when no voyages exist", async () => {
@@ -213,7 +218,7 @@ describe("getVoyageBySlug", () => {
     expect(result).toBeNull();
   });
 
-  it("includes publicationState preview and omits status filter when includeDrafts=true", async () => {
+  it("omits status filter when includeDrafts=true", async () => {
     const mockDraftVoyage = {
       id: 8,
       name: "Draft Voyage",
@@ -228,7 +233,6 @@ describe("getVoyageBySlug", () => {
     expect(result).toEqual(mockDraftVoyage);
     expect(getMockedFetchAPI()).toHaveBeenCalledWith("/voyages", {
       urlParams: expect.objectContaining({
-        publicationState: "preview",
         filters: {
           slug: { $eq: "draft-voyage" },
           // status filter NOT present when includeDrafts=true
@@ -241,11 +245,23 @@ describe("getVoyageBySlug", () => {
     });
   });
 
-  it("does not include publicationState when includeDrafts=false (default)", async () => {
+  it.each([
+    ["getVoyagesAdmin", () => getVoyagesAdmin()],
+    ["getArchivedVoyagesForAuthor", () => getArchivedVoyagesForAuthor(1)],
+    [
+      "getVoyageBySlug (includeDrafts=true)",
+      () => getVoyageBySlug("some-voyage", { includeDrafts: true }),
+    ],
+    [
+      "getVoyageBySlug (includeDrafts=false)",
+      () => getVoyageBySlug("some-voyage", { includeDrafts: false }),
+    ],
+  ])("never sends publicationState (%s)", async (_label, fn) => {
     getMockedFetchAPI().mockResolvedValueOnce([]);
 
-    await getVoyageBySlug("some-voyage");
+    await fn();
 
+    expect(getMockedFetchAPI()).toHaveBeenCalledTimes(1);
     const call = getMockedFetchAPI().mock.calls[0];
     const urlParams = call[1].urlParams as Record<string, unknown>;
     expect(urlParams).not.toHaveProperty("publicationState");

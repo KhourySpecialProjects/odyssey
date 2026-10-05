@@ -16,7 +16,7 @@ Frontend fetches from Strapi REST via `STRAPI_ACCESS_TOKEN`. Media on S3/CDN. Au
 
 ## Critical Version Constraints
 
-- **Strapi v4.22** — Entity Service API, numeric `id`, nested responses. NEVER use Document Service API, `documentId`, or flat responses (v5).
+- **This branch line (`feature/strapi-v5` and its children) is mid-migration to Strapi v5.** Backend `@strapi/*` packages are v5. Entity Service is kept on purpose until ODY-606, so don't migrate it ad hoc. For backend config and APIs, use the Context7 v5 docs. The `strapi-v4-patterns` skill and the v4 rules describe `develop`, not this branch. The frontend still expects v4 nested responses until ODY-607.
 - **Tailwind v3.4** — `tailwind.config.ts`. NEVER use `@theme`, CSS-first config (v4).
 - **Next.js 15** — App Router, Server Components by default. `cache` and `next` fetch options are mutually exclusive — passing both silently breaks caching.
 
@@ -69,6 +69,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/testing-and-deployment.md` | Writing tests, debugging CI, or checking environments        |
 | `docs/agent/workflow.md`               | Agent design rationale and troubleshooting                   |
 | `docs/agent/learnings/`                | Accumulated gotchas and discoveries from past sessions       |
+| `docs/agent/server-action-auth.md`     | Writing or changing any "use server" export                  |
 
 ## Skills
 

@@ -1,11 +1,20 @@
 "use server";
 
 import { Dataset } from "@/types";
-import { fetchAPI, flattenAttributes } from "../utils";
+import {
+  fetchAPI,
+  flattenAttributes,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { datasetSchema, DatasetInput } from "../validations/dataset";
 import { z } from "zod";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -43,13 +52,17 @@ export async function createDataset(
   try {
     const validated = datasetSchema.parse(data);
 
+    // Strapi v5 relation writes take a documentId, not the numeric id.
+    const droplet = await resolveDocumentId("droplets", validated.droplet);
+
     const response = await fetch(`${STRAPI_API_URL}/api/datasets`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-      body: JSON.stringify({ data: validated }),
+      body: JSON.stringify({ data: { ...validated, droplet } }),
     });
 
     const responseData = await response.json();
@@ -76,6 +89,10 @@ export async function createDataset(
         data: null,
       };
     }
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same outcome as Strapi rejecting a non-existent droplet relation.
+      return { ok: false, error: "Failed to create dataset", data: null };
+    }
     console.error(err);
     return {
       ok: false,
@@ -93,15 +110,13 @@ export async function deleteDataset(
   datasetId: number,
 ): Promise<{ ok: boolean; error: string | null }> {
   try {
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/datasets/${datasetId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
+    const response = await fetch(await strapiEntryUrl("datasets", datasetId), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+    });
 
     if (!response.ok) {
       return { ok: false, error: "Failed to delete dataset." };
@@ -112,6 +127,10 @@ export async function deleteDataset(
 
     return { ok: true, error: null };
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same as the 404 Strapi used to return for a missing dataset.
+      return { ok: false, error: "Failed to delete dataset." };
+    }
     console.error(err);
     return {
       ok: false,

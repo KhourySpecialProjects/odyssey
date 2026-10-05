@@ -6,8 +6,14 @@ const {
   createPlaylistAnnouncement,
   createGroupAnnouncement,
   createSystemAnnouncement,
+  getUnreadAnnouncementCount,
 } = require("../../lib/requests/feed");
 const { flattenAttributes } = require("../../lib/utils");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
+const {
+  resolveDocumentId,
+  strapiEntryUrl,
+} = require("../../lib/strapi-document-id");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -24,7 +30,19 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
+// Non-identity mapping (5 -> "doc5") proves URLs and relation values are
+// documentIds, not numeric ids.
+const toDoc = (ref) => {
+  const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
+  return `doc${v}`;
+};
+
 beforeEach(() => {
+  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
+  strapiEntryUrl.mockImplementation(
+    async (c, ref, q) =>
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${c}/${toDoc(ref)}${q ? `?${q}` : ""}`,
+  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -38,6 +56,15 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+jest.mock("../../lib/auth/session", () => ({
+  getCurrentUser: jest.fn(),
+}));
+
+jest.mock("../../lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
+  getCachedUserSocial: jest.fn(),
+}));
+
 describe("Feed tests", () => {
   const { revalidateTag } = require("next/cache");
 
@@ -46,20 +73,48 @@ describe("Feed tests", () => {
   });
 
   describe("fetchAnnouncements", () => {
+    const { getCurrentUser } = require("../../lib/auth/session");
+    const {
+      getCachedUser,
+      getCachedUserSocial,
+    } = require("../../lib/requests/cached");
+
+    const mockSocial = {
+      id: 5,
+      email: "test.user@northeastern.edu",
+      friendships: [
+        {
+          authorized_users: [{ id: 5 }, { id: 10 }],
+        },
+      ],
+    };
+
+    // Signed-in session for user 5 (token carries the Strapi id)
+    beforeEach(() => {
+      getCurrentUser.mockResolvedValue({
+        id: 5,
+        email: "test.user@northeastern.edu",
+      });
+      getCachedUserSocial.mockResolvedValue(mockSocial);
+    });
+
+    function mockPrecompute() {
+      const { fetchAPI } = require("../../lib/utils");
+      fetchAPI
+        .mockResolvedValueOnce([{ id: 1 }]) // groups
+        .mockResolvedValueOnce([{ id: 2 }]) // playlists
+        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]); // enrollments
+    }
+
+    function mockAnnouncementsResponse(data = []) {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data, meta: { pagination: { pageCount: 1 } } }),
+      });
+    }
+
     it("should fetch and return announcements for a user", async () => {
       const { fetchAPI } = require("../../lib/utils");
-
-      const mockUser = {
-        id: 5,
-        firstName: "Test",
-        lastName: "User",
-        email: "test.user@northeastern.edu",
-        friendships: [
-          {
-            authorized_users: [{ id: 5 }, { id: 10 }],
-          },
-        ],
-      };
 
       const mockAnnouncements = [
         {
@@ -88,17 +143,14 @@ describe("Feed tests", () => {
       };
 
       // Mock the 3 parallel pre-compute queries via fetchAPI
-      fetchAPI
-        .mockResolvedValueOnce([{ id: 1 }]) // groups
-        .mockResolvedValueOnce([{ id: 2 }]) // playlists
-        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]); // enrollments
+      mockPrecompute();
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockStrapiResponse,
       });
 
-      const result = await fetchAnnouncements(mockUser);
+      const result = await fetchAnnouncements();
 
       // fetchAPI called 3 times for pre-compute
       expect(fetchAPI).toHaveBeenCalledTimes(3);
@@ -109,7 +161,10 @@ describe("Feed tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          next: { tags: ["announcements"], revalidate: 900 },
+          next: {
+            tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(5)],
+            revalidate: 900,
+          },
         }),
       );
 
@@ -124,9 +179,85 @@ describe("Feed tests", () => {
       expect(flattenAttributes).toHaveBeenCalledWith(mockStrapiResponse.data);
     });
 
+    it("scopes the query to the session user and their friends from the server-side social graph", async () => {
+      const { fetchAPI } = require("../../lib/utils");
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(2, ["friend", "system"], { archived: true });
+
+      expect(getCachedUserSocial).toHaveBeenCalledWith(
+        "test.user@northeastern.edu",
+      );
+      // Pre-compute lookups are keyed on the session user's id
+      for (const [, options] of fetchAPI.mock.calls) {
+        expect(JSON.stringify(options.urlParams.filters)).toContain(
+          '{"$eq":5}',
+        );
+      }
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      // Friend 10 comes from the social graph; the viewer is excluded
+      expect(url).toContain("[authorized_user][id][$in][0]=10");
+      expect(url).not.toContain("[authorized_user][id][$in][1]");
+      expect(url).toContain("[authorized_user][id][$eq]=5");
+      expect(url).toContain("[type][$in][0]=friend");
+      expect(url).toContain("[type][$in][1]=system");
+      expect(url).toContain("[readAt][$notNull]=true");
+      expect(url).toContain("pagination[page]=2");
+    });
+
+    it("ignores a user object passed by the caller", async () => {
+      const { fetchAPI } = require("../../lib/utils");
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      // An old-style call trying to read user 99's feed
+      await fetchAnnouncements(
+        { id: 99, friendships: [{ authorized_users: [{ id: 77 }] }] },
+        ["friend"],
+      );
+
+      const allParams = JSON.stringify(fetchAPI.mock.calls);
+      expect(allParams).not.toContain("99");
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).not.toContain("=99");
+      expect(url).not.toContain("=77");
+      expect(url).toContain("[authorized_user][id][$eq]=5");
+      // A non-numeric page falls back to page 1
+      expect(url).toContain("pagination[page]=1");
+      expect(global.fetch.mock.calls[0][1].next.tags).toEqual([
+        CACHE_TAGS.announcements,
+        CACHE_TAGS.userFeed(5),
+      ]);
+    });
+
+    it("falls back to the email lookup for tokens without an id", async () => {
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ email: "test.user@northeastern.edu" });
+      getCachedUser.mockResolvedValue({ id: 5 });
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      expect(getCachedUser).toHaveBeenCalledWith("test.user@northeastern.edu");
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(global.fetch.mock.calls[0][1].next.tags).toContain(
+        CACHE_TAGS.userFeed(5),
+      );
+    });
+
+    it("rejects without a signed-in user and queries nothing", async () => {
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue(undefined);
+
+      await expect(fetchAnnouncements(1)).rejects.toThrow("Not authenticated");
+      expect(fetchAPI).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it("should handle fetch errors", async () => {
       const { fetchAPI } = require("../../lib/utils");
-      const mockUser = { id: 5, friendships: [] };
 
       // Mock pre-compute queries to succeed, but the main fetch fails
       fetchAPI
@@ -136,9 +267,28 @@ describe("Feed tests", () => {
 
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await expect(fetchAnnouncements(mockUser)).rejects.toThrow(
+      await expect(fetchAnnouncements()).rejects.toThrow(
         "Failed to fetch announcement data.",
       );
+    });
+  });
+
+  describe("getUnreadAnnouncementCount", () => {
+    it("counts the session user's unread feed", async () => {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
+      fetchAPI.mockResolvedValue([]);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { total: 7 } } }),
+      });
+
+      await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[readAt][$null]=true");
     });
   });
 
@@ -182,7 +332,17 @@ describe("Feed tests", () => {
       expect(requestBody.data.content).toContain(mockUser.lastName);
       expect(requestBody.data.content).toContain(mockDroplet.name);
       expect(requestBody.data.type).toBe("friend");
-      expect(requestBody.data.authorized_user).toBe(mockUser.id);
+      expect(requestBody.data.droplet).toBe(`doc${mockDroplet.id}`);
+      // Only numeric ids are passed: the entities come from the caller.
+      expect(resolveDocumentId).toHaveBeenCalledWith(
+        "droplets",
+        mockDroplet.id,
+      );
+      expect(resolveDocumentId).toHaveBeenCalledWith(
+        "authorized-users",
+        mockUser.id,
+      );
+      expect(requestBody.data.authorized_user).toBe(`doc${mockUser.id}`);
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
@@ -282,7 +442,7 @@ describe("Feed tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
-        `http://test-api-url/api/announcements/${announcementId}`,
+        `http://test-api-url/api/announcements/doc${announcementId}`,
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -292,7 +452,7 @@ describe("Feed tests", () => {
           body: JSON.stringify({
             data: {
               kudosGiven: {
-                connect: [mockUser],
+                connect: [`doc${mockUser.id}`],
               },
             },
           }),
@@ -316,7 +476,7 @@ describe("Feed tests", () => {
       // expect(requestBody.data.content).toContain(mockUser.firstName);
       expect(requestBody.data.content).toContain("kudos");
       expect(requestBody.data.type).toBe("kudos");
-      expect(requestBody.data.authorized_user).toBe(mockUser.id);
+      expect(requestBody.data.authorized_user).toBe(`doc${mockUser.id}`);
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
@@ -427,7 +587,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(playlistName);
       expect(requestBody.data.type).toBe("playlist");
-      expect(requestBody.data.playlist).toBe(playlistId);
+      expect(requestBody.data.playlist).toBe(`doc${playlistId}`);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -508,7 +668,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(groupName);
       expect(requestBody.data.type).toBe("group");
-      expect(requestBody.data.group).toBe(groupId);
+      expect(requestBody.data.group).toBe(`doc${groupId}`);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -589,7 +749,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(dropletName);
       expect(requestBody.data.type).toBe("droplet");
-      expect(requestBody.data.droplet).toBe(dropletId);
+      expect(requestBody.data.droplet).toBe(`doc${dropletId}`);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -672,7 +832,7 @@ describe("Feed tests", () => {
 
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toBe(content);
-      expect(requestBody.data.authorized_user).toBe(mockAuthUser.id);
+      expect(requestBody.data.authorized_user).toBe(`doc${mockAuthUser.id}`);
       expect(requestBody.data.type).toBe("system");
       expect(requestBody.data.firstCreated).toBeDefined();
 
