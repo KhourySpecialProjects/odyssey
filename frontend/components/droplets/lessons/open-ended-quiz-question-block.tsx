@@ -12,6 +12,13 @@ declare global {
     posthog?: typeof posthog;
   }
 }
+
+// stripHtmlTags collapses whitespace in the correct answer, so the student's
+// answer gets the same treatment; otherwise multi-line or extra-spaced answers
+// (e.g. code) could never match.
+const normalizeAnswer = (answer: string) =>
+  answer.replace(/\s+/g, " ").trim().toLowerCase();
+
 export function OpenEndedQuizQuestionBlock({
   question,
   lessonId,
@@ -51,8 +58,8 @@ export function OpenEndedQuizQuestionBlock({
 
   const checkAnswer = () => {
     const isAnswerCorrect =
-      userAnswer.trim().toLowerCase() ===
-      stripHtmlTags(question.correctAnswer).trim().toLowerCase();
+      normalizeAnswer(userAnswer) ===
+      normalizeAnswer(stripHtmlTags(question.correctAnswer));
     setIsCorrect(isAnswerCorrect);
 
     if (!isAnswerCorrect) {
