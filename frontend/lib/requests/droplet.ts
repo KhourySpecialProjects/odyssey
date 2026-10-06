@@ -401,6 +401,11 @@ export async function updateDroplet(
       revalidateTag(CACHE_TAGS.allGroups);
       revalidateTag(CACHE_TAGS.allUserDashboards);
     }
+    // Publishing a claimed voyage droplet finishes the claim (the droplet
+    // lifecycle marks its voyage node "authored"), so voyage maps must refetch.
+    if (data.status === "published") {
+      revalidateTag(CACHE_TAGS.voyages);
+    }
     revalidateTag(CACHE_TAGS.allUserContent);
 
     return { ok: true, error: null, data: responseData.data };
