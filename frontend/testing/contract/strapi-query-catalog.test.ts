@@ -160,7 +160,7 @@ describe("strapi query catalog (ODY-635)", () => {
       }
     }
 
-    // Document-id lookups (the identity mock in jest.setup skips them).
+    // Document-id lookups (the global mock in jest.setup skips them).
     const real = jest.requireActual("@/lib/strapi-document-id");
     responder = undefined;
     let n = 9000;

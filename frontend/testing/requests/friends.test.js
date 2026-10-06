@@ -4,6 +4,7 @@ const {
   resolveDocumentIds,
   strapiEntryUrl,
 } = require("../../lib/strapi-document-id");
+const { installDocumentIdMock } = require("../../lib/testing/document-id-mock");
 const {
   fetchFriends,
   getSentRequestIds,
@@ -40,10 +41,6 @@ const toDoc = (ref) => {
   const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
   return typeof v === "string" && v.startsWith("doc") ? v : `doc${v}`;
 };
-const identityRef = (ref) =>
-  ref && typeof ref === "object"
-    ? ref.documentId ?? String(ref.id)
-    : String(ref);
 
 beforeEach(() => {
   resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
@@ -58,10 +55,7 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
-  resolveDocumentId.mockImplementation(async (_c, ref) => identityRef(ref));
-  resolveDocumentIds.mockImplementation(async (_c, refs) =>
-    refs.map(identityRef),
-  );
+  installDocumentIdMock();
 });
 
 jest.mock("next/cache", () => ({

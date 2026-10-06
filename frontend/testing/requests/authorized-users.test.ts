@@ -32,6 +32,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -957,7 +958,7 @@ describe("Authorized User Tests", () => {
 
       expect(result.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/authorized-users/1"),
+        expect.stringContaining("/authorized-users/doc1"),
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining("firstName"),
@@ -1064,7 +1065,7 @@ describe("Authorized User Tests", () => {
       });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
-      expect(body.data.roles.set).toEqual(["2", "3"]);
+      expect(body.data.roles.set).toEqual(["doc2", "doc3"]);
     });
 
     it("should not include roles when roles array is empty", async () => {
@@ -1139,7 +1140,7 @@ describe("Authorized User Tests", () => {
       const result = await deleteAuthorizedUser(formData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/authorized-users/1"),
+        expect.stringContaining("/authorized-users/doc1"),
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -1238,22 +1239,7 @@ describe("Authorized User Tests", () => {
     });
 
     afterEach(() => {
-      const identity = (ref: unknown) =>
-        typeof ref === "object" && ref !== null
-          ? (ref as { documentId?: string }).documentId ??
-            String((ref as { id: number }).id)
-          : String(ref);
-      jest
-        .mocked(resolveDocumentId)
-        .mockImplementation(async (_c, ref) => identity(ref));
-      jest
-        .mocked(resolveDocumentIds)
-        .mockImplementation(async (_c, refs) => refs.map(identity));
-      jest
-        .mocked(strapiEntryUrl)
-        .mockImplementation(
-          async (c, ref) => `http://test-api-url/api/${c}/${identity(ref)}`,
-        );
+      installDocumentIdMock();
     });
 
     function userForm() {

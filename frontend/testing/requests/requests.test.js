@@ -508,7 +508,7 @@ describe("Playlist enrollment tests", () => {
       const result = await togglePlaylistEnrollment(2);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/12"),
+        expect.stringContaining("/api/authorized-users/doc12"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -518,7 +518,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: ["2"],
+                disconnect: ["doc2"],
               },
             },
           }),
@@ -562,7 +562,7 @@ describe("Playlist enrollment tests", () => {
       const result = await togglePlaylistEnrollment(4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/12"),
+        expect.stringContaining("/api/authorized-users/doc12"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -572,7 +572,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: ["4"],
+                connect: ["doc4"],
               },
             },
           }),
@@ -645,7 +645,7 @@ describe("Playlist enrollment tests", () => {
       const result = await enrollInPlaylist(4, 1);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/1"),
+        expect.stringContaining("/api/authorized-users/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -655,7 +655,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: ["4"],
+                connect: ["doc4"],
               },
             },
           }),

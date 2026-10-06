@@ -390,7 +390,7 @@ describe("createVoyageWithNodes — branch node POST failure", () => {
 
     // Cleanup DELETE should have been called
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/99"),
+      expect.stringContaining("/api/voyages/doc99"),
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(revalidateTag).not.toHaveBeenCalled();

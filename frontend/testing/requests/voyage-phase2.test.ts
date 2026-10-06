@@ -270,7 +270,7 @@ describe("deleteVoyage — ownership check (Task 3)", () => {
     // fetchAPI should NOT be called for ownership lookup (admin skips it)
     expect(getMockedFetchAPI()).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/55"),
+      expect.stringContaining("/api/voyages/doc55"),
       expect.objectContaining({ method: "DELETE" }),
     );
   });
@@ -303,7 +303,7 @@ describe("deleteVoyage — ownership check (Task 3)", () => {
     expect(result.data).toEqual(deletedVoyage);
 
     expect(getMockedFetchAPI()).toHaveBeenCalledWith(
-      "/voyages/10",
+      "/voyages/doc10",
       expect.objectContaining({
         urlParams: { populate: { authors: { fields: ["id"] } } },
         next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
@@ -371,7 +371,7 @@ describe("publishVoyage — ownership check (Task 3)", () => {
     // fetchAPI should NOT be called for ownership lookup (admin skips it)
     expect(getMockedFetchAPI()).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/20"),
+      expect.stringContaining("/api/voyages/doc20"),
       expect.objectContaining({ method: "PUT" }),
     );
   });
@@ -391,7 +391,7 @@ describe("publishVoyage — ownership check (Task 3)", () => {
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
 
     expect(getMockedFetchAPI()).toHaveBeenCalledWith(
-      "/voyages/20",
+      "/voyages/doc20",
       expect.objectContaining({
         urlParams: { populate: { authors: { fields: ["id"] } } },
         next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },

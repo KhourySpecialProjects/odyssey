@@ -17,11 +17,7 @@ import {
   deleteVoyage,
 } from "@/lib/requests/voyage";
 import { flattenAttributes } from "@/lib/utils";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-} from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 import { revalidateTag } from "next/cache";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -118,24 +114,8 @@ beforeEach(() => {
   jest.resetAllMocks();
   // Restore the default pass-through implementation after reset.
   mockedFlattenAttributes.mockImplementation((data: unknown) => data);
-  // resetAllMocks also wipes the global identity mock for the documentId helper.
-  const idOf = (ref: unknown) =>
-    ref && typeof ref === "object"
-      ? (ref as { documentId?: string }).documentId ??
-        String((ref as { id: number }).id)
-      : String(ref);
-  jest
-    .mocked(resolveDocumentId)
-    .mockImplementation(async (_c, ref) => idOf(ref));
-  jest
-    .mocked(resolveDocumentIds)
-    .mockImplementation(async (_c, refs) => refs.map(idOf));
-  jest
-    .mocked(strapiEntryUrl)
-    .mockImplementation(
-      async (collection, ref, query) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${idOf(ref)}${query ? `?${query}` : ""}`,
-    );
+  // resetAllMocks also wipes the global mock for the documentId helper.
+  installDocumentIdMock();
 });
 
 // ---------------------------------------------------------------------------
@@ -270,9 +250,9 @@ describe("voyage-branches — branch node parent body fields (lines 299-336)", (
     });
 
     expect(result.ok).toBe(true);
-    // Branch node POST body should include parentNode as a documentId ("20")
+    // Branch node POST body should include parentNode as a documentId ("doc20")
     const branchBody = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
-    expect(branchBody.data.parentNode).toBe("20");
+    expect(branchBody.data.parentNode).toBe("doc20");
   });
 
   it("branch node with null parentPlaylistId — parentNode absent from body", async () => {

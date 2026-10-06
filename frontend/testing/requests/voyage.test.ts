@@ -170,7 +170,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"voyage":"99"'),
+        body: expect.stringContaining('"voyage":"doc99"'),
       }),
     );
 
@@ -180,7 +180,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"parentNode":"10"'),
+        body: expect.stringContaining('"parentNode":"doc10"'),
       }),
     );
 
@@ -241,7 +241,7 @@ describe("createVoyageWithNodes", () => {
       expect.stringContaining("/api/voyage-nodes"),
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"droplet":"42"'),
+        body: expect.stringContaining('"droplet":"doc42"'),
       }),
     );
 
@@ -371,7 +371,7 @@ describe("createVoyageWithNodes", () => {
 
     // Cleanup DELETE was called
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/99"),
+      expect.stringContaining("/api/voyages/doc99"),
       expect.objectContaining({ method: "DELETE" }),
     );
 

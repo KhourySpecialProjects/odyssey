@@ -69,27 +69,13 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
-// jest.resetAllMocks() also wipes the identity mock of @/lib/strapi-document-id
-// installed in jest.setup.ts, so put it back after every reset.
+// jest.resetAllMocks() also wipes the documentId mock installed in
+// jest.setup.ts, so put it back after every reset.
 function resetAllMocks() {
   jest.resetAllMocks();
-  const identity = (ref: any): string =>
-    ref && typeof ref === "object"
-      ? ref.documentId ?? String(ref.id)
-      : String(ref);
-  jest
-    .mocked(resolveDocumentId)
-    .mockImplementation(async (_c, ref) => identity(ref));
-  jest
-    .mocked(resolveDocumentIds)
-    .mockImplementation(async (_c, refs) => refs.map(identity));
-  jest
-    .mocked(strapiEntryUrl)
-    .mockImplementation(
-      async (collection, ref, query) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
-    );
+  installDocumentIdMock();
 }
 
 // ─── module mocks ────────────────────────────────────────────────────────────
@@ -1214,7 +1200,7 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
       const lessonPut = fetchMock.mock.calls.find(
         (c) =>
           c[1]?.method === "PUT" &&
-          (c[0] as string).endsWith("/api/lessons/200"),
+          (c[0] as string).endsWith("/api/lessons/doc200"),
       );
       expect(lessonPut).toBeDefined();
       const putBody = JSON.parse(lessonPut![1]?.body as string);
@@ -1465,7 +1451,8 @@ describe("droplet-coverage — publishDraftToOriginal", () => {
 
     const updateCall = fetchMock.mock.calls.find(
       (c) =>
-        c[1]?.method === "PUT" && (c[0] as string).includes("/api/droplets/2"),
+        c[1]?.method === "PUT" &&
+        (c[0] as string).includes("/api/droplets/doc2"),
     );
     const updateBody = JSON.parse(updateCall![1]?.body as string);
     // The fetched draft's entities carry documentIds, so they are sent as is
@@ -1516,12 +1503,12 @@ describe("droplet-coverage — favoriteDroplet", () => {
     const putBody = JSON.parse(putCall[1]?.body as string);
     // Should include both original user (3) and new user (7), as documentIds
     expect(putBody.data.usersFavorited).toContain("docU3");
-    expect(putBody.data.usersFavorited).toContain("7");
+    expect(putBody.data.usersFavorited).toContain("doc7");
     // The droplet comes from the caller, so both URLs are built from its
     // numeric id; its (possibly forged) documentId is never used.
-    expect(putCall[0]).toMatch(/\/api\/droplets\/5$/);
+    expect(putCall[0]).toMatch(/\/api\/droplets\/doc5$/);
     expect(fetchMock.mock.calls[0][0]).toMatch(
-      /\/api\/droplets\/5\?populate=usersFavorited$/,
+      /\/api\/droplets\/doc5\?populate=usersFavorited$/,
     );
     expect(strapiEntryUrl).toHaveBeenCalledWith(
       "droplets",
@@ -1583,7 +1570,7 @@ describe("droplet-coverage — favoriteDroplet", () => {
     expect(result).toEqual({ success: true });
 
     const putBody = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
-    expect(putBody.data.usersFavorited).toEqual(["3"]); // 7 removed
+    expect(putBody.data.usersFavorited).toEqual(["doc3"]); // 7 removed
   });
 
   it("returns { success: false } when fetch latest state fails", async () => {

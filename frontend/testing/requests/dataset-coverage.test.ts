@@ -306,7 +306,7 @@ describe("dataset requests", () => {
       await deleteDataset(42);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/datasets/42"),
+        expect.stringContaining("/api/datasets/doc42"),
         expect.objectContaining({ method: "DELETE" }),
       );
     });

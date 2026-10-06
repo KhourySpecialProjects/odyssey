@@ -26,32 +26,13 @@ import {
   makeDroplet,
 } from "@/lib/testing/mock-helpers";
 
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-} from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
-// jest.resetAllMocks() also wipes the identity mock of @/lib/strapi-document-id
-// installed in jest.setup.ts, so put it back after every reset.
+// jest.resetAllMocks() also wipes the documentId mock installed in
+// jest.setup.ts, so put it back after every reset.
 function resetAllMocks() {
   jest.resetAllMocks();
-  const identity = (ref: any): string =>
-    ref && typeof ref === "object"
-      ? ref.documentId ?? String(ref.id)
-      : String(ref);
-  jest
-    .mocked(resolveDocumentId)
-    .mockImplementation(async (_c, ref) => identity(ref));
-  jest
-    .mocked(resolveDocumentIds)
-    .mockImplementation(async (_c, refs) => refs.map(identity));
-  jest
-    .mocked(strapiEntryUrl)
-    .mockImplementation(
-      async (collection, ref, query) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
-    );
+  installDocumentIdMock();
 }
 
 // ─── module mocks ────────────────────────────────────────────────────────────
@@ -228,6 +209,10 @@ const strapiError = (status: number, message: string) =>
     status,
   );
 
+// Relation values are fake documentIds ("doc5"); the fake stores numeric ids.
+const idOfDoc = (documentId: unknown) =>
+  Number(String(documentId).replace(/^doc/, ""));
+
 class FakeStrapi {
   readonly lessons = new Map<number, FakeLesson>();
   readonly enrollments: FakeEnrollment[] = [];
@@ -357,7 +342,8 @@ class FakeStrapi {
 
   draftWasDeleted(): boolean {
     return (
-      this.requests("DELETE", new RegExp(`^/api/droplets/${DRAFT}$`)).length > 0
+      this.requests("DELETE", new RegExp(`^/api/droplets/doc${DRAFT}$`))
+        .length > 0
     );
   }
 
@@ -450,10 +436,10 @@ class FakeStrapi {
     }
 
     if (method === "PUT") {
-      if (/^\/api\/lessons\/\d+$/.test(path)) {
+      if (/^\/api\/lessons\/doc\d+$/.test(path)) {
         return this.putLesson(idIn(/(\d+)$/), data);
       }
-      if (/^\/api\/droplets\/\d+$/.test(path)) {
+      if (/^\/api\/droplets\/doc\d+$/.test(path)) {
         return makeFetchResponse({
           data: {
             id: idIn(/(\d+)$/),
@@ -461,8 +447,8 @@ class FakeStrapi {
           },
         });
       }
-      if (/^\/api\/enrollments\/\d+$/.test(path)) {
-        this.enrollment(idIn(/(\d+)$/)).droplet = Number(data.droplet); // relation values are documentIds; the fake uses String(id)
+      if (/^\/api\/enrollments\/doc\d+$/.test(path)) {
+        this.enrollment(idIn(/(\d+)$/)).droplet = idOfDoc(data.droplet);
         return makeFetchResponse({ data: {} });
       }
     }
@@ -472,11 +458,11 @@ class FakeStrapi {
     }
 
     // Strapi v5 answers every core DELETE with an empty 204
-    if (method === "DELETE" && /^\/api\/droplets\/\d+$/.test(path)) {
+    if (method === "DELETE" && /^\/api\/droplets\/doc\d+$/.test(path)) {
       return makeEmptyResponse(204);
     }
 
-    if (method === "DELETE" && /^\/api\/lessons\/\d+$/.test(path)) {
+    if (method === "DELETE" && /^\/api\/lessons\/doc\d+$/.test(path)) {
       this.removeLesson(idIn(/(\d+)$/));
       return makeEmptyResponse(204);
     }
@@ -539,7 +525,7 @@ class FakeStrapi {
     const name = data.name as string;
     const lesson = this.addLesson({
       id: this.nextLessonId++,
-      dropletId: Number((data.droplets as string[])[0]),
+      dropletId: idOfDoc((data.droplets as string[])[0]),
       name,
       // beforeCreate always overwrites the posted slug with one generated from the name
       slug: this.uniqueSlug(name),
@@ -726,9 +712,9 @@ function label(call: LoggedCall): string {
 const phases = (calls: LoggedCall[]) =>
   calls.map(label).filter((step, i, steps) => step !== steps[i - 1]);
 
-const LESSON_PUT = /^\/api\/lessons\/\d+$/;
+const LESSON_PUT = /^\/api\/lessons\/doc\d+$/;
 const LESSON_POST = /^\/api\/lessons$/;
-const ENROLLMENT_PUT = /^\/api\/enrollments\/\d+$/;
+const ENROLLMENT_PUT = /^\/api\/enrollments\/doc\d+$/;
 
 // ─── tests ───────────────────────────────────────────────────────────────────
 
@@ -777,7 +763,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
     // Exactly one lesson write, carrying only the content that changed
     const puts = fake.requests("PUT", LESSON_PUT);
     expect(puts).toHaveLength(1);
-    expect(puts[0].path).toBe(`/api/lessons/${QUIZ}`);
+    expect(puts[0].path).toBe(`/api/lessons/doc${QUIZ}`);
     expect(Object.keys(puts[0].body?.data ?? {})).toEqual(["blocks"]);
     expect(JSON.stringify(fake.lesson(QUIZ).blocks)).toContain("Five");
 
@@ -892,7 +878,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
       blocksVersion: "v2",
       blocksV2: [paragraph("bn-fresh", "Brand new")],
       slug: expect.any(String),
-      droplets: [String(LIVE)], // a documentId (the fake uses String(id))
+      droplets: [`doc${LIVE}`],
     });
   });
 
@@ -914,7 +900,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
 
     expect(result.ok).toBe(true);
     expect(fake.lessons.has(QUIZ)).toBe(false);
-    expect(fake.requests("DELETE", /^\/api\/lessons\/202$/)).toHaveLength(1);
+    expect(fake.requests("DELETE", /^\/api\/lessons\/doc202$/)).toHaveLength(1);
     expect(fake.progress(STUDENT)).toEqual([INTRO]);
     expect(fake.requests("PUT", ENROLLMENT_PUT)).not.toEqual([]);
     expect(fake.enrollment(AUTHOR_ENROLLMENT).droplet).toBe(LIVE);
@@ -940,7 +926,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
     expect(fake.progress(STUDENT)).toEqual([INTRO, QUIZ]);
     // The droplet itself is still updated and the draft is still removed
     expect(
-      fake.requests("PUT", new RegExp(`^/api/droplets/${LIVE}$`)),
+      fake.requests("PUT", new RegExp(`^/api/droplets/doc${LIVE}$`)),
     ).toHaveLength(1);
     expect(fake.draftWasDeleted()).toBe(true);
   });
@@ -970,7 +956,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
       fake.lessons.delete(fake.draftLesson("Wrap up").id);
       fake.failRequest(
         "PUT",
-        new RegExp(`^/api/lessons/${INTRO}$`),
+        new RegExp(`^/api/lessons/doc${INTRO}$`),
         "Something broke",
         status,
       );
@@ -1053,7 +1039,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
     fake.lessons.delete(fake.draftLesson("Wrap up").id);
     fake.failRequest(
       "PUT",
-      new RegExp(`^/api/droplets/${LIVE}$`),
+      new RegExp(`^/api/droplets/doc${LIVE}$`),
       "Invalid relations",
       400,
     );
@@ -1212,9 +1198,9 @@ describe("publishDraftToOriginal: lesson sync", () => {
     expect(result.ok).toBe(true);
     const puts = fake.requests("PUT", LESSON_PUT);
     expect(puts.map((put) => put.path).sort()).toEqual([
-      `/api/lessons/${INTRO}`,
-      `/api/lessons/${QUIZ}`,
-      `/api/lessons/${WRAP_UP}`,
+      `/api/lessons/doc${INTRO}`,
+      `/api/lessons/doc${QUIZ}`,
+      `/api/lessons/doc${WRAP_UP}`,
     ]);
 
     const allowed = [
@@ -1245,7 +1231,8 @@ describe("publishDraftToOriginal: lesson sync", () => {
 
     // Each lesson got exactly the fields that changed
     const bodyOf = (lessonId: number) =>
-      puts.find((put) => put.path === `/api/lessons/${lessonId}`)?.body?.data;
+      puts.find((put) => put.path === `/api/lessons/doc${lessonId}`)?.body
+        ?.data;
     expect(Object.keys(bodyOf(INTRO) ?? {}).sort()).toEqual(
       ["name", "orderIndex", "type"].sort(),
     );
@@ -1338,13 +1325,13 @@ describe("publishDraftToOriginal: lesson sync", () => {
     expect(result.ok).toBe(true);
     expect(phases(fake.log)).toEqual([
       "read draft enrollments",
-      `PUT /api/droplets/${LIVE}`,
+      `PUT /api/droplets/doc${LIVE}`,
       "update lesson",
       "create lesson",
       "delete live lesson",
       "move enrollment",
       "delete draft lesson",
-      `DELETE /api/droplets/${DRAFT}`,
+      `DELETE /api/droplets/doc${DRAFT}`,
     ]);
     expect(fake.enrollment(AUTHOR_ENROLLMENT).droplet).toBe(LIVE);
   });

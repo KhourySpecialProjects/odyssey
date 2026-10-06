@@ -143,7 +143,7 @@ describe("updateUserInfo — auth + validation security", () => {
 
     expect(result.ok).toBe(true);
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/authorized-users/42"),
+      expect.stringContaining("/authorized-users/doc42"),
       expect.objectContaining({ method: "PUT" }),
     );
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
@@ -167,13 +167,13 @@ describe("updateUserInfo — auth + validation security", () => {
 
     expect(result.ok).toBe(true);
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/authorized-users/99"),
+      expect.stringContaining("/authorized-users/doc99"),
       expect.objectContaining({ method: "PUT" }),
     );
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body.data.firstName).toBe("Bob");
     expect(body.data.isEnabled).toBe(false);
-    expect(body.data.roles.set).toEqual(["2"]);
+    expect(body.data.roles.set).toEqual(["doc2"]);
   });
 
   // 6 -------------------------------------------------------------------

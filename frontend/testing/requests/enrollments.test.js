@@ -585,7 +585,7 @@ describe("Enrollment Tests", () => {
       const result = await updateEnrollmentFirstTime("123");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/enrollments/123"),
+        expect.stringContaining("/api/enrollments/doc123"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
@@ -815,7 +815,7 @@ describe("Enrollment Tests", () => {
       await deleteEnrollment({ droplet: 123 });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/enrollments/50"),
+        expect.stringContaining("/api/enrollments/doc50"),
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -1142,7 +1142,7 @@ describe("Enrollment Tests", () => {
       expect(result).toEqual({ success: true, alreadyViewed: false });
       expect(global.fetch).toHaveBeenCalledTimes(1);
       const [url, init] = global.fetch.mock.calls[0];
-      expect(url).toContain("/api/enrollments/123?");
+      expect(url).toContain("/api/enrollments/doc123?");
       expect(decodeURIComponent(url)).toContain(
         "populate[viewedLessons][fields][0]=id",
       );
@@ -1435,7 +1435,7 @@ describe("Enrollment Tests", () => {
       const result = await updateCompletionDate("123");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/enrollments/123"),
+        expect.stringContaining("/api/enrollments/doc123"),
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining("completionDate"),

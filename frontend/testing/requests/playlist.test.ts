@@ -15,6 +15,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
@@ -130,7 +131,7 @@ describe("updatePlaylist", () => {
 
     const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
     expect(init.method).toBe("PUT");
-    expect(url).toMatch(/\/api\/playlists\/123$/);
+    expect(url).toMatch(/\/api\/playlists\/doc123$/);
     expect(JSON.parse(init.body).data.regenerateSlug).toBe(false);
   });
 
@@ -350,10 +351,6 @@ describe("archivePlaylist", () => {
 });
 
 describe("documentId handling (ODY-601)", () => {
-  const identity = (ref: any) =>
-    ref && typeof ref === "object"
-      ? ref.documentId ?? String(ref.id)
-      : String(ref);
   const toDoc = (ref: any) =>
     ref && typeof ref === "object" && ref.documentId
       ? ref.documentId
@@ -374,16 +371,7 @@ describe("documentId handling (ODY-601)", () => {
   });
 
   afterEach(() => {
-    (resolveDocumentId as jest.Mock).mockImplementation(async (_c, ref) =>
-      identity(ref),
-    );
-    (resolveDocumentIds as jest.Mock).mockImplementation(async (_c, refs) =>
-      refs.map(identity),
-    );
-    (strapiEntryUrl as jest.Mock).mockImplementation(
-      async (collection, ref, query) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
-    );
+    installDocumentIdMock();
   });
 
   const okResponse = {

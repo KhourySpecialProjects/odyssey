@@ -391,7 +391,7 @@ describe("Droplet API Functions", () => {
       const result = await updateDropletFunFact("A fun fact!", 123);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/droplets/123"),
+        expect.stringContaining("/api/droplets/doc123"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({ data: { funFact: "A fun fact!" } }),
@@ -687,10 +687,10 @@ describe("Droplet API Functions", () => {
               focusArea: "Test Area",
               type: "test",
               tags: {
-                connect: ["1", "2"],
+                connect: ["doc1", "doc2"],
               },
               authorized_users: {
-                connect: ["1"],
+                connect: ["doc1"],
               },
               learningObjectives: [
                 { objective: "Objective 1" },

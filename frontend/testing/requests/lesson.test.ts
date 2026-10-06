@@ -313,7 +313,7 @@ describe("Lesson API Functions", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching("/api/lessons/123"),
+        expect.stringMatching("/api/lessons/doc123"),
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining('"blocksVersion":"v2"'),

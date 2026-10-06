@@ -20,6 +20,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -41,12 +42,6 @@ const toDoc = (ref: unknown): string =>
   ref && typeof ref === "object" && (ref as { documentId?: string }).documentId
     ? (ref as { documentId: string }).documentId
     : "doc" + (typeof ref === "object" ? (ref as { id: number }).id : ref);
-
-const identity = (ref: unknown): string =>
-  ref && typeof ref === "object"
-    ? (ref as { documentId?: string }).documentId ??
-      String((ref as { id: number }).id)
-    : String(ref);
 
 const urlFor =
   (map: (ref: unknown) => string) =>
@@ -94,7 +89,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  useMapping(identity);
+  installDocumentIdMock();
 });
 
 const mainNode = (playlistId: number) => ({

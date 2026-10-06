@@ -224,7 +224,7 @@ describe("highlights requests — coverage", () => {
       await deleteHighlight(42, 7);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/highlights/42"),
+        expect.stringContaining("/api/highlights/doc42"),
         expect.objectContaining({ method: "DELETE" }),
       );
     });

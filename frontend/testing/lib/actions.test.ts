@@ -28,6 +28,7 @@ import {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
 global.fetch = jest.fn();
 
@@ -235,7 +236,7 @@ describe("Server Actions", () => {
 
       // Must use the session user's id (42), NOT any caller-supplied id
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/42"),
+        expect.stringContaining("/api/authorized-users/doc42"),
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
@@ -557,7 +558,7 @@ describe("Server Actions", () => {
       const result = await deleteAccessRequest(formData);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/access-requests/123"),
+        expect.stringContaining("/api/access-requests/doc123"),
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -669,7 +670,7 @@ describe("Server Actions", () => {
       const result = await deleteReport("456");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/reports/456"),
+        expect.stringContaining("/api/reports/doc456"),
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -740,7 +741,7 @@ describe("Server Actions", () => {
         expect.stringContaining("/api/creation-requests"),
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ data: { ...formData, user: "1" } }),
+          body: JSON.stringify({ data: { ...formData, user: "doc1" } }),
         }),
       );
       expect(result).toEqual({
@@ -1111,7 +1112,7 @@ describe("Server Actions", () => {
       const result = await deleteCreationRequest("123");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/creation-requests/123"),
+        expect.stringContaining("/api/creation-requests/doc123"),
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -1498,23 +1499,7 @@ describe("Server Actions", () => {
     });
 
     afterEach(() => {
-      const identity = (ref: unknown) =>
-        typeof ref === "object" && ref !== null
-          ? (ref as { documentId?: string }).documentId ??
-            String((ref as { id: number }).id)
-          : String(ref);
-      jest
-        .mocked(resolveDocumentId)
-        .mockImplementation(async (_c, ref) => identity(ref));
-      jest
-        .mocked(resolveDocumentIds)
-        .mockImplementation(async (_c, refs) => refs.map(identity));
-      jest
-        .mocked(strapiEntryUrl)
-        .mockImplementation(
-          async (c, ref, q) =>
-            `http://localhost:1337/api/${c}/${identity(ref)}${q ? `?${q}` : ""}`,
-        );
+      installDocumentIdMock();
     });
 
     it("setTimeZone PUTs to the session user's documentId", async () => {

@@ -243,7 +243,7 @@ describe("Notes Tests", () => {
       const result = await updateNoteContent(1, "Updated content", 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/notes/1"),
+        expect.stringContaining("/api/notes/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -315,7 +315,7 @@ describe("Notes Tests", () => {
       const result = await updateNotePosition(1, 150, 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/notes/1"),
+        expect.stringContaining("/api/notes/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -639,7 +639,7 @@ describe("deleteNote", () => {
     const result = await deleteNote(1, 4);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringMatching("/api/notes/1"),
+      expect.stringMatching("/api/notes/doc1"),
       expect.objectContaining({
         method: "DELETE",
         headers: expect.objectContaining({

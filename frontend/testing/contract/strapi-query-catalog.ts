@@ -444,7 +444,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
         ME_ROUTE,
         [
           "GET",
-          /^\/droplets\/1$/,
+          /^\/droplets\/doc1$/,
           { data: ent(1, { usersFavorited: rel(ent(9)) }) },
         ],
       ]),
@@ -610,12 +610,12 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(5, 1, 3),
-      routes([["GET", /^\/lessons\/5$/, { data: lessonEnt(5, "v1") }]]),
+      routes([["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }]]),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(6, 1, 4),
-      routes([["GET", /^\/lessons\/6$/, { data: lessonEnt(6, "v2") }]]),
+      routes([["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }]]),
     ),
   ]),
   notes: defineModule<typeof import("@/lib/requests/notes")>([

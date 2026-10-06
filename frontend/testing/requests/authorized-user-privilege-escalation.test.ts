@@ -170,7 +170,7 @@ describe("createAuthorizedUser — plain User accounts for provisioning roles", 
     expect(result.ok).toBe(true);
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const body = JSON.parse(String(mockFetch.mock.calls[0][1]?.body));
-    expect(body.data.roles).toEqual({ set: [String(USER_ROLE_ID)] });
+    expect(body.data.roles).toEqual({ set: [`doc${USER_ROLE_ID}`] });
   });
 
   it.each([
@@ -230,7 +230,7 @@ describe("resolveEmailsToUserIds", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const body = JSON.parse(String(mockFetch.mock.calls[0][1]?.body));
     expect(body.data.email).toBe("new@northeastern.edu");
-    expect(body.data.roles).toEqual({ set: [String(USER_ROLE_ID)] });
+    expect(body.data.roles).toEqual({ set: [`doc${USER_ROLE_ID}`] });
   });
 
   it("logs instead of silently dropping a failed creation", async () => {

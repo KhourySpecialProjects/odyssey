@@ -172,7 +172,7 @@ describe("enrollInVoyage", () => {
         headers: expect.objectContaining({
           "Content-Type": "application/json",
         }),
-        body: expect.stringContaining('"voyage":"10"'),
+        body: expect.stringContaining('"voyage":"doc10"'),
       }),
     );
     expect(revalidateTag).toHaveBeenCalledWith(
@@ -322,7 +322,7 @@ describe("unenrollFromVoyage", () => {
     const result = await unenrollFromVoyage(10);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyage-enrollments/5"),
+      expect.stringContaining("/api/voyage-enrollments/doc5"),
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(revalidateTag).toHaveBeenCalledWith(
@@ -531,7 +531,7 @@ describe("markVoyageNodeComplete", () => {
         headers: expect.objectContaining({
           "Content-Type": "application/json",
         }),
-        body: expect.stringContaining('"voyageNode":"7"'),
+        body: expect.stringContaining('"voyageNode":"doc7"'),
       }),
     );
 
