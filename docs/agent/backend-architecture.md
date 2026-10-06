@@ -215,6 +215,16 @@ Hooks live in `src/api/*/content-types/*/lifecycles.ts` (droplet, lesson, playli
 - **`plugin::content-manager.uid` `generateUIDField` keeps its signature**, so `lib/lifecycle-utils.ts` `generateSlug` works unchanged.
 - **Slack sends are a no-op unless `NODE_ENV=production`** (`lib/slack.ts`), so tests switch it on per test and count `fetch` calls to the webhook URL.
 
+### Content-manager extension (ODY-699)
+
+With D&P off, the v5 admin (content-manager) still treats `status` as its own computed D&P field, which breaks the real `status` enum on droplet and voyage. `src/extensions/content-manager/` wraps three things for any model with D&P off and a `status` attribute:
+
+- **Edit view:** `document-metadata.formatDocumentWithMetadata` stops overwriting `status` with `undefined`; the stored value is kept (still permission-sanitized).
+- **List view:** `document-metadata.getStatus` returns the stored `status` when the request's model (`strapi.requestContext`) is such a model.
+- **Saves:** the `collection-types` controller (`create`/`update`/`clone`, patched in place so `autoClone` still works) swaps a value like `edit`, which the admin rejects with 400 "Invalid status", for `draft` before validation. The `document-manager` service puts the real value back after sanitization, so field permissions apply and the droplet lifecycle sees `edit` once.
+
+It depends on content-manager internals, and `strapi-server.ts` throws at boot if a wrapped member disappears. **After any `@strapi/*` bump,** run `npx jest tests/admin --runInBand` and do one admin save of a droplet. Delete the extension if upstream fixes this. Plan: `docs/plans/ODY-699.md`.
+
 ### Lesson lock routes (`custom-lesson` controller)
 
 `POST/DELETE /api/lessons/:id/lock`, `PUT /api/lessons/:id/lock/heartbeat` and `GET /api/lessons/:id/lock-status` (tested in `tests/api/lesson-lock.test.js`):

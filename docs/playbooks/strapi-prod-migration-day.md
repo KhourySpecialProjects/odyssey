@@ -31,7 +31,7 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 
 ### Phase 1: Code blockers (starts now)
 
-- [ ] **1.1 ODY-699 (hard gate for any v5 deploy):** the v5 admin hides `status` on droplets and voyages, so editors can't change it.
+- [ ] **1.1 ODY-699 (hard gate for any v5 deploy):** the v5 admin hides `status` on droplets and voyages, so editors can't change it. Fixed by the content-manager extension in `backend/src/extensions/content-manager/` (plan: `docs/plans/ODY-699.md`); tick after the manual check on the `ody597` scratch DB (plan Task 5).
 - [ ] **1.2 Audit Warning 4 (a person must do this, because agents can't edit `docker-compose.yml`):** remove the `developTesting` infra changes from the branch (the Infisical `--env=prod` `entrypoint.sh` files and the `docker-compose.yml` changes), or get the owner's sign-off.
 - [ ] **1.3 Audit Warning 5:** add a backend Jest step to `build.yml` that runs on the deploy Node version.
 - [ ] **1.4 Audit Warning 6:** make the default `strapi-document-id` Jest mock non-identity (for example `"doc" + id`) and fix whatever breaks.
