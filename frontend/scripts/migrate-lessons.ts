@@ -45,6 +45,8 @@ async function fetchAPI(path: string, options: any = {}) {
     headers: {
       Authorization: `Bearer ${STRAPI_TOKEN}`,
       "Content-Type": "application/json",
+      // This script reads v4-shaped responses (attributes, relation .data).
+      "Strapi-Response-Format": "v4",
     },
   };
 
