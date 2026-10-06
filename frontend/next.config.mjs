@@ -1,5 +1,34 @@
 import pkg from "./package.json" with { type: "json" };
 
+// The demo (DEMO_MODE=true) gets a demo-only login, so it must never start
+// against the real site or its Strapi. A hosted demo subdomain is fine.
+const PRODUCTION_HOSTS = new Set([
+  "khouryodyssey.org",
+  "www.khouryodyssey.org",
+  "data.khouryodyssey.org",
+  "www.data.khouryodyssey.org",
+  "odyssey.khoury.northeastern.edu",
+  "strapi.odyssey.khoury.northeastern.edu",
+]);
+if (process.env.DEMO_MODE === "true") {
+  for (const name of [
+    "APP_URL",
+    "NEXTAUTH_URL",
+    "NEXT_PUBLIC_STRAPI_API_URL",
+    "STRAPI_API_URL",
+  ]) {
+    let host = null;
+    try {
+      host = new URL(process.env[name] ?? "").hostname;
+    } catch {}
+    if (host && PRODUCTION_HOSTS.has(host)) {
+      throw new Error(
+        `DEMO_MODE is on but ${name} points at production (${host}). Refusing to start.`,
+      );
+    }
+  }
+}
+
 // Derive CSP-safe origins from the S3/CDN env vars so the config follows the
 // actual bucket (any region) or a CloudFront distribution without edits.
 function originFromEnv(value) {

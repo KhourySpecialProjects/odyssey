@@ -273,6 +273,10 @@ async function createLinearIssue(
     sessionUrl?: string;
   },
 ) {
+  // The demo must never file real tickets or spend the Anthropic budget on
+  // write-ups. The report itself is still saved to Strapi above.
+  if (process.env.DEMO_MODE === "true" || !process.env.LINEAR_API_KEY) return;
+
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || "placeholder",
   });

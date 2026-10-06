@@ -28,6 +28,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .docker.env
+.env.demo
 
 # local uploads
 /public/uploads

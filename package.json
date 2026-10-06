@@ -9,7 +9,13 @@
     "dev": "npm run clear && concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
     "prettier-check": "npx prettier . --check",
     "prettier-write": "npx prettier . --write",
-    "lint": "cd frontend && eslint app components --ext .js,.ts,.tsx"
+    "lint": "cd frontend && eslint app components --ext .js,.ts,.tsx",
+    "demo:setup": "node demo/setup-env.mjs",
+    "demo:db:up": "docker start odyssey-demo-db 2>/dev/null || docker run -d --name odyssey-demo-db -p 5433:5432 -e POSTGRES_DB=odyssey_demo -e POSTGRES_USER=odyssey_demo -e POSTGRES_PASSWORD=odyssey_demo -v odyssey-demo-db:/var/lib/postgresql/data postgres:13-alpine",
+    "demo:db:down": "docker stop odyssey-demo-db",
+    "demo:db:reset": "docker rm -f odyssey-demo-db; docker volume rm odyssey-demo-db; npm run demo:db:up",
+    "demo:backend": "cd backend && ENV_PATH=.env.demo npm run dev",
+    "demo:frontend": "cd frontend && node --env-file=.env.demo node_modules/next/dist/bin/next dev -p 3001"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

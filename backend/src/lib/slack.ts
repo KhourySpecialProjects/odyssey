@@ -35,6 +35,8 @@ export interface SlackPayload {
  */
 export async function sendSlackNotification(payload: SlackPayload): Promise<void> {
   if (process.env.NODE_ENV !== 'production') return;
+  // The demo never posts to the real admin channel, even if a webhook is set.
+  if (process.env.DEMO_MODE === 'true') return;
 
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 

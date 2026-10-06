@@ -572,6 +572,31 @@ describe("actions-coverage: lib/actions.ts", () => {
       expect(strapiBody.data).not.toHaveProperty("sessionUrl");
       expect(strapiBody.data.type).toBe("bug");
     });
+
+    it("in demo mode saves the report but skips Anthropic and Linear", async () => {
+      process.env.DEMO_MODE = "true";
+      const MockAnthropic = jest.mocked(require("@anthropic-ai/sdk"));
+      const mockFetch = queueStrapiSuccess();
+
+      const result = await actions.createBugReport(bugFormData);
+
+      expect(result.ok).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(String(mockFetch.mock.calls[0][0])).toContain("/api/reports");
+      expect(MockAnthropic).not.toHaveBeenCalled();
+    });
+
+    it("skips Anthropic and Linear when no Linear key is set", async () => {
+      delete process.env.LINEAR_API_KEY;
+      const MockAnthropic = jest.mocked(require("@anthropic-ai/sdk"));
+      const mockFetch = queueStrapiSuccess();
+
+      const result = await actions.createBugReport(bugFormData);
+
+      expect(result.ok).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(MockAnthropic).not.toHaveBeenCalled();
+    });
   });
 
   // -------------------------------------------------------------------------
