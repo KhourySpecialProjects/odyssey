@@ -7,6 +7,7 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
+import { demoLoginProvider, isDemoMode } from "./demo-login";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -56,22 +57,25 @@ async function syncAzureProfilePhoto(
 }
 
 export const authOptions: NextAuthOptions = {
-  providers: [
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID || "",
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET || "",
-      tenantId: process.env.AZURE_AD_TENANT_ID,
-      authorization: {
-        params: {
-          scope: "openid email profile User.Read",
-        },
-      },
-    }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-    }),
-  ],
+  // The demo environment logs in as seeded personas instead (lib/auth/demo-login.ts)
+  providers: isDemoMode()
+    ? [demoLoginProvider()]
+    : [
+        AzureADProvider({
+          clientId: process.env.AZURE_AD_CLIENT_ID || "",
+          clientSecret: process.env.AZURE_AD_CLIENT_SECRET || "",
+          tenantId: process.env.AZURE_AD_TENANT_ID,
+          authorization: {
+            params: {
+              scope: "openid email profile User.Read",
+            },
+          },
+        }),
+        GitHubProvider({
+          clientId: process.env.GITHUB_CLIENT_ID || "",
+          clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+        }),
+      ],
   pages: {
     signIn: "/auth/login",
   },

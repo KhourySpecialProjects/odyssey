@@ -9,6 +9,7 @@ import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { profileEmailFromUsername } from "@/lib/profile-email";
 import { ProfileContent } from "./profile-content";
 import { PrivateProfileError } from "./private-profile-error";
 
@@ -20,7 +21,7 @@ export default async function PublicProfilePage({
   const { username } = await params;
 
   try {
-    const userEmail = username + "@northeastern.edu";
+    const userEmail = profileEmailFromUsername(username);
     const currentUser = await getCurrentUser();
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
