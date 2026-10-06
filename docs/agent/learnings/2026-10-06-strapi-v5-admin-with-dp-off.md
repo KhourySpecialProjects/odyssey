@@ -16,4 +16,4 @@ Don't treat `publishedAt` as "first published" (the frontend doesn't read it tod
 
 - `@strapi/core/dist/services/document-service/draft-and-publish.js` `statusToData`: with no D&P it sets `data.publishedAt = new Date()`.
 - `GET /content-manager/collection-types/api::droplet.droplet?sort=status:ASC` and `...:DESC` return the same order on `ody597`.
-- `SELECT count(*) FROM droplets WHERE difficulty IS NULL` returns 50 on `ody597` and `ody633`. Results are in `docs/plans/ODY-699.md` under "Verification results".
+- `SELECT count(*) FROM droplets WHERE difficulty IS NULL` returns 50 on `ody597` and `ody633`. The full verification results were in the ODY-699 plan, which was deleted on 2026-10-06.

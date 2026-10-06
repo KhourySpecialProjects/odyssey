@@ -223,7 +223,7 @@ With D&P off, the v5 admin (content-manager) still treats `status` as its own co
 - **List view:** `document-metadata.getStatus` returns the stored `status` when the request's model (`strapi.requestContext`) is such a model.
 - **Saves:** the `collection-types` controller (`create`/`update`/`clone`, patched in place so `autoClone` still works) swaps a value like `edit`, which the admin rejects with 400 "Invalid status", for `draft` before validation. The `document-manager` service puts the real value back after sanitization, so field permissions apply and the droplet lifecycle sees `edit` once.
 
-It depends on content-manager internals. Services are lazy, so a bootstrap hook in `strapi-server.ts` resolves the wrapped services at startup; boot fails if a wrapped member disappears. If a saved status is not restored, the controller wrapper logs an `ODY-699` error instead of throwing. CI runs backend Jest (`test.yml` backend matrix, Node 20.14.0), so `tests/admin` catches drift on every PR. **After any `@strapi/*` bump,** also do one admin save of a droplet. Delete the extension if upstream fixes this. Plan: `docs/plans/ODY-699.md`.
+It depends on content-manager internals. Services are lazy, so a bootstrap hook in `strapi-server.ts` resolves the wrapped services at startup; boot fails if a wrapped member disappears. If a saved status is not restored, the controller wrapper logs an `ODY-699` error instead of throwing. CI runs backend Jest (`test.yml` backend matrix, Node 20.14.0), so `tests/admin` catches drift on every PR. **After any `@strapi/*` bump,** also do one admin save of a droplet. Delete the extension if upstream fixes this. Ticket: [ODY-699](https://linear.app/aiil/issue/ODY-699).
 
 ### Lesson lock routes (`custom-lesson` controller)
 
