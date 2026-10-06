@@ -529,6 +529,34 @@ describe("Droplet API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.authors);
     });
 
+    it("publishing revalidates voyages, since it can finish a voyage claim", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "published" } },
+          }),
+      });
+
+      await updateDroplet(123, { status: "published", inReview: false });
+
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
+    });
+
+    it("saves that don't publish leave the voyages cache alone", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "published" } },
+          }),
+      });
+
+      await updateDroplet(123, { description: "edit" });
+
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.voyages);
+    });
+
     it("does not revalidate on failure", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,

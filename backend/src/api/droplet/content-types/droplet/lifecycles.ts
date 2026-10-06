@@ -1,5 +1,10 @@
 import { sendSlackNotification, escapeSlackMrkdwn, SlackBlock } from '../../../../lib/slack';
-import { generateSlug, formatPersonName, capitalize } from '../../../../lib/lifecycle-utils';
+import {
+  generateSlug,
+  formatPersonName,
+  capitalize,
+  markClaimedVoyageNodesAuthored,
+} from '../../../../lib/lifecycle-utils';
 import { DropletStatus, DropletWithRelations } from '../../types';
 
 module.exports = {
@@ -27,6 +32,16 @@ module.exports = {
   async afterUpdate(event) {
     const { result } = event;
     const prevStatus = event.state?.previousStatus as DropletStatus | null | undefined;
+
+    // Publishing a claimed voyage droplet finishes the claim. Logged instead of
+    // thrown: the droplet is already saved, so the publish must not fail here.
+    if (result.status === 'published' && prevStatus !== undefined && prevStatus !== 'published') {
+      try {
+        await markClaimedVoyageNodesAuthored({ id: result.id });
+      } catch (error) {
+        strapi.log.error(`Could not mark voyage claims authored for droplet ${result.id}`, error);
+      }
+    }
 
     // Only fire when status transitions *into* 'edit'.
     if (result.status !== 'edit' || prevStatus === 'edit' || prevStatus === undefined) return;
