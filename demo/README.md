@@ -60,6 +60,14 @@ Strapi v5 means changing that one file.
   Background students `student4` to `student45` fill the groups.
 - **Droplets in every state**: published, draft, in review, changes requested,
   an `[EDIT]` copy in review, hidden, and a claimed voyage draft.
+- **The Block Gallery** ("SQL Basics: A Tour of Every Lesson Block", by
+  `contentcreator1`): one lesson per block family, so every lesson block
+  appears at least once, plus a classic (v1) lesson. Its Slides lesson works in
+  presentation mode, and its notebooks read `students.csv`. The image and the
+  dataset are served from `frontend/public/demo/`. JavaScript code blocks need
+  Piston running, or Run shows an error. For now the notebooks only find the
+  dataset in the draft editor: the learner page doesn't load dataset URLs (an
+  app bug, not a demo one).
 - **Playlists**: public, private and archived.
 - **A voyage** with a main path and branches, playlist and droplet steps, and
   unclaimed, claimed and authored steps. Plus a draft voyage.

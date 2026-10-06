@@ -1,0 +1,19 @@
+id,name,major,gpa,credits
+1,Student 1,CS,3.80,64
+2,Student 2,DS,3.40,48
+3,Student 3,CY,3.10,96
+4,Student 4,MATH,3.90,32
+5,Student 5,CS,2.90,80
+6,Student 6,DS,3.60,112
+7,Student 7,CS,3.50,16
+8,Student 8,CY,3.20,64
+9,Student 9,MATH,3.70,48
+10,Student 10,CS,3.30,96
+11,Student 11,DS,2.80,32
+12,Student 12,CS,3.95,128
+13,Student 13,CY,3.00,80
+14,Student 14,MATH,3.45,64
+15,Student 15,DS,3.65,48
+16,Student 16,CS,3.15,112
+17,Student 17,CY,3.55,16
+18,Student 18,DS,3.25,96

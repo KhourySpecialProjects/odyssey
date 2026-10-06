@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" font-family="Helvetica, Arial, sans-serif" role="img" aria-labelledby="title">
+  <title id="title">Entity-relationship diagram: students take courses through enrollments</title>
+  <rect width="720" height="260" fill="#f8fafc"/>
+  <g stroke="#0f172a" stroke-width="2" fill="#ffffff">
+    <rect x="30" y="50" width="180" height="150" rx="8"/>
+    <rect x="270" y="50" width="180" height="150" rx="8"/>
+    <rect x="510" y="50" width="180" height="150" rx="8"/>
+  </g>
+  <g fill="#2d7597">
+    <rect x="30" y="50" width="180" height="36" rx="8"/>
+    <rect x="270" y="50" width="180" height="36" rx="8"/>
+    <rect x="510" y="50" width="180" height="36" rx="8"/>
+  </g>
+  <g fill="#ffffff" font-size="17" font-weight="700" text-anchor="middle">
+    <text x="120" y="74">students</text>
+    <text x="360" y="74">enrollments</text>
+    <text x="600" y="74">courses</text>
+  </g>
+  <g fill="#0f172a" font-size="15">
+    <text x="46" y="114">id (PK)</text>
+    <text x="46" y="140">name</text>
+    <text x="46" y="166">major</text>
+    <text x="46" y="192">gpa</text>
+    <text x="286" y="114">student_id (FK)</text>
+    <text x="286" y="140">course_id (FK)</text>
+    <text x="286" y="166">semester</text>
+    <text x="526" y="114">id (PK)</text>
+    <text x="526" y="140">title</text>
+    <text x="526" y="166">credits</text>
+  </g>
+  <g stroke="#0f172a" stroke-width="2" fill="none">
+    <line x1="210" y1="110" x2="270" y2="110"/>
+    <line x1="450" y1="136" x2="510" y2="110"/>
+    <path d="M258 100 L270 110 L258 120"/>
+    <path d="M462 126 L450 136 L462 146"/>
+  </g>
+  <g fill="#475569" font-size="13" text-anchor="middle">
+    <text x="240" y="100">1 : many</text>
+    <text x="480" y="152">many : 1</text>
+  </g>
+</svg>

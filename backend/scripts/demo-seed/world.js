@@ -4,8 +4,14 @@
 // does (see each step), so every page renders it.
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const people = require('./people');
 const content = require('./content');
+const { blockGallery } = require('./gallery');
+
+// Files the demo serves itself (frontend/public), e.g. the gallery's dataset
+const FRONTEND_PUBLIC = path.join(__dirname, '..', '..', '..', 'frontend', 'public');
 
 const UID = {
   role: 'api::authorized-user-role.authorized-user-role',
@@ -29,6 +35,7 @@ const UID = {
   accessRequest: 'api::access-request.access-request',
   report: 'api::report.report',
   gallery: 'api::gallery.gallery',
+  dataset: 'api::dataset.dataset',
 };
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -127,6 +134,7 @@ const SOLO_ENROLLMENTS = [
   { student: 'student1', droplet: 'resume', level: 0.5 },
   { student: 'student3', droplet: 'intro', level: 1 },
   { student: 'student3', droplet: 'html-css', level: 0.5 },
+  { student: 'student1', droplet: 'block-gallery', level: 0 },
 ];
 
 const FRIENDSHIPS = [
@@ -186,6 +194,7 @@ async function seedWorld(db) {
       difficulty: spec.difficulty,
       status: spec.status,
       isHidden: spec.isHidden ?? false,
+      presentationEnabled: spec.presentationEnabled ?? false,
       inReview: spec.inReview ?? false,
       afterReview: spec.afterReview ?? null,
       description: spec.description ?? null,
@@ -199,13 +208,14 @@ async function seedWorld(db) {
     });
     const lessons = [];
     for (const [orderIndex, lesson] of spec.lessons.entries()) {
-      const blocksV2 = lesson.blocksV2 ?? content.lessonBlocks(lesson);
+      // Classic (v1) lessons use the blocks dynamic zone; everything else is BlockNote v2
+      const blocksV2 = lesson.blocks ? null : lesson.blocksV2 ?? content.lessonBlocks(lesson);
       const createdLesson = await db.create(UID.lesson, {
         name: lesson.name,
         slug: 'seed',
-        blocks: [],
-        blocksV2,
-        blocksVersion: 'v2',
+        ...(lesson.blocks
+          ? { blocks: lesson.blocks, blocksVersion: 'v1' }
+          : { blocks: [], blocksV2, blocksVersion: 'v2' }),
         type: 'general',
         orderIndex,
         droplets: [created.id],
@@ -213,13 +223,29 @@ async function seedWorld(db) {
       });
       lessons.push({ id: createdLesson.id, blocksV2 });
     }
+    // Datasets the way the upload UI saves them: name is the filename notebooks read
+    for (const dataset of spec.datasets ?? []) {
+      const file = fs.readFileSync(path.join(FRONTEND_PUBLIC, dataset.file), 'utf8');
+      const [header, ...rows] = file.trim().split('\n');
+      await db.create(UID.dataset, {
+        name: dataset.name,
+        format: dataset.format,
+        fileUrl: `/${dataset.file}`,
+        fileSize: Buffer.byteLength(file),
+        rowCount: rows.length,
+        columnCount: header.split(',').length,
+        columnNames: header.split(','),
+        droplet: created.id,
+      });
+      add('datasets');
+    }
     droplets[key] = { id: created.id, slug: created.slug, name: created.name, spec, lessons };
     add('droplets');
     add('lessons', lessons.length);
     return droplets[key];
   }
 
-  for (const spec of content.droplets) await createDroplet(spec.key, spec);
+  for (const spec of [...content.droplets, blockGallery]) await createDroplet(spec.key, spec);
   for (const spec of content.droplets) {
     if (spec.prerequisites) {
       await db.update(UID.droplet, droplets[spec.key].id, {
