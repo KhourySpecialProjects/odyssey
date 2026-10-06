@@ -16,6 +16,7 @@ const LESSON_UID = 'api::lesson.lesson';
 const PLAYLIST_UID = 'api::playlist.playlist';
 const CREATION_REQUEST_UID = 'api::creation-request.creation-request';
 const ACCESS_REQUEST_UID = 'api::access-request.access-request';
+const VOYAGE_UID = 'api::voyage.voyage';
 const USER_UID = 'api::authorized-user.authorized-user';
 
 const dropletData = (overrides = {}) => ({
@@ -40,6 +41,11 @@ const playlistData = (overrides = {}) => ({
   slug: SLUG_PLACEHOLDER,
   ...overrides,
 });
+
+const voyageData = (overrides = {}) => {
+  const name = unique('Voyage');
+  return { name, slug: name.toLowerCase().replace(/\s+/g, '-'), ...overrides };
+};
 
 const accessRequestData = (overrides = {}) => ({
   givenName: 'Ada',
@@ -66,7 +72,9 @@ module.exports = {
   CREATION_REQUEST_UID,
   ACCESS_REQUEST_UID,
   USER_UID,
+  VOYAGE_UID,
   dropletData,
+  voyageData,
   lessonData,
   playlistData,
   accessRequestData,

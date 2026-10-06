@@ -25,6 +25,7 @@ These boot a real Strapi v5 instance per test file on a throwaway SQLite databas
 - `backend/tests/helpers/strapi.js` sets the test env in code (dummy secrets, `DATABASE_CLIENT=sqlite`, `SLACK_WEBHOOK_URL`), runs `compileStrapi` + `createStrapi().load()`, mounts the server and tears it down.
 - `backend/config/env/test/plugins.ts` turns the documentation plugin off (so the boot doesn't rewrite tracked docs JSON) and uses the local upload provider.
 - `backend/tests/helpers/api-token.js` makes a full-access API token for REST tests with supertest.
+- `backend/tests/helpers/admin-auth.js` (`createSuperAdminToken`) creates a super-admin and logs in through `POST /admin/login`, for admin and content-manager routes (`tests/admin/`). TS source under `src/` can't be required from Jest; require the compiled `dist/src/...` that `setupStrapi` builds.
 - `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
 - `test.failing` marks known issues (for example ODY-700); when one is fixed Jest reports it as failing, and it gets flipped to `it`.
 
