@@ -13,6 +13,7 @@ import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
 import { getVoyageEnrollmentsForGroupMembers } from "@/lib/requests/voyage-enrollment";
+import { enrollmentProgressPercent } from "@/lib/enrollment-completion";
 import { AuthorizedUser, DueDate } from "@/types";
 import { DateTime } from "luxon";
 
@@ -122,11 +123,7 @@ export default async function GroupDetailPage({ params }: Props) {
         if (!enrollment.droplet || !enrollment.authorizedUser) return;
 
         const memberId = enrollment.authorizedUser.id;
-        const completedLessons =
-          enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-        const dropletLessons = enrollment.droplet?.lessons?.length || 1;
-        const percentCompleted =
-          (completedLessons.length / dropletLessons) * 100 || 0;
+        const percentCompleted = enrollmentProgressPercent(enrollment);
 
         const key = `${memberId}-${enrollment.droplet.id}`;
         if (!completionStatuses[key]) {
@@ -136,7 +133,11 @@ export default async function GroupDetailPage({ params }: Props) {
           };
         }
 
-        completionStatuses[key].completionPercentage = percentCompleted;
+        // A member can have two enrollments for one droplet; keep the most complete.
+        completionStatuses[key].completionPercentage = Math.max(
+          completionStatuses[key].completionPercentage,
+          percentCompleted,
+        );
         if (enrollment.completionDate) {
           completionStatuses[key].completionDate = enrollment.completionDate;
         }
