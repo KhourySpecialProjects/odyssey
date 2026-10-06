@@ -20,21 +20,57 @@ Needs Docker and Node 20.6+.
    ```bash
    npm run demo:db:up
    ```
-3. **Start the demo backend** (Strapi on http://localhost:1338):
+3. **Fill it with the demo world** (once, on an empty database):
+   ```bash
+   npm run demo:seed
+   ```
+   It prints an access token at the end. Paste it into `frontend/.env.demo` as
+   `STRAPI_ACCESS_TOKEN`. The seed refuses to run outside demo mode, against a
+   database whose name doesn't contain "demo", or on a database that already
+   has data.
+4. **Start the demo backend** (Strapi on http://localhost:1338):
    ```bash
    npm run demo:backend
    ```
-4. **Start the demo frontend** (http://localhost:3001):
+   The first visit to http://localhost:1338/admin asks you to create a Strapi
+   admin account for browsing the data.
+5. **Start the demo frontend** (http://localhost:3001):
    ```bash
    npm run demo:frontend
    ```
+   Logging in as a persona needs the demo login, which is a later piece.
 
 The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 
 | Command | What it does |
 |---|---|
 | `npm run demo:db:down` | Stops the demo database (data is kept) |
-| `npm run demo:db:reset` | Deletes the demo database and starts an empty one |
+| `npm run demo:db:reset` | Deletes the demo database and starts an empty one (give it a few seconds before seeding) |
+
+## What the seed creates
+
+The seed (`backend/scripts/demo-seed/`) writes data the same way the app does,
+so every page shows it. Every Strapi call goes through `strapi.js`, so moving to
+Strapi v5 means changing that one file.
+
+- **Personas** (email `<name>@demo.odyssey.test`): `admin1` (System Admin),
+  `contentcreator1` (databases), `contentcreator2` (web development and career),
+  `contenteditor1`, `faculty1` (runs CS 3200), `student1` (keeps up),
+  `student2` (behind, overdue), `student3` (has a pending creator request).
+  Background students `student4` to `student45` fill the groups.
+- **Droplets in every state**: published, draft, in review, changes requested,
+  an `[EDIT]` copy in review, hidden, and a claimed voyage draft.
+- **Playlists**: public, private and archived.
+- **A voyage** with a main path and branches, playlist and droplet steps, and
+  unclaimed, claimed and authored steps. Plus a draft voyage.
+- **Groups**: CS 3200 with past, near and future due dates and mixed progress;
+  a playlist-only club; an archived group.
+- **Activity**: enrollments, ratings, a highlight and notes, voyage progress,
+  friends with pending requests and a block, announcements of every type.
+- **Admin backlog**: a creation request, access requests and bug reports.
+- The `/features` gallery, with placeholder images for now.
+
+Dates are relative to when you seed. Shifting them on reset comes in a later piece.
 
 ## Safety switches
 
