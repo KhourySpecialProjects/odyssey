@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Droplet } from "@/types";
@@ -20,6 +20,8 @@ const mockPush = jest.fn();
 const mockUpdateDroplet = updateDroplet as jest.MockedFunction<
   typeof updateDroplet
 >;
+const mockPublishDraftToOriginal =
+  publishDraftToOriginal as jest.MockedFunction<typeof publishDraftToOriginal>;
 const mockToast = {
   success: jest.fn(),
   error: jest.fn(),
@@ -44,6 +46,13 @@ describe("ContentActionButton", () => {
     isHidden: false,
     learningObjectives: [],
     inReview: false,
+  };
+
+  // An [EDIT] draft: a copy of a live droplet
+  const mockEditDraft: Droplet = {
+    ...mockDroplet,
+    id: 2,
+    originalDropletId: 99,
   };
 
   const mockDropletWithReview: Droplet = {
@@ -150,6 +159,31 @@ describe("ContentActionButton", () => {
           { regenerateSlug: false },
         );
       });
+    });
+
+    it("publishes a new droplet without calling publishDraftToOriginal", async () => {
+      const user = userEvent.setup();
+      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
+
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="publish"
+          buttonText="Publish Droplet"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
+      await user.type(
+        screen.getByPlaceholderText("Enter droplet name"),
+        mockDroplet.name,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateDroplet).toHaveBeenCalled();
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
     });
 
     it("shows success toast and redirects to /explore on successful publish", async () => {
@@ -392,6 +426,35 @@ describe("ContentActionButton", () => {
       });
     });
 
+    it("submits an edit draft for review without publishing it over the live droplet", async () => {
+      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="requestReview"
+          buttonText="Submit for review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /submit for review/i }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledWith(
+          "Droplet submitted for review",
+        );
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
+      expect(mockUpdateDroplet).toHaveBeenCalledWith(
+        mockEditDraft.id,
+        { name: mockEditDraft.name, inReview: true },
+        { regenerateSlug: false },
+      );
+    });
+
     it("supports re-request review button text", () => {
       render(
         <ContentActionButton
@@ -512,6 +575,26 @@ describe("ContentActionButton", () => {
       });
     });
 
+    it("requests changes on an edit draft without publishing it", async () => {
+      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="requestChanges"
+          buttonText="Request Changes"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateDroplet).toHaveBeenCalled();
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
+    });
+
     it("shows success toast and redirects to /review on successful request changes", async () => {
       mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
 
@@ -596,6 +679,87 @@ describe("ContentActionButton", () => {
       fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
       const newTextarea = screen.getByPlaceholderText("Enter changes here...");
       expect(newTextarea).toHaveValue("Some feedback");
+    });
+  });
+
+  describe("Publish Draft Action", () => {
+    it("publishes the edit draft over its original and opens the live droplet", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: true,
+        error: null,
+        slug: "live-droplet",
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      expect(screen.getByText(/publish draft changes/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/d/live-droplet");
+      });
+      expect(mockPublishDraftToOriginal).toHaveBeenCalledTimes(1);
+      expect(mockPublishDraftToOriginal).toHaveBeenCalledWith(
+        mockEditDraft.id,
+        mockEditDraft.originalDropletId,
+      );
+      expect(mockToast.success).toHaveBeenCalledWith(
+        "Changes published successfully!",
+      );
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+    });
+
+    it("shows the publish error and stays on the draft when publishing fails", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: false,
+        error: "Original droplet not found",
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Original droplet not found",
+        );
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("does not call publishDraftToOriginal when no original droplet is linked", async () => {
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "No original droplet linked",
+        );
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
     });
   });
 
