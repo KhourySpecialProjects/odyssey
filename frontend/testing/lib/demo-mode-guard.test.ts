@@ -11,7 +11,7 @@ function loadNextConfig(env: Record<string, string>) {
     ["--input-type=module", "-e", "await import('./next.config.mjs')"],
     {
       cwd: path.join(__dirname, "../.."),
-      env: { PATH: process.env.PATH ?? "", ...env },
+      env: { NODE_ENV: "test", PATH: process.env.PATH ?? "", ...env },
       encoding: "utf8",
     },
   );
