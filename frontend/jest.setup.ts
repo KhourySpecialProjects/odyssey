@@ -70,28 +70,23 @@ jest.mock("react", () => ({
   cache: (fn: Function) => fn,
 }));
 
-// Identity mapping for the Strapi id -> documentId helper so existing URL
-// assertions (/api/droplets/5) keep passing without network lookups. Tests that
-// need to prove a documentId is used can override with mockImplementation
-// (e.g. 5 -> "doc5"). strapi-document-id.test.ts unmocks the real module.
+// Fake documentIds (5 -> "doc5"), see lib/testing/document-id-mock.ts. After
+// jest.resetAllMocks(), call installDocumentIdMock(). strapi-document-id.test.ts unmocks it.
 jest.mock("@/lib/strapi-document-id", () => {
-  const identity = (ref: any): string => {
-    if (ref && typeof ref === "object") {
-      return ref.documentId ?? String(ref.id);
-    }
-    return String(ref);
-  };
+  const { fakeDocumentId } = jest.requireActual(
+    "@/lib/testing/document-id-mock",
+  );
   return {
     ...jest.requireActual("@/lib/strapi-document-id"),
     resolveDocumentId: jest.fn(async (_collection: string, ref: any) =>
-      identity(ref),
+      fakeDocumentId(ref),
     ),
     resolveDocumentIds: jest.fn(async (_collection: string, refs: any[]) =>
-      refs.map(identity),
+      refs.map(fakeDocumentId),
     ),
     strapiEntryUrl: jest.fn(
       async (collection: string, ref: any, query?: string) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${fakeDocumentId(ref)}${query ? `?${query}` : ""}`,
     ),
   };
 });

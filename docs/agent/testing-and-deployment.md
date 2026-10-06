@@ -28,7 +28,7 @@ These boot a real Strapi v5 instance per test file on a throwaway SQLite databas
 - `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
 - `test.failing` marks known issues (for example ODY-700); when one is fixed Jest reports it as failing, and it gets flipped to `it`.
 
-A run must leave `git status` clean. Not wired into CI yet (follow-up), and needs Node 20 or later.
+A run must leave `git status` clean. Needs Node 20 or later. CI runs these as the `backend` entry of the matrix in `.github/workflows/test.yml`, on Node 20.14.0 (the ECS image version).
 
 ### Test Directory Structure
 
