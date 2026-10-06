@@ -59,6 +59,7 @@ describe('admin content-manager read path (own status attribute)', () => {
       .set(adminAuth());
     expect(res.status).toBe(200);
     const row = res.body.results.find((r) => r.documentId === droplet.documentId);
+    expect(row).toBeDefined();
     expect(row.status).toBe('edit');
   });
 
@@ -97,12 +98,14 @@ describe('admin content-manager read path (own status attribute)', () => {
 describe('admin content-manager write path (status outside draft|published)', () => {
   it('saves an edit droplet without touching status', async () => {
     const droplet = await createDroplet({ status: 'edit' });
+    slack.reset();
     const res = await http()
       .put(cmUrl(DROPLET_UID, droplet.documentId))
       .set(adminAuth())
       .send({ name: `${droplet.name} renamed`, status: 'edit' });
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('edit');
+    expect(slack.sends()).toHaveLength(0);
 
     const after = await stored(DROPLET_UID, droplet.documentId);
     expect(after.name).toBe(`${droplet.name} renamed`);
@@ -139,6 +142,42 @@ describe('admin content-manager write path (status outside draft|published)', ()
       .set(adminAuth())
       .send({ name: droplet.name, status: 'bogus' });
     expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).not.toContain('Invalid status');
     expect((await stored(DROPLET_UID, droplet.documentId)).status).toBe('draft');
+  });
+
+  it('clones a droplet with status edit', async () => {
+    const source = await createDroplet({ status: 'edit' });
+    const res = await http()
+      .post(`${cmUrl(DROPLET_UID)}/clone/${source.documentId}`)
+      .set(adminAuth())
+      .send({ ...dropletData(), status: 'edit' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.documentId).not.toBe(source.documentId);
+    expect((await stored(DROPLET_UID, res.body.data.documentId)).status).toBe('edit');
+  });
+
+  it('logs an error when the stashed status is never restored', async () => {
+    const { wrapCollectionTypesController } = require('../../dist/src/extensions/content-manager/own-status');
+    const controller = { create: jest.fn(async () => {}), update: jest.fn(async () => {}), clone: jest.fn(async () => {}) };
+    wrapCollectionTypesController(controller);
+    const logError = jest.spyOn(strapi.log, 'error').mockImplementation(() => {});
+    const ctx = { params: { model: DROPLET_UID, id: 'abc' }, request: { body: { status: 'edit' } }, state: {} };
+    await controller.update(ctx);
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('ODY-699'));
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('edit'));
+    logError.mockRestore();
+  });
+
+  it('resolves both wrapped services during bootstrap', async () => {
+    const plugin = require('../../dist/src/extensions/content-manager/strapi-server').default({
+      services: { 'document-metadata': () => ({}), 'document-manager': () => ({}) },
+      controllers: { 'collection-types': { create() {}, update() {}, clone() {}, autoClone() {} } },
+    });
+    const service = jest.fn();
+    const spy = jest.spyOn(strapi, 'plugin').mockReturnValue({ service });
+    await plugin.bootstrap({ strapi });
+    spy.mockRestore();
+    expect(service.mock.calls.map(([n]) => n).sort()).toEqual(['document-manager', 'document-metadata']);
   });
 });

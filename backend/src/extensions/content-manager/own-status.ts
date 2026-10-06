@@ -2,6 +2,7 @@
 // ODY-699: keep a real `status` attribute working in the content-manager when D&P is off. See docs/agent/backend-architecture.md.
 
 const OWN_STATUS_STATE_KEY = 'ody699OwnStatus';
+const OWN_STATUS_CONSUMED_KEY = 'ody699OwnStatusConsumed';
 const DIMENSION_STATUSES = ['draft', 'published'];
 
 type AnyFn = (...args: any[]) => any;
@@ -25,7 +26,7 @@ function assertFunctions(owner: string, target: any, names: string[]) {
   }
 }
 
-/** Throws at boot if the content-manager internals we wrap have changed shape. */
+/** Throws if the content-manager internals we wrap have changed shape. */
 export function assertContentManagerShape(plugin: any) {
   for (const name of ['document-metadata', 'document-manager']) {
     assertFunctions('services', plugin?.services, [name]);
@@ -68,7 +69,7 @@ export function wrapCollectionTypesController(controller: Record<string, AnyFn>)
 
   for (const name of ['create', 'update', 'clone']) {
     const original = controller[name];
-    controller[name] = function (this: unknown, ctx: any) {
+    controller[name] = async function (this: unknown, ctx: any) {
       const status = ctx.request?.body?.status;
       const model = ctx.params?.model;
       if (typeof status === 'string' && !DIMENSION_STATUSES.includes(status) && hasOwnStatus(model)) {
@@ -79,7 +80,14 @@ export function wrapCollectionTypesController(controller: Record<string, AnyFn>)
           ctx.request.body.status = placeholder;
         }
       }
-      return original.call(this, ctx);
+      const result = await original.call(this, ctx);
+      if (ctx.state[OWN_STATUS_STATE_KEY] !== undefined && !ctx.state[OWN_STATUS_CONSUMED_KEY]) {
+        const id = ctx.params?.id ?? ctx.params?.sourceId;
+        (strapi as any).log.error(
+          `ODY-699: status "${ctx.state[OWN_STATUS_STATE_KEY]}" was not restored for ${model} ${id}; saved as placeholder.`
+        );
+      }
+      return result;
     };
   }
 }
@@ -88,6 +96,7 @@ function restoreStatus(uid: string, data: any) {
   const ctx = requestContext();
   const stashed = ctx?.state?.[OWN_STATUS_STATE_KEY];
   if (stashed === undefined || ctx.params?.model !== uid || !data || !('status' in data)) return data;
+  ctx.state[OWN_STATUS_CONSUMED_KEY] = true;
   return { ...data, status: stashed };
 }
 
