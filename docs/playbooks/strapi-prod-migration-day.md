@@ -2,7 +2,7 @@
 
 A checklist for the engineers running a Strapi migration against **production**: what to prepare, what to run during the maintenance window, and how to roll back. Work through it top to bottom and tick each box as you go.
 
-This playbook covers **ODY-633: turning off Draft & Publish** and the **Strapi v5 upgrade** (ODY-597, rehearsed in ODY-602). On 2026-10-05 the team decided that ODY-633 doesn't ship alone on v4. It ships with v5 in one combined v4→v5 cutover. The [timeline](#strapi-v5-timeline-to-migration-day) lists what has to happen before migration day. The v4-only window steps below are the starting point for the combined steps (task 2.3). Background and reasoning live in [docs/plans/ODY-633.md](../plans/ODY-633.md) and [docs/plans/strapi-v5-branch-audit-2.md](../plans/strapi-v5-branch-audit-2.md). This page is only the steps.
+This playbook covers **ODY-633: turning off Draft & Publish** and the **Strapi v5 upgrade** (ODY-597, rehearsed in ODY-602). On 2026-10-05 the team decided that ODY-633 doesn't ship alone on v4. It ships with v5 in one combined v4→v5 cutover. The [timeline](#strapi-v5-timeline-to-migration-day) lists what has to happen before migration day. The v4-only window steps below are the starting point for the combined steps (task 2.3). Background and reasoning live in the Linear tickets [ODY-633](https://linear.app/aiil/issue/ODY-633) and [ODY-28](https://linear.app/aiil/issue/ODY-28) (the Strapi 5 parent ticket). This page is only the steps.
 
 > **Why this needs a window.** On the first boot with Draft & Publish (D&P) off, Strapi v4 permanently **deletes every row where `published_at IS NULL`**, then drops the `published_at` column. This happens before any migration runs, so it can't be fixed in code. Every such row has to be handled by hand in SQL _before_ the new backend boots.
 
@@ -40,7 +40,7 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 - [x] **1.7 ODY-724:** smoke-test the email provider on v5.
 - [x] **1.8 Node version (ODY-604):** choose 20.14.0 (today's images) or Node 22. The rehearsal must use the same image the cutover deploys. Choosing 20.14.0 (today's images)
 - [x] **1.9 Prod token type:** find out whether prod's `STRAPI_ACCESS_TOKEN` is full-access or custom. Every ODY-635 finding assumes full-access. It is full-access
-- [x] **1.10** Create a Linear ticket for the 204 fix, then rename `scripts/strapi-v5-delete-204/` to match it. The plan file was deleted on 2026-10-06.
+- [x] **1.10** Create a Linear ticket for the 204 fix, then rename `scripts/strapi-v5-delete-204/` to match it.
 
 **Gate A:** a re-run `/audit` on `feature/strapi-v5` has only Critical 3 open. The rehearsal closes Critical 3.
 
@@ -92,7 +92,7 @@ Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev
 
 - [ ] **Prerequisite (required):** the current `develop`, including ODY-582 (Strapi 4.26.2) and ODY-659 (null-droplet guards), was released to `production` and is stable **before** the ODY-633 PR merged to `develop`.
 - [ ] **Release freeze:** since ODY-633 landed on `develop` there have been no `develop` to `production` merges. Any normal prod deploy would run the D&P switch without this playbook. Comms announces the freeze to the team.
-- [ ] **Strapi version check:** if `@strapi/strapi` on `production` differs from the version checked in the ODY-633 plan (4.25.24 and 4.26.2 checked), make sure `dist/migrations/draft-publish.js` and the `beforeSync` → `db.schema.sync()` order in `dist/Strapi.js` haven't changed.
+- [ ] **Strapi version check:** if `@strapi/strapi` on `production` differs from the versions checked for [ODY-633](https://linear.app/aiil/issue/ODY-633) (4.25.24 and 4.26.2), make sure `dist/migrations/draft-publish.js` and the `beforeSync` → `db.schema.sync()` order in `dist/Strapi.js` haven't changed.
 - [ ] **Dev done first:** the ODY-633 steps have run on dev and dev has been smoke-checked afterwards. On dev: admin edit freeze, fresh `pg_dump` outside the repo (for example `~/ody-633/dev-pre-02-<date>.dump`) as rollback, dev backend scaled to 0 (`<dev-cluster>` / `<dev-backend-service>`), audit → handling → audit shows 0 → merge to `develop` → wait for the new task definition to be `PRIMARY` → scale back up. `dev2-image-push.yml` sets no desired count, so scale up by hand.
 - [ ] **Prod copy audit:** restore a copy of prod locally and run `scripts/ody-633/01-audit.sql`. Save the output **outside the repo**.
 - [ ] **Per-row decisions:** for every unpublished row, pick **keep and hide** (the default) or **delete** (only for rows the audit shows nothing points at). Write `~/ody-633/02-handle-unpublished.prod.sql` (outside the repo). The Reviewer signs off.
@@ -141,7 +141,7 @@ Choose a rollback path by what went wrong:
   - Run `psql -v ON_ERROR_STOP=1 -f scripts/ody-633/04-reenable-check.sql` to confirm.
   - Publish permissions for roles other than Super Admin **don't come back**. Re-grant them in Strapi admin → Settings → Roles, using the query 4 output from step 4.
 - **Rows were deleted that shouldn't have been:** restore them from the step 2 snapshot, into a side instance and then copy the rows back, or do a full restore if the damage is wide. Then follow the path above if the code also needs reverting.
-- **Before step 8:** nothing has been deployed, but the backend is already down. Abort by scaling back up with the old task definition (`--desired-count 1`, the Terraform value). Rows changed by `02` can stay as they are, since they're hidden by Odyssey fields (except lessons, which have no hide field) and published under D&P. The ODY-633 plan explains why this is safe.
+- **Before step 8:** nothing has been deployed, but the backend is already down. Abort by scaling back up with the old task definition (`--desired-count 1`, the Terraform value). Rows changed by `02` can stay as they are, since they're hidden by Odyssey fields (except lessons, which have no hide field) and published under D&P. [ODY-633](https://linear.app/aiil/issue/ODY-633) explains why this is safe.
 
 ## After the window
 

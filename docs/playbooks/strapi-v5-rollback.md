@@ -2,7 +2,7 @@
 
 What to do when the Strapi v5 cutover goes wrong and we need to go back to Strapi v4. Work top to bottom and tick each box. It applies to prod and dev; for dev, use the dev names and branch (`develop` instead of `production`).
 
-This page is steps only. The reasoning is in [docs/plans/ODY-596.md](../plans/ODY-596.md). The cutover itself is in the [migration-day playbook](strapi-prod-migration-day.md).
+This page is steps only. The reasoning is in the Linear ticket [ODY-596](https://linear.app/aiil/issue/ODY-596). The cutover itself is in the [migration-day playbook](strapi-prod-migration-day.md).
 
 ## Have these in hand first
 
