@@ -103,6 +103,11 @@ describe("parseMarkdownToBlockNote — additional coverage", () => {
       expect(result.blocks[0].props).toMatchObject({ language: "python" });
     });
 
+    it("treats a text fence as plain text", () => {
+      const result = parseMarkdownToBlockNote("```text\nHTTP/1.1 200 OK\n```");
+      expect(result.blocks[0].props).toMatchObject({ language: "plaintext" });
+    });
+
     it("captures multi-line code block content", () => {
       const markdown = "```python\ndef foo():\n    return 42\n```";
       const result = parseMarkdownToBlockNote(markdown);

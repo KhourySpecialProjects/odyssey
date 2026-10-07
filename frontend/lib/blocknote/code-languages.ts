@@ -7,6 +7,7 @@ const LANG_ALIASES: Record<string, string> = {
   sh: "bash",
   cs: "csharp",
   "c++": "cpp",
+  text: "plaintext",
 };
 
 /**
