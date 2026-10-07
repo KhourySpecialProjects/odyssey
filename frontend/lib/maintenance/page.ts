@@ -70,7 +70,7 @@ export function renderMaintenancePage(): string {
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 16px 40px rgba(16, 24, 40, 0.06);
   }
   .logo { display: block; margin: 0 auto; height: 32px; width: auto; }
-  .boat { display: block; margin: 12px auto 8px; width: min(320px, 86%); height: auto; }
+  .boat { display: block; margin: 16px auto 36px; width: min(320px, 86%); height: auto; }
   .hull { fill: #297496; }
   @media (prefers-color-scheme: dark) { .hull { fill: #5fb4e5; } }
   .bob { animation: bob 4s ease-in-out infinite; }
