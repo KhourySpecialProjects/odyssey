@@ -9,6 +9,8 @@ const path = require('path');
 const people = require('./people');
 const content = require('./content');
 const { blockGallery } = require('./gallery');
+// Built from catalog/*.md by npm run demo:catalog (see catalog/README.md)
+const catalog = require('./catalog.json');
 
 // Files the demo serves itself (frontend/public), e.g. the gallery's dataset
 const FRONTEND_PUBLIC = path.join(__dirname, '..', '..', '..', 'frontend', 'public');
@@ -52,6 +54,16 @@ function seededRandom(seed) {
   };
 }
 
+/** A shuffled copy of items, using rng (Fisher-Yates). */
+function shuffled(items, rng) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 /** The hash the lesson renderer uses for BlockNote block ids (frontend convert-blocks.ts). */
 function blockNoteIdToNumber(blockId) {
   let hash = 0;
@@ -61,15 +73,6 @@ function blockNoteIdToNumber(blockId) {
   }
   return Math.abs(hash);
 }
-
-const TAGS = [
-  ['odyssey', 'Odyssey'],
-  ['sql', 'SQL'],
-  ['databases', 'Databases'],
-  ['web-development', 'Web Development'],
-  ['javascript', 'JavaScript'],
-  ['career', 'Career'],
-];
 
 /** Groups, with due dates as days from today (negative means already past). */
 const GROUPS = [
@@ -137,6 +140,14 @@ const SOLO_ENROLLMENTS = [
   { student: 'student1', droplet: 'block-gallery', level: 0 },
 ];
 
+/** Personas' own picks from the catalog, on top of the background students' browsing. */
+const CATALOG_ENROLLMENTS = [
+  { student: 'student1', droplet: 'git-basics', level: 1 },
+  { student: 'student1', droplet: 'python-basics', level: 0.67 },
+  { student: 'student2', droplet: 'time-management', level: 0.34 },
+  { student: 'student3', droplet: 'study-strategies', level: 1 },
+];
+
 const FRIENDSHIPS = [
   ['student1', 'student2'],
   ['student1', 'student4'],
@@ -180,7 +191,7 @@ async function seedWorld(db) {
   const fullName = (key) => `${users[key].firstName} ${users[key].lastName}`;
 
   const tagIds = {};
-  for (const [slug, name] of TAGS) tagIds[slug] = (await db.create(UID.tag, { name, slug })).id;
+  for (const [slug, name] of content.TAGS) tagIds[slug] = (await db.create(UID.tag, { name, slug })).id;
 
   // Droplets and lessons, like createDroplet + addLesson. The lifecycles
   // replace the placeholder slugs with ones generated from the names.
@@ -202,7 +213,10 @@ async function seedWorld(db) {
       funFact: spec.funFact ?? null,
       learningObjectives: spec.learningObjectives.map((objective) => ({ objective })),
       nextSteps: spec.nextSteps ?? [],
-      tags: (spec.tags ?? []).map((tag) => tagIds[tag]),
+      tags: (spec.tags ?? []).map((tag) => {
+        if (!tagIds[tag]) throw new Error(`${spec.name} has tag ${tag}, which isn't in content.js TAGS`);
+        return tagIds[tag];
+      }),
       authorized_users: spec.authors.map(userId),
       ...extra,
     });
@@ -245,7 +259,7 @@ async function seedWorld(db) {
     return droplets[key];
   }
 
-  for (const spec of [...content.droplets, blockGallery]) await createDroplet(spec.key, spec);
+  for (const spec of [...content.droplets, blockGallery, ...catalog.droplets]) await createDroplet(spec.key, spec);
   for (const spec of content.droplets) {
     if (spec.prerequisites) {
       await db.update(UID.droplet, droplets[spec.key].id, {
@@ -413,19 +427,19 @@ async function seedWorld(db) {
   const diligenceOf = (key) =>
     (diligence[key] ??= people.PERSONA_DILIGENCE[key] ?? DILIGENCE_OVERRIDES[key] ?? random());
   const enrollments = new Map(); // `${student}|${droplet}` -> enrollment
-  async function enroll(student, dropletKey, level) {
+  async function enroll(student, dropletKey, level, rng = random) {
     const mapKey = `${student}|${dropletKey}`;
     if (enrollments.has(mapKey)) return enrollments.get(mapKey);
     const { lessons } = droplets[dropletKey];
     const viewedCount = Math.round(Math.max(0, Math.min(1, level)) * lessons.length);
     const isComplete = lessons.length > 0 && viewedCount === lessons.length;
-    const rating = isComplete && random() < 0.8 ? 3 + Math.floor(random() * 3) : null;
+    const rating = isComplete && rng() < 0.8 ? 3 + Math.floor(rng() * 3) : null;
     const created = await db.create(UID.enrollment, {
       authorizedUser: userId(student),
       droplet: droplets[dropletKey].id,
       viewedLessons: lessons.slice(0, viewedCount).map((lesson) => lesson.id),
       isComplete,
-      completionDate: isComplete ? daysFromNow(-(1 + Math.floor(random() * 20))) : null,
+      completionDate: isComplete ? daysFromNow(-(1 + Math.floor(rng() * 20))) : null,
       rating,
       isFirstTime: false,
       isArchived: false,
@@ -450,6 +464,19 @@ async function seedWorld(db) {
     }
   }
   for (const { student, droplet, level } of SOLO_ENROLLMENTS) await enroll(student, droplet, level);
+
+  // The catalog: personas' picks, then background students browsing Explore,
+  // 2 to 17 of them per droplet. It has its own random sequence, so editing
+  // the catalog doesn't change the rest of the world.
+  const browsing = seededRandom(2026);
+  for (const { student, droplet, level } of CATALOG_ENROLLMENTS) await enroll(student, droplet, level, browsing);
+  const background = Object.keys(users).filter((key) => !users[key].isPersona);
+  for (const spec of catalog.droplets) {
+    const readers = shuffled(background, browsing).slice(0, 2 + Math.floor(browsing() * 16));
+    for (const student of readers) {
+      await enroll(student, spec.key, browsing() < 0.55 ? 1 : browsing() * 0.9, browsing);
+    }
+  }
 
   // Enrolled playlist users (enrollUsers connects authorized-user.playlists)
   for (const [key, members] of Object.entries(playlistMembers)) {

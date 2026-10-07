@@ -17,8 +17,8 @@ const ROLES = {
 /** The accounts someone can log in as. Everyone also has the User role, like real accounts. */
 const personas = [
   { key: 'admin1', firstName: 'Admin', lastName: '1', role: ROLES.admin, bio: 'Runs the platform: approvals, roles and announcements.' },
-  { key: 'contentcreator1', firstName: 'Content Creator', lastName: '1', role: ROLES.creator, bio: 'Writes the databases and SQL droplets.' },
-  { key: 'contentcreator2', firstName: 'Content Creator', lastName: '2', role: ROLES.creator, bio: 'Writes the web development and career droplets.' },
+  { key: 'contentcreator1', firstName: 'Content Creator', lastName: '1', role: ROLES.creator, bio: 'Writes the databases, SQL, Python and algorithms droplets.' },
+  { key: 'contentcreator2', firstName: 'Content Creator', lastName: '2', role: ROLES.creator, bio: 'Writes the web development, career and study skills droplets.' },
   { key: 'contenteditor1', firstName: 'Content Editor', lastName: '1', role: ROLES.editor, bio: 'Reviews submitted droplets before they go live.' },
   { key: 'faculty1', firstName: 'Faculty', lastName: '1', role: ROLES.faculty, bio: 'Teaches CS 3200: Database Design and runs its group.' },
   { key: 'student1', firstName: 'Student', lastName: '1', role: null, bio: 'Keeps up with every due date.' },

@@ -73,9 +73,12 @@ Strapi v5 means changing that one file.
   appears at least once, plus a classic (v1) lesson. Its Slides lesson works in
   presentation mode, and its notebooks read `students.csv`. The image and the
   dataset are served from `frontend/public/demo/`. JavaScript code blocks need
-  `npm run demo:piston`. For now the notebooks only find the
-  dataset in the draft editor: the learner page doesn't load dataset URLs (an
-  app bug, not a demo one).
+  `npm run demo:piston`.
+- **A catalog of published droplets** for Explore: Python and data,
+  algorithms, SQL, web development, security, tools, career and study skills.
+  They're written in Markdown in `backend/scripts/demo-seed/catalog/` and go
+  through the app's own Markdown importer. Background students browse them,
+  so the popular ones show ratings. Its README explains how to add one.
 - **Playlists**: public, private and archived.
 - **A voyage** with a main path and branches, playlist and droplet steps, and
   unclaimed, claimed and authored steps. Plus a draft voyage.

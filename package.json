@@ -17,7 +17,8 @@
     "demo:backend": "cd backend && ENV_PATH=.env.demo npm run dev",
     "demo:seed": "cd backend && ENV_PATH=.env.demo node scripts/demo-seed/index.js",
     "demo:frontend": "cd frontend && node --env-file=.env.demo node_modules/next/dist/bin/next dev -p 3001",
-    "demo:piston": "node demo/piston.mjs"
+    "demo:piston": "node demo/piston.mjs",
+    "demo:catalog": "cd frontend && UPDATE_DEMO_CATALOG=1 npx jest testing/lib/demo-catalog.test.ts"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

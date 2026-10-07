@@ -432,4 +432,24 @@ const draftVoyage = {
   ],
 };
 
-module.exports = { droplets, editCopy, playlists, voyage, draftVoyage, lessonBlocks, paragraph };
+/** Tags droplets can use, as [slug, name]. */
+const TAGS = [
+  ['odyssey', 'Odyssey'],
+  ['sql', 'SQL'],
+  ['databases', 'Databases'],
+  ['web-development', 'Web Development'],
+  ['javascript', 'JavaScript'],
+  ['career', 'Career'],
+  ['python', 'Python'],
+  ['data-science', 'Data Science'],
+  ['algorithms', 'Algorithms'],
+  ['testing', 'Testing'],
+  ['security', 'Security'],
+  ['git', 'Git'],
+  ['command-line', 'Command Line'],
+  ['accessibility', 'Accessibility'],
+  ['co-op', 'Co-op'],
+  ['study-skills', 'Study Skills'],
+];
+
+module.exports = { droplets, editCopy, playlists, voyage, draftVoyage, lessonBlocks, paragraph, TAGS };
