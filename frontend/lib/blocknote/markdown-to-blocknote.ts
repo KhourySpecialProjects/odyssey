@@ -1,5 +1,6 @@
 import { CustomBlockNoteBlock } from "@/types";
 import { v4 as uuidv4 } from "uuid";
+import { resolveCodeLanguage } from "@/lib/blocknote/code-languages";
 
 interface ParseResult {
   title: string;
@@ -700,7 +701,9 @@ function parseNestedList(
 }
 
 /**
- * Parse fenced code blocks (```language ... ```)
+ * Parse fenced code blocks (```language ... ```) into the app's code block,
+ * the same block the editor makes from code typed or pasted between fences.
+ * (The editor has no BlockNote codeBlock, so it would drop one.)
  */
 function parseCodeBlock(
   lines: string[],
@@ -709,7 +712,10 @@ function parseCodeBlock(
   const firstLine = lines[startIndex].trim();
   if (!firstLine.startsWith("```")) return null;
 
-  const language = firstLine.slice(3).trim() || "text";
+  const fenceLanguage = firstLine.slice(3).trim();
+  const language = fenceLanguage
+    ? resolveCodeLanguage(fenceLanguage)
+    : "plaintext";
   let i = startIndex + 1;
   const codeLines: string[] = [];
 
@@ -725,17 +731,13 @@ function parseCodeBlock(
   return {
     block: {
       id: uuidv4(),
-      type: "codeBlock",
+      type: "code-block",
       props: {
         language,
+        code: codeLines.join("\n"),
+        editable: true,
+        runnable: false,
       },
-      content: [
-        {
-          type: "text",
-          text: codeLines.join("\n"),
-          styles: {},
-        },
-      ],
       children: [],
     },
     nextIndex: i,

@@ -20,6 +20,7 @@ import {
   isAutolinkFalsePositive,
   isSafeLinkHref,
 } from "@/lib/blocknote/autolink-filter";
+import { resolveCodeLanguage } from "@/lib/blocknote/code-languages";
 import { Extension, markInputRule } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { addRowAfter, goToNextCell, isInTable } from "prosemirror-tables";
@@ -121,22 +122,6 @@ const CUSTOM_BLOCK_TYPES = new Set([
   "quiz-multiple-choice",
   "code-block",
 ]);
-
-// Code fence language aliases → code block language values
-const LANG_ALIASES: Record<string, string> = {
-  js: "javascript",
-  ts: "typescript",
-  py: "python",
-  rb: "ruby",
-  sh: "bash",
-  cs: "csharp",
-  "c++": "cpp",
-};
-
-function resolveLanguage(lang: string): string {
-  const lower = lang.toLowerCase();
-  return LANG_ALIASES[lower] || lower;
-}
 
 function getBlockPlainText(b: unknown): string | undefined {
   const c = (b as Record<string, unknown>).content;
@@ -428,7 +413,7 @@ export function BlockNoteEditorClient({
               const inner = singleLineMatch[1];
               const langCodeMatch = inner.match(/^(\w+)\s+(.+)$/);
               const language = langCodeMatch
-                ? resolveLanguage(langCodeMatch[1])
+                ? resolveCodeLanguage(langCodeMatch[1])
                 : "javascript";
               const code = langCodeMatch
                 ? langCodeMatch[2].trim()
@@ -453,7 +438,7 @@ export function BlockNoteEditorClient({
             const openFenceMatch = plain.match(/^```(\w*)$/);
             if (openFenceMatch) {
               const language = openFenceMatch[1]
-                ? resolveLanguage(openFenceMatch[1])
+                ? resolveCodeLanguage(openFenceMatch[1])
                 : "javascript";
 
               const codeLines: string[] = [];

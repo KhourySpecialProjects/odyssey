@@ -21,6 +21,7 @@
  *   763-777 createImageBlock helper
  */
 import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
+import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 
 describe("parseMarkdownToBlockNote — additional coverage", () => {
   // ── Horizontal rule (slide-break separator) ─────────────────────────────
@@ -74,38 +75,54 @@ describe("parseMarkdownToBlockNote — additional coverage", () => {
   // ── Code blocks ──────────────────────────────────────────────────────────
 
   describe("fenced code blocks", () => {
-    it("parses a simple code block with language tag", () => {
+    it("parses a code block with a language tag into the app's code block", () => {
       const markdown = "```javascript\nconst x = 1;\n```";
       const result = parseMarkdownToBlockNote(markdown);
       expect(result.blocks[0]).toMatchObject({
-        type: "codeBlock",
-        props: { language: "javascript" },
+        type: "code-block",
+        props: {
+          language: "javascript",
+          code: "const x = 1;",
+          editable: true,
+          runnable: false,
+        },
       });
-      const content = result.blocks[0].content as Array<{
-        type: string;
-        text: string;
-      }>;
-      expect(content[0].text).toBe("const x = 1;");
     });
 
-    it("parses a code block with no language tag (defaults to 'text')", () => {
+    it("parses a code block with no language tag as plain text", () => {
       const markdown = "```\nsome code\n```";
       const result = parseMarkdownToBlockNote(markdown);
       expect(result.blocks[0]).toMatchObject({
-        type: "codeBlock",
-        props: { language: "text" },
+        type: "code-block",
+        props: { language: "plaintext", code: "some code" },
       });
+    });
+
+    it("maps short language names like the editor does for pasted code", () => {
+      const result = parseMarkdownToBlockNote("```py\nprint(1)\n```");
+      expect(result.blocks[0].props).toMatchObject({ language: "python" });
     });
 
     it("captures multi-line code block content", () => {
       const markdown = "```python\ndef foo():\n    return 42\n```";
       const result = parseMarkdownToBlockNote(markdown);
-      const content = result.blocks[0].content as Array<{
-        type: string;
-        text: string;
-      }>;
-      expect(content[0].text).toContain("def foo()");
-      expect(content[0].text).toContain("return 42");
+      const { code } = result.blocks[0].props as { code: string };
+      expect(code).toContain("def foo()");
+      expect(code).toContain("return 42");
+    });
+
+    it("keeps the code when the lesson page converts the blocks", () => {
+      const { blocks } = parseMarkdownToBlockNote(
+        "Run this:\n\n```python\nprint('hello')\n```",
+      );
+
+      expect(convertBlockNoteToV1Blocks(blocks)).toContainEqual(
+        expect.objectContaining({
+          __component: "droplets.code-block",
+          language: "python",
+          code: "print('hello')",
+        }),
+      );
     });
   });
 
