@@ -10,6 +10,7 @@ import { VoyagePublishButton } from "@/components/voyages/voyage-publish-button"
 import { VoyageProgressBar } from "@/components/voyages/voyage-progress-bar";
 import {
   computeNodeStatuses,
+  computeCompletionCounts,
   computeCompletionPercentage,
   findFirstIncompleteNode,
 } from "@/lib/voyage-progress";
@@ -118,12 +119,13 @@ export default async function VoyagePage({ params }: Props) {
     ? Math.round(computeCompletionPercentage(voyageNodes, completedNodeIds))
     : 0;
 
-  const requiredNodes = voyageNodes.filter((n) => n.branchType !== "optional");
-  const completedCount = isEnrolled
-    ? requiredNodes.filter((n) => completedNodeIds.has(n.id)).length
-    : 0;
-
-  const totalCount = requiredNodes.length;
+  // Same nodes as the percentage, so steps that aren't written yet don't
+  // count against "N of M completed"
+  const { completed, total: totalCount } = computeCompletionCounts(
+    voyageNodes,
+    completedNodeIds,
+  );
+  const completedCount = isEnrolled ? completed : 0;
 
   const firstIncompleteNode = isEnrolled
     ? findFirstIncompleteNode(voyageNodes, completedNodeIds)

@@ -139,29 +139,43 @@ export function computeNodeStatuses(
 }
 
 /**
- * Calculate overall completion percentage.
+ * Count the nodes behind the progress bar's "N of M completed".
  * Only required nodes count (branchType !== "optional").
  * Non-completable nodes (placeholder/draft droplet nodes) are excluded from
- * the denominator — they have no content to complete yet.
+ * the total — they have no content to complete yet.
+ */
+export function computeCompletionCounts(
+  nodes: VoyageNode[],
+  completedNodeIds: Set<number>,
+): { completed: number; total: number } {
+  const requiredAndCompletableNodes = nodes.filter(
+    (n) => n.branchType !== "optional" && isCompletableNode(n),
+  );
+
+  return {
+    completed: requiredAndCompletableNodes.filter((n) =>
+      completedNodeIds.has(n.id),
+    ).length,
+    total: requiredAndCompletableNodes.length,
+  };
+}
+
+/**
+ * Calculate overall completion percentage over the same nodes as
+ * computeCompletionCounts, so the bar and its "N of M" always agree.
  * Returns a number between 0 and 100.
  */
 export function computeCompletionPercentage(
   nodes: VoyageNode[],
   completedNodeIds: Set<number>,
 ): number {
-  const requiredAndCompletableNodes = nodes.filter(
-    (n) => n.branchType !== "optional" && isCompletableNode(n),
-  );
+  const { completed, total } = computeCompletionCounts(nodes, completedNodeIds);
 
-  if (requiredAndCompletableNodes.length === 0) {
+  if (total === 0) {
     return 0;
   }
 
-  const completedRequired = requiredAndCompletableNodes.filter((n) =>
-    completedNodeIds.has(n.id),
-  );
-
-  return (completedRequired.length / requiredAndCompletableNodes.length) * 100;
+  return (completed / total) * 100;
 }
 
 /**

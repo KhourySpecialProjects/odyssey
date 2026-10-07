@@ -1,6 +1,7 @@
 import { Droplet, VoyageNode } from "@/types";
 import {
   computeNodeStatuses,
+  computeCompletionCounts,
   computeCompletionPercentage,
   findFirstIncompleteNode,
   isCompletableNode,
@@ -585,5 +586,59 @@ describe("computeCompletionPercentage — droplet node behavior", () => {
 
     const pct = computeCompletionPercentage([placeholder], new Set());
     expect(pct).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeCompletionCounts
+// ---------------------------------------------------------------------------
+
+describe("computeCompletionCounts", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("returns zeros for an empty voyage", () => {
+    expect(computeCompletionCounts([], new Set())).toEqual({
+      completed: 0,
+      total: 0,
+    });
+  });
+
+  it("counts completed required steps out of all required steps", () => {
+    const main1 = makeMainNode(1, 0);
+    const main2 = makeMainNode(2, 1);
+    const branch = makeBranchNode(3, main1);
+
+    expect(
+      computeCompletionCounts([main1, main2, branch], new Set([1, 3])),
+    ).toEqual({ completed: 2, total: 3 });
+  });
+
+  it("leaves out optional steps, even completed ones", () => {
+    const main1 = makeMainNode(1, 0);
+    const optional = makeBranchNode(2, main1, { branchType: "optional" });
+
+    expect(computeCompletionCounts([main1, optional], new Set([2]))).toEqual({
+      completed: 0,
+      total: 1,
+    });
+  });
+
+  it("counts the same steps as the percentage, so a voyage with unwritten steps doesn't read 100% and 3 of 5", () => {
+    const done = [makeMainNode(1, 0), makeMainNode(2, 1), makeMainNode(3, 2)];
+    const placeholder = makeMainNode(4, 3, { nodeType: "droplet" });
+    const draftNode = makeMainNode(5, 4, {
+      nodeType: "droplet",
+      droplet: { id: 99, status: "draft" } as Partial<Droplet> as Droplet,
+    });
+    const nodes = [...done, placeholder, draftNode];
+    const completed = new Set([1, 2, 3]);
+
+    expect(computeCompletionCounts(nodes, completed)).toEqual({
+      completed: 3,
+      total: 3,
+    });
+    expect(computeCompletionPercentage(nodes, completed)).toBe(100);
   });
 });
