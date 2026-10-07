@@ -3,15 +3,6 @@
 // any script: inline styles and SVG only (the CSP allows both), plus
 // /logo.svg, which the middleware matcher leaves to the static file server.
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 // The boat from components/ui/animated-sailboat.tsx, with CSS animations in
 // place of SMIL so prefers-reduced-motion can switch them off.
 const SAILBOAT_SVG = `<svg class="boat" width="300" height="283" viewBox="20 10 190 180" fill="none" aria-hidden="true">
@@ -40,13 +31,7 @@ const SAILBOAT_SVG = `<svg class="boat" width="300" height="283" viewBox="20 10 
   </g>
 </svg>`;
 
-export function renderMaintenancePage({
-  until,
-}: { until?: string } = {}): string {
-  const backBy = until?.trim()
-    ? `<p class="until">Expected back by <strong>${escapeHtml(until.trim())}</strong></p>`
-    : "";
-
+export function renderMaintenancePage(): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -79,41 +64,38 @@ export function renderMaintenancePage({
     -webkit-font-smoothing: antialiased;
   }
   main {
-    width: 100%; max-width: 520px; background: var(--card);
-    border: 1px solid var(--line); border-radius: 20px;
-    padding: 32px 28px 28px; text-align: center;
+    width: 100%; max-width: 480px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 24px;
+    padding: 32px 28px 36px; text-align: center;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 16px 40px rgba(16, 24, 40, 0.06);
   }
-  .logo { display: block; margin: 0 auto; height: 34px; width: auto; }
-  .boat { display: block; margin: 8px auto 4px; width: min(300px, 80%); height: auto; }
+  .logo { display: block; margin: 0 auto; height: 32px; width: auto; }
+  .boat { display: block; margin: 12px auto 8px; width: min(320px, 86%); height: auto; }
   .hull { fill: #297496; }
   @media (prefers-color-scheme: dark) { .hull { fill: #5fb4e5; } }
   .bob { animation: bob 4s ease-in-out infinite; }
   .rock { transform-origin: 110px 158px; animation: rock 4s ease-in-out infinite; }
   @keyframes bob { 0%, 50%, 100% { transform: translateY(0); } 25% { transform: translateY(-3px); } 75% { transform: translateY(1.5px); } }
   @keyframes rock { 0%, 50%, 100% { transform: rotate(0deg); } 25% { transform: rotate(1.5deg); } 75% { transform: rotate(-1deg); } }
-  @media (prefers-reduced-motion: reduce) { .bob, .rock { animation: none; } }
-  .eyebrow {
-    display: inline-block; margin: 0 0 10px; padding: 3px 10px; border-radius: 999px;
-    background: var(--tint); color: var(--accent);
-    font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  h1 { margin: 0; font-size: 30px; line-height: 1.2; font-weight: 800; letter-spacing: -0.015em; text-wrap: balance; }
+  .status {
+    display: inline-flex; align-items: center; gap: 8px; margin: 16px 0 0;
+    padding: 6px 14px; border-radius: 999px; background: var(--tint); color: var(--accent);
+    font-size: 13px; font-weight: 600;
   }
-  h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; }
-  p { margin: 12px 0 0; color: var(--muted); }
-  .until { color: var(--ink); }
-  .until strong { color: var(--accent); }
-  .note { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+  .refresh { margin: 10px 0 0; color: var(--faint); font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .bob, .rock, .dot { animation: none; } }
 </style>
 </head>
 <body>
 <main>
   <img class="logo" src="/logo.svg" alt="Khoury Odyssey">
   ${SAILBOAT_SVG}
-  <div class="eyebrow">Scheduled maintenance</div>
   <h1>Odyssey is getting an update</h1>
-  <p>We're making some improvements right now, so Odyssey is unavailable for a little while. Your progress, notes and enrollments are safe.</p>
-  ${backBy}
-  <p class="note">This page checks again every minute and will take you back to Odyssey when it's ready.</p>
+  <p class="status"><i class="dot" aria-hidden="true"></i>Scheduled maintenance</p>
+  <p class="refresh">Refreshes every minute</p>
 </main>
 </body>
 </html>`;

@@ -126,28 +126,8 @@ describe("renderMaintenancePage", () => {
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain("<title>Odyssey is under maintenance</title>");
     expect(html).toContain("Odyssey is getting an update");
+    expect(html).toContain("Scheduled maintenance");
     expect(html).toContain('http-equiv="refresh" content="60"');
-    expect(html).not.toContain("Expected back by");
     expect(html).not.toMatch(/<script/i);
-  });
-
-  it("shows the expected end time when one is set", () => {
-    expect(renderMaintenancePage({ until: "3:00 PM ET" })).toContain(
-      "Expected back by <strong>3:00 PM ET</strong>",
-    );
-  });
-
-  it("escapes the end time", () => {
-    const html = renderMaintenancePage({
-      until: '<img src=x onerror="alert(1)">',
-    });
-    expect(html).not.toContain("<img src=x");
-    expect(html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
-  });
-
-  it("ignores a blank end time", () => {
-    expect(renderMaintenancePage({ until: "   " })).not.toContain(
-      "Expected back by",
-    );
   });
 });

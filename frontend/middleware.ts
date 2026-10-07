@@ -106,13 +106,10 @@ function maintenanceResponse(req: NextRequest): NextResponse | undefined {
         headers: { ...headers, "Content-Type": "text/plain; charset=utf-8" },
       });
     case "page":
-      return new NextResponse(
-        renderMaintenancePage({ until: process.env.MAINTENANCE_UNTIL }),
-        {
-          status: 503,
-          headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
-        },
-      );
+      return new NextResponse(renderMaintenancePage(), {
+        status: 503,
+        headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
+      });
   }
 }
 

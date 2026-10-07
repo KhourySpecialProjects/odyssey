@@ -220,12 +220,11 @@ During an update (a Strapi migration, a database restore), turn on maintenance m
 | Variable                   | Effect                                                                                                                          |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `MAINTENANCE_MODE=true`    | Pages return the maintenance page (503), `/api/*` returns a JSON 503, form posts and Server Actions return a plain 503          |
-| `MAINTENANCE_UNTIL`        | Optional text shown as "Expected back by …", e.g. `3:00 PM ET`                                                                  |
 | `MAINTENANCE_BYPASS_TOKEN` | Optional. Opening any URL with `?maintenance_bypass=<token>` sets a 12-hour cookie that lets that browser use the site normally |
 
 The variables are read on every request, so turning it on or off only needs the frontend to restart, not a new image:
 
-1. Set `MAINTENANCE_MODE=true` (plus the optional variables) in the frontend service's environment and redeploy the ECS service so the tasks restart. This is an infra change, made outside `terraform/` by whoever owns it.
+1. Set `MAINTENANCE_MODE=true` (plus the optional bypass token) in the frontend service's environment and redeploy the ECS service so the tasks restart. This is an infra change, made outside `terraform/` by whoever owns it.
 2. Check the site shows the page, then open `/?maintenance_bypass=<token>` to smoke-test with the bypass.
 3. When the update is done, set `MAINTENANCE_MODE=false` and redeploy again. Open pages reload every minute, so students land back on Odyssey on their own.
 

@@ -181,13 +181,11 @@ describe("middleware", () => {
     const saved = {
       mode: process.env.MAINTENANCE_MODE,
       token: process.env.MAINTENANCE_BYPASS_TOKEN,
-      until: process.env.MAINTENANCE_UNTIL,
     };
 
     beforeEach(() => {
       process.env.MAINTENANCE_MODE = "true";
       process.env.MAINTENANCE_BYPASS_TOKEN = "s3cret-token";
-      process.env.MAINTENANCE_UNTIL = "3:00 PM ET";
       jest.mocked(getToken).mockResolvedValue(signedInToken as never);
     });
 
@@ -195,7 +193,6 @@ describe("middleware", () => {
       for (const [key, value] of [
         ["MAINTENANCE_MODE", saved.mode],
         ["MAINTENANCE_BYPASS_TOKEN", saved.token],
-        ["MAINTENANCE_UNTIL", saved.until],
       ] as const) {
         if (value === undefined) delete process.env[key];
         else process.env[key] = value;
@@ -216,9 +213,6 @@ describe("middleware", () => {
           "Content-Type": "text/html; charset=utf-8",
         });
         expect(res.body).toContain("Odyssey is getting an update");
-        expect(res.body).toContain(
-          "Expected back by <strong>3:00 PM ET</strong>",
-        );
         expect(getToken).not.toHaveBeenCalled();
       },
     );

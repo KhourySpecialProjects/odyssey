@@ -2,11 +2,10 @@
 // request with a 503 instead of running the app. It reads the environment on
 // each request, so turning it on or off only needs a restart, not a rebuild.
 //
-//   MAINTENANCE_MODE=true          turn it on
-//   MAINTENANCE_UNTIL="3:00 PM ET" optional, shown on the page
-//   MAINTENANCE_BYPASS_TOKEN=...   optional; open any URL with
-//                                  ?maintenance_bypass=<token> to use the site
-//                                  normally in that browser
+//   MAINTENANCE_MODE=true         turn it on
+//   MAINTENANCE_BYPASS_TOKEN=...  optional; open any URL with
+//                                 ?maintenance_bypass=<token> to use the site
+//                                 normally in that browser
 
 export { renderMaintenancePage } from "./page";
 
