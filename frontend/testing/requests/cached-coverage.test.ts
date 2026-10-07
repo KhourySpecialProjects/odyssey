@@ -564,6 +564,18 @@ describe("cached.ts — getCachedDropletBySlug", () => {
     expect(result).toEqual(MOCK_DROPLET);
   });
 
+  it("populates each dataset's fileUrl, which the lesson page's notebooks load", async () => {
+    await getCachedDropletBySlug("python-basics");
+
+    const { populate } = mockedGetDropletBySlug.mock.calls[0][1]! as {
+      populate: { datasets: unknown };
+    };
+    // NotebookCodeViewer loads every dataset by its name from its fileUrl
+    expect(populate.datasets).toEqual({
+      fields: ["id", "name", "fileUrl", "fileSize"],
+    });
+  });
+
   it("returns null when droplet does not exist", async () => {
     mockedGetDropletBySlug.mockResolvedValue(null as unknown as Droplet);
 

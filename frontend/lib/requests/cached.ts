@@ -212,8 +212,9 @@ export const getCachedDropletBySlug = cache((slug: string) =>
         ],
       },
       nextSteps: { fields: ["id", "label", "url"] },
+      // The lesson page's notebooks load each dataset from its fileUrl
       datasets: {
-        fields: ["id", "name", "fileSize"],
+        fields: ["id", "name", "fileUrl", "fileSize"],
       },
     },
   }),
