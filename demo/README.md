@@ -38,7 +38,14 @@ Needs Docker and Node 20.6+.
    ```bash
    npm run demo:frontend
    ```
-   Logging in as a persona needs the demo login, which is a later piece.
+   The login page lists the personas. Pick one to log in as them.
+6. **Optional: run non-Python code** (Python runs in the browser and needs nothing):
+   ```bash
+   npm run demo:piston
+   ```
+   This starts Piston, the code runner from `docker-compose.yml` (a privileged
+   container on port 2000, localhost only), and installs JavaScript. Without it,
+   Run on a JavaScript code block says the execution service is unreachable.
 
 The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 
@@ -46,6 +53,7 @@ The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 |---|---|
 | `npm run demo:db:down` | Stops the demo database (data is kept) |
 | `npm run demo:db:reset` | Deletes the demo database and starts an empty one (give it a few seconds before seeding) |
+| `docker compose stop piston` | Stops Piston |
 
 ## What the seed creates
 
@@ -65,7 +73,7 @@ Strapi v5 means changing that one file.
   appears at least once, plus a classic (v1) lesson. Its Slides lesson works in
   presentation mode, and its notebooks read `students.csv`. The image and the
   dataset are served from `frontend/public/demo/`. JavaScript code blocks need
-  Piston running, or Run shows an error. For now the notebooks only find the
+  `npm run demo:piston`. For now the notebooks only find the
   dataset in the draft editor: the learner page doesn't load dataset URLs (an
   app bug, not a demo one).
 - **Playlists**: public, private and archived.
@@ -76,7 +84,8 @@ Strapi v5 means changing that one file.
 - **Activity**: enrollments, ratings, a highlight and notes, voyage progress,
   friends with pending requests and a block, announcements of every type.
 - **Admin backlog**: a creation request, access requests and bug reports.
-- The `/features` gallery, with placeholder images for now.
+- The `/features` gallery, with screenshots of this demo world
+  (`frontend/public/demo/features/`). Retake them if those pages change.
 
 Dates are relative to when you seed. Shifting them on reset comes in a later piece.
 

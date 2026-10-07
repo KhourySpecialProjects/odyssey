@@ -100,9 +100,10 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 
 # Non-Python code blocks. Python runs in the browser and needs nothing.
-# For other languages, start Piston (it's in docker-compose.yml) and set
-# PISTON_API_URL=http://localhost:2000
-PISTON_API_URL=
+# Other languages run on Piston: start it with npm run demo:piston. Until
+# then, Run says the execution service is unreachable. The URL is Piston's
+# execute endpoint, not just its address.
+PISTON_API_URL=http://localhost:2000/api/v2/execute
 JUDGE0_URL=
 JUDGE0_KEY=
 JUDGE0_API_URL=

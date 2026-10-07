@@ -136,7 +136,8 @@ const calloutLesson = [
   callout('warning', code('DELETE FROM students'), ' removes every row in the table.'),
   callout('caution', 'Indexes speed up reads but slow down writes. Add them where queries need them.'),
   callout('question', 'When would you choose a LEFT JOIN over an INNER JOIN?'),
-  callout('more-information', 'See the ', link('https://www.postgresql.org/docs/current/queries.html', 'queries chapter'), ' of the PostgreSQL docs.'),
+  // No links here: callouts show a link's text but drop the link itself
+  callout('more-information', 'The queries chapter of the PostgreSQL docs covers every kind of JOIN.'),
 ];
 
 const quizLesson = [
@@ -184,7 +185,7 @@ const codeLesson = [
   ),
   heading(2, 'Other languages'),
   paragraph(
-    'Other languages run on a code server (Piston or Judge0). In the demo, start Piston first, or Run shows an error.'
+    'Other languages run on a code server (Piston or Judge0). In the demo, start it with npm run demo:piston first.'
   ),
   codeBlock(
     'javascript',

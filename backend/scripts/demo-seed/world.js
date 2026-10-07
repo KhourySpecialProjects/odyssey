@@ -660,15 +660,16 @@ async function seedWorld(db) {
     }
   }
 
-  // /features page gallery. Placeholder images until real screenshots exist.
+  // /features page gallery. The images are screenshots of this demo world, square
+  // because the gallery stretches each one to fill a square.
   await db.create(UID.gallery, {
     title: 'Odyssey Features',
     slug: 'features',
     subtitle: 'Bite-sized learning, built for Khoury students',
     items: [
-      { title: 'Droplets', description: 'Short courses you can finish in one sitting.', image_urls: ['/logo.svg'] },
-      { title: 'Voyages', description: 'Guided paths with required and optional steps.', image_urls: ['/logo.svg'] },
-      { title: 'Groups', description: 'Classes and clubs with due dates and progress.', image_urls: ['/logo.svg'] },
+      { title: 'Droplets', description: 'Short courses you can finish in one sitting.', image_urls: ['/demo/features/droplets.png'] },
+      { title: 'Voyages', description: 'Guided paths with required and optional steps.', image_urls: ['/demo/features/voyages.png'] },
+      { title: 'Groups', description: 'Classes and clubs with due dates and progress.', image_urls: ['/demo/features/groups.png'] },
     ],
   });
 
