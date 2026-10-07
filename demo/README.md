@@ -89,6 +89,13 @@ Strapi v5 means changing that one file.
 
 Dates are relative to when you seed. Shifting them on reset comes in a later piece.
 
+A test (`frontend/testing/lib/demo-seed-coverage.test.ts`) runs the seed
+without Strapi and fails when the app gains something the demo doesn't show:
+a lesson block or callout type missing from the Block Gallery, or a droplet
+status, announcement type or voyage claim status the seed never uses. It also
+fails if a seeded lesson breaks the editor's rules (unknown block types,
+repeated block ids, unsupported text styles).
+
 ## Safety switches
 
 - `DEMO_MODE=true` turns the demo behaviour on.

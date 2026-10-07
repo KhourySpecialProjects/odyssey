@@ -10,6 +10,8 @@
 // - Prop types are strict: true/false answers are booleans, the notebook's
 //   editable is the string "true", sandbox flags are booleans.
 // - Any other dollar sign in text is read as math too, so prose avoids them.
+// frontend/testing/lib/demo-seed-coverage.test.ts checks the gallery has every
+// block and callout type, and follows the block type, id and style rules.
 'use strict';
 
 const { randomUUID } = require('crypto');
