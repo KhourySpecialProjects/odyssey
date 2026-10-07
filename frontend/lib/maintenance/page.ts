@@ -83,7 +83,6 @@ export function renderMaintenancePage(): string {
     padding: 6px 14px; border-radius: 999px; background: var(--tint); color: var(--accent);
     font-size: 13px; font-weight: 600;
   }
-  .refresh { margin: 10px 0 0; color: var(--faint); font-size: 13px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
   @media (prefers-reduced-motion: reduce) { .bob, .rock, .dot { animation: none; } }
@@ -95,7 +94,6 @@ export function renderMaintenancePage(): string {
   ${SAILBOAT_SVG}
   <h1>Odyssey is getting an update</h1>
   <p class="status"><i class="dot" aria-hidden="true"></i>Scheduled maintenance</p>
-  <p class="refresh">Refreshes every minute</p>
 </main>
 </body>
 </html>`;
