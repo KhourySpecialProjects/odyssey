@@ -27,13 +27,15 @@ Needs Docker and Node 20.6+.
    It prints an access token at the end. Paste it into `frontend/.env.demo` as
    `STRAPI_ACCESS_TOKEN`. The seed refuses to run outside demo mode, against a
    database whose name doesn't contain "demo", or on a database that already
-   has data.
+   has data. When it's done, it saves a snapshot of the fresh world for
+   `npm run demo:reset`.
 4. **Start the demo backend** (Strapi on http://localhost:1338):
    ```bash
    npm run demo:backend
    ```
    The first visit to http://localhost:1338/admin asks you to create a Strapi
-   admin account for browsing the data.
+   admin account for browsing the data. Run `npm run demo:snapshot` afterwards,
+   or the next reset removes the account.
 5. **Start the demo frontend** (http://localhost:3001):
    ```bash
    npm run demo:frontend
@@ -52,6 +54,8 @@ The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 | Command | What it does |
 |---|---|
 | `npm run demo:db:down` | Stops the demo database (data is kept) |
+| `npm run demo:reset` | Puts the demo back to the freshly seeded world in a few seconds, with every date moved forward so "due in 3 days" is still 3 days away. Run it while the demo is running: it also clears the frontend's cached data |
+| `npm run demo:snapshot` | Saves the database as it is now as the world `demo:reset` goes back to (`demo/.snapshot/`, git-ignored) |
 | `npm run demo:db:reset` | Deletes the demo database and starts an empty one (give it a few seconds before seeding) |
 | `docker compose stop piston` | Stops Piston |
 
@@ -90,7 +94,8 @@ Strapi v5 means changing that one file.
 - The `/features` gallery, with screenshots of this demo world
   (`frontend/public/demo/features/`). Retake them if those pages change.
 
-Dates are relative to when you seed. Shifting them on reset comes in a later piece.
+Dates are relative to when you seed, and `npm run demo:reset` keeps them that
+way by moving every date forward by the time since the snapshot was saved.
 
 A test (`frontend/testing/lib/demo-seed-coverage.test.ts`) runs the seed
 without Strapi and fails when the app gains something the demo doesn't show:

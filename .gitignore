@@ -18,6 +18,9 @@ frontend/providers/PHProvider.tsx
 # Playwright MCP logs
 .playwright-mcp/
 
+# Demo database snapshot (npm run demo:snapshot); only works with your own demo secrets
+demo/.snapshot/
+
 # personal agent settings (each developer has their own)
 .claude/settings.local.json
 .claude/.env

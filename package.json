@@ -15,7 +15,9 @@
     "demo:db:down": "docker stop odyssey-demo-db",
     "demo:db:reset": "docker rm -f odyssey-demo-db; docker volume rm odyssey-demo-db; npm run demo:db:up",
     "demo:backend": "cd backend && ENV_PATH=.env.demo npm run dev",
-    "demo:seed": "cd backend && ENV_PATH=.env.demo node scripts/demo-seed/index.js",
+    "demo:seed": "cd backend && ENV_PATH=.env.demo node scripts/demo-seed/index.js && node ../demo/snapshot.mjs save",
+    "demo:snapshot": "node demo/snapshot.mjs save",
+    "demo:reset": "node demo/snapshot.mjs restore",
     "demo:frontend": "cd frontend && node --env-file=.env.demo node_modules/next/dist/bin/next dev -p 3001",
     "demo:piston": "node demo/piston.mjs",
     "demo:catalog": "cd frontend && UPDATE_DEMO_CATALOG=1 npx jest testing/lib/demo-catalog.test.ts"
