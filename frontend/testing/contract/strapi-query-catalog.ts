@@ -478,7 +478,14 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call(
       "createEnrollment",
       (m) => m.createEnrollment(DROPLET, [{ id: 1 }] as never),
-      routes([ME_ROUTE]),
+      routes([
+        ME_ROUTE,
+        [
+          "GET",
+          /^\/droplets$/,
+          list(ent(1, { isHidden: false, status: "published" })),
+        ],
+      ]),
     ),
     call(
       "updateViewedLessons",

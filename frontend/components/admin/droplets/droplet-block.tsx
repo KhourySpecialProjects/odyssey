@@ -30,7 +30,9 @@ export function DropletBlock({
 
     if (result.ok) {
       toast.success(
-        `Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`,
+        !droplet.isHidden
+          ? `${droplet.name} archived. No new learners can enroll`
+          : `${droplet.name} is visible again`,
       );
     } else {
       setDroplet((prev) => ({ ...prev, isHidden: !prev.isHidden }));

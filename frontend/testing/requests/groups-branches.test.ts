@@ -65,6 +65,10 @@ jest.mock("@/lib/requests/enrollment", () => ({
   createEnrollmentDirect: jest.fn(),
 }));
 
+jest.mock("@/lib/requests/droplet-access", () => ({
+  getListedDropletIds: jest.fn(async (ids: number[]) => ids),
+}));
+
 jest.mock("@/lib/requests/playlist-enrollment", () => ({
   enrollInPlaylist: jest.fn(),
 }));

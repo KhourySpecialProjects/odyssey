@@ -105,7 +105,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   // ODY-507
   "lib/requests/enrollment.ts#calculateDropletAverageRating": "ODY-507",
   "lib/requests/enrollment.ts#changeEnrollmentRating": "ODY-507",
-  "lib/requests/enrollment.ts#createEnrollment": "ODY-507",
   "lib/requests/enrollment.ts#createEnrollmentDirect": "ODY-507",
   "lib/requests/enrollment.ts#createEnrollmentFromEmail": "ODY-507",
   "lib/requests/enrollment.ts#deleteEnrollment": "ODY-507",

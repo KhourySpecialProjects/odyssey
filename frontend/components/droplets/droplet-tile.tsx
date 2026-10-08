@@ -132,11 +132,19 @@ export function DropletTile({
         ? await setDropletHidden(droplet.id, !isArchived)
         : await archiveDroplet(droplet, isArchived ? false : true);
       if (result.success) {
-        toast.success(
-          isArchived
-            ? `${droplet.name} is now unarchived!`
-            : `${droplet.name} is now archived!`,
-        );
+        if (creatorArchive) {
+          toast.success(
+            isArchived
+              ? `${droplet.name} is visible again`
+              : `${droplet.name} archived. No new learners can enroll`,
+          );
+        } else {
+          toast.success(
+            isArchived
+              ? `${droplet.name} is now unarchived!`
+              : `${droplet.name} is now archived!`,
+          );
+        }
       } else {
         toast.error("Failed to update droplet visibility");
       }

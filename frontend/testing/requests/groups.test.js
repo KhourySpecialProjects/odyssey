@@ -85,6 +85,10 @@ jest.mock("../../lib/requests/enrollment", () => ({
   createEnrollmentDirect: jest.fn(),
 }));
 
+jest.mock("../../lib/requests/droplet-access", () => ({
+  getListedDropletIds: jest.fn(),
+}));
+
 jest.mock("../../lib/requests/playlist-enrollment", () => ({
   enrollInPlaylist: jest.fn(),
 }));
@@ -1323,6 +1327,32 @@ describe("Groups Tests", () => {
   });
 
   describe("enrollUsers", () => {
+    const {
+      getListedDropletIds,
+    } = require("../../lib/requests/droplet-access");
+
+    beforeEach(() => {
+      getListedDropletIds.mockImplementation(async (ids) => ids);
+    });
+
+    it("skips unlisted droplets", async () => {
+      getListedDropletIds.mockResolvedValue([101]);
+      fetchAPI.mockResolvedValue([]);
+      createEnrollmentDirect.mockResolvedValue({ id: 1, ok: true });
+
+      await enrollUsers({
+        id: 1,
+        members: [{ id: 10 }],
+        droplets: [{ id: 101 }, { id: 102 }],
+        playlists: [{ id: 201, droplets: [{ id: 103 }] }],
+      });
+
+      expect(getListedDropletIds).toHaveBeenCalledWith([101, 102, 103]);
+      expect(createEnrollmentDirect).toHaveBeenCalledTimes(1);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 101);
+      expect(enrollInPlaylist).toHaveBeenCalledWith(201, 10);
+    });
+
     it("should enroll all members in all droplets and playlists", async () => {
       const mockGroup = {
         id: 1,

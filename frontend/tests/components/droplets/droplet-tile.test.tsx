@@ -3,10 +3,11 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { Droplet } from "@/types";
 import { toast } from "sonner";
 import { DateTime } from "luxon";
-import { archiveDroplet } from "@/lib/requests/droplet";
+import { archiveDroplet, setDropletHidden } from "@/lib/requests/droplet";
 
 jest.mock("@/lib/requests/droplet", () => ({
   archiveDroplet: jest.fn(),
+  setDropletHidden: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -409,6 +410,50 @@ describe("DropletTile", () => {
         expect(archiveDroplet).toHaveBeenCalledWith(mockDroplet, false);
         expect(toast.success).toHaveBeenCalledWith(
           `${mockDroplet.name} is now unarchived!`,
+        );
+      });
+    });
+
+    it("creator archive shows the no-new-enrollments toast", async () => {
+      (setDropletHidden as jest.Mock).mockResolvedValue({ success: true });
+
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={false}
+          isCreator={true}
+          creatorArchive
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+
+      await waitFor(() => {
+        expect(setDropletHidden).toHaveBeenCalledWith(mockDroplet.id, true);
+        expect(toast.success).toHaveBeenCalledWith(
+          `${mockDroplet.name} archived. No new learners can enroll`,
+        );
+      });
+    });
+
+    it("creator unarchive shows the visible-again toast", async () => {
+      (setDropletHidden as jest.Mock).mockResolvedValue({ success: true });
+
+      render(
+        <DropletTile
+          droplet={mockDroplet}
+          isArchived={true}
+          isCreator={true}
+          creatorArchive
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Unarchive" }));
+
+      await waitFor(() => {
+        expect(setDropletHidden).toHaveBeenCalledWith(mockDroplet.id, false);
+        expect(toast.success).toHaveBeenCalledWith(
+          `${mockDroplet.name} is visible again`,
         );
       });
     });

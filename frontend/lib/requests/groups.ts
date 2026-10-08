@@ -9,6 +9,7 @@ import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
 import { createEnrollmentDirect } from "./enrollment";
+import { getListedDropletIds } from "./droplet-access";
 import { enrollInVoyageDirect } from "./voyage-enrollment";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -661,12 +662,16 @@ export async function enrollUsers(group: Group) {
       ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) ||
         []),
     ];
-    const uniqueDropletIds = [...new Set(allDropletIds)];
     const memberIds = group.members?.map((m) => m.id) || [];
 
     if (memberIds.length === 0) {
       return;
     }
+
+    // Unlisted (hidden or unpublished) droplets are skipped.
+    const uniqueDropletIds = await getListedDropletIds([
+      ...new Set(allDropletIds),
+    ]);
 
     // Need to collect existing enrollments if uniqueDropletIds is not empty
     let existingSet = new Set<string>();

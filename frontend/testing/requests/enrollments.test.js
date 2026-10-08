@@ -26,6 +26,12 @@ const {
   strapiEntryUrl,
   StrapiEntryNotFoundError,
 } = require("../../lib/strapi-document-id");
+const { requireRole } = require("../../lib/auth/require-role");
+const { getDropletAccessFresh } = require("../../lib/requests/droplet-access");
+const {
+  describeServerActionAuth,
+  authFixtures,
+} = require("../helpers/server-action-auth");
 const mockEnrollments = require("../mocks/enrollmentsMock");
 const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
@@ -51,12 +57,23 @@ jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
+jest.mock("../../lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
+jest.mock("../../lib/requests/droplet-access", () => ({
+  getDropletAccessFresh: jest.fn(),
+}));
+
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
 }));
 
 global.fetch = jest.fn();
+
+const gateAs = (over = {}) =>
+  authFixtures.as({ id: 1, documentId: "docU1", ...over });
 
 beforeEach(() => {
   jest.spyOn(console, "error").mockImplementation(() => {});
@@ -954,9 +971,17 @@ describe("Enrollment Tests", () => {
       lessons: [{ id: 1, slug: "lesson-1" }],
     };
 
+    beforeEach(() => {
+      requireRole.mockResolvedValue(gateAs());
+      getDropletAccessFresh.mockResolvedValue({
+        id: 1,
+        isHidden: false,
+        status: "published",
+        authorized_users: [],
+      });
+    });
+
     it("creates enrollment when not already enrolled", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([]);
 
       global.fetch.mockResolvedValueOnce({
@@ -971,9 +996,7 @@ describe("Enrollment Tests", () => {
     });
 
     it("sends documentIds for all relations, resolving the caller's entities by numeric id only", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       const user = { id: 1, documentId: "docU1" };
-      getAuthorizedUserByEmail.mockResolvedValue(user);
       fetchAPI.mockResolvedValue([]);
       const droplet = { ...mockDroplet, documentId: "attackerDroplet" };
       const lessons = [{ id: 1, documentId: "attackerLesson" }];
@@ -1003,8 +1026,6 @@ describe("Enrollment Tests", () => {
     });
 
     it("resolves numeric-only entities to documentIds", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([]);
       resolveDocumentId
         .mockImplementationOnce(async () => "docUser")
@@ -1022,8 +1043,6 @@ describe("Enrollment Tests", () => {
     });
 
     it("returns ok:false without calling Strapi when a relation is missing", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([]);
       resolveDocumentId.mockRejectedValueOnce(
         new StrapiEntryNotFoundError("missing"),
@@ -1036,8 +1055,6 @@ describe("Enrollment Tests", () => {
     });
 
     it("does not create when already enrolled", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([{ id: 1, droplet: { id: 1 } }]);
 
       const result = await createEnrollment(mockDroplet, []);
@@ -1047,8 +1064,6 @@ describe("Enrollment Tests", () => {
     });
 
     it("handles droplet without lessons", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([]);
 
       global.fetch.mockResolvedValueOnce({
@@ -1061,19 +1076,116 @@ describe("Enrollment Tests", () => {
     });
 
     it("handles unauthenticated user", async () => {
-      const consoleError = jest.spyOn(console, "error");
-      getCurrentUser.mockResolvedValue(null);
+      requireRole.mockResolvedValue({ ok: false, error: "unauthenticated" });
 
       const result = await createEnrollment(mockDroplet, []);
 
-      expect(result.error).toBe("Database Error: Failed to enroll.");
-      expect(consoleError).toHaveBeenCalled();
+      expect(result).toEqual({
+        ok: false,
+        error: "unauthenticated",
+        data: null,
+      });
       expect(revalidateTag).not.toHaveBeenCalled();
     });
 
+    it("refuses a hidden droplet for a non-author without calling Strapi", async () => {
+      fetchAPI.mockResolvedValue([]);
+      getDropletAccessFresh.mockResolvedValue({
+        id: 1,
+        isHidden: true,
+        status: "published",
+        authorized_users: [{ id: 99 }],
+      });
+
+      const result = await createEnrollment(mockDroplet, []);
+
+      expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("refuses when the droplet no longer exists", async () => {
+      fetchAPI.mockResolvedValue([]);
+      getDropletAccessFresh.mockResolvedValue(null);
+
+      const result = await createEnrollment(mockDroplet, []);
+
+      expect(result.error).toBe("forbidden");
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("allows an author to enroll in their hidden droplet", async () => {
+      fetchAPI.mockResolvedValue([]);
+      getDropletAccessFresh.mockResolvedValue({
+        id: 1,
+        isHidden: true,
+        status: "draft",
+        authorized_users: [{ id: 1 }],
+      });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 1 } }),
+      });
+
+      const result = await createEnrollment(mockDroplet, []);
+
+      expect(result.ok).toBe(true);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows a ContentEditor to enroll in a draft droplet", async () => {
+      requireRole.mockResolvedValue(gateAs({ roles: ["Content Editor"] }));
+      fetchAPI.mockResolvedValue([]);
+      getDropletAccessFresh.mockResolvedValue({
+        id: 1,
+        isHidden: false,
+        status: "draft",
+        authorized_users: [],
+      });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 1 } }),
+      });
+
+      const result = await createEnrollment(mockDroplet, []);
+
+      expect(result.ok).toBe(true);
+    });
+
+    it("skips the visibility read when already enrolled", async () => {
+      fetchAPI.mockResolvedValue([{ id: 1, droplet: { id: 1 } }]);
+
+      await createEnrollment(mockDroplet, []);
+
+      expect(getDropletAccessFresh).not.toHaveBeenCalled();
+    });
+
+    describeServerActionAuth("createEnrollment", {
+      requireRole,
+      invoke: () => createEnrollment(mockDroplet, []),
+      mutations: () => [global.fetch, revalidateTag],
+      denial: { kind: "role", roles: [] },
+      authorized: {
+        as: gateAs(),
+        arrange: () => {
+          fetchAPI.mockResolvedValue([]);
+          getDropletAccessFresh.mockResolvedValue({
+            id: 1,
+            isHidden: false,
+            status: "published",
+            authorized_users: [],
+          });
+          global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({ data: { id: 1 } }),
+          });
+        },
+        expect: (result) => expect(result.ok).toBe(true),
+      },
+      expectDenied: (result, code) =>
+        expect(result).toEqual({ ok: false, error: code, data: null }),
+    });
+
     it("handles API error responses", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValue([]);
 
       global.fetch.mockResolvedValueOnce({

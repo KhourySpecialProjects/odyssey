@@ -499,11 +499,14 @@ async function applyDropletUpdate(
     // Still swept: droplets (the editor reads through it), enrollments
     // (/d/[slug] has no status gate, so drafts can have enrollments), and
     // user-content (every co-author's /my-content lists the draft).
-    // A save that sets `status` always gets the full sweep, since the
-    // previous status is unknown here.
+    // A save that sets `status` or `isHidden` always gets the full sweep, since
+    // the previous value is unknown here.
     const isDraftSave =
       data.status === undefined &&
+      data.isHidden === undefined &&
       responseData.data?.attributes?.status === "draft";
+    const visibilityChanged =
+      data.isHidden !== undefined || data.status !== undefined;
 
     revalidateTag(CACHE_TAGS.droplets);
     if (!isDraftSave || data.authorized_users) {
@@ -516,6 +519,13 @@ async function applyDropletUpdate(
       revalidateTag(CACHE_TAGS.allUserDashboards);
     }
     revalidateTag(CACHE_TAGS.allUserContent);
+    // Visibility feeds voyages, tag counts, the feed and profile "Created".
+    if (visibilityChanged) {
+      revalidateTag(CACHE_TAGS.voyages);
+      revalidateTag(CACHE_TAGS.tags);
+      revalidateTag(CACHE_TAGS.announcements);
+      revalidateTag(CACHE_TAGS.users);
+    }
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {

@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
+import { updateDroplet } from "@/lib/requests/droplet";
 import { DropletBlock } from "@/components/admin/droplets/droplet-block";
 import { makeDroplet } from "@/lib/testing/mock-helpers";
 
@@ -40,6 +42,47 @@ describe("DropletBlock", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  // React 18 in jsdom doesn't run form actions on click; call the action prop.
+  const runFormAction = async (container: HTMLElement) => {
+    const form = container.querySelector("form") as HTMLFormElement;
+    const key = Object.keys(form).find((k) => k.startsWith("__reactProps"))!;
+    const props = (
+      form as unknown as Record<string, { action: () => unknown }>
+    )[key];
+    await act(async () => {
+      await props.action();
+    });
+  };
+
+  describe("Toast copy", () => {
+    it("shows the archived copy when hiding", async () => {
+      (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+      const { container } = render(<DropletBlock droplet={mockDroplet} />);
+
+      await runFormAction(container);
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          "Test Droplet archived. No new learners can enroll",
+        ),
+      );
+    });
+
+    it("shows the visible-again copy when showing", async () => {
+      (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+      const hidden = makeDroplet({ ...mockDroplet, isHidden: true });
+      const { container } = render(<DropletBlock droplet={hidden} />);
+
+      await runFormAction(container);
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          "Test Droplet is visible again",
+        ),
+      );
+    });
   });
 
   describe("Rendering", () => {

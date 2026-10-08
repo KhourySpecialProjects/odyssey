@@ -26,6 +26,9 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { requireRole } from "@/lib/auth/require-role";
+import { getDropletAccessFresh } from "@/lib/requests/droplet-access";
+import { isDropletListed, isDropletStaff } from "@/lib/droplet-visibility";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -550,16 +553,28 @@ export async function createEnrollment(
   droplet: Droplet,
   viewedLessons: Lesson[],
 ) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error, data: null };
   try {
-    const user = await getCurrentUser();
-    if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const authorizedUser = {
+      id: gate.user.id,
+      documentId: gate.user.documentId,
+    };
     const existing = await getEnrollmentByUserAndDroplet(
       authorizedUser.id,
       droplet.id,
     );
 
     if (!existing) {
+      // Unlisted droplets are closed to new enrollments except for authors and staff.
+      const access = await getDropletAccessFresh(droplet.id);
+      const canEnroll =
+        !!access &&
+        (isDropletListed(access) ||
+          isDropletStaff(gate.user.roles) ||
+          !!access.authorized_users?.some((u) => u.id === gate.user.id));
+      if (!canEnroll) return { ok: false, error: "forbidden", data: null };
+
       // Strapi v5 relation writes take documentIds. `droplet` and
       // `viewedLessons` come from the caller, so pass only their numeric ids
       // (the same id the duplicate check above used) and never a

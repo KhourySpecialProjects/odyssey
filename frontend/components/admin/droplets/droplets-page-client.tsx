@@ -156,6 +156,12 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
       if (!result.ok) {
         setIsHidden(!next);
         toast.error(result.error ?? "Failed to update visibility");
+      } else {
+        toast.success(
+          next
+            ? `${droplet.name} archived. No new learners can enroll`
+            : `${droplet.name} is visible again`,
+        );
       }
     } catch {
       setIsHidden(!next);

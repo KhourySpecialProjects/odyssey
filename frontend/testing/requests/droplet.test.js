@@ -451,6 +451,27 @@ describe("Droplet API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith("authors");
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("groups");
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.tags);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.announcements);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.users);
+    });
+
+    it("hiding a draft droplet still sweeps playlists, groups and dashboards", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { id: 123, attributes: { status: "draft" } },
+          }),
+      });
+
+      await updateDroplet(123, { isHidden: true });
+
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allGroups);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
     });
 
     it("revalidates with regenerateSlug option", async () => {
@@ -510,6 +531,10 @@ describe("Droplet API Functions", () => {
         CACHE_TAGS.allUserDashboards,
       );
       expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.authors);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.voyages);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.tags);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
     });
 
     it("draft saves that change authorized_users still revalidate authors", async () => {
