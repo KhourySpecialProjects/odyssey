@@ -24,7 +24,7 @@ beforeEach(() => {
   process.env = {
     ...originalEnv,
     DEMO_MODE: "true",
-    DEMO_RESET_SECRET: "reset-secret",
+    DEMO_CONTROL_SECRET: "control-secret",
   };
 });
 
@@ -33,8 +33,8 @@ afterAll(() => {
 });
 
 describe("POST /api/demo/reset-cache", () => {
-  it("clears the cached data with the demo reset secret", async () => {
-    const response = await POST(request("Bearer reset-secret"));
+  it("clears the cached data with the demo control secret", async () => {
+    const response = await POST(request("Bearer control-secret"));
 
     expect(response.status).toBe(200);
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
@@ -49,12 +49,12 @@ describe("POST /api/demo/reset-cache", () => {
   it("doesn't exist outside demo mode", async () => {
     process.env.DEMO_MODE = "false";
 
-    expect((await POST(request("Bearer reset-secret"))).status).toBe(404);
+    expect((await POST(request("Bearer control-secret"))).status).toBe(404);
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("doesn't exist when no reset secret is set", async () => {
-    delete process.env.DEMO_RESET_SECRET;
+  it("doesn't exist when no control secret is set", async () => {
+    delete process.env.DEMO_CONTROL_SECRET;
 
     expect((await POST(request("Bearer "))).status).toBe(404);
   });

@@ -21,8 +21,8 @@ function providerIdsWith(demoMode: string | undefined): string[] {
 }
 
 describe("login providers", () => {
-  it("only offers the demo login in demo mode", () => {
-    expect(providerIdsWith("true")).toEqual(["demo"]);
+  it("only offers the demo logins (persona picker and login links) in demo mode", () => {
+    expect(providerIdsWith("true")).toEqual(["demo", "demo-link"]);
   });
 
   it("keeps Microsoft and GitHub login outside demo mode", () => {

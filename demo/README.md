@@ -40,7 +40,8 @@ Needs Docker and Node 20.6+.
    ```bash
    npm run demo:frontend
    ```
-   The login page lists the personas. Pick one to log in as them.
+   The login page lists the personas. Pick one to log in as them. Scripts and
+   agents use one-time login links instead (see below).
 6. **Optional: run non-Python code** (Python runs in the browser and needs nothing):
    ```bash
    npm run demo:piston
@@ -57,7 +58,28 @@ The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 | `npm run demo:reset` | Puts the demo back to the freshly seeded world in a few seconds, with every date moved forward so "due in 3 days" is still 3 days away. Run it while the demo is running: it also clears the frontend's cached data |
 | `npm run demo:snapshot` | Saves the database as it is now as the world `demo:reset` goes back to (`demo/.snapshot/`, git-ignored) |
 | `npm run demo:db:reset` | Deletes the demo database and starts an empty one (give it a few seconds before seeding) |
+| `npm run demo:login-link -- student1` | Prints a one-time login link for a persona (see below) |
 | `docker compose stop piston` | Stops Piston |
+
+## Logging in from scripts and agents
+
+Agents can't click through the persona picker, so they log in with a one-time
+link. The demo frontend must be running.
+
+```bash
+npm run demo:login-link -- student1                # lands on /explore
+npm run demo:login-link -- contenteditor1 /review  # lands on /review
+```
+
+Opening the printed link logs that persona in and lands on the path. A link
+works once, expires after 10 minutes, and only logs in an enabled
+`@demo.odyssey.test` account. To be two personas at once, open the second
+link in a private window.
+
+The script calls `POST /api/demo/login-link` with
+`Authorization: Bearer <DEMO_CONTROL_SECRET>` (from `frontend/.env.demo`) and
+a body like `{ "email": "student1@demo.odyssey.test", "callbackUrl": "/explore" }`.
+It answers `{ "url", "expiresAt" }`. The agent runner will use the same route.
 
 ## What the seed creates
 
@@ -109,6 +131,10 @@ repeated block ids, unsupported text styles).
 - `DEMO_MODE=true` turns the demo behaviour on.
 - The frontend refuses to start in demo mode if it's pointed at a production
   address (the real site or its Strapi). See `frontend/next.config.mjs`.
+- The demo control routes (`/api/demo/*`, for login links and clearing cached
+  data) answer 404 unless `DEMO_MODE=true` and `DEMO_CONTROL_SECRET` is set,
+  and 401 without the secret. Like the persona picker, login links only log in
+  `@demo.odyssey.test` accounts.
 - Bug reports are saved but never sent to Linear, and never call Claude to write
   the ticket. Slack messages are never sent.
 - PostHog, the AI features and S3 are off while their keys are blank.

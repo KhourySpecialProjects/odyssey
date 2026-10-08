@@ -1,11 +1,6 @@
-import { timingSafeEqual } from "crypto";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { isDemoMode } from "@/lib/auth/demo-login";
-
-const sameSecret = (given: string, expected: string) =>
-  given.length === expected.length &&
-  timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+import { demoControlSecret, isDemoControlRequest } from "@/lib/demo-control";
 
 /**
  * Demo only. `npm run demo:reset` calls this after it restores the demo
@@ -14,12 +9,11 @@ const sameSecret = (given: string, expected: string) =>
  * revalidating it clears all of it.
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.DEMO_RESET_SECRET;
-  if (!isDemoMode() || !secret) {
+  const secret = demoControlSecret();
+  if (!secret) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const given = request.headers.get("authorization") ?? "";
-  if (!sameSecret(given, `Bearer ${secret}`)) {
+  if (!isDemoControlRequest(request, secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

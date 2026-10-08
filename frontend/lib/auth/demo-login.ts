@@ -31,13 +31,8 @@ type DemoAccountRow = {
 const fullName = (row: DemoAccountRow) =>
   `${row.firstName ?? ""} ${row.lastName ?? ""}`.trim() || row.email;
 
-/** next-auth `authorize` for the demo provider: an enabled demo account, or null. */
-export async function authorizeDemoLogin(
-  credentials: Record<string, string> | undefined,
-) {
-  const email = credentials?.email?.trim().toLowerCase();
-  if (!isDemoMode() || !isDemoEmail(email)) return null;
-
+/** The enabled demo account with this email, or null. */
+export async function findEnabledDemoAccount(email: string) {
   const [account] = await fetchAPI<DemoAccountRow[]>("/authorized-users", {
     urlParams: {
       filters: { email: { $eq: email } },
@@ -46,7 +41,18 @@ export async function authorizeDemoLogin(
     },
     cache: "no-store",
   });
-  if (!account?.isEnabled) return null;
+  return account?.isEnabled ? account : null;
+}
+
+/** next-auth `authorize` for the demo provider: an enabled demo account, or null. */
+export async function authorizeDemoLogin(
+  credentials: Record<string, string> | undefined,
+) {
+  const email = credentials?.email?.trim().toLowerCase();
+  if (!isDemoMode() || !isDemoEmail(email)) return null;
+
+  const account = await findEnabledDemoAccount(email);
+  if (!account) return null;
 
   return { id: String(account.id), email, name: fullName(account) };
 }

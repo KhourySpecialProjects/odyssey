@@ -8,6 +8,7 @@ import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { demoLoginProvider, isDemoMode } from "./demo-login";
+import { demoLinkProvider } from "./demo-login-link";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -57,9 +58,10 @@ async function syncAzureProfilePhoto(
 }
 
 export const authOptions: NextAuthOptions = {
-  // The demo environment logs in as seeded personas instead (lib/auth/demo-login.ts)
+  // The demo environment logs in as seeded personas instead, from the persona
+  // picker or a one-time login link (lib/auth/demo-login*.ts)
   providers: isDemoMode()
-    ? [demoLoginProvider()]
+    ? [demoLoginProvider(), demoLinkProvider()]
     : [
         AzureADProvider({
           clientId: process.env.AZURE_AD_CLIENT_ID || "",

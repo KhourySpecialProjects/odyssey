@@ -60,8 +60,9 @@ NEXT_PUBLIC_APP_ENV=demo
 APP_URL=http://localhost:3001
 NEXTAUTH_URL=http://localhost:3001
 NEXTAUTH_SECRET=${secret(32)}
-# npm run demo:reset sends this to clear the frontend's cached data
-DEMO_RESET_SECRET=${secret(32)}
+# Guards the demo-only control routes: npm run demo:reset uses it to clear
+# cached data, and npm run demo:login-link to create one-time login links
+DEMO_CONTROL_SECRET=${secret(32)}
 # Real logins are off in the demo: the persona login replaces them.
 AZURE_AD_CLIENT_ID=
 AZURE_AD_CLIENT_SECRET=

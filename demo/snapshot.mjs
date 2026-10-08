@@ -9,14 +9,13 @@
 // Then it tells the demo frontend to drop the data it cached before.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { postControl } from "./control.mjs";
 
 const CONTAINER = "odyssey-demo-db"; // started by npm run demo:db:up
 const DB = ["-U", "odyssey_demo", "-d", "odyssey_demo"];
 const DIR = new URL("./.snapshot/", import.meta.url);
 const DUMP = new URL("odyssey_demo.dump", DIR);
 const INFO = new URL("snapshot.json", DIR);
-const FRONTEND_ENV = new URL("../frontend/.env.demo", import.meta.url);
-const FRONTEND_URL = process.env.DEMO_FRONTEND_URL ?? "http://localhost:3001";
 
 const docker = (args, options = {}) =>
   execFileSync("docker", ["exec", "-i", CONTAINER, ...args], {
@@ -55,34 +54,13 @@ BEGIN
 END
 $shift$;`;
 
-/** The demo frontend's DEMO_RESET_SECRET, from the environment or frontend/.env.demo. */
-function resetSecret() {
-  if (process.env.DEMO_RESET_SECRET) return process.env.DEMO_RESET_SECRET;
-  if (!existsSync(FRONTEND_ENV)) return null;
-  const line = readFileSync(FRONTEND_ENV, "utf8").match(
-    /^DEMO_RESET_SECRET=(.*)$/m,
-  );
-  return line?.[1].trim() || null;
-}
-
 async function clearFrontendCache() {
-  const secret = resetSecret();
-  const restart =
-    "Restart npm run demo:frontend so it stops showing cached data.";
-  if (!secret)
-    return console.log(
-      `No DEMO_RESET_SECRET in frontend/.env.demo. ${restart}`,
-    );
   try {
-    const response = await fetch(`${FRONTEND_URL}/api/demo/reset-cache`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${secret}` },
-    });
-    if (!response.ok) throw new Error(`status ${response.status}`);
+    await postControl("/api/demo/reset-cache");
     console.log("Cleared the demo frontend's cached data.");
-  } catch {
+  } catch (error) {
     console.log(
-      `The demo frontend isn't reachable at ${FRONTEND_URL}. If it's running, ${restart.toLowerCase()}`,
+      `${error.message} If the demo frontend is running, restart it so it stops showing cached data.`,
     );
   }
 }
