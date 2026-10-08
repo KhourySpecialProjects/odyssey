@@ -53,8 +53,9 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
   - Rollback means restoring the snapshot, not running `git revert`.
   - Write down the decision point: "roll back if X is still broken at time Y."
 - [ ] **2.4 Assign the roles** (Driver, Reviewer and Comms) in the table above.
+- [ ] **2.5 ODY-605:** update the agent docs and skills for v5 on `feature/strapi-v5`, so the develop merge carries them (audit-2 Minor 2). Blocks ODY-603.
 
-**Gate B:** the ODY-596 restore has been tested, the v5 version of `03` exists, and the Reviewer has reviewed the window steps.
+**Gate B:** the ODY-596 restore has been tested, the v5 version of `03` exists, the Reviewer has reviewed the window steps, and ODY-605 has landed.
 
 ### Phase 3: Rehearsal, ODY-602 (Awad)
 
@@ -82,9 +83,8 @@ Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev
 ### Phase 5: Dev soak and window prep (up to M)
 
 - [ ] **5.1** Soak dev for an agreed period. ODY-603 asks for "a set period" but doesn't give a length yet. Watch the ECS logs and error rates.
-- [ ] **5.2 ODY-605:** update the agent docs and skills for v5. This blocks ODY-603.
-- [ ] **5.3** Schedule the window. Comms announces the window and the Strapi admin edit freeze.
-- [ ] **5.4 M−1 go/no-go:**
+- [ ] **5.2** Schedule the window. Comms announces the window and the Strapi admin edit freeze.
+- [ ] **5.3 M−1 go/no-go:**
   - The Driver checks access: `psql` to prod RDS, RDS snapshots, and ECS service updates.
   - Record the last v4 task definition ARN and image tag (for rollback) and the exact merge SHA.
 

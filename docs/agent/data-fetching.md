@@ -21,9 +21,18 @@ const droplets = await fetchAPI<Droplet[]>("/droplets", {
 1. Serializes `urlParams` with `qs.stringify()` (handles nested Strapi filter/populate syntax)
 2. Adds `Authorization: Bearer ${STRAPI_ACCESS_TOKEN}` header
 3. Adds `Content-Type: application/json`
-4. Passes `next` or `cache` option to the underlying `fetch()` call
-5. Calls `flattenAttributes()` on `data.data` by default (set `flattenResponse: false` to skip)
-6. Throws on non-2xx responses with status code in the error message
+4. Spreads `STRAPI_RESPONSE_FORMAT_HEADER` (`Strapi-Response-Format: v4`)
+5. Passes `next` or `cache` option to the underlying `fetch()` call
+6. Adds `pagination[withCount]=false` to flattened requests (flattening drops `meta`); set `withCount` yourself or `flattenResponse: false` to keep it
+7. Calls `flattenAttributes()` on `data.data` by default (set `flattenResponse: false` to skip)
+8. Throws on non-2xx responses with status code in the error message
+
+### Strapi v5 response format
+
+- Every request to Strapi sends `Strapi-Response-Format: v4`, so v5 answers `{ data: { id, documentId, attributes } }` and `flattenAttributes` works unchanged. It keeps the top-level `documentId`.
+- `fetchAPI` adds the header. Raw `fetch()` calls and `frontend/scripts/migrate-*.ts` must spread `STRAPI_RESPONSE_FORMAT_HEADER` (`lib/utils.ts`). Guard: `testing/lib/strapi-response-format-guard.test.ts`.
+- The header changes the shape only. Numeric single-entry URLs still 404 and unknown keys still 400.
+- Core DELETE returns an empty 204, even for a missing documentId. Read it with `readJsonOrNull` (`lib/strapi-response.ts`); tests use `makeEmptyResponse(204)`.
 
 ### The cache/next Mutual Exclusion Rule
 
@@ -203,6 +212,9 @@ import qs from "qs";
 { pagination: { page: 1, pageSize: 25 } }
 // or
 { pagination: { start: 0, limit: 25 } }
+
+// Dynamic zone: nested populate needs `on` per component (lib/requests/lesson-populates.ts)
+{ populate: { blocks: { on: { "droplets.quiz": { populate: ["questions"] }, "droplets.generic": true } } } }
 ```
 
 `fetchAPI()` passes `urlParams` directly to `qs.stringify()` with `encodeValuesOnly: true`. The `qs` library handles the Strapi bracket notation (`filters[status][$eq]=published`) automatically.
@@ -214,10 +226,11 @@ Single-entry REST routes (`/api/droplets/:id`) and relation writes only accept a
 - **Single-entry URLs:** build them with `await strapiEntryUrl("droplets", ref, query?)`. For `fetchAPI` paths use `` `/droplets/${await resolveDocumentId("droplets", id)}` ``. `ref` can be a number, a documentId, or the entity itself. Passing an entity that has `documentId` skips the lookup, but only for entities your own server code fetched (see the next bullet). A documentId must match `/^[A-Za-z0-9]+$/`; anything else throws `InvalidEntryRefError`.
 - **Relation writes:** every relation value in a POST/PUT body (`connect`, `disconnect`, `set`, or shorthand like `droplet: id`) must be a documentId. Use `entity.documentId` when you have the entity, otherwise `resolveDocumentIds("<target collection>", ids)`. Components and their `id`s are not relations.
 - **Exported Server Actions must not trust a client `documentId`:** in every exported function of a `"use server"` file, all arguments are untrusted, and documentIds are not secret (every entity sent to a client carries one). A `documentId` may only be used if it came from a server-side fetch in the same call. For anything that arrived as an argument (including nested objects and arrays such as `data.droplets` or `group.members`), pass only the numeric id: `x.id` or `{ id: x.id }`. When the action already fetched the entity for an auth, ownership or duplicate check, write to that fetched entity so the check and the write always hit the same row. Otherwise a user can pass `{ id: <their own>, documentId: <someone else's> }`, pass the check on their own row, and write to the other. Non-exported helpers and server-to-server calls may pass fetched entities.
+- **Ids are stable across the v5 boot.** The session `documentId` is optional, because old JWTs don't have it. After a re-run migration the documentIds are regenerated, so restart the frontend to clear its in-process lookup cache.
 - **Filters on `id` are fine:** `filters[id][$eq]=5` still works. Plain reads by id should use the filter, since it needs no lookup.
 - **Rendering paths:** don't call the helper while a page renders or inside `unstable_cache` or `cached.ts`. Its lookup uses `cache: "no-store"`, which makes static routes dynamic. Use an `id` filter there.
 - **Not found:** the helper throws `StrapiEntryNotFoundError`. Invalid refs (null, NaN, `""`) throw `InvalidEntryRefError`, a subclass. Handle both as you would a Strapi 404.
-- **Lock routes:** `/lessons/:id/lock*` take the numeric id until ODY-606. `lesson-lock.ts` stays numeric.
+- **Lock routes:** `/lessons/:id/lock*` accept a numeric id or a documentId since ODY-606. `lesson-lock.ts` still sends numeric ids.
 - **Guard:** `testing/lib/strapi-entry-url-guard.test.ts` fails on raw-id single-entry URLs and lists each `file:line`.
 
 Test conventions:
@@ -228,8 +241,9 @@ Test conventions:
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.
-2. **Forgetting `flattenAttributes()` on raw fetch responses** — Server Actions use raw `fetch()` for PUT/POST/DELETE. The response is wrapped in Strapi's `{ data: { attributes: {} } }` format. Call `flattenAttributes()` manually.
+2. **Forgetting `flattenAttributes()` on raw fetch responses** — Server Actions use raw `fetch()` for PUT/POST/DELETE. The response is wrapped in Strapi's `{ data: { attributes: {} } }` format. Call `flattenAttributes()` manually, and spread `STRAPI_RESPONSE_FORMAT_HEADER` into the headers (without it v5 answers flat and `flattenAttributes` breaks).
 3. **Hardcoding cache tag strings** — Use `CACHE_TAGS` constants. Hardcoded strings won't be found by grep when debugging invalidation issues.
 4. **Forgetting `revalidateTag()` after mutations** — The cache serves stale data until explicitly invalidated. Every mutation needs corresponding tag invalidation.
 5. **Over-populating queries** — Only populate relations you actually render. Deep populates with `{ populate: "*" }` pull the entire relation graph and are expensive.
 6. **Using `getCachedX()` in Server Actions** — React `cache()` only deduplicates within a single render. In Server Actions, call the underlying request function directly.
+7. **Raw list fetch without pagination** — REST `defaultLimit` is 25, so the result silently caps at 25 rows (ODY-720). Send `pagination` explicitly.
