@@ -28,7 +28,7 @@ describe("Logo", () => {
     render(<Logo width={100} height={100} />);
 
     const [, darkLogo] = screen.getAllByAltText("Khoury Odyssey Logo");
-    expect(darkLogo).toHaveClass("hidden", "dark:inline");
+    expect(darkLogo).toHaveClass("hidden", "dark:block");
   });
 
   it("passes width and height through to both images", () => {
