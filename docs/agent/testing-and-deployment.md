@@ -27,7 +27,8 @@ These boot a real Strapi v5 instance per test file on a throwaway SQLite databas
 - `backend/tests/helpers/api-token.js` makes a full-access API token for REST tests with supertest.
 - `backend/tests/helpers/admin-auth.js` (`createSuperAdminToken`) creates a super-admin and logs in through `POST /admin/login`, for admin and content-manager routes (`tests/admin/`). TS source under `src/` can't be required from Jest; require the compiled `dist/src/...` that `setupStrapi` builds.
 - `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
-- `test.failing` marks known issues (for example ODY-700); when one is fixed Jest reports it as failing, and it gets flipped to `it`.
+- `test.failing` marks known issues; when one is fixed Jest reports it as failing, and it gets flipped to `it`.
+- Tooling: regenerate the lockfile fresh (it can't be upgraded in place from v4). The 5.56.0 pins are intentional. Bump `ckeditor5` only together with `@_sh/strapi-plugin-ckeditor`. `backend/.prettierrc.json` is required.
 
 A run must leave `git status` clean. Needs Node 20 or later. CI runs these as the `backend` entry of the matrix in `.github/workflows/test.yml`, on Node 20.14.0 (the ECS image version).
 

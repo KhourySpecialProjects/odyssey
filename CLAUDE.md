@@ -1,12 +1,12 @@
 # Odyssey — Khoury College Education Platform
 
-Next.js 15 + Strapi 4.22 education platform at khouryodyssey.org. Makes education content discoverable and completable by Northeastern students through bite-sized learning units called "droplets."
+Next.js 15 + Strapi 5 education platform at khouryodyssey.org. Makes education content discoverable and completable by Northeastern students through bite-sized learning units called "droplets."
 
 ## Project Map
 
 ```
 frontend/          Next.js 15 App Router (TypeScript, Tailwind v3.4)
-backend/           Strapi CMS v4.22 (Entity Service API, PostgreSQL)
+backend/           Strapi CMS v5 (Document Service API, PostgreSQL)
 terraform/         AWS infra — DO NOT MODIFY
 initdb/            Database seed scripts
 docs/agent/        Detailed reference docs (read when relevant to your task)
@@ -16,7 +16,12 @@ Frontend fetches from Strapi REST via `STRAPI_ACCESS_TOKEN`. Media on S3/CDN. Au
 
 ## Critical Version Constraints
 
-- **This branch line (`feature/strapi-v5` and its children) is mid-migration to Strapi v5.** Backend `@strapi/*` packages are v5. Entity Service is kept on purpose until ODY-606, so don't migrate it ad hoc. For backend config and APIs, use the Context7 v5 docs. The `strapi-v4-patterns` skill and the v4 rules describe `develop`, not this branch. The frontend still expects v4 nested responses until ODY-607.
+- **Strapi 5.56** — use the Context7 v5 docs for backend config and APIs.
+- **Document Service, never Entity Service** — `backend/tests/no-entity-service.test.js` fails on `entityService`.
+- **The frontend sends `Strapi-Response-Format: v4`**, so responses stay nested. Every raw `fetch()` spreads `STRAPI_RESPONSE_FORMAT_HEADER` (guard: `frontend/testing/lib/strapi-response-format-guard.test.ts`).
+- **`id` vs `documentId`** — numeric `id` for filters, comparisons and cache tags; `documentId` for single-entry URLs and relation writes (numeric ids 404). See `docs/agent/data-fetching.md`.
+- **Draft & Publish is off everywhere** — `status` is a domain field. Never send `publicationState`. New types set `draftAndPublish: false`.
+- **`production` is still Strapi v4 until ODY-603.** On a branch cut from `production`, follow that branch's docs.
 - **Tailwind v3.4** — `tailwind.config.ts`. NEVER use `@theme`, CSS-first config (v4).
 - **Next.js 15** — App Router, Server Components by default. `cache` and `next` fetch options are mutually exclusive — passing both silently breaks caching.
 
@@ -43,6 +48,8 @@ Workflow commands:
 These apply to virtually every task:
 
 - `fetchAPI()` in `lib/utils.ts` — single entry point for all Strapi calls. Auto-flattens Strapi responses by default. Only call `flattenAttributes()` manually when using raw `fetch()` (e.g., PUT/DELETE in Server Actions).
+- DELETE returns an empty 204: read it with `readJsonOrNull` (`lib/strapi-response.ts`), not `res.json()`
+- Unknown query or body keys return 400 "Invalid key" (strict REST)
 - `qs` library builds Strapi query strings (populate/filters/pagination)
 - `cn()` utility (clsx + tailwind-merge) for conditional Tailwind classes
 - Zod schemas in `frontend/lib/validations/` validate form data
@@ -75,14 +82,14 @@ Read these when your task touches the relevant area. Don't preload all of them.
 
 Six domain-specific skills with `invocation: auto` — Claude loads them automatically when the task matches. No manual invocation needed.
 
-| Skill                     | Use when                                                           |
-| ------------------------- | ------------------------------------------------------------------ |
-| `systematic-debugging`    | Any bug, test failure, or unexpected behavior (4-phase root cause) |
-| `react-patterns`          | Building components, routes, Server/Client decisions, Suspense     |
-| `testing-patterns`        | Writing Jest tests, fixing test failures, setting up mocks         |
-| `data-fetching`           | Request functions, cache tags, invalidation, Server Actions        |
-| `strapi-v4-patterns`      | Strapi query building, schema reading, Entity Service API          |
-| `schema-change-checklist` | Modifying Strapi content types (ripple effect checklist)           |
+| Skill                     | Use when                                                               |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `systematic-debugging`    | Any bug, test failure, or unexpected behavior (4-phase root cause)     |
+| `react-patterns`          | Building components, routes, Server/Client decisions, Suspense         |
+| `testing-patterns`        | Writing Jest tests, fixing test failures, setting up mocks             |
+| `data-fetching`           | Request functions, cache tags, invalidation, Server Actions            |
+| `strapi-v5-patterns`      | Strapi v5 Document Service, documentId, query building, schema reading |
+| `schema-change-checklist` | Modifying Strapi content types (ripple effect checklist)               |
 
 ## Agents
 

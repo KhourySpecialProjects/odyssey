@@ -15,12 +15,14 @@ For every schema field change (add, remove, rename, change type):
 ### 1. Schema (source of truth)
 
 - [ ] `backend/src/api/{type}/content-types/{type}/schema.json` — make the change here first
-- [ ] New content types must set `"draftAndPublish": false`; toggling D&P on an existing type hard-deletes rows (see `docs/agent/backend-architecture.md` "Draft & Publish")
+- [ ] New content types must set `"draftAndPublish": false`; never turn D&P on, and never add `status`/`publishedAt` to a D&P type (see `docs/agent/backend-architecture.md` "Draft & Publish")
 
 ### 2. TypeScript Types
 
 - [ ] `frontend/types/` — update the TypeScript interface for this content type
 - [ ] Check if any other types reference this one (grep for the type name in `frontend/types/`)
+- [ ] Types carry `documentId?: string`
+- [ ] Commit `backend/types/generated/` (typegen runs on every `strapi develop`)
 
 ### 3. Request Functions
 
@@ -36,6 +38,7 @@ For every schema field change (add, remove, rename, change type):
 
 - [ ] `frontend/lib/actions.ts` — if the field is writable, does a Server Action create/update it?
 - [ ] Does the Zod validation schema in `frontend/lib/validations/{type}.ts` need the new field?
+- [ ] Relation writes send documentIds (`resolveDocumentIds`); a new non-schema input key needs `addInputParams` (strict REST returns 400 otherwise)
 
 ### 6. Components
 
@@ -59,7 +62,7 @@ If you're adding or modifying a relation (manyToMany, manyToOne, oneToMany):
 - [ ] Check both sides of the relation — Strapi requires `inversedBy`/`mappedBy` to match
 - [ ] Update populate queries on BOTH content types
 - [ ] Check if the inverse side's request functions need updating
-- [ ] Verify the join table (if applicable) is handled correctly
+- [ ] Verify the join table (if applicable) is handled correctly; raw SQL uses `*_lnk`/`*_cmps` names
 
 ## Field Removal (extra steps)
 
@@ -76,6 +79,7 @@ After making all changes:
 
 ```bash
 cd frontend && npm test          # Catch type errors and broken tests
+npm --prefix backend test        # Backend Jest (lifecycles, guards)
 cd frontend && npm run build     # Catch any build-time TypeScript errors
 ```
 
