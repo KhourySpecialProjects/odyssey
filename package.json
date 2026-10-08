@@ -19,6 +19,7 @@
     "demo:snapshot": "node demo/snapshot.mjs save",
     "demo:reset": "node demo/snapshot.mjs restore",
     "demo:login-link": "node demo/login-link.mjs",
+    "demo:agent": "node demo/agent.mjs",
     "demo:frontend": "cd frontend && node --env-file=.env.demo node_modules/next/dist/bin/next dev -p 3001",
     "demo:piston": "node demo/piston.mjs",
     "demo:catalog": "cd frontend && UPDATE_DEMO_CATALOG=1 npx jest testing/lib/demo-catalog.test.ts"

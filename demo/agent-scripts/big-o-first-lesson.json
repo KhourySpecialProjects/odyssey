@@ -1,0 +1,42 @@
+{
+  "goal": "Find the Big-O droplet on Explore, enroll, and finish its first lesson, quiz included.",
+  "steps": [
+    {
+      "tool": "type",
+      "target": "searchbox \"Search...\"",
+      "input": { "text": "Big-O", "submit": true, "why": "find the droplet" }
+    },
+    {
+      "tool": "click",
+      "target": "Beginner Big-O Notation Without the Fear",
+      "input": { "why": "open it" }
+    },
+    {
+      "tool": "click",
+      "target": "button \"Enroll and Continue\"",
+      "input": { "why": "enroll" }
+    },
+    {
+      "tool": "click",
+      "target": "radio \"O(n)\"",
+      "input": { "why": "4n + 10 grows like n" }
+    },
+    {
+      "tool": "click",
+      "target": "button \"Check Answer\"",
+      "input": { "why": "check the answer" }
+    },
+    {
+      "tool": "click",
+      "target": "button \"Mark as complete\"",
+      "input": { "why": "finish the lesson" }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "outcome": "done",
+        "summary": "Enrolled in the Big-O droplet and finished its first lesson, answering the quiz."
+      }
+    }
+  ]
+}

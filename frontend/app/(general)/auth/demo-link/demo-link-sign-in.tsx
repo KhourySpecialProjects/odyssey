@@ -21,7 +21,8 @@ export function DemoLinkSignIn({
     if (sent.current) return;
     sent.current = true;
     signIn("demo-link", { token, redirect: false }).then((result) => {
-      if (result?.ok && !result.error) window.location.assign(callbackUrl);
+      // replace, so going back doesn't land on the used link
+      if (result?.ok && !result.error) window.location.replace(callbackUrl);
       else setFailed(true);
     });
   }, [token, callbackUrl]);

@@ -5,9 +5,29 @@ import { DemoLinkSignIn } from "@/app/(general)/auth/demo-link/demo-link-sign-in
 jest.mock("next-auth/react", () => ({ signIn: jest.fn() }));
 
 const mockSignIn = signIn as jest.MockedFunction<typeof signIn>;
+const originalLocation = window.location;
 
 describe("DemoLinkSignIn", () => {
   beforeEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    (window as any).location = originalLocation;
+  });
+
+  it("lands where the link says, leaving the used link out of history", async () => {
+    const replace = jest.fn();
+    delete (window as any).location;
+    (window as any).location = { replace };
+    mockSignIn.mockResolvedValue({
+      ok: true,
+      error: null,
+      status: 200,
+      url: null,
+    } as never);
+
+    render(<DemoLinkSignIn token="abc.def" callbackUrl="/review" />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/review"));
+  });
 
   it("logs in once with the link's token", async () => {
     mockSignIn.mockReturnValue(new Promise(() => {}));

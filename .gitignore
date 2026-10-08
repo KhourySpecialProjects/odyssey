@@ -20,6 +20,9 @@ frontend/providers/PHProvider.tsx
 
 # Demo database snapshot (npm run demo:snapshot); only works with your own demo secrets
 demo/.snapshot/
+# Demo agent runs (npm run demo:agent) and the agents' API key
+demo/.agent-runs/
+demo/.env.agent
 
 # personal agent settings (each developer has their own)
 .claude/settings.local.json

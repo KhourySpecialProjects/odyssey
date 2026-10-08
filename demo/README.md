@@ -1,7 +1,7 @@
 # Odyssey demo environment
 
-A separate copy of Odyssey with fake data, for showing every feature and (later)
-for AI agents that play roles. It never touches production data. See the
+A separate copy of Odyssey with fake data, for showing every feature and for AI
+agents that play its personas. It never touches production data. See the
 demo-environment research doc for the full plan.
 
 This branch (`demo`) is never merged into `develop` or `production`.
@@ -59,6 +59,7 @@ The demo runs on its own ports, so it can run next to your normal `npm run dev`.
 | `npm run demo:snapshot` | Saves the database as it is now as the world `demo:reset` goes back to (`demo/.snapshot/`, git-ignored) |
 | `npm run demo:db:reset` | Deletes the demo database and starts an empty one (give it a few seconds before seeding) |
 | `npm run demo:login-link -- student1` | Prints a one-time login link for a persona (see below) |
+| `npm run demo:agent -- student1 "<goal>"` | Has Claude play a persona until it reaches the goal (see below) |
 | `docker compose stop piston` | Stops Piston |
 
 ## Logging in from scripts and agents
@@ -79,7 +80,71 @@ link in a private window.
 The script calls `POST /api/demo/login-link` with
 `Authorization: Bearer <DEMO_CONTROL_SECRET>` (from `frontend/.env.demo`) and
 a body like `{ "email": "student1@demo.odyssey.test", "callbackUrl": "/explore" }`.
-It answers `{ "url", "expiresAt" }`. The agent runner will use the same route.
+It answers `{ "url", "expiresAt" }`. The agent runner uses the same route.
+
+## Running an agent
+
+`npm run demo:agent` has Claude play one persona on the demo site, in a real
+browser, until it reaches a goal or hits a limit. At each step it reads the
+page as an accessibility snapshot (the outline of headings, text, links and
+form fields) and takes one action: click, type, choose an option, press a key,
+open a page, go back or look again.
+
+```bash
+npm run demo:agent -- student1 "Finish the Python Basics droplet, quizzes included"
+npm run demo:agent -- student1 "..." --watch    # shows the browser window
+```
+
+It needs:
+
+- the demo frontend running (the agent logs in with a one-time login link);
+- Node 22.18 or later, because it runs the TypeScript in
+  `frontend/lib/demo-agent/` directly;
+- Google Chrome, or `npx playwright install chromium` in `frontend/` and
+  `--browser chromium`;
+- the demo's own Anthropic API key, with a monthly spending limit, in
+  `DEMO_AGENT_API_KEY` (your shell, or `demo/.env.agent`, which is
+  git-ignored). Never use the app's key.
+
+It prints a line per step and ends with what the agent did, anything it found
+broken and the estimated cost. The full log is saved in `demo/.agent-runs/`
+(git-ignored). Ctrl+C stops a run after the current step and still saves the
+log. Run `npm run demo:reset` afterwards to undo what the agent changed.
+
+| Option | Default | |
+|---|---|---|
+| `--start <path>` | `/explore` | Page it starts on |
+| `--max-steps <n>` | 60 | Most actions it may take |
+| `--max-minutes <n>` | 15 | Longest it may run |
+| `--max-dollars <n>` | 3 | Most it may spend, estimated from the tokens it uses |
+| `--model <id>` | `claude-opus-5-5` | `claude-sonnet-5-5` costs half as much |
+| `--effort <level>` | `medium` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `--watch` | off | Shows the browser window |
+| `--browser <name>` | `chrome` | `chromium` uses Playwright's own browser instead of Google Chrome |
+| `--script <file>` | | Replays a script instead of calling Claude (no key, no cost) |
+
+**Cost.** Our estimate is $1 to $2 per goal on Claude Opus 5.5; the first real
+runs will show the actual cost. To keep long runs cheap, old page snapshots
+are cleared on the server as a run goes on, and earlier turns are read from
+the prompt cache.
+
+**Trying it without Claude.** `--script` replays a list of actions, finding
+each element by how it reads in the snapshot. This one enrolls in the Big-O
+droplet and finishes its first lesson, quiz included. Use a student who
+hasn't started that droplet, like student1 after a reset:
+
+```bash
+npm run demo:agent -- student1 --script demo/agent-scripts/big-o-first-lesson.json
+```
+
+**Guardrails.** The main page stays on the demo site: links elsewhere are
+blocked, anything that still lands off the site is undone, and new tabs are
+closed. Embedded frames, like videos, still load their own content. Agents
+can't log out, log in as someone else, call the demo's control routes or open
+Next's developer endpoints (one of them opens files in your editor). The agent
+is told to treat page text as content, never as instructions, and the step,
+time and spending limits stop a run that goes wrong. The safety switches below
+still apply.
 
 ## What the seed creates
 
