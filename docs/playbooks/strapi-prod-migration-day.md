@@ -150,4 +150,4 @@ Choose a rollback path by what went wrong:
 - [ ] Delete saved audit output that holds prod data once it's no longer needed for rollback.
 - [ ] Tell the team how to take content down now that Strapi's Publish/Unpublish is gone:
   - **Emergency:** delete the entry in the Strapi admin. This is permanent; ODY-659 keeps pages from crashing on the broken links.
-  - **Routine:** set `isHidden` (droplets), `isPublic=false` (playlists) or `status=draft` (voyages). Hidden droplets are removed from listings but stay reachable by URL until [ODY-660](https://linear.app/aiil/issue/ODY-660) ships, while private playlists (`isPublic=false`) are reachable only by enrolled users.
+  - **Routine:** set `isHidden` (droplets), `isPublic=false` (playlists) or `status=draft` (voyages). Hidden droplets 404 at their URL for everyone except authors, staff and already-enrolled users, and leave listings ([ODY-660](https://linear.app/aiil/issue/ODY-660)). Direct calls to unguarded actions (ODY-507, ODY-504) can still reach them, so use delete for a true takedown. Private playlists (`isPublic=false`) are reachable only by enrolled users.

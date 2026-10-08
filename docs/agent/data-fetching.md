@@ -219,6 +219,8 @@ import qs from "qs";
 
 `fetchAPI()` passes `urlParams` directly to `qs.stringify()` with `encodeValuesOnly: true`. The `qs` library handles the Strapi bracket notation (`filters[status][$eq]=published`) automatically.
 
+Droplet listings spread `LISTED_DROPLET_FILTER` (`lib/droplet-visibility.ts`). Queries an editor saves from (`getGroupBySlugV2`, the playlist editor) must not use it; filter in page code instead, or a save would drop the hidden entries.
+
 ## Single entries and relations on Strapi v5
 
 Single-entry REST routes (`/api/droplets/:id`) and relation writes only accept a `documentId`. A numeric id returns 404. Callers still hold numeric ids (fetched data, the session, FormData), so `lib/strapi-document-id.ts` converts them. It is a plain server module, not `"use server"`; never import it from a client component.
