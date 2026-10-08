@@ -16,7 +16,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import {
   getCachedEnrollmentsWithLessonIds,
-  getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
 } from "@/lib/requests/cached";
 import { StarRating } from "@/components/ui/rating-stars";
 import { AuthorCard } from "@/components/droplets/author-block";
@@ -31,7 +31,7 @@ type params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getCachedDropletBySlug(p.slug);
+  const droplet = await getCachedViewableDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {
@@ -44,7 +44,7 @@ export default async function DropletRoute({ params }: Props) {
   const user = await getCurrentUser();
   const userId = await getAuthorizedUserId(user);
   const [droplet, enrollments] = await Promise.all([
-    getCachedDropletBySlug(p.slug),
+    getCachedViewableDropletBySlug(p.slug),
     userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
   if (!droplet) return notFound();

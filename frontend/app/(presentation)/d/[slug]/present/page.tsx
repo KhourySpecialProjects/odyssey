@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import {
-  getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
   getCachedLessonBySlug,
   getCachedEnrollmentsWithLessonIds,
 } from "@/lib/requests/cached";
@@ -27,7 +27,7 @@ export default async function PresentationPage({ params }: Props) {
   const user = await getCurrentUser();
   const userId = await getAuthorizedUserId(user);
   const [droplet, enrollments] = await Promise.all([
-    getCachedDropletBySlug(slug),
+    getCachedViewableDropletBySlug(slug),
     userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
 

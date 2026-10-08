@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
-  getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
   getCachedLessonBySlug,
 } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -26,8 +26,12 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const lesson = await getCachedLessonBySlug(p.lessonSlug);
-  if (!lesson) return {};
+  const [droplet, lesson] = await Promise.all([
+    getCachedViewableDropletBySlug(p.slug),
+    getCachedLessonBySlug(p.lessonSlug),
+  ]);
+  if (!droplet || !lesson) return {};
+  if (!droplet.lessons?.some((l) => l.id === lesson.id)) return {};
 
   return {
     title: lesson.name,
@@ -47,7 +51,7 @@ export default async function Page({ params }: Props) {
   // lesson. A failed read shows none instead of failing the whole lesson.
   const [droplet, lesson, authUser, enrollments, notes, highlights] =
     await Promise.all([
-      getCachedDropletBySlug(slug),
+      getCachedViewableDropletBySlug(slug),
       getCachedLessonBySlug(lessonSlug),
       getCachedUser(currentUser.email),
       getCachedEnrollmentsWithLessonIds(userId),
@@ -63,6 +67,7 @@ export default async function Page({ params }: Props) {
   let enrollmentId: string | undefined;
 
   if (!droplet || !lesson || !authUser) return notFound();
+  if (!droplet.lessons?.some((l) => l.id === lesson.id)) return notFound();
 
   const enrollment = enrollments.find((e) => e.droplet?.id === droplet.id);
 

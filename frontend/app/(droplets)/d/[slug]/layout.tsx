@@ -1,7 +1,7 @@
 import { DropletLayoutShell } from "@/components/droplets/droplet-layout-shell";
 import {
   getCachedEnrollmentsWithLessonIds,
-  getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
 } from "@/lib/requests/cached";
 import { Metadata } from "next/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -20,7 +20,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getCachedDropletBySlug(p.slug);
+  const droplet = await getCachedViewableDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {
@@ -38,7 +38,7 @@ export default async function RootLayout({ params, children }: Props) {
 
   const userId = await getAuthorizedUserId(user);
   const [droplet, enrollments] = await Promise.all([
-    getCachedDropletBySlug(slug),
+    getCachedViewableDropletBySlug(slug),
     userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
   ]);
 

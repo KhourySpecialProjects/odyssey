@@ -30,6 +30,7 @@ import {
   getCachedDraftDropletBySlug,
   getCachedDraftDropletOptions,
   getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
   getCachedVoyageEnrollment,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
@@ -45,6 +46,8 @@ import {
   getVoyageEnrollmentsByUser,
 } from "@/lib/requests/voyage-enrollment";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { USER_POPULATES } from "@/lib/requests/user-populates";
 
 // ─── module mocks ────────────────────────────────────────────────────────────
@@ -570,6 +573,118 @@ describe("cached.ts — getCachedDropletBySlug", () => {
     const result = await getCachedDropletBySlug("nonexistent");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("cached.ts — getCachedDropletBySlug prerequisite filters", () => {
+  it("filters prerequisites and postrequisites to listed droplets", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(MOCK_DROPLET);
+    await getCachedDropletBySlug("python-basics");
+
+    const { populate } = mockedGetDropletBySlug.mock.calls.at(-1)![1] as {
+      populate: Record<string, { filters?: unknown }>;
+    };
+    expect(populate.prerequisites.filters).toEqual(LISTED_DROPLET_FILTER);
+    expect(populate.postrequisites.filters).toEqual(LISTED_DROPLET_FILTER);
+  });
+});
+
+describe("cached.ts — getCachedViewableDropletBySlug", () => {
+  const mockedGetCurrentUser = jest.mocked(getCurrentUser);
+  const withState = (state: Partial<Droplet>) =>
+    ({ ...MOCK_DROPLET, authorized_users: [], ...state }) as unknown as Droplet;
+  const sessionUser = (roles: AuthorizedUserRoleTitle[] = []) =>
+    ({ id: 9, email: "u@example.com", roles }) as never;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue([]);
+  });
+
+  it("returns a listed droplet without fetching enrollments", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: false, status: "published" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(undefined);
+
+    expect(await getCachedViewableDropletBySlug("listed")).not.toBeNull();
+    expect(mockedGetEnrollmentsByAuthorizedUser).not.toHaveBeenCalled();
+  });
+
+  it("returns null for a missing droplet", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(null as unknown as Droplet);
+    mockedGetCurrentUser.mockResolvedValue(sessionUser());
+
+    expect(await getCachedViewableDropletBySlug("missing")).toBeNull();
+  });
+
+  it("returns a hidden droplet to its author", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({
+        isHidden: true,
+        status: "published",
+        authorized_users: [{ id: 9 }] as never,
+      }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(sessionUser());
+
+    expect(await getCachedViewableDropletBySlug("h-author")).not.toBeNull();
+  });
+
+  it("returns a hidden droplet to a ContentEditor", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: true, status: "published" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(
+      sessionUser([AuthorizedUserRoleTitle.ContentEditor]),
+    );
+
+    expect(await getCachedViewableDropletBySlug("h-editor")).not.toBeNull();
+  });
+
+  it("returns null for a hidden droplet and a Faculty viewer who isn't enrolled", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: true, status: "published" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(
+      sessionUser([AuthorizedUserRoleTitle.Faculty]),
+    );
+
+    expect(await getCachedViewableDropletBySlug("h-faculty")).toBeNull();
+  });
+
+  it("returns a published-but-hidden droplet to an enrolled viewer", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: true, status: "published" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(sessionUser());
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      { id: "e1", droplet: { id: 5 } },
+    ] as never);
+
+    expect(await getCachedViewableDropletBySlug("h-enrolled")).not.toBeNull();
+  });
+
+  it("returns null for a draft droplet even when enrolled", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: false, status: "draft" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(sessionUser());
+    mockedGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      { id: "e1", droplet: { id: 5 } },
+    ] as never);
+
+    expect(await getCachedViewableDropletBySlug("d-enrolled")).toBeNull();
+  });
+
+  it("returns null for an unlisted droplet with no session", async () => {
+    mockedGetDropletBySlug.mockResolvedValue(
+      withState({ isHidden: true, status: "published" }),
+    );
+    mockedGetCurrentUser.mockResolvedValue(undefined);
+
+    expect(await getCachedViewableDropletBySlug("h-anon")).toBeNull();
+    expect(mockedGetEnrollmentsByAuthorizedUser).not.toHaveBeenCalled();
   });
 });
 

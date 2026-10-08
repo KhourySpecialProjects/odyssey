@@ -10,6 +10,11 @@ import { CACHE_TAGS } from "../cache-tags";
 import { getCurrentUser } from "../auth/session";
 import { SLIDE_BREAK_MARKER } from "../blocknote/slide-break";
 import {
+  LISTED_DROPLET_FILTER,
+  canViewDroplet,
+  isDropletListed,
+} from "../droplet-visibility";
+import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
 } from "./voyage-enrollment";
@@ -198,6 +203,7 @@ export const getCachedDropletBySlug = cache((slug: string) =>
           "isHidden",
           "status",
         ],
+        filters: LISTED_DROPLET_FILTER,
       },
       postrequisites: {
         fields: [
@@ -210,6 +216,7 @@ export const getCachedDropletBySlug = cache((slug: string) =>
           "isHidden",
           "status",
         ],
+        filters: LISTED_DROPLET_FILTER,
       },
       nextSteps: { fields: ["id", "label", "url"] },
       datasets: {
@@ -218,6 +225,30 @@ export const getCachedDropletBySlug = cache((slug: string) =>
     },
   }),
 );
+
+/**
+ * The droplet for a public route, or null when it's missing or the viewer
+ * may not open it (see canViewDroplet). Enrollments load only for unlisted droplets.
+ */
+export const getCachedViewableDropletBySlug = cache(async (slug: string) => {
+  const [droplet, user] = await Promise.all([
+    getCachedDropletBySlug(slug),
+    getCurrentUser(),
+  ]);
+  if (!droplet) return null;
+  if (isDropletListed(droplet)) return droplet;
+
+  const userId = user?.email ? await getUserIdForEmail(user.email) : undefined;
+  const isEnrolled = userId
+    ? (await getCachedEnrollmentsWithLessonIds(userId)).some(
+        (e) => e.droplet?.id === droplet.id,
+      )
+    : false;
+
+  return canViewDroplet(droplet, { id: userId, roles: user?.roles }, isEnrolled)
+    ? droplet
+    : null;
+});
 
 export const getCachedVoyageEnrollment = cache(
   async (authorizedUserId: number, voyageId: number) =>

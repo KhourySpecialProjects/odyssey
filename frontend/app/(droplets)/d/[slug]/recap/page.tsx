@@ -11,9 +11,10 @@ import { StarRating } from "@/components/ui/rating-stars";
 import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
-  getCachedDropletBySlug,
+  getCachedViewableDropletBySlug,
 } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
@@ -39,7 +40,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getCachedDropletBySlug(p.slug);
+  const droplet = await getCachedViewableDropletBySlug(p.slug);
 
   if (!droplet) {
     return notFound();
@@ -54,7 +55,7 @@ export default async function DropletRecapRoute({ params }: Props) {
   const p = await params;
   const currentUser = await getCurrentUser();
   const [droplet, userId] = await Promise.all([
-    getCachedDropletBySlug(p.slug),
+    getCachedViewableDropletBySlug(p.slug),
     getAuthorizedUserId(currentUser),
   ]);
   if (!droplet) {
@@ -75,9 +76,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             droplet.tags && {
               tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
             },
-            {
-              $or: [{ status: "published" }, { status: { $null: true } }],
-            },
+            LISTED_DROPLET_FILTER,
           ],
         },
         pagination: {

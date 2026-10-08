@@ -232,6 +232,7 @@ export const MODULE_PATHS: Record<string, string> = {
   cached: "@/lib/requests/cached",
   data: "@/lib/requests/data",
   dataset: "@/lib/requests/dataset",
+  "droplet-access": "@/lib/requests/droplet-access",
   "droplet-analytics": "@/lib/requests/droplet-analytics",
   droplet: "@/lib/requests/droplet",
   enrollment: "@/lib/requests/enrollment",
@@ -361,6 +362,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       m.getCachedDraftDropletOptions(),
     ),
     call("getCachedDropletBySlug", (m) => m.getCachedDropletBySlug(SLUG)),
+    call("getCachedViewableDropletBySlug", (m) =>
+      m.getCachedViewableDropletBySlug(SLUG),
+    ),
     call("getCachedVoyageEnrollment", (m) => m.getCachedVoyageEnrollment(1, 1)),
     call("getCachedVoyageEnrollmentsByUser", (m) =>
       m.getCachedVoyageEnrollmentsByUser(1),
@@ -381,6 +385,12 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call("getDropletAnalytics", (m) =>
       m.getDropletAnalytics(1, [{ id: 1, name: "Sentinel" }]),
     ),
+  ]),
+  "droplet-access": defineModule<
+    typeof import("@/lib/requests/droplet-access")
+  >([
+    call("getDropletAccessFresh", (m) => m.getDropletAccessFresh(1)),
+    call("getListedDropletIds", (m) => m.getListedDropletIds([1, 2])),
   ]),
   droplet: defineModule<typeof import("@/lib/requests/droplet")>([
     call("getDroplets", (m) => m.getDroplets()),
