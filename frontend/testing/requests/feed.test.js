@@ -10,6 +10,7 @@ const {
   fetchAnnouncementById,
   fetchUserAnnouncements,
 } = require("../../lib/requests/feed");
+const qs = require("qs");
 const { flattenAttributes } = require("../../lib/utils");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
 const {
@@ -66,6 +67,17 @@ jest.mock("../../lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
   getCachedUserSocial: jest.fn(),
 }));
+
+// Decodes the filters and asserts the listed-or-no-droplet clause sits under $and.
+const expectListedOrNoDropletUnderAnd = (rawUrl) => {
+  const { filters } = qs.parse(rawUrl.split("?")[1], { depth: 20 });
+  const clause = filters.$and.find((f) => f.$or?.[0]?.droplet);
+  expect(clause.$or).toEqual([
+    { droplet: { id: { $null: "true" } } },
+    { droplet: { isHidden: { $eq: "false" }, status: { $eq: "published" } } },
+  ]);
+  expect(filters.$or).toBeUndefined();
+};
 
 describe("Feed tests", () => {
   const { revalidateTag } = require("next/cache");
@@ -216,10 +228,8 @@ describe("Feed tests", () => {
 
         await fetchAnnouncements(1, types);
 
+        expectListedOrNoDropletUnderAnd(global.fetch.mock.calls[0][0]);
         const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-        expect(url).toContain("[droplet][id][$null]=true");
-        expect(url).toContain("[droplet][isHidden][$eq]=false");
-        expect(url).toContain("[droplet][status][$eq]=published");
         // playlist droplets are filtered too
         expect(url).toContain("[playlist][populate][droplets][filters]");
       },
@@ -891,10 +901,7 @@ describe("Feed tests", () => {
 
       await call();
 
-      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-      expect(url).toContain("[droplet][id][$null]=true");
-      expect(url).toContain("[droplet][isHidden][$eq]=false");
-      expect(url).toContain("[droplet][status][$eq]=published");
+      expectListedOrNoDropletUnderAnd(global.fetch.mock.calls[0][0]);
     });
   });
 });

@@ -555,6 +555,9 @@ export async function createEnrollment(
 ) {
   const gate = await requireRole([]);
   if (!gate.ok) return { ok: false, error: gate.error, data: null };
+  if (!Number.isInteger(droplet?.id)) {
+    return { ok: false, error: "forbidden", data: null };
+  }
   try {
     const authorizedUser = {
       id: gate.user.id,
@@ -570,6 +573,7 @@ export async function createEnrollment(
       const access = await getDropletAccessFresh(droplet.id);
       const canEnroll =
         !!access &&
+        access.id === droplet.id &&
         (isDropletListed(access) ||
           isDropletStaff(gate.user.roles) ||
           !!access.authorized_users?.some((u) => u.id === gate.user.id));

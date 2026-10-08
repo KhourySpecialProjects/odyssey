@@ -148,6 +148,19 @@ describe("GroupDetailPage", () => {
     expect(props.group.droplets.map((d: any) => d.id)).toEqual([1]);
   });
 
+  it("fails closed for a non-member when the viewer's enrollments fetch rejects", async () => {
+    (getCachedUser as jest.Mock).mockResolvedValue({ id: 20 });
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockRejectedValue(
+      new Error("boom"),
+    );
+
+    const props = await render();
+
+    expect(getCachedEnrollmentsWithLessonIds).toHaveBeenCalledWith(20);
+    expect(props.group.droplets.map((d: any) => d.id)).toEqual([1]);
+    expect(props.dueDates.map((d: any) => d.droplet.id)).toEqual([1]);
+  });
+
   it("keeps hidden droplets for staff", async () => {
     (getCachedUser as jest.Mock).mockResolvedValue({ id: 20 });
     (getCurrentUser as jest.Mock).mockResolvedValue({

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 // Rendered SVG dimensions — shared with voyage-tree-map so connectors can
 // anchor to actual island geometry, not the (larger) layout box.
@@ -574,11 +575,18 @@ export function VoyageTreeIsland({
       ? "text-slate-400"
       : "text-slate-600 dark:text-slate-300";
 
+  // Explicit href prop takes priority, then derive from slug + nodeType
+  const resolvedHref =
+    hrefProp ?? (slug ? (isDropletNode ? `/d/${slug}` : `/p/${slug}`) : null);
+  const isLinked = !!resolvedHref && !isLocked;
+
   const content = (
     <div
-      className={`text-center transition-transform duration-200 ${
-        !isLocked ? "cursor-pointer hover:scale-105" : ""
-      } ${isLocked ? "opacity-40" : ""}`}
+      className={cn(
+        "text-center transition-transform duration-200",
+        isLinked && "cursor-pointer hover:scale-105",
+        isLocked && "opacity-40",
+      )}
     >
       <div className="relative inline-block">
         {/* Step number badge */}
@@ -645,11 +653,7 @@ export function VoyageTreeIsland({
     </div>
   );
 
-  // Resolve href: explicit prop takes priority, then derive from slug + nodeType
-  const resolvedHref =
-    hrefProp ?? (slug ? (isDropletNode ? `/d/${slug}` : `/p/${slug}`) : null);
-
-  if (resolvedHref && !isLocked) {
+  if (resolvedHref && isLinked) {
     return <Link href={resolvedHref}>{content}</Link>;
   }
 

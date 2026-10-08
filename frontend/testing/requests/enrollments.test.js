@@ -1151,6 +1151,40 @@ describe("Enrollment Tests", () => {
       expect(result.ok).toBe(true);
     });
 
+    it.each([[undefined], ["1"], [1.5], [null]])(
+      "refuses a droplet with id %p before any fetch",
+      async (id) => {
+        const result = await createEnrollment({ ...mockDroplet, id }, []);
+
+        expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+        expect(fetchAPI).not.toHaveBeenCalled();
+        expect(getDropletAccessFresh).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses a missing droplet argument", async () => {
+      const result = await createEnrollment(undefined, []);
+
+      expect(result.error).toBe("forbidden");
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("refuses when the access row id doesn't match the droplet", async () => {
+      fetchAPI.mockResolvedValue([]);
+      getDropletAccessFresh.mockResolvedValue({
+        id: 2,
+        isHidden: false,
+        status: "published",
+        authorized_users: [],
+      });
+
+      const result = await createEnrollment(mockDroplet, []);
+
+      expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it("skips the visibility read when already enrolled", async () => {
       fetchAPI.mockResolvedValue([{ id: 1, droplet: { id: 1 } }]);
 

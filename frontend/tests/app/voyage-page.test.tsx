@@ -54,14 +54,14 @@ jest.mock("@/components/voyages/voyage-progress-bar", () => ({
   VoyageProgressBar: () => null,
 }));
 
-const node = (droplet: object) => ({
+const node = (droplet: object, claimStatus = "authored") => ({
   id: 10,
   label: "Node",
   nodeType: "droplet",
   isMainPath: true,
   branchType: "required",
   orderIndex: 0,
-  claimStatus: "authored",
+  claimStatus,
   droplet: { id: 5, name: "D", slug: "d-slug", ...droplet },
 });
 
@@ -71,6 +71,7 @@ async function render(
     userId = 1,
     roles = [] as AuthorizedUserRoleTitle[],
     enrolledIn = [] as number[],
+    claimStatus = "authored",
   } = {},
 ) {
   (getVoyageBySlug as jest.Mock).mockResolvedValue({
@@ -78,7 +79,7 @@ async function render(
     slug: "v",
     name: "V",
     status: "published",
-    voyage_nodes: [node(droplet)],
+    voyage_nodes: [node(droplet, claimStatus)],
   });
   (getCurrentUser as jest.Mock).mockResolvedValue({ email: "a@x.edu", roles });
   (getAuthorizedUserId as jest.Mock).mockResolvedValue(userId);
@@ -136,5 +137,30 @@ describe("VoyagePage droplet node links", () => {
     expect(html).not.toContain("/d/d-slug");
     expect(html).toContain("Unavailable");
     expect(html).toContain('data-href=""');
+  });
+
+  it("keeps In Progress and no link for a claimed unopenable node", async () => {
+    const html = await render(
+      { isHidden: true, status: "draft" },
+      { claimStatus: "claimed" },
+    );
+
+    expect(html).toContain("In Progress");
+    expect(html).not.toContain("Unavailable");
+    expect(html).not.toContain("/d/");
+    expect(html).toContain('data-slug=""');
+  });
+
+  it("gives an unlinked journey row no hover styles", async () => {
+    const html = await render(hidden);
+
+    expect(html).not.toContain("hover:border-slate-300");
+    expect(html).not.toContain("hover:shadow-sm");
+  });
+
+  it("keeps hover styles on a linked journey row", async () => {
+    const html = await render({ ...hidden, authorized_users: [{ id: 1 }] });
+
+    expect(html).toContain("hover:border-slate-300");
   });
 });

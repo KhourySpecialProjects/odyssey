@@ -818,8 +818,7 @@ export async function fetchAnnouncementById(id: number) {
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       filters: {
-        id: { $eq: id },
-        ...LISTED_OR_NO_DROPLET,
+        $and: [{ id: { $eq: id } }, LISTED_OR_NO_DROPLET],
       },
       populate: {
         authorized_user: {
@@ -896,13 +895,17 @@ export async function fetchUserAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       filters: {
-        authorized_user: {
-          id: { $eq: userId },
-        },
-        type: {
-          $in: ["friend", "kudos", "droplet"],
-        },
-        ...LISTED_OR_NO_DROPLET,
+        $and: [
+          {
+            authorized_user: {
+              id: { $eq: userId },
+            },
+            type: {
+              $in: ["friend", "kudos", "droplet"],
+            },
+          },
+          LISTED_OR_NO_DROPLET,
+        ],
       },
       populate: {
         authorized_user: {

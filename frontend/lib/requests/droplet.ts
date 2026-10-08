@@ -497,7 +497,7 @@ async function applyDropletUpdate(
     //  - authors: creator lists only hold droplet ids, so they change only
     //    when authorized_users changes.
     // Still swept: droplets (the editor reads through it), enrollments
-    // (/d/[slug] has no status gate, so drafts can have enrollments), and
+    // (authors and staff can still enroll in drafts), and
     // user-content (every co-author's /my-content lists the draft).
     // A save that sets `status` or `isHidden` always gets the full sweep, since
     // the previous value is unknown here.

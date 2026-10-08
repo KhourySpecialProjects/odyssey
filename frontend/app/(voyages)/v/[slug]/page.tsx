@@ -20,7 +20,11 @@ import {
   findFirstIncompleteNode,
 } from "@/lib/voyage-progress";
 import { VoyageNode } from "@/types";
-import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
+import {
+  cn,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+} from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -97,7 +101,7 @@ export default async function VoyagePage({ params }: Props) {
   const enrolledDropletIds = new Set(
     dropletEnrollments.filter(hasDroplet).map((e) => e.droplet.id),
   );
-  const unavailableNodeIds = new Set(
+  const unavailableNodeIds = new Set<string | number>(
     voyageNodes
       .filter(
         (n) =>
@@ -141,7 +145,8 @@ export default async function VoyagePage({ params }: Props) {
       status: getNodeStatus(node),
       nodeType: node.nodeType,
       claimStatus: node.claimStatus,
-      unavailable,
+      // Claimed nodes keep their "In Progress" state; the missing slug already unlinks them.
+      unavailable: unavailable && node.claimStatus !== "claimed",
     };
   });
 
@@ -315,7 +320,7 @@ export default async function VoyagePage({ params }: Props) {
                         const isClaimed =
                           isDroplet && main.claimStatus === "claimed";
 
-                        const nodeHref = main.unavailable
+                        const nodeHref = unavailableNodeIds.has(main.id)
                           ? undefined
                           : isDroplet
                             ? main.slug
@@ -372,7 +377,11 @@ export default async function VoyagePage({ params }: Props) {
                             ) : (
                               <MaybeLink
                                 href={nodeHref}
-                                className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 transition-all hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                                className={cn(
+                                  "flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 transition-all dark:border-slate-700 dark:bg-slate-800",
+                                  nodeHref &&
+                                    "hover:border-slate-300 hover:shadow-sm",
+                                )}
                               >
                                 <div
                                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
@@ -426,7 +435,7 @@ export default async function VoyagePage({ params }: Props) {
                           const branchIsPlaceholder =
                             branchIsDroplet &&
                             branch.claimStatus === "unclaimed";
-                          const branchHref = branch.unavailable
+                          const branchHref = unavailableNodeIds.has(branch.id)
                             ? undefined
                             : branchIsDroplet
                               ? branch.slug
@@ -439,9 +448,12 @@ export default async function VoyagePage({ params }: Props) {
                             ? "Unavailable"
                             : branchIsPlaceholder
                               ? "Become author!"
-                              : branchIsDroplet
-                                ? "1 droplet"
-                                : `${branch.dropletCount ?? 0} droplets`;
+                              : branchIsDroplet &&
+                                  branch.claimStatus === "claimed"
+                                ? "In Progress"
+                                : branchIsDroplet
+                                  ? "1 droplet"
+                                  : `${branch.dropletCount ?? 0} droplets`;
 
                           return branchLocked ? (
                             <div
@@ -474,7 +486,10 @@ export default async function VoyagePage({ params }: Props) {
                             <MaybeLink
                               key={branch.id}
                               href={branchHref}
-                              className="ml-5 flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-1.5 transition-all hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/50"
+                              className={cn(
+                                "ml-5 flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-1.5 transition-all dark:border-slate-700 dark:bg-slate-800/50",
+                                branchHref && "hover:border-slate-300",
+                              )}
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
