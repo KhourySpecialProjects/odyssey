@@ -13,6 +13,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 interface RenderGroupDashboardProps {
   group: Group;
+  /** Unfiltered group for the Progress tab; defaults to `group`. */
+  progressGroup?: Group;
   canEdit: boolean | undefined;
   authUser: AuthorizedUser;
   dueDates: DueDate[];
@@ -25,6 +27,7 @@ interface RenderGroupDashboardProps {
 
 export function GroupDashboard({
   group,
+  progressGroup,
   canEdit,
   authUser,
   dueDates,
@@ -49,6 +52,7 @@ export function GroupDashboard({
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
+  const progressSource = progressGroup ?? group;
   const hasVoyages = group.voyages && group.voyages.length > 0;
   const canViewProgress = canEdit || isAdmin;
   const tabNames = [
@@ -223,13 +227,14 @@ export function GroupDashboard({
             title=""
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
-            {((group.droplets && group.droplets.length > 0) ||
-              (group.playlists && group.playlists.length > 0) ||
-              (group.voyages && group.voyages.length > 0)) &&
-            group.members &&
-            group.members.length > 0 ? (
+            {((progressSource.droplets && progressSource.droplets.length > 0) ||
+              (progressSource.playlists &&
+                progressSource.playlists.length > 0) ||
+              (progressSource.voyages && progressSource.voyages.length > 0)) &&
+            progressSource.members &&
+            progressSource.members.length > 0 ? (
               <GroupProgressGrid
-                group={group}
+                group={progressSource}
                 statuses={statuses}
                 voyageStatuses={voyageStatuses}
               />

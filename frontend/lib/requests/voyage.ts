@@ -8,6 +8,7 @@ import {
 } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { LISTED_DROPLET_FILTER } from "../droplet-visibility";
 import { requireRole } from "@/lib/auth/require-role";
 import { assertOwner } from "@/lib/auth/guards";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -243,9 +244,13 @@ export async function getVoyages(): Promise<Voyage[]> {
         populate: {
           playlist: {
             fields: ["id", "slug", "name"],
-            populate: { droplets: { fields: ["id"] } },
+            populate: {
+              droplets: { fields: ["id"], filters: LISTED_DROPLET_FILTER },
+            },
           },
-          droplet: { fields: ["id", "slug", "name", "status"] },
+          droplet: {
+            fields: ["id", "slug", "name", "status", "isHidden"],
+          },
           parentNode: { fields: ["id"] },
         },
       },
@@ -322,10 +327,13 @@ export async function getVoyageBySlug(
           playlist: {
             fields: ["id", "name", "slug"],
             populate: {
-              droplets: { fields: ["id"] },
+              droplets: { fields: ["id"], filters: LISTED_DROPLET_FILTER },
             },
           },
-          droplet: { fields: ["id", "name", "slug", "status"] },
+          droplet: {
+            fields: ["id", "name", "slug", "status", "isHidden"],
+            populate: { authorized_users: { fields: ["id"] } },
+          },
           claimedBy: { fields: ["id"] },
           parentNode: { fields: ["id"] },
         },

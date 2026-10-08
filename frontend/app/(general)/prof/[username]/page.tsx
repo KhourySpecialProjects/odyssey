@@ -8,6 +8,10 @@ import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import {
+  LISTED_DROPLET_FILTER,
+  isDropletListed,
+} from "@/lib/droplet-visibility";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { ProfileContent } from "./profile-content";
 import { PrivateProfileError } from "./private-profile-error";
@@ -33,6 +37,7 @@ export default async function PublicProfilePage({
       populate: {
         ...USER_POPULATES.social.populate,
         droplets: {
+          filters: LISTED_DROPLET_FILTER,
           fields: ["id", "name", "slug", "description", "averageRating"],
         },
       },
@@ -72,10 +77,15 @@ export default async function PublicProfilePage({
       viewerDataPromise,
     ]);
 
+    // Unlisted droplets are hidden for everyone, the owner included.
+    const listedEnrollments = (enrollments || []).filter(
+      (e) => e.droplet && isDropletListed(e.droplet),
+    );
+
     return (
       <ProfileContent
         userData={userData}
-        enrollments={enrollments || []}
+        enrollments={listedEnrollments}
         friends={friends || []}
         announcements={announcements || []}
         currentUserCompletedIds={currentUserCompletedIds}

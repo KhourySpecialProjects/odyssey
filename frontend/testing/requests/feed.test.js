@@ -7,6 +7,8 @@ const {
   createGroupAnnouncement,
   createSystemAnnouncement,
   getUnreadAnnouncementCount,
+  fetchAnnouncementById,
+  fetchUserAnnouncements,
 } = require("../../lib/requests/feed");
 const { flattenAttributes } = require("../../lib/utils");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
@@ -205,6 +207,23 @@ describe("Feed tests", () => {
       expect(url).toContain("[readAt][$notNull]=true");
       expect(url).toContain("pagination[page]=2");
     });
+
+    it.each([[undefined], [["friend"]]])(
+      "only returns announcements without a droplet or with a listed one (types=%s)",
+      async (types) => {
+        mockPrecompute();
+        mockAnnouncementsResponse();
+
+        await fetchAnnouncements(1, types);
+
+        const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+        expect(url).toContain("[droplet][id][$null]=true");
+        expect(url).toContain("[droplet][isHidden][$eq]=false");
+        expect(url).toContain("[droplet][status][$eq]=published");
+        // playlist droplets are filtered too
+        expect(url).toContain("[playlist][populate][droplets][filters]");
+      },
+    );
 
     it("ignores a user object passed by the caller", async () => {
       const { fetchAPI } = require("../../lib/utils");
@@ -852,6 +871,30 @@ describe("Feed tests", () => {
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
       expect(revalidateTag).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("listed-droplet filters", () => {
+    beforeEach(() => global.fetch.mockReset());
+
+    const okResponse = () =>
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [] }),
+      });
+
+    it.each([
+      ["fetchAnnouncementById", () => fetchAnnouncementById(4)],
+      ["fetchUserAnnouncements", () => fetchUserAnnouncements(4)],
+    ])("%s filters out unlisted droplets", async (_name, call) => {
+      okResponse();
+
+      await call();
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[droplet][id][$null]=true");
+      expect(url).toContain("[droplet][isHidden][$eq]=false");
+      expect(url).toContain("[droplet][status][$eq]=published");
     });
   });
 });

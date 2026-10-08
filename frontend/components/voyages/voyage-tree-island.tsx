@@ -24,6 +24,7 @@ interface VoyageTreeIslandProps {
   href?: string;
   nodeType?: "playlist" | "droplet";
   claimStatus?: "unclaimed" | "claimed" | "authored" | null;
+  unavailable?: boolean;
 }
 
 function IslandSvg({
@@ -543,6 +544,7 @@ export function VoyageTreeIsland({
   href: hrefProp,
   nodeType = "playlist",
   claimStatus,
+  unavailable = false,
 }: VoyageTreeIslandProps) {
   const isMain = size === "main";
   const isLocked = status === "locked";
@@ -553,7 +555,9 @@ export function VoyageTreeIsland({
 
   // Compute subtitle text based on node type and claim state
   let subtitleText: string | null = null;
-  if (isDropletNode && isUnclaimed) {
+  if (unavailable) {
+    subtitleText = "Unavailable";
+  } else if (isDropletNode && isUnclaimed) {
     subtitleText = "Become author!";
   } else if (isDropletNode && isClaimed) {
     subtitleText = "In Progress";

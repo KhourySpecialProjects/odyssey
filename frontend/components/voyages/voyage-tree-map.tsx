@@ -17,6 +17,8 @@ export interface TreeNode {
   status?: "completed" | "available" | "locked";
   nodeType: "playlist" | "droplet";
   claimStatus?: "unclaimed" | "claimed" | "authored" | null;
+  /** Droplet the viewer cannot open: no link, subtitle reads "Unavailable". */
+  unavailable?: boolean;
 }
 
 interface VoyageTreeMapProps {
@@ -361,6 +363,7 @@ export function VoyageTreeMap({
                   scale={svgScale}
                   nodeType={layout.node.nodeType}
                   claimStatus={layout.node.claimStatus}
+                  unavailable={layout.node.unavailable}
                 />
               </div>
             );

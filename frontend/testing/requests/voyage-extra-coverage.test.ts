@@ -25,6 +25,7 @@ import {
   deleteVoyage,
 } from "@/lib/requests/voyage";
 import { flattenAttributes } from "@/lib/utils";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -207,6 +208,24 @@ describe("getVoyageBySlug", () => {
         tags: [CACHE_TAGS.voyages],
         revalidate: 900,
       },
+    });
+  });
+
+  it("filters playlist droplets to listed and loads droplet visibility", async () => {
+    getMockedFetchAPI().mockResolvedValueOnce([{ id: 5 }]);
+
+    await getVoyageBySlug("test-voyage");
+
+    const options: any = getMockedFetchAPI().mock.calls[0][1];
+    const node = options.urlParams.populate.voyage_nodes.populate;
+    expect(node.playlist.populate.droplets.filters).toEqual(
+      LISTED_DROPLET_FILTER,
+    );
+    expect(node.droplet.fields).toEqual(
+      expect.arrayContaining(["isHidden", "status"]),
+    );
+    expect(node.droplet.populate).toEqual({
+      authorized_users: { fields: ["id"] },
     });
   });
 

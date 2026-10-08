@@ -477,6 +477,7 @@ export async function getGroupBySlugV2(
           "name",
           "slug",
           "status",
+          "isHidden",
           "focusArea",
           "difficulty",
           "type",
@@ -494,7 +495,7 @@ export async function getGroupBySlugV2(
         fields: ["id", "name", "slug", "isPublic"],
         populate: {
           droplets: {
-            fields: ["id", "name", "slug", "type"],
+            fields: ["id", "name", "slug", "type", "isHidden", "status"],
           },
         },
         sort: "name:asc",
@@ -515,7 +516,11 @@ export async function getGroupBySlugV2(
             populate: {
               playlist: {
                 fields: ["id", "name", "slug"],
-                populate: { droplets: { fields: ["id", "name", "slug"] } },
+                populate: {
+                  droplets: {
+                    fields: ["id", "name", "slug", "isHidden", "status"],
+                  },
+                },
               },
             },
             sort: "orderIndex:asc",

@@ -6,6 +6,7 @@ import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import type { Enrollment } from "@/types";
 import { hasDroplet } from "@/lib/enrollment-completion";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -39,6 +40,7 @@ export default async function PlaylistPage({ params }: Props) {
     getPlaylistBySlug(p.slug, {
       populate: {
         droplets: {
+          filters: LISTED_DROPLET_FILTER,
           populate: {
             tags: true,
             lessons: {

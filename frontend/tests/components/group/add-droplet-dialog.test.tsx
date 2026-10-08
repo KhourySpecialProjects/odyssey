@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AddDropletDialog } from "@/components/group/add-droplet-dialog";
 import { getDroplets } from "@/lib/requests/droplet";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
 import { makeDroplet, makeTag } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/requests/droplet", () => ({
@@ -89,6 +90,23 @@ describe("AddDropletDialog", () => {
     );
 
     expect(screen.getByText("Add Droplet")).toBeInTheDocument();
+  });
+
+  it("requests only listed droplets", async () => {
+    render(
+      <AddDropletDialog
+        currentDroplets={mockCurrentDroplets}
+        onAddDroplets={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Add Droplet"));
+
+    await waitFor(() => {
+      expect(mockedGetDroplets).toHaveBeenCalledWith({
+        filters: LISTED_DROPLET_FILTER,
+      });
+    });
   });
 
   it("filters droplets based on search", async () => {

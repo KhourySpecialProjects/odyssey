@@ -1,5 +1,11 @@
 import { getVoyageBySlug } from "@/lib/requests/voyage";
-import { getCachedVoyageEnrollment } from "@/lib/requests/cached";
+import {
+  getCachedEnrollmentsWithLessonIds,
+  getCachedVoyageEnrollment,
+} from "@/lib/requests/cached";
+import { canViewDroplet } from "@/lib/droplet-visibility";
+import { hasDroplet } from "@/lib/enrollment-completion";
+import type { Enrollment } from "@/types";
 import { getVoyageNodeCompletions } from "@/lib/requests/voyage-enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
@@ -52,12 +58,13 @@ export default async function VoyagePage({ params }: Props) {
 
   // Completions only matter when enrolled, but both are cached per user, so
   // fetch them together rather than one after the other.
-  const [enrollment, completions] = userId
+  const [enrollment, completions, dropletEnrollments] = userId
     ? await Promise.all([
         getCachedVoyageEnrollment(userId, voyage.id),
         getVoyageNodeCompletions(userId, voyage.id),
+        getCachedEnrollmentsWithLessonIds(userId),
       ])
-    : [null, []];
+    : [null, [], [] as Enrollment[]];
 
   const isAuthenticated = !!sessionUser;
   const isEnrolled = enrollment !== null;
@@ -86,15 +93,39 @@ export default async function VoyagePage({ params }: Props) {
     return nodeStatuses.get(node.id) ?? "available";
   };
 
+  // Droplet nodes the viewer can't open stay in the tree without a link.
+  const enrolledDropletIds = new Set(
+    dropletEnrollments.filter(hasDroplet).map((e) => e.droplet.id),
+  );
+  const unavailableNodeIds = new Set(
+    voyageNodes
+      .filter(
+        (n) =>
+          n.nodeType === "droplet" &&
+          n.droplet &&
+          !canViewDroplet(
+            n.droplet,
+            { id: userId ?? undefined, roles: sessionUser?.roles },
+            enrolledDropletIds.has(n.droplet.id),
+          ),
+      )
+      .map((n) => n.id),
+  );
+
   // Map VoyageNode[] to TreeNode[] for VoyageTreeMap
   const treeNodes: TreeNode[] = voyageNodes.map((node) => {
     const isDropletNode = node.nodeType === "droplet";
-    const slug = isDropletNode ? node.droplet?.slug : node.playlist?.slug;
+    const unavailable = unavailableNodeIds.has(node.id);
+    const slug = unavailable
+      ? undefined
+      : isDropletNode
+        ? node.droplet?.slug
+        : node.playlist?.slug;
     const dropletCount = isDropletNode
       ? undefined
       : node.playlist?.droplets?.length;
     const href =
-      isDropletNode && !slug
+      isDropletNode && !slug && !unavailable
         ? `/v/${voyage.slug}/unclaimed/${node.id}`
         : undefined;
     return {
@@ -110,6 +141,7 @@ export default async function VoyagePage({ params }: Props) {
       status: getNodeStatus(node),
       nodeType: node.nodeType,
       claimStatus: node.claimStatus,
+      unavailable,
     };
   });
 
@@ -129,13 +161,15 @@ export default async function VoyagePage({ params }: Props) {
     ? findFirstIncompleteNode(voyageNodes, completedNodeIds)
     : null;
   const firstIncompleteHref = firstIncompleteNode
-    ? firstIncompleteNode.nodeType === "droplet"
-      ? firstIncompleteNode.droplet?.slug
-        ? `/d/${firstIncompleteNode.droplet.slug}`
-        : `/v/${voyage.slug}/unclaimed/${firstIncompleteNode.id}`
-      : firstIncompleteNode.playlist?.slug
-        ? `/p/${firstIncompleteNode.playlist.slug}`
-        : "#"
+    ? unavailableNodeIds.has(firstIncompleteNode.id)
+      ? undefined
+      : firstIncompleteNode.nodeType === "droplet"
+        ? firstIncompleteNode.droplet?.slug
+          ? `/d/${firstIncompleteNode.droplet.slug}`
+          : `/v/${voyage.slug}/unclaimed/${firstIncompleteNode.id}`
+        : firstIncompleteNode.playlist?.slug
+          ? `/p/${firstIncompleteNode.playlist.slug}`
+          : "#"
     : undefined;
 
   const totalDroplets = treeNodes.reduce(
@@ -281,21 +315,25 @@ export default async function VoyagePage({ params }: Props) {
                         const isClaimed =
                           isDroplet && main.claimStatus === "claimed";
 
-                        const nodeHref = isDroplet
-                          ? main.slug
-                            ? `/d/${main.slug}`
-                            : `/v/${voyage.slug}/unclaimed/${main.id}`
-                          : main.slug
-                            ? `/p/${main.slug}`
-                            : "#";
+                        const nodeHref = main.unavailable
+                          ? undefined
+                          : isDroplet
+                            ? main.slug
+                              ? `/d/${main.slug}`
+                              : `/v/${voyage.slug}/unclaimed/${main.id}`
+                            : main.slug
+                              ? `/p/${main.slug}`
+                              : "#";
 
-                        const nodeSubtitle = isPlaceholder
-                          ? "Become author!"
-                          : isClaimed
-                            ? "In Progress"
-                            : isDroplet
-                              ? "1 droplet"
-                              : `${main.dropletCount ?? 0} droplets`;
+                        const nodeSubtitle = main.unavailable
+                          ? "Unavailable"
+                          : isPlaceholder
+                            ? "Become author!"
+                            : isClaimed
+                              ? "In Progress"
+                              : isDroplet
+                                ? "1 droplet"
+                                : `${main.dropletCount ?? 0} droplets`;
 
                         const mainNode = (
                           <div key={main.id}>
@@ -332,7 +370,7 @@ export default async function VoyagePage({ params }: Props) {
                                 </svg>
                               </div>
                             ) : (
-                              <Link
+                              <MaybeLink
                                 href={nodeHref}
                                 className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 transition-all hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
                               >
@@ -375,7 +413,7 @@ export default async function VoyagePage({ params }: Props) {
                                     </svg>
                                   </span>
                                 )}
-                              </Link>
+                              </MaybeLink>
                             )}
                           </div>
                         );
@@ -388,18 +426,22 @@ export default async function VoyagePage({ params }: Props) {
                           const branchIsPlaceholder =
                             branchIsDroplet &&
                             branch.claimStatus === "unclaimed";
-                          const branchHref = branchIsDroplet
-                            ? branch.slug
-                              ? `/d/${branch.slug}`
-                              : `/v/${voyage.slug}/unclaimed/${branch.id}`
-                            : branch.slug
-                              ? `/p/${branch.slug}`
-                              : "#";
-                          const branchSubtitle = branchIsPlaceholder
-                            ? "Become author!"
+                          const branchHref = branch.unavailable
+                            ? undefined
                             : branchIsDroplet
-                              ? "1 droplet"
-                              : `${branch.dropletCount ?? 0} droplets`;
+                              ? branch.slug
+                                ? `/d/${branch.slug}`
+                                : `/v/${voyage.slug}/unclaimed/${branch.id}`
+                              : branch.slug
+                                ? `/p/${branch.slug}`
+                                : "#";
+                          const branchSubtitle = branch.unavailable
+                            ? "Unavailable"
+                            : branchIsPlaceholder
+                              ? "Become author!"
+                              : branchIsDroplet
+                                ? "1 droplet"
+                                : `${branch.dropletCount ?? 0} droplets`;
 
                           return branchLocked ? (
                             <div
@@ -429,7 +471,7 @@ export default async function VoyagePage({ params }: Props) {
                               </span>
                             </div>
                           ) : (
-                            <Link
+                            <MaybeLink
                               key={branch.id}
                               href={branchHref}
                               className="ml-5 flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-1.5 transition-all hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/50"
@@ -472,7 +514,7 @@ export default async function VoyagePage({ params }: Props) {
                                   ? "optional"
                                   : "required"}
                               </span>
-                            </Link>
+                            </MaybeLink>
                           );
                         });
 
@@ -504,5 +546,24 @@ export default async function VoyagePage({ params }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Renders a link when there's an href, otherwise the same box without one.
+function MaybeLink({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  return href ? (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <div className={className}>{children}</div>
   );
 }

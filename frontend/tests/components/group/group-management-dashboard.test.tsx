@@ -72,7 +72,12 @@ jest.mock("@/components/playlists/playlist-card", () => ({
 
 jest.mock("@/components/group/group-progress-grid", () => ({
   GroupProgressGrid: ({ group, statuses }: any) => (
-    <div data-testid="progress-grid">Progress Grid for {group.groupName}</div>
+    <div data-testid="progress-grid">
+      Progress Grid for {group.groupName}
+      <span data-testid="progress-droplets">
+        {group.droplets?.map((d: any) => d.name).join(",")}
+      </span>
+    </div>
   ),
 }));
 
@@ -853,6 +858,50 @@ describe("GroupDashboard", () => {
       expect(dropletsTab).toBeInTheDocument();
       expect(playlistsTab).toBeInTheDocument();
       expect(progressTab).toBeInTheDocument();
+    });
+  });
+
+  describe("Hidden droplets (progressGroup)", () => {
+    const visible = mockDroplets[0];
+    const hidden = { ...mockDroplets[1], isHidden: true };
+
+    it("Droplets tab renders group.droplets only", () => {
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, droplets: [visible] }}
+          progressGroup={{ ...mockGroup, droplets: [visible, hidden] }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+          voyageStatuses={{}}
+        />,
+      );
+
+      expect(screen.getByTestId(`droplet-${visible.id}`)).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(`droplet-${hidden.id}`),
+      ).not.toBeInTheDocument();
+    });
+
+    it("Progress tab uses progressGroup, including the hidden droplet", () => {
+      mockSearchParams.set("tab", "progress");
+
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, droplets: [] }}
+          progressGroup={{ ...mockGroup, droplets: [visible, hidden] }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+          voyageStatuses={{}}
+        />,
+      );
+
+      expect(screen.getByTestId("progress-droplets")).toHaveTextContent(
+        `${visible.name},${hidden.name}`,
+      );
     });
   });
 });

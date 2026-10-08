@@ -13,7 +13,10 @@ import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
 import { getVoyageEnrollmentsForGroupMembers } from "@/lib/requests/voyage-enrollment";
-import { AuthorizedUser, DueDate } from "@/types";
+import { AuthorizedUser, DueDate, Enrollment } from "@/types";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import { hasDroplet } from "@/lib/enrollment-completion";
+import { withViewableGroupDroplets } from "@/lib/droplet-visibility";
 import { DateTime } from "luxon";
 
 type Props = {
@@ -39,39 +42,8 @@ export default async function GroupDetailPage({ params }: Props) {
   const isCreator = group.creator?.id === authorizedUser.id;
   const canEdit = isCreator || isAuthorizedUserAdmin(user.roles);
 
-  const dueDates = await getGroupDueDates(group);
-
-  const filteredDueDates = dueDates.reduce(
-    (acc, curr) => {
-      if (!curr.dueDate) return acc;
-
-      const itemId = curr.droplet?.id || curr.playlist?.id;
-      const itemType = curr.droplet ? "droplet" : "playlist";
-      const key = `${itemType}-${itemId}`;
-
-      if (!acc[key] || new Date(curr.dueDate) < new Date(acc[key].dueDate)) {
-        acc[key] = curr;
-      }
-      return acc;
-    },
-    {} as Record<string, (typeof dueDates)[0]>,
-  );
-
-  const uniqueDueDates = Object.values(filteredDueDates);
-  const getDaysUntil = (dueDate: DueDate) => {
-    let daysUntil = "0";
-    if (dueDate && dueDate.dueDate !== "") {
-      const dueDateObject = DateTime.fromISO(dueDate.dueDate);
-      const today = DateTime.local().startOf("day");
-      const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
-      daysUntil = String(Math.ceil(diffDays));
-    }
-    return daysUntil;
-  };
-
-  const processedDueDates = uniqueDueDates.filter((dueDate) => {
-    return Number(getDaysUntil(dueDate)) >= 0;
-  });
+  const dueDatesPromise = getGroupDueDates(group);
+  dueDatesPromise.catch(() => {});
 
   let sortedMembers: AuthorizedUser[] = [];
   const completionStatuses: Record<
@@ -80,6 +52,7 @@ export default async function GroupDetailPage({ params }: Props) {
   > = {};
   const voyageStatuses: Record<string, { completionPercentage: number }> = {};
 
+  // Progress uses the unfiltered group, so hidden droplets are still counted.
   const voyageDropletIds =
     group.voyages?.flatMap(
       (v) =>
@@ -98,6 +71,11 @@ export default async function GroupDetailPage({ params }: Props) {
   ];
 
   const voyageIds = group.voyages?.map((v) => v.id) || [];
+  const viewerIsMember = !!group.members?.some(
+    (m) => m.id === authorizedUser.id,
+  );
+  let membersFetchFailed = false;
+  let allEnrollments: Enrollment[] = [];
 
   if (group.members && (allDropletIds.length > 0 || voyageIds.length > 0)) {
     sortedMembers = [...group.members].sort((a, b) => {
@@ -109,7 +87,7 @@ export default async function GroupDetailPage({ params }: Props) {
     try {
       const memberIds = sortedMembers.map((m) => m.id);
 
-      const [allEnrollments, voyageEnrollments] = await Promise.all([
+      const [memberEnrollments, voyageEnrollments] = await Promise.all([
         allDropletIds.length > 0
           ? getEnrollmentsForGroupMembers(memberIds, allDropletIds)
           : Promise.resolve([]),
@@ -117,6 +95,7 @@ export default async function GroupDetailPage({ params }: Props) {
           ? getVoyageEnrollmentsForGroupMembers(memberIds, voyageIds)
           : Promise.resolve([]),
       ]);
+      allEnrollments = memberEnrollments;
 
       allEnrollments.forEach((enrollment) => {
         if (!enrollment.droplet || !enrollment.authorizedUser) return;
@@ -150,9 +129,79 @@ export default async function GroupDetailPage({ params }: Props) {
         };
       });
     } catch (error) {
+      membersFetchFailed = true;
       console.error("Error fetching completion statuses:", error);
     }
   }
+
+  // Viewer's enrolled droplets: members reuse the loaded rows, others fetch.
+  let viewerEnrollments: Enrollment[] = [];
+  if (viewerIsMember) {
+    viewerEnrollments = membersFetchFailed
+      ? []
+      : allEnrollments.filter(
+          (e) => e.authorizedUser?.id === authorizedUser.id,
+        );
+  } else {
+    viewerEnrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    ).catch(() => []);
+  }
+  const enrolledIds = new Set(
+    viewerEnrollments.filter(hasDroplet).map((e) => e.droplet.id),
+  );
+  const visibleGroup = withViewableGroupDroplets(
+    group,
+    { id: authorizedUser.id, roles: user.roles },
+    enrolledIds,
+  );
+  const visibleDropletIds = new Set([
+    ...(visibleGroup.droplets?.map((d) => d.id) || []),
+    ...(visibleGroup.playlists?.flatMap(
+      (p) => p.droplets?.map((d) => d.id) || [],
+    ) || []),
+    ...(visibleGroup.voyages?.flatMap(
+      (v) =>
+        v.voyage_nodes?.flatMap(
+          (n) => n.playlist?.droplets?.map((d) => d.id) || [],
+        ) || [],
+    ) || []),
+  ]);
+  const dueDates = (await dueDatesPromise).filter(
+    (d) => !d.droplet || visibleDropletIds.has(d.droplet.id),
+  );
+
+  const filteredDueDates = dueDates.reduce(
+    (acc, curr) => {
+      if (!curr.dueDate) return acc;
+
+      const itemId = curr.droplet?.id || curr.playlist?.id;
+      const itemType = curr.droplet ? "droplet" : "playlist";
+      const key = `${itemType}-${itemId}`;
+
+      if (!acc[key] || new Date(curr.dueDate) < new Date(acc[key].dueDate)) {
+        acc[key] = curr;
+      }
+      return acc;
+    },
+    {} as Record<string, (typeof dueDates)[0]>,
+  );
+
+  const uniqueDueDates = Object.values(filteredDueDates);
+  const getDaysUntil = (dueDate: DueDate) => {
+    let daysUntil = "0";
+    if (dueDate && dueDate.dueDate !== "") {
+      const dueDateObject = DateTime.fromISO(dueDate.dueDate);
+      const today = DateTime.local().startOf("day");
+      const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
+      daysUntil = String(Math.ceil(diffDays));
+    }
+    return daysUntil;
+  };
+
+  const processedDueDates = uniqueDueDates.filter((dueDate) => {
+    return Number(getDaysUntil(dueDate)) >= 0;
+  });
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">
@@ -224,7 +273,8 @@ export default async function GroupDetailPage({ params }: Props) {
       <Separator />
 
       <GroupDashboard
-        group={group}
+        group={visibleGroup}
+        progressGroup={group}
         canEdit={canEdit}
         authUser={authorizedUser}
         dueDates={dueDates}

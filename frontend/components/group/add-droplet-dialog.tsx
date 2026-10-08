@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Droplet } from "@/types";
+import { LISTED_DROPLET_FILTER } from "@/lib/droplet-visibility";
 import { GroupDropletTile } from "./group-droplet-tile";
 import { getDroplets } from "@/lib/requests/droplet";
 
@@ -31,11 +32,9 @@ export function AddDropletDialog({
 
   useEffect(() => {
     if (open) {
-      getDroplets().then((droplets) => {
+      getDroplets({ filters: LISTED_DROPLET_FILTER }).then((droplets) => {
         const filtered = droplets.filter(
-          (d) =>
-            !currentDroplets.find((cd) => cd.id === d.id) &&
-            d.status !== "draft",
+          (d) => !currentDroplets.find((cd) => cd.id === d.id),
         );
         setAvailableDroplets(filtered);
       });

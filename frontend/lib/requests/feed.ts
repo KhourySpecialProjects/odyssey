@@ -16,6 +16,15 @@ import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getCachedUserSocial } from "./cached";
 import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
+import { LISTED_DROPLET_FILTER } from "../droplet-visibility";
+
+// Announcements with no droplet, or whose droplet is listed.
+const LISTED_OR_NO_DROPLET = {
+  $or: [
+    { droplet: { id: { $null: true } } },
+    { droplet: LISTED_DROPLET_FILTER },
+  ],
+};
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -162,7 +171,7 @@ export async function fetchAnnouncements(
       : { readAt: { $null: true } };
 
     const baseFilters = {
-      $and: [{ $or: orFilters }, readAtFilter],
+      $and: [{ $or: orFilters }, readAtFilter, LISTED_OR_NO_DROPLET],
     };
 
     const query = qs.stringify({
@@ -170,7 +179,12 @@ export async function fetchAnnouncements(
       fields: ["id", "type", "content", "firstCreated", "readAt"],
       filters: types?.length
         ? {
-            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }],
+            $and: [
+              { $or: orFilters },
+              readAtFilter,
+              LISTED_OR_NO_DROPLET,
+              { type: { $in: types } },
+            ],
           }
         : baseFilters,
       populate: {
@@ -213,6 +227,7 @@ export async function fetchAnnouncements(
           fields: ["id", "name", "slug", "description", "isPublic"],
           populate: {
             droplets: {
+              filters: LISTED_DROPLET_FILTER,
               fields: ["id", "name", "slug"],
               populate: {
                 lessons: {
@@ -804,6 +819,7 @@ export async function fetchAnnouncementById(id: number) {
       sort: ["firstCreated:desc"],
       filters: {
         id: { $eq: id },
+        ...LISTED_OR_NO_DROPLET,
       },
       populate: {
         authorized_user: {
@@ -831,6 +847,7 @@ export async function fetchAnnouncementById(id: number) {
           fields: ["id", "name", "slug", "description", "isPublic"],
           populate: {
             droplets: {
+              filters: LISTED_DROPLET_FILTER,
               fields: ["id", "name", "slug"],
               populate: {
                 lessons: {
@@ -885,6 +902,7 @@ export async function fetchUserAnnouncements(
         type: {
           $in: ["friend", "kudos", "droplet"],
         },
+        ...LISTED_OR_NO_DROPLET,
       },
       populate: {
         authorized_user: {
