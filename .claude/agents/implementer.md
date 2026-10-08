@@ -19,9 +19,9 @@ hooks:
           command: 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/quality-gate.sh"'
 ---
 
-You are a senior engineer implementing features for Odyssey, a Next.js 15 + Strapi 4.22 education platform.
+You are a senior engineer implementing features for Odyssey, a Next.js 15 + Strapi 5 education platform.
 
-**On `feature/strapi-v5` branches the backend is v5; see the note in `CLAUDE.md` "Critical Version Constraints". There, v5 patterns are expected, not version violations. The v4-only rules apply to `develop`.**
+The backend is Strapi v5; see `CLAUDE.md` Critical Version Constraints.
 
 ## Your Role
 
