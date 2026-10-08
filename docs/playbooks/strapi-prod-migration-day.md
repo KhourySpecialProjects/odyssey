@@ -42,18 +42,18 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 - [x] **1.9 Prod token type:** find out whether prod's `STRAPI_ACCESS_TOKEN` is full-access or custom. Every ODY-635 finding assumes full-access. It is full-access
 - [x] **1.10** Create a Linear ticket for the 204 fix, then rename `scripts/strapi-v5-delete-204/` to match it.
 
-**Gate A:** a re-run `/audit` on `feature/strapi-v5` has only Critical 3 open. The rehearsal closes Critical 3.
+**Gate A:** a re-run `/audit` on `feature/strapi-v5` has only Critical 3 open. The rehearsal closes Critical 3. **Passed:** the re-run found only the expected blocker (the D&P cutover isn't rehearsed yet).
 
 ### Phase 2: Scripts and runbook (runs alongside phase 1)
 
 - [ ] **2.1 ODY-596 backup and rollback:** store a prod `pg_dump` somewhere durable. Write the rollback runbook: v5 tasks to 0 → restore → redeploy the last v4 image tag → check the frontend. Test the restore on a scratch DB and record how long it takes. Decide whether S3 media needs a snapshot too: the files don't change, but the upload rows do.
-- [ ] **2.2 Rewrite `03-post-switch-verify.sql` for v5:** v5 keeps `published_at` and renames the join tables (`*_lnk`, `*_cmps`, `files_related_mph`). Leave `01` and `02` on the v4 names, because they run on v4 data before the first v5 boot.
-- [ ] **2.3 Write the combined v4→v5 window steps** in this playbook, for dev and prod:
+- [x] **2.2 Rewrite `03-post-switch-verify.sql` for v5:** v5 keeps `published_at` and renames the join tables (`*_lnk`, `*_cmps`, `files_related_mph`). Leave `01` and `02` on the v4 names, because they run on v4 data before the first v5 boot. Done 2026-10-07 and run clean on the `ody597` scratch DB. v5 gives Super Admin publish permissions again on boot, so `03` now checks only the other roles.
+- [x] **2.3 Write the combined v4→v5 window steps** for dev and prod. Written 2026-10-07 in [strapi-v5-cutover-window.md](strapi-v5-cutover-window.md); the Reviewer's review is part of gate B.
   - The order: freeze → snapshot → backend to 0 → `01` → `02` → gate → merge → wait for `PRIMARY` → scale to 1 → wait for the migration to finish → `03` (v5) → the ODY-635 and ODY-700 smoke scripts → manual smoke check.
   - Rollback means restoring the snapshot, not running `git revert`.
   - Write down the decision point: "roll back if X is still broken at time Y."
-- [ ] **2.4 Assign the roles** (Driver, Reviewer and Comms) in the table above.
-- [ ] **2.5 ODY-605:** update the agent docs and skills for v5 on `feature/strapi-v5`, so the develop merge carries them (audit-2 Minor 2). Blocks ODY-603.
+- [x] **2.4 Assign the roles** (Driver, Reviewer and Comms) in the table above.
+- [x] **2.5 ODY-605:** update the agent docs and skills for v5 on `feature/strapi-v5`, so the develop merge carries them (audit-2 Minor 2). Blocks ODY-603.
 
 **Gate B:** the ODY-596 restore has been tested, the v5 version of `03` exists, the Reviewer has reviewed the window steps, and ODY-605 has landed.
 
@@ -75,7 +75,7 @@ Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev
 
 - [ ] **4.1 Last v4 release:** release the current `develop` to `production` first, so the prod cutover merge contains only v5 work.
 - [ ] **4.2 Release freeze starts:** from now on, any `develop` → `production` merge _is_ the prod cutover. Branch prod hotfixes off `production`. Comms announces the freeze.
-- [ ] **4.3** Run the combined window steps on dev. `dev2-image-push.yml` sets no desired count, so scale the backend back up by hand.
+- [ ] **4.3** Run the [combined window steps](strapi-v5-cutover-window.md) on dev. `dev2-image-push.yml` sets no desired count, so scale the backend back up by hand.
 - [ ] **4.4** Smoke-check dev as staff and as a normal user.
 
 **Gate D:** dev runs v5, `03` and the smoke scripts pass, and the soak period starts.
@@ -86,7 +86,7 @@ Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev
 - [ ] **5.2** Schedule the window. Comms announces the window and the Strapi admin edit freeze.
 - [ ] **5.3 M−1 go/no-go:**
   - The Driver checks access: `psql` to prod RDS, RDS snapshots, and ECS service updates.
-  - Record the last v4 task definition ARN and image tag (for rollback) and the exact merge SHA.
+  - Record the exact merge SHA, tag the v4 images `v4-final`, and register the rollback task definitions (see the window doc's "Before the window").
 
 ## Before the window
 
@@ -117,9 +117,10 @@ The prod pipeline (`prod-image-push.yml`) deploys the frontend and backend **in 
 9. [ ] **Backend up.** Scale up only after the pipeline's "Update ECS service" step has finished **and** `aws ecs describe-services --cluster <prod-cluster> --services <prod-backend-service>` shows the new task definition ARN as the `PRIMARY` deployment. Otherwise the old D&P-on task definition boots next to the new one. Then scale back to 1 task (the Terraform `desired_count`) and watch the logs for a clean boot.
        `aws ecs update-service --cluster <prod-cluster> --service <prod-backend-service> --desired-count 1`
 10. [ ] **Verify.** Run `psql -v ON_ERROR_STOP=1 -f scripts/ody-633/03-post-switch-verify.sql`. Check that:
-    - the totals equal the step 7 gate run's totals exactly;
-    - `published_at` is gone;
-    - there are 0 publish permissions;
+    - the `before_v5_boot` totals equal the step 7 gate run's totals exactly. Run `03` straight after the clean boot, because a user deleting their own row before then also breaks the match. `created_since_boot` is new user content and can be above 0;
+    - no v5 internal migration is missing;
+    - every document check is 0 (no null `published_at` or `document_id`, no duplicate `document_id`, no `locale`);
+    - the publish permissions outside Super Admin equal step 4's query 4 output minus its Super Admin rows, compared on every column (they do nothing while D&P is off);
     - the orphan counts are unchanged.
 11. [ ] **Smoke-check** as staff and as a normal user:
     - explore
