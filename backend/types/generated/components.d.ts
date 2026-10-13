@@ -1,6 +1,6 @@
-import type { Schema, Struct } from '@strapi/strapi';
+import type { Attribute, Schema } from '@strapi/strapi';
 
-export interface DropletsCallout extends Struct.ComponentSchema {
+export interface DropletsCallout extends Schema.Component {
   collectionName: 'components_droplets_callouts';
   info: {
     description: '';
@@ -8,50 +8,51 @@ export interface DropletsCallout extends Struct.ComponentSchema {
     icon: 'volumeUp';
   };
   attributes: {
-    color: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'bg-sky-50'>;
-    content: Schema.Attribute.Blocks & Schema.Attribute.Required;
-    iconEnabled: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    type: Schema.Attribute.Enumeration<['info', 'warning']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'info'>;
+    color: Attribute.String &
+      Attribute.Required &
+      Attribute.DefaultTo<'bg-sky-50'>;
+    content: Attribute.Blocks & Attribute.Required;
+    iconEnabled: Attribute.Boolean & Attribute.DefaultTo<true>;
+    type: Attribute.Enumeration<['info', 'warning']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'info'>;
   };
 }
 
-export interface DropletsDataset extends Struct.ComponentSchema {
+export interface DropletsDataset extends Schema.Component {
   collectionName: 'components_droplets_datasets';
   info: {
     displayName: 'Dataset';
   };
   attributes: {
-    fileSize: Schema.Attribute.Integer & Schema.Attribute.Required;
-    fileType: Schema.Attribute.String & Schema.Attribute.Required;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
-    url: Schema.Attribute.String & Schema.Attribute.Required;
+    fileSize: Attribute.Integer & Attribute.Required;
+    fileType: Attribute.String & Attribute.Required;
+    name: Attribute.String & Attribute.Required;
+    url: Attribute.String & Attribute.Required;
   };
 }
 
-export interface DropletsExpandable extends Struct.ComponentSchema {
+export interface DropletsExpandable extends Schema.Component {
   collectionName: 'components_droplets_expandables';
   info: {
     displayName: 'Expandable';
     icon: 'archive';
   };
   attributes: {
-    content: Schema.Attribute.RichText &
-      Schema.Attribute.Required &
-      Schema.Attribute.CustomField<
-        'plugin::ckeditor5.CKEditor',
+    content: Attribute.RichText &
+      Attribute.Required &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
         {
+          output: 'HTML';
           preset: 'rich';
         }
       >;
-    title: Schema.Attribute.String & Schema.Attribute.Required;
+    title: Attribute.String & Attribute.Required;
   };
 }
 
-export interface DropletsGeneric extends Struct.ComponentSchema {
+export interface DropletsGeneric extends Schema.Component {
   collectionName: 'components_droplets_generics';
   info: {
     description: '';
@@ -59,61 +60,62 @@ export interface DropletsGeneric extends Struct.ComponentSchema {
     icon: 'pencil';
   };
   attributes: {
-    content: Schema.Attribute.RichText &
-      Schema.Attribute.Required &
-      Schema.Attribute.CustomField<
-        'plugin::ckeditor5.CKEditor',
+    content: Attribute.RichText &
+      Attribute.Required &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
         {
+          output: 'HTML';
           preset: 'rich';
         }
       >;
   };
 }
 
-export interface DropletsLearningObjective extends Struct.ComponentSchema {
+export interface DropletsLearningObjective extends Schema.Component {
   collectionName: 'components_droplets_learning_objective';
   info: {
     description: '';
     displayName: 'Learning Objective';
   };
   attributes: {
-    objective: Schema.Attribute.String & Schema.Attribute.Required;
+    objective: Attribute.String & Attribute.Required;
   };
 }
 
-export interface DropletsOpenEndedQuiz extends Struct.ComponentSchema {
+export interface DropletsOpenEndedQuiz extends Schema.Component {
   collectionName: 'components_droplets_open_ended_quizs';
   info: {
     displayName: 'Open Ended Quiz';
   };
   attributes: {
-    questions: Schema.Attribute.Component<'quizzes.open-ended-question', true>;
+    questions: Attribute.Component<'quizzes.open-ended-question', true>;
   };
 }
 
-export interface DropletsQuiz extends Struct.ComponentSchema {
+export interface DropletsQuiz extends Schema.Component {
   collectionName: 'components_droplets_quizzes';
   info: {
     displayName: 'Quiz';
   };
   attributes: {
-    questions: Schema.Attribute.Component<'quizzes.question', true> &
-      Schema.Attribute.Required;
+    questions: Attribute.Component<'quizzes.question', true> &
+      Attribute.Required;
   };
 }
 
-export interface DropletsResource extends Struct.ComponentSchema {
+export interface DropletsResource extends Schema.Component {
   collectionName: 'components_droplets_resources';
   info: {
     displayName: 'Resource';
   };
   attributes: {
-    label: Schema.Attribute.String;
-    url: Schema.Attribute.String & Schema.Attribute.Required;
+    label: Attribute.String;
+    url: Attribute.String & Attribute.Required;
   };
 }
 
-export interface DropletsVideo extends Struct.ComponentSchema {
+export interface DropletsVideo extends Schema.Component {
   collectionName: 'components_droplets_videos';
   info: {
     description: '';
@@ -121,11 +123,11 @@ export interface DropletsVideo extends Struct.ComponentSchema {
     icon: 'play';
   };
   attributes: {
-    url: Schema.Attribute.String & Schema.Attribute.Required;
+    url: Attribute.String & Attribute.Required;
   };
 }
 
-export interface GalleriesGalleryItem extends Struct.ComponentSchema {
+export interface GalleriesGalleryItem extends Schema.Component {
   collectionName: 'components_galleries_gallery_items';
   info: {
     description: '';
@@ -133,44 +135,45 @@ export interface GalleriesGalleryItem extends Struct.ComponentSchema {
     icon: 'layer';
   };
   attributes: {
-    description: Schema.Attribute.Text;
-    image_urls: Schema.Attribute.JSON;
-    title: Schema.Attribute.String;
+    description: Attribute.Text;
+    image_urls: Attribute.JSON;
+    title: Attribute.String;
   };
 }
 
-export interface QuizzesAnswerOption extends Struct.ComponentSchema {
+export interface QuizzesAnswerOption extends Schema.Component {
   collectionName: 'components_quiz_answer_option';
   info: {
     description: '';
     displayName: 'Quiz Answer Option';
   };
   attributes: {
-    content: Schema.Attribute.String & Schema.Attribute.Required;
-    isCorrect: Schema.Attribute.Boolean &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<false>;
+    content: Attribute.String & Attribute.Required;
+    isCorrect: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
   };
 }
 
-export interface QuizzesOpenEndedQuestion extends Struct.ComponentSchema {
+export interface QuizzesOpenEndedQuestion extends Schema.Component {
   collectionName: 'components_quizzes_open_ended_questions';
   info: {
     displayName: 'Open Ended Question';
   };
   attributes: {
-    content: Schema.Attribute.RichText &
-      Schema.Attribute.CustomField<
-        'plugin::ckeditor5.CKEditor',
+    content: Attribute.RichText &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
         {
+          output: 'HTML';
           preset: 'rich';
         }
       >;
-    correctAnswer: Schema.Attribute.String;
+    correctAnswer: Attribute.String;
   };
 }
 
-export interface QuizzesQuestion extends Struct.ComponentSchema {
+export interface QuizzesQuestion extends Schema.Component {
   collectionName: 'components_quiz_questions';
   info: {
     description: '';
@@ -178,22 +181,23 @@ export interface QuizzesQuestion extends Struct.ComponentSchema {
     icon: 'question';
   };
   attributes: {
-    answerOptions: Schema.Attribute.Component<'quizzes.answer-option', true> &
-      Schema.Attribute.Required;
-    content: Schema.Attribute.RichText &
-      Schema.Attribute.Required &
-      Schema.Attribute.CustomField<
-        'plugin::ckeditor5.CKEditor',
+    answerOptions: Attribute.Component<'quizzes.answer-option', true> &
+      Attribute.Required;
+    content: Attribute.RichText &
+      Attribute.Required &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
         {
+          output: 'HTML';
           preset: 'rich';
         }
       >;
   };
 }
 
-declare module '@strapi/strapi' {
-  export namespace Public {
-    export interface ComponentSchemas {
+declare module '@strapi/types' {
+  export module Shared {
+    export interface Components {
       'droplets.callout': DropletsCallout;
       'droplets.dataset': DropletsDataset;
       'droplets.expandable': DropletsExpandable;

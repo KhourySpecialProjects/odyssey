@@ -17,42 +17,12 @@
 
 import { publishDraftToOriginal } from "@/lib/requests/droplet";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { revalidateTag } from "next/cache";
 import {
   mockGlobalFetch,
   makeFetchResponse,
-  makeEmptyResponse,
   makeDroplet,
 } from "@/lib/testing/mock-helpers";
-
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-} from "@/lib/strapi-document-id";
-
-// jest.resetAllMocks() also wipes the identity mock of @/lib/strapi-document-id
-// installed in jest.setup.ts, so put it back after every reset.
-function resetAllMocks() {
-  jest.resetAllMocks();
-  const identity = (ref: any): string =>
-    ref && typeof ref === "object"
-      ? ref.documentId ?? String(ref.id)
-      : String(ref);
-  jest
-    .mocked(resolveDocumentId)
-    .mockImplementation(async (_c, ref) => identity(ref));
-  jest
-    .mocked(resolveDocumentIds)
-    .mockImplementation(async (_c, refs) => refs.map(identity));
-  jest
-    .mocked(strapiEntryUrl)
-    .mockImplementation(
-      async (collection, ref, query) =>
-        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${identity(ref)}${query ? `?${query}` : ""}`,
-    );
-}
 
 // ─── module mocks ────────────────────────────────────────────────────────────
 
@@ -365,9 +335,8 @@ class FakeStrapi {
 
   /** Routes fetchAPI, global.fetch and deleteLesson to this fake. */
   install(): void {
-    getMockedFetchAPI().mockImplementation(
-      async (path: string, options?: { urlParams?: any }) =>
-        this.readDroplet(path, options?.urlParams?.filters?.id?.$eq),
+    getMockedFetchAPI().mockImplementation(async (path: string) =>
+      this.readDroplet(path),
     );
     mockGlobalFetch().mockImplementation(async (input, init) => {
       const url = String(input);
@@ -387,20 +356,15 @@ class FakeStrapi {
 
   // ── fetchAPI: GET /droplets/:id with its lessons ───────────────────────────
 
-  // getDropletById reads the list endpoint with an id filter (Strapi v5 single
-  // routes need a documentId), so the fake answers with a one-item list.
-  private readDroplet(path: string, id: number): unknown {
-    if (path !== "/droplets" || (id !== DRAFT && id !== LIVE)) {
-      throw new Error(
-        `FakeStrapi: unexpected fetchAPI path ${path} (id ${id})`,
-      );
+  private readDroplet(path: string): unknown {
+    const id = Number(/^\/droplets\/(\d+)$/.exec(path)?.[1]);
+    if (id !== DRAFT && id !== LIVE) {
+      throw new Error(`FakeStrapi: unexpected fetchAPI path ${path}`);
     }
-    return clone([
-      {
-        ...(id === DRAFT ? DRAFT_DROPLET : LIVE_DROPLET),
-        lessons: this.lessonsOf(id).map((lesson) => this.attributes(lesson)),
-      },
-    ]);
+    return clone({
+      ...(id === DRAFT ? DRAFT_DROPLET : LIVE_DROPLET),
+      lessons: this.lessonsOf(id).map((lesson) => this.attributes(lesson)),
+    });
   }
 
   /** A lesson as fetchAPI returns it for fields: ["*"] with blocks populated. */
@@ -462,7 +426,7 @@ class FakeStrapi {
         });
       }
       if (/^\/api\/enrollments\/\d+$/.test(path)) {
-        this.enrollment(idIn(/(\d+)$/)).droplet = Number(data.droplet); // relation values are documentIds; the fake uses String(id)
+        this.enrollment(idIn(/(\d+)$/)).droplet = data.droplet as number;
         return makeFetchResponse({ data: {} });
       }
     }
@@ -471,14 +435,8 @@ class FakeStrapi {
       return this.postLesson(data);
     }
 
-    // Strapi v5 answers every core DELETE with an empty 204
     if (method === "DELETE" && /^\/api\/droplets\/\d+$/.test(path)) {
-      return makeEmptyResponse(204);
-    }
-
-    if (method === "DELETE" && /^\/api\/lessons\/\d+$/.test(path)) {
-      this.removeLesson(idIn(/(\d+)$/));
-      return makeEmptyResponse(204);
+      return makeFetchResponse({ data: { id: idIn(/(\d+)$/) } });
     }
 
     throw new Error(`FakeStrapi: unhandled ${method} ${path}`);
@@ -539,7 +497,7 @@ class FakeStrapi {
     const name = data.name as string;
     const lesson = this.addLesson({
       id: this.nextLessonId++,
-      dropletId: Number((data.droplets as string[])[0]),
+      dropletId: (data.droplets as number[])[0],
       name,
       // beforeCreate always overwrites the posted slug with one generated from the name
       slug: this.uniqueSlug(name),
@@ -628,11 +586,6 @@ class FakeStrapi {
     }
     if (!lesson) return { ok: false, error: "Not Found", data: null };
 
-    this.removeLesson(lessonId);
-    return { ok: true, error: null, data: null };
-  }
-
-  private removeLesson(lessonId: number) {
     this.lessons.delete(lessonId);
     // Strapi deletes the join rows along with the lesson
     for (const enrollment of this.enrollments) {
@@ -640,6 +593,7 @@ class FakeStrapi {
         (id) => id !== lessonId,
       );
     }
+    return { ok: true, error: null, data: null };
   }
 }
 
@@ -738,7 +692,7 @@ describe("publishDraftToOriginal: lesson sync", () => {
   beforeEach(() => {
     // resetAllMocks drains mockResolvedValueOnce queues; clearAllMocks only
     // resets call counts. Both are needed to prevent cross-test contamination.
-    resetAllMocks();
+    jest.resetAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
     jest.spyOn(console, "warn").mockImplementation(() => {});
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -892,40 +846,8 @@ describe("publishDraftToOriginal: lesson sync", () => {
       blocksVersion: "v2",
       blocksV2: [paragraph("bn-fresh", "Brand new")],
       slug: expect.any(String),
-      droplets: [String(LIVE)], // a documentId (the fake uses String(id))
+      droplets: [LIVE],
     });
-  });
-
-  it("publishes a lesson removal when Strapi answers every DELETE with an empty 204 (v5)", async () => {
-    seedLiveDroplet(fake);
-    seedDraft(fake);
-    fake.enrollments.push({
-      id: AUTHOR_ENROLLMENT,
-      droplet: DRAFT,
-      viewedLessons: [101],
-    });
-    fake.lessons.delete(fake.draftLesson("Quiz").id);
-    // Use the real deleteLesson so DELETE /api/lessons/:id reaches the fake
-    getMockedDeleteLesson().mockImplementation(
-      jest.requireActual("@/lib/requests/lesson").deleteLesson,
-    );
-
-    const result = await publishDraftToOriginal(DRAFT, LIVE);
-
-    expect(result.ok).toBe(true);
-    expect(fake.lessons.has(QUIZ)).toBe(false);
-    expect(fake.requests("DELETE", /^\/api\/lessons\/202$/)).toHaveLength(1);
-    expect(fake.progress(STUDENT)).toEqual([INTRO]);
-    expect(fake.requests("PUT", ENROLLMENT_PUT)).not.toEqual([]);
-    expect(fake.enrollment(AUTHOR_ENROLLMENT).droplet).toBe(LIVE);
-    expect(fake.draftWasDeleted()).toBe(true);
-    expect(console.error).not.toHaveBeenCalled();
-    // updateDroplet, publish's finally and deepDeleteDroplet each revalidate this tag once
-    expect(
-      jest
-        .mocked(revalidateTag)
-        .mock.calls.filter(([tag]) => tag === CACHE_TAGS.allUserDashboards),
-    ).toHaveLength(3);
   });
 
   it("writes no lesson and deletes no lesson when the draft is unchanged", async () => {
@@ -1167,14 +1089,8 @@ describe("publishDraftToOriginal: lesson sync", () => {
     ];
     const reads = getMockedFetchAPI().mock.calls as FetchAPICall[];
     // The first draft read is publish's own; deepDeleteDroplet reads the draft again afterwards
-    const readOf = (id: number) =>
-      reads.filter(
-        ([path, options]) =>
-          path === "/droplets" &&
-          (options.urlParams as any).filters.id.$eq === id,
-      );
-    const draftRead = readOf(DRAFT)[0];
-    const liveReads = readOf(LIVE);
+    const draftRead = reads.find(([path]) => path === `/droplets/${DRAFT}`);
+    const liveReads = reads.filter(([path]) => path === `/droplets/${LIVE}`);
     expect(draftRead).toBeDefined();
     expect(liveReads).toHaveLength(1);
 
@@ -1185,7 +1101,9 @@ describe("publishDraftToOriginal: lesson sync", () => {
       // Every lesson field (content, lineage) with the blocks populated, in order
       expect(options.urlParams.populate.lessons).toEqual({
         fields: ["*"],
-        populate: LESSON_BLOCKS_POPULATE,
+        populate: {
+          blocks: { populate: { questions: { populate: ["answerOptions"] } } },
+        },
         sort: ["orderIndex:asc"],
       });
     }

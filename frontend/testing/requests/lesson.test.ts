@@ -10,14 +10,7 @@ import {
 } from "@/lib/requests/lesson";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
-import { makeEmptyResponse, mockGlobalFetch } from "@/lib/testing/mock-helpers";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-} from "@/lib/strapi-document-id";
+import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -61,15 +54,12 @@ describe("Lesson API Functions", () => {
           }),
       } as Response);
 
-      jest.mocked(resolveDocumentId).mockResolvedValueOnce("docDroplet1");
-
       const result = await addLesson({
         name: "Test Lesson",
         dropletId: 1,
         orderIndex: 0,
       });
 
-      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", 1);
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({
@@ -80,7 +70,7 @@ describe("Lesson API Functions", () => {
               slug: "random",
               blocks: [],
               droplets: {
-                connect: ["docDroplet1"],
+                connect: [1],
               },
               orderIndex: 0,
             },
@@ -121,8 +111,6 @@ describe("Lesson API Functions", () => {
           }),
       } as Response);
 
-      jest.mocked(resolveDocumentId).mockResolvedValueOnce("docDroplet1");
-
       const result = await addLesson({
         name: "Test Lesson",
         dropletId: 1,
@@ -146,7 +134,7 @@ describe("Lesson API Functions", () => {
         blocksV2: mockBlocks,
         blocksVersion: "v2",
         droplets: {
-          connect: ["docDroplet1"],
+          connect: [1],
         },
         orderIndex: 0,
       });
@@ -278,23 +266,6 @@ describe("Lesson API Functions", () => {
     });
   });
 
-  describe("addLesson - droplet not found", () => {
-    it("returns ok:false without calling Strapi", async () => {
-      jest
-        .mocked(resolveDocumentId)
-        .mockRejectedValueOnce(new StrapiEntryNotFoundError("no droplet"));
-
-      const result = await addLesson({
-        name: "L",
-        dropletId: 99,
-        orderIndex: 0,
-      });
-
-      expect(result).toEqual({ ok: false, error: "no droplet", data: null });
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-  });
-
   describe("updateLesson", () => {
     it("successfully updates lesson with blocksV2", async () => {
       const mockBlocks = [
@@ -422,7 +393,15 @@ describe("Lesson API Functions", () => {
       expect(fetchAPI).toHaveBeenCalledWith("/lessons", {
         urlParams: expect.objectContaining({
           filters: { slug: "test-lesson" },
-          populate: LESSON_BLOCKS_POPULATE,
+          populate: {
+            blocks: {
+              populate: {
+                questions: {
+                  populate: ["answerOptions"],
+                },
+              },
+            },
+          },
         }),
         // lesson only: droplet-level mutations must not flush lesson pages
         next: { tags: [CACHE_TAGS.lesson], revalidate: 900 },
@@ -457,58 +436,6 @@ describe("Lesson API Functions", () => {
 
       expect(result).toBe(true);
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
-    });
-
-    it("sends the enrollment documentId URL and lesson documentIds", async () => {
-      const { getCurrentUser } = require("@/lib/auth/session");
-      const {
-        getAuthorizedUserByEmail,
-      } = require("@/lib/requests/authorized-user");
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      jest
-        .mocked(strapiEntryUrl)
-        .mockResolvedValueOnce("http://strapi/api/enrollments/docE9");
-      jest
-        .mocked(resolveDocumentIds)
-        .mockImplementationOnce(async (_c, refs) =>
-          refs.map((r) => "doc" + String(r)),
-        );
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 9 } }),
-      } as Response);
-
-      await markLessonAsComplete("9", [1, 2], 3);
-
-      expect(strapiEntryUrl).toHaveBeenCalledWith("enrollments", "9");
-      expect(resolveDocumentIds).toHaveBeenCalledWith("lessons", [1, 2, 3]);
-      expect(fetchMock).toHaveBeenCalledWith(
-        "http://strapi/api/enrollments/docE9",
-        expect.objectContaining({
-          body: JSON.stringify({
-            data: { viewedLessons: ["doc1", "doc2", "doc3"] },
-          }),
-        }),
-      );
-    });
-
-    it("returns false when the enrollment cannot be resolved", async () => {
-      const { getCurrentUser } = require("@/lib/auth/session");
-      const {
-        getAuthorizedUserByEmail,
-      } = require("@/lib/requests/authorized-user");
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      jest
-        .mocked(strapiEntryUrl)
-        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
-      jest.spyOn(console, "error").mockImplementation(() => {});
-
-      const result = await markLessonAsComplete("9", [1], 2);
-
-      expect(result).toBe(false);
-      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it("handles errors when marking as complete", async () => {
@@ -566,46 +493,6 @@ describe("Lesson API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
     });
 
-    it("treats an empty 204 as success (Strapi v5)", async () => {
-      fetchMock.mockResolvedValueOnce(makeEmptyResponse(204));
-
-      const result = await deleteLesson(123);
-
-      expect(result).toEqual({ ok: true, error: null, data: null });
-      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.droplets);
-      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
-      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.lesson);
-    });
-
-    it("deletes via the lesson documentId", async () => {
-      jest
-        .mocked(strapiEntryUrl)
-        .mockResolvedValueOnce("http://strapi/api/lessons/docL123");
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 123 } }),
-      } as Response);
-
-      await deleteLesson(123);
-
-      expect(strapiEntryUrl).toHaveBeenCalledWith("lessons", 123);
-      expect(fetchMock).toHaveBeenCalledWith(
-        "http://strapi/api/lessons/docL123",
-        expect.objectContaining({ method: "DELETE" }),
-      );
-    });
-
-    it("returns the not-found result when the lesson cannot be resolved", async () => {
-      jest
-        .mocked(strapiEntryUrl)
-        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
-
-      const result = await deleteLesson(123);
-
-      expect(result).toEqual({ ok: false, error: "Not Found", data: null });
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-
     it("skips revalidation when revalidate is false", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
@@ -625,89 +512,7 @@ describe("Lesson API Functions", () => {
     });
   });
 
-  describe("updateLesson - documentId URL", () => {
-    it("updates via the lesson documentId and handles a missing lesson", async () => {
-      jest
-        .mocked(strapiEntryUrl)
-        .mockResolvedValueOnce("http://strapi/api/lessons/docL5");
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 5 } }),
-      } as Response);
-
-      await updateLesson(5, { name: "x" });
-
-      expect(strapiEntryUrl).toHaveBeenCalledWith("lessons", 5);
-      expect(fetchMock).toHaveBeenCalledWith(
-        "http://strapi/api/lessons/docL5",
-        expect.objectContaining({ method: "PUT" }),
-      );
-
-      fetchMock.mockClear();
-      jest
-        .mocked(strapiEntryUrl)
-        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
-
-      const result = await updateLesson(6, { name: "x" });
-
-      expect(result).toEqual({ ok: false, error: "Not Found", data: null });
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-  });
-
   describe("duplicateLessonToDroplet", () => {
-    it("reads the source via its documentId and connects the target documentId", async () => {
-      jest
-        .mocked(strapiEntryUrl)
-        .mockResolvedValueOnce("http://strapi/api/lessons/docSrc?q=1");
-      jest.mocked(resolveDocumentId).mockResolvedValueOnce("docTarget");
-      fetchMock
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              data: {
-                id: 1,
-                attributes: { name: "O", slug: "o", blocks: [] },
-              },
-            }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 2 } }),
-        } as Response);
-
-      await duplicateLessonToDroplet(1, 2, 0);
-
-      expect(strapiEntryUrl).toHaveBeenCalledWith(
-        "lessons",
-        1,
-        expect.stringContaining("populate[blocks]"),
-      );
-      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", 2);
-      expect(fetchMock.mock.calls[0][0]).toBe(
-        "http://strapi/api/lessons/docSrc?q=1",
-      );
-      const body = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
-      expect(body.data.droplets).toEqual({ connect: ["docTarget"] });
-    });
-
-    it("reports a failed source fetch when the source lesson is missing", async () => {
-      jest
-        .mocked(strapiEntryUrl)
-        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
-      jest.spyOn(console, "error").mockImplementation(() => {});
-
-      const result = await duplicateLessonToDroplet(1, 2, 0);
-
-      expect(result).toEqual({
-        ok: false,
-        error: "Failed to fetch source lesson",
-        data: null,
-      });
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-
     it("duplicates v2 lesson correctly and revalidates enrollments", async () => {
       const mockV2Lesson = {
         data: {
@@ -737,10 +542,6 @@ describe("Lesson API Functions", () => {
       expect(result.ok).toBe(true);
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments");
-      // Source GET scopes the quiz populate per component with `on`
-      expect(fetchMock.mock.calls[0][0]).toContain(
-        "populate[blocks][on][droplets.quiz][populate][questions][populate][0]=answerOptions",
-      );
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({

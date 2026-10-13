@@ -12,11 +12,12 @@
     },
     "content": {
       "type": "customField",
-      "customField": "plugin::ckeditor5.CKEditor",
       "options": {
+        "output": "HTML",
         "preset": "rich"
       },
-      "required": true
+      "required": true,
+      "customField": "plugin::ckeditor.CKEditor"
     }
   }
 }

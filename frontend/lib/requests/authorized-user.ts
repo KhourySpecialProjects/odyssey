@@ -19,13 +19,6 @@ import { CACHE_TAGS } from "../cache-tags";
 import { USER_POPULATES } from "./user-populates";
 import { getCurrentUser } from "../auth/session";
 import { requireRole } from "../auth/require-role";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-} from "../strapi-document-id";
-import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -482,17 +475,17 @@ export async function createAuthorizedUser(
     isEnabled: formData.get("isEnabled"),
   });
 
-  try {
-    const dataToSend = {
-      data: {
-        email,
-        isEnabled,
-        roles: {
-          set: [await resolveDocumentId("authorized-user-roles", roleID)],
-        },
+  const dataToSend = {
+    data: {
+      email,
+      isEnabled,
+      roles: {
+        set: [{ id: roleID }],
       },
-    };
+    },
+  };
 
+  try {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
       {
@@ -509,10 +502,6 @@ export async function createAuthorizedUser(
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
-    if (err instanceof StrapiEntryNotFoundError) {
-      // Strapi used to reject a relation to a missing role with a 400.
-      return { ok: false, error: err.message, data: null };
-    }
     console.error(err);
     return { error: "Database Error: Failed to Create Authorized User." };
   }
@@ -546,7 +535,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
             email,
             isEnabled: true,
             roles: {
-              set: [await resolveDocumentId("authorized-user-roles", roleID)],
+              set: [{ id: roleID }],
             },
           },
         };
@@ -680,14 +669,15 @@ export async function updateUserInfo(
     if (github !== undefined) data.github = github;
     if (website !== undefined) data.website = website;
     if (photo !== undefined) data.profilePhoto = photo;
-    try {
-      if (roles && roles.length > 0) {
-        data.roles = {
-          set: await resolveDocumentIds("authorized-user-roles", roleIds),
-        };
-      }
+    if (roles && roles.length > 0) {
+      data.roles = {
+        set: roleIds.map((id) => ({ id })),
+      };
+    }
 
-      await fetch(await strapiEntryUrl("authorized-users", userId), {
+    await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -695,12 +685,8 @@ export async function updateUserInfo(
           ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data }),
-      });
-    } catch (err) {
-      // The PUT response was never inspected, so a 404/400 for a missing user
-      // or role was silently ignored. Keep that.
-      if (!(err instanceof StrapiEntryNotFoundError)) throw err;
-    }
+      },
+    );
     // firstTime and isPublic never appear in another user's cached view: the
     // user lists/search (`users`) and creator lists (`authors`) don't select
     // them, and every other read of them goes through
@@ -744,26 +730,21 @@ export async function deleteAuthorizedUser(formData: FormData) {
   });
 
   try {
-    const response = await fetch(await strapiEntryUrl("authorized-users", id), {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
       },
-    });
-    const body = await readJsonOrNull(response);
-    if (!response.ok || body?.error)
-      return {
-        ok: false,
-        error: body?.error?.message ?? "Failed to delete authorized user.",
-        data: null,
-      };
+    );
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
   } catch (err) {
-    if (err instanceof StrapiEntryNotFoundError) {
-      // Same result as the 404 body Strapi used to return.
-      return { ok: false, error: "Not Found", data: null };
-    }
     console.error(err);
     return {
       ok: false,
@@ -794,9 +775,9 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
           },
         },
       },
-      fields: ["id", "firstName", "lastName", "email"],
+      fields: ["id", "username", "email"],
       populate: {},
-      sort: ["lastName"],
+      sort: ["username"],
       pagination: {
         pageSize,
         page,
