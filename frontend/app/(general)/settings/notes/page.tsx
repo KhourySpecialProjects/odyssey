@@ -1,10 +1,9 @@
 import { Metadata } from "next";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getAllNotesByUser } from "@/lib/requests/notes";
 import { getAllHighlightsByUser } from "@/lib/requests/highlights";
-import { hasDroplet } from "@/lib/enrollment-completion";
 import { Note, Highlight } from "@/types";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
@@ -19,10 +18,9 @@ export default async function NotesPage() {
   const currentUser = await getCurrentUser();
   if (!currentUser?.email) redirect("/");
 
-  const userId = await getAuthorizedUserId(currentUser);
-  if (!userId) redirect("/");
-  const [rawEnrollments, allUserNotes, allUserHighlights] = await Promise.all([
-    getEnrollmentsByAuthorizedUser(userId, {
+  const user = await getCachedUser(currentUser.email);
+  const [enrollments, allUserNotes, allUserHighlights] = await Promise.all([
+    getEnrollmentsByAuthorizedUser(user.id, {
       populate: {
         droplet: {
           populate: {
@@ -34,11 +32,9 @@ export default async function NotesPage() {
         },
       },
     }),
-    getAllNotesByUser(userId),
-    getAllHighlightsByUser(userId),
+    getAllNotesByUser(user.id),
+    getAllHighlightsByUser(user.id),
   ]);
-
-  const enrollments = rawEnrollments.filter(hasDroplet);
 
   // Build lessonId -> dropletId map from enrollments
   const lessonToDroplet = new Map<number, number>();

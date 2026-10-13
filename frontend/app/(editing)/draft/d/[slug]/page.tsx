@@ -1,7 +1,7 @@
-import { updateDropletFunFact } from "@/lib/requests/droplet";
+import { updateDropletFunFact, getDroplets } from "@/lib/requests/droplet";
+import type { Droplet } from "@/types";
 import {
   getCachedDraftDropletBySlug,
-  getCachedDraftDropletOptions,
   getCachedUser,
 } from "@/lib/requests/cached";
 import { stripHtmlTags } from "@/lib/utils";
@@ -51,11 +51,18 @@ export default async function Droplet({ params }: Props) {
     return notFound();
   }
 
-  // Same request-deduplicated queries as the draft layout.
-  const [authUser, droplet, dropletOptions, tags] = await Promise.all([
-    user.email ? getCachedUser(user.email) : null,
+  const authUser = user.email ? await getCachedUser(user.email) : null;
+
+  const [droplet, droplets, tags] = await Promise.all([
     getCachedDraftDropletBySlug(p.slug),
-    getCachedDraftDropletOptions(),
+    getDroplets({
+      filters: {
+        $and: [{ status: { $eq: "published" } }, { isHidden: false }],
+      },
+      fields: ["id", "name", "slug"],
+      populate: {},
+      pagination: { pageSize: 250, page: 1 },
+    }),
     getTags(),
   ]);
 
@@ -63,25 +70,13 @@ export default async function Droplet({ params }: Props) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
   }
 
-  // Prerequisite / similar-droplet choices: visible published droplets only.
-  const droplets = dropletOptions
-    .filter((option) => option.isHidden === false)
-    .map(({ id, name, slug }) => ({ id, name, slug }));
-
-  // Inline Server Actions serialize (encrypted) every value they capture into
-  // the page payload, so capture primitives rather than `droplet` / `user`.
-  const dropletId = droplet.id;
-  const overview = droplet.overview;
-  const userEmail = user.email;
-  const userRoles = user.roles ?? [];
-
   const generateFunFact = async () => {
     "use server";
 
-    if (userEmail) {
+    if (user?.email) {
       const { allowed, retryAfterMs } = checkRateLimit(
-        userEmail,
-        userRoles,
+        user.email,
+        user.roles ?? [],
         "fun-fact",
       );
       if (!allowed) {
@@ -101,13 +96,13 @@ export default async function Droplet({ params }: Props) {
           {
             role: "user",
             content: `Generate a short, one-sentence fun fact about the following overview. Do not include any introductions, explanations, or phrases like "Here's a fun fact." Just output the fact itself. Here is the overview:
- "${overview || "If you're reading this, simply output No Overview"}"`,
+ "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
           },
         ],
       });
 
       if (msg.content[0].type === "text") {
-        await updateDropletFunFact(msg.content[0].text, dropletId);
+        await updateDropletFunFact(msg.content[0].text, droplet.id);
         return msg.content[0].text;
       } else {
         return "";
@@ -138,7 +133,7 @@ export default async function Droplet({ params }: Props) {
   const deleteFunFact = async () => {
     "use server";
 
-    await updateDropletFunFact("", dropletId);
+    await updateDropletFunFact("", droplet.id);
   };
 
   return (

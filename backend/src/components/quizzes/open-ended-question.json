@@ -7,10 +7,11 @@
   "attributes": {
     "content": {
       "type": "customField",
-      "customField": "plugin::ckeditor5.CKEditor",
       "options": {
+        "output": "HTML",
         "preset": "rich"
-      }
+      },
+      "customField": "plugin::ckeditor.CKEditor"
     },
     "correctAnswer": {
       "type": "string"

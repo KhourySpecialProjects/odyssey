@@ -5,8 +5,6 @@ import { DueDate, Playlist } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { PlaylistCard } from "../playlists/playlist-card";
 import { AdminPagination } from "@/components/admin/admin-pagination";
-import { useSortKey } from "@/hooks/use-sort-key";
-import { sortPlaylists } from "@/lib/playlist-sort";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -16,39 +14,36 @@ export function UserPlaylistsClient({
   dueDates,
   isArchived,
   dashboardPage,
-  sortKey,
 }: {
   customPlaylists: Playlist[];
   publicPlaylists: Playlist[];
   dueDates: DueDate[];
   isArchived?: boolean;
   dashboardPage?: boolean;
-  sortKey?: string;
 }) {
   const { searchQuery } = useSearch();
-  const activeSortKey = useSortKey(sortKey);
   const [customPage, setCustomPage] = useState(1);
   const [publicPage, setPublicPage] = useState(1);
 
   const filteredPublic = useMemo(() => {
-    return sortPlaylists(publicPlaylists, activeSortKey).filter((playlist) =>
+    return publicPlaylists.filter((playlist) =>
       playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [publicPlaylists, activeSortKey, searchQuery]);
+  }, [publicPlaylists, searchQuery]);
 
   const filteredCustom = useMemo(() => {
-    return sortPlaylists(customPlaylists, activeSortKey).filter((playlist) =>
+    return customPlaylists.filter((playlist) =>
       playlist.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [customPlaylists, activeSortKey, searchQuery]);
+  }, [customPlaylists, searchQuery]);
 
   useEffect(() => {
     setPublicPage(1);
-  }, [publicPlaylists, searchQuery, activeSortKey]);
+  }, [publicPlaylists, searchQuery]);
 
   useEffect(() => {
     setCustomPage(1);
-  }, [customPlaylists, searchQuery, activeSortKey]);
+  }, [customPlaylists, searchQuery]);
 
   const customTotalPages = Math.ceil(filteredCustom.length / ITEMS_PER_PAGE);
   const paginatedCustom = filteredCustom.slice(

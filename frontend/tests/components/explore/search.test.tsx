@@ -14,18 +14,12 @@ describe("Search", () => {
   const mockRouter = {
     push: jest.fn(),
   };
-  let replaceStateSpy: jest.SpyInstance;
 
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    replaceStateSpy = jest.spyOn(window.history, "replaceState");
   });
 
-  afterEach(() => {
-    replaceStateSpy.mockRestore();
-  });
-
-  it("mirrors the query into the URL without a server navigation", async () => {
+  it("updates search query when typing", async () => {
     render(
       <SearchProvider>
         <Search />
@@ -37,24 +31,8 @@ describe("Search", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    expect(replaceStateSpy).toHaveBeenCalledWith(
-      null,
-      "",
+    expect(mockRouter.push).toHaveBeenCalledWith(
       expect.stringContaining("q=test+query"),
     );
-    expect(mockRouter.push).not.toHaveBeenCalled();
-  });
-
-  it("does not touch the URL on mount when there is no query", async () => {
-    render(
-      <SearchProvider>
-        <Search />
-      </SearchProvider>,
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 350));
-
-    expect(replaceStateSpy).not.toHaveBeenCalled();
-    expect(mockRouter.push).not.toHaveBeenCalled();
   });
 });

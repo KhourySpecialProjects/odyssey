@@ -36,13 +36,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { duplicateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
-import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
 
 export default function Sidebar({
   user,
   author = false,
   droplet,
-  completedLessonIds: serverCompletedLessonIds = [],
+  completedLessonIds = [],
   enrollmentId,
   expanded,
   setExpanded,
@@ -65,14 +64,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
-
-  // The layout (and so these props) doesn't re-render on lesson-to-lesson
-  // navigation, and "Next" navigates before its save lands, so include
-  // lessons marked viewed in this session (see viewed-lessons-store).
-  const completedLessonIds = useViewedLessonIds(
-    enrollmentId,
-    serverCompletedLessonIds,
-  );
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
   const canPresent =

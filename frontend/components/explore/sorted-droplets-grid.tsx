@@ -10,7 +10,6 @@ import {
 } from "@/components/message";
 import { useSearch } from "@/contexts/SearchContext";
 import { AdminPagination } from "@/components/admin/admin-pagination";
-import { useSortKey } from "@/hooks/use-sort-key";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -22,7 +21,6 @@ interface SortedDropletsGridProps {
   dueDates: DueDate[];
   isAdmin?: boolean;
   archivedDropletIds?: number[];
-  favoritedDropletIds?: number[];
   currentUserId?: number;
 }
 
@@ -36,17 +34,15 @@ export function SortedDropletsGrid({
   dueDates,
   isAdmin,
   archivedDropletIds = [],
-  favoritedDropletIds = [],
   currentUserId,
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
-  const activeSortKey = useSortKey(sortKey);
   const [currentPage, setCurrentPage] = useState(1);
 
   const sortedDroplets = useMemo(() => {
     const sorted = [...droplets];
-    if (activeSortKey) {
-      const [field, direction] = activeSortKey.split(":");
+    if (sortKey) {
+      const [field, direction] = sortKey.split(":");
       sorted.sort((a, b) => {
         let ratingA = ratingsMap.get(a.id);
         let ratingB = ratingsMap.get(b.id);
@@ -116,7 +112,7 @@ export function SortedDropletsGrid({
       });
     }
     return sorted;
-  }, [droplets, activeSortKey, ratingsMap, dueDates]);
+  }, [droplets, sortKey, ratingsMap]);
 
   const { searchQuery } = useSearch();
 
@@ -166,7 +162,13 @@ export function SortedDropletsGrid({
             }
             isAdmin={isAdmin}
             isArchived={archivedDropletIds.includes(droplet.id)}
-            isFavorited={favoritedDropletIds.includes(droplet.id)}
+            isFavorited={
+              currentUserId
+                ? droplet.usersFavorited?.some(
+                    (user) => user.id === currentUserId,
+                  ) ?? false
+                : false
+            }
             isCreator={
               currentUserId
                 ? droplet.authorized_users?.some(

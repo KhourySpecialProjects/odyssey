@@ -2,18 +2,11 @@
 
 import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { CACHE_TAGS } from "../cache-tags";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-} from "@/lib/strapi-document-id";
-import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -81,7 +74,7 @@ export async function getPlaylistBySlug(
         },
       },
       authors: {
-        fields: ["id"],
+        fields: ["id", "name"],
       },
     },
   }: StrapiRequestParams = {},
@@ -118,32 +111,18 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   id: number,
   { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
-  // Strapi v5 single-entry routes take a documentId, so read through the list
-  // endpoint with an id filter instead (same as getDropletById).
-  const path = `/playlists`;
+  const path = `/playlists/${id}`;
   const urlParams = {
     sort,
-    filters: { ...filters, id: { $eq: id } },
+    filters: { ...filters },
     populate,
     fields,
-    pagination: {
-      pageSize: 1,
-      page: 1,
-    },
   };
 
-  const playlists = await fetchAPI<T[]>(path, {
+  return await fetchAPI<T>(path, {
     urlParams,
     next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
   });
-  const playlist = playlists?.[0];
-  if (!playlist) {
-    // Keep the failure a missing playlist used to produce (a 404 from /playlists/:id).
-    const error = new Error(`Failed to fetch data: HTTP error! status: 404`);
-    console.error("Fetch error:", error);
-    throw error;
-  }
-  return playlist;
 }
 
 export async function updatePlaylist(
@@ -159,45 +138,28 @@ export async function updatePlaylist(
   },
 ) {
   try {
-    let url: string;
-    let dropletDocIds: string[] | undefined;
-    try {
-      [url, dropletDocIds] = await Promise.all([
-        strapiEntryUrl("playlists", id),
-        data.droplets &&
-          resolveDocumentIds(
-            "droplets",
-            data.droplets.map((d) => d.id),
-          ),
-      ]);
-    } catch (error) {
-      // Same result Strapi's 404 produced before
-      if (error instanceof StrapiEntryNotFoundError) {
-        return { ok: false, error: "Not Found", data: null };
-      }
-      throw error;
-    }
-
     const dataToSend = {
       name: data.name,
       description: data.description,
       isPublic: data.isPublic,
       droplets: {
-        set: dropletDocIds,
+        set: data.droplets,
       },
       slug: data.slug,
       regenerateSlug: false,
     };
 
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
       },
-      body: JSON.stringify({ data: dataToSend }),
-    });
+    );
 
     const responseData = await response.json();
 
@@ -211,8 +173,8 @@ export async function updatePlaylist(
 
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.allUserContent);
-    revalidateTag(CACHE_TAGS.allUserDashboards);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -234,34 +196,16 @@ export async function createPlaylist(data: {
 }) {
   const tempSlug = "random";
   try {
-    let authorDocId: string;
-    let dropletDocIds: string[];
-    try {
-      [authorDocId, dropletDocIds] = await Promise.all([
-        resolveDocumentId("authorized-users", data.author.id),
-        resolveDocumentIds(
-          "droplets",
-          data.droplets.map((d) => d.id),
-        ),
-      ]);
-    } catch (error) {
-      if (error instanceof StrapiEntryNotFoundError) {
-        return { ok: false, error: "Failed to create playlist", data: null };
-      }
-      throw error;
-    }
-
-    // Relation values are documentIds on Strapi v5
     const dataToSend = {
       name: data.name,
       description: data.description,
       authors: {
-        connect: [authorDocId],
+        connect: [data.author.id],
       },
       slug: tempSlug, // this gets overwritten by Strapi
       isPublic: data.isPublic,
       droplets: {
-        connect: dropletDocIds,
+        connect: data.droplets,
       },
     };
 
@@ -272,7 +216,6 @@ export async function createPlaylist(data: {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -289,10 +232,8 @@ export async function createPlaylist(data: {
     }
 
     revalidateTag(CACHE_TAGS.playlists);
-    // A new playlist has one author and no enrollees yet, so only the
-    // author's /my-content and /dashboard can change.
-    revalidateTag(CACHE_TAGS.userContent(data.author.id));
-    revalidateTag(CACHE_TAGS.userDashboard(data.author.id));
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -309,21 +250,17 @@ export async function deletePlaylist(id: number) {
     const group = await getPlaylistById(id);
 
     const response = await fetch(
-      await strapiEntryUrl("playlists", {
-        id,
-        documentId: group?.documentId,
-      }),
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id,
       {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
 
-    const body = await readJsonOrNull(response);
+    const data = await response.json();
 
     if (!response.ok) {
       return { ok: false, error: "Failed to delete playlist.", data: null };
@@ -332,9 +269,9 @@ export async function deletePlaylist(id: number) {
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.allUserContent);
-    revalidateTag(CACHE_TAGS.allUserDashboards);
-    return { ok: true, error: null, data: body?.data ?? null };
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
+    return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Playlist." };
@@ -375,13 +312,12 @@ export async function archivePlaylist(
     }
 
     const response = await fetch(
-      await strapiEntryUrl("playlists", fullPlaylist),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: { isArchived: archiveState } }),
       },
@@ -392,11 +328,9 @@ export async function archivePlaylist(
       throw new Error("Failed to archive playlist");
     }
 
-    // isArchived lives on the playlist itself, so every author's /my-content
-    // and every enrollee's /dashboard see it — keep the global sweeps.
     revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.allUserContent);
-    revalidateTag(CACHE_TAGS.allUserDashboards);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { success: true };
   } catch (error) {
     console.error("Error archiving playlist:", error);

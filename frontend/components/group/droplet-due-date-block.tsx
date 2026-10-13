@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
-import DateTimePicker from "./datetime-picker";
+import MUIDateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
 import { Check, Trash2Icon } from "lucide-react";
 import Link from "next/link";
@@ -71,11 +71,13 @@ export function DropletDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <DateTimePicker
-          onChange={handleInputChange}
-          date={dueDate}
-          aria-label={`Due date for ${currentDroplet.name}`}
-        />
+        <div className="rounded-md dark:bg-slate-50">
+          <MUIDateTimePicker
+            onChange={handleInputChange}
+            date={dueDate}
+            data-testid="picker"
+          ></MUIDateTimePicker>
+        </div>
         <div className="flex flex-col gap-2">
           <Button
             onClick={() => {

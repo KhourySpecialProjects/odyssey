@@ -3,7 +3,6 @@
 import { requireRole } from "@/lib/auth/require-role";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 
 const STRAPI_BASE_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_API_URL = `${STRAPI_BASE_URL}/api`;
@@ -13,7 +12,6 @@ function strapiHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-    ...STRAPI_RESPONSE_FORMAT_HEADER,
   };
 }
 

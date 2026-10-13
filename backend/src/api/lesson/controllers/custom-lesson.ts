@@ -1,4 +1,4 @@
-import type { Core } from "@strapi/strapi";
+import { Strapi } from "@strapi/strapi";
 
 const LOCK_TIMEOUT_MS = 60_000; // 60 seconds — lock expires if no heartbeat
 
@@ -9,53 +9,23 @@ function isLockStale(lockedAt: string | null): boolean {
 
 type LessonWithLock = {
   id: number;
-  documentId: string;
   lockedAt: string | null;
   lockedBy: { id: number; firstName: string; lastName: string } | null;
 };
 
-function getStrapi(): Core.Strapi {
-  return (global as unknown as { strapi: Core.Strapi }).strapi;
+function getStrapi(): Strapi {
+  return (global as unknown as { strapi: Strapi }).strapi;
 }
 
-// The route's `:id` is either the numeric row id (what the frontend still
-// sends) or a documentId, so the frontend can switch to documentIds later.
-type LessonFilter = { id: number } | { documentId: string };
-
-function parseLessonRef(ref: unknown): LessonFilter | null {
-  if (typeof ref !== "string") return null;
-  if (/^\d+$/.test(ref)) return { id: Number(ref) };
-  if (/^[A-Za-z0-9]+$/.test(ref)) return { documentId: ref };
-  return null;
-}
-
-async function findLessonWithLock(
-  ref: unknown
-): Promise<LessonWithLock | null> {
-  const filters = parseLessonRef(ref);
-  if (!filters) return null;
-
-  const lesson = (await getStrapi()
-    .documents("api::lesson.lesson")
-    .findFirst({
-      filters,
+async function findLessonWithLock(id: number): Promise<LessonWithLock | null> {
+  return (await getStrapi().entityService.findOne(
+    "api::lesson.lesson",
+    id,
+    {
       fields: ["lockedAt"],
       populate: { lockedBy: { fields: ["id", "firstName", "lastName"] } },
-    })) as unknown as LessonWithLock | null;
-  if (!lesson) return null;
-
-  // v5 adds documentId to every populated entry. Keep the REST contract the
-  // frontend has always seen: lockedBy is exactly { id, firstName, lastName }.
-  return {
-    ...lesson,
-    lockedBy: lesson.lockedBy
-      ? {
-          id: lesson.lockedBy.id,
-          firstName: lesson.lockedBy.firstName,
-          lastName: lesson.lockedBy.lastName,
-        }
-      : null,
-  };
+    }
+  )) as LessonWithLock | null;
 }
 
 export default {
@@ -83,14 +53,6 @@ export default {
     // could both pass the "is it locked?" check before either writes.
     // Reference: @strapi/database/dist/index.js — Database.transaction()
     // and transactionCtx (async-local-storage based transaction propagation).
-    //
-    // This stays on the Query Engine (strapi.db.query), which is not
-    // deprecated: the Document Service has no transaction-aware
-    // compare-and-swap. `:id` may be a documentId, which the Query Engine
-    // filters on directly.
-    const where = parseLessonRef(id);
-    if (!where) return ctx.notFound("Lesson not found");
-
     try {
       const result = await getStrapi().db.transaction(async () => {
         // Re-fetch inside the transaction. Because transactionCtx is active,
@@ -98,7 +60,7 @@ export default {
         const lesson = (await getStrapi()
           .db.query("api::lesson.lesson")
           .findOne({
-            where,
+            where: { id },
             populate: { lockedBy: true },
           })) as LessonWithLock | null;
 
@@ -117,7 +79,7 @@ export default {
         }
 
         await getStrapi().db.query("api::lesson.lesson").update({
-          where: { id: lesson.id },
+          where: { id },
           data: { lockedBy: userId, lockedAt: new Date().toISOString() },
         });
 
@@ -170,11 +132,7 @@ export default {
       return ctx.forbidden("You do not hold this lock");
     }
 
-    // documents.update runs the entity validator and the lesson beforeUpdate
-    // hook. The data has no blocks/blocksV2 and no regenerateSlug, so the hook
-    // does nothing here. lockedBy: null clears the relation.
-    await getStrapi().documents("api::lesson.lesson").update({
-      documentId: lesson.documentId,
+    await getStrapi().entityService.update("api::lesson.lesson", id, {
       data: { lockedBy: null, lockedAt: null },
     });
 
@@ -204,9 +162,7 @@ export default {
       return ctx.forbidden("You do not hold this lock");
     }
 
-    // See releaseLock: the lesson beforeUpdate hook runs and does nothing.
-    await getStrapi().documents("api::lesson.lesson").update({
-      documentId: lesson.documentId,
+    await getStrapi().entityService.update("api::lesson.lesson", id, {
       data: { lockedAt: new Date().toISOString() },
     });
 

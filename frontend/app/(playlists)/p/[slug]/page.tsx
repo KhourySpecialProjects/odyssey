@@ -2,10 +2,8 @@ import { getPlaylistBySlug } from "@/lib/requests/playlist";
 import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
-import type { Enrollment } from "@/types";
-import { hasDroplet } from "@/lib/enrollment-completion";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -33,9 +31,7 @@ type Params = {
 
 export default async function PlaylistPage({ params }: Props) {
   const p = await params;
-  const user = await getCurrentUser();
-  const userId = await getAuthorizedUserId(user);
-  const [playlist, enrollments] = await Promise.all([
+  const [playlist, user] = await Promise.all([
     getPlaylistBySlug(p.slug, {
       populate: {
         droplets: {
@@ -50,6 +46,7 @@ export default async function PlaylistPage({ params }: Props) {
               "slug",
               "type",
               "focusArea",
+              "learningObjectives",
               "isHidden",
               "status",
             ],
@@ -59,27 +56,38 @@ export default async function PlaylistPage({ params }: Props) {
           fields: ["id"],
         },
         authors: {
-          fields: ["id"],
+          fields: ["id", "name"],
+          populate: "*",
         },
       },
     }),
-    userId ? getCachedEnrollmentsWithLessonIds(userId) : ([] as Enrollment[]),
+    getCurrentUser(),
   ]);
   if (!playlist) {
     notFound();
   }
-  const enrolledDropletIds = enrollments
-    .filter(hasDroplet)
-    .map((e) => e.droplet.id);
-  const completedLessonIds = enrollments.flatMap(
-    (enrollment) =>
-      enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||
-      [],
-  );
-  const isEnrolled = userId
-    ? playlist.authorized_users?.some((p: AuthorizedUser) => p.id === userId) ||
-      false
-    : false;
+  let enrolledDropletIds: number[] = [];
+  let completedLessonIds: number[] = [];
+  let isEnrolled = false;
+
+  if (user?.email) {
+    const authorizedUser = await getCachedUser(user.email);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||
+        [],
+    );
+
+    isEnrolled =
+      playlist.authorized_users?.some(
+        (p: AuthorizedUser) => p.id === authorizedUser.id,
+      ) || false;
+  }
 
   if (!playlist.isPublic && !isEnrolled) {
     notFound();

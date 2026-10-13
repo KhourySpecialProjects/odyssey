@@ -1,13 +1,12 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconDroplet } from "@tabler/icons-react";
 import {
+  getCachedUserDashboardFull,
   getCachedEnrollmentsFavorites,
   getCachedUserDueDates,
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
-import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
@@ -32,14 +31,8 @@ export async function EnrolledDropletsGrid({
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const userId = await getAuthorizedUserId(user);
-  if (!userId) return null;
-
-  const [allEnrollments, dueDates] = await Promise.all([
-    getCachedEnrollmentsFavorites(userId),
-    getCachedUserDueDates(userId),
-  ]);
-  const enrollments = allEnrollments.filter(hasDroplet);
+  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
 
@@ -85,6 +78,8 @@ export async function EnrolledDropletsGrid({
     );
   }
 
+  const dueDates = await getCachedUserDueDates(authorizedUser.id);
+
   return (
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
@@ -97,7 +92,7 @@ export async function EnrolledDropletsGrid({
       type={type}
       focusArea={focusArea}
       difficulty={difficulty}
-      currentUserId={userId}
+      currentUser={authorizedUser}
       isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );

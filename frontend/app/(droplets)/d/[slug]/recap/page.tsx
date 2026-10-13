@@ -13,8 +13,8 @@ import {
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
 } from "@/lib/requests/cached";
+import { updateCompletionDate } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -23,11 +23,6 @@ import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { redirect } from "next/navigation";
 import { Confetti } from "./confetti";
-import { CompletionBackfill } from "@/components/droplets/completion-backfill";
-import {
-  enrollmentNeedsCompletionBackfill,
-  hasDroplet,
-} from "@/lib/enrollment-completion";
 
 type Props = {
   params: Promise<Params>;
@@ -52,45 +47,45 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRecapRoute({ params }: Props) {
   const p = await params;
-  const currentUser = await getCurrentUser();
-  const [droplet, userId] = await Promise.all([
+  const [droplet, currentUser] = await Promise.all([
     getCachedDropletBySlug(p.slug),
-    getAuthorizedUserId(currentUser),
+    getCurrentUser(),
   ]);
   if (!droplet) {
     return notFound();
   }
 
-  if (!currentUser?.email || !userId) {
+  if (!currentUser?.email) {
     redirect(`/d/${p.slug}`);
   }
 
-  const [dropletRecommendations, authUser, enrollments, highlights, notes] =
-    await Promise.all([
-      getDroplets({
-        fields: ["*"],
-        filters: {
-          $and: [
-            { slug: { $nei: p.slug } },
-            droplet.tags && {
-              tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
-            },
-            {
-              $or: [{ status: "published" }, { status: { $null: true } }],
-            },
-          ],
+  const dropletRecommendations = await getDroplets({
+    fields: ["*"],
+    filters: {
+      $and: [
+        { slug: { $nei: p.slug } },
+        droplet.tags && {
+          tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
         },
-        pagination: {
-          page: 1,
-          pageSize: 4,
+        {
+          $or: [{ status: "published" }, { status: { $null: true } }],
         },
-        populate: { tags: { fields: ["name", "slug"] } },
-      }),
-      getCachedUser(currentUser.email),
-      getCachedEnrollmentsWithLessonIds(userId),
-      getHighlightsByDroplet(userId, droplet.id),
-      getNotesByDroplet(userId, droplet.id),
-    ]);
+      ],
+    },
+    pagination: {
+      page: 1,
+      pageSize: 4,
+    },
+    populate: { tags: { populate: "*" } },
+  });
+
+  const authUser = await getCachedUser(currentUser.email);
+
+  const [enrollments, highlights, notes] = await Promise.all([
+    getCachedEnrollmentsWithLessonIds(authUser.id),
+    getHighlightsByDroplet(authUser.id, droplet.id),
+    getNotesByDroplet(authUser.id, droplet.id),
+  ]);
 
   let enrollID: string = "";
   const filteredHighlights = highlights.filter(
@@ -98,9 +93,7 @@ export default async function DropletRecapRoute({ params }: Props) {
       !notes.some((lesson) => lesson.highlight?.id === highlight.id),
   );
 
-  const enrollment = enrollments
-    .filter(hasDroplet)
-    .find((e) => e.droplet.id === droplet.id);
+  const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
   if (enrollment) {
     enrollID = enrollment.id;
@@ -114,11 +107,16 @@ export default async function DropletRecapRoute({ params }: Props) {
 
   const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
 
+  if (
+    enrollment &&
+    enrollment.isComplete === true &&
+    !enrollment.completionDate
+  ) {
+    await updateCompletionDate(enrollment.id);
+  }
+
   return (
     <>
-      {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
-        <CompletionBackfill enrollmentId={enrollment.id} />
-      )}
       {enrollment &&
         enrollment.viewedLessons.length ===
           enrollment.droplet.lessons?.length &&

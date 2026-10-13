@@ -3,7 +3,6 @@
 import qs from "qs";
 import { fetchAuthorizedUsersMetadata } from "./authorized-user";
 import { fetchEnrollmentMetadata } from "./enrollment";
-import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -41,10 +40,7 @@ async function fetchDropletCount(before?: string): Promise<number> {
   });
   try {
     const res = await fetch(`${STRAPI_API_URL}/api/droplets?${query}`, {
-      headers: {
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
+      headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
       cache: "no-store",
     });
     if (!res.ok) {

@@ -187,12 +187,10 @@ export function DropletTile({
           populate: {
             blocks: {
               on: {
-                "droplets.generic": { fields: ["content"] },
-                "droplets.expandable": { fields: ["title", "content"] },
-                "droplets.callout": {
-                  fields: ["content", "type", "color", "iconEnabled"],
-                },
-                "droplets.video": { fields: ["url"] },
+                "droplets.generic": { populate: "*" },
+                "droplets.expandable": { populate: "*" },
+                "droplets.callout": { populate: "*" },
+                "droplets.video": { populate: "*" },
                 "droplets.quiz": {
                   populate: {
                     questions: { populate: { answerOptions: true } },

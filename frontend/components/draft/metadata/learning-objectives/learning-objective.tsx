@@ -3,7 +3,7 @@ import { IconTarget, IconTrash } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useOffClick } from "../hooks/useOffClick";
-import { Button } from "@/components/ui/button";
+import { Button } from "@lemonsqueezy/wedges";
 
 export function LearningObjectiveDisplay({
   objective,
@@ -54,10 +54,9 @@ export function LearningObjectiveDisplay({
           />
           <Button
             size="sm"
-            className="h-8 shrink-0 rounded-lg bg-red-300 text-black hover:bg-red-400 dark:bg-red-300 dark:text-black dark:hover:bg-red-400"
+            className="bg-red-300 text-black dark:bg-red-300 dark:text-black"
             type="button"
             onClick={remove}
-            aria-label="Remove learning objective"
           >
             <IconTrash className="h-4 w-4" stroke={1.8} />
           </Button>

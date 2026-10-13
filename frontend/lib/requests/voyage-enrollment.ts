@@ -1,52 +1,17 @@
 "use server";
 
 import { VoyageEnrollment, VoyageNode, VoyageNodeCompletion } from "@/types";
-import {
-  fetchAPI,
-  flattenAttributes,
-  STRAPI_RESPONSE_FORMAT_HEADER,
-} from "@/lib/utils";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "./cached";
 import { requireRole } from "@/lib/auth/require-role";
-import { withAuth, assertOwner } from "@/lib/auth/guards";
-import {
-  resolveDocumentId,
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-  type EntryRef,
-  type StrapiCollection,
-} from "@/lib/strapi-document-id";
-import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
-
-// Not exported: "use server" files may only export functions (see guard test).
-const CLAIM_BYPASS_ROLES = [
-  AuthorizedUserRoleTitle.SysAdmin,
-  AuthorizedUserRoleTitle.Faculty,
-] as const;
-
-/**
- * Like strapiEntryUrl, but returns null when the entry no longer exists so the
- * caller can return the same result a Strapi 404 used to produce.
- */
-async function entryUrlOrNull(
-  collection: StrapiCollection,
-  ref: EntryRef,
-): Promise<string | null> {
-  try {
-    return await strapiEntryUrl(collection, ref);
-  } catch (error) {
-    if (error instanceof StrapiEntryNotFoundError) return null;
-    throw error;
-  }
-}
 
 /**
  * Fetches a single voyage enrollment for a specific user and voyage.
@@ -191,14 +156,13 @@ export async function enrollInVoyage(voyageId: number) {
     }
 
     // Draft guard: fetch voyage status before enrolling
-    const voyage = await fetchAPI<{
-      id: number;
-      documentId?: string;
-      status: string;
-    } | null>(`/voyages/${await resolveDocumentId("voyages", voyageId)}`, {
-      urlParams: { fields: ["id", "status"] },
-      cache: "no-store",
-    });
+    const voyage = await fetchAPI<{ id: number; status: string } | null>(
+      `/voyages/${voyageId}`,
+      {
+        urlParams: { fields: ["id", "status"] },
+        cache: "no-store",
+      },
+    );
 
     if (!voyage) {
       return { ok: false, error: "not_found", data: null };
@@ -217,26 +181,16 @@ export async function enrollInVoyage(voyageId: number) {
       return { ok: true, error: null, data: existing };
     }
 
-    // Relation values are documentIds on Strapi v5
-    const [userDocId, voyageDocId] = await Promise.all([
-      resolveDocumentId("authorized-users", authorizedUser),
-      resolveDocumentId("voyages", {
-        id: voyageId,
-        documentId: voyage.documentId,
-      }),
-    ]);
-
     const response = await fetch(`${STRAPI_API_URL}/api/voyage-enrollments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
-          authorizedUser: userDocId,
-          voyage: voyageDocId,
+          authorizedUser: authorizedUser.id,
+          voyage: voyageId,
           enrolledAt: new Date().toISOString(),
         },
       }),
@@ -252,10 +206,9 @@ export async function enrollInVoyage(voyageId: number) {
       };
     }
 
-    // Per-user only. Every cached voyage-enrollment read also carries the
-    // per-user tag of each user it returns (incl. the group progress grid),
-    // and voyage reads (`voyages`) contain no enrollment data or counts.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
+    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
+    revalidateTag(CACHE_TAGS.voyages);
 
     return {
       ok: true,
@@ -287,36 +240,16 @@ export async function enrollInVoyageDirect(
       return { ok: true, error: null, data: existing };
     }
 
-    // Relation values are documentIds on Strapi v5
-    let userDocId: string;
-    let voyageDocId: string;
-    try {
-      [userDocId, voyageDocId] = await Promise.all([
-        resolveDocumentId("authorized-users", authorizedUserId),
-        resolveDocumentId("voyages", voyageId),
-      ]);
-    } catch (error) {
-      if (error instanceof StrapiEntryNotFoundError) {
-        return {
-          ok: false,
-          error: "Failed to enroll in voyage",
-          data: null,
-        };
-      }
-      throw error;
-    }
-
     const response = await fetch(`${STRAPI_API_URL}/api/voyage-enrollments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
-          authorizedUser: userDocId,
-          voyage: voyageDocId,
+          authorizedUser: authorizedUserId,
+          voyage: voyageId,
           enrolledAt: new Date().toISOString(),
         },
       }),
@@ -332,9 +265,9 @@ export async function enrollInVoyageDirect(
       };
     }
 
-    // Per-user only (see enrollInVoyage). Group enrollment calls this once
-    // per member x voyage, so global sweeps here multiplied quickly.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
+    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
+    revalidateTag(CACHE_TAGS.voyages);
 
     return {
       ok: true,
@@ -391,41 +324,32 @@ export async function unenrollFromVoyage(voyageId: number) {
     );
 
     await Promise.all(
-      completions.map(async (completion) => {
-        // A completion that no longer exists is already gone (the 404 was
-        // ignored before too).
-        const completionUrl = await entryUrlOrNull(
-          "voyage-node-completions",
-          completion,
-        );
-        if (!completionUrl) return;
-        return fetch(completionUrl, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
+      completions.map((completion) =>
+        fetch(
+          `${STRAPI_API_URL}/api/voyage-node-completions/${completion.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            },
           },
-        });
-      }),
+        ),
+      ),
     );
 
-    const enrollmentUrl = await entryUrlOrNull(
-      "voyage-enrollments",
-      enrollment,
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/voyage-enrollments/${enrollment.id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
     );
-    const response = enrollmentUrl
-      ? await fetch(enrollmentUrl, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
-        })
-      : null;
 
-    if (!response?.ok) {
+    if (!response.ok) {
       return {
         ok: false,
         error: "Failed to unenroll from voyage.",
@@ -433,17 +357,13 @@ export async function unenrollFromVoyage(voyageId: number) {
       };
     }
 
-    const body = await readJsonOrNull(response);
+    const data = await response.json();
 
-    // Per-user only (see enrollInVoyage). Node completions are read with the
-    // per-user tag too (getVoyageNodeCompletions).
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
+    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
+    revalidateTag(CACHE_TAGS.voyages);
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(body?.data ?? null),
-    };
+    return { ok: true, error: null, data: flattenAttributes(data.data) };
   } catch (err) {
     console.error("Error in unenrollFromVoyage:", err);
     return {
@@ -558,46 +478,7 @@ export async function markVoyageNodeComplete(
       return { ok: true, error: null, data: existing[0] };
     }
 
-    // The enrollment check above returned the enrollment entity, so its
-    // documentId is used without a lookup.
-    const enrollmentRef = {
-      id: voyageEnrollmentId,
-      documentId: enrollmentCheck[0].documentId,
-    };
-
-    // Create the voyage-node-completion record. Relation values are
-    // documentIds on Strapi v5.
-    let completionRelations: {
-      voyageNode: string;
-      voyageEnrollment: string;
-      authorizedUser: string;
-    };
-    try {
-      const [voyageNode, voyageEnrollment, authorizedUserDoc] =
-        await Promise.all([
-          resolveDocumentId("voyage-nodes", voyageNodeId),
-          resolveDocumentId("voyage-enrollments", enrollmentRef),
-          resolveDocumentId("authorized-users", {
-            id: userId,
-            documentId: authorizedUser.documentId,
-          }),
-        ]);
-      completionRelations = {
-        voyageNode,
-        voyageEnrollment,
-        authorizedUser: authorizedUserDoc,
-      };
-    } catch (error) {
-      if (error instanceof StrapiEntryNotFoundError) {
-        return {
-          ok: false,
-          error: "Failed to mark node as complete",
-          data: null,
-        };
-      }
-      throw error;
-    }
-
+    // Create the voyage-node-completion record
     const completionResponse = await fetch(
       `${STRAPI_API_URL}/api/voyage-node-completions`,
       {
@@ -605,11 +486,12 @@ export async function markVoyageNodeComplete(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
-            ...completionRelations,
+            voyageNode: voyageNodeId,
+            voyageEnrollment: voyageEnrollmentId,
+            authorizedUser: userId,
             completedAt: new Date().toISOString(),
           },
         }),
@@ -696,13 +578,12 @@ export async function markVoyageNodeComplete(
 
       // 5. PUT updated percentage on voyage-enrollment
       const putResponse = await fetch(
-        await strapiEntryUrl("voyage-enrollments", enrollmentRef),
+        `${STRAPI_API_URL}/api/voyage-enrollments/${voyageEnrollmentId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: { completionPercentage: newPercentage },
@@ -716,6 +597,7 @@ export async function markVoyageNodeComplete(
           await putResponse.text().catch(() => "unknown"),
         );
         revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
+        revalidateTag(CACHE_TAGS.allVoyageEnrollments);
         return {
           ok: false,
           error:
@@ -725,9 +607,8 @@ export async function markVoyageNodeComplete(
       }
     }
 
-    // Per-user only: completions and completionPercentage belong to this
-    // user, and every read that returns them carries this user's tag.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
+    revalidateTag(CACHE_TAGS.allVoyageEnrollments);
 
     return {
       ok: true,
@@ -987,136 +868,146 @@ export async function claimNodeForUser(
   error: string | null;
   data: { dropletSlug: string } | null;
 }> {
-  return withAuth([], async (user) => {
-    // userId is the target of the claim, not the caller.
-    const self = assertOwner(userId, user, {
-      bypassRoles: CLAIM_BYPASS_ROLES,
-    });
-    if (!self.ok) return { ok: false, error: self.error, data: null };
+  // Auth: verify the caller is either the target user or a faculty/admin
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser?.email) {
+    return { ok: false, error: "Not authenticated", data: null };
+  }
+  const callerUser = await getCachedUser(sessionUser.email);
+  if (!callerUser) {
+    return { ok: false, error: "User not found", data: null };
+  }
+  const callerRoles = sessionUser.roles as AuthorizedUserRoleTitle[];
+  const isSelf = callerUser.id === userId;
+  const isPrivileged =
+    callerRoles?.includes(AuthorizedUserRoleTitle.SysAdmin) ||
+    callerRoles?.includes(AuthorizedUserRoleTitle.Faculty);
+  if (!isSelf && !isPrivileged) {
+    return {
+      ok: false,
+      error: "Not authorized to claim for this user",
+      data: null,
+    };
+  }
 
-    const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
-      urlParams: {
-        filters: { id: { $eq: voyageNodeId } },
-        fields: ["id", "label", "nodeType", "claimStatus"],
-        populate: { voyage: { fields: ["name"] } },
-        pagination: { pageSize: 1, page: 1 },
-      },
-      next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
-    });
+  const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
+    urlParams: {
+      filters: { id: { $eq: voyageNodeId } },
+      fields: ["id", "label", "nodeType", "claimStatus"],
+      populate: { voyage: { fields: ["name"] } },
+      pagination: { pageSize: 1, page: 1 },
+    },
+    next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
+  });
 
-    const node = nodes[0];
-    if (!node) return { ok: false, error: "Voyage node not found", data: null };
-    if (node.nodeType !== "droplet")
-      return { ok: false, error: "Node is not a droplet node", data: null };
-    if (node.claimStatus !== "unclaimed")
-      return { ok: false, error: "Node is not unclaimed", data: null };
+  const node = nodes[0];
+  if (!node) return { ok: false, error: "Voyage node not found", data: null };
+  if (node.nodeType !== "droplet")
+    return { ok: false, error: "Node is not a droplet node", data: null };
+  if (node.claimStatus !== "unclaimed")
+    return { ok: false, error: "Node is not unclaimed", data: null };
 
-    const voyageName = node.voyage?.name ?? "Voyage";
-    const baseName = `${node.label} — ${voyageName}`;
+  const voyageName = node.voyage?.name ?? "Voyage";
+  const baseName = `${node.label} — ${voyageName}`;
 
-    let dropletData: any = null;
-    let finalName = baseName;
+  let dropletData: any = null;
+  let finalName = baseName;
 
-    // Relation values are documentIds on Strapi v5
-    let claimerDocId: string;
-    try {
-      claimerDocId = await resolveDocumentId("authorized-users", userId);
-    } catch (error) {
-      if (error instanceof StrapiEntryNotFoundError) {
-        // Strapi used to reject the unknown relation with a 400 on every retry
-        return {
-          ok: false,
-          error: "Failed to create droplet after retries",
-          data: null,
-        };
-      }
-      throw error;
-    }
-
-    for (let attempt = 0; attempt < 5; attempt++) {
-      finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
-      const slug = finalName
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-      const createRes = await fetch(`${STRAPI_API_URL}/api/droplets`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            name: finalName,
-            slug,
-            type: "knowledge",
-            focusArea: "technical",
-            difficulty: "beginner",
-            status: "draft",
-            isHidden: true,
-            learningObjectives: [{ objective: "TBD" }],
-            authorized_users: { connect: [claimerDocId] },
-          },
-        }),
-      });
-
-      if (createRes.ok) {
-        const raw = await createRes.json();
-        dropletData = flattenAttributes(raw.data);
-        break;
-      }
-      if (createRes.status !== 400) {
-        return { ok: false, error: "Failed to create droplet", data: null };
-      }
-    }
-
-    if (!dropletData)
-      return {
-        ok: false,
-        error: "Failed to create droplet after retries",
-        data: null,
-      };
-
-    await fetch(await strapiEntryUrl("voyage-nodes", node), {
-      method: "PUT",
+  for (let attempt = 0; attempt < 5; attempt++) {
+    finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
+    const slug = finalName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    const createRes = await fetch(`${STRAPI_API_URL}/api/droplets`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
-          droplet: await resolveDocumentId("droplets", dropletData),
-          claimedBy: claimerDocId,
-          claimStatus: "claimed",
+          name: finalName,
+          slug,
+          type: "knowledge",
+          focusArea: "technical",
+          difficulty: "beginner",
+          status: "draft",
+          isHidden: true,
+          learningObjectives: [
+            { __component: "droplets.learning-objective", objective: "TBD" },
+          ],
+          authorized_users: { connect: [userId] },
         },
       }),
     });
 
-    revalidateTag(CACHE_TAGS.voyages);
-    revalidateTag(CACHE_TAGS.droplets);
+    if (createRes.ok) {
+      const raw = await createRes.json();
+      dropletData = flattenAttributes(raw.data);
+      break;
+    }
+    if (createRes.status !== 400) {
+      return { ok: false, error: "Failed to create droplet", data: null };
+    }
+  }
 
-    return { ok: true, error: null, data: { dropletSlug: dropletData.slug } };
+  if (!dropletData)
+    return {
+      ok: false,
+      error: "Failed to create droplet after retries",
+      data: null,
+    };
+
+  await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify({
+      data: {
+        droplet: dropletData.id,
+        claimedBy: userId,
+        claimStatus: "claimed",
+      },
+    }),
   });
+
+  revalidateTag(CACHE_TAGS.voyages);
+  revalidateTag(CACHE_TAGS.droplets);
+
+  return { ok: true, error: null, data: { dropletSlug: dropletData.slug } };
 }
 
 export async function claimVoyageDropletNode(voyageNodeId: number) {
-  return withAuth(
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser?.email) return { ok: false, error: "Not authenticated" };
+
+  const user = await getCachedUser(sessionUser.email);
+  if (!user) return { ok: false, error: "User not found" };
+
+  const roles = sessionUser.roles as AuthorizedUserRoleTitle[];
+  const hasRole = roles?.some((r) =>
     [
       AuthorizedUserRoleTitle.ContentCreator,
       AuthorizedUserRoleTitle.ContentEditor,
       AuthorizedUserRoleTitle.Faculty,
       AuthorizedUserRoleTitle.SysAdmin,
-    ],
-    (user) => claimNodeForUser(voyageNodeId, user.id),
+    ].includes(r),
   );
+  if (!hasRole) return { ok: false, error: "Content Creator role required" };
+
+  return claimNodeForUser(voyageNodeId, user.id);
 }
 
 export async function unclaimVoyageDropletNode(voyageNodeId: number) {
-  const gate = await requireRole([]);
-  if (!gate.ok) return { ok: false, error: gate.error };
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser?.email) return { ok: false, error: "Not authenticated" };
+
+  const user = await getCachedUser(sessionUser.email);
+  if (!user) return { ok: false, error: "User not found" };
 
   const nodeData = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
     urlParams: {
@@ -1133,17 +1024,19 @@ export async function unclaimVoyageDropletNode(voyageNodeId: number) {
   if (node.claimStatus !== "claimed")
     return { ok: false, error: "Node is not claimed" };
 
-  const owner = assertOwner(node.claimedBy?.id, gate.user, {
-    bypassRoles: CLAIM_BYPASS_ROLES,
-  });
-  if (!owner.ok) return { ok: false, error: owner.error };
+  const roles = sessionUser.roles as AuthorizedUserRoleTitle[];
+  const isClaimedByUser = node.claimedBy?.id === user.id;
+  const isPrivileged =
+    roles?.includes(AuthorizedUserRoleTitle.SysAdmin) ||
+    roles?.includes(AuthorizedUserRoleTitle.Faculty);
+  if (!isClaimedByUser && !isPrivileged)
+    return { ok: false, error: "Not authorized" };
 
-  await fetch(await strapiEntryUrl("voyage-nodes", node), {
+  await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-      ...STRAPI_RESPONSE_FORMAT_HEADER,
     },
     body: JSON.stringify({
       data: { droplet: null, claimedBy: null, claimStatus: "unclaimed" },

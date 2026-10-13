@@ -23,11 +23,7 @@ export function ContentTypeSelector({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // Unknown values fall back to droplets, matching the Explore page
-  const requestedType = searchParams.get("contentType");
-  const currentType = contentTypes.some((t) => t.value === requestedType)
-    ? requestedType
-    : "droplets";
+  const currentType = searchParams.get("contentType") || "droplets";
 
   const createQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);

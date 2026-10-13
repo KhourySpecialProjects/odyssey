@@ -114,7 +114,7 @@ export function CreateDropletForm({
             fields: ["name", "slug", "status"],
             populate: {
               authorized_users: {
-                fields: ["email"],
+                fields: ["name", "email"],
               },
             },
             pagination: { pageSize: 1, page: 1 },

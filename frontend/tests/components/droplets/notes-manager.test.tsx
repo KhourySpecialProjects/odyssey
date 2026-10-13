@@ -11,7 +11,6 @@ import {
   DropletStatus,
   DropletType,
   Enrollment,
-  EnrollmentWithDroplet,
   FocusArea,
   Highlight,
   HighlightColor,
@@ -35,7 +34,7 @@ jest.mock("@/components/droplets/notes-summary-client", () => ({
     onSelectionChange,
     selectedDropletIds,
   }: {
-    enrollment: EnrollmentWithDroplet;
+    enrollment: Enrollment;
     onSelectionChange: (id: number, checked: boolean) => void;
     selectedDropletIds: Set<number>;
   }) => (
@@ -143,7 +142,7 @@ describe("NotesManager", () => {
 
   const mockAuthorizedUser = makeAuthorizedUser({ id: 1 });
 
-  const mockEnrollment: EnrollmentWithDroplet = {
+  const mockEnrollment: Enrollment = {
     id: "1",
     authorizedUser: mockAuthorizedUser,
     droplet: mockDroplet,
@@ -236,13 +235,13 @@ describe("NotesManager", () => {
 
   describe("Filtering Logic", () => {
     it("only shows enrollments with notes or highlights", () => {
-      const enrollmentWithContent: EnrollmentWithDroplet = {
+      const enrollmentWithContent: Enrollment = {
         ...mockEnrollment,
         id: "1",
         droplet: { ...mockDroplet, id: 1, name: "Has Content" },
       };
 
-      const enrollmentWithoutContent: EnrollmentWithDroplet = {
+      const enrollmentWithoutContent: Enrollment = {
         ...mockEnrollment,
         id: "2",
         droplet: { ...mockDroplet, id: 2, name: "No Content" },
@@ -641,7 +640,7 @@ describe("NotesManager", () => {
     });
 
     it("handles very long droplet names", () => {
-      const longNameEnrollment: EnrollmentWithDroplet = {
+      const longNameEnrollment: Enrollment = {
         ...mockEnrollment,
         droplet: { ...mockDroplet, name: "A".repeat(200) },
       };

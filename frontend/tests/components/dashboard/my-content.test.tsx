@@ -2,10 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { MyContent } from "@/components/dashboard/my-content";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  getCachedUser,
   getCachedUserDashboardFull,
   getCachedUserGroups,
-  getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 
@@ -154,27 +152,18 @@ describe("MyContent", () => {
       expect(notFound).toHaveBeenCalled();
     });
 
-    it("resolves the user id without the full dashboard lookup", async () => {
+    it("fetches authorized user by email", async () => {
       await MyContent({ searchParams: {} });
 
-      expect(getCachedUser).toHaveBeenCalledWith("test@example.com");
-      expect(getCachedUserDashboardFull).not.toHaveBeenCalled();
+      expect(getCachedUserDashboardFull).toHaveBeenCalledWith(
+        "test@example.com",
+      );
     });
 
-    it("fetches user groups only for tabs that render them", async () => {
+    it("fetches user groups", async () => {
       await MyContent({ searchParams: {} });
-      expect(getCachedUserGroups).not.toHaveBeenCalled();
 
-      await MyContent({ searchParams: { contentType: "groups" } });
       expect(getCachedUserGroups).toHaveBeenCalledWith(1);
-    });
-
-    it("fetches voyage enrollments only for the voyages tab", async () => {
-      await MyContent({ searchParams: { contentType: "droplets" } });
-      expect(getCachedVoyageEnrollmentsByUser).not.toHaveBeenCalled();
-
-      await MyContent({ searchParams: { contentType: "voyages" } });
-      expect(getCachedVoyageEnrollmentsByUser).toHaveBeenCalledWith(1);
     });
   });
 

@@ -1,4 +1,41 @@
 export default ({ env }) => ({
+  documentation: {
+    enabled: true,
+    config: {
+      openapi: "3.0.0",
+      info: {
+        version: "1.0.0",
+        title: "Khoury Odyssey CMS: API Docs",
+        description:
+          "API documentation for Khoury Odyssey's content management system.",
+        termsOfService: null,
+        contact: {
+          name: "Khoury Odyssey Team",
+          email: "khouryodyssey@northeastern.edu",
+          url: "https://khouryodyssey.org",
+        },
+        license: null,
+      },
+      "x-strapi-config": {
+        // Leave empty to ignore plugins during generation
+        // plugins: ["upload", "users-permissions"],
+        plugins: ["upload"],
+        path: "/documentation",
+      },
+      servers: [
+        { url: "http://localhost:1337/api", description: "Development server" },
+        {
+          url: "https://www.data.khouryodyssey.org/api",
+          description: "Production server",
+        },
+      ],
+      externalDocs: {
+        description: "Strapi Docs",
+        url: "https://docs.strapi.io/developer-docs/latest/getting-started/introduction.html",
+      },
+      security: [{ bearerAuth: [] }],
+    },
+  },
   upload: env("AWS_S3_BUCKET")
     ? {
         config: {
@@ -8,15 +45,8 @@ export default ({ env }) => ({
             baseUrl: env("AWS_CDN_URL"),
             rootPath: env("AWS_CDN_ROOT_PATH"),
             s3Options: {
-              // Without both keys, omit credentials so the AWS default credential chain applies.
-              ...(env("AWS_S3_ACCESS_KEY") && env("AWS_S3_SECRET_KEY")
-                ? {
-                    credentials: {
-                      accessKeyId: env("AWS_S3_ACCESS_KEY"),
-                      secretAccessKey: env("AWS_S3_SECRET_KEY"),
-                    },
-                  }
-                : {}),
+              accessKeyId: env("AWS_S3_ACCESS_KEY"),
+              secretAccessKey: env("AWS_S3_SECRET_KEY"),
               region: env("AWS_S3_REGION"),
               endpoint: env("AWS_S3_ENDPOINT"),
               params: {

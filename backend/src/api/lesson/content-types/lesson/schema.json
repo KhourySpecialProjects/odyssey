@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": false
+    "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
@@ -86,9 +86,6 @@
       "mappedBy": "lesson"
     },
     "orderIndex": {
-      "type": "integer"
-    },
-    "originalLessonId": {
       "type": "integer"
     },
     "lockedBy": {

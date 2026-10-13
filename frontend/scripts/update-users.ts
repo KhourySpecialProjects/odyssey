@@ -17,7 +17,7 @@ if (!STRAPI_TOKEN) {
 async function fetchUsersWithoutTimeZone() {
   const query = qs.stringify({
     filters: { timeZone: { $null: true } },
-    fields: ["id", "documentId", "timeZone"],
+    fields: ["id", "timeZone"],
   });
   const res = await fetch(`${STRAPI_URL}/api/authorized-users?${query}`, {
     headers: { Authorization: `Bearer ${STRAPI_TOKEN}` },
@@ -27,18 +27,13 @@ async function fetchUsersWithoutTimeZone() {
     throw new Error(`Fetch users failed: ${res.status} ${t}`);
   }
   return res.json() as Promise<{
-    data: Array<{ id: number; documentId: string; timeZone: string | null }>;
+    data: Array<{ id: number; timeZone: string | null }>;
     meta: { pagination: { page: number; pageCount: number } };
   }>;
 }
 
-async function updateUserTimeZone(
-  id: number,
-  documentId: string,
-  timeZone = "America/New_York  ",
-) {
-  // Strapi v5 single-entry routes take a documentId.
-  const res = await fetch(`${STRAPI_URL}/api/authorized-users/${documentId}`, {
+async function updateUserTimeZone(id: number, timeZone = "America/New_York  ") {
+  const res = await fetch(`${STRAPI_URL}/api/authorized-users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -61,7 +56,7 @@ async function main() {
     if (!data?.length) break;
 
     for (const user of data) {
-      await updateUserTimeZone(user.id, user.documentId);
+      await updateUserTimeZone(user.id);
       totalUpdated += 1;
     }
 

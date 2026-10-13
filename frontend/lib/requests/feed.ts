@@ -2,25 +2,28 @@
 
 import { Announcement, AuthorizedUser, Droplet, Friendship } from "@/types";
 import qs from "qs";
-import {
-  flattenAttributes,
-  fetchAPI,
-  STRAPI_RESPONSE_FORMAT_HEADER,
-} from "../utils";
+import { flattenAttributes, fetchAPI } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { getCurrentUser } from "../auth/session";
-import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import { getCachedUserSocial } from "./cached";
-import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-export type FeedPage = {
+/**
+ * Pre-computes the IDs needed for the feed query using fast, minimal queries
+ * run in parallel, then queries announcements with simple $in filters
+ * instead of deep nested relation joins.
+ */
+export async function fetchAnnouncements(
+  user: AuthorizedUser,
+  page?: number,
+  roles?: string[],
+  options?: { archived?: boolean },
+): Promise<{
   data: Announcement[];
   pagination: {
     page: number;
@@ -28,100 +31,64 @@ export type FeedPage = {
     pageCount: number;
     total: number;
   };
-};
-
-function friendIdsOf(
-  userId: number,
-  friendships: Friendship[] | undefined,
-): number[] {
-  return (friendships || [])
-    .flatMap((f) =>
-      (f.authorized_users || [])
-        .filter((u) => u.id !== userId)
-        .map((u) => u.id),
-    )
-    .filter((id, i, arr) => arr.indexOf(id) === i);
-}
-
-/**
- * The signed-in user's feed. Callable from the client as a Server Action, so
- * the viewer always comes from the session — never from arguments.
- *
- * Pre-computes the IDs needed for the feed query using fast, minimal queries
- * run in parallel, then queries announcements with simple $in filters
- * instead of deep nested relation joins.
- */
-export async function fetchAnnouncements(
-  page?: number,
-  roles?: string[],
-  options?: { archived?: boolean },
-): Promise<FeedPage> {
+}> {
   const archived = options?.archived ?? false;
-  const sessionUser = await getCurrentUser();
-  const userId = await getAuthorizedUserId(sessionUser);
-  if (!sessionUser?.email || !userId) {
-    throw new Error("Not authenticated");
-  }
-  const email = sessionUser.email;
-  // Arguments arrive from the client unchecked.
-  const pageNumber =
-    typeof page === "number" && Number.isInteger(page) && page > 0 ? page : 1;
-  const types = Array.isArray(roles)
-    ? roles.filter((r) => typeof r === "string")
-    : undefined;
   try {
-    // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
-    // parallel. Friends come from the social graph the activity layout already
-    // reads (request-deduped there; a Data Cache hit from a Server Action).
-    const [groupIds, playlistIds, enrolledDropletIds, friendIds] =
-      await Promise.all([
-        fetchAPI<{ id: number }[]>("/groups", {
-          urlParams: {
-            filters: {
-              $or: [
-                { creator: { id: { $eq: userId } } },
-                { admins: { id: { $eq: userId } } },
-                { managers: { id: { $eq: userId } } },
-                { members: { id: { $eq: userId } } },
-              ],
-            },
-            fields: ["id"],
-            pagination: { pageSize: 250, page: 1 },
+    // Extract friend IDs from the user's friendships (already populated on authUser)
+    const friendIds = (user.friendships || [])
+      .flatMap((f: Friendship) =>
+        (f.authorized_users || [])
+          .filter((u) => u.id !== user.id)
+          .map((u) => u.id),
+      )
+      .filter((id, i, arr) => arr.indexOf(id) === i);
+
+    // Fetch group IDs, playlist IDs, and enrolled droplet IDs in parallel
+    const [groupIds, playlistIds, enrolledDropletIds] = await Promise.all([
+      fetchAPI<{ id: number }[]>("/groups", {
+        urlParams: {
+          filters: {
+            $or: [
+              { creator: { id: { $eq: user.id } } },
+              { admins: { id: { $eq: user.id } } },
+              { managers: { id: { $eq: user.id } } },
+              { members: { id: { $eq: user.id } } },
+            ],
           },
-          next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
-        }).then((groups) => groups.map((g) => g.id)),
-        fetchAPI<{ id: number }[]>("/playlists", {
-          urlParams: {
-            filters: {
-              authorized_users: { id: { $eq: userId } },
-            },
-            fields: ["id"],
-            pagination: { pageSize: 250, page: 1 },
+          fields: ["id"],
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+      }).then((groups) => groups.map((g) => g.id)),
+      fetchAPI<{ id: number }[]>("/playlists", {
+        urlParams: {
+          filters: {
+            authorized_users: { id: { $eq: user.id } },
           },
-          next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
-        }).then((playlists) => playlists.map((p) => p.id)),
-        fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
-          urlParams: {
-            filters: {
-              authorizedUser: { id: { $eq: userId } },
-            },
-            fields: ["id"],
-            populate: { droplet: { fields: ["id"] } },
-            pagination: { pageSize: 250, page: 1 },
+          fields: ["id"],
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
+      }).then((playlists) => playlists.map((p) => p.id)),
+      fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
+        urlParams: {
+          filters: {
+            authorizedUser: { id: { $eq: user.id } },
           },
-          next: {
-            tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.allEnrollments],
-            revalidate: 900,
-          },
-        }).then((enrollments) =>
-          enrollments
-            .map((e) => e.droplet?.id)
-            .filter((id): id is number => id != null),
-        ),
-        getCachedUserSocial(email).then((social) =>
-          friendIdsOf(userId, social?.friendships),
-        ),
-      ]);
+          fields: ["id"],
+          populate: { droplet: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: {
+          tags: [CACHE_TAGS.enrollments(user.id), CACHE_TAGS.allEnrollments],
+          revalidate: 900,
+        },
+      }).then((enrollments) =>
+        enrollments
+          .map((e) => e.droplet?.id)
+          .filter((id): id is number => id != null),
+      ),
+    ]);
 
     // Build the query with simple $in filters instead of nested relation joins
     const orFilters: any[] = [];
@@ -153,7 +120,7 @@ export async function fetchAnnouncements(
       type: "system",
       $or: [
         { authorized_user: { id: { $null: true } } },
-        { authorized_user: { id: { $eq: userId } } },
+        { authorized_user: { id: { $eq: user.id } } },
       ],
     });
 
@@ -168,9 +135,9 @@ export async function fetchAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated", "readAt"],
-      filters: types?.length
+      filters: roles?.length
         ? {
-            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }],
+            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: roles } }],
           }
         : baseFilters,
       populate: {
@@ -231,23 +198,15 @@ export async function fetchAnnouncements(
       },
       pagination: {
         pageSize: 25,
-        page: pageNumber,
+        page: page || 1,
       },
     });
 
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: {
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        // Two-level: new announcements sweep the global tag; read-state
-        // changes on a user's own system announcements use userFeed(id).
-        next: {
-          tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
-          revalidate: 900,
-        },
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
     if (!response.ok) {
@@ -282,20 +241,16 @@ export async function createFriendAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: await resolveDocumentId(
-              "authorized-users",
-              user.id,
-            ),
+            authorized_user: user.id,
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
-            droplet: await resolveDocumentId("droplets", droplet.id),
+            droplet: droplet.id,
             type: "friend",
           },
         }),
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -320,18 +275,17 @@ export async function createKudosAnnouncement(
 ) {
   try {
     const response = await fetch(
-      await strapiEntryUrl("announcements", announcementId),
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${announcementId}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
             kudosGiven: {
-              connect: [await resolveDocumentId("authorized-users", user.id)],
+              connect: [user],
             },
           },
         }),
@@ -353,12 +307,9 @@ export async function createKudosAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: await resolveDocumentId(
-              "authorized-users",
-              user.id,
-            ),
+            authorized_user: user.id,
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
-            droplet: await resolveDocumentId("droplets", droplet.id),
+            droplet: droplet.id,
             firstCreated: curDate,
             type: "kudos",
           },
@@ -366,7 +317,6 @@ export async function createKudosAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -396,7 +346,7 @@ export async function createPlaylistAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            playlist: await resolveDocumentId("playlists", id),
+            playlist: id,
             content: `${playlistName} has been updated. Click to view this playlist!`,
             firstCreated: curDate,
             type: "playlist",
@@ -405,7 +355,6 @@ export async function createPlaylistAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -432,7 +381,7 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            group: await resolveDocumentId("groups", id),
+            group: id,
             content: `${groupName} has been updated. Click to view this group!`,
             firstCreated: curDate,
             type: "group",
@@ -441,7 +390,6 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -468,7 +416,7 @@ export async function createDropletAnnouncement(name: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            droplet: await resolveDocumentId("droplets", id),
+            droplet: id,
             content: `${name} has been updated. Click to view this droplet!`,
             firstCreated: curDate,
             type: "droplet",
@@ -477,7 +425,6 @@ export async function createDropletAnnouncement(name: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -542,10 +489,7 @@ export async function createSystemAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: await resolveDocumentId(
-              "authorized-users",
-              authUser.id,
-            ),
+            authorized_user: authUser.id,
             content: content,
             firstCreated: curDate,
             type: "system",
@@ -554,7 +498,6 @@ export async function createSystemAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -611,7 +554,6 @@ export async function createSystemBroadcast(content: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -640,10 +582,7 @@ export async function markAnnouncementRead(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      await strapiEntryUrl("announcements", {
-        id,
-        documentId: ownership.documentId,
-      }),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
       {
         method: "PUT",
         body: JSON.stringify({
@@ -652,7 +591,6 @@ export async function markAnnouncementRead(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -661,7 +599,7 @@ export async function markAnnouncementRead(id: number) {
         `Failed to mark announcement as read (${response.status})`,
       );
     }
-    revalidateReadState(ownership);
+    revalidateTag(CACHE_TAGS.announcements);
     return { success: true };
   } catch (error) {
     console.error("Error marking announcement as read:", error);
@@ -679,10 +617,7 @@ export async function markAnnouncementUnread(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      await strapiEntryUrl("announcements", {
-        id,
-        documentId: ownership.documentId,
-      }),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
       {
         method: "PUT",
         body: JSON.stringify({
@@ -691,7 +626,6 @@ export async function markAnnouncementUnread(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -700,7 +634,7 @@ export async function markAnnouncementUnread(id: number) {
         `Failed to mark announcement as unread (${response.status})`,
       );
     }
-    revalidateReadState(ownership);
+    revalidateTag(CACHE_TAGS.announcements);
     return { success: true };
   } catch (error) {
     console.error("Error marking announcement as unread:", error);
@@ -717,31 +651,20 @@ export async function markAnnouncementUnread(id: number) {
  */
 async function assertAnnouncementOwnership(
   id: number,
-): Promise<
-  | { ok: true; ownerId: number; type?: string; documentId?: string }
-  | { ok: false; error: string }
-> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getCurrentUser();
   if (!user?.email) return { ok: false, error: "Not authenticated" };
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) return { ok: false, error: "Not authorized" };
 
-  // Filter the list endpoint by id: single-entry routes need a documentId, and
-  // this needs no lookup.
-  const [announcement] = await fetchAPI<
-    {
-      id: number;
-      documentId?: string;
-      type?: string;
-      authorized_user?: { id: number } | null;
-    }[]
-  >("/announcements", {
+  const announcement = await fetchAPI<{
+    id: number;
+    authorized_user?: { id: number } | null;
+  }>(`/announcements/${id}`, {
     urlParams: {
-      filters: { id: { $eq: id } },
-      fields: ["id", "type"],
+      fields: ["id"],
       populate: { authorized_user: { fields: ["id"] } },
-      pagination: { pageSize: 1, page: 1 },
     },
     next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
   });
@@ -758,37 +681,18 @@ async function assertAnnouncementOwnership(
   if (ownerId !== authorizedUser.id) {
     return { ok: false, error: "Not authorized" };
   }
-  return {
-    ok: true,
-    ownerId,
-    type: announcement.type,
-    documentId: announcement.documentId,
-  };
-}
-
-/**
- * readAt lives on the announcement row, so a read-state change is visible in
- * every feed that includes the row. A targeted system announcement is only
- * ever in its owner's feed (fetchAnnouncements matches system rows by
- * authorized_user = viewer; fetchUserAnnouncements excludes system), so its
- * owner's per-user feed tag is enough. Friend/kudos rows owned by the caller
- * appear in their friends' feeds, so those still sweep globally.
- */
-function revalidateReadState(ownership: { ownerId: number; type?: string }) {
-  if (ownership.type === "system") {
-    revalidateTag(CACHE_TAGS.userFeed(ownership.ownerId));
-  } else {
-    revalidateTag(CACHE_TAGS.announcements);
-  }
+  return { ok: true };
 }
 
 /**
  * Count unread (non-archived) announcements for the current user.
  * Used for the nav badge.
  */
-export async function getUnreadAnnouncementCount(): Promise<number> {
+export async function getUnreadAnnouncementCount(
+  user: AuthorizedUser,
+): Promise<number> {
   try {
-    const { pagination } = await fetchAnnouncements(1, undefined, {
+    const { pagination } = await fetchAnnouncements(user, 1, undefined, {
       archived: false,
     });
     return pagination.total;
@@ -806,7 +710,7 @@ export async function fetchAnnouncementById(id: number) {
         id: { $eq: id },
       },
       populate: {
-        authorized_user: {
+        authorized_users: {
           fields: [
             "id",
             "email",
@@ -844,7 +748,7 @@ export async function fetchAnnouncementById(id: number) {
           fields: ["id", "name", "slug"],
         },
         group: {
-          fields: ["id", "slug"],
+          fields: ["id", "name", "slug"],
         },
       },
       pagination: {
@@ -856,10 +760,7 @@ export async function fetchAnnouncementById(id: number) {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: {
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
@@ -910,10 +811,7 @@ export async function fetchUserAnnouncements(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: {
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );

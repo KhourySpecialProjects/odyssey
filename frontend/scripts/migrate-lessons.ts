@@ -13,12 +13,10 @@ const STRAPI_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 interface Droplet {
   id: number;
-  documentId?: string;
   attributes: {
     lessons?: {
       data?: Array<{
         id: number;
-        documentId?: string;
         attributes: {
           name: string;
           slug: string;
@@ -101,16 +99,12 @@ async function migrateDropletLessons() {
           const lesson = lessons[i];
 
           try {
-            // Strapi v5 relation values are documentIds.
-            if (!droplet.documentId || !lesson.documentId) {
-              throw new Error("Missing documentId on droplet or lesson");
-            }
             const response = await fetchAPI("/droplet-lessons", {
               method: "POST",
               body: JSON.stringify({
                 data: {
-                  droplet: droplet.documentId,
-                  lesson: lesson.documentId,
+                  droplet: droplet.id,
+                  lesson: lesson.id,
                   orderIndex: i,
                 },
               }),

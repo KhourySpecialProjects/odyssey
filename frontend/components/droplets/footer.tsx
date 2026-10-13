@@ -5,15 +5,11 @@ import { IconArrowLeft, IconArrowRight, IconLock } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
+import { markLessonAsComplete } from "@/lib/requests/lesson";
 import {
   isLessonQuizCompleted,
   markLessonQuizCompleted,
 } from "@/lib/quiz-storage";
-import {
-  useViewedLessonIds,
-  useViewedLessonsStore,
-} from "@/stores/viewed-lessons-store";
-import { toast } from "sonner";
 
 type PaginationProps = {
   link: string;
@@ -35,69 +31,29 @@ export default function DropletFooter({
   const router = useRouter();
   const [canProceed, setCanProceed] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const markViewed = useViewedLessonsStore((s) => s.markViewed);
-  const unmarkViewed = useViewedLessonsStore((s) => s.unmarkViewed);
-  // Includes lessons whose save is still in flight (see viewed-lessons-store)
-  const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
-  const isViewed = (lessonId: number) => viewedLessonIds.includes(lessonId);
 
-  /**
-   * Saves the current lesson as viewed. Returns true when server data changed
-   * (the lesson was newly viewed, or the droplet became complete).
-   */
-  const saveLessonViewed = async (): Promise<boolean> => {
-    if (!enrollmentId || !currentLessonId || !droplet.lessons) return false;
-    // Already recorded: nothing to save (missing completion data on legacy
-    // enrollments is filled in by <CompletionBackfill> on the page).
-    if (isViewed(currentLessonId)) return false;
+  const handleNextClick = async () => {
+    if (enrollmentId && currentLessonId && droplet.lessons) {
+      const allDropletLessonIds = droplet.lessons.map((l) => l.id);
 
-    const lessonId = currentLessonId;
-    // Show it as viewed in the sidebar right away; see viewed-lessons-store.
-    markViewed(enrollmentId, lessonId);
-    const result = await updateViewedLessons(
-      enrollmentId,
-      lessonId,
-      droplet.lessons.map((l) => l.id),
-    ).catch(() => ({ success: false as const }));
-
-    if (!result.success) {
-      unmarkViewed(enrollmentId, lessonId);
-      toast.error("Couldn't save your progress on this lesson.");
-      return false;
-    }
-    return !result.alreadyViewed;
-  };
-
-  // The recap page shows the droplet as completed based on this save, so
-  // wait for it before going there.
-  const saveBeforeRecap = async () => {
-    await saveLessonViewed();
-  };
-
-  // Lesson to lesson: navigate first and save in the background, then
-  // refresh so the layout (sidebar, progress) reflects the stored progress.
-  // Next.js's own refresh after a navigation interrupts a pending Server
-  // Action runs when the navigation finishes, which can be before the save
-  // lands, so it can't be relied on for this.
-  const saveInBackground = async () => {
-    if (await saveLessonViewed()) router.refresh();
-  };
-
-  const handleMarkAsComplete = () => {
-    if (!enrollmentId || !currentLessonId || !droplet.lessons) return;
-    const allDropletLessonIds = droplet.lessons.map((l) => l.id);
-    startTransition(async () => {
-      // Same action as "Next" so finishing the last lesson here also records
-      // the droplet's completion (isComplete + completionDate).
-      const { success } = await updateViewedLessons(
+      await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
       );
-      // No router.refresh(): the action's revalidateTag already re-renders
-      // the route, and a refresh here would be a second full server render.
-      if (!success) {
-        console.error("Failed to mark lesson as complete");
+    }
+  };
+
+  const handleMarkAsComplete = () => {
+    if (!enrollmentId || !currentLessonId) return;
+    startTransition(async () => {
+      const success = await markLessonAsComplete(
+        enrollmentId,
+        completedLessonIds,
+        currentLessonId,
+      );
+      if (success) {
+        await router.refresh();
       }
     });
   };
@@ -194,10 +150,9 @@ export default function DropletFooter({
     };
   }
 
-  const nextIsRecap = next?.link.endsWith("/recap") ?? false;
-
   const isCompleted =
-    currentLessonId !== undefined && isViewed(currentLessonId);
+    currentLessonId !== undefined &&
+    completedLessonIds.includes(currentLessonId);
 
   return (
     <div className="justify-left flex w-full flex-col">
@@ -230,8 +185,7 @@ export default function DropletFooter({
             <PaginationLinkWrapper
               link={next.link}
               canProceed={canProceed}
-              onClick={nextIsRecap ? saveBeforeRecap : saveInBackground}
-              awaitOnClick={nextIsRecap}
+              onClick={handleNextClick}
             >
               Next
               <IconArrowRight className="h-4 w-4" />
@@ -251,26 +205,18 @@ const PaginationLinkWrapper = ({
   children,
   canProceed,
   onClick,
-  awaitOnClick = false,
 }: {
   link: string;
   className?: string;
   children: React.ReactNode;
   canProceed: boolean;
   onClick?: () => Promise<void>;
-  awaitOnClick?: boolean;
 }) => {
   const router = useRouter();
 
   const handleClick = async () => {
-    if (onClick && awaitOnClick) {
+    if (onClick) {
       await onClick();
-    } else if (onClick) {
-      // Navigate right away; the save finishes in the background and onClick
-      // handles its own result (see saveInBackground).
-      onClick().catch((error) =>
-        console.error("Failed to save lesson progress:", error),
-      );
     }
     router.push(link);
   };

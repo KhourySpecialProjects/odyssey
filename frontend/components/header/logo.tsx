@@ -1,28 +1,31 @@
-import Image from "next/image";
+"use client";
 
-// Both variants are rendered and toggled with Tailwind's class-based dark mode
-// (next-themes sets `class="dark"` on <html>), so the logo is in the server
-// HTML instead of appearing after hydration. `inline` keeps the img's default
-// display so layout matches the light variant.
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
 export function Logo({ width, height }: { width: number; height: number }) {
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const image =
+    theme === "dark" || resolvedTheme === "dark"
+      ? "/logo_dark.png"
+      : "/logo.png";
+
   return (
-    <>
-      <Image
-        src="/logo.png"
-        alt="Khoury Odyssey Logo"
-        width={width}
-        height={height}
-        priority
-        className="dark:hidden"
-      />
-      <Image
-        src="/logo_dark.png"
-        alt="Khoury Odyssey Logo"
-        width={width}
-        height={height}
-        priority
-        className="hidden dark:inline"
-      />
-    </>
+    <Image
+      src={image}
+      alt="Khoury Odyssey Logo"
+      width={width}
+      height={height}
+      priority
+    />
   );
 }

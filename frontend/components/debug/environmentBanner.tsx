@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth/session";
-import { isDevRoleOverrideEnabled } from "@/lib/auth/dev-role-override";
 import { cookies } from "next/headers";
 import { RoleSwitcher } from "./role-switcher";
 
@@ -8,7 +7,7 @@ export async function EnvironmentBanner({ className }: { className?: string }) {
   const app_env = process.env.NEXT_PUBLIC_APP_ENV;
   if (app_env === "production") return null;
 
-  const isDev = isDevRoleOverrideEnabled();
+  const isDev = process.env.NODE_ENV === "development";
   const user = isDev ? await getCurrentUser() : null;
   const rawLabel = isDev
     ? (await cookies()).get("dev-role-label")?.value ?? null

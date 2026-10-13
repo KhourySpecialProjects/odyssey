@@ -1,5 +1,5 @@
 import { AccessRequest } from "@/components/shared/access-manager/access-requests/access-requests";
-import { flattenAttributes, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { flattenAttributes } from "@/lib/utils";
 import { CACHE_TAGS } from "../cache-tags";
 import { Droplet, Group } from "@/types";
 import qs from "qs";
@@ -15,8 +15,7 @@ export async function fetchDroplets() {
     let allDroplets: Droplet[] = [];
     while (true) {
       const query = qs.stringify({
-        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
-        sort: ["createdAt", "id"],
+        sort: ["id"],
         fields: ["id", "name", "type", "slug", "isHidden", "focusArea"],
         populate: {
           lessons: { fields: ["id", "name"] },
@@ -30,10 +29,7 @@ export async function fetchDroplets() {
       const response = await fetch(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query,
         {
-          headers: {
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
           next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
         },
       );
@@ -60,8 +56,7 @@ export async function fetchGroups() {
     let allGroups: Group[] = [];
     while (true) {
       const query = qs.stringify({
-        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
-        sort: ["createdAt", "id"],
+        sort: ["id"],
         fields: ["id", "groupName", "slug", "isArchived", "semester"],
         populate: {
           members: {
@@ -86,10 +81,7 @@ export async function fetchGroups() {
       const response = await fetch(
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/groups?${query}`,
         {
-          headers: {
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
+          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
           next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
         },
       );
@@ -122,8 +114,7 @@ export async function fetchAccessRequests() {
 
     while (true) {
       const query = qs.stringify({
-        // Creation order (id stops tracking it on Strapi v5); id only breaks ties so pages stay stable.
-        sort: ["createdAt", "id"],
+        sort: ["id"],
         fields: [
           "id",
           "givenName",
@@ -140,10 +131,7 @@ export async function fetchAccessRequests() {
       const response = await fetch(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests?" + query,
         {
-          headers: {
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
           next: { tags: [CACHE_TAGS.accessRequests], revalidate: 900 },
         },
       );
@@ -171,8 +159,7 @@ export async function fetchReports() {
 
     while (true) {
       const query = qs.stringify({
-        // Newest first (id stops tracking creation order on Strapi v5); id only breaks ties.
-        sort: ["createdAt:desc", "id:desc"],
+        sort: ["id:desc"],
         fields: [
           "id",
           "type",
@@ -190,10 +177,7 @@ export async function fetchReports() {
       const response = await fetch(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query,
         {
-          headers: {
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
           next: { tags: [CACHE_TAGS.reports], revalidate: 900 },
         },
       );

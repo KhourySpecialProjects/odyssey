@@ -1,7 +1,9 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
-import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
-import { DueDate, Playlist } from "@/types";
+import {
+  getCachedUser,
+  getCachedEnrollmentsWithLessonIds,
+} from "@/lib/requests/cached";
+import { AuthorizedUser, DueDate, Playlist } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconLayoutList } from "@tabler/icons-react";
 import { getUserDueDates } from "@/lib/requests/groups";
@@ -31,13 +33,14 @@ export async function PlaylistsGrid({
 }: PlaylistsGridProps) {
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
+  let authorizedUser: AuthorizedUser | null = null;
   let dueDates: DueDate[] = [];
 
-  const userId = await getAuthorizedUserId(user);
-  if (userId) {
+  if (user?.email) {
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
     const [enrollments, userDueDates] = await Promise.all([
-      getCachedEnrollmentsWithLessonIds(userId),
-      getUserDueDates(userId),
+      getCachedEnrollmentsWithLessonIds(authorizedUser.id),
+      getUserDueDates(authorizedUser.id),
     ]);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
@@ -65,6 +68,23 @@ export async function PlaylistsGrid({
     };
   });
 
+  if (sortKey) {
+    const [field, direction] = sortKey.split(":");
+    if (field === "name") {
+      playlistsWithCompletion?.sort((a, b) => {
+        return direction === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      });
+    } else if (field === "completion") {
+      playlistsWithCompletion?.sort((a, b) => {
+        return direction === "asc"
+          ? a.completionPercentage - b.completionPercentage
+          : b.completionPercentage - a.completionPercentage;
+      });
+    }
+  }
+
   if (!playlistsWithCompletion || playlistsWithCompletion.length === 0) {
     return (
       <EmptyState
@@ -83,9 +103,8 @@ export async function PlaylistsGrid({
   return (
     <SortedPlaylistsGrid
       playlistsWithCompletion={playlistsWithCompletion}
-      sortKey={sortKey}
       dueDates={dueDates}
-      currentUserId={userId}
+      currentUserId={authorizedUser?.id}
     />
   );
 }

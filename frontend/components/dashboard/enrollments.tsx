@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
-import { hasDroplet } from "@/lib/enrollment-completion";
 import { notFound } from "next/navigation";
 import { DropletTile } from "../droplets/droplet-tile";
 
@@ -14,7 +13,7 @@ export async function Enrollments() {
 
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {enrollments.filter(hasDroplet).map((enrollment) => {
+      {enrollments.map((enrollment) => {
         const completedLessonIds =
           enrollment.viewedLessons?.map((l) => l.id) || [];
         return (

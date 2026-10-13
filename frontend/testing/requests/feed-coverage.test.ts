@@ -4,21 +4,14 @@
  * Targets uncovered lines 463-580:
  *   463-531  fetchAnnouncementById — happy path + error path
  *   533-582  fetchUserAnnouncements — happy path + error path + pagination
- *   markAnnouncementRead / markAnnouncementUnread — cache invalidation scope
  */
 
 import {
   fetchAnnouncementById,
   fetchUserAnnouncements,
-  markAnnouncementRead,
-  markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
-import { revalidateTag } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { strapiEntryUrl } from "@/lib/strapi-document-id";
+import { flattenAttributes } from "@/lib/utils";
 import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
@@ -32,14 +25,6 @@ jest.mock("@/lib/utils", () => ({
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
-}));
-
-jest.mock("@/lib/auth/session", () => ({
-  getCurrentUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -64,7 +49,7 @@ describe("fetchAnnouncementById", () => {
       id: 7,
       type: "system",
       content: "Welcome message",
-      authorized_user: [],
+      authorized_users: [],
     };
 
     jest.mocked(flattenAttributes).mockReturnValueOnce(mockAnnouncement);
@@ -93,11 +78,6 @@ describe("fetchAnnouncementById", () => {
     expect(calledUrl).toContain("announcements?");
     // qs encodes filters: the id value 7 should appear in the query
     expect(calledUrl).toContain("7");
-    // ODY-635 R2: the schema relation is `authorized_user` (singular).
-    expect(decodeURIComponent(calledUrl)).toContain(
-      "populate[authorized_user][fields][0]=id",
-    );
-    expect(calledUrl).not.toContain("authorized_users");
 
     expect(result).toEqual(mockAnnouncement);
   });
@@ -107,7 +87,7 @@ describe("fetchAnnouncementById", () => {
       id: 42,
       type: "droplet",
       content: "New droplet announcement",
-      authorized_user: [{ id: 1, email: "user@example.com" }],
+      authorized_users: [{ id: 1, email: "user@example.com" }],
       playlist: { id: 5, name: "Playlist A", slug: "playlist-a" },
       droplet: { id: 10, name: "Droplet X", slug: "droplet-x" },
       group: { id: 3, name: "Group Z", slug: "group-z" },
@@ -260,130 +240,5 @@ describe("fetchUserAnnouncements", () => {
     await expect(fetchUserAnnouncements(42)).rejects.toThrow(
       "Failed to fetch user announcements.",
     );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// markAnnouncementRead / markAnnouncementUnread — invalidation scope
-// ---------------------------------------------------------------------------
-
-describe("announcement read state invalidation", () => {
-  let fetchMock: jest.MockedFunction<typeof fetch>;
-
-  function mockOwnedAnnouncement(type: string, ownerId = 5) {
-    // The ownership check filters the list endpoint by id, so it returns an array.
-    jest.mocked(fetchAPI).mockResolvedValueOnce([
-      {
-        id: 11,
-        documentId: "doc11",
-        type,
-        authorized_user: { id: ownerId },
-      },
-    ]);
-  }
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock = mockGlobalFetch();
-    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 11 } }));
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest
-      .mocked(getCurrentUser)
-      .mockResolvedValue({ email: "owner@test.com" } as never);
-    jest.mocked(getAuthorizedUserByEmail).mockResolvedValue({ id: 5 } as never);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("marking a targeted system announcement read only revalidates the owner's feed", async () => {
-    mockOwnedAnnouncement("system");
-
-    const result = await markAnnouncementRead(11);
-
-    expect(result).toEqual({ success: true });
-    expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
-  });
-
-  it("marking a targeted system announcement unread only revalidates the owner's feed", async () => {
-    mockOwnedAnnouncement("system");
-
-    const result = await markAnnouncementUnread(11);
-
-    expect(result).toEqual({ success: true });
-    expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-  });
-
-  it("friend announcements still sweep globally (they appear in friends' feeds)", async () => {
-    mockOwnedAnnouncement("friend");
-
-    await markAnnouncementRead(11);
-
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.announcements);
-    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-  });
-
-  it("requests the announcement type in the ownership check", async () => {
-    mockOwnedAnnouncement("system");
-
-    await markAnnouncementRead(11);
-
-    expect(fetchAPI).toHaveBeenCalledWith(
-      "/announcements",
-      expect.objectContaining({
-        urlParams: expect.objectContaining({
-          filters: { id: { $eq: 11 } },
-          fields: ["id", "type"],
-        }),
-      }),
-    );
-  });
-
-  it("writes to the announcement's documentId taken from the ownership check, without a lookup", async () => {
-    mockOwnedAnnouncement("system");
-    jest
-      .mocked(strapiEntryUrl)
-      .mockImplementationOnce(
-        async (collection, ref) =>
-          `http://x/api/${collection}/${(ref as { documentId: string }).documentId}`,
-      );
-
-    await markAnnouncementRead(11);
-
-    expect(strapiEntryUrl).toHaveBeenCalledWith("announcements", {
-      id: 11,
-      documentId: "doc11",
-    });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://x/api/announcements/doc11",
-      expect.objectContaining({ method: "PUT" }),
-    );
-  });
-
-  it("reports a missing announcement instead of throwing", async () => {
-    jest.mocked(fetchAPI).mockResolvedValueOnce([]);
-
-    const result = await markAnnouncementRead(11);
-
-    expect(result).toEqual({
-      success: false,
-      error: "Announcement not found",
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("does not revalidate when the caller doesn't own the announcement", async () => {
-    mockOwnedAnnouncement("system", 99);
-
-    const result = await markAnnouncementRead(11);
-
-    expect(result).toEqual({ success: false, error: "Not authorized" });
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
