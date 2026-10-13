@@ -5,8 +5,8 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
-import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 interface PlaylistWithId {
@@ -33,7 +33,7 @@ export async function togglePlaylistEnrollment(playlistId: number) {
     );
 
     const response = await fetch(
-      await strapiEntryUrl("authorized-users", authorizedUser),
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${authorizedUser.id}`,
       {
         method: "PUT",
         headers: {
@@ -44,9 +44,7 @@ export async function togglePlaylistEnrollment(playlistId: number) {
         body: JSON.stringify({
           data: {
             playlists: {
-              [isEnrolled ? "disconnect" : "connect"]: [
-                await resolveDocumentId("playlists", playlistId),
-              ],
+              [isEnrolled ? "disconnect" : "connect"]: [playlistId],
             },
           },
         }),
@@ -81,7 +79,7 @@ export async function togglePlaylistEnrollment(playlistId: number) {
 export async function enrollInPlaylist(playlistId: number, userId: number) {
   try {
     const response = await fetch(
-      await strapiEntryUrl("authorized-users", userId),
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -92,7 +90,7 @@ export async function enrollInPlaylist(playlistId: number, userId: number) {
         body: JSON.stringify({
           data: {
             playlists: {
-              connect: [await resolveDocumentId("playlists", playlistId)],
+              connect: [playlistId],
             },
           },
         }),

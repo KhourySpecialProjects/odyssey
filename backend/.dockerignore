@@ -16,5 +16,3 @@ dist
 README.md
 .gitignore
 Dockerfile
-# Generated output of the removed documentation plugin
-src/extensions/documentation

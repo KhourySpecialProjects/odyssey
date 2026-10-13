@@ -6,13 +6,11 @@ module.exports = {
   async afterCreate(event) {
     const { result } = event;
 
-    // After hooks have the result's documentId, so a plain findOne works.
-    const creationRequest = (await strapi
-      .documents('api::creation-request.creation-request')
-      .findOne({
-        documentId: result.documentId,
-        populate: { user: { fields: ['firstName', 'lastName', 'email'] } },
-      })) as unknown as CreationRequestWithUser | null;
+    const creationRequest = (await strapi.entityService.findOne(
+      'api::creation-request.creation-request',
+      result.id,
+      { populate: { user: { fields: ['firstName', 'lastName', 'email'] } } }
+    )) as CreationRequestWithUser | null;
 
     const user = creationRequest?.user;
     const userName = escapeSlackMrkdwn(user ? formatPersonName(user) : 'Unknown');
