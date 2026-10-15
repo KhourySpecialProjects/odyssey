@@ -13,25 +13,6 @@ cd frontend && npx jest --coverage         # Generate coverage report
 
 Config: `frontend/jest.config.js` with `jest-environment-jsdom`. Setup file: `frontend/jest.setup.ts` (imports `@testing-library/jest-dom` matchers).
 
-### Backend Tests (Strapi v5 lifecycle hooks)
-
-```bash
-npm --prefix backend test                              # All backend tests (jest --runInBand)
-npm --prefix backend test -- tests/lifecycles/droplet  # One file
-```
-
-These boot a real Strapi v5 instance per test file on a throwaway SQLite database (`backend/.tmp/test-*.db`, removed in teardown), using `better-sqlite3`. Needs no Postgres, S3 or `.env`. `better-sqlite3` is pinned to 12.9.0 because the backend Docker images are Node 20 and newer versions drop Node 20 (bump with ODY-604).
-
-- `backend/tests/helpers/strapi.js` sets the test env in code (dummy secrets, `DATABASE_CLIENT=sqlite`, `SLACK_WEBHOOK_URL`), runs `compileStrapi` + `createStrapi().load()`, mounts the server and tears it down.
-- `backend/config/env/test/plugins.ts` turns the documentation plugin off (so the boot doesn't rewrite tracked docs JSON) and uses the local upload provider.
-- `backend/tests/helpers/api-token.js` makes a full-access API token for REST tests with supertest.
-- `backend/tests/helpers/admin-auth.js` (`createSuperAdminToken`) creates a super-admin and logs in through `POST /admin/login`, for admin and content-manager routes (`tests/admin/`). TS source under `src/` can't be required from Jest; require the compiled `dist/src/...` that `setupStrapi` builds.
-- `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
-- `test.failing` marks known issues; when one is fixed Jest reports it as failing, and it gets flipped to `it`.
-- Tooling: regenerate the lockfile fresh (it can't be upgraded in place from v4). The 5.56.0 pins are intentional. Bump `ckeditor5` only together with `@_sh/strapi-plugin-ckeditor`. `backend/.prettierrc.json` is required.
-
-A run must leave `git status` clean. Needs Node 20 or later. CI runs these as the `backend` entry of the matrix in `.github/workflows/test.yml`, on Node 20.14.0 (the ECS image version).
-
 ### Test Directory Structure
 
 ```
@@ -201,12 +182,6 @@ Use the `/ci` slash command in Claude Code:
 ```
 
 The command runs each check sequentially, reports pass/fail with relevant output, and gives a final verdict (READY TO PUSH or NOT READY TO PUSH).
-
-### Dependency audits (feature/strapi-v5, temporary)
-
-Dependabot only targets `develop`, and reads its config from `production`. At every `develop` → `feature/strapi-v5` merge and before the ODY-602 rehearsal, run `cd backend && npm audit`.
-Compare advisory names against the Decision Record in `docs/plans/ODY-701.md`, and triage any new name before merging.
-Delete this subsection when v5 merges to `develop`.
 
 ### Quality Gate Hook
 

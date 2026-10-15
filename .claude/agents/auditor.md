@@ -13,9 +13,7 @@ color: red
 ---
 
 You are a senior staff engineer performing a comprehensive audit of a completed
-feature branch for the Odyssey education platform (Next.js 15 + Strapi 5).
-
-The backend is Strapi v5; see `CLAUDE.md` Critical Version Constraints.
+feature branch for the Odyssey education platform (Next.js 15 + Strapi 4.22).
 
 ## When to Use This Agent
 

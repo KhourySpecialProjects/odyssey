@@ -18,7 +18,6 @@ import {
   getMockedFetchAPI,
   mockGlobalFetch,
   makeFetchResponse,
-  makeEmptyResponse,
   assertOk,
 } from "@/lib/testing/mock-helpers";
 
@@ -270,21 +269,9 @@ describe("deleteVoyage — ownership check (Task 3)", () => {
     // fetchAPI should NOT be called for ownership lookup (admin skips it)
     expect(getMockedFetchAPI()).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/doc55"),
+      expect.stringContaining("/api/voyages/55"),
       expect.objectContaining({ method: "DELETE" }),
     );
-  });
-
-  it("treats an empty 204 as success (Strapi v5)", async () => {
-    mockAsAdmin(1);
-    fetchMock.mockResolvedValueOnce(makeEmptyResponse(204));
-
-    const result = await deleteVoyage(55);
-
-    expect(result).toEqual({ ok: true, error: null, data: null });
-    expect(revalidateTag).toHaveBeenCalledTimes(2);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
   });
 
   it("allows faculty to delete their own voyage", async () => {
@@ -303,7 +290,7 @@ describe("deleteVoyage — ownership check (Task 3)", () => {
     expect(result.data).toEqual(deletedVoyage);
 
     expect(getMockedFetchAPI()).toHaveBeenCalledWith(
-      "/voyages/doc10",
+      "/voyages/10",
       expect.objectContaining({
         urlParams: { populate: { authors: { fields: ["id"] } } },
         next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },
@@ -371,7 +358,7 @@ describe("publishVoyage — ownership check (Task 3)", () => {
     // fetchAPI should NOT be called for ownership lookup (admin skips it)
     expect(getMockedFetchAPI()).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/voyages/doc20"),
+      expect.stringContaining("/api/voyages/20"),
       expect.objectContaining({ method: "PUT" }),
     );
   });
@@ -391,7 +378,7 @@ describe("publishVoyage — ownership check (Task 3)", () => {
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
 
     expect(getMockedFetchAPI()).toHaveBeenCalledWith(
-      "/voyages/doc20",
+      "/voyages/20",
       expect.objectContaining({
         urlParams: { populate: { authors: { fields: ["id"] } } },
         next: { tags: [CACHE_TAGS.voyages], revalidate: 0 },

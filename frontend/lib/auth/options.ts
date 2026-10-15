@@ -7,17 +7,13 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
-import {
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-  type EntryRef,
-} from "../strapi-document-id";
 
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 async function syncAzureProfilePhoto(
   accessToken: string,
-  user: EntryRef,
+  userId: number,
 ): Promise<string | null> {
   const photoBuffer = await getUserPhoto(accessToken);
   if (!photoBuffer) return null;
@@ -33,27 +29,24 @@ async function syncAzureProfilePhoto(
   const profilePhoto = uploadResult.url;
   const fileName = profilePhoto.split("/").pop()!;
   try {
-    const res = await fetch(await strapiEntryUrl("authorized-users", user), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
+    const res = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        body: JSON.stringify({ data: { profilePhoto } }),
       },
-      body: JSON.stringify({ data: { profilePhoto } }),
-    });
+    );
     if (!res.ok) {
       console.error("Strapi profile photo save failed:", res.status);
       await deleteImage(fileName).catch(() => {});
       return null;
     }
   } catch (err) {
-    if (err instanceof StrapiEntryNotFoundError) {
-      // Same outcome as the 404 the PUT used to return.
-      console.error("Strapi profile photo save failed:", 404);
-      await deleteImage(fileName).catch(() => {});
-      return null;
-    }
     console.error("Failed to save profile photo to Strapi:", err);
     await deleteImage(fileName).catch(() => {});
     return null;
@@ -121,7 +114,6 @@ export const authOptions: NextAuthOptions = {
           fetchAPI<
             {
               id: number;
-              documentId?: string;
               roles: { title: string }[];
               profilePhoto: string | null;
             }[]
@@ -139,14 +131,16 @@ export const authOptions: NextAuthOptions = {
         const profilePhoto =
           authorizedUser.profilePhoto ||
           (isAzure && account.access_token
-            ? await syncAzureProfilePhoto(account.access_token, authorizedUser)
+            ? await syncAzureProfilePhoto(
+                account.access_token,
+                authorizedUser.id,
+              )
             : null);
 
         token.user = {
           // Stored so pages can start id-keyed fetches without first looking
           // the user up by email (see lib/auth/current-user-id.ts).
           id: authorizedUser.id,
-          documentId: authorizedUser.documentId,
           name: user.name,
           email: user.email,
           image: profilePhoto || user.image,

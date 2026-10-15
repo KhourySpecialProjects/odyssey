@@ -17,7 +17,6 @@ import {
   deleteVoyage,
 } from "@/lib/requests/voyage";
 import { flattenAttributes } from "@/lib/utils";
-import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 import { revalidateTag } from "next/cache";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -114,8 +113,6 @@ beforeEach(() => {
   jest.resetAllMocks();
   // Restore the default pass-through implementation after reset.
   mockedFlattenAttributes.mockImplementation((data: unknown) => data);
-  // resetAllMocks also wipes the global mock for the documentId helper.
-  installDocumentIdMock();
 });
 
 // ---------------------------------------------------------------------------
@@ -250,9 +247,9 @@ describe("voyage-branches — branch node parent body fields (lines 299-336)", (
     });
 
     expect(result.ok).toBe(true);
-    // Branch node POST body should include parentNode as a documentId ("doc20")
+    // Branch node POST body should include parentNode: 20
     const branchBody = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
-    expect(branchBody.data.parentNode).toBe("doc20");
+    expect(branchBody.data.parentNode).toBe(20);
   });
 
   it("branch node with null parentPlaylistId — parentNode absent from body", async () => {

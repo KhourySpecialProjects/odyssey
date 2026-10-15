@@ -23,19 +23,17 @@ jobs:
       TZ: 'America/New_York'
 
     strategy:
-      fail-fast: false
       matrix:
-        project: ['frontend', 'backend']
+        project: ['frontend']
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Backend pins the same Node as backend-build in build.yml.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.project == 'backend' && '20.14.0' || '20' }}
+          node-version: '20'
 
       - name: Install dependencies
         run: |

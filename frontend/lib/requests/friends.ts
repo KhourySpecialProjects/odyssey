@@ -4,11 +4,6 @@ import { AuthorizedUser, Friendship } from "@/types";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import qs from "qs";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-} from "../strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -162,19 +157,13 @@ export async function getSentRequestIds(
 
 export async function acceptFriendRequest(userId: number, requestId: number) {
   try {
-    // Relation values are documentIds; a missing user throws and lands in the
-    // catch below like any other failed step.
-    const [requestDocumentId, userDocumentId] = await resolveDocumentIds(
-      "authorized-users",
-      [requestId, userId],
-    );
     const friendshipResponse = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships",
       {
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_users: [requestDocumentId, userDocumentId],
+            authorized_users: [requestId, userId],
           },
         }),
         headers: {
@@ -190,7 +179,7 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
       throw new Error("Failed to create friendship");
     }
     const deleteResponse = await fetch(
-      await strapiEntryUrl("authorized-users", userDocumentId),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -201,7 +190,7 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
         body: JSON.stringify({
           data: {
             received_requests: {
-              disconnect: [requestDocumentId],
+              disconnect: [requestId],
             },
           },
         }),
@@ -228,9 +217,8 @@ export async function sendFriendRequest(
   requestee: AuthorizedUser,
 ) {
   try {
-    // Both users come from the caller, so address them by numeric id only.
     const sentToResponse = await fetch(
-      await strapiEntryUrl("authorized-users", requestee.id),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${requestee.id}`,
       {
         method: "PUT",
         headers: {
@@ -241,9 +229,7 @@ export async function sendFriendRequest(
         body: JSON.stringify({
           data: {
             received_requests: {
-              connect: [
-                await resolveDocumentId("authorized-users", requester.id),
-              ],
+              connect: [requester.id],
             },
           },
         }),
@@ -257,7 +243,7 @@ export async function sendFriendRequest(
 
     // Add requestee to requester's sent_requests
     const sentFromResponse = await fetch(
-      await strapiEntryUrl("authorized-users", requester.id),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${requester.id}`,
       {
         method: "PUT",
         headers: {
@@ -268,9 +254,7 @@ export async function sendFriendRequest(
         body: JSON.stringify({
           data: {
             sent_requests: {
-              connect: [
-                await resolveDocumentId("authorized-users", requestee.id),
-              ],
+              connect: [requestee.id],
             },
           },
         }),
@@ -296,7 +280,7 @@ export async function sendFriendRequest(
 export async function rejectFriendRequest(userId: number, requestId: number) {
   try {
     const deleteResponse = await fetch(
-      await strapiEntryUrl("authorized-users", userId),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -307,9 +291,7 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
         body: JSON.stringify({
           data: {
             received_requests: {
-              disconnect: [
-                await resolveDocumentId("authorized-users", requestId),
-              ],
+              disconnect: [requestId],
             },
           },
         }),
@@ -335,7 +317,7 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
 export async function cancelFriendRequest(userId: number, requestId: number) {
   try {
     const deleteResponse = await fetch(
-      await strapiEntryUrl("authorized-users", userId),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -346,9 +328,7 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
         body: JSON.stringify({
           data: {
             sent_requests: {
-              disconnect: [
-                await resolveDocumentId("authorized-users", requestId),
-              ],
+              disconnect: [requestId],
             },
           },
         }),
@@ -373,7 +353,7 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
 export async function unblockUser(userId: number, requestId: number) {
   try {
     const deleteResponse = await fetch(
-      await strapiEntryUrl("authorized-users", userId),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -384,9 +364,7 @@ export async function unblockUser(userId: number, requestId: number) {
         body: JSON.stringify({
           data: {
             blocked: {
-              disconnect: [
-                await resolveDocumentId("authorized-users", requestId),
-              ],
+              disconnect: [requestId],
             },
           },
         }),
@@ -411,7 +389,7 @@ export async function unblockUser(userId: number, requestId: number) {
 export async function BlockUser(userId: number, requestId: number) {
   try {
     const deleteResponse = await fetch(
-      await strapiEntryUrl("authorized-users", userId),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
         headers: {
@@ -422,7 +400,7 @@ export async function BlockUser(userId: number, requestId: number) {
         body: JSON.stringify({
           data: {
             blocked: {
-              connect: [await resolveDocumentId("authorized-users", requestId)],
+              connect: [requestId],
             },
           },
         }),
@@ -487,7 +465,7 @@ export async function removeFriend(userId: number, friendId: number) {
     }
 
     const deleteResponse = await fetch(
-      await strapiEntryUrl("friendships", friendship),
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/friendships/${friendship.id}`,
       {
         method: "DELETE",
         headers: {

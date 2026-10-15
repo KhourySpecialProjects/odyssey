@@ -6,7 +6,7 @@
     "pluralName": "voyages",
     "displayName": "Voyage"
   },
-  "options": { "draftAndPublish": false },
+  "options": { "draftAndPublish": true },
   "pluginOptions": {},
   "attributes": {
     "name": { "type": "string", "required": true, "unique": true },
