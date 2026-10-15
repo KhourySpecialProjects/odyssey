@@ -69,6 +69,28 @@ jest.mock("react", () => ({
   useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
   cache: (fn: Function) => fn,
 }));
+
+// Fake documentIds (5 -> "doc5"), see lib/testing/document-id-mock.ts. After
+// jest.resetAllMocks(), call installDocumentIdMock(). strapi-document-id.test.ts unmocks it.
+jest.mock("@/lib/strapi-document-id", () => {
+  const { fakeDocumentId } = jest.requireActual(
+    "@/lib/testing/document-id-mock",
+  );
+  return {
+    ...jest.requireActual("@/lib/strapi-document-id"),
+    resolveDocumentId: jest.fn(async (_collection: string, ref: any) =>
+      fakeDocumentId(ref),
+    ),
+    resolveDocumentIds: jest.fn(async (_collection: string, refs: any[]) =>
+      refs.map(fakeDocumentId),
+    ),
+    strapiEntryUrl: jest.fn(
+      async (collection: string, ref: any, query?: string) =>
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${fakeDocumentId(ref)}${query ? `?${query}` : ""}`,
+    ),
+  };
+});
+
 // Mock posthog-js to prevent network calls in tests
 jest.mock("posthog-js", () => ({
   init: jest.fn(),

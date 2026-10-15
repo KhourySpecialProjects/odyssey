@@ -7,13 +7,17 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
+import {
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+  type EntryRef,
+} from "../strapi-document-id";
 
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 async function syncAzureProfilePhoto(
   accessToken: string,
-  userId: number,
+  user: EntryRef,
 ): Promise<string | null> {
   const photoBuffer = await getUserPhoto(accessToken);
   if (!photoBuffer) return null;
@@ -29,24 +33,27 @@ async function syncAzureProfilePhoto(
   const profilePhoto = uploadResult.url;
   const fileName = profilePhoto.split("/").pop()!;
   try {
-    const res = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({ data: { profilePhoto } }),
+    const res = await fetch(await strapiEntryUrl("authorized-users", user), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({ data: { profilePhoto } }),
+    });
     if (!res.ok) {
       console.error("Strapi profile photo save failed:", res.status);
       await deleteImage(fileName).catch(() => {});
       return null;
     }
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same outcome as the 404 the PUT used to return.
+      console.error("Strapi profile photo save failed:", 404);
+      await deleteImage(fileName).catch(() => {});
+      return null;
+    }
     console.error("Failed to save profile photo to Strapi:", err);
     await deleteImage(fileName).catch(() => {});
     return null;
@@ -70,27 +77,12 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-      // GitHub now sends an `iss` parameter on OAuth callbacks (RFC 9207).
-      // NextAuth v4 rejects the callback unless the provider declares its issuer.
-      issuer: "https://github.com/login/oauth",
     }),
   ],
   pages: {
     signIn: "/auth/login",
   },
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      const target = url.startsWith("/") ? `${baseUrl}${url}` : url;
-
-      // Never send people back to the login page itself. This also stops the
-      // nested callbackUrl loop.
-      if (target.includes("/auth/login")) return `${baseUrl}/explore`;
-
-      // Only allow redirects within this site.
-      if (target.startsWith(baseUrl)) return target;
-
-      return `${baseUrl}/explore`;
-    },
     async signIn({ user }) {
       if (!user.email) return false;
 
@@ -114,6 +106,7 @@ export const authOptions: NextAuthOptions = {
           fetchAPI<
             {
               id: number;
+              documentId?: string;
               roles: { title: string }[];
               profilePhoto: string | null;
             }[]
@@ -131,16 +124,14 @@ export const authOptions: NextAuthOptions = {
         const profilePhoto =
           authorizedUser.profilePhoto ||
           (isAzure && account.access_token
-            ? await syncAzureProfilePhoto(
-                account.access_token,
-                authorizedUser.id,
-              )
+            ? await syncAzureProfilePhoto(account.access_token, authorizedUser)
             : null);
 
         token.user = {
           // Stored so pages can start id-keyed fetches without first looking
           // the user up by email (see lib/auth/current-user-id.ts).
           id: authorizedUser.id,
+          documentId: authorizedUser.documentId,
           name: user.name,
           email: user.email,
           image: profilePhoto || user.image,

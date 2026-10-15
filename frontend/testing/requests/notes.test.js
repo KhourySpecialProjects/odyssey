@@ -9,8 +9,15 @@ const {
   deleteNote,
 } = require("../../lib/requests/notes");
 const { fetchAPI } = require("../../lib/utils");
+const {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} = require("../../lib/strapi-document-id");
 
 const mockNotes = require("../mocks/notesMock");
+const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -199,6 +206,30 @@ describe("Notes Tests", () => {
       revalidateTag.mockReset();
     });
 
+    it("updates via the note documentId", async () => {
+      strapiEntryUrl.mockResolvedValueOnce("http://strapi/api/notes/docN1");
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await updateNoteContent(1, "x", 4);
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith("notes", 1);
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://strapi/api/notes/docN1",
+        expect.objectContaining({ method: "PUT" }),
+      );
+    });
+
+    it("returns success:false when the note cannot be resolved", async () => {
+      strapiEntryUrl.mockRejectedValueOnce(
+        new StrapiEntryNotFoundError("missing"),
+      );
+
+      const result = await updateNoteContent(1, "x", 4);
+
+      expect(result.success).toBe(false);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it("should successfully update note content", async () => {
       const mockResponse = {
         ok: true,
@@ -212,7 +243,7 @@ describe("Notes Tests", () => {
       const result = await updateNoteContent(1, "Updated content", 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/notes/1"),
+        expect.stringContaining("/api/notes/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -284,7 +315,7 @@ describe("Notes Tests", () => {
       const result = await updateNotePosition(1, 150, 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/notes/1"),
+        expect.stringContaining("/api/notes/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -346,11 +377,20 @@ describe("Notes Tests", () => {
     });
 
     it("should successfully create a new note", async () => {
-      const mockLesson = { id: 101, title: "Test Lesson" };
-      const mockEnrollment = { id: 201, authorizedUser: { id: 4 } };
+      const mockLesson = {
+        id: 101,
+        documentId: "docL101",
+        title: "Test Lesson",
+      };
+      const mockEnrollment = {
+        id: 201,
+        documentId: "docE201",
+        authorizedUser: { id: 4 },
+      };
       const mockPosition = 150;
       const mockHighlight = {
         id: 301,
+        documentId: "docH301",
         text: "Highlighted text",
         color: "yellow",
         yLevel: 75,
@@ -376,6 +416,9 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
 
       const result = await createNote(
         mockLesson,
@@ -397,10 +440,10 @@ describe("Notes Tests", () => {
           body: JSON.stringify({
             data: {
               content: "",
-              lesson: mockLesson.id,
-              enrollment: mockEnrollment.id,
+              lesson: "doc101",
+              enrollment: "doc201",
               positionY: Math.round(mockPosition),
-              highlight: mockHighlight.id,
+              highlight: "doc301",
             },
           }),
         }),
@@ -411,9 +454,78 @@ describe("Notes Tests", () => {
       expect(result).toEqual({ success: true });
     });
 
+    it("resolves relations from numeric ids only and ignores client documentIds", async () => {
+      const lesson = { id: 101, documentId: "someoneElsesLesson" };
+      const enrollment = { id: 201, documentId: "someoneElsesEnrollment" };
+      const highlight = { id: 301, documentId: "someoneElsesHighlight" };
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 1 } }),
+      });
+
+      await createNote(lesson, enrollment, 10, 4, highlight);
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("lessons", 101);
+      expect(resolveDocumentId).toHaveBeenCalledWith("enrollments", 201);
+      expect(resolveDocumentId).toHaveBeenCalledWith("highlights", { id: 301 });
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data).toMatchObject({
+        lesson: "doc101",
+        enrollment: "doc201",
+        highlight: "doc301",
+      });
+    });
+
+    it("resolves numeric-only entities to documentIds", async () => {
+      const toDoc = async (_c, ref) =>
+        "doc" + (typeof ref === "object" ? ref.id : ref);
+      resolveDocumentId
+        .mockImplementationOnce(toDoc)
+        .mockImplementationOnce(toDoc)
+        .mockImplementationOnce(toDoc);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 1 } }),
+      });
+
+      await createNote({ id: 101 }, { id: 201 }, 10, 4, { id: 301 });
+
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data).toMatchObject({
+        lesson: "doc101",
+        enrollment: "doc201",
+        highlight: "doc301",
+      });
+    });
+
+    it("returns the add-failed result when a relation cannot be resolved", async () => {
+      resolveDocumentId.mockRejectedValueOnce(
+        new StrapiEntryNotFoundError("missing"),
+      );
+
+      const result = await createNote({ id: 1 }, { id: 2 }, 10, 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to add new note",
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it("should create a note without a highlight", async () => {
-      const mockLesson = { id: 101, title: "Test Lesson" };
-      const mockEnrollment = { id: 201, authorizedUser: { id: 4 } };
+      const mockLesson = {
+        id: 101,
+        documentId: "docL101",
+        title: "Test Lesson",
+      };
+      const mockEnrollment = {
+        id: 201,
+        documentId: "docE201",
+        authorizedUser: { id: 4 },
+      };
       const mockPosition = 150;
 
       const mockResponse = {
@@ -422,6 +534,9 @@ describe("Notes Tests", () => {
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
 
       const result = await createNote(
         mockLesson,
@@ -436,8 +551,8 @@ describe("Notes Tests", () => {
           body: JSON.stringify({
             data: {
               content: "",
-              lesson: mockLesson.id,
-              enrollment: mockEnrollment.id,
+              lesson: "doc101",
+              enrollment: "doc201",
               positionY: Math.round(mockPosition),
               highlight: undefined,
             },
@@ -524,7 +639,7 @@ describe("deleteNote", () => {
     const result = await deleteNote(1, 4);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringMatching("/api/notes/1"),
+      expect.stringMatching("/api/notes/doc1"),
       expect.objectContaining({
         method: "DELETE",
         headers: expect.objectContaining({
@@ -541,6 +656,44 @@ describe("deleteNote", () => {
     });
 
     expect(revalidateTag).toHaveBeenCalledWith("notes-4");
+  });
+
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deleteNote(1, 4);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.notes(4));
+  });
+
+  it("deletes via the note documentId", async () => {
+    strapiEntryUrl.mockResolvedValueOnce("http://strapi/api/notes/docN1");
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { id: 1 } }),
+    });
+
+    await deleteNote(1, 4);
+
+    expect(strapiEntryUrl).toHaveBeenCalledWith("notes", 1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://strapi/api/notes/docN1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("returns the not-found result when the note cannot be resolved", async () => {
+    strapiEntryUrl.mockRejectedValueOnce(
+      new StrapiEntryNotFoundError("missing"),
+    );
+
+    const result = await deleteNote(1, 4);
+
+    expect(result).toEqual({ ok: false, error: "Not Found", data: null });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("handles deletion failure", async () => {

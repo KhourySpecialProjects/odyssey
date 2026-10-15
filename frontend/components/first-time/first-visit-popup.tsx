@@ -115,25 +115,16 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           "Hey there — welcome to Odyssey! This is where you'll see updates to your droplets, playlists, and groups.",
           user,
         );
-        try {
-          const introDroplet = await getDropletById<Droplet>(43);
-          const enrollData = await getEnrollmentsByAuthorizedUser(user.id);
-          if (
-            enrollData &&
-            !enrollData.some((enroll) => enroll.droplet?.id === 43)
-          ) {
-            await createEnrollment(introDroplet, []);
-          }
-          setIsOpen(false);
-          router.push("/d/introduction-to-odyssey");
-        } catch (err) {
-          console.error(
-            "Intro droplet not available, skipping enrollment",
-            err,
-          );
-          setIsOpen(false);
-          router.push("/explore");
+        const introDroplet = await getDropletById<Droplet>(43);
+        const enrollData = await getEnrollmentsByAuthorizedUser(user.id);
+        if (
+          enrollData &&
+          !enrollData.some((enroll) => enroll.droplet?.id === 43)
+        ) {
+          await createEnrollment(introDroplet, []);
         }
+        setIsOpen(false);
+        router.push("/d/introduction-to-odyssey");
       }
     } catch {
       console.error("Failed to save your information. Please try again.");

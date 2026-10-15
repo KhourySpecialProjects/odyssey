@@ -96,6 +96,24 @@ export function makeFetchResponse(body: unknown, status = 200): Response {
   } as unknown as Response;
 }
 
+/** Empty-body response like Strapi v5's DELETE 204; `json()` throws as real fetch does. */
+export function makeEmptyResponse(status = 204): Response {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  if (typeof (globalThis as any).Response === "function") {
+    return new (globalThis as any).Response(null, { status });
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => {
+      throw new SyntaxError("Unexpected end of JSON input");
+    },
+    text: async () => "",
+    headers: { get: () => null } as unknown as Headers,
+  } as unknown as Response;
+}
+
 /**
  * Constructs a failed (ok=false) Response-compatible object.
  */
