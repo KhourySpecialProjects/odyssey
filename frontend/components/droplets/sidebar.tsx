@@ -179,7 +179,11 @@ export default function Sidebar({
       );
     } catch (error) {
       console.error("Error creating draft:", error);
-      alert("Failed to create draft. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? `Failed to create draft: ${error.message}`
+          : "Failed to create draft. Please try again.",
+      );
     } finally {
       setIsCreatingDraft(false);
       setShowEditDialog(false);
