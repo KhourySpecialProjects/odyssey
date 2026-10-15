@@ -1,24 +1,21 @@
 services:
   strapi:
-    container_name: strapi
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: strapi:latest
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
-      - ./backend/.docker.env
-    volumes:
-      - ./backend/config:/opt/app/config
-      - ./backend/types:/opt/app/types
-      - ./backend/src:/opt/app/src
-      - ./backend/package.json:/opt/package.json
-      - ./backend/yarn.lock:/opt/yarn.lock
-      - ./backend/.env:/opt/app/.env
-      - ./backend/public/uploads:/opt/app/public/uploads
-    ports:
-      - 1337:1337
+    environment:
+      - HOST=0.0.0.0
+      - PORT=1337
+      - DATABASE_CLIENT=postgres
+      - DATABASE_HOST=strapiDB
+      - DATABASE_PORT=5432
+      - DATABASE_SSL=false
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_ENDPOINT=${AWS_S3_ENDPOINT}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_CDN_URL=${AWS_CDN_URL}
+      - AWS_CDN_ROOT_PATH=${AWS_CDN_ROOT_PATH}
     depends_on:
       - strapiDB
     networks:
@@ -26,16 +23,15 @@ services:
       - frontend
 
   strapiDB:
-    container_name: strapiDB
-    platform: linux/amd64 #for platform error on Apple M1 chips
+    platform: linux/amd64
     restart: unless-stopped
-    env_file: ./backend/.docker.env
     image: postgres:12.0-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - ./initdb:/docker-entrypoint-initdb.d
-      - strapi-data:/var/lib/postgresql/data/ #using a volume
-    ports:
-      - 5432:5432
+      - strapi-data:/var/lib/postgresql/data/
     networks:
       - db
 
@@ -43,20 +39,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_cache:/app/.next
-    env_file:
-      - ./frontend/.env.local
-      - ./frontend/.docker.env
     environment:
-      - WATCHPACK_POLLING=true
-      # PISTON_API_URL / JUDGE0_API_URL / JUDGE0_API_KEY come from
-      # frontend/.env.local. Judge0 wins if both are set.
-    ports:
-      - 3000:3000
+      - NEXT_PUBLIC_APP_ENV=production
+      - APP_URL=${APP_URL}
+      - STRAPI_API_URL=http://strapi:1337
+      - NEXT_PUBLIC_STRAPI_API_URL=${NEXT_PUBLIC_STRAPI_API_URL}
+      - AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
+      - AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
+      - POSTHOG_PROJECT_ID=${POSTHOG_PROJECT_ID}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_S3_BUCKET_ROOT=${AWS_S3_BUCKET_ROOT}
+      - AWS_S3_BUCKET_URL=${AWS_S3_BUCKET_URL}
+      - AWS_CDN_URL=${AWS_CDN_URL}
     depends_on:
       - strapi
       - piston
@@ -64,21 +62,16 @@ services:
       - frontend
 
   piston:
-    container_name: piston
     image: ghcr.io/engineer-man/piston:latest
     restart: unless-stopped
     privileged: true
     volumes:
       - piston-data:/piston
-    ports:
-      - "127.0.0.1:2000:2000"
     networks:
       - frontend
 
 volumes:
   strapi-data:
-  frontend_node_modules:
-  frontend_cache:
   piston-data:
 
 networks:
