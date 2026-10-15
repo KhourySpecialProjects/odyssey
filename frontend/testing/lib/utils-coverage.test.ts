@@ -974,4 +974,108 @@ describe("convertBlockNoteToMarkdown", () => {
     ];
     expect(convertBlockNoteToMarkdown(blocks)).toBe("First\n\nSecond");
   });
+
+  it("converts a table with inline-content cells, first row as header", () => {
+    const blocks = [
+      {
+        type: "table",
+        props: {},
+        content: {
+          type: "tableContent",
+          columnWidths: [undefined, undefined],
+          rows: [
+            { cells: [[{ text: "Name", styles: {} }], [{ text: "Age" }]] },
+            {
+              cells: [
+                [{ text: "Ada", styles: { bold: true } }],
+                [{ text: "36" }],
+              ],
+            },
+          ],
+        },
+        children: [],
+      },
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe(
+      "| Name | Age |\n| --- | --- |\n| **Ada** | 36 |",
+    );
+  });
+
+  it("converts a table with tableCell objects and escapes pipes", () => {
+    const cell = (text: string) => ({
+      type: "tableCell",
+      props: {},
+      content: [{ type: "text", text, styles: {} }],
+    });
+    const blocks = [
+      {
+        type: "table",
+        props: {},
+        content: {
+          type: "tableContent",
+          rows: [{ cells: [cell("a|b"), cell("c")] }, { cells: [cell("d")] }],
+        },
+      },
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe(
+      "| a\\|b | c |\n| --- | --- |\n| d |  |",
+    );
+  });
+
+  it("returns empty string for a table with no rows", () => {
+    const blocks = [
+      { type: "table", props: {}, content: { type: "tableContent", rows: [] } },
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe("");
+  });
+
+  it("does not throw when a block's content is not an array", () => {
+    const blocks = [
+      { type: "paragraph", props: {}, content: { unexpected: true } },
+      { type: "heading", content: [{ text: "No props", styles: {} }] },
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe("# No props");
+  });
+
+  it("returns empty string when blocks is not an array", () => {
+    expect(convertBlockNoteToMarkdown(null as any)).toBe("");
+  });
+
+  it("converts links inside inline content", () => {
+    const blocks = [
+      {
+        type: "paragraph",
+        props: {},
+        content: [
+          { type: "text", text: "See ", styles: {} },
+          {
+            type: "link",
+            href: "https://example.com",
+            content: [{ type: "text", text: "docs", styles: { bold: true } }],
+          },
+        ],
+      },
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe(
+      "See [**docs**](https://example.com)",
+    );
+  });
+
+  it("indents nested list items under their parent", () => {
+    const item = (type: string, text: string, children: any[] = []) => ({
+      type,
+      props: {},
+      content: [{ type: "text", text, styles: {} }],
+      children,
+    });
+    const blocks = [
+      item("bulletListItem", "Parent", [
+        item("bulletListItem", "Child", [item("bulletListItem", "Grandchild")]),
+      ]),
+      item("numberedListItem", "Step", [item("paragraph", "Detail")]),
+    ];
+    expect(convertBlockNoteToMarkdown(blocks)).toBe(
+      "- Parent\n\n  - Child\n\n    - Grandchild\n\n1. Step\n\n   Detail",
+    );
+  });
 });
