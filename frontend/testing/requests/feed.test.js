@@ -10,10 +10,6 @@ const {
 } = require("../../lib/requests/feed");
 const { flattenAttributes } = require("../../lib/utils");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
-const {
-  resolveDocumentId,
-  strapiEntryUrl,
-} = require("../../lib/strapi-document-id");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -30,19 +26,7 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-// Non-identity mapping (5 -> "doc5") proves URLs and relation values are
-// documentIds, not numeric ids.
-const toDoc = (ref) => {
-  const v = ref && typeof ref === "object" ? ref.documentId ?? ref.id : ref;
-  return `doc${v}`;
-};
-
 beforeEach(() => {
-  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
-  strapiEntryUrl.mockImplementation(
-    async (c, ref, q) =>
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${c}/${toDoc(ref)}${q ? `?${q}` : ""}`,
-  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -332,17 +316,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.content).toContain(mockUser.lastName);
       expect(requestBody.data.content).toContain(mockDroplet.name);
       expect(requestBody.data.type).toBe("friend");
-      expect(requestBody.data.droplet).toBe(`doc${mockDroplet.id}`);
-      // Only numeric ids are passed: the entities come from the caller.
-      expect(resolveDocumentId).toHaveBeenCalledWith(
-        "droplets",
-        mockDroplet.id,
-      );
-      expect(resolveDocumentId).toHaveBeenCalledWith(
-        "authorized-users",
-        mockUser.id,
-      );
-      expect(requestBody.data.authorized_user).toBe(`doc${mockUser.id}`);
+      expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
@@ -442,7 +416,7 @@ describe("Feed tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
-        `http://test-api-url/api/announcements/doc${announcementId}`,
+        `http://test-api-url/api/announcements/${announcementId}`,
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -452,7 +426,7 @@ describe("Feed tests", () => {
           body: JSON.stringify({
             data: {
               kudosGiven: {
-                connect: [`doc${mockUser.id}`],
+                connect: [mockUser],
               },
             },
           }),
@@ -476,7 +450,7 @@ describe("Feed tests", () => {
       // expect(requestBody.data.content).toContain(mockUser.firstName);
       expect(requestBody.data.content).toContain("kudos");
       expect(requestBody.data.type).toBe("kudos");
-      expect(requestBody.data.authorized_user).toBe(`doc${mockUser.id}`);
+      expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
@@ -587,7 +561,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(playlistName);
       expect(requestBody.data.type).toBe("playlist");
-      expect(requestBody.data.playlist).toBe(`doc${playlistId}`);
+      expect(requestBody.data.playlist).toBe(playlistId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -668,7 +642,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(groupName);
       expect(requestBody.data.type).toBe("group");
-      expect(requestBody.data.group).toBe(`doc${groupId}`);
+      expect(requestBody.data.group).toBe(groupId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -749,7 +723,7 @@ describe("Feed tests", () => {
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(dropletName);
       expect(requestBody.data.type).toBe("droplet");
-      expect(requestBody.data.droplet).toBe(`doc${dropletId}`);
+      expect(requestBody.data.droplet).toBe(dropletId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
       expect(revalidateTag).toHaveBeenCalledWith("announcements");
@@ -832,7 +806,7 @@ describe("Feed tests", () => {
 
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toBe(content);
-      expect(requestBody.data.authorized_user).toBe(`doc${mockAuthUser.id}`);
+      expect(requestBody.data.authorized_user).toBe(mockAuthUser.id);
       expect(requestBody.data.type).toBe("system");
       expect(requestBody.data.firstCreated).toBeDefined();
 

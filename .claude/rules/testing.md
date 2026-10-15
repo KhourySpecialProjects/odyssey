@@ -17,5 +17,3 @@ paths:
 - Always `jest.clearAllMocks()` in `beforeEach`.
 - Prefer `getByRole` > `getByText` > `getByLabelText` > `getByTestId`.
 - Run specific tests: `cd frontend && npx jest path/to/test.ts`.
-- Document ids are mocked globally: `5` becomes `"doc5"`. After `jest.resetAllMocks()` call `installDocumentIdMock()`.
-- Mock a DELETE response with `makeEmptyResponse(204)`.
