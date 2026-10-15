@@ -373,22 +373,47 @@ export function Sidebar({
 
   if (!user) return <UnauthorizedRoute />;
 
-  const showActionButton = droplet.status !== "published" && !droplet.inReview;
+  const isDraft = droplet.status !== "published";
   const isAdmin = isAuthorizedUserAdmin(user.roles);
   const isEditor = isContentEditor(user.roles);
   const isFaculty = isAuthorizedUserFaculty(user.roles);
   const isCreator = isContentCreator(user.roles);
-  const actionButtonProps =
-    showActionButton && (isAdmin || isEditor || isFaculty)
-      ? {
-          actionType: (droplet.originalDropletId
-            ? "publishDraft"
-            : "publish") as "publishDraft" | "publish",
-          buttonText: "Publish",
-        }
-      : showActionButton && isCreator
-        ? { actionType: "requestReview" as const, buttonText: "Review" }
-        : null;
+  // Admin and Faculty can publish any draft; Content Editors only once it has
+  // been submitted for review. Whoever can publish an in-review draft can also
+  // send it back with requested changes.
+  const canPublish =
+    isDraft && (isAdmin || isFaculty || (isEditor && droplet.inReview));
+  const canRequestChanges =
+    isDraft && droplet.inReview && (isAdmin || isFaculty || isEditor);
+  const canRequestReview =
+    isDraft && !droplet.inReview && isCreator && !canPublish;
+
+  const actionButtons: Pick<
+    Parameters<typeof ContentActionButton>[0],
+    "actionType" | "buttonText"
+  >[] = [];
+  if (canPublish) {
+    // An edit draft overwrites its live droplet when published
+    actionButtons.push(
+      droplet.originalDropletId
+        ? { actionType: "publishDraft", buttonText: "Publish changes" }
+        : { actionType: "publish", buttonText: "Publish" },
+    );
+  }
+  if (canRequestChanges) {
+    actionButtons.push({
+      actionType: "requestChanges",
+      buttonText: "Request changes",
+    });
+  }
+  if (canRequestReview) {
+    actionButtons.push({
+      actionType: "requestReview",
+      buttonText: droplet.afterReview
+        ? "Resubmit for review"
+        : "Submit for review",
+    });
+  }
 
   return (
     <>
@@ -714,7 +739,10 @@ export function Sidebar({
                 />
               </button>
             </div>
-            <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
+            {/* Wraps so a long action label ("Submit for review", "Request
+                changes") gets its own full-width row instead of overflowing
+                the sidebar */}
+            <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={
                   pathname.startsWith(`/draft/d/${droplet.slug}/`)
@@ -725,17 +753,18 @@ export function Sidebar({
               >
                 Preview
               </Link>
-              {actionButtonProps && (
+              {actionButtons.map(({ actionType, buttonText }) => (
                 <ContentActionButton
+                  key={actionType}
                   droplet={
                     droplet as Parameters<
                       typeof ContentActionButton
                     >[0]["droplet"]
                   }
-                  actionType={actionButtonProps.actionType}
-                  buttonText={actionButtonProps.buttonText}
+                  actionType={actionType}
+                  buttonText={buttonText}
                 />
-              )}
+              ))}
             </div>
           </div>
         </div>
