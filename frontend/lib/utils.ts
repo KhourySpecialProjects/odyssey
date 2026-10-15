@@ -613,71 +613,127 @@ export function parseSandpackFiles(
   }
 }
 
-// Helper function to convert BlockNote JSON to markdown
+// Converts BlockNote inline content (styled text and links) to markdown.
+// Anything that isn't an array (e.g. a table's content object) yields "".
+function inlineContentToMarkdown(content: unknown): string {
+  if (!Array.isArray(content)) return "";
+
+  return content
+    .map((item: any) => {
+      if (item?.type === "link") {
+        return `[${inlineContentToMarkdown(item.content)}](${item.href ?? ""})`;
+      }
+
+      let formatted = item?.text || "";
+
+      // Apply text styles
+      if (item?.styles?.bold) formatted = `**${formatted}**`;
+      if (item?.styles?.italic) formatted = `*${formatted}*`;
+      if (item?.styles?.underline) formatted = `<u>${formatted}</u>`;
+      if (item?.styles?.strike) formatted = `~~${formatted}~~`;
+      if (item?.styles?.code) formatted = `\`${formatted}\``;
+
+      return formatted;
+    })
+    .join("");
+}
+
+// Converts BlockNote table content to a markdown table. Markdown tables need
+// a header, so the first row becomes it. Cells are either inline content
+// arrays or { type: "tableCell", content } objects, depending on the editor.
+function tableContentToMarkdown(content: any): string {
+  const rows: string[][] = (content?.rows ?? []).map((row: any) =>
+    (row?.cells ?? []).map((cell: any) =>
+      inlineContentToMarkdown(Array.isArray(cell) ? cell : cell?.content)
+        .replace(/\|/g, "\\|")
+        .replace(/\n/g, " "),
+    ),
+  );
+  const width = Math.max(0, ...rows.map((row) => row.length));
+  if (width === 0) return "";
+
+  const toLine = (cells: string[]) =>
+    `| ${Array.from({ length: width }, (_, i) => cells[i] ?? "").join(" | ")} |`;
+
+  return [
+    toLine(rows[0]),
+    toLine(Array(width).fill("---")),
+    ...rows.slice(1).map(toLine),
+  ].join("\n");
+}
+
+function blockNoteBlockToMarkdown(block: any): string {
+  const props = block.props ?? {};
+  const text = inlineContentToMarkdown(block.content);
+
+  switch (block.type) {
+    case "heading":
+      const level = "#".repeat(props.level || 1);
+      return `${level} ${text}`;
+
+    case "paragraph":
+      return text || "";
+
+    case "bulletListItem":
+      return `- ${text}`;
+
+    case "numberedListItem":
+      return `1. ${text}`;
+
+    case "table":
+      return tableContentToMarkdown(block.content);
+
+    case "image":
+      const imgCaption = props.caption || "";
+      return props.url ? `![${imgCaption}](${props.url})` : "";
+
+    case "video":
+      return props.url
+        ? `#### Video\n\nVideo Link: ${props.url}${props.caption ? `\n\n*${props.caption}*` : ""}`
+        : "";
+
+    case "callout":
+      const calloutType = props.calloutType || "default";
+      return `> **${calloutType.charAt(0).toUpperCase() + calloutType.slice(1)}**\n> \n> ${text}`;
+
+    case "quiz-true-false":
+      return `#### True/False Question\n\n**Q:** ${props.question}\n\n**Correct Answer:** ${props.correctAnswer ? "True" : "False"}`;
+
+    case "quiz-open-ended":
+      return `#### Open-Ended Question\n\n**Q:** ${props.question}\n\n**Answer:** ${props.correctAnswer}`;
+
+    case "quiz-multiple-choice":
+      const options = props.options
+        ?.map(
+          (opt: any, idx: number) =>
+            `   ${idx + 1}. ${opt.text} ${opt.isCorrect ? "✓ (Correct)" : ""}`,
+        )
+        .join("\n");
+      return `#### Multiple Choice Question\n\n**Q:** ${props.question}\n\n${options}`;
+
+    default:
+      return "";
+  }
+}
+
+// Helper function to convert BlockNote JSON to markdown. Nested blocks
+// (e.g. indented list items) are indented under their parent.
 export function convertBlockNoteToMarkdown(blocks: any[]): string {
+  if (!Array.isArray(blocks)) return "";
+
   return blocks
     .map((block) => {
-      const text =
-        block.content
-          ?.map((content: any) => {
-            let formatted = content.text || "";
+      const markdown = blockNoteBlockToMarkdown(block);
+      const children = convertBlockNoteToMarkdown(block.children);
+      if (!children) return markdown;
+      if (!markdown) return children;
 
-            // Apply text styles
-            if (content.styles?.bold) formatted = `**${formatted}**`;
-            if (content.styles?.italic) formatted = `*${formatted}*`;
-            if (content.styles?.underline) formatted = `<u>${formatted}</u>`;
-            if (content.styles?.strike) formatted = `~~${formatted}~~`;
-            if (content.styles?.code) formatted = `\`${formatted}\``;
-
-            return formatted;
-          })
-          .join("") || "";
-
-      switch (block.type) {
-        case "heading":
-          const level = "#".repeat(block.props.level);
-          return `${level} ${text}`;
-
-        case "paragraph":
-          return text || "";
-
-        case "bulletListItem":
-          return `- ${text}`;
-
-        case "numberedListItem":
-          return `1. ${text}`;
-
-        case "image":
-          const imgCaption = block.props.caption || "";
-          return block.props.url ? `![${imgCaption}](${block.props.url})` : "";
-
-        case "video":
-          return block.props.url
-            ? `#### Video\n\nVideo Link: ${block.props.url}${block.props.caption ? `\n\n*${block.props.caption}*` : ""}`
-            : "";
-
-        case "callout":
-          const calloutType = block.props.calloutType || "default";
-          return `> **${calloutType.charAt(0).toUpperCase() + calloutType.slice(1)}**\n> \n> ${text}`;
-
-        case "quiz-true-false":
-          return `#### True/False Question\n\n**Q:** ${block.props.question}\n\n**Correct Answer:** ${block.props.correctAnswer ? "True" : "False"}`;
-
-        case "quiz-open-ended":
-          return `#### Open-Ended Question\n\n**Q:** ${block.props.question}\n\n**Answer:** ${block.props.correctAnswer}`;
-
-        case "quiz-multiple-choice":
-          const options = block.props.options
-            ?.map(
-              (opt: any, idx: number) =>
-                `   ${idx + 1}. ${opt.text} ${opt.isCorrect ? "✓ (Correct)" : ""}`,
-            )
-            .join("\n");
-          return `#### Multiple Choice Question\n\n**Q:** ${block.props.question}\n\n${options}`;
-
-        default:
-          return "";
-      }
+      const indent = block.type === "numberedListItem" ? "   " : "  ";
+      const indented = children
+        .split("\n")
+        .map((line) => (line ? indent + line : line))
+        .join("\n");
+      return `${markdown}\n\n${indented}`;
     })
     .filter((line) => line !== "")
     .join("\n\n");

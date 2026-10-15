@@ -2,12 +2,17 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { Block, Droplet } from "@/types";
 import { getDropletBySlug } from "@/lib/requests/droplet";
+import { toast } from "sonner";
 
 jest.mock("@/lib/requests/droplet", () => ({
   ...jest.requireActual("@/lib/requests/droplet"),
   getDropletBySlug: jest.fn(),
   archiveDroplet: jest.fn(),
   favoriteDroplet: jest.fn(),
+}));
+
+jest.mock("sonner", () => ({
+  toast: { success: jest.fn(), error: jest.fn() },
 }));
 
 // Mock URL.createObjectURL and URL.revokeObjectURL
@@ -736,6 +741,111 @@ describe("Export Droplet to Markdown", () => {
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("#### Callout Droplet");
       expect(markdownContent).toContain("Color: blue");
+    });
+  });
+
+  describe("BlockNote (v2) lessons", () => {
+    it("exports a v2 lesson that contains a table", async () => {
+      const dropletWithTable = {
+        ...mockDroplet,
+        lessons: [
+          {
+            id: 1,
+            name: "Table Lesson",
+            slug: "table-lesson",
+            type: "standard",
+            orderIndex: 1,
+            droplets: [] as Droplet[],
+            notes: "",
+            blocks: [],
+            blocksVersion: "v2",
+            blocksV2: [
+              {
+                type: "paragraph",
+                props: {},
+                content: [{ type: "text", text: "Before table", styles: {} }],
+                children: [],
+              },
+              {
+                type: "table",
+                props: {},
+                content: {
+                  type: "tableContent",
+                  columnWidths: [undefined, undefined],
+                  rows: [
+                    {
+                      cells: [
+                        [{ type: "text", text: "Term" }],
+                        [{ type: "text", text: "Meaning" }],
+                      ],
+                    },
+                    {
+                      cells: [
+                        [{ type: "text", text: "API" }],
+                        [{ type: "text", text: "Interface" }],
+                      ],
+                    },
+                  ],
+                },
+                children: [],
+              },
+            ],
+          },
+        ],
+      } as any;
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletWithTable);
+      const blobSpy = jest.spyOn(global, "Blob");
+
+      render(<DropletTile droplet={dropletWithTable} isAdmin={true} />);
+      await clickExportAndWait(blobSpy);
+
+      const markdownContent = getMarkdownContent(blobSpy);
+      expect(markdownContent).toContain("Before table");
+      expect(markdownContent).toContain(
+        "| Term | Meaning |\n| --- | --- |\n| API | Interface |",
+      );
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("exports a droplet with no difficulty", async () => {
+      const dropletNoDifficulty = { ...mockDroplet, difficulty: null };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoDifficulty);
+      const blobSpy = jest.spyOn(global, "Blob");
+
+      render(<DropletTile droplet={dropletNoDifficulty} isAdmin={true} />);
+      await clickExportAndWait(blobSpy);
+
+      expect(getMarkdownContent(blobSpy)).toContain("Difficulty: Not set");
+    });
+  });
+
+  describe("Export failures", () => {
+    it("shows an error toast when the droplet can't be fetched", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      (getDropletBySlug as jest.Mock).mockRejectedValue(new Error("boom"));
+      const blobSpy = jest.spyOn(global, "Blob");
+
+      render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
+      fireEvent.click(screen.getByRole("button", { name: /export markdown/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to export Markdown. Please try again.",
+        );
+      });
+      expect(blobSpy).not.toHaveBeenCalled();
+    });
+
+    it("shows an error toast when the droplet is not found", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      (getDropletBySlug as jest.Mock).mockResolvedValue(undefined);
+
+      render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
+      fireEvent.click(screen.getByRole("button", { name: /export markdown/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled();
+      });
     });
   });
 });
