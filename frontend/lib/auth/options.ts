@@ -77,12 +77,27 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      // GitHub now sends an `iss` parameter on OAuth callbacks (RFC 9207).
+      // NextAuth v4 rejects the callback unless the provider declares its issuer.
+      issuer: "https://github.com/login/oauth",
     }),
   ],
   pages: {
     signIn: "/auth/login",
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      const target = url.startsWith("/") ? `${baseUrl}${url}` : url;
+
+      // Never send people back to the login page itself. This also stops the
+      // nested callbackUrl loop.
+      if (target.includes("/auth/login")) return `${baseUrl}/explore`;
+
+      // Only allow redirects within this site.
+      if (target.startsWith(baseUrl)) return target;
+
+      return `${baseUrl}/explore`;
+    },
     async signIn({ user }) {
       if (!user.email) return false;
 
