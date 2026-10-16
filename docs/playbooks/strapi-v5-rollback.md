@@ -17,7 +17,7 @@ The Driver writes these down in the window notes at the start of the window. If 
 - [ ] Media bucket name and the T0 media listing file
 - [ ] Who the Driver and the Rollback approver are
 
-All `psql` commands assume `PGHOST`, `PGUSER` and `PGPASSWORD` point at the RDS instance, using PG 18 client tools. The `scripts/ody-596/` scripts must exist (ODY-596 Tasks 1–3). If they don't, this checklist isn't ready to use.
+All `psql` commands assume `PGHOST`, `PGUSER` and `PGPASSWORD` point at the RDS instance, using PG 18 client tools. The `scripts/strapi-v5-cutover/rollback/` scripts must exist (ODY-596 Tasks 1–3). If they don't, this checklist isn't ready to use.
 
 ## Rules that always apply
 
@@ -61,7 +61,7 @@ If no data is damaged and a code fix can ship within about 2 hours, prefer fixin
 | Path B, but the frozen copy is missing or fails its check | **C. Restore from the dump**                |
 | The database server itself is down or unusable            | **D. Restore the snapshot to a new server** |
 
-If you're not sure whether v5 has started, run `psql -d <db> -f scripts/ody-596/fingerprint.sql`. If `flavor` is `v4`, use Path A. If it's `v5` or `PARTIAL`, use Path B.
+If you're not sure whether v5 has started, run `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`. If `flavor` is `v4`, use Path A. If it's `v5` or `PARTIAL`, use Path B.
 
 ## Path A: Abort (the database is untouched)
 
@@ -83,13 +83,13 @@ The rehearsal time is in the window notes. The swap itself takes seconds.
 2. [ ] **Close leftover database connections.** Run this connected to the `postgres` database:
        `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('<db>', '<db>_v4_frozen') AND pid <> pg_backend_pid();`
 3. [ ] **Only if the site had reopened:** save the list of what changed since reopening. Re-entry needs it later.
-       `psql -d <db> -v t_open='<T_open UTC>' -f scripts/ody-596/writes-since.sql > ~/ody-596/<env>-writes-since-<date>.txt`
+       `psql -d <db> -v t_open='<T_open UTC>' -f scripts/strapi-v5-cutover/rollback/writes-since.sql > ~/ody-596/<env>-writes-since-<date>.txt`
 4. [ ] **Check that the frozen copy is good.** `flavor` must be `v4`, and the counts must match the copy-check fingerprint file. If either is wrong, stop and go to Path C.
-       `psql -d <db>_v4_frozen -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] **Swap.** This renames the broken database to `<db>_v5_failed` and the frozen copy to `<db>`:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/ody-596/swap-back.sql`
+       `psql -d postgres -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] **Check the live database.** `flavor` must be `v4`. The owner and settings the swap script printed must match the T0 fingerprint.
-       `psql -d <db> -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 7. [ ] **Bring v4 back.** Deploy both rollback task definitions:
        `aws ecs update-service --cluster <cluster> --service <backend-service> --task-definition <backend rollback ARN> --desired-count 1`
        `aws ecs update-service --cluster <cluster> --service <frontend-service> --task-definition <frontend rollback ARN> --desired-count <normal count>`
@@ -108,9 +108,9 @@ Use this when the frozen copy is missing or broken. The restore time from the re
        `createdb <db>_v4_restored`
        `pg_restore --no-owner --role=<db owner> -j 4 -d <db>_v4_restored <dump file>`
 4. [ ] Check it. `flavor` must be `v4`, and the counts must match the T0 fingerprint file.
-       `psql -d <db>_v4_restored -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db>_v4_restored -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] Swap it in:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/ody-596/swap-back.sql`
+       `psql -d postgres -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] Continue from Path B step 6.
 
 ## Path D: Restore the snapshot to a new server

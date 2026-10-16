@@ -6,13 +6,13 @@ The checklist for the combined v4 → v5 cutover (ODY-633 + ODY-597). Run it on 
 
 ## Dev vs prod
 
-|             | Dev                                                         | Prod                                                          |
-| ----------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
-| Merge       | `feature/strapi-v5` → `develop`                             | `develop` → `production`                                      |
-| Pipeline    | `dev2-image-push.yml`                                       | `prod-image-push.yml`                                         |
-| `02` file   | `scripts/ody-633/02-handle-unpublished.sql` (dev decisions) | `~/ody-633/02-handle-unpublished.prod.sql` (outside the repo) |
-| Database    | dev RDS, PG 16.13                                           | prod RDS, PG 18                                               |
-| Edit freeze | Tell the team in Slack                                      | Comms announces it ahead of time                              |
+|             | Dev                                                                                    | Prod                                                          |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Merge       | `feature/strapi-v5` → `develop`                                                        | `develop` → `production`                                      |
+| Pipeline    | `dev2-image-push.yml`                                                                  | `prod-image-push.yml`                                         |
+| `02` file   | `scripts/strapi-v5-cutover/unpublished-rows/02-handle-unpublished.sql` (dev decisions) | `~/ody-633/02-handle-unpublished.prod.sql` (outside the repo) |
+| Database    | dev RDS, PG 16.13                                                                      | prod RDS, PG 18                                               |
+| Edit freeze | Tell the team in Slack                                                                 | Comms announces it ahead of time                              |
 
 Both pipelines deploy the frontend and backend at the same time as soon as the merge lands. Neither one sets a task count, so you scale the backend up by hand.
 
@@ -55,7 +55,7 @@ The outage runs from step 3 to step 15. **Don't run `terraform apply` during the
 3. [ ] **Backend to 0.** Wait until 0 tasks are running.
        `aws ecs update-service --cluster <cluster> --service <backend-service> --desired-count 0`
 4. [ ] **Audit.** Save the output. Query 4 is the baseline for step 12.
-       `psql -v ON_ERROR_STOP=1 -f scripts/ody-633/01-audit.sql`
+       `psql -v ON_ERROR_STOP=1 -f scripts/strapi-v5-cutover/unpublished-rows/01-audit.sql`
 5. [ ] **Compare with the rehearsal.** Are there unpublished rows that the rehearsal didn't have? Has any row marked for delete gained a dependent (section 3a)? If so, **stop** and decide with the Reviewer, or abort.
 6. [ ] **Handle.** This runs as one transaction and rolls back on any error.
        `psql -v ON_ERROR_STOP=1 -v expected_db=<db> -f <02 file>`
@@ -67,7 +67,7 @@ The outage runs from step 3 to step 15. **Don't run `terraform apply` during the
         `aws ecs update-service --cluster <cluster> --service <backend-service> --desired-count 1`
 11. [ ] **Wait for the migration.** In the backend logs, look for `[discard-drafts] Migration completed successfully` and then `Strapi started successfully`. If the second line hasn't appeared by boot + 2 × `T_mig`, **roll back**.
 12. [ ] **Verify the database.**
-        `psql -v ON_ERROR_STOP=1 -f scripts/ody-633/03-post-switch-verify.sql`
+        `psql -v ON_ERROR_STOP=1 -f scripts/strapi-v5-cutover/unpublished-rows/03-post-switch-verify.sql`
     - [ ] Section 1: `before_v5_boot` equals the step 7 totals.
     - [ ] Section 2: no migrations missing.
     - [ ] Section 3: every count is 0.

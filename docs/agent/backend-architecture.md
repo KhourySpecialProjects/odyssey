@@ -197,7 +197,7 @@ Strapi Draft & Publish is **off on every content type** (`draftAndPublish: false
 Droplet `isHidden`/`status` and voyage `isArchived` only filter listings: `/d/[slug]` and its lesson pages stay reachable by URL (ODY-660). Voyage `status` (non-staff) and playlist `isPublic` (non-enrolled) do gate their slug pages. Lessons have no visibility field. Don't send `publicationState` or `publishedAt`. New content types must set `draftAndPublish: false`, since the admin's Content-Type Builder turns it on by default and turning it off later triggers the hard delete below.
 
 - **`status` reservation:** v5 reserves `status` only on D&P types. With D&P off, boot only warns (only `id`/`document_id` collisions throw), but the Content-Type Builder refuses to create a _new_ `status` attribute. The admin handling is in the content-manager extension below.
-- **Cutover-only:** turning D&P off on a type deletes every row with `published_at IS NULL` (v4 hard-deletes on boot before migrations; v5 does the same and keeps the column). Back-fill `published_at` first. See `scripts/ody-633/` and `docs/playbooks/strapi-prod-migration-day.md`.
+- **Cutover-only:** turning D&P off on a type deletes every row with `published_at IS NULL` (v4 hard-deletes on boot before migrations; v5 does the same and keeps the column). Back-fill `published_at` first. See `scripts/strapi-v5-cutover/unpublished-rows/` and `docs/playbooks/strapi-prod-migration-day.md`.
 
 Publishing an `[EDIT]` draft (`publishDraftToOriginal`) syncs lessons in place instead of recreating them. Each draft lesson is matched to a live lesson by `originalLessonId` (recorded when `duplicateDroplet` clones the draft), then by exact name; position is never used. A matched lesson is updated with only the fields that changed, so it keeps its id and slug (even if renamed) and everything keyed to it: students' `viewedLessons`, notes and highlights. Slugs of kept lessons never change. Draft lessons with no match are created, and live lessons missing from the draft are deleted. Writes happen in this order: the droplet's metadata, lesson updates, lesson creates, lesson deletes, and only then the draft's own enrollments move and the draft is deleted. Deletes run last, after every update and create has succeeded, so a failure part way never leaves students with fewer lessons; it returns `{ ok: false }`, keeps the draft, and publishing again finishes the job.
 
@@ -245,7 +245,7 @@ PostgreSQL via `DATABASE_*` env variables. Local dev uses Docker Compose (`docke
 
 Seed data: `initdb/data.sql` runs on first Docker Compose startup to populate the database from a `pg_dump` of the dev server.
 
-- **Join tables renamed in v5:** `*_links` to `*_lnk`, `*_components` to `*_cmps`, `files_related_morphs` to `files_related_mph`. Index names keep the old names, and the migration is one-way. Raw SQL must use the new names; `scripts/ody-633/01`/`02` use the v4 names on purpose and `03` still does until playbook 2.2.
+- **Join tables renamed in v5:** `*_links` to `*_lnk`, `*_components` to `*_cmps`, `files_related_morphs` to `files_related_mph`. Index names keep the old names, and the migration is one-way. Raw SQL must use the new names; `scripts/strapi-v5-cutover/unpublished-rows/01`/`02` use the v4 names on purpose and `03` still does until playbook 2.2.
 - **No DB unique index on uid/slug fields in v5**, so two concurrent creates can race.
 
 ## Config on v5
