@@ -1,5 +1,5 @@
 // ODY-635: runs the real request functions with fetch stubbed and records every Strapi request they build.
-// Set ODY635_CATALOG_OUT=<file> to dump the catalog for scripts/ody-635/replay.mjs.
+// Set ODY635_CATALOG_OUT=<file> to dump the catalog for scripts/strapi-v5-cutover/api-smoke/replay.mjs.
 import fs from "fs";
 import path from "path";
 import {

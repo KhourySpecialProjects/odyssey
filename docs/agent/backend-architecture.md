@@ -184,7 +184,7 @@ await strapi.documents(uid).delete({ documentId });
 
 - An unknown query or body key returns 400 "Invalid key"; `error.details.source` is `query` or `body`.
 - Non-schema input keys need `strapi.contentAPI.addInputParams` (`backend/src/index.ts`).
-- Guard: `frontend/testing/contract/strapi-query-catalog.test.ts`; smoke: `scripts/ody-635/smoke-queries.sh`.
+- Guard: `frontend/testing/contract/strapi-query-catalog.test.ts`; smoke: `scripts/strapi-v5-cutover/api-smoke/smoke-queries.sh`.
 
 ### Draft & Publish
 
