@@ -939,7 +939,9 @@ export async function duplicateDroplet(dropletId: number) {
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      await Promise.all(
+      // allSettled, not all: every copy has to finish before a failure can
+      // remove the draft, or a copy still in flight would outlive it.
+      const results = await Promise.allSettled(
         sortedLessons.map(async (lesson, index) => {
           const lessonTimestamp = Date.now();
           const lessonRandomSuffix = Math.random()
@@ -1006,6 +1008,27 @@ export async function duplicateDroplet(dropletId: number) {
           );
         }),
       );
+
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failure) {
+        // A draft missing lessons can't be left behind: the next Edit would
+        // open it, and publishing it would delete those lessons from the
+        // live droplet along with their students' progress.
+        const cleanup = await deepDeleteDroplet(newDropletId);
+        const reason =
+          failure.reason instanceof Error
+            ? failure.reason.message
+            : String(failure.reason);
+        if (cleanup.error) {
+          throw new Error(
+            `${reason} (The incomplete draft couldn't be removed. Delete it from the draft editor and don't publish it.)`,
+          );
+        }
+        throw new Error(reason);
+      }
     }
 
     revalidateTag(CACHE_TAGS.authors);
