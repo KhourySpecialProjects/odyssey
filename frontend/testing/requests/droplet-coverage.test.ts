@@ -993,7 +993,104 @@ describe("droplet-coverage — duplicateDroplet", () => {
 
     const result = await duplicateDroplet(1);
     expect(result.ok).toBe(false);
-    expect(result.error).toMatch(/Failed to create lesson/);
+    expect(result.error).toBe(
+      'Couldn\'t copy lesson "L1": lesson creation failed',
+    );
+  });
+
+  describe("when a lesson copy is rejected", () => {
+    // Original with one v1 lesson; no existing draft; the draft POST succeeds
+    function setUpCopyOf(lessonName: string) {
+      getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+      getMockedFetchAPI().mockResolvedValueOnce(
+        makeDroplet({
+          id: 1,
+          name: "Original",
+          authorized_users: [],
+          lessons: [
+            makeLesson({
+              id: 10,
+              name: lessonName,
+              slug: "lesson",
+              orderIndex: 0,
+              blocksVersion: "v1",
+              blocks: [],
+            }),
+          ],
+        }),
+      );
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+    }
+
+    it("says which field Strapi rejected", async () => {
+      setUpCopyOf("Profile Components");
+      fetchMock.mockResolvedValueOnce(
+        makeFetchErrorResponse(
+          {
+            data: null,
+            error: {
+              status: 400,
+              name: "ValidationError",
+              message: "2 errors occurred",
+              details: {
+                errors: [
+                  {
+                    path: ["blocks", "2", "url"],
+                    message: "blocks[2].url must be defined.",
+                    name: "ValidationError",
+                  },
+                  {
+                    path: ["blocks", "4", "content"],
+                    message: "blocks[4].content must be defined.",
+                    name: "ValidationError",
+                  },
+                ],
+              },
+            },
+          },
+          400,
+        ),
+      );
+
+      const result = await duplicateDroplet(1);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        'Couldn\'t copy lesson "Profile Components": blocks[2].url must be defined. (and 1 more)',
+      );
+    });
+
+    it("uses Strapi's message when there are no details", async () => {
+      setUpCopyOf("L1");
+      fetchMock.mockResolvedValueOnce(
+        makeFetchErrorResponse(
+          {
+            error: {
+              status: 403,
+              name: "ForbiddenError",
+              message: "Forbidden",
+            },
+          },
+          403,
+        ),
+      );
+
+      const result = await duplicateDroplet(1);
+      expect(result.error).toBe('Couldn\'t copy lesson "L1": Forbidden');
+    });
+
+    it("falls back to the HTTP status when the body isn't JSON", async () => {
+      setUpCopyOf("L1");
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        json: () => Promise.reject(new SyntaxError("Unexpected token <")),
+      } as unknown as Response);
+
+      const result = await duplicateDroplet(1);
+      expect(result.error).toBe('Couldn\'t copy lesson "L1": HTTP 502');
+    });
   });
 });
 

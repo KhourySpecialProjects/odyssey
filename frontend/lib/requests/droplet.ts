@@ -624,6 +624,29 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
+// Strapi's reason for a rejected write, e.g. "blocks[2].color must be defined."
+// The first detailed error carries the full field path; error.message alone
+// says "2 errors occurred" when there are several. Falls back to the status
+// when the body isn't JSON (e.g. a proxy's error page).
+async function readStrapiError(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    console.error("Strapi error:", JSON.stringify(body, null, 2));
+    const error = body?.error;
+    const details = error?.details?.errors;
+    if (Array.isArray(details) && details[0]?.message) {
+      const more =
+        details.length > 1 ? ` (and ${details.length - 1} more)` : "";
+      return `${details[0].message}${more}`;
+    }
+    if (typeof error === "string") return error;
+    if (error?.message) return error.message;
+  } catch {
+    // Not JSON
+  }
+  return `HTTP ${response.status}`;
+}
+
 export async function duplicateDroplet(dropletId: number) {
   try {
     const user = await getCurrentUser();
@@ -973,12 +996,8 @@ export async function duplicateDroplet(dropletId: number) {
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error(
-              "Failed to create lesson:",
-              JSON.stringify(errorData, null, 2),
-            );
-            throw new Error(`Failed to create lesson: ${lesson.name}`);
+            const reason = await readStrapiError(response);
+            throw new Error(`Couldn't copy lesson "${lesson.name}": ${reason}`);
           }
 
           const createdLesson = await response.json();
