@@ -54,6 +54,10 @@ async function syncAzureProfilePhoto(
   return profilePhoto;
 }
 
+// Data URIs (Azure Graph photos) bloat the session cookie past Node's 16 KB header limit.
+const safeImage = (src?: string | null) =>
+  src && !src.startsWith("data:") ? src : null;
+
 export const authOptions: NextAuthOptions = {
   providers: [
     AzureADProvider({
@@ -124,7 +128,7 @@ export const authOptions: NextAuthOptions = {
         token.user = {
           name: user.name,
           email: user.email,
-          image: profilePhoto || user.image,
+          image: profilePhoto || safeImage(user.image),
           nuid: graphProfile?.nuid,
           isActive: true,
           roles: authorizedUser.roles.map(
@@ -132,6 +136,10 @@ export const authOptions: NextAuthOptions = {
           ),
         };
       }
+
+      // Runs on every call so existing oversized cookies shrink without re-login.
+      delete token.picture;
+      if (token.user) token.user.image = safeImage(token.user.image);
 
       return token;
     },
