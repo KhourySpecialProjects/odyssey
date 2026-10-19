@@ -840,6 +840,85 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(lessonBody.data.originalLessonId).toBe(30);
   });
 
+  it("omits nulls in required fields that have a default, so Strapi fills them in", async () => {
+    // Callout color was added as required on 2025-02-10; older callouts hold
+    // null there. Strapi applies a default only when the field is missing.
+    getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+
+    getMockedFetchAPI().mockResolvedValueOnce(
+      makeDroplet({
+        id: 1,
+        name: "Original",
+        authorized_users: [],
+        lessons: [
+          makeLesson({
+            id: 40,
+            name: "Profile Components",
+            slug: "profile-components",
+            orderIndex: 0,
+            blocksVersion: "v1",
+            // Raw rows as Strapi returns them: the nulls the types don't allow
+            blocks: [
+              {
+                __component: "droplets.callout",
+                id: 1,
+                color: null,
+                type: null,
+                iconEnabled: null,
+                content: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "a" }],
+                  },
+                ],
+              },
+              {
+                __component: "droplets.callout",
+                id: 2,
+                color: "bg-amber-50",
+                type: "warning",
+                content: null,
+              },
+              {
+                __component: "droplets.quiz",
+                id: 3,
+                questions: [
+                  {
+                    id: 4,
+                    content: "Q?",
+                    answerOptions: [
+                      { id: 5, content: "A", isCorrect: null },
+                      { id: 6, content: "B", isCorrect: true },
+                    ],
+                  },
+                ],
+              },
+            ] as unknown as Lesson["blocks"],
+          }),
+        ],
+      }),
+    );
+
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 60 } }));
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 61 } }));
+
+    const result = await duplicateDroplet(1);
+    expect(result.ok).toBe(true);
+
+    const lessonBody = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
+    const [oldCallout, newCallout, quiz] = lessonBody.data.blocks;
+    expect(oldCallout).not.toHaveProperty("color");
+    expect(oldCallout).not.toHaveProperty("type");
+    // Not required, and null means "no icon": keep it as is
+    expect(oldCallout.iconEnabled).toBeNull();
+    expect(newCallout).toMatchObject({ color: "bg-amber-50", type: "warning" });
+    const [nullAnswer, setAnswer] = quiz.questions[0].answerOptions;
+    expect(nullAnswer).not.toHaveProperty("isCorrect");
+    expect(setAnswer.isCorrect).toBe(true);
+  });
+
   it("reads the original droplet fresh, bypassing the data cache", async () => {
     // Direct edits to a live droplet autosave without revalidating. A cached read
     // could clone stale content, and publishing would then revert those edits.

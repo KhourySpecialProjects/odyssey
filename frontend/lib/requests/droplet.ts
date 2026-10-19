@@ -820,6 +820,17 @@ export async function duplicateDroplet(dropletId: number) {
     const newDropletId = dropletResponseData.data.id;
     console.log("Created new droplet with ID:", newDropletId);
 
+    // Old rows can hold null in required fields that were added later with a
+    // default (callout color and type, answer isCorrect). Strapi fills in a
+    // default only when the field is missing, so drop the null and let it.
+    const dropNulls = (obj: any, keys: string[]) => {
+      const result = { ...obj };
+      for (const key of keys) {
+        if (result[key] == null) delete result[key];
+      }
+      return result;
+    };
+
     // Helper function to remove ids from blocks while preserving structure
     const cleanBlocks = (blocks: any[]): any[] => {
       if (!Array.isArray(blocks)) {
@@ -845,7 +856,7 @@ export async function duplicateDroplet(dropletId: number) {
                     answerOptions:
                       q.answerOptions?.map((a: any) => {
                         const { id: aId, ...answerWithoutId } = a;
-                        return answerWithoutId;
+                        return dropNulls(answerWithoutId, ["isCorrect"]);
                       }) || [],
                   };
                 }),
@@ -868,7 +879,7 @@ export async function duplicateDroplet(dropletId: number) {
           case "droplets.callout":
             if (block.content && Array.isArray(block.content)) {
               return {
-                ...blockWithoutId,
+                ...dropNulls(blockWithoutId, ["color", "type"]),
                 content: block.content.map((node: any) => {
                   const { id: nodeId, ...nodeWithoutId } = node;
                   if (
@@ -886,7 +897,7 @@ export async function duplicateDroplet(dropletId: number) {
                 }),
               };
             }
-            return blockWithoutId;
+            return dropNulls(blockWithoutId, ["color", "type"]);
 
           case "droplets.generic":
           case "droplets.expandable":
