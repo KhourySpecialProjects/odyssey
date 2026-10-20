@@ -840,6 +840,85 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(lessonBody.data.originalLessonId).toBe(30);
   });
 
+  it("omits nulls in required fields that have a default, so Strapi fills them in", async () => {
+    // Callout color was added as required on 2025-02-10; older callouts hold
+    // null there. Strapi applies a default only when the field is missing.
+    getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+
+    getMockedFetchAPI().mockResolvedValueOnce(
+      makeDroplet({
+        id: 1,
+        name: "Original",
+        authorized_users: [],
+        lessons: [
+          makeLesson({
+            id: 40,
+            name: "Profile Components",
+            slug: "profile-components",
+            orderIndex: 0,
+            blocksVersion: "v1",
+            // Raw rows as Strapi returns them: the nulls the types don't allow
+            blocks: [
+              {
+                __component: "droplets.callout",
+                id: 1,
+                color: null,
+                type: null,
+                iconEnabled: null,
+                content: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "a" }],
+                  },
+                ],
+              },
+              {
+                __component: "droplets.callout",
+                id: 2,
+                color: "bg-amber-50",
+                type: "warning",
+                content: null,
+              },
+              {
+                __component: "droplets.quiz",
+                id: 3,
+                questions: [
+                  {
+                    id: 4,
+                    content: "Q?",
+                    answerOptions: [
+                      { id: 5, content: "A", isCorrect: null },
+                      { id: 6, content: "B", isCorrect: true },
+                    ],
+                  },
+                ],
+              },
+            ] as unknown as Lesson["blocks"],
+          }),
+        ],
+      }),
+    );
+
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 60 } }));
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 61 } }));
+
+    const result = await duplicateDroplet(1);
+    expect(result.ok).toBe(true);
+
+    const lessonBody = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
+    const [oldCallout, newCallout, quiz] = lessonBody.data.blocks;
+    expect(oldCallout).not.toHaveProperty("color");
+    expect(oldCallout).not.toHaveProperty("type");
+    // Not required, and null means "no icon": keep it as is
+    expect(oldCallout.iconEnabled).toBeNull();
+    expect(newCallout).toMatchObject({ color: "bg-amber-50", type: "warning" });
+    const [nullAnswer, setAnswer] = quiz.questions[0].answerOptions;
+    expect(nullAnswer).not.toHaveProperty("isCorrect");
+    expect(setAnswer.isCorrect).toBe(true);
+  });
+
   it("reads the original droplet fresh, bypassing the data cache", async () => {
     // Direct edits to a live droplet autosave without revalidating. A cached read
     // could clone stale content, and publishing would then revert those edits.
@@ -883,38 +962,267 @@ describe("droplet-coverage — duplicateDroplet", () => {
     expect(result.error).toMatch(/Slug conflict/);
   });
 
-  it("returns error when lesson POST fails (lines 852-858)", async () => {
+  it("keeps the draft when every lesson is copied", async () => {
     getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
     getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-
     getMockedFetchAPI().mockResolvedValueOnce(
       makeDroplet({
         id: 1,
         name: "Original",
         authorized_users: [],
         lessons: [
-          makeLesson({
-            id: 10,
-            name: "L1",
-            slug: "l1",
-            orderIndex: 0,
-            blocksVersion: "v1",
-            blocks: [],
-          }),
+          makeLesson({ id: 10, name: "L1", slug: "l1", orderIndex: 0 }),
+          makeLesson({ id: 11, name: "L2", slug: "l2", orderIndex: 1 }),
         ],
       }),
     );
-
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
-    // Lesson POST fails
-    fetchMock.mockResolvedValueOnce(
-      makeFetchErrorResponse({ error: "lesson creation failed" }, 500),
-    );
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 101 } }));
+    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 102 } }));
 
     const result = await duplicateDroplet(1);
-    expect(result.ok).toBe(false);
-    expect(result.error).toMatch(/Failed to create lesson/);
+
+    expect(result.ok).toBe(true);
+    expect(getMockedDeleteLesson()).not.toHaveBeenCalled();
+    expect(
+      fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
+    ).toBe(false);
+  });
+
+  describe("when a lesson copy is rejected", () => {
+    // One-lesson original, no existing draft, and the draft droplet (id 70)
+    // is created. After the lesson response come the cleanup's calls:
+    // deepDeleteDroplet reads the draft, then DELETEs it.
+    function setUpCopyOf(lessonName: string, lessonResponse: Response) {
+      getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+      getMockedFetchAPI()
+        .mockResolvedValueOnce(
+          makeDroplet({
+            id: 1,
+            name: "Original",
+            authorized_users: [],
+            lessons: [
+              makeLesson({
+                id: 10,
+                name: lessonName,
+                slug: "lesson",
+                orderIndex: 0,
+                blocksVersion: "v1",
+                blocks: [],
+              }),
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(makeDroplet({ id: 70, lessons: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+      fetchMock.mockResolvedValueOnce(lessonResponse);
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+    }
+
+    it("returns error when lesson POST fails (lines 852-858)", async () => {
+      setUpCopyOf(
+        "L1",
+        makeFetchErrorResponse({ error: "lesson creation failed" }, 500),
+      );
+
+      const result = await duplicateDroplet(1);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        'Couldn\'t copy lesson "L1": lesson creation failed',
+      );
+    });
+
+    it("says which field Strapi rejected", async () => {
+      setUpCopyOf(
+        "Profile Components",
+        makeFetchErrorResponse(
+          {
+            data: null,
+            error: {
+              status: 400,
+              name: "ValidationError",
+              message: "2 errors occurred",
+              details: {
+                errors: [
+                  {
+                    path: ["blocks", "2", "url"],
+                    message: "blocks[2].url must be defined.",
+                    name: "ValidationError",
+                  },
+                  {
+                    path: ["blocks", "4", "content"],
+                    message: "blocks[4].content must be defined.",
+                    name: "ValidationError",
+                  },
+                ],
+              },
+            },
+          },
+          400,
+        ),
+      );
+
+      const result = await duplicateDroplet(1);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        'Couldn\'t copy lesson "Profile Components": blocks[2].url must be defined. (and 1 more)',
+      );
+    });
+
+    it("uses Strapi's message when there are no details", async () => {
+      setUpCopyOf(
+        "L1",
+        makeFetchErrorResponse(
+          {
+            error: {
+              status: 403,
+              name: "ForbiddenError",
+              message: "Forbidden",
+            },
+          },
+          403,
+        ),
+      );
+
+      const result = await duplicateDroplet(1);
+      expect(result.error).toBe('Couldn\'t copy lesson "L1": Forbidden');
+    });
+
+    it("falls back to the HTTP status when the body isn't JSON", async () => {
+      setUpCopyOf("L1", {
+        ok: false,
+        status: 502,
+        json: () => Promise.reject(new SyntaxError("Unexpected token <")),
+      } as unknown as Response);
+
+      const result = await duplicateDroplet(1);
+      expect(result.error).toBe('Couldn\'t copy lesson "L1": HTTP 502');
+    });
+
+    it("deletes the draft and the lessons already copied into it", async () => {
+      getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+      getMockedFetchAPI()
+        .mockResolvedValueOnce(
+          makeDroplet({
+            id: 1,
+            name: "Original",
+            authorized_users: [],
+            lessons: [
+              makeLesson({ id: 10, name: "Intro", slug: "a", orderIndex: 0 }),
+              makeLesson({
+                id: 11,
+                name: "Profile Components",
+                slug: "b",
+                orderIndex: 1,
+              }),
+            ],
+          }),
+        )
+        // deepDeleteDroplet reads the draft: the lesson that was copied
+        .mockResolvedValueOnce(
+          makeDroplet({ id: 70, lessons: [makeLesson({ id: 101 })] }),
+        );
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 101 } }));
+      fetchMock.mockResolvedValueOnce(
+        makeFetchErrorResponse({ error: { message: "Bad block" } }, 400),
+      );
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+
+      const result = await duplicateDroplet(1);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        'Couldn\'t copy lesson "Profile Components": Bad block',
+      );
+      expect(getMockedDeleteLesson()).toHaveBeenCalledWith(101, false);
+      const deleteCall = fetchMock.mock.calls.find(
+        ([, init]) => init?.method === "DELETE",
+      );
+      expect(deleteCall?.[0]).toMatch(/\/api\/droplets\/70$/);
+    });
+
+    it("waits for every copy to finish before deleting the draft", async () => {
+      getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+      getMockedFetchAPI()
+        .mockResolvedValueOnce(
+          makeDroplet({
+            id: 1,
+            name: "Original",
+            authorized_users: [],
+            lessons: [
+              makeLesson({ id: 10, name: "Slow", slug: "a", orderIndex: 0 }),
+              makeLesson({ id: 11, name: "Broken", slug: "b", orderIndex: 1 }),
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(
+          makeDroplet({ id: 70, lessons: [makeLesson({ id: 101 })] }),
+        );
+      let finishSlowCopy: (response: Response) => void = () => {};
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+      fetchMock.mockReturnValueOnce(
+        new Promise<Response>((resolve) => (finishSlowCopy = resolve)),
+      );
+      fetchMock.mockResolvedValueOnce(
+        makeFetchErrorResponse({ error: { message: "Bad block" } }, 400),
+      );
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+
+      const pending = duplicateDroplet(1);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // "Broken" has failed, but "Slow" is still being copied
+      expect(getMockedDeleteLesson()).not.toHaveBeenCalled();
+      expect(
+        fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
+      ).toBe(false);
+
+      finishSlowCopy(makeFetchResponse({ data: { id: 101 } }));
+      const result = await pending;
+
+      expect(result.ok).toBe(false);
+      expect(getMockedDeleteLesson()).toHaveBeenCalledWith(101, false);
+      expect(
+        fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
+      ).toBe(true);
+    });
+
+    it("tells the author to delete the draft when it can't be removed", async () => {
+      getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
+      getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
+      getMockedFetchAPI()
+        .mockResolvedValueOnce(
+          makeDroplet({
+            id: 1,
+            name: "Original",
+            authorized_users: [],
+            lessons: [makeLesson({ id: 10, name: "L1", orderIndex: 0 })],
+          }),
+        )
+        .mockResolvedValueOnce(makeDroplet({ id: 70, lessons: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
+      fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
+      fetchMock.mockResolvedValueOnce(
+        makeFetchErrorResponse({ error: { message: "Bad block" } }, 400),
+      );
+      // DELETE of the draft fails
+      fetchMock.mockResolvedValueOnce(makeFetchErrorResponse({}, 500));
+
+      const result = await duplicateDroplet(1);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        "Couldn't copy lesson \"L1\": Bad block (The incomplete draft couldn't be removed. Delete it from the draft editor and don't publish it.)",
+      );
+    });
   });
 });
 
