@@ -49,7 +49,7 @@ describe("PHProvider identify", () => {
     username: "tuser",
   };
 
-  it("identifies from the session id without calling the server action", async () => {
+  it("identifies from the session id and never calls the lookup action", async () => {
     mockUseSession.mockReturnValue({
       status: "authenticated",
       data: { user: { ...sessionUser, id: 42 } },
@@ -70,12 +70,11 @@ describe("PHProvider identify", () => {
     expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
   });
 
-  it("falls back to the lookup when the session has no id", async () => {
+  it("does not identify, and never looks the user up, when the session has no id", async () => {
     mockUseSession.mockReturnValue({
       status: "authenticated",
       data: { user: sessionUser },
     });
-    mockGetAuthorizedUserByEmail.mockResolvedValue({ id: 7 });
 
     render(
       <PHProvider>
@@ -83,35 +82,9 @@ describe("PHProvider identify", () => {
       </PHProvider>,
     );
 
-    await waitFor(() =>
-      expect(mockPh.identify).toHaveBeenCalledWith("7", {
-        name: "Test User",
-        email: "test@example.com",
-        username: "tuser",
-      }),
-    );
-    expect(mockGetAuthorizedUserByEmail).toHaveBeenCalledWith(
-      "test@example.com",
-    );
-  });
-
-  it("does not identify when the fallback lookup fails", async () => {
-    mockUseSession.mockReturnValue({
-      status: "authenticated",
-      data: { user: sessionUser },
-    });
-    mockGetAuthorizedUserByEmail.mockRejectedValue(new Error("down"));
-
-    render(
-      <PHProvider>
-        <div />
-      </PHProvider>,
-    );
-
-    await waitFor(() =>
-      expect(mockGetAuthorizedUserByEmail).toHaveBeenCalled(),
-    );
+    await Promise.resolve();
     expect(mockPh.identify).not.toHaveBeenCalled();
+    expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
   });
 
   it("resets when unauthenticated", () => {

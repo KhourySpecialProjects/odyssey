@@ -167,7 +167,7 @@ export async function updateNotePosition(
 
 export async function createNote(
   lesson: Lesson,
-  enrollment: Enrollment,
+  enrollment: Pick<Enrollment, "id">,
   position: number,
   authorizedUserId: number,
   highlight?: Highlight,

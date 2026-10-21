@@ -1,6 +1,5 @@
 "use client";
 
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { useSession } from "next-auth/react";
 import posthog from "posthog-js";
 import { PostHogProvider, usePostHog } from "posthog-js/react";
@@ -13,36 +12,18 @@ function PostHogIdentify() {
   useEffect(() => {
     if (!ph) return;
 
-    let cancelled = false;
-
-    if (status === "authenticated" && session?.user?.email) {
-      (async () => {
-        try {
-          // The session carries the authorized-user id; only tokens issued
-          // before it was added need the lookup (a Server Action round trip)
-          const authUserId =
-            session.user.id ??
-            (await getAuthorizedUserByEmail(session.user.email!))?.id;
-          if (cancelled) return;
-
-          if (authUserId) {
-            ph.identify(authUserId.toString(), {
-              name: session.user.name,
-              email: session.user.email,
-              username: (session.user as any).username,
-            });
-          }
-        } catch {
-          // ignore
-        }
-      })();
+    // The session carries the authorized-user id (ODY-555), so no lookup is
+    // needed. A stale token without an id is refreshed by the session re-check
+    // and this effect re-runs once the id appears.
+    if (status === "authenticated" && session?.user?.id) {
+      ph.identify(session.user.id.toString(), {
+        name: session.user.name,
+        email: session.user.email,
+        username: (session.user as any).username,
+      });
     } else if (status === "unauthenticated") {
       ph.reset();
     }
-
-    return () => {
-      cancelled = true;
-    };
   }, [
     ph,
     status,

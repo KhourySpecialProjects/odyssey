@@ -190,7 +190,6 @@ describe("LessonRenderer (viewer)", () => {
   });
 
   it("creates a note from a highlight and asks the wrapper to refetch", async () => {
-    jest.mocked(getEnrollByID).mockResolvedValue({ id: "5" } as never);
     jest.mocked(getHighlights).mockResolvedValue(serverHighlights);
     jest.mocked(createNote).mockResolvedValue({ success: true });
 
@@ -207,6 +206,7 @@ describe("LessonRenderer (viewer)", () => {
       1,
       serverHighlights[0],
     );
+    expect(getEnrollByID).not.toHaveBeenCalled();
   });
 
   it("shows the enrollment gate instead of highlights when not enrolled", () => {

@@ -7,7 +7,6 @@ import {
   getNotesByAuthorizedUserAndLesson,
 } from "@/lib/requests/notes";
 import { NoteBlock } from "./note-block";
-import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { updateNotePosition } from "@/lib/requests/notes";
 import { IconPlus } from "@tabler/icons-react";
@@ -142,11 +141,12 @@ export function NotesBar({
     };
     setNotes((prev) => [...prev, newNote]);
 
-    const enrollment = await getEnrollByID(String(enrollmentId), {
-      fields: ["id"],
-      populate: {},
-    });
-    const result = await createNote(lesson, enrollment, posY + 50, userId);
+    const result = await createNote(
+      lesson,
+      { id: enrollmentId },
+      posY + 50,
+      userId,
+    );
 
     if (result.success) {
       await fetchNotes();

@@ -1,14 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { IconStar, IconStarFilled } from "@tabler/icons-react";
-import {
-  changeEnrollmentRating,
-  calculateDropletAverageRating,
-} from "@/lib/requests/enrollment";
-import { getEnrollByID } from "@/lib/requests/enrollment";
+import { changeEnrollmentRating } from "@/lib/requests/enrollment";
 import { toast } from "sonner";
-import { updateDropletAverageRating } from "@/lib/requests/droplet";
 
 interface StarRatingProps {
   value: number;
@@ -35,44 +30,29 @@ const StarRating: React.FC<StarRatingProps> = ({
   const [hover, setHover] = useState(0);
   const [rating, setRating] = useState(initialValue);
 
-  useEffect(() => {
-    const fetchRating = async () => {
-      if (!average && enrollmentID) {
-        try {
-          const enrollment = await getEnrollByID(enrollmentID, {
-            fields: ["id", "rating"],
-            populate: {},
-          });
-          if (enrollment?.rating) {
-            setRating(enrollment.rating);
-          }
-        } catch (error) {
-          console.error("Error fetching rating:", error);
-        }
-      }
-    };
-    fetchRating();
-  }, [enrollmentID, average]);
+  const [prevValue, setPrevValue] = useState(initialValue);
+
+  // Resync when the server hands us a new value (adjust state during render)
+  if (initialValue !== prevValue) {
+    setPrevValue(initialValue);
+    setRating(initialValue);
+  }
 
   const handleRatingClick = async (newRating: number) => {
     if (!average && enrollmentID) {
       try {
-        await changeEnrollmentRating(newRating, enrollmentID);
-        const droplet = (
-          await getEnrollByID(enrollmentID, {
-            fields: ["id"],
-            populate: { droplet: { fields: ["id"] } },
-          })
-        ).droplet;
-        setRating(newRating);
-        setHover(newRating);
-        if (droplet) {
-          const averageRating = await calculateDropletAverageRating(droplet);
-          await updateDropletAverageRating(averageRating, droplet.id);
+        // The server action also recomputes the droplet's average rating
+        const result = await changeEnrollmentRating(newRating, enrollmentID);
+        if (result?.success) {
+          setRating(newRating);
+          setHover(newRating);
+          toast.success("Rating submitted successfully");
+        } else {
+          toast.error("Failed to submit rating");
         }
-        toast.success("Rating submitted successfully");
       } catch (error) {
         console.error("Error updating rating:", error);
+        toast.error("Failed to submit rating");
       }
     }
   };

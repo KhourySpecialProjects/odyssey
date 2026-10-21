@@ -21,7 +21,6 @@ import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
 import { Highlight } from "@/types";
-import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import {
   createHighlight,
@@ -221,16 +220,11 @@ export function LessonRenderer({
 
   const handleCreateNote = async (notePos: number, text: string) => {
     setExpanded(true);
-    const enrollment = await getEnrollByID(String(enrollmentId), {
-      fields: ["id"],
-      populate: {},
-    });
-
-    if (authUser) {
+    if (authUser && enrollmentId) {
       const highlight = await getHighlights(authUser.id, text);
       const result = await createNote(
         lesson,
-        enrollment,
+        { id: enrollmentId },
         notePos,
         authUser.id,
         highlight[0],
