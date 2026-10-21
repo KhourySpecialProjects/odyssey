@@ -124,7 +124,14 @@ export async function getHighlightsByAuthorizedUserAndLesson(
 
   return await fetchAPI<Highlight[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.highlights(authorizedUserId)], revalidate: 900 },
+    // note is populated above, so note changes must refresh this read too
+    next: {
+      tags: [
+        CACHE_TAGS.highlights(authorizedUserId),
+        CACHE_TAGS.notes(authorizedUserId),
+      ],
+      revalidate: 900,
+    },
   });
 }
 

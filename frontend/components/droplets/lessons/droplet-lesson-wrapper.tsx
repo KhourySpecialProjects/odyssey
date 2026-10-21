@@ -1,7 +1,7 @@
 "use client";
 
 import { LessonRenderer } from "./lesson-renderer";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
   Droplet,
@@ -61,6 +61,13 @@ export function DropletLessonWrapper({
   // shown as locked (and its quiz gate skipped) while "Next" saves.
   const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  // Notes deleted in the notes bar. The bar keeps its own list, so this is how
+  // the lesson learns that a highlight no longer has a note.
+  const [deletedNoteIds, setDeletedNoteIds] = useState<number[]>([]);
+  const liveNotes = useMemo(
+    () => notes.filter((n) => !deletedNoteIds.includes(n.id)),
+    [notes, deletedNoteIds],
+  );
   const [expanded, setExpanded] = useState(false);
   // NotesBar isn't mounted until the panel is first opened, then stays mounted
   // so its state (drag position, open editors) survives collapsing
@@ -79,7 +86,9 @@ export function DropletLessonWrapper({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      // An Esc something else already used (the highlight toolbar closing)
+      // doesn't also close the notes bar
+      if (e.key === "Escape" && !e.defaultPrevented) {
         setExpanded(false);
       }
     };
@@ -109,6 +118,7 @@ export function DropletLessonWrapper({
             author={author}
             authUser={authUser}
             initialHighlights={initialHighlights}
+            notes={liveNotes}
             onUpdate={fetchNotes}
             expanded={expanded}
             setExpanded={setExpanded}
@@ -142,6 +152,12 @@ export function DropletLessonWrapper({
                     lesson={lesson}
                     enrollmentId={enrollmentId}
                     initNotes={notes}
+                    onNoteDeleted={(id) =>
+                      setDeletedNoteIds((prev) => [...prev, id])
+                    }
+                    onNoteDeleteFailed={(id) =>
+                      setDeletedNoteIds((prev) => prev.filter((n) => n !== id))
+                    }
                   />
                 )}
               </div>

@@ -10,12 +10,12 @@ import {
   isAuthorizedUserAdmin,
   parseSandpackFiles,
 } from "@/lib/utils";
-import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
+import { User, Droplet, Lesson, AuthorizedUser, Note } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
@@ -66,6 +66,12 @@ interface LessonRendererProps {
   authUser?: AuthorizedUser;
   /** The user's highlights on this lesson, fetched by the lesson page */
   initialHighlights: Highlight[];
+  /**
+   * The user's notes on this lesson, kept current by the page. When given, a
+   * highlight "has a note" if one of these notes is attached to it, which
+   * follows notes deleted in the notes bar.
+   */
+  notes?: Note[];
   onUpdate: () => void;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
@@ -85,6 +91,7 @@ export function LessonRenderer({
   author = false,
   authUser,
   initialHighlights,
+  notes,
   onUpdate,
   expanded,
   setExpanded,
@@ -111,6 +118,39 @@ export function LessonRenderer({
     highlightsRef.current = next;
     setHighlights(next);
   };
+
+  // Which highlights have a note. When the notes list is given it is the
+  // truth (it follows deletions made in the notes bar); otherwise the flag on
+  // each highlight, which is only as fresh as the page load.
+  const noteHighlightIds = useMemo(
+    () =>
+      notes
+        ? new Set(
+            notes.flatMap((n) => (n.highlight?.id ? [n.highlight.id] : [])),
+          )
+        : null,
+    [notes],
+  );
+  // Notes created here that the notes list hasn't caught up with yet
+  const [justNoted, setJustNoted] = useState<number[]>([]);
+  useEffect(() => {
+    if (!noteHighlightIds) return;
+    setJustNoted((prev) => {
+      const rest = prev.filter((id) => !noteHighlightIds.has(id));
+      return rest.length === prev.length ? prev : rest;
+    });
+  }, [noteHighlightIds]);
+  const hasNote = (h: Highlight) =>
+    noteHighlightIds
+      ? h.id !== undefined &&
+        (noteHighlightIds.has(h.id) || justNoted.includes(h.id))
+      : highlightHasNote(h);
+  // What the blocks see: each highlight's note flag taken from `hasNote`
+  const shownHighlights = highlights.map((h) =>
+    hasNote(h) === highlightHasNote(h)
+      ? h
+      : { ...h, note: hasNote(h) ? {} : null },
+  );
 
   const displayBlocks =
     lesson.blocksVersion === "v2" && lesson.blocksV2
@@ -333,11 +373,15 @@ export function LessonRenderer({
     if (isPendingHighlightId(baseId)) return null;
     const previousBase = highlightsRef.current.find((h) => h.id === baseId);
     if (!previousBase) return null;
+    // A highlight with a note is never absorbed (its note would become a
+    // general note), even if the caller asked: re-checked against the latest
+    // state, since a note can have been added since the block decided.
     const absorbed = highlightsRef.current.filter(
       (h) =>
         h.id !== undefined &&
         removeIds.includes(h.id) &&
-        !isPendingHighlightId(h.id),
+        !isPendingHighlightId(h.id) &&
+        !hasNote(h),
     );
     const absorbedIds = absorbed.map((h) => h.id);
 
@@ -365,6 +409,13 @@ export function LessonRenderer({
     let updated: Highlight;
     try {
       const result = await updateHighlight(baseId, changes);
+      // The base is gone on the server: drop it, as a delete would, and bring
+      // the absorbed highlights back (they were never deleted)
+      if (!result.ok && result.error === "Highlight not found") {
+        commitHighlights((prev) => prev.filter((h) => h.id !== baseId));
+        restore(absorbed);
+        return null;
+      }
       if (!result.ok || !result.data) return rollBack();
       updated = { ...previousBase, ...changes, ...result.data };
     } catch {
@@ -398,7 +449,7 @@ export function LessonRenderer({
     // first. Take the user to the existing note instead.
     const current =
       highlightsRef.current.find((h) => h.id === highlight.id) ?? highlight;
-    if (highlightHasNote(current)) {
+    if (hasNote(current)) {
       toast.info("This highlight already has a note");
       return;
     }
@@ -421,6 +472,10 @@ export function LessonRenderer({
           commitHighlights((prev) =>
             prev.map((h) => (h.id === highlight.id ? { ...h, note: {} } : h)),
           );
+          if (highlight.id !== undefined) {
+            const noted = highlight.id;
+            setJustNoted((prev) => [...prev, noted]);
+          }
           toast.success("Note created");
         } else {
           toast.error("Failed to create note");
@@ -488,15 +543,13 @@ export function LessonRenderer({
                 dropletName={droplet.name}
                 lessonName={lesson.name}
                 userId={authUser?.id}
-                highlights={highlights}
+                highlights={shownHighlights}
                 onHighlight={handleHighlight}
                 onUpdateHighlight={handleUpdateHighlight}
                 onMergeHighlights={handleMergeHighlights}
                 onDeleteHighlight={handleDeleteHighlight}
                 onNote={handleCreateNote}
                 enrollmentId={enrollmentId}
-                expanded={expanded}
-                setExpanded={setExpanded}
                 author={author}
               />
             ))}
@@ -521,8 +574,6 @@ function LessonBlockRenderer({
   onDeleteHighlight,
   onNote,
   enrollmentId,
-  expanded,
-  setExpanded,
   author,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -557,8 +608,6 @@ function LessonBlockRenderer({
   onDeleteHighlight: (id: number) => Promise<boolean>;
   onNote: (notePos: number, highlight: Highlight) => void;
   enrollmentId: string | undefined;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
   author: boolean;
 }) {
   switch (block.__component) {
@@ -573,8 +622,6 @@ function LessonBlockRenderer({
           onDeleteHighlight={onDeleteHighlight}
           onNote={onNote}
           enrollmentId={enrollmentId}
-          expanded={expanded}
-          setExpanded={setExpanded}
           author={author}
         />
       );

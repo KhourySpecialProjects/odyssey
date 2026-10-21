@@ -17,11 +17,17 @@ export function NotesBar({
   lesson,
   enrollmentId,
   initNotes,
+  onNoteDeleted,
+  onNoteDeleteFailed,
 }: {
   userId: number;
   lesson: Lesson;
   enrollmentId: string | undefined;
   initNotes: Note[];
+  /** A note was removed (optimistically): its highlight no longer has a note */
+  onNoteDeleted?: (noteId: number) => void;
+  /** The delete didn't go through, so the note is back */
+  onNoteDeleteFailed?: (noteId: number) => void;
 }) {
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
@@ -161,9 +167,11 @@ export function NotesBar({
   const handleDeleteNote = async (id: number) => {
     try {
       setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
+      onNoteDeleted?.(id);
 
       const result = await deleteNote(id, userId);
       if (!result.ok) {
+        onNoteDeleteFailed?.(id);
         const updatedNotes = await getNotesByAuthorizedUserAndLesson(
           userId,
           lesson.slug,
@@ -172,6 +180,7 @@ export function NotesBar({
       }
     } catch (error) {
       console.error("Failed to delete note:", error);
+      onNoteDeleteFailed?.(id);
       const updatedNotes = await getNotesByAuthorizedUserAndLesson(
         userId,
         lesson.slug,

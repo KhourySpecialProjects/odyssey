@@ -1,19 +1,24 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   getLoadedHighlighter,
   loadHighlighter,
   type HighlighterModule,
 } from "./load-highlighter";
 import { Highlight, HighlightColor } from "@/types";
-import { SelectionToolbar } from "./selection-toolbar";
+import { SelectionToolbar, type ToolbarPosition } from "./selection-toolbar";
 import {
   HIGHLIGHT_PIECE_SELECTOR,
   highlightHasNote,
   isPendingHighlightId,
 } from "./highlight-ids";
-//import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
@@ -59,8 +64,6 @@ interface GenericBlockRendererProps {
   onDeleteHighlight: (highlightId: number) => Promise<boolean>;
   onNote: (notePos: number, highlight: Highlight) => void;
   enrollmentId: string | undefined;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
   author?: boolean;
 }
 
@@ -180,6 +183,90 @@ function highlightRange(
 }
 
 /**
+ * The offset of a boundary point in the block: the number of characters in the
+ * text nodes before it, counted the same way the drawing and saved positions
+ * count. A selection can end on an element rather than a text node (triple
+ * click, Ctrl+A, Shift+Down), so for those the count is the length of the text
+ * in the range from the start of the block to the point.
+ * Returns -1 when the point isn't inside the block.
+ */
+function pointOffset(container: Node, node: Node, offset: number): number {
+  if (!container.contains(node)) return -1;
+  if (node.nodeType === Node.TEXT_NODE) {
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    let position = 0;
+    while (walker.nextNode()) {
+      if (walker.currentNode === node) return position + offset;
+      position += walker.currentNode.textContent?.length ?? 0;
+    }
+    return -1;
+  }
+  const range = document.createRange();
+  range.setStart(container, 0);
+  range.setEnd(node, offset);
+  return range.toString().length;
+}
+
+/**
+ * The element a range boundary sits in or next to: a text node's parent, or
+ * for an element container the child at the boundary (the one after a start
+ * point, the one before an end point).
+ */
+function elementAtPoint(
+  node: Node,
+  offset: number,
+  isEnd: boolean,
+): Element | null {
+  if (node.nodeType !== Node.ELEMENT_NODE) return node.parentElement;
+  // Splitting text to draw a highlight leaves empty text nodes behind: skip them
+  const isEmptyText = (n: Node) =>
+    n.nodeType === Node.TEXT_NODE && !n.textContent;
+  const children = Array.from(node.childNodes);
+  const child = isEnd
+    ? children
+        .slice(0, offset)
+        .reverse()
+        .find((n) => !isEmptyText(n))
+    : children.slice(offset).find((n) => !isEmptyText(n));
+  if (!child) return node as Element;
+  return child.nodeType === Node.ELEMENT_NODE
+    ? (child as Element)
+    : child.parentElement;
+}
+
+// Stands in when a range can't report where it is (it returns nothing in jsdom)
+const ZERO_RECT = {
+  top: 0,
+  left: 0,
+  bottom: 0,
+  right: 0,
+  width: 0,
+  height: 0,
+  x: 0,
+  y: 0,
+  toJSON: () => ({}),
+} as DOMRect;
+
+/**
+ * The bottom edge of what sticks to the top of the page (the site header and
+ * the banners around it), so the toolbar can sit below a selection that is
+ * under it instead.
+ */
+function stickyHeaderBottom(): number {
+  const header = document.querySelector("header");
+  if (!header) return 0;
+  let bottom = header.getBoundingClientRect().bottom;
+  const parent = header.parentElement;
+  if (
+    parent &&
+    ["sticky", "fixed"].includes(getComputedStyle(parent).position)
+  ) {
+    bottom = Math.max(bottom, parent.getBoundingClientRect().bottom);
+  }
+  return bottom;
+}
+
+/**
  * The highlight a selection [start, end) sits entirely inside. `pieceId` is the
  * id of the innermost drawn piece at the selection, when there is one; it wins
  * if it is among the candidates (so selecting and clicking agree). Otherwise
@@ -216,25 +303,42 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   author = false,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
     x: number;
     y: number;
     /** The saved highlight the toolbar is acting on, when there is one */
     highlightId: number | null;
     savedText: string;
+    /** Where a note goes: the selection's (or clicked piece's) top, relative to the content */
+    notePosition: number;
   }>({
     x: 0,
     y: 0,
     highlightId: null,
     savedText: "",
+    notePosition: 0,
   });
-  const [mousePositionY, setMousePositionY] = useState(0);
+  // What opened the toolbar. Only a selection-opened toolbar closes when the
+  // selection collapses: a click on a highlight collapses it by itself.
+  const toolbarSourceRef = useRef<"selection" | "click" | null>(null);
+  // The selection (as "start-end") the user dismissed with Esc or an action, so
+  // the same selection doesn't pop the toolbar straight back open.
+  const dismissedRef = useRef<string | null>(null);
+  // A pointer is down on the content: wait for it to come up before opening.
+  const pointerDownRef = useRef(false);
+  // A pointer is down on the toolbar: nothing may close it until the click lands
+  // (in Safari and on iOS a button press doesn't focus it, and can collapse the
+  // selection).
+  const toolbarPointerRef = useRef(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
-  const [toolbarPosition, setToolbarPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [toolbarPosition, setToolbarPosition] =
+    useState<ToolbarPosition | null>(null);
   const [isOnHighlight, setIsOnHighlight] = useState(false);
+  // The colour of the highlight the toolbar is on (shown as the pressed one)
+  const [highlightColor, setHighlightColor] = useState<HighlightColor | null>(
+    null,
+  );
   const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(
     null,
   );
@@ -258,22 +362,23 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   // (including a save returning in another block); depending on it would
   // rebuild this block and wipe a selection the user started here. `block` can
   // also be a new object on every render (v2 lessons are converted each time).
-  // So the key is built from this block's own highlights, and only from what
-  // is drawn or acted on (id, offsets, colour, text, whether it has a note):
-  // a server echo that only changes `updatedAt` must not redraw.
+  // So the drawing is keyed by this block's own highlights, and only by what
+  // is drawn (id, offsets, colour): a server echo that only changes
+  // `updatedAt`, or a note flag flipping, must not redraw. The actions read the
+  // current, un-memoised list (`blockList`) so they never see stale text or
+  // note flags.
   const sourceIds = block.sourceBlockIds ?? [];
-  const blockHighlightsKey = JSON.stringify(
-    highlights
-      .filter((h) => h.blockId === block.id || sourceIds.includes(h.blockId))
-      .map((h) => ({
-        id: h.id,
-        blockId: h.blockId,
-        text: h.text,
-        color: h.color,
-        position: { start: h.position?.start, end: h.position?.end },
-        note: highlightHasNote(h) ? {} : null,
-      })),
+  const blockList = highlights.filter(
+    (h) => h.blockId === block.id || sourceIds.includes(h.blockId),
   );
+  const blockHighlightsKey = JSON.stringify(
+    blockList.map((h) => ({
+      id: h.id,
+      color: h.color,
+      position: { start: h.position?.start, end: h.position?.end },
+    })),
+  );
+  // Only the drawn fields are present (the drawing code reads nothing else)
   const blockHighlights = useMemo<Highlight[]>(
     () => JSON.parse(blockHighlightsKey),
     [blockHighlightsKey],
@@ -468,9 +573,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   // Highlights with a server record. Pending ones (temporary id) are inert:
   // they can't be removed, recoloured, noted or merged until the save returns.
-  const savedHighlights = blockHighlights.filter(
-    (h) => !isPendingHighlightId(h.id),
-  );
+  const savedHighlights = blockList.filter((h) => !isPendingHighlightId(h.id));
 
   /** The id on the drawn highlight piece that contains `el`, if any. */
   const pieceHighlightId = (el: Element | null | undefined): number | null => {
@@ -478,102 +581,194 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return piece ? Number(piece.dataset.highlightId) : null;
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const notesBarTop = rect.top + scrollTop;
-    const clickY = e.clientY + scrollTop - notesBarTop;
-    setMousePositionY(clickY);
+  /**
+   * The live selection, when it lies inside this block's content: its offsets
+   * (counted as the drawing counts them), text and range. Null for no
+   * selection, a collapsed one, or one that reaches outside the block.
+   */
+  const readSelection = () => {
+    const container = contentRef.current;
+    const selection = window.getSelection();
+    if (
+      !container ||
+      !selection ||
+      selection.rangeCount === 0 ||
+      selection.isCollapsed
+    ) {
+      return null;
+    }
+    const range = selection.getRangeAt(0);
+    if (
+      !container.contains(range.startContainer) ||
+      !container.contains(range.endContainer)
+    ) {
+      return null;
+    }
+    const text = selection.toString();
+    const a = pointOffset(container, range.startContainer, range.startOffset);
+    const b = pointOffset(container, range.endContainer, range.endOffset);
+    if (text.length === 0 || a < 0 || b < 0 || a === b) return null;
+    return { range, start: Math.min(a, b), end: Math.max(a, b), text };
   };
 
-  const handleMouseUp = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
+  /**
+   * Reads the live selection into `popupRef`: what the toolbar's actions act
+   * on. Null when there is no usable selection, or it sits inside a highlight
+   * that hasn't finished saving (offer nothing).
+   */
+  const syncPopupFromSelection = () => {
+    const selection = readSelection();
+    if (!selection) return null;
+    const { range, start, end, text } = selection;
+
+    const startPieceId = pieceHighlightId(
+      elementAtPoint(range.startContainer, range.startOffset, false),
+    );
+    const endPieceId = pieceHighlightId(
+      elementAtPoint(range.endContainer, range.endOffset, true),
+    );
+    const samePieceId =
+      startPieceId !== null && startPieceId === endPieceId
+        ? startPieceId
+        : null;
+    if (samePieceId !== null && isPendingHighlightId(samePieceId)) return null;
+
+    // A selection entirely inside one saved highlight is that highlight
+    // (recolour, note, remove). With several to choose from, take the one a
+    // click there would pick: the innermost drawn piece at the selection when
+    // it is one of them, otherwise the one drawn last.
+    const containing = pickContaining(savedHighlights, start, end, samePieceId);
+
+    const rect = range.getBoundingClientRect() ?? ZERO_RECT;
+    const contentTop = contentRef.current?.getBoundingClientRect().top ?? 0;
+    popupRef.current.x = start;
+    popupRef.current.y = end;
+    popupRef.current.savedText = text;
+    popupRef.current.highlightId = containing?.id ?? null;
+    popupRef.current.notePosition = rect.top - contentTop;
+    setIsOnHighlight(!!containing);
+    setHighlightColor(containing?.color ?? null);
+    return { rect, signature: `${start}-${end}` };
+  };
+
+  /**
+   * Where the toolbar goes: the selection's edges relative to this block, the
+   * top of the free area (under the sticky header) and the block's width. The
+   * toolbar measures itself and picks above, below, and a clamped x.
+   */
+  const placeToolbar = (rect: DOMRect): ToolbarPosition => {
+    const wrapper = wrapperRef.current?.getBoundingClientRect();
+    const wrapperTop = wrapper?.top ?? 0;
+    const wrapperLeft = wrapper?.left ?? 0;
+    return {
+      x: rect.left + rect.width / 2 - wrapperLeft,
+      anchorTop: rect.top - wrapperTop,
+      anchorBottom: rect.bottom - wrapperTop,
+      minTop: stickyHeaderBottom() - wrapperTop,
+      maxX: wrapper?.width ?? 0,
+    };
+  };
+
+  const toolbarHasFocus = () =>
+    !!wrapperRef.current
+      ?.querySelector('[role="toolbar"]')
+      ?.contains(document.activeElement);
+
+  /** Opens, updates or closes the toolbar to match the live selection. */
+  const syncToolbarWithSelection = () => {
+    const found = syncPopupFromSelection();
+    if (!found) {
+      dismissedRef.current = null;
+      // A collapsed selection closes a toolbar the selection opened, unless
+      // the user is working in the toolbar (focus in it, or a press on it that
+      // hasn't produced its click yet). A click-opened one stays.
+      if (
+        toolbarSourceRef.current === "selection" &&
+        !toolbarHasFocus() &&
+        !toolbarPointerRef.current
+      ) {
+        setToolbarPosition(null);
+      }
       return;
     }
-
-    const range = selection.getRangeAt(0);
-
-    let text = selection.toString();
-    popupRef.current.savedText = text;
-    const latexParent = range.startContainer.parentElement?.closest(
-      ".katex-inline, .katex-block",
-    );
-    if (latexParent) {
-      text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
-    }
-    if (text.length > 0 && contentRef.current) {
-      const walker = document.createTreeWalker(
-        contentRef.current,
-        NodeFilter.SHOW_TEXT,
-      );
-
-      let currentPosition = 0;
-      let startOffset = -1;
-      let endOffset = -1;
-      let node = walker.nextNode();
-
-      while (node) {
-        const nodeLength = node.textContent?.length || 0;
-
-        if (node === range.startContainer && startOffset === -1) {
-          startOffset = currentPosition + range.startOffset;
-        }
-        if (node === range.endContainer && endOffset === -1) {
-          endOffset = currentPosition + range.endOffset;
-          break;
-        }
-
-        currentPosition += nodeLength;
-        node = walker.nextNode();
-      }
-
-      if (startOffset === -1 || endOffset === -1) return;
-
-      const highlightStart = Math.min(startOffset, endOffset);
-      const highlightEnd = Math.max(startOffset, endOffset);
-
-      // Inside a highlight that hasn't finished saving: offer nothing
-      const startPieceId = pieceHighlightId(range.startContainer.parentElement);
-      const endPieceId = pieceHighlightId(range.endContainer.parentElement);
-      if (
-        startPieceId !== null &&
-        startPieceId === endPieceId &&
-        isPendingHighlightId(startPieceId)
-      ) {
-        return;
-      }
-
-      // A selection entirely inside one saved highlight is that highlight
-      // (recolour, note, remove). With several to choose from, take the one a
-      // click there would pick: the innermost drawn piece at the selection
-      // when it is one of them, otherwise the one drawn last.
-      const containing = pickContaining(
-        savedHighlights,
-        highlightStart,
-        highlightEnd,
-        startPieceId !== null && startPieceId === endPieceId
-          ? startPieceId
-          : null,
-      );
-
-      popupRef.current.x = highlightStart;
-      popupRef.current.y = highlightEnd;
-      popupRef.current.highlightId = containing?.id ?? null;
-
-      // Show floating selection toolbar
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarY =
-        selectionRect.top > 50
-          ? selectionRect.top - 44
-          : selectionRect.bottom + 8;
-      setToolbarPosition({
-        x: selectionRect.left + selectionRect.width / 2,
-        y: toolbarY,
-      });
-      setIsOnHighlight(!!containing);
-    }
+    if (dismissedRef.current === found.signature) return;
+    toolbarSourceRef.current = "selection";
+    setToolbarPosition(placeToolbar(found.rect));
   };
+
+  // Keep the selection listeners calling the latest handlers
+  const syncRef = useRef(syncToolbarWithSelection);
+  useLayoutEffect(() => {
+    syncRef.current = syncToolbarWithSelection;
+  });
+
+  const selectionEnabled = Boolean(enrollmentId) && !author;
+  useEffect(() => {
+    if (!selectionEnabled) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
+    const inToolbar = (target: EventTarget | null) =>
+      !!wrapperRef.current
+        ?.querySelector('[role="toolbar"]')
+        ?.contains(target as Node);
+
+    // Keyboard and touch selections only ever fire `selectionchange`, so that
+    // is what opens the toolbar. It fires a lot, so wait for it to settle, and
+    // wait out a mouse drag completely: `pointerup` checks at once.
+    const onSelectionChange = () => {
+      clearTimeout(timer);
+      if (pointerDownRef.current) return;
+      timer = setTimeout(() => syncRef.current(), 150);
+    };
+    const onPointerDown = (e: Event) => {
+      if (inToolbar(e.target)) {
+        // A press on the toolbar must never close it
+        clearTimeout(releaseTimer);
+        toolbarPointerRef.current = true;
+      } else if (contentRef.current?.contains(e.target as Node)) {
+        pointerDownRef.current = true;
+        // A new gesture: the selection it makes may open the toolbar again
+        dismissedRef.current = null;
+      }
+    };
+    // pointercancel: a touch long-press hands over to the browser's own
+    // selection handles
+    const onPointerEnd = () => {
+      // Only a gesture that started on this block's content is checked here.
+      // A press on a toolbar button can collapse the selection (Safari, iOS)
+      // and must not close the toolbar before its click arrives; it stays
+      // protected until after the click (which follows the pointerup).
+      if (toolbarPointerRef.current) {
+        releaseTimer = setTimeout(() => {
+          toolbarPointerRef.current = false;
+        }, 0);
+      }
+      if (!pointerDownRef.current) return;
+      pointerDownRef.current = false;
+      clearTimeout(timer);
+      syncRef.current();
+    };
+    // Don't stay waiting for a pointerup that never comes
+    const onForget = () => {
+      pointerDownRef.current = false;
+      toolbarPointerRef.current = false;
+    };
+
+    document.addEventListener("selectionchange", onSelectionChange);
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointerup", onPointerEnd);
+    document.addEventListener("pointercancel", onPointerEnd);
+    window.addEventListener("blur", onForget);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(releaseTimer);
+      document.removeEventListener("selectionchange", onSelectionChange);
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointerup", onPointerEnd);
+      document.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("blur", onForget);
+    };
+  }, [selectionEnabled]);
 
   /** The saved highlight the toolbar is acting on (clicked, or selected within). */
   const targetHighlight = (): Highlight | null => {
@@ -594,7 +789,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
    * highlight that now holds the selection (null when nothing was saved).
    * - the clicked highlight, or the one the selection sits inside: recoloured;
    * - a selection overlapping saved highlights (ODY-153): one is updated to
-   *   cover the union and the others are absorbed (see below for notes);
+   *   cover the union and the others are absorbed, except that a highlight
+   *   with a note is never deleted (its note would become a general note);
    * - otherwise: a new highlight.
    * Everything is read before the first await, so the toolbar can close.
    */
@@ -631,10 +827,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
     }
 
-    // A highlight with a note is never deleted (its note would become a
-    // general note), so it is kept: as the base when it is the only noted one,
-    // otherwise left in place inside the union. Without that, the earliest is
-    // the base.
+    // A highlight with a note is kept: as the base when it is the only noted
+    // one, otherwise left in place inside the union. Without a note to protect,
+    // the earliest is the base.
     const byStart = [...overlapping].sort(
       (a, b) =>
         a.position.start - b.position.start || (a.id ?? 0) - (b.id ?? 0),
@@ -662,7 +857,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleCreateNote = async () => {
-    const notePosition = mousePositionY;
+    const notePosition = popupRef.current.notePosition;
     // A clicked highlight is noted as it is; anything else is saved first
     const highlight =
       popupRef.current.highlightId !== null
@@ -687,8 +882,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     if (!enrollmentId || author) return;
 
     // Clicking on or inside a drawn highlight shows the toolbar with Remove.
-    // Anything without a highlight id (including authored background-color
-    // spans) is not a highlight.
+    // Anything without our highlight marker (including authored
+    // background-color spans and the note bar's flash span) is not a highlight.
     const piece = target.closest<HTMLElement>(HIGHLIGHT_PIECE_SELECTOR);
     if (!piece || !contentRef.current) return;
 
@@ -697,64 +892,116 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const highlight = savedHighlights.find((h) => h.id === id);
     if (!highlight) return;
 
+    const rect = piece.getBoundingClientRect();
     popupRef.current.x = highlight.position.start;
     popupRef.current.y = highlight.position.end;
     popupRef.current.savedText = highlight.text;
     popupRef.current.highlightId = id;
+    popupRef.current.notePosition =
+      rect.top - contentRef.current.getBoundingClientRect().top;
 
-    const rect = piece.getBoundingClientRect();
-    const toolbarY = rect.top > 50 ? rect.top - 44 : rect.bottom + 8;
-    setToolbarPosition({ x: rect.left + rect.width / 2, y: toolbarY });
+    toolbarSourceRef.current = "click";
+    dismissedRef.current = null;
+    setToolbarPosition(placeToolbar(rect));
     setIsOnHighlight(true);
+    setHighlightColor(highlight.color);
   };
 
   const handleCloseEnlarged = () => {
     setEnlargedImage(null);
   };
 
-  const handleToolbarApplyColor = (color: HighlightColor) => {
-    setSelectedColor(color);
-    void saveSelection(color, false);
+  // A toolbar action can run before the debounced selection check has caught
+  // up with the selection, so it reads the live selection first. A click-opened
+  // toolbar acts on the clicked highlight and has no selection to read.
+  const refreshForAction = () => {
+    if (toolbarSourceRef.current === "selection") syncPopupFromSelection();
+  };
+
+  // Close after an action and clear the selection. Both the clearing and the
+  // redraw that follows fire `selectionchange`; the selection is collapsed by
+  // then, so nothing reopens, and remembering it covers a selection that
+  // survives.
+  const closeAfterAction = () => {
+    dismissedRef.current = `${popupRef.current.x}-${popupRef.current.y}`;
+    returnFocusToContent();
     setToolbarPosition(null);
     window.getSelection()?.removeAllRanges();
+  };
+
+  // When the toolbar had keyboard focus and goes away, focus would drop to the
+  // page; give it back to the text the toolbar belongs to.
+  const returnFocusToContent = () => {
+    if (toolbarHasFocus()) contentRef.current?.focus({ preventScroll: true });
+  };
+
+  const handleToolbarClose = (reason: "escape" | "outside") => {
+    if (reason === "escape") {
+      dismissedRef.current = `${popupRef.current.x}-${popupRef.current.y}`;
+      returnFocusToContent();
+    }
+    setToolbarPosition(null);
+  };
+
+  // Esc belongs to the toolbar only when the reader is in this block (or on
+  // the page itself); with focus in some other widget (a dialog, a menu) that
+  // widget gets it.
+  const ownsEscape = () => {
+    const active = document.activeElement;
+    return (
+      !active ||
+      active === document.body ||
+      !!wrapperRef.current?.contains(active)
+    );
+  };
+
+  const handleToolbarApplyColor = (color: HighlightColor) => {
+    refreshForAction();
+    setSelectedColor(color);
+    void saveSelection(color, false);
+    closeAfterAction();
   };
 
   const handleToolbarDelete = () => {
+    refreshForAction();
     handlePopupDelete();
-    setToolbarPosition(null);
+    closeAfterAction();
   };
 
   const handleToolbarNote = () => {
+    refreshForAction();
     void handleCreateNote();
-    setToolbarPosition(null);
-    window.getSelection()?.removeAllRanges();
+    closeAfterAction();
   };
 
   return (
-    <div>
-      {enrollmentId && !author && (
-        <SelectionToolbar
-          position={toolbarPosition}
-          selectedColor={selectedColor}
-          isOnHighlight={isOnHighlight}
-          onApplyColor={handleToolbarApplyColor}
-          onDelete={handleToolbarDelete}
-          onNote={handleToolbarNote}
-          onClose={() => setToolbarPosition(null)}
-        />
-      )}
-      <div style={{ display: "none" }}></div>
-
+    <div ref={wrapperRef} className="relative">
       {tableData && <TableRenderer tableData={tableData} />}
 
       {nonTableContent && (
         <div
           ref={contentRef}
-          onMouseUp={() => handleMouseUp()}
-          onMouseDown={(e) => handleMouseDown(e)}
+          // focusable by script only, so focus can return here from the toolbar
+          tabIndex={-1}
           onClick={handleContentClick}
           className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit max-w-none select-text dark:text-slate-300"
         ></div>
+      )}
+
+      {/* Inside the block, after the content: Tab reaches it, and it scrolls with the text */}
+      {enrollmentId && !author && (
+        <SelectionToolbar
+          position={toolbarPosition}
+          selectedColor={
+            isOnHighlight && highlightColor ? highlightColor : selectedColor
+          }
+          isOnHighlight={isOnHighlight}
+          ownsEscape={ownsEscape}
+          onApplyColor={handleToolbarApplyColor}
+          onDelete={handleToolbarDelete}
+          onNote={handleToolbarNote}
+          onClose={handleToolbarClose}
+        />
       )}
 
       {enlargedImage && (

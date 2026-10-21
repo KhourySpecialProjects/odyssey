@@ -296,6 +296,40 @@ describe("NotesBar", () => {
       });
     });
 
+    it("reports a deleted note at once, so its highlight can be noted again", async () => {
+      const onNoteDeleted = jest.fn();
+      const onNoteDeleteFailed = jest.fn();
+      render(
+        <NotesBar
+          {...defaultProps}
+          onNoteDeleted={onNoteDeleted}
+          onNoteDeleteFailed={onNoteDeleteFailed}
+        />,
+      );
+
+      await userEvent.click(screen.getAllByTestId("deleteNote")[0]);
+
+      expect(onNoteDeleted).toHaveBeenCalledWith(1);
+      await waitFor(() => expect(deleteNote).toHaveBeenCalled());
+      expect(onNoteDeleteFailed).not.toHaveBeenCalled();
+    });
+
+    it("reports a failed delete (the note is back) and a rejected one", async () => {
+      jest.spyOn(console, "error").mockImplementation();
+      const onNoteDeleteFailed = jest.fn();
+      (deleteNote as jest.Mock).mockResolvedValueOnce({ ok: false });
+      (deleteNote as jest.Mock).mockRejectedValueOnce(new Error("down"));
+      render(
+        <NotesBar {...defaultProps} onNoteDeleteFailed={onNoteDeleteFailed} />,
+      );
+
+      await userEvent.click(screen.getAllByTestId("deleteNote")[0]);
+      await waitFor(() => expect(onNoteDeleteFailed).toHaveBeenCalledWith(1));
+
+      await userEvent.click(screen.getAllByTestId("deleteNote")[0]);
+      await waitFor(() => expect(onNoteDeleteFailed).toHaveBeenCalledTimes(2));
+    });
+
     it("optimistically removes note from UI", async () => {
       const { container } = render(<NotesBar {...defaultProps} />);
     });

@@ -21,16 +21,22 @@ jest.mock("@/components/droplets/lessons/lesson-renderer", () => ({
     initialHighlights,
     onUpdate,
     completedLessonIds,
+    notes,
   }: {
     expanded: boolean;
     setExpanded: (expanded: boolean) => void;
     initialHighlights: Highlight[];
     onUpdate: () => void;
     completedLessonIds: number[];
+    notes?: Note[];
   }) => (
     <div>
       <span data-testid="renderer-completed">
         {completedLessonIds.join(",")}
+      </span>
+      <span data-testid="renderer-expanded">{String(expanded)}</span>
+      <span data-testid="renderer-notes">
+        {(notes ?? []).map((n) => n.id).join(",")}
       </span>
       <button onClick={() => setExpanded(!expanded)}>Toggle notes</button>
       <button onClick={onUpdate}>Note from highlight</button>
@@ -44,12 +50,28 @@ jest.mock("@/components/droplets/lessons/lesson-renderer", () => ({
 }));
 
 jest.mock("@/components/droplets/lessons/note-taking/notes-bar", () => ({
-  NotesBar: ({ initNotes }: { initNotes: Note[] }) => (
-    <ul data-testid="notes-bar">
-      {initNotes.map((n) => (
-        <li key={n.id}>{n.content}</li>
-      ))}
-    </ul>
+  NotesBar: ({
+    initNotes,
+    onNoteDeleted,
+    onNoteDeleteFailed,
+  }: {
+    initNotes: Note[];
+    onNoteDeleted?: (id: number) => void;
+    onNoteDeleteFailed?: (id: number) => void;
+  }) => (
+    <div>
+      <button onClick={() => onNoteDeleted?.(initNotes[0].id)}>
+        Delete first note
+      </button>
+      <button onClick={() => onNoteDeleteFailed?.(initNotes[0].id)}>
+        First delete failed
+      </button>
+      <ul data-testid="notes-bar">
+        {initNotes.map((n) => (
+          <li key={n.id}>{n.content}</li>
+        ))}
+      </ul>
+    </div>
   ),
 }));
 
@@ -169,6 +191,36 @@ describe("DropletLessonWrapper", () => {
       1,
       "test-lesson",
     );
+  });
+
+  it("closes the notes bar on Esc, but not on an Esc something else already handled", async () => {
+    render(<DropletLessonWrapper {...props} />);
+    fireEvent.click(screen.getByText("Toggle notes"));
+    expect(screen.getByTestId("renderer-expanded")).toHaveTextContent("true");
+
+    // the highlight toolbar closing claims the key with preventDefault
+    const claim = (e: KeyboardEvent) => e.preventDefault();
+    window.addEventListener("keydown", claim, true);
+    fireEvent.keyDown(document, { key: "Escape" });
+    window.removeEventListener("keydown", claim, true);
+    expect(screen.getByTestId("renderer-expanded")).toHaveTextContent("true");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.getByTestId("renderer-expanded")).toHaveTextContent("false");
+  });
+
+  it("tells the renderer which notes exist, following deletions in the notes bar", async () => {
+    render(<DropletLessonWrapper {...props} />);
+    expect(screen.getByTestId("renderer-notes")).toHaveTextContent("1");
+    fireEvent.click(screen.getByText("Toggle notes"));
+    await screen.findByTestId("notes-bar");
+
+    fireEvent.click(screen.getByText("Delete first note"));
+    expect(screen.getByTestId("renderer-notes")).toBeEmptyDOMElement();
+
+    // the delete failed, so the note is back
+    fireEvent.click(screen.getByText("First delete failed"));
+    expect(screen.getByTestId("renderer-notes")).toHaveTextContent("1");
   });
 
   it("never renders the notes panel without an enrollment", () => {

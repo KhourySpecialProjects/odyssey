@@ -181,7 +181,8 @@ describe("Highlight reads by lesson", () => {
           // the viewer needs to know which highlights already have a note
           populate: { note: { fields: ["id"] } },
         }),
-        next: { tags: ["highlights-1"], revalidate: 900 },
+        // note is populated, so both highlight and note writes must refresh it
+        next: { tags: ["highlights-1", "notes-1"], revalidate: 900 },
       }),
     );
   });

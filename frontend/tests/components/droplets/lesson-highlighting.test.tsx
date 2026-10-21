@@ -19,7 +19,7 @@ import {
 } from "@/lib/requests/highlights";
 import { createNote } from "@/lib/requests/notes";
 import { getEnrollByID } from "@/lib/requests/enrollment";
-import { AuthorizedUser, Highlight, Lesson } from "@/types";
+import { AuthorizedUser, Highlight, Lesson, Note } from "@/types";
 
 jest.mock("@/lib/requests/highlights", () => ({
   createHighlight: jest.fn(),
@@ -159,8 +159,8 @@ function highlightBeta(color = "Pink") {
   // Drawing replaces the <p>, so keep the wrapper that survives it
   const wrapper = content.closest(".prose")!;
   select(textNode(content, "Alpha"), 6, 10);
-  fireEvent.mouseUp(content);
-  fireEvent.mouseDown(screen.getByTitle(`Highlight ${color}`));
+  release(content);
+  fireEvent.click(screen.getByTitle(`Highlight ${color}`));
   return wrapper;
 }
 
@@ -227,16 +227,14 @@ describe("a block's DOM is only rebuilt for content or highlight changes", () =>
         onDeleteHighlight={jest.fn().mockResolvedValue(true)}
         onNote={jest.fn()}
         enrollmentId="123"
-        expanded={false}
-        setExpanded={jest.fn()}
       />,
     );
     const content = container.querySelector(".prose")!;
     const node = textNode(content, "Alpha");
     select(node, 6, 10);
-    fireEvent.mouseUp(content);
+    release(content);
 
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     // The parent owns the highlight list and hasn't changed it, so nothing
     // may be drawn or rebuilt by the block itself.
@@ -332,7 +330,7 @@ describe("removing a highlight", () => {
     // The highlight splits the text, so look the block up by its wrapper
     const content = document.querySelector(".prose")!;
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Remove highlight"));
+    fireEvent.click(screen.getByTitle("Remove highlight"));
     return content;
   };
 
@@ -414,7 +412,7 @@ describe("a save that returns later", () => {
     );
 
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Remove highlight"));
+    fireEvent.click(screen.getByTitle("Remove highlight"));
 
     await waitFor(() => expect(mockedDeleteHighlight).toHaveBeenCalledWith(8));
   });
@@ -454,7 +452,7 @@ describe("a highlight that is still being saved", () => {
 
     const span = highlightSpans(content)[0];
     select(textNode(span, "beta"), 1, 3);
-    fireEvent.mouseUp(content.querySelector("p")!);
+    release(content.querySelector("p")!);
 
     expect(screen.queryByTitle("Remove highlight")).toBeNull();
     expect(screen.queryByTitle("Highlight Pink")).toBeNull();
@@ -462,6 +460,12 @@ describe("a highlight that is still being saved", () => {
 });
 
 // ─── Chunk 2: highlights know their id ──────────────────────────────────────
+
+/** A mouse drag ends on the content: the pointer went down there, then comes up. */
+const release = (el: Element) => {
+  fireEvent.pointerDown(el);
+  fireEvent.pointerUp(el);
+};
 
 const hl = (
   id: number,
@@ -495,8 +499,6 @@ function renderBlock(
     onDeleteHighlight: jest.fn().mockResolvedValue(true),
     onNote: jest.fn(),
     enrollmentId: "123",
-    expanded: false,
-    setExpanded: jest.fn(),
     ...over,
   };
   const { container } = render(<GenericBlockRenderer {...props} />);
@@ -625,7 +627,7 @@ describe("drawn pieces carry the highlight id", () => {
     expect(screen.queryByTitle("Highlight Yellow")).toBeNull();
 
     select(textNode(authored, "hello"), 1, 3);
-    fireEvent.mouseUp(content);
+    release(content);
     // A fresh selection: colours are offered, but it isn't "on a highlight"
     expect(screen.getByTitle("Highlight Yellow")).toBeInTheDocument();
     expect(screen.queryByTitle("Remove highlight")).toBeNull();
@@ -640,7 +642,7 @@ describe("remove and recolour act on the highlight that was clicked", () => {
     );
 
     fireEvent.click(highlightSpans(content)[1]);
-    fireEvent.mouseDown(screen.getByTitle("Remove highlight"));
+    fireEvent.click(screen.getByTitle("Remove highlight"));
 
     expect(onDeleteHighlight).toHaveBeenCalledTimes(1);
     expect(onDeleteHighlight).toHaveBeenCalledWith(2);
@@ -656,7 +658,7 @@ describe("remove and recolour act on the highlight that was clicked", () => {
     )!;
 
     fireEvent.click(innermost);
-    fireEvent.mouseDown(screen.getByTitle("Remove highlight"));
+    fireEvent.click(screen.getByTitle("Remove highlight"));
 
     expect(onDeleteHighlight).toHaveBeenCalledTimes(1);
     expect(onDeleteHighlight).toHaveBeenCalledWith(9);
@@ -670,7 +672,7 @@ describe("remove and recolour act on the highlight that was clicked", () => {
     const spans = highlightSpans(content);
 
     fireEvent.click(spans[spans.length - 1]);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     expect(onUpdateHighlight).toHaveBeenCalledTimes(1);
     expect(onUpdateHighlight).toHaveBeenCalledWith(5, { color: PINK });
@@ -685,10 +687,10 @@ describe("remove and recolour act on the highlight that was clicked", () => {
     );
 
     select(textNode(highlightSpans(content)[0], "beta"), 1, 3);
-    fireEvent.mouseUp(content);
+    release(content);
 
     expect(screen.getByTitle("Remove highlight")).toBeInTheDocument();
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
     expect(onUpdateHighlight).toHaveBeenCalledWith(3, { color: PINK });
     expect(onHighlight).not.toHaveBeenCalled();
   });
@@ -713,7 +715,7 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
   const selectOverBoth = (content: Element) => {
     const spans = highlightSpans(content);
     selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
-    fireEvent.mouseUp(content);
+    release(content);
   };
 
   it("hands the union to onMergeHighlights: the earliest is the base, the others are absorbed", () => {
@@ -721,7 +723,7 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
       renderBlock(text, twoHighlights());
 
     selectOverBoth(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     expect(onMergeHighlights).toHaveBeenCalledWith(
       3,
@@ -744,8 +746,8 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
     const spans = highlightSpans(content);
 
     selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     expect(onMergeHighlights).toHaveBeenCalledWith(
       4,
@@ -764,8 +766,8 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
 
     // from inside "Alpha" to inside " delta": overlaps all three
     selectAcross(textNode(content, "Alpha"), 2, textNode(content, "delta"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     // The earliest (unnoted) one is the base; the noted ones are not deleted
     expect(onUpdateHighlight).toHaveBeenCalledWith(
@@ -784,8 +786,8 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
     const spans = highlightSpans(content);
 
     selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     // Only "gamma" is saved and overlapping: it is merged with the selection
     expect(onUpdateHighlight).toHaveBeenCalledWith(
@@ -806,8 +808,8 @@ describe("a selection that overlaps highlights merges them (ODY-153)", () => {
       (n) => n.nodeType === Node.TEXT_NODE && n.textContent === " ",
     ) as Text;
     select(space, 0, 1);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     expect(onUpdateHighlight).not.toHaveBeenCalled();
     expect(onHighlight).toHaveBeenCalledWith(
@@ -826,10 +828,11 @@ describe("notes link the highlight they came from", () => {
     });
 
     select(textNode(content, "Alpha"), 6, 10);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Add note"));
 
-    await waitFor(() => expect(onNote).toHaveBeenCalledWith(0, saved));
+    // the note goes where the selection starts, relative to the content (rect top 200, content top 0)
+    await waitFor(() => expect(onNote).toHaveBeenCalledWith(200, saved));
     expect(onHighlight).toHaveBeenCalledWith(
       expect.objectContaining({ text: "beta" }),
       true,
@@ -843,8 +846,8 @@ describe("notes link the highlight they came from", () => {
     );
 
     select(textNode(content, "Alpha"), 6, 10);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Add note"));
 
     await waitFor(() => expect(onHighlight).toHaveBeenCalled());
     await act(async () => {});
@@ -858,7 +861,7 @@ describe("notes link the highlight they came from", () => {
     );
 
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    fireEvent.click(screen.getByTitle("Add note"));
 
     await waitFor(() =>
       expect(onNote).toHaveBeenCalledWith(
@@ -879,10 +882,10 @@ describe("notes link the highlight they came from", () => {
     const spans = highlightSpans(content);
 
     selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Add note"));
 
-    await waitFor(() => expect(onNote).toHaveBeenCalledWith(0, merged));
+    await waitFor(() => expect(onNote).toHaveBeenCalledWith(200, merged));
     expect(onMergeHighlights).toHaveBeenCalledWith(
       3,
       expect.objectContaining({ position: { start: 3, end: 16 } }),
@@ -902,8 +905,8 @@ describe("notes link the highlight they came from", () => {
 
     const content = screen.getByText("Alpha beta gamma");
     select(textNode(content, "Alpha"), 6, 10);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Add note"));
 
     await waitFor(() => expect(createNote).toHaveBeenCalled());
     expect(createNote).toHaveBeenCalledWith(
@@ -934,7 +937,7 @@ describe("recolouring through LessonRenderer", () => {
     const content = document.querySelector(".prose")!;
 
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Green"));
+    fireEvent.click(screen.getByTitle("Highlight Green"));
 
     expect(updateHighlight).toHaveBeenCalledWith(7, { color: "#86efac" });
     expect(highlightSpans(content)[0].style.backgroundColor).toBe(
@@ -969,7 +972,7 @@ describe("recolouring through LessonRenderer", () => {
     const content = document.querySelector(".prose")!;
 
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Green"));
+    fireEvent.click(screen.getByTitle("Highlight Green"));
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Failed to update highlight"),
@@ -995,7 +998,7 @@ describe("recolouring through LessonRenderer", () => {
     const content = document.querySelector(".prose")!;
 
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Green"));
+    fireEvent.click(screen.getByTitle("Highlight Green"));
 
     await waitFor(() => expect(highlightSpans(content)).toHaveLength(0));
     expect(toast.error).not.toHaveBeenCalled();
@@ -1029,8 +1032,8 @@ describe("merging through LessonRenderer (ODY-153)", () => {
     const content = document.querySelector(".prose")!;
     const spans = highlightSpans(content);
     selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Green"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Green"));
     return content;
   };
 
@@ -1132,7 +1135,7 @@ describe("notes and highlights that already have one (W5)", () => {
   const addNoteOnClicked = () => {
     const content = document.querySelector(".prose")!;
     fireEvent.click(highlightSpans(content)[0]);
-    fireEvent.mouseDown(screen.getByTitle("Add note"));
+    fireEvent.click(screen.getByTitle("Add note"));
   };
 
   it("creates no second note: opens the notes bar and says so", async () => {
@@ -1209,8 +1212,8 @@ describe("selection and drawing details", () => {
     )!;
 
     select(textNode(innermost, "beta"), 1, 3);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Remove highlight"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Remove highlight"));
 
     expect(onDeleteHighlight).toHaveBeenCalledWith(7);
   });
@@ -1224,8 +1227,6 @@ describe("selection and drawing details", () => {
       onDeleteHighlight: jest.fn().mockResolvedValue(true),
       onNote: jest.fn(),
       enrollmentId: "123",
-      expanded: false,
-      setExpanded: jest.fn(),
     };
     const { container, rerender } = render(
       <GenericBlockRenderer {...props} highlights={[hl(1, "beta", 6, 10)]} />,
@@ -1251,12 +1252,171 @@ describe("selection and drawing details", () => {
 
     // from inside "a " to inside " b": strictly overlaps highlight 3
     selectAcross(textNode(content, "a "), 1, textNode(content, " b"), 2);
-    fireEvent.mouseUp(content);
-    fireEvent.mouseDown(screen.getByTitle("Highlight Pink"));
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
 
     expect(onUpdateHighlight).toHaveBeenCalledWith(
       3,
       expect.objectContaining({ text: "a x b" }),
     );
+  });
+
+  it("leaves the line-number gutter's digits out of a merged highlight's text", async () => {
+    // offsets: "Alpha beta" is 0-10, the gutter's "1" is 10-11, the code 11-20
+    const { content, onUpdateHighlight } = renderBlock(
+      "<p>Alpha beta</p><pre><code>code line</code></pre>",
+      [hl(3, "beta", 6, 10)],
+    );
+    // let highlight.js load and the block settle before selecting
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
+    selectAcross(
+      textNode(content.querySelector(".ody-highlight")!, "beta"),
+      2,
+      textNode(content.querySelector("pre code")!, "code"),
+      4,
+    );
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Pink"));
+
+    expect(onUpdateHighlight).toHaveBeenCalledWith(
+      3,
+      expect.objectContaining({
+        position: { start: 6, end: 15 },
+        text: "betacode",
+      }),
+    );
+  });
+
+  it("does not redraw when only a highlight's note flag flips", () => {
+    const props = {
+      block: { id: 1, content: "<p>Alpha beta gamma</p>" },
+      onHighlight: jest.fn().mockResolvedValue(null),
+      onUpdateHighlight: jest.fn().mockResolvedValue(null),
+      onMergeHighlights: jest.fn().mockResolvedValue(null),
+      onDeleteHighlight: jest.fn().mockResolvedValue(true),
+      onNote: jest.fn(),
+      enrollmentId: "123",
+    };
+    const { container, rerender } = render(
+      <GenericBlockRenderer {...props} highlights={[hl(1, "beta", 6, 10)]} />,
+    );
+    const piece = textNode(container.querySelector(".prose")!, "beta");
+
+    rerender(
+      <GenericBlockRenderer
+        {...props}
+        highlights={[noted(hl(1, "beta", 6, 10))]}
+      />,
+    );
+
+    expect(piece.isConnected).toBe(true);
+  });
+});
+
+describe("the note flag follows the notes list (W9)", () => {
+  const noteOn = (highlightId: number) =>
+    ({
+      id: 1,
+      content: "",
+      positionY: 0,
+      highlight: { id: highlightId },
+    }) as unknown as Note;
+  const addNoteOnClicked = () => {
+    const content = document.querySelector(".prose")!;
+    fireEvent.click(highlightSpans(content)[0]);
+    fireEvent.click(screen.getByTitle("Add note"));
+  };
+
+  it("lets a note be created again once the note on its highlight is deleted", async () => {
+    jest.mocked(getEnrollByID).mockResolvedValue({ id: "5" } as never);
+    jest.mocked(createNote).mockResolvedValue({ success: true });
+    const props = lessonProps({
+      initialHighlights: [savedRecord({ id: 7 })],
+      notes: [noteOn(7)],
+    });
+    const { rerender } = render(<LessonRenderer {...props} />);
+
+    addNoteOnClicked();
+    await waitFor(() =>
+      expect(toast.info).toHaveBeenCalledWith(
+        "This highlight already has a note",
+      ),
+    );
+    expect(createNote).not.toHaveBeenCalled();
+
+    // the note is deleted in the notes bar: the page passes the list without it
+    rerender(<LessonRenderer {...props} notes={[]} />);
+    addNoteOnClicked();
+
+    await waitFor(() => expect(createNote).toHaveBeenCalledTimes(1));
+  });
+
+  it("treats a highlight as noted from the notes list even if it loaded without the flag", async () => {
+    render(
+      <LessonRenderer
+        {...lessonProps({
+          initialHighlights: [savedRecord({ id: 7 })],
+          notes: [noteOn(7)],
+        })}
+      />,
+    );
+
+    addNoteOnClicked();
+
+    await waitFor(() => expect(toast.info).toHaveBeenCalled());
+    expect(createNote).not.toHaveBeenCalled();
+  });
+});
+
+describe("merging when the server or the notes disagree", () => {
+  const mergeLesson = {
+    id: 1,
+    name: "Lesson",
+    slug: "lesson",
+    blocks: [
+      {
+        id: 1,
+        __component: "droplets.generic",
+        content: "<p>Alpha beta gamma delta</p>",
+      },
+    ],
+  } as unknown as Lesson;
+  const both = () => [
+    savedRecord({ id: 3, text: "beta", position: { start: 6, end: 10 } }),
+    savedRecord({ id: 4, text: "gamma", position: { start: 11, end: 16 } }),
+  ];
+  const ids = (content: Element) =>
+    new Set(
+      Array.from(highlightSpans(content)).map((s) => s.dataset.highlightId),
+    );
+  const startMerge = () => {
+    const content = document.querySelector(".prose")!;
+    const spans = highlightSpans(content);
+    selectAcross(textNode(content, "Alpha"), 3, textNode(spans[1], "gamma"), 2);
+    release(content);
+    fireEvent.click(screen.getByTitle("Highlight Green"));
+    return content;
+  };
+
+  it("drops the base and brings the absorbed highlight back when the update says 'Highlight not found'", async () => {
+    mockedUpdateHighlight.mockResolvedValue({
+      ok: false,
+      error: "Highlight not found",
+      data: null,
+    });
+    render(
+      <LessonRenderer
+        {...lessonProps({ lesson: mergeLesson, initialHighlights: both() })}
+      />,
+    );
+
+    const content = startMerge();
+
+    await waitFor(() => expect(ids(content)).toEqual(new Set(["4"])));
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(mockedDeleteHighlight).not.toHaveBeenCalled();
   });
 });

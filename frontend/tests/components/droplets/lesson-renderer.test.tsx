@@ -9,7 +9,7 @@ import {
 import { createNote } from "@/lib/requests/notes";
 import { toast } from "sonner";
 import { getEnrollByID } from "@/lib/requests/enrollment";
-import { AuthorizedUser, Highlight, Lesson } from "@/types";
+import { AuthorizedUser, Highlight, Lesson, Note } from "@/types";
 
 jest.mock("@/lib/requests/highlights", () => ({
   createHighlight: jest.fn(),
@@ -42,10 +42,20 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
     highlights,
     onHighlight,
     onUpdateHighlight,
+    onMergeHighlights,
     onDeleteHighlight,
     onNote,
   }: {
     highlights: Highlight[];
+    onMergeHighlights: (
+      baseId: number,
+      changes: {
+        color: Highlight["color"];
+        position: { start: number; end: number };
+        text: string;
+      },
+      removeIds: number[],
+    ) => Promise<Highlight | null>;
     onHighlight: (
       highlight: Highlight,
       isWithNote?: boolean,
@@ -67,6 +77,21 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
       </ul>
       <button onClick={() => onUpdateHighlight(7, { color: "#86efac" })}>
         Recolour highlight
+      </button>
+      <button
+        onClick={() =>
+          onMergeHighlights(
+            7,
+            {
+              color: "#86efac",
+              position: { start: 0, end: 12 },
+              text: "Server highlight and more",
+            },
+            [9],
+          )
+        }
+      >
+        Merge highlights
       </button>
       <button
         onClick={() =>
@@ -316,6 +341,71 @@ describe("LessonRenderer (viewer)", () => {
     );
     expect(screen.getByTestId("highlights")).toHaveTextContent(
       "Server highlight",
+    );
+  });
+
+  it("never absorbs a highlight that has a note, even when the block asked to", async () => {
+    jest.mocked(updateHighlight).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { ...serverHighlights[0], position: { start: 0, end: 12 } },
+    });
+    const withNoted = [
+      ...serverHighlights,
+      {
+        id: 9,
+        text: "Noted highlight",
+        color: "#fff300",
+        position: { start: 7, end: 12 },
+        blockId: 1,
+      },
+    ] as Highlight[];
+    const notes = [
+      { id: 1, content: "", positionY: 0, highlight: { id: 9 } },
+    ] as unknown as Note[];
+
+    render(
+      <LessonRenderer {...props} initialHighlights={withNoted} notes={notes} />,
+    );
+    fireEvent.click(screen.getByText("Merge highlights"));
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Highlights merged"),
+    );
+    expect(deleteHighlight).not.toHaveBeenCalled();
+    expect(screen.getByTestId("highlights")).toHaveTextContent(
+      "Noted highlight",
+    );
+  });
+
+  it("deletes the absorbed highlights of a merge that have no note", async () => {
+    jest.mocked(updateHighlight).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { ...serverHighlights[0], position: { start: 0, end: 12 } },
+    });
+    jest
+      .mocked(deleteHighlight)
+      .mockResolvedValue({ ok: true, error: null, data: { id: 9 } });
+    const withOther = [
+      ...serverHighlights,
+      {
+        id: 9,
+        text: "Plain highlight",
+        color: "#fff300",
+        position: { start: 7, end: 12 },
+        blockId: 1,
+      },
+    ] as Highlight[];
+
+    render(
+      <LessonRenderer {...props} initialHighlights={withOther} notes={[]} />,
+    );
+    fireEvent.click(screen.getByText("Merge highlights"));
+
+    await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(9));
+    expect(screen.getByTestId("highlights")).not.toHaveTextContent(
+      "Plain highlight",
     );
   });
 

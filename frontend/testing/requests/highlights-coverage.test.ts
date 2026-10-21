@@ -194,7 +194,10 @@ describe("highlights requests — coverage", () => {
           fields: ["text", "position", "color", "blockId", "yLevel"],
           pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: [CACHE_TAGS.highlights(11)], revalidate: 900 },
+        next: {
+          tags: [CACHE_TAGS.highlights(11), CACHE_TAGS.notes(11)],
+          revalidate: 900,
+        },
       });
     });
 
