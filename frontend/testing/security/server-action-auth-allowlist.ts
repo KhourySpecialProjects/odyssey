@@ -142,7 +142,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/notes.ts#createNote": "ODY-508",
   "lib/requests/notes.ts#deleteNote": "ODY-508",
   "lib/requests/notes.ts#getAllNotesByUser": "ODY-508",
-  "lib/requests/notes.ts#getNotesByAuthorizedUserAndLesson": "ODY-508",
   "lib/requests/notes.ts#getNotesByDroplet": "ODY-508",
   "lib/requests/notes.ts#updateNoteContent": "ODY-508",
   "lib/requests/notes.ts#updateNotePosition": "ODY-508",
