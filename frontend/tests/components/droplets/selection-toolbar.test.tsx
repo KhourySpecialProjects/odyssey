@@ -70,6 +70,13 @@ const setSelection = (
 const select = (node: Text, start: number, end: number) =>
   setSelection(node, start, node, end);
 
+/** Moves focus; the toolbar tracks it in state, so it happens inside act. */
+const focusIn = (el: HTMLElement) => {
+  act(() => {
+    el.focus();
+  });
+};
+
 /** A mouse drag ends on the content: the pointer went down there, then comes up. */
 const release = (el: Element) => {
   fireEvent.pointerDown(el);
@@ -172,7 +179,7 @@ describe("opening the toolbar from the selection", () => {
     const { content } = setup("<p>Alpha beta gamma</p>");
     select(textNode(content, "Alpha"), 6, 10);
     settle();
-    screen.getByRole("button", { name: "Highlight Pink" }).focus();
+    focusIn(screen.getByRole("button", { name: "Highlight Pink" }));
 
     window.getSelection()!.removeAllRanges();
     settle();
@@ -470,7 +477,7 @@ describe("placing the toolbar inside the block", () => {
     it("closes the toolbar from inside it", () => {
       open();
       const button = screen.getByRole("button", { name: "Highlight Pink" });
-      button.focus();
+      focusIn(button);
 
       fireEvent.keyDown(button, { key: "Escape" });
 
@@ -483,7 +490,7 @@ describe("placing the toolbar inside the block", () => {
       const other = document.createElement("button");
       other.id = "other-widget";
       document.body.appendChild(other);
-      other.focus();
+      focusIn(other);
 
       fireEvent.keyDown(other, { key: "Escape" });
 
@@ -501,7 +508,7 @@ describe("placing the toolbar inside the block", () => {
 
     it("gives focus back to the text when it closes the toolbar the keyboard was in", () => {
       const content = open();
-      screen.getByRole("button", { name: "Highlight Pink" }).focus();
+      focusIn(screen.getByRole("button", { name: "Highlight Pink" }));
 
       fireEvent.keyDown(document.activeElement!, { key: "Escape" });
 
@@ -596,7 +603,7 @@ describe("toolbar accessibility", () => {
 
     expect(stops()).toEqual([buttons[0]]);
 
-    buttons[0].focus();
+    focusIn(buttons[0]);
     await user.keyboard("{ArrowRight}{ArrowRight}");
 
     expect(stops()).toEqual([buttons[2]]);
@@ -623,7 +630,7 @@ describe("toolbar accessibility", () => {
   it("gives focus back to the text after a keyboard action closes it", async () => {
     const user = userEvent.setup();
     const { content } = openOn();
-    screen.getByRole("button", { name: "Highlight Pink" }).focus();
+    focusIn(screen.getByRole("button", { name: "Highlight Pink" }));
 
     await user.keyboard("{Enter}");
 
@@ -707,7 +714,7 @@ describe("using the toolbar from the keyboard", () => {
       const user = userEvent.setup();
       const { onHighlight } = open();
 
-      screen.getByRole("button", { name: "Highlight Pink" }).focus();
+      focusIn(screen.getByRole("button", { name: "Highlight Pink" }));
       await user.keyboard(key);
 
       expect(onHighlight).toHaveBeenCalledWith(
@@ -726,7 +733,7 @@ describe("using the toolbar from the keyboard", () => {
     select(textNode(content.querySelector(".ody-highlight")!, "beta"), 0, 4);
     release(content);
 
-    screen.getByRole("button", { name: "Remove highlight" }).focus();
+    focusIn(screen.getByRole("button", { name: "Remove highlight" }));
     await user.keyboard("{Enter}");
 
     expect(onDeleteHighlight).toHaveBeenCalledWith(7);
@@ -739,7 +746,7 @@ describe("using the toolbar from the keyboard", () => {
       screen.getByRole("toolbar").querySelectorAll("button"),
     );
 
-    buttons[0].focus();
+    focusIn(buttons[0]);
     await user.keyboard("{ArrowRight}");
     expect(buttons[1]).toHaveFocus();
 
@@ -759,7 +766,7 @@ describe("using the toolbar from the keyboard", () => {
 
     // nothing between the content and the toolbar can take focus
     content.setAttribute("tabindex", "0");
-    content.focus();
+    focusIn(content);
     await user.tab();
 
     expect(first).toHaveFocus();

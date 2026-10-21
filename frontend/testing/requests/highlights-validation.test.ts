@@ -121,6 +121,82 @@ describe("deleteHighlight validation", () => {
   });
 });
 
+describe("the rest of the input", () => {
+  const badInputs: [string, unknown][] = [
+    ["null", null],
+    ["undefined", undefined],
+    ["a string", "text"],
+    ["an array", []],
+  ];
+
+  it.each(badInputs)(
+    "createHighlight rejects %s as the input, without throwing",
+    async (_n, input) => {
+      const result = await createHighlight(
+        input as Parameters<typeof createHighlight>[0],
+      );
+      expect(result).toEqual(invalid);
+      expectNothingSent();
+    },
+  );
+
+  it.each(badInputs)(
+    "updateHighlight rejects %s as the changes, without throwing",
+    async (_n, changes) => {
+      const result = await updateHighlight(
+        5,
+        changes as Parameters<typeof updateHighlight>[1],
+      );
+      expect(result).toEqual(invalid);
+      expectNothingSent();
+    },
+  );
+
+  const badCreateFields: [string, Partial<typeof validCreate>][] = [
+    ["a lesson id of 0", { lessonId: 0 }],
+    ["a negative lesson id", { lessonId: -2 }],
+    ["a fractional lesson id", { lessonId: 1.5 }],
+    ["a string lesson id", { lessonId: "2" as never }],
+    ["a negative block id", { blockId: -1 }],
+    ["a fractional block id", { blockId: 0.5 }],
+    ["a string block id", { blockId: "3" as never }],
+    ["an unsafe block id", { blockId: Number.MAX_SAFE_INTEGER + 2 }],
+    ["empty text", { text: "" }],
+    ["text that isn't a string", { text: 5 as never }],
+    ["text over 10,000 characters", { text: "x".repeat(10_001) }],
+  ];
+
+  it.each(badCreateFields)("createHighlight rejects %s", async (_n, over) => {
+    const result = await createHighlight({ ...validCreate, ...over });
+    expect(result).toEqual(invalid);
+    expectNothingSent();
+  });
+
+  it("createHighlight accepts a block id of 0 and text of exactly 10,000 characters", async () => {
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+
+    const result = await createHighlight({
+      ...validCreate,
+      blockId: 0,
+      text: "x".repeat(10_000),
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([
+    ["empty text", ""],
+    ["text that isn't a string", 5],
+    ["text over 10,000 characters", "x".repeat(10_001)],
+  ])("updateHighlight rejects %s", async (_n, text) => {
+    const result = await updateHighlight(5, {
+      text: text as string,
+    });
+    expect(result).toEqual(invalid);
+    expectNothingSent();
+  });
+});
+
 describe("the position that is sent is rebuilt from the validated numbers", () => {
   const sneaky = { start: 1, end: 4, extra: "x" } as {
     start: number;

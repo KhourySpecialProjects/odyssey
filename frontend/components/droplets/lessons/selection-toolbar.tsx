@@ -4,14 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HighlightColor } from "@/types";
 import { cn } from "@/lib/utils";
 import { IconTrash, IconNotebook } from "@tabler/icons-react";
-
-const COLORS: { color: HighlightColor; label: string }[] = [
-  { color: "#f9a8d4", label: "Pink" },
-  { color: "#fbd38d", label: "Orange" },
-  { color: "#fff300", label: "Yellow" },
-  { color: "#86efac", label: "Green" },
-  { color: "#93c5fd", label: "Blue" },
-];
+import { HIGHLIGHT_COLOR_OPTIONS as COLORS } from "./highlight-colors";
 
 // Used until the toolbar has been measured (and where nothing can be measured)
 const FALLBACK_HEIGHT = 36;

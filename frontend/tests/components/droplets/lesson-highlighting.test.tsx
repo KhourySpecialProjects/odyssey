@@ -1420,3 +1420,38 @@ describe("merging when the server or the notes disagree", () => {
     expect(mockedDeleteHighlight).not.toHaveBeenCalled();
   });
 });
+
+describe("which highlights a block draws (audit S7)", () => {
+  // A converted v2 block groups several saved blocks: highlights saved under
+  // any of its sourceBlockIds belong to it
+  const grouped = { id: 1, sourceBlockIds: [11, 12], content: "" };
+  const text = "<p>Alpha beta gamma delta</p>";
+  const on = (blockId: number, ...rest: [string, number, number]) => ({
+    ...hl(blockId * 10, ...rest),
+    blockId,
+  });
+
+  it("draws highlights saved under the block's own id or one of its sourceBlockIds, and no others", () => {
+    const { content } = renderBlock(
+      text,
+      [
+        on(1, "Alpha", 0, 5), // the block's own id
+        on(12, "beta", 6, 10), // one of its source blocks
+        on(99, "gamma", 11, 16), // another block's
+      ],
+      { block: { ...grouped, content: text } },
+    );
+
+    const drawn = Array.from(highlightSpans(content)).map((s) => s.textContent);
+    expect(drawn).toEqual(["Alpha", "beta"]);
+  });
+
+  it("draws nothing from other blocks when the block has no sourceBlockIds", () => {
+    const { content } = renderBlock(text, [
+      on(12, "beta", 6, 10),
+      on(99, "gamma", 11, 16),
+    ]);
+
+    expect(highlightSpans(content)).toHaveLength(0);
+  });
+});

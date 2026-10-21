@@ -52,6 +52,8 @@
  *                 getHighlightsByAuthorizedUserAndLesson, which populates
  *                 each highlight's note)
  * highlights      createHighlight, updateHighlight, deleteHighlight         900s
+ *                 (updateHighlight and deleteHighlight also sweep the
+ *                 notes tag: every notes read embeds the note's highlight)
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
  *                 publishDraftToOriginal

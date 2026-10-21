@@ -78,6 +78,9 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
       <button onClick={() => onUpdateHighlight(7, { color: "#86efac" })}>
         Recolour highlight
       </button>
+      <button onClick={() => onUpdateHighlight(7, { color: "#93c5fd" })}>
+        Recolour highlight blue
+      </button>
       <button
         onClick={() =>
           onMergeHighlights(
@@ -342,6 +345,204 @@ describe("LessonRenderer (viewer)", () => {
     expect(screen.getByTestId("highlights")).toHaveTextContent(
       "Server highlight",
     );
+  });
+
+  describe("keeping the notes in step with their highlight (audit W1)", () => {
+    const noted = [
+      { id: 1, content: "", positionY: 0, highlight: { id: 7 } },
+    ] as unknown as Note[];
+
+    it("refreshes the notes once after recolouring a highlight that has a note", async () => {
+      jest.mocked(updateHighlight).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { ...serverHighlights[0], color: "#86efac" },
+      });
+      render(<LessonRenderer {...props} notes={noted} />);
+
+      fireEvent.click(screen.getByText("Recolour highlight"));
+
+      await waitFor(() => expect(props.onUpdate).toHaveBeenCalledTimes(1));
+    });
+
+    it("does not refresh the notes for a plain recolour", async () => {
+      jest.mocked(updateHighlight).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { ...serverHighlights[0], color: "#86efac" },
+      });
+      render(<LessonRenderer {...props} notes={[]} />);
+
+      fireEvent.click(screen.getByText("Recolour highlight"));
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlight updated"),
+      );
+      expect(props.onUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does not refresh the notes when the update fails", async () => {
+      jest.mocked(updateHighlight).mockResolvedValue({
+        ok: false,
+        error: "Failed to update highlight",
+        data: null,
+      });
+      render(<LessonRenderer {...props} notes={noted} />);
+
+      fireEvent.click(screen.getByText("Recolour highlight"));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(props.onUpdate).not.toHaveBeenCalled();
+    });
+
+    it("refreshes the notes after a merge whose base has a note", async () => {
+      jest.mocked(updateHighlight).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { ...serverHighlights[0], position: { start: 0, end: 12 } },
+      });
+      jest
+        .mocked(deleteHighlight)
+        .mockResolvedValue({ ok: true, error: null, data: { id: 9 } });
+      const withOther = [
+        ...serverHighlights,
+        {
+          id: 9,
+          text: "Plain highlight",
+          color: "#fff300",
+          position: { start: 7, end: 12 },
+          blockId: 1,
+        },
+      ] as Highlight[];
+      render(
+        <LessonRenderer
+          {...props}
+          initialHighlights={withOther}
+          notes={noted}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Merge highlights"));
+
+      await waitFor(() => expect(props.onUpdate).toHaveBeenCalledTimes(1));
+    });
+
+    it("does not refresh the notes after a merge whose base has none", async () => {
+      jest.mocked(updateHighlight).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { ...serverHighlights[0], position: { start: 0, end: 12 } },
+      });
+      render(<LessonRenderer {...props} notes={[]} />);
+
+      fireEvent.click(screen.getByText("Merge highlights"));
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlights merged"),
+      );
+      expect(props.onUpdate).not.toHaveBeenCalled();
+    });
+
+    it("refreshes the notes after deleting a highlight that has a note, not otherwise", async () => {
+      jest
+        .mocked(deleteHighlight)
+        .mockResolvedValue({ ok: true, error: null, data: { id: 7 } });
+      const { unmount } = render(<LessonRenderer {...props} notes={noted} />);
+      fireEvent.click(screen.getByText("Delete highlight"));
+      await waitFor(() => expect(props.onUpdate).toHaveBeenCalledTimes(1));
+      unmount();
+
+      jest.mocked(props.onUpdate).mockClear();
+      render(<LessonRenderer {...props} notes={[]} />);
+      fireEvent.click(screen.getByText("Delete highlight"));
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlight removed"),
+      );
+      expect(props.onUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("overlapping recolours (audit S3)", () => {
+    it("keeps the newer colour on screen when an older update fails afterwards", async () => {
+      let failFirst!: (value: {
+        ok: false;
+        error: "Failed to update highlight";
+        data: null;
+      }) => void;
+      jest
+        .mocked(updateHighlight)
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              failFirst = resolve;
+            }),
+        )
+        .mockResolvedValueOnce({
+          ok: true,
+          error: null,
+          data: { ...serverHighlights[0], color: "#93c5fd" },
+        });
+      render(<LessonRenderer {...props} />);
+
+      // yellow -> green (slow), then green -> blue (succeeds)
+      fireEvent.click(screen.getByText("Recolour highlight"));
+      fireEvent.click(screen.getByText("Recolour highlight blue"));
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlight updated"),
+      );
+
+      failFirst({
+        ok: false,
+        error: "Failed to update highlight",
+        data: null,
+      });
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Failed to update highlight"),
+      );
+
+      expect(screen.getByText("Server highlight")).toHaveAttribute(
+        "data-color",
+        "#93c5fd",
+      );
+    });
+  });
+
+  describe("a lapsed session (audit S5)", () => {
+    const expired = {
+      ok: false,
+      error: "unauthenticated",
+      data: null,
+    } as const;
+    const message =
+      "Your session has expired. Sign in again to save highlights.";
+
+    it("says so when saving, recolouring and removing are refused", async () => {
+      jest.mocked(createHighlight).mockResolvedValue(expired);
+      jest.mocked(updateHighlight).mockResolvedValue(expired);
+      jest.mocked(deleteHighlight).mockResolvedValue(expired);
+      render(<LessonRenderer {...props} />);
+
+      fireEvent.click(screen.getByText("Highlight"));
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenLastCalledWith(message),
+      );
+      jest.mocked(toast.error).mockClear();
+
+      fireEvent.click(screen.getByText("Recolour highlight"));
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenLastCalledWith(message),
+      );
+      jest.mocked(toast.error).mockClear();
+
+      fireEvent.click(screen.getByText("Delete highlight"));
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenLastCalledWith(message),
+      );
+      // nothing generic was shown
+      expect(toast.error).not.toHaveBeenCalledWith(
+        "Failed to remove highlight",
+      );
+    });
   });
 
   it("never absorbs a highlight that has a note, even when the block asked to", async () => {

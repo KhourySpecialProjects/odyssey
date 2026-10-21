@@ -10,6 +10,7 @@ import {
 import { CACHE_TAGS } from "../cache-tags";
 import { revalidateTag } from "next/cache";
 import { withAuth, assertOwner, type AuthUser } from "@/lib/auth/guards";
+import { HIGHLIGHT_COLORS } from "@/components/droplets/lessons/highlight-colors";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -153,19 +154,27 @@ type HighlightWriteResult<T> = {
   data: T | null;
 };
 
-const HIGHLIGHT_COLORS: readonly string[] = [
-  "#f9a8d4",
-  "#fbd38d",
-  "#fff300",
-  "#86efac",
-  "#93c5fd",
-];
+// The longest highlight text we accept (a lesson block is far shorter)
+const MAX_HIGHLIGHT_TEXT_LENGTH = 10_000;
 
 const isValidId = (id: unknown): id is number =>
   typeof id === "number" && Number.isSafeInteger(id) && id > 0;
 
+// A block id is a whole number, 0 or more (v2 blocks hash to non-negative ids)
+const isValidBlockId = (blockId: unknown): blockId is number =>
+  typeof blockId === "number" && Number.isSafeInteger(blockId) && blockId >= 0;
+
+const isValidText = (text: unknown): text is string =>
+  typeof text === "string" &&
+  text.length > 0 &&
+  text.length <= MAX_HIGHLIGHT_TEXT_LENGTH;
+
 const isValidColor = (color: unknown): boolean =>
-  typeof color === "string" && HIGHLIGHT_COLORS.includes(color);
+  typeof color === "string" &&
+  (HIGHLIGHT_COLORS as readonly string[]).includes(color);
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isValidPosition = (position: unknown): boolean => {
   if (typeof position !== "object" || position === null) return false;
@@ -231,7 +240,14 @@ export async function createHighlight(input: {
   lessonId: number;
 }): Promise<HighlightWriteResult<Highlight>> {
   return withAuth([], async (user) => {
-    if (!isValidColor(input.color) || !isValidPosition(input.position)) {
+    if (
+      !isObject(input) ||
+      !isValidText(input.text) ||
+      !isValidColor(input.color) ||
+      !isValidPosition(input.position) ||
+      !isValidBlockId(input.blockId) ||
+      !isValidId(input.lessonId)
+    ) {
       return INVALID;
     }
     try {
@@ -283,8 +299,10 @@ export async function updateHighlight(
   return withAuth([], async (user) => {
     if (
       !isValidId(id) ||
+      !isObject(changes) ||
       (changes.color !== undefined && !isValidColor(changes.color)) ||
-      (changes.position !== undefined && !isValidPosition(changes.position))
+      (changes.position !== undefined && !isValidPosition(changes.position)) ||
+      (changes.text !== undefined && !isValidText(changes.text))
     ) {
       return INVALID;
     }
@@ -316,6 +334,8 @@ export async function updateHighlight(
 
       const json = await response.json();
       revalidateTag(CACHE_TAGS.highlights(user.id));
+      // a note embeds its highlight (colour, text, position): refresh those reads
+      revalidateTag(CACHE_TAGS.notes(user.id));
       return {
         ok: true,
         error: null,
@@ -348,6 +368,8 @@ export async function deleteHighlight(
       }
 
       revalidateTag(CACHE_TAGS.highlights(user.id));
+      // a note embeds its highlight, so its read goes stale too
+      revalidateTag(CACHE_TAGS.notes(user.id));
       return { ok: true, error: null, data: { id } };
     } catch (error) {
       console.error("deleteHighlight failed:", error);

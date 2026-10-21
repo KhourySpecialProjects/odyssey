@@ -112,6 +112,16 @@ export function LessonRenderer({
   const highlightsRef = useRef<Highlight[]>(initialHighlights);
   // Ids whose delete is already on its way, so a repeat call is ignored.
   const deletingIds = useRef<Set<number>>(new Set());
+  // The newest update started for each highlight, so a failing older update
+  // doesn't roll the screen back over a newer one
+  const updateSeq = useRef<Map<number, number>>(new Map());
+  const startUpdate = (id: number) => {
+    const seq = (updateSeq.current.get(id) ?? 0) + 1;
+    updateSeq.current.set(id, seq);
+    return seq;
+  };
+  const isLatestUpdate = (id: number, seq: number) =>
+    updateSeq.current.get(id) === seq;
 
   const commitHighlights = (update: (prev: Highlight[]) => Highlight[]) => {
     const next = update(highlightsRef.current);
@@ -233,6 +243,15 @@ export function LessonRenderer({
     );
   }
 
+  // A save, update or delete that didn't go through. A lapsed session says so
+  // (retrying would just fail again); anything else gets the generic message.
+  const notifyFailure = (error: string | null | undefined, generic: string) =>
+    toast.error(
+      error === "unauthenticated"
+        ? "Your session has expired. Sign in again to save highlights."
+        : generic,
+    );
+
   // The list above is the single source of truth: blocks draw from it, so a
   // change here shows at once. A new highlight goes in with a temporary id and
   // is swapped for the server record when the save returns, or taken out again
@@ -244,9 +263,10 @@ export function LessonRenderer({
     const tempId = nextTempHighlightId.current--;
     commitHighlights((prev) => [...prev, { ...highlight, id: tempId }]);
 
+    let failure: string | null | undefined;
     const fail = () => {
       commitHighlights((prev) => prev.filter((h) => h.id !== tempId));
-      toast.error("Failed to save highlight");
+      notifyFailure(failure, "Failed to save highlight");
       return null;
     };
 
@@ -258,6 +278,7 @@ export function LessonRenderer({
         blockId: highlight.blockId,
         lessonId: lesson.id,
       });
+      failure = result.error;
       if (!result.ok || !result.data) return fail();
 
       const saved: Highlight = { ...highlight, ...result.data };
@@ -286,23 +307,27 @@ export function LessonRenderer({
     const removed = highlightsRef.current.find((h) => h.id === highlightId);
     commitHighlights((prev) => prev.filter((h) => h.id !== highlightId));
 
+    let failure: string | null | undefined;
     const restore = () => {
       if (removed) {
         commitHighlights((prev) =>
           prev.some((h) => h.id === highlightId) ? prev : [...prev, removed],
         );
       }
-      toast.error("Failed to remove highlight");
+      notifyFailure(failure, "Failed to remove highlight");
       return false;
     };
 
     try {
       const result = await deleteHighlight(highlightId);
+      failure = result.error;
       // Already gone on the server: that is what the user asked for
       if (!result.ok && result.error === "Highlight not found") return true;
       if (!result.ok) return restore();
 
       toast.success("Highlight removed");
+      // Its note (if it had one) is now a general note: refresh the notes
+      if (removed && hasNote(removed)) onUpdate();
       return true;
     } catch {
       return restore();
@@ -324,20 +349,26 @@ export function LessonRenderer({
 
     const previous = highlightsRef.current.find((h) => h.id === highlightId);
     if (!previous) return null;
+    const seq = startUpdate(highlightId);
     commitHighlights((prev) =>
       prev.map((h) => (h.id === highlightId ? { ...h, ...changes } : h)),
     );
 
+    let failure: string | null | undefined;
     const rollBack = () => {
-      commitHighlights((prev) =>
-        prev.map((h) => (h.id === highlightId ? previous : h)),
-      );
-      toast.error("Failed to update highlight");
+      // Only if no newer update has started since: that one owns the screen
+      if (isLatestUpdate(highlightId, seq)) {
+        commitHighlights((prev) =>
+          prev.map((h) => (h.id === highlightId ? previous : h)),
+        );
+      }
+      notifyFailure(failure, "Failed to update highlight");
       return null;
     };
 
     try {
       const result = await updateHighlight(highlightId, changes);
+      failure = result.error;
       // Gone on the server: drop it, as a delete would, rather than putting
       // back a highlight that no longer exists
       if (!result.ok && result.error === "Highlight not found") {
@@ -351,6 +382,8 @@ export function LessonRenderer({
         prev.map((h) => (h.id === highlightId ? updated : h)),
       );
       toast.success("Highlight updated");
+      // A note embeds its highlight (colour, text, position): refresh the notes
+      if (hasNote(previous)) onUpdate();
       return updated;
     } catch {
       return rollBack();
@@ -384,6 +417,7 @@ export function LessonRenderer({
         !hasNote(h),
     );
     const absorbedIds = absorbed.map((h) => h.id);
+    const seq = startUpdate(baseId);
 
     commitHighlights((prev) =>
       prev
@@ -397,18 +431,22 @@ export function LessonRenderer({
         ...records.filter((r) => !prev.some((h) => h.id === r.id)),
       ]);
 
+    let failure: string | null | undefined;
     const rollBack = () => {
-      commitHighlights((prev) =>
-        prev.map((h) => (h.id === baseId ? previousBase : h)),
-      );
+      if (isLatestUpdate(baseId, seq)) {
+        commitHighlights((prev) =>
+          prev.map((h) => (h.id === baseId ? previousBase : h)),
+        );
+      }
       restore(absorbed);
-      toast.error("Failed to update highlight");
+      notifyFailure(failure, "Failed to update highlight");
       return null;
     };
 
     let updated: Highlight;
     try {
       const result = await updateHighlight(baseId, changes);
+      failure = result.error;
       // The base is gone on the server: drop it, as a delete would, and bring
       // the absorbed highlights back (they were never deleted)
       if (!result.ok && result.error === "Highlight not found") {
@@ -425,18 +463,23 @@ export function LessonRenderer({
       prev.map((h) => (h.id === baseId ? updated : h)),
     );
     toast.success("Highlights merged");
+    // The base's note embeds its highlight: refresh the notes (new position,
+    // colour and text, or the badge's jump-to-text goes to the old place)
+    if (hasNote(previousBase)) onUpdate();
 
     await Promise.all(
       absorbed.map(async (record) => {
+        let failure: string | null | undefined;
         try {
           const result = await deleteHighlight(record.id as number);
           // Already gone on the server counts as deleted
           if (result.ok || result.error === "Highlight not found") return;
+          failure = result.error;
         } catch {
           // fall through to the restore below
         }
         restore([record]);
-        toast.error("Failed to remove highlight");
+        notifyFailure(failure, "Failed to remove highlight");
       }),
     );
     return updated;

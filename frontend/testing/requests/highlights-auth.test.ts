@@ -102,6 +102,8 @@ describe("createHighlight", () => {
       },
     });
     expect(mockedRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.highlights(7));
+    // a new highlight has no note yet: the notes reads stay
+    expect(mockedRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.notes(7));
     expect(result).toEqual({
       ok: true,
       error: null,
@@ -207,6 +209,8 @@ describe("updateHighlight", () => {
       data: { color: "#86efac", position: { start: 1, end: 4 } },
     });
     expect(mockedRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.highlights(7));
+    // every notes read embeds the note's highlight
+    expect(mockedRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.notes(7));
     expect(result.ok).toBe(true);
     expect(result.data).toEqual(
       expect.objectContaining({ id: 5, color: "#86efac" }),
@@ -304,6 +308,8 @@ describe("deleteHighlight", () => {
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(mockedRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.highlights(7));
+    // every notes read embeds the note's highlight
+    expect(mockedRevalidateTag).toHaveBeenCalledWith(CACHE_TAGS.notes(7));
     expect(result).toEqual({ ok: true, error: null, data: { id: 5 } });
   });
 
