@@ -49,7 +49,7 @@
  *                 isEnabled change), deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
  *                 deleteNote
- * highlights      createHighlight, deleteHighlight                          900s
+ * highlights      createHighlight, updateHighlight, deleteHighlight         900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
  *                 publishDraftToOriginal

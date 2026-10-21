@@ -32,8 +32,6 @@ describe("GenericBlockRenderer", () => {
     enrollmentId: "123",
     expanded: false,
     setExpanded: jest.fn(),
-    activeBlock: 1,
-    setActiveBlock: jest.fn(),
   };
 
   let mockRange: Range;
@@ -406,13 +404,23 @@ describe("GenericBlockRenderer", () => {
         "data-highlighted",
       );
 
-      // The failure isn't cached, so the next render fetches the grammar again
+      // The failure isn't cached, so the next redraw fetches the grammar again.
+      // A block only redraws when its content or its own highlights change, so
+      // add a highlight to this block.
       mockHaskellChunkFails = false;
       rerender(
         <GenericBlockRenderer
           {...defaultProps}
           block={block}
-          highlights={[]}
+          highlights={[
+            {
+              id: 1,
+              text: "main",
+              position: { start: 0, end: 4 },
+              color: "#fff300",
+              blockId: 1,
+            },
+          ]}
         />,
       );
       await waitFor(() =>
@@ -1140,49 +1148,6 @@ describe("GenericBlockRenderer", () => {
     });
   });
 
-  describe("Active Block Tracking", () => {
-    it("sets active block on mouse enter", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-    });
-
-    it("handles mouse leave event", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseLeave(contentDiv);
-
-      expect(contentDiv).toBeInTheDocument();
-    });
-
-    it("updates active block when different block is hovered", () => {
-      const { rerender, container } = render(
-        <GenericBlockRenderer {...defaultProps} />,
-      );
-
-      let contentDiv = container.querySelector(".prose")!;
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-
-      rerender(
-        <GenericBlockRenderer
-          {...defaultProps}
-          block={{ id: 2, content: "Different block" }}
-        />,
-      );
-
-      contentDiv = container.querySelector(".prose")!;
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(2);
-    });
-  });
-
   describe("Expanded State Management", () => {
     it("renders prose content when expanded is true", () => {
       const { container } = render(
@@ -1366,7 +1331,7 @@ describe("GenericBlockRenderer", () => {
   });
 
   describe("Component Lifecycle", () => {
-    it("sets up and cleans up event listeners properly", () => {
+    it("removes its content on unmount", () => {
       const { container, unmount } = render(
         <GenericBlockRenderer {...defaultProps} />,
       );
@@ -1374,9 +1339,6 @@ describe("GenericBlockRenderer", () => {
       const contentDiv = container.querySelector(".prose")!;
 
       expect(contentDiv).toBeInTheDocument();
-
-      fireEvent.mouseOver(contentDiv);
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
 
       unmount();
 
@@ -1418,16 +1380,6 @@ describe("GenericBlockRenderer", () => {
       expect(document.createTreeWalker).toHaveBeenCalled();
     });
 
-    it("sets up event listeners on mount", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      expect(contentDiv).toBeInTheDocument();
-
-      fireEvent.mouseOver(contentDiv);
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-    });
-
     it("re-processes content when block id changes", () => {
       const { rerender } = render(<GenericBlockRenderer {...defaultProps} />);
 
@@ -1450,10 +1402,7 @@ describe("GenericBlockRenderer", () => {
 
       for (let i = 0; i < 5; i++) {
         rerender(
-          <GenericBlockRenderer
-            {...defaultProps}
-            activeBlock={i % 2 === 0 ? 1 : 2}
-          />,
+          <GenericBlockRenderer {...defaultProps} expanded={i % 2 === 0} />,
         );
       }
 

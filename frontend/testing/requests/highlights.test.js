@@ -2,10 +2,13 @@ const {
   getHighlights,
   getHighlightsByDroplet,
   getHighlightsByAuthorizedUserAndLesson,
-  createHighlight,
-  deleteHighlight,
 } = require("../../lib/requests/highlights");
 const { fetchAPI } = require("../../lib/utils");
+
+// Highlight writes (create/update/delete) are covered in highlights-auth.test.ts.
+jest.mock("../../lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -249,60 +252,7 @@ describe("Highlights Tests", () => {
   });
 });
 
-describe("Highlight Actions", () => {
-  it("should create highlight", async () => {
-    const { revalidateTag } = require("next/cache");
-    const highlightData = {
-      data: {
-        content: "Test highlight",
-        lesson: 1,
-        authorized_user: 5,
-      },
-    };
-
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await createHighlight(highlightData);
-    expect(result.data).toBeDefined();
-    expect(result.data.id).toBe(1);
-    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
-  });
-
-  it("should handle highlight creation error", async () => {
-    const { revalidateTag } = require("next/cache");
-    const highlightData = {
-      data: {
-        content: "Test highlight",
-        lesson: 1,
-        authorized_user: 5,
-      },
-    };
-
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: "Failed to create highlight" }),
-    });
-
-    await expect(createHighlight(highlightData)).rejects.toThrow();
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("should delete highlight", async () => {
-    const { revalidateTag } = require("next/cache");
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await deleteHighlight(1, 5);
-    expect(result).toBeDefined();
-    expect(result.data.id).toBe(1);
-    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
-  });
-
+describe("Highlight reads by lesson", () => {
   it("should fetch a user's highlights for a lesson by slug", async () => {
     const mockHighlights = [
       { id: 1, text: "Key idea", color: "#fff300", blockId: 2 },
@@ -324,15 +274,5 @@ describe("Highlight Actions", () => {
         next: { tags: ["highlights-1"], revalidate: 900 },
       }),
     );
-  });
-});
-
-describe("Error Cases", () => {
-  it("should handle network errors", async () => {
-    global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-    await expect(
-      createHighlight({ data: { content: "Test", authorized_user: 5 } }),
-    ).rejects.toThrow();
   });
 });

@@ -34,6 +34,7 @@ import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 import { HighlightDropdown } from "./highlight-dropdown";
+import { isPendingHighlightId } from "./highlight-ids";
 import { HighlightHintBanner } from "./highlight-hint-banner";
 import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
@@ -94,6 +95,21 @@ export function LessonRenderer({
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
   const lessonContentRef = useRef<HTMLDivElement>(null);
   const firedMilestones = useRef<Set<number>>(new Set());
+  // Temporary ids for highlights that are still being saved. They are negative
+  // so they can never collide with a server id.
+  const nextTempHighlightId = useRef(-1);
+  // The latest list, updated synchronously by `commitHighlights`. Handlers read
+  // and roll back from here, never from the list of the render they were
+  // created in, which can be stale by the time a save or delete returns.
+  const highlightsRef = useRef<Highlight[]>(initialHighlights);
+  // Ids whose delete is already on its way, so a repeat call is ignored.
+  const deletingIds = useRef<Set<number>>(new Set());
+
+  const commitHighlights = (update: (prev: Highlight[]) => Highlight[]) => {
+    const next = update(highlightsRef.current);
+    highlightsRef.current = next;
+    setHighlights(next);
+  };
 
   const displayBlocks =
     lesson.blocksVersion === "v2" && lesson.blocksV2
@@ -106,10 +122,6 @@ export function LessonRenderer({
     .forEach((b: Block) => {
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
-
-  const [activeBlock, setActiveBlock] = useState<number | undefined>(
-    displayBlocks[0]?.id,
-  );
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
@@ -180,42 +192,81 @@ export function LessonRenderer({
     );
   }
 
+  // The list above is the single source of truth: blocks draw from it, so a
+  // change here shows at once. A new highlight goes in with a temporary id and
+  // is swapped for the server record when the save returns, or taken out again
+  // if it fails.
   const handleHighlight = async (
     highlight: Highlight,
     isWithNote?: boolean,
-  ) => {
-    const response = await createHighlight({
-      data: {
+  ): Promise<Highlight | null> => {
+    const tempId = nextTempHighlightId.current--;
+    commitHighlights((prev) => [...prev, { ...highlight, id: tempId }]);
+
+    const fail = () => {
+      commitHighlights((prev) => prev.filter((h) => h.id !== tempId));
+      toast.error("Failed to save highlight");
+      return null;
+    };
+
+    try {
+      const result = await createHighlight({
         text: highlight.text,
         position: highlight.position,
         color: highlight.color,
-        lesson: lesson.id,
-        authorized_user: authUser?.id,
         blockId: highlight.blockId,
-      },
-    });
+        lessonId: lesson.id,
+      });
+      if (!result.ok || !result.data) return fail();
 
-    if (response.data) {
-      const formattedHighlight = {
-        ...response.data.attributes,
-        id: response.data.id,
-      };
-      setHighlights((prev) => [...prev, formattedHighlight]);
-      if (!(isWithNote === true)) {
+      const saved: Highlight = { ...highlight, ...result.data };
+      commitHighlights((prev) =>
+        prev.map((h) => (h.id === tempId ? saved : h)),
+      );
+      if (isWithNote !== true) {
         toast.success("Highlight saved");
       }
-    } else {
-      toast.error("Failed to save highlight");
+      return saved;
+    } catch {
+      return fail();
     }
   };
 
-  const handleDeleteHighlight = async (highlightId: number) => {
-    const response = await deleteHighlight(highlightId, authUser!.id);
-    if (response && !response.error) {
-      setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
-      toast.success("Highlight removed");
-    } else {
+  // Removed from the list at once; put back if the delete fails.
+  const handleDeleteHighlight = async (
+    highlightId: number,
+  ): Promise<boolean> => {
+    // Still being saved: there is no server record to delete yet.
+    if (isPendingHighlightId(highlightId)) return false;
+    // Already on its way (e.g. two drawn pieces resolved to the same record)
+    if (deletingIds.current.has(highlightId)) return false;
+    deletingIds.current.add(highlightId);
+
+    const removed = highlightsRef.current.find((h) => h.id === highlightId);
+    commitHighlights((prev) => prev.filter((h) => h.id !== highlightId));
+
+    const restore = () => {
+      if (removed) {
+        commitHighlights((prev) =>
+          prev.some((h) => h.id === highlightId) ? prev : [...prev, removed],
+        );
+      }
       toast.error("Failed to remove highlight");
+      return false;
+    };
+
+    try {
+      const result = await deleteHighlight(highlightId);
+      // Already gone on the server: that is what the user asked for
+      if (!result.ok && result.error === "Highlight not found") return true;
+      if (!result.ok) return restore();
+
+      toast.success("Highlight removed");
+      return true;
+    } catch {
+      return restore();
+    } finally {
+      deletingIds.current.delete(highlightId);
     }
   };
 
@@ -307,8 +358,6 @@ export function LessonRenderer({
                 enrollmentId={enrollmentId}
                 expanded={expanded}
                 setExpanded={setExpanded}
-                activeBlock={activeBlock}
-                setActiveBlock={(id: number) => setActiveBlock(id)}
                 author={author}
               />
             ))}
@@ -333,8 +382,6 @@ function LessonBlockRenderer({
   enrollmentId,
   expanded,
   setExpanded,
-  activeBlock,
-  setActiveBlock,
   author,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -345,14 +392,15 @@ function LessonBlockRenderer({
   lessonName: string;
   userId?: number;
   highlights: Highlight[];
-  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
-  onDeleteHighlight: (id: number) => void;
+  onHighlight: (
+    highlight: Highlight,
+    isWithNote?: boolean,
+  ) => Promise<Highlight | null>;
+  onDeleteHighlight: (id: number) => Promise<boolean>;
   onNote: (notePos: number, text: string) => void;
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
-  activeBlock: number | undefined;
-  setActiveBlock: (id: number) => void;
   author: boolean;
 }) {
   switch (block.__component) {
@@ -367,8 +415,6 @@ function LessonBlockRenderer({
           enrollmentId={enrollmentId}
           expanded={expanded}
           setExpanded={setExpanded}
-          activeBlock={activeBlock}
-          setActiveBlock={setActiveBlock}
           author={author}
         />
       );

@@ -7,6 +7,7 @@ import {
   getHighlightsByAuthorizedUserAndLesson,
 } from "@/lib/requests/highlights";
 import { createNote } from "@/lib/requests/notes";
+import { toast } from "sonner";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { AuthorizedUser, Highlight, Lesson } from "@/types";
 
@@ -44,8 +45,11 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
     onNote,
   }: {
     highlights: Highlight[];
-    onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
-    onDeleteHighlight: (id: number) => void;
+    onHighlight: (
+      highlight: Highlight,
+      isWithNote?: boolean,
+    ) => Promise<Highlight | null>;
+    onDeleteHighlight: (id: number) => Promise<boolean>;
     onNote: (notePos: number, text: string) => void;
   }) => (
     <div>
@@ -67,6 +71,14 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
         Highlight
       </button>
       <button onClick={() => onDeleteHighlight(7)}>Delete highlight</button>
+      <button
+        onClick={() => {
+          onDeleteHighlight(7);
+          onDeleteHighlight(7);
+        }}
+      >
+        Delete highlight twice
+      </button>
       <button onClick={() => onNote(120, "Server highlight")}>Add note</button>
     </div>
   ),
@@ -151,14 +163,14 @@ describe("LessonRenderer (viewer)", () => {
 
   it("adds a created highlight to the server-provided list", async () => {
     jest.mocked(createHighlight).mockResolvedValue({
+      ok: true,
+      error: null,
       data: {
         id: 8,
-        attributes: {
-          text: "New highlight",
-          color: "#86efac",
-          position: { start: 0, end: 3 },
-          blockId: 1,
-        },
+        text: "New highlight",
+        color: "#86efac",
+        position: { start: 0, end: 3 },
+        blockId: 1,
       },
     });
 
@@ -173,10 +185,43 @@ describe("LessonRenderer (viewer)", () => {
     expect(screen.getByTestId("highlights")).toHaveTextContent(
       "Server highlight",
     );
+    expect(createHighlight).toHaveBeenCalledWith({
+      text: "New highlight",
+      color: "#86efac",
+      position: { start: 0, end: 3 },
+      blockId: 1,
+      lessonId: 1,
+    });
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Highlight saved"),
+    );
+  });
+
+  it("shows a new highlight before the save returns and drops it if the save fails", async () => {
+    jest.mocked(createHighlight).mockResolvedValue({
+      ok: false,
+      error: "Failed to save highlight",
+      data: null,
+    });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Highlight"));
+
+    // Synchronously after the click: the save hasn't been awaited yet
+    expect(screen.getByTestId("highlights")).toHaveTextContent("New highlight");
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Failed to save highlight"),
+    );
+    expect(screen.getByTestId("highlights")).not.toHaveTextContent(
+      "New highlight",
+    );
   });
 
   it("removes a deleted server-provided highlight", async () => {
-    jest.mocked(deleteHighlight).mockResolvedValue({ data: { id: 7 } });
+    jest
+      .mocked(deleteHighlight)
+      .mockResolvedValue({ ok: true, error: null, data: { id: 7 } });
 
     render(<LessonRenderer {...props} />);
     fireEvent.click(screen.getByText("Delete highlight"));
@@ -186,7 +231,70 @@ describe("LessonRenderer (viewer)", () => {
         "Server highlight",
       ),
     );
-    expect(deleteHighlight).toHaveBeenCalledWith(7, 1);
+    expect(deleteHighlight).toHaveBeenCalledWith(7);
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Highlight removed"),
+    );
+  });
+
+  it("ignores a repeat delete for an id that is already being deleted", async () => {
+    jest
+      .mocked(deleteHighlight)
+      .mockResolvedValueOnce({ ok: true, error: null, data: { id: 7 } })
+      .mockResolvedValue({
+        ok: false,
+        error: "Highlight not found",
+        data: null,
+      });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Delete highlight twice"));
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Highlight removed"),
+    );
+    expect(deleteHighlight).toHaveBeenCalledTimes(1);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(screen.getByTestId("highlights")).not.toHaveTextContent(
+      "Server highlight",
+    );
+  });
+
+  it("treats 'Highlight not found' as already removed", async () => {
+    jest.mocked(deleteHighlight).mockResolvedValue({
+      ok: false,
+      error: "Highlight not found",
+      data: null,
+    });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Delete highlight"));
+
+    await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(7));
+    await waitFor(() =>
+      expect(screen.getByTestId("highlights")).not.toHaveTextContent(
+        "Server highlight",
+      ),
+    );
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("puts a highlight back when deleting it fails", async () => {
+    jest.mocked(deleteHighlight).mockResolvedValue({
+      ok: false,
+      error: "Failed to delete highlight",
+      data: null,
+    });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Delete highlight"));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Failed to remove highlight"),
+    );
+    expect(screen.getByTestId("highlights")).toHaveTextContent(
+      "Server highlight",
+    );
   });
 
   it("creates a note from a highlight and asks the wrapper to refetch", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   getLoadedHighlighter,
   loadHighlighter,
@@ -8,6 +8,7 @@ import {
 } from "./load-highlighter";
 import { Highlight, HighlightColor } from "@/types";
 import { SelectionToolbar } from "./selection-toolbar";
+import { isPendingHighlightId } from "./highlight-ids";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
@@ -16,25 +17,99 @@ import DOMPurify from "isomorphic-dompurify";
 interface Block {
   content: string;
   id: number;
+  /** Set on converted v2 blocks: the original block ids their highlights were saved under */
+  sourceBlockIds?: number[];
 }
 
 interface GenericBlockRendererProps {
   block: Block;
   highlights: Highlight[];
-  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
-  onDeleteHighlight: (highlightId: number) => void;
+  onHighlight: (
+    highlight: Highlight,
+    isWithNote?: boolean,
+  ) => Promise<Highlight | null> | void;
+  onDeleteHighlight: (highlightId: number) => Promise<boolean> | void;
   onNote: (notePos: number, text: string) => void;
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
-  activeBlock: number | undefined;
-  setActiveBlock: (id: number) => void;
   author?: boolean;
 }
 
 interface EnlargedImage {
   src: string;
   alt: string;
+}
+
+const processLatex = (content: string) => {
+  content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
+    try {
+      return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
+    } catch (e) {
+      console.error("Failed to process block LaTeX:", e);
+      return match;
+    }
+  });
+
+  content = content.replace(/\$(.*?)\$/g, (match, latex) => {
+    try {
+      return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
+    } catch (e) {
+      console.error("Failed to process inline LaTeX:", e);
+      return match;
+    }
+  });
+
+  return content;
+};
+
+function highlightRange(
+  startNode: Node,
+  startOffset: number,
+  endNode: Node,
+  endOffset: number,
+  color: HighlightColor,
+) {
+  const range = document.createRange();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+
+  const walker = document.createTreeWalker(
+    range.commonAncestorContainer,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) => {
+        return range.intersectsNode(node)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_REJECT;
+      },
+    },
+  );
+
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    textNodes.push(node);
+  }
+
+  for (const node of textNodes) {
+    const nodeRange = document.createRange();
+    const nodeStart = node === startNode ? startOffset : 0;
+    const nodeEnd = node === endNode ? endOffset : node.textContent?.length;
+
+    nodeRange.setStart(node, nodeStart);
+    nodeRange.setEnd(node, nodeEnd || 0);
+
+    const span = document.createElement("span");
+
+    span.style.backgroundColor = color;
+    span.style.borderRadius = "8px";
+    span.style.setProperty("color", "black", "important");
+
+    const contents = nodeRange.extractContents();
+    span.appendChild(contents);
+    nodeRange.insertNode(span);
+  }
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -44,7 +119,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onDeleteHighlight,
   onNote,
   enrollmentId,
-  setActiveBlock,
   author = false,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -75,98 +149,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     null,
   );
 
-  const processLatex = (content: string) => {
-    content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
-      try {
-        return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
-      } catch (e) {
-        console.error("Failed to process block LaTeX:", e);
-        return match;
-      }
-    });
-
-    content = content.replace(/\$(.*?)\$/g, (match, latex) => {
-      try {
-        return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
-      } catch (e) {
-        console.error("Failed to process inline LaTeX:", e);
-        return match;
-      }
-    });
-
-    return content;
-  };
-
-  useEffect(() => {
-    const handleMouseEnter = () => {
-      setActiveBlock(block.id);
-    };
-
-    const handleMouseLeave = () => {
-      //
-    };
-
-    if (contentRef.current) {
-      contentRef.current.addEventListener("mouseover", handleMouseEnter);
-      contentRef.current.addEventListener("mouseleave", handleMouseLeave);
-    }
-    return () => {
-      if (contentRef.current) {
-        contentRef.current.removeEventListener("mouseover", handleMouseEnter);
-        contentRef.current.removeEventListener("mouseleave", handleMouseLeave);
-      }
-    };
-  }, [block.id]);
-
-  function highlightRange(
-    startNode: Node,
-    startOffset: number,
-    endNode: Node,
-    endOffset: number,
-    color: HighlightColor,
-  ) {
-    const range = document.createRange();
-    range.setStart(startNode, startOffset);
-    range.setEnd(endNode, endOffset);
-
-    const walker = document.createTreeWalker(
-      range.commonAncestorContainer,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          return range.intersectsNode(node)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_REJECT;
-        },
-      },
-    );
-
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      textNodes.push(node);
-    }
-
-    for (const node of textNodes) {
-      const nodeRange = document.createRange();
-      const nodeStart = node === startNode ? startOffset : 0;
-      const nodeEnd = node === endNode ? endOffset : node.textContent?.length;
-
-      nodeRange.setStart(node, nodeStart);
-      nodeRange.setEnd(node, nodeEnd || 0);
-
-      const span = document.createElement("span");
-
-      span.style.backgroundColor = color;
-      span.style.borderRadius = "8px";
-      span.style.setProperty("color", "black", "important");
-
-      const contents = nodeRange.extractContents();
-      span.appendChild(contents);
-      nodeRange.insertNode(span);
-    }
-  }
-
   // Check if content contains a table
   const tableMatch = block.content.match(
     /<!--TABLE_START-->([\s\S]*?)<!--TABLE_END-->/,
@@ -181,6 +163,28 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     ? block.content.replace(/<!--TABLE_START-->[\s\S]*?<!--TABLE_END-->/, "")
     : block.content;
 
+  // This block's highlights, stable by value. `highlights` is the whole
+  // lesson's list and gets a new identity whenever any highlight changes
+  // (including a save returning in another block); depending on it would
+  // rebuild this block and wipe a selection the user started here. `block` can
+  // also be a new object on every render (v2 lessons are converted each time).
+  // So the key is built from this block's own highlights, and the memo only
+  // changes when their content does.
+  const sourceIds = block.sourceBlockIds ?? [];
+  const blockHighlightsKey = JSON.stringify(
+    highlights.filter(
+      (h) => h.blockId === block.id || sourceIds.includes(h.blockId),
+    ),
+  );
+  const blockHighlights = useMemo<Highlight[]>(
+    () => JSON.parse(blockHighlightsKey),
+    [blockHighlightsKey],
+  );
+
+  // The drawing effect is the only thing that writes to the block's DOM, and
+  // it only re-runs when the content or this lesson's highlights change. It
+  // must not depend on hover, toolbar state, colour or callback identity: a
+  // rebuild replaces every text node and drops the user's selection.
   useEffect(() => {
     const container = contentRef.current;
     if (!container) return;
@@ -274,19 +278,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         pre.insertBefore(lineNumbers, pre.firstChild);
       });
-      const blockHighlights = highlights.filter((h) => {
-        if (h.blockId === block.id) return true;
-        // Check if block is a generic block with sourceBlockIds
-        if (
-          "sourceBlockIds" in block &&
-          Array.isArray(block.sourceBlockIds) &&
-          block.sourceBlockIds.includes(h.blockId)
-        ) {
-          return true;
-        }
-        return false;
-      });
-
       const sortedHighlights = [...blockHighlights].sort(
         (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
       );
@@ -382,15 +373,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    nonTableContent,
-    highlights,
-    contentRef,
-    popupRef,
-    onNote,
-    savedSelectionRef,
-    selectedColor,
-  ]);
+  }, [nonTableContent, blockHighlights]);
 
   const getTextOffset = (parent: Node, node: Node): number => {
     let offset = 0;
@@ -401,6 +384,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       offset += walker.currentNode.textContent?.length || 0;
     }
     return offset;
+  };
+
+  // A highlight that is still being saved has a temporary id and can't be
+  // removed, recoloured or merged yet. Drawn pieces carry no id, so find the
+  // highlights covering [start, end) by offsets: pending only if no saved
+  // highlight covers it too.
+  const isInsidePendingHighlight = (start: number, end: number) => {
+    const covers = (h: Highlight) =>
+      h.position.start <= start && end <= h.position.end;
+    const covering = blockHighlights.filter(covers);
+    return (
+      covering.some((h) => isPendingHighlightId(h.id)) &&
+      !covering.some((h) => !isPendingHighlightId(h.id))
+    );
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -460,6 +457,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       const highlightStart = Math.min(startOffset, endOffset);
       const highlightEnd = Math.max(startOffset, endOffset);
 
+      // Inside a highlight that hasn't finished saving: offer nothing
+      if (isInsidePendingHighlight(highlightStart, highlightEnd)) return;
+
       const startSpan = range.startContainer.parentElement?.closest(
         'span[style*="background-color"]',
       ) as HTMLElement | null;
@@ -502,6 +502,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     );
 
     spans.forEach((span) => {
+      // A nested span goes with its parent when the parent is unwrapped
+      if (!contentRef.current?.contains(span)) return;
       const spanRange = document.createRange();
       spanRange.selectNodeContents(span);
 
@@ -547,39 +549,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     if (!text || globalStart === globalEnd) return;
 
-    // Use position-based walker (same as the useEffect that re-applies highlights)
-    const walker = document.createTreeWalker(
-      contentRef.current,
-      NodeFilter.SHOW_TEXT,
-    );
-
-    let currentPosition = 0;
-    let startNode: Node | null = null;
-    let endNode: Node | null = null;
-    let startOffset = 0;
-    let endOffset = 0;
-
-    let node = walker.nextNode();
-    while (node) {
-      const nodeLength = node.textContent?.length || 0;
-
-      if (!startNode && currentPosition + nodeLength > globalStart) {
-        startNode = node;
-        startOffset = globalStart - currentPosition;
-      }
-
-      if (!endNode && currentPosition + nodeLength >= globalEnd) {
-        endNode = node;
-        endOffset = globalEnd - currentPosition;
-        break;
-      }
-
-      currentPosition += nodeLength;
-      node = walker.nextNode();
-    }
-
-    if (!startNode || !endNode) return;
-
+    // The block never wraps the selection by hand: the parent adds the
+    // highlight to its state and the drawing effect draws it from there.
     const existingSpan = popupRef.current.highlightSpan;
     const effectiveColor = existingSpan
       ? (existingSpan.style.backgroundColor as HighlightColor)
@@ -596,22 +567,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     );
 
     popupRef.current.highlightSpan = null;
-
-    if (!existingSpan) {
-      try {
-        const newRange = document.createRange();
-        newRange.setStart(startNode, startOffset);
-        newRange.setEnd(endNode, endOffset);
-
-        const span = document.createElement("span");
-        span.style.borderRadius = "8px";
-        span.style.backgroundColor = colorToUse;
-        span.style.setProperty("color", "black", "important");
-        newRange.surroundContents(span);
-      } catch {
-        highlightRange(startNode, startOffset, endNode, endOffset, colorToUse);
-      }
-    }
   };
 
   const handleApplyColor = (color: HighlightColor) => {
@@ -699,6 +654,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     if (spanStart === -1) return;
+
+    if (isInsidePendingHighlight(spanStart, spanEnd)) return;
 
     const range = document.createRange();
     range.selectNodeContents(highlightSpan);

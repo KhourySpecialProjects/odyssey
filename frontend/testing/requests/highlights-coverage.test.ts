@@ -1,22 +1,18 @@
 /**
- * Coverage tests for lib/requests/highlights.ts.
- * Targets previously-uncovered paths: getAllHighlightsByUser (lines 84-119),
- * deleteHighlight error path (line 132), and remaining branch gaps.
+ * Coverage tests for the read functions in lib/requests/highlights.ts.
+ * The writes (create/update/delete) are covered in highlights-auth.test.ts.
  */
 
 import {
   getAllHighlightsByUser,
-  deleteHighlight,
   getHighlightsByAuthorizedUserAndLesson,
-  createHighlight,
 } from "@/lib/requests/highlights";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import {
-  getMockedFetchAPI,
-  mockGlobalFetch,
-  makeFetchResponse,
-} from "@/lib/testing/mock-helpers";
-import { revalidateTag } from "next/cache";
+import { getMockedFetchAPI, mockGlobalFetch } from "@/lib/testing/mock-helpers";
+
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -25,8 +21,6 @@ jest.mock("@/lib/utils", () => ({
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
-
-const mockedRevalidateTag = jest.mocked(revalidateTag);
 
 describe("highlights requests — coverage", () => {
   let mockedFetchAPI: ReturnType<typeof getMockedFetchAPI>;
@@ -170,62 +164,6 @@ describe("highlights requests — coverage", () => {
     });
   });
 
-  // ── deleteHighlight (line 131-132: error branch) ───────────────────────────
-
-  describe("deleteHighlight", () => {
-    it("deletes a highlight and calls revalidateTag", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeFetchResponse({ data: { id: 1 } }, 200),
-      );
-
-      await deleteHighlight(1, 5);
-
-      expect(mockedRevalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.highlights(5),
-      );
-    });
-
-    it("throws when response is not ok", async () => {
-      mockFetch.mockResolvedValueOnce(makeFetchResponse({}, 404));
-
-      await expect(deleteHighlight(99, 5)).rejects.toThrow(
-        "Failed to delete highlight",
-      );
-      expect(mockedRevalidateTag).not.toHaveBeenCalled();
-    });
-
-    it("throws on network error", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("Connection reset"));
-
-      await expect(deleteHighlight(1, 5)).rejects.toThrow("Connection reset");
-    });
-
-    it("calls DELETE on the correct URL", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeFetchResponse({ data: { id: 42 } }, 200),
-      );
-
-      await deleteHighlight(42, 7);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/highlights/42"),
-        expect.objectContaining({ method: "DELETE" }),
-      );
-    });
-
-    it("uses the authorizedUserId to scope the cache tag", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeFetchResponse({ data: { id: 1 } }, 200),
-      );
-
-      await deleteHighlight(1, 99);
-
-      expect(mockedRevalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.highlights(99),
-      );
-    });
-  });
-
   // ── getHighlightsByAuthorizedUserAndLesson ──────────────────────────────────
 
   describe("getHighlightsByAuthorizedUserAndLesson", () => {
@@ -275,67 +213,6 @@ describe("highlights requests — coverage", () => {
       await expect(
         getHighlightsByAuthorizedUserAndLesson(5, "some-lesson"),
       ).rejects.toThrow("API down");
-    });
-  });
-
-  // ── createHighlight ─────────────────────────────────────────────────────────
-
-  describe("createHighlight", () => {
-    it("creates a highlight and calls revalidateTag", async () => {
-      const highlightData = {
-        data: {
-          text: "Key concept",
-          color: "#fff300",
-          authorized_user: 5,
-          lesson: 2,
-        },
-      };
-      mockFetch.mockResolvedValueOnce(
-        makeFetchResponse({ data: { id: 10 } }, 201),
-      );
-
-      const result = await createHighlight(highlightData);
-
-      expect(result).toEqual({ data: { id: 10 } });
-      expect(mockedRevalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.highlights(5),
-      );
-    });
-
-    it("throws when response is not ok", async () => {
-      const highlightData = {
-        data: { text: "note", authorized_user: 5, lesson: 1 },
-      };
-      mockFetch.mockResolvedValueOnce(makeFetchResponse({}, 400));
-
-      await expect(createHighlight(highlightData)).rejects.toThrow(
-        "Failed to create highlight",
-      );
-      expect(mockedRevalidateTag).not.toHaveBeenCalled();
-    });
-
-    it("throws on network error", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("Network timeout"));
-
-      await expect(
-        createHighlight({ data: { text: "note", authorized_user: 5 } }),
-      ).rejects.toThrow("Network timeout");
-    });
-
-    it("POSTs to the correct highlights endpoint", async () => {
-      const highlightData = {
-        data: { text: "concept", authorized_user: 3, lesson: 7 },
-      };
-      mockFetch.mockResolvedValueOnce(
-        makeFetchResponse({ data: { id: 1 } }, 201),
-      );
-
-      await createHighlight(highlightData);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/highlights"),
-        expect.objectContaining({ method: "POST" }),
-      );
     });
   });
 });
