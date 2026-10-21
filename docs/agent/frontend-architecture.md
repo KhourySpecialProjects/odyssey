@@ -86,7 +86,7 @@ Authentication uses NextAuth with two providers: Azure AD (Northeastern SSO) and
 
 1. User clicks sign in → redirected to Azure AD or GitHub
 2. `signIn` callback (`lib/auth/options.ts`) checks the user's email exists in the `authorized-users` Strapi collection. If not found, sign-in is rejected.
-3. `jwt` callback fetches the user's roles from Strapi and their NUID from Microsoft Graph API (Azure AD users only). These are embedded in the JWT.
+3. `jwt` callback fetches the user's roles from Strapi and their NUID from Microsoft Graph API (Azure AD users only). These are embedded in the JWT, along with the Strapi user id (ODY-555). Later `jwt` calls re-check that id every 5 minutes (data-cached lookup by email) and drop it if the account no longer exists.
 4. `session` callback populates the NextAuth session object with roles, user ID, NUID, and profile data from the JWT.
 5. Middleware (`frontend/middleware.ts`) only checks that a session token exists for `/admin`, `/d`, `/activity`. Role gating happens in `app/(general)/admin/layout.tsx` (SysAdmin via `getCurrentUser`) and in each Server Action via `requireRole`.
 
