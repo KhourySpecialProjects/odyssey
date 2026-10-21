@@ -14,39 +14,6 @@ import { withAuth, assertOwner, type AuthUser } from "@/lib/auth/guards";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-export async function getHighlights(
-  authorizedUserId: number,
-  text: string,
-  {
-    sort,
-    pagination = { pageSize: 250, page: 1 },
-    fields = ["id", "color", "text", "yLevel"],
-  }: StrapiRequestParams = {},
-): Promise<Highlight[]> {
-  const path = `/highlights`;
-  const urlParams = {
-    sort,
-    filters: {
-      authorized_user: {
-        id: { $eq: authorizedUserId },
-      },
-      text: { $eq: text },
-    },
-    populate: {
-      lesson: {
-        fields: ["id"],
-      },
-    },
-    fields,
-    pagination,
-  };
-
-  return await fetchAPI<Highlight[]>(path, {
-    urlParams,
-    next: { tags: [CACHE_TAGS.highlights(authorizedUserId)], revalidate: 900 },
-  });
-}
-
 export async function getHighlightsByDroplet(
   authUser: number,
   dropletId: number,
@@ -147,6 +114,10 @@ export async function getHighlightsByAuthorizedUserAndLesson(
         slug: { $eq: lessonSlug },
       },
     },
+    // note.highlight is one-to-one, so the viewer must know which highlights
+    // already have a note (a merge must never delete one; a second note would
+    // take the link from the first).
+    populate: { note: { fields: ["id"] } },
     fields,
     pagination,
   };
@@ -263,7 +234,10 @@ export async function createHighlight(input: {
         body: JSON.stringify({
           data: {
             text: input.text,
-            position: input.position,
+            position: {
+              start: input.position.start,
+              end: input.position.end,
+            },
             color: input.color,
             blockId: input.blockId,
             lesson: input.lessonId,
@@ -314,7 +288,13 @@ export async function updateHighlight(
       // Only these fields can change; anything else a client sends is dropped.
       const data: Record<string, unknown> = {};
       if (changes.color !== undefined) data.color = changes.color;
-      if (changes.position !== undefined) data.position = changes.position;
+      if (changes.position !== undefined) {
+        // Rebuilt from the validated numbers, never the client's own object
+        data.position = {
+          start: changes.position.start,
+          end: changes.position.end,
+        };
+      }
       if (changes.text !== undefined) data.text = changes.text;
 
       const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {

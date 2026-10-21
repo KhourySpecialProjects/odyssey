@@ -2,8 +2,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import {
   createHighlight,
+  updateHighlight,
   deleteHighlight,
-  getHighlights,
   getHighlightsByAuthorizedUserAndLesson,
 } from "@/lib/requests/highlights";
 import { createNote } from "@/lib/requests/notes";
@@ -13,8 +13,8 @@ import { AuthorizedUser, Highlight, Lesson } from "@/types";
 
 jest.mock("@/lib/requests/highlights", () => ({
   createHighlight: jest.fn(),
+  updateHighlight: jest.fn(),
   deleteHighlight: jest.fn(),
-  getHighlights: jest.fn(),
   getHighlightsByAuthorizedUserAndLesson: jest.fn(),
 }));
 
@@ -32,7 +32,7 @@ jest.mock("posthog-js", () => ({
 }));
 
 jest.mock("sonner", () => ({
-  toast: { success: jest.fn(), error: jest.fn() },
+  toast: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
 // Stand-in that exposes the highlight list and the highlight/note callbacks
@@ -41,6 +41,7 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
   default: ({
     highlights,
     onHighlight,
+    onUpdateHighlight,
     onDeleteHighlight,
     onNote,
   }: {
@@ -49,15 +50,24 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
       highlight: Highlight,
       isWithNote?: boolean,
     ) => Promise<Highlight | null>;
+    onUpdateHighlight: (
+      id: number,
+      changes: { color?: Highlight["color"] },
+    ) => Promise<Highlight | null>;
     onDeleteHighlight: (id: number) => Promise<boolean>;
-    onNote: (notePos: number, text: string) => void;
+    onNote: (notePos: number, highlight: Highlight) => void;
   }) => (
     <div>
       <ul data-testid="highlights">
         {highlights.map((h) => (
-          <li key={h.id}>{h.text}</li>
+          <li key={h.id} data-color={h.color}>
+            {h.text}
+          </li>
         ))}
       </ul>
+      <button onClick={() => onUpdateHighlight(7, { color: "#86efac" })}>
+        Recolour highlight
+      </button>
       <button
         onClick={() =>
           onHighlight({
@@ -79,7 +89,19 @@ jest.mock("@/components/droplets/lessons/generic-block-renderer", () => ({
       >
         Delete highlight twice
       </button>
-      <button onClick={() => onNote(120, "Server highlight")}>Add note</button>
+      <button
+        onClick={() =>
+          onNote(120, {
+            id: 7,
+            text: "Server highlight",
+            color: "#fff300",
+            position: { start: 0, end: 6 },
+            blockId: 1,
+          })
+        }
+      >
+        Add note
+      </button>
     </div>
   ),
 }));
@@ -152,9 +174,9 @@ describe("LessonRenderer (viewer)", () => {
       expect(screen.getByText("Test Lesson")).toBeInTheDocument(),
     );
     for (const request of [
-      getHighlights,
       getHighlightsByAuthorizedUserAndLesson,
       createHighlight,
+      updateHighlight,
       deleteHighlight,
     ]) {
       expect(request).not.toHaveBeenCalled();
@@ -297,9 +319,52 @@ describe("LessonRenderer (viewer)", () => {
     );
   });
 
+  it("recolours a highlight at once and keeps the server's record", async () => {
+    jest.mocked(updateHighlight).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { ...serverHighlights[0], color: "#86efac" },
+    });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Recolour highlight"));
+
+    // Before the update has been awaited
+    expect(screen.getByText("Server highlight")).toHaveAttribute(
+      "data-color",
+      "#86efac",
+    );
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Highlight updated"),
+    );
+    expect(updateHighlight).toHaveBeenCalledWith(7, { color: "#86efac" });
+    expect(screen.getByText("Server highlight")).toHaveAttribute(
+      "data-color",
+      "#86efac",
+    );
+  });
+
+  it("puts the old colour back when the update fails", async () => {
+    jest.mocked(updateHighlight).mockResolvedValue({
+      ok: false,
+      error: "Failed to update highlight",
+      data: null,
+    });
+
+    render(<LessonRenderer {...props} />);
+    fireEvent.click(screen.getByText("Recolour highlight"));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Failed to update highlight"),
+    );
+    expect(screen.getByText("Server highlight")).toHaveAttribute(
+      "data-color",
+      "#fff300",
+    );
+  });
+
   it("creates a note from a highlight and asks the wrapper to refetch", async () => {
     jest.mocked(getEnrollByID).mockResolvedValue({ id: "5" } as never);
-    jest.mocked(getHighlights).mockResolvedValue(serverHighlights);
     jest.mocked(createNote).mockResolvedValue({ success: true });
 
     render(<LessonRenderer {...props} />);
@@ -307,7 +372,6 @@ describe("LessonRenderer (viewer)", () => {
 
     await waitFor(() => expect(props.onUpdate).toHaveBeenCalledTimes(1));
     expect(props.setExpanded).toHaveBeenCalledWith(true);
-    expect(getHighlights).toHaveBeenCalledWith(1, "Server highlight");
     expect(createNote).toHaveBeenCalledWith(
       lesson,
       { id: "5" },

@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { authFixtures } from "@/testing/helpers/server-action-auth";
-import { mockGlobalFetch } from "@/lib/testing/mock-helpers";
+import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 
 jest.mock("@/lib/auth/require-role", () => ({
   requireRole: jest.fn(),
@@ -118,6 +118,32 @@ describe("deleteHighlight validation", () => {
     const result = await deleteHighlight(id);
     expect(result).toEqual(invalid);
     expectNothingSent();
+  });
+});
+
+describe("the position that is sent is rebuilt from the validated numbers", () => {
+  const sneaky = { start: 1, end: 4, extra: "x" } as {
+    start: number;
+    end: number;
+  };
+
+  it("createHighlight drops extra keys on position", async () => {
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+
+    await createHighlight({ ...validCreate, position: sneaky });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.data.position).toEqual({ start: 1, end: 4 });
+  });
+
+  it("updateHighlight drops extra keys on position", async () => {
+    mockedFetchAPI.mockResolvedValue([{ id: 5, authorized_user: { id: 7 } }]);
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 5 } }));
+
+    await updateHighlight(5, { position: sneaky });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.data.position).toEqual({ start: 1, end: 4 });
   });
 });
 

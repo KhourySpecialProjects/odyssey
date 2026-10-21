@@ -133,7 +133,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
 
   // ODY-508
   "lib/requests/highlights.ts#getAllHighlightsByUser": "ODY-508",
-  "lib/requests/highlights.ts#getHighlights": "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByAuthorizedUserAndLesson":
     "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByDroplet": "ODY-508",
