@@ -1,10 +1,20 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Sidebar from "@/components/droplets/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Block, Droplet, Lesson } from "@/types";
 import { act } from "@testing-library/react";
 import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import { duplicateDroplet } from "@/lib/requests/droplet";
+import { toast } from "sonner";
+
+jest.mock("@/lib/requests/droplet", () => ({
+  duplicateDroplet: jest.fn(),
+}));
+
+jest.mock("sonner", () => ({
+  toast: { success: jest.fn(), error: jest.fn() },
+}));
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
@@ -254,6 +264,69 @@ describe("Sidebar", () => {
       );
 
       expect(screen.queryByTitle("Edit droplet")).not.toBeInTheDocument();
+    });
+
+    it("shows the reason in a toast when the draft can't be created", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      (duplicateDroplet as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "difficulty must be defined.",
+        data: null,
+        isExisting: false,
+      });
+
+      render(
+        <Sidebar
+          user={mockUser}
+          author={true}
+          droplet={mockDroplet}
+          completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      fireEvent.click(screen.getByTitle("Edit droplet"));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Create Draft & Edit" }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to create draft: difficulty must be defined.",
+        );
+      });
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it("navigates to the draft when it is created", async () => {
+      (duplicateDroplet as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { id: 9, attributes: { slug: "draft-123" } },
+        isExisting: false,
+      });
+
+      render(
+        <Sidebar
+          user={mockUser}
+          author={true}
+          droplet={mockDroplet}
+          completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      fireEvent.click(screen.getByTitle("Edit droplet"));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Create Draft & Edit" }),
+      );
+
+      await waitFor(() => {
+        expect(mockRouter.push).toHaveBeenCalledWith("/draft/d/draft-123");
+      });
+      expect(toast.error).not.toHaveBeenCalled();
     });
   });
 

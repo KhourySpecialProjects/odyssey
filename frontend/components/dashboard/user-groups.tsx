@@ -4,14 +4,15 @@ import { GroupCard } from "../group/group-card";
 import { useSearch } from "@/contexts/SearchContext";
 import { useSortKey } from "@/hooks/use-sort-key";
 import { useMemo } from "react";
+import { getGroupArchiveState } from "@/lib/group-archive";
 
 export function UserGroups({
   activeGroups,
-  isArchived,
+  viewerId,
   sortKey: serverSortKey,
 }: {
   activeGroups: Group[];
-  isArchived: boolean;
+  viewerId: number;
   sortKey?: string;
 }) {
   const { searchQuery } = useSearch();
@@ -41,8 +42,7 @@ export function UserGroups({
             key={group.id}
             group={group}
             role={"member"}
-            isArchived={isArchived}
-            dashboardPage={true}
+            archiveState={getGroupArchiveState(group, viewerId)}
           />
         </div>
       ))}

@@ -515,6 +515,11 @@ async function applyDropletUpdate(
       revalidateTag(CACHE_TAGS.allGroups);
       revalidateTag(CACHE_TAGS.allUserDashboards);
     }
+    // Publishing a claimed voyage droplet finishes the claim (the droplet
+    // lifecycle marks its voyage node "authored"), so voyage maps must refetch.
+    if (data.status === "published") {
+      revalidateTag(CACHE_TAGS.voyages);
+    }
     revalidateTag(CACHE_TAGS.allUserContent);
 
     return { ok: true, error: null, data: responseData.data };
@@ -746,6 +751,29 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
+// Strapi's reason for a rejected write, e.g. "blocks[2].color must be defined."
+// The first detailed error carries the full field path; error.message alone
+// says "2 errors occurred" when there are several. Falls back to the status
+// when the body isn't JSON (e.g. a proxy's error page).
+async function readStrapiError(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    console.error("Strapi error:", JSON.stringify(body, null, 2));
+    const error = body?.error;
+    const details = error?.details?.errors;
+    if (Array.isArray(details) && details[0]?.message) {
+      const more =
+        details.length > 1 ? ` (and ${details.length - 1} more)` : "";
+      return `${details[0].message}${more}`;
+    }
+    if (typeof error === "string") return error;
+    if (error?.message) return error.message;
+  } catch {
+    // Not JSON
+  }
+  return `HTTP ${response.status}`;
+}
+
 export async function duplicateDroplet(dropletId: number) {
   try {
     const user = await getCurrentUser();
@@ -950,6 +978,17 @@ export async function duplicateDroplet(dropletId: number) {
       dropletResponseData.data,
     );
 
+    // Old rows can hold null in required fields that were added later with a
+    // default (callout color and type, answer isCorrect). Strapi fills in a
+    // default only when the field is missing, so drop the null and let it.
+    const dropNulls = (obj: any, keys: string[]) => {
+      const result = { ...obj };
+      for (const key of keys) {
+        if (result[key] == null) delete result[key];
+      }
+      return result;
+    };
+
     // Helper function to remove ids from blocks while preserving structure
     const cleanBlocks = (blocks: any[]): any[] => {
       if (!Array.isArray(blocks)) {
@@ -975,7 +1014,7 @@ export async function duplicateDroplet(dropletId: number) {
                     answerOptions:
                       q.answerOptions?.map((a: any) => {
                         const { id: aId, ...answerWithoutId } = a;
-                        return answerWithoutId;
+                        return dropNulls(answerWithoutId, ["isCorrect"]);
                       }) || [],
                   };
                 }),
@@ -998,7 +1037,7 @@ export async function duplicateDroplet(dropletId: number) {
           case "droplets.callout":
             if (block.content && Array.isArray(block.content)) {
               return {
-                ...blockWithoutId,
+                ...dropNulls(blockWithoutId, ["color", "type"]),
                 content: block.content.map((node: any) => {
                   const { id: nodeId, ...nodeWithoutId } = node;
                   if (
@@ -1016,7 +1055,7 @@ export async function duplicateDroplet(dropletId: number) {
                 }),
               };
             }
-            return blockWithoutId;
+            return dropNulls(blockWithoutId, ["color", "type"]);
 
           case "droplets.generic":
           case "droplets.expandable":
@@ -1035,7 +1074,9 @@ export async function duplicateDroplet(dropletId: number) {
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      await Promise.all(
+      // allSettled, not all: every copy has to finish before a failure can
+      // remove the draft, or a copy still in flight would outlive it.
+      const results = await Promise.allSettled(
         sortedLessons.map(async (lesson, index) => {
           const lessonTimestamp = Date.now();
           const lessonRandomSuffix = Math.random()
@@ -1092,12 +1133,8 @@ export async function duplicateDroplet(dropletId: number) {
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error(
-              "Failed to create lesson:",
-              JSON.stringify(errorData, null, 2),
-            );
-            throw new Error(`Failed to create lesson: ${lesson.name}`);
+            const reason = await readStrapiError(response);
+            throw new Error(`Couldn't copy lesson "${lesson.name}": ${reason}`);
           }
 
           const createdLesson = await response.json();
@@ -1106,6 +1143,27 @@ export async function duplicateDroplet(dropletId: number) {
           );
         }),
       );
+
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failure) {
+        // A draft missing lessons can't be left behind: the next Edit would
+        // open it, and publishing it would delete those lessons from the
+        // live droplet along with their students' progress.
+        const cleanup = await deepDeleteDroplet(newDropletId);
+        const reason =
+          failure.reason instanceof Error
+            ? failure.reason.message
+            : String(failure.reason);
+        if (cleanup.error) {
+          throw new Error(
+            `${reason} (The incomplete draft couldn't be removed. Delete it from the draft editor and don't publish it.)`,
+          );
+        }
+        throw new Error(reason);
+      }
     }
 
     revalidateTag(CACHE_TAGS.authors);

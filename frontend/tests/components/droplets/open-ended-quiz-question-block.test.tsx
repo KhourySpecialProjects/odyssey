@@ -53,4 +53,42 @@ describe("OpenEndedQuizQuestionBlock", () => {
       screen.getByPlaceholderText("Type your answer here..."),
     ).toBeInTheDocument();
   });
+
+  describe("whitespace in answers (ODY-618)", () => {
+    const answerWith = (correctAnswer: string, typed: string) => {
+      render(
+        <OpenEndedQuizQuestionBlock
+          question={{ ...mockQuestion, correctAnswer }}
+        />,
+      );
+      fireEvent.change(
+        screen.getByPlaceholderText("Type your answer here..."),
+        {
+          target: { value: typed },
+        },
+      );
+      fireEvent.click(screen.getByText("Check Answer"));
+    };
+
+    it("accepts a multi-line code answer typed the same way", () => {
+      answerWith(
+        "<pre><code>for i in range(3):\n    print(i)</code></pre>",
+        "for i in range(3):\n    print(i)",
+      );
+      expect(screen.getByText(/Right/i)).toBeInTheDocument();
+    });
+
+    it("accepts an answer with extra spaces", () => {
+      answerWith("<p>New York City</p>", "  New   York  City ");
+      expect(screen.getByText(/Right/i)).toBeInTheDocument();
+    });
+
+    it("still rejects a different answer", () => {
+      answerWith(
+        "<pre><code>for i in range(3):\n    print(i)</code></pre>",
+        "for i in range(4):\n    print(i)",
+      );
+      expect(screen.getByText("Not Quite")).toBeInTheDocument();
+    });
+  });
 });

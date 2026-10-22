@@ -803,6 +803,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     assignPlaylistDueDate: WRITE,
     deleteGroup: WRITE,
     archiveGroup: WRITE,
+    setGroupArchivedForMe: WRITE,
   },
   highlights: { deleteHighlight: WRITE },
   "lesson-lock": {

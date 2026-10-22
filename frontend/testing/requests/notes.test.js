@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import { requireRole } from "../../lib/auth/require-role";
 
 const {
   getNotesByAuthorizedUserAndLesson,
@@ -18,6 +19,10 @@ const {
 const mockNotes = require("../mocks/notesMock");
 const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
+
+jest.mock("../../lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -58,6 +63,12 @@ describe("Notes Tests", () => {
   describe("getNotesByAuthorizedUserAndLesson", () => {
     beforeEach(() => {
       jest.clearAllMocks();
+      // Signed in as user 4, who owns the notes requested below. The
+      // ownership gate itself is covered in notes-auth.test.ts.
+      requireRole.mockResolvedValue({
+        ok: true,
+        user: { id: 4, email: "user4@northeastern.edu", roles: [] },
+      });
     });
 
     it("should fetch and return notes for this user and lesson", async () => {
@@ -110,7 +121,7 @@ describe("Notes Tests", () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch notes"));
 
       await expect(
-        getNotesByAuthorizedUserAndLesson(-1, 500),
+        getNotesByAuthorizedUserAndLesson(4, "500"),
       ).rejects.toThrow();
     });
   });

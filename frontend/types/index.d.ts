@@ -56,7 +56,7 @@ export type Highlight = {
 };
 
 export type User = {
-  /** Strapi authorized-user id. Absent on tokens issued before it was added. */
+  /** Strapi authorized-user id. Absent on tokens issued before it was added, or when the account no longer exists. */
   id?: number;
   /** Strapi v5 documentId. Absent on pre-v5 tokens. */
   documentId?: string;
@@ -246,7 +246,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
-  difficulty: DropletDifficulty;
+  difficulty?: DropletDifficulty | null;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];

@@ -738,4 +738,17 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("Color: blue");
     });
   });
+
+  describe("Droplets created before difficulty was required", () => {
+    it("exports a droplet with no difficulty", async () => {
+      const dropletNoDifficulty = { ...mockDroplet, difficulty: null };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoDifficulty);
+      const blobSpy = jest.spyOn(global, "Blob");
+
+      render(<DropletTile droplet={dropletNoDifficulty} isAdmin={true} />);
+      await clickExportAndWait(blobSpy);
+
+      expect(getMarkdownContent(blobSpy)).toContain("Difficulty: Not set");
+    });
+  });
 });

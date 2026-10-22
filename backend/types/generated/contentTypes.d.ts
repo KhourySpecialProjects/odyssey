@@ -912,8 +912,7 @@ export interface ApiDropletDroplet extends Struct.CollectionTypeSchema {
       }>;
     difficulty: Schema.Attribute.Enumeration<
       ['beginner', 'intermediate', 'advanced']
-    > &
-      Schema.Attribute.Required;
+    >;
     droplet_lessons: Schema.Attribute.Relation<
       'oneToMany',
       'api::droplet-lesson.droplet-lesson'
