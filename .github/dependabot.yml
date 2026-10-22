@@ -21,3 +21,10 @@ updates:
     commit-message:
       prefix: "improvement"
     open-pull-requests-limit: 10
+    # A lone CKEditor bump installs a second copy and breaks the admin editor.
+    groups:
+      ckeditor:
+        patterns:
+          - "ckeditor5"
+          - "@ckeditor/*"
+          - "@_sh/strapi-plugin-ckeditor"

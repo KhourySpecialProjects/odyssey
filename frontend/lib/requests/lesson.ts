@@ -12,6 +12,15 @@ import { LessonSchema } from "../validations/lesson";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
+import qs from "qs";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -34,15 +43,7 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   const urlParams = {
     sort,
     filters: { ...filters, slug },
-    populate: {
-      blocks: {
-        populate: {
-          questions: {
-            populate: ["answerOptions"],
-          },
-        },
-      },
-    },
+    populate: LESSON_BLOCKS_POPULATE,
     fields,
     pagination: {
       pageSize: 1,
@@ -72,23 +73,28 @@ export async function markLessonAsComplete(
     if (!user?.email) throw new Error("User not authenticated");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        cache: "no-store",
-        body: JSON.stringify({
-          data: {
-            viewedLessons: [...completedLessonIds, lessonId],
-          },
-        }),
+    // A missing enrollment or lesson throws StrapiEntryNotFoundError here,
+    // which the catch below turns into `false`, like the old 404 did.
+    const enrollmentUrl = await strapiEntryUrl("enrollments", enrollmentId);
+    const viewedLessons = await resolveDocumentIds("lessons", [
+      ...completedLessonIds,
+      lessonId,
+    ]);
+
+    const response = await fetch(enrollmentUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      cache: "no-store",
+      body: JSON.stringify({
+        data: {
+          viewedLessons,
+        },
+      }),
+    });
 
     if (!response.ok) {
       const error = await response.json();
@@ -143,20 +149,21 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+    const response = await fetch(await strapiEntryUrl("lessons", id), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
+    });
+    const body = await readJsonOrNull(response);
+    if (!response.ok || body?.error)
+      return {
+        ok: false,
+        error: body?.error?.message ?? "Failed to delete lesson.",
+        data: null,
+      };
 
     if (revalidate) {
       revalidateTag(CACHE_TAGS.droplets);
@@ -164,8 +171,12 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
       revalidateTag(CACHE_TAGS.lesson);
     }
 
-    return { ok: true, error: null, data: data.data };
+    return { ok: true, error: null, data: body?.data ?? null };
   } catch (err) {
+    // Same result as the 404 Strapi used to return for a missing lesson.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { ok: false, error: "Not Found", data: null };
+    }
     console.error(err);
     return { error: "Database Error: Failed to Delete Lesson." };
   }
@@ -198,18 +209,15 @@ export async function updateLesson(
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
-      {
-        method: "PUT",
-        body: JSON.stringify({ data: dataToSend }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+    const response = await fetch(await strapiEntryUrl("lessons", id), {
+      method: "PUT",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+    });
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
@@ -229,6 +237,10 @@ export async function updateLesson(
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
+    // Same result as the 404 Strapi used to return for a missing lesson.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { ok: false, error: "Not Found", data: null };
+    }
     console.error(err);
     return {
       ok: false,
@@ -258,7 +270,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       slug: "random", //autogenerated but must be defined
       blocks: [],
       droplets: {
-        connect: [formData.dropletId],
+        connect: [await resolveDocumentId("droplets", formData.dropletId)],
       },
       orderIndex: formData.orderIndex,
     };
@@ -294,6 +306,10 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 
     return { ok: true, error: null, data: lessonResult.data };
   } catch (err) {
+    // Same result as Strapi rejecting a droplet relation that does not exist.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { ok: false, error: err.message, data: null };
+    }
     console.error(err);
     return { error: "Database Error: Failed to create lesson." };
   }
@@ -306,15 +322,30 @@ export async function duplicateLessonToDroplet(
 ) {
   try {
     // Fetch the source lesson with all its data including blocksV2 and blocksVersion
-    const sourceLesson = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/lessons/${sourceLessonId}?populate[blocks][populate][questions][populate]=answerOptions&fields=*`,
-      {
-        headers: {
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-      },
+    const sourceQuery = qs.stringify(
+      { populate: LESSON_BLOCKS_POPULATE, fields: ["*"] },
+      { encodeValuesOnly: true },
     );
+    let sourceLessonUrl: string;
+    try {
+      sourceLessonUrl = await strapiEntryUrl(
+        "lessons",
+        sourceLessonId,
+        sourceQuery,
+      );
+    } catch (err) {
+      // Same failure as the 404 Strapi used to return for a missing lesson.
+      if (err instanceof StrapiEntryNotFoundError) {
+        throw new Error("Failed to fetch source lesson");
+      }
+      throw err;
+    }
+    const sourceLesson = await fetch(sourceLessonUrl, {
+      headers: {
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
+      },
+    });
 
     if (!sourceLesson.ok) {
       throw new Error("Failed to fetch source lesson");
@@ -428,7 +459,7 @@ export async function duplicateLessonToDroplet(
       notes: lesson.notes || null,
       blocksVersion: blocksVersion,
       droplets: {
-        connect: [targetDropletId],
+        connect: [await resolveDocumentId("droplets", targetDropletId)],
       },
     };
 
