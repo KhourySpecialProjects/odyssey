@@ -20,6 +20,32 @@ Both pipelines deploy the frontend and backend at the same time as soon as the m
 
 In the commands, replace `<cluster>`, `<backend-service>`, `<frontend-service>`, `<db-instance>`, `<db>`, `<backend-url>` and the ECR repo names with the values for the environment you're working in.
 
+## Database access
+
+Both RDS instances are private. ECS Exec doesn't work (the task roles have no `ssmmessages` permissions), so reach them through a temporary jump instance and an SSM port-forward. Set it up before step 1 and keep it until the window or rollback is over.
+
+|                 | Dev                                                                       | Prod                                      |
+| --------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
+| `<db-instance>` | `odyssey-dev2`                                                            | `odyssey-production-db`                   |
+| Subnet          | `subnet-0018b75c008fbacc8` (public)                                       | `subnet-0260f87c888e5b09a` (private, NAT) |
+| Security groups | `sg-08f7dd705233d47f0` (`ec2-rds-1`) + `sg-06addef9076022b35` (`default`) | `sg-0a6086eb97f271182` (backend)          |
+| Public IP       | `--associate-public-ip-address`                                           | `--no-associate-public-ip-address`        |
+
+1. [ ] **Launch the jump instance** (profile `jumpbox-ssm`; no inbound rules or SSH key needed):
+       `AMI=$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 --query Parameter.Value --output text)`
+       `ID=$(aws ec2 run-instances --image-id $AMI --instance-type t4g.nano --subnet-id <subnet> <public-ip flag> --security-group-ids <security groups> --iam-instance-profile Name=jumpbox-ssm --metadata-options HttpTokens=required --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ody-<env>-db-jump}]' --query 'Instances[0].InstanceId' --output text)`
+       Wait until `aws ssm describe-instance-information --filters Key=InstanceIds,Values=$ID --query "InstanceInformationList[].PingStatus"` prints `Online`.
+2. [ ] **Open the tunnel** in its own terminal and leave it running:
+       `DBHOST=$(aws rds describe-db-instances --db-instance-identifier <db-instance> --query "DBInstances[0].Endpoint.Address" --output text)`
+       `aws ssm start-session --target $ID --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{"host":["'"$DBHOST"'"],"portNumber":["5432"],"localPortNumber":["15432"]}'`
+3. [ ] **Point `psql` at it.** Every `psql`/`pg_dump` command in this checklist relies on these. Use the PostgreSQL 18 client tools (`/opt/homebrew/opt/postgresql@18/bin`); older ones can't dump or read a newer server.
+       `export PGHOST=127.0.0.1 PGPORT=15432 PGUSER=<db user> PGDATABASE=<db>`, with the password in `~/.pgpass` (from the backend's `DATABASE_*` secret).
+       Check: `psql -c "select version(), current_user;"`
+4. [ ] **Keep the tunnel alive.** Session Manager ends a port-forward after about 20 minutes with no traffic. Run this in a spare terminal for the whole window:
+       `while true; do psql -qAt -c "select 1" >/dev/null && date +"%H:%M tunnel ok"; sleep 240; done`
+       If the tunnel still drops ("timed out due to inactivity"), run step 2 again; the jump instance keeps running. Don't change Session Manager's idle timeout, which applies to the whole account.
+5. [ ] **After the window**, stop the tunnel and terminate the instance: `aws ec2 terminate-instances --instance-ids $ID`.
+
 ## Numbers from the rehearsal (ODY-602)
 
 Fill these in before the window. Step 11 and the decision point use them.
@@ -45,7 +71,7 @@ Fill these in before the window. Step 11 and the decision point use them.
       `aws ecs describe-services --cluster <cluster> --services <backend-service> --query 'services[0].healthCheckGracePeriodSeconds'`
 - [ ] Check that the RDS instance has free storage of at least twice the database size, for the frozen copy (step 7a):
       `SELECT pg_size_pretty(pg_database_size('<db>'));`, compared with CloudWatch `FreeStorageSpace`.
-- [ ] Check access: `psql` to the RDS (the role needs `CREATEDB` and membership in the database owner role, to make the frozen copy and to swap it back), RDS snapshots, ECS service updates, CloudWatch logs, ECR and the media bucket.
+- [ ] Check access: `psql` to the RDS through the [database access](#database-access) tunnel (the role needs `CREATEDB` and membership in the database owner role, to make the frozen copy and to swap it back), RDS snapshots, ECS service updates, CloudWatch logs, ECR and the media bucket.
 - [ ] Get a full-access API token ready for the API smoke script.
 - [ ] Check out the merge SHA and run `cd frontend && npm ci`. The smoke script builds its queries from this checkout.
 
