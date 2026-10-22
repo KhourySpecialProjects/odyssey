@@ -1,4 +1,25 @@
 import { isDevRoleOverrideEnabled } from "@/lib/auth/session";
+import { cookies } from "next/headers";
+import { getDevRoleOverride } from "@/lib/auth/dev-role-override";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(),
+}));
+
+const mockedCookies = jest.mocked(cookies);
+
+/** Builds a mock cookie store with an optional dev-role-override value. */
+function makeCookieStore(cookieValue?: string) {
+  return {
+    get: (name: string) => {
+      if (name === "dev-role-override" && cookieValue !== undefined) {
+        return { value: cookieValue };
+      }
+      return undefined;
+    },
+  } as unknown as Awaited<ReturnType<typeof cookies>>;
+}
 
 // Save originals so we can restore them between tests
 const originalNodeEnv = process.env.NODE_ENV;
@@ -90,5 +111,87 @@ describe("isDevRoleOverrideEnabled", () => {
     });
     process.env.ENABLE_DEV_ROLE_OVERRIDE = "True";
     expect(isDevRoleOverrideEnabled()).toBe(false);
+  });
+});
+
+describe("getDevRoleOverride", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "test",
+      writable: true,
+      configurable: true,
+    });
+    delete process.env.ENABLE_DEV_ROLE_OVERRIDE;
+  });
+
+  it("returns null and never reads cookies when NODE_ENV is production, even with the flag on and a valid cookie", async () => {
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+      configurable: true,
+    });
+    process.env.ENABLE_DEV_ROLE_OVERRIDE = "true";
+    mockedCookies.mockResolvedValue(
+      makeCookieStore(
+        encodeURIComponent(JSON.stringify([AuthorizedUserRoleTitle.SysAdmin])),
+      ),
+    );
+
+    const result = await getDevRoleOverride();
+
+    expect(result).toBeNull();
+    expect(mockedCookies).not.toHaveBeenCalled();
+  });
+
+  it("returns the override roles in dev with the flag on and a valid cookie", async () => {
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+      configurable: true,
+    });
+    process.env.ENABLE_DEV_ROLE_OVERRIDE = "true";
+    mockedCookies.mockResolvedValue(
+      makeCookieStore(
+        encodeURIComponent(JSON.stringify([AuthorizedUserRoleTitle.SysAdmin])),
+      ),
+    );
+
+    const result = await getDevRoleOverride();
+
+    expect(result).toEqual([AuthorizedUserRoleTitle.SysAdmin]);
+  });
+
+  it("returns null in dev with the flag on and no cookie", async () => {
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+      configurable: true,
+    });
+    process.env.ENABLE_DEV_ROLE_OVERRIDE = "true";
+    mockedCookies.mockResolvedValue(makeCookieStore());
+
+    const result = await getDevRoleOverride();
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null and never reads cookies in dev with the flag off, even with a valid cookie", async () => {
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+      configurable: true,
+    });
+    delete process.env.ENABLE_DEV_ROLE_OVERRIDE;
+    mockedCookies.mockResolvedValue(
+      makeCookieStore(
+        encodeURIComponent(JSON.stringify([AuthorizedUserRoleTitle.SysAdmin])),
+      ),
+    );
+
+    const result = await getDevRoleOverride();
+
+    expect(result).toBeNull();
+    expect(mockedCookies).not.toHaveBeenCalled();
   });
 });

@@ -20,6 +20,7 @@ import {
 } from "@/lib/actions";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 global.fetch = jest.fn();
 
@@ -238,6 +239,27 @@ describe("Server Actions", () => {
         }),
       );
       expect(result).toEqual({ success: true });
+    });
+
+    it("revalidates only the session user's per-user tag", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: true,
+        user: { id: 42, email: "user@northeastern.edu", roles: [] },
+      });
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 42 } }),
+      });
+
+      await setTimeZone("America/New_York");
+
+      // timeZone is only read via getAuthorizedUserByEmail (per-user tagged),
+      // so the global users tag must not be flushed.
+      expect(mockedRevalidateTag).toHaveBeenCalledTimes(1);
+      expect(mockedRevalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.user("user@northeastern.edu"),
+      );
+      expect(mockedRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
     });
 
     it("handles fetch response not ok", async () => {

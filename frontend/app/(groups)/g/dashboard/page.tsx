@@ -1,11 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCachedUser, getCachedUserGroups } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { getCachedUserGroups } from "@/lib/requests/cached";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
 import { redirect } from "next/navigation";
-import { GroupCard } from "@/components/group/group-card";
-import { Suspense } from "react";
-import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { PaginatedGroupsGrid } from "./paginated-groups-grid";
 import { IconUsers, IconArchive } from "@tabler/icons-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -53,12 +52,12 @@ export default async function GroupsPage({ searchParams }: Props) {
     redirect("/unauthorized");
   }
 
-  const authorizedUser = await getCachedUser(user.email);
-  if (!authorizedUser) {
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) {
     redirect("/unauthorized");
   }
 
-  const allGroups = await getCachedUserGroups(authorizedUser.id);
+  const allGroups = await getCachedUserGroups(userId);
   const groupsByRole: Record<string, GroupWithRole[]> = {
     creator: [],
     admin: [],
@@ -68,24 +67,24 @@ export default async function GroupsPage({ searchParams }: Props) {
   const archived: GroupWithRole[] = [];
 
   allGroups.forEach((group) => {
-    const archiveState = getGroupArchiveState(group, authorizedUser.id);
+    const archiveState = getGroupArchiveState(group, userId);
 
     if (archiveState.isEffectivelyArchived) {
-      const role = getHighestGroupRole(group, authorizedUser.id) ?? "member";
+      const role = getHighestGroupRole(group, userId) ?? "member";
       archived.push({ group, role, archiveState });
       return;
     }
 
-    if (group.creator?.id === authorizedUser.id) {
+    if (group.creator?.id === userId) {
       groupsByRole.creator.push({ group, role: "creator", archiveState });
     }
-    if (group.admins?.some((admin) => admin.id === authorizedUser.id)) {
+    if (group.admins?.some((admin) => admin.id === userId)) {
       groupsByRole.admin.push({ group, role: "admin", archiveState });
     }
-    if (group.managers?.some((manager) => manager.id === authorizedUser.id)) {
+    if (group.managers?.some((manager) => manager.id === userId)) {
       groupsByRole.manager.push({ group, role: "manager", archiveState });
     }
-    if (group.members?.some((member) => member.id === authorizedUser.id)) {
+    if (group.members?.some((member) => member.id === userId)) {
       groupsByRole.member.push({ group, role: "member", archiveState });
     }
   });
@@ -156,21 +155,12 @@ export default async function GroupsPage({ searchParams }: Props) {
         ) : (
           <div>
             {groupsToRender.length > 0 ? (
-              <Suspense fallback={<DropletsSkeleton />}>
-                <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {groupsToRender.map(({ group, role, archiveState }) => (
-                    <div key={`group-${group.id}`} className="h-full">
-                      <GroupCard
-                        key={group.id}
-                        group={group}
-                        role={role}
-                        roleColors={roleColors}
-                        archiveState={archiveState}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </Suspense>
+              <PaginatedGroupsGrid
+                // Remount on tab change so the page resets to 1.
+                key={String(tab)}
+                groups={groupsToRender}
+                roleColors={roleColors}
+              />
             ) : (
               <EmptyState
                 icon={

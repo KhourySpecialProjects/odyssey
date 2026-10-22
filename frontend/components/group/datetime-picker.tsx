@@ -1,55 +1,64 @@
-import * as React from "react";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-import { DateTime } from "luxon";
+"use client";
 
-interface MUIDateTimePickerProps {
+import { useState, type ChangeEvent } from "react";
+import { DateTime, Settings } from "luxon";
+
+/** Value format of `<input type="datetime-local">` (minute precision). */
+const INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
+
+interface DateTimePickerProps {
   date: DateTime | null;
   onChange: (date: DateTime | null) => void;
+  "aria-label"?: string;
 }
 
-export default function MUIDateTimePicker({
+function toInputValue(date: DateTime | null): string {
+  return date?.isValid ? date.toFormat(INPUT_FORMAT) : "";
+}
+
+export default function DateTimePicker({
   date,
   onChange,
-}: MUIDateTimePickerProps) {
+  "aria-label": ariaLabel = "Due date",
+}: DateTimePickerProps) {
+  // Wall-clock time is shown and parsed in the incoming value's zone. With no
+  // value, fall back to luxon's default zone, which is what the callers'
+  // DateTime.fromISO() / DateTime.local() produce.
+  const zone = date?.zone ?? Settings.defaultZone;
+  const formatted = toInputValue(date);
+
+  // Keep the raw input string locally so partially cleared segments aren't
+  // overwritten mid-edit; resync whenever the `date` prop changes.
+  const [inputValue, setInputValue] = useState(formatted);
+  const [syncedValue, setSyncedValue] = useState(formatted);
+  if (formatted !== syncedValue) {
+    setSyncedValue(formatted);
+    setInputValue(formatted);
+  }
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setInputValue(raw);
+
+    if (!raw) {
+      onChange(null);
+      return;
+    }
+
+    const parsed = DateTime.fromFormat(raw, INPUT_FORMAT, { zone });
+    // Some browsers include seconds (yyyy-MM-ddTHH:mm:ss).
+    const next = parsed.isValid ? parsed : DateTime.fromISO(raw, { zone });
+    onChange(next.isValid ? next : null);
+  };
+
   return (
-    <LocalizationProvider dateAdapter={AdapterLuxon}>
-      <DateTimePicker
-        value={date}
-        onChange={(e) => onChange(e)}
-        slotProps={{
-          textField: {
-            inputProps: {
-              "data-testid": "picker",
-            },
-          },
-        }}
-        sx={{
-          backgroundColor: "#CBD5E1",
-          borderRadius: "6px",
-          width: { xs: "80px", md: "240px" },
-          "& .MuiOutlinedInput-root": {
-            backgroundColor: "#CBD5E1",
-            borderRadius: "6px",
-            "& fieldset": {
-              border: "none",
-            },
-            "&:hover fieldset": {
-              border: "none",
-            },
-            "&.Mui-focused fieldset": {
-              border: "none",
-            },
-          },
-          "& .MuiInputBase-input": {
-            height: "auto",
-            padding: "12px",
-            borderRadius: "6px",
-            fontSize: "0.925rem",
-          },
-        }}
-      />
-    </LocalizationProvider>
+    <input
+      type="datetime-local"
+      data-testid="picker"
+      aria-label={ariaLabel}
+      value={inputValue}
+      onChange={handleChange}
+      className="block w-52 rounded-md border-0 bg-slate-300 p-3 text-[0.925rem] text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none md:w-60 dark:bg-slate-700 dark:text-white"
+    />
   );
 }

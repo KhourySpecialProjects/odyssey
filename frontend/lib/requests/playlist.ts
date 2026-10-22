@@ -2,7 +2,7 @@
 
 import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
@@ -74,7 +74,7 @@ export async function getPlaylistBySlug(
         },
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
   }: StrapiRequestParams = {},
@@ -156,6 +156,7 @@ export async function updatePlaylist(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -173,8 +174,8 @@ export async function updatePlaylist(
 
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -216,6 +217,7 @@ export async function createPlaylist(data: {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -232,8 +234,10 @@ export async function createPlaylist(data: {
     }
 
     revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    // A new playlist has one author and no enrollees yet, so only the
+    // author's /my-content and /dashboard can change.
+    revalidateTag(CACHE_TAGS.userContent(data.author.id));
+    revalidateTag(CACHE_TAGS.userDashboard(data.author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -256,6 +260,7 @@ export async function deletePlaylist(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -269,8 +274,8 @@ export async function deletePlaylist(id: number) {
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -318,6 +323,7 @@ export async function archivePlaylist(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({ data: { isArchived: archiveState } }),
       },
@@ -328,9 +334,11 @@ export async function archivePlaylist(
       throw new Error("Failed to archive playlist");
     }
 
+    // isArchived lives on the playlist itself, so every author's /my-content
+    // and every enrollee's /dashboard see it — keep the global sweeps.
     revalidateTag(CACHE_TAGS.playlists);
-    revalidateTag(CACHE_TAGS.userContent);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserContent);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving playlist:", error);

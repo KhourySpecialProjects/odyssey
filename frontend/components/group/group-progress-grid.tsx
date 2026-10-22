@@ -6,7 +6,6 @@ import { AuthorizedUser } from "@/types";
 import React, { useMemo, useState } from "react";
 import { FileSpreadsheet, MoveLeft, MoveRight } from "lucide-react";
 import { Button } from "../ui/button";
-import * as XLSX from "xlsx-js-style";
 import { toast } from "sonner";
 import {
   Select,
@@ -63,38 +62,41 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
   const isShowingVoyage = selectedVoyage !== null;
 
-  // Collect voyage droplets (deduped against group droplets)
-  const voyageDroplets = useMemo(() => {
-    const groupDropletIds = new Set((group.droplets || []).map((d) => d.id));
+  // "All" droplets: loose, then playlist, then voyage, each listed once
+  const allDroplets = useMemo(() => {
     const seen = new Set<number>();
     const result: Droplet[] = [];
+    const addDroplets = (droplets: Droplet[] = []) => {
+      for (const d of droplets) {
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
+          result.push(d);
+        }
+      }
+    };
+    addDroplets(group.droplets);
+    (group.playlists || []).forEach((p) => addDroplets(p.droplets));
     (group.voyages || []).forEach((v) => {
       (v.voyage_nodes || [])
         .filter(
           (n: VoyageNode) => n.nodeType === "playlist" && n.playlist?.droplets,
         )
         .sort((a: VoyageNode, b: VoyageNode) => a.orderIndex - b.orderIndex)
-        .forEach((n: VoyageNode) => {
-          for (const d of n.playlist!.droplets!) {
-            if (!groupDropletIds.has(d.id) && !seen.has(d.id)) {
-              seen.add(d.id);
-              result.push(d);
-            }
-          }
-        });
+        .forEach((n: VoyageNode) => addDroplets(n.playlist!.droplets));
     });
     return result;
-  }, [group.droplets, group.voyages]);
+  }, [group.droplets, group.playlists, group.voyages]);
+
+  const selectedPlaylist =
+    isShowingVoyage || selectedValue === "all"
+      ? undefined
+      : group.playlists?.find((playlist) => playlist.name === selectedValue);
 
   // Droplet view
   const getDisplayedDroplets = () => {
     if (isShowingVoyage) return [];
-    if (selectedValue === "all")
-      return [...(group.droplets || []), ...voyageDroplets];
-    return (
-      group.playlists?.find((playlist) => playlist.name === selectedValue)
-        ?.droplets || []
-    );
+    if (selectedValue === "all") return allDroplets;
+    return selectedPlaylist?.droplets || [];
   };
 
   const displayedDroplets = getDisplayedDroplets();
@@ -151,24 +153,31 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
     return Math.round((completed / dropletIds.length) * 100);
   };
 
-  const exportGridToExcel = () => {
+  const exportGridToExcel = async () => {
     try {
       if (sortedMembers) {
+        // Loaded on demand so the spreadsheet library isn't in the page bundle
+        const XLSX = await import("xlsx-js-style");
         const headers: string[] = [];
-        const allDroplets = [...(group.droplets || []), ...voyageDroplets];
-        allDroplets.forEach((droplet) => {
+        const exportDroplets = displayedDroplets;
+        exportDroplets.forEach((droplet) => {
           headers.push(`${droplet.name}`);
           headers.push("Completion Date");
         });
 
-        const allVoyagePlaylistNodes: { voyage: Voyage; node: VoyageNode }[] =
-          [];
-        (group.voyages || []).forEach((voyage) => {
+        const exportVoyages =
+          selectedValue === "all"
+            ? group.voyages || []
+            : selectedVoyage
+              ? [selectedVoyage]
+              : [];
+        const exportVoyageNodes: { voyage: Voyage; node: VoyageNode }[] = [];
+        exportVoyages.forEach((voyage) => {
           (voyage.voyage_nodes || [])
             .filter((n: VoyageNode) => n.nodeType === "playlist" && n.playlist)
             .sort((a: VoyageNode, b: VoyageNode) => a.orderIndex - b.orderIndex)
             .forEach((node: VoyageNode) => {
-              allVoyagePlaylistNodes.push({ voyage, node });
+              exportVoyageNodes.push({ voyage, node });
               headers.push(
                 `${voyage.name} - ${node.playlist?.name || node.label}`,
               );
@@ -183,7 +192,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               : "N/A";
           row.push(member.email, memberName);
 
-          allDroplets.forEach((droplet) => {
+          exportDroplets.forEach((droplet) => {
             const key = `${member.id}-${droplet.id}`;
             const status = statuses[key];
             if (status) {
@@ -218,7 +227,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
             }
           });
 
-          allVoyagePlaylistNodes.forEach(({ node }) => {
+          exportVoyageNodes.forEach(({ node }) => {
             row.push(getPlaylistCompletion(member.id, node));
           });
 
@@ -240,7 +249,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
         const range = XLSX.utils.decode_range(worksheet["!ref"]!);
-        const dropletCount = allDroplets.length;
+        const dropletCount = exportDroplets.length;
         const voyageStartCol = 2 + dropletCount * 2;
 
         const applyColorToCell = (cellAddress: string) => {
@@ -276,9 +285,17 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
+        const selectionSlug = (
+          selectedVoyage?.name ??
+          selectedPlaylist?.name ??
+          ""
+        )
+          .replace(/[^\w-]+/g, "_")
+          .replace(/^_+|_+$/g, "");
+        const suffix = selectionSlug ? `_${selectionSlug}` : "";
         XLSX.writeFile(
           workbook,
-          `${group.groupName.replace(/ /g, "_")}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`,
+          `${group.groupName.replace(/ /g, "_")}${suffix}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`,
         );
       }
     } catch (error) {

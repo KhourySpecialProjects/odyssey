@@ -3,10 +3,10 @@ import { EnrolledDropletsGrid } from "./enrolled-droplets-grid";
 import { UserPlaylistsGrid } from "./user-playlists-grid";
 import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 import {
-  getCachedUserDashboardFull,
   getCachedUserGroups,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { notFound } from "next/navigation";
 import { UserGroups } from "./user-groups";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -35,23 +35,26 @@ export async function MyContent({
     return notFound();
   }
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const allGroups = (await getCachedUserGroups(authorizedUser.id)).filter(
-    (group) => group.members?.some((member) => member.id === authorizedUser.id),
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return notFound();
+
+  // Only the groups and voyages tabs render this data; the grids for the
+  // other tabs fetch their own.
+  const needsGroups = contentType === "groups" || contentType === "archived";
+  const [userGroups, voyageEnrollments] = await Promise.all([
+    needsGroups ? getCachedUserGroups(userId) : [],
+    contentType === "voyages" ? getCachedVoyageEnrollmentsByUser(userId) : [],
+  ]);
+  const allGroups = userGroups.filter((group) =>
+    group.members?.some((member) => member.id === userId),
   );
   // Uses the same hybrid archive rule as /g/dashboard (getGroupArchiveState):
   // archived for me (users_archived) OR archived for everyone (isArchived).
   const activeGroups = allGroups.filter(
-    (group) =>
-      !getGroupArchiveState(group, authorizedUser.id).isEffectivelyArchived,
+    (group) => !getGroupArchiveState(group, userId).isEffectivelyArchived,
   );
   const archivedGroups = allGroups.filter(
-    (group) =>
-      getGroupArchiveState(group, authorizedUser.id).isEffectivelyArchived,
-  );
-
-  const voyageEnrollments = await getCachedVoyageEnrollmentsByUser(
-    authorizedUser.id,
+    (group) => getGroupArchiveState(group, userId).isEffectivelyArchived,
   );
 
   return (
@@ -84,7 +87,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={activeGroups}
-              viewerId={authorizedUser.id}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>
@@ -111,7 +114,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={archivedGroups}
-              viewerId={authorizedUser.id}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>

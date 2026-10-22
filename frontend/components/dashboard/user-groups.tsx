@@ -2,19 +2,21 @@
 import { Group } from "@/types";
 import { GroupCard } from "../group/group-card";
 import { useSearch } from "@/contexts/SearchContext";
+import { useSortKey } from "@/hooks/use-sort-key";
 import { useMemo } from "react";
 import { getGroupArchiveState } from "@/lib/group-archive";
 
 export function UserGroups({
   activeGroups,
   viewerId,
-  sortKey,
+  sortKey: serverSortKey,
 }: {
   activeGroups: Group[];
   viewerId: number;
   sortKey?: string;
 }) {
   const { searchQuery } = useSearch();
+  const sortKey = useSortKey(serverSortKey);
   const filteredGroups = useMemo(() => {
     return activeGroups.filter((group) =>
       group.groupName.toLowerCase().includes(searchQuery.toLowerCase()),

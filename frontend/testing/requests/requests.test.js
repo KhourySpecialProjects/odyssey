@@ -197,7 +197,7 @@ describe("Data requests", () => {
 
       const callUrl = global.fetch.mock.calls[0][0];
 
-      expect(callUrl).toMatch(/sort%5B0%5D=id/);
+      expect(callUrl).toMatch(/sort%5B0%5D=createdAt&sort%5B1%5D=id/);
 
       expect(callUrl).toMatch(
         /fields%5B0%5D=id&fields%5B1%5D=groupName&fields%5B2%5D=slug&fields%5B3%5D=isArchived/,

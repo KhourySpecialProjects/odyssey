@@ -1,8 +1,20 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Sidebar from "@/components/droplets/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Block, Droplet, Lesson } from "@/types";
+import { act } from "@testing-library/react";
+import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import { duplicateDroplet } from "@/lib/requests/droplet";
+import { toast } from "sonner";
+
+jest.mock("@/lib/requests/droplet", () => ({
+  duplicateDroplet: jest.fn(),
+}));
+
+jest.mock("sonner", () => ({
+  toast: { success: jest.fn(), error: jest.fn() },
+}));
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
@@ -94,6 +106,7 @@ describe("Sidebar", () => {
     jest.clearAllMocks();
     (usePathname as jest.Mock).mockReturnValue("/d/test-droplet");
     (useRouter as jest.Mock).mockReturnValue(mockRouter); // Add this
+    useViewedLessonsStore.setState({ pendingViewed: {} });
   });
 
   // ... rest of your tests remain the same
@@ -252,6 +265,69 @@ describe("Sidebar", () => {
 
       expect(screen.queryByTitle("Edit droplet")).not.toBeInTheDocument();
     });
+
+    it("shows the reason in a toast when the draft can't be created", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      (duplicateDroplet as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "difficulty must be defined.",
+        data: null,
+        isExisting: false,
+      });
+
+      render(
+        <Sidebar
+          user={mockUser}
+          author={true}
+          droplet={mockDroplet}
+          completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      fireEvent.click(screen.getByTitle("Edit droplet"));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Create Draft & Edit" }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to create draft: difficulty must be defined.",
+        );
+      });
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it("navigates to the draft when it is created", async () => {
+      (duplicateDroplet as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { id: 9, attributes: { slug: "draft-123" } },
+        isExisting: false,
+      });
+
+      render(
+        <Sidebar
+          user={mockUser}
+          author={true}
+          droplet={mockDroplet}
+          completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      fireEvent.click(screen.getByTitle("Edit droplet"));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Create Draft & Edit" }),
+      );
+
+      await waitFor(() => {
+        expect(mockRouter.push).toHaveBeenCalledWith("/draft/d/draft-123");
+      });
+      expect(toast.error).not.toHaveBeenCalled();
+    });
   });
 
   describe("Progress Calculation", () => {
@@ -277,6 +353,47 @@ describe("Sidebar", () => {
           author={false}
           droplet={mockDroplet}
           completedLessonIds={[1]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      expect(screen.getByText("33% complete")).toBeInTheDocument();
+    });
+
+    it("counts lessons marked viewed in this session before the save lands", () => {
+      useViewedLessonsStore.setState({ pendingViewed: {} });
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[1]}
+          enrollmentId="42"
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+      const lesson3Link = () => screen.getAllByText("Lesson 3")[0].closest("a");
+      expect(lesson3Link()).toHaveClass("pointer-events-none");
+
+      // "Next" on lesson 2 marks it viewed while its save is still running
+      act(() => useViewedLessonsStore.getState().markViewed("42", 2));
+
+      expect(screen.getByText("67% complete")).toBeInTheDocument();
+      expect(lesson3Link()).not.toHaveClass("pointer-events-none");
+      useViewedLessonsStore.setState({ pendingViewed: {} });
+    });
+
+    it("ignores lessons pending under a different enrollment", () => {
+      act(() => useViewedLessonsStore.getState().markViewed("99", 2));
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[1]}
+          enrollmentId="42"
           expanded={true}
           setExpanded={mockSetExpanded}
         />,

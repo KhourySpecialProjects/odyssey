@@ -385,11 +385,13 @@ describe("markVoyageNodeComplete — PUT enrollment percentage fails", () => {
       data: createdCompletion,
     });
 
-    // revalidateTag still called on the partial success path
+    // revalidateTag still called on the partial success path (per-user only)
     expect(revalidateTag).toHaveBeenCalledWith(
       CACHE_TAGS.voyageEnrollments(42),
     );
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allVoyageEnrollments);
+    expect(revalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.allVoyageEnrollments,
+    );
   });
 });
 

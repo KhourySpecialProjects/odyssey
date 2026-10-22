@@ -2,6 +2,7 @@ import {
   getVoyageEnrollment,
   getVoyageEnrollmentsByUser,
   enrollInVoyage,
+  enrollInVoyageDirect,
   unenrollFromVoyage,
   getVoyageNodeCompletions,
   markVoyageNodeComplete,
@@ -176,8 +177,13 @@ describe("enrollInVoyage", () => {
     expect(revalidateTag).toHaveBeenCalledWith(
       CACHE_TAGS.voyageEnrollments(42),
     );
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allVoyageEnrollments);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
+    // Per-user only: voyage reads hold no enrollment data, and every
+    // voyage-enrollment read carries the per-user tag of each user it returns.
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.allVoyageEnrollments,
+    );
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.voyages);
     expect(result).toEqual({
       ok: true,
       error: null,
@@ -252,6 +258,41 @@ describe("enrollInVoyage", () => {
   });
 });
 
+describe("enrollInVoyageDirect", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("revalidates only the enrolled member's per-user tag", async () => {
+    // getVoyageEnrollment returns null (not enrolled)
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([]);
+    const createdEnrollment = { id: 6, completionPercentage: 0 };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: createdEnrollment }),
+    });
+    (flattenAttributes as jest.Mock).mockReturnValue(createdEnrollment);
+
+    const result = await enrollInVoyageDirect(77, 10);
+
+    expect(result).toEqual({ ok: true, error: null, data: createdEnrollment });
+    // Group enrollment calls this per member x voyage — no global sweeps.
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.voyageEnrollments(77),
+    );
+  });
+
+  it("does not revalidate when already enrolled", async () => {
+    (fetchAPI as jest.Mock).mockResolvedValueOnce([{ id: 6 }]);
+
+    await enrollInVoyageDirect(77, 10);
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+});
+
 describe("unenrollFromVoyage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -286,8 +327,13 @@ describe("unenrollFromVoyage", () => {
     expect(revalidateTag).toHaveBeenCalledWith(
       CACHE_TAGS.voyageEnrollments(42),
     );
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allVoyageEnrollments);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
+    // Per-user only: voyage reads hold no enrollment data, and every
+    // voyage-enrollment read carries the per-user tag of each user it returns.
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.allVoyageEnrollments,
+    );
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.voyages);
     expect(result).toEqual({
       ok: true,
       error: null,
@@ -472,7 +518,9 @@ describe("markVoyageNodeComplete", () => {
     expect(revalidateTag).toHaveBeenCalledWith(
       CACHE_TAGS.voyageEnrollments(42),
     );
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allVoyageEnrollments);
+    expect(revalidateTag).not.toHaveBeenCalledWith(
+      CACHE_TAGS.allVoyageEnrollments,
+    );
 
     expect(result).toEqual(expect.objectContaining({ ok: true }));
   });

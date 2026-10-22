@@ -31,7 +31,7 @@ export default async function UnclaimedDropletPage({ params }: Props) {
       fields: ["id", "label", "nodeType", "claimStatus"],
       populate: {
         voyage: { fields: ["id", "name", "slug"] },
-        claimedBy: { fields: ["id", "name"] },
+        claimedBy: { fields: ["id"] },
         droplet: { fields: ["id", "slug"] },
       },
       pagination: { pageSize: 1, page: 1 },

@@ -69,12 +69,6 @@ jest.mock("react", () => ({
   useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
   cache: (fn: Function) => fn,
 }));
-// Mock the flat package
-jest.mock("flat", () => ({
-  flatten: (obj: any) => obj,
-  unflatten: (obj: any) => obj,
-}));
-
 // Mock posthog-js to prevent network calls in tests
 jest.mock("posthog-js", () => ({
   init: jest.fn(),
