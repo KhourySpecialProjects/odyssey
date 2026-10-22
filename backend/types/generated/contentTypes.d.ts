@@ -911,10 +911,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    difficulty: Attribute.Enumeration<
-      ['beginner', 'intermediate', 'advanced']
-    > &
-      Attribute.Required;
+    difficulty: Attribute.Enumeration<['beginner', 'intermediate', 'advanced']>;
     droplet_lessons: Attribute.Relation<
       'api::droplet.droplet',
       'oneToMany',
@@ -1409,6 +1406,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'api::note.note'
     >;
     orderIndex: Attribute.Integer;
+    originalLessonId: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
@@ -1785,9 +1783,7 @@ export interface ApiVoyageVoyage extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
-    isArchived: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isSequential: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

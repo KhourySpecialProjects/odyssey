@@ -2,7 +2,7 @@
 
 import { Enrollment, Note, Lesson, Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 
@@ -106,6 +106,7 @@ export async function updateNoteContent(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -141,6 +142,7 @@ export async function updateNotePosition(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -177,6 +179,7 @@ export async function createNote(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -246,6 +249,7 @@ export async function deleteNote(id: number, authorizedUserId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );

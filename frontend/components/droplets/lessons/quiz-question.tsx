@@ -11,6 +11,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RenderedContent } from "@/components/ui/rendered-content";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
@@ -170,11 +171,11 @@ export function QuizQuestionBlock({
 
   return (
     <>
-      <div
+      <RenderedContent
         role="question"
-        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300"
-        dangerouslySetInnerHTML={{ __html: question.content }}
-      ></div>
+        html={question.content}
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit prose-pre:my-2 prose-pre:text-base dark:text-slate-300"
+      />
 
       {showResult ? (
         <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
@@ -216,12 +217,12 @@ export function QuizQuestionBlock({
                       (opt) => String(opt.id) === id,
                     );
                     return selectedAnswer ? (
-                      <li
-                        key={id}
-                        dangerouslySetInnerHTML={{
-                          __html: selectedAnswer.content,
-                        }}
-                      />
+                      <li key={id}>
+                        <RenderedContent
+                          html={selectedAnswer.content}
+                          className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
+                        />
+                      </li>
                     ) : null;
                   })}
                 </ul>
@@ -271,10 +272,9 @@ export function QuizQuestionBlock({
                               />
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: answer.content,
-                                }}
+                              <RenderedContent
+                                html={answer.content}
+                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
                               />
                             </FormLabel>
                           </FormItem>
@@ -305,10 +305,9 @@ export function QuizQuestionBlock({
                               />
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: answer.content,
-                                }}
+                              <RenderedContent
+                                html={answer.content}
+                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
                               />
                             </FormLabel>
                           </FormItem>

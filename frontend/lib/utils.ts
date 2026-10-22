@@ -67,6 +67,15 @@ export type PopulateValue =
       [key: string]: PopulateValue;
     };
 
+/**
+ * Asks Strapi v5 to keep answering in the v4 response shape (`data.attributes`),
+ * which flattenAttributes relies on. Strapi v4 ignores it. Spread it into the
+ * headers of every request to Strapi.
+ */
+export const STRAPI_RESPONSE_FORMAT_HEADER = {
+  "Strapi-Response-Format": "v4",
+} as const;
+
 export async function fetchAPI<T>(
   path: string,
   config: {
@@ -91,6 +100,7 @@ export async function fetchAPI<T>(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       ...config.options,
       ...(config.cache && { cache: config.cache }),
@@ -567,6 +577,26 @@ export const stripHtmlTags = (html: string) => {
     .replace(/\s+/g, " ")
     .trim();
 };
+
+/**
+ * Returns true if the question is a True/False quiz.
+ * Tolerates HTML wrapping (e.g. `<p>True</p>`) produced by TipTap.
+ *
+ * @param question QuizQuestion to test
+ * @returns true when exactly two options whose stripped text is "true" and "false"
+ */
+export function isTrueFalseQuestion(question: {
+  answerOptions: { content: string }[];
+}): boolean {
+  if (question.answerOptions.length !== 2) return false;
+  const texts = question.answerOptions.map((o) =>
+    stripHtmlTags(o.content).toLowerCase(),
+  );
+  return (
+    (texts[0] === "true" && texts[1] === "false") ||
+    (texts[0] === "false" && texts[1] === "true")
+  );
+}
 
 export function parseSandpackFiles(
   json: string | null | undefined,

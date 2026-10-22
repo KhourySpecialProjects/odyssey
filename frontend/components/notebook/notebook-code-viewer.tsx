@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { CodeEditor } from "@/components/ui/code-editor";
+import { LazyCodeEditor } from "@/components/ui/lazy-code-editor";
 import {
   Play,
   Loader2,
@@ -161,7 +161,7 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
 
         {/* Code area */}
         <div className="min-w-0 flex-1 border-l border-slate-100 dark:border-gray-700/50">
-          <CodeEditor
+          <LazyCodeEditor
             language={language}
             value={code}
             onChange={editable ? setCode : undefined}

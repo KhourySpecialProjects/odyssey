@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { archiveGroup } from "@/lib/requests/groups";
+import { cn } from "@/lib/utils";
 
 type GroupCardProps = {
   group: Group;
@@ -49,16 +50,22 @@ export function GroupCard({
       <div className="flex h-full w-full flex-col p-2 transition-colors">
         <div className="flex h-full flex-col justify-between gap-3 rounded-md bg-slate-50 p-6 dark:bg-slate-800">
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-3xl font-black text-slate-950 dark:text-slate-300">
+            <div className="flex items-start justify-between gap-3">
+              {/* min-w-0 lets the title shrink inside the flex row; long names wrap
+                  (even single long words) and stop at two lines, full name on hover. */}
+              <h3
+                title={group.groupName}
+                className="line-clamp-2 min-w-0 text-2xl font-black break-words text-slate-950 sm:text-3xl dark:text-slate-300"
+              >
                 {group.groupName}
               </h3>
               <Badge
-                className={
+                className={cn(
+                  "shrink-0",
                   roleColors
                     ? roleColors[role]
-                    : "bg-green-100 text-green-800 hover:bg-green-100 dark:hover:bg-green-100"
-                }
+                    : "bg-green-100 text-green-800 hover:bg-green-100 dark:hover:bg-green-100",
+                )}
               >
                 {role}
               </Badge>

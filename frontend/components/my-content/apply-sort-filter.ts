@@ -95,7 +95,8 @@ export function dropletMatchesFilters(
   }
 
   if (difficulty && difficulty.length > 0) {
-    if (!difficulty.includes(droplet.difficulty)) return false;
+    if (!droplet.difficulty || !difficulty.includes(droplet.difficulty))
+      return false;
   }
 
   return true;

@@ -1,7 +1,7 @@
 const {
   getHighlights,
   getHighlightsByDroplet,
-  getHighlightsForLesson,
+  getHighlightsByAuthorizedUserAndLesson,
   createHighlight,
   deleteHighlight,
 } = require("../../lib/requests/highlights");
@@ -9,18 +9,6 @@ const { fetchAPI } = require("../../lib/utils");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
-}));
-
-jest.mock("@/lib/auth/session", () => ({
-  getCurrentUser: jest.fn().mockResolvedValue({
-    email: "test@example.com",
-  }),
-}));
-
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn().mockResolvedValue({
-    id: 1,
-  }),
 }));
 
 global.fetch = jest.fn();
@@ -315,19 +303,27 @@ describe("Highlight Actions", () => {
     expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
   });
 
-  it("should handle get highlights error", async () => {
-    global.fetch.mockImplementation(() =>
-      Promise.resolve({ email: "test@example.com" }),
+  it("should fetch a user's highlights for a lesson by slug", async () => {
+    const mockHighlights = [
+      { id: 1, text: "Key idea", color: "#fff300", blockId: 2 },
+    ];
+    fetchAPI.mockResolvedValueOnce(mockHighlights);
+
+    const result = await getHighlightsByAuthorizedUserAndLesson(1, "lesson-1");
+
+    expect(result).toEqual(mockHighlights);
+    expect(fetchAPI).toHaveBeenCalledWith(
+      "/highlights",
+      expect.objectContaining({
+        urlParams: expect.objectContaining({
+          filters: {
+            authorized_user: { id: { $eq: 1 } },
+            lesson: { slug: { $eq: "lesson-1" } },
+          },
+        }),
+        next: { tags: ["highlights-1"], revalidate: 900 },
+      }),
     );
-    global.fetch.mockImplementation(() => Promise.resolve({ id: 1 }));
-
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: "Failed to get highlights" }),
-    });
-
-    const result = await getHighlightsForLesson(1);
-    expect(result.error).toBeDefined();
   });
 });
 
@@ -339,18 +335,4 @@ describe("Error Cases", () => {
       createHighlight({ data: { content: "Test", authorized_user: 5 } }),
     ).rejects.toThrow();
   });
-
-  // it("should handle missing user email", async () => {
-  //   global.fetch.mockImplementation(() =>
-  //     Promise.resolve(null),
-  //   );
-  //   global.fetch.mockResolvedValueOnce({
-  //     ok: false,
-  //     json: async () => ({ error: "No email identified" }),
-  //   });
-
-  //   await expect(getHighlightsForLesson(1)).rejects.toEqual(
-  //     "No email identified",
-  //   );
-  // });
 });

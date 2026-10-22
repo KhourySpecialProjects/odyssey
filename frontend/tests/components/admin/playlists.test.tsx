@@ -82,7 +82,7 @@ describe("Playlists", () => {
           },
         },
         authors: {
-          fields: ["id", "name"],
+          fields: ["id"],
         },
       },
     });

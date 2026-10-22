@@ -27,7 +27,6 @@ import {
   createHighlight,
   deleteHighlight,
   getHighlights,
-  getHighlightsForLesson,
 } from "@/lib/requests/highlights";
 import { Block } from "@/types";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
@@ -64,6 +63,8 @@ interface LessonRendererProps {
   user?: User | null;
   author?: boolean;
   authUser?: AuthorizedUser;
+  /** The user's highlights on this lesson, fetched by the lesson page */
+  initialHighlights: Highlight[];
   onUpdate: () => void;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
@@ -74,15 +75,6 @@ export interface Heading {
   level: number;
 }
 
-interface HighlightResponseItem {
-  id: number;
-  attributes: {
-    text: string;
-    position: number;
-    color: string;
-  };
-}
-
 export function LessonRenderer({
   lesson,
   droplet,
@@ -91,30 +83,17 @@ export function LessonRenderer({
   user,
   author = false,
   authUser,
+  initialHighlights,
   onUpdate,
   expanded,
   setExpanded,
 }: LessonRendererProps) {
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  // Move all hooks before any early returns.
+  // Highlights come from the lesson page, then are kept in sync locally on
+  // create/delete (the wrapper is keyed by lesson, so this resets per lesson).
+  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
   const lessonContentRef = useRef<HTMLDivElement>(null);
   const firedMilestones = useRef<Set<number>>(new Set());
-
-  // Move all hooks before any early returns
-  useEffect(() => {
-    const fetchHighlights = async () => {
-      const response = await getHighlightsForLesson(lesson.id);
-      if (response.data) {
-        const formattedHighlights = response.data.map(
-          (item: HighlightResponseItem) => ({
-            ...item.attributes,
-            id: item.id,
-          }),
-        );
-        setHighlights(formattedHighlights);
-      }
-    };
-    fetchHighlights();
-  }, [lesson.id]);
 
   const displayBlocks =
     lesson.blocksVersion === "v2" && lesson.blocksV2

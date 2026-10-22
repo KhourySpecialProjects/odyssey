@@ -7,6 +7,7 @@ const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
@@ -71,6 +72,31 @@ describe("Playlist Enrollment Tests", () => {
       );
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-5");
+    });
+
+    it("scopes dashboard/user invalidation to the acting user", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@northeastern.edu" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 5, playlists: [] });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 5 } }),
+      });
+
+      await togglePlaylistEnrollment(99);
+
+      // playlists stays global: playlist reads carry authorized_users, which
+      // is how the playlist page decides "enrolled".
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.playlists);
+      // The cached record read that decides connect/disconnect next time
+      expect(revalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.user("test@northeastern.edu"),
+      );
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userDashboard(5));
+      expect(revalidateTag).not.toHaveBeenCalledWith(
+        CACHE_TAGS.allUserDashboards,
+      );
+      // No enrollment record changes, so no global enrollments sweep
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
     });
 
     it("successfully unenrolls (disconnect) when user IS enrolled", async () => {
@@ -168,6 +194,11 @@ describe("Playlist Enrollment Tests", () => {
       );
       expect(revalidateTag).toHaveBeenCalledWith("playlists");
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-7");
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userDashboard(7));
+      expect(revalidateTag).not.toHaveBeenCalledWith(
+        CACHE_TAGS.allUserDashboards,
+      );
+      expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.allEnrollments);
     });
 
     it("fails when API returns an error response", async () => {

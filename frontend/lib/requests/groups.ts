@@ -2,7 +2,7 @@
 
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
@@ -314,7 +314,7 @@ export async function updateGroupMembers(
   });
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
   return result;
 }
 
@@ -427,7 +427,7 @@ export async function createGroup(
     },
   });
   revalidateTag(CACHE_TAGS.allGroups);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -622,7 +622,7 @@ export async function updateGroup(
 
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -802,6 +802,7 @@ export async function assignDropletDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -824,6 +825,7 @@ export async function assignDropletDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -923,6 +925,7 @@ export async function assignPlaylistDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -945,6 +948,7 @@ export async function assignPlaylistDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -1094,6 +1098,7 @@ export async function deleteGroup(id: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -1106,7 +1111,7 @@ export async function deleteGroup(id: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1150,6 +1155,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({ data: { isArchived: archiveState } }),
     });
@@ -1161,7 +1167,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);

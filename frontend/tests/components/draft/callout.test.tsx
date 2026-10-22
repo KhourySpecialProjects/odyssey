@@ -36,20 +36,6 @@ jest.mock("@/components/ui/callout-icons", () => ({
   ),
 }));
 
-jest.mock("@lemonsqueezy/wedges", () => ({
-  Button: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button onClick={onClick} data-testid="wedges-button">
-      {children}
-    </button>
-  ),
-}));
-
 describe("CalloutEditor", () => {
   const mockBlock = {
     __component: "droplets.callout" as "droplets.callout",
@@ -124,7 +110,7 @@ describe("CalloutEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId("wedges-button"));
+    fireEvent.click(screen.getByRole("toggleButton"));
 
     expect(mockUpdateBlock).toHaveBeenCalledWith({
       __component: "droplets.callout",
