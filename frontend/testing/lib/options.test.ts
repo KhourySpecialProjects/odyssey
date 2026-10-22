@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/auth/options";
 import { fetchIsAuthorizedUser } from "@/lib/requests/authorized-user";
 import { fetchAPI } from "@/lib/utils";
+import { getUserPhoto, getUserProfile } from "@/lib/auth/azure";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 jest.mock("@/lib/utils", () => ({
@@ -120,6 +121,117 @@ describe("options", () => {
             roles: ["User"],
           },
           userIdCheckedAt: expect.any(Number),
+        });
+      });
+
+      describe("GH-1046 session cookie size", () => {
+        const DATA_URI = "data:image/jpeg;base64, /9j/4AAQ";
+        const GITHUB_URL = "https://avatars.githubusercontent.com/u/1";
+        const azureAccount = {
+          access_token: "test-token",
+          providerAccountId: "1",
+          provider: "azure-ad" as const,
+          type: "oauth" as const,
+        };
+        const githubAccount = {
+          access_token: "gh-token",
+          providerAccountId: "2",
+          provider: "github" as const,
+          type: "oauth" as const,
+        };
+        const baseUser = {
+          name: "Test User",
+          email: "test@test.com",
+          id: "1",
+          emailVerified: new Date(),
+        };
+
+        it("(a) strips picture and uses the Strapi photo on Azure sign-in", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            {
+              id: 1,
+              profilePhoto: "https://cdn/x.jpg",
+              roles: [{ title: "User" }],
+            },
+          ]);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { name: "Test User", picture: DATA_URI, sub: "1" },
+            user: { ...baseUser, image: DATA_URI },
+            account: azureAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBe("https://cdn/x.jpg");
+          expect(getUserPhoto).not.toHaveBeenCalled();
+        });
+
+        it("(b) drops the data URI when the photo sync fails", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            { id: 1, profilePhoto: null, roles: [{ title: "User" }] },
+          ]);
+          (getUserPhoto as jest.Mock).mockResolvedValueOnce(null);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { name: "Test User", picture: DATA_URI, sub: "1" },
+            user: { ...baseUser, image: DATA_URI },
+            account: azureAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect(getUserPhoto).toHaveBeenCalled();
+          expect(result.user.image).toBeNull();
+          expect("picture" in result).toBe(false);
+        });
+
+        it("(c) shrinks an existing token without a user arg", async () => {
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: {
+              picture: DATA_URI,
+              user: { email: "test@test.com", image: DATA_URI, roles: [] },
+              userIdCheckedAt: Date.now(),
+            },
+          } as any);
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBeNull();
+          expect(fetchAPI).not.toHaveBeenCalled();
+        });
+
+        it("(d) keeps the GitHub avatar on GitHub sign-in", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            { id: 1, profilePhoto: null, roles: [{ title: "User" }] },
+          ]);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { picture: GITHUB_URL },
+            user: { ...baseUser, image: GITHUB_URL },
+            account: githubAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect(result.user.image).toBe(GITHUB_URL);
+          expect("picture" in result).toBe(false);
+          expect(getUserProfile).not.toHaveBeenCalled();
+          expect(getUserPhoto).not.toHaveBeenCalled();
+        });
+
+        it("(d) keeps a GitHub URL on an existing token", async () => {
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: {
+              picture: GITHUB_URL,
+              user: { email: "test@test.com", image: GITHUB_URL, roles: [] },
+              userIdCheckedAt: Date.now(),
+            },
+          } as any);
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBe(GITHUB_URL);
+          expect(fetchAPI).not.toHaveBeenCalled();
         });
       });
     });
