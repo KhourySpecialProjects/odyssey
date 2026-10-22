@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SortFilterItem } from "@/lib/globals";
 import { ArrowUpDownIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function Sort({
   options,
@@ -21,19 +21,17 @@ export function Sort({
   options: SortFilterItem[];
   defaultValue: SortFilterItem;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedValue = searchParams.get("sort") || defaultValue.slug;
 
   const updateQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);
-    if (value !== defaultValue.slug) {
-      params.set("sort", value);
-    } else {
-      params.delete("sort");
-    }
-    router.push(`${pathname}?${params.toString()}`);
+    // Always set the param (even for the default) so client grids can tell a
+    // user choice from the server-rendered sort; see useSortKey.
+    params.set("sort", value);
+    // Grids sort client-side, so update the URL without a server render.
+    window.history.pushState(null, "", `${pathname}?${params.toString()}`);
   };
 
   return (

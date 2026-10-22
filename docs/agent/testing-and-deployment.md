@@ -114,6 +114,8 @@ describe("DropletCard", () => {
 
 **Reusable mock data** lives in `frontend/testing/mocks/`. Create mock factories for frequently used types rather than inline mock objects.
 
+**Shared test helpers** live in `frontend/testing/helpers/` — `server-action-auth.ts` (the `describeServerActionAuth` auth-test pattern) and `use-server-directive.ts` (the `"use server"` directive detector). See `docs/agent/server-action-auth.md`.
+
 ### Test Conventions
 
 - One test file per source file, mirroring the source directory structure

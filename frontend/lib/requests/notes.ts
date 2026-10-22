@@ -2,17 +2,26 @@
 
 import { Enrollment, Note, Lesson, Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { requireRole } from "../auth/require-role";
+import { assertOwner } from "../auth/guards";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
- * Gets all Notes matching the specified criteria, unless overridden by `options`.
+ * Gets one user's Notes on one lesson.
+ *
+ * Callable from the browser (the lesson's notes bar), so `authorizedUserId`
+ * is a target, not the caller: it must be the signed-in user's own id.
+ * Notes are private, so no role bypasses this, not even SysAdmin.
+ * @param authorizedUserId The signed-in user's authorized-user id.
+ * @param lessonSlug The lesson's slug.
  * @param options Strapi query modifiers.
- * @returns The matching Droplets.
+ * @returns The caller's notes on the lesson, or [] when the caller isn't
+ *   signed in or asks for someone else's notes.
  */
 export async function getNotesByAuthorizedUserAndLesson(
   authorizedUserId: number,
@@ -23,6 +32,11 @@ export async function getNotesByAuthorizedUserAndLesson(
     fields = ["id", "content", "positionY"],
   }: StrapiRequestParams = {},
 ): Promise<Note[]> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return [];
+  const owner = assertOwner(authorizedUserId, gate.user, { bypassRoles: [] });
+  if (!owner.ok) return [];
+
   const path = `/notes`;
   const urlParams = {
     sort,
@@ -106,6 +120,7 @@ export async function updateNoteContent(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -141,6 +156,7 @@ export async function updateNotePosition(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -177,6 +193,7 @@ export async function createNote(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
         data: {
@@ -246,6 +263,7 @@ export async function deleteNote(id: number, authorizedUserId: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );

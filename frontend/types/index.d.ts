@@ -53,6 +53,8 @@ export type Highlight = {
 };
 
 export type User = {
+  /** Strapi authorized-user id. Absent on tokens issued before it was added, or when the account no longer exists. */
+  id?: number;
   name?: string | null;
   email?: string | null;
   image?: string | null;
@@ -205,6 +207,7 @@ export type Lesson = {
   droplets: Droplet[];
   notes: string;
   orderIndex: number;
+  originalLessonId?: number | null; // [EDIT]-draft lessons only: id of the live lesson this was cloned from
 };
 
 export type Tag = {
@@ -233,7 +236,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
-  difficulty: DropletDifficulty;
+  difficulty?: DropletDifficulty | null;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
@@ -287,7 +290,7 @@ export type OpenEndedQuiz = {
 export type Enrollment = {
   id: string;
   authorizedUser: AuthorizedUser;
-  droplet: Droplet;
+  droplet: Droplet | null;
   viewedLessons: Lesson[];
   isComplete: boolean;
   rating: number;
@@ -296,6 +299,8 @@ export type Enrollment = {
   notes: Note[];
   completionDate: Date;
 };
+
+export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
 
 export interface Playlist {
   id: number;

@@ -325,10 +325,10 @@ describe("CodeBlockComponent", () => {
       render(<CodeBlockComponent {...baseProps} />);
 
       const select = screen.getByRole("combobox");
-      expect(select).toHaveClass("rounded-md");
+      expect(select).toHaveClass("rounded-t");
       expect(select).toHaveClass("border-gray-300");
       expect(select).toHaveClass(
-        "mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white",
+        "rounded-t border border-b-0 border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300",
       );
     });
 
@@ -336,8 +336,8 @@ describe("CodeBlockComponent", () => {
       render(<CodeBlockComponent {...baseProps} />);
 
       const select = screen.getByRole("combobox");
-      expect(select).toHaveClass("focus:border-blue-500");
-      expect(select).toHaveClass("focus:ring-2");
+      expect(select).toHaveClass("focus:ring-blue-500");
+      expect(select).toHaveClass("focus:ring-1");
     });
 
     it("line numbers have correct styling", () => {
@@ -345,10 +345,7 @@ describe("CodeBlockComponent", () => {
 
       const lineNumbers = container.querySelector(".select-none");
       expect(lineNumbers).toHaveClass(
-        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
-      );
-      expect(lineNumbers).toHaveClass(
-        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
+        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-gray-200 bg-gray-100 text-sm text-gray-400 select-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400",
       );
     });
 

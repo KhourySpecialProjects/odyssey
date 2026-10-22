@@ -2,16 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
-import { BuiltInProviderType } from "next-auth/providers/index";
-import { ClientSafeProvider, LiteralUnion, signIn } from "next-auth/react";
+import { ClientSafeProvider, signIn } from "next-auth/react";
 
 export default function LoginButtons({
   providers,
 }: {
-  providers: Record<
-    LiteralUnion<BuiltInProviderType, string>,
-    ClientSafeProvider
-  > | null;
+  providers: Record<string, ClientSafeProvider> | null;
 }) {
   if (!providers) throw new Error("No auth providers configured");
 

@@ -20,24 +20,35 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export async function ActivityTabContent({ contentType, searchParams }: Props) {
+/**
+ * Loads tag options inside its own Suspense boundary so the content grid
+ * below doesn't wait for the tag query before it starts fetching.
+ */
+async function DropletFiltersWithTags() {
+  const tagOptions = await getTags({
+    populate: {
+      droplets: { fields: ["id", "isHidden", "status"] },
+    },
+  }).then((tags) =>
+    tags
+      .filter((t) =>
+        t.droplets?.some((d) => !d.isHidden && d.status === "published"),
+      )
+      .map((t) => ({ label: t.name, value: t.slug })),
+  );
+
+  return (
+    <DropletFiltersButton
+      sortOptions={sorting}
+      defaultSort={defaultSort}
+      tagOptions={tagOptions}
+    />
+  );
+}
+
+export function ActivityTabContent({ contentType, searchParams }: Props) {
   const { sort } = searchParams as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-
-  const tagOptions =
-    contentType === "droplets"
-      ? await getTags({
-          populate: {
-            droplets: { fields: ["id", "isHidden", "status"] },
-          },
-        }).then((tags) =>
-          tags
-            .filter((t) =>
-              t.droplets?.some((d) => !d.isHidden && d.status === "published"),
-            )
-            .map((t) => ({ label: t.name, value: t.slug })),
-        )
-      : [];
 
   return (
     <SearchProvider>
@@ -45,11 +56,17 @@ export async function ActivityTabContent({ contentType, searchParams }: Props) {
         <Search />
         <div className="flex flex-1 flex-row flex-wrap items-center justify-end gap-2">
           {contentType === "droplets" ? (
-            <DropletFiltersButton
-              sortOptions={sorting}
-              defaultSort={defaultSort}
-              tagOptions={tagOptions}
-            />
+            <Suspense
+              fallback={
+                <DropletFiltersButton
+                  sortOptions={sorting}
+                  defaultSort={defaultSort}
+                  tagOptions={[]}
+                />
+              }
+            >
+              <DropletFiltersWithTags />
+            </Suspense>
           ) : (
             <Sort options={playlistSorting} defaultValue={defaultSort} />
           )}

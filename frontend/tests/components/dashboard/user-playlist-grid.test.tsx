@@ -12,6 +12,11 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("@/lib/requests/cached", () => ({
+  // The grids resolve the user id via getAuthorizedUserId, which falls back to
+  // getCachedUser for tokens without an id; mirror the dashboard user here.
+  getCachedUser: jest.fn((email: string) =>
+    jest.requireMock("@/lib/requests/cached").getCachedUserDashboardFull(email),
+  ),
   getCachedUserDashboardFull: jest.fn(),
   getCachedEnrollmentsFavorites: jest.fn(),
   getCachedUserDueDates: jest.fn(),

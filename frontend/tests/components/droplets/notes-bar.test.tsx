@@ -356,15 +356,42 @@ describe("NotesBar", () => {
   });
 
   describe("Note Fetching", () => {
-    it("fetches notes on mount", async () => {
-      render(<NotesBar {...defaultProps} />);
+    it("renders initNotes without fetching on mount", async () => {
+      const { container } = render(<NotesBar {...defaultProps} />);
+
+      expect(container.querySelectorAll(".note-block").length).toBe(2);
+      // Let mount effects settle before asserting nothing was fetched
+      await waitFor(() => {
+        expect(screen.getByText("My Notes")).toBeInTheDocument();
+      });
+      expect(getNotesByAuthorizedUserAndLesson).not.toHaveBeenCalled();
+    });
+
+    it("shows the refetched notes after creating a note", async () => {
+      (getNotesByAuthorizedUserAndLesson as jest.Mock).mockResolvedValue([
+        ...mockInitNotes,
+        { ...mockInitNotes[0], id: 3, positionY: 500 },
+      ]);
+
+      const { container } = render(<NotesBar {...defaultProps} />);
+      await userEvent.click(screen.getByTitle("Create a note"));
 
       await waitFor(() => {
         expect(getNotesByAuthorizedUserAndLesson).toHaveBeenCalledWith(
           1,
           "test-lesson",
         );
+        expect(container.querySelectorAll(".note-block").length).toBe(3);
       });
+    });
+
+    it("re-syncs when initNotes changes", () => {
+      const { container, rerender } = render(<NotesBar {...defaultProps} />);
+      expect(container.querySelectorAll(".note-block").length).toBe(2);
+
+      rerender(<NotesBar {...defaultProps} initNotes={[mockInitNotes[0]]} />);
+
+      expect(container.querySelectorAll(".note-block").length).toBe(1);
     });
   });
 

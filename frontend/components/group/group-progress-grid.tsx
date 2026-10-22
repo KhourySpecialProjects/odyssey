@@ -6,7 +6,6 @@ import { AuthorizedUser } from "@/types";
 import React, { useMemo, useState } from "react";
 import { FileSpreadsheet, MoveLeft, MoveRight } from "lucide-react";
 import { Button } from "../ui/button";
-import * as XLSX from "xlsx-js-style";
 import { toast } from "sonner";
 import {
   Select,
@@ -154,9 +153,11 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
     return Math.round((completed / dropletIds.length) * 100);
   };
 
-  const exportGridToExcel = () => {
+  const exportGridToExcel = async () => {
     try {
       if (sortedMembers) {
+        // Loaded on demand so the spreadsheet library isn't in the page bundle
+        const XLSX = await import("xlsx-js-style");
         const headers: string[] = [];
         const exportDroplets = displayedDroplets;
         exportDroplets.forEach((droplet) => {

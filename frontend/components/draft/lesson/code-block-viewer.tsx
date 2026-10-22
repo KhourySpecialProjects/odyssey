@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CodeEditor } from "@/components/ui/code-editor";
+import { LazyCodeEditor } from "@/components/ui/lazy-code-editor";
 import { executeCode } from "@/lib/code-execution";
 
 const LANGUAGE_LABELS: Record<string, string> = {
@@ -82,7 +82,11 @@ export function CodeBlockViewer({
       <div className="relative">
         {isEditing && editable ? (
           <div>
-            <CodeEditor language={language} value={code} onChange={setCode} />
+            <LazyCodeEditor
+              language={language}
+              value={code}
+              onChange={setCode}
+            />
             <div className="flex gap-2 border-t border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
               <button
                 onClick={() => setIsEditing(false)}
@@ -108,7 +112,7 @@ export function CodeBlockViewer({
             className="group relative cursor-pointer"
             onClick={() => editable && setIsEditing(true)}
           >
-            <CodeEditor language={language} value={code} readOnly />
+            <LazyCodeEditor language={language} value={code} readOnly />
             {editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">

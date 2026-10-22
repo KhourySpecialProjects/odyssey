@@ -1,8 +1,13 @@
 import { authOptions } from "@/lib/auth/options";
 import { fetchIsAuthorizedUser } from "@/lib/requests/authorized-user";
+import { fetchAPI } from "@/lib/utils";
+import { getUserPhoto, getUserProfile } from "@/lib/auth/azure";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 jest.mock("@/lib/utils", () => ({
-  fetchAPI: jest.fn().mockResolvedValue([{ roles: [{ title: "User" }] }]),
+  fetchAPI: jest
+    .fn()
+    .mockResolvedValue([{ id: 7, roles: [{ title: "User" }] }]),
 }));
 
 jest.mock("@/lib/auth/azure", () => ({
@@ -107,6 +112,7 @@ describe("options", () => {
 
         expect(result).toEqual({
           user: {
+            id: 7,
             name: "Test User",
             email: "test@test.com",
             image: "test.jpg",
@@ -114,7 +120,256 @@ describe("options", () => {
             isActive: true,
             roles: ["User"],
           },
+          userIdCheckedAt: expect.any(Number),
         });
+      });
+
+      describe("GH-1046 session cookie size", () => {
+        const DATA_URI = "data:image/jpeg;base64, /9j/4AAQ";
+        const GITHUB_URL = "https://avatars.githubusercontent.com/u/1";
+        const azureAccount = {
+          access_token: "test-token",
+          providerAccountId: "1",
+          provider: "azure-ad" as const,
+          type: "oauth" as const,
+        };
+        const githubAccount = {
+          access_token: "gh-token",
+          providerAccountId: "2",
+          provider: "github" as const,
+          type: "oauth" as const,
+        };
+        const baseUser = {
+          name: "Test User",
+          email: "test@test.com",
+          id: "1",
+          emailVerified: new Date(),
+        };
+
+        it("(a) strips picture and uses the Strapi photo on Azure sign-in", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            {
+              id: 1,
+              profilePhoto: "https://cdn/x.jpg",
+              roles: [{ title: "User" }],
+            },
+          ]);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { name: "Test User", picture: DATA_URI, sub: "1" },
+            user: { ...baseUser, image: DATA_URI },
+            account: azureAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBe("https://cdn/x.jpg");
+          expect(getUserPhoto).not.toHaveBeenCalled();
+        });
+
+        it("(b) drops the data URI when the photo sync fails", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            { id: 1, profilePhoto: null, roles: [{ title: "User" }] },
+          ]);
+          (getUserPhoto as jest.Mock).mockResolvedValueOnce(null);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { name: "Test User", picture: DATA_URI, sub: "1" },
+            user: { ...baseUser, image: DATA_URI },
+            account: azureAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect(getUserPhoto).toHaveBeenCalled();
+          expect(result.user.image).toBeNull();
+          expect("picture" in result).toBe(false);
+        });
+
+        it("(c) shrinks an existing token without a user arg", async () => {
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: {
+              picture: DATA_URI,
+              user: { email: "test@test.com", image: DATA_URI, roles: [] },
+              userIdCheckedAt: Date.now(),
+            },
+          } as any);
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBeNull();
+          expect(fetchAPI).not.toHaveBeenCalled();
+        });
+
+        it("(d) keeps the GitHub avatar on GitHub sign-in", async () => {
+          (fetchAPI as jest.Mock).mockResolvedValueOnce([
+            { id: 1, profilePhoto: null, roles: [{ title: "User" }] },
+          ]);
+
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: { picture: GITHUB_URL },
+            user: { ...baseUser, image: GITHUB_URL },
+            account: githubAccount,
+            profile: undefined,
+            trigger: "signIn",
+          });
+
+          expect(result.user.image).toBe(GITHUB_URL);
+          expect("picture" in result).toBe(false);
+          expect(getUserProfile).not.toHaveBeenCalled();
+          expect(getUserPhoto).not.toHaveBeenCalled();
+        });
+
+        it("(d) keeps a GitHub URL on an existing token", async () => {
+          const result: any = await authOptions.callbacks!.jwt!({
+            token: {
+              picture: GITHUB_URL,
+              user: { email: "test@test.com", image: GITHUB_URL, roles: [] },
+              userIdCheckedAt: Date.now(),
+            },
+          } as any);
+
+          expect("picture" in result).toBe(false);
+          expect(result.user.image).toBe(GITHUB_URL);
+          expect(fetchAPI).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe("jwt callback account id re-check", () => {
+      const NOW = new Date("2026-01-01T00:00:00Z").getTime();
+      const INTERVAL = 5 * 60 * 1000;
+      const mockFetchAPI = fetchAPI as jest.Mock;
+      const baseUser = {
+        id: 7,
+        email: "test@test.com",
+        roles: ["User"],
+        isActive: true,
+      };
+      const callJwt = (token: Record<string, unknown>) =>
+        authOptions.callbacks!.jwt!({
+          token,
+          trigger: "update",
+        } as Parameters<
+          NonNullable<NonNullable<typeof authOptions.callbacks>["jwt"]>
+        >[0]);
+
+      beforeEach(() => {
+        jest.useFakeTimers().setSystemTime(NOW);
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it("records the check time on the top-level token at sign-in", async () => {
+        const result = await authOptions.callbacks!.jwt!({
+          token: {},
+          user: {
+            name: "T",
+            email: "test@test.com",
+            id: "1",
+            emailVerified: new Date(),
+          },
+          account: null,
+          profile: undefined,
+          trigger: "signIn",
+        });
+
+        expect(result.user).toEqual(expect.objectContaining({ id: 7 }));
+        expect(result.user).not.toHaveProperty("userIdCheckedAt");
+        expect(result.userIdCheckedAt).toBe(NOW);
+      });
+
+      it("makes no lookup within the interval", async () => {
+        const token = { user: baseUser, userIdCheckedAt: NOW - INTERVAL + 1 };
+
+        const result = await callJwt({ ...token });
+
+        expect(mockFetchAPI).not.toHaveBeenCalled();
+        expect(result).toEqual(token);
+      });
+
+      it("keeps the id and updates the check time when unchanged", async () => {
+        mockFetchAPI.mockResolvedValueOnce([{ id: 7 }]);
+
+        const result = await callJwt({
+          user: baseUser,
+          userIdCheckedAt: NOW - INTERVAL - 1,
+        });
+
+        expect(mockFetchAPI).toHaveBeenCalledTimes(1);
+        expect(result.user).toEqual(baseUser);
+        expect(result.userIdCheckedAt).toBe(NOW);
+      });
+
+      it("updates the id when the account was re-created", async () => {
+        mockFetchAPI.mockResolvedValueOnce([{ id: 99 }]);
+
+        const result = await callJwt({
+          user: baseUser,
+          userIdCheckedAt: NOW - INTERVAL - 1,
+        });
+
+        expect(result.user).toEqual({ ...baseUser, id: 99 });
+        expect(result.userIdCheckedAt).toBe(NOW);
+      });
+
+      it("removes the id when the account no longer exists", async () => {
+        mockFetchAPI.mockResolvedValueOnce([]);
+
+        const result = await callJwt({
+          user: baseUser,
+          userIdCheckedAt: NOW - INTERVAL - 1,
+        });
+
+        expect((result.user as { id?: number }).id).toBeUndefined();
+        expect((result.user as { email?: string }).email).toBe("test@test.com");
+        expect(result.userIdCheckedAt).toBe(NOW);
+      });
+
+      it("adds an id to pre-ODY-555 tokens", async () => {
+        mockFetchAPI.mockResolvedValueOnce([{ id: 12 }]);
+        const { id: _omit, ...noId } = baseUser;
+
+        const result = await callJwt({ user: noId });
+
+        expect(result.user).toEqual({ ...noId, id: 12 });
+        expect(result.userIdCheckedAt).toBe(NOW);
+      });
+
+      it("leaves the token unchanged when the lookup throws", async () => {
+        const errorSpy = jest
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        mockFetchAPI.mockRejectedValueOnce(new Error("Strapi down"));
+        const checkedAt = NOW - INTERVAL - 1;
+
+        const result = await callJwt({
+          user: baseUser,
+          userIdCheckedAt: checkedAt,
+        });
+
+        expect(result.user).toEqual(baseUser);
+        expect(result.userIdCheckedAt).toBe(checkedAt);
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
+      });
+
+      it("looks up by email with data-cache tags and no cache option", async () => {
+        mockFetchAPI.mockResolvedValueOnce([{ id: 7 }]);
+
+        await callJwt({ user: baseUser, userIdCheckedAt: NOW - INTERVAL - 1 });
+
+        expect(mockFetchAPI).toHaveBeenCalledWith("/authorized-users", {
+          urlParams: {
+            filters: { email: { $eq: "test@test.com" } },
+            fields: ["id"],
+            pagination: { pageSize: 1, page: 1 },
+          },
+          next: { revalidate: 900, tags: [CACHE_TAGS.users] },
+        });
+        expect(mockFetchAPI.mock.calls[0][1]).not.toHaveProperty("cache");
       });
     });
 

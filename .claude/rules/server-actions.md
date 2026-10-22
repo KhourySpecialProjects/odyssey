@@ -15,3 +15,4 @@ paths:
 - MUST call `revalidateTag()` with appropriate `CACHE_TAGS` after every mutation.
 - Never hardcode cache tag strings — always use `CACHE_TAGS` constants from `lib/cache-tags.ts`.
 - **#1 bug source in this codebase:** `fetchAPI()` auto-flattens but raw `fetch()` does NOT. Always call `flattenAttributes()` after raw `fetch()`.
+- Every export must call `requireRole` or `withAuth` (`lib/auth/guards.ts`), or be allowlisted. Enforced by `testing/security/server-action-auth-guard.test.ts`. See `docs/agent/server-action-auth.md`.

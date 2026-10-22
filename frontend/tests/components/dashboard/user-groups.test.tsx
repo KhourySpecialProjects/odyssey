@@ -47,7 +47,7 @@ const mockGroups = [
 describe("UserGroups", () => {
   const defaultProps = {
     activeGroups: mockGroups,
-    isArchived: false,
+    viewerId: mockUser.id,
   };
 
   it("renders all groups initially", () => {

@@ -2,7 +2,7 @@
 
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "@/lib/utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
@@ -12,6 +12,7 @@ import { createEnrollmentDirect } from "./enrollment";
 import { enrollInVoyageDirect } from "./voyage-enrollment";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
+import { SetGroupArchivedForMeSchema } from "@/lib/validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -314,7 +315,7 @@ export async function updateGroupMembers(
   });
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
   return result;
 }
 
@@ -427,7 +428,7 @@ export async function createGroup(
     },
   });
   revalidateTag(CACHE_TAGS.allGroups);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -622,7 +623,7 @@ export async function updateGroup(
 
   revalidateTag(CACHE_TAGS.allGroups);
   revalidateTag(CACHE_TAGS.allDueDates);
-  revalidateTag(CACHE_TAGS.userDashboard);
+  revalidateTag(CACHE_TAGS.allUserDashboards);
 
   return result;
 }
@@ -802,6 +803,7 @@ export async function assignDropletDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -824,6 +826,7 @@ export async function assignDropletDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -923,6 +926,7 @@ export async function assignPlaylistDueDate(
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
             },
             body: JSON.stringify({
               data: {
@@ -945,6 +949,7 @@ export async function assignPlaylistDueDate(
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
           body: JSON.stringify({
             data: {
@@ -1094,6 +1099,7 @@ export async function deleteGroup(id: number) {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 
@@ -1106,7 +1112,7 @@ export async function deleteGroup(id: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1145,13 +1151,23 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       };
     }
 
+    const data: { isArchived: boolean; users_archived?: { set: number[] } } = {
+      isArchived: archiveState,
+    };
+    // "Unarchive for all members" is a full reset: it also clears every
+    // personal archive, so the group comes back for everyone. (R2)
+    if (archiveState === false) {
+      data.users_archived = { set: [] };
+    }
+
     const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-      body: JSON.stringify({ data: { isArchived: archiveState } }),
+      body: JSON.stringify({ data }),
     });
 
     if (!response.ok) {
@@ -1161,10 +1177,81 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allDueDates);
-    revalidateTag(CACHE_TAGS.userDashboard);
+    revalidateTag(CACHE_TAGS.allUserDashboards);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);
     return { success: false, error };
+  }
+}
+
+/**
+ * Archives or unarchives a group for the calling user only, by connecting
+ * or disconnecting them from `users_archived`. Identity comes from the
+ * session (never a client-supplied id). Refuses if the caller has no role
+ * in the group at all.
+ *
+ * This is a partial relation update (connect/disconnect), so it never
+ * touches other members' rows and has no read-modify-write race.
+ */
+export async function setGroupArchivedForMe(
+  groupId: number,
+  archived: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+
+  const parsed = SetGroupArchivedForMeSchema.safeParse({ groupId, archived });
+  if (!parsed.success) {
+    return { success: false, error: "invalid input" };
+  }
+
+  try {
+    const fullGroup = await fetchAPI<Group>(`/groups/${groupId}`, {
+      urlParams: {
+        populate: {
+          creator: { fields: ["id"] },
+          admins: { fields: ["id"] },
+          managers: { fields: ["id"] },
+          members: { fields: ["id"] },
+        },
+      },
+      next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
+    });
+
+    const isParticipant =
+      fullGroup.creator?.id === gate.user.id ||
+      fullGroup.admins?.some((a) => a.id === gate.user.id) ||
+      fullGroup.managers?.some((m) => m.id === gate.user.id) ||
+      fullGroup.members?.some((m) => m.id === gate.user.id);
+    if (!isParticipant) {
+      return { success: false, error: "forbidden" };
+    }
+
+    const response = await fetch(`${STRAPI_API_URL}/api/groups/${groupId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
+      },
+      body: JSON.stringify({
+        data: {
+          users_archived: {
+            [archived ? "connect" : "disconnect"]: [gate.user.id],
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: "Failed to update archive state" };
+    }
+
+    revalidateTag(CACHE_TAGS.allGroups);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating personal archive state:", error);
+    return { success: false, error: "Failed to update archive state" };
   }
 }

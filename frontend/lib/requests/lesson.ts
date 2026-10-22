@@ -1,7 +1,11 @@
 "use server";
 import { Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, stripHtmlTags } from "../utils";
+import {
+  fetchAPI,
+  stripHtmlTags,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { LessonSchema } from "../validations/lesson";
@@ -16,11 +20,15 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  * Gets the desired lesson by its unique slug.
  * @param slug The unique slug of the desired lesson.
  * @param options Strapi query modifiers.
+ * @param fresh Skip the data cache. The draft lesson editor must always load
+ * the latest saved content: its autosaves skip revalidation, so a cached copy
+ * could be stale after a reload and then be autosaved over newer content.
  * @returns The lesson.
  */
 export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   slug: string,
   { sort, filters, fields = ["*"] }: StrapiRequestParams = {},
+  { fresh = false }: { fresh?: boolean } = {},
 ): Promise<T> {
   const path = `/lessons`;
   const urlParams = {
@@ -42,9 +50,15 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
     },
   };
 
+  // Tagged with `lesson` only: this returns lesson fields + blocks and no
+  // droplet data, so droplet-level mutations (ratings, metadata autosave)
+  // must not flush every lesson page. Every mutation that changes lesson
+  // data revalidates `lesson` (see cache-tags.ts).
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.droplets, CACHE_TAGS.lesson], revalidate: 900 },
+    ...(fresh
+      ? { cache: "no-store" as const }
+      : { next: { tags: [CACHE_TAGS.lesson], revalidate: 900 } }),
   }).then((lessons) => lessons[0]);
 }
 
@@ -65,6 +79,7 @@ export async function markLessonAsComplete(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         cache: "no-store",
         body: JSON.stringify({
@@ -104,6 +119,7 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
@@ -134,6 +150,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -189,14 +206,18 @@ export async function updateLesson(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      const errorPath = responseData.error.details.errors[0].path[0];
-      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      const firstError = responseData.error?.details?.errors?.[0];
+      const errorPath = firstError?.path?.[0];
+      const errorMessage = errorPath
+        ? `${responseData.error.message} (${errorPath})`
+        : responseData.error?.message ?? "Failed to update lesson.";
       return { ok: false, error: errorMessage, data: null };
     }
 
@@ -256,6 +277,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -289,6 +311,7 @@ export async function duplicateLessonToDroplet(
       {
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -436,6 +459,7 @@ export async function duplicateLessonToDroplet(
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
     });
 

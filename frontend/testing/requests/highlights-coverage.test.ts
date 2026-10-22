@@ -7,7 +7,7 @@
 import {
   getAllHighlightsByUser,
   deleteHighlight,
-  getHighlightsForLesson,
+  getHighlightsByAuthorizedUserAndLesson,
   createHighlight,
 } from "@/lib/requests/highlights";
 import { CACHE_TAGS } from "@/lib/cache-tags";
@@ -17,9 +17,6 @@ import {
   makeFetchResponse,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import type { User } from "@/types";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -29,23 +26,7 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
-jest.mock("@/lib/auth/session", () => ({
-  getCurrentUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
 const mockedRevalidateTag = jest.mocked(revalidateTag);
-
-function getGetCurrentUser() {
-  return jest.mocked(getCurrentUser);
-}
-
-function getGetAuthorizedUserByEmail() {
-  return jest.mocked(getAuthorizedUserByEmail);
-}
 
 describe("highlights requests — coverage", () => {
   let mockedFetchAPI: ReturnType<typeof getMockedFetchAPI>;
@@ -245,79 +226,55 @@ describe("highlights requests — coverage", () => {
     });
   });
 
-  // ── getHighlightsForLesson ──────────────────────────────────────────────────
+  // ── getHighlightsByAuthorizedUserAndLesson ──────────────────────────────────
 
-  describe("getHighlightsForLesson", () => {
-    it("fetches highlights for a lesson when user is authenticated", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({
-        email: "alice@example.com",
-        roles: [],
-        isActive: true,
-      } as User);
-      getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 11 });
+  describe("getHighlightsByAuthorizedUserAndLesson", () => {
+    it("fetches the user's highlights on a lesson by slug", async () => {
+      const mockHighlights = [
+        {
+          id: 1,
+          text: "Key idea",
+          color: "#fff300" as const,
+          position: { start: 0, end: 8 },
+          blockId: 4,
+        },
+      ];
+      mockedFetchAPI.mockResolvedValueOnce(mockHighlights);
 
-      const responseBody = { data: [{ id: 1, text: "note" }] };
-      mockFetch.mockResolvedValueOnce(makeFetchResponse(responseBody));
-
-      const result = await getHighlightsForLesson(3);
-
-      expect(result).toEqual(responseBody);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("filters[lesson][id][$eq]=3"),
-        expect.anything(),
+      const result = await getHighlightsByAuthorizedUserAndLesson(
+        11,
+        "intro-lesson",
       );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("filters[authorized_user][id][$eq]=11"),
-        expect.anything(),
-      );
-    });
 
-    it("throws when current user has no email", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce({
-        email: null,
-        roles: [],
-        isActive: true,
-      } as User);
-
-      await expect(getHighlightsForLesson(3)).rejects.toThrow(
-        "No email identified",
-      );
-    });
-
-    it("throws when current user is null", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      getCurrentUser.mockResolvedValueOnce(undefined);
-
-      await expect(getHighlightsForLesson(3)).rejects.toThrow(
-        "No email identified",
-      );
-    });
-
-    it("uses authorized user id for cache tag", async () => {
-      const getCurrentUser = getGetCurrentUser();
-      const getAuthorizedUserByEmail = getGetAuthorizedUserByEmail();
-      getCurrentUser.mockResolvedValueOnce({
-        email: "bob@example.com",
-        roles: [],
-        isActive: true,
-      } as User);
-      getAuthorizedUserByEmail.mockResolvedValueOnce({ id: 22 });
-
-      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
-
-      await getHighlightsForLesson(5);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          next: expect.objectContaining({
-            tags: [CACHE_TAGS.highlights(22)],
-          }),
+      expect(result).toEqual(mockHighlights);
+      expect(mockedFetchAPI).toHaveBeenCalledWith("/highlights", {
+        urlParams: expect.objectContaining({
+          filters: {
+            authorized_user: { id: { $eq: 11 } },
+            lesson: { slug: { $eq: "intro-lesson" } },
+          },
+          fields: ["text", "position", "color", "blockId", "yLevel"],
+          pagination: { pageSize: 250, page: 1 },
         }),
-      );
+        next: { tags: [CACHE_TAGS.highlights(11)], revalidate: 900 },
+      });
+    });
+
+    it("reads through fetchAPI rather than raw fetch", async () => {
+      mockedFetchAPI.mockResolvedValueOnce([]);
+
+      await getHighlightsByAuthorizedUserAndLesson(22, "some-lesson");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockedFetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("propagates fetchAPI errors", async () => {
+      mockedFetchAPI.mockRejectedValueOnce(new Error("API down"));
+
+      await expect(
+        getHighlightsByAuthorizedUserAndLesson(5, "some-lesson"),
+      ).rejects.toThrow("API down");
     });
   });
 

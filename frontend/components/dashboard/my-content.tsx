@@ -3,10 +3,10 @@ import { EnrolledDropletsGrid } from "./enrolled-droplets-grid";
 import { UserPlaylistsGrid } from "./user-playlists-grid";
 import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 import {
-  getCachedUserDashboardFull,
   getCachedUserGroups,
   getCachedVoyageEnrollmentsByUser,
 } from "@/lib/requests/cached";
+import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { notFound } from "next/navigation";
 import { UserGroups } from "./user-groups";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,6 +15,7 @@ import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
 import { ArchivedVoyagesGrid } from "./archived-voyages-grid";
 import { VoyageCard } from "@/components/voyages/voyage-card";
+import { getGroupArchiveState } from "@/lib/group-archive";
 
 export async function MyContent({
   searchParams,
@@ -34,20 +35,26 @@ export async function MyContent({
     return notFound();
   }
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const allGroups = (await getCachedUserGroups(authorizedUser.id)).filter(
-    (group) => group.members?.some((member) => member.id === authorizedUser.id),
-  );
-  const activeGroups = allGroups.filter(
-    (group) =>
-      !group.users_archived?.some((user) => user.id === authorizedUser.id),
-  );
-  const archivedGroups = allGroups.filter((group) =>
-    group.users_archived?.some((user) => user.id === authorizedUser.id),
-  );
+  const userId = await getAuthorizedUserId(user);
+  if (!userId) return notFound();
 
-  const voyageEnrollments = await getCachedVoyageEnrollmentsByUser(
-    authorizedUser.id,
+  // Only the groups and voyages tabs render this data; the grids for the
+  // other tabs fetch their own.
+  const needsGroups = contentType === "groups" || contentType === "archived";
+  const [userGroups, voyageEnrollments] = await Promise.all([
+    needsGroups ? getCachedUserGroups(userId) : [],
+    contentType === "voyages" ? getCachedVoyageEnrollmentsByUser(userId) : [],
+  ]);
+  const allGroups = userGroups.filter((group) =>
+    group.members?.some((member) => member.id === userId),
+  );
+  // Uses the same hybrid archive rule as /g/dashboard (getGroupArchiveState):
+  // archived for me (users_archived) OR archived for everyone (isArchived).
+  const activeGroups = allGroups.filter(
+    (group) => !getGroupArchiveState(group, userId).isEffectivelyArchived,
+  );
+  const archivedGroups = allGroups.filter(
+    (group) => getGroupArchiveState(group, userId).isEffectivelyArchived,
   );
 
   return (
@@ -80,7 +87,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={activeGroups}
-              isArchived={false}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>
@@ -107,7 +114,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={archivedGroups}
-              isArchived={true}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>

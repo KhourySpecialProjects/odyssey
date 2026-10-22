@@ -185,7 +185,7 @@ describe("createVoyageWithNodes", () => {
     );
 
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userContent);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
 
     expect(result).toEqual({
       ok: true,
