@@ -72,13 +72,13 @@ describeServerActionAuth("togglePresentationEnabled", {
     kind: "owner",
     nonOwner: authFixtures.as({ id: 99 }),
     arrange: () => {
-      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
     },
   },
   authorized: {
     as: authFixtures.as({ id: 7 }),
     arrange: () => {
-      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
       fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
     },
     expect: (result) => {
@@ -92,7 +92,7 @@ describeServerActionAuth("togglePresentationEnabled", {
 describe("togglePresentationEnabled: extra cases", () => {
   it("allows an admin to toggle presentation on a droplet owned by someone else", async () => {
     mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
-    mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+    mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
     fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await togglePresentationEnabled(1, true);
@@ -102,9 +102,9 @@ describe("togglePresentationEnabled: extra cases", () => {
 
   it("denies a droplet with no owners and runs no mutation or cache invalidation", async () => {
     mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
-    mockedFetchAPI.mockResolvedValue(
+    mockedFetchAPI.mockResolvedValue([
       makeDroplet({ id: 1, authorized_users: [] }),
-    );
+    ]);
 
     const result = await togglePresentationEnabled(1, true);
 
@@ -122,13 +122,13 @@ describeServerActionAuth("setDropletHidden", {
     kind: "owner",
     nonOwner: authFixtures.as({ id: 99 }),
     arrange: () => {
-      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
     },
   },
   authorized: {
     as: authFixtures.as({ id: 7 }),
     arrange: () => {
-      mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
       fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
     },
     expect: (result) => {
@@ -142,7 +142,7 @@ describeServerActionAuth("setDropletHidden", {
 describe("setDropletHidden: extra cases", () => {
   it("allows an admin to hide a droplet owned by someone else", async () => {
     mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
-    mockedFetchAPI.mockResolvedValue(dropletOwnedBySeven());
+    mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
     fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await setDropletHidden(1, true);
@@ -152,9 +152,9 @@ describe("setDropletHidden: extra cases", () => {
 
   it("denies a droplet with no owners and runs no mutation or cache invalidation", async () => {
     mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
-    mockedFetchAPI.mockResolvedValue(
+    mockedFetchAPI.mockResolvedValue([
       makeDroplet({ id: 1, authorized_users: [] }),
-    );
+    ]);
 
     const result = await setDropletHidden(1, true);
 

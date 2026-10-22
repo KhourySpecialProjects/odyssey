@@ -13,15 +13,7 @@ export async function getGalleryBySlug(
   {
     sort,
     pagination = { pageSize: 250, page: 1 },
-    populate = {
-      items: {
-        populate: {
-          media: {
-            fields: ["id", "url", "alternativeText", "width", "height"],
-          },
-        },
-      },
-    },
+    populate = { items: true },
     fields = ["id", "slug", "title", "subtitle"],
   }: StrapiRequestParams = {},
 ): Promise<Gallery | undefined> {
