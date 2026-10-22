@@ -39,8 +39,8 @@
  *                 playlist page decides "enrolled" — so enrollment toggles
  *                 still sweep this tag)
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
- *                 deleteGroup, archiveGroup, deletePlaylist,
- *                 updateDroplet (not draft saves)
+ *                 deleteGroup, archiveGroup, setGroupArchivedForMe,
+ *                 deletePlaylist, updateDroplet (not draft saves)
  * authors         createDroplet, updateDroplet (draft saves only when       900s
  *                 authorized_users changes), deepDeleteDroplet,
  *                 duplicateDroplet, publishDraftToOriginal,
