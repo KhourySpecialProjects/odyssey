@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
 -- ODY-596 rollback: rename <live> to <failed> and <frozen> to <live> in one transaction. Backend and frontend must be at 0.
--- Run while connected to postgres: psql -d postgres -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f swap-back.sql
+-- Run while connected to template1 (dev's <db> is itself named postgres): psql -d template1 -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f swap-back.sql
 \if :{?live}
 \else
   DO $$ BEGIN RAISE EXCEPTION 'ODY-596: pass -v live=<database name>'; END $$;
@@ -24,7 +24,7 @@ SELECT current_database() NOT IN (:'live', :'frozen', :'failed') AS ok_db,
 \gset
 \if :ok_db
 \else
-  DO $$ BEGIN RAISE EXCEPTION 'ODY-596: connect to the postgres database, not to live, frozen or failed'; END $$;
+  DO $$ BEGIN RAISE EXCEPTION 'ODY-596: connect to template1 (psql -d template1), not to live, frozen or failed'; END $$;
 \endif
 \if :ok_names
 \else

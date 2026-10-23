@@ -80,14 +80,15 @@ The rehearsal time is in the window notes. The swap itself takes seconds.
 
 1. [ ] **Stop everything.** Scale the backend to 0. If the site has reopened, scale the frontend to 0 too, which stops new writes. Wait until 0 tasks are running.
        `aws ecs update-service --cluster <cluster> --service <backend-service> --desired-count 0`
-2. [ ] **Close leftover database connections.** Run this connected to the `postgres` database:
-       `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('<db>', '<db>_v4_frozen') AND pid <> pg_backend_pid();`
+2. [ ] **Close leftover database connections.** Run this connected to `template1`, not to `<db>` (on dev, `<db>` is `postgres`, and you can't rename a database you're connected to):
+       `psql -d template1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('<db>', '<db>_v4_frozen') AND pid <> pg_backend_pid();"`
 3. [ ] **Only if the site had reopened:** save the list of what changed since reopening. Re-entry needs it later.
        `psql -d <db> -v t_open='<T_open UTC>' -f scripts/strapi-v5-cutover/rollback/writes-since.sql > ~/ody-596/<env>-writes-since-<date>.txt`
-4. [ ] **Check that the frozen copy is good.** `flavor` must be `v4`, and the counts must match the copy-check fingerprint file. If either is wrong, stop and go to Path C.
+       Expect about 42 new `admin_permissions` rows even if nobody edited anything: v5 creates them on its first boot. They aren't user content, so don't re-enter them.
+4. [ ] **Check that the frozen copy is good.** `flavor` must be `v4`, and the counts must match the copy-check fingerprint file. Compare from section 4 on; line 4 holds the time the fingerprint was taken, so it always differs. If either is wrong, stop and go to Path C.
        `psql -d <db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] **Swap.** This renames the broken database to `<db>_v5_failed` and the frozen copy to `<db>`:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
+       `psql -d template1 -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] **Check the live database.** `flavor` must be `v4`. The owner and settings the swap script printed must match the T0 fingerprint.
        `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
        Copies made with `TEMPLATE` don't keep connect permissions (`datacl`) or per-database settings. If `swap-back.sql` printed a warning about either, re-apply the values it shows for `<db>_v5_failed` to `<db>` before step 7.
@@ -105,18 +106,18 @@ Use this when the frozen copy is missing or broken. The restore time from the re
 1. [ ] Do Path B steps 1–3.
 2. [ ] Check that the dump file is intact. The sha256 must match the window notes.
        `shasum -a 256 <dump file>`
-3. [ ] Create an empty database and restore into it:
-       `createdb <db>_v4_restored`
+3. [ ] Create an empty database from `template0` and restore into it (`template0` because the keepalive may be connected to `template1`, and Postgres won't copy a template with other sessions on it):
+       `createdb --maintenance-db=template1 -T template0 <db>_v4_restored`
        `pg_restore --no-owner --role=<db owner> -j 4 -d <db>_v4_restored <dump file>`
 4. [ ] Check it. `flavor` must be `v4`, and the counts must match the T0 fingerprint file.
        `psql -d <db>_v4_restored -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] Swap it in:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
+       `psql -d template1 -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] Continue from Path B step 6.
 
 ## Path D: Restore the snapshot to a new server
 
-Use this only when the database server itself can't be used. It's the slowest path, often 30 minutes or more.
+Use this only when the database server itself can't be used. It's the slowest path, often 30 minutes or more. On dev, the restore alone took about 10 min (drill, 2026-10-23); add the backend repoint and the v4 deploy on top.
 
 1. [ ] If the database can still be reached, do Path B steps 1–3. If it can't, scale the backend and frontend to 0 and skip the rest of those steps.
 2. [ ] Restore the T0 snapshot to a new instance, using the **same** subnet group, security groups and parameter group as the old one:

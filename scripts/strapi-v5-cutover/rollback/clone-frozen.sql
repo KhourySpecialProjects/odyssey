@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
 -- ODY-596: copy <src> to the frozen v4 rollback copy, after the 01 gate and before the merge. Backend must be at 0.
--- Run while connected to postgres: psql -d postgres -v src=<db> -v frozen=<db>_v4_frozen -f clone-frozen.sql
+-- Run while connected to template1 (dev's <db> is itself named postgres): psql -d template1 -v src=<db> -v frozen=<db>_v4_frozen -f clone-frozen.sql
 \if :{?src}
 \else
   DO $$ BEGIN RAISE EXCEPTION 'ODY-596: pass -v src=<database name>'; END $$;
@@ -19,7 +19,7 @@ SELECT current_database() NOT IN (:'src', :'frozen') AS ok_db,
 \gset
 \if :ok_db
 \else
-  DO $$ BEGIN RAISE EXCEPTION 'ODY-596: connect to the postgres database, not to src or frozen'; END $$;
+  DO $$ BEGIN RAISE EXCEPTION 'ODY-596: connect to template1 (psql -d template1), not to src or frozen'; END $$;
 \endif
 \if :ok_names
 \else

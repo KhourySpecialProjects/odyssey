@@ -19,14 +19,16 @@ This playbook covers **ODY-633: turning off Draft & Publish** and the **Strapi v
 
 Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, once ODY-602 has timed the migration. Every phase ends at a gate. Don't start the next phase until that gate passes. Phases 1 and 2 can run at the same time. Strapi 4 is end of life (ODY-639), so keep the gaps between phases short.
 
-| Phase                       | What                                                                  | Gate                                                |
-| --------------------------- | --------------------------------------------------------------------- | --------------------------------------------------- |
-| 1. Code blockers            | Close the open audit findings and the hard-gate tickets on the branch | **A:** a re-run `/audit` has only Critical 3 open   |
-| 2. Scripts and runbook      | v5 `03`, the ODY-596 restore runbook, the combined window steps       | **B:** the rehearsal can start                      |
-| 3. Rehearsal (ODY-602)      | The full combined v4→v5 run on a PG 18 copy of prod                   | **C:** every ODY-602 criterion passes, and M is set |
-| 4. Dev cutover              | Merge `feature/strapi-v5` → `develop` with the window steps           | **D:** dev runs v5 and its smoke check passes       |
-| 5. Dev soak and window prep | Soak on dev, then announce the window                                 | **E:** go/no-go at M−1                              |
-| M                           | Run the window                                                        |                                                     |
+**Order change (2026-10-22): dev goes first.** Dev has no real user data, so the dev cutover (phase 4) is the first rehearsal. It starts after gate B. The prod-copy rehearsal (phase 3, ODY-602) runs after gate D, alongside the dev soak. Gate C gates the prod window (M), not the dev cutover. The phase numbers are unchanged; the table below is in the new order.
+
+| Phase                       | What                                                                      | Gate                                                |
+| --------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1. Code blockers            | Close the open audit findings and the hard-gate tickets on the branch     | **A:** a re-run `/audit` has only Critical 3 open   |
+| 2. Scripts and runbook      | v5 `03`, the ODY-596 restore runbook, the combined window steps           | **B:** the dev cutover can start                    |
+| 4. Dev cutover              | Merge `feature/strapi-v5` → `develop` with the window steps (rehearsal 1) | **D:** dev runs v5 and its smoke check passes       |
+| 3. Rehearsal (ODY-602)      | The full combined v4→v5 run on a PG 18 copy of prod, during the dev soak  | **C:** every ODY-602 criterion passes, and M is set |
+| 5. Dev soak and window prep | Soak on dev, then announce the window                                     | **E:** go/no-go at M−1 (needs gate C)               |
+| M                           | Run the window                                                            |                                                     |
 
 **Already done:** ODY-597, 598, 599, 600, 601, 606, 607, 633 (code), 634, 635, 700 and 701, plus the 204 DELETE fix (audit Critical 1 and 2).
 
@@ -47,7 +49,7 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 
 ### Phase 2: Scripts and runbook (runs alongside phase 1)
 
-- [ ] **2.1 ODY-596 backup and rollback:** the rollback runbook is [strapi-v5-rollback.md](strapi-v5-rollback.md), and its scripts are in `scripts/strapi-v5-cutover/rollback/` (written 2026-10-15 and tested on throwaway PG 18 and PG 12 databases). Still to do: store a prod `pg_dump` somewhere durable, test the restore on a scratch DB and record how long it takes (3.6), and decide whether S3 media needs a snapshot too: the files don't change, but the upload rows do.
+- [ ] **2.1 ODY-596 backup and rollback:** the rollback runbook is [strapi-v5-rollback.md](strapi-v5-rollback.md), and its scripts are in `scripts/strapi-v5-cutover/rollback/` (written 2026-10-15 and tested on throwaway PG 18 and PG 12 databases). Rehearsed on dev data: Path B on 2026-10-22 and Path C on 2026-10-23 (locally, about 3 min), and an RDS drill on 2026-10-23 on a restored dev snapshot. The drill proved that RDS lets `postgres` copy and rename a database named `postgres` from `template1`, and Path D's restore took about 10 min. Still to do: store a prod `pg_dump` somewhere durable, test the restore on a scratch DB and record how long it takes (3.6), and decide whether S3 media needs a snapshot too: the files don't change, but the upload rows do.
 - [x] **2.2 Rewrite `03-post-switch-verify.sql` for v5:** v5 keeps `published_at` and renames the join tables (`*_lnk`, `*_cmps`, `files_related_mph`). Leave `01` and `02` on the v4 names, because they run on v4 data before the first v5 boot. Done 2026-10-07 and run clean on the `ody597` scratch DB. v5 gives Super Admin publish permissions again on boot, so `03` now checks only the other roles.
 - [x] **2.3 Write the combined v4→v5 window steps** for dev and prod. Written 2026-10-07 in [strapi-v5-cutover-window.md](strapi-v5-cutover-window.md); the Reviewer's review is part of gate B.
   - The order: freeze → snapshot → backend to 0 → T0 fingerprint, dump and media listing → `01` → `02` → gate → frozen copy and copy check → merge → wait for `PRIMARY` → scale to 1 → wait for the migration to finish → `03` (v5) and fingerprint → the API smoke script → manual smoke check. The ODY-700 script renames real entries, so it runs only in the rehearsal.
@@ -59,6 +61,8 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 **Gate B:** the ODY-596 restore has been tested, the v5 version of `03` exists, the Reviewer has reviewed the window steps, and ODY-605 has landed.
 
 ### Phase 3: Rehearsal, ODY-602 (Awad)
+
+Runs after gate D, alongside the dev soak (phase 5). Gate E needs gate C.
 
 - [ ] **3.1** Take a fresh prod backup and restore it to a scratch PG 18 database.
 - [ ] **3.2** Run `01` on the copy and make the per-row decisions. Write `~/ody-633/02-handle-unpublished.prod.sql` outside the repo and get the Reviewer's sign-off. Apply it, then run `01` again and confirm 0 unpublished rows. Then make the frozen copy and check it, as in cutover window steps 7a–7b.
@@ -72,7 +76,7 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 
 ### Phase 4: Dev cutover
 
-Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev RDS (PG 16.13), so treat it as a cutover.
+Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev RDS (PG 16.13), so treat it as a cutover. It starts after gate B, before phase 3.
 
 - [x] **4.0 Local rehearsal on a copy of live dev (2026-10-22): passed.** Dev has no real user data, so it is the first rehearsal; ODY-602 still runs on prod data before M. The copy was a `pg_dump` of `odyssey-dev2` (27 MB) restored into a local `postgres:16`, booted with `ecs.dev.Dockerfile` (Node 20.14). It ran under amd64 emulation on Apple Silicon, so the times are upper bounds.
 
@@ -89,6 +93,8 @@ Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev
 **Gate D:** dev runs v5, `03` and the smoke scripts pass, and the soak period starts.
 
 ### Phase 5: Dev soak and window prep (up to M)
+
+Phase 3 runs during this phase. Don't set M or hold the go/no-go until gate C has passed.
 
 - [ ] **5.1** Soak dev for an agreed period. ODY-603 asks for "a set period" but doesn't give a length yet. Watch the ECS logs and error rates.
 - [ ] **5.2** Schedule the window. Comms announces the window and the Strapi admin edit freeze.

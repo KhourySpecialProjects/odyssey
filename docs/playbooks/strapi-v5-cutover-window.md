@@ -27,9 +27,12 @@ Both RDS instances are private. ECS Exec doesn't work (the task roles have no `s
 |                 | Dev                                                                       | Prod                                      |
 | --------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
 | `<db-instance>` | `odyssey-dev2`                                                            | `odyssey-production-db`                   |
+| `<db>`          | `postgres`                                                                | the backend secret's `DATABASE_NAME`      |
 | Subnet          | `subnet-0018b75c008fbacc8` (public)                                       | `subnet-0260f87c888e5b09a` (private, NAT) |
 | Security groups | `sg-08f7dd705233d47f0` (`ec2-rds-1`) + `sg-06addef9076022b35` (`default`) | `sg-0a6086eb97f271182` (backend)          |
 | Public IP       | `--associate-public-ip-address`                                           | `--no-associate-public-ip-address`        |
+
+Postgres can't copy or rename a database while you're connected to it, so the frozen copy (step 7a) and the rollback swap connect to `template1`, a database every Postgres server has. Don't use `-d postgres` for them: on dev, `<db>` is itself called `postgres`, and the scripts refuse. Close any open `psql` sessions on `<db>` before step 7a.
 
 1. [ ] **Launch the jump instance** (profile `jumpbox-ssm`; no inbound rules or SSH key needed):
        `AMI=$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 --query Parameter.Value --output text)`
@@ -40,15 +43,19 @@ Both RDS instances are private. ECS Exec doesn't work (the task roles have no `s
        `aws ssm start-session --target $ID --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{"host":["'"$DBHOST"'"],"portNumber":["5432"],"localPortNumber":["15432"]}'`
 3. [ ] **Point `psql` at it.** Every `psql`/`pg_dump` command in this checklist relies on these. Use the PostgreSQL 18 client tools (`/opt/homebrew/opt/postgresql@18/bin`); older ones can't dump or read a newer server.
        `export PGHOST=127.0.0.1 PGPORT=15432 PGUSER=<db user> PGDATABASE=<db>`, with the password in `~/.pgpass` (from the backend's `DATABASE_*` secret).
+       The `~/.pgpass` line must use `*` for the database, `127.0.0.1:15432:*:<db user>:<password>`. Otherwise every `psql -d template1` asks for the password.
        Check: `psql -c "select version(), current_user;"`
 4. [ ] **Keep the tunnel alive.** Session Manager ends a port-forward after about 20 minutes with no traffic. Run this in a spare terminal for the whole window:
-       `while true; do psql -qAt -c "select 1" >/dev/null && date +"%H:%M tunnel ok"; sleep 240; done`
+       `while true; do psql -d template1 -qAt -c "select 1" >/dev/null && date +"%H:%M tunnel ok"; sleep 240; done`
+       It connects to `template1` so it never counts as a session on `<db>` during step 7a or a swap.
        If the tunnel still drops ("timed out due to inactivity"), run step 2 again; the jump instance keeps running. Don't change Session Manager's idle timeout, which applies to the whole account.
 5. [ ] **After the window**, stop the tunnel and terminate the instance: `aws ec2 terminate-instances --instance-ids $ID`.
 
 ## Numbers from the rehearsal (ODY-602)
 
 Fill these in before the window. Step 11 and the decision point use them.
+
+**Dev runs before ODY-602,** so for dev use the local rehearsal ([migration-day](strapi-prod-migration-day.md) item 4.0): `T_mig` ≈ 15 s, and `T_rb` ≈ 77 s for the database part plus the time ECS takes to deploy the rollback task definitions. The API smoke has no earlier count yet, so dev's result becomes the baseline for prod.
 
 - [ ] `T_mig`, the time the migration took (3.3): \_\_\_\_
 - [ ] `T_rb`, the time the rollback took (3.6): \_\_\_\_
@@ -58,7 +65,7 @@ Fill these in before the window. Step 11 and the decision point use them.
 
 ## Before the window
 
-- [ ] Dev: gate C has passed. Prod: the M−1 go/no-go (gate E) has passed.
+- [ ] Dev: gate B has passed (dev goes first and is the first rehearsal). Prod: gates C and E have passed.
 - [ ] The `02` file for this environment is ready. For prod, the Reviewer has signed it off.
 - [ ] Start the [window notes](#window-notes) and record the exact merge SHA. Keep the notes outside the repo.
 - [ ] **Tag the current v4 images.** The pipelines push only `:latest`, so after the merge the old task definitions would pull the v5 image. Do this for the backend and the frontend repo:
@@ -112,7 +119,7 @@ The outage runs from step 3 to step 15. **Don't run `terraform apply` during the
        `psql -v ON_ERROR_STOP=1 -v expected_db=<db> -f <02 file>`
 7. [ ] **Gate.** Run `01` again and save the output. **Every unpublished count must be 0.** If it isn't, stop. This run is the baseline for step 12.
    - [ ] **7a. Frozen copy.** This is the copy a rollback swaps back to. If the script warns that `datacl` or settings differ, re-apply them to the copy now.
-         `psql -d postgres -v src=<db> -v frozen=<db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/clone-frozen.sql`
+         `psql -d template1 -v src=<db> -v frozen=<db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/clone-frozen.sql`
    - [ ] **7b. Copy check.** Fingerprint both databases. Both `flavor`s must be `v4`, and section 4 must diff clean. If not, investigate for up to 10 minutes, then abort ([Path A](strapi-v5-rollback.md#path-a-abort-the-database-is-untouched)).
          `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql > ~/ody-596/<env>-fp-gate-<date>.txt`
          `psql -d <db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/fingerprint.sql > ~/ody-596/<env>-fp-copycheck-<date>.txt`
