@@ -7,9 +7,13 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
+import {
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+  type EntryRef,
+} from "../strapi-document-id";
 import { CACHE_TAGS } from "../cache-tags";
 
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
@@ -27,25 +31,30 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  */
 const ACCOUNT_ID_RECHECK_MS = 5 * 60 * 1000;
 
-/** Looks up just the authorized-user id by email; null if no user matches. */
-async function fetchAccountId(email: string): Promise<number | null> {
-  const [match] = await fetchAPI<{ id: number }[]>("/authorized-users", {
-    urlParams: {
-      filters: { email: { $eq: email } },
-      fields: ["id"],
-      pagination: { pageSize: 1, page: 1 },
+/** Looks up the authorized-user id and documentId by email; null if no user matches. */
+async function fetchAccountId(
+  email: string,
+): Promise<{ id: number; documentId?: string } | null> {
+  const [match] = await fetchAPI<{ id: number; documentId?: string }[]>(
+    "/authorized-users",
+    {
+      urlParams: {
+        filters: { email: { $eq: email } },
+        fields: ["id"],
+        pagination: { pageSize: 1, page: 1 },
+      },
+      // Data-cached so the re-check is normally a cache hit; create/delete
+      // AuthorizedUser revalidate `users`, so an in-app delete/re-create is
+      // seen on the next check.
+      next: { revalidate: 900, tags: [CACHE_TAGS.users] },
     },
-    // Data-cached so the re-check is normally a cache hit; create/delete
-    // AuthorizedUser revalidate `users`, so an in-app delete/re-create is
-    // seen on the next check.
-    next: { revalidate: 900, tags: [CACHE_TAGS.users] },
-  });
-  return match?.id ?? null;
+  );
+  return match ? { id: match.id, documentId: match.documentId } : null;
 }
 
 async function syncAzureProfilePhoto(
   accessToken: string,
-  userId: number,
+  user: EntryRef,
 ): Promise<string | null> {
   const photoBuffer = await getUserPhoto(accessToken);
   if (!photoBuffer) return null;
@@ -61,24 +70,27 @@ async function syncAzureProfilePhoto(
   const profilePhoto = uploadResult.url;
   const fileName = profilePhoto.split("/").pop()!;
   try {
-    const res = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({ data: { profilePhoto } }),
+    const res = await fetch(await strapiEntryUrl("authorized-users", user), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({ data: { profilePhoto } }),
+    });
     if (!res.ok) {
       console.error("Strapi profile photo save failed:", res.status);
       await deleteImage(fileName).catch(() => {});
       return null;
     }
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same outcome as the 404 the PUT used to return.
+      console.error("Strapi profile photo save failed:", 404);
+      await deleteImage(fileName).catch(() => {});
+      return null;
+    }
     console.error("Failed to save profile photo to Strapi:", err);
     await deleteImage(fileName).catch(() => {});
     return null;
@@ -135,6 +147,7 @@ export const authOptions: NextAuthOptions = {
           fetchAPI<
             {
               id: number;
+              documentId?: string;
               roles: { title: string }[];
               profilePhoto: string | null;
             }[]
@@ -152,16 +165,14 @@ export const authOptions: NextAuthOptions = {
         const profilePhoto =
           authorizedUser.profilePhoto ||
           (isAzure && account.access_token
-            ? await syncAzureProfilePhoto(
-                account.access_token,
-                authorizedUser.id,
-              )
+            ? await syncAzureProfilePhoto(account.access_token, authorizedUser)
             : null);
 
         token.user = {
           // Stored so pages can start id-keyed fetches without first looking
           // the user up by email (see lib/auth/current-user-id.ts).
           id: authorizedUser.id,
+          documentId: authorizedUser.documentId,
           name: user.name,
           email: user.email,
           image: profilePhoto || safeImage(user.image),
@@ -178,10 +189,14 @@ export const authOptions: NextAuthOptions = {
           Date.now() - token.userIdCheckedAt > ACCOUNT_ID_RECHECK_MS)
       ) {
         try {
-          const id = await fetchAccountId(token.user.email);
-          // No match: drop the id so getAuthorizedUserId falls back to the
+          const match = await fetchAccountId(token.user.email);
+          // No match: drop the ids so getAuthorizedUserId falls back to the
           // email lookup and pages take their not-found/unauthorized paths.
-          token.user = { ...token.user, id: id ?? undefined };
+          token.user = {
+            ...token.user,
+            id: match?.id,
+            documentId: match?.documentId,
+          };
           token.userIdCheckedAt = Date.now();
         } catch (err) {
           console.error("Failed to re-check authorized user id:", err);

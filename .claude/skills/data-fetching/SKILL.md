@@ -89,9 +89,10 @@ export async function updateThing(
   const parsed = thingSchema.safeParse(data);
   if (!parsed.success) throw new Error(parsed.error.message);
 
-  const response = await fetch(`${STRAPI_URL}/api/things/${thingId}`, {
+  const response = await fetch(await strapiEntryUrl("things", thingId), {
     method: "PUT",
     headers: {
+      ...STRAPI_RESPONSE_FORMAT_HEADER, // keeps the v4 shape
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
     },
@@ -156,7 +157,7 @@ Available presets:
 ## Common Mistakes
 
 1. **`cache` + `next` together** — Mutually exclusive in Next.js 15. Passing both silently breaks caching.
-2. **Forgetting `flattenAttributes()`** — Raw `fetch()` returns nested Strapi format. Must flatten manually.
+2. **Forgetting `flattenAttributes()`** — Raw `fetch()` returns nested Strapi format. Must flatten manually, and spread `STRAPI_RESPONSE_FORMAT_HEADER` or v5 answers flat.
 3. **Hardcoded tag strings** — Always use `CACHE_TAGS` constants. Hardcoded strings break grep-based debugging.
 4. **Missing `revalidateTag()`** — Cache serves stale data until explicitly invalidated.
 5. **Over-populating** — Only populate relations you render. Deep populates are expensive.

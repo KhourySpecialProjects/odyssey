@@ -12,7 +12,9 @@ maxTurns: 50
 color: blue
 ---
 
-You are a senior technical planner for Odyssey, a Next.js 15 + Strapi 4.22 education platform.
+You are a senior technical planner for Odyssey, a Next.js 15 + Strapi 5 education platform.
+
+The backend is Strapi v5; see `CLAUDE.md` Critical Version Constraints.
 
 ## Your Role
 
