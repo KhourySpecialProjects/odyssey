@@ -68,11 +68,18 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 - [ ] **3.6** Run the rollback once on the copy ([Path B](strapi-v5-rollback.md#path-b-swap-back-to-the-frozen-copy): `writes-since.sql`, `swap-back.sql`, `fingerprint.sql`, then boot the v4 image) and time it from the decision to a passing v4 smoke check. This is `T_rb` in the cutover window.
 - [ ] **3.7** File each issue you find and link it to ODY-602. If a fix changes the migration or the schema, run the rehearsal again.
 
-**Gate C:** every ODY-602 acceptance criterion passes, which closes audit Critical 3. Set **M**, and size the window as migration time + rollback time + a buffer.
+**Gate C:** every ODY-602 acceptance criterion passes, which closes audit Critical 3. Set **M**, and size the window as migration time + rollback time + a buffer. The dev numbers in 4.0 are for scale only; prod is PG 18 with more data, so size the prod window from 3.3 and 3.6.
 
 ### Phase 4: Dev cutover
 
 Merging `feature/strapi-v5` into `develop` runs the one-way migration on the dev RDS (PG 16.13), so treat it as a cutover.
+
+- [x] **4.0 Local rehearsal on a copy of live dev (2026-10-22): passed.** Dev has no real user data, so it is the first rehearsal; ODY-602 still runs on prod data before M. The copy was a `pg_dump` of `odyssey-dev2` (27 MB) restored into a local `postgres:16`, booted with `ecs.dev.Dockerfile` (Node 20.14). It ran under amd64 emulation on Apple Silicon, so the times are upper bounds.
+
+  - `02`: committed (7 droplets back-filled, lesson 278 deleted). `01` afterwards showed 0 unpublished rows.
+  - **`T_mig` ≈ 15 s.** The internal migrations took 3.2 s (longest `5.0.0-02-created-document-id`, 1.4 s; `discard-drafts` 0.14 s), and container start to `Strapi started successfully` took 14 s. `03` matched the gate in every section, and the fingerprint showed `v5`.
+  - **`T_rb`, database part ≈ 77 s** (Path B, decision to a restored `v4` fingerprint). The swap itself took 2 ms. This doesn't include ECS deploying the v4 rollback task definitions, which can't be rehearsed locally.
+  - On dev, the pipeline build and ECS task start take far longer than the migration. Size the dev window around those.
 
 - [ ] **4.1 Last v4 release:** release the current `develop` to `production` first, so the prod cutover merge contains only v5 work.
 - [ ] **4.2 Release freeze starts:** from now on, any `develop` → `production` merge _is_ the prod cutover. Branch prod hotfixes off `production`. Comms announces the freeze.
