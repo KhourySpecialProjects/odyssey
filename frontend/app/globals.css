@@ -196,6 +196,22 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   color: #e06b85;
 }
 
+/* Lesson highlights (generic-block-renderer.tsx). A highlight is one piece
+   per text node; giving every piece the height of inline code, and painting
+   inline code without its border, makes the pieces read as one bar. */
+.lesson-highlight {
+  padding-block: 0.15em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.prose code.lesson-highlight {
+  border-color: transparent;
+  /* Its smaller monospace text sits lower; these line its top and bottom up
+     with the text beside it */
+  padding-top: 0.26em;
+  padding-bottom: 0.13em;
+}
+
 /* Fenced code block backgrounds: light by default, dark in dark mode.
    Tailwind Typography hardcodes a dark pre background; override it here
    so rendered lessons and quiz blocks both respect the site theme.

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   getLoadedHighlighter,
   loadHighlighter,
   type HighlighterModule,
 } from "./load-highlighter";
 import { Highlight, HighlightColor } from "@/types";
-import { SelectionToolbar } from "./selection-toolbar";
+import { SelectionToolbar, type ToolbarAnchor } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
@@ -16,19 +16,37 @@ import DOMPurify from "isomorphic-dompurify";
 interface Block {
   content: string;
   id: number;
+  /** Ids of the BlockNote blocks grouped into this one */
+  sourceBlockIds?: number[];
+}
+
+/** A highlight the reader just made, before it's saved */
+export type HighlightDraft = Pick<
+  Highlight,
+  "text" | "position" | "color" | "blockId"
+>;
+
+/**
+ * Saved highlights a new one overlaps: `baseId` is extended to cover the
+ * draft, and the highlights in `removeIds` are deleted.
+ */
+export interface HighlightMerge {
+  baseId: number;
+  removeIds: number[];
 }
 
 interface GenericBlockRendererProps {
   block: Block;
   highlights: Highlight[];
-  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
+  /** Saves a highlight. Resolves to it once saved, or null if that failed. */
+  onHighlight: (
+    highlight: HighlightDraft,
+    options?: { merge?: HighlightMerge; withNote?: boolean },
+  ) => Promise<Highlight | null>;
+  onRecolorHighlight: (highlightId: number, color: HighlightColor) => void;
   onDeleteHighlight: (highlightId: number) => void;
-  onNote: (notePos: number, text: string) => void;
+  onNote: (notePos: number, highlight: Highlight) => void;
   enrollmentId: string | undefined;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
-  activeBlock: number | undefined;
-  setActiveBlock: (id: number) => void;
   author?: boolean;
 }
 
@@ -37,135 +55,204 @@ interface EnlargedImage {
   alt: string;
 }
 
+/** What the toolbar acts on: new text, or a saved highlight */
+type ToolbarTarget =
+  | { kind: "selection"; start: number; end: number; text: string }
+  | { kind: "highlight"; highlightId: number };
+
+interface ToolbarState {
+  target: ToolbarTarget;
+  anchor: ToolbarAnchor;
+  /** Where a note made from here goes, in px from the top of the block */
+  notePos: number;
+}
+
+/** Class on every drawn piece of a highlight; data-highlight-id names it */
+const HIGHLIGHT_CLASS = "lesson-highlight";
+
+// How long the selection has to stay still before the toolbar opens
+const SELECTION_DELAY_MS = 150;
+
+type SavedHighlight = Highlight & { id: number };
+
+// A new highlight has a negative id until its save returns
+const isSaved = (highlight: Highlight): highlight is SavedHighlight =>
+  (highlight.id ?? 0) > 0;
+
+/** Outer highlights first, so one inside another is drawn on top of it */
+const byDrawOrder = (a: Highlight, b: Highlight) =>
+  (a.position?.start ?? 0) - (b.position?.start ?? 0) ||
+  (b.position?.end ?? 0) - (a.position?.end ?? 0);
+
+/** A range without the whitespace at either end, which isn't drawn */
+function trimmed(text: string, start: number, end: number) {
+  while (start < end && /\s/.test(text[start])) start++;
+  while (end > start && /\s/.test(text[end - 1])) end--;
+  return { start, end };
+}
+
+const processLatex = (content: string) => {
+  content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
+    try {
+      return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
+    } catch (e) {
+      console.error("Failed to process block LaTeX:", e);
+      return match;
+    }
+  });
+
+  content = content.replace(/\$(.*?)\$/g, (match, latex) => {
+    try {
+      return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
+    } catch (e) {
+      console.error("Failed to process inline LaTeX:", e);
+      return match;
+    }
+  });
+
+  return content;
+};
+
+/**
+ * The block's text nodes, in order. Highlight positions are character offsets
+ * across all of them (line numbers and LaTeX markup included).
+ */
+function textNodes(container: Node): Text[] {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  return nodes;
+}
+
+/** The character offset of a boundary point, counted from the block's start */
+function offsetOf(container: Node, node: Node, offset: number): number {
+  const range = document.createRange();
+  range.selectNodeContents(container);
+  range.setEnd(node, offset);
+  return range.toString().length;
+}
+
+type Piece = { node: Text; from: number; to: number };
+
+const isBlank = ({ node, from, to }: Piece) =>
+  !/\S/.test(node.data.slice(from, to));
+
+/**
+ * Inline code the piece covers whole. It's painted itself, so its padding and
+ * border don't cut a gap in the highlight.
+ */
+function wholeInlineCode({ node, from, to }: Piece): HTMLElement | null {
+  const code = node.parentElement;
+  return code?.tagName === "CODE" &&
+    !code.closest("pre") &&
+    // Already painted by a highlight this one sits inside
+    !code.classList.contains(HIGHLIGHT_CLASS) &&
+    code.childNodes.length === 1 &&
+    from === 0 &&
+    to === node.length
+    ? code
+    : null;
+}
+
+/**
+ * Draws a highlight as one tagged element per text node it covers, styled to
+ * read as one bar: only its two ends are rounded, and whitespace at either
+ * end isn't painted.
+ */
+function drawHighlight(container: HTMLElement, highlight: Highlight) {
+  const { start, end } = highlight.position ?? {};
+  if (start == null || end == null || start >= end) return;
+
+  const pieces: Piece[] = [];
+  let offset = 0;
+  for (const node of textNodes(container)) {
+    const piece = {
+      node,
+      from: Math.max(start - offset, 0),
+      to: Math.min(end - offset, node.length),
+    };
+    // A line break between paragraphs would paint an empty line
+    const betweenBlocks =
+      isBlank(piece) &&
+      node.data.includes("\n") &&
+      !node.parentElement?.closest("pre");
+    if (piece.from < piece.to && !betweenBlocks) pieces.push(piece);
+    offset += node.length;
+    if (offset >= end) break;
+  }
+
+  while (pieces.length > 0 && isBlank(pieces[0])) pieces.shift();
+  while (pieces.length > 0 && isBlank(pieces[pieces.length - 1])) pieces.pop();
+  if (pieces.length === 0) return;
+  const first = pieces[0];
+  const last = pieces[pieces.length - 1];
+  while (/\s/.test(first.node.data[first.from])) first.from++;
+  while (/\s/.test(last.node.data[last.to - 1])) last.to--;
+
+  for (const piece of pieces) {
+    let element = wholeInlineCode(piece);
+    if (!element) {
+      const { node, from, to } = piece;
+      const text = from > 0 ? node.splitText(from) : node;
+      if (to - from < text.length) text.splitText(to - from);
+      element = document.createElement("span");
+      text.replaceWith(element);
+      element.appendChild(text);
+    }
+
+    const [left, right] = [piece === first, piece === last].map((round) =>
+      round ? "8px" : "0px",
+    );
+    element.classList.add(HIGHLIGHT_CLASS);
+    element.dataset.highlightId = String(highlight.id);
+    element.style.backgroundColor = highlight.color;
+    element.style.borderRadius = `${left} ${right} ${right} ${left}`;
+    element.style.setProperty("color", "black", "important");
+  }
+}
+
+/** A rect's position relative to `parent`, for placing the toolbar */
+function anchorIn(parent: HTMLElement, rect: DOMRect): ToolbarAnchor {
+  const parentRect = parent.getBoundingClientRect();
+  return {
+    top: rect.top - parentRect.top,
+    bottom: rect.bottom - parentRect.top,
+    centerX: rect.left + rect.width / 2 - parentRect.left,
+  };
+}
+
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   block,
   highlights,
   onHighlight,
+  onRecolorHighlight,
   onDeleteHighlight,
   onNote,
   enrollmentId,
-  setActiveBlock,
   author = false,
 }) => {
+  const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const popupRef = useRef<{
-    x: number;
-    y: number;
-    highlightSpan: HTMLElement | null;
-    showColors: boolean;
-    savedRange: Range | null;
-    savedText: string;
-  }>({
-    x: 0,
-    y: 0,
-    highlightSpan: null,
-    showColors: false,
-    savedRange: null,
-    savedText: "",
-  });
-  const savedSelectionRef = useRef<Range | null>(null);
-  const [mousePositionY, setMousePositionY] = useState(0);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
-  const [toolbarPosition, setToolbarPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [isOnHighlight, setIsOnHighlight] = useState(false);
+  const [toolbar, setToolbar] = useState<ToolbarState | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(
     null,
   );
+  const canHighlight = !!enrollmentId && !author;
 
-  const processLatex = (content: string) => {
-    content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
-      try {
-        return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
-      } catch (e) {
-        console.error("Failed to process block LaTeX:", e);
-        return match;
-      }
-    });
-
-    content = content.replace(/\$(.*?)\$/g, (match, latex) => {
-      try {
-        return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
-      } catch (e) {
-        console.error("Failed to process inline LaTeX:", e);
-        return match;
-      }
-    });
-
-    return content;
-  };
-
+  const blockHighlights = highlights.filter(
+    (h) =>
+      h.blockId === block.id || !!block.sourceBlockIds?.includes(h.blockId),
+  );
+  // The block is redrawn only when this changes, so a new highlights array
+  // (or a hover, or a colour pick) leaves the reader's selection alone
+  const highlightKey = blockHighlights
+    .map((h) => `${h.id}:${h.position?.start}-${h.position?.end}:${h.color}`)
+    .join(",");
+  const blockHighlightsRef = useRef(blockHighlights);
   useEffect(() => {
-    const handleMouseEnter = () => {
-      setActiveBlock(block.id);
-    };
-
-    const handleMouseLeave = () => {
-      //
-    };
-
-    if (contentRef.current) {
-      contentRef.current.addEventListener("mouseover", handleMouseEnter);
-      contentRef.current.addEventListener("mouseleave", handleMouseLeave);
-    }
-    return () => {
-      if (contentRef.current) {
-        contentRef.current.removeEventListener("mouseover", handleMouseEnter);
-        contentRef.current.removeEventListener("mouseleave", handleMouseLeave);
-      }
-    };
-  }, [block.id]);
-
-  function highlightRange(
-    startNode: Node,
-    startOffset: number,
-    endNode: Node,
-    endOffset: number,
-    color: HighlightColor,
-  ) {
-    const range = document.createRange();
-    range.setStart(startNode, startOffset);
-    range.setEnd(endNode, endOffset);
-
-    const walker = document.createTreeWalker(
-      range.commonAncestorContainer,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          return range.intersectsNode(node)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_REJECT;
-        },
-      },
-    );
-
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      textNodes.push(node);
-    }
-
-    for (const node of textNodes) {
-      const nodeRange = document.createRange();
-      const nodeStart = node === startNode ? startOffset : 0;
-      const nodeEnd = node === endNode ? endOffset : node.textContent?.length;
-
-      nodeRange.setStart(node, nodeStart);
-      nodeRange.setEnd(node, nodeEnd || 0);
-
-      const span = document.createElement("span");
-
-      span.style.backgroundColor = color;
-      span.style.borderRadius = "8px";
-      span.style.setProperty("color", "black", "important");
-
-      const contents = nodeRange.extractContents();
-      span.appendChild(contents);
-      nodeRange.insertNode(span);
-    }
-  }
+    blockHighlightsRef.current = blockHighlights;
+  });
 
   // Check if content contains a table
   const tableMatch = block.content.match(
@@ -274,83 +361,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         pre.insertBefore(lineNumbers, pre.firstChild);
       });
-      const blockHighlights = highlights.filter((h) => {
-        if (h.blockId === block.id) return true;
-        // Check if block is a generic block with sourceBlockIds
-        if (
-          "sourceBlockIds" in block &&
-          Array.isArray(block.sourceBlockIds) &&
-          block.sourceBlockIds.includes(h.blockId)
-        ) {
-          return true;
-        }
-        return false;
-      });
 
-      const sortedHighlights = [...blockHighlights].sort(
-        (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
-      );
-
-      sortedHighlights.forEach((highlight) => {
-        const walker = document.createTreeWalker(
-          container,
-          NodeFilter.SHOW_TEXT,
-        );
-
-        let currentPosition = 0;
-        let startNode: Node | null = null;
-        let endNode: Node | null = null;
-        let startOffset = 0;
-        let endOffset = 0;
-
-        let node = walker.nextNode();
-
-        while (node) {
-          const nodeLength = node.textContent?.length || 0;
-
-          if (
-            !startNode &&
-            currentPosition + nodeLength >= highlight.position.start
-          ) {
-            startNode = node;
-            startOffset = highlight.position.start - currentPosition;
-          }
-
-          if (
-            !endNode &&
-            currentPosition + nodeLength >= highlight.position.end
-          ) {
-            endNode = node;
-            endOffset = highlight.position.end - currentPosition;
-            break;
-          }
-
-          currentPosition += nodeLength;
-          node = walker.nextNode();
-        }
-
-        if (!startNode || !endNode) return;
-
-        try {
-          const range = document.createRange();
-          range.setStart(startNode, startOffset);
-          range.setEnd(endNode, endOffset);
-
-          const span = document.createElement("span");
-          span.style.borderRadius = "8px";
-          span.style.backgroundColor = highlight.color;
-          span.style.setProperty("color", "black", "important");
-          range.surroundContents(span);
-        } catch {
-          highlightRange(
-            startNode,
-            startOffset,
-            endNode,
-            endOffset,
-            highlight.color,
-          );
-        }
-      });
+      // Drawn from the saved list only, so nothing else needs to add spans
+      [...blockHighlightsRef.current]
+        .sort(byDrawOrder)
+        .forEach((highlight) => drawHighlight(container, highlight));
 
       return codeBlocks.length > 0;
     };
@@ -382,280 +397,198 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    nonTableContent,
-    highlights,
-    contentRef,
-    popupRef,
-    onNote,
-    savedSelectionRef,
-    selectedColor,
-  ]);
+  }, [nonTableContent, highlightKey]);
 
-  const getTextOffset = (parent: Node, node: Node): number => {
-    let offset = 0;
-    const walker = document.createTreeWalker(parent, NodeFilter.SHOW_TEXT);
-
-    while (walker.nextNode()) {
-      if (walker.currentNode === node) break;
-      offset += walker.currentNode.textContent?.length || 0;
-    }
-    return offset;
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const notesBarTop = rect.top + scrollTop;
-    const clickY = e.clientY + scrollTop - notesBarTop;
-    setMousePositionY(clickY);
-  };
-
-  const handleMouseUp = () => {
+  // The toolbar follows the selection however it was made: mouse, Shift +
+  // arrow keys, or a long-press on a phone
+  const readSelection = () => {
+    const root = rootRef.current;
+    const container = contentRef.current;
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
+    if (!root || !container) return;
+
+    const range =
+      selection && selection.rangeCount > 0 && !selection.isCollapsed
+        ? selection.getRangeAt(0)
+        : null;
+    if (!range) {
+      // A toolbar opened by clicking a highlight has no selection to begin
+      // with, and one in use from the keyboard has already read its own
+      const toolbarFocused = !!root
+        .querySelector('[role="toolbar"]')
+        ?.contains(document.activeElement);
+      setToolbar((current) =>
+        current?.target.kind === "selection" && !toolbarFocused
+          ? null
+          : current,
+      );
+      return;
+    }
+    if (
+      !container.contains(range.startContainer) ||
+      !container.contains(range.endContainer)
+    ) {
+      setToolbar(null);
       return;
     }
 
-    const range = selection.getRangeAt(0);
-    savedSelectionRef.current = range.cloneRange();
+    const start = offsetOf(container, range.startContainer, range.startOffset);
+    const end = offsetOf(container, range.endContainer, range.endOffset);
+    if (start === end) return;
 
-    let text = selection.toString();
-    popupRef.current.savedText = text;
-    popupRef.current.savedRange = savedSelectionRef.current;
+    let text = selection!.toString();
     const latexParent = range.startContainer.parentElement?.closest(
       ".katex-inline, .katex-block",
     );
     if (latexParent) {
       text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
     }
-    if (text.length > 0 && contentRef.current) {
-      const walker = document.createTreeWalker(
-        contentRef.current,
-        NodeFilter.SHOW_TEXT,
-      );
 
-      let currentPosition = 0;
-      let startOffset = -1;
-      let endOffset = -1;
-      let node = walker.nextNode();
+    const rect = range.getBoundingClientRect();
+    // Exactly a saved highlight's text (as drawn): offer to recolour or remove
+    // it. Part of one is new text to highlight on top of it.
+    const blockText = container.textContent ?? "";
+    const selected = trimmed(blockText, start, end);
+    const same = blockHighlightsRef.current
+      .filter(isSaved)
+      .sort(byDrawOrder)
+      .filter((h) => {
+        const drawn = trimmed(blockText, h.position.start, h.position.end);
+        return drawn.start === selected.start && drawn.end === selected.end;
+      })
+      .pop();
 
-      while (node) {
-        const nodeLength = node.textContent?.length || 0;
-
-        if (node === range.startContainer && startOffset === -1) {
-          startOffset = currentPosition + range.startOffset;
-        }
-        if (node === range.endContainer && endOffset === -1) {
-          endOffset = currentPosition + range.endOffset;
-          break;
-        }
-
-        currentPosition += nodeLength;
-        node = walker.nextNode();
-      }
-
-      if (startOffset === -1 || endOffset === -1) return;
-
-      const highlightStart = Math.min(startOffset, endOffset);
-      const highlightEnd = Math.max(startOffset, endOffset);
-
-      const startSpan = range.startContainer.parentElement?.closest(
-        'span[style*="background-color"]',
-      ) as HTMLElement | null;
-      const endSpan = range.endContainer?.parentElement?.closest(
-        'span[style*="background-color"]',
-      ) as HTMLElement | null;
-      // Only treat as "edit existing highlight" when the entire selection is
-      // contained within the same span; a partial overlap is a new selection.
-      const highlightSpan =
-        startSpan && endSpan && startSpan === endSpan ? startSpan : null;
-
-      popupRef.current.x = highlightStart;
-      popupRef.current.y = highlightEnd;
-      popupRef.current.highlightSpan = highlightSpan;
-      popupRef.current.savedRange = savedSelectionRef.current;
-
-      // Show floating selection toolbar
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarY =
-        selectionRect.top > 50
-          ? selectionRect.top - 44
-          : selectionRect.bottom + 8;
-      setToolbarPosition({
-        x: selectionRect.left + selectionRect.width / 2,
-        y: toolbarY,
-      });
-      setIsOnHighlight(!!highlightSpan);
-    }
-  };
-
-  const handlePopupDelete = () => {
-    const savedRange = popupRef.current.savedRange;
-
-    if (!contentRef.current || !savedRange) {
-      return;
-    }
-
-    const spans = Array.from(
-      contentRef.current.querySelectorAll('span[style*="background-color"]'),
-    );
-
-    spans.forEach((span) => {
-      const spanRange = document.createRange();
-      spanRange.selectNodeContents(span);
-
-      const rangeIntersects =
-        savedRange.compareBoundaryPoints(Range.END_TO_START, spanRange) < 0 &&
-        savedRange.compareBoundaryPoints(Range.START_TO_END, spanRange) > 0;
-
-      if (rangeIntersects) {
-        const highlightId = highlights.find(
-          (h) =>
-            (h.text === span.textContent ||
-              h.text.includes(span.textContent || "")) &&
-            h.blockId === block.id,
-        )?.id;
-
-        if (highlightId) {
-          onDeleteHighlight(highlightId);
-        }
-
-        const textNode = document.createTextNode(span.textContent || "");
-        const parent = span.parentNode;
-        if (parent) {
-          parent.replaceChild(textNode, span);
-          parent.normalize();
-        }
-      }
+    setToolbar({
+      target: same
+        ? { kind: "highlight", highlightId: same.id }
+        : { kind: "selection", start, end, text },
+      anchor: anchorIn(root, rect),
+      notePos: rect.top - container.getBoundingClientRect().top,
     });
+  };
+  const readSelectionRef = useRef(readSelection);
+  useEffect(() => {
+    readSelectionRef.current = readSelection;
+  });
 
-    popupRef.current.highlightSpan = null;
-    popupRef.current.savedRange = null;
+  useEffect(() => {
+    if (!canHighlight) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const handleSelectionChange = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => readSelectionRef.current(), SELECTION_DELAY_MS);
+    };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
+  }, [canHighlight]);
+
+  const closeToolbar = useCallback(() => setToolbar(null), []);
+
+  const finishToolbar = () => {
+    setToolbar(null);
+    window.getSelection()?.removeAllRanges();
   };
 
-  const handlePopupHighlight = (
-    isWithNote?: boolean,
-    colorOverride?: HighlightColor,
-  ) => {
-    if (!contentRef.current) return;
-
-    const colorToUse = colorOverride ?? selectedColor;
-    const globalStart = popupRef.current.x;
-    const globalEnd = popupRef.current.y;
-    const text = popupRef.current.savedText;
-
-    if (!text || globalStart === globalEnd) return;
-
-    // Use position-based walker (same as the useEffect that re-applies highlights)
-    const walker = document.createTreeWalker(
-      contentRef.current,
-      NodeFilter.SHOW_TEXT,
-    );
-
-    let currentPosition = 0;
-    let startNode: Node | null = null;
-    let endNode: Node | null = null;
-    let startOffset = 0;
-    let endOffset = 0;
-
-    let node = walker.nextNode();
-    while (node) {
-      const nodeLength = node.textContent?.length || 0;
-
-      if (!startNode && currentPosition + nodeLength > globalStart) {
-        startNode = node;
-        startOffset = globalStart - currentPosition;
-      }
-
-      if (!endNode && currentPosition + nodeLength >= globalEnd) {
-        endNode = node;
-        endOffset = globalEnd - currentPosition;
-        break;
-      }
-
-      currentPosition += nodeLength;
-      node = walker.nextNode();
+  /**
+   * A new highlight over the selected text. Inside saved highlights, it goes
+   * on top of them (`inside` is the innermost). Across saved highlights'
+   * edges, it's merged with them: the one with a note (or the first) is
+   * extended.
+   */
+  const draftFor = (
+    target: Extract<ToolbarTarget, { kind: "selection" }>,
+    color: HighlightColor,
+  ): {
+    draft: HighlightDraft;
+    merge?: HighlightMerge;
+    inside?: SavedHighlight;
+  } => {
+    const saved = blockHighlights.filter(isSaved);
+    const containers = saved
+      .filter(
+        (h) => h.position.start <= target.start && target.end <= h.position.end,
+      )
+      .sort(byDrawOrder);
+    const inside = containers[containers.length - 1];
+    const overlapping = saved
+      .filter(
+        (h) =>
+          !containers.includes(h) &&
+          h.position.start < target.end &&
+          target.start < h.position.end,
+      )
+      .sort(byDrawOrder);
+    if (overlapping.length === 0 || !contentRef.current) {
+      return {
+        draft: {
+          text: target.text,
+          position: { start: target.start, end: target.end },
+          color,
+          blockId: block.id,
+        },
+        inside,
+      };
     }
 
-    if (!startNode || !endNode) return;
-
-    const existingSpan = popupRef.current.highlightSpan;
-    const effectiveColor = existingSpan
-      ? (existingSpan.style.backgroundColor as HighlightColor)
-      : colorToUse;
-
-    onHighlight(
-      {
-        text,
-        position: { start: globalStart, end: globalEnd },
-        color: effectiveColor,
-        blockId: block.id,
+    const start = Math.min(target.start, overlapping[0].position.start);
+    const end = Math.max(target.end, ...overlapping.map((h) => h.position.end));
+    const base = overlapping.find((h) => h.note) ?? overlapping[0];
+    return {
+      draft: {
+        text: (contentRef.current.textContent ?? "").slice(start, end),
+        position: { start, end },
+        color,
+        blockId: base.blockId,
       },
-      isWithNote,
-    );
-
-    popupRef.current.highlightSpan = null;
-
-    if (!existingSpan) {
-      try {
-        const newRange = document.createRange();
-        newRange.setStart(startNode, startOffset);
-        newRange.setEnd(endNode, endOffset);
-
-        const span = document.createElement("span");
-        span.style.borderRadius = "8px";
-        span.style.backgroundColor = colorToUse;
-        span.style.setProperty("color", "black", "important");
-        newRange.surroundContents(span);
-      } catch {
-        highlightRange(startNode, startOffset, endNode, endOffset, colorToUse);
-      }
-    }
+      merge: {
+        baseId: base.id,
+        removeIds: overlapping.filter((h) => h !== base).map((h) => h.id),
+      },
+      inside,
+    };
   };
 
   const handleApplyColor = (color: HighlightColor) => {
-    const savedRange = popupRef.current.savedRange;
-    if (
-      popupRef.current.highlightSpan &&
-      popupRef.current.highlightSpan.textContent &&
-      savedRange &&
-      popupRef.current.highlightSpan.contains(savedRange.startContainer) &&
-      popupRef.current.highlightSpan.contains(savedRange.endContainer)
-    ) {
-      const blockOffset = getTextOffset(
-        contentRef.current!,
-        popupRef.current.highlightSpan.firstChild!,
-      );
-
-      const spanLength = popupRef.current.highlightSpan.textContent.length;
-
-      const highlightId = highlights.find(
-        (h) => h.text === popupRef.current.highlightSpan?.textContent,
-      )?.id;
-      if (highlightId) {
-        onDeleteHighlight(highlightId);
-      }
-      onHighlight({
-        text: popupRef.current.highlightSpan.textContent,
-        position: {
-          start: blockOffset,
-          end: blockOffset + spanLength,
-        },
-        color: color,
-        blockId: block.id,
-      });
+    setSelectedColor(color);
+    if (!toolbar) return;
+    const { target } = toolbar;
+    if (target.kind === "highlight") {
+      onRecolorHighlight(target.highlightId, color);
     } else {
-      setSelectedColor(color);
+      const { draft, merge, inside } = draftFor(target, color);
+      // The same colour on top of the highlight around it wouldn't show
+      if (merge || inside?.color !== color) void onHighlight(draft, { merge });
     }
+    finishToolbar();
   };
 
-  const handleCreateNote = () => {
-    handlePopupHighlight(true);
-    onNote(
-      mousePositionY,
-      popupRef.current.savedText.replace(/[\r\n]+/g, "") || "",
-    );
+  const handleDelete = () => {
+    if (toolbar?.target.kind === "highlight") {
+      onDeleteHighlight(toolbar.target.highlightId);
+    }
+    finishToolbar();
+  };
+
+  // The note is linked to the highlight it's made from, so a new one is saved
+  // first and the note waits for it
+  const handleNote = async () => {
+    if (!toolbar) return;
+    const { target, notePos } = toolbar;
+    finishToolbar();
+
+    if (target.kind === "highlight") {
+      const highlight = blockHighlights.find(
+        (h) => h.id === target.highlightId,
+      );
+      if (highlight) onNote(notePos, highlight);
+      return;
+    }
+    const { draft, merge } = draftFor(target, selectedColor);
+    const saved = await onHighlight(draft, { merge, withNote: true });
+    if (saved) onNote(notePos, saved);
   };
 
   const handleContentClick = (e: React.MouseEvent) => {
@@ -671,101 +604,62 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
-    if (!enrollmentId || author) return;
+    // A drag that ends on a highlight is a selection, handled above
+    if (!canHighlight || !window.getSelection()?.isCollapsed) return;
 
-    // If clicking on or inside a highlight span, show toolbar with delete option
-    const highlightSpan = target.closest(
-      'span[style*="background-color"]',
-    ) as HTMLElement | null;
-    if (!highlightSpan || !contentRef.current) return;
+    const piece = target.closest<HTMLElement>(`.${HIGHLIGHT_CLASS}`);
+    const highlightId = Number(piece?.dataset.highlightId);
+    const highlight = blockHighlights
+      .filter(isSaved)
+      .find((h) => h.id === highlightId);
+    const root = rootRef.current;
+    const container = contentRef.current;
+    if (!piece || !highlight || !root || !container) return;
 
-    // Walk the tree to find the character offsets of this span
-    const walker = document.createTreeWalker(
-      contentRef.current,
-      NodeFilter.SHOW_TEXT,
+    const firstPiece = container.querySelector(
+      `.${HIGHLIGHT_CLASS}[data-highlight-id="${highlightId}"]`,
     );
-    let currentPosition = 0;
-    let spanStart = -1;
-    let spanEnd = -1;
-    let node = walker.nextNode();
-    while (node) {
-      const nodeLength = node.textContent?.length || 0;
-      if (highlightSpan.contains(node)) {
-        if (spanStart === -1) spanStart = currentPosition;
-        spanEnd = currentPosition + nodeLength;
-      }
-      currentPosition += nodeLength;
-      node = walker.nextNode();
-    }
-
-    if (spanStart === -1) return;
-
-    const range = document.createRange();
-    range.selectNodeContents(highlightSpan);
-    popupRef.current.x = spanStart;
-    popupRef.current.y = spanEnd;
-    popupRef.current.savedText = highlightSpan.textContent || "";
-    popupRef.current.highlightSpan = highlightSpan;
-    popupRef.current.savedRange = range;
-    savedSelectionRef.current = range;
-
-    const rect = highlightSpan.getBoundingClientRect();
-    const toolbarY = rect.top > 50 ? rect.top - 44 : rect.bottom + 8;
-    setToolbarPosition({ x: rect.left + rect.width / 2, y: toolbarY });
-    setIsOnHighlight(true);
+    setToolbar({
+      target: { kind: "highlight", highlightId },
+      anchor: anchorIn(root, piece.getBoundingClientRect()),
+      notePos:
+        (firstPiece ?? piece).getBoundingClientRect().top -
+        container.getBoundingClientRect().top,
+    });
   };
 
   const handleCloseEnlarged = () => {
     setEnlargedImage(null);
   };
 
-  const handleToolbarApplyColor = (color: HighlightColor) => {
-    setSelectedColor(color);
-    if (isOnHighlight) {
-      handleApplyColor(color);
-    } else {
-      handlePopupHighlight(false, color);
-    }
-    setToolbarPosition(null);
-    window.getSelection()?.removeAllRanges();
-  };
-
-  const handleToolbarDelete = () => {
-    handlePopupDelete();
-    setToolbarPosition(null);
-  };
-
-  const handleToolbarNote = () => {
-    handleCreateNote();
-    setToolbarPosition(null);
-    window.getSelection()?.removeAllRanges();
-  };
+  const toolbarTarget = toolbar?.target;
+  const toolbarHighlight =
+    toolbarTarget?.kind === "highlight"
+      ? blockHighlights.find((h) => h.id === toolbarTarget.highlightId)
+      : undefined;
 
   return (
-    <div>
-      {enrollmentId && !author && (
-        <SelectionToolbar
-          position={toolbarPosition}
-          selectedColor={selectedColor}
-          isOnHighlight={isOnHighlight}
-          onApplyColor={handleToolbarApplyColor}
-          onDelete={handleToolbarDelete}
-          onNote={handleToolbarNote}
-          onClose={() => setToolbarPosition(null)}
-        />
-      )}
-      <div style={{ display: "none" }}></div>
-
+    <div ref={rootRef} className="relative">
       {tableData && <TableRenderer tableData={tableData} />}
 
       {nonTableContent && (
         <div
           ref={contentRef}
-          onMouseUp={() => handleMouseUp()}
-          onMouseDown={(e) => handleMouseDown(e)}
           onClick={handleContentClick}
           className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit max-w-none select-text dark:text-slate-300"
         ></div>
+      )}
+
+      {canHighlight && toolbar && (
+        <SelectionToolbar
+          anchor={toolbar.anchor}
+          selectedColor={toolbarHighlight?.color ?? selectedColor}
+          isOnHighlight={toolbar.target.kind === "highlight"}
+          onApplyColor={handleApplyColor}
+          onDelete={handleDelete}
+          onNote={handleNote}
+          onClose={closeToolbar}
+        />
       )}
 
       {enlargedImage && (

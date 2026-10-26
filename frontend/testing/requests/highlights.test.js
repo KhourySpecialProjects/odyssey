@@ -1,9 +1,6 @@
 const {
-  getHighlights,
   getHighlightsByDroplet,
   getHighlightsByAuthorizedUserAndLesson,
-  createHighlight,
-  deleteHighlight,
 } = require("../../lib/requests/highlights");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -30,97 +27,6 @@ jest.mock("next/cache", () => ({
 describe("Highlights Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe("getHighlights", () => {
-    it("should fetch highlights for an authorized user with specific text", async () => {
-      const mockHighlights = [
-        {
-          id: 1,
-          color: "yellow",
-          text: "This is an important concept",
-          yLevel: 150,
-          lesson: { id: 101 },
-        },
-        {
-          id: 2,
-          color: "green",
-          text: "This is an important concept",
-          yLevel: 300,
-          lesson: { id: 102 },
-        },
-      ];
-
-      fetchAPI.mockResolvedValueOnce(mockHighlights);
-
-      const authorizedUserId = 5;
-      const text = "This is an important concept";
-      const result = await getHighlights(authorizedUserId, text);
-
-      expect(result).toEqual(mockHighlights);
-
-      expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
-        urlParams: expect.objectContaining({
-          filters: {
-            authorized_user: {
-              id: { $eq: authorizedUserId },
-            },
-            text: { $eq: text },
-          },
-          populate: {
-            lesson: {
-              fields: ["id"],
-            },
-          },
-          fields: ["id", "color", "text", "yLevel"],
-          pagination: { pageSize: 250, page: 1 },
-        }),
-        next: { tags: ["highlights-5"], revalidate: 900 },
-      });
-    });
-
-    it("should use custom sort and pagination parameters when provided", async () => {
-      const mockHighlights = [
-        { id: 1, color: "yellow", text: "Custom params test" },
-      ];
-
-      fetchAPI.mockResolvedValueOnce(mockHighlights);
-
-      const authorizedUserId = 5;
-      const text = "Custom params test";
-      const customParams = {
-        sort: ["id:desc"],
-        pagination: { pageSize: 50, page: 2 },
-        fields: ["id", "color"],
-      };
-
-      await getHighlights(authorizedUserId, text, customParams);
-
-      expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
-        urlParams: expect.objectContaining({
-          sort: ["id:desc"],
-          pagination: { pageSize: 50, page: 2 },
-          fields: ["id", "color"],
-        }),
-        next: { tags: ["highlights-5"], revalidate: 900 },
-      });
-    });
-
-    it("should return empty array when no highlights found", async () => {
-      fetchAPI.mockResolvedValueOnce([]);
-
-      const result = await getHighlights(5, "Non-existent text");
-
-      expect(result).toEqual([]);
-    });
-
-    it("should handle errors from fetchAPI", async () => {
-      fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch highlights"));
-
-      await expect(getHighlights(5, "Error test")).rejects.toThrow(
-        "Failed to fetch highlights",
-      );
-    });
   });
 
   describe("getHighlightsByDroplet", () => {
@@ -249,60 +155,7 @@ describe("Highlights Tests", () => {
   });
 });
 
-describe("Highlight Actions", () => {
-  it("should create highlight", async () => {
-    const { revalidateTag } = require("next/cache");
-    const highlightData = {
-      data: {
-        content: "Test highlight",
-        lesson: 1,
-        authorized_user: 5,
-      },
-    };
-
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await createHighlight(highlightData);
-    expect(result.data).toBeDefined();
-    expect(result.data.id).toBe(1);
-    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
-  });
-
-  it("should handle highlight creation error", async () => {
-    const { revalidateTag } = require("next/cache");
-    const highlightData = {
-      data: {
-        content: "Test highlight",
-        lesson: 1,
-        authorized_user: 5,
-      },
-    };
-
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: "Failed to create highlight" }),
-    });
-
-    await expect(createHighlight(highlightData)).rejects.toThrow();
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("should delete highlight", async () => {
-    const { revalidateTag } = require("next/cache");
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await deleteHighlight(1, 5);
-    expect(result).toBeDefined();
-    expect(result.data.id).toBe(1);
-    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
-  });
-
+describe("getHighlightsByAuthorizedUserAndLesson", () => {
   it("should fetch a user's highlights for a lesson by slug", async () => {
     const mockHighlights = [
       { id: 1, text: "Key idea", color: "#fff300", blockId: 2 },
@@ -320,19 +173,10 @@ describe("Highlight Actions", () => {
             authorized_user: { id: { $eq: 1 } },
             lesson: { slug: { $eq: "lesson-1" } },
           },
+          populate: { note: { fields: ["id"] } },
         }),
-        next: { tags: ["highlights-1"], revalidate: 900 },
+        next: { tags: ["highlights-1", "notes-1"], revalidate: 900 },
       }),
     );
-  });
-});
-
-describe("Error Cases", () => {
-  it("should handle network errors", async () => {
-    global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-    await expect(
-      createHighlight({ data: { content: "Test", authorized_user: 5 } }),
-    ).rejects.toThrow();
   });
 });
