@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { useRouter } from "next/navigation";
@@ -956,6 +962,74 @@ describe("LessonRenderer", () => {
       );
       expect(screen.getByRole("button", { name: "Reload" })).toBeVisible();
       expect(screen.queryByRole("button", { name: "Change URL" })).toBeNull();
+    });
+
+    describe("pending saves", () => {
+      beforeEach(() => jest.useFakeTimers());
+      afterEach(() => jest.useRealTimers());
+
+      it("drops pending saves, without flushing them, when the poll freezes the tab", () => {
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: false, isOwnLock: true }),
+        );
+        const { rerender } = render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        // The mount autosave is pending (debounced); the tab then freezes.
+        mockUseEditingLock.mockReturnValue(lockState());
+        rerender(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+
+        jest.advanceTimersByTime(10_000);
+
+        expect(updateLesson).not.toHaveBeenCalled();
+      });
+
+      it("drops pending saves when the review ends", () => {
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: true, isReviewer: true, isOwnLock: true }),
+        );
+        const { rerender } = render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: false, reviewEnded: true }),
+        );
+        rerender(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+
+        jest.advanceTimersByTime(10_000);
+
+        expect(updateLesson).not.toHaveBeenCalled();
+      });
+
+      it("flushes pending saves, then releases the lock, on Stop editing", async () => {
+        const stopEditing = jest.fn();
+        mockUseEditingLock.mockReturnValue(
+          lockState({
+            inReview: true,
+            isReviewer: true,
+            isOwnLock: true,
+            stopEditing,
+          }),
+        );
+        render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        expect(updateLesson).not.toHaveBeenCalled();
+
+        await act(async () => {
+          fireEvent.click(screen.getByRole("button", { name: "Stop editing" }));
+        });
+
+        expect(updateLesson).toHaveBeenCalledTimes(1);
+        expect(stopEditing).toHaveBeenCalledTimes(1);
+        expect(
+          (updateLesson as jest.Mock).mock.invocationCallOrder[0],
+        ).toBeLessThan(stopEditing.mock.invocationCallOrder[0]);
+      });
     });
 
     it("shows one info toast, no error toast, and freezes on an in_review result", async () => {

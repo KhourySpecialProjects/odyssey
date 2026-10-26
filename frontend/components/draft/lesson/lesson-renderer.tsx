@@ -101,6 +101,9 @@ export function LessonRenderer({
   const markFrozenRef = useRef(markFrozen);
   markFrozenRef.current = markFrozen;
   const cancelSavesRef = useRef<() => void>(() => {});
+  // Read in effect cleanups, which run after the render that set it.
+  const discardSavesRef = useRef(false);
+  discardSavesRef.current = frozen || reviewEnded;
 
   /**
    * Handles the result of every lesson write. A refused write (the droplet went
@@ -252,7 +255,10 @@ export function LessonRenderer({
     if (editorVersion !== "v1" || isReadOnly) return;
     debounceUpdate(blocks);
     return () => {
-      debounceUpdate.flush();
+      // Once the tab is frozen or the review is over, the server would refuse
+      // the pending save, so drop it instead of flushing it.
+      if (discardSavesRef.current) debounceUpdate.cancel();
+      else debounceUpdate.flush();
     };
   }, [blocks, debounceUpdate, editorVersion, isReadOnly]);
 
@@ -354,6 +360,21 @@ export function LessonRenderer({
     debounceUpdate.cancel();
     debounceUpdateV2.cancel();
     debouncedNameUpdate.cancel();
+  };
+
+  // Picked up by the poll: drop every pending save rather than send it.
+  useEffect(() => {
+    if (frozen || reviewEnded) cancelSavesRef.current();
+  }, [frozen, reviewEnded]);
+
+  // Stop editing: send what is pending, wait for it, then release the lock.
+  const handleStopEditing = async () => {
+    await Promise.all([
+      debounceUpdate.flush(),
+      debounceUpdateV2.flush(),
+      debouncedNameUpdate.flush(),
+    ]);
+    await stopEditing();
   };
 
   const handleAddTool = useCallback(
@@ -525,7 +546,7 @@ export function LessonRenderer({
               <span className="flex-1">
                 You&apos;re editing this lesson during its review.
               </span>
-              <Button size="sm" variant="outline" onClick={() => stopEditing()}>
+              <Button size="sm" variant="outline" onClick={handleStopEditing}>
                 Stop editing
               </Button>
             </>
