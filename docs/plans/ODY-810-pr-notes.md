@@ -45,3 +45,9 @@ Also out of scope: ODY-811 (stale copy after a lock handover between co-authors;
 
 - Jest: new suites for the helpers, the server checks, the lesson, droplet and dataset actions, `useEditingLock`, the lesson renderer, the sidebar, withdraw, the read-only Overview and `useDropletUpdate`.
 - Manual run (Task 12) needs a live app and Strapi; see the report for the steps.
+
+## Known limitations (not fixed here)
+
+- **Lock poll cost.** `getLessonLockStatus` now does about three Strapi reads per open lesson tab every 10 s, in every state (the lock status, the lesson's droplets, and their authors). It was one read, and only while another editor held the lock. Fine at current scale; a single combined endpoint or a longer interval would cut it if it shows up in Strapi load.
+- **`useEditingLock` ref pattern.** The hook keeps its timers and flags in refs shared across effect runs, as it did before this work. It is not changed here, and ODY-811 will touch it again.
+- **Classic blocks and `inert`.** The Classic editors have no `editable` prop, so a read-only lesson relies on `inert` (set on the DOM node, because the React 19 runtime bundled with the App Router ignores `inert=""` as a prop). `inert` blocks focus and keyboard input, but a Classic block that already had focus when the tab froze is only blurred by the browser, not made non-editable.
