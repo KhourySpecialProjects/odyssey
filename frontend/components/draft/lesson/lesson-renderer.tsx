@@ -47,6 +47,8 @@ import { useEditingLock } from "@/hooks/useEditingLock";
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
+const NOTICE_MS = 8_000;
+
 const REVIEW_FROZEN_TOAST =
   "This droplet is in review, so your last change wasn't saved.";
 
@@ -137,17 +139,17 @@ export function LessonRenderer({
   const [name, setName] = useState(lesson.name);
   const [isEditingName, setIsEditingName] = useState(false);
 
-  // Check if lesson is truly new (empty from props and no blocksV2)
-  const isLessonEmpty =
-    (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
-
   const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
     lesson.blocksVersion || "v1",
   );
-  // BlockNote mounts once per content version: a refresh after a lock takeover
-  // bumps it, which remounts the editor on the latest saved document.
+  // BlockNote and the classic blocks mount once per content version: a refresh
+  // after a lock takeover bumps it, which remounts them on the latest content.
   const [blocksV2, setBlocksV2] = useState<unknown>(lesson.blocksV2);
   const [contentVersion, setContentVersion] = useState(0);
+
+  // Check if the lesson is truly new. Read from state, not props: after a lock
+  // takeover the props are the copy from when the page loaded.
+  const isLessonEmpty = (blocks?.length === 0 || !blocks) && !blocksV2;
 
   // Show toggle button if:
   // 1. Lesson is truly empty (new lesson), OR
@@ -374,6 +376,27 @@ export function LessonRenderer({
     debouncedNameUpdate.cancel();
   };
 
+  // The takeover notice shows for a few seconds after the tab turns editable.
+  const [noticeVisible, setNoticeVisible] = useState(false);
+  const takeoverNoticeDue = isOwnLock && tookOver && !inReview;
+  useEffect(() => {
+    if (!takeoverNoticeDue) {
+      setNoticeVisible(false);
+      return;
+    }
+    setNoticeVisible(true);
+    const timer = setTimeout(() => setNoticeVisible(false), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [takeoverNoticeDue, tookOverFrom]);
+  const showTakeoverNotice = takeoverNoticeDue && noticeVisible;
+  const liveMessage = isRefreshing
+    ? "Loading the latest version..."
+    : showTakeoverNotice
+      ? tookOverFrom
+        ? `${tookOverFrom.firstName} ${tookOverFrom.lastName} finished editing. You're now editing the latest version.`
+        : "You're now editing the latest version."
+      : "";
+
   // Loads the latest saved content before the tab turns editable. Pending
   // saves are dropped first: they hold the old copy. The editor stays
   // read-only (no onChange, no autosave) until this resolves, and BlockNote's
@@ -381,8 +404,11 @@ export function LessonRenderer({
   refreshLessonRef.current = async () => {
     cancelSavesRef.current();
     const response = await getLatestLessonContent(lesson.id);
+    // A refusal because the droplet went into review freezes the tab at once.
+    if (handleSaveResult(response)) return false;
     if (!response?.ok || !response.data) return false;
     const fresh = response.data;
+    setIsEditingName(false);
     const freshBlocks = (fresh.blocks ?? []) as Block[];
     hasSetVersionRef.current = true;
     setBlocks(freshBlocks);
@@ -533,7 +559,7 @@ export function LessonRenderer({
   const classicBlocksRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
-  }, [isReadOnly, editorVersion]);
+  }, [isReadOnly, editorVersion, contentVersion]);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
@@ -590,6 +616,7 @@ export function LessonRenderer({
               <Button
                 size="sm"
                 variant="outline"
+                disabled={isRefreshing}
                 onClick={() => startEditing()}
               >
                 Edit
@@ -615,23 +642,26 @@ export function LessonRenderer({
           <span>Unable to acquire editing lock. {lockError}</span>
         </div>
       )}
-      {isRefreshing && (
-        <div className="mx-auto mb-4 max-w-2xl px-4 py-3 text-center text-sm text-slate-500">
-          Loading the latest version...
-        </div>
-      )}
-      {isOwnLock && tookOver && !inReview && (
-        <div
-          role="status"
-          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200"
-        >
-          <span>
-            {tookOverFrom
-              ? `${tookOverFrom.firstName} ${tookOverFrom.lastName} finished editing. You're now editing the latest version.`
-              : "You're now editing the latest version."}
-          </span>
-        </div>
-      )}
+      {/* Always mounted, so screen readers announce text that appears in it. */}
+      <div
+        role="status"
+        className={cn(
+          liveMessage &&
+            "mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200",
+        )}
+      >
+        {liveMessage && <span className="flex-1">{liveMessage}</span>}
+        {showTakeoverNotice && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Dismiss notice"
+            onClick={() => setNoticeVisible(false)}
+          >
+            Dismiss
+          </Button>
+        )}
+      </div>
       {lockLoading && (
         <div className="mx-auto mb-4 max-w-2xl px-4 py-3 text-center text-sm text-slate-500">
           Checking editing access...
@@ -794,7 +824,11 @@ export function LessonRenderer({
       {editorVersion === "v1" ? (
         <>
           {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
-          <div className="w-full px-10 md:px-40" ref={classicBlocksRef}>
+          <div
+            key={contentVersion}
+            className="w-full px-10 md:px-40"
+            ref={classicBlocksRef}
+          >
             <BlockList
               blocks={blocks}
               onReorder={handleReorderSource}
