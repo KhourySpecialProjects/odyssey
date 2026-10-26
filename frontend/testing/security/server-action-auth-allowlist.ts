@@ -29,8 +29,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/import/custom-prompt-ai.ts#customPromptAI": "ODY-504",
   "lib/import/expand-with-ai.ts#expandLessonContent": "ODY-504",
   "lib/import/split-with-ai.ts#splitTextWithAI": "ODY-504",
-  "lib/requests/dataset.ts#createDataset": "ODY-504",
-  "lib/requests/dataset.ts#deleteDataset": "ODY-504",
   "lib/requests/dataset.ts#getDatasetsByDropletId": "ODY-504",
   "lib/requests/droplet.ts#archiveDroplet": "ODY-504",
   "lib/requests/droplet.ts#createDroplet": "ODY-504",
