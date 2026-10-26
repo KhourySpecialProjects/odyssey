@@ -8,7 +8,11 @@ import {
 import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { useRouter } from "next/navigation";
-import { updateLesson, deleteLesson } from "@/lib/requests/lesson";
+import {
+  updateLesson,
+  deleteLesson,
+  getLatestLessonContent,
+} from "@/lib/requests/lesson";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 
@@ -68,6 +72,7 @@ jest.mock("@/lib/requests/lesson", () => ({
   updateLesson: jest.fn(),
   deleteLesson: jest.fn(),
   revalidateLesson: jest.fn().mockResolvedValue(undefined),
+  getLatestLessonContent: jest.fn(),
 }));
 
 const mockUseEditingLock = jest.fn().mockReturnValue({
@@ -87,8 +92,18 @@ jest.mock("@/lib/requests/droplet", () => ({
 }));
 
 jest.mock("@/components/draft/lesson/blocknote-editor", () => ({
-  BlockNoteEditor: ({ editable }: { editable: boolean }) => (
-    <div data-testid="blocknote-editor" data-editable={String(editable)} />
+  BlockNoteEditor: ({
+    editable,
+    initialContent,
+  }: {
+    editable: boolean;
+    initialContent?: unknown;
+  }) => (
+    <div
+      data-testid="blocknote-editor"
+      data-editable={String(editable)}
+      data-content={JSON.stringify(initialContent ?? null)}
+    />
   ),
 }));
 
@@ -1210,6 +1225,192 @@ describe("LessonRenderer", () => {
 
         expect(updateLesson).toHaveBeenCalled();
       });
+    });
+  });
+  describe("Lock takeover (ODY-811)", () => {
+    const OLD_V2 = [{ type: "paragraph", content: "old copy" }];
+    const NEW_V2 = [{ type: "paragraph", content: "A's newer edit" }];
+    const v2Lesson = {
+      ...mockLesson,
+      blocks: [],
+      blocksV2: OLD_V2,
+      blocksVersion: "v2" as const,
+    };
+    const lockState = (over: Record<string, unknown> = {}) => ({
+      isLocked: true,
+      isOwnLock: false,
+      lockedBy: null,
+      isLoading: false,
+      error: null,
+      inReview: false,
+      isReviewer: false,
+      reviewEnded: false,
+      isRefreshing: false,
+      tookOver: false,
+      tookOverFrom: null,
+      release: jest.fn(),
+      startEditing: jest.fn(),
+      stopEditing: jest.fn(),
+      markFrozen: jest.fn(),
+      ...over,
+    });
+    const fresh = (over: Record<string, unknown> = {}) => ({
+      ok: true,
+      error: null,
+      data: {
+        name: "Fresh name",
+        blocks: [],
+        blocksV2: NEW_V2,
+        blocksVersion: "v2",
+        ...over,
+      },
+    });
+    /** The refresh callback the renderer handed to the hook. */
+    const refreshFn = () =>
+      mockUseEditingLock.mock.calls[0][1] as () => Promise<boolean>;
+    const editor = () => screen.getByTestId("blocknote-editor");
+
+    it("shows the fresh content, still read-only, before the tab becomes editable", async () => {
+      (getLatestLessonContent as jest.Mock).mockResolvedValue(fresh());
+      mockUseEditingLock.mockReturnValue(lockState({ isRefreshing: true }));
+      const { rerender } = render(
+        <LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />,
+      );
+      expect(editor()).toHaveAttribute("data-content", JSON.stringify(OLD_V2));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await refreshFn()();
+      });
+
+      expect(ok).toBe(true);
+      expect(getLatestLessonContent).toHaveBeenCalledWith(1);
+      expect(editor()).toHaveAttribute("data-content", JSON.stringify(NEW_V2));
+      expect(editor()).toHaveAttribute("data-editable", "false");
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Fresh name",
+      );
+
+      mockUseEditingLock.mockReturnValue(
+        lockState({ isOwnLock: true, tookOver: true }),
+      );
+      rerender(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      expect(editor()).toHaveAttribute("data-editable", "true");
+      expect(editor()).toHaveAttribute("data-content", JSON.stringify(NEW_V2));
+    });
+
+    it("returns false and keeps the old content when the read fails", async () => {
+      (getLatestLessonContent as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "forbidden",
+        data: null,
+      });
+      mockUseEditingLock.mockReturnValue(lockState({ isRefreshing: true }));
+      render(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await refreshFn()();
+      });
+
+      expect(ok).toBe(false);
+      expect(editor()).toHaveAttribute("data-content", JSON.stringify(OLD_V2));
+    });
+
+    it("returns false when the read throws", async () => {
+      (getLatestLessonContent as jest.Mock).mockRejectedValue(new Error("x"));
+      mockUseEditingLock.mockReturnValue(lockState({ isRefreshing: true }));
+      render(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      await expect(refreshFn()()).rejects.toThrow("x");
+    });
+
+    describe("saves during the swap", () => {
+      beforeEach(() => jest.useFakeTimers());
+      afterEach(() => jest.useRealTimers());
+
+      it("never sends the stale classic blocks, and sends nothing for v2", async () => {
+        const freshBlocks = [
+          { __component: "droplets.generic", content: "newer text" },
+        ];
+        (getLatestLessonContent as jest.Mock).mockResolvedValue(
+          fresh({ blocks: freshBlocks, blocksV2: null, blocksVersion: "v1" }),
+        );
+        // Editable on the old copy: its mount autosave is still pending.
+        mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+        render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+
+        await act(async () => {
+          await refreshFn()();
+        });
+        act(() => {
+          jest.advanceTimersByTime(10_000);
+        });
+
+        const sent = (updateLesson as jest.Mock).mock.calls;
+        for (const [, data] of sent) {
+          expect(JSON.stringify(data)).not.toContain("Generic content");
+        }
+        expect(sent.some(([, d]) => "blocksV2" in d)).toBe(false);
+      });
+
+      it("makes no updateLesson call when a v2 lesson is refreshed and becomes editable", async () => {
+        (getLatestLessonContent as jest.Mock).mockResolvedValue(fresh());
+        mockUseEditingLock.mockReturnValue(lockState({ isRefreshing: true }));
+        const { rerender } = render(
+          <LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />,
+        );
+        await act(async () => {
+          await refreshFn()();
+        });
+        mockUseEditingLock.mockReturnValue(
+          lockState({ isOwnLock: true, tookOver: true }),
+        );
+        rerender(
+          <LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />,
+        );
+        act(() => {
+          jest.advanceTimersByTime(10_000);
+        });
+
+        expect(updateLesson).not.toHaveBeenCalled();
+      });
+    });
+
+    it("tells the user who finished editing", () => {
+      mockUseEditingLock.mockReturnValue(
+        lockState({
+          isOwnLock: true,
+          tookOver: true,
+          tookOverFrom: { id: 9, firstName: "Ada", lastName: "Lovelace" },
+        }),
+      );
+      render(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Ada Lovelace finished editing. You're now editing the latest version.",
+      );
+    });
+
+    it("uses the plain notice when the previous holder is unknown", () => {
+      mockUseEditingLock.mockReturnValue(
+        lockState({ isOwnLock: true, tookOver: true }),
+      );
+      render(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "You're now editing the latest version.",
+      );
+    });
+
+    it("shows no notice for the first lock on load", () => {
+      mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+      render(<LessonRenderer lesson={v2Lesson} dropletSlug="test-droplet" />);
+
+      expect(screen.queryByRole("status")).toBeNull();
     });
   });
 });
