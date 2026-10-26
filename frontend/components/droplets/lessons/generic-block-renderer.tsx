@@ -79,6 +79,18 @@ type SavedHighlight = Highlight & { id: number };
 const isSaved = (highlight: Highlight): highlight is SavedHighlight =>
   (highlight.id ?? 0) > 0;
 
+/** Outer highlights first, so one inside another is drawn on top of it */
+const byDrawOrder = (a: Highlight, b: Highlight) =>
+  (a.position?.start ?? 0) - (b.position?.start ?? 0) ||
+  (b.position?.end ?? 0) - (a.position?.end ?? 0);
+
+/** A range without the whitespace at either end, which isn't drawn */
+function trimmed(text: string, start: number, end: number) {
+  while (start < end && /\s/.test(text[start])) start++;
+  while (end > start && /\s/.test(text[end - 1])) end--;
+  return { start, end };
+}
+
 const processLatex = (content: string) => {
   content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
     try {
@@ -133,6 +145,8 @@ function wholeInlineCode({ node, from, to }: Piece): HTMLElement | null {
   const code = node.parentElement;
   return code?.tagName === "CODE" &&
     !code.closest("pre") &&
+    // Already painted by a highlight this one sits inside
+    !code.classList.contains(HIGHLIGHT_CLASS) &&
     code.childNodes.length === 1 &&
     from === 0 &&
     to === node.length
@@ -350,7 +364,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       // Drawn from the saved list only, so nothing else needs to add spans
       [...blockHighlightsRef.current]
-        .sort((a, b) => (a.position?.start || 0) - (b.position?.start || 0))
+        .sort(byDrawOrder)
         .forEach((highlight) => drawHighlight(container, highlight));
 
       return codeBlocks.length > 0;
@@ -431,21 +445,22 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     const rect = range.getBoundingClientRect();
-    // Inside one saved highlight: offer to recolour or remove it. Of nested
-    // ones (from before overlaps merged), the innermost.
-    const covering = blockHighlightsRef.current
+    // Exactly a saved highlight's text (as drawn): offer to recolour or remove
+    // it. Part of one is new text to highlight on top of it.
+    const blockText = container.textContent ?? "";
+    const selected = trimmed(blockText, start, end);
+    const same = blockHighlightsRef.current
       .filter(isSaved)
-      .filter((h) => h.position.start <= start && end <= h.position.end)
-      .sort(
-        (a, b) =>
-          a.position.end -
-          a.position.start -
-          (b.position.end - b.position.start),
-      )[0];
+      .sort(byDrawOrder)
+      .filter((h) => {
+        const drawn = trimmed(blockText, h.position.start, h.position.end);
+        return drawn.start === selected.start && drawn.end === selected.end;
+      })
+      .pop();
 
     setToolbar({
-      target: covering
-        ? { kind: "highlight", highlightId: covering.id }
+      target: same
+        ? { kind: "highlight", highlightId: same.id }
         : { kind: "selection", start, end, text },
       anchor: anchorIn(root, rect),
       notePos: rect.top - container.getBoundingClientRect().top,
@@ -478,19 +493,34 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   /**
-   * A new highlight over the selected text. If it overlaps saved highlights,
-   * it's merged with them: the one with a note (or the first) is extended.
+   * A new highlight over the selected text. Inside saved highlights, it goes
+   * on top of them (`inside` is the innermost). Across saved highlights'
+   * edges, it's merged with them: the one with a note (or the first) is
+   * extended.
    */
   const draftFor = (
     target: Extract<ToolbarTarget, { kind: "selection" }>,
     color: HighlightColor,
-  ): { draft: HighlightDraft; merge?: HighlightMerge } => {
-    const overlapping = blockHighlights
-      .filter(isSaved)
+  ): {
+    draft: HighlightDraft;
+    merge?: HighlightMerge;
+    inside?: SavedHighlight;
+  } => {
+    const saved = blockHighlights.filter(isSaved);
+    const containers = saved
       .filter(
-        (h) => h.position.start < target.end && target.start < h.position.end,
+        (h) => h.position.start <= target.start && target.end <= h.position.end,
       )
-      .sort((a, b) => a.position.start - b.position.start);
+      .sort(byDrawOrder);
+    const inside = containers[containers.length - 1];
+    const overlapping = saved
+      .filter(
+        (h) =>
+          !containers.includes(h) &&
+          h.position.start < target.end &&
+          target.start < h.position.end,
+      )
+      .sort(byDrawOrder);
     if (overlapping.length === 0 || !contentRef.current) {
       return {
         draft: {
@@ -499,6 +529,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           color,
           blockId: block.id,
         },
+        inside,
       };
     }
 
@@ -516,6 +547,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         baseId: base.id,
         removeIds: overlapping.filter((h) => h !== base).map((h) => h.id),
       },
+      inside,
     };
   };
 
@@ -526,8 +558,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     if (target.kind === "highlight") {
       onRecolorHighlight(target.highlightId, color);
     } else {
-      const { draft, merge } = draftFor(target, color);
-      void onHighlight(draft, { merge });
+      const { draft, merge, inside } = draftFor(target, color);
+      // The same colour on top of the highlight around it wouldn't show
+      if (merge || inside?.color !== color) void onHighlight(draft, { merge });
     }
     finishToolbar();
   };

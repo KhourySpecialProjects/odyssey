@@ -916,13 +916,14 @@ describe("GenericBlockRenderer", () => {
       );
     });
 
-    it("offers to remove a highlight when the selection is inside it", async () => {
+    it("offers to remove a highlight when the selection is exactly its text", async () => {
       const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}
           block={sqlBlock}
           highlights={[
-            makeHighlight({ id: 7, position: { start: 6, end: 9 } }),
+            // Saved with a trailing space, which isn't drawn
+            makeHighlight({ id: 7, position: { start: 6, end: 10 } }),
           ]}
         />,
       );
@@ -934,6 +935,140 @@ describe("GenericBlockRenderer", () => {
 
       expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith(7);
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Highlighting inside a highlight", () => {
+    // "Learn SQL today", all of it highlighted in yellow
+    const outer = makeHighlight({
+      id: 1,
+      position: { start: 0, end: 15 },
+      color: "#fff300",
+    });
+
+    it("highlights part of a highlight as a new one on top of it", async () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[outer]}
+        />,
+      );
+
+      selectText(container, "SQL");
+      await screen.findByRole("toolbar");
+      expect(
+        screen.queryByRole("button", { name: "Remove highlight" }),
+      ).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Highlight Blue" }));
+
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+        {
+          text: "SQL",
+          position: { start: 6, end: 9 },
+          color: "#93c5fd",
+          blockId: 1,
+        },
+        { merge: undefined },
+      );
+      expect(defaultProps.onRecolorHighlight).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the part is given the colour around it", async () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[outer]}
+        />,
+      );
+
+      selectText(container, "SQL");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Yellow" }),
+      );
+
+      expect(defaultProps.onHighlight).not.toHaveBeenCalled();
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+    });
+
+    it("draws the inner highlight on top, even when both start together", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[
+            makeHighlight({
+              id: 2,
+              position: { start: 6, end: 9 },
+              color: "#93c5fd",
+            }),
+            makeHighlight({ id: 1, position: { start: 6, end: 15 } }),
+          ]}
+        />,
+      );
+
+      const [outerPiece] = pieces(container, 1);
+      const [innerPiece] = pieces(container, 2);
+      expect(outerPiece).toHaveTextContent(/^SQL today$/);
+      expect(outerPiece).toContainElement(innerPiece as HTMLElement);
+      expect(innerPiece).toHaveTextContent(/^SQL$/);
+      expect(innerPiece).toHaveStyle({ backgroundColor: "#93c5fd" });
+    });
+
+    it("acts on the inner highlight when it's clicked, and the outer one elsewhere", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[
+            outer,
+            makeHighlight({ id: 2, position: { start: 6, end: 9 } }),
+          ]}
+        />,
+      );
+
+      fireEvent.click(pieces(container, 2)[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Remove highlight" }));
+      fireEvent.click(pieces(container, 1)[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Remove highlight" }));
+
+      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(1, 2);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(2, 1);
+    });
+
+    it("merges a selection across an inner highlight's edge with it, not the outer one", async () => {
+      // "Learn SQL joins today": all of it highlighted, and SQL (6-9) inside
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>Learn SQL joins today</p>" }}
+          highlights={[
+            makeHighlight({ id: 1, position: { start: 0, end: 21 } }),
+            makeHighlight({
+              id: 2,
+              position: { start: 6, end: 9 },
+              color: "#93c5fd",
+            }),
+          ]}
+        />,
+      );
+
+      // From inside "SQL" to inside "joins"
+      select(textNode(container, "SQL"), 1, textNode(container, "joins"), 3);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Blue" }),
+      );
+
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+        {
+          text: "SQL jo",
+          position: { start: 6, end: 12 },
+          color: "#93c5fd",
+          blockId: 1,
+        },
+        { merge: { baseId: 2, removeIds: [] } },
+      );
     });
   });
 

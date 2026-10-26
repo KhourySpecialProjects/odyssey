@@ -414,6 +414,38 @@ describe("LessonRenderer (viewer)", () => {
     });
   });
 
+  it("saves part of a highlight as a new highlight inside it", async () => {
+    const whole: Highlight = {
+      id: 4,
+      text: "Learn SQL joins today",
+      color: "#fff300",
+      position: { start: 0, end: 21 },
+      blockId: 1,
+    };
+    const { container } = render(
+      <LessonRenderer {...props} initialHighlights={[whole]} />,
+    );
+    const [first] = blocks(container);
+
+    selectText(first, "SQL");
+    await screen.findByRole("toolbar");
+    fireEvent.click(button("Highlight Blue"));
+
+    expect(createHighlight).toHaveBeenCalledWith({
+      text: "SQL",
+      position: { start: 6, end: 9 },
+      color: "#93c5fd",
+      blockId: 1,
+      lessonId: 1,
+    });
+    await waitFor(() => expect(pieces(first, 100)).toHaveLength(1));
+    expect(pieces(first, 4)[0]).toContainElement(
+      pieces(first, 100)[0] as HTMLElement,
+    );
+    expect(updateHighlight).not.toHaveBeenCalled();
+    expect(deleteHighlight).not.toHaveBeenCalled();
+  });
+
   describe("adding a note", () => {
     it("links the note to the highlight it just created", async () => {
       jest.mocked(createHighlight).mockResolvedValue({
