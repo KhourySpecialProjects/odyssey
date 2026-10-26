@@ -31,6 +31,32 @@ jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkDropletUpdate: jest.fn(),
+  checkDropletContentWrite: jest.fn(),
+  checkPublishDraft: jest.fn(),
+}));
+
+const ADMIN_GATE = {
+  ok: true,
+  user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+};
+
+/** Auth and the review freeze pass; these tests are about the request logic. */
+function allowReviewFreeze() {
+  jest
+    .requireMock("@/lib/auth/require-role")
+    .requireRole.mockResolvedValue(ADMIN_GATE);
+  const freeze = jest.requireMock("@/lib/auth/review-freeze");
+  freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
+  freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
+  freeze.checkPublishDraft.mockResolvedValue({ ok: true });
+}
+allowReviewFreeze();
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),

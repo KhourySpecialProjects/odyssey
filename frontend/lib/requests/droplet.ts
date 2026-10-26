@@ -10,6 +10,11 @@ import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
 import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
+import {
+  checkDropletContentWrite,
+  checkDropletUpdate,
+  checkPublishDraft,
+} from "../auth/review-freeze";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
@@ -236,6 +241,11 @@ export async function updateDropletAverageRating(
 }
 
 export async function updateDropletFunFact(fact: string, dropletId: number) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
     const response = await fetch(await strapiEntryUrl("droplets", dropletId), {
       method: "PUT",
@@ -391,7 +401,11 @@ export async function updateDroplet(
     regenerateSlug: false,
   },
 ) {
-  return applyDropletUpdate(id, data, options);
+  return withAuth([], async (user) => {
+    const check = await checkDropletUpdate(user, id, data);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyDropletUpdate(id, data, options);
+  });
 }
 
 /**
@@ -549,7 +563,11 @@ export async function togglePresentationEnabled(
     );
     if (!owner.ok) return { ok: false, error: owner.error, data: null };
 
-    return updateDroplet(dropletId, { presentationEnabled: enabled });
+    return applyDropletUpdate(
+      dropletId,
+      { presentationEnabled: enabled },
+      { regenerateSlug: false },
+    );
   });
 }
 
@@ -610,7 +628,11 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
     );
     if (!owner.ok) return { success: false, error: "forbidden" };
 
-    const result = await updateDroplet(dropletId, { isHidden: hidden });
+    const result = await applyDropletUpdate(
+      dropletId,
+      { isHidden: hidden },
+      { regenerateSlug: false },
+    );
     if (!result.ok) {
       return { success: false, error: result.error };
     }
@@ -1340,6 +1362,15 @@ export async function publishDraftToOriginal(
   draftDropletId: number,
   originalDropletId: number,
 ) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error, slug: null };
+  const check = await checkPublishDraft(
+    gate.user,
+    draftDropletId,
+    originalDropletId,
+  );
+  if (!check.ok) return { ok: false, error: check.error, slug: null };
+
   let author: { id: number } | null = null;
   let dbWritesStarted = false;
   let draftEnrollments: { data?: any[] } = {};
@@ -1760,6 +1791,11 @@ export async function updateDropletLearningObjective(
   oldObjective: string,
   newObjective: string,
 ) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
     // Fetch current droplet with learning objectives
     const droplet = await getDropletById<Droplet>(dropletId, {

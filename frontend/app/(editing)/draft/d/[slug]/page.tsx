@@ -24,6 +24,9 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
+
+const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
 
 type Props = {
   params: Promise<Params>;
@@ -107,13 +110,32 @@ export default async function Droplet({ params }: Props) {
       });
 
       if (msg.content[0].type === "text") {
-        await updateDropletFunFact(msg.content[0].text, dropletId);
+        const saved = await updateDropletFunFact(
+          msg.content[0].text,
+          dropletId,
+        );
+        if (!saved.success) {
+          throw new Error(
+            saved.error === REVIEW_FROZEN_ERROR
+              ? REVIEW_FROZEN_MESSAGE
+              : FUN_FACT_SAVE_ERROR,
+          );
+        }
         return msg.content[0].text;
       } else {
         return "";
       }
     } catch (error: unknown) {
       console.error("Error generating fun fact:", error);
+
+      // A refused save already has its own message for the editor.
+      if (
+        error instanceof Error &&
+        (error.message === REVIEW_FROZEN_MESSAGE ||
+          error.message === FUN_FACT_SAVE_ERROR)
+      ) {
+        throw error;
+      }
 
       // Handle specific error cases
       const status =
