@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { useDropletUpdate } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { updateDroplet } from "@/lib/requests/droplet";
@@ -52,10 +52,13 @@ describe("useDropletUpdate", () => {
     await act(async () => {
       result.current.handleChange({ description: "x" });
     });
-    await new Promise((resolve) => setTimeout(resolve, 1100));
 
-    expect(result.current.error).toBe(
-      "In review. Editing is paused until the reviewer sends it back.",
+    await waitFor(
+      () =>
+        expect(result.current.error).toBe(
+          "In review. Editing is paused until the reviewer sends it back.",
+        ),
+      { timeout: 4000 },
     );
     expect(mockRouter.replace).not.toHaveBeenCalled();
   });
@@ -72,10 +75,13 @@ describe("useDropletUpdate", () => {
     await act(async () => {
       result.current.handleChange({ name: "x" });
     });
-    await new Promise((resolve) => setTimeout(resolve, 1100));
 
-    expect(result.current.error).toBe(
-      "A droplet with a similar title is in progress or already exists.",
+    await waitFor(
+      () =>
+        expect(result.current.error).toBe(
+          "A droplet with a similar title is in progress or already exists.",
+        ),
+      { timeout: 4000 },
     );
   });
 });
