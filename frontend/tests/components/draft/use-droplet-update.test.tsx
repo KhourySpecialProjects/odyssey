@@ -39,4 +39,43 @@ describe("useDropletUpdate", () => {
     expect(mockRouter.replace).toHaveBeenCalledWith("/draft/d/new-slug");
     expect(result.current.error).toBe("");
   });
+
+  it("shows the freeze sentence when the save is refused for review", async () => {
+    (updateDroplet as jest.Mock).mockResolvedValue({
+      ok: false,
+      error: "in_review",
+      data: null,
+    });
+
+    const { result } = renderHook(() => useDropletUpdate(1));
+
+    await act(async () => {
+      result.current.handleChange({ description: "x" });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    expect(result.current.error).toBe(
+      "In review. Editing is paused until the reviewer sends it back.",
+    );
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+  });
+
+  it("keeps the generic message for other failures", async () => {
+    (updateDroplet as jest.Mock).mockResolvedValue({
+      ok: false,
+      error: "boom",
+      data: null,
+    });
+
+    const { result } = renderHook(() => useDropletUpdate(1));
+
+    await act(async () => {
+      result.current.handleChange({ name: "x" });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    expect(result.current.error).toBe(
+      "A droplet with a similar title is in progress or already exists.",
+    );
+  });
 });

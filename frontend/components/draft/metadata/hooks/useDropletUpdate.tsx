@@ -6,6 +6,7 @@ import { DropletSchema } from "@/lib/validations/droplet";
 import { debounce } from "lodash";
 import { useRouter } from "next/navigation";
 import { updateDroplet } from "@/lib/requests/droplet";
+import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
 export function useDropletUpdate(dropletId: number) {
   const [error, setError] = useState("");
@@ -19,7 +20,9 @@ export function useDropletUpdate(dropletId: number) {
         router.replace(`/draft/d/${response.data.attributes.slug}`);
       }
     } else {
-      if (
+      if (response.error === REVIEW_FROZEN_ERROR) {
+        setError(REVIEW_FROZEN_MESSAGE);
+      } else if (
         response.error ===
         "description must be at most 500 characters (description)"
       ) {

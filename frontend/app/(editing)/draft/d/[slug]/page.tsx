@@ -24,7 +24,14 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
+import {
+  REVIEW_FROZEN_ERROR,
+  REVIEW_FROZEN_MESSAGE,
+  isFrozenFor,
+} from "@/lib/review-roles";
+import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { IconLock } from "@tabler/icons-react";
 
 const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
 
@@ -70,6 +77,34 @@ export default async function Droplet({ params }: Props) {
   const droplets = dropletOptions
     .filter((option) => option.isHidden === false)
     .map(({ id, name, slug }) => ({ id, name, slug }));
+
+  // While the droplet is in review, an author (any role) can read the draft
+  // but not change it, so show it as plain content instead of the editors.
+  const isAuthor =
+    !!authUser && !!droplet.authorized_users?.some((u) => u.id === authUser.id);
+  const frozen =
+    droplet.status !== "published" &&
+    isFrozenFor(user.roles, droplet.inReview, isAuthor);
+  if (frozen) {
+    const authorIds = new Set(droplet.authorized_users?.map((u) => u.id));
+    const authorNames = (await fetchAuthorizedUsers())
+      .filter((u) => authorIds.has(u.id))
+      .map((u) => `${u.firstName} ${u.lastName}`.trim());
+
+    return (
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div
+          role="status"
+          className="mx-40 mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>{REVIEW_FROZEN_MESSAGE}</span>
+        </div>
+        <FrozenOverview droplet={droplet} authorNames={authorNames} />
+        <div className="pb-16" />
+      </div>
+    );
+  }
 
   // Inline Server Actions serialize (encrypted) every value they capture into
   // the page payload, so capture primitives rather than `droplet` / `user`.
