@@ -693,10 +693,15 @@ export function LessonRenderer({
                 if (editorVersion === "v1") return;
                 hasSetVersionRef.current = true;
                 debounceUpdateV2.flush();
-                await updateLesson(lesson.id, {
+                const response = await updateLesson(lesson.id, {
                   blocksVersion: "v1",
                   blocksV2: null,
                 });
+                if (handleSaveResult(response)) return;
+                if (!response?.ok || response.error) {
+                  toast.error("Could not switch the editor. Please try again.");
+                  return;
+                }
                 setEditorVersion("v1");
               }}
               className={cn(
@@ -713,10 +718,15 @@ export function LessonRenderer({
                 if (editorVersion === "v2") return;
                 debounceUpdate.flush();
                 hasSetVersionRef.current = true;
-                await updateLesson(lesson.id, {
+                const response = await updateLesson(lesson.id, {
                   blocksVersion: "v2",
                   blocksV2: null,
                 });
+                if (handleSaveResult(response)) return;
+                if (!response?.ok || response.error) {
+                  toast.error("Could not switch the editor. Please try again.");
+                  return;
+                }
                 setEditorVersion("v2");
               }}
               className={cn(

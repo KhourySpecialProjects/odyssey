@@ -1081,6 +1081,84 @@ describe("LessonRenderer", () => {
       expect(toast.error).not.toHaveBeenCalled();
     });
 
+    describe("editor toggle", () => {
+      const emptyLesson = { ...mockLesson, blocks: [] };
+
+      beforeEach(() => {
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: false, isOwnLock: true }),
+        );
+      });
+
+      it("switches the editor when the save succeeds", async () => {
+        render(
+          <LessonRenderer lesson={emptyLesson} dropletSlug="test-droplet" />,
+        );
+        // An empty lesson starts on BlockNote.
+        await waitFor(() =>
+          expect(screen.getByTestId("blocknote-editor")).toBeInTheDocument(),
+        );
+        (updateLesson as jest.Mock).mockClear();
+
+        fireEvent.click(screen.getByRole("button", { name: "Classic" }));
+
+        await waitFor(() =>
+          expect(
+            screen.getByTestId("draggable-block-list"),
+          ).toBeInTheDocument(),
+        );
+        expect(updateLesson).toHaveBeenCalledWith(1, {
+          blocksVersion: "v1",
+          blocksV2: null,
+        });
+      });
+
+      it("stays put and shows the info toast when the save is refused for review", async () => {
+        const markFrozen = jest.fn();
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: false, isOwnLock: true, markFrozen }),
+        );
+        render(
+          <LessonRenderer lesson={emptyLesson} dropletSlug="test-droplet" />,
+        );
+        await waitFor(() =>
+          expect(screen.getByTestId("blocknote-editor")).toBeInTheDocument(),
+        );
+        (updateLesson as jest.Mock).mockResolvedValue({
+          ok: false,
+          error: "in_review",
+          data: null,
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "Classic" }));
+
+        await waitFor(() => expect(markFrozen).toHaveBeenCalled());
+        expect(toast.info).toHaveBeenCalled();
+        expect(toast.error).not.toHaveBeenCalled();
+        expect(screen.getByTestId("blocknote-editor")).toBeInTheDocument();
+        expect(screen.queryByTestId("draggable-block-list")).toBeNull();
+      });
+
+      it("stays put when the save fails for another reason", async () => {
+        render(
+          <LessonRenderer lesson={emptyLesson} dropletSlug="test-droplet" />,
+        );
+        await waitFor(() =>
+          expect(screen.getByTestId("blocknote-editor")).toBeInTheDocument(),
+        );
+        (updateLesson as jest.Mock).mockResolvedValue({
+          ok: false,
+          error: "boom",
+          data: null,
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "Classic" }));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalled());
+        expect(screen.getByTestId("blocknote-editor")).toBeInTheDocument();
+      });
+    });
+
     it("makes no updateLesson call on mount for a read-only v1 lesson", () => {
       mockUseEditingLock.mockReturnValue(lockState());
 
