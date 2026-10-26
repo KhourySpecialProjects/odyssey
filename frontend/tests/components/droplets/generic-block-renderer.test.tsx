@@ -1,8 +1,15 @@
-import { render, fireEvent, screen, waitFor } from "@testing-library/react";
+import {
+  render,
+  fireEvent,
+  screen,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import GenericBlockRenderer from "@/components/droplets/lessons/generic-block-renderer";
 import hljs from "highlight.js/lib/core";
 import katex from "katex";
-import { Highlight, HighlightColor } from "@/types";
+import { Highlight } from "@/types";
 
 // The renderer lazy-loads ./highlighter, which configures the real
 // highlight.js/lib/core (shared with this file) and fetches grammars on demand.
@@ -17,6 +24,59 @@ jest.mock("katex", () => ({
   renderToString: jest.fn(),
 }));
 
+/** The nth text node in the block's content that contains `text` */
+function textNode(container: HTMLElement, text: string, nth = 0): Text {
+  const walker = document.createTreeWalker(
+    container.querySelector(".prose")!,
+    NodeFilter.SHOW_TEXT,
+  );
+  const matches: Text[] = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    if (node.data.includes(text)) matches.push(node);
+  }
+  return matches[nth];
+}
+
+/**
+ * Selects text the way a mouse drag, Shift + arrow keys or a long-press does.
+ * Only selectionchange fires; there's no mouse event.
+ */
+function select(
+  start: Node,
+  startOffset: number,
+  end: Node,
+  endOffset: number,
+) {
+  const range = new Range();
+  range.setStart(start, startOffset);
+  range.setEnd(end, endOffset);
+  const selection = window.getSelection()!;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  act(() => {
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+}
+
+/** Selects `text` inside a single text node of the block */
+function selectText(container: HTMLElement, text: string) {
+  const node = textNode(container, text);
+  const at = node.data.indexOf(text);
+  select(node, at, node, at + text.length);
+}
+
+function makeHighlight(
+  overrides: Partial<Highlight> & Pick<Highlight, "id" | "position">,
+): Highlight {
+  return { text: "", color: "#fff300", blockId: 1, ...overrides };
+}
+
+const pieces = (container: HTMLElement, id: number) =>
+  Array.from(
+    container.querySelectorAll(`.lesson-highlight[data-highlight-id="${id}"]`),
+  );
+
 describe("GenericBlockRenderer", () => {
   const mockBlock = {
     id: 1,
@@ -27,104 +87,44 @@ describe("GenericBlockRenderer", () => {
     block: mockBlock,
     highlights: [] as Highlight[],
     onHighlight: jest.fn(),
+    onRecolorHighlight: jest.fn(),
     onDeleteHighlight: jest.fn(),
     onNote: jest.fn(),
     enrollmentId: "123",
-    expanded: false,
-    setExpanded: jest.fn(),
-    activeBlock: 1,
-    setActiveBlock: jest.fn(),
   };
 
-  let mockRange: Range;
-  let mockSelection: Selection;
+  // "Learn SQL today": SQL is characters 6-9
+  const sqlBlock = { id: 1, content: "<p>Learn SQL today</p>" };
+
+  const originalRangeRect = Range.prototype.getBoundingClientRect;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    window.getSelection()?.removeAllRanges();
 
-    // JSDOM does not implement Range.prototype.getBoundingClientRect
-    function makeDOMRect(overrides: Partial<DOMRect> = {}): DOMRect {
-      return {
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-        ...overrides,
-      };
-    }
-    Range.prototype.getBoundingClientRect = jest.fn(() => makeDOMRect());
+    // JSDOM has no layout, so give selections a place on the page
+    Range.prototype.getBoundingClientRect = jest.fn(
+      () =>
+        ({
+          top: 140,
+          bottom: 160,
+          left: 50,
+          right: 150,
+          width: 100,
+          height: 20,
+          x: 50,
+          y: 140,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
 
     (katex.renderToString as jest.Mock).mockImplementation(
       (latex) => `<span class="katex-rendered">${latex}</span>`,
     );
-
-    // Use a shared text node so the tree walker and range refer to the same object.
-    // handleMouseUp matches walker nodes against range.startContainer/endContainer
-    // by identity; mismatched objects cause startOffset/endOffset to stay -1 and
-    // the function returns early without ever calling setToolbarPosition.
-    const sharedTextNode = document.createTextNode("test");
-
-    mockRange = {
-      cloneRange: jest.fn().mockReturnThis(),
-      setStart: jest.fn(),
-      setEnd: jest.fn(),
-      startContainer: sharedTextNode,
-      endContainer: sharedTextNode,
-      startOffset: 0,
-      endOffset: 4,
-      toString: jest.fn().mockReturnValue("test"),
-      surroundContents: jest.fn(),
-      deleteContents: jest.fn(),
-      insertNode: jest.fn(),
-      commonAncestorContainer: document.createElement("div"),
-      intersectsNode: jest.fn().mockReturnValue(true),
-      compareBoundaryPoints: jest.fn().mockReturnValue(-1),
-      extractContents: jest
-        .fn()
-        .mockReturnValue(document.createDocumentFragment()),
-      selectNodeContents: jest.fn(),
-      getBoundingClientRect: jest.fn().mockReturnValue({
-        top: 100,
-        left: 50,
-        bottom: 120,
-        right: 150,
-        width: 100,
-        height: 20,
-      }),
-    } as unknown as Range;
-
-    mockSelection = {
-      toString: jest.fn().mockReturnValue("test"),
-      getRangeAt: jest.fn().mockReturnValue(mockRange),
-      isCollapsed: false,
-      rangeCount: 1,
-      removeAllRanges: jest.fn(),
-      addRange: jest.fn(),
-    } as unknown as Selection;
-
-    window.getSelection = jest.fn().mockReturnValue(mockSelection);
-    document.createRange = jest.fn().mockReturnValue(mockRange);
-
-    // Return the same sharedTextNode so handleMouseUp can match it against
-    // mockRange.startContainer / mockRange.endContainer by identity.
-    const mockWalker = {
-      nextNode: jest
-        .fn()
-        .mockReturnValueOnce(sharedTextNode)
-        .mockReturnValue(null),
-      currentNode: sharedTextNode,
-    };
-    document.createTreeWalker = jest
-      .fn()
-      .mockReturnValue(mockWalker as unknown as TreeWalker);
   });
 
   afterEach(() => {
+    Range.prototype.getBoundingClientRect = originalRangeRect;
     jest.restoreAllMocks();
   });
 
@@ -406,13 +406,16 @@ describe("GenericBlockRenderer", () => {
         "data-highlighted",
       );
 
-      // The failure isn't cached, so the next render fetches the grammar again
+      // The failure isn't cached, so the next redraw (here, for a new
+      // highlight) fetches the grammar again
       mockHaskellChunkFails = false;
       rerender(
         <GenericBlockRenderer
           {...defaultProps}
           block={block}
-          highlights={[]}
+          highlights={[
+            makeHighlight({ id: 1, position: { start: 1, end: 5 } }),
+          ]}
         />,
       );
       await waitFor(() =>
@@ -508,523 +511,589 @@ describe("GenericBlockRenderer", () => {
     });
   });
 
-  describe("Text Selection and Highlighting", () => {
-    it("handles mouse down to track position", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
+  describe("Drawing saved highlights", () => {
+    it("draws a highlight as a span tagged with its id and colour", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[
+            makeHighlight({
+              id: 7,
+              text: "SQL",
+              position: { start: 6, end: 9 },
+              color: "#86efac",
+            }),
+          ]}
+        />,
+      );
 
-      const mockGetBoundingClientRect = jest.fn().mockReturnValue({ top: 50 });
-      Object.defineProperty(contentDiv, "getBoundingClientRect", {
-        value: mockGetBoundingClientRect,
-        configurable: true,
-      });
-
-      fireEvent.mouseDown(contentDiv, { clientY: 100 });
-      expect(mockGetBoundingClientRect).toHaveBeenCalled();
+      const [piece] = pieces(container, 7);
+      expect(piece).toHaveTextContent(/^SQL$/);
+      expect(piece).toHaveClass("lesson-highlight");
+      expect(piece).toHaveStyle({ backgroundColor: "#86efac" });
+      expect(container.querySelector(".prose")).toHaveTextContent(
+        "Learn SQL today",
+      );
     });
 
-    it("ignores collapsed selections on mouse up", () => {
-      const collapsedSelection = {
-        ...mockSelection,
-        isCollapsed: true,
-      };
-      window.getSelection = jest.fn().mockReturnValue(collapsedSelection);
+    it("draws a highlight across bold text as one tagged piece per text node", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>Use <strong>inner</strong> joins</p>" }}
+          highlights={[
+            makeHighlight({ id: 7, position: { start: 0, end: 15 } }),
+          ]}
+        />,
+      );
 
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
+      expect(pieces(container, 7).map((p) => p.textContent)).toEqual([
+        "Use ",
+        "inner",
+        " joins",
+      ]);
+    });
 
-      fireEvent.mouseUp(contentDiv);
+    it("draws this block's highlights, including those of blocks grouped into it", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ ...sqlBlock, sourceBlockIds: [1, 5] }}
+          highlights={[
+            makeHighlight({
+              id: 1,
+              blockId: 5,
+              position: { start: 0, end: 5 },
+            }),
+            makeHighlight({
+              id: 2,
+              blockId: 2,
+              position: { start: 6, end: 9 },
+            }),
+          ]}
+        />,
+      );
+
+      expect(pieces(container, 1)).toHaveLength(1);
+      expect(pieces(container, 2)).toHaveLength(0);
+    });
+
+    it("doesn't treat text the author coloured as a highlight", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{
+            id: 1,
+            content:
+              '<p><span style="background-color: #fff300">Key</span> term</p>',
+          }}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Key"));
+
+      expect(container.querySelector(".lesson-highlight")).toBeNull();
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+    });
+
+    describe("as one bar", () => {
+      const radii = (container: HTMLElement, id: number) =>
+        pieces(container, id).map((p) => (p as HTMLElement).style.borderRadius);
+
+      it("rounds only the two ends of a highlight that crosses formatting", () => {
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={{
+              id: 1,
+              content: "<p>Use <strong>inner</strong> joins</p>",
+            }}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 0, end: 15 } }),
+            ]}
+          />,
+        );
+
+        expect(radii(container, 7)).toEqual([
+          "8px 0px 0px 8px",
+          "0px 0px 0px 0px",
+          "0px 8px 8px 0px",
+        ]);
+      });
+
+      it("rounds all four corners of a highlight in one piece", () => {
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={sqlBlock}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 6, end: 9 } }),
+            ]}
+          />,
+        );
+
+        expect(radii(container, 7)).toEqual(["8px 8px 8px 8px"]);
+      });
+
+      it("doesn't paint whitespace at either end", () => {
+        // " SQL " in "Learn SQL today"
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={sqlBlock}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 5, end: 10 } }),
+            ]}
+          />,
+        );
+
+        expect(pieces(container, 7).map((p) => p.textContent)).toEqual(["SQL"]);
+        expect(radii(container, 7)).toEqual(["8px 8px 8px 8px"]);
+        expect(container.querySelector(".prose")).toHaveTextContent(
+          "Learn SQL today",
+        );
+      });
+
+      it("paints inline code it covers whole, instead of a piece inside it", () => {
+        // "Call onChange to update": "Call onChange " is 0-14
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={{
+              id: 1,
+              content: "<p>Call <code>onChange</code> to update</p>",
+            }}
+            highlights={[
+              makeHighlight({
+                id: 7,
+                position: { start: 0, end: 14 },
+                color: "#86efac",
+              }),
+            ]}
+          />,
+        );
+
+        const code = container.querySelector("code")!;
+        expect(pieces(container, 7)).toEqual([screen.getByText("Call"), code]);
+        expect(code).toHaveStyle({ backgroundColor: "#86efac" });
+        expect(code.querySelector("span")).toBeNull();
+        expect(radii(container, 7)).toEqual([
+          "8px 0px 0px 8px",
+          "0px 8px 8px 0px",
+        ]);
+      });
+
+      it("paints only the covered part of inline code it covers in part", () => {
+        // "Call onChange": "Call on" is 0-7
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={{ id: 1, content: "<p>Call <code>onChange</code></p>" }}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 0, end: 7 } }),
+            ]}
+          />,
+        );
+
+        const [, inCode] = pieces(container, 7);
+        expect(inCode.tagName).toBe("SPAN");
+        expect(inCode).toHaveTextContent(/^on$/);
+        expect(container.querySelector("code")).not.toHaveClass(
+          "lesson-highlight",
+        );
+      });
+
+      it("skips the line break between paragraphs", () => {
+        // "One\nTwo": the "\n" between the paragraphs is character 3
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={{ id: 1, content: "<p>One</p>\n<p>Two</p>" }}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 0, end: 7 } }),
+            ]}
+          />,
+        );
+
+        expect(pieces(container, 7).map((p) => p.textContent)).toEqual([
+          "One",
+          "Two",
+        ]);
+        expect(radii(container, 7)).toEqual([
+          "8px 0px 0px 8px",
+          "0px 8px 8px 0px",
+        ]);
+      });
+    });
+  });
+
+  describe("Redraws", () => {
+    const saved = makeHighlight({ id: 7, position: { start: 6, end: 9 } });
+
+    it("keeps the block's text when it re-renders with the same highlights", () => {
+      const { container, rerender } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[saved]}
+        />,
+      );
+      const before = textNode(container, "Learn");
+
+      // A new array, new objects and new callbacks, as a parent re-render gives
+      rerender(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ ...sqlBlock }}
+          highlights={[{ ...saved }]}
+          onNote={jest.fn()}
+          onHighlight={jest.fn()}
+        />,
+      );
+
+      expect(textNode(container, "Learn")).toBe(before);
+    });
+
+    it("redraws when one of the block's own highlights changes", () => {
+      const { container, rerender } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[saved]}
+        />,
+      );
+      const before = textNode(container, "Learn");
+
+      rerender(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[{ ...saved, color: "#93c5fd" }]}
+        />,
+      );
+
+      expect(textNode(container, "Learn")).not.toBe(before);
+      expect(pieces(container, 7)[0]).toHaveStyle({
+        backgroundColor: "#93c5fd",
+      });
+    });
+  });
+
+  describe("Selecting text", () => {
+    it("opens the toolbar right after the block's text once a selection settles", async () => {
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} />,
+      );
+
+      selectText(container, "SQL");
+
+      const toolbar = await screen.findByRole("toolbar");
+      const prose = container.querySelector(".prose")!;
+      expect(container).toContainElement(toolbar);
+      expect(
+        prose.compareDocumentPosition(toolbar) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Remove highlight" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("saves the selected text in the picked colour", async () => {
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} />,
+      );
+
+      selectText(container, "SQL");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Green" }),
+      );
+
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+        {
+          text: "SQL",
+          position: { start: 6, end: 9 },
+          color: "#86efac",
+          blockId: 1,
+        },
+        { merge: undefined },
+      );
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+    });
+
+    it("works from the keyboard: Tab reaches the toolbar, arrows move, Enter applies", async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} />,
+      );
+
+      selectText(container, "SQL");
+      await screen.findByRole("toolbar");
+      await user.tab();
+      expect(
+        screen.getByRole("button", { name: "Highlight Pink" }),
+      ).toHaveFocus();
+
+      await user.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
+      expect(
+        screen.getByRole("button", { name: "Highlight Green" }),
+      ).toHaveFocus();
+      await user.keyboard("{ArrowLeft}");
+      expect(
+        screen.getByRole("button", { name: "Highlight Yellow" }),
+      ).toHaveFocus();
+
+      await user.keyboard("{Enter}");
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "SQL", color: "#fff300" }),
+        { merge: undefined },
+      );
+    });
+
+    it("closes the toolbar on Escape", async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} />,
+      );
+
+      selectText(container, "SQL");
+      await screen.findByRole("toolbar");
+      await user.keyboard("{Escape}");
+
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+    });
+
+    it("closes the toolbar when the selection moves out of the block", async () => {
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} />,
+      );
+      const elsewhere = document.createElement("p");
+      elsewhere.textContent = "Somewhere else";
+      document.body.appendChild(elsewhere);
+
+      selectText(container, "SQL");
+      await screen.findByRole("toolbar");
+      select(elsewhere.firstChild!, 0, elsewhere.firstChild!, 4);
+
+      await waitFor(() =>
+        expect(screen.queryByRole("toolbar")).not.toBeInTheDocument(),
+      );
+      elsewhere.remove();
+    });
+
+    it("merges a selection over saved highlights into the one with a note", async () => {
+      // "Learn SQL joins today": SQL is 6-9, joins is 10-15
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>Learn SQL joins today</p>" }}
+          highlights={[
+            makeHighlight({ id: 1, position: { start: 6, end: 9 } }),
+            makeHighlight({
+              id: 2,
+              position: { start: 10, end: 15 },
+              note: { id: 3 },
+            }),
+          ]}
+        />,
+      );
+
+      // From inside "SQL" to inside "joins"
+      select(textNode(container, "SQL"), 2, textNode(container, "joins"), 2);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Blue" }),
+      );
+
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+        {
+          text: "SQL joins",
+          position: { start: 6, end: 15 },
+          color: "#93c5fd",
+          blockId: 1,
+        },
+        { merge: { baseId: 2, removeIds: [1] } },
+      );
+    });
+
+    it("offers to remove a highlight when the selection is inside it", async () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[
+            makeHighlight({ id: 7, position: { start: 6, end: 9 } }),
+          ]}
+        />,
+      );
+
+      selectText(container, "SQL");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Remove highlight" }),
+      );
+
+      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith(7);
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
     });
+  });
 
-    it("handles text selection on mouse up", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
+  describe("Clicking a highlight", () => {
+    it("removes the highlight that was clicked, not one with the same text", async () => {
+      // "SQL is a language. SQL has joins.": the second SQL is 19-22
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>SQL is a language. SQL has joins.</p>" }}
+          highlights={[
+            makeHighlight({
+              id: 1,
+              text: "SQL",
+              position: { start: 0, end: 3 },
+            }),
+            makeHighlight({
+              id: 2,
+              text: "SQL",
+              position: { start: 19, end: 22 },
+            }),
+          ]}
+        />,
+      );
 
-      fireEvent.mouseUp(contentDiv);
+      fireEvent.click(pieces(container, 2)[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Remove highlight" }));
 
-      expect(window.getSelection).toHaveBeenCalled();
-      expect(mockSelection.getRangeAt).toHaveBeenCalled();
+      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledTimes(1);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith(2);
     });
 
-    it("saves selection range on mouse up", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
+    it("recolours a highlight that crosses bold text, creating none", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={{ id: 1, content: "<p>Use <strong>inner</strong> joins</p>" }}
+          highlights={[
+            makeHighlight({ id: 7, position: { start: 0, end: 15 } }),
+          ]}
+        />,
+      );
 
-      fireEvent.mouseUp(contentDiv);
-      expect(mockRange.cloneRange).toHaveBeenCalled();
-    });
+      // Click the bold piece
+      fireEvent.click(pieces(container, 7)[1]);
+      expect(
+        screen.getByRole("button", { name: "Highlight Yellow" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      fireEvent.click(screen.getByRole("button", { name: "Highlight Blue" }));
 
-    it("handles empty text selection", () => {
-      (mockSelection.toString as jest.Mock).mockReturnValue("");
-      (mockRange.toString as jest.Mock).mockReturnValue("");
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseUp(contentDiv);
+      expect(defaultProps.onRecolorHighlight).toHaveBeenCalledWith(
+        7,
+        "#93c5fd",
+      );
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
+      expect(defaultProps.onDeleteHighlight).not.toHaveBeenCalled();
     });
 
-    it("handles text selection with multiple nodes in tree walker", () => {
-      const textNode1 = document.createTextNode("Test");
-      const textNode2 = document.createTextNode(" content");
-
-      const mockWalker = {
-        nextNode: jest
-          .fn()
-          .mockReturnValueOnce(textNode1)
-          .mockReturnValueOnce(textNode2)
-          .mockReturnValue(null),
-        currentNode: textNode1,
-      };
-
-      document.createTreeWalker = jest
-        .fn()
-        .mockReturnValue(mockWalker as unknown as TreeWalker);
-
-      const spanningRange = {
-        ...mockRange,
-        startContainer: textNode1,
-        endContainer: textNode2,
-        startOffset: 0,
-        endOffset: 8,
-      };
-
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(spanningRange);
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseUp(contentDiv);
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-  });
-
-  describe("Existing Highlights Rendering", () => {
-    it("applies existing highlights to content", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("sorts highlights by start position before applying", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 2,
-          text: "content",
-          position: { start: 5, end: 12 },
-          color: "#ff0000" as HighlightColor,
-          blockId: 1,
-        },
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("only applies highlights for current block", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-        {
-          id: 2,
-          text: "Other",
-          position: { start: 0, end: 5 },
-          color: "#ff0000" as HighlightColor,
-          blockId: 2,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-      const treeWalkerCalls = (document.createTreeWalker as jest.Mock).mock
-        .calls.length;
-      expect(treeWalkerCalls).toBeGreaterThan(0);
-    });
-
-    it("uses fallback highlightRange when surroundContents fails", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      mockRange.surroundContents = jest.fn().mockImplementation(() => {
-        throw new Error("Cannot surround");
-      });
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("handles highlights with nodes found by tree walker", () => {
-      const textNode = document.createTextNode("Test content");
-
-      const mockWalker = {
-        nextNode: jest.fn().mockReturnValueOnce(textNode).mockReturnValue(null),
-        currentNode: textNode,
-      };
-
-      document.createTreeWalker = jest
-        .fn()
-        .mockReturnValue(mockWalker as unknown as TreeWalker);
-
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-  });
-
-  describe("Highlight Popup and Deletion", () => {
-    it("detects existing highlight on selection", () => {
-      const highlightedSpan = document.createElement("span");
-      highlightedSpan.style.backgroundColor = "#fff300";
-      highlightedSpan.textContent = "test";
-
-      const parentElement = document.createElement("div");
-      parentElement.className = "prose";
-      parentElement.appendChild(highlightedSpan);
-
-      const textNode = highlightedSpan.firstChild!;
-
-      const rangeWithHighlight = {
-        ...mockRange,
-        startContainer: textNode,
-        endContainer: textNode,
-      };
-
-      Object.defineProperty(textNode, "parentElement", {
-        value: highlightedSpan,
-        configurable: true,
-      });
-
-      highlightedSpan.closest = jest.fn().mockReturnValue(highlightedSpan);
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(rangeWithHighlight);
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const proseDiv = container.querySelector(".prose")!;
-      proseDiv.innerHTML = "";
-      proseDiv.appendChild(highlightedSpan);
-
-      fireEvent.mouseUp(proseDiv);
-      expect(mockSelection.getRangeAt).toHaveBeenCalled();
-    });
-
-    it("handles popup delete for multiple intersecting highlights", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-        {
-          id: 2,
-          text: "content",
-          position: { start: 5, end: 12 },
-          color: "#ff0000" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
+    it("adds a note to the clicked highlight without saving a new one", () => {
+      const saved = makeHighlight({ id: 7, position: { start: 6, end: 9 } });
       const { container } = render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[saved]}
+        />,
       );
 
-      const span1 = document.createElement("span");
-      span1.style.backgroundColor = "#fff300";
-      span1.textContent = "Test";
-
-      const proseDiv = container.querySelector(".prose")!;
-      proseDiv.innerHTML = "";
-      proseDiv.appendChild(span1);
-
-      const deleteRange = {
-        ...mockRange,
-        compareBoundaryPoints: jest
-          .fn()
-          .mockReturnValueOnce(-1)
-          .mockReturnValueOnce(1),
-      };
-
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(deleteRange);
-      fireEvent.mouseUp(proseDiv);
-
-      // The toolbar "Remove highlight" button only appears when isOnHighlight is true,
-      // which requires the selection's start/end spans to be the same existing highlight span.
-      // Verify the mouseUp interaction was handled correctly.
-      expect(mockSelection.getRangeAt).toHaveBeenCalled();
-    });
-  });
-
-  describe("Color Selection and Application", () => {
-    it("applies color to existing highlight span", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      const { container } = render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-
-      expect(container.querySelector(".prose")).toBeInTheDocument();
-    });
-
-    it("color buttons are available in toolbar after selection", async () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      // Trigger mouseUp to set toolbar position
-      fireEvent.mouseUp(contentDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Highlight Yellow")).toBeInTheDocument();
-      });
-
-      expect(screen.getByTitle("Highlight Pink")).toBeInTheDocument();
-      expect(screen.getByTitle("Highlight Orange")).toBeInTheDocument();
-      expect(screen.getByTitle("Highlight Green")).toBeInTheDocument();
-      expect(screen.getByTitle("Highlight Blue")).toBeInTheDocument();
-    });
-
-    it("can click color buttons after selection", async () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseUp(contentDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Highlight Pink")).toBeInTheDocument();
-      });
-
-      const pinkButton = screen.getByTitle("Highlight Pink");
-      fireEvent.mouseDown(pinkButton);
-
-      // After clicking a color button the toolbar dismisses itself
-      await waitFor(() => {
-        expect(screen.queryByTitle("Highlight Pink")).not.toBeInTheDocument();
-      });
-    });
-  });
-
-  describe("Highlight Deletion", () => {
-    it("provides delete functionality through toolbar when on a highlight", async () => {
-      const highlightedSpan = document.createElement("span");
-      highlightedSpan.style.backgroundColor = "#fff300";
-
-      const textNode = document.createTextNode("test");
-      highlightedSpan.appendChild(textNode);
-
-      // parentElement must be highlightedSpan so closest() call resolves correctly
-      Object.defineProperty(textNode, "parentElement", {
-        value: highlightedSpan,
-        configurable: true,
-      });
-      // closest() on the span returns itself — makes isOnHighlight=true
-      highlightedSpan.closest = jest.fn().mockReturnValue(highlightedSpan);
-
-      const rangeOnHighlight = {
-        ...mockRange,
-        startContainer: textNode,
-        endContainer: textNode,
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          top: 100,
-          left: 50,
-          bottom: 120,
-          right: 150,
-          width: 100,
-          height: 20,
-        }),
-      };
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(rangeOnHighlight);
-
-      // Tree walker must yield the same textNode for startOffset/endOffset to be found
-      document.createTreeWalker = jest.fn().mockReturnValue({
-        nextNode: jest.fn().mockReturnValueOnce(textNode).mockReturnValue(null),
-        currentNode: textNode,
-      } as unknown as TreeWalker);
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const proseDiv = container.querySelector(".prose")!;
-      proseDiv.innerHTML = "";
-      proseDiv.appendChild(highlightedSpan);
-
-      fireEvent.mouseUp(proseDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Remove highlight")).toBeInTheDocument();
-      });
-    });
-
-    it("handles click on remove highlight button", async () => {
-      const highlightedSpan = document.createElement("span");
-      highlightedSpan.style.backgroundColor = "#fff300";
-
-      const textNode = document.createTextNode("test");
-      highlightedSpan.appendChild(textNode);
-
-      Object.defineProperty(textNode, "parentElement", {
-        value: highlightedSpan,
-        configurable: true,
-      });
-      highlightedSpan.closest = jest.fn().mockReturnValue(highlightedSpan);
-
-      const rangeOnHighlight = {
-        ...mockRange,
-        startContainer: textNode,
-        endContainer: textNode,
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          top: 100,
-          left: 50,
-          bottom: 120,
-          right: 150,
-          width: 100,
-          height: 20,
-        }),
-      };
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(rangeOnHighlight);
-
-      document.createTreeWalker = jest.fn().mockReturnValue({
-        nextNode: jest.fn().mockReturnValueOnce(textNode).mockReturnValue(null),
-        currentNode: textNode,
-      } as unknown as TreeWalker);
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const proseDiv = container.querySelector(".prose")!;
-      proseDiv.innerHTML = "";
-      proseDiv.appendChild(highlightedSpan);
-
-      fireEvent.mouseUp(proseDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Remove highlight")).toBeInTheDocument();
-      });
-
-      const deleteButton = screen.getByTitle("Remove highlight");
-      fireEvent.mouseDown(deleteButton);
-
-      expect(deleteButton).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Note Creation", () => {
-    it("creates note with highlighted text", async () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseDown(contentDiv, { clientY: 100 });
-      fireEvent.mouseUp(contentDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Add note")).toBeInTheDocument();
-      });
-
-      const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
-
-      expect(defaultProps.onNote).toHaveBeenCalled();
-    });
-
-    it("strips newlines from note text", async () => {
-      (mockSelection.toString as jest.Mock).mockReturnValue(
-        "test\nwith\nnewlines",
-      );
-      (mockRange.toString as jest.Mock).mockReturnValue("test\nwith\nnewlines");
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseDown(contentDiv, { clientY: 150 });
-      fireEvent.mouseUp(contentDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Add note")).toBeInTheDocument();
-      });
-
-      const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
+      fireEvent.click(pieces(container, 7)[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Add note" }));
 
       expect(defaultProps.onNote).toHaveBeenCalledWith(
         expect.any(Number),
-        expect.stringMatching(/^[^\r\n]*$/),
+        saved,
+      );
+      expect(defaultProps.onHighlight).not.toHaveBeenCalled();
+    });
+
+    it("ignores a highlight that's still being saved", () => {
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          highlights={[
+            makeHighlight({ id: -1, position: { start: 6, end: 9 } }),
+          ]}
+        />,
+      );
+
+      fireEvent.click(pieces(container, -1)[0]);
+
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Notes", () => {
+    it("saves the selection first, then links the note to the saved highlight", async () => {
+      const saved = makeHighlight({
+        id: 9,
+        text: "SQL",
+        position: { start: 6, end: 9 },
+      });
+      const onHighlight = jest.fn().mockResolvedValue(saved);
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          onHighlight={onHighlight}
+        />,
+      );
+
+      selectText(container, "SQL");
+      fireEvent.click(await screen.findByRole("button", { name: "Add note" }));
+
+      expect(onHighlight).toHaveBeenCalledWith(
+        {
+          text: "SQL",
+          position: { start: 6, end: 9 },
+          color: "#fff300",
+          blockId: 1,
+        },
+        { merge: undefined, withNote: true },
+      );
+      // Placed level with the selection (140px down; the block is at 0)
+      await waitFor(() =>
+        expect(defaultProps.onNote).toHaveBeenCalledWith(140, saved),
       );
     });
 
-    it("creates note with position from mouse event", async () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      const mockGetBoundingClientRect = jest.fn().mockReturnValue({ top: 50 });
-      Object.defineProperty(contentDiv, "getBoundingClientRect", {
-        value: mockGetBoundingClientRect,
-        configurable: true,
-      });
-
-      fireEvent.mouseDown(contentDiv, { clientY: 200 });
-      fireEvent.mouseUp(contentDiv);
-
-      await waitFor(() => {
-        expect(screen.getByTitle("Add note")).toBeInTheDocument();
-      });
-
-      const noteButton = screen.getByTitle("Add note");
-      fireEvent.mouseDown(noteButton);
-
-      expect(defaultProps.onNote).toHaveBeenCalledWith(
-        expect.any(Number),
-        expect.any(String),
+    it("adds no note when the highlight couldn't be saved", async () => {
+      const onHighlight = jest.fn().mockResolvedValue(null);
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          onHighlight={onHighlight}
+        />,
       );
+
+      selectText(container, "SQL");
+      fireEvent.click(await screen.findByRole("button", { name: "Add note" }));
+
+      await waitFor(() => expect(onHighlight).toHaveBeenCalled());
+      expect(defaultProps.onNote).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Readers who can't highlight", () => {
+    it.each([
+      ["not enrolled", { enrollmentId: undefined }],
+      ["the author", { author: true }],
+    ])("shows no toolbar to a reader who's %s", async (_, props) => {
+      const { container } = render(
+        <GenericBlockRenderer {...defaultProps} block={sqlBlock} {...props} />,
+      );
+
+      selectText(container, "SQL");
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
     });
   });
 
@@ -1140,135 +1209,6 @@ describe("GenericBlockRenderer", () => {
     });
   });
 
-  describe("Active Block Tracking", () => {
-    it("sets active block on mouse enter", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-    });
-
-    it("handles mouse leave event", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseLeave(contentDiv);
-
-      expect(contentDiv).toBeInTheDocument();
-    });
-
-    it("updates active block when different block is hovered", () => {
-      const { rerender, container } = render(
-        <GenericBlockRenderer {...defaultProps} />,
-      );
-
-      let contentDiv = container.querySelector(".prose")!;
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-
-      rerender(
-        <GenericBlockRenderer
-          {...defaultProps}
-          block={{ id: 2, content: "Different block" }}
-        />,
-      );
-
-      contentDiv = container.querySelector(".prose")!;
-      fireEvent.mouseOver(contentDiv);
-
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(2);
-    });
-  });
-
-  describe("Expanded State Management", () => {
-    it("renders prose content when expanded is true", () => {
-      const { container } = render(
-        <GenericBlockRenderer {...defaultProps} expanded={true} />,
-      );
-      expect(container.querySelector(".prose")).toBeInTheDocument();
-    });
-
-    it("setExpanded prop is accepted without error", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-
-      expect(defaultProps.setExpanded).toBeDefined();
-      expect(container.querySelector(".prose")).toBeInTheDocument();
-    });
-
-    it("renders prose content when expanded is false", () => {
-      const { container } = render(
-        <GenericBlockRenderer {...defaultProps} expanded={false} />,
-      );
-      expect(container.querySelector(".prose")).toBeInTheDocument();
-    });
-  });
-
-  describe("LaTeX in Selection", () => {
-    it("extracts LaTeX from data-latex attribute when selecting LaTeX content", () => {
-      const { container } = render(
-        <GenericBlockRenderer
-          {...defaultProps}
-          block={{
-            id: 1,
-            content: "Test $x^2$ content",
-          }}
-        />,
-      );
-
-      const latexElement = document.createElement("span");
-      latexElement.className = "katex-inline";
-      latexElement.setAttribute("data-latex", encodeURIComponent("x^2"));
-      latexElement.textContent = "rendered latex";
-
-      const textNode = document.createTextNode("rendered latex");
-      latexElement.appendChild(textNode);
-
-      const parentElement = document.createElement("div");
-      parentElement.appendChild(latexElement);
-
-      const latexRange = {
-        ...mockRange,
-        startContainer: textNode,
-        endContainer: textNode,
-      };
-
-      Object.defineProperty(textNode, "parentElement", {
-        value: latexElement,
-        writable: true,
-        configurable: true,
-      });
-
-      latexElement.closest = jest.fn().mockReturnValue(latexElement);
-      mockSelection.getRangeAt = jest.fn().mockReturnValue(latexRange);
-
-      const contentDiv = container.querySelector(".prose")!;
-      fireEvent.mouseUp(contentDiv);
-
-      expect(mockSelection.getRangeAt).toHaveBeenCalled();
-    });
-
-    it("handles LaTeX block elements", () => {
-      const { container } = render(
-        <GenericBlockRenderer
-          {...defaultProps}
-          block={{
-            id: 1,
-            content: "Test $$y=mx+b$$ content",
-          }}
-        />,
-      );
-
-      const latexBlock = document.createElement("div");
-      latexBlock.className = "katex-block";
-      latexBlock.setAttribute("data-latex", encodeURIComponent("y=mx+b"));
-
-      expect(container).toBeInTheDocument();
-    });
-  });
-
   describe("Edge Cases and Error Handling", () => {
     it("handles empty content", () => {
       render(
@@ -1279,43 +1219,6 @@ describe("GenericBlockRenderer", () => {
       );
 
       expect(screen.queryByText("Test content")).not.toBeInTheDocument();
-    });
-
-    it("handles null selection", () => {
-      window.getSelection = jest.fn().mockReturnValue(null);
-
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseUp(contentDiv);
-
-      expect(defaultProps.onHighlight).not.toHaveBeenCalled();
-    });
-
-    it("handles highlight with missing start or end nodes", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      const mockWalker = {
-        nextNode: jest.fn().mockReturnValue(null),
-        currentNode: null,
-      };
-      document.createTreeWalker = jest
-        .fn()
-        .mockReturnValue(mockWalker as unknown as TreeWalker);
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-
-      expect(document.createTreeWalker).toHaveBeenCalled();
     });
 
     it("handles contentRef being null", () => {
@@ -1366,23 +1269,6 @@ describe("GenericBlockRenderer", () => {
   });
 
   describe("Component Lifecycle", () => {
-    it("sets up and cleans up event listeners properly", () => {
-      const { container, unmount } = render(
-        <GenericBlockRenderer {...defaultProps} />,
-      );
-
-      const contentDiv = container.querySelector(".prose")!;
-
-      expect(contentDiv).toBeInTheDocument();
-
-      fireEvent.mouseOver(contentDiv);
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
-
-      unmount();
-
-      expect(contentDiv).not.toBeInTheDocument();
-    });
-
     it("updates when block content changes", () => {
       const { rerender } = render(<GenericBlockRenderer {...defaultProps} />);
 
@@ -1396,36 +1282,6 @@ describe("GenericBlockRenderer", () => {
       );
 
       expect(screen.getByText("Updated content")).toBeInTheDocument();
-    });
-
-    it("updates when highlights change", () => {
-      const { rerender } = render(<GenericBlockRenderer {...defaultProps} />);
-
-      const newHighlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      rerender(
-        <GenericBlockRenderer {...defaultProps} highlights={newHighlights} />,
-      );
-
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("sets up event listeners on mount", () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      expect(contentDiv).toBeInTheDocument();
-
-      fireEvent.mouseOver(contentDiv);
-      expect(defaultProps.setActiveBlock).toHaveBeenCalledWith(1);
     });
 
     it("re-processes content when block id changes", () => {
@@ -1443,21 +1299,6 @@ describe("GenericBlockRenderer", () => {
 
       // Component should re-process LaTeX
       expect(katex.renderToString).toHaveBeenCalled();
-    });
-
-    it("handles rapid state changes", () => {
-      const { rerender } = render(<GenericBlockRenderer {...defaultProps} />);
-
-      for (let i = 0; i < 5; i++) {
-        rerender(
-          <GenericBlockRenderer
-            {...defaultProps}
-            activeBlock={i % 2 === 0 ? 1 : 2}
-          />,
-        );
-      }
-
-      expect(screen.getByText("Test content")).toBeInTheDocument();
     });
 
     it("does not highlight a block that unmounts before highlight.js loads", async () => {
@@ -1489,128 +1330,10 @@ describe("GenericBlockRenderer", () => {
     });
   });
 
-  describe("Complex Highlighting Scenarios", () => {
-    it("handles overlapping highlight positions", () => {
-      const textNode1 = document.createTextNode("Test content here");
-
-      const mockWalker = {
-        nextNode: jest
-          .fn()
-          .mockReturnValueOnce(textNode1)
-          .mockReturnValue(null),
-        currentNode: textNode1,
-      };
-
-      document.createTreeWalker = jest
-        .fn()
-        .mockReturnValue(mockWalker as unknown as TreeWalker);
-
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test content",
-          position: { start: 0, end: 12 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("handles highlight at end of content", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "content",
-          position: { start: 5, end: 12 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("handles highlight at start of content", () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "Test",
-          position: { start: 0, end: 4 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer {...defaultProps} highlights={highlights} />,
-      );
-
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-  });
-
   describe("Integration Tests", () => {
-    it("handles complete workflow: select, show toolbar, close toolbar", async () => {
-      const { container } = render(<GenericBlockRenderer {...defaultProps} />);
-      const contentDiv = container.querySelector(".prose")!;
-
-      fireEvent.mouseDown(contentDiv, { clientY: 100 });
-      fireEvent.mouseUp(contentDiv);
-
-      expect(mockRange.cloneRange).toHaveBeenCalled();
-
-      // After a selection the toolbar should appear with color buttons
-      await waitFor(() => {
-        expect(screen.getByTitle("Highlight Yellow")).toBeInTheDocument();
-      });
-
-      // The "Remove highlight" button only appears when isOnHighlight=true;
-      // in this basic flow, just verify the toolbar color buttons are present.
-      expect(screen.getByTitle("Add note")).toBeInTheDocument();
-    });
-
-    it("handles LaTeX with highlighting", () => {
+    it("draws highlights in code blocks after syntax highlighting", async () => {
       const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "x^2",
-          position: { start: 0, end: 3 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
-      ];
-
-      render(
-        <GenericBlockRenderer
-          {...defaultProps}
-          block={{ id: 1, content: "Test $x^2$ content" }}
-          highlights={highlights}
-        />,
-      );
-
-      expect(katex.renderToString).toHaveBeenCalled();
-      expect(document.createTreeWalker).toHaveBeenCalled();
-    });
-
-    it("handles code blocks with highlights", async () => {
-      const highlights: Highlight[] = [
-        {
-          id: 1,
-          text: "const",
-          position: { start: 0, end: 5 },
-          color: "#fff300" as HighlightColor,
-          blockId: 1,
-        },
+        makeHighlight({ id: 1, position: { start: 1, end: 6 } }),
       ];
 
       const { container } = render(
@@ -1630,6 +1353,12 @@ describe("GenericBlockRenderer", () => {
           "yes",
         ),
       );
+      // Offsets count the line number gutter ("1") first
+      expect(
+        pieces(container, 1)
+          .map((p) => p.textContent)
+          .join(""),
+      ).toBe("const");
     });
   });
 });

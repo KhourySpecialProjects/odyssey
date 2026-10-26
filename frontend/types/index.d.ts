@@ -53,6 +53,11 @@ export type Highlight = {
   lesson?: Lesson;
   yLevel?: number;
   blockId: number;
+  /**
+   * The note linked to this highlight (one-to-one). Only the lesson viewer's
+   * highlight fetch populates it; `id` is unknown for a note made since.
+   */
+  note?: { id?: number } | null;
 };
 
 export type User = {

@@ -48,8 +48,10 @@
  *                 updateUserInfo (only when name/bio/photo/links/roles/
  *                 isEnabled change), deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
- *                 deleteNote
- * highlights      createHighlight, deleteHighlight                          900s
+ *                 deleteNote, updateHighlight, deleteHighlight (notes show
+ *                 their highlight). getHighlightsByAuthorizedUserAndLesson
+ *                 also carries it, since it populates each highlight's note.
+ * highlights      createHighlight, updateHighlight, deleteHighlight         900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
  *                 publishDraftToOriginal
