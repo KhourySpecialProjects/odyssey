@@ -6,12 +6,16 @@ import {
   loadHighlighter,
   type HighlighterModule,
 } from "./load-highlighter";
-import { Highlight, HighlightColor } from "@/types";
+import { Highlight, HighlightColor, HighlightContext } from "@/types";
 import { SelectionToolbar, type ToolbarAnchor } from "./selection-toolbar";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
+import {
+  highlightContext,
+  type PlacedHighlight,
+} from "@/lib/highlight-placement";
 
 interface Block {
   content: string;
@@ -24,7 +28,7 @@ interface Block {
 export type HighlightDraft = Pick<
   Highlight,
   "text" | "position" | "color" | "blockId"
->;
+> & { context?: HighlightContext };
 
 /**
  * Saved highlights a new one overlaps: `baseId` is extended to cover the
@@ -37,7 +41,8 @@ export interface HighlightMerge {
 
 interface GenericBlockRendererProps {
   block: Block;
-  highlights: Highlight[];
+  /** Placed where they are in the lesson now (lib/highlight-placement) */
+  highlights: PlacedHighlight[];
   /** Saves a highlight. Resolves to it once saved, or null if that failed. */
   onHighlight: (
     highlight: HighlightDraft,
@@ -46,6 +51,11 @@ interface GenericBlockRendererProps {
   onRecolorHighlight: (highlightId: number, color: HighlightColor) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, highlight: Highlight) => void;
+  /**
+   * Set while the reader is moving a highlight whose text was deleted: the
+   * toolbar then offers to move it onto the selected text instead
+   */
+  onMoveHighlight?: (target: HighlightDraft) => void;
   enrollmentId: string | undefined;
   author?: boolean;
 }
@@ -113,6 +123,121 @@ const processLatex = (content: string) => {
   return content;
 };
 
+const TABLE = /<!--TABLE_START-->([\s\S]*?)<!--TABLE_END-->/;
+
+/** A block's content without its table, which is drawn on its own */
+const withoutTable = (content: string) => content.replace(TABLE, "");
+
+/**
+ * Draws a block's HTML into `container`: its LaTeX, its code and the code's
+ * line numbers. Returns whether it has code blocks.
+ *
+ * highlight.js rewrites each code element's markup, so it must run before
+ * line numbers and saved highlights are applied. Until it (and any language
+ * grammar the page's code needs) has loaded, the content renders without it
+ * and re-renders once it arrives. It doesn't change the text.
+ */
+function renderBlockContent(
+  container: HTMLElement,
+  html: string,
+  highlighter: HighlighterModule | null,
+): boolean {
+  container.innerHTML = DOMPurify.sanitize(processLatex(html));
+
+  const inlineLatexElements = container.querySelectorAll(".katex-inline");
+  inlineLatexElements.forEach((element) => {
+    const latex = element.textContent || "";
+    try {
+      const mathElement = document.createElement("span");
+      mathElement.innerHTML = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: false,
+      });
+      element.parentNode?.replaceChild(mathElement, element);
+    } catch (e) {
+      console.error("Failed to render inline LaTeX:", e);
+    }
+  });
+
+  const blockLatexElements = container.querySelectorAll(".katex-block");
+  blockLatexElements.forEach((element) => {
+    const latex = decodeURIComponent(element.getAttribute("data-latex") || "");
+    try {
+      const mathElement = document.createElement("div");
+      mathElement.innerHTML = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: true,
+      });
+      element.parentNode?.replaceChild(mathElement, element);
+    } catch (e) {
+      console.error("Failed to render block LaTeX:", e);
+    }
+  });
+
+  const codeBlocks = container.querySelectorAll("pre code");
+  codeBlocks.forEach((codeBlock) => {
+    if (codeBlock.classList.contains("language-plaintext")) {
+      codeBlock.classList.remove("language-plaintext");
+    }
+  });
+  // Scoped to this block (like RenderedContent) so a re-render of one block
+  // can't touch another block's code
+  if (codeBlocks.length > 0) highlighter?.highlightCodeBlocks(container);
+
+  const preBlocks = container.querySelectorAll("pre");
+
+  preBlocks.forEach((pre) => {
+    const code = pre.querySelector("code");
+    if (!code) return;
+
+    const rawLines = code.textContent?.split("\n") ?? [];
+    if (rawLines[rawLines.length - 1] === "") rawLines.pop();
+    const lineCount = rawLines.length;
+
+    // Force code line-height to match gutter — prose-lg sets ~1.777
+    // which causes lines to drift out of sync with the 1.25rem gutter.
+    code.style.lineHeight = "1.25rem";
+    code.style.display = "block";
+    code.style.padding = "0";
+    code.style.margin = "0";
+
+    pre.style.position = "relative";
+    pre.style.paddingTop = "0.75rem";
+    pre.style.paddingBottom = "0.75rem";
+    pre.style.paddingLeft = "3rem";
+    pre.style.paddingRight = "1rem";
+
+    const lineNumbers = document.createElement("div");
+    lineNumbers.className =
+      "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-sm border-r border-gray-200 bg-gray-100 text-gray-400 select-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
+    lineNumbers.style.paddingTop = "0.75rem";
+
+    for (let i = 1; i <= lineCount; i++) {
+      const line = document.createElement("div");
+      line.className = "pr-2 text-right font-mono";
+      line.style.lineHeight = "1.25rem";
+      line.style.height = "1.25rem";
+      line.textContent = `${i}`;
+      lineNumbers.appendChild(line);
+    }
+
+    pre.insertBefore(lineNumbers, pre.firstChild);
+  });
+
+  return codeBlocks.length > 0;
+}
+
+/**
+ * A block's text as it's drawn, which highlight positions count, so the
+ * lesson can place highlights (lib/highlight-placement) before each block
+ * draws them. Needs a browser DOM.
+ */
+export function blockText(content: string): string {
+  const container = document.createElement("div");
+  renderBlockContent(container, withoutTable(content), null);
+  return container.textContent ?? "";
+}
+
 /**
  * The block's text nodes, in order. Highlight positions are character offsets
  * across all of them (line numbers and LaTeX markup included).
@@ -157,9 +282,10 @@ function wholeInlineCode({ node, from, to }: Piece): HTMLElement | null {
 /**
  * Draws a highlight as one tagged element per text node it covers, styled to
  * read as one bar: only its two ends are rounded, and whitespace at either
- * end isn't painted.
+ * end isn't painted. One whose words were edited since is also underlined,
+ * and says what it covered before.
  */
-function drawHighlight(container: HTMLElement, highlight: Highlight) {
+function drawHighlight(container: HTMLElement, highlight: PlacedHighlight) {
   const { start, end } = highlight.position ?? {};
   if (start == null || end == null || start >= end) return;
 
@@ -208,6 +334,10 @@ function drawHighlight(container: HTMLElement, highlight: Highlight) {
     element.style.backgroundColor = highlight.color;
     element.style.borderRadius = `${left} ${right} ${right} ${left}`;
     element.style.setProperty("color", "black", "important");
+    if (highlight.edited) {
+      element.dataset.highlightEdited = "";
+      element.title = `This text changed after you highlighted it. You highlighted: “${highlight.text}”`;
+    }
   }
 }
 
@@ -228,6 +358,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onRecolorHighlight,
   onDeleteHighlight,
   onNote,
+  onMoveHighlight,
   enrollmentId,
   author = false,
 }) => {
@@ -247,7 +378,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   // The block is redrawn only when this changes, so a new highlights array
   // (or a hover, or a colour pick) leaves the reader's selection alone
   const highlightKey = blockHighlights
-    .map((h) => `${h.id}:${h.position?.start}-${h.position?.end}:${h.color}`)
+    .map(
+      (h) =>
+        `${h.id}:${h.position?.start}-${h.position?.end}:${h.color}` +
+        (h.edited ? ":edited" : ""),
+    )
     .join(",");
   const blockHighlightsRef = useRef(blockHighlights);
   useEffect(() => {
@@ -255,119 +390,32 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   });
 
   // Check if content contains a table
-  const tableMatch = block.content.match(
-    /<!--TABLE_START-->([\s\S]*?)<!--TABLE_END-->/,
-  );
+  const tableMatch = block.content.match(TABLE);
   let tableData = null;
   try {
     tableData = tableMatch ? JSON.parse(tableMatch[1]) : null;
   } catch (e) {
     console.error("Failed to parse table data:", e);
   }
-  const nonTableContent = tableMatch
-    ? block.content.replace(/<!--TABLE_START-->[\s\S]*?<!--TABLE_END-->/, "")
-    : block.content;
+  const nonTableContent = withoutTable(block.content);
 
   useEffect(() => {
     const container = contentRef.current;
     if (!container) return;
 
-    // highlight.js rewrites each code element's markup, so it must run before
-    // line numbers and saved highlights are applied. Until it (and any language
-    // grammar the page's code needs) has loaded, the content renders without it
-    // and re-renders once it arrives.
     const renderContent = (highlighter: HighlighterModule | null) => {
-      const processedContent = processLatex(nonTableContent);
-      container.innerHTML = DOMPurify.sanitize(processedContent);
-
-      const inlineLatexElements = container.querySelectorAll(".katex-inline");
-      inlineLatexElements.forEach((element) => {
-        const latex = element.textContent || "";
-        try {
-          const mathElement = document.createElement("span");
-          mathElement.innerHTML = katex.renderToString(latex, {
-            throwOnError: false,
-            displayMode: false,
-          });
-          element.parentNode?.replaceChild(mathElement, element);
-        } catch (e) {
-          console.error("Failed to render inline LaTeX:", e);
-        }
-      });
-
-      const blockLatexElements = container.querySelectorAll(".katex-block");
-      blockLatexElements.forEach((element) => {
-        const latex = decodeURIComponent(
-          element.getAttribute("data-latex") || "",
-        );
-        try {
-          const mathElement = document.createElement("div");
-          mathElement.innerHTML = katex.renderToString(latex, {
-            throwOnError: false,
-            displayMode: true,
-          });
-          element.parentNode?.replaceChild(mathElement, element);
-        } catch (e) {
-          console.error("Failed to render block LaTeX:", e);
-        }
-      });
-
-      const codeBlocks = container.querySelectorAll("pre code");
-      codeBlocks.forEach((codeBlock) => {
-        if (codeBlock.classList.contains("language-plaintext")) {
-          codeBlock.classList.remove("language-plaintext");
-        }
-      });
-      // Scoped to this block (like RenderedContent) so a re-render of one block
-      // can't touch another block's code
-      if (codeBlocks.length > 0) highlighter?.highlightCodeBlocks(container);
-
-      const preBlocks = container.querySelectorAll("pre");
-
-      preBlocks.forEach((pre) => {
-        const code = pre.querySelector("code");
-        if (!code) return;
-
-        const rawLines = code.textContent?.split("\n") ?? [];
-        if (rawLines[rawLines.length - 1] === "") rawLines.pop();
-        const lineCount = rawLines.length;
-
-        // Force code line-height to match gutter — prose-lg sets ~1.777
-        // which causes lines to drift out of sync with the 1.25rem gutter.
-        code.style.lineHeight = "1.25rem";
-        code.style.display = "block";
-        code.style.padding = "0";
-        code.style.margin = "0";
-
-        pre.style.position = "relative";
-        pre.style.paddingTop = "0.75rem";
-        pre.style.paddingBottom = "0.75rem";
-        pre.style.paddingLeft = "3rem";
-        pre.style.paddingRight = "1rem";
-
-        const lineNumbers = document.createElement("div");
-        lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-sm border-r border-gray-200 bg-gray-100 text-gray-400 select-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
-        lineNumbers.style.paddingTop = "0.75rem";
-
-        for (let i = 1; i <= lineCount; i++) {
-          const line = document.createElement("div");
-          line.className = "pr-2 text-right font-mono";
-          line.style.lineHeight = "1.25rem";
-          line.style.height = "1.25rem";
-          line.textContent = `${i}`;
-          lineNumbers.appendChild(line);
-        }
-
-        pre.insertBefore(lineNumbers, pre.firstChild);
-      });
+      const hasCodeBlocks = renderBlockContent(
+        container,
+        nonTableContent,
+        highlighter,
+      );
 
       // Drawn from the saved list only, so nothing else needs to add spans
       [...blockHighlightsRef.current]
         .sort(byDrawOrder)
         .forEach((highlight) => drawHighlight(container, highlight));
 
-      return codeBlocks.length > 0;
+      return hasCodeBlocks;
     };
 
     const highlighter = getLoadedHighlighter();
@@ -446,17 +494,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     const rect = range.getBoundingClientRect();
     // Exactly a saved highlight's text (as drawn): offer to recolour or remove
-    // it. Part of one is new text to highlight on top of it.
-    const blockText = container.textContent ?? "";
-    const selected = trimmed(blockText, start, end);
-    const same = blockHighlightsRef.current
-      .filter(isSaved)
-      .sort(byDrawOrder)
-      .filter((h) => {
-        const drawn = trimmed(blockText, h.position.start, h.position.end);
-        return drawn.start === selected.start && drawn.end === selected.end;
-      })
-      .pop();
+    // it. Part of one is new text to highlight on top of it. While moving a
+    // highlight, any text is somewhere it could go.
+    const drawnText = container.textContent ?? "";
+    const selected = trimmed(drawnText, start, end);
+    const same = onMoveHighlight
+      ? undefined
+      : blockHighlightsRef.current
+          .filter(isSaved)
+          .sort(byDrawOrder)
+          .filter((h) => {
+            const drawn = trimmed(drawnText, h.position.start, h.position.end);
+            return drawn.start === selected.start && drawn.end === selected.end;
+          })
+          .pop();
 
     setToolbar({
       target: same
@@ -492,6 +543,25 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     window.getSelection()?.removeAllRanges();
   };
 
+  // The context saved with a highlight finds it again after the lesson is
+  // edited (lib/highlight-placement)
+  const contextFor = (start: number, end: number) => {
+    const drawn = contentRef.current?.textContent;
+    return drawn ? { context: highlightContext(drawn, start, end) } : {};
+  };
+
+  /** A highlight over exactly the selected text */
+  const selectionDraft = (
+    target: Extract<ToolbarTarget, { kind: "selection" }>,
+    color: HighlightColor,
+  ): HighlightDraft => ({
+    text: target.text,
+    position: { start: target.start, end: target.end },
+    color,
+    blockId: block.id,
+    ...contextFor(target.start, target.end),
+  });
+
   /**
    * A new highlight over the selected text. Inside saved highlights, it goes
    * on top of them (`inside` is the innermost). Across saved highlights'
@@ -522,15 +592,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       )
       .sort(byDrawOrder);
     if (overlapping.length === 0 || !contentRef.current) {
-      return {
-        draft: {
-          text: target.text,
-          position: { start: target.start, end: target.end },
-          color,
-          blockId: block.id,
-        },
-        inside,
-      };
+      return { draft: selectionDraft(target, color), inside };
     }
 
     const start = Math.min(target.start, overlapping[0].position.start);
@@ -542,6 +604,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         position: { start, end },
         color,
         blockId: base.blockId,
+        ...contextFor(start, end),
       },
       merge: {
         baseId: base.id,
@@ -568,6 +631,13 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handleDelete = () => {
     if (toolbar?.target.kind === "highlight") {
       onDeleteHighlight(toolbar.target.highlightId);
+    }
+    finishToolbar();
+  };
+
+  const handleMoveHere = () => {
+    if (toolbar?.target.kind === "selection") {
+      onMoveHighlight?.(selectionDraft(toolbar.target, selectedColor));
     }
     finishToolbar();
   };
@@ -658,6 +728,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           onApplyColor={handleApplyColor}
           onDelete={handleDelete}
           onNote={handleNote}
+          onMoveHere={
+            onMoveHighlight && toolbar.target.kind === "selection"
+              ? handleMoveHere
+              : undefined
+          }
           onClose={closeToolbar}
         />
       )}

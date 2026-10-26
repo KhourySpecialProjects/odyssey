@@ -1240,6 +1240,7 @@ export interface ApiHighlightHighlight extends Struct.CollectionTypeSchema {
     >;
     blockId: Schema.Attribute.Integer;
     color: Schema.Attribute.String & Schema.Attribute.DefaultTo<'yellow'>;
+    context: Schema.Attribute.JSON;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

@@ -143,7 +143,7 @@ Group
 
 - **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos. Relations to droplet, playlist, group, sender/receiver users.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
-- **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `selectedText`, `startOffset`/`endOffset` for position.
+- **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `text`, and `position` (`{ start, end }`, character offsets in the drawn text of lesson block `blockId`). `context` (`{ quote, prefix, suffix }`, ODY-198) lets the lesson viewer find it again after the author edits the lesson (`frontend/lib/highlight-placement.ts`); one whose text was deleted is listed for the reader to move or remove, never dropped.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
 - **Tag** — Simple `name` field, many-to-many with Droplet.
 

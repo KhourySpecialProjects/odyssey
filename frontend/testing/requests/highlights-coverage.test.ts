@@ -326,13 +326,33 @@ describe("highlights requests — coverage", () => {
       });
     });
 
+    it("sends a moved highlight's block and context, rebuilt from the checked values", async () => {
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 42 } }));
+
+      await updateHighlight(42, {
+        position: { start: 4, end: 9 },
+        text: "joins",
+        blockId: 7,
+        context: { quote: "joins", prefix: "SQL ", suffix: "", extra: 1 },
+      } as never);
+
+      expect(putBody()).toEqual({
+        data: {
+          position: { start: 4, end: 9 },
+          text: "joins",
+          blockId: 7,
+          context: { quote: "joins", prefix: "SQL ", suffix: "" },
+        },
+      });
+    });
+
     it("drops fields that a client can't change", async () => {
       mockFetch.mockResolvedValueOnce(makeFetchResponse({ data: { id: 42 } }));
 
       await updateHighlight(42, {
         color: "#86efac",
         authorized_user: 99,
-        blockId: 3,
+        lesson: 3,
       } as never);
 
       expect(putBody()).toEqual({ data: { color: "#86efac" } });
@@ -355,6 +375,8 @@ describe("highlights requests — coverage", () => {
       ["an empty range", { position: { start: 4, end: 4 } }],
       ["a negative start", { position: { start: -1, end: 4 } }],
       ["empty text", { text: "" }],
+      ["a block id that isn't a whole number", { blockId: 1.5 }],
+      ["a context with no quote", { context: { prefix: "", suffix: "" } }],
     ])("rejects %s", async (_label, changes) => {
       await expect(updateHighlight(42, changes as never)).resolves.toEqual(
         INVALID,
@@ -416,7 +438,15 @@ describe("highlights requests — coverage", () => {
             lesson: { slug: { $eq: "intro-lesson" } },
           },
           populate: { note: { fields: ["id"] } },
-          fields: ["text", "position", "color", "blockId", "yLevel"],
+          fields: [
+            "text",
+            "position",
+            "color",
+            "blockId",
+            "yLevel",
+            "context",
+            "createdAt",
+          ],
           pagination: { pageSize: 250, page: 1 },
         }),
         next: {
@@ -524,12 +554,39 @@ describe("highlights requests — coverage", () => {
       expect(postBody().data).not.toHaveProperty("note");
     });
 
+    it("saves the context that finds it again after edits, rebuilt from the checked values", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 10 } }, 201),
+      );
+
+      await createHighlight({
+        ...input,
+        context: {
+          quote: "Key concept",
+          prefix: "The ",
+          suffix: " is",
+          extra: "x",
+        },
+      } as never);
+
+      expect(postBody().data.context).toEqual({
+        quote: "Key concept",
+        prefix: "The ",
+        suffix: " is",
+      });
+    });
+
     it.each([
       ["no text", { text: "" }],
       ["a colour that isn't offered", { color: "yellow" }],
       ["an empty range", { position: { start: 3, end: 3 } }],
       ["a block id that isn't a whole number", { blockId: 1.5 }],
       ["a lesson id given as a string", { lessonId: "2" }],
+      [
+        "a context with more than 30 characters either side",
+        { context: { quote: "Key", prefix: "x".repeat(31), suffix: "" } },
+      ],
+      ["a context that isn't an object", { context: "Key concept" }],
     ])("rejects %s", async (_label, change) => {
       await expect(
         createHighlight({ ...input, ...change } as never),

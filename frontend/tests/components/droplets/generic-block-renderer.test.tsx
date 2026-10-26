@@ -816,6 +816,7 @@ describe("GenericBlockRenderer", () => {
           position: { start: 6, end: 9 },
           color: "#86efac",
           blockId: 1,
+          context: { quote: "SQL", prefix: "Learn ", suffix: " today" },
         },
         { merge: undefined },
       );
@@ -911,6 +912,7 @@ describe("GenericBlockRenderer", () => {
           position: { start: 6, end: 15 },
           color: "#93c5fd",
           blockId: 1,
+          context: { quote: "SQL joins", prefix: "Learn ", suffix: " today" },
         },
         { merge: { baseId: 2, removeIds: [1] } },
       );
@@ -968,6 +970,7 @@ describe("GenericBlockRenderer", () => {
           position: { start: 6, end: 9 },
           color: "#93c5fd",
           blockId: 1,
+          context: { quote: "SQL", prefix: "Learn ", suffix: " today" },
         },
         { merge: undefined },
       );
@@ -1066,6 +1069,7 @@ describe("GenericBlockRenderer", () => {
           position: { start: 6, end: 12 },
           color: "#93c5fd",
           blockId: 1,
+          context: { quote: "SQL jo", prefix: "Learn ", suffix: "ins today" },
         },
         { merge: { baseId: 2, removeIds: [] } },
       );
@@ -1189,6 +1193,7 @@ describe("GenericBlockRenderer", () => {
           position: { start: 6, end: 9 },
           color: "#fff300",
           blockId: 1,
+          context: { quote: "SQL", prefix: "Learn ", suffix: " today" },
         },
         { merge: undefined, withNote: true },
       );

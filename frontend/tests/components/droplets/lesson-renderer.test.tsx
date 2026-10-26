@@ -4,6 +4,7 @@ import {
   fireEvent,
   waitFor,
   act,
+  within,
 } from "@testing-library/react";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import {
@@ -245,6 +246,7 @@ describe("LessonRenderer (viewer)", () => {
         color: "#86efac",
         blockId: 1,
         lessonId: 1,
+        context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
       });
 
       await act(async () =>
@@ -379,6 +381,8 @@ describe("LessonRenderer (viewer)", () => {
         color: "#93c5fd",
         position: { start: 6, end: 15 },
         text: "SQL joins",
+        blockId: 1,
+        context: { quote: "SQL joins", prefix: "Learn ", suffix: " today" },
       });
       await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(5));
       expect(createHighlight).not.toHaveBeenCalled();
@@ -437,6 +441,7 @@ describe("LessonRenderer (viewer)", () => {
       color: "#93c5fd",
       blockId: 1,
       lessonId: 1,
+      context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
     });
     await waitFor(() => expect(pieces(first, 100)).toHaveLength(1));
     expect(pieces(first, 4)[0]).toContainElement(
@@ -513,5 +518,186 @@ describe("LessonRenderer (viewer)", () => {
 
     expect(screen.getByText("Enrollment Required")).toBeInTheDocument();
     expect(container.querySelector(".lesson-highlight")).toBeNull();
+  });
+
+  describe("after the author edits the lesson (ODY-198)", () => {
+    // Saved on "SQL" when block 1 read "Learn SQL joins today"
+    const sqlHighlight: Highlight = {
+      id: 4,
+      text: "SQL",
+      color: "#fff300",
+      position: { start: 6, end: 9 },
+      blockId: 1,
+      context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
+    };
+
+    /** The lesson with block 1's content replaced */
+    const editedLesson = (content: string) =>
+      ({
+        ...lesson,
+        blocks: [{ ...lesson.blocks[0], content }, lesson.blocks[1]],
+      }) as Lesson;
+
+    const notice = () =>
+      screen.queryByRole("region", {
+        name: "Highlights no longer in this lesson",
+      });
+
+    it("follows a highlight's text when a paragraph is added above it", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          lesson={editedLesson("<p>Intro.</p><p>Learn SQL joins today</p>")}
+          initialHighlights={[sqlHighlight]}
+        />,
+      );
+
+      expect(pieces(container, 4).map((p) => p.textContent)).toEqual(["SQL"]);
+      expect(notice()).not.toBeInTheDocument();
+    });
+
+    it("draws over the new words when the highlighted words were edited, and says what they were", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          lesson={editedLesson("<p>Learn Postgres joins today</p>")}
+          initialHighlights={[sqlHighlight]}
+        />,
+      );
+
+      const [piece] = pieces(container, 4);
+      expect(piece).toHaveTextContent(/^Postgres$/);
+      expect(piece).toHaveAttribute("data-highlight-edited");
+      expect(piece).toHaveAttribute(
+        "title",
+        expect.stringContaining("You highlighted: “SQL”"),
+      );
+    });
+
+    it("re-finds an older highlight after a Classic-editor save gives its block a new id", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          initialHighlights={[{ ...serverHighlight, blockId: 99 }]}
+        />,
+      );
+
+      expect(
+        pieces(container, 7)
+          .map((p) => p.textContent)
+          .join(""),
+      ).toBe("Use inner joins");
+    });
+
+    describe("when the highlighted text was deleted", () => {
+      const renderDeleted = (highlight: Highlight = sqlHighlight) =>
+        render(
+          <LessonRenderer
+            {...props}
+            lesson={editedLesson("<p>Learn joins today</p>")}
+            initialHighlights={[highlight]}
+          />,
+        );
+
+      it("lists it above the lesson instead of drawing it on other words", () => {
+        const { container } = renderDeleted({
+          ...sqlHighlight,
+          note: { id: 3 },
+        });
+
+        expect(pieces(container, 4)).toHaveLength(0);
+        expect(notice()).toHaveTextContent(
+          "1 of your highlights is on text that's no longer here.",
+        );
+        fireEvent.click(button("Show"));
+        const item = within(notice()!).getByRole("listitem");
+        expect(item).toHaveTextContent("“SQL”");
+        expect(item).toHaveTextContent("Has a note");
+        expect(deleteHighlight).not.toHaveBeenCalled();
+      });
+
+      it("removes it when the reader chooses to", async () => {
+        renderDeleted();
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Remove"));
+
+        await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(4));
+        expect(notice()).not.toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith("Highlight removed");
+      });
+
+      it("moves it onto the text the reader selects, keeping its colour", async () => {
+        const { container } = renderDeleted();
+        const [first] = blocks(container);
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        expect(notice()).toHaveTextContent(
+          "Select the text this highlight should move to",
+        );
+        selectText(first, "joins");
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Move highlight here",
+          }),
+        );
+
+        expect(updateHighlight).toHaveBeenCalledWith(4, {
+          text: "joins",
+          position: { start: 6, end: 11 },
+          blockId: 1,
+          context: { quote: "joins", prefix: "Learn ", suffix: " today" },
+        });
+        expect(createHighlight).not.toHaveBeenCalled();
+        expect(pieces(first, 4).map((p) => p.textContent)).toEqual(["joins"]);
+        expect(pieces(first, 4)[0]).toHaveStyle({ backgroundColor: "#fff300" });
+        expect(notice()).not.toBeInTheDocument();
+        await waitFor(() =>
+          expect(toast.success).toHaveBeenCalledWith("Highlight moved"),
+        );
+      });
+
+      it("puts it back on the list if the move fails", async () => {
+        jest.mocked(updateHighlight).mockResolvedValue({
+          ok: false,
+          error: "Failed to update highlight",
+          data: null,
+        });
+        const { container } = renderDeleted();
+        const [first] = blocks(container);
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        selectText(first, "joins");
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Move highlight here",
+          }),
+        );
+
+        await waitFor(() =>
+          expect(toast.error).toHaveBeenCalledWith("Failed to move highlight"),
+        );
+        expect(pieces(first, 4)).toHaveLength(0);
+        expect(notice()).toBeInTheDocument();
+      });
+
+      it("offers the usual highlight colours again once the move is cancelled", async () => {
+        const { container } = renderDeleted();
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        fireEvent.click(button("Cancel"));
+        selectText(blocks(container)[0], "joins");
+
+        expect(
+          await screen.findByRole("button", { name: "Highlight Green" }),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Move highlight here" }),
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 });
