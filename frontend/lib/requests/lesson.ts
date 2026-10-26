@@ -21,6 +21,11 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { withAuth } from "@/lib/auth/guards";
+import {
+  checkDropletContentWrite,
+  checkLessonWrite,
+} from "@/lib/auth/review-freeze";
 import { deleteLessonRecord } from "@/lib/requests/lesson-delete";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -149,21 +154,39 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
 }
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
-  return deleteLessonRecord(id, revalidate);
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, id);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return deleteLessonRecord(id, revalidate);
+  });
 }
+
+type UpdateLessonOptions = {
+  reload?: boolean;
+  regenerateSlug?: boolean;
+  skipRevalidation?: boolean;
+};
 
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
-  options: {
-    reload?: boolean;
-    regenerateSlug?: boolean;
-    skipRevalidation?: boolean;
-  } = {
+  options: UpdateLessonOptions = {
     reload: false,
     regenerateSlug: false,
     skipRevalidation: false,
   },
+) {
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, id);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyLessonUpdate(id, data, options);
+  });
+}
+
+async function applyLessonUpdate(
+  id: number,
+  data: Partial<z.infer<typeof LessonSchema>>,
+  options: UpdateLessonOptions,
 ) {
   try {
     if (data.blocks) {
@@ -234,6 +257,14 @@ const CreateLessonSchema = LessonSchema.pick({
 });
 
 export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
+  return withAuth([], async (user) => {
+    const check = await checkDropletContentWrite(user, formData.dropletId);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyAddLesson(formData);
+  });
+}
+
+async function applyAddLesson(formData: z.infer<typeof CreateLessonSchema>) {
   try {
     const lessonData: any = {
       name: formData.name,
@@ -286,6 +317,18 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 }
 
 export async function duplicateLessonToDroplet(
+  sourceLessonId: number,
+  targetDropletId: number,
+  newOrderIndex: number,
+) {
+  return withAuth([], async (user) => {
+    const check = await checkDropletContentWrite(user, targetDropletId);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyDuplicateLesson(sourceLessonId, targetDropletId, newOrderIndex);
+  });
+}
+
+async function applyDuplicateLesson(
   sourceLessonId: number,
   targetDropletId: number,
   newOrderIndex: number,

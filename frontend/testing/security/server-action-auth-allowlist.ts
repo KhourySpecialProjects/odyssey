@@ -53,14 +53,10 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/galleries.ts#getGalleryBySlug": "ODY-504",
   "lib/requests/lesson-lock.ts#getCurrentAuthorizedUserId": "ODY-504",
   "lib/requests/lesson-lock.ts#getLessonLockStatus": "ODY-504",
-  "lib/requests/lesson.ts#addLesson": "ODY-504",
   "lib/requests/lesson.ts#completeLesson": "ODY-504",
-  "lib/requests/lesson.ts#deleteLesson": "ODY-504",
-  "lib/requests/lesson.ts#duplicateLessonToDroplet": "ODY-504",
   "lib/requests/lesson.ts#getLessonBySlug": "ODY-504",
   "lib/requests/lesson.ts#markLessonAsComplete": "ODY-504",
   "lib/requests/lesson.ts#revalidateLesson": "ODY-504",
-  "lib/requests/lesson.ts#updateLesson": "ODY-504",
 
   // ODY-505
   "lib/requests/playlist.ts#archivePlaylist": "ODY-505",
