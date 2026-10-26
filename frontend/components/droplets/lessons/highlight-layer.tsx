@@ -11,7 +11,11 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import type { EditorView } from "@codemirror/view";
-import { Highlight, HighlightColor } from "@/types";
+import { Highlight, HighlightColor, HighlightContext } from "@/types";
+import {
+  highlightContext,
+  type PlacedHighlight,
+} from "@/lib/highlight-placement";
 import {
   HIGHLIGHT_CLASS,
   REGION_ATTR,
@@ -33,7 +37,7 @@ import { SelectionToolbar, type ToolbarAnchor } from "./selection-toolbar";
 export type HighlightDraft = Pick<
   Highlight,
   "text" | "position" | "color" | "blockId"
->;
+> & { context?: HighlightContext };
 
 /**
  * Saved highlights a new one overlaps: `baseId` is extended to cover the
@@ -51,7 +55,8 @@ export interface HighlightRequest {
 }
 
 interface HighlightLayerProps {
-  highlights: Highlight[];
+  /** Placed where they are in the lesson now (lib/highlight-placement) */
+  highlights: PlacedHighlight[];
   canHighlight: boolean;
   /**
    * Saves highlights: one per block a selection covers. Resolves to each
@@ -64,6 +69,11 @@ interface HighlightLayerProps {
   onRecolorHighlight: (highlightIds: number[], color: HighlightColor) => void;
   onDeleteHighlight: (highlightIds: number[]) => void;
   onNote: (notePos: number, highlight: Highlight) => void;
+  /**
+   * Set while the reader is moving a highlight whose text was deleted: the
+   * toolbar then offers to move it onto the selected text instead
+   */
+  onMoveHighlight?: (target: HighlightDraft) => void;
   className?: string;
   children: React.ReactNode;
 }
@@ -93,7 +103,7 @@ interface ToolbarState {
 // How long the selection has to stay still before the toolbar opens
 const SELECTION_DELAY_MS = 150;
 
-const HighlightsContext = createContext<Highlight[]>([]);
+const HighlightsContext = createContext<PlacedHighlight[]>([]);
 
 /**
  * The highlights for a region showing these block ids, and a key that
@@ -104,7 +114,11 @@ export function useRegionHighlights(ids: number[]) {
     ids.includes(h.blockId),
   );
   const key = highlights
-    .map((h) => `${h.id}:${h.position?.start}-${h.position?.end}:${h.color}`)
+    .map(
+      (h) =>
+        `${h.id}:${h.position?.start}-${h.position?.end}:${h.color}` +
+        (h.edited ? ":edited" : ""),
+    )
     .join(",");
   return { highlights, key };
 }
@@ -174,6 +188,7 @@ export function HighlightLayer({
   onRecolorHighlight,
   onDeleteHighlight,
   onNote,
+  onMoveHighlight,
   className,
   children,
 }: HighlightLayerProps) {
@@ -242,19 +257,24 @@ export function HighlightLayer({
     }
 
     // Exactly saved highlights' text (as drawn): offer to recolour or remove
-    // them. Part of one is new text to highlight on top of it.
-    const same = segments.map(({ region, start, end }) => {
-      const text = regionReader(region).text();
-      const selected = trimmed(text, start, end);
-      return highlightsIn(region)
-        .filter(isSaved)
-        .sort(byDrawOrder)
-        .filter((h) => {
-          const drawn = trimmed(text, h.position.start, h.position.end);
-          return drawn.start === selected.start && drawn.end === selected.end;
-        })
-        .pop();
-    });
+    // them. Part of one is new text to highlight on top of it. While moving a
+    // highlight, any text is somewhere it could go.
+    const same = onMoveHighlight
+      ? []
+      : segments.map(({ region, start, end }) => {
+          const text = regionReader(region).text();
+          const selected = trimmed(text, start, end);
+          return highlightsIn(region)
+            .filter(isSaved)
+            .sort(byDrawOrder)
+            .filter((h) => {
+              const drawn = trimmed(text, h.position.start, h.position.end);
+              return (
+                drawn.start === selected.start && drawn.end === selected.end
+              );
+            })
+            .pop();
+        });
     const sameIds = same.flatMap((h) => (h ? [h.id] : []));
 
     setToolbar({
@@ -321,6 +341,7 @@ export function HighlightLayer({
           start < h.position.end,
       )
       .sort(byDrawOrder);
+    const drawn = regionReader(region).text();
     if (overlapping.length === 0) {
       return {
         draft: {
@@ -328,6 +349,7 @@ export function HighlightLayer({
           position: { start, end },
           color,
           blockId: regionIds(region)[0],
+          context: highlightContext(drawn, start, end),
         },
         inside,
       };
@@ -342,6 +364,7 @@ export function HighlightLayer({
         position: { start: mergedStart, end: mergedEnd },
         color,
         blockId: base.blockId,
+        context: highlightContext(drawn, mergedStart, mergedEnd),
       },
       merge: {
         baseId: base.id,
@@ -375,6 +398,22 @@ export function HighlightLayer({
     finishToolbar();
   };
 
+  // The segment where the selection ends, as the toolbar is shown there
+  const handleMoveHere = () => {
+    if (toolbar?.target.kind === "selection") {
+      const { segments } = toolbar.target;
+      const { region, start, end, text } = segments[segments.length - 1];
+      onMoveHighlight?.({
+        text,
+        position: { start, end },
+        color: selectedColor,
+        blockId: regionIds(region)[0],
+        context: highlightContext(regionReader(region).text(), start, end),
+      });
+    }
+    finishToolbar();
+  };
+
   // The note is linked to the first highlight it's made from, so new ones
   // are saved first and the note waits for them
   const handleNote = async () => {
@@ -402,7 +441,8 @@ export function HighlightLayer({
 
   const handleClick = (e: React.MouseEvent) => {
     // A drag that ends on a highlight is a selection, handled above
-    if (!canHighlight || !window.getSelection()?.isCollapsed) return;
+    if (!canHighlight || onMoveHighlight) return;
+    if (!window.getSelection()?.isCollapsed) return;
 
     const piece = (e.target as HTMLElement).closest<HTMLElement>(
       `.${HIGHLIGHT_CLASS}`,
@@ -451,6 +491,11 @@ export function HighlightLayer({
             onApplyColor={handleApplyColor}
             onDelete={handleDelete}
             onNote={handleNote}
+            onMoveHere={
+              onMoveHighlight && toolbar.target.kind === "selection"
+                ? handleMoveHere
+                : undefined
+            }
             onClose={closeToolbar}
           />,
           toolbar.home,

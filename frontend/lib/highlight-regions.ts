@@ -12,6 +12,9 @@ export const REGION_ATTR = "data-highlight-region";
 /** Class on every drawn piece of a highlight; data-highlight-id names it */
 export const HIGHLIGHT_CLASS = "lesson-highlight";
 
+/** A highlight placed on edited text (ODY-198) is drawn as `edited` */
+type DrawnHighlight = Highlight & { edited?: boolean };
+
 export type SavedHighlight = Highlight & { id: number };
 
 // A new highlight has a negative id until its save returns
@@ -51,9 +54,13 @@ export interface RegionReader {
 
 const readers = new WeakMap<Element, RegionReader>();
 
+/** Fired on a region (and bubbles) when its reader is set */
+export const READER_EVENT = "highlight-region-reader";
+
 /** For a region whose DOM isn't simply its text, such as a code editor */
 export function setRegionReader(region: Element, reader: RegionReader) {
   readers.set(region, reader);
+  region.dispatchEvent(new Event(READER_EVENT, { bubbles: true }));
 }
 
 export function regionReader(region: Element): RegionReader {
@@ -163,12 +170,15 @@ function wholeInlineCode({ node, from, to }: Piece): HTMLElement | null {
     : null;
 }
 
+const editedTitle = ({ text }: Highlight) =>
+  `This text changed after you highlighted it. You highlighted: “${text}”`;
+
 /**
  * Draws a highlight as one tagged element per text node it covers, styled to
  * read as one bar: only its two ends are rounded, and whitespace at either
  * end isn't painted.
  */
-function drawHighlight(region: HTMLElement, highlight: Highlight) {
+function drawHighlight(region: HTMLElement, highlight: DrawnHighlight) {
   const { start, end } = highlight.position ?? {};
   if (start == null || end == null || start >= end) return;
 
@@ -217,6 +227,10 @@ function drawHighlight(region: HTMLElement, highlight: Highlight) {
     element.style.backgroundColor = highlight.color;
     element.style.borderRadius = `${left} ${right} ${right} ${left}`;
     element.style.setProperty("color", "black", "important");
+    if (highlight.edited) {
+      element.dataset.highlightEdited = "";
+      element.title = editedTitle(highlight);
+    }
   }
 }
 
@@ -228,6 +242,8 @@ function clearHighlights(region: HTMLElement) {
     if (element.tagName === "CODE") {
       element.classList.remove(HIGHLIGHT_CLASS);
       delete element.dataset.highlightId;
+      delete element.dataset.highlightEdited;
+      element.removeAttribute("title");
       ["background-color", "border-radius", "color"].forEach((property) =>
         element.style.removeProperty(property),
       );
@@ -241,7 +257,10 @@ function clearHighlights(region: HTMLElement) {
 }
 
 /** Redraws a region's highlights; one inside another goes on top of it */
-export function drawHighlights(region: HTMLElement, highlights: Highlight[]) {
+export function drawHighlights(
+  region: HTMLElement,
+  highlights: DrawnHighlight[],
+) {
   clearHighlights(region);
   [...highlights]
     .sort(byDrawOrder)
@@ -252,7 +271,7 @@ export function drawHighlights(region: HTMLElement, highlights: Highlight[]) {
  * Highlights in a code editor, as ranges of the code to mark. Whitespace at
  * either end isn't painted, as in drawHighlight.
  */
-export function codeMarks(highlights: Highlight[], code: string) {
+export function codeMarks(highlights: DrawnHighlight[], code: string) {
   return [...highlights].sort(byDrawOrder).flatMap((highlight) => {
     const { start, end } = trimmed(
       code,
@@ -267,6 +286,10 @@ export function codeMarks(highlights: Highlight[], code: string) {
             className: HIGHLIGHT_CLASS,
             attributes: {
               "data-highlight-id": String(highlight.id),
+              ...(highlight.edited && {
+                "data-highlight-edited": "",
+                title: editedTitle(highlight),
+              }),
               style: `background-color: ${highlight.color}; color: black !important; border-radius: 8px`,
             },
           },

@@ -4,6 +4,7 @@ import {
   fireEvent,
   waitFor,
   act,
+  within,
 } from "@testing-library/react";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import {
@@ -54,9 +55,35 @@ jest.mock("@/components/droplets/lessons/quiz", () => ({
 jest.mock("@/components/droplets/lessons/open-ended-quiz", () => ({
   OpenEndedQuizBlock: () => null,
 }));
-jest.mock("@/components/draft/lesson/code-block-viewer", () => ({
-  CodeBlockViewer: () => null,
-}));
+// Like the real viewer, its editor sets the region's reader only once loaded
+jest.mock("@/components/draft/lesson/code-block-viewer", () => {
+  const { useEffect, useRef } = jest.requireActual("react");
+  const { regionProps, setRegionReader } = jest.requireActual(
+    "@/lib/highlight-regions",
+  );
+  return {
+    CodeBlockViewer: ({
+      code,
+      highlightIds,
+    }: {
+      code: string;
+      highlightIds: number[];
+    }) => {
+      const ref = useRef(null);
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          setRegionReader(ref.current!, {
+            offsetOf: () => 0,
+            text: () => code,
+            slice: (start: number, end: number) => code.slice(start, end),
+          });
+        }, 0);
+        return () => clearTimeout(timer);
+      }, [code]);
+      return <div ref={ref} {...regionProps(highlightIds)} />;
+    },
+  };
+});
 jest.mock("@/components/notebook/notebook-code-viewer", () => ({
   NotebookCodeViewer: () => null,
 }));
@@ -246,6 +273,7 @@ describe("LessonRenderer (viewer)", () => {
         color: "#86efac",
         blockId: 1,
         lessonId: 1,
+        context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
       });
 
       await act(async () =>
@@ -411,6 +439,8 @@ describe("LessonRenderer (viewer)", () => {
         color: "#93c5fd",
         position: { start: 6, end: 15 },
         text: "SQL joins",
+        blockId: 1,
+        context: { quote: "SQL joins", prefix: "Learn ", suffix: " today" },
       });
       await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(5));
       expect(createHighlight).not.toHaveBeenCalled();
@@ -469,6 +499,7 @@ describe("LessonRenderer (viewer)", () => {
       color: "#93c5fd",
       blockId: 1,
       lessonId: 1,
+      context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
     });
     await waitFor(() => expect(pieces(first, 100)).toHaveLength(1));
     expect(pieces(first, 4)[0]).toContainElement(
@@ -557,6 +588,7 @@ describe("LessonRenderer (viewer)", () => {
       color: "#86efac",
       position: { start: 10, end: 21 },
       blockId: 1,
+      context: { quote: "joins today", prefix: "Learn SQL ", suffix: "" },
     };
     const useInner: Highlight = {
       id: 5,
@@ -564,6 +596,7 @@ describe("LessonRenderer (viewer)", () => {
       color: "#86efac",
       position: { start: 0, end: 9 },
       blockId: 2,
+      context: { quote: "Use inner", prefix: "", suffix: " joins" },
     };
 
     it("saves a highlight in each block the selection covers, and says so once", async () => {
@@ -614,6 +647,7 @@ describe("LessonRenderer (viewer)", () => {
         color: "#86efac",
         blockId: 1,
         lessonId: 1,
+        context: { quote: "Learn SQL", prefix: "", suffix: " joins today" },
       });
     });
 
@@ -716,6 +750,11 @@ describe("LessonRenderer (viewer)", () => {
         color: "#93c5fd",
         blockId: calloutBlockId,
         lessonId: 1,
+        context: {
+          quote: "clause",
+          prefix: "Mind the ON ",
+          suffix: "",
+        },
       });
     });
 
@@ -734,6 +773,11 @@ describe("LessonRenderer (viewer)", () => {
         color: "#93c5fd",
         blockId: blockNoteIdToNumber("droplets.expandable:1"),
         lessonId: 1,
+        context: {
+          quote: "keys",
+          prefix: "Rows pair up by their ",
+          suffix: ".",
+        },
       });
     });
   });
@@ -745,5 +789,252 @@ describe("LessonRenderer (viewer)", () => {
 
     expect(screen.getByText("Enrollment Required")).toBeInTheDocument();
     expect(container.querySelector(".lesson-highlight")).toBeNull();
+  });
+
+  describe("after the author edits the lesson (ODY-198)", () => {
+    // Saved on "SQL" when block 1 read "Learn SQL joins today"
+    const sqlHighlight: Highlight = {
+      id: 4,
+      text: "SQL",
+      color: "#fff300",
+      position: { start: 6, end: 9 },
+      blockId: 1,
+      context: { quote: "SQL", prefix: "Learn ", suffix: " joins today" },
+    };
+
+    /** The lesson with block 1's content replaced */
+    const editedLesson = (content: string) =>
+      ({
+        ...lesson,
+        blocks: [{ ...lesson.blocks[0], content }, lesson.blocks[1]],
+      }) as Lesson;
+
+    const notice = () =>
+      screen.queryByRole("region", {
+        name: "Highlights no longer in this lesson",
+      });
+
+    it("follows a highlight's text when a paragraph is added above it", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          lesson={editedLesson("<p>Intro.</p><p>Learn SQL joins today</p>")}
+          initialHighlights={[sqlHighlight]}
+        />,
+      );
+
+      expect(pieces(container, 4).map((p) => p.textContent)).toEqual(["SQL"]);
+      expect(notice()).not.toBeInTheDocument();
+    });
+
+    it("draws over the new words when the highlighted words were edited, and says what they were", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          lesson={editedLesson("<p>Learn Postgres joins today</p>")}
+          initialHighlights={[sqlHighlight]}
+        />,
+      );
+
+      const [piece] = pieces(container, 4);
+      expect(piece).toHaveTextContent(/^Postgres$/);
+      expect(piece).toHaveAttribute("data-highlight-edited");
+      expect(piece).toHaveAttribute(
+        "title",
+        expect.stringContaining("You highlighted: “SQL”"),
+      );
+    });
+
+    it("re-finds an older highlight after a Classic-editor save gives its block a new id", () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          initialHighlights={[{ ...serverHighlight, blockId: 99 }]}
+        />,
+      );
+
+      expect(
+        pieces(container, 7)
+          .map((p) => p.textContent)
+          .join(""),
+      ).toBe("Use inner joins");
+    });
+
+    describe("when the highlighted text was deleted", () => {
+      const renderDeleted = (highlight: Highlight = sqlHighlight) =>
+        render(
+          <LessonRenderer
+            {...props}
+            lesson={editedLesson("<p>Learn joins today</p>")}
+            initialHighlights={[highlight]}
+          />,
+        );
+
+      it("lists it above the lesson instead of drawing it on other words", () => {
+        const { container } = renderDeleted({
+          ...sqlHighlight,
+          note: { id: 3 },
+        });
+
+        expect(pieces(container, 4)).toHaveLength(0);
+        expect(notice()).toHaveTextContent(
+          "1 of your highlights is on text that's no longer here.",
+        );
+        fireEvent.click(button("Show"));
+        const item = within(notice()!).getByRole("listitem");
+        expect(item).toHaveTextContent("“SQL”");
+        expect(item).toHaveTextContent("Has a note");
+        expect(deleteHighlight).not.toHaveBeenCalled();
+      });
+
+      it("removes it when the reader chooses to", async () => {
+        renderDeleted();
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Remove"));
+
+        await waitFor(() => expect(deleteHighlight).toHaveBeenCalledWith(4));
+        expect(notice()).not.toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith("Highlight removed");
+      });
+
+      it("moves it onto the text the reader selects, keeping its colour", async () => {
+        const { container } = renderDeleted();
+        const [first] = blocks(container);
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        expect(notice()).toHaveTextContent(
+          "Select the text this highlight should move to",
+        );
+        selectText(first, "joins");
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Move highlight here",
+          }),
+        );
+
+        expect(updateHighlight).toHaveBeenCalledWith(4, {
+          text: "joins",
+          position: { start: 6, end: 11 },
+          blockId: 1,
+          context: { quote: "joins", prefix: "Learn ", suffix: " today" },
+        });
+        expect(createHighlight).not.toHaveBeenCalled();
+        expect(pieces(first, 4).map((p) => p.textContent)).toEqual(["joins"]);
+        expect(pieces(first, 4)[0]).toHaveStyle({ backgroundColor: "#fff300" });
+        expect(notice()).not.toBeInTheDocument();
+        await waitFor(() =>
+          expect(toast.success).toHaveBeenCalledWith("Highlight moved"),
+        );
+      });
+
+      it("puts it back on the list if the move fails", async () => {
+        jest.mocked(updateHighlight).mockResolvedValue({
+          ok: false,
+          error: "Failed to update highlight",
+          data: null,
+        });
+        const { container } = renderDeleted();
+        const [first] = blocks(container);
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        selectText(first, "joins");
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Move highlight here",
+          }),
+        );
+
+        await waitFor(() =>
+          expect(toast.error).toHaveBeenCalledWith("Failed to move highlight"),
+        );
+        expect(pieces(first, 4)).toHaveLength(0);
+        expect(notice()).toBeInTheDocument();
+      });
+
+      it("offers the usual highlight colours again once the move is cancelled", async () => {
+        const { container } = renderDeleted();
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        fireEvent.click(button("Cancel"));
+        selectText(blocks(container)[0], "joins");
+
+        expect(
+          await screen.findByRole("button", { name: "Highlight Green" }),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Move highlight here" }),
+        ).not.toBeInTheDocument();
+      });
+
+      it("doesn't open the recolour toolbar when a saved highlight is clicked", async () => {
+        const { container } = render(
+          <LessonRenderer
+            {...props}
+            lesson={editedLesson("<p>Learn joins today</p>")}
+            initialHighlights={[sqlHighlight, serverHighlight]}
+          />,
+        );
+
+        fireEvent.click(button("Show"));
+        fireEvent.click(button("Move to new text"));
+        // Block 2's saved highlight, drawn while the other one is moving
+        fireEvent.click(pieces(container, 7)[0]);
+
+        expect(pieces(container, 7).length).toBeGreaterThan(0);
+        expect(
+          screen.queryByRole("toolbar", { name: "Highlight text" }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Remove highlight" }),
+        ).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("highlights on other kinds of block (ODY-198)", () => {
+    const codeBlock = {
+      id: 3,
+      __component: "droplets.code-block",
+      language: "sql",
+      code: "SELECT 1;",
+    };
+    const codeHighlight: Highlight = {
+      id: 8,
+      text: "SELECT",
+      color: "#fff300",
+      position: { start: 0, end: 6 },
+      blockId: blockNoteIdToNumber("droplets.code-block:3"),
+      context: { quote: "SELECT", prefix: "", suffix: " 1;" },
+    };
+
+    it("doesn't list a code block's highlight as deleted, though its editor loads late", async () => {
+      render(
+        <LessonRenderer
+          {...props}
+          lesson={
+            {
+              ...lesson,
+              blocks: [...(lesson.blocks as object[]), codeBlock],
+            } as unknown as Lesson
+          }
+          initialHighlights={[codeHighlight]}
+        />,
+      );
+
+      // It's placed once the editor's text is known
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+
+      expect(
+        screen.queryByRole("region", {
+          name: "Highlights no longer in this lesson",
+        }),
+      ).not.toBeInTheDocument();
+    });
   });
 });
