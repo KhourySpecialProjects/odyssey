@@ -88,6 +88,8 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
   refreshRef.current = refresh;
   // The last other editor seen holding the lock; reported after a takeover.
   const lastHolderRef = useRef<LockHolder | null>(null);
+  // The acquire-and-refresh that is running, if any.
+  const takeoverRef = useRef<Promise<void> | null>(null);
 
   const release = useCallback(async () => {
     clearTimeout(heartbeatRef.current);
@@ -113,6 +115,7 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
     reviewRef.current = { inReview: false, isReviewer: false };
     reviewKnownRef.current = false;
     lastHolderRef.current = null;
+    takeoverRef.current = null;
 
     // Recursive setTimeout prevents stacking when requests are slow
     const startHeartbeat = () => {
@@ -250,6 +253,39 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
       return true;
     };
 
+    /**
+     * Acquires the lock for a tab that is already open and, on success, runs
+     * the takeover. Only one runs at a time: the poll and the Edit button both
+     * join the one in flight, so a double click can't refresh (and remount the
+     * editor over the user's work) twice, or drop a lock the first run holds.
+     */
+    const tryTakeOver = (): Promise<void> => {
+      if (takeoverRef.current) return takeoverRef.current;
+      const run = (async () => {
+        const result = await acquireLessonLock(lessonId);
+        if (!mountedRef.current) return;
+        if (result.success) {
+          await takeOver();
+        } else if (result.error === REVIEW_FROZEN_ERROR) {
+          editRequestedRef.current = false;
+          applyReview({ inReview: true, isReviewer: false });
+        } else {
+          // Refused (another editor won the race): show who holds it.
+          if (result.lockedBy) lastHolderRef.current = result.lockedBy;
+          setState((prev) => ({
+            ...prev,
+            isLocked: true,
+            lockedBy: result.lockedBy ?? prev.lockedBy,
+            isLoading: false,
+          }));
+        }
+      })().finally(() => {
+        if (takeoverRef.current === run) takeoverRef.current = null;
+      });
+      takeoverRef.current = run;
+      return run;
+    };
+
     /** Applies a review state from the server. A null review keeps the old one. */
     const applyReview = (review: LockStatus["review"] | undefined) => {
       if (!review) return;
@@ -299,21 +335,8 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
             const canReviewerAcquire =
               inReview && isReviewer && editRequestedRef.current;
             if (!status.isLocked && (canAutoAcquire || canReviewerAcquire)) {
-              const result = await acquireLessonLock(lessonId);
+              await tryTakeOver();
               if (!mountedRef.current) return;
-              if (result.success) {
-                await takeOver();
-              } else if (result.error === REVIEW_FROZEN_ERROR) {
-                applyReview({ inReview: true, isReviewer: false });
-              } else {
-                // Acquire failed (race with another editor) — update state
-                if (result.lockedBy) lastHolderRef.current = result.lockedBy;
-                setState((prev) => ({
-                  ...prev,
-                  lockedBy: result.lockedBy ?? prev.lockedBy,
-                  isLoading: false,
-                }));
-              }
             } else if (status.isLocked) {
               if (status.lockedBy) lastHolderRef.current = status.lockedBy;
               // Only update state if lockedBy actually changed
@@ -338,23 +361,9 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
         const { inReview, isReviewer } = reviewRef.current;
         if (!inReview || !isReviewer || reviewEndedRef.current) return;
         editRequestedRef.current = true;
+        if (takeoverRef.current) return takeoverRef.current;
         if (holdsLockRef.current) return;
-        const result = await acquireLessonLock(lessonId);
-        if (!mountedRef.current) return;
-        if (result.success) {
-          await takeOver();
-        } else if (result.error === REVIEW_FROZEN_ERROR) {
-          editRequestedRef.current = false;
-          applyReview({ inReview: true, isReviewer: false });
-        } else {
-          if (result.lockedBy) lastHolderRef.current = result.lockedBy;
-          setState((prev) => ({
-            ...prev,
-            isLocked: true,
-            lockedBy: result.lockedBy ?? prev.lockedBy,
-            isLoading: false,
-          }));
-        }
+        await tryTakeOver();
       },
       async stopEditing() {
         editRequestedRef.current = false;

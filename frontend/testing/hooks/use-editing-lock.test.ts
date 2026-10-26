@@ -479,4 +479,101 @@ describe("useEditingLock: hanging and overlapping takeovers (ODY-811)", () => {
     expect(mockRefresh).toHaveBeenCalledTimes(2);
     expect(result.current.isOwnLock).toBe(true);
   });
+
+  it("does a single acquire and refresh for a double startEditing", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result } = await mount();
+
+    let both!: Promise<unknown>;
+    await act(async () => {
+      both = Promise.all([
+        result.current.startEditing(),
+        result.current.startEditing(),
+      ]);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      gate.resolve(true);
+      await both;
+    });
+
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(mockRelease).not.toHaveBeenCalled();
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("reuses the running takeover when the poll fires during startEditing's acquire", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const acquire = deferred<{ success: boolean }>();
+    const { result } = await mount();
+    mockAcquire.mockReturnValue(acquire.promise);
+
+    let started!: Promise<void>;
+    await act(async () => {
+      started = result.current.startEditing();
+      await Promise.resolve();
+    });
+    await tick();
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      acquire.resolve({ success: true });
+      await started;
+    });
+
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("does not touch the lock when unmounted during a refresh", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result, unmount } = await mount();
+
+    await act(async () => {
+      void result.current.startEditing();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    unmount();
+    mockRelease.mockClear();
+    await act(async () => {
+      gate.resolve(true);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockRelease).not.toHaveBeenCalled();
+  });
+
+  it("stays read-only when stopEditing runs during a refresh", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result } = await mount();
+
+    let started!: Promise<void>;
+    await act(async () => {
+      started = result.current.startEditing();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await result.current.stopEditing();
+    });
+    await act(async () => {
+      gate.resolve(true);
+      await started;
+    });
+    await flush();
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isRefreshing).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+  });
 });
