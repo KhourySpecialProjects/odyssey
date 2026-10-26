@@ -434,3 +434,49 @@ describe("useEditingLock: refresh on takeover (ODY-811)", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 });
+
+describe("useEditingLock: hanging and overlapping takeovers (ODY-811)", () => {
+  const OTHER = { id: 9, firstName: "Ada", lastName: "Lovelace" };
+
+  function deferred<T>() {
+    let resolve!: (v: T) => void;
+    const promise = new Promise<T>((r) => (resolve = r));
+    return { promise, resolve };
+  }
+
+  const flush = () =>
+    act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+  it("gives up on a refresh that never settles, releases the lock and retries on the next poll", async () => {
+    mockRefresh.mockReturnValueOnce(new Promise<boolean>(() => {}));
+    mockAcquire.mockResolvedValueOnce({
+      success: false,
+      error: "Lesson is locked",
+      lockedBy: OTHER,
+    });
+    const { result } = await mount();
+
+    await tick();
+    expect(result.current.isRefreshing).toBe(true);
+
+    await act(async () => {
+      jest.advanceTimersByTime(15_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.isRefreshing).toBe(false);
+    expect(result.current.isOwnLock).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+
+    await tick();
+
+    expect(mockRefresh).toHaveBeenCalledTimes(2);
+    expect(result.current.isOwnLock).toBe(true);
+  });
+});

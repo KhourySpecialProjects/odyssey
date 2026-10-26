@@ -13,6 +13,8 @@ import { REVIEW_FROZEN_ERROR } from "@/lib/review-roles";
 
 const HEARTBEAT_INTERVAL = 30_000;
 const POLL_INTERVAL = 10_000;
+// Well under the 60 s lock TTL.
+const REFRESH_TIMEOUT = 15_000;
 
 type LockHolder = NonNullable<LockStatus["lockedBy"]>;
 
@@ -209,11 +211,22 @@ export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
         isRefreshing: true,
       }));
 
+      // A refresh that never settles must not hold the lock (the heartbeat
+      // keeps it alive) or stall the poll: after the timeout it counts as failed.
       let refreshed = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        refreshed = (await refreshRef.current()) === true;
+        refreshed =
+          (await Promise.race([
+            refreshRef.current(),
+            new Promise<boolean>((resolve) => {
+              timer = setTimeout(() => resolve(false), REFRESH_TIMEOUT);
+            }),
+          ])) === true;
       } catch {
         refreshed = false;
+      } finally {
+        clearTimeout(timer);
       }
       if (!mountedRef.current) return false;
 
