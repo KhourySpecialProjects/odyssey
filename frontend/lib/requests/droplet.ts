@@ -4,7 +4,7 @@ import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
-import { deleteLesson } from "./lesson";
+import { deleteLessonRecord } from "./lesson-delete";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
@@ -279,7 +279,7 @@ export async function deepDeleteDroplet(id: number) {
 
     if (droplet.lessons) {
       for (const lesson of droplet.lessons) {
-        await deleteLesson(lesson.id, false);
+        await deleteLessonRecord(lesson.id, false);
       }
     }
 
@@ -1304,7 +1304,7 @@ async function applyLessonSync(
   const notRemoved: string[] = [];
   for (const lesson of plan.deletes) {
     try {
-      const result = await deleteLesson(lesson.liveLessonId, false);
+      const result = await deleteLessonRecord(lesson.liveLessonId, false);
       // Its catch path returns { error } without ok, so anything but ok === true failed
       if (result?.ok !== true) {
         notRemoved.push(

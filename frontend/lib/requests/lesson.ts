@@ -21,6 +21,7 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { deleteLessonRecord } from "@/lib/requests/lesson-delete";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -148,38 +149,7 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
 }
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
-  try {
-    const response = await fetch(await strapiEntryUrl("lessons", id), {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-    });
-    const body = await readJsonOrNull(response);
-    if (!response.ok || body?.error)
-      return {
-        ok: false,
-        error: body?.error?.message ?? "Failed to delete lesson.",
-        data: null,
-      };
-
-    if (revalidate) {
-      revalidateTag(CACHE_TAGS.droplets);
-      revalidateTag(CACHE_TAGS.allEnrollments);
-      revalidateTag(CACHE_TAGS.lesson);
-    }
-
-    return { ok: true, error: null, data: body?.data ?? null };
-  } catch (err) {
-    // Same result as the 404 Strapi used to return for a missing lesson.
-    if (err instanceof StrapiEntryNotFoundError) {
-      return { ok: false, error: "Not Found", data: null };
-    }
-    console.error(err);
-    return { error: "Database Error: Failed to Delete Lesson." };
-  }
+  return deleteLessonRecord(id, revalidate);
 }
 
 export async function updateLesson(

@@ -101,8 +101,8 @@ jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentByUserAndDroplet: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ function getMockedFetchAPI() {
   return jest.mocked(jest.requireMock("@/lib/utils").fetchAPI);
 }
 function getMockedDeleteLesson() {
-  return jest.requireMock("@/lib/requests/lesson").deleteLesson;
+  return jest.requireMock("@/lib/requests/lesson-delete").deleteLessonRecord;
 }
 
 // ─── getDropletById ──────────────────────────────────────────────────────────

@@ -271,6 +271,7 @@ export const MODULE_PATHS: Record<string, string> = {
   galleries: "@/lib/requests/galleries",
   groups: "@/lib/requests/groups",
   highlights: "@/lib/requests/highlights",
+  "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
   notes: "@/lib/requests/notes",
@@ -866,6 +867,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     setGroupArchivedForMe: WRITE,
   },
   highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
+  "lesson-delete": { deleteLessonRecord: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",

@@ -58,9 +58,9 @@ jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentByUserAndDroplet: jest.fn(),
 }));
 
-// Only deleteLesson: publish must not import anything else from ./lesson.
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+// Publish deletes live lessons through deleteLessonRecord only.
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function getMockedFetchAPI() {
   return jest.mocked(jest.requireMock("@/lib/utils").fetchAPI);
 }
 function getMockedDeleteLesson() {
-  return jest.requireMock("@/lib/requests/lesson").deleteLesson;
+  return jest.requireMock("@/lib/requests/lesson-delete").deleteLessonRecord;
 }
 
 // ─── ids ─────────────────────────────────────────────────────────────────────
@@ -891,9 +891,9 @@ describe("publishDraftToOriginal: lesson sync", () => {
       viewedLessons: [101],
     });
     fake.lessons.delete(fake.draftLesson("Quiz").id);
-    // Use the real deleteLesson so DELETE /api/lessons/:id reaches the fake
+    // Use the real deleteLessonRecord so DELETE /api/lessons/:id reaches the fake
     getMockedDeleteLesson().mockImplementation(
-      jest.requireActual("@/lib/requests/lesson").deleteLesson,
+      jest.requireActual("@/lib/requests/lesson-delete").deleteLessonRecord,
     );
 
     const result = await publishDraftToOriginal(DRAFT, LIVE);

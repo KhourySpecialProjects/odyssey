@@ -20,7 +20,7 @@ import {
   favoriteDroplet,
   getFavoritedDropletIds,
 } from "@/lib/requests/droplet";
-import { deleteLesson, addLesson } from "@/lib/requests/lesson";
+import { addLesson } from "@/lib/requests/lesson";
 import { getEnrollmentByUserAndDroplet } from "@/lib/requests/enrollment";
 import { revalidateTag } from "next/cache";
 import { fetchAPI } from "@/lib/utils";
@@ -44,8 +44,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -73,7 +73,9 @@ beforeEach(() => {
 describe("deepDeleteDroplet", () => {
   it("successfully deletes a droplet and revalidates tags", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       {
@@ -110,7 +112,9 @@ describe("deepDeleteDroplet", () => {
 
   it("treats an empty 204 as success (Strapi v5)", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       { id: 123, name: "Test Droplet", lessons: [{ id: 1 }] },
@@ -1203,7 +1207,9 @@ describe("publishDraftToOriginal", () => {
 
   it("successfully publishes a draft to original", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     // First fetchAPI call: getDropletById for draft droplet
     fetchAPI.mockResolvedValueOnce([
