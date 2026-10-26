@@ -221,6 +221,32 @@ const PUBLISH_DRAFT = routes([
   ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
 ]);
 
+const REVIEW_ROW = ent(5, {
+  round: 1,
+  key: "1:1:1",
+  state: "open",
+  droplet: { data: ent(1) },
+  reviewer: { data: ent(1) },
+});
+const REVIEW_COMMENT_ROW = ent(7, {
+  field: "description",
+  body: "Sentinel comment",
+  author: { data: ent(1) },
+  review: { data: ent(5, { state: "open", droplet: { data: ent(1) } }) },
+});
+
+const REVIEW_OPEN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["POST", /^\/reviews$/, { data: REVIEW_ROW }],
+]);
+
+const REVIEW_WRITE_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { value: 3 }))],
+  ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
+]);
+
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -251,6 +277,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
+  reviews: "@/lib/requests/reviews",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -662,6 +689,40 @@ export const CAPTURED: Record<string, Call<never>[]> = {
         author: { id: 1 },
         userId: 1,
       }),
+    ),
+  ]),
+  reviews: defineModule<typeof import("@/lib/requests/reviews")>([
+    call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
+    call(
+      "addComment",
+      (m) =>
+        m.addComment({
+          reviewId: 5,
+          lessonId: 6,
+          field: "blocks",
+          anchor: {
+            v: 1,
+            field: "blocks",
+            blockId: "b1",
+            quote: "q",
+            prefix: "",
+            suffix: "",
+          },
+          body: "Sentinel comment",
+        }),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("editComment", (m) => m.editComment(7, "Edited"), REVIEW_WRITE_ROUTES),
+    call("deleteComment", (m) => m.deleteComment(7), REVIEW_WRITE_ROUTES),
+    call(
+      "resolveComment",
+      (m) => m.resolveComment(7, true),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewForDroplet",
+      (m) => m.getReviewForDroplet(1),
+      REVIEW_WRITE_ROUTES,
     ),
   ]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([

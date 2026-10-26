@@ -67,6 +67,7 @@ Droplet
 ├── funFact: text
 ├── originalDropletId: integer (links draft copies to published originals)
 ├── inReview: boolean
+├── reviewRound: integer (server-owned submission count; +1 when inReview turns true)
 ├── afterReview: text
 │
 ├── lessons → many-to-many Lesson (direct relation; order comes from Lesson.orderIndex)
@@ -156,11 +157,13 @@ Group
 
 Five types, all `draftAndPublish: false`. Relations to droplet, lesson, authorized-user and criterion are one-way manyToOne; `review` has two-way `comments`, `scores` and `aiScoringRuns`.
 
-- **Review** — `round` is the droplet's submission number, shared by all reviewers. `key` = `<dropletId>:<reviewerId>:<round>` (unique index `reviews_key_uq`). `state`: open, sent, published; withdrawing keeps the open review.
+- **Review** — `round` is the droplet's submission number, shared by all reviewers. `key` = `<dropletId>:<reviewerId>:<round>` (unique index `reviews_key_uq`). `state`: open, sent, published; withdrawing keeps the open review. `round` is `droplet.reviewRound` when the review opens.
 - **ReviewComment** — `field` (blocks, description, overview, objective), JSON `anchor`, `body` (max 5000), optional `parent` for replies. No lesson means the droplet-level fields.
 - **ReviewScore** — `value` and `aiValue` are 1-5 (nullable), `criterionName` is a snapshot. `key` = `<reviewId>:<lessonId|overall>:<criterionId>` (unique index `review_scores_key_uq`). No lesson means Overall.
 - **AiScoringRun** — `runState` (queued, running, done, partial, failed), not `status`: the content-manager extension wraps any model with a `status` attribute. Stores `inputTokens`/`outputTokens` only, no `costUsd`.
 - **ReviewCriterion** — Router has no `delete` route; retire with `active: false`. `name` is unique (`review_criteria_name_uq`). `backend/src/lib/review-criteria-seed.ts` seeds five criteria on boot only when the table is empty.
+- **`droplet.reviewRound`** — The droplet lifecycle owns the counter: `beforeCreate` sets 1 if `inReview` else 0, and `beforeUpdate` adds 1 when `inReview` goes from not-true to true. Client and admin edits to it are ignored (the admin field shows as editable but a save has no effect).
+- Boot backfill (`backend/src/lib/review-round-backfill.ts`) sets in-review droplets with `reviewRound` null or below 1 to 1; it's idempotent. Adding the column leaves existing rows NULL (no column default), so code must treat NULL as 0.
 - Deleting a lesson nulls the relation on its comments and scores, so they look like Overview/Overall. Read a score's lesson from `key`, and treat `field: "blocks"` with no lesson as orphaned.
 
 ## Strapi API Patterns

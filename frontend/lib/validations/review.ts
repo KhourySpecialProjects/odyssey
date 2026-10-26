@@ -51,13 +51,15 @@ export const reviewScoreKeySchema = z.string().regex(/^\d+:(\d+|overall):\d+$/);
 /** `<dropletId>:<reviewerId>:<round>` */
 export const reviewKeySchema = z.string().regex(/^\d+:\d+:\d+$/);
 
+export const reviewCommentBodySchema = z.string().trim().min(1).max(5000);
+
 export const reviewCommentInputSchema = z
   .object({
     reviewId: id,
     lessonId: id.nullable(),
     field: reviewCommentFieldSchema,
     anchor: reviewAnchorSchema,
-    body: z.string().trim().min(1).max(5000),
+    body: reviewCommentBodySchema,
   })
   .refine((c) => c.anchor.field === c.field, {
     message: "anchor.field must match field",
