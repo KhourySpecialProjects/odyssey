@@ -402,7 +402,7 @@ export async function updateDroplet(
   },
 ) {
   return withAuth([], async (user) => {
-    const check = await checkDropletUpdate(user, id, data);
+    const check = await checkDropletUpdate(user, id, data, options);
     if (!check.ok) return { ok: false, error: check.error, data: null };
     return applyDropletUpdate(id, data, options);
   });

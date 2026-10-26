@@ -119,6 +119,20 @@ describe("updateDroplet: status changes", () => {
     expect(putBodies()).toEqual([{ inReview: false, regenerateSlug: false }]);
   });
 
+  it("refuses a Withdraw that regenerates the slug, with no PUT", async () => {
+    routeDroplet(true);
+    mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
+
+    const result = await updateDroplet(
+      1,
+      { inReview: false },
+      { regenerateSlug: true },
+    );
+
+    expect(result).toEqual({ ok: false, error: "in_review", data: null });
+    expect(putBodies()).toEqual([]);
+  });
+
   it("refuses status from a creator author and sends no PUT", async () => {
     routeDroplet(true);
     mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));

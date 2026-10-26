@@ -71,6 +71,60 @@ describe("classifyDropletChange", () => {
   });
 });
 
+describe("regenerateSlug", () => {
+  it("counts a status-only change as content when it regenerates the slug", () => {
+    expect(
+      classifyDropletChange(
+        { inReview: false },
+        { name: "N" },
+        { regenerateSlug: true },
+      ),
+    ).toEqual({ status: false, content: true, inReview: false });
+    expect(
+      classifyDropletChange(
+        { inReview: false },
+        { name: "N" },
+        { regenerateSlug: false },
+      ),
+    ).toEqual({ status: false, content: false, inReview: false });
+  });
+
+  it("refuses an author's Withdraw that regenerates the slug", async () => {
+    mockFetch.mockResolvedValue([stored({ inReview: true })]);
+    const author = user(7, [Role.ContentCreator]) as never;
+
+    expect(
+      await checkDropletUpdate(
+        author,
+        1,
+        { inReview: false },
+        { regenerateSlug: true },
+      ),
+    ).toEqual({ ok: false, error: "in_review" });
+    expect(
+      await checkDropletUpdate(
+        author,
+        1,
+        { inReview: false },
+        { regenerateSlug: false },
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it("does not stop a reviewer", async () => {
+    mockFetch.mockResolvedValue([stored({ inReview: true })]);
+
+    expect(
+      await checkDropletUpdate(
+        user(9, [Role.ContentEditor]) as never,
+        1,
+        { inReview: false },
+        { regenerateSlug: true },
+      ),
+    ).toEqual({ ok: true });
+  });
+});
+
 describe("loaders", () => {
   it("loadDropletForWrite queries fresh by numeric id", async () => {
     mockFetch.mockResolvedValue([droplet({ inReview: null })]);

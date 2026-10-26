@@ -68,9 +68,12 @@ function toShape(raw: RawDroplet): DropletForWrite {
 export function classifyDropletChange(
   data: Record<string, unknown>,
   stored: { name?: string },
+  options: { regenerateSlug?: boolean } = {},
 ): { status: boolean; content: boolean; inReview: boolean | undefined } {
   let status = false;
-  let content = false;
+  // Regenerating the slug rewrites the droplet's URL, so it is a content change
+  // even when the payload itself is only a status change.
+  let content = !!options.regenerateSlug;
   let inReview: boolean | undefined;
   for (const [key, value] of Object.entries(data)) {
     if (value === undefined) continue;
@@ -218,6 +221,7 @@ export async function checkDropletUpdate(
   user: AuthUser,
   dropletId: number,
   data: Record<string, unknown>,
+  options: { regenerateSlug?: boolean } = {},
 ): Promise<FreezeResult> {
   if (!isValidId(dropletId)) return fail("forbidden");
   try {
@@ -226,7 +230,7 @@ export async function checkDropletUpdate(
     const isAuthor = droplet.ownerIds.includes(user.id);
     if (isReviewerFor(user.roles, droplet.inReview, isAuthor)) return OK;
 
-    const change = classifyDropletChange(data, { name: droplet.name });
+    const change = classifyDropletChange(data, { name: droplet.name }, options);
     if (change.status) return fail("forbidden");
     if (!hasBypass(user) && !isAuthor) return fail("forbidden");
 
