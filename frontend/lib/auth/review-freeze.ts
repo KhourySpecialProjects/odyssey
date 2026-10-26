@@ -31,7 +31,9 @@ export type DropletForWrite = {
   ownerIds: number[];
 };
 
-const WRITE_BYPASS_ROLES = [Role.SysAdmin, Role.Faculty, Role.ContentEditor];
+// Matches who the draft layout lets in besides authors. Faculty edit only
+// their own droplets (ODY-798, 2026-10-26).
+const WRITE_BYPASS_ROLES = [Role.SysAdmin, Role.ContentEditor];
 const DROPLET_FIELDS = [
   "id",
   "name",
@@ -161,11 +163,9 @@ function checkDropletWrite(
   return OK;
 }
 
-/** Only Admin and Faculty may write to something with no droplet. */
+/** Only Admin may write to something with no droplet (it has no authors). */
 function checkOrphanWrite(user: AuthUser): FreezeResult {
-  return user.roles.includes(Role.SysAdmin) || user.roles.includes(Role.Faculty)
-    ? OK
-    : fail("forbidden");
+  return user.roles.includes(Role.SysAdmin) ? OK : fail("forbidden");
 }
 
 export async function checkDropletContentWrite(

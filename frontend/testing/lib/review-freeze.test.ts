@@ -415,7 +415,7 @@ describe("checkLessonWrite", () => {
     mockFetch.mockResolvedValue([{ id: 5, droplets: [droplet()] }]);
     expect(await checkLessonWrite(author as never, 5)).toEqual({ ok: true });
   });
-  it("a lesson with no droplet is forbidden except for Admin and Faculty", async () => {
+  it("a lesson with no droplet is forbidden except for Admin", async () => {
     mockFetch.mockResolvedValue([{ id: 5, droplets: [] }]);
     expect(await checkLessonWrite(author as never, 5)).toEqual({
       ok: false,
@@ -430,9 +430,7 @@ describe("checkLessonWrite", () => {
       ok: true,
     });
     expect(await checkLessonWrite(user(1, [Role.Faculty]) as never, 5)).toEqual(
-      {
-        ok: true,
-      },
+      { ok: false, error: "forbidden" },
     );
   });
   it("missing lesson gives Not Found; lookup failure fails closed", async () => {
@@ -461,7 +459,7 @@ describe("checkDatasetWrite", () => {
       await checkDatasetWrite(user(9, [Role.ContentEditor]) as never, 3),
     ).toEqual({ ok: true });
   });
-  it("a dataset with no droplet is forbidden except for Admin and Faculty", async () => {
+  it("a dataset with no droplet is forbidden except for Admin", async () => {
     mockFetch.mockResolvedValue([{ id: 3, droplet: null }]);
     expect(
       await checkDatasetWrite(user(7, [Role.ContentEditor]) as never, 3),

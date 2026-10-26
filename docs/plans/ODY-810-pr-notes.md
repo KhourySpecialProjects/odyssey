@@ -20,7 +20,7 @@ Checked against `git diff e6754c59 -- frontend/testing/security/server-action-au
 > - `dataset.ts`: `createDataset`, `deleteDataset`
 > - `lesson-lock.ts`: `getLessonLockStatus`
 >
-> **The rule they now enforce:** writes require an author of the droplet, or System Admin, Faculty or Content Editor. While a droplet is in review, its authors (any role) can't change content, `status` or `afterReview`, except `inReview: false` (Withdraw). Only non-author reviewers can review or publish it. `publishDraftToOriginal` also checks that the draft belongs to the original. `acquireLessonLock` now refuses callers who have no write rights or whose droplet is frozen.
+> **The rule they now enforce:** writes require an author of the droplet, or System Admin or Content Editor. Faculty skip the manual review (ODY-798): they write and publish only their own droplets, and never review someone else's. While a droplet is in review, its authors (any role) can't change content, `status` or `afterReview`, except `inReview: false` (Withdraw). Only non-author reviewers can review or publish it. `publishDraftToOriginal` also checks that the draft belongs to the original. `acquireLessonLock` now refuses callers who have no write rights or whose droplet is frozen.
 >
 > **Still open for ODY-504 (25 entries):**
 >
@@ -36,7 +36,7 @@ Checked against `git diff e6754c59 -- frontend/testing/security/server-action-au
 
 ## Known gaps (accepted, not closed here)
 
-1. **Direct publish by an Admin or Faculty author.** When a droplet is not in review, Admin and Faculty can still publish it directly, their own included (`isReviewerFor` keeps today's behavior outside review). An author can also Withdraw and then publish directly. The user accepted this; it is not closed in this ticket.
+1. **Direct publish by an Admin or Faculty author.** When a droplet is not in review, a System Admin can publish any draft directly, and a Faculty member their own (`isReviewerFor` outside review). An author can also Withdraw and then publish directly. The user accepted this; it is not closed in this ticket.
 2. **Dataset file delete by URL (ODY-510).** `lib/actions.ts#deleteDataset(fileUrl)` can delete any dataset's file by URL, and `#uploadDataset` writes a file with no droplet. Both write files only, take no droplet id, and stay in `PENDING_AUTH` for ODY-510. The record actions (`createDataset`, `deleteDataset` in `lib/requests/dataset.ts`) are frozen.
 
 Also out of scope: ODY-811 (stale copy after a lock handover between co-authors; this branch only avoids making it worse), ODY-798/804, and the rest of ODY-504.

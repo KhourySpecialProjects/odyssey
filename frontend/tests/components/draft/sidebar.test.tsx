@@ -399,10 +399,12 @@ describe("Sidebar", () => {
       [SysAdmin, "new draft in review", [publish, requestChanges]],
       [SysAdmin, "edit draft", [publishChanges]],
       [SysAdmin, "edit draft in review", [publishChanges, requestChanges]],
-      [Faculty, "new draft", [publish]],
-      [Faculty, "new draft in review", [publish, requestChanges]],
-      [Faculty, "edit draft", [publishChanges]],
-      [Faculty, "edit draft in review", [publishChanges, requestChanges]],
+      // Faculty skip the manual review and never act on someone else's
+      // droplet (ODY-798, 2026-10-26); these rows are non-authors.
+      [Faculty, "new draft", []],
+      [Faculty, "new draft in review", []],
+      [Faculty, "edit draft", []],
+      [Faculty, "edit draft in review", []],
       // Content Editors publish only once a draft has been submitted for review
       [ContentEditor, "new draft", []],
       [ContentEditor, "new draft in review", [publish, requestChanges]],
@@ -481,6 +483,12 @@ describe("Sidebar", () => {
       expect(renderActions([Faculty], draftStates["new draft"], true)).toEqual([
         publish,
       ]);
+    });
+
+    it("a Faculty author publishes their own edit draft directly", () => {
+      expect(renderActions([Faculty], draftStates["edit draft"], true)).toEqual(
+        [publishChanges],
+      );
     });
 
     it("a Content Creator author not in review still sees Submit and no Withdraw", () => {
