@@ -73,6 +73,7 @@ export const GROUP = {
 // Record<StrapiCollection, true> fails to compile when a collection is added without updating this list.
 const COLLECTIONS: Record<StrapiCollection, true> = {
   "access-requests": true,
+  "ai-scoring-runs": true,
   announcements: true,
   "authorized-users": true,
   "authorized-user-roles": true,
@@ -90,6 +91,10 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   notes: true,
   playlists: true,
   reports: true,
+  "review-comments": true,
+  "review-criteria": true,
+  "review-scores": true,
+  reviews: true,
   tags: true,
   voyages: true,
   "voyage-enrollments": true,

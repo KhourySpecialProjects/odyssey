@@ -1,0 +1,63 @@
+{
+  "kind": "collectionType",
+  "collectionName": "review_scores",
+  "info": {
+    "singularName": "review-score",
+    "pluralName": "review-scores",
+    "displayName": "Review Score",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "review_scores_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "review": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review.review",
+      "inversedBy": "scores"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson"
+    },
+    "criterion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review-criterion.review-criterion"
+    },
+    "criterionName": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "value": {
+      "type": "integer",
+      "min": 1,
+      "max": 5
+    },
+    "aiValue": {
+      "type": "integer",
+      "min": 1,
+      "max": 5
+    },
+    "aiRationale": {
+      "type": "text"
+    },
+    "key": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "regex": "^\\d+:(\\d+|overall):\\d+$"
+    }
+  }
+}

@@ -23,7 +23,8 @@ The `schema.json` is the authoritative definition of every field, relation, enum
 ```
 api/
 ├── access-request/       User requests for platform access
-├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist)
+├── ai-scoring-run/       One AI scoring attempt for a review (tokens, runState)
+├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist, review_feedback, review_published)
 ├── authorized-user/      User profiles (email-based, linked to roles)
 ├── authorized-user-role/ Role definitions (System Admin, Content Creator, etc.)
 ├── creation-request/     Requests to become a Content Creator
@@ -39,6 +40,10 @@ api/
 ├── note/                 User notes on lessons (positioned vertically)
 ├── playlist/             Curated droplet collections
 ├── report/               Bug reports
+├── review/               One reviewer's review of a droplet round
+├── review-comment/       Anchored review comments (replies via parent)
+├── review-criterion/     Rubric criteria (admin-edited, seeded)
+├── review-score/         1-5 score per lesson (or overall) and criterion
 └── tag/                  Content categorization tags
 ```
 
@@ -141,11 +146,22 @@ Group
 
 ### Other Key Types
 
-- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos. Relations to droplet, playlist, group, sender/receiver users.
+- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published. Relations to droplet, playlist, group, sender/receiver users.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
 - **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `selectedText`, `startOffset`/`endOffset` for position.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
 - **Tag** — Simple `name` field, many-to-many with Droplet.
+
+### Review (ODY-798)
+
+Five types, all `draftAndPublish: false`. Relations to droplet, lesson, authorized-user and criterion are one-way manyToOne; `review` has two-way `comments`, `scores` and `aiScoringRuns`.
+
+- **Review** — `round` is the droplet's submission number, shared by all reviewers. `key` = `<dropletId>:<reviewerId>:<round>` (unique index `reviews_key_uq`). `state`: open, sent, published; withdrawing keeps the open review.
+- **ReviewComment** — `field` (blocks, description, overview, objective), JSON `anchor`, `body` (max 5000), optional `parent` for replies. No lesson means the droplet-level fields.
+- **ReviewScore** — `value` and `aiValue` are 1-5 (nullable), `criterionName` is a snapshot. `key` = `<reviewId>:<lessonId|overall>:<criterionId>` (unique index `review_scores_key_uq`). No lesson means Overall.
+- **AiScoringRun** — `runState` (queued, running, done, partial, failed), not `status`: the content-manager extension wraps any model with a `status` attribute. Stores `inputTokens`/`outputTokens` only, no `costUsd`.
+- **ReviewCriterion** — Router has no `delete` route; retire with `active: false`. `name` is unique (`review_criteria_name_uq`). `backend/src/lib/review-criteria-seed.ts` seeds five criteria on boot only when the table is empty.
+- Deleting a lesson nulls the relation on its comments and scores, so they look like Overview/Overall. Read a score's lesson from `key`, and treat `field: "blocks"` with no lesson as orphaned.
 
 ## Strapi API Patterns
 
@@ -247,6 +263,7 @@ Seed data: `initdb/data.sql` runs on first Docker Compose startup to populate th
 
 - **Join tables renamed in v5:** `*_links` to `*_lnk`, `*_components` to `*_cmps`, `files_related_morphs` to `files_related_mph`. Index names keep the old names, and the migration is one-way. Raw SQL must use the new names; `scripts/strapi-v5-cutover/unpublished-rows/01`/`02` use the v4 names on purpose and `03` still does until playbook 2.2.
 - **No DB unique index on uid/slug fields in v5**, so two concurrent creates can race.
+- `unique: true` is app-level only (a SELECT before INSERT). For a real guard, declare a top-level `indexes` entry in schema.json (see `review-score`). Edit such schemas by hand, not in the Content-Type Builder.
 
 ## Config on v5
 

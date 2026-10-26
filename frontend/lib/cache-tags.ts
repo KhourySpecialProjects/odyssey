@@ -127,6 +127,8 @@
  *                 "groups" tag, since getUserGroups carries both.
  * favorites      Per-user tag "favorites-{userId}"                          900s
  *                 (getFavoritedDropletIds, explore hearts): favoriteDroplet
+ * review          Per-droplet tag "review-{dropletId}": no readers or        900s
+ *                 mutators yet (added by ODY-802/803/804)
  */
 
 export const CACHE_TAGS = {
@@ -166,4 +168,7 @@ export const CACHE_TAGS = {
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
+
+  // Per-droplet (scoped to one droplet)
+  review: (dropletId: number) => `review-${dropletId}`, // one droplet's review data (unused until ODY-802)
 };
