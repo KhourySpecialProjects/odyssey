@@ -874,6 +874,27 @@ describe("LessonRenderer", () => {
       expect(screen.queryByText("Text")).toBeNull();
     });
 
+    it("sets inert on the classic blocks as a DOM attribute only while read-only", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+      const { rerender } = render(
+        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+      );
+      const list = screen.getByTestId("draggable-block-list");
+      expect(list.parentElement?.hasAttribute("inert")).toBe(true);
+
+      mockUseEditingLock.mockReturnValue(
+        lockState({ inReview: false, isOwnLock: true }),
+      );
+      rerender(
+        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+      );
+      expect(
+        screen
+          .getByTestId("draggable-block-list")
+          .parentElement?.hasAttribute("inert"),
+      ).toBe(false);
+    });
+
     it("makes the BlockNote editor non-editable when frozen", () => {
       mockUseEditingLock.mockReturnValue(lockState());
 

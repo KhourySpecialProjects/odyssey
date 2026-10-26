@@ -474,6 +474,14 @@ export function LessonRenderer({
     updateBlocksBackendReload(newItems);
   };
 
+  // The classic blocks are inert while read-only. Set the attribute on the DOM
+  // node rather than as a prop: React 18 doesn't type `inert`, and the React 19
+  // runtime Next's App Router bundles treats `inert=""` as false.
+  const classicBlocksRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
+  }, [isReadOnly, editorVersion]);
+
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
 
@@ -706,12 +714,7 @@ export function LessonRenderer({
       {editorVersion === "v1" ? (
         <>
           {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
-          <div
-            className="w-full px-10 md:px-40"
-            // React 18 doesn't type `inert`; it makes the classic blocks
-            // non-interactive while read-only.
-            {...(isReadOnly ? ({ inert: "" } as object) : {})}
-          >
+          <div className="w-full px-10 md:px-40" ref={classicBlocksRef}>
             <BlockList
               blocks={blocks}
               onReorder={handleReorderSource}
