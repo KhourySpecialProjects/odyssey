@@ -8,6 +8,8 @@ import { Droplet, User } from "@/types";
 
 interface DraftLayoutShellProps {
   user: User;
+  /** The caller is an author of this droplet (any role). */
+  isAuthor: boolean;
   droplet: Pick<
     Droplet,
     | "id"
@@ -31,6 +33,7 @@ interface DraftLayoutShellProps {
 
 export function DraftLayoutShell({
   user,
+  isAuthor,
   droplet,
   availableDroplets,
   children,
@@ -57,6 +60,7 @@ export function DraftLayoutShell({
       <Sidebar
         droplet={droplet}
         user={user}
+        isAuthor={isAuthor}
         availableDroplets={availableDroplets}
         expanded={expanded}
         setExpanded={setExpanded}

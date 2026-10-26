@@ -3,6 +3,7 @@ import {
   screen,
   fireEvent,
   act,
+  cleanup,
   waitFor,
 } from "@testing-library/react";
 import { Sidebar } from "@/components/draft/sidebar";
@@ -147,6 +148,7 @@ describe("Sidebar", () => {
   });
 
   const defaultProps = {
+    isAuthor: false,
     expanded: true,
     setExpanded: jest.fn(),
     onRestartTour: jest.fn(),
@@ -368,6 +370,7 @@ describe("Sidebar", () => {
     const renderActions = (
       roles: AuthorizedUserRoleTitle[],
       droplet: object,
+      isAuthor = false,
     ) => {
       render(
         <Sidebar
@@ -375,6 +378,7 @@ describe("Sidebar", () => {
           droplet={droplet as any}
           availableDroplets={[]}
           {...defaultProps}
+          isAuthor={isAuthor}
         />,
       );
       return screen
@@ -441,6 +445,96 @@ describe("Sidebar", () => {
 
     it("shows no action buttons on a published droplet", () => {
       expect(renderActions([SysAdmin], mockPublishedDroplet)).toEqual([]);
+    });
+
+    const withdraw = ["withdrawReview", "Withdraw from review"];
+
+    it.each<[string, AuthorizedUserRoleTitle[]]>([
+      ["Content Creator", [ContentCreator]],
+      ["Content Editor", [ContentEditor]],
+      ["Faculty", [Faculty]],
+      ["System Admin", [SysAdmin]],
+    ])(
+      "a %s author of an in-review droplet sees only Withdraw",
+      (_name, roles) => {
+        expect(
+          renderActions(roles, draftStates["new draft in review"], true),
+        ).toEqual([withdraw]);
+        cleanup();
+        expect(
+          renderActions(roles, draftStates["edit draft in review"], true),
+        ).toEqual([withdraw]);
+      },
+    );
+
+    it("a non-author Content Editor sees Publish and Request changes, not Withdraw", () => {
+      expect(
+        renderActions(
+          [ContentEditor],
+          draftStates["new draft in review"],
+          false,
+        ),
+      ).toEqual([publish, requestChanges]);
+    });
+
+    it("a Faculty author still sees Publish when the droplet is not in review", () => {
+      expect(renderActions([Faculty], draftStates["new draft"], true)).toEqual([
+        publish,
+      ]);
+    });
+
+    it("a Content Creator author not in review still sees Submit and no Withdraw", () => {
+      expect(
+        renderActions([ContentCreator], draftStates["new draft"], true),
+      ).toEqual([submitForReview]);
+    });
+
+    describe("frozen sidebar", () => {
+      const inReview = draftStates["new draft in review"];
+      const renderSidebar = (
+        roles: AuthorizedUserRoleTitle[],
+        isAuthor: boolean,
+      ) =>
+        render(
+          <Sidebar
+            user={{ ...mockUser, roles } as any}
+            droplet={inReview as any}
+            availableDroplets={[]}
+            {...defaultProps}
+            isAuthor={isAuthor}
+          />,
+        );
+
+      it("hides Add lesson and Auto-format and labels the droplet for an author", () => {
+        const { container } = renderSidebar([ContentCreator], true);
+
+        expect(screen.queryByTestId("add-lesson")).toBeNull();
+        expect(container.querySelector("#tour-auto-format")).toBeNull();
+        expect(screen.getByText("In review")).toBeInTheDocument();
+      });
+
+      it("keeps Add lesson and Auto-format for a reviewer, who still sees the label", () => {
+        const { container } = renderSidebar([ContentEditor], false);
+
+        expect(screen.getByTestId("add-lesson")).toBeInTheDocument();
+        expect(container.querySelector("#tour-auto-format")).not.toBeNull();
+        expect(screen.getByText("In review")).toBeInTheDocument();
+      });
+
+      it("shows no In review label outside review", () => {
+        render(
+          <Sidebar
+            user={{ ...mockUser, roles: [ContentCreator] } as any}
+            droplet={mockDroplet as any}
+            availableDroplets={[]}
+            {...defaultProps}
+            isAuthor
+          />,
+        );
+
+        expect(screen.queryByText("In review")).toBeNull();
+        expect(screen.getByTestId("add-lesson")).toBeInTheDocument();
+      });
     });
   });
 });

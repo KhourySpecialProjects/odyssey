@@ -90,6 +90,7 @@ export default async function CheckPermission({ params, children }: Props) {
   return (
     <DraftLayoutShell
       droplet={shellDroplet}
+      isAuthor={isAuthor}
       user={user}
       availableDroplets={availableDroplets}
     >

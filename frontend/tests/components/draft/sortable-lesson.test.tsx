@@ -2,16 +2,19 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useRouter } from "next/navigation";
 
+const mockUseSortable = jest.fn();
 jest.mock("@dnd-kit/sortable", () => ({
-  useSortable: () => ({
-    attributes: {},
-    listeners: {},
-    setNodeRef: jest.fn(),
-    transform: null,
-    transition: undefined,
-    isDragging: false,
-  }),
+  useSortable: (...args: unknown[]) => mockUseSortable(...args),
 }));
+
+const sortableReturn = () => ({
+  attributes: {},
+  listeners: {},
+  setNodeRef: jest.fn(),
+  transform: null,
+  transition: undefined,
+  isDragging: false,
+});
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -96,7 +99,36 @@ describe("SortableLesson", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseSortable.mockReturnValue(sortableReturn());
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
+  });
+
+  it("shows the drag handle and enables sorting by default", () => {
+    const { container } = render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname="/draft/d/test-droplet"
+      />,
+    );
+
+    expect(container.querySelector(".cursor-grab")).not.toBeNull();
+    expect(mockUseSortable).toHaveBeenCalledWith({ id: 1, disabled: false });
+  });
+
+  it("hides the drag handle and disables sorting when dragDisabled", () => {
+    const { container } = render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname="/draft/d/test-droplet"
+        dragDisabled
+      />,
+    );
+
+    expect(container.querySelector(".cursor-grab")).toBeNull();
+    expect(mockUseSortable).toHaveBeenCalledWith({ id: 1, disabled: true });
+    expect(screen.getByText("Test Lesson")).toBeInTheDocument();
   });
 
   it("renders lesson name and correct icon based on type", () => {

@@ -73,9 +73,11 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
+import { isFrozenFor, isReviewerFor } from "@/lib/review-roles";
 
 export function Sidebar({
   user,
+  isAuthor,
   droplet,
   availableDroplets,
   expanded,
@@ -83,6 +85,8 @@ export function Sidebar({
   onRestartTour,
 }: {
   user: User;
+  /** The caller is an author of this droplet (any role). */
+  isAuthor: boolean;
   droplet: Pick<
     Droplet,
     | "id"
@@ -374,19 +378,19 @@ export function Sidebar({
   if (!user) return <UnauthorizedRoute />;
 
   const isDraft = droplet.status !== "published";
-  const isAdmin = isAuthorizedUserAdmin(user.roles);
-  const isEditor = isContentEditor(user.roles);
-  const isFaculty = isAuthorizedUserFaculty(user.roles);
   const isCreator = isContentCreator(user.roles);
-  // Admin and Faculty can publish any draft; Content Editors only once it has
-  // been submitted for review. Whoever can publish an in-review draft can also
-  // send it back with requested changes.
+  // While a droplet is in review, only a reviewer who isn't one of its authors
+  // can publish it or send it back. Outside review, Admin and Faculty can
+  // publish any draft. Authors are frozen out of editing and can withdraw.
   const canPublish =
-    isDraft && (isAdmin || isFaculty || (isEditor && droplet.inReview));
+    isDraft && isReviewerFor(user.roles, droplet.inReview, isAuthor);
   const canRequestChanges =
-    isDraft && droplet.inReview && (isAdmin || isFaculty || isEditor);
+    isDraft && !!droplet.inReview && isReviewerFor(user.roles, true, isAuthor);
+  const canWithdrawReview = isDraft && !!droplet.inReview && isAuthor;
   const canRequestReview =
     isDraft && !droplet.inReview && isCreator && !canPublish;
+  const isFrozen =
+    isDraft && isFrozenFor(user.roles, droplet.inReview, isAuthor);
 
   const actionButtons: Pick<
     Parameters<typeof ContentActionButton>[0],
@@ -404,6 +408,12 @@ export function Sidebar({
     actionButtons.push({
       actionType: "requestChanges",
       buttonText: "Request changes",
+    });
+  }
+  if (canWithdrawReview) {
+    actionButtons.push({
+      actionType: "withdrawReview",
+      buttonText: "Withdraw from review",
     });
   }
   if (canRequestReview) {
@@ -483,40 +493,42 @@ export function Sidebar({
                   <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
                 </span>
               </button>
-              <div id="tour-auto-format">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {hasAutoFormatted ? (
-                        <button
-                          aria-disabled="true"
-                          onClick={(e) => e.preventDefault()}
-                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
-                        >
-                          <IconLayoutRows className="h-5 w-5" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setShowAutoFormatConfirm(true)}
-                          disabled={isAutoFormatting}
-                          className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
-                        >
-                          {isAutoFormatting ? (
-                            <IconLoader2 className="h-5 w-5 animate-spin" />
-                          ) : (
+              {!isFrozen && (
+                <div id="tour-auto-format">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {hasAutoFormatted ? (
+                          <button
+                            aria-disabled="true"
+                            onClick={(e) => e.preventDefault()}
+                            className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                          >
                             <IconLayoutRows className="h-5 w-5" />
-                          )}
-                        </button>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {hasAutoFormatted
-                        ? "Auto-format limit reached (10/10)"
-                        : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setShowAutoFormatConfirm(true)}
+                            disabled={isAutoFormatting}
+                            className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
+                          >
+                            {isAutoFormatting ? (
+                              <IconLoader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <IconLayoutRows className="h-5 w-5" />
+                            )}
+                          </button>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {hasAutoFormatted
+                          ? "Auto-format limit reached (10/10)"
+                          : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
               <div id="tour-present">
                 <TooltipProvider>
                   <Tooltip>
@@ -594,6 +606,11 @@ export function Sidebar({
               <p className="mt-6 px-4 pb-3 text-2xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
+              {isDraft && droplet.inReview && (
+                <p className="-mt-3 px-4 pb-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  In review
+                </p>
+              )}
 
               <Link
                 id="tour-overview"
@@ -651,15 +668,17 @@ export function Sidebar({
               </AlertDialog>
 
               {/* Add lesson section */}
-              <div id="tour-add-lesson">
-                <AddLesson
-                  droplet={droplet}
-                  onAddLesson={addLessonCallback}
-                  onAddLessons={addLessonsCallback}
-                  availableDroplets={availableDroplets}
-                  currentLessonCount={dropletLessons.length}
-                />
-              </div>
+              {!isFrozen && (
+                <div id="tour-add-lesson">
+                  <AddLesson
+                    droplet={droplet}
+                    onAddLesson={addLessonCallback}
+                    onAddLessons={addLessonsCallback}
+                    availableDroplets={availableDroplets}
+                    currentLessonCount={dropletLessons.length}
+                  />
+                </div>
+              )}
 
               {/* Sortable lessons list */}
               <div id="tour-lessons-list">
@@ -679,6 +698,7 @@ export function Sidebar({
                           lesson={lesson}
                           droplet={droplet}
                           pathname={pathname}
+                          dragDisabled={isFrozen}
                         />
                       ))}
                     </ul>

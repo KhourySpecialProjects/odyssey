@@ -1120,4 +1120,103 @@ describe("ContentActionButton", () => {
       expect(mockUpdateDroplet).not.toHaveBeenCalled();
     });
   });
+
+  describe("Withdraw Action", () => {
+    const inReviewDroplet: Droplet = {
+      ...mockDroplet,
+      inReview: true,
+      afterReview: "Earlier feedback",
+    };
+
+    it("renders an outline button", () => {
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      const button = screen.getByRole("button", {
+        name: "Withdraw from review",
+      });
+      expect(button).toHaveClass("bg-white");
+      expect(button).toHaveClass("text-[#344054]");
+      expect(button).not.toHaveClass("text-white");
+    });
+
+    it("asks for confirmation before withdrawing", () => {
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+
+      expect(screen.getByText("Withdraw from review?")).toBeInTheDocument();
+      expect(screen.getByText(/you can edit it again/i)).toBeInTheDocument();
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+    });
+
+    it("sends only inReview: false, then reloads", async () => {
+      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
+
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateDroplet).toHaveBeenCalledWith(
+          inReviewDroplet.id,
+          { inReview: false },
+          { regenerateSlug: false },
+        );
+      });
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledWith("Withdrawn from review");
+        expect(window.location.reload).toHaveBeenCalled();
+      });
+    });
+
+    it("shows an error toast and does not reload when withdrawing fails", async () => {
+      mockUpdateDroplet.mockResolvedValue({
+        ok: false,
+        error: "forbidden",
+      } as any);
+
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Error withdrawing from review",
+        );
+      });
+      expect(window.location.reload).not.toHaveBeenCalled();
+    });
+  });
 });
