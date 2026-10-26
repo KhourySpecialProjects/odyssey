@@ -80,6 +80,16 @@ jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn(),
 }));
 
+jest.mock("@/components/draft/lesson/blocknote-editor", () => ({
+  BlockNoteEditor: ({ editable }: { editable: boolean }) => (
+    <div data-testid="blocknote-editor" data-editable={String(editable)} />
+  ),
+}));
+
+jest.mock("@/lib/pyodide/pyodide-context", () => ({
+  PyodideProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
@@ -88,6 +98,7 @@ jest.mock("sonner", () => ({
   toast: {
     error: jest.fn(),
     success: jest.fn(),
+    info: jest.fn(),
   },
 }));
 
@@ -818,6 +829,182 @@ describe("LessonRenderer", () => {
       expect(
         screen.getByText(/Could not resolve your user account/),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("Review freeze", () => {
+    const lockState = (over: Record<string, unknown> = {}) => ({
+      isLocked: false,
+      isOwnLock: false,
+      lockedBy: null,
+      isLoading: false,
+      error: null,
+      inReview: true,
+      isReviewer: false,
+      reviewEnded: false,
+      release: jest.fn(),
+      startEditing: jest.fn(),
+      stopEditing: jest.fn(),
+      markFrozen: jest.fn(),
+      ...over,
+    });
+
+    it("shows the frozen banner and no edit controls for an author", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "In review. Editing is paused until the reviewer sends it back.",
+      );
+      expect(screen.queryByLabelText("Edit lesson title")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Change URL" })).toBeNull();
+      expect(screen.queryByTestId("delete-lesson-button")).toBeNull();
+      expect(screen.queryByText("Classic")).toBeNull();
+      expect(screen.queryByText("BlockNote")).toBeNull();
+    });
+
+    it("hides AddLessonBlock and inerts the classic blocks when frozen", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const list = screen.getByTestId("draggable-block-list");
+      expect(list.parentElement).toHaveAttribute("inert");
+      expect(screen.queryByText("Text")).toBeNull();
+    });
+
+    it("makes the BlockNote editor non-editable when frozen", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+
+      render(
+        <LessonRenderer
+          lesson={{ ...mockLesson, blocksVersion: "v2", blocksV2: [] } as never}
+          dropletSlug="test-droplet"
+        />,
+      );
+
+      expect(screen.getByTestId("blocknote-editor")).toHaveAttribute(
+        "data-editable",
+        "false",
+      );
+    });
+
+    it("lets a reviewer start editing", async () => {
+      const startEditing = jest.fn();
+      mockUseEditingLock.mockReturnValue(
+        lockState({ isReviewer: true, startEditing }),
+      );
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "In review. This lesson is read-only while you review it.",
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+      expect(startEditing).toHaveBeenCalled();
+    });
+
+    it("lets a reviewer stop editing and hides the frozen banner", async () => {
+      const stopEditing = jest.fn();
+      mockUseEditingLock.mockReturnValue(
+        lockState({ isReviewer: true, isOwnLock: true, stopEditing }),
+      );
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(
+        screen.queryByText(/Editing is paused until the reviewer/),
+      ).toBeNull();
+      expect(screen.getByRole("button", { name: "Change URL" })).toBeVisible();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Stop editing" }),
+      );
+      expect(stopEditing).toHaveBeenCalled();
+    });
+
+    it("offers Reload when the review ended", () => {
+      mockUseEditingLock.mockReturnValue(
+        lockState({ inReview: false, reviewEnded: true }),
+      );
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "The review is over. Reload to edit the latest version.",
+      );
+      expect(screen.getByRole("button", { name: "Reload" })).toBeVisible();
+      expect(screen.queryByRole("button", { name: "Change URL" })).toBeNull();
+    });
+
+    it("shows one info toast, no error toast, and freezes on an in_review result", async () => {
+      const markFrozen = jest.fn();
+      mockUseEditingLock.mockReturnValue(
+        lockState({ inReview: false, isOwnLock: true, markFrozen }),
+      );
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "in_review",
+        data: null,
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      // Flush this editor's debounced autosave (the Preview button does the same).
+      window.dispatchEvent(new CustomEvent("flush-save-request"));
+      await waitFor(() => expect(markFrozen).toHaveBeenCalled());
+      expect(toast.info).toHaveBeenCalled();
+      // Every call carries the same id, so Sonner shows a single toast.
+      for (const call of (toast.info as jest.Mock).mock.calls) {
+        expect(call).toEqual([
+          "This droplet is in review, so your last change wasn't saved.",
+          { id: "review-frozen" },
+        ]);
+      }
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(markFrozen).toHaveBeenCalled();
+    });
+
+    it("does not show the slug-exists toast when Change URL is refused for review", async () => {
+      mockUseEditingLock.mockReturnValue(
+        lockState({ inReview: false, isOwnLock: true }),
+      );
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "in_review",
+        data: null,
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+      fireEvent.click(screen.getByRole("button", { name: "Change URL" }));
+      fireEvent.change(screen.getByPlaceholderText("e.g., my-new-url-slug"), {
+        target: { value: "new-slug" },
+      });
+      fireEvent.click(screen.getByText("Confirm"));
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalled());
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("makes no updateLesson call on mount for a read-only v1 lesson", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(updateLesson).not.toHaveBeenCalled();
+    });
+
+    it("makes no updateLesson call on mount for a read-only empty lesson", () => {
+      mockUseEditingLock.mockReturnValue(lockState());
+
+      render(
+        <LessonRenderer
+          lesson={{ ...mockLesson, blocks: [] }}
+          dropletSlug="test-droplet"
+        />,
+      );
+
+      expect(updateLesson).not.toHaveBeenCalled();
     });
   });
 });

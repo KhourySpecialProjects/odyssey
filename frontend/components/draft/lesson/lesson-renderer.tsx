@@ -44,6 +44,10 @@ import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
 import { IconLock } from "@tabler/icons-react";
+import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
+
+const REVIEW_FROZEN_TOAST =
+  "This droplet is in review, so your last change wasn't saved.";
 
 export interface BaseBlock {
   __component: string;
@@ -82,8 +86,37 @@ export function LessonRenderer({
     lockedBy,
     isLoading: lockLoading,
     error: lockError,
+    inReview = false,
+    isReviewer = false,
+    reviewEnded = false,
+    startEditing,
+    stopEditing,
+    markFrozen,
   } = useEditingLock(lesson.id);
-  const isReadOnly = lockLoading || !isOwnLock;
+  const frozen = inReview && !isReviewer;
+  const isReadOnly = lockLoading || !isOwnLock || frozen;
+
+  // Kept in refs so handleSaveResult stays stable and can cancel debounces
+  // that are created after it.
+  const markFrozenRef = useRef(markFrozen);
+  markFrozenRef.current = markFrozen;
+  const cancelSavesRef = useRef<() => void>(() => {});
+
+  /**
+   * Handles the result of every lesson write. A refused write (the droplet went
+   * into review) freezes the editor, cancels pending saves, shows one info
+   * toast and is never retried. Returns true when the result was that refusal.
+   */
+  const handleSaveResult = useCallback(
+    (response: { error?: unknown } | null | undefined) => {
+      if (response?.error !== REVIEW_FROZEN_ERROR) return false;
+      markFrozenRef.current?.();
+      cancelSavesRef.current();
+      toast.info(REVIEW_FROZEN_TOAST, { id: "review-frozen" });
+      return true;
+    },
+    [],
+  );
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(
@@ -118,6 +151,7 @@ export function LessonRenderer({
       (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
     if (
+      !isReadOnly &&
       isNew &&
       (!lesson.blocksVersion || lesson.blocksVersion === "v1") &&
       !hasSetVersionRef.current
@@ -126,11 +160,20 @@ export function LessonRenderer({
       setEditorVersion("v2");
       updateLesson(lesson.id, {
         blocksVersion: "v2",
-      }).catch(() => {
-        // Ignore errors - lesson might not be fully created yet
-      });
+      })
+        .then(handleSaveResult)
+        .catch(() => {
+          // Ignore errors - lesson might not be fully created yet
+        });
     }
-  }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
+  }, [
+    lesson.blocks,
+    lesson.blocksV2,
+    lesson.blocksVersion,
+    lesson.id,
+    isReadOnly,
+    handleSaveResult,
+  ]);
 
   const updateBlocksBackend = useCallback(
     async (blocks: Block[]) => {
@@ -140,11 +183,12 @@ export function LessonRenderer({
         { skipRevalidation: true },
       );
 
+      if (handleSaveResult(response)) return;
       if (!response || response.error || !response.ok) {
         return;
       }
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const updateBlocksV2Backend = useCallback(
@@ -155,11 +199,12 @@ export function LessonRenderer({
         { skipRevalidation: true },
       );
 
+      if (handleSaveResult(response)) return;
       if (!response || response.error || !response.ok) {
         return;
       }
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const debounceUpdateV2 = useMemo(
@@ -169,13 +214,14 @@ export function LessonRenderer({
 
   const updateBlocksBackendReload = useCallback(
     async (blocks: Block[]) => {
-      await updateLesson(
+      const response = await updateLesson(
         lesson.id,
         { blocks: blocks as unknown as BaseBlock[] },
         { reload: true },
       );
+      handleSaveResult(response);
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const deleteBlock = useCallback(
@@ -203,12 +249,12 @@ export function LessonRenderer({
   }, []);
 
   useEffect(() => {
-    if (editorVersion !== "v1") return;
+    if (editorVersion !== "v1" || isReadOnly) return;
     debounceUpdate(blocks);
     return () => {
       debounceUpdate.flush();
     };
-  }, [blocks, debounceUpdate, editorVersion]);
+  }, [blocks, debounceUpdate, editorVersion, isReadOnly]);
 
   useEffect(() => {
     setBlocks(lesson.blocks);
@@ -245,12 +291,13 @@ export function LessonRenderer({
   const updateNameBackend = useCallback(
     async (name: string) => {
       const response = await updateLesson(lesson.id, { name });
+      if (handleSaveResult(response)) return;
       if (response && !response.error) {
         const slug = response.data.attributes.slug;
         router.replace(`/draft/d/${dropletSlug}/${slug}`);
       }
     },
-    [lesson.id, dropletSlug, router],
+    [lesson.id, dropletSlug, router, handleSaveResult],
   );
 
   const handleRegenerateSlug = async () => {
@@ -263,7 +310,9 @@ export function LessonRenderer({
       { name, slug: newSlugInput.trim() },
       { regenerateSlug: false },
     );
-    if (response.ok && !response.error) {
+    if (handleSaveResult(response)) {
+      setIsPopupOpen(false);
+    } else if (response.ok && !response.error) {
       router.replace(
         `/draft/d/${dropletSlug}/${response.data.attributes.slug}`,
       );
@@ -290,16 +339,22 @@ export function LessonRenderer({
       fields: ["id"],
       populate: {},
     }).then(() => deleteLesson(lesson.id, true));
+    if (handleSaveResult(response)) return;
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
       return;
     }
-  }, [lesson.id, dropletSlug, router]);
+  }, [lesson.id, dropletSlug, router, handleSaveResult]);
 
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
     [updateNameBackend],
   );
+  cancelSavesRef.current = () => {
+    debounceUpdate.cancel();
+    debounceUpdateV2.cancel();
+    debouncedNameUpdate.cancel();
+  };
 
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
@@ -424,7 +479,65 @@ export function LessonRenderer({
 
   return (
     <>
-      {isReadOnly && lockedBy && (
+      {reviewEnded && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span className="flex-1">
+            The review is over. Reload to edit the latest version.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </Button>
+        </div>
+      )}
+      {!reviewEnded && frozen && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>{REVIEW_FROZEN_MESSAGE}</span>
+        </div>
+      )}
+      {!reviewEnded && inReview && isReviewer && !lockLoading && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          {isOwnLock ? (
+            <>
+              <span className="flex-1">
+                You&apos;re editing this lesson during its review.
+              </span>
+              <Button size="sm" variant="outline" onClick={() => stopEditing()}>
+                Stop editing
+              </Button>
+            </>
+          ) : (
+            <>
+              <span className="flex-1">
+                In review. This lesson is read-only while you review it.
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => startEditing()}
+              >
+                Edit
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+      {isReadOnly && lockedBy && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
           <IconLock className="h-4 w-4 shrink-0" />
           <span>
@@ -435,7 +548,7 @@ export function LessonRenderer({
           </span>
         </div>
       )}
-      {isReadOnly && !lockedBy && lockError && (
+      {isReadOnly && !lockedBy && lockError && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
           <IconLock className="h-4 w-4 shrink-0" />
           <span>Unable to acquire editing lock. {lockError}</span>
@@ -592,8 +705,13 @@ export function LessonRenderer({
 
       {editorVersion === "v1" ? (
         <>
-          <AddLessonBlock onAddBlock={handleAddTool} />
-          <div className="w-full px-10 md:px-40">
+          {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
+          <div
+            className="w-full px-10 md:px-40"
+            // React 18 doesn't type `inert`; it makes the classic blocks
+            // non-interactive while read-only.
+            {...(isReadOnly ? ({ inert: "" } as object) : {})}
+          >
             <BlockList
               blocks={blocks}
               onReorder={handleReorderSource}
