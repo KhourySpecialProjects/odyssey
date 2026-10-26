@@ -19,7 +19,7 @@
     "ckeditor5": "48.4.0",
     "pg": "^8.11.5",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "react-dom": "^19.3.1",
     "react-router-dom": "^6.30.3",
     "styled-components": "^6.0.0"
   },
