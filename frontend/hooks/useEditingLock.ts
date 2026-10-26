@@ -14,12 +14,26 @@ import { REVIEW_FROZEN_ERROR } from "@/lib/review-roles";
 const HEARTBEAT_INTERVAL = 30_000;
 const POLL_INTERVAL = 10_000;
 
+type LockHolder = NonNullable<LockStatus["lockedBy"]>;
+
+/**
+ * Loads the lesson's latest saved content into the editor. Resolves true when
+ * the editor now shows it, false (or throws) when it could not be loaded.
+ */
+export type RefreshLesson = () => Promise<boolean>;
+
 type EditingLockState = {
   isLocked: boolean;
   isOwnLock: boolean;
   lockedBy: LockStatus["lockedBy"];
   isLoading: boolean;
   error: string | null;
+  /** The lock is held and the latest content is loading; still read-only. */
+  isRefreshing: boolean;
+  /** This lock was taken after the page loaded, so the content was refreshed. */
+  tookOver: boolean;
+  /** Who held the lock before, when known. Meaningful only while tookOver. */
+  tookOverFrom: LockHolder | null;
   /** The lesson's droplet is in review. */
   inReview: boolean;
   /** The caller reviews it (never an author). Meaningful only while inReview. */
@@ -40,12 +54,21 @@ const INITIAL_STATE: EditingLockState = {
   lockedBy: null,
   isLoading: true,
   error: null,
+  isRefreshing: false,
+  tookOver: false,
+  tookOverFrom: null,
   inReview: false,
   isReviewer: false,
   reviewEnded: false,
 };
 
-export function useEditingLock(lessonId: number) {
+/**
+ * @param refresh Called after every lock gained once the page has loaded (poll
+ * takeover, a reviewer's Edit, taking back a lost lock). The tab stays
+ * read-only until it resolves true, so it never edits a stale copy. Only the
+ * first acquire on mount skips it: that content was rendered moments ago.
+ */
+export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
   const [state, setState] = useState<EditingLockState>(INITIAL_STATE);
   const userIdRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setTimeout>>();
@@ -59,6 +82,10 @@ export function useEditingLock(lessonId: number) {
   // unknown (the lookup failed), nothing takes the lock on its own.
   const reviewKnownRef = useRef(false);
   const actionsRef = useRef<Actions | null>(null);
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+  // The last other editor seen holding the lock; reported after a takeover.
+  const lastHolderRef = useRef<LockHolder | null>(null);
 
   const release = useCallback(async () => {
     clearTimeout(heartbeatRef.current);
@@ -83,6 +110,7 @@ export function useEditingLock(lessonId: number) {
     reviewEndedRef.current = false;
     reviewRef.current = { inReview: false, isReviewer: false };
     reviewKnownRef.current = false;
+    lastHolderRef.current = null;
 
     // Recursive setTimeout prevents stacking when requests are slow
     const startHeartbeat = () => {
@@ -119,8 +147,9 @@ export function useEditingLock(lessonId: number) {
       heartbeatRef.current = setTimeout(tick, HEARTBEAT_INTERVAL);
     };
 
-    const gainLock = () => {
+    const gainLock = (takeover?: { from: LockHolder | null }) => {
       holdsLockRef.current = true;
+      lastHolderRef.current = null;
       setState((prev) => ({
         ...prev,
         isLocked: true,
@@ -128,6 +157,9 @@ export function useEditingLock(lessonId: number) {
         lockedBy: null,
         isLoading: false,
         error: null,
+        isRefreshing: false,
+        tookOver: !!takeover,
+        tookOverFrom: takeover?.from ?? null,
       }));
       startHeartbeat();
     };
@@ -144,6 +176,7 @@ export function useEditingLock(lessonId: number) {
           isOwnLock: false,
           lockedBy: null,
           isLoading: false,
+          isRefreshing: false,
         }));
       }
       if (held) {
@@ -153,6 +186,55 @@ export function useEditingLock(lessonId: number) {
           // The lock expires on its own after 60 s without a heartbeat.
         }
       }
+    };
+
+    /**
+     * Runs after the server granted the lock to a tab whose content may be old.
+     * The lock is held (and kept alive) while the latest content loads, so no
+     * one else can write in between, but the tab stays read-only until the
+     * refresh succeeds. If it fails, the lock is released and the next poll
+     * tries again. Returns true when the tab became editable.
+     */
+    const takeOver = async (): Promise<boolean> => {
+      const from = lastHolderRef.current;
+      holdsLockRef.current = true;
+      startHeartbeat();
+      setState((prev) => ({
+        ...prev,
+        isLocked: true,
+        isOwnLock: false,
+        lockedBy: null,
+        isLoading: false,
+        error: null,
+        isRefreshing: true,
+      }));
+
+      let refreshed = false;
+      try {
+        refreshed = (await refreshRef.current()) === true;
+      } catch {
+        refreshed = false;
+      }
+      if (!mountedRef.current) return false;
+
+      // The lock was dropped meanwhile (lost heartbeat, frozen, review ended).
+      if (!holdsLockRef.current) {
+        setState((prev) => ({ ...prev, isRefreshing: false }));
+        return false;
+      }
+      const { inReview, isReviewer } = reviewRef.current;
+      if (!refreshed || (inReview && !isReviewer) || reviewEndedRef.current) {
+        await dropLock();
+        if (!refreshed && mountedRef.current) {
+          setState((prev) => ({
+            ...prev,
+            error: "Couldn't load the latest version of this lesson.",
+          }));
+        }
+        return false;
+      }
+      gainLock({ from });
+      return true;
     };
 
     /** Applies a review state from the server. A null review keeps the old one. */
@@ -207,11 +289,12 @@ export function useEditingLock(lessonId: number) {
               const result = await acquireLessonLock(lessonId);
               if (!mountedRef.current) return;
               if (result.success) {
-                gainLock();
+                await takeOver();
               } else if (result.error === REVIEW_FROZEN_ERROR) {
                 applyReview({ inReview: true, isReviewer: false });
               } else {
                 // Acquire failed (race with another editor) — update state
+                if (result.lockedBy) lastHolderRef.current = result.lockedBy;
                 setState((prev) => ({
                   ...prev,
                   lockedBy: result.lockedBy ?? prev.lockedBy,
@@ -219,6 +302,7 @@ export function useEditingLock(lessonId: number) {
                 }));
               }
             } else if (status.isLocked) {
+              if (status.lockedBy) lastHolderRef.current = status.lockedBy;
               // Only update state if lockedBy actually changed
               setState((prev) => {
                 if (prev.lockedBy?.id === status.lockedBy?.id) return prev;
@@ -245,11 +329,12 @@ export function useEditingLock(lessonId: number) {
         const result = await acquireLessonLock(lessonId);
         if (!mountedRef.current) return;
         if (result.success) {
-          gainLock();
+          await takeOver();
         } else if (result.error === REVIEW_FROZEN_ERROR) {
           editRequestedRef.current = false;
           applyReview({ inReview: true, isReviewer: false });
         } else {
+          if (result.lockedBy) lastHolderRef.current = result.lockedBy;
           setState((prev) => ({
             ...prev,
             isLocked: true,
@@ -327,6 +412,7 @@ export function useEditingLock(lessonId: number) {
           applyReview({ inReview: true, isReviewer: false });
           setState((prev) => ({ ...prev, isLoading: false, error: null }));
         } else {
+          if (result.lockedBy) lastHolderRef.current = result.lockedBy;
           setState((prev) => ({
             ...prev,
             isLocked: true,
