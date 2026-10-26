@@ -34,6 +34,29 @@ const {
 const { createEnrollmentDirect } = require("../../lib/requests/enrollment");
 const { enrollInPlaylist } = require("../../lib/requests/playlist-enrollment");
 const { revalidateTag } = require("next/cache");
+const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
+const { CACHE_TAGS } = require("../../lib/cache-tags");
+const {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+} = require("../../lib/strapi-document-id");
+
+// Re-installs the global documentId mock after jest.resetAllMocks() wipes it.
+const { installDocumentIdMock } = require("../../lib/testing/document-id-mock");
+// Non-identity mapping (5 -> "doc5") to prove documentIds reach the request body.
+const useDocPrefixedIds = () => {
+  const toDoc = (ref) =>
+    ref && typeof ref === "object" && ref.documentId
+      ? ref.documentId
+      : "doc" + (typeof ref === "object" ? ref.id : ref);
+  resolveDocumentId.mockImplementation(async (_c, ref) => toDoc(ref));
+  resolveDocumentIds.mockImplementation(async (_c, refs) => refs.map(toDoc));
+  strapiEntryUrl.mockImplementation(
+    async (collection, ref) =>
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${collection}/${toDoc(ref)}`,
+  );
+};
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -95,6 +118,7 @@ beforeEach(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  installDocumentIdMock();
   process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
   process.env.STRAPI_ACCESS_TOKEN = "test-token";
 });
@@ -587,12 +611,12 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockUpdatedGroup);
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              members: { connect: [10, 11] },
+              members: { connect: ["doc10", "doc11"] },
             },
           }),
         },
@@ -616,12 +640,12 @@ describe("Groups Tests", () => {
       await updateGroupMembers(groupId, updates);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              managers: { disconnect: [15] },
+              managers: { disconnect: ["doc15"] },
             },
           }),
         },
@@ -640,13 +664,13 @@ describe("Groups Tests", () => {
       await updateGroupMembers(groupId, updates);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              admins: { connect: [20] },
-              members: { disconnect: [5] },
+              admins: { connect: ["doc20"] },
+              members: { disconnect: ["doc5"] },
             },
           }),
         },
@@ -689,12 +713,12 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockUpdatedGroup);
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              members: { connect: userIds },
+              members: { connect: userIds.map((id) => `doc${id}`) },
             },
           }),
         },
@@ -711,12 +735,12 @@ describe("Groups Tests", () => {
       await addGroupMembers(groupId, userIds, role);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              admins: { connect: userIds },
+              admins: { connect: userIds.map((id) => `doc${id}`) },
             },
           }),
         },
@@ -752,12 +776,12 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockUpdatedGroup);
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              members: { disconnect: userIds },
+              members: { disconnect: userIds.map((id) => `doc${id}`) },
             },
           }),
         },
@@ -774,12 +798,12 @@ describe("Groups Tests", () => {
       await removeGroupMembers(groupId, userIds, role);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: JSON.stringify({
             data: {
-              managers: { disconnect: userIds },
+              managers: { disconnect: userIds.map((id) => `doc${id}`) },
             },
           }),
         },
@@ -826,16 +850,20 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockUpdatedGroup);
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
-          body: expect.stringContaining(`"members":{"disconnect":[${userId}]}`),
+          body: expect.stringContaining(
+            `"members":{"disconnect":["doc${userId}"]}`,
+          ),
         },
       });
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
-          body: expect.stringContaining(`"managers":{"connect":[${userId}]}`),
+          body: expect.stringContaining(
+            `"managers":{"connect":["doc${userId}"]}`,
+          ),
         },
       });
     });
@@ -851,16 +879,20 @@ describe("Groups Tests", () => {
       await changeGroupMemberRole(groupId, userId, fromRole, toRole);
 
       expect(revalidateTag).toHaveBeenCalledWith("groups");
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
-          body: expect.stringContaining(`"admins":{"disconnect":[${userId}]}`),
+          body: expect.stringContaining(
+            `"admins":{"disconnect":["doc${userId}"]}`,
+          ),
         },
       });
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
-          body: expect.stringContaining(`"members":{"connect":[${userId}]}`),
+          body: expect.stringContaining(
+            `"members":{"connect":["doc${userId}"]}`,
+          ),
         },
       });
     });
@@ -925,20 +957,20 @@ describe("Groups Tests", () => {
         "A test group description",
       );
       expect(actualBody.data).toHaveProperty("semester", "Fall 2023");
-      expect(actualBody.data).toHaveProperty("creator", 5);
+      expect(actualBody.data).toHaveProperty("creator", "doc5");
       expect(actualBody.data).toHaveProperty(
         "slug",
         expect.stringMatching(/test-group-\d+/),
       );
 
-      expect(actualBody.data.admins).toHaveProperty("set", [10, 11]);
-      expect(actualBody.data.managers).toHaveProperty("set", [12]);
-      expect(actualBody.data.members.set).toEqual([{ id: 20 }, { id: 21 }]);
+      expect(actualBody.data.admins).toHaveProperty("set", ["doc10", "doc11"]);
+      expect(actualBody.data.managers).toHaveProperty("set", ["doc12"]);
+      expect(actualBody.data.members.set).toEqual(["doc20", "doc21"]);
 
       expect(actualBody.data.droplets).toHaveProperty("connect");
-      expect(actualBody.data.droplets.connect).toEqual([{ id: 1 }, { id: 2 }]);
+      expect(actualBody.data.droplets.connect).toEqual(["doc1", "doc2"]);
       expect(actualBody.data.playlists).toHaveProperty("connect");
-      expect(actualBody.data.playlists.connect).toEqual([{ id: 3 }, { id: 4 }]);
+      expect(actualBody.data.playlists.connect).toEqual(["doc3", "doc4"]);
     });
 
     it("should use default semester when not provided", async () => {
@@ -964,7 +996,7 @@ describe("Groups Tests", () => {
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
       expect(requestBody.data).toHaveProperty("groupName", "Minimal Group");
       expect(requestBody.data).toHaveProperty("semester", "Open Membership");
-      expect(requestBody.data).toHaveProperty("creator", 5);
+      expect(requestBody.data).toHaveProperty("creator", "doc5");
       expect(requestBody.data).not.toHaveProperty("droplets");
       expect(requestBody.data).not.toHaveProperty("playlists");
     });
@@ -985,7 +1017,7 @@ describe("Groups Tests", () => {
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
-      expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
+      expect(requestBody.data.members.set).toEqual(["doc30", "doc31"]);
     });
 
     it("should handle errors during group creation", async () => {
@@ -1184,7 +1216,7 @@ describe("Groups Tests", () => {
 
       expect(result).toEqual(mockUpdatedGroup);
 
-      expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
+      expect(fetchAPI).toHaveBeenCalledWith(`/groups/doc${groupId}`, {
         options: {
           method: "PUT",
           body: expect.any(String),
@@ -1203,11 +1235,11 @@ describe("Groups Tests", () => {
       expect(requestBody.data).toHaveProperty("semester", "Spring 2024");
       expect(requestBody.data).toHaveProperty("isArchived", true);
 
-      expect(requestBody.data.admins.set).toEqual([{ id: 10 }, { id: 11 }]);
-      expect(requestBody.data.managers.set).toEqual([{ id: 12 }]);
-      expect(requestBody.data.members.set).toEqual([{ id: 20 }, { id: 21 }]);
-      expect(requestBody.data.droplets.set).toEqual([{ id: 1 }, { id: 2 }]);
-      expect(requestBody.data.playlists.set).toEqual([{ id: 3 }, { id: 4 }]);
+      expect(requestBody.data.admins.set).toEqual(["doc10", "doc11"]);
+      expect(requestBody.data.managers.set).toEqual(["doc12"]);
+      expect(requestBody.data.members.set).toEqual(["doc20", "doc21"]);
+      expect(requestBody.data.droplets.set).toEqual(["doc1", "doc2"]);
+      expect(requestBody.data.playlists.set).toEqual(["doc3", "doc4"]);
     });
 
     it("should update only specified fields", async () => {
@@ -1272,7 +1304,7 @@ describe("Groups Tests", () => {
       expect(revalidateTag).toHaveBeenCalledWith("groups");
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
-      expect(requestBody.data.members.set).toEqual([{ id: 101 }, { id: 102 }]);
+      expect(requestBody.data.members.set).toEqual(["doc101", "doc102"]);
     });
 
     it("should handle errors during update", async () => {
@@ -1400,6 +1432,8 @@ describe("Groups Tests", () => {
 
       process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
+      // resetAllMocks wipes the global documentId mock
+      installDocumentIdMock();
     });
 
     it("should update existing due dates if they already exist", async () => {
@@ -1429,7 +1463,7 @@ describe("Groups Tests", () => {
 
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
-        expect.stringContaining("/api/due-dates/201"),
+        expect.stringContaining("/api/due-dates/doc201"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -1510,7 +1544,7 @@ describe("Groups Tests", () => {
         // POST calls — first POST succeeds, second fails
         if (options?.method === "POST") {
           const body = JSON.parse(options.body);
-          if (body.data.authorized_user === 10) {
+          if (body.data.authorized_user === "doc10") {
             return { ok: true };
           } else {
             return { ok: false, text: async () => "Server error" };
@@ -1559,6 +1593,8 @@ describe("Groups Tests", () => {
 
       process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
+      // resetAllMocks wipes the global documentId mock
+      installDocumentIdMock();
     });
 
     it("should create new due dates when none exist", async () => {
@@ -1644,7 +1680,7 @@ describe("Groups Tests", () => {
         // POST calls — first POST succeeds, second fails
         if (options?.method === "POST") {
           const body = JSON.parse(options.body);
-          if (body.data.authorized_user === 10) {
+          if (body.data.authorized_user === "doc10") {
             return { ok: true };
           } else {
             return { ok: false, text: async () => "Server error" };
@@ -2119,6 +2155,26 @@ describe("deleteGroup", () => {
     expect(revalidateTag).toHaveBeenCalledWith("groups");
   });
 
+  it("treats an empty 204 as success (Strapi v5)", async () => {
+    fetchAPI.mockResolvedValueOnce([
+      { id: 123, groupName: "Test Group", members: [{ id: 10 }] },
+    ]);
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    const result = await deleteGroup(123);
+
+    expect(result).toEqual({ ok: true, error: null, data: null });
+    expect(revalidateTag).toHaveBeenCalledTimes(4);
+    for (const tag of [
+      CACHE_TAGS.authors,
+      CACHE_TAGS.allGroups,
+      CACHE_TAGS.allDueDates,
+      CACHE_TAGS.allUserDashboards,
+    ]) {
+      expect(revalidateTag).toHaveBeenCalledWith(tag);
+    }
+  });
+
   it("handles group deletion failure", async () => {
     const mockResponse = { ok: false };
     fetchAPI.mockResolvedValueOnce(mockResponse);
@@ -2201,6 +2257,217 @@ describe("archiveGroup", () => {
   });
 });
 
+describe("documentId handling (ODY-601)", () => {
+  beforeEach(() => {
+    useDocPrefixedIds();
+  });
+
+  it("updateGroupMembers puts to the group documentId and sends user documentIds", async () => {
+    fetchAPI.mockResolvedValueOnce({ id: 1 });
+
+    await updateGroupMembers(1, {
+      disconnect: { role: "members", userIds: [5] },
+      connect: { role: "admins", userIds: [6, 7] },
+    });
+
+    expect(resolveDocumentId).toHaveBeenCalledWith("groups", 1);
+    expect(resolveDocumentIds).toHaveBeenCalledWith("authorized-users", [6, 7]);
+    expect(fetchAPI).toHaveBeenCalledWith("/groups/doc1", {
+      options: {
+        method: "PUT",
+        body: JSON.stringify({
+          data: {
+            admins: { connect: ["doc6", "doc7"] },
+            members: { disconnect: ["doc5"] },
+          },
+        }),
+      },
+    });
+  });
+
+  it("createGroup sends documentIds for creator and every relation", async () => {
+    fetchAPI.mockResolvedValueOnce({ id: 9 });
+
+    await createGroup(5, {
+      groupName: "G",
+      initialMembers: { admins: [1], managers: [2], memberIds: [3] },
+      droplets: [4],
+      playlists: [5],
+      voyages: [6],
+    });
+
+    const body = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
+    expect(body.data.creator).toBe("doc5");
+    expect(body.data.admins).toEqual({ set: ["doc1"] });
+    expect(body.data.managers).toEqual({ set: ["doc2"] });
+    expect(body.data.members).toEqual({ set: ["doc3"] });
+    expect(body.data.droplets).toEqual({ connect: ["doc4"] });
+    expect(body.data.playlists).toEqual({ connect: ["doc5"] });
+    expect(body.data.voyages).toEqual({ connect: ["doc6"] });
+  });
+
+  it("updateGroup resolves relations from numeric ids and ignores client documentIds", async () => {
+    fetchAPI.mockResolvedValueOnce({ id: 1 });
+
+    await updateGroup(1, {
+      memberIds: [20],
+      droplets: [{ id: 1, documentId: "forgedDroplet" }, { id: 2 }],
+      playlists: [{ id: 4, documentId: "forgedPlaylist" }],
+      voyages: [{ id: 3, documentId: "forgedVoyage" }],
+    });
+
+    expect(fetchAPI.mock.calls[0][0]).toBe("/groups/doc1");
+    const body = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
+    expect(body.data.members.set).toEqual(["doc20"]);
+    expect(body.data.droplets.set).toEqual(["doc1", "doc2"]);
+    expect(body.data.playlists.set).toEqual(["doc4"]);
+    expect(body.data.voyages.set).toEqual(["doc3"]);
+  });
+
+  it("assignDropletDueDate resolves the create body from numeric ids and ignores client documentIds", async () => {
+    fetchAPI.mockResolvedValueOnce([]);
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    const group = {
+      id: 1,
+      documentId: "groupDoc",
+      members: [{ id: 10, documentId: "userDoc" }],
+    };
+    const result = await assignDropletDueDate("2023-12-31", group, {
+      id: 101,
+      documentId: "dropletDoc",
+    });
+
+    expect(result).toEqual({ success: true });
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.data).toEqual({
+      dueDate: "2023-12-31",
+      authorized_user: "doc10",
+      droplet: "doc101",
+      group: "doc1",
+    });
+  });
+
+  it("assignPlaylistDueDate resolves bare numeric ids to documentIds in the create body", async () => {
+    fetchAPI.mockResolvedValueOnce([]);
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    await assignPlaylistDueDate(
+      null,
+      { id: 1, members: [{ id: 10 }] },
+      { id: 201 },
+    );
+
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.data).toEqual({
+      dueDate: null,
+      authorized_user: "doc10",
+      playlist: "doc201",
+      group: "doc1",
+    });
+  });
+
+  it("assignDropletDueDate updates an existing due date by its documentId without a lookup", async () => {
+    fetchAPI.mockResolvedValueOnce([
+      { id: 201, documentId: "ddDoc", authorized_user: { id: 10 } },
+    ]);
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    await assignDropletDueDate(
+      "2023-12-31",
+      { id: 1, members: [{ id: 10 }] },
+      { id: 101 },
+    );
+
+    expect(global.fetch.mock.calls[0][0]).toBe(
+      "http://test-api-url/api/due-dates/ddDoc",
+    );
+    expect(resolveDocumentId).not.toHaveBeenCalledWith(
+      "due-dates",
+      expect.anything(),
+    );
+  });
+
+  it("assignDropletDueDate treats a missing relation target like a failed create", async () => {
+    const {
+      StrapiEntryNotFoundError,
+    } = require("../../lib/strapi-document-id");
+    fetchAPI.mockResolvedValueOnce([]);
+    resolveDocumentId.mockRejectedValue(new StrapiEntryNotFoundError("gone"));
+
+    const result = await assignDropletDueDate(
+      "2023-12-31",
+      { id: 1, members: [{ id: 10 }] },
+      { id: 101 },
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to process due dates for some users",
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("archiveGroup ignores a mismatched client documentId and writes to the fetched group", async () => {
+    getCurrentUser.mockResolvedValue({ email: "test@example.com" });
+    getAuthorizedUserByEmail.mockResolvedValue({ id: 5 });
+    fetchAPI.mockResolvedValueOnce({
+      id: 10,
+      documentId: "fetchedGroupDoc",
+      creator: { id: 5 },
+      admins: [],
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true, text: async () => "" });
+
+    const result = await archiveGroup(
+      { id: 10, documentId: "someoneElsesGroupDoc", groupName: "G" },
+      true,
+    );
+
+    expect(result).toEqual({ success: true });
+    // The authorization read is addressed by numeric id, never the client's
+    // documentId, and the PUT goes to the row that was just authorized.
+    expect(fetchAPI.mock.calls[0][0]).toBe("/groups/doc10");
+    expect(global.fetch.mock.calls[0][0]).toBe(
+      "http://test-api-url/api/groups/fetchedGroupDoc",
+    );
+    expect(JSON.stringify(global.fetch.mock.calls)).not.toContain(
+      "someoneElsesGroupDoc",
+    );
+  });
+
+  it("deleteGroup deletes by the fetched group's documentId", async () => {
+    fetchAPI.mockResolvedValueOnce([{ id: 123, documentId: "groupDoc" }]);
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 123 } }),
+    });
+
+    await deleteGroup(123);
+
+    expect(global.fetch.mock.calls[0][0]).toBe(
+      "http://test-api-url/api/groups/groupDoc",
+    );
+  });
+
+  it("deleteGroup returns the 404-style result when the group no longer exists", async () => {
+    const {
+      StrapiEntryNotFoundError,
+    } = require("../../lib/strapi-document-id");
+    fetchAPI.mockResolvedValueOnce([]);
+    strapiEntryUrl.mockRejectedValueOnce(new StrapiEntryNotFoundError("gone"));
+
+    const result = await deleteGroup(123);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete group.",
+      data: null,
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
 describe("setGroupArchivedForMe", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -2254,11 +2521,11 @@ describe("setGroupArchivedForMe", () => {
 
     expect(result).toEqual({ success: true });
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/groups/10"),
+      expect.stringContaining("/api/groups/doc10"),
       expect.objectContaining({
         method: "PUT",
         body: JSON.stringify({
-          data: { users_archived: { connect: [5] } },
+          data: { users_archived: { connect: ["doc5"] } },
         }),
       }),
     );
@@ -2277,11 +2544,11 @@ describe("setGroupArchivedForMe", () => {
 
     expect(result).toEqual({ success: true });
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/groups/10"),
+      expect.stringContaining("/api/groups/doc10"),
       expect.objectContaining({
         method: "PUT",
         body: JSON.stringify({
-          data: { users_archived: { disconnect: [5] } },
+          data: { users_archived: { disconnect: ["doc5"] } },
         }),
       }),
     );
@@ -2300,7 +2567,7 @@ describe("setGroupArchivedForMe", () => {
 
     const [, fetchOptions] = global.fetch.mock.calls[0];
     const body = JSON.parse(fetchOptions.body);
-    expect(body.data.users_archived.connect).toEqual([2]);
+    expect(body.data.users_archived.connect).toEqual(["doc2"]);
   });
 
   it("returns a failure and does not revalidate when Strapi rejects the PUT", async () => {
