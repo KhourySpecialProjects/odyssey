@@ -497,6 +497,68 @@ export interface ApiAccessRequestAccessRequest
   };
 }
 
+export interface ApiAiScoringRunAiScoringRun
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'ai_scoring_runs';
+  info: {
+    description: '';
+    displayName: 'AI Scoring Run';
+    pluralName: 'ai-scoring-runs';
+    singularName: 'ai-scoring-run';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    criteria: Schema.Attribute.JSON;
+    error: Schema.Attribute.Text;
+    failedLessons: Schema.Attribute.JSON;
+    finishedAt: Schema.Attribute.DateTime;
+    inputTokens: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-scoring-run.ai-scoring-run'
+    > &
+      Schema.Attribute.Private;
+    model: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    outputTokens: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    review: Schema.Attribute.Relation<'manyToOne', 'api::review.review'>;
+    runState: Schema.Attribute.Enumeration<
+      ['queued', 'running', 'done', 'partial', 'failed']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'queued'>;
+    startedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiAnnouncementAnnouncement
   extends Struct.CollectionTypeSchema {
   collectionName: 'announcements';
@@ -539,7 +601,16 @@ export interface ApiAnnouncementAnnouncement
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
-      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
+      [
+        'playlist',
+        'droplet',
+        'friend',
+        'system',
+        'group',
+        'kudos',
+        'review_feedback',
+        'review_published',
+      ]
     > &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
@@ -1464,6 +1535,224 @@ export interface ApiReportReport extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiReviewCommentReviewComment
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'review_comments';
+  info: {
+    description: '';
+    displayName: 'Review Comment';
+    pluralName: 'review-comments';
+    singularName: 'review-comment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    anchor: Schema.Attribute.JSON & Schema.Attribute.Required;
+    author: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    body: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 5000;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    field: Schema.Attribute.Enumeration<
+      ['blocks', 'description', 'overview', 'objective']
+    > &
+      Schema.Attribute.Required;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review-comment.review-comment'
+    > &
+      Schema.Attribute.Private;
+    parent: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::review-comment.review-comment'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    resolvedAt: Schema.Attribute.DateTime;
+    review: Schema.Attribute.Relation<'manyToOne', 'api::review.review'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiReviewCriterionReviewCriterion
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'review_criteria';
+  info: {
+    description: '';
+    displayName: 'Review Criterion';
+    pluralName: 'review-criteria';
+    singularName: 'review-criterion';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    active: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    lessonDescription: Schema.Attribute.Text & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review-criterion.review-criterion'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    order: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    overallDescription: Schema.Attribute.Text & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiReviewScoreReviewScore extends Struct.CollectionTypeSchema {
+  collectionName: 'review_scores';
+  info: {
+    description: '';
+    displayName: 'Review Score';
+    pluralName: 'review-scores';
+    singularName: 'review-score';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    aiRationale: Schema.Attribute.Text;
+    aiValue: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    criterion: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::review-criterion.review-criterion'
+    >;
+    criterionName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review-score.review-score'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    review: Schema.Attribute.Relation<'manyToOne', 'api::review.review'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    value: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+  };
+}
+
+export interface ApiReviewReview extends Struct.CollectionTypeSchema {
+  collectionName: 'reviews';
+  info: {
+    description: '';
+    displayName: 'Review';
+    pluralName: 'reviews';
+    singularName: 'review';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    aiScoringRuns: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-scoring-run.ai-scoring-run'
+    >;
+    comments: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review-comment.review-comment'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review.review'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    reviewer: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    round: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    scores: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review-score.review-score'
+    >;
+    sentAt: Schema.Attribute.DateTime;
+    state: Schema.Attribute.Enumeration<['open', 'sent', 'published']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'open'>;
+    summaryNote: Schema.Attribute.Text;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiTagTag extends Struct.CollectionTypeSchema {
   collectionName: 'tags';
   info: {
@@ -2194,6 +2483,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
+      'api::ai-scoring-run.ai-scoring-run': ApiAiScoringRunAiScoringRun;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
@@ -2211,6 +2501,10 @@ declare module '@strapi/strapi' {
       'api::note.note': ApiNoteNote;
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
+      'api::review-comment.review-comment': ApiReviewCommentReviewComment;
+      'api::review-criterion.review-criterion': ApiReviewCriterionReviewCriterion;
+      'api::review-score.review-score': ApiReviewScoreReviewScore;
+      'api::review.review': ApiReviewReview;
       'api::tag.tag': ApiTagTag;
       'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
       'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;

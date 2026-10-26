@@ -19,6 +19,12 @@ const ACCESS_REQUEST_UID = 'api::access-request.access-request';
 const VOYAGE_UID = 'api::voyage.voyage';
 const USER_UID = 'api::authorized-user.authorized-user';
 
+const REVIEW_CRITERION_UID = 'api::review-criterion.review-criterion';
+const REVIEW_UID = 'api::review.review';
+const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
+const REVIEW_SCORE_UID = 'api::review-score.review-score';
+const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
   slug: SLUG_PLACEHOLDER,
@@ -63,8 +69,39 @@ const userData = (overrides = {}) => ({
   ...overrides,
 });
 
+// Distinct numeric ids per call keep the review and score keys unique.
+let keyCounter = 1000;
+
+const reviewData = (overrides = {}) => ({
+  round: 1,
+  key: `${++keyCounter}:1:1`,
+  ...overrides,
+});
+
+const reviewScoreData = (overrides = {}) => ({
+  criterionName: 'Tone',
+  key: `${++keyCounter}:overall:1`,
+  ...overrides,
+});
+
+const reviewCriterionData = (overrides = {}) => ({
+  name: unique('Criterion'),
+  lessonDescription: 'Lesson question',
+  overallDescription: 'Overall question',
+  order: 1,
+  ...overrides,
+});
+
 module.exports = {
   unique,
+  REVIEW_CRITERION_UID,
+  REVIEW_UID,
+  REVIEW_COMMENT_UID,
+  REVIEW_SCORE_UID,
+  AI_SCORING_RUN_UID,
+  reviewData,
+  reviewScoreData,
+  reviewCriterionData,
   SLUG_PLACEHOLDER,
   DROPLET_UID,
   LESSON_UID,

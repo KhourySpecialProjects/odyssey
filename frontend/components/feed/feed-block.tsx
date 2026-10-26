@@ -11,6 +11,8 @@ import {
   Info,
   Check,
   RotateCcw,
+  MessageSquareText,
+  BadgeCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
@@ -64,6 +66,14 @@ export function FeedBlock({
     system: {
       icon: <Info size={18} />,
       label: "System",
+    },
+    review_feedback: {
+      icon: <MessageSquareText size={18} />,
+      label: "Review feedback",
+    },
+    review_published: {
+      icon: <BadgeCheck size={18} />,
+      label: "Review published",
     },
   };
 

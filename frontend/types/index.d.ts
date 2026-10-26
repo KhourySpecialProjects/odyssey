@@ -24,7 +24,9 @@ export type AnnouncementType =
   | "friend"
   | "system"
   | "group"
-  | "kudos";
+  | "kudos"
+  | "review_feedback"
+  | "review_published";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -421,6 +423,104 @@ export type Announcement = {
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
   readAt?: string | null;
+};
+
+export type ReviewState = "open" | "sent" | "published";
+
+export type ReviewCommentField =
+  | "blocks"
+  | "description"
+  | "overview"
+  | "objective";
+
+export type AiScoringRunState =
+  | "queued"
+  | "running"
+  | "done"
+  | "partial"
+  | "failed";
+
+export type ReviewAnchor = {
+  v: 1;
+  field: ReviewCommentField;
+  blockId?: string;
+  start?: number;
+  end?: number;
+  quote: string;
+  prefix: string;
+  suffix: string;
+};
+
+export type ReviewCriterion = {
+  id: number;
+  documentId?: string;
+  name: string;
+  lessonDescription: string;
+  overallDescription: string;
+  order: number;
+  active: boolean;
+};
+
+export type ReviewCriterionSnapshot = Pick<
+  ReviewCriterion,
+  "id" | "name" | "lessonDescription" | "overallDescription" | "order"
+>;
+
+export type Review = {
+  id: number;
+  documentId?: string;
+  droplet?: Droplet | null;
+  reviewer?: AuthorizedUser | null;
+  round: number;
+  key: string;
+  state: ReviewState;
+  summaryNote?: string | null;
+  sentAt?: string | null;
+  comments?: ReviewComment[];
+  scores?: ReviewScore[];
+  aiScoringRuns?: AiScoringRun[];
+};
+
+export type ReviewComment = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  field: ReviewCommentField;
+  anchor: ReviewAnchor;
+  body: string;
+  author?: AuthorizedUser | null;
+  resolvedAt?: string | null;
+  parent?: ReviewComment | null;
+};
+
+export type ReviewScore = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  criterion?: ReviewCriterion | null;
+  criterionName: string;
+  value: number | null;
+  aiValue: number | null;
+  aiRationale?: string | null;
+  key: string;
+};
+
+export type AiScoringRun = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  runState: AiScoringRunState;
+  model?: string | null;
+  promptVersion?: string | null;
+  criteria?: ReviewCriterionSnapshot[] | null;
+  failedLessons?: number[] | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  error?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
 };
 
 export type Note = {

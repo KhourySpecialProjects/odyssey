@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_scoring_runs",
+  "info": {
+    "singularName": "ai-scoring-run",
+    "pluralName": "ai-scoring-runs",
+    "displayName": "AI Scoring Run",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "review": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review.review",
+      "inversedBy": "aiScoringRuns"
+    },
+    "runState": {
+      "type": "enumeration",
+      "enum": [
+        "queued",
+        "running",
+        "done",
+        "partial",
+        "failed"
+      ],
+      "required": true,
+      "default": "queued"
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "promptVersion": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "criteria": {
+      "type": "json"
+    },
+    "failedLessons": {
+      "type": "json"
+    },
+    "inputTokens": {
+      "type": "integer",
+      "min": 0
+    },
+    "outputTokens": {
+      "type": "integer",
+      "min": 0
+    },
+    "error": {
+      "type": "text"
+    },
+    "startedAt": {
+      "type": "datetime"
+    },
+    "finishedAt": {
+      "type": "datetime"
+    }
+  }
+}
