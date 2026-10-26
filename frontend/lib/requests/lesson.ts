@@ -70,6 +70,54 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   }).then((lessons) => lessons[0]);
 }
 
+/**
+ * The lesson's latest saved content, never cached. A tab that takes over the
+ * edit lock calls this before turning editable, so it never autosaves the
+ * copy it loaded earlier over a co-author's newer edits (ODY-811). Needs the
+ * same rights as taking the lock.
+ */
+export async function getLatestLessonContent(lessonId: number) {
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, lessonId);
+    if (!check.ok) return { ok: false as const, error: check.error, data: null };
+
+    try {
+      const lessons = await fetchAPI<
+        Pick<Lesson, "name" | "blocks" | "blocksV2" | "blocksVersion">[]
+      >("/lessons", {
+        urlParams: {
+          filters: { id: { $eq: lessonId } },
+          fields: ["name", "blocksV2", "blocksVersion"],
+          populate: LESSON_BLOCKS_POPULATE,
+          pagination: { pageSize: 1, page: 1 },
+        },
+        cache: "no-store",
+      });
+      const lesson = lessons?.[0];
+      if (!lesson) {
+        return { ok: false as const, error: "Not Found", data: null };
+      }
+      return {
+        ok: true as const,
+        error: null,
+        data: {
+          name: lesson.name,
+          blocks: lesson.blocks ?? [],
+          blocksV2: lesson.blocksV2 ?? null,
+          blocksVersion: lesson.blocksVersion ?? null,
+        },
+      };
+    } catch (err) {
+      console.error(err);
+      return {
+        ok: false as const,
+        error: "Could not load the latest lesson content.",
+        data: null,
+      };
+    }
+  });
+}
+
 export async function markLessonAsComplete(
   enrollmentId: string,
   completedLessonIds: number[],
