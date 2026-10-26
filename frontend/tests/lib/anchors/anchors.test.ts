@@ -1,0 +1,390 @@
+import {
+  Anchor,
+  OUTDATED,
+  blockNoteContent,
+  createAnchor,
+  drawAnchor,
+  htmlContent,
+  removeAnchor,
+  resolveAnchor,
+} from "@/lib/anchors";
+import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import { CustomBlockNoteBlock } from "@/types";
+import DOMPurify from "isomorphic-dompurify";
+
+type Inline = { type: "text"; text: string; styles: Record<string, boolean> };
+const text = (value: string, styles = {}): Inline => ({
+  type: "text",
+  text: value,
+  styles,
+});
+const paragraph = (id: string, ...content: Inline[]) => ({
+  id,
+  type: "paragraph",
+  props: {},
+  content,
+  children: [],
+});
+
+// Three paragraphs in a row, which the lesson view merges into one block
+const lesson = [
+  paragraph("intro", text("Databases store data in tables.")),
+  paragraph(
+    "joins",
+    text("A join combines rows from two tables. "),
+    text("Inner", { bold: true }),
+    text(" joins keep matching rows."),
+  ),
+  paragraph(
+    "repeat",
+    text("Use a join when you need both tables, and use a join carefully."),
+  ),
+];
+
+/** Renders blocks the way the lesson view does */
+function renderLesson(blocks: unknown[]): HTMLElement {
+  const root = document.createElement("div");
+  root.innerHTML = convertBlockNoteToV1Blocks(blocks as CustomBlockNoteBlock[])
+    .map((block) => (block as { content: string }).content)
+    .join("");
+  document.body.appendChild(root);
+  return root;
+}
+
+const blockElement = (root: Element, id: string) =>
+  root.querySelector(`[data-block-id="${id}"]`)!;
+
+/** A range over the nth copy of `quote` in an element's text */
+function rangeOver(element: Element, quote: string, nth = 0): Range {
+  const nodes: Text[] = [];
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  const all = nodes.map((node) => node.data).join("");
+  let start = -1;
+  for (let i = 0; i <= nth; i++) start = all.indexOf(quote, start + 1);
+  const end = start + quote.length;
+
+  const range = new Range();
+  let offset = 0;
+  for (const node of nodes) {
+    if (start >= offset && start <= offset + node.length) {
+      range.setStart(node, start - offset);
+      break;
+    }
+    offset += node.length;
+  }
+  offset = 0;
+  for (const node of nodes) {
+    if (end >= offset && end <= offset + node.length) {
+      range.setEnd(node, end - offset);
+      break;
+    }
+    offset += node.length;
+  }
+  return range;
+}
+
+const joinsText =
+  "A join combines rows from two tables. Inner joins keep matching rows.";
+
+function anchorOn(blockId: string, quote: string, nth = 0): Anchor {
+  const root = renderLesson(lesson);
+  return createAnchor(rangeOver(blockElement(root, blockId), quote, nth), {
+    field: "blocks",
+  })!;
+}
+
+afterEach(() => {
+  document.body.innerHTML = "";
+});
+
+describe("createAnchor", () => {
+  it("anchors a selection to its block's id and offsets in that block alone", () => {
+    const anchor = anchorOn("joins", "Inner joins");
+
+    const start = joinsText.indexOf("Inner joins");
+    expect(anchor).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "joins",
+      start,
+      end: start + "Inner joins".length,
+      quote: "Inner joins",
+      prefix: joinsText.slice(start - 30, start),
+      suffix: " keep matching rows.",
+    });
+  });
+
+  it("leaves out whitespace at either end of the selection", () => {
+    expect(anchorOn("joins", " Inner joins ").quote).toBe("Inner joins");
+  });
+
+  it("still finds the block after the lesson view sanitises its HTML", () => {
+    // GenericBlockRenderer passes each block's HTML through DOMPurify
+    const root = document.createElement("div");
+    root.innerHTML = DOMPurify.sanitize(renderLesson(lesson).innerHTML);
+    document.body.appendChild(root);
+
+    expect(
+      createAnchor(rangeOver(blockElement(root, "joins"), "Inner joins"), {
+        field: "blocks",
+      }),
+    ).toMatchObject({ blockId: "joins", quote: "Inner joins" });
+  });
+
+  it("anchors a whole block by its id alone", () => {
+    expect(createAnchor({ blockId: "intro" }, { field: "blocks" })).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "intro",
+    });
+  });
+
+  it("doesn't anchor a selection across two blocks, or an empty one", () => {
+    const root = renderLesson(lesson);
+    const across = new Range();
+    across.setStart(blockElement(root, "intro").firstChild!, 0);
+    across.setEnd(blockElement(root, "joins").firstChild!, 3);
+    const empty = new Range();
+    empty.setStart(blockElement(root, "intro").firstChild!, 2);
+
+    expect(createAnchor(across, { field: "blocks" })).toBeNull();
+    expect(createAnchor(empty, { field: "blocks" })).toBeNull();
+  });
+
+  it("counts a list item's own text, not its sub-items'", () => {
+    const root = renderLesson([
+      {
+        id: "outer",
+        type: "bulletListItem",
+        props: {},
+        content: [text("Outer item")],
+        children: [
+          {
+            id: "inner",
+            type: "bulletListItem",
+            props: {},
+            content: [text("Inner item")],
+            children: [],
+          },
+        ],
+      },
+    ]);
+
+    const anchor = createAnchor(
+      rangeOver(blockElement(root, "inner"), "item"),
+      { field: "blocks" },
+    );
+
+    expect(anchor).toMatchObject({ blockId: "inner", start: 6, end: 10 });
+  });
+
+  it("anchors by quote where blocks have no ids, such as the Overview", () => {
+    const overview = document.createElement("div");
+    overview.innerHTML =
+      "<p>Learn <strong>SQL</strong> joins.</p><p>Then practise.</p>";
+    document.body.appendChild(overview);
+
+    const anchor = createAnchor(rangeOver(overview, "SQL joins"), {
+      field: "overview",
+      root: overview,
+    });
+
+    expect(anchor).toEqual({
+      v: 1,
+      field: "overview",
+      start: 6,
+      end: 15,
+      quote: "SQL joins",
+      prefix: "Learn ",
+      suffix: ".Then practise.",
+    });
+  });
+});
+
+describe("resolveAnchor", () => {
+  const resolve = (blocks: unknown[], anchor: Anchor) =>
+    resolveAnchor(
+      { blocks: blockNoteContent(blocks as CustomBlockNoteBlock[]) },
+      anchor,
+    );
+
+  it("finds it again after a paragraph is inserted above", () => {
+    const anchor = anchorOn("joins", "Inner joins");
+    const edited = [
+      paragraph("new", text("A new first paragraph, merged with the rest.")),
+      ...lesson,
+    ];
+
+    const found = resolve(edited, anchor);
+
+    expect(found).toEqual({
+      field: "blocks",
+      blockId: "joins",
+      start: anchor.start,
+      end: anchor.end,
+      exact: true,
+    });
+    // The lesson view still marks the same words, though the new paragraph
+    // is merged into the same rendered block
+    const spans = drawAnchor(renderLesson(edited), found as never, "c1");
+    expect(spans.map((span) => span.textContent).join("")).toBe("Inner joins");
+  });
+
+  it("finds it again by its quote after a word before it changes", () => {
+    const anchor = anchorOn("joins", "Inner joins");
+    const edited = [
+      lesson[0],
+      paragraph(
+        "joins",
+        text("A SQL join combines rows from two tables. "),
+        text("Inner", { bold: true }),
+        text(" joins keep matching rows."),
+      ),
+    ];
+
+    expect(resolve(edited, anchor)).toEqual({
+      field: "blocks",
+      blockId: "joins",
+      start: anchor.start! + 4,
+      end: anchor.end! + 4,
+      exact: true,
+    });
+  });
+
+  it("follows a word changed inside it, by the text either side", () => {
+    const anchor = anchorOn("joins", "Inner joins");
+    const edited = [
+      paragraph(
+        "joins",
+        text(
+          "A join combines rows from two tables. Inner join keep matching rows.",
+        ),
+      ),
+    ];
+
+    const found = resolve(edited, anchor);
+
+    expect(found).toMatchObject({ blockId: "joins", exact: false });
+    const { start, end } = found as { start: number; end: number };
+    expect(blockNoteContent(edited as never)[0].text.slice(start, end)).toBe(
+      "Inner join",
+    );
+  });
+
+  it("tells two identical phrases apart by the text around them", () => {
+    const anchor = anchorOn("repeat", "a join", 1);
+    const edited = [
+      paragraph(
+        "repeat",
+        text(
+          "Always use a join when you need both tables, and use a join carefully.",
+        ),
+      ),
+    ];
+
+    const found = resolve(edited, anchor) as { start: number };
+
+    const editedText =
+      "Always use a join when you need both tables, and use a join carefully.";
+    expect(found.start).toBe(editedText.lastIndexOf("a join"));
+  });
+
+  it("says outdated, rather than dropping it, when the text is deleted", () => {
+    const anchor = anchorOn("joins", "Inner joins");
+
+    expect(
+      resolve(
+        [lesson[0], paragraph("joins", text("Joins are covered later."))],
+        anchor,
+      ),
+    ).toBe(OUTDATED);
+    expect(resolve([lesson[0]], anchor)).toBe(OUTDATED);
+  });
+
+  it("finds a whole-block anchor while its block exists", () => {
+    const anchor = createAnchor({ blockId: "intro" }, { field: "blocks" })!;
+
+    expect(resolve(lesson, anchor)).toEqual({
+      field: "blocks",
+      blockId: "intro",
+      start: 0,
+      end: "Databases store data in tables.".length,
+      exact: true,
+    });
+    expect(resolve(lesson.slice(1), anchor)).toBe(OUTDATED);
+  });
+
+  it("finds a quote in the Overview's text after it's edited", () => {
+    const overview = document.createElement("div");
+    overview.innerHTML = "<p>Learn <strong>SQL</strong> joins.</p>";
+    document.body.appendChild(overview);
+    const anchor = createAnchor(rangeOver(overview, "SQL joins"), {
+      field: "overview",
+      root: overview,
+    })!;
+
+    const found = resolveAnchor(
+      { overview: htmlContent("<p>First, learn <em>SQL</em> joins.</p>") },
+      anchor,
+    );
+
+    expect(found).toEqual({
+      field: "overview",
+      start: 13,
+      end: 22,
+      exact: true,
+    });
+  });
+});
+
+describe("blockNoteContent", () => {
+  it("reads each block's own text, children after their parent", () => {
+    expect(
+      blockNoteContent([
+        {
+          id: "a",
+          content: [
+            text("See "),
+            {
+              type: "link",
+              href: "https://example.com",
+              content: [text("the docs")],
+            },
+            text("\nnext line"),
+          ],
+          children: [{ id: "b", content: "Child", children: [] }],
+        },
+        { id: "c", content: [], children: [] },
+      ] as never),
+    ).toEqual([
+      { id: "a", text: "See the docs\nnext line" },
+      { id: "b", text: "Child" },
+      { id: "c", text: "" },
+    ]);
+  });
+});
+
+describe("drawAnchor", () => {
+  it("wraps the text in tagged spans, one per text node, and takes them out again", () => {
+    const root = renderLesson(lesson);
+    const anchor = anchorOn("joins", "two tables. Inner");
+    const found = resolveAnchor(
+      { blocks: blockNoteContent(lesson as never) },
+      anchor,
+    );
+
+    const spans = drawAnchor(root, found as never, "c1");
+
+    expect(spans.map((span) => span.textContent)).toEqual([
+      "two tables. ",
+      "Inner",
+    ]);
+    expect(spans.every((span) => span.dataset.anchorId === "c1")).toBe(true);
+    expect(blockElement(root, "joins")).toHaveTextContent(joinsText);
+
+    removeAnchor(root, "c1");
+    expect(root.querySelector("[data-anchor-id]")).toBeNull();
+    expect(blockElement(root, "joins")).toHaveTextContent(joinsText);
+  });
+});
