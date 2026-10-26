@@ -46,7 +46,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/droplet.ts#updateDropletAverageRating": "ODY-504",
   "lib/requests/galleries.ts#getGalleryBySlug": "ODY-504",
   "lib/requests/lesson-lock.ts#getCurrentAuthorizedUserId": "ODY-504",
-  "lib/requests/lesson-lock.ts#getLessonLockStatus": "ODY-504",
   "lib/requests/lesson.ts#completeLesson": "ODY-504",
   "lib/requests/lesson.ts#getLessonBySlug": "ODY-504",
   "lib/requests/lesson.ts#markLessonAsComplete": "ODY-504",

@@ -35,10 +35,24 @@ jest.mock("@/lib/auth/require-role", () => ({
   ),
 }));
 
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkLessonWrite: jest.fn(() => Promise.resolve({ ok: true })),
+  getLessonReviewState: jest.fn(() =>
+    Promise.resolve({ inReview: false, isReviewer: false }),
+  ),
+}));
+
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+import {
+  checkLessonWrite,
+  getLessonReviewState,
+} from "@/lib/auth/review-freeze";
+
+const mockedCheckLessonWrite = jest.mocked(checkLessonWrite);
+const mockedGetLessonReviewState = jest.mocked(getLessonReviewState);
 const mockedRequireRole = jest.mocked(requireRole);
 const mockedGetCurrentUser = jest.mocked(getCurrentUser);
 
@@ -64,6 +78,32 @@ describe("Lesson Lock API Functions", () => {
 
       const id = await getCurrentAuthorizedUserId();
       expect(id).toBeNull();
+    });
+  });
+
+  describe("acquireLessonLock: review freeze", () => {
+    it("refuses a frozen caller without calling the lock route", async () => {
+      mockedCheckLessonWrite.mockResolvedValueOnce({
+        ok: false,
+        error: "in_review",
+      });
+
+      const result = await acquireLessonLock(1);
+
+      expect(result).toEqual({ success: false, error: "in_review" });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("refuses a caller without write rights", async () => {
+      mockedCheckLessonWrite.mockResolvedValueOnce({
+        ok: false,
+        error: "forbidden",
+      });
+
+      const result = await acquireLessonLock(1);
+
+      expect(result).toEqual({ success: false, error: "forbidden" });
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 
@@ -217,6 +257,66 @@ describe("Lesson Lock API Functions", () => {
 
       expect(result).toBe(false);
       expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getLessonLockStatus: review state", () => {
+    const unlockedResponse = {
+      ok: true,
+      json: () =>
+        Promise.resolve({ isLocked: false, lockedBy: null, lockedAt: null }),
+    } as unknown as Response;
+
+    it("adds the review state to the lock status", async () => {
+      jest.mocked(global.fetch).mockResolvedValueOnce(unlockedResponse);
+      mockedGetLessonReviewState.mockResolvedValueOnce({
+        inReview: true,
+        isReviewer: false,
+      });
+
+      const result = await getLessonLockStatus(1);
+
+      expect(result.review).toEqual({ inReview: true, isReviewer: false });
+      expect(mockedGetLessonReviewState).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 42 }),
+        1,
+      );
+    });
+
+    it("returns review null when the lookup fails", async () => {
+      jest.mocked(global.fetch).mockResolvedValueOnce(unlockedResponse);
+      mockedGetLessonReviewState.mockResolvedValueOnce(null);
+
+      const result = await getLessonLockStatus(1);
+
+      expect(result.review).toBeNull();
+    });
+
+    it("returns the unlocked default with review null when logged out", async () => {
+      mockedRequireRole.mockResolvedValueOnce({
+        ok: false,
+        error: "unauthenticated",
+      });
+
+      const result = await getLessonLockStatus(1);
+
+      expect(result).toEqual({
+        isLocked: false,
+        lockedBy: null,
+        lockedAt: null,
+        review: null,
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("keeps review null on a failed status fetch", async () => {
+      jest.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+      } as unknown as Response);
+
+      const result = await getLessonLockStatus(1);
+
+      expect(result.review).toBeNull();
     });
   });
 
