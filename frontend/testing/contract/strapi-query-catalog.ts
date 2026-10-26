@@ -285,6 +285,7 @@ export const MODULE_PATHS: Record<string, string> = {
   galleries: "@/lib/requests/galleries",
   groups: "@/lib/requests/groups",
   highlights: "@/lib/requests/highlights",
+  "droplet-authors": "@/lib/requests/droplet-authors",
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
@@ -749,6 +750,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       REVIEW_WRITE_ROUTES,
     ),
   ]),
+  "droplet-authors": defineModule<
+    typeof import("@/lib/requests/droplet-authors")
+  >([call("getAuthorNames", (m) => m.getAuthorNames([1, 2]))]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([
     call("getTags", (m) => m.getTags()),
     call("getTagBySlug", (m) => m.getTagBySlug(SLUG)),

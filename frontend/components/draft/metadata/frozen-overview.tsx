@@ -21,8 +21,8 @@ type FrozenOverviewProps = {
     | "funFact"
     | "datasets"
   >;
-  /** Display names of the droplet's authors. */
-  authorNames: string[];
+  /** The droplet's authors. Empty when they couldn't be loaded. */
+  authors: { id: number; name: string }[];
 };
 
 function Pill({ name }: { name: string }) {
@@ -59,7 +59,7 @@ function Section({
  * editors while the droplet is in review and the caller can't change it. It
  * is its own view rather than a `readOnly` flag threaded through every editor.
  */
-export function FrozenOverview({ droplet, authorNames }: FrozenOverviewProps) {
+export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
   const tags = droplet.tags ?? [];
   const objectives = droplet.learningObjectives ?? [];
   const nextSteps = droplet.nextSteps ?? [];
@@ -91,10 +91,10 @@ export function FrozenOverview({ droplet, authorNames }: FrozenOverviewProps) {
 
       <div className="w-full space-y-10 px-40 pt-6">
         <Section title="Author(s)">
-          {authorNames.length > 0 ? (
+          {authors.length > 0 ? (
             <ul className="list-disc pl-5">
-              {authorNames.map((name) => (
-                <li key={name}>{name}</li>
+              {authors.map((author) => (
+                <li key={author.id}>{author.name}</li>
               ))}
             </ul>
           ) : (

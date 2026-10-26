@@ -30,7 +30,12 @@ const droplet = {
 
 describe("FrozenOverview", () => {
   it("renders every field as plain content", () => {
-    render(<FrozenOverview droplet={droplet} authorNames={["Ada Lovelace"]} />);
+    render(
+      <FrozenOverview
+        droplet={droplet}
+        authors={[{ id: 7, name: "Ada Lovelace" }]}
+      />,
+    );
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Python Basics" }),
@@ -56,7 +61,12 @@ describe("FrozenOverview", () => {
   });
 
   it("has no buttons or textboxes", () => {
-    render(<FrozenOverview droplet={droplet} authorNames={["Ada Lovelace"]} />);
+    render(
+      <FrozenOverview
+        droplet={droplet}
+        authors={[{ id: 7, name: "Ada Lovelace" }]}
+      />,
+    );
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
@@ -64,7 +74,7 @@ describe("FrozenOverview", () => {
 
   it("sanitizes the overview HTML", () => {
     const { container } = render(
-      <FrozenOverview droplet={droplet} authorNames={[]} />,
+      <FrozenOverview droplet={droplet} authors={[]} />,
     );
 
     expect(container.querySelector("script")).toBeNull();
@@ -81,7 +91,7 @@ describe("FrozenOverview", () => {
             learningObjectives: [],
           } as unknown as Droplet
         }
-        authorNames={[]}
+        authors={[]}
       />,
     );
 

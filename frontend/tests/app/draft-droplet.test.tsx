@@ -43,8 +43,8 @@ jest.mock("@/lib/requests/lesson", () => ({
   getLessonBySlug: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  fetchAuthorizedUsers: jest.fn(),
+jest.mock("@/lib/requests/droplet-authors", () => ({
+  getAuthorNames: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/tag", () => ({
@@ -319,11 +319,8 @@ describe("draft droplet overview page: review freeze", () => {
 
   beforeEach(() => {
     jest
-      .requireMock("@/lib/requests/authorized-user")
-      .fetchAuthorizedUsers.mockResolvedValue([
-        { id: 7, firstName: "Ada", lastName: "Lovelace" },
-        { id: 9, firstName: "Not", lastName: "Author" },
-      ]);
+      .requireMock("@/lib/requests/droplet-authors")
+      .getAuthorNames.mockResolvedValue([{ id: 7, name: "Ada Lovelace" }]);
   });
 
   async function renderOverview() {
@@ -343,7 +340,9 @@ describe("draft droplet overview page: review freeze", () => {
     );
     expect(screen.getByTestId("frozen-overview")).toBeInTheDocument();
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.queryByText("Not Author")).toBeNull();
+    expect(
+      jest.requireMock("@/lib/requests/droplet-authors").getAuthorNames,
+    ).toHaveBeenCalledWith([7]);
     expect(mockedGeneralInfo).not.toHaveBeenCalled();
   });
 

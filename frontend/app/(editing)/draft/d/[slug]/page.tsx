@@ -30,7 +30,7 @@ import {
   isFrozenFor,
 } from "@/lib/review-roles";
 import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { getAuthorNames } from "@/lib/requests/droplet-authors";
 import { IconLock } from "@tabler/icons-react";
 
 const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
@@ -86,10 +86,10 @@ export default async function Droplet({ params }: Props) {
     droplet.status !== "published" &&
     isFrozenFor(user.roles, droplet.inReview, isAuthor);
   if (frozen) {
-    const authorIds = new Set(droplet.authorized_users?.map((u) => u.id));
-    const authorNames = (await fetchAuthorizedUsers())
-      .filter((u) => authorIds.has(u.id))
-      .map((u) => `${u.firstName} ${u.lastName}`.trim());
+    // Names only, and never fatal: the page still renders without them.
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
 
     return (
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
@@ -100,7 +100,7 @@ export default async function Droplet({ params }: Props) {
           <IconLock className="h-4 w-4 shrink-0" />
           <span>{REVIEW_FROZEN_MESSAGE}</span>
         </div>
-        <FrozenOverview droplet={droplet} authorNames={authorNames} />
+        <FrozenOverview droplet={droplet} authors={authors} />
         <div className="pb-16" />
       </div>
     );
