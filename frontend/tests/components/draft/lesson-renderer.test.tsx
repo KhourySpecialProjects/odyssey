@@ -1233,7 +1233,7 @@ describe("LessonRenderer", () => {
     const v2Lesson = {
       ...mockLesson,
       blocks: [],
-      blocksV2: OLD_V2,
+      blocksV2: OLD_V2 as never,
       blocksVersion: "v2" as const,
     };
     const lockState = (over: Record<string, unknown> = {}) => ({

@@ -53,11 +53,10 @@ function route(inReview = false) {
 }
 
 const contentReads = () =>
-  mockedFetchAPI.mock.calls.filter(
-    ([, o]) =>
-      (o as { urlParams?: { fields?: string[] } })?.urlParams?.fields?.includes(
-        "name",
-      ),
+  mockedFetchAPI.mock.calls.filter(([, o]) =>
+    (o as { urlParams?: { fields?: string[] } })?.urlParams?.fields?.includes(
+      "name",
+    ),
   );
 
 beforeEach(() => {

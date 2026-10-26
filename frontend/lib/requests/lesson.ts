@@ -79,7 +79,8 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
 export async function getLatestLessonContent(lessonId: number) {
   return withAuth([], async (user) => {
     const check = await checkLessonWrite(user, lessonId);
-    if (!check.ok) return { ok: false as const, error: check.error, data: null };
+    if (!check.ok)
+      return { ok: false as const, error: check.error, data: null };
 
     try {
       const lessons = await fetchAPI<
