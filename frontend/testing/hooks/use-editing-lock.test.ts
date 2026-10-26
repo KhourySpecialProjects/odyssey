@@ -214,6 +214,38 @@ describe("useEditingLock", () => {
     expect(mockAcquire).not.toHaveBeenCalled();
   });
 
+  it("does not acquire when the first review lookup fails, and retries on the next poll", async () => {
+    mockStatus.mockResolvedValue(status(null));
+
+    const { result } = await mount();
+
+    expect(mockAcquire).not.toHaveBeenCalled();
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+
+    await tick();
+    expect(mockAcquire).not.toHaveBeenCalled();
+
+    mockStatus.mockResolvedValue(status(NOT_IN_REVIEW));
+    await tick();
+
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("stays frozen when a failed first lookup is followed by an in-review state", async () => {
+    mockStatus.mockResolvedValue(status(null));
+    const { result } = await mount();
+
+    mockStatus.mockResolvedValue(status(CREATOR_IN_REVIEW));
+    await tick();
+
+    expect(mockAcquire).not.toHaveBeenCalled();
+    expect(result.current.inReview).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it("treats an in_review acquire refusal as frozen", async () => {
     mockAcquire.mockResolvedValue({ success: false, error: "in_review" });
 

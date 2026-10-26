@@ -55,6 +55,9 @@ export function useEditingLock(lessonId: number) {
   const editRequestedRef = useRef(false);
   const reviewEndedRef = useRef(false);
   const reviewRef = useRef({ inReview: false, isReviewer: false });
+  // False until the server has reported a review state at least once. While
+  // unknown (the lookup failed), nothing takes the lock on its own.
+  const reviewKnownRef = useRef(false);
   const actionsRef = useRef<Actions | null>(null);
 
   const release = useCallback(async () => {
@@ -79,6 +82,7 @@ export function useEditingLock(lessonId: number) {
     editRequestedRef.current = false;
     reviewEndedRef.current = false;
     reviewRef.current = { inReview: false, isReviewer: false };
+    reviewKnownRef.current = false;
 
     // Recursive setTimeout prevents stacking when requests are slow
     const startHeartbeat = () => {
@@ -154,6 +158,7 @@ export function useEditingLock(lessonId: number) {
     /** Applies a review state from the server. A null review keeps the old one. */
     const applyReview = (review: LockStatus["review"] | undefined) => {
       if (!review) return;
+      reviewKnownRef.current = true;
       const wasInReview = reviewRef.current.inReview;
       reviewRef.current = {
         inReview: review.inReview,
@@ -182,6 +187,11 @@ export function useEditingLock(lessonId: number) {
           const status = await getLessonLockStatus(lessonId);
           if (!mountedRef.current) return;
           applyReview(status.review);
+          if (reviewKnownRef.current) {
+            setState((prev) =>
+              prev.isLoading ? { ...prev, isLoading: false } : prev,
+            );
+          }
 
           const { inReview, isReviewer } = reviewRef.current;
           const frozen = inReview && !isReviewer;
@@ -189,7 +199,8 @@ export function useEditingLock(lessonId: number) {
           if (holdsLockRef.current) {
             if (frozen || reviewEndedRef.current) await dropLock();
           } else {
-            const canAutoAcquire = !inReview && !reviewEndedRef.current;
+            const canAutoAcquire =
+              reviewKnownRef.current && !inReview && !reviewEndedRef.current;
             const canReviewerAcquire =
               inReview && isReviewer && editRequestedRef.current;
             if (!status.isLocked && (canAutoAcquire || canReviewerAcquire)) {
@@ -280,6 +291,18 @@ export function useEditingLock(lessonId: number) {
         const status = await getLessonLockStatus(lessonId);
         if (!mountedRef.current) return;
         applyReview(status.review);
+
+        if (!reviewKnownRef.current) {
+          // The review lookup failed. Don't take the lock blind: stay
+          // read-only and let the next poll try again.
+          setState((prev) => ({
+            ...prev,
+            isLocked: status.isLocked,
+            lockedBy: status.lockedBy,
+          }));
+          startPolling();
+          return;
+        }
 
         if (reviewRef.current.inReview) {
           // In review: read-only, no lock. A reviewer takes it with Edit.
