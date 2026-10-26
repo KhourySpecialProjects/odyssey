@@ -5,6 +5,8 @@ import {
   updateDropletLearningObjective,
 } from "@/lib/requests/droplet";
 import { requireRole } from "@/lib/auth/require-role";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import {
@@ -361,10 +363,23 @@ describe("publishDraftToOriginal auth", () => {
   it("gets past the check for a non-author Editor in review", async () => {
     draft();
     mockedRequireRole.mockResolvedValue(as(9, Role.ContentEditor));
+    jest
+      .mocked(getCurrentUser)
+      .mockResolvedValue({ email: "editor@example.invalid" } as never);
+    jest.mocked(getAuthorizedUserByEmail).mockResolvedValue({ id: 9 } as never);
 
     const result = await publishDraftToOriginal(1, 2);
 
-    // The fixture is too thin to publish, but the refusal must not be an auth one.
+    // The fixture is too thin to finish publishing, but the flow must have
+    // carried on past the check: it re-read the draft in full (the check only
+    // reads a few fields), which a refusal never does.
+    const fullReads = mockedFetchAPI.mock.calls.filter(
+      ([, config]) =>
+        (config as { urlParams?: { fields?: string[] } }).urlParams
+          ?.fields?.[0] === "*",
+    );
+    expect(fullReads.length).toBeGreaterThan(0);
+    expect(mockedFetchAPI.mock.calls.length).toBeGreaterThan(1);
     expect(result.error).not.toBe("forbidden");
     expect(result.error).not.toBe("in_review");
   });

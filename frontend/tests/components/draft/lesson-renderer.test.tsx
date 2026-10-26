@@ -1159,25 +1159,57 @@ describe("LessonRenderer", () => {
       });
     });
 
-    it("makes no updateLesson call on mount for a read-only v1 lesson", () => {
-      mockUseEditingLock.mockReturnValue(lockState());
+    describe("read-only mounts", () => {
+      // The v1 autosave is debounced by 1.5 s, so a synchronous assertion
+      // would pass even without the guard. Advance past the debounce.
+      beforeEach(() => jest.useFakeTimers());
+      afterEach(() => jest.useRealTimers());
 
-      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+      it("makes no updateLesson call for a read-only v1 lesson", () => {
+        mockUseEditingLock.mockReturnValue(lockState());
 
-      expect(updateLesson).not.toHaveBeenCalled();
-    });
+        const { unmount } = render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        act(() => {
+          jest.advanceTimersByTime(5_000);
+        });
+        unmount();
 
-    it("makes no updateLesson call on mount for a read-only empty lesson", () => {
-      mockUseEditingLock.mockReturnValue(lockState());
+        expect(updateLesson).not.toHaveBeenCalled();
+      });
 
-      render(
-        <LessonRenderer
-          lesson={{ ...mockLesson, blocks: [] }}
-          dropletSlug="test-droplet"
-        />,
-      );
+      it("makes no updateLesson call for a read-only empty lesson", () => {
+        mockUseEditingLock.mockReturnValue(lockState());
 
-      expect(updateLesson).not.toHaveBeenCalled();
+        const { unmount } = render(
+          <LessonRenderer
+            lesson={{ ...mockLesson, blocks: [] }}
+            dropletSlug="test-droplet"
+          />,
+        );
+        act(() => {
+          jest.advanceTimersByTime(5_000);
+        });
+        unmount();
+
+        expect(updateLesson).not.toHaveBeenCalled();
+      });
+
+      it("does autosave a v1 lesson that is editable (control)", () => {
+        mockUseEditingLock.mockReturnValue(
+          lockState({ inReview: false, isOwnLock: true }),
+        );
+
+        render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        act(() => {
+          jest.advanceTimersByTime(5_000);
+        });
+
+        expect(updateLesson).toHaveBeenCalled();
+      });
     });
   });
 });
