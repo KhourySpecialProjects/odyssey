@@ -137,3 +137,36 @@ for (const [name, invoke] of actions) {
     });
   });
 }
+
+describe("ids that are not plain integers", () => {
+  const sneaky = { id: 1, documentId: "frozendoc" } as never;
+
+  beforeEach(() => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    routeLookups();
+    routeWrites();
+  });
+
+  it.each([
+    ["updateLesson", () => updateLesson(sneaky, { name: "x" })],
+    ["deleteLesson", () => deleteLesson(sneaky)],
+    [
+      "addLesson",
+      () => addLesson({ name: "x", dropletId: sneaky, orderIndex: 0 }),
+    ],
+    [
+      "duplicateLessonToDroplet (target)",
+      () => duplicateLessonToDroplet(5, sneaky, 0),
+    ],
+    [
+      "duplicateLessonToDroplet (source)",
+      () => duplicateLessonToDroplet(sneaky, 1, 0),
+    ],
+  ])("%s refuses an object id with no lookup or write", async (_n, invoke) => {
+    const result = await invoke();
+
+    expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+    expect(mockedFetchAPI).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

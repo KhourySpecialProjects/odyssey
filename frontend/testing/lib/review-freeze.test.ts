@@ -480,3 +480,31 @@ describe("getLessonReviewState", () => {
     expect(await getLessonReviewState(user(7, []) as never, 5)).toBeNull();
   });
 });
+
+describe("id validation", () => {
+  const sneaky = { id: 1, documentId: "frozendoc" } as never;
+  const u = user(7, [Role.SysAdmin]) as never;
+
+  it.each([
+    ["an object", sneaky],
+    ["a string", "1" as never],
+    ["zero", 0],
+    ["a negative number", -1],
+    ["a fraction", 1.5],
+    ["NaN", NaN],
+    ["undefined", undefined as never],
+  ])("refuses %s before any lookup", async (_name, bad) => {
+    const forbidden = { ok: false, error: "forbidden" };
+
+    expect(await checkDropletContentWrite(u, bad)).toEqual(forbidden);
+    expect(await checkLessonWrite(u, bad)).toEqual(forbidden);
+    expect(await checkDatasetWrite(u, bad)).toEqual(forbidden);
+    expect(await checkDropletUpdate(u, bad, { description: "x" })).toEqual(
+      forbidden,
+    );
+    expect(await checkPublishDraft(u, bad, 2)).toEqual(forbidden);
+    expect(await checkPublishDraft(u, 1, bad)).toEqual(forbidden);
+    expect(await getLessonReviewState(u, bad)).toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

@@ -21,6 +21,7 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { isValidId } from "@/lib/auth/valid-id";
 import { withAuth } from "@/lib/auth/guards";
 import {
   checkDropletContentWrite,
@@ -322,6 +323,10 @@ export async function duplicateLessonToDroplet(
   newOrderIndex: number,
 ) {
   return withAuth([], async (user) => {
+    // The source is only read, but it is resolved from this argument too.
+    if (!isValidId(sourceLessonId)) {
+      return { ok: false, error: "forbidden", data: null };
+    }
     const check = await checkDropletContentWrite(user, targetDropletId);
     if (!check.ok) return { ok: false, error: check.error, data: null };
     return applyDuplicateLesson(sourceLessonId, targetDropletId, newOrderIndex);

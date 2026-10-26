@@ -7,6 +7,7 @@ import {
   checkLessonWrite,
   getLessonReviewState,
 } from "@/lib/auth/review-freeze";
+import { isValidId } from "@/lib/auth/valid-id";
 import type { LessonReviewState } from "@/lib/review-roles";
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 
@@ -132,6 +133,7 @@ export async function getLessonLockStatus(
   };
   const auth = await requireRole([]);
   if (!auth.ok) return unlocked;
+  if (!isValidId(lessonId)) return unlocked;
 
   try {
     const res = await fetch(

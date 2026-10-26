@@ -355,3 +355,40 @@ describe("publishDraftToOriginal auth", () => {
     expect(result.error).not.toBe("in_review");
   });
 });
+
+describe("ids that are not plain integers", () => {
+  const sneaky = { id: 1, documentId: "frozendoc" } as never;
+
+  beforeEach(() => {
+    mockedRequireRole.mockResolvedValue(as(1, Role.SysAdmin));
+    routeDroplet(false);
+  });
+
+  it("refuses an object id with no lookup or write", async () => {
+    expect(await updateDroplet(sneaky, { description: "x" })).toEqual({
+      ok: false,
+      error: "forbidden",
+      data: null,
+    });
+    expect(await updateDropletFunFact("f", sneaky)).toEqual({
+      success: false,
+      error: "forbidden",
+    });
+    expect(await updateDropletLearningObjective(sneaky, "a", "b")).toEqual({
+      success: false,
+      error: "forbidden",
+    });
+    expect(await publishDraftToOriginal(sneaky, 2)).toEqual({
+      ok: false,
+      error: "forbidden",
+      slug: null,
+    });
+    expect(await publishDraftToOriginal(1, sneaky)).toEqual({
+      ok: false,
+      error: "forbidden",
+      slug: null,
+    });
+    expect(mockedFetchAPI).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

@@ -260,6 +260,23 @@ describe("Lesson Lock API Functions", () => {
     });
   });
 
+  describe("ids that are not plain integers", () => {
+    it("acquire and status refuse an object id with no fetch", async () => {
+      const sneaky = { id: 1, documentId: "frozendoc" } as never;
+      mockedCheckLessonWrite.mockResolvedValueOnce({
+        ok: false,
+        error: "forbidden",
+      });
+
+      expect(await acquireLessonLock(sneaky)).toEqual({
+        success: false,
+        error: "forbidden",
+      });
+      expect((await getLessonLockStatus(sneaky)).review).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe("getLessonLockStatus: review state", () => {
     const unlockedResponse = {
       ok: true,

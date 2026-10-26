@@ -154,3 +154,20 @@ describe("dataset record actions: review freeze", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe("ids that are not plain integers", () => {
+  it("refuses an object id with no lookup or write", async () => {
+    const sneaky = { id: 1, documentId: "frozendoc" } as never;
+    mockedRequireRole.mockResolvedValue(as(1, Role.SysAdmin));
+    routeLookups();
+
+    expect(await deleteDataset(sneaky)).toEqual({
+      ok: false,
+      error: "forbidden",
+    });
+    const created = await createDataset({ ...NEW_DATASET, droplet: sneaky });
+    expect(created.ok).toBe(false);
+    expect(mockedFetchAPI).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

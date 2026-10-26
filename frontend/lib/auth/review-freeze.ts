@@ -7,6 +7,7 @@ import {
   type LessonReviewState,
 } from "@/lib/review-roles";
 import { fetchAPI } from "@/lib/utils";
+import { isValidId } from "@/lib/auth/valid-id";
 
 /**
  * Server-side review-freeze checks. Not a "use server" file and never imported
@@ -168,6 +169,7 @@ export async function checkDropletContentWrite(
   user: AuthUser,
   dropletId: number,
 ): Promise<FreezeResult> {
+  if (!isValidId(dropletId)) return fail("forbidden");
   try {
     const droplet = await loadDropletForWrite(dropletId);
     if (!droplet) return fail("Not Found");
@@ -181,6 +183,7 @@ export async function checkLessonWrite(
   user: AuthUser,
   lessonId: number,
 ): Promise<FreezeResult> {
+  if (!isValidId(lessonId)) return fail("forbidden");
   try {
     const droplets = await loadLessonDroplets(lessonId);
     if (!droplets) return fail("Not Found");
@@ -200,6 +203,7 @@ export async function checkDatasetWrite(
   user: AuthUser,
   datasetId: number,
 ): Promise<FreezeResult> {
+  if (!isValidId(datasetId)) return fail("forbidden");
   try {
     const dataset = await loadDatasetDroplet(datasetId);
     if (!dataset) return fail("Not Found");
@@ -215,6 +219,7 @@ export async function checkDropletUpdate(
   dropletId: number,
   data: Record<string, unknown>,
 ): Promise<FreezeResult> {
+  if (!isValidId(dropletId)) return fail("forbidden");
   try {
     const droplet = await loadDropletForWrite(dropletId);
     if (!droplet) return fail("Not Found");
@@ -241,6 +246,7 @@ export async function checkPublishDraft(
   draftId: number,
   originalId: number,
 ): Promise<FreezeResult> {
+  if (!isValidId(draftId) || !isValidId(originalId)) return fail("forbidden");
   try {
     const draft = await loadDropletForWrite(draftId);
     if (!draft) return fail("Not Found");
@@ -261,6 +267,7 @@ export async function getLessonReviewState(
   user: AuthUser,
   lessonId: number,
 ): Promise<LessonReviewState | null> {
+  if (!isValidId(lessonId)) return null;
   try {
     const droplets = await loadLessonDroplets(lessonId);
     if (!droplets) return null;
