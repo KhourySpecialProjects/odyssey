@@ -599,6 +599,11 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   lesson: defineModule<typeof import("@/lib/requests/lesson")>([
     call("getLessonBySlug", (m) => m.getLessonBySlug(SLUG)),
     call(
+      "getLatestLessonContent",
+      (m) => m.getLatestLessonContent(1),
+      routes(FREEZE_LOOKUPS),
+    ),
+    call(
       "updateLesson",
       (m) =>
         m.updateLesson(

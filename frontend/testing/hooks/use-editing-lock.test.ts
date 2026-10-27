@@ -22,6 +22,7 @@ const mockRelease = jest.mocked(releaseLessonLock);
 const mockHeartbeat = jest.mocked(heartbeatLessonLock);
 const mockStatus = jest.mocked(getLessonLockStatus);
 const mockUserId = jest.mocked(getCurrentAuthorizedUserId);
+const mockRefresh = jest.fn<Promise<boolean>, []>();
 
 const status = (
   review: LockStatus["review"],
@@ -40,7 +41,7 @@ const REVIEWER_IN_REVIEW = { inReview: true, isReviewer: true };
 
 /** Mount and let the async init finish. */
 async function mount() {
-  const hook = renderHook(() => useEditingLock(1));
+  const hook = renderHook(() => useEditingLock(1, mockRefresh));
   await act(async () => {
     await Promise.resolve();
     await Promise.resolve();
@@ -68,6 +69,8 @@ beforeEach(() => {
   mockRelease.mockResolvedValue(undefined);
   mockHeartbeat.mockResolvedValue(true);
   mockStatus.mockResolvedValue(status(NOT_IN_REVIEW));
+  mockRefresh.mockReset();
+  mockRefresh.mockResolvedValue(true);
 });
 
 afterEach(() => {
@@ -284,5 +287,293 @@ describe("useEditingLock", () => {
     });
 
     expect(mockHeartbeat).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("useEditingLock: refresh on takeover (ODY-811)", () => {
+  const OTHER = { id: 9, firstName: "Ada", lastName: "Lovelace" };
+  const LOCKED = { success: false, error: "Lesson is locked", lockedBy: OTHER };
+
+  /** Mounts read-only because another editor holds the lock. */
+  async function mountLockedByOther() {
+    mockAcquire.mockResolvedValueOnce(LOCKED);
+    return mount();
+  }
+
+  it("does not refresh for the acquire on mount", async () => {
+    const { result } = await mount();
+
+    expect(result.current.isOwnLock).toBe(true);
+    expect(result.current.tookOver).toBe(false);
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("awaits the refresh before a poll takeover turns editable", async () => {
+    let finish!: (ok: boolean) => void;
+    mockRefresh.mockReturnValue(new Promise<boolean>((r) => (finish = r)));
+    const { result } = await mountLockedByOther();
+
+    await tick();
+
+    expect(mockAcquire).toHaveBeenCalledTimes(2);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isRefreshing).toBe(true);
+
+    await act(async () => {
+      finish(true);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.isOwnLock).toBe(true);
+    expect(result.current.isRefreshing).toBe(false);
+    expect(result.current.tookOver).toBe(true);
+    expect(result.current.tookOverFrom).toEqual(OTHER);
+    expect(mockRelease).not.toHaveBeenCalled();
+  });
+
+  it("releases the lock and stays read-only when the refresh fails, then retries", async () => {
+    mockRefresh.mockResolvedValueOnce(false);
+    const { result } = await mountLockedByOther();
+
+    await tick();
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isRefreshing).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+    expect(result.current.error).toMatch(/latest version/);
+
+    await tick();
+
+    expect(mockRefresh).toHaveBeenCalledTimes(2);
+    expect(result.current.isOwnLock).toBe(true);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("treats a throwing refresh as a failure", async () => {
+    mockRefresh.mockRejectedValueOnce(new Error("network"));
+    const { result } = await mountLockedByOther();
+
+    await tick();
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+  });
+
+  it("does not gain the lock when the droplet entered review during the refresh", async () => {
+    let finish!: (ok: boolean) => void;
+    mockRefresh.mockReturnValue(new Promise<boolean>((r) => (finish = r)));
+    const { result } = await mountLockedByOther();
+    await tick();
+
+    await act(async () => {
+      await result.current.markFrozen();
+    });
+    await act(async () => {
+      finish(true);
+      await Promise.resolve();
+    });
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isRefreshing).toBe(false);
+  });
+
+  it("refreshes for a reviewer's startEditing too", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const { result } = await mount();
+    expect(mockRefresh).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.startEditing();
+    });
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(true);
+    expect(result.current.tookOver).toBe(true);
+  });
+
+  it("keeps a reviewer read-only and releases the lock when startEditing's refresh fails", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    mockRefresh.mockResolvedValue(false);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.startEditing();
+    });
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+  });
+
+  it("refreshes when the poll takes back a lock lost to a failed heartbeat", async () => {
+    const { result } = await mount();
+    mockHeartbeat.mockResolvedValueOnce(false);
+    await act(async () => {
+      jest.advanceTimersByTime(30_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.isOwnLock).toBe(false);
+
+    await tick();
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("never refreshes or acquires after the review ended (D11)", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const { result } = await mount();
+    mockStatus.mockResolvedValue(status(NOT_IN_REVIEW));
+    await tick();
+    await tick();
+
+    expect(result.current.reviewEnded).toBe(true);
+    expect(mockAcquire).not.toHaveBeenCalled();
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+});
+
+describe("useEditingLock: hanging and overlapping takeovers (ODY-811)", () => {
+  const OTHER = { id: 9, firstName: "Ada", lastName: "Lovelace" };
+
+  function deferred<T>() {
+    let resolve!: (v: T) => void;
+    const promise = new Promise<T>((r) => (resolve = r));
+    return { promise, resolve };
+  }
+
+  const flush = () =>
+    act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+  it("gives up on a refresh that never settles, releases the lock and retries on the next poll", async () => {
+    mockRefresh.mockReturnValueOnce(new Promise<boolean>(() => {}));
+    mockAcquire.mockResolvedValueOnce({
+      success: false,
+      error: "Lesson is locked",
+      lockedBy: OTHER,
+    });
+    const { result } = await mount();
+
+    await tick();
+    expect(result.current.isRefreshing).toBe(true);
+
+    await act(async () => {
+      jest.advanceTimersByTime(15_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.isRefreshing).toBe(false);
+    expect(result.current.isOwnLock).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
+
+    await tick();
+
+    expect(mockRefresh).toHaveBeenCalledTimes(2);
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("does a single acquire and refresh for a double startEditing", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result } = await mount();
+
+    let both!: Promise<unknown>;
+    await act(async () => {
+      both = Promise.all([
+        result.current.startEditing(),
+        result.current.startEditing(),
+      ]);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      gate.resolve(true);
+      await both;
+    });
+
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(mockRelease).not.toHaveBeenCalled();
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("reuses the running takeover when the poll fires during startEditing's acquire", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const acquire = deferred<{ success: boolean }>();
+    const { result } = await mount();
+    mockAcquire.mockReturnValue(acquire.promise);
+
+    let started!: Promise<void>;
+    await act(async () => {
+      started = result.current.startEditing();
+      await Promise.resolve();
+    });
+    await tick();
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      acquire.resolve({ success: true });
+      await started;
+    });
+
+    expect(mockAcquire).toHaveBeenCalledTimes(1);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.isOwnLock).toBe(true);
+  });
+
+  it("does not touch the lock when unmounted during a refresh", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result, unmount } = await mount();
+
+    await act(async () => {
+      void result.current.startEditing();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    unmount();
+    mockRelease.mockClear();
+    await act(async () => {
+      gate.resolve(true);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockRelease).not.toHaveBeenCalled();
+  });
+
+  it("stays read-only when stopEditing runs during a refresh", async () => {
+    mockStatus.mockResolvedValue(status(REVIEWER_IN_REVIEW));
+    const gate = deferred<boolean>();
+    mockRefresh.mockReturnValue(gate.promise);
+    const { result } = await mount();
+
+    let started!: Promise<void>;
+    await act(async () => {
+      started = result.current.startEditing();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await result.current.stopEditing();
+    });
+    await act(async () => {
+      gate.resolve(true);
+      await started;
+    });
+    await flush();
+
+    expect(result.current.isOwnLock).toBe(false);
+    expect(result.current.isRefreshing).toBe(false);
+    expect(mockRelease).toHaveBeenCalledWith(1);
   });
 });
