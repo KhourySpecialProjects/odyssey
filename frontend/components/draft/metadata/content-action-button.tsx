@@ -14,6 +14,13 @@ type ActionType =
   | "withdrawReview"
   | "publishDraft";
 
+/** The publish action returns codes for denials; anything else is a message for the author. */
+function publishErrorMessage(error: string | null | undefined): string {
+  if (error === "forbidden") return "You can't publish this draft.";
+  if (error === "unauthenticated") return "Please sign in again.";
+  return error || "Failed to publish draft";
+}
+
 type ContentActionButtonProps = {
   droplet: Droplet;
   actionType: ActionType;
@@ -54,11 +61,14 @@ export function ContentActionButton({
             droplet.originalDropletId,
           );
           if (!publishResult.ok) {
-            throw new Error(publishResult.error || "Failed to publish draft");
+            throw new Error(publishErrorMessage(publishResult.error));
           }
 
           toast.success("Changes published successfully!");
-          router.push(`/d/${publishResult.slug}`);
+          // /my-content is where the sidebar sends authors after publishing.
+          router.push(
+            publishResult.slug ? `/d/${publishResult.slug}` : "/my-content",
+          );
           return;
         }
 

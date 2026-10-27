@@ -742,6 +742,56 @@ describe("ContentActionButton", () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ["forbidden", "You can't publish this draft."],
+      ["unauthenticated", "Please sign in again."],
+    ])("turns the %s code into a readable toast", async (code, message) => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: false,
+        error: code,
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(message);
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("goes to /my-content when the publish returns no slug", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: true,
+        error: null,
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/my-content");
+      });
+    });
+
     it("does not call publishDraftToOriginal when no original droplet is linked", async () => {
       render(
         <ContentActionButton

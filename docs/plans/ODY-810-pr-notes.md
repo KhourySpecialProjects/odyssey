@@ -11,9 +11,9 @@ Freeze a draft for its creator while it's in review.
 
 ## Proposed ODY-504 update (needs your OK)
 
-Checked against `git diff e6754c59 -- frontend/testing/security/server-action-auth-allowlist.ts`: exactly these 11 entries were removed from `PENDING_AUTH`, and 25 `ODY-504` entries remain (36 before).
+Checked against `git diff 8dc51151 -- frontend/testing/security/server-action-auth-allowlist.ts`: ODY-810 removes exactly these 10 entries from `PENDING_AUTH`, and 25 `ODY-504` entries remain (35 before; ODY-800, #1146, already removed `publishDraftToOriginal`).
 
-> **Update from ODY-810.** These 11 entries now have real auth and are removed from `PENDING_AUTH`:
+> **Update from ODY-800 and ODY-810.** These 11 entries now have real auth and are removed from `PENDING_AUTH` (`publishDraftToOriginal` by ODY-800, the rest by ODY-810):
 >
 > - `lesson.ts`: `updateLesson`, `addLesson`, `deleteLesson`, `duplicateLessonToDroplet`
 > - `droplet.ts`: `updateDroplet`, `updateDropletLearningObjective`, `updateDropletFunFact`, `publishDraftToOriginal`
