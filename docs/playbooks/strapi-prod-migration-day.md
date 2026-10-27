@@ -100,7 +100,7 @@ Phase 3 runs during this phase. Don't set M or hold the go/no-go until gate C ha
 - [ ] **5.2** Schedule the window. Comms announces the window and the Strapi admin edit freeze.
 - [ ] **5.3 M−1 go/no-go:**
   - The Driver checks access: `psql` to prod RDS (including permission to copy and rename databases), RDS snapshots, ECS service updates, ECR and the media bucket.
-  - Record the exact merge SHA, tag the v4 images `v4-pre-v5-<date>`, and register the rollback task definitions (see the window doc's "Before the window").
+  - Record the exact merge SHA, tag the v4 images `v4-pre-v5-<date>`, and register the rollback task definitions (see the window doc's [Phase 0](strapi-v5-cutover-window.md#phase-0-prepare-days-before-the-window)).
 
 ## Migration day
 
