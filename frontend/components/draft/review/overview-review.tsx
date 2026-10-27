@@ -8,7 +8,7 @@ import {
   FrozenOverview,
   type OverviewField,
 } from "@/components/draft/metadata/frozen-overview";
-import { useReviewComments } from "@/hooks/use-review-comments";
+import { useDropletReviewComments } from "./review-comments-context";
 import {
   commentCounts,
   commentStripText,
@@ -56,7 +56,7 @@ export function OverviewReview({
     setTimeout(() => router.refresh(), SAVE_SETTLE_MS);
   };
   const commenting = mode === "comment";
-  const reviewComments = useReviewComments(dropletId, true);
+  const reviewComments = useDropletReviewComments(dropletId, true);
   const { review, add, edit, remove, resolve } = reviewComments;
 
   const comments = useMemo(

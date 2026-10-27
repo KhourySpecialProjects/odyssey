@@ -44,7 +44,7 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
-import { useReviewComments } from "@/hooks/use-review-comments";
+import { useDropletReviewComments } from "@/components/draft/review/review-comments-context";
 import {
   ReviewModeBar,
   type ReviewMode,
@@ -136,7 +136,7 @@ export function LessonRenderer({
   const isReviewing = !reviewEnded && inReview && isReviewer && !lockLoading;
   const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
   const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
-  const reviewComments = useReviewComments(dropletId, isReviewing);
+  const reviewComments = useDropletReviewComments(dropletId, isReviewing);
   const lessonComments = useMemo(
     () => commentsOnLesson(reviewComments.comments, lesson.id),
     [reviewComments.comments, lesson.id],
