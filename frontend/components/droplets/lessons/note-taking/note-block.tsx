@@ -49,20 +49,22 @@ export function NoteBlock({
     }
   }, [content, note.id, authorizedUserId, onUpdate]);
 
+  // The dark: copy overrides the secondary Badge's dark:bg-slate-700, which
+  // would otherwise hide the slate-700 text and the highlight colour
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
       case "#f9a8d4":
-        return "bg-[#f9a8d4]";
+        return "bg-[#f9a8d4] dark:bg-[#f9a8d4]";
       case "#fbd38d":
-        return "bg-[#fbd38d]";
+        return "bg-[#fbd38d] dark:bg-[#fbd38d]";
       case "#fff300":
-        return "bg-[#fff300]";
+        return "bg-[#fff300] dark:bg-[#fff300]";
       case "#86efac":
-        return "bg-[#86efac]";
+        return "bg-[#86efac] dark:bg-[#86efac]";
       case "#93c5fd":
-        return "bg-[#93c5fd]";
+        return "bg-[#93c5fd] dark:bg-[#93c5fd]";
       default:
-        return "bg-[#fff300]";
+        return "bg-[#fff300] dark:bg-[#fff300]";
     }
   };
 

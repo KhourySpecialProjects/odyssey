@@ -318,6 +318,31 @@ describe("DropletFooter", () => {
       expect(screen.getByRole("button", { name: /next/i })).toBeEnabled();
     });
 
+    it("stays on the last lesson when the recap save fails", async () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+      (updateViewedLessons as jest.Mock).mockResolvedValue({ success: false });
+      jest.spyOn(console, "error").mockImplementation(() => {});
+
+      render(
+        <DropletFooter
+          droplet={mockDroplet as any}
+          enrollmentId="42"
+          currentLessonId={3}
+        />,
+      );
+      fireEvent.click(screen.getByText("Next").closest("button")!);
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to save lesson progress",
+        ),
+      );
+      // One toast, and no recap showing the droplet as incomplete
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: /next/i })).toBeEnabled();
+    });
+
     const clickNextFromLesson1 = (props: Record<string, unknown> = {}) => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
       render(

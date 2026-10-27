@@ -37,8 +37,12 @@ const NotesBar = dynamic(
           </span>
         </div>
         {/* Only the spinner is the live region, so screen readers announce
-            "Loading notes" rather than the heading as well */}
-        <div role="status" className="flex items-center justify-center py-12">
+            "Loading notes" rather than the heading as well. aria-live, not
+            role="status": the footer counts [role="status"] as answered quizzes */}
+        <div
+          aria-live="polite"
+          className="flex items-center justify-center py-12"
+        >
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
           <span className="sr-only">Loading notes</span>
         </div>
