@@ -266,6 +266,7 @@ export type Droplet = {
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;
+  reviewRound?: number | null;
   afterReview?: string;
   funFact?: string;
   averageRating?: number;
@@ -491,6 +492,7 @@ export type ReviewComment = {
   body: string;
   author?: AuthorizedUser | null;
   resolvedAt?: string | null;
+  createdAt?: string;
   parent?: ReviewComment | null;
 };
 

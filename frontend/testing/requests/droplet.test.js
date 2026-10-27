@@ -574,6 +574,19 @@ describe("Droplet API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
     });
 
+    it("never sends a client reviewRound", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 123, attributes: {} } }),
+      });
+
+      await updateDroplet(123, { inReview: true, reviewRound: 5 });
+
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data.inReview).toBe(true);
+      expect(body.data).not.toHaveProperty("reviewRound");
+    });
+
     it("saves that don't publish leave the voyages cache alone", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: true,

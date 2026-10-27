@@ -156,7 +156,7 @@ All cache tags are defined in `frontend/lib/cache-tags.ts`. Two scoping levels:
 - `CACHE_TAGS.notes(userId)` → `"notes-{userId}"`
 - `CACHE_TAGS.highlights(userId)` → `"highlights-{userId}"`
 
-Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (no readers or mutators yet).
+Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (read by `getReviewForDroplet`, invalidated by the `lib/requests/reviews.ts` writes).
 
 ### Invalidation Pattern
 

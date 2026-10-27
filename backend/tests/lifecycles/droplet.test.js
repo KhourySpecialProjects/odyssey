@@ -263,3 +263,109 @@ describe('droplet over REST', () => {
     expect(res.body.data.slug).toMatch(/^rest-renamed-/);
   });
 });
+
+describe('droplet reviewRound', () => {
+  const round = async (documentId) =>
+    (await strapi.documents(DROPLET_UID).findOne({ documentId })).reviewRound;
+
+  it('starts at 0 on create, 1 when created in review, and ignores a sent value', async () => {
+    expect((await create()).reviewRound).toBe(0);
+    expect((await create({ inReview: true })).reviewRound).toBe(1);
+    expect((await create({ reviewRound: 9 })).reviewRound).toBe(0);
+    expect((await create({ inReview: true, reviewRound: 9 })).reviewRound).toBe(1);
+  });
+
+  it('keeps a clone of an in-review droplet consistent (round >= 1)', async () => {
+    const source = await create({ inReview: true });
+    await update(source.documentId, { inReview: false });
+    await update(source.documentId, { inReview: true });
+    // clone merges the source row into the create data; name and slug must be overridden (unique).
+    const name = unique('Clone Round');
+    const clone = await strapi
+      .documents(DROPLET_UID)
+      .clone({ documentId: source.documentId, data: { name, slug: name.toLowerCase().replace(/ /g, '-') } });
+    const row = await strapi.documents(DROPLET_UID).findOne({ documentId: clone.documentId });
+    expect(row.inReview).toBe(true);
+    expect(row.reviewRound).toBeGreaterThanOrEqual(1);
+  });
+
+  it('bumps the right droplet on a Query Engine update keyed by documentId', async () => {
+    const a = await create();
+    const b = await create({ inReview: true });
+    await strapi.db.transaction(() =>
+      strapi.db.query(DROPLET_UID).update({ where: { documentId: a.documentId }, data: { inReview: true } })
+    );
+    expect(await round(a.documentId)).toBe(1);
+    expect(await round(b.documentId)).toBe(1);
+  });
+
+  it('does not throw on a Query Engine update with neither id nor documentId', async () => {
+    const a = await create();
+    await expect(
+      strapi.db.transaction(() =>
+        strapi.db.query(DROPLET_UID).update({ where: { name: a.name }, data: { inReview: true } })
+      )
+    ).resolves.toBeDefined();
+    expect(await round(a.documentId)).toBe(0);
+  });
+
+  it('bumps only when inReview turns true (withdraw + resubmit is a new round)', async () => {
+    const { documentId } = await create();
+    await update(documentId, { inReview: true });
+    expect(await round(documentId)).toBe(1);
+    await update(documentId, { inReview: true });
+    expect(await round(documentId)).toBe(1);
+    await update(documentId, { inReview: false });
+    expect(await round(documentId)).toBe(1);
+    await update(documentId, { inReview: true });
+    expect(await round(documentId)).toBe(2);
+  });
+
+  it('ignores unrelated updates and a client-sent reviewRound', async () => {
+    const { documentId } = await create({ inReview: true });
+    await update(documentId, { name: unique('Renamed Round') });
+    expect(await round(documentId)).toBe(1);
+    await update(documentId, { reviewRound: 50 });
+    expect(await round(documentId)).toBe(1);
+  });
+
+  it('ignores reviewRound over REST and bumps on REST inReview', async () => {
+    const { documentId } = await create();
+    let res = await rest()
+      .put(`/api/droplets/${documentId}`)
+      .set(auth())
+      .send({ data: { reviewRound: 50 } });
+    expect(res.status).toBe(200);
+    expect(await round(documentId)).toBe(0);
+
+    res = await rest()
+      .put(`/api/droplets/${documentId}`)
+      .set(auth())
+      .send({ data: { inReview: true } });
+    expect(res.status).toBe(200);
+    expect(await round(documentId)).toBe(1);
+  });
+
+  it('bumps and still notifies Slack on { status: edit, inReview: true }', async () => {
+    const name = unique('Round Slack');
+    const { documentId } = await create({ name });
+    slack.reset();
+
+    await update(documentId, { status: 'edit', inReview: true });
+
+    expect(await round(documentId)).toBe(1);
+    const sends = slack.sends();
+    expect(sends).toHaveLength(1);
+    expect(sends[0].text).toContain(name);
+  });
+
+  it('records one bump for two submits (SQLite runs the transactions serially)', async () => {
+    const { documentId } = await create();
+    const results = await Promise.allSettled([
+      update(documentId, { inReview: true }),
+      update(documentId, { inReview: true }),
+    ]);
+    expect(results.map((r) => r.status)).toEqual(['fulfilled', 'fulfilled']);
+    expect(await round(documentId)).toBe(1);
+  });
+});

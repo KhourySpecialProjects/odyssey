@@ -1,5 +1,6 @@
 import {
   reviewAnchorSchema,
+  reviewCommentBodySchema,
   reviewCommentInputSchema,
   reviewKeySchema,
   reviewScoreInputSchema,
@@ -153,5 +154,21 @@ describe("reviewScoreInputSchema", () => {
     expect(
       reviewScoreInputSchema.safeParse({ ...base, value: 6 }).success,
     ).toBe(false);
+  });
+});
+
+describe("reviewCommentBodySchema", () => {
+  it("rejects whitespace-only text", () => {
+    expect(reviewCommentBodySchema.safeParse("   ").success).toBe(false);
+  });
+
+  it("rejects text over 5000 characters", () => {
+    expect(reviewCommentBodySchema.safeParse("a".repeat(5001)).success).toBe(
+      false,
+    );
+  });
+
+  it("returns trimmed text", () => {
+    expect(reviewCommentBodySchema.parse("  ok  ")).toBe("ok");
   });
 });
