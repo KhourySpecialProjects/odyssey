@@ -833,5 +833,14 @@ describe("NoteBlock", () => {
       const badge = screen.getByTitle("Highlighted text");
       expect(badge).toHaveClass("whitespace-nowrap");
     });
+
+    it("keeps the highlight colour in dark mode instead of the badge's slate", () => {
+      render(<NoteBlock {...mockProps} />);
+
+      const badge = screen.getByTitle("Highlighted text");
+      // Slate-700 bg would hide the chip's slate-700 text
+      expect(badge).toHaveClass("dark:bg-[#fff300]");
+      expect(badge).not.toHaveClass("dark:bg-slate-700");
+    });
   });
 });

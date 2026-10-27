@@ -129,9 +129,11 @@ describe("DropletLessonWrapper", () => {
 
     fireEvent.click(screen.getByText("Toggle notes"));
 
-    const liveRegion = screen.getByText("Loading notes").closest("[role]");
-    expect(liveRegion).toHaveAttribute("role", "status");
+    const liveRegion = screen.getByText("Loading notes").closest("[aria-live]");
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
     expect(liveRegion).not.toHaveTextContent("My Notes");
+    // The footer's quiz gate counts [role="status"] as answered questions
+    expect(document.querySelector('[role="status"]')).toBeNull();
     expect(
       screen.getByRole("heading", { name: "My Notes" }),
     ).toBeInTheDocument();
