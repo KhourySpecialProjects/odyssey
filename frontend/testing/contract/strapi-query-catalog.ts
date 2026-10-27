@@ -192,30 +192,6 @@ const DUPLICATE_DROPLET = routes([
   ["GET", /^\/droplets$/, list(dropletEnt(1))],
 ]);
 
-const PUBLISH_DRAFT = routes([
-  ME_ROUTE,
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(1, {
-        status: "draft",
-        lessons: rel(lessonEnt(5, "v1"), lessonEnt(7, "v2")),
-      }),
-    ),
-    /id\]\[\$eq\]=1(&|$)/,
-  ],
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(2, { lessons: rel(lessonEnt(6, "v1"), lessonEnt(8, "v1")) }),
-    ),
-    /id\]\[\$eq\]=2(&|$)/,
-  ],
-  ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
-]);
-
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -432,11 +408,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       routes([ME_ROUTE]),
     ),
     call("duplicateDroplet", (m) => m.duplicateDroplet(1), DUPLICATE_DROPLET),
-    call(
-      "publishDraftToOriginal",
-      (m) => m.publishDraftToOriginal(1, 2),
-      PUBLISH_DRAFT,
-    ),
     call(
       "favoriteDroplet",
       (m) => m.favoriteDroplet(DROPLET, true),
@@ -764,6 +735,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     setDropletHidden: WRITE,
     createNewTag: WRITE,
     updateDropletLearningObjective: WRITE,
+    publishDraftToOriginal: "custom publish-edit route (ODY-800)",
   },
   enrollment: {
     changeEnrollmentRating: WRITE,

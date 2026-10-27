@@ -61,7 +61,6 @@ const CURATED_WRITES = [
   "droplet.updateDroplet",
   "droplet.createDroplet",
   "droplet.duplicateDroplet",
-  "droplet.publishDraftToOriginal",
   "droplet.favoriteDroplet",
   "enrollment.createEnrollment",
   "enrollment.updateViewedLessons",

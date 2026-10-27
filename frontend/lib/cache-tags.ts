@@ -15,6 +15,9 @@
  *                 (updateDropletAverageRating does NOT invalidate: the
  *                 average is an aggregate and may be up to 900s stale; the
  *                 rater's own rating refreshes via enrollments-{userId})
+ *                 (publishDraftToOriginal flushes all its tags on success,
+ *                 a 5xx or a network error, since the publish may have
+ *                 committed; not on a 4xx)
  * enrollments     Two-level tag system:                                      900s
  *                 ↳ Per-user tag "enrollments-{userId}":
  *                   createEnrollment, createEnrollmentFromEmail,
@@ -40,7 +43,8 @@
  *                 still sweep this tag)
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
  *                 deleteGroup, archiveGroup, setGroupArchivedForMe,
- *                 deletePlaylist, updateDroplet (not draft saves)
+ *                 deletePlaylist, updateDroplet (not draft saves),
+ *                 publishDraftToOriginal
  * authors         createDroplet, updateDroplet (draft saves only when       900s
  *                 authorized_users changes), deepDeleteDroplet,
  *                 duplicateDroplet, publishDraftToOriginal,
@@ -55,6 +59,11 @@
  *                 publishDraftToOriginal
  *                 (getLessonBySlug carries only this tag — it returns no
  *                 droplet data, so droplet-level mutations don't flush it)
+ * voyages         publishDraftToOriginal, updateDroplet (on publish),       900s
+ *                 createVoyageWithNodes, publishVoyage,
+ *                 updateVoyageWithNodes, deleteVoyage, archiveVoyage,
+ *                 claimNodeForUser, unclaimVoyageDropletNode,
+ *                 approveCreationRequest
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
@@ -96,7 +105,7 @@
  *                 ↳ Global tag "user-content" (co-authors / playlist
  *                   creators affected): updateDroplet, deepDeleteDroplet,
  *                   updatePlaylist, deletePlaylist, archivePlaylist,
- *                   publishDraftToOriginal (via finally), voyage mutations
+ *                   publishDraftToOriginal, voyage mutations
  *                 (droplets + playlists on /my-content)
  * user-dashboard  Two-level tag system (getCachedUserDashboardFull):         900s
  *                 ↳ Per-user tag "user-dashboard-{userId}":
@@ -107,7 +116,7 @@
  *                   createGroup, updateGroup, updateGroupMembers,
  *                   deleteGroup, archiveGroup, updateDroplet (not draft
  *                   saves), deepDeleteDroplet, archiveVoyage,
- *                   publishDraftToOriginal (via finally)
+ *                   publishDraftToOriginal
  *                 (playlists + groups on /dashboard)
  * voyage-enrollments Two-level tag system:                                   900s
  *                 ↳ Per-user tag "voyage-enrollments-{userId}":

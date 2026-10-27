@@ -18,6 +18,7 @@ const CREATION_REQUEST_UID = 'api::creation-request.creation-request';
 const ACCESS_REQUEST_UID = 'api::access-request.access-request';
 const VOYAGE_UID = 'api::voyage.voyage';
 const USER_UID = 'api::authorized-user.authorized-user';
+const ENROLLMENT_UID = 'api::enrollment.enrollment';
 
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
@@ -63,6 +64,11 @@ const userData = (overrides = {}) => ({
   ...overrides,
 });
 
+const enrollmentData = (overrides = {}) => ({
+  isComplete: false,
+  ...overrides,
+});
+
 module.exports = {
   unique,
   SLUG_PLACEHOLDER,
@@ -73,10 +79,12 @@ module.exports = {
   ACCESS_REQUEST_UID,
   USER_UID,
   VOYAGE_UID,
+  ENROLLMENT_UID,
   dropletData,
   voyageData,
   lessonData,
   playlistData,
   accessRequestData,
   userData,
+  enrollmentData,
 };

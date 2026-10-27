@@ -1,13 +1,6 @@
-import isEqual from "lodash/isEqual";
+import { isDeepStrictEqual } from 'node:util';
 
-/**
- * Pure planning for publishing an [EDIT] draft over a live droplet (ODY-622).
- *
- * Decides which live lessons to update in place, which draft lessons to create
- * and which live lessons to delete. It does no I/O and has no "use server"
- * directive, so it can be unit-tested and exports freely. The writes live in
- * lib/requests/droplet.ts.
- */
+/** Pure planner for publishing an [EDIT] draft over a live droplet (ODY-622, ported from the frontend). */
 
 /** The lesson fields the planner reads. A lesson fetched with `fields: ["*"]` satisfies this. */
 export type SyncableLesson = {
@@ -15,7 +8,7 @@ export type SyncableLesson = {
   name: string;
   type?: string | null;
   orderIndex?: number | null;
-  blocksVersion?: "v1" | "v2" | null;
+  blocksVersion?: 'v1' | 'v2' | null;
   blocks?: unknown[] | null;
   blocksV2?: unknown;
   /** [EDIT]-draft lessons only: id of the live lesson this was cloned from. */
@@ -27,20 +20,21 @@ export type LessonWriteFields = {
   name?: string;
   type?: string;
   orderIndex?: number;
-  blocksVersion?: "v1" | "v2";
+  blocksVersion?: 'v1' | 'v2';
   blocks?: unknown[];
   blocksV2?: unknown;
 };
 
 export type LessonSyncPlan = {
-  /** Live lessons to PUT in place. `changes` has at least one field; `name` is the draft lesson's. */
+  /** Live lessons to update in place. `changes` has at least one field. */
   updates: {
+    draftLessonId: number;
     liveLessonId: number;
     name: string;
     changes: LessonWriteFields;
   }[];
-  /** Live lesson ids that matched a draft lesson and have nothing to write. */
-  unchanged: number[];
+  /** Matched lessons with nothing to write. */
+  unchanged: { draftLessonId: number; liveLessonId: number }[];
   /** Draft lessons with no live counterpart, to POST. */
   creates: {
     draftLessonId: number;
@@ -67,22 +61,18 @@ type RawBlock = {
 /** A shallow copy of `record` without its `id` key. */
 function withoutId<T extends Record<string, unknown>>(
   record: T,
-): Omit<T, "id"> {
+): Omit<T, 'id'> {
   return Object.fromEntries(
-    Object.entries(record).filter(([key]) => key !== "id"),
-  ) as Omit<T, "id">;
+    Object.entries(record).filter(([key]) => key !== 'id'),
+  ) as Omit<T, 'id'>;
 }
 
-/**
- * Removes the Strapi component ids from v1 blocks so they can be sent as the
- * body of a create or update: at block level, and for quizzes also at question
- * and answer-option level.
- */
+/** Strips component ids from v1 blocks (block, question and answer-option level) for a write. */
 export function cleanLessonBlocks(blocks: unknown[]): unknown[] {
   if (!Array.isArray(blocks)) return [];
 
   return (blocks as RawBlock[]).map((block) => {
-    if (block.__component === "droplets.quiz" && block.questions) {
+    if (block.__component === 'droplets.quiz' && block.questions) {
       return {
         ...withoutId(block),
         questions: block.questions.map((question) => ({
@@ -93,7 +83,7 @@ export function cleanLessonBlocks(blocks: unknown[]): unknown[] {
       };
     }
 
-    if (block.__component === "droplets.open-ended-quiz" && block.questions) {
+    if (block.__component === 'droplets.open-ended-quiz' && block.questions) {
       return {
         ...withoutId(block),
         questions: block.questions.map((question) => withoutId(question)),
@@ -104,16 +94,13 @@ export function cleanLessonBlocks(blocks: unknown[]): unknown[] {
   });
 }
 
-/**
- * Recursively drops every `id` key. Only used to compare v1 blocks: a clone gets
- * fresh component ids, so comparing them would make every lesson look edited.
- */
+/** Drops every `id` key recursively; clones get fresh component ids, so v1 comparison ignores them. */
 function stripIdsDeep(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripIdsDeep);
-  if (value !== null && typeof value === "object") {
+  if (value !== null && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
-        .filter(([key]) => key !== "id")
+        .filter(([key]) => key !== 'id')
         .map(([key, nested]) => [key, stripIdsDeep(nested)]),
     );
   }
@@ -127,21 +114,12 @@ function byOrder(a: SyncableLesson, b: SyncableLesson): number {
 
 /** A v2 lesson takes its content from blocksV2 only when it has some; anything else uses blocks. */
 function usesBlocksV2(lesson: SyncableLesson): boolean {
-  return (lesson.blocksVersion ?? "v1") === "v2" && lesson.blocksV2 != null;
+  return (lesson.blocksVersion ?? 'v1') === 'v2' && lesson.blocksV2 != null;
 }
 
 /**
- * Pairs each draft lesson (by index into `draft`) with a live lesson, or null.
- *
- * 1. Lineage, over every draft lesson: `originalLessonId` names a live lesson
- *    that is still unclaimed. This runs to completion first, so the name pass
- *    below can never take a live lesson that a draft lesson claims by lineage.
- * 2. Exact name (trimmed), in draft order, against the live lessons nobody has
- *    claimed. This covers drafts made before lineage existed, and retries: a
- *    lesson created by a failed earlier attempt is matched, not created again.
- *
- * Position is never used. It would attach progress, notes and highlights to the
- * wrong content as soon as an author inserts, deletes or reorders a lesson.
+ * Pairs each draft lesson (by index) with a live lesson or null: lineage first, then exact name.
+ * Never by position, which would attach progress to the wrong content.
  */
 function matchLessons(
   draft: SyncableLesson[],
@@ -181,13 +159,13 @@ function matchLessons(
 /** The content half of a write: blocksV2 for a v2 lesson that has it, otherwise cleaned blocks. */
 function contentOf(
   lesson: SyncableLesson,
-): Pick<LessonWriteFields, "blocks" | "blocksV2"> {
+): Pick<LessonWriteFields, 'blocks' | 'blocksV2'> {
   return usesBlocksV2(lesson)
     ? { blocksV2: lesson.blocksV2 }
     : { blocks: cleanLessonBlocks(lesson.blocks ?? []) };
 }
 
-/** Everything a new live lesson needs. The slug is not here: Strapi generates it from the name. */
+/** Everything a new live lesson needs, except the slug. */
 function createFieldsFor(
   draft: SyncableLesson,
   orderIndex: number,
@@ -196,7 +174,7 @@ function createFieldsFor(
     name: draft.name,
     ...(draft.type != null ? { type: draft.type } : {}),
     orderIndex,
-    blocksVersion: draft.blocksVersion ?? "v1",
+    blocksVersion: draft.blocksVersion ?? 'v1',
     ...contentOf(draft),
   };
 }
@@ -213,19 +191,21 @@ function changesFor(
   if (draft.type != null && draft.type !== live.type) changes.type = draft.type;
   if (live.orderIndex !== orderIndex) changes.orderIndex = orderIndex;
 
-  const blocksVersion = draft.blocksVersion ?? "v1";
-  if (blocksVersion !== (live.blocksVersion ?? "v1")) {
+  const blocksVersion = draft.blocksVersion ?? 'v1';
+  if (blocksVersion !== (live.blocksVersion ?? 'v1')) {
     changes.blocksVersion = blocksVersion;
   }
 
-  // Leaving v1 content untouched matters: rewriting it recreates the dynamic-zone
-  // components, and v1 highlights anchor to those component ids. v2 ids are kept.
+  // Unchanged v1 content is never rewritten: v1 highlights anchor to its component ids.
   if (usesBlocksV2(draft)) {
-    if (!isEqual(draft.blocksV2, live.blocksV2)) {
+    if (!isDeepStrictEqual(draft.blocksV2, live.blocksV2)) {
       changes.blocksV2 = draft.blocksV2;
     }
   } else if (
-    !isEqual(stripIdsDeep(draft.blocks ?? []), stripIdsDeep(live.blocks ?? []))
+    !isDeepStrictEqual(
+      stripIdsDeep(draft.blocks ?? []),
+      stripIdsDeep(live.blocks ?? []),
+    )
   ) {
     changes.blocks = cleanLessonBlocks(draft.blocks ?? []);
   }
@@ -234,14 +214,8 @@ function changesFor(
 }
 
 /**
- * Plans how to turn a live droplet's lessons into the draft's, keeping the
- * identity (id, slug) of every live lesson that survives.
- *
- * A draft lesson's position in `(orderIndex, id)` order is its target
- * orderIndex, 0..n-1. Matched lessons get only the fields that changed;
- * unmatched draft lessons are created; unmatched live lessons are deleted.
- * Updates, unchanged ids and creates come out in draft order, deletes in live
- * order.
+ * Plans how to turn the live lessons into the draft's, keeping the id and slug of survivors.
+ * A draft lesson's position in (orderIndex, id) order is its target orderIndex.
  */
 export function planLessonSync(
   draftLessons: SyncableLesson[],
@@ -273,12 +247,16 @@ export function planLessonSync(
     const changes = changesFor(draftLesson, liveLesson, orderIndex);
     if (Object.keys(changes).length > 0) {
       plan.updates.push({
+        draftLessonId: draftLesson.id,
         liveLessonId: liveLesson.id,
         name: draftLesson.name,
         changes,
       });
     } else {
-      plan.unchanged.push(liveLesson.id);
+      plan.unchanged.push({
+        draftLessonId: draftLesson.id,
+        liveLessonId: liveLesson.id,
+      });
     }
   });
 
