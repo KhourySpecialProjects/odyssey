@@ -38,8 +38,8 @@ The step-by-step runbook for the combined v4 → v5 cutover (ODY-633 + ODY-597).
 | Merge                                   | `feature/strapi-v5` → `develop`                                        | `develop` → `production`                                                |
 | Pipeline                                | `dev2-image-push.yml`                                                  | `prod-image-push.yml` (rolling update)                                  |
 | `02` file                               | `scripts/strapi-v5-cutover/unpublished-rows/02-handle-unpublished.sql` | `~/ody-633/02-handle-unpublished.prod.sql` (outside the repo, approved) |
-| Jumpbox subnet                          | `subnet-0018b75c008fbacc8` (public)                                    | `subnet-0260f87c888e5b09a` (private, NAT)                               |
-| Jumpbox security groups                 | `sg-08f7dd705233d47f0 sg-06addef9076022b35`                            | `sg-0a6086eb97f271182`                                                  |
+| Jumpbox subnet                          | looked up in Phase 1                                                   | looked up in Phase 1                                                    |
+| Jumpbox security groups                 | looked up in Phase 1                                                   | looked up in Phase 1                                                    |
 | Jumpbox public IP flag                  | `--associate-public-ip-address`                                        | `--no-associate-public-ip-address`                                      |
 | Edit freeze                             | Tell the team in Slack                                                 | Comms announces it ahead of time                                        |
 
@@ -149,11 +149,36 @@ aws sso login
 Points the AWS CLI at the Odyssey account and refreshes your SSO login.
 
 ```bash
-AMI=$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 --query Parameter.Value --output text)
-ID=$(aws ec2 run-instances --image-id $AMI --instance-type t4g.nano --subnet-id <subnet> <public IP flag> --security-group-ids <security groups> --iam-instance-profile Name=jumpbox-ssm --metadata-options HttpTokens=required --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ody-<env>-db-jump}]' --query 'Instances[0].InstanceId' --output text); echo $ID
+C=<cluster>; BE=<backend service>; DBI=<db instance>
 ```
 
-Launches a tiny instance (about $0.25/day) in a subnet that can reach the database, with the `jumpbox-ssm` role. Use the subnet, security groups and public IP flag from the values table. Record the instance id.
+Sets the three values from the values table that the lookups below need. Terminal B sets them again.
+
+Then find the jump instance's network. Run only the block for your environment.
+
+```bash
+SUBNET=$(aws ecs describe-services --cluster $C --services $BE --query "services[0].networkConfiguration.awsvpcConfiguration.subnets[0]" --output text)
+SGS=$(aws ecs describe-services --cluster $C --services $BE --query "services[0].networkConfiguration.awsvpcConfiguration.securityGroups" --output text)
+PUBIP=--no-associate-public-ip-address; echo "subnet: $SUBNET  security groups: $SGS"
+```
+
+Prod only. Uses the backend service's own network: its first subnet and its security groups. Those subnets are private (outbound through NAT), so the instance gets no public IP. Must print a `subnet-…` id and at least one `sg-…` id.
+
+```bash
+VPC=$(aws rds describe-db-instances --db-instance-identifier $DBI --query "DBInstances[0].DBSubnetGroup.VpcId" --output text)
+SGS=$(aws ec2 describe-security-groups --filters Name=vpc-id,Values=$VPC Name=group-name,Values=ec2-rds-1,default --query "SecurityGroups[].GroupId" --output text)
+SUBNET=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC Name=map-public-ip-on-launch,Values=true --query "Subnets[0].SubnetId" --output text)
+PUBIP=--associate-public-ip-address; echo "vpc: $VPC  subnet: $SUBNET  security groups: $SGS"
+```
+
+Dev only. Finds the database's VPC, the `ec2-rds-1` and `default` security groups in it, and a subnet that gives new instances a public IP. Must print two `sg-…` ids and a `subnet-…` id; if any value is `None` or empty, stop and check `DBI`.
+
+```bash
+AMI=$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 --query Parameter.Value --output text)
+ID=$(aws ec2 run-instances --image-id $AMI --instance-type t4g.nano --subnet-id $SUBNET $PUBIP --security-group-ids ${=SGS} --iam-instance-profile Name=jumpbox-ssm --metadata-options HttpTokens=required --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ody-<env>-db-jump}]' --query 'Instances[0].InstanceId' --output text); echo $ID
+```
+
+Launches a tiny instance (about $0.25/day) in a subnet that can reach the database, with the `jumpbox-ssm` role. It uses the subnet, security groups and public IP flag you just looked up. Record the instance id.
 
 ```bash
 aws ec2 wait instance-running --instance-ids $ID
@@ -163,7 +188,7 @@ aws ssm describe-instance-information --filters Key=InstanceIds,Values=$ID --que
 Waits for the instance, then asks SSM whether its agent is connected. Repeat the second line until it prints `"Online"` (1–3 minutes).
 
 ```bash
-DBHOST=$(aws rds describe-db-instances --db-instance-identifier <DBI> --query "DBInstances[0].Endpoint.Address" --output text); echo $DBHOST
+DBHOST=$(aws rds describe-db-instances --db-instance-identifier $DBI --query "DBInstances[0].Endpoint.Address" --output text); echo $DBHOST
 aws ssm start-session --target $ID --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{"host":["'"$DBHOST"'"],"portNumber":["5432"],"localPortNumber":["<PGPORT>"]}'
 ```
 
@@ -509,12 +534,18 @@ Prod only. Two temporary rules on the `odyssey-production` load balancer's HTTPS
 ### Switch on (step 1)
 
 ```bash
-L=arn:aws:elasticloadbalancing:us-east-2:851725173181:listener/app/odyssey-production/248cb06a658903a6/d4d2598743aa4006
-FTG=arn:aws:elasticloadbalancing:us-east-2:851725173181:targetgroup/odyssey-fe-production/fae24b8279e902ae
+FTG=$(aws ecs describe-services --cluster $C --services $FE --query "services[0].loadBalancers[0].targetGroupArn" --output text)
+FLB=$(aws elbv2 describe-target-groups --target-group-arns $FTG --query "TargetGroups[0].LoadBalancerArns[0]" --output text)
+L=$(aws elbv2 describe-listeners --load-balancer-arn $FLB --query 'Listeners[?Port==`443`].ListenerArn | [0]' --output text); echo "$FTG"; echo "$L"
+```
+
+Run in Terminal B (it uses `C` and `FE`). Finds the frontend's target group, its load balancer and that load balancer's HTTPS listener. On prod the listener ARN must contain `odyssey-production`; if either line is `None` or empty, stop.
+
+```bash
 MYIP=$(curl -s https://checkip.amazonaws.com); echo $MYIP
 ```
 
-Sets the listener and the frontend target group, and finds your public IP. Check it on the day: Wi-Fi or a VPN changes it.
+Finds your public IP. Check it on the day: Wi-Fi or a VPN changes it.
 
 ```bash
 python3 -c 'import json; b=open("/Users/jaylenz/ody-596/maintenance-fixed-response.html").read().strip(); assert len(b.encode())<=1024; json.dump([{"Type":"fixed-response","FixedResponseConfig":{"StatusCode":"503","ContentType":"text/html","MessageBody":b}}], open("/Users/jaylenz/ody-596/maintenance-action.json","w"))'
