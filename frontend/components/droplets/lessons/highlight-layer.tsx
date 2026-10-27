@@ -31,7 +31,12 @@ import {
   setRegionReader,
   trimmed,
 } from "@/lib/highlight-regions";
-import { SelectionToolbar, type ToolbarAnchor } from "./selection-toolbar";
+import { SelectionToolbar } from "./selection-toolbar";
+import {
+  anchorIn,
+  useSelectionChange,
+  type PopoverAnchor,
+} from "@/lib/selection";
 
 /** A highlight the reader just made, before it's saved */
 export type HighlightDraft = Pick<
@@ -95,13 +100,10 @@ interface ToolbarState {
   target: ToolbarTarget;
   /** The block it's shown in (see homeOf) */
   home: HTMLElement;
-  anchor: ToolbarAnchor;
+  anchor: PopoverAnchor;
   /** Where a note made from here goes, in px from the top of the block */
   notePos: number;
 }
-
-// How long the selection has to stay still before the toolbar opens
-const SELECTION_DELAY_MS = 150;
 
 const HighlightsContext = createContext<PlacedHighlight[]>([]);
 
@@ -121,16 +123,6 @@ export function useRegionHighlights(ids: number[]) {
     )
     .join(",");
   return { highlights, key };
-}
-
-/** A rect's position relative to `parent`, for placing the toolbar */
-function anchorIn(parent: HTMLElement, rect: DOMRect): ToolbarAnchor {
-  const parentRect = parent.getBoundingClientRect();
-  return {
-    top: rect.top - parentRect.top,
-    bottom: rect.bottom - parentRect.top,
-    centerX: rect.left + rect.width / 2 - parentRect.left,
-  };
 }
 
 /**
@@ -205,8 +197,7 @@ export function HighlightLayer({
     return highlightsRef.current.filter((h) => ids.includes(h.blockId));
   };
 
-  // The toolbar follows the selection however it was made: mouse, Shift +
-  // arrow keys, or a long-press on a phone
+  // The toolbar follows the selection however it was made
   const readSelection = () => {
     const root = rootRef.current;
     const selection = window.getSelection();
@@ -292,24 +283,7 @@ export function HighlightLayer({
         first.region.getBoundingClientRect().top,
     });
   };
-  const readSelectionRef = useRef(readSelection);
-  useEffect(() => {
-    readSelectionRef.current = readSelection;
-  });
-
-  useEffect(() => {
-    if (!canHighlight) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const handleSelectionChange = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => readSelectionRef.current(), SELECTION_DELAY_MS);
-    };
-    document.addEventListener("selectionchange", handleSelectionChange);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("selectionchange", handleSelectionChange);
-    };
-  }, [canHighlight]);
+  useSelectionChange(readSelection, canHighlight);
 
   const closeToolbar = useCallback(() => setToolbar(null), []);
 

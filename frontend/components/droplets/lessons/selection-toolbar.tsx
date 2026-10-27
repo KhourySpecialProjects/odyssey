@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { HighlightColor } from "@/types";
 import { IconTrash, IconNotebook } from "@tabler/icons-react";
 import { HIGHLIGHT_COLORS } from "@/lib/highlight-colors";
-
-/** Where the selected text sits, in px from the toolbar's parent's top left */
-export interface ToolbarAnchor {
-  top: number;
-  bottom: number;
-  centerX: number;
-}
+import { placePopover, useDismiss, type PopoverAnchor } from "@/lib/selection";
 
 interface SelectionToolbarProps {
-  anchor: ToolbarAnchor;
+  anchor: PopoverAnchor;
   selectedColor: HighlightColor;
   isOnHighlight: boolean;
   onApplyColor: (color: HighlightColor) => void;
@@ -26,11 +20,6 @@ interface SelectionToolbarProps {
   onMoveHere?: () => void;
   onClose: () => void;
 }
-
-const GAP = 8;
-
-// The site header (the element the droplet sidebar measures too)
-const HEADER_SELECTOR = ".sticky.top-0.z-50";
 
 // Mouse down on a button would otherwise clear the reader's text selection
 const keepSelection = (e: React.MouseEvent) => e.preventDefault();
@@ -63,38 +52,11 @@ export function SelectionToolbar({
   // Above the selection, or below it when it would go under the site header,
   // and kept inside the lesson column
   useLayoutEffect(() => {
-    const toolbar = ref.current;
-    const parent = toolbar?.parentElement;
-    if (!toolbar || !parent) return;
-
-    const width = toolbar.offsetWidth;
-    const left = Math.max(
-      0,
-      Math.min(anchor.centerX - width / 2, parent.clientWidth - width),
-    );
-    const above = anchor.top - toolbar.offsetHeight - GAP;
-    const headerBottom =
-      document.querySelector(HEADER_SELECTOR)?.getBoundingClientRect().bottom ??
-      0;
-    const fitsAbove =
-      parent.getBoundingClientRect().top + above >= headerBottom;
-    setPlacement({ left, top: fitsAbove ? above : anchor.bottom + GAP });
+    const next = ref.current && placePopover(ref.current, anchor);
+    if (next) setPlacement(next);
   }, [anchor]);
 
-  useEffect(() => {
-    const handlePointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
+  useDismiss(ref, onClose);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const last = buttonCount - 1;
