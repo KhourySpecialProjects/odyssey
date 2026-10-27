@@ -1,4 +1,7 @@
 import type { Review, ReviewComment } from "@/types";
+import { resolveAnchor } from "@/lib/anchors/resolve";
+import { OUTDATED, type AnchorContent } from "@/lib/anchors/types";
+import type { DrawnAnchor } from "@/lib/anchors/editor";
 
 /**
  * Client-side rules for a reviewer's own comments (ODY-806). Pure, so the
@@ -35,4 +38,44 @@ export function commentStripText(
 ): string {
   const comments = `${total} ${total === 1 ? "comment" : "comments"} on ${place}`;
   return `${comments} · ${pending} pending`;
+}
+
+/** The id a comment's mark is drawn with (data-anchor-id) */
+export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
+
+/**
+ * Finds each open comment's text in the current content. Drawn ones are
+ * styled pending (dashed amber underline) until the review is sent, then
+ * tinted; a whole block gets a wash instead. A comment whose text was edited
+ * away is outdated, listed rather than dropped. Resolved comments aren't drawn.
+ */
+export function commentMarks(
+  comments: readonly ReviewComment[],
+  content: AnchorContent,
+  reviewState: Review["state"] | undefined,
+): { drawn: DrawnAnchor[]; outdated: ReviewComment[] } {
+  const sent = reviewState !== undefined && reviewState !== "open";
+  const drawn: DrawnAnchor[] = [];
+  const outdated: ReviewComment[] = [];
+  for (const comment of comments) {
+    if (isResolved(comment)) continue;
+    const range = resolveAnchor(content, comment.anchor);
+    if (range === OUTDATED) {
+      outdated.push(comment);
+      continue;
+    }
+    // A whole block gets only the wash, so a comment on words inside it
+    // still shows its own underline
+    const kind = !("quote" in comment.anchor)
+      ? "review-mark--block"
+      : sent
+        ? "review-mark--sent"
+        : "review-mark--pending";
+    drawn.push({
+      id: markIdFor(comment),
+      range,
+      className: `review-mark ${kind}`,
+    });
+  }
+  return { drawn, outdated };
 }

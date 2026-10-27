@@ -3,7 +3,12 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { AnchorRange } from "./types";
 
-export type DrawnAnchor = { id: string; range: AnchorRange };
+/** An anchor to draw, with an optional class for its span (ODY-806) */
+export type DrawnAnchor = {
+  id: string;
+  range: AnchorRange;
+  className?: string;
+};
 
 const anchorsKey = new PluginKey("anchors");
 
@@ -28,13 +33,17 @@ export function anchorDecorations(
 
     // Inside the container, then inside its content node
     const textStart = pos + 2;
-    for (const { id, range } of anchors) {
+    for (const { id, range, className } of anchors) {
       if (range.blockId !== node.attrs.id) continue;
       const end = Math.min(range.end, content.content.size);
       if (range.start < end) {
         decorations.push(
+          // nodeName gives each anchor its own span: without it ProseMirror
+          // merges overlapping decorations into one, and one id wins
           Decoration.inline(textStart + range.start, textStart + end, {
+            nodeName: "span",
             "data-anchor-id": id,
+            ...(className && { class: className }),
           }),
         );
       }

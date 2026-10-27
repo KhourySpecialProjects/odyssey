@@ -51,9 +51,15 @@ import {
 } from "@/components/draft/review/review-mode-bar";
 import {
   commentCounts,
+  commentMarks,
   commentStripText,
   commentsOnLesson,
 } from "@/lib/review-comments";
+import { blockNoteContent } from "@/lib/anchors/content";
+import type { DrawnAnchor } from "@/lib/anchors/editor";
+import { OutdatedComments } from "@/components/draft/review/outdated-comments";
+
+const NO_MARKS: DrawnAnchor[] = [];
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
@@ -170,6 +176,21 @@ export function LessonRenderer({
   // after a lock takeover bumps it, which remounts them on the latest content.
   const [blocksV2, setBlocksV2] = useState<unknown>(lesson.blocksV2);
   const [contentVersion, setContentVersion] = useState(0);
+
+  // Each comment found in the current content, or listed as outdated
+  const marks = useMemo(
+    () =>
+      commentMarks(
+        lessonComments,
+        {
+          blocks: blockNoteContent(
+            Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : [],
+          ),
+        },
+        reviewComments.review?.state,
+      ),
+    [lessonComments, blocksV2, reviewComments.review?.state],
+  );
 
   // Check if the lesson is truly new. Read from state, not props: after a lock
   // takeover the props are the copy from when the page loaded.
@@ -747,6 +768,9 @@ export function LessonRenderer({
                   )}
           </p>
         )}
+        {showCommentLayer && editorVersion === "v2" && (
+          <OutdatedComments comments={marks.outdated} />
+        )}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -865,6 +889,7 @@ export function LessonRenderer({
                   initialContent={blocksV2 as unknown as BlockNoteBlock[]}
                   onChange={isReadOnly ? () => {} : debounceUpdateV2}
                   editable={!isReadOnly}
+                  anchors={showCommentLayer ? marks.drawn : NO_MARKS}
                 />
               </PyodideProvider>
             </DatasetProvider>

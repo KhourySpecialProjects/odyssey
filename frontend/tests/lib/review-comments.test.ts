@@ -1,4 +1,5 @@
 import {
+  commentMarks,
   commentCounts,
   commentStripText,
   commentsOnLesson,
@@ -66,5 +67,83 @@ describe("commentStripText", () => {
     expect(commentStripText({ total: 0, pending: 0 }, "the Overview")).toBe(
       "0 comments on the Overview · 0 pending",
     );
+  });
+});
+
+describe("commentMarks", () => {
+  const content = {
+    blocks: [
+      { id: "b1", text: "A loop repeats a block of code." },
+      { id: "b2", text: "Second paragraph." },
+    ],
+  };
+  const words = comment({
+    id: 1,
+    anchor: {
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+      start: 2,
+      end: 6,
+      quote: "loop",
+      prefix: "A ",
+      suffix: " repeats",
+    },
+  });
+  const block = comment({
+    id: 2,
+    anchor: { v: 1, field: "blocks", blockId: "b2" },
+  });
+
+  it("draws open comments as pending, and a whole block with only a wash", () => {
+    const { drawn, outdated } = commentMarks([words, block], content, "open");
+
+    expect(outdated).toEqual([]);
+    expect(drawn).toEqual([
+      {
+        id: "comment-1",
+        range: {
+          field: "blocks",
+          blockId: "b1",
+          start: 2,
+          end: 6,
+          exact: true,
+        },
+        className: "review-mark review-mark--pending",
+      },
+      {
+        id: "comment-2",
+        range: {
+          field: "blocks",
+          blockId: "b2",
+          start: 0,
+          end: 17,
+          exact: true,
+        },
+        className: "review-mark review-mark--block",
+      },
+    ]);
+  });
+
+  it("tints them once the review is sent", () => {
+    const { drawn } = commentMarks([words], content, "sent");
+    expect(drawn[0].className).toBe("review-mark review-mark--sent");
+  });
+
+  it("doesn't draw a resolved comment", () => {
+    const resolved = { ...words, resolvedAt: "2026-10-27T12:00:00Z" };
+    expect(commentMarks([resolved], content, "open")).toEqual({
+      drawn: [],
+      outdated: [],
+    });
+  });
+
+  it("lists a comment whose text was edited away as outdated", () => {
+    const gone = { blocks: [{ id: "b1", text: "Something else entirely." }] };
+
+    const { drawn, outdated } = commentMarks([words, block], gone, "open");
+
+    expect(drawn).toEqual([]);
+    expect(outdated.map((c) => c.id)).toEqual([1, 2]);
   });
 });

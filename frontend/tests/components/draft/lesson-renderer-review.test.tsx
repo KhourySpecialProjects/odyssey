@@ -14,7 +14,12 @@ jest.mock("@/components/draft/lesson/delete-lesson", () => ({
   DeleteLessonButton: () => <button type="button">Delete Lesson</button>,
 }));
 jest.mock("@/components/draft/lesson/blocknote-editor", () => ({
-  BlockNoteEditor: () => <div data-testid="blocknote-editor" />,
+  BlockNoteEditor: ({ anchors }: { anchors?: { id: string }[] }) => (
+    <div
+      data-testid="blocknote-editor"
+      data-anchors={(anchors ?? []).map((a) => a.id).join(",")}
+    />
+  ),
 }));
 jest.mock("@/lib/pyodide/pyodide-context", () => ({
   PyodideProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -72,7 +77,15 @@ const lesson = {
   notes: "",
   orderIndex: 1,
   blocksVersion: "v2" as const,
-  blocksV2: [],
+  blocksV2: [
+    {
+      id: "b1",
+      type: "paragraph",
+      props: {},
+      content: [{ type: "text", text: "A loop repeats.", styles: {} }],
+      children: [],
+    },
+  ],
   blocks: [],
 };
 
@@ -93,6 +106,13 @@ const myReview = {
       resolvedAt: "2026-10-27T12:00:00Z",
     },
     { id: 3, field: "blocks", anchor, body: "c", lesson: { id: 2 } },
+    {
+      id: 4,
+      field: "blocks",
+      anchor: { v: 1, field: "blocks", blockId: "deleted-block" },
+      body: "This paragraph is unclear",
+      lesson: { id: 1 },
+    },
   ],
 };
 
@@ -204,7 +224,7 @@ describe("the comment strip", () => {
     await renderLesson();
 
     expect(await screen.findByTestId("review-comment-strip")).toHaveTextContent(
-      "2 comments on this lesson · 1 pending",
+      "3 comments on this lesson · 2 pending",
     );
   });
 
@@ -232,5 +252,43 @@ describe("the comment strip", () => {
         "Couldn't load your comments",
       ),
     );
+  });
+});
+
+describe("the drawing layer", () => {
+  const drawnIds = () =>
+    screen.getByTestId("blocknote-editor").getAttribute("data-anchors");
+
+  it("draws this lesson's open comments in Comment mode", async () => {
+    await renderLesson();
+
+    await waitFor(() => expect(drawnIds()).toBe("comment-1"));
+  });
+
+  it("draws nothing in Read mode", async () => {
+    const user = userEvent.setup();
+    await renderLesson();
+    await waitFor(() => expect(drawnIds()).toBe("comment-1"));
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+
+    expect(drawnIds()).toBe("");
+  });
+
+  it("draws nothing while the reviewer edits", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+    await renderLesson();
+
+    expect(drawnIds()).toBe("");
+  });
+
+  it("lists a comment whose text is gone as outdated, not drawn", async () => {
+    await renderLesson();
+
+    const outdated = await screen.findByRole("region", {
+      name: "Outdated comments",
+    });
+    expect(outdated).toHaveTextContent("This paragraph is unclear");
+    expect(drawnIds()).not.toContain("comment-4");
   });
 });

@@ -30,6 +30,8 @@ import type { BlockNoteEditor as Editor } from "@blocknote/core";
 import {
   AnchorRange,
   anchorsPlugin,
+  refreshAnchors,
+  type DrawnAnchor,
   blockNoteContent,
   createAnchor,
   resolveAnchor,
@@ -139,5 +141,76 @@ describe("anchors in the BlockNote editor", () => {
 
     expect(anchor.quote).toBe("second");
     expect(saved.text.slice(anchor.start, anchor.end)).toBe("second");
+  });
+
+  describe("review comment marks (ODY-806)", () => {
+    const whole = (id: string): DrawnAnchor => ({
+      id,
+      range: {
+        field: "blocks",
+        blockId: "intro",
+        start: 0,
+        end: 21,
+        exact: true,
+      },
+      className: "review-mark review-mark--pending",
+    });
+
+    it("gives each span the mark's class", () => {
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [whole("c2")]));
+
+      const span = root.querySelector('[data-anchor-id="c2"]')!;
+      expect(span.textContent).toBe("Databases store data.");
+      expect(span).toHaveClass("review-mark", "review-mark--pending");
+    });
+
+    it("keeps a mark through an edit to another block", () => {
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [whole("c3")]));
+
+      editor.updateBlock("joins", { content: "Rewritten." });
+
+      expect(root.querySelector('[data-anchor-id="c3"]')?.textContent).toBe(
+        "Databases store data.",
+      );
+    });
+
+    it("keeps both ids where two anchors overlap", () => {
+      const words: DrawnAnchor = {
+        id: "c7",
+        range: {
+          field: "blocks",
+          blockId: "intro",
+          start: 0,
+          end: 9,
+          exact: true,
+        },
+      };
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [whole("c8"), words]),
+      );
+
+      const outer = root.querySelector('[data-anchor-id="c8"]');
+      const inner = root.querySelector('[data-anchor-id="c7"]');
+      expect(inner?.textContent).toBe("Databases");
+      expect(
+        Array.from(root.querySelectorAll('[data-anchor-id="c8"]'))
+          .map((span) => span.textContent)
+          .join(""),
+      ).toBe("Databases store data.");
+      expect(outer).not.toBeNull();
+    });
+
+    it("redraws when the anchors change and refreshAnchors is called", () => {
+      let anchors: DrawnAnchor[] = [whole("c4")];
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => anchors));
+
+      anchors = [];
+      refreshAnchors(editor.prosemirrorView!);
+      expect(root.querySelector('[data-anchor-id="c4"]')).toBeNull();
+
+      anchors = [whole("c5")];
+      refreshAnchors(editor.prosemirrorView!);
+      expect(root.querySelector('[data-anchor-id="c5"]')).not.toBeNull();
+    });
   });
 });

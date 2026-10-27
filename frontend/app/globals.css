@@ -227,6 +227,33 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   text-underline-offset: 0.2em;
 }
 
+/* Review comment marks (ODY-806), drawn by lib/anchors: a dashed amber
+   underline while pending, a tint once sent. A whole block gets only a wash,
+   so a comment on words inside it keeps its own underline. */
+.review-mark {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.review-mark--pending {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: #d97706;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.review-mark--sent {
+  background-color: rgb(251 191 36 / 0.25);
+}
+.review-mark--block {
+  background-color: rgb(251 191 36 / 0.15);
+}
+.dark .review-mark--pending {
+  text-decoration-color: #fbbf24;
+}
+.dark .review-mark--sent {
+  background-color: rgb(251 191 36 / 0.2);
+}
+
 /* Fenced code block backgrounds: light by default, dark in dark mode.
    Tailwind Typography hardcodes a dark pre background; override it here
    so rendered lessons and quiz blocks both respect the site theme.
