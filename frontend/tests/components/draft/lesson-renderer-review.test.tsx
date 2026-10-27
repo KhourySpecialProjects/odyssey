@@ -1,0 +1,236 @@
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
+import { getMyReview } from "@/lib/requests/reviews";
+
+jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
+  LessonNameInput: () => <div data-testid="lesson-name-input" />,
+}));
+jest.mock("@/components/draft/lesson/block_list", () => ({
+  __esModule: true,
+  default: () => <div data-testid="block-list" />,
+}));
+jest.mock("@/components/draft/lesson/delete-lesson", () => ({
+  DeleteLessonButton: () => <button type="button">Delete Lesson</button>,
+}));
+jest.mock("@/components/draft/lesson/blocknote-editor", () => ({
+  BlockNoteEditor: () => <div data-testid="blocknote-editor" />,
+}));
+jest.mock("@/lib/pyodide/pyodide-context", () => ({
+  PyodideProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+jest.mock("@/lib/requests/lesson", () => ({
+  updateLesson: jest.fn().mockResolvedValue({ ok: true }),
+  deleteLesson: jest.fn(),
+  revalidateLesson: jest.fn().mockResolvedValue(undefined),
+  getLatestLessonContent: jest.fn(),
+}));
+jest.mock("@/lib/requests/droplet", () => ({ getDropletBySlug: jest.fn() }));
+jest.mock("@/lib/requests/reviews", () => ({
+  getMyReview: jest.fn(),
+  getOrOpenReview: jest.fn(),
+  addComment: jest.fn(),
+  editComment: jest.fn(),
+  deleteComment: jest.fn(),
+  resolveComment: jest.fn(),
+}));
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
+}));
+jest.mock("sonner", () => ({
+  toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() },
+}));
+
+const startEditing = jest.fn();
+const stopEditing = jest.fn();
+const mockUseEditingLock = jest.fn();
+jest.mock("@/hooks/useEditingLock", () => ({
+  useEditingLock: (...args: unknown[]) => mockUseEditingLock(...args),
+}));
+
+const lockState = (over: Record<string, unknown> = {}) => ({
+  isLocked: false,
+  isOwnLock: false,
+  lockedBy: null,
+  isLoading: false,
+  error: null,
+  inReview: true,
+  isReviewer: true,
+  reviewEnded: false,
+  startEditing,
+  stopEditing,
+  markFrozen: jest.fn(),
+  ...over,
+});
+
+const lesson = {
+  id: 1,
+  name: "Loops",
+  slug: "loops",
+  type: "standard",
+  droplets: [],
+  notes: "",
+  orderIndex: 1,
+  blocksVersion: "v2" as const,
+  blocksV2: [],
+  blocks: [],
+};
+
+const anchor = { v: 1 as const, field: "blocks" as const, blockId: "b1" };
+const myReview = {
+  id: 7,
+  round: 1,
+  key: "3:9:1",
+  state: "open",
+  comments: [
+    { id: 1, field: "blocks", anchor, body: "a", lesson: { id: 1 } },
+    {
+      id: 2,
+      field: "blocks",
+      anchor,
+      body: "b",
+      lesson: { id: 1 },
+      resolvedAt: "2026-10-27T12:00:00Z",
+    },
+    { id: 3, field: "blocks", anchor, body: "c", lesson: { id: 2 } },
+  ],
+};
+
+/** Renders, then lets the comment load settle */
+async function renderLesson() {
+  const view = render(
+    <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />,
+  );
+  await act(async () => {});
+  return view;
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseEditingLock.mockReturnValue(lockState());
+  jest
+    .mocked(getMyReview)
+    .mockResolvedValue({ ok: true, error: null, data: myReview } as never);
+});
+
+describe("who sees the review bar", () => {
+  it("a reviewer of a lesson in review, in Comment mode by default", async () => {
+    await renderLesson();
+
+    expect(screen.getByRole("button", { name: "Comment" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Read" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await waitFor(() => expect(getMyReview).toHaveBeenCalledWith(3));
+  });
+
+  it("not the frozen creator, who never loads review comments", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isReviewer: false }));
+    await renderLesson();
+
+    expect(screen.queryByRole("group", { name: "Review mode" })).toBeNull();
+    expect(getMyReview).not.toHaveBeenCalled();
+  });
+
+  it("nobody when the lesson isn't in review", async () => {
+    mockUseEditingLock.mockReturnValue(
+      lockState({ inReview: false, isReviewer: false, isOwnLock: true }),
+    );
+    await renderLesson();
+
+    expect(screen.queryByRole("group", { name: "Review mode" })).toBeNull();
+    expect(getMyReview).not.toHaveBeenCalled();
+  });
+
+  it("nobody once the review has ended", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ reviewEnded: true }));
+    await renderLesson();
+
+    expect(screen.queryByRole("group", { name: "Review mode" })).toBeNull();
+  });
+});
+
+describe("the three modes", () => {
+  it("Read hides the comment strip and Comment brings it back", async () => {
+    const user = userEvent.setup();
+    await renderLesson();
+    expect(await screen.findByTestId("review-comment-strip")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+    expect(screen.queryByTestId("review-comment-strip")).toBeNull();
+    expect(screen.getByRole("button", { name: "Read" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+    expect(screen.getByTestId("review-comment-strip")).toBeVisible();
+  });
+
+  it("Edit takes the lock", async () => {
+    const user = userEvent.setup();
+    await renderLesson();
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(startEditing).toHaveBeenCalled();
+  });
+
+  it("while editing, offers Stop editing and hides the toggle and the strip", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+    await renderLesson();
+
+    expect(
+      screen.getByRole("button", { name: "Stop editing" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Review mode" })).toBeNull();
+    expect(screen.queryByTestId("review-comment-strip")).toBeNull();
+  });
+
+  it("disables Edit while a takeover is loading the latest version", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isRefreshing: true }));
+    await renderLesson();
+
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
+  });
+});
+
+describe("the comment strip", () => {
+  it("counts this lesson's comments and the pending ones", async () => {
+    await renderLesson();
+
+    expect(await screen.findByTestId("review-comment-strip")).toHaveTextContent(
+      "2 comments on this lesson · 1 pending",
+    );
+  });
+
+  it("reads zero before the reviewer has a review", async () => {
+    jest
+      .mocked(getMyReview)
+      .mockResolvedValue({ ok: true, error: null, data: null } as never);
+    await renderLesson();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("review-comment-strip")).toHaveTextContent(
+        "0 comments on this lesson · 0 pending",
+      ),
+    );
+  });
+
+  it("says when the comments couldn't load", async () => {
+    jest
+      .mocked(getMyReview)
+      .mockResolvedValue({ ok: false, error: "failed", data: null } as never);
+    await renderLesson();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("review-comment-strip")).toHaveTextContent(
+        "Couldn't load your comments",
+      ),
+    );
+  });
+});

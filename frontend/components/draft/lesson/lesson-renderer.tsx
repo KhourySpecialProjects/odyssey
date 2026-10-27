@@ -44,6 +44,16 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
+import { useReviewComments } from "@/hooks/use-review-comments";
+import {
+  ReviewModeBar,
+  type ReviewMode,
+} from "@/components/draft/review/review-mode-bar";
+import {
+  commentCounts,
+  commentStripText,
+  commentsOnLesson,
+} from "@/lib/review-comments";
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
@@ -75,12 +85,15 @@ export interface OpenEndedQuizBlock extends BaseBlock {
 interface LessonRendererProps {
   lesson: Lesson;
   dropletSlug: string;
+  /** The draft's id, for the reviewer's comments (ODY-806) */
+  dropletId?: number;
   datasets?: Dataset[];
 }
 
 export function LessonRenderer({
   lesson,
   dropletSlug,
+  dropletId,
   datasets = [],
 }: LessonRendererProps) {
   const router = useRouter();
@@ -105,6 +118,17 @@ export function LessonRenderer({
   } = useEditingLock(lesson.id, refreshForLock);
   const frozen = inReview && !isReviewer;
   const isReadOnly = lockLoading || !isOwnLock || frozen;
+
+  // A reviewer comments or reads without the lock, or takes it to edit (ODY-806)
+  const isReviewing = !reviewEnded && inReview && isReviewer && !lockLoading;
+  const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
+  const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
+  const reviewComments = useReviewComments(dropletId, isReviewing);
+  const lessonComments = useMemo(
+    () => commentsOnLesson(reviewComments.comments, lesson.id),
+    [reviewComments.comments, lesson.id],
+  );
+  const showCommentLayer = isReviewing && reviewMode === "comment";
 
   // Kept in refs so handleSaveResult stays stable and can cancel debounces
   // that are created after it.
@@ -593,37 +617,14 @@ export function LessonRenderer({
           <span>{REVIEW_FROZEN_MESSAGE}</span>
         </div>
       )}
-      {!reviewEnded && inReview && isReviewer && !lockLoading && (
-        <div
-          role="status"
-          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
-        >
-          <IconLock className="h-4 w-4 shrink-0" />
-          {isOwnLock ? (
-            <>
-              <span className="flex-1">
-                You&apos;re editing this lesson during its review.
-              </span>
-              <Button size="sm" variant="outline" onClick={handleStopEditing}>
-                Stop editing
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className="flex-1">
-                In review. This lesson is read-only while you review it.
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isRefreshing}
-                onClick={() => startEditing()}
-              >
-                Edit
-              </Button>
-            </>
-          )}
-        </div>
+      {isReviewing && (
+        <ReviewModeBar
+          mode={reviewMode}
+          onModeChange={setViewMode}
+          onEdit={() => startEditing()}
+          onStopEditing={handleStopEditing}
+          editDisabled={isRefreshing}
+        />
       )}
       {isReadOnly && lockedBy && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
@@ -731,6 +732,20 @@ export function LessonRenderer({
               </div>
             )}
           </div>
+        )}
+        {showCommentLayer && (
+          <p
+            data-testid="review-comment-strip"
+            className="text-sm text-slate-500 dark:text-slate-400"
+          >
+            {reviewComments.isLoading
+              ? "Loading your comments..."
+              : reviewComments.loadError
+                ? "Couldn't load your comments. Reload to try again."
+                : commentStripText(
+                    commentCounts(lessonComments, reviewComments.review?.state),
+                  )}
+          </p>
         )}
       </div>
 
