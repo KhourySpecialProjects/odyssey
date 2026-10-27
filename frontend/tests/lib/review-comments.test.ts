@@ -134,9 +134,19 @@ describe("commentMarks", () => {
     expect(drawn[0].className).toBe("review-mark review-mark--sent");
   });
 
-  it("doesn't draw a resolved comment", () => {
+  it("gives a resolved comment an invisible mark, to keep its tag in place", () => {
     const resolved = { ...words, resolvedAt: "2026-10-27T12:00:00Z" };
-    expect(commentMarks([resolved], content, "open")).toEqual({
+    const { drawn, outdated } = commentMarks([resolved], content, "open");
+    expect(drawn.map((m) => m.className)).toEqual([
+      "review-mark review-mark--resolved",
+    ]);
+    expect(outdated).toEqual([]);
+  });
+
+  it("doesn't list a resolved comment as outdated", () => {
+    const resolved = { ...words, resolvedAt: "2026-10-27T12:00:00Z" };
+    const gone = { blocks: [{ id: "b1", text: "Something else entirely." }] };
+    expect(commentMarks([resolved], gone, "open")).toEqual({
       drawn: [],
       outdated: [],
     });

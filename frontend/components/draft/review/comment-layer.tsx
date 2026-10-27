@@ -21,6 +21,7 @@ import {
   type PopoverAnchor,
 } from "@/lib/selection";
 import {
+  DRAFT_MARK_ID,
   commentSnippet,
   isResolved,
   markIdFor,
@@ -332,7 +333,9 @@ export function CommentLayer({
     const selection = readSelection(content);
     if (selection.kind !== "inside") return;
 
-    const anchor = createAnchor(selection.range, { field });
+    // In a Classic lesson, whose blocks have no lasting ids, the anchor is a
+    // quote within the whole lesson
+    const anchor = createAnchor(selection.range, { field, root: content });
     if (!anchor) return;
     const reviewAnchor = toReviewAnchor(anchor);
     if (!reviewAnchor || !("quote" in reviewAnchor)) {
@@ -380,11 +383,25 @@ export function CommentLayer({
   };
 
   // A mark lights its tag on hover, and opens its card on a click
+  // Marks nest where comments overlap, and which span is innermost is up to
+  // the editor. So every mark around the point counts, and an open comment
+  // on words wins over an open whole block, which wins over a resolved one.
   const markAt = (target: EventTarget) => {
-    const mark = (target as Element).closest?.(MARK);
-    const id = mark?.getAttribute("data-anchor-id");
-    if (!mark || !id || id === "comment-draft") return null;
-    return { mark, id };
+    const content = contentRef.current;
+    const found: { mark: Element; comment: ReviewComment }[] = [];
+    let mark = (target as Element).closest?.(MARK) ?? null;
+    while (mark && content?.contains(mark)) {
+      const id = mark.getAttribute("data-anchor-id");
+      const comment = comments.find((c) => markIdFor(c) === id);
+      if (comment && id !== DRAFT_MARK_ID) found.push({ mark, comment });
+      mark = mark.parentElement?.closest(MARK) ?? null;
+    }
+    const rank = ({ comment }: { comment: ReviewComment }) =>
+      isResolved(comment) ? 2 : "quote" in comment.anchor ? 0 : 1;
+    const best = found.sort((a, b) => rank(a) - rank(b))[0];
+    return best
+      ? { mark: best.mark, id: markIdFor(best.comment), comment: best.comment }
+      : null;
   };
   const handleMouseOver = (e: React.MouseEvent) => {
     const id = markAt(e.target)?.id ?? null;
@@ -395,10 +412,10 @@ export function CommentLayer({
     const found = markAt(e.target);
     const root = rootRef.current;
     if (!found || !root) return;
-    const comment = comments.find((c) => markIdFor(c) === found.id);
-    if (comment) {
-      openCard(comment.id, anchorIn(root, found.mark.getBoundingClientRect()));
-    }
+    openCard(
+      found.comment.id,
+      anchorIn(root, found.mark.getBoundingClientRect()),
+    );
   };
 
   const cardComment = card && comments.find((c) => c.id === card.commentId);

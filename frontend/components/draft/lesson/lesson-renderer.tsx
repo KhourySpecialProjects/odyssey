@@ -55,15 +55,16 @@ import {
   commentMarks,
   commentStripText,
   commentsOnLesson,
+  decorateMarks,
+  draftRangeIn,
   numberComments,
 } from "@/lib/review-comments";
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
 import { OutdatedComments } from "@/components/draft/review/outdated-comments";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
-import { resolveAnchor } from "@/lib/anchors/resolve";
-import { OUTDATED } from "@/lib/anchors/types";
-import type { ReviewAnchor } from "@/types";
+import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
+import type { ReviewAnchor, ReviewComment } from "@/types";
 
 const NO_MARKS: DrawnAnchor[] = [];
 import { IconLock } from "@tabler/icons-react";
@@ -201,30 +202,34 @@ export function LessonRenderer({
   // types, and hovering a tag or a mark lights the mark
   const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
   const [litMarkId, setLitMarkId] = useState<string | null>(null);
-  const drawnMarks = useMemo(() => {
-    const drawn = marks.drawn.map((mark) =>
-      mark.id === litMarkId
-        ? { ...mark, className: `${mark.className} review-mark--lit` }
-        : mark,
-    );
-    const range = draftAnchor && resolveAnchor(anchorContent, draftAnchor);
-    if (!range || range === OUTDATED) return drawn;
-    return [
-      ...drawn,
-      {
-        id: "comment-draft",
-        range,
-        className: "review-mark review-mark--draft",
-      },
-    ];
-  }, [marks.drawn, litMarkId, draftAnchor, anchorContent]);
+  const drawnMarks = useMemo(
+    () =>
+      decorateMarks(
+        marks.drawn,
+        litMarkId,
+        draftRangeIn(anchorContent, draftAnchor),
+      ),
+    [marks.drawn, litMarkId, draftAnchor, anchorContent],
+  );
   const commentNumbers = useMemo(
     () => numberComments(lessonComments),
     [lessonComments],
   );
+  // A Classic lesson finds its outdated comments once its text is on the page
+  const [classicOutdated, setClassicOutdated] = useState<ReviewComment[]>([]);
+  const handleClassicOutdated = useCallback((list: ReviewComment[]) => {
+    setClassicOutdated((current) =>
+      current.length === list.length &&
+      current.every((c, i) => c.id === list[i].id)
+        ? current
+        : list,
+    );
+  }, []);
+  const outdatedComments =
+    editorVersion === "v2" ? marks.outdated : classicOutdated;
   const outdatedIds = useMemo(
-    () => new Set(marks.outdated.map((c) => c.id)),
-    [marks.outdated],
+    () => new Set(outdatedComments.map((c) => c.id)),
+    [outdatedComments],
   );
   const blockTypeById = useMemo(
     () =>
@@ -249,6 +254,22 @@ export function LessonRenderer({
       addReviewComment({ field: "blocks", lessonId: lesson.id, anchor, body }),
     [addReviewComment, lesson.id],
   );
+  const commentLayerProps = {
+    enabled: showCommentLayer,
+    field: "blocks" as const,
+    comments: lessonComments,
+    numbers: commentNumbers,
+    outdatedIds,
+    blockFor,
+    canChange: canChangeComments,
+    onPost: postComment,
+    onEdit: reviewComments.edit,
+    onDelete: reviewComments.remove,
+    onResolve: reviewComments.resolve,
+    onDraftChange: setDraftAnchor,
+    litMarkId,
+    onLitChange: setLitMarkId,
+  };
 
   // Check if the lesson is truly new. Read from state, not props: after a lock
   // takeover the props are the copy from when the page loaded.
@@ -662,7 +683,7 @@ export function LessonRenderer({
   const classicBlocksRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
-  }, [isReadOnly, editorVersion, contentVersion]);
+  }, [isReadOnly, editorVersion, contentVersion, showCommentLayer]);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
@@ -826,9 +847,7 @@ export function LessonRenderer({
                   )}
           </p>
         )}
-        {showCommentLayer && editorVersion === "v2" && (
-          <OutdatedComments comments={marks.outdated} />
-        )}
+        {showCommentLayer && <OutdatedComments comments={outdatedComments} />}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -918,7 +937,21 @@ export function LessonRenderer({
         </div>
       )}
 
-      {editorVersion === "v1" ? (
+      {editorVersion === "v1" && showCommentLayer ? (
+        // Comment mode shows Classic blocks as one read-only text (Task 7)
+        <div className="w-full px-10 md:px-40">
+          <CommentLayer {...commentLayerProps}>
+            <ClassicReviewView
+              blocks={blocks}
+              comments={lessonComments}
+              reviewState={reviewComments.review?.state}
+              draftAnchor={draftAnchor}
+              litMarkId={litMarkId}
+              onOutdated={handleClassicOutdated}
+            />
+          </CommentLayer>
+        </div>
+      ) : editorVersion === "v1" ? (
         <>
           {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
           <div
@@ -942,22 +975,7 @@ export function LessonRenderer({
             </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
-                <CommentLayer
-                  enabled={showCommentLayer}
-                  field="blocks"
-                  comments={lessonComments}
-                  numbers={commentNumbers}
-                  outdatedIds={outdatedIds}
-                  blockFor={blockFor}
-                  canChange={canChangeComments}
-                  onPost={postComment}
-                  onEdit={reviewComments.edit}
-                  onDelete={reviewComments.remove}
-                  onResolve={reviewComments.resolve}
-                  onDraftChange={setDraftAnchor}
-                  litMarkId={litMarkId}
-                  onLitChange={setLitMarkId}
-                >
+                <CommentLayer {...commentLayerProps}>
                   <BlockNoteEditor
                     key={`editor-${lesson.id}-${contentVersion}`}
                     initialContent={blocksV2 as unknown as BlockNoteBlock[]}

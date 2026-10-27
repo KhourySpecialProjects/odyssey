@@ -1,6 +1,10 @@
-import type { Review, ReviewComment } from "@/types";
+import type { Review, ReviewAnchor, ReviewComment } from "@/types";
 import { resolveAnchor } from "@/lib/anchors/resolve";
-import { OUTDATED, type AnchorContent } from "@/lib/anchors/types";
+import {
+  OUTDATED,
+  type AnchorContent,
+  type AnchorRange,
+} from "@/lib/anchors/types";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
 
 /**
@@ -46,8 +50,9 @@ export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
 /**
  * Finds each open comment's text in the current content. Drawn ones are
  * styled pending (dashed amber underline) until the review is sent, then
- * tinted; a whole block gets a wash instead. A comment whose text was edited
- * away is outdated, listed rather than dropped. Resolved comments aren't drawn.
+ * tinted; a whole block gets a wash instead. A resolved comment's mark is
+ * invisible but keeps its tag in place. A comment whose text was edited away
+ * is outdated, listed rather than dropped.
  */
 export function commentMarks(
   comments: readonly ReviewComment[],
@@ -58,19 +63,20 @@ export function commentMarks(
   const drawn: DrawnAnchor[] = [];
   const outdated: ReviewComment[] = [];
   for (const comment of comments) {
-    if (isResolved(comment)) continue;
     const range = resolveAnchor(content, comment.anchor);
     if (range === OUTDATED) {
-      outdated.push(comment);
+      if (!isResolved(comment)) outdated.push(comment);
       continue;
     }
     // A whole block gets only the wash, so a comment on words inside it
     // still shows its own underline
-    const kind = !("quote" in comment.anchor)
-      ? "review-mark--block"
-      : sent
-        ? "review-mark--sent"
-        : "review-mark--pending";
+    const kind = isResolved(comment)
+      ? "review-mark--resolved"
+      : !("quote" in comment.anchor)
+        ? "review-mark--block"
+        : sent
+          ? "review-mark--sent"
+          : "review-mark--pending";
     drawn.push({
       id: markIdFor(comment),
       range,
@@ -153,4 +159,41 @@ export function blockTypes(blocks: readonly BlockLike[]): Map<string, string> {
   };
   blocks.forEach(add);
   return types;
+}
+
+/** The id of the mark drawn under the text a comment is being written for */
+export const DRAFT_MARK_ID = "comment-draft";
+
+/**
+ * The marks as drawn: the lit one (its tag or text is hovered) gets
+ * `review-mark--lit`, and the text a comment is being written for is added.
+ */
+export function decorateMarks(
+  drawn: readonly DrawnAnchor[],
+  litMarkId: string | null,
+  draftRange: AnchorRange | null,
+): DrawnAnchor[] {
+  const marks = drawn.map((mark) =>
+    mark.id === litMarkId
+      ? { ...mark, className: `${mark.className} review-mark--lit` }
+      : mark,
+  );
+  if (draftRange) {
+    marks.push({
+      id: DRAFT_MARK_ID,
+      range: draftRange,
+      className: "review-mark review-mark--draft",
+    });
+  }
+  return marks;
+}
+
+/** The text a draft comment is for, found in the current content */
+export function draftRangeIn(
+  content: AnchorContent,
+  anchor: ReviewAnchor | null,
+): AnchorRange | null {
+  if (!anchor) return null;
+  const range = resolveAnchor(content, anchor);
+  return range === OUTDATED ? null : range;
 }

@@ -259,16 +259,16 @@ describe("the drawing layer", () => {
   const drawnIds = () =>
     screen.getByTestId("blocknote-editor").getAttribute("data-anchors");
 
-  it("draws this lesson's open comments in Comment mode", async () => {
+  it("draws this lesson's comments in Comment mode (resolved ones invisibly)", async () => {
     await renderLesson();
 
-    await waitFor(() => expect(drawnIds()).toBe("comment-1"));
+    await waitFor(() => expect(drawnIds()).toBe("comment-1,comment-2"));
   });
 
   it("draws nothing in Read mode", async () => {
     const user = userEvent.setup();
     await renderLesson();
-    await waitFor(() => expect(drawnIds()).toBe("comment-1"));
+    await waitFor(() => expect(drawnIds()).toBe("comment-1,comment-2"));
 
     await user.click(screen.getByRole("button", { name: "Read" }));
 
@@ -290,5 +290,58 @@ describe("the drawing layer", () => {
     });
     expect(outdated).toHaveTextContent("This paragraph is unclear");
     expect(drawnIds()).not.toContain("comment-4");
+  });
+});
+
+describe("a Classic lesson (Task 7)", () => {
+  const classic = {
+    ...lesson,
+    blocksVersion: "v1" as const,
+    blocksV2: null,
+    blocks: [
+      {
+        id: 9,
+        __component: "droplets.generic" as const,
+        content: "<p>A loop repeats code.</p>",
+      },
+    ],
+  };
+  const renderClassic = async () => {
+    render(
+      <LessonRenderer
+        lesson={classic as never}
+        dropletSlug="d"
+        dropletId={3}
+      />,
+    );
+    await act(async () => {});
+  };
+
+  it("shows the read-only review text in Comment mode", async () => {
+    await renderClassic();
+
+    expect(screen.getByTestId("classic-review-view")).toHaveTextContent(
+      "A loop repeats code.",
+    );
+    expect(screen.queryByTestId("block-list")).toBeNull();
+  });
+
+  it("goes back to the block editors in Read mode", async () => {
+    const user = userEvent.setup();
+    await renderClassic();
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+
+    expect(screen.queryByTestId("classic-review-view")).toBeNull();
+    expect(screen.getByTestId("block-list")).toBeInTheDocument();
+  });
+
+  it("keeps the block editors inert after leaving Comment mode", async () => {
+    const user = userEvent.setup();
+    await renderClassic();
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+
+    expect(screen.getByTestId("block-list").closest("[inert]")).not.toBeNull();
   });
 });

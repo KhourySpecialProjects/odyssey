@@ -368,6 +368,48 @@ describe("tags and the comment card (Task 6)", () => {
     expect(onLitChange).toHaveBeenLastCalledWith("comment-1");
   });
 
+  it("prefers an open words comment where marks nest", async () => {
+    const user = userEvent.setup();
+    const outer = { ...blockComment, id: 3, resolvedAt: null };
+    render(
+      <CommentLayer
+        enabled
+        field="blocks"
+        comments={[outer, wordsComment]}
+        numbers={
+          new Map([
+            [1, 1],
+            [3, 2],
+          ])
+        }
+        outdatedIds={new Set()}
+        blockFor={() => undefined}
+        canChange
+        onPost={onPost}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onResolve={onResolve}
+        onDraftChange={onDraftChange}
+        litMarkId={null}
+        onLitChange={onLitChange}
+      >
+        {/* The editor put the whole-block mark innermost */}
+        <p>
+          <span data-anchor-id="comment-1">
+            <span data-anchor-id="comment-3">loop</span>
+          </span>
+        </p>
+      </CommentLayer>,
+    );
+
+    await user.hover(screen.getByText("loop"));
+    expect(onLitChange).toHaveBeenLastCalledWith("comment-1");
+    await user.click(screen.getByText("loop"));
+    expect(
+      screen.getByRole("dialog", { name: "Comment 1" }),
+    ).toBeInTheDocument();
+  });
+
   it("rings the tag of the lit mark", () => {
     withComments({ litMarkId: "comment-1" });
 
