@@ -167,7 +167,7 @@ Six domain-specific reference guides with `invocation: auto`. Claude reads the `
 | `react-patterns`          | Server/Client component decisions, route structure, Suspense, forms, Zustand, auth, loading/error conventions |
 | `testing-patterns`        | 4 mock patterns (fetchAPI, Server Actions, next-auth, next/navigation), RTL conventions, mock data rules      |
 | `data-fetching`           | fetchAPI internals, CACHE_TAGS system (global + per-user), invalidation matrix, 7 common mistakes             |
-| `strapi-v4-patterns`      | Query building with qs, Entity Service API patterns, populate/filter syntax, 6 gotchas                        |
+| `strapi-v5-patterns`      | Document Service, documentId, strict REST, query building with qs, populate/filter syntax, gotchas            |
 | `schema-change-checklist` | 8-step ripple effect checklist ensuring all downstream files are updated when a schema changes                |
 
 Every skill encodes Odyssey-specific knowledge. Generic patterns (WCAG, TDD methodology, React fundamentals) are intentionally excluded — refer to standard documentation or Claude's training for those.
@@ -182,7 +182,7 @@ Six path-conditional rules that activate automatically when Claude touches match
 | `components`        | `frontend/components/**`, `frontend/app/**` | Server Components by default, `cn()` for classes                    |
 | `request-functions` | `frontend/lib/requests/**`                  | Use `fetchAPI()`, `CACHE_TAGS`, 900s default revalidation           |
 | `server-actions`    | `frontend/lib/actions*`                     | Raw `fetch()` needs `flattenAttributes()`, always `revalidateTag()` |
-| `strapi-backend`    | `backend/src/api/**`                        | Entity Service API only, numeric IDs, nested responses              |
+| `strapi-backend`    | `backend/src/api/**`                        | Document Service only, documentId rules, strict REST, D&P off       |
 | `testing`           | `**/*.test.*`                               | Mock with flat data, `jest.clearAllMocks()`, role-based queries     |
 
 ## What's Custom vs. Off-the-Shelf
@@ -192,7 +192,7 @@ This workflow was built from scratch for Odyssey, informed by patterns from othe
 ### Entirely custom to Odyssey
 
 - **All 5 agents** — Written specifically for this codebase. The planner parses Linear tickets, the implementer knows Odyssey's TDD mock patterns, the auditor creates Linear tickets for findings.
-- **All 6 skills** — Every line encodes Odyssey-specific knowledge (Strapi v4.22 query patterns, the `flattenAttributes` rule, the cache tag invalidation matrix). Generic skills were removed.
+- **All 6 skills** — Every line encodes Odyssey-specific knowledge (Strapi v5 query patterns, the `flattenAttributes` rule, the cache tag invalidation matrix). Generic skills were removed.
 - **All 6 rules** — Path-conditional to Odyssey's file structure.
 - **All 6 commands** — Dispatch logic tailored to Odyssey's workflow and `docs/plans/` convention.
 - **7 hooks** — Safety guards, formatting, and workflow automation.
@@ -230,7 +230,7 @@ Everything else in Superpowers (brainstorming, planning, TDD, code review, git w
 
 These apply to every task. Violating them causes silent bugs.
 
-- **Strapi v4.22** — Entity Service API, numeric `id`, nested `{ data: { attributes: {} } }` responses. NEVER use Document Service API, `documentId`, or flat responses (v5).
+- **Strapi 5** — Document Service API, never Entity Service. The frontend sends `Strapi-Response-Format: v4`, so responses stay nested. Use `documentId` for single-entry URLs and relation writes; numeric `id` elsewhere. See `docs/agent/data-fetching.md`.
 - **Tailwind v3.4** — `tailwind.config.ts`. NEVER use `@theme` or CSS-first config (v4).
 - **Next.js 15** — `cache` and `next` fetch options are mutually exclusive. Passing both silently breaks caching.
 
