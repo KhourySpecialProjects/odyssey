@@ -22,7 +22,7 @@ UPDATE playlists SET is_public = false WHERE published_at IS NULL AND id IN (53)
 -- DELETE FROM droplets_lessons_links WHERE lesson_id IN (NULL) AND droplet_id IN (NULL);
 
 -- (b) keep: back-fill so Strapi's disable step keeps the row. Droplets 136-141 and voyage 10 are already status='draft'.
-UPDATE droplets          SET published_at = created_at WHERE published_at IS NULL AND id IN (136, 137, 138, 139, 140, 141);
+UPDATE droplets          SET published_at = created_at WHERE published_at IS NULL AND id IN (136, 137, 138, 139, 140, 141, 250);
 UPDATE lessons           SET published_at = created_at WHERE published_at IS NULL AND id IN (NULL);
 UPDATE playlists         SET published_at = created_at WHERE published_at IS NULL AND id IN (53);
 UPDATE voyages           SET published_at = created_at WHERE published_at IS NULL AND id IN (10);

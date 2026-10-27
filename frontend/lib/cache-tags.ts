@@ -39,8 +39,8 @@
  *                 playlist page decides "enrolled" — so enrollment toggles
  *                 still sweep this tag)
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
- *                 deleteGroup, archiveGroup, deletePlaylist,
- *                 updateDroplet (not draft saves)
+ *                 deleteGroup, archiveGroup, setGroupArchivedForMe,
+ *                 deletePlaylist, updateDroplet (not draft saves)
  * authors         createDroplet, updateDroplet (draft saves only when       900s
  *                 authorized_users changes), deepDeleteDroplet,
  *                 duplicateDroplet, publishDraftToOriginal,
@@ -48,8 +48,10 @@
  *                 updateUserInfo (only when name/bio/photo/links/roles/
  *                 isEnabled change), deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
- *                 deleteNote
- * highlights      createHighlight, deleteHighlight                          900s
+ *                 deleteNote, updateHighlight, deleteHighlight (notes show
+ *                 their highlight). getHighlightsByAuthorizedUserAndLesson
+ *                 also carries it, since it populates each highlight's note.
+ * highlights      createHighlight, updateHighlight, deleteHighlight         900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
  *                 publishDraftToOriginal

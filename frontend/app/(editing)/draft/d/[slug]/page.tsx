@@ -149,7 +149,7 @@ export default async function Droplet({ params }: Props) {
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
-              difficulty={droplet.difficulty}
+              difficulty={droplet.difficulty ?? undefined}
               dropletId={droplet.id}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
@@ -177,8 +177,8 @@ export default async function Droplet({ params }: Props) {
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
-            This is currently a draft droplet. To publish this droplet, contact
-            a Content Editor or Admin.
+            This is currently a draft droplet. Submit it for review, and a
+            Content Editor will publish it or request changes.
           </div>
           {!droplet.inReview &&
             droplet.afterReview !== null &&

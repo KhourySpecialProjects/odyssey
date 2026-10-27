@@ -912,8 +912,7 @@ export interface ApiDropletDroplet extends Struct.CollectionTypeSchema {
       }>;
     difficulty: Schema.Attribute.Enumeration<
       ['beginner', 'intermediate', 'advanced']
-    > &
-      Schema.Attribute.Required;
+    >;
     droplet_lessons: Schema.Attribute.Relation<
       'oneToMany',
       'api::droplet-lesson.droplet-lesson'
@@ -1241,6 +1240,7 @@ export interface ApiHighlightHighlight extends Struct.CollectionTypeSchema {
     >;
     blockId: Schema.Attribute.Integer;
     color: Schema.Attribute.String & Schema.Attribute.DefaultTo<'yellow'>;
+    context: Schema.Attribute.JSON;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

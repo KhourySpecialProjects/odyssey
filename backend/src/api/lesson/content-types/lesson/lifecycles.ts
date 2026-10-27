@@ -15,14 +15,7 @@ module.exports = {
   async beforeUpdate(event) {
     const { data } = event.params;
 
-    // Autosave sends non-empty content on almost every update, and then the
-    // lesson can't end up empty, so skip reading the existing row (blocksV2 +
-    // the whole blocks dynamic zone) unless the incoming data could empty it.
-    const incomingHasContent =
-      (Array.isArray(data.blocks) ? data.blocks.length > 0 : Boolean(data.blocks)) ||
-      Boolean(data.blocksV2);
-
-    if (('blocks' in data || 'blocksV2' in data) && !incomingHasContent) {
+    if ('blocks' in data || 'blocksV2' in data) {
       // Before hooks only know the numeric row id, so use findFirst on id.
       const existing = (await strapi.documents('api::lesson.lesson').findFirst({
         filters: { id: event.params.where.id },

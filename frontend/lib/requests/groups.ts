@@ -19,6 +19,7 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { SetGroupArchivedForMeSchema } from "@/lib/validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -1241,6 +1242,15 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       };
     }
 
+    const data: { isArchived: boolean; users_archived?: { set: string[] } } = {
+      isArchived: archiveState,
+    };
+    // "Unarchive for all members" is a full reset: it also clears every
+    // personal archive, so the group comes back for everyone. (R2)
+    if (archiveState === false) {
+      data.users_archived = { set: [] };
+    }
+
     // Write to the group that was just fetched and authorized against, never
     // to a caller-supplied documentId.
     const response = await fetch(await strapiEntryUrl("groups", fullGroup), {
@@ -1250,7 +1260,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-      body: JSON.stringify({ data: { isArchived: archiveState } }),
+      body: JSON.stringify({ data }),
     });
 
     if (!response.ok) {
@@ -1265,5 +1275,83 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
   } catch (error) {
     console.error("Error archiving group:", error);
     return { success: false, error };
+  }
+}
+
+/**
+ * Archives or unarchives a group for the calling user only, by connecting
+ * or disconnecting them from `users_archived`. Identity comes from the
+ * session (never a client-supplied id). Refuses if the caller has no role
+ * in the group at all.
+ *
+ * This is a partial relation update (connect/disconnect), so it never
+ * touches other members' rows and has no read-modify-write race.
+ */
+export async function setGroupArchivedForMe(
+  groupId: number,
+  archived: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+
+  const parsed = SetGroupArchivedForMeSchema.safeParse({ groupId, archived });
+  if (!parsed.success) {
+    return { success: false, error: "invalid input" };
+  }
+
+  try {
+    const fullGroup = await fetchAPI<Group>(
+      `/groups/${await resolveDocumentId("groups", groupId)}`,
+      {
+        urlParams: {
+          populate: {
+            creator: { fields: ["id"] },
+            admins: { fields: ["id"] },
+            managers: { fields: ["id"] },
+            members: { fields: ["id"] },
+          },
+        },
+        next: { tags: [CACHE_TAGS.allGroups], revalidate: 0 },
+      },
+    );
+
+    const isParticipant =
+      fullGroup.creator?.id === gate.user.id ||
+      fullGroup.admins?.some((a) => a.id === gate.user.id) ||
+      fullGroup.managers?.some((m) => m.id === gate.user.id) ||
+      fullGroup.members?.some((m) => m.id === gate.user.id);
+    if (!isParticipant) {
+      return { success: false, error: "forbidden" };
+    }
+
+    const userDocumentId = await resolveDocumentId(
+      "authorized-users",
+      gate.user,
+    );
+    const response = await fetch(await strapiEntryUrl("groups", fullGroup), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
+      },
+      body: JSON.stringify({
+        data: {
+          users_archived: {
+            [archived ? "connect" : "disconnect"]: [userDocumentId],
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: "Failed to update archive state" };
+    }
+
+    revalidateTag(CACHE_TAGS.allGroups);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating personal archive state:", error);
+    return { success: false, error: "Failed to update archive state" };
   }
 }

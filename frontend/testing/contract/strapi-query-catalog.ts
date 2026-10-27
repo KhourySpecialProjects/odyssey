@@ -561,19 +561,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
   ]),
   highlights: defineModule<typeof import("@/lib/requests/highlights")>([
-    call("getHighlights", (m) => m.getHighlights(1, "text")),
     call("createHighlight", (m) =>
       m.createHighlight({
-        data: {
-          text: "t",
-          color: "yellow",
-          position: { x: 1 },
-          yLevel: 1.5,
-          blockId: 1,
-          lesson: 1,
-          authorized_user: 1,
-          note: 1,
-        },
+        text: "t",
+        color: "#fff300",
+        position: { start: 0, end: 1 },
+        blockId: 1,
+        lessonId: 1,
       }),
     ),
     call("getHighlightsByDroplet", (m) => m.getHighlightsByDroplet(1, 1)),
@@ -803,8 +797,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     assignPlaylistDueDate: WRITE,
     deleteGroup: WRITE,
     archiveGroup: WRITE,
+    setGroupArchivedForMe: WRITE,
   },
-  highlights: { deleteHighlight: WRITE },
+  highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",

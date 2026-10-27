@@ -132,17 +132,13 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/voyage-enrollment.ts#unenrollFromVoyage": "ODY-507",
 
   // ODY-508
-  "lib/requests/highlights.ts#createHighlight": "ODY-508",
-  "lib/requests/highlights.ts#deleteHighlight": "ODY-508",
   "lib/requests/highlights.ts#getAllHighlightsByUser": "ODY-508",
-  "lib/requests/highlights.ts#getHighlights": "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByAuthorizedUserAndLesson":
     "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByDroplet": "ODY-508",
   "lib/requests/notes.ts#createNote": "ODY-508",
   "lib/requests/notes.ts#deleteNote": "ODY-508",
   "lib/requests/notes.ts#getAllNotesByUser": "ODY-508",
-  "lib/requests/notes.ts#getNotesByAuthorizedUserAndLesson": "ODY-508",
   "lib/requests/notes.ts#getNotesByDroplet": "ODY-508",
   "lib/requests/notes.ts#updateNoteContent": "ODY-508",
   "lib/requests/notes.ts#updateNotePosition": "ODY-508",

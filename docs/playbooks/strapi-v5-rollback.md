@@ -2,22 +2,22 @@
 
 What to do when the Strapi v5 cutover goes wrong and we need to go back to Strapi v4. Work top to bottom and tick each box. It applies to prod and dev; for dev, use the dev names and branch (`develop` instead of `production`).
 
-This page is steps only. The reasoning is in the Linear ticket [ODY-596](https://linear.app/aiil/issue/ODY-596). The cutover itself is in the [migration-day playbook](strapi-prod-migration-day.md).
+This page is steps only. The reasoning is in the Linear ticket [ODY-596](https://linear.app/aiil/issue/ODY-596). The cutover steps are in [strapi-v5-cutover-window.md](strapi-v5-cutover-window.md), and the timeline and roles in the [migration-day playbook](strapi-prod-migration-day.md).
 
 ## Have these in hand first
 
-The Driver writes these down in the window notes at the start of the window. If any value is missing, find it before you go further.
+All of these are in the [window notes](strapi-v5-cutover-window.md#window-notes). The cutover window step that produces each one is in brackets. If any value is missing, find it before you go further.
 
 - [ ] Environment, `<cluster>`, `<backend-service>` and `<frontend-service>` names, and the frontend's normal task count
-- [ ] Database name `<db>` and the frozen copy's name `<db>_v4_frozen`
-- [ ] **Rollback task definition ARNs** for the backend and the frontend. These are pinned to the v4 images (tagged `v4-pre-v5-<date>`).
-- [ ] The T0 RDS snapshot id, the dump file path and its sha256
-- [ ] The two fingerprint files: T0 (before any changes) and the copy check (taken right after the frozen copy was made)
-- [ ] `T_open`: the time the site reopened, in UTC. Leave it blank if the site hasn't reopened yet.
-- [ ] Media bucket name and the T0 media listing file
-- [ ] Who the Driver and the Rollback approver are
+- [ ] Database name `<db>`, its owner, and the frozen copy's name `<db>_v4_frozen` (step 7a)
+- [ ] **Rollback task definition ARNs** for the backend and the frontend. These are pinned to the v4 images tagged `v4-pre-v5-<date>` ("Before the window").
+- [ ] The T0 RDS snapshot id (step 2), the dump file path and its sha256 (step 3b)
+- [ ] The fingerprint files: T0, before any changes (step 3a), and the copy check, taken right after the frozen copy was made (step 7b)
+- [ ] `T_open`: the time the site reopened, in UTC (step 15). Leave it blank if the site hasn't reopened yet.
+- [ ] Media bucket name and the T0 media listing file (step 3c)
+- [ ] The rollback deadline, and who the Driver and the Rollback approver are
 
-All `psql` commands assume `PGHOST`, `PGUSER` and `PGPASSWORD` point at the RDS instance, using PG 18 client tools. The `scripts/ody-596/` scripts must exist (ODY-596 Tasks 1–3). If they don't, this checklist isn't ready to use.
+All `psql` commands assume `PGHOST`, `PGUSER` and `PGPASSWORD` point at the RDS instance, using PG 18 client tools. The scripts are in `scripts/strapi-v5-cutover/rollback/`: `fingerprint.sql`, `clone-frozen.sql` (used in the window), `swap-back.sql` and `writes-since.sql`.
 
 ## Rules that always apply
 
@@ -31,12 +31,12 @@ All `psql` commands assume `PGHOST`, `PGUSER` and `PGPASSWORD` point at the RDS 
 
 ## 1. Decide whether to roll back
 
-**Before the site reopens:** the Driver decides. Rolling back loses nothing. Roll back if any of these happen:
+**Before the site reopens:** the Driver decides, using the cutover window's [decision point](strapi-v5-cutover-window.md#decision-point). Rolling back loses nothing. Roll back if any of these happen:
 
-- [ ] v5's first start doesn't finish within the boot limit in the window notes, or the logs show a migration error. Don't retry in the same window.
-- [ ] After the migration, the row-count check shows differences the rehearsal didn't, or the v5 `03` check fails, or a smoke script reports a FAIL.
-- [ ] A smoke-test item fails and can't be fixed within 15 minutes.
-- [ ] The hard deadline in the window notes passes and things still aren't green. Roll back no matter what.
+- [ ] v5's first start doesn't log `Strapi started successfully` by boot + 2 × `T_mig` (window step 11), or the backend crashes during the migration. Don't retry in the same window.
+- [ ] After the migration, `03` shows lost rows or duplicate `document_id`s, or the after-v5 fingerprint (window step 12) shows count differences the rehearsal didn't.
+- [ ] `03` has a failing section, the API smoke test has more failures than the rehearsal, or a manual smoke check item is broken and can't be fixed within 15 minutes.
+- [ ] The rollback deadline passes and things still aren't green. Roll back no matter what.
 
 **After the site reopens, for up to 24 hours:** the Rollback approver must sign off. Users' new work since reopening will be lost. Roll back if any of these happen:
 
@@ -61,7 +61,7 @@ If no data is damaged and a code fix can ship within about 2 hours, prefer fixin
 | Path B, but the frozen copy is missing or fails its check | **C. Restore from the dump**                |
 | The database server itself is down or unusable            | **D. Restore the snapshot to a new server** |
 
-If you're not sure whether v5 has started, run `psql -d <db> -f scripts/ody-596/fingerprint.sql`. If `flavor` is `v4`, use Path A. If it's `v5` or `PARTIAL`, use Path B.
+If you're not sure whether v5 has started, run `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`. If `flavor` is `v4`, use Path A. If it's `v5` or `PARTIAL`, use Path B.
 
 ## Path A: Abort (the database is untouched)
 
@@ -80,16 +80,18 @@ The rehearsal time is in the window notes. The swap itself takes seconds.
 
 1. [ ] **Stop everything.** Scale the backend to 0. If the site has reopened, scale the frontend to 0 too, which stops new writes. Wait until 0 tasks are running.
        `aws ecs update-service --cluster <cluster> --service <backend-service> --desired-count 0`
-2. [ ] **Close leftover database connections.** Run this connected to the `postgres` database:
-       `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('<db>', '<db>_v4_frozen') AND pid <> pg_backend_pid();`
+2. [ ] **Close leftover database connections.** Run this connected to `template1`, not to `<db>` (on dev, `<db>` is `postgres`, and you can't rename a database you're connected to):
+       `psql -d template1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('<db>', '<db>_v4_frozen') AND pid <> pg_backend_pid();"`
 3. [ ] **Only if the site had reopened:** save the list of what changed since reopening. Re-entry needs it later.
-       `psql -d <db> -v t_open='<T_open UTC>' -f scripts/ody-596/writes-since.sql > ~/ody-596/<env>-writes-since-<date>.txt`
-4. [ ] **Check that the frozen copy is good.** `flavor` must be `v4`, and the counts must match the copy-check fingerprint file. If either is wrong, stop and go to Path C.
-       `psql -d <db>_v4_frozen -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db> -v t_open='<T_open UTC>' -f scripts/strapi-v5-cutover/rollback/writes-since.sql > ~/ody-596/<env>-writes-since-<date>.txt`
+       Expect about 42 new `admin_permissions` rows even if nobody edited anything: v5 creates them on its first boot. They aren't user content, so don't re-enter them.
+4. [ ] **Check that the frozen copy is good.** `flavor` must be `v4`, and the counts must match the copy-check fingerprint file. Compare from section 4 on; line 4 holds the time the fingerprint was taken, so it always differs. If either is wrong, stop and go to Path C.
+       `psql -d <db>_v4_frozen -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] **Swap.** This renames the broken database to `<db>_v5_failed` and the frozen copy to `<db>`:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/ody-596/swap-back.sql`
+       `psql -d template1 -v live=<db> -v frozen=<db>_v4_frozen -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] **Check the live database.** `flavor` must be `v4`. The owner and settings the swap script printed must match the T0 fingerprint.
-       `psql -d <db> -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db> -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
+       Copies made with `TEMPLATE` don't keep connect permissions (`datacl`) or per-database settings. If `swap-back.sql` printed a warning about either, re-apply the values it shows for `<db>_v5_failed` to `<db>` before step 7.
 7. [ ] **Bring v4 back.** Deploy both rollback task definitions:
        `aws ecs update-service --cluster <cluster> --service <backend-service> --task-definition <backend rollback ARN> --desired-count 1`
        `aws ecs update-service --cluster <cluster> --service <frontend-service> --task-definition <frontend rollback ARN> --desired-count <normal count>`
@@ -104,18 +106,18 @@ Use this when the frozen copy is missing or broken. The restore time from the re
 1. [ ] Do Path B steps 1–3.
 2. [ ] Check that the dump file is intact. The sha256 must match the window notes.
        `shasum -a 256 <dump file>`
-3. [ ] Create an empty database and restore into it:
-       `createdb <db>_v4_restored`
+3. [ ] Create an empty database from `template0` and restore into it (`template0` because the keepalive may be connected to `template1`, and Postgres won't copy a template with other sessions on it):
+       `createdb --maintenance-db=template1 -T template0 <db>_v4_restored`
        `pg_restore --no-owner --role=<db owner> -j 4 -d <db>_v4_restored <dump file>`
 4. [ ] Check it. `flavor` must be `v4`, and the counts must match the T0 fingerprint file.
-       `psql -d <db>_v4_restored -f scripts/ody-596/fingerprint.sql`
+       `psql -d <db>_v4_restored -f scripts/strapi-v5-cutover/rollback/fingerprint.sql`
 5. [ ] Swap it in:
-       `psql -d postgres -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/ody-596/swap-back.sql`
+       `psql -d template1 -v live=<db> -v frozen=<db>_v4_restored -v failed=<db>_v5_failed -f scripts/strapi-v5-cutover/rollback/swap-back.sql`
 6. [ ] Continue from Path B step 6.
 
 ## Path D: Restore the snapshot to a new server
 
-Use this only when the database server itself can't be used. It's the slowest path, often 30 minutes or more.
+Use this only when the database server itself can't be used. It's the slowest path, often 30 minutes or more. On dev, the restore alone took about 10 min (drill, 2026-10-23); add the backend repoint and the v4 deploy on top.
 
 1. [ ] If the database can still be reached, do Path B steps 1–3. If it can't, scale the backend and frontend to 0 and skip the rest of those steps.
 2. [ ] Restore the T0 snapshot to a new instance, using the **same** subnet group, security groups and parameter group as the old one:
