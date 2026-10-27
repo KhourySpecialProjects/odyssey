@@ -132,6 +132,19 @@ Pattern for every action:
 
 **Critical:** Server Actions that use raw `fetch()` MUST call `flattenAttributes()` manually. `fetchAPI()` auto-flattens, but raw `fetch()` does not. This is a frequent source of bugs.
 
+## Review comments
+
+A reviewer of a droplet in review (System Admin or Content Editor, never an author: `isReviewerFor` in `lib/review-roles.ts`) comments on its lessons and Overview (ODY-806). Plan and decisions: `docs/plans/ODY-806.md`.
+
+- **Modes.** `components/draft/review/review-mode-bar.tsx`: Comment (the default), Read (no comments shown) and Edit (takes the lesson's lock, ODY-810; on the Overview it shows the editors).
+- **Data.** `useReviewComments` (`hooks/use-review-comments.ts`) reads the reviewer's own review with `getMyReview` and adds, edits, deletes and resolves comments optimistically, rolling back on failure. The first comment opens the review; looking never does. The draft layout loads it once (`review-comments-context.tsx`) so the sidebar's counts and the page share it.
+- **Anchors** come from `lib/anchors` (ODY-801) and are checked by `reviewAnchorSchema` (`lib/validations/review.ts`): a whole BlockNote block (`blockId`) or a quote with context. `lib/review-comments.ts` has the pure rules: counts, numbering, marks, snippets.
+- **Drawing, by kind of content:**
+  - **BlockNote lessons:** ProseMirror decorations from `anchorsPlugin`, added through `createBlockNoteExtension` (BlockNote drops TipTap extensions made with our copy of `@tiptap/core`). Never edit the editor's DOM by hand.
+  - **Classic lessons and the Overview:** `ReviewTextView` writes read-only HTML outside React and draws marks with `drawAnchor`. Classic blocks have no lasting ids, so their comments are quotes within the whole lesson, and there are no whole-block comments.
+- **Making and opening comments.** `comment-layer.tsx` wraps the content: block bars (BlockNote only), selection to `comment-composer.tsx`, numbered margin tags, two-way hover lighting, and `comment-card.tsx` (Edit, Delete, Resolve). Selection timing, popover placement and dismissal come from `lib/selection`, shared with learner highlights.
+- **Keyboard.** Block bars, tags, the composer and the card all work by keyboard. A comment on a few words needs a selection, and a read-only editor takes no caret, so by keyboard that needs the browser's caret browsing.
+
 ## Static Assets and Media
 
 - Static assets (logos, icons, default images) live in `frontend/public/`
