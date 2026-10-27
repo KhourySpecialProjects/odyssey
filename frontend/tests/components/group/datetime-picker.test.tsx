@@ -13,6 +13,16 @@ describe("DateTimePicker", () => {
     expect(screen.getByLabelText("Due date")).toBe(picker);
   });
 
+  it("shows a focus ring in both themes (Input's own focus style is too faint)", () => {
+    render(<DateTimePicker date={null} onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("picker")).toHaveClass(
+      "focus-visible:ring-2",
+      "focus-visible:ring-slate-950",
+      "dark:focus-visible:ring-slate-300",
+    );
+  });
+
   it("accepts a custom accessible label", () => {
     render(
       <DateTimePicker
