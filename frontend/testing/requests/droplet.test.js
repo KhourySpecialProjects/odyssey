@@ -29,6 +29,32 @@ jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkDropletUpdate: jest.fn(),
+  checkDropletContentWrite: jest.fn(),
+  checkPublishDraft: jest.fn(),
+}));
+
+const ADMIN_GATE = {
+  ok: true,
+  user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+};
+
+/** Auth and the review freeze pass; these tests are about the request logic. */
+function allowReviewFreeze() {
+  jest
+    .requireMock("@/lib/auth/require-role")
+    .requireRole.mockResolvedValue(ADMIN_GATE);
+  const freeze = jest.requireMock("@/lib/auth/review-freeze");
+  freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
+  freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
+  freeze.checkPublishDraft.mockResolvedValue({ ok: true });
+}
+allowReviewFreeze();
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -42,8 +68,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -71,7 +97,9 @@ beforeEach(() => {
 describe("deepDeleteDroplet", () => {
   it("successfully deletes a droplet and revalidates tags", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       {
@@ -108,7 +136,9 @@ describe("deepDeleteDroplet", () => {
 
   it("treats an empty 204 as success (Strapi v5)", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       { id: 123, name: "Test Droplet", lessons: [{ id: 1 }] },

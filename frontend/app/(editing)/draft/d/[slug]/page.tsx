@@ -24,6 +24,16 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import {
+  REVIEW_FROZEN_ERROR,
+  REVIEW_FROZEN_MESSAGE,
+  isFrozenFor,
+} from "@/lib/review-roles";
+import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
+import { getAuthorNames } from "@/lib/requests/droplet-authors";
+import { IconLock } from "@tabler/icons-react";
+
+const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
 
 type Props = {
   params: Promise<Params>;
@@ -68,6 +78,34 @@ export default async function Droplet({ params }: Props) {
     .filter((option) => option.isHidden === false)
     .map(({ id, name, slug }) => ({ id, name, slug }));
 
+  // While the droplet is in review, an author (any role) can read the draft
+  // but not change it, so show it as plain content instead of the editors.
+  const isAuthor =
+    !!authUser && !!droplet.authorized_users?.some((u) => u.id === authUser.id);
+  const frozen =
+    droplet.status !== "published" &&
+    isFrozenFor(user.roles, droplet.inReview, isAuthor);
+  if (frozen) {
+    // Names only, and never fatal: the page still renders without them.
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+
+    return (
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div
+          role="status"
+          className="mx-40 mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>{REVIEW_FROZEN_MESSAGE}</span>
+        </div>
+        <FrozenOverview droplet={droplet} authors={authors} />
+        <div className="pb-16" />
+      </div>
+    );
+  }
+
   // Inline Server Actions serialize (encrypted) every value they capture into
   // the page payload, so capture primitives rather than `droplet` / `user`.
   const dropletId = droplet.id;
@@ -107,13 +145,32 @@ export default async function Droplet({ params }: Props) {
       });
 
       if (msg.content[0].type === "text") {
-        await updateDropletFunFact(msg.content[0].text, dropletId);
+        const saved = await updateDropletFunFact(
+          msg.content[0].text,
+          dropletId,
+        );
+        if (!saved.success) {
+          throw new Error(
+            saved.error === REVIEW_FROZEN_ERROR
+              ? REVIEW_FROZEN_MESSAGE
+              : FUN_FACT_SAVE_ERROR,
+          );
+        }
         return msg.content[0].text;
       } else {
         return "";
       }
     } catch (error: unknown) {
       console.error("Error generating fun fact:", error);
+
+      // A refused save already has its own message for the editor.
+      if (
+        error instanceof Error &&
+        (error.message === REVIEW_FROZEN_MESSAGE ||
+          error.message === FUN_FACT_SAVE_ERROR)
+      ) {
+        throw error;
+      }
 
       // Handle specific error cases
       const status =

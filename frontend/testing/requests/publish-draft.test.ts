@@ -85,7 +85,6 @@ describeServerActionAuth("publishDraftToOriginal", {
   mutations: () => [fetchMock, mockedRevalidateTag],
   denial: {
     kind: "owner",
-    roles: [SysAdmin, Faculty, ContentEditor],
     nonOwner: authFixtures.as({ id: 99, roles: [Faculty] }),
     arrange: () => {
       mockedFetchAPI.mockResolvedValue([draftRow()]);
@@ -134,12 +133,28 @@ describe("publishDraftToOriginal: who may publish", () => {
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
 
-  it("allows Faculty who are also Editors on a draft they did not write (G2)", async () => {
+  it("refuses Faculty who are also Editors on a draft they did not write, outside review", async () => {
     mockedRequireRole.mockResolvedValue(
       authFixtures.as({ id: 99, roles: [Faculty, ContentEditor] }),
     );
 
-    expect((await publish()).ok).toBe(true);
+    const result = await publish();
+
+    expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an author while the draft is in review, whatever their role (ODY-810)", async () => {
+    mockedFetchAPI.mockResolvedValue([draftRow({ inReview: true })]);
+    for (const roles of [[Faculty], [ContentEditor], [SysAdmin]]) {
+      mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7, roles }));
+
+      const result = await publish();
+
+      expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
 
   it("refuses an Editor who wrote the draft while it is not in review, with no request", async () => {
@@ -184,11 +199,7 @@ describe("publishDraftToOriginal: who may publish", () => {
 
     const result = await publish();
 
-    expect(result).toEqual({
-      ok: false,
-      error: "Draft droplet not found",
-      slug: null,
-    });
+    expect(result).toEqual({ ok: false, error: "Not Found", slug: null });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -191,6 +191,18 @@ const dropletEnt = (id: number, extra: Record<string, unknown> = {}) =>
     ...extra,
   });
 
+// What the review-freeze lookups read: a draft droplet (not in review) in a lesson.
+const FREEZE_DROPLET = ent(1, {
+  name: "Sentinel droplet",
+  inReview: false,
+  status: "draft",
+  authorized_users: rel(),
+});
+const FREEZE_LOOKUPS: Route[] = [
+  ["GET", /^\/lessons$/, list(ent(1, { droplets: rel(FREEZE_DROPLET) }))],
+  ["GET", /^\/droplets$/, list(FREEZE_DROPLET)],
+];
+
 const DUPLICATE_DROPLET = routes([
   ME_ROUTE,
   ["GET", /^\/droplets$/, list(), /originalDropletId/],
@@ -247,6 +259,8 @@ export const MODULE_PATHS: Record<string, string> = {
   galleries: "@/lib/requests/galleries",
   groups: "@/lib/requests/groups",
   highlights: "@/lib/requests/highlights",
+  "droplet-authors": "@/lib/requests/droplet-authors",
+  "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
   notes: "@/lib/requests/notes",
@@ -398,33 +412,36 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call("getInReviewDroplets", (m) => m.getInReviewDroplets()),
     call("getRandomFunFactDroplet", (m) => m.getRandomFunFactDroplet()),
     call("getFavoritedDropletIds", (m) => m.getFavoritedDropletIds(1)),
-    call("updateDroplet", (m) =>
-      m.updateDroplet(
-        1,
-        {
-          name: "Sentinel droplet",
-          slug: SLUG,
-          focusArea: "technical",
-          type: "knowledge",
-          difficulty: "beginner",
-          isHidden: false,
-          presentationEnabled: true,
-          learningObjectives: ["Learn"],
-          nextSteps: [{ label: "Next", url: "https://example.com" }],
-          description: "d",
-          overview: "o",
-          authorized_users: [1],
-          tagIds: [1],
-          prerequisiteIds: [2],
-          postrequisiteIds: [3],
-          lessons: [{ id: 1 }],
-          datasets: [1] as never,
-          inReview: false,
-          status: "draft",
-          afterReview: "",
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "updateDroplet",
+      (m) =>
+        m.updateDroplet(
+          1,
+          {
+            name: "Sentinel droplet",
+            slug: SLUG,
+            focusArea: "technical",
+            type: "knowledge",
+            difficulty: "beginner",
+            isHidden: false,
+            presentationEnabled: true,
+            learningObjectives: ["Learn"],
+            nextSteps: [{ label: "Next", url: "https://example.com" }],
+            description: "d",
+            overview: "o",
+            authorized_users: [1],
+            tagIds: [1],
+            prerequisiteIds: [2],
+            postrequisiteIds: [3],
+            lessons: [{ id: 1 }],
+            datasets: [1] as never,
+            inReview: false,
+            status: "draft",
+            afterReview: "",
+          },
+          { regenerateSlug: false },
+        ),
+      routes([["GET", /^\/droplets$/, list(FREEZE_DROPLET)]]),
     ),
     call(
       "createDroplet",
@@ -581,38 +598,50 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   ]),
   lesson: defineModule<typeof import("@/lib/requests/lesson")>([
     call("getLessonBySlug", (m) => m.getLessonBySlug(SLUG)),
-    call("updateLesson", (m) =>
-      m.updateLesson(
-        1,
-        {
-          name: "Sentinel lesson",
-          slug: SLUG,
-          blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
-          blocksV2: [{ type: "paragraph", content: "x" }],
-          blocksVersion: "v1",
-          orderIndex: 0,
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "updateLesson",
+      (m) =>
+        m.updateLesson(
+          1,
+          {
+            name: "Sentinel lesson",
+            slug: SLUG,
+            blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
+            blocksV2: [{ type: "paragraph", content: "x" }],
+            blocksVersion: "v1",
+            orderIndex: 0,
+          },
+          { regenerateSlug: false },
+        ),
+      routes(FREEZE_LOOKUPS),
     ),
-    call("addLesson", (m) =>
-      m.addLesson({
-        name: "Sentinel lesson",
-        dropletId: 1,
-        orderIndex: 1,
-        blocksV2: [{ type: "paragraph", content: "x" }],
-        blocksVersion: "v2",
-      }),
+    call(
+      "addLesson",
+      (m) =>
+        m.addLesson({
+          name: "Sentinel lesson",
+          dropletId: 1,
+          orderIndex: 1,
+          blocksV2: [{ type: "paragraph", content: "x" }],
+          blocksVersion: "v2",
+        }),
+      routes(FREEZE_LOOKUPS),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(5, 1, 3),
-      routes([["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }],
+      ]),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(6, 1, 4),
-      routes([["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }],
+      ]),
     ),
   ]),
   notes: defineModule<typeof import("@/lib/requests/notes")>([
@@ -690,6 +719,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       REVIEW_WRITE_ROUTES,
     ),
   ]),
+  "droplet-authors": defineModule<
+    typeof import("@/lib/requests/droplet-authors")
+  >([call("getAuthorNames", (m) => m.getAuthorNames([1, 2]))]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([
     call("getTags", (m) => m.getTags()),
     call("getTagBySlug", (m) => m.getTagBySlug(SLUG)),
@@ -838,6 +870,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     setGroupArchivedForMe: WRITE,
   },
   highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
+  "lesson-delete": { deleteLessonRecord: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",

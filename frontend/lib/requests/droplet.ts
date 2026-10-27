@@ -2,24 +2,22 @@
 
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import {
-  fetchAPI,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentEditor,
-  STRAPI_RESPONSE_FORMAT_HEADER,
-} from "../utils";
+import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
-import { deleteLesson } from "./lesson";
+import { deleteLessonRecord } from "./lesson-delete";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
 import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
+import {
+  checkDropletContentWrite,
+  checkDropletUpdate,
+  checkPublishDraft,
+} from "../auth/review-freeze";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
-import { AuthorizedUserRoleTitle } from "../globals";
 import { LESSON_BLOCKS_POPULATE } from "./lesson-populates";
 import {
   type EntryRef,
@@ -242,6 +240,11 @@ export async function updateDropletAverageRating(
 }
 
 export async function updateDropletFunFact(fact: string, dropletId: number) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
     const response = await fetch(await strapiEntryUrl("droplets", dropletId), {
       method: "PUT",
@@ -285,7 +288,7 @@ export async function deepDeleteDroplet(id: number) {
 
     if (droplet.lessons) {
       for (const lesson of droplet.lessons) {
-        await deleteLesson(lesson.id, false);
+        await deleteLessonRecord(lesson.id, false);
       }
     }
 
@@ -391,6 +394,19 @@ export async function updateDroplet(
   options: { regenerateSlug?: boolean } = {
     regenerateSlug: false,
   },
+) {
+  return withAuth([], async (user) => {
+    const check = await checkDropletUpdate(user, id, data, options);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyDropletUpdate(id, data, options);
+  });
+}
+
+/** The body of updateDroplet. Not exported, so it isn't a server action. */
+async function applyDropletUpdate(
+  id: number,
+  data: Partial<z.infer<typeof DropletSchema>>,
+  options: { regenerateSlug?: boolean },
 ) {
   try {
     const relationData = await dropletRelationData(data).catch((err) => {
@@ -534,7 +550,11 @@ export async function togglePresentationEnabled(
     );
     if (!owner.ok) return { ok: false, error: owner.error, data: null };
 
-    return updateDroplet(dropletId, { presentationEnabled: enabled });
+    return applyDropletUpdate(
+      dropletId,
+      { presentationEnabled: enabled },
+      { regenerateSlug: false },
+    );
   });
 }
 
@@ -595,7 +615,11 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
     );
     if (!owner.ok) return { success: false, error: "forbidden" };
 
-    const result = await updateDroplet(dropletId, { isHidden: hidden });
+    const result = await applyDropletUpdate(
+      dropletId,
+      { isHidden: hidden },
+      { regenerateSlug: false },
+    );
     if (!result.ok) {
       return { success: false, error: result.error };
     }
@@ -1212,22 +1236,22 @@ export async function publishDraftToOriginal(
   draftDropletId: number,
   originalDropletId: number,
 ) {
-  const gate = await requireRole([
-    AuthorizedUserRoleTitle.SysAdmin,
-    AuthorizedUserRoleTitle.Faculty,
-    AuthorizedUserRoleTitle.ContentEditor,
-  ]);
+  const gate = await requireRole([]);
   if (!gate.ok) return { ok: false, error: gate.error, slug: null };
+  // Who may publish, and that the draft belongs to the original (ODY-810).
+  const check = await checkPublishDraft(
+    gate.user,
+    draftDropletId,
+    originalDropletId,
+  );
+  if (!check.ok) return { ok: false, error: check.error, slug: null };
 
   let draft: Droplet;
   try {
-    // Fresh read: the rule below must not trust a cached copy.
+    // Fresh read for the draft's documentId.
     draft = await getDropletById<Droplet>(
       draftDropletId,
-      {
-        fields: ["id", "originalDropletId", "inReview", "status"],
-        populate: { authorized_users: { fields: ["id"] } },
-      },
+      { fields: ["id"] },
       { fresh: true },
     );
   } catch (err) {
@@ -1237,20 +1261,6 @@ export async function publishDraftToOriginal(
   // The route is addressed by the server-fetched documentId only.
   if (!draft.documentId) {
     return { ok: false, error: "Draft droplet not found", slug: null };
-  }
-
-  // Admin, or Faculty who wrote it or also edit content, or an Editor once it is in review.
-  const roles = gate.user.roles;
-  const isEditor = isContentEditor(roles);
-  const isAuthor = (draft.authorized_users ?? []).some(
-    (u) => u.id === gate.user.id,
-  );
-  const allowed =
-    isAuthorizedUserAdmin(roles) ||
-    (isAuthorizedUserFaculty(roles) && (isAuthor || isEditor)) ||
-    (isEditor && draft.inReview === true);
-  if (!allowed || draft.originalDropletId !== originalDropletId) {
-    return { ok: false, error: "forbidden", slug: null };
   }
 
   const draftDocumentId = encodeURIComponent(draft.documentId);
@@ -1415,6 +1425,11 @@ export async function updateDropletLearningObjective(
   oldObjective: string,
   newObjective: string,
 ) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
     // Fetch current droplet with learning objectives
     const droplet = await getDropletById<Droplet>(dropletId, {

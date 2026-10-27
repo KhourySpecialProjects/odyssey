@@ -11,12 +11,15 @@ interface SortableLessonProps {
   lesson: Lesson;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
   pathname: string;
+  /** Hides the drag handle and turns reordering off. */
+  dragDisabled?: boolean;
 }
 
 export function SortableLesson({
   lesson,
   droplet,
   pathname,
+  dragDisabled = false,
 }: SortableLessonProps) {
   const router = useRouter();
 
@@ -29,6 +32,7 @@ export function SortableLesson({
     isDragging,
   } = useSortable({
     id: lesson.id,
+    disabled: dragDisabled,
   });
 
   const style = {
@@ -58,21 +62,25 @@ export function SortableLesson({
             : "text-[#344054] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
         )}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab px-1 active:cursor-grabbing"
-        >
-          <IconGripVertical
-            className={cn(
-              "h-4 w-4 shrink-0",
-              pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
-                ? "text-[#287697] dark:text-[#4AABCF]"
-                : "text-slate-400",
-            )}
-            stroke={1.8}
-          />
-        </div>
+        {dragDisabled ? (
+          <div className="w-2 shrink-0" />
+        ) : (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab px-1 active:cursor-grabbing"
+          >
+            <IconGripVertical
+              className={cn(
+                "h-4 w-4 shrink-0",
+                pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
+                  ? "text-[#287697] dark:text-[#4AABCF]"
+                  : "text-slate-400",
+              )}
+              stroke={1.8}
+            />
+          </div>
+        )}
 
         <Link
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}

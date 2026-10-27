@@ -11,6 +11,7 @@ type ActionType =
   | "publish"
   | "requestReview"
   | "requestChanges"
+  | "withdrawReview"
   | "publishDraft";
 
 /** The publish action returns codes for denials; anything else is a message for the author. */
@@ -90,6 +91,19 @@ export function ContentActionButton({
           );
           successMessage = "Droplet submitted for review";
           errorMessage = "Error submitting droplet for review";
+          shouldReload = true;
+          break;
+
+        case "withdrawReview":
+          // Only inReview: the freeze check allows exactly this change to an
+          // in-review draft, and afterReview is kept as it is.
+          response = await updateDroplet(
+            droplet.id,
+            { inReview: false },
+            { regenerateSlug: false },
+          );
+          successMessage = "Withdrawn from review";
+          errorMessage = "Error withdrawing from review";
           shouldReload = true;
           break;
 
@@ -205,6 +219,17 @@ export function ContentActionButton({
           ),
         };
 
+      case "withdrawReview":
+        return {
+          title: "Withdraw from review?",
+          content: (
+            <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+              The droplet leaves the review queue and you can edit it again.
+              Submit it again when it&apos;s ready.
+            </p>
+          ),
+        };
+
       case "requestChanges":
         return {
           title: "Request Changes",
@@ -261,17 +286,19 @@ export function ContentActionButton({
 
   const buttonColorClasses =
     actionType === "publish" || actionType === "publishDraft"
-      ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
+      ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
       : actionType === "requestReview"
-        ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
-        : "border-red-400 bg-red-400 hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
+        ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
+        : actionType === "withdrawReview"
+          ? "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800"
+          : "border-red-400 bg-red-400 text-white hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
 
   return (
     <>
       <button
         onClick={() => setIsPopupOpen(true)}
         disabled={isLoading}
-        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
+        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
       >
         {isLoading ? "Processing..." : buttonText}
       </button>
