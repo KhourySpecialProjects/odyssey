@@ -17,7 +17,7 @@
  * Classic-editor lessons or the Overview.
  */
 export * from "./types";
-export { createAnchor } from "./create";
+export { createAnchor, pointAnchor } from "./create";
 export { resolveAnchor } from "./resolve";
 export { blockNoteContent, htmlContent } from "./content";
 export { drawAnchor, removeAnchor } from "./draw";

@@ -200,6 +200,72 @@ describe("anchors in the BlockNote editor", () => {
       expect(outer).not.toBeNull();
     });
 
+    it("anchors and draws a selection across blocks (Round 2)", () => {
+      const intro = root.querySelector(
+        '[data-id="intro"] .bn-inline-content',
+      )!.firstChild!;
+      const joins = root.querySelector(
+        '[data-id="joins"] .bn-inline-content',
+      )!.firstChild!;
+      const range = new Range();
+      range.setStart(intro, "Databases ".length);
+      range.setEnd(joins, "A join".length);
+
+      const anchor = createAnchor(range, { field: "blocks" })!;
+      expect(anchor).toMatchObject({
+        blockId: "intro",
+        endBlockId: "joins",
+        start: 10,
+        end: 6,
+        quote: "store data.\nA join",
+      });
+
+      const found = resolveAnchor(
+        { blocks: blockNoteContent(editor.document) },
+        anchor,
+      ) as AnchorRange;
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [{ id: "c9", range: found }]),
+      );
+
+      const spans = Array.from(root.querySelectorAll('[data-anchor-id="c9"]'));
+      expect(spans.map((span) => span.textContent).join("|")).toBe(
+        "store data.|A join",
+      );
+    });
+
+    it("draws a caret at a spot comment, beside its letters", () => {
+      const spot = (point: "before" | "after"): DrawnAnchor => ({
+        id: `spot-${point}`,
+        range: {
+          field: "blocks",
+          blockId: "intro",
+          start: 10,
+          end: 15,
+          exact: true,
+        },
+        className: "review-mark",
+        point,
+      });
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [spot("before"), spot("after")]),
+      );
+
+      const before = root.querySelector(
+        '.anchor-caret[data-anchor-id="spot-before"]',
+      )!;
+      const after = root.querySelector(
+        '.anchor-caret[data-anchor-id="spot-after"]',
+      )!;
+      expect(before).toHaveClass("review-mark");
+      expect(before.nextElementSibling).toHaveTextContent("store");
+      expect(after.previousElementSibling).toHaveTextContent("store");
+      // The carets are drawn, not text
+      expect(blockNoteContent(editor.document)[0].text).toBe(
+        "Databases store data.",
+      );
+    });
+
     it("redraws when the anchors change and refreshAnchors is called", () => {
       let anchors: DrawnAnchor[] = [whole("c4")];
       editor._tiptapEditor.registerPlugin(anchorsPlugin(() => anchors));

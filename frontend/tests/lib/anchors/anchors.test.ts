@@ -5,6 +5,7 @@ import {
   createAnchor,
   drawAnchor,
   htmlContent,
+  pointAnchor,
   removeAnchor,
   resolveAnchor,
 } from "@/lib/anchors";
@@ -140,15 +141,48 @@ describe("createAnchor", () => {
     });
   });
 
-  it("doesn't anchor a selection across two blocks, or an empty one", () => {
+  it("anchors a selection across blocks from its first block to its last", () => {
     const root = renderLesson(lesson);
     const across = new Range();
-    across.setStart(blockElement(root, "intro").firstChild!, 0);
-    across.setEnd(blockElement(root, "joins").firstChild!, 3);
+    across.setStart(blockElement(root, "intro").firstChild!, 10);
+    across.setEnd(blockElement(root, "repeat").firstChild!, 3);
+
+    expect(createAnchor(across, { field: "blocks" })).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "intro",
+      endBlockId: "repeat",
+      start: 10,
+      end: 3,
+      quote: `store data in tables.\n${joinsText}\nUse`,
+      prefix: "Databases ",
+      suffix: " a join when you need both tab",
+    });
+  });
+
+  it("keeps a selection to one block when only whitespace spills over", () => {
+    const root = renderLesson(lesson);
+    const intro = blockElement(root, "intro").firstChild as Text;
+    const spill = new Range();
+    spill.setStart(intro, 10);
+    spill.setEnd(blockElement(root, "joins").firstChild!, 0);
+
+    expect(createAnchor(spill, { field: "blocks" })).toMatchObject({
+      blockId: "intro",
+      start: 10,
+      end: intro.length,
+      quote: "store data in tables.",
+    });
+    expect(createAnchor(spill, { field: "blocks" })).not.toHaveProperty(
+      "endBlockId",
+    );
+  });
+
+  it("doesn't anchor an empty selection", () => {
+    const root = renderLesson(lesson);
     const empty = new Range();
     empty.setStart(blockElement(root, "intro").firstChild!, 2);
 
-    expect(createAnchor(across, { field: "blocks" })).toBeNull();
     expect(createAnchor(empty, { field: "blocks" })).toBeNull();
   });
 
@@ -199,6 +233,61 @@ describe("createAnchor", () => {
       prefix: "Learn ",
       suffix: ".Then practise.",
     });
+  });
+});
+
+describe("pointAnchor", () => {
+  const base = { field: "blocks", blockId: "joins" };
+  const text = "Inner joins keep rows.";
+
+  it("anchors a spot to the rest of its word, before it", () => {
+    // "Inner jo|ins"
+    expect(pointAnchor(text, 8, "before", base)).toEqual({
+      v: 1,
+      ...base,
+      start: 8,
+      end: 11,
+      quote: "ins",
+      prefix: "Inner jo",
+      suffix: " keep rows.",
+      point: "before",
+    });
+  });
+
+  it("anchors a spot to the word that ends at it, after it", () => {
+    expect(pointAnchor(text, 5, "after", base)).toMatchObject({
+      start: 0,
+      end: 5,
+      quote: "Inner",
+      point: "after",
+    });
+  });
+
+  it("takes the other side when its own side has no word", () => {
+    // At the end of the text, and just before a space
+    expect(pointAnchor(text, text.length, "before", base)).toMatchObject({
+      quote: "rows.",
+      point: "after",
+    });
+    expect(pointAnchor(text, 5, "before", base)).toMatchObject({
+      quote: "Inner",
+      point: "after",
+    });
+  });
+
+  it("stops a word at a break between parts", () => {
+    // Two list items read as "onetwo"
+    expect(
+      pointAnchor("onetwo", 1, "before", base, new Set([3])),
+    ).toMatchObject({ quote: "ne" });
+    expect(pointAnchor("onetwo", 5, "after", base, new Set([3]))).toMatchObject(
+      { quote: "tw" },
+    );
+  });
+
+  it("returns null with no word either side", () => {
+    expect(pointAnchor("   ", 1, "before", base)).toBeNull();
+    expect(pointAnchor("", 0, "after", base)).toBeNull();
   });
 });
 
@@ -315,6 +404,67 @@ describe("resolveAnchor", () => {
     expect(resolve(lesson.slice(1), anchor)).toBe(OUTDATED);
   });
 
+  describe("across blocks", () => {
+    const across: Anchor = {
+      v: 1,
+      field: "blocks",
+      blockId: "intro",
+      endBlockId: "joins",
+      start: 10,
+      end: 6,
+      quote: "store data in tables.\nA join",
+      prefix: "Databases ",
+      suffix: " combines rows from two tables",
+    };
+
+    it("finds it from its first block to its last", () => {
+      expect(resolve(lesson, across)).toEqual({
+        field: "blocks",
+        blockId: "intro",
+        endBlockId: "joins",
+        start: 10,
+        end: 6,
+        exact: true,
+      });
+    });
+
+    it("finds the quote again after a paragraph is inserted above", () => {
+      const edited = [paragraph("new", text("First.")), ...lesson];
+
+      expect(resolve(edited, across)).toMatchObject({
+        blockId: "intro",
+        endBlockId: "joins",
+        start: 10,
+        end: 6,
+      });
+    });
+
+    it("follows the quote when its blocks get new ids", () => {
+      const edited = [
+        paragraph("a", text("Databases store data in tables.")),
+        paragraph("b", text("A join combines rows from two tables.")),
+      ];
+
+      expect(resolve(edited, across)).toEqual({
+        field: "blocks",
+        blockId: "a",
+        endBlockId: "b",
+        start: 10,
+        end: 6,
+        exact: true,
+      });
+    });
+
+    it("says outdated when the text between is edited away", () => {
+      const edited = [
+        lesson[0],
+        paragraph("joins", text("Joins are covered later.")),
+      ];
+
+      expect(resolve(edited, across)).toBe(OUTDATED);
+    });
+  });
+
   it("finds a quote in the Overview's text after it's edited", () => {
     const overview = document.createElement("div");
     overview.innerHTML = "<p>Learn <strong>SQL</strong> joins.</p>";
@@ -386,5 +536,50 @@ describe("drawAnchor", () => {
     removeAnchor(root, "c1");
     expect(root.querySelector("[data-anchor-id]")).toBeNull();
     expect(blockElement(root, "joins")).toHaveTextContent(joinsText);
+  });
+
+  it("draws across blocks, with the class it's given", () => {
+    const root = renderLesson(lesson);
+
+    const spans = drawAnchor(
+      root,
+      {
+        field: "blocks",
+        blockId: "intro",
+        endBlockId: "repeat",
+        start: 10,
+        end: 3,
+        exact: true,
+      },
+      "c2",
+      { className: "mark" },
+    );
+
+    expect(spans.map((span) => span.textContent).join("|")).toBe(
+      `store data in tables.|A join combines rows from two tables. |Inner| joins keep matching rows.|Use`,
+    );
+    expect(spans.every((span) => span.className === "mark")).toBe(true);
+  });
+
+  it("puts a caret at a spot comment's end, and takes it out again", () => {
+    const overview = document.createElement("div");
+    overview.innerHTML = "<p>Learn SQL joins.</p>";
+    document.body.appendChild(overview);
+
+    drawAnchor(
+      overview,
+      { field: "overview", start: 6, end: 9, exact: true },
+      "c3",
+      { className: "mark", point: "after" },
+    );
+
+    const caret = overview.querySelector(".anchor-caret")!;
+    expect(caret).toHaveAttribute("data-anchor-id", "c3");
+    expect(caret).toHaveClass("mark");
+    expect(caret.previousSibling).toHaveTextContent("SQL");
+    expect(overview).toHaveTextContent("Learn SQL joins.");
+
+    removeAnchor(overview, "c3");
+    expect(overview.innerHTML).toBe("<p>Learn SQL joins.</p>");
   });
 });

@@ -107,3 +107,15 @@ export function wrapRange(
     return span;
   });
 }
+
+/**
+ * The caret drawn at a spot comment: an empty span, tagged like the mark and
+ * classed `anchor-caret`
+ */
+export function caretElement(id: string, className?: string): HTMLElement {
+  const caret = document.createElement("span");
+  caret.dataset.anchorId = id;
+  caret.className = className ? `anchor-caret ${className}` : "anchor-caret";
+  caret.setAttribute("aria-hidden", "true");
+  return caret;
+}

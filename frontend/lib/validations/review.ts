@@ -22,16 +22,20 @@ export const aiScoringRunStateSchema = z.enum([
 const anchorBase = { v: z.literal(1), field: reviewCommentFieldSchema };
 
 // Text in a block or field: its quote and context, with offsets when known.
-// start/end come together, and end >= start.
+// start/end come together, and end >= start. Across blocks (endBlockId), the
+// offsets are in different blocks, so only their presence is checked. A spot
+// (point) is the letters beside it, in one block.
 const textAnchorSchema = z
   .object({
     ...anchorBase,
     blockId: z.string().min(1).optional(),
+    endBlockId: z.string().min(1).optional(),
     start: z.number().int().min(0).optional(),
     end: z.number().int().min(0).optional(),
     quote: z.string().min(1).max(2000),
     prefix: z.string().max(200),
     suffix: z.string().max(200),
+    point: z.enum(["before", "after"]).optional(),
   })
   .strict()
   .refine((a) => (a.start === undefined) === (a.end === undefined), {
@@ -39,12 +43,31 @@ const textAnchorSchema = z
     path: ["end"],
   })
   .refine(
-    (a) => a.start === undefined || a.end === undefined || a.end >= a.start,
+    (a) =>
+      a.endBlockId !== undefined ||
+      a.start === undefined ||
+      a.end === undefined ||
+      a.end >= a.start,
     {
       message: "end must be >= start",
       path: ["end"],
     },
-  );
+  )
+  .refine(
+    (a) =>
+      a.endBlockId === undefined ||
+      (a.blockId !== undefined &&
+        a.start !== undefined &&
+        a.endBlockId !== a.blockId),
+    {
+      message: "a selection across blocks needs blockId, start and end",
+      path: ["endBlockId"],
+    },
+  )
+  .refine((a) => a.point === undefined || a.endBlockId === undefined, {
+    message: "a spot is in one block",
+    path: ["point"],
+  });
 
 // A whole block: its id and nothing else (lib/anchors' createAnchor, ODY-801)
 const wholeBlockAnchorSchema = z

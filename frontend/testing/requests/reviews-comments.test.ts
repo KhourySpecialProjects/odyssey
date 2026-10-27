@@ -322,6 +322,58 @@ describe("whole-block anchors", () => {
   });
 });
 
+describe("spot and multi-block anchors (ODY-806, Round 2)", () => {
+  const across = {
+    v: 1 as const,
+    field: "blocks" as const,
+    blockId: "b1",
+    endBlockId: "b3",
+    start: 12,
+    end: 4,
+    quote: "end of one\nall of two\nthree",
+    prefix: "",
+    suffix: "",
+  };
+
+  it("accepts a selection across blocks, whose end is in another block", async () => {
+    arrange();
+
+    expect((await addComment({ ...validInput, anchor: across })).ok).toBe(true);
+    expect(sentBodies()[0].anchor).toEqual(across);
+  });
+
+  it("accepts a comment at a spot", async () => {
+    arrange();
+    const spot = {
+      ...anchor,
+      blockId: "b1",
+      start: 3,
+      end: 8,
+      point: "before",
+    };
+
+    expect(
+      (await addComment({ ...validInput, anchor: spot as never })).ok,
+    ).toBe(true);
+    expect(sentBodies()[0].anchor).toEqual(spot);
+  });
+
+  it.each([
+    ["an end block with no start block", { ...across, blockId: undefined }],
+    ["an end block that is the start block", { ...across, endBlockId: "b1" }],
+    ["a spot across blocks", { ...across, point: "after" }],
+    ["an unknown side", { ...anchor, point: "middle" }],
+  ])("rejects %s without any fetch", async (_, bad) => {
+    arrange();
+
+    expectDenied(
+      await addComment({ ...validInput, anchor: bad as never }),
+      "invalid_input",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("an author of the droplet (ODY-810)", () => {
   beforeEach(() => {
     mockedRequireRole.mockResolvedValue(admin());

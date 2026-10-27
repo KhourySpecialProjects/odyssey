@@ -461,11 +461,15 @@ export type ReviewAnchor =
       v: 1;
       field: ReviewCommentField;
       blockId?: string;
+      /** Across BlockNote blocks: the last block, which `end` is in */
+      endBlockId?: string;
       start?: number;
       end?: number;
       quote: string;
       prefix: string;
       suffix: string;
+      /** At one spot: just before the quote, or just after it */
+      point?: "before" | "after";
     }
   | { v: 1; field: ReviewCommentField; blockId: string };
 
