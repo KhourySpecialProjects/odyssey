@@ -73,6 +73,7 @@ export const GROUP = {
 // Record<StrapiCollection, true> fails to compile when a collection is added without updating this list.
 const COLLECTIONS: Record<StrapiCollection, true> = {
   "access-requests": true,
+  "ai-scoring-runs": true,
   announcements: true,
   "authorized-users": true,
   "authorized-user-roles": true,
@@ -90,6 +91,10 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   notes: true,
   playlists: true,
   reports: true,
+  "review-comments": true,
+  "review-criteria": true,
+  "review-scores": true,
+  reviews: true,
   tags: true,
   voyages: true,
   "voyage-enrollments": true,
@@ -192,6 +197,59 @@ const DUPLICATE_DROPLET = routes([
   ["GET", /^\/droplets$/, list(dropletEnt(1))],
 ]);
 
+<<<<<<< HEAD
+=======
+const PUBLISH_DRAFT = routes([
+  ME_ROUTE,
+  [
+    "GET",
+    /^\/droplets$/,
+    list(
+      dropletEnt(1, {
+        status: "draft",
+        lessons: rel(lessonEnt(5, "v1"), lessonEnt(7, "v2")),
+      }),
+    ),
+    /id\]\[\$eq\]=1(&|$)/,
+  ],
+  [
+    "GET",
+    /^\/droplets$/,
+    list(
+      dropletEnt(2, { lessons: rel(lessonEnt(6, "v1"), lessonEnt(8, "v1")) }),
+    ),
+    /id\]\[\$eq\]=2(&|$)/,
+  ],
+  ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
+]);
+
+const REVIEW_ROW = ent(5, {
+  round: 1,
+  key: "1:1:1",
+  state: "open",
+  droplet: { data: ent(1) },
+  reviewer: { data: ent(1) },
+});
+const REVIEW_COMMENT_ROW = ent(7, {
+  field: "description",
+  body: "Sentinel comment",
+  author: { data: ent(1) },
+  review: { data: ent(5, { state: "open", droplet: { data: ent(1) } }) },
+});
+
+const REVIEW_OPEN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["POST", /^\/reviews$/, { data: REVIEW_ROW }],
+]);
+
+const REVIEW_WRITE_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { value: 3 }))],
+  ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
+]);
+
+>>>>>>> feature/highlighting-and-inline-suggestions
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -222,6 +280,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
+  reviews: "@/lib/requests/reviews",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -532,19 +591,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
   ]),
   highlights: defineModule<typeof import("@/lib/requests/highlights")>([
-    call("getHighlights", (m) => m.getHighlights(1, "text")),
     call("createHighlight", (m) =>
       m.createHighlight({
-        data: {
-          text: "t",
-          color: "yellow",
-          position: { x: 1 },
-          yLevel: 1.5,
-          blockId: 1,
-          lesson: 1,
-          authorized_user: 1,
-          note: 1,
-        },
+        text: "t",
+        color: "#fff300",
+        position: { start: 0, end: 1 },
+        blockId: 1,
+        lessonId: 1,
       }),
     ),
     call("getHighlightsByDroplet", (m) => m.getHighlightsByDroplet(1, 1)),
@@ -628,6 +681,40 @@ export const CAPTURED: Record<string, Call<never>[]> = {
         author: { id: 1 },
         userId: 1,
       }),
+    ),
+  ]),
+  reviews: defineModule<typeof import("@/lib/requests/reviews")>([
+    call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
+    call(
+      "addComment",
+      (m) =>
+        m.addComment({
+          reviewId: 5,
+          lessonId: 6,
+          field: "blocks",
+          anchor: {
+            v: 1,
+            field: "blocks",
+            blockId: "b1",
+            quote: "q",
+            prefix: "",
+            suffix: "",
+          },
+          body: "Sentinel comment",
+        }),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("editComment", (m) => m.editComment(7, "Edited"), REVIEW_WRITE_ROUTES),
+    call("deleteComment", (m) => m.deleteComment(7), REVIEW_WRITE_ROUTES),
+    call(
+      "resolveComment",
+      (m) => m.resolveComment(7, true),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewForDroplet",
+      (m) => m.getReviewForDroplet(1),
+      REVIEW_WRITE_ROUTES,
     ),
   ]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([
@@ -777,7 +864,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     archiveGroup: WRITE,
     setGroupArchivedForMe: WRITE,
   },
-  highlights: { deleteHighlight: WRITE },
+  highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",

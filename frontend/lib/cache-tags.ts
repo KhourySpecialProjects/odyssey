@@ -52,8 +52,10 @@
  *                 updateUserInfo (only when name/bio/photo/links/roles/
  *                 isEnabled change), deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
- *                 deleteNote
- * highlights      createHighlight, deleteHighlight                          900s
+ *                 deleteNote, updateHighlight, deleteHighlight (notes show
+ *                 their highlight). getHighlightsByAuthorizedUserAndLesson
+ *                 also carries it, since it populates each highlight's note.
+ * highlights      createHighlight, updateHighlight, deleteHighlight         900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
  *                 publishDraftToOriginal
@@ -136,6 +138,10 @@
  *                 "groups" tag, since getUserGroups carries both.
  * favorites      Per-user tag "favorites-{userId}"                          900s
  *                 (getFavoritedDropletIds, explore hearts): favoriteDroplet
+ * review          Per-droplet tag "review-{dropletId}": read by              900s
+ *                 getReviewForDroplet; invalidated by getOrOpenReview
+ *                 (create), addComment, editComment, deleteComment,
+ *                 resolveComment (ODY-803/804 add theirs)
  */
 
 export const CACHE_TAGS = {
@@ -175,4 +181,7 @@ export const CACHE_TAGS = {
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
+
+  // Per-droplet (scoped to one droplet)
+  review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores
 };

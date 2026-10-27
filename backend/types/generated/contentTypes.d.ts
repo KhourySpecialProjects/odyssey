@@ -539,7 +539,16 @@ export interface ApiAnnouncementAnnouncement
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
-      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
+      [
+        'playlist',
+        'droplet',
+        'friend',
+        'system',
+        'group',
+        'kudos',
+        'review_feedback',
+        'review_published',
+      ]
     > &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
@@ -970,6 +979,14 @@ export interface ApiDropletDroplet extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    reviewRound: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     status: Schema.Attribute.Enumeration<['draft', 'edit', 'published']> &
       Schema.Attribute.Required &
