@@ -1,14 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getPath,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-  isContentEditor,
-} from "@/lib/utils";
+import { cn, getPath, isContentCreator } from "@/lib/utils";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
