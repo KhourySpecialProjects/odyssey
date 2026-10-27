@@ -1,4 +1,8 @@
 import {
+  blockLabel,
+  blockTypes,
+  commentSnippet,
+  numberComments,
   commentMarks,
   commentCounts,
   commentStripText,
@@ -145,5 +149,96 @@ describe("commentMarks", () => {
 
     expect(drawn).toEqual([]);
     expect(outdated.map((c) => c.id)).toEqual([1, 2]);
+  });
+});
+
+describe("numberComments", () => {
+  it("numbers open comments in the order written", () => {
+    const list = [comment({ id: 9 }), comment({ id: 3 }), comment({ id: 5 })];
+    expect([...numberComments(list)]).toEqual([
+      [3, 1],
+      [5, 2],
+      [9, 3],
+    ]);
+  });
+
+  it("closes up when one is resolved, and gives it no number", () => {
+    const list = [
+      comment({ id: 3 }),
+      comment({ id: 5, resolvedAt: "2026-10-27T12:00:00Z" }),
+      comment({ id: 9 }),
+    ];
+    expect([...numberComments(list)]).toEqual([
+      [3, 1],
+      [9, 2],
+    ]);
+  });
+
+  it("gives a new, unsaved comment the next number", () => {
+    const list = [comment({ id: -2 }), comment({ id: 4 }), comment({ id: -1 })];
+    expect([...numberComments(list)]).toEqual([
+      [4, 1],
+      [-1, 2],
+      [-2, 3],
+    ]);
+  });
+});
+
+describe("commentSnippet", () => {
+  const words = comment({
+    anchor: {
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+      start: 0,
+      end: 40,
+      quote: "A loop repeats a block of code until done",
+      prefix: "",
+      suffix: "",
+    },
+  });
+  const block = comment({ anchor: { v: 1, field: "blocks", blockId: "b2" } });
+
+  it("quotes the words, shortened", () => {
+    expect(commentSnippet(words, undefined)).toBe("“A loop repeats a block…”");
+  });
+
+  it("names the block and its first words", () => {
+    expect(
+      commentSnippet(block, {
+        type: "quiz-multiple-choice",
+        text: "Which loop runs at least once?",
+      }),
+    ).toBe("Check-in · “Which loop runs at…”");
+  });
+
+  it("reads longer for a label", () => {
+    expect(commentSnippet(words, undefined, { long: true })).toBe(
+      "“A loop repeats a block of code until done”",
+    );
+  });
+});
+
+describe("blocks", () => {
+  it("labels BlockNote block types", () => {
+    expect(blockLabel("heading")).toBe("Heading");
+    expect(blockLabel("numberedListItem")).toBe("List item");
+    expect(blockLabel("something-new")).toBe("Block");
+    expect(blockLabel(undefined)).toBe("Block");
+  });
+
+  it("maps every block id to its type, children included", () => {
+    expect([
+      ...blockTypes([
+        {
+          id: "a",
+          type: "bulletListItem",
+          children: [{ id: "b", type: "paragraph" }],
+        },
+      ]),
+    ]).toEqual([
+      ["a", "bulletListItem"],
+      ["b", "paragraph"],
+    ]);
   });
 });

@@ -79,3 +79,78 @@ export function commentMarks(
   }
   return { drawn, outdated };
 }
+
+/**
+ * Open comments' numbers (D7): 1, 2, 3 in the order they were written, so a
+ * new comment always gets the next one. Resolving takes a comment out and the
+ * rest close up; resolved comments have no number. Comments not saved yet
+ * (negative ids, -1 first) come after every saved one.
+ */
+export function numberComments(
+  comments: readonly ReviewComment[],
+): Map<number, number> {
+  const rank = (c: ReviewComment) =>
+    c.id > 0 ? c.id : Number.MAX_SAFE_INTEGER / 2 - c.id;
+  const open = comments
+    .filter((c) => !isResolved(c))
+    .sort((a, b) => rank(a) - rank(b));
+  return new Map(open.map((c, i) => [c.id, i + 1]));
+}
+
+const BLOCK_LABELS: Record<string, string> = {
+  paragraph: "Paragraph",
+  heading: "Heading",
+  bulletListItem: "List item",
+  numberedListItem: "List item",
+  checkListItem: "List item",
+  table: "Table",
+  callout: "Callout",
+  image: "Image",
+  latex: "Equation",
+  codeBlock: "Code",
+  "code-block": "Code",
+  "notebook-code": "Code",
+  "sandpack-block": "Code",
+  "quiz-multiple-choice": "Check-in",
+  "quiz-true-false": "Check-in",
+  "quiz-open-ended": "Check-in",
+};
+
+/** What a BlockNote block type is called in a tag, e.g. "Paragraph" */
+export const blockLabel = (type: string | undefined) =>
+  (type && BLOCK_LABELS[type]) ?? "Block";
+
+const trunc = (text: string, length: number) =>
+  text.length > length ? `${text.slice(0, length - 1).trimEnd()}…` : text;
+
+/** The block a whole-block comment is on, as the tag names it */
+export type TagBlock = { type?: string; text: string };
+
+/**
+ * A few words of what a comment is about (D8): the quoted phrase, or the
+ * block's kind and its first words. `long` is for labels read in full.
+ */
+export function commentSnippet(
+  comment: ReviewComment,
+  block: TagBlock | undefined,
+  { long = false }: { long?: boolean } = {},
+): string {
+  const { anchor } = comment;
+  if ("quote" in anchor) return `“${trunc(anchor.quote, long ? 90 : 24)}”`;
+  const label = blockLabel(block?.type);
+  const words = block?.text.trim();
+  return words ? `${label} · “${trunc(words, long ? 70 : 20)}”` : label;
+}
+
+type BlockLike = { id?: string; type?: string; children?: BlockLike[] };
+
+/** Each BlockNote block's type by id, children included */
+export function blockTypes(blocks: readonly BlockLike[]): Map<string, string> {
+  const types = new Map<string, string>();
+  const add = (block: BlockLike) => {
+    if (block.id && block.type) types.set(block.id, block.type);
+    block.children?.forEach(add);
+  };
+  blocks.forEach(add);
+  return types;
+}

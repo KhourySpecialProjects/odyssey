@@ -50,10 +50,12 @@ import {
   type ReviewMode,
 } from "@/components/draft/review/review-mode-bar";
 import {
+  blockTypes,
   commentCounts,
   commentMarks,
   commentStripText,
   commentsOnLesson,
+  numberComments,
 } from "@/lib/review-comments";
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
@@ -195,20 +197,52 @@ export function LessonRenderer({
       commentMarks(lessonComments, anchorContent, reviewComments.review?.state),
     [lessonComments, anchorContent, reviewComments.review?.state],
   );
-  // The text a comment is being written for stays marked while the reviewer types
+  // The text a comment is being written for stays marked while the reviewer
+  // types, and hovering a tag or a mark lights the mark
   const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
+  const [litMarkId, setLitMarkId] = useState<string | null>(null);
   const drawnMarks = useMemo(() => {
+    const drawn = marks.drawn.map((mark) =>
+      mark.id === litMarkId
+        ? { ...mark, className: `${mark.className} review-mark--lit` }
+        : mark,
+    );
     const range = draftAnchor && resolveAnchor(anchorContent, draftAnchor);
-    if (!range || range === OUTDATED) return marks.drawn;
+    if (!range || range === OUTDATED) return drawn;
     return [
-      ...marks.drawn,
+      ...drawn,
       {
         id: "comment-draft",
         range,
         className: "review-mark review-mark--draft",
       },
     ];
-  }, [marks.drawn, draftAnchor, anchorContent]);
+  }, [marks.drawn, litMarkId, draftAnchor, anchorContent]);
+  const commentNumbers = useMemo(
+    () => numberComments(lessonComments),
+    [lessonComments],
+  );
+  const outdatedIds = useMemo(
+    () => new Set(marks.outdated.map((c) => c.id)),
+    [marks.outdated],
+  );
+  const blockTypeById = useMemo(
+    () =>
+      blockTypes(Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : []),
+    [blocksV2],
+  );
+  const blockFor = useCallback(
+    (blockId: string) => {
+      const text = anchorContent.blocks.find((b) => b.id === blockId)?.text;
+      return text === undefined
+        ? undefined
+        : { type: blockTypeById.get(blockId), text };
+    },
+    [anchorContent, blockTypeById],
+  );
+  // Comments change only while the review is open (or not opened yet)
+  const canChangeComments =
+    !reviewComments.review || reviewComments.review.state === "open";
   const { add: addReviewComment } = reviewComments;
   const postComment = useCallback(
     (anchor: ReviewAnchor, body: string) =>
@@ -911,8 +945,18 @@ export function LessonRenderer({
                 <CommentLayer
                   enabled={showCommentLayer}
                   field="blocks"
+                  comments={lessonComments}
+                  numbers={commentNumbers}
+                  outdatedIds={outdatedIds}
+                  blockFor={blockFor}
+                  canChange={canChangeComments}
                   onPost={postComment}
+                  onEdit={reviewComments.edit}
+                  onDelete={reviewComments.remove}
+                  onResolve={reviewComments.resolve}
                   onDraftChange={setDraftAnchor}
+                  litMarkId={litMarkId}
+                  onLitChange={setLitMarkId}
                 >
                   <BlockNoteEditor
                     key={`editor-${lesson.id}-${contentVersion}`}

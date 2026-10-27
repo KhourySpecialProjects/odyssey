@@ -247,6 +247,9 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 .review-mark--block {
   background-color: rgb(251 191 36 / 0.15);
 }
+.review-mark--lit {
+  background-color: rgb(251 191 36 / 0.45);
+}
 .review-mark--draft {
   background-color: rgb(251 191 36 / 0.4);
 }

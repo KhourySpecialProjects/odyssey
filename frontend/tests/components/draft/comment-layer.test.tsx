@@ -22,12 +22,17 @@ beforeAll(() => {
     }) as DOMRect;
 });
 
-/** Two blocks laid out like BlockNote's editor DOM */
+/** Two blocks laid out like BlockNote's editor DOM, with comment 1's mark */
 const Editor = () => (
   <div className="bn-editor">
     <div data-node-type="blockContainer" data-id="b1">
       <div className="bn-block-content">
-        <p className="bn-inline-content">A loop repeats a block of code.</p>
+        <p className="bn-inline-content">
+          A loop repeats a block of code.{" "}
+          <span data-anchor-id="comment-1" className="review-mark">
+            Marked
+          </span>
+        </p>
       </div>
     </div>
     <div data-node-type="blockContainer" data-id="b2">
@@ -40,14 +45,60 @@ const Editor = () => (
 
 const onPost = jest.fn();
 const onDraftChange = jest.fn();
+const onEdit = jest.fn();
+const onDelete = jest.fn();
+const onResolve = jest.fn();
+const onLitChange = jest.fn();
 
-function mount(enabled = true) {
+const wordsComment = {
+  id: 1,
+  field: "blocks" as const,
+  anchor: {
+    v: 1 as const,
+    field: "blocks" as const,
+    blockId: "b1",
+    start: 2,
+    end: 6,
+    quote: "loop",
+    prefix: "A ",
+    suffix: " repeats",
+  },
+  body: "Which loop?",
+  resolvedAt: null,
+};
+const blockComment = {
+  id: 2,
+  field: "blocks" as const,
+  anchor: { v: 1 as const, field: "blocks" as const, blockId: "b2" },
+  body: "Shorten this.",
+  resolvedAt: "2026-10-27T12:00:00Z",
+};
+
+function mount(
+  enabled = true,
+  over: Partial<React.ComponentProps<typeof CommentLayer>> = {},
+) {
   return render(
     <CommentLayer
       enabled={enabled}
       field="blocks"
+      comments={[]}
+      numbers={new Map()}
+      outdatedIds={new Set()}
+      blockFor={(id) =>
+        id === "b2"
+          ? { type: "paragraph", text: "Loops end when a condition fails." }
+          : undefined
+      }
+      canChange
       onPost={onPost}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onResolve={onResolve}
       onDraftChange={onDraftChange}
+      litMarkId={null}
+      onLitChange={onLitChange}
+      {...over}
     >
       <Editor />
     </CommentLayer>,
@@ -140,7 +191,7 @@ describe("a comment on a few words", () => {
       end: 6,
       quote: "loop",
       prefix: "A ",
-      suffix: " repeats a block of code.",
+      suffix: expect.stringMatching(/^ repeats a block of code\./),
     });
   });
 
@@ -242,5 +293,173 @@ describe("the comment box", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("tags and the comment card (Task 6)", () => {
+  const withComments = (over = {}) =>
+    mount(true, {
+      comments: [wordsComment, blockComment],
+      numbers: new Map([[1, 1]]),
+      ...over,
+    });
+
+  beforeEach(() => {
+    onEdit.mockResolvedValue({ ok: true });
+    onDelete.mockResolvedValue({ ok: true });
+    onResolve.mockResolvedValue({ ok: true });
+  });
+
+  it("gives each comment a tag with its number and what it's about", () => {
+    withComments();
+
+    expect(
+      screen.getByRole("button", { name: "Comment 1: “loop”" }),
+    ).toHaveTextContent("1“loop”");
+    // Resolved: no number, placed by its block, named by the block
+    expect(
+      screen.getByRole("button", {
+        name: "Resolved comment: Paragraph · “Loops end when a condition fails.”",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("puts the tags in reading order", () => {
+    withComments();
+
+    expect(screen.getAllByTestId("comment-tag")).toHaveLength(2);
+  });
+
+  it("gives an outdated comment no tag", () => {
+    withComments({ outdatedIds: new Set([1]) });
+
+    expect(screen.getAllByTestId("comment-tag")).toHaveLength(1);
+  });
+
+  it("shows only the number where the margin is tight, and the words on hover or focus", () => {
+    const width = window.innerWidth;
+    window.innerWidth = 100;
+    try {
+      withComments();
+      const snippet = screen
+        .getByRole("button", { name: "Comment 1: “loop”" })
+        .querySelector("span:last-child")!;
+      expect(snippet).toHaveClass(
+        "hidden",
+        "group-hover:inline",
+        "group-focus-visible:inline",
+      );
+    } finally {
+      window.innerWidth = width;
+    }
+  });
+
+  it("lights the mark when its tag is hovered or focused, and the tag when the mark is", async () => {
+    const user = userEvent.setup();
+    withComments();
+    const tag = screen.getByRole("button", { name: "Comment 1: “loop”" });
+
+    await user.hover(tag);
+    expect(onLitChange).toHaveBeenLastCalledWith("comment-1");
+    await user.unhover(tag);
+    expect(onLitChange).toHaveBeenLastCalledWith(null);
+
+    await user.hover(screen.getByText("Marked"));
+    expect(onLitChange).toHaveBeenLastCalledWith("comment-1");
+  });
+
+  it("rings the tag of the lit mark", () => {
+    withComments({ litMarkId: "comment-1" });
+
+    expect(
+      screen.getByRole("button", { name: "Comment 1: “loop”" }),
+    ).toHaveClass("ring-2");
+  });
+
+  it("opens the card from a tag, and from the mark", async () => {
+    const user = userEvent.setup();
+    withComments();
+
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    expect(screen.getByRole("dialog", { name: "Comment 1" })).toHaveTextContent(
+      "Which loop?",
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await user.click(screen.getByText("Marked"));
+    expect(
+      screen.getByRole("dialog", { name: "Comment 1" }),
+    ).toBeInTheDocument();
+  });
+
+  it("edits a comment from its card", async () => {
+    const user = userEvent.setup();
+    withComments();
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const box = screen.getByRole("textbox", { name: "Edit your comment" });
+    await user.clear(box);
+    await user.type(box, "Which kind of loop?");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onEdit).toHaveBeenCalledWith(1, "Which kind of loop?");
+  });
+
+  it("deletes a comment after confirming", async () => {
+    const user = userEvent.setup();
+    withComments();
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    expect(onDelete).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(onDelete).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("resolves a comment, and reopens a resolved one", async () => {
+    const user = userEvent.setup();
+    withComments();
+
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(screen.getByRole("button", { name: "Resolve" }));
+    expect(onResolve).toHaveBeenCalledWith(1, true);
+
+    await user.click(
+      screen.getByRole("button", { name: /^Resolved comment:/ }),
+    );
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Reopen" }));
+    expect(onResolve).toHaveBeenCalledWith(2, false);
+  });
+
+  it("says so when a change doesn't save, and stays open", async () => {
+    onDelete.mockResolvedValue({ ok: false, error: "failed" });
+    const user = userEvent.setup();
+    withComments();
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "That didn't save",
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Comment 1" }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no changes once the review is sent", async () => {
+    const user = userEvent.setup();
+    withComments({ canChange: false });
+    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+
+    for (const name of ["Edit", "Delete", "Resolve"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
   });
 });
