@@ -45,7 +45,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/droplet.ts#getFavoritedDropletIds": "ODY-504",
   "lib/requests/droplet.ts#getInReviewDroplets": "ODY-504",
   "lib/requests/droplet.ts#getRandomFunFactDroplet": "ODY-504",
-  "lib/requests/droplet.ts#publishDraftToOriginal": "ODY-504",
   "lib/requests/droplet.ts#updateDroplet": "ODY-504",
   "lib/requests/droplet.ts#updateDropletAverageRating": "ODY-504",
   "lib/requests/droplet.ts#updateDropletFunFact": "ODY-504",
