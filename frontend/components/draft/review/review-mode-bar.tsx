@@ -14,6 +14,8 @@ interface ReviewModeBarProps {
   onStopEditing: () => void;
   /** While a lock takeover is loading the latest version */
   editDisabled?: boolean;
+  /** What's being reviewed, as the bar names it */
+  subject?: "lesson" | "overview";
 }
 
 const MODES = [
@@ -31,7 +33,9 @@ export function ReviewModeBar({
   onEdit,
   onStopEditing,
   editDisabled = false,
+  subject = "lesson",
 }: ReviewModeBarProps) {
+  const name = subject === "lesson" ? "this lesson" : "the Overview";
   return (
     <div
       role="status"
@@ -41,7 +45,7 @@ export function ReviewModeBar({
       {mode === "edit" ? (
         <>
           <span className="flex-1">
-            You&apos;re editing this lesson during its review.
+            You&apos;re editing {name} during its review.
           </span>
           <Button size="sm" variant="outline" onClick={onStopEditing}>
             Stop editing
@@ -50,7 +54,8 @@ export function ReviewModeBar({
       ) : (
         <>
           <span className="flex-1">
-            In review. This lesson is read-only while you review it.
+            In review. {name === "this lesson" ? "This lesson" : "The Overview"}{" "}
+            is read-only while you review it.
           </span>
           <div
             role="group"

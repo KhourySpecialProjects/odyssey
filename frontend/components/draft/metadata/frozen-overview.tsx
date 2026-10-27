@@ -23,7 +23,18 @@ type FrozenOverviewProps = {
   >;
   /** The droplet's authors. Empty when they couldn't be loaded. */
   authors: { id: number; name: string }[];
+  /**
+   * Replaces how a commentable field is shown (ODY-806): the description,
+   * the overview text, or the learning objectives. Given the default.
+   */
+  renderField?: (
+    field: OverviewField,
+    standard: React.ReactNode,
+  ) => React.ReactNode;
 };
+
+/** The Overview fields a reviewer can comment on */
+export type OverviewField = "description" | "overview" | "objective";
 
 function Pill({ name }: { name: string }) {
   const colors = getTagColors(name);
@@ -59,7 +70,11 @@ function Section({
  * editors while the droplet is in review and the caller can't change it. It
  * is its own view rather than a `readOnly` flag threaded through every editor.
  */
-export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
+export function FrozenOverview({
+  droplet,
+  authors,
+  renderField = (_field, standard) => standard,
+}: FrozenOverviewProps) {
   const tags = droplet.tags ?? [];
   const objectives = droplet.learningObjectives ?? [];
   const nextSteps = droplet.nextSteps ?? [];
@@ -83,9 +98,12 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
           {droplet.name}
         </h1>
         {droplet.description ? (
-          <p className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed dark:text-slate-300">
-            {stripHtmlTags(droplet.description)}
-          </p>
+          <div className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed dark:text-slate-300">
+            {renderField(
+              "description",
+              <p>{stripHtmlTags(droplet.description)}</p>,
+            )}
+          </div>
         ) : null}
       </div>
 
@@ -104,22 +122,29 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
 
         {droplet.overview ? (
           <Section title="Overview">
-            <div
-              className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit max-w-none dark:text-slate-300"
-              dangerouslySetInnerHTML={{
-                __html: createDOMPurifier.sanitize(droplet.overview),
-              }}
-            />
+            <div className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit max-w-none dark:text-slate-300">
+              {renderField(
+                "overview",
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: createDOMPurifier.sanitize(droplet.overview),
+                  }}
+                />,
+              )}
+            </div>
           </Section>
         ) : null}
 
         <Section title="Learning Objectives">
           {objectives.length > 0 ? (
-            <ul className="list-disc pl-5">
-              {objectives.map((objective) => (
-                <li key={objective.id}>{objective.objective}</li>
-              ))}
-            </ul>
+            renderField(
+              "objective",
+              <ul className="list-disc pl-5">
+                {objectives.map((objective) => (
+                  <li key={objective.id}>{objective.objective}</li>
+                ))}
+              </ul>,
+            )
           ) : (
             <p>None yet.</p>
           )}

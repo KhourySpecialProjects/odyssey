@@ -66,6 +66,13 @@ jest.mock("next/navigation", () => ({
   notFound: jest.fn(() => "NOT_FOUND"),
 }));
 
+// The reviewer's Overview (ODY-806); its editors arrive as children
+jest.mock("@/components/draft/review/overview-review", () => ({
+  OverviewReview: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="overview-review">{children}</div>
+  ),
+}));
+
 jest.mock("@/components/draft/draft-layout-shell", () => ({
   DraftLayoutShell: jest.fn(() => null),
 }));
@@ -361,7 +368,7 @@ describe("draft droplet overview page: review freeze", () => {
     },
   );
 
-  it("keeps the editors for a non-author reviewer in review", async () => {
+  it("gives a non-author reviewer in review the review Overview, with the editors for Edit", async () => {
     mockedGetCurrentUser.mockResolvedValue({
       ...SESSION_USER,
       roles: [ContentEditor],
@@ -371,6 +378,7 @@ describe("draft droplet overview page: review freeze", () => {
 
     await renderOverview();
 
+    expect(screen.getByTestId("overview-review")).toBeInTheDocument();
     expect(screen.queryByTestId("frozen-overview")).toBeNull();
     expect(mockedGeneralInfo).toHaveBeenCalled();
   });
@@ -378,6 +386,7 @@ describe("draft droplet overview page: review freeze", () => {
   it("keeps the editors for an author when the droplet is not in review", async () => {
     await renderOverview();
 
+    expect(screen.queryByTestId("overview-review")).toBeNull();
     expect(screen.queryByTestId("frozen-overview")).toBeNull();
     expect(mockedGeneralInfo).toHaveBeenCalled();
   });
