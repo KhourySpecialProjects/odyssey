@@ -1072,6 +1072,17 @@ describe("code-block blocks", () => {
     }
   });
 
+  it("keeps its id when blocks are added above it, as its highlights use it", () => {
+    const code = makeBlock({ id: "query", type: "code-block", props: {} });
+    const [before] = convertBlockNoteToV1Blocks([code]);
+    const [, after] = convertBlockNoteToV1Blocks([
+      makeBlock({ id: "new", type: "divider" }),
+      code,
+    ]);
+
+    expect(after.id).toBe(before.id);
+  });
+
   it("defaults to javascript language when missing", () => {
     const result = convertBlockNoteToV1Blocks([
       makeBlock({ type: "code-block", props: {} }),

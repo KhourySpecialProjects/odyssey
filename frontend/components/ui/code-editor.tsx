@@ -12,7 +12,7 @@ import { php } from "@codemirror/lang-php";
 import { rust } from "@codemirror/lang-rust";
 import { json } from "@codemirror/lang-json";
 import { StreamLanguage } from "@codemirror/language";
-import { keymap } from "@codemirror/view";
+import { Decoration, EditorView, keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { go } from "@codemirror/legacy-modes/mode/go";
 import { ruby } from "@codemirror/legacy-modes/mode/ruby";
@@ -60,6 +60,14 @@ function getLanguageExtension(language: string): Extension | null {
   }
 }
 
+/** A range of the code wrapped in a span with this class and attributes */
+export interface CodeMark {
+  from: number;
+  to: number;
+  className: string;
+  attributes: Record<string, string>;
+}
+
 interface CodeEditorProps {
   value: string;
   onChange?: (value: string) => void;
@@ -68,6 +76,8 @@ interface CodeEditorProps {
   className?: string;
   minHeight?: string;
   placeholder?: string;
+  marks?: CodeMark[];
+  onCreateEditor?: (view: EditorView) => void;
 }
 
 export function CodeEditor({
@@ -78,6 +88,8 @@ export function CodeEditor({
   className,
   minHeight = "60px",
   placeholder,
+  marks,
+  onCreateEditor,
 }: CodeEditorProps) {
   const { resolvedTheme } = useTheme();
   const cmTheme = resolvedTheme === "dark" ? githubDark : githubLight;
@@ -87,8 +99,20 @@ export function CodeEditor({
     if (!readOnly) ext.push(keymap.of([indentWithTab]));
     const langExt = getLanguageExtension(language);
     if (langExt) ext.push(langExt);
+    if (marks?.length) {
+      ext.push(
+        EditorView.decorations.of(
+          Decoration.set(
+            marks.map(({ from, to, className, attributes }) =>
+              Decoration.mark({ class: className, attributes }).range(from, to),
+            ),
+            true,
+          ),
+        ),
+      );
+    }
     return ext;
-  }, [language, readOnly]);
+  }, [language, readOnly, marks]);
 
   return (
     <CodeMirror
@@ -99,9 +123,13 @@ export function CodeEditor({
       readOnly={readOnly}
       editable={!readOnly}
       placeholder={placeholder}
+      onCreateEditor={onCreateEditor}
       basicSetup={{
         lineNumbers: true,
         foldGutter: false,
+        // Read-only code is selected like the rest of the page: the browser
+        // draws the selection, including one that starts outside the editor
+        drawSelection: !readOnly,
         highlightActiveLine: !readOnly,
         bracketMatching: true,
         indentOnInput: true,

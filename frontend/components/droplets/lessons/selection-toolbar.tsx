@@ -131,7 +131,8 @@ export function SelectionToolbar({
       aria-label="Highlight text"
       onKeyDown={handleKeyDown}
       className="absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
-      style={placement}
+      // No margin from a block that spaces out its children (a callout's do)
+      style={{ ...placement, margin: 0 }}
     >
       {HIGHLIGHT_COLORS.map(({ color, label }, i) => (
         <button

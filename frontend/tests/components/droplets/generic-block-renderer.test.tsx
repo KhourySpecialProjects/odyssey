@@ -6,7 +6,8 @@ import {
   act,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import GenericBlockRenderer from "@/components/droplets/lessons/generic-block-renderer";
+import Block from "@/components/droplets/lessons/generic-block-renderer";
+import { HighlightLayer } from "@/components/droplets/lessons/highlight-layer";
 import hljs from "highlight.js/lib/core";
 import katex from "katex";
 import { Highlight } from "@/types";
@@ -70,6 +71,24 @@ function makeHighlight(
   overrides: Partial<Highlight> & Pick<Highlight, "id" | "position">,
 ): Highlight {
   return { text: "", color: "#fff300", blockId: 1, ...overrides };
+}
+
+/** The block in a lesson's HighlightLayer, which selects and saves for it */
+function GenericBlockRenderer({
+  block,
+  enrollmentId,
+  author = false,
+  ...layer
+}: React.ComponentProps<typeof Block> &
+  Omit<
+    React.ComponentProps<typeof HighlightLayer>,
+    "canHighlight" | "children"
+  > & { enrollmentId: string | undefined; author?: boolean }) {
+  return (
+    <HighlightLayer canHighlight={!!enrollmentId && !author} {...layer}>
+      <Block block={block} />
+    </HighlightLayer>
+  );
 }
 
 const pieces = (container: HTMLElement, id: number) =>
@@ -579,6 +598,54 @@ describe("GenericBlockRenderer", () => {
       expect(pieces(container, 2)).toHaveLength(0);
     });
 
+    it("draws highlights in a table's cells, and redraws them when they change", () => {
+      const cells = (...texts: string[]) => ({
+        cells: texts.map((content, cellIndex) => ({
+          content,
+          backgroundColor: null,
+          rowIndex: 0,
+          cellIndex,
+        })),
+      });
+      const table = {
+        markdown: "",
+        hasHeaders: true,
+        cellBackgroundColors: {},
+        rows: [cells("Join", "Keeps"), cells("Inner", "Matches")],
+      };
+      const block = {
+        id: 1,
+        content: `<!--TABLE_START-->${JSON.stringify(table)}<!--TABLE_END-->`,
+      };
+      // "JoinKeepsInnerMatches": Inner is 9-14
+      const { container, rerender } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={block}
+          highlights={[
+            makeHighlight({ id: 7, position: { start: 9, end: 14 } }),
+          ]}
+        />,
+      );
+
+      expect(
+        pieces(container, 7).map((p) => p.closest("td")?.textContent),
+      ).toEqual(["Inner"]);
+
+      rerender(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={block}
+          highlights={[
+            makeHighlight({ id: 8, position: { start: 14, end: 21 } }),
+          ]}
+        />,
+      );
+
+      expect(pieces(container, 7)).toHaveLength(0);
+      expect(pieces(container, 8)[0]).toHaveTextContent(/^Matches$/);
+    });
+
     it("doesn't treat text the author coloured as a highlight", () => {
       const { container } = render(
         <GenericBlockRenderer
@@ -810,15 +877,16 @@ describe("GenericBlockRenderer", () => {
         await screen.findByRole("button", { name: "Highlight Green" }),
       );
 
-      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith([
         {
-          text: "SQL",
-          position: { start: 6, end: 9 },
-          color: "#86efac",
-          blockId: 1,
+          draft: {
+            text: "SQL",
+            position: { start: 6, end: 9 },
+            color: "#86efac",
+            blockId: 1,
+          },
         },
-        { merge: undefined },
-      );
+      ]);
       expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
     });
 
@@ -845,10 +913,11 @@ describe("GenericBlockRenderer", () => {
       ).toHaveFocus();
 
       await user.keyboard("{Enter}");
-      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
-        expect.objectContaining({ text: "SQL", color: "#fff300" }),
-        { merge: undefined },
-      );
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith([
+        {
+          draft: expect.objectContaining({ text: "SQL", color: "#fff300" }),
+        },
+      ]);
     });
 
     it("closes the toolbar on Escape", async () => {
@@ -905,15 +974,17 @@ describe("GenericBlockRenderer", () => {
         await screen.findByRole("button", { name: "Highlight Blue" }),
       );
 
-      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith([
         {
-          text: "SQL joins",
-          position: { start: 6, end: 15 },
-          color: "#93c5fd",
-          blockId: 1,
+          draft: {
+            text: "SQL joins",
+            position: { start: 6, end: 15 },
+            color: "#93c5fd",
+            blockId: 1,
+          },
+          merge: { baseId: 2, removeIds: [1] },
         },
-        { merge: { baseId: 2, removeIds: [1] } },
-      );
+      ]);
     });
 
     it("offers to remove a highlight when the selection is exactly its text", async () => {
@@ -933,7 +1004,7 @@ describe("GenericBlockRenderer", () => {
         await screen.findByRole("button", { name: "Remove highlight" }),
       );
 
-      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith(7);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith([7]);
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
     });
   });
@@ -962,15 +1033,16 @@ describe("GenericBlockRenderer", () => {
       ).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Highlight Blue" }));
 
-      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith([
         {
-          text: "SQL",
-          position: { start: 6, end: 9 },
-          color: "#93c5fd",
-          blockId: 1,
+          draft: {
+            text: "SQL",
+            position: { start: 6, end: 9 },
+            color: "#93c5fd",
+            blockId: 1,
+          },
         },
-        { merge: undefined },
-      );
+      ]);
       expect(defaultProps.onRecolorHighlight).not.toHaveBeenCalled();
     });
 
@@ -1033,8 +1105,8 @@ describe("GenericBlockRenderer", () => {
       fireEvent.click(pieces(container, 1)[0]);
       fireEvent.click(screen.getByRole("button", { name: "Remove highlight" }));
 
-      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(1, 2);
-      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(2, 1);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(1, [2]);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenNthCalledWith(2, [1]);
     });
 
     it("merges a selection across an inner highlight's edge with it, not the outer one", async () => {
@@ -1060,15 +1132,17 @@ describe("GenericBlockRenderer", () => {
         await screen.findByRole("button", { name: "Highlight Blue" }),
       );
 
-      expect(defaultProps.onHighlight).toHaveBeenCalledWith(
+      expect(defaultProps.onHighlight).toHaveBeenCalledWith([
         {
-          text: "SQL jo",
-          position: { start: 6, end: 12 },
-          color: "#93c5fd",
-          blockId: 1,
+          draft: {
+            text: "SQL jo",
+            position: { start: 6, end: 12 },
+            color: "#93c5fd",
+            blockId: 1,
+          },
+          merge: { baseId: 2, removeIds: [] },
         },
-        { merge: { baseId: 2, removeIds: [] } },
-      );
+      ]);
     });
   });
 
@@ -1098,7 +1172,7 @@ describe("GenericBlockRenderer", () => {
       fireEvent.click(screen.getByRole("button", { name: "Remove highlight" }));
 
       expect(defaultProps.onDeleteHighlight).toHaveBeenCalledTimes(1);
-      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith(2);
+      expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith([2]);
     });
 
     it("recolours a highlight that crosses bold text, creating none", () => {
@@ -1120,7 +1194,7 @@ describe("GenericBlockRenderer", () => {
       fireEvent.click(screen.getByRole("button", { name: "Highlight Blue" }));
 
       expect(defaultProps.onRecolorHighlight).toHaveBeenCalledWith(
-        7,
+        [7],
         "#93c5fd",
       );
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
@@ -1171,7 +1245,7 @@ describe("GenericBlockRenderer", () => {
         text: "SQL",
         position: { start: 6, end: 9 },
       });
-      const onHighlight = jest.fn().mockResolvedValue(saved);
+      const onHighlight = jest.fn().mockResolvedValue([saved]);
       const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}
@@ -1184,13 +1258,17 @@ describe("GenericBlockRenderer", () => {
       fireEvent.click(await screen.findByRole("button", { name: "Add note" }));
 
       expect(onHighlight).toHaveBeenCalledWith(
-        {
-          text: "SQL",
-          position: { start: 6, end: 9 },
-          color: "#fff300",
-          blockId: 1,
-        },
-        { merge: undefined, withNote: true },
+        [
+          {
+            draft: {
+              text: "SQL",
+              position: { start: 6, end: 9 },
+              color: "#fff300",
+              blockId: 1,
+            },
+          },
+        ],
+        { withNote: true },
       );
       // Placed level with the selection (140px down; the block is at 0)
       await waitFor(() =>
@@ -1199,7 +1277,7 @@ describe("GenericBlockRenderer", () => {
     });
 
     it("adds no note when the highlight couldn't be saved", async () => {
-      const onHighlight = jest.fn().mockResolvedValue(null);
+      const onHighlight = jest.fn().mockResolvedValue([null]);
       const { container } = render(
         <GenericBlockRenderer
           {...defaultProps}

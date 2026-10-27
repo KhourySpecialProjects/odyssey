@@ -58,7 +58,7 @@ type BlockNoteTableRow = {
 };
 
 // Convert BlockNote string ID to a deterministic number for database storage
-function blockNoteIdToNumber(blockId: string): number {
+export function blockNoteIdToNumber(blockId: string): number {
   let hash = 0;
   for (let i = 0; i < blockId.length; i++) {
     const char = blockId.charCodeAt(i);
@@ -576,7 +576,9 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.code-block",
-        id: blockIndex,
+        // Highlights are saved under it, so it mustn't change when blocks
+        // are added above
+        id: blockId,
         language,
         code,
         editable,
