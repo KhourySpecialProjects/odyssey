@@ -58,6 +58,10 @@ import {
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
 import { OutdatedComments } from "@/components/draft/review/outdated-comments";
+import { CommentLayer } from "@/components/draft/review/comment-layer";
+import { resolveAnchor } from "@/lib/anchors/resolve";
+import { OUTDATED } from "@/lib/anchors/types";
+import type { ReviewAnchor } from "@/types";
 
 const NO_MARKS: DrawnAnchor[] = [];
 import { IconLock } from "@tabler/icons-react";
@@ -178,18 +182,38 @@ export function LessonRenderer({
   const [contentVersion, setContentVersion] = useState(0);
 
   // Each comment found in the current content, or listed as outdated
+  const anchorContent = useMemo(
+    () => ({
+      blocks: blockNoteContent(
+        Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : [],
+      ),
+    }),
+    [blocksV2],
+  );
   const marks = useMemo(
     () =>
-      commentMarks(
-        lessonComments,
-        {
-          blocks: blockNoteContent(
-            Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : [],
-          ),
-        },
-        reviewComments.review?.state,
-      ),
-    [lessonComments, blocksV2, reviewComments.review?.state],
+      commentMarks(lessonComments, anchorContent, reviewComments.review?.state),
+    [lessonComments, anchorContent, reviewComments.review?.state],
+  );
+  // The text a comment is being written for stays marked while the reviewer types
+  const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
+  const drawnMarks = useMemo(() => {
+    const range = draftAnchor && resolveAnchor(anchorContent, draftAnchor);
+    if (!range || range === OUTDATED) return marks.drawn;
+    return [
+      ...marks.drawn,
+      {
+        id: "comment-draft",
+        range,
+        className: "review-mark review-mark--draft",
+      },
+    ];
+  }, [marks.drawn, draftAnchor, anchorContent]);
+  const { add: addReviewComment } = reviewComments;
+  const postComment = useCallback(
+    (anchor: ReviewAnchor, body: string) =>
+      addReviewComment({ field: "blocks", lessonId: lesson.id, anchor, body }),
+    [addReviewComment, lesson.id],
   );
 
   // Check if the lesson is truly new. Read from state, not props: after a lock
@@ -884,13 +908,20 @@ export function LessonRenderer({
             </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
-                <BlockNoteEditor
-                  key={`editor-${lesson.id}-${contentVersion}`}
-                  initialContent={blocksV2 as unknown as BlockNoteBlock[]}
-                  onChange={isReadOnly ? () => {} : debounceUpdateV2}
-                  editable={!isReadOnly}
-                  anchors={showCommentLayer ? marks.drawn : NO_MARKS}
-                />
+                <CommentLayer
+                  enabled={showCommentLayer}
+                  field="blocks"
+                  onPost={postComment}
+                  onDraftChange={setDraftAnchor}
+                >
+                  <BlockNoteEditor
+                    key={`editor-${lesson.id}-${contentVersion}`}
+                    initialContent={blocksV2 as unknown as BlockNoteBlock[]}
+                    onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                    editable={!isReadOnly}
+                    anchors={showCommentLayer ? drawnMarks : NO_MARKS}
+                  />
+                </CommentLayer>
               </PyodideProvider>
             </DatasetProvider>
           </div>
