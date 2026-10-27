@@ -1,7 +1,18 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "@/components/draft/review/comment-keyboard";
 import { SELECTION_DELAY_MS } from "@/lib/selection";
 
 jest.mock("sonner", () => ({
@@ -20,6 +31,9 @@ beforeAll(() => {
       width: 60,
       height: 20,
     }) as DOMRect;
+  Range.prototype.getClientRects = function () {
+    return [this.getBoundingClientRect()] as unknown as DOMRectList;
+  };
 });
 
 /** Two blocks laid out like BlockNote's editor DOM, with comment 1's mark */
@@ -127,39 +141,51 @@ beforeEach(() => {
 
 afterEach(() => window.getSelection()?.removeAllRanges());
 
+/** Where the browser would put a caret for a click: a text node and offset */
+function caretAt(blockId: string, offset: number) {
+  const text = document.querySelector(
+    `[data-id="${blockId}"] .bn-inline-content`,
+  )!.firstChild!;
+  (
+    document as unknown as { caretPositionFromPoint: unknown }
+  ).caretPositionFromPoint = () => ({ offsetNode: text, offset });
+}
+
+afterEach(() => {
+  delete (document as unknown as { caretPositionFromPoint?: unknown })
+    .caretPositionFromPoint;
+});
+
+const content = () => document.querySelector(".rc-commenting")!;
+
 describe("a whole-block comment", () => {
   it("gives every block a bar that opens the comment box", async () => {
     const user = userEvent.setup();
     mount();
 
-    const bars = screen.getAllByRole("button", {
-      name: /^Comment on this paragraph:/,
-    });
+    const bars = screen.getAllByTestId("block-bar");
     expect(bars).toHaveLength(2);
+    // The keyboard reaches blocks through "Comment with the keyboard"
+    expect(bars[0]).toHaveAttribute("tabindex", "-1");
+    await user.hover(bars[1]);
+    expect(bars[1].firstChild).toHaveClass("scale-x-[2]");
     await user.click(bars[1]);
 
-    const dialog = screen.getByRole("dialog", {
-      name: "Comment on this paragraph",
-    });
-    expect(dialog).toBeInTheDocument();
-    expect(screen.getByText("Whole paragraph")).toBeInTheDocument();
-    expect(onDraftChange).toHaveBeenLastCalledWith({
-      v: 1,
-      field: "blocks",
-      blockId: "b2",
-    });
-    expect(screen.getByRole("textbox", { name: "Your comment" })).toHaveFocus();
+    expect(
+      screen.getByRole("dialog", { name: "Comment on this paragraph" }),
+    ).toBeInTheDocument();
+    // Outlined by the layer, not marked in the text
+    expect(onDraftChange).toHaveBeenLastCalledWith(null);
+    expect(screen.getByRole("textbox", { name: "Comment" })).toHaveFocus();
   });
 
   it("posts the block's anchor and the text, then says it's saved", async () => {
     const user = userEvent.setup();
     mount();
-    await user.click(
-      screen.getAllByRole("button", { name: /^Comment on this paragraph:/ })[0],
-    );
+    await user.click(screen.getAllByTestId("block-bar")[0]);
 
     await user.type(screen.getByRole("textbox"), "Say what a block is.");
-    await user.click(screen.getByRole("button", { name: "Post" }));
+    await user.click(screen.getByRole("button", { name: "Comment" }));
 
     expect(onPost).toHaveBeenCalledWith(
       { v: 1, field: "blocks", blockId: "b1" },
@@ -169,16 +195,120 @@ describe("a whole-block comment", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(onDraftChange).toHaveBeenLastCalledWith(null);
   });
+
+  it("takes the whole block on an Alt-click", () => {
+    mount();
+    caretAt("b2", 3);
+
+    fireEvent.click(screen.getByText(/^Loops end/), { altKey: true });
+
+    expect(
+      screen.getByRole("dialog", { name: "Comment on this paragraph" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("a comment at a spot (the caret)", () => {
+  it("opens at the spot clicked, anchored to the letters beside it", () => {
+    mount();
+    // "A loop rep|eats"
+    caretAt("b1", 10);
+
+    fireEvent.click(screen.getByText(/^A loop repeats/));
+
+    expect(
+      screen.getByRole("dialog", { name: /^Comment at “A loop rep‸eats a/ }),
+    ).toBeInTheDocument();
+    expect(onDraftChange).toHaveBeenLastCalledWith({
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+      start: 10,
+      end: 14,
+      quote: "eats",
+      prefix: "A loop rep",
+      suffix: expect.stringMatching(/^ a block of code\./),
+      point: "before",
+    });
+  });
+
+  it("draws the caret where the pointer is", () => {
+    jest.useFakeTimers();
+    try {
+      mount();
+      caretAt("b1", 10);
+
+      fireEvent.pointerMove(screen.getByText(/^A loop repeats/), {
+        clientX: 50,
+        clientY: 110,
+      });
+      act(() => jest.advanceTimersByTime(20));
+
+      expect(document.querySelector(".rc-caret")).toHaveClass("is-on");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("keeps a half-written comment when the text is clicked again", async () => {
+    const user = userEvent.setup();
+    mount();
+    caretAt("b1", 10);
+    fireEvent.click(screen.getByText(/^A loop repeats/));
+    await user.type(screen.getByRole("textbox"), "Half a thought");
+
+    caretAt("b2", 3);
+    fireEvent.pointerDown(screen.getByText(/^Loops end/));
+    fireEvent.click(screen.getByText(/^Loops end/));
+
+    expect(screen.getByRole("textbox")).toHaveValue("Half a thought");
+    expect(toast.info).toHaveBeenCalledWith(
+      "Post or cancel this comment first.",
+      { id: "comment-hold" },
+    );
+  });
+
+  it("doesn't follow a link in the text", () => {
+    render(
+      <CommentLayer
+        enabled
+        field="overview"
+        comments={[]}
+        numbers={new Map()}
+        outdatedIds={new Set()}
+        blockFor={() => undefined}
+        canChange
+        onPost={onPost}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onResolve={onResolve}
+        onDraftChange={onDraftChange}
+        litMarkId={null}
+        onLitChange={onLitChange}
+      >
+        <p>
+          See <a href="https://example.com">the docs</a>
+        </p>
+      </CommentLayer>,
+    );
+
+    const click = createEvent.click(screen.getByText("the docs"));
+    fireEvent(screen.getByText("the docs"), click);
+
+    expect(click.defaultPrevented).toBe(true);
+  });
 });
 
 describe("a comment on a few words", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it("opens from a selection, quoting it", () => {
+  it("opens at once when the words are dragged across", () => {
     mount();
-
+    fireEvent.pointerDown(screen.getByText(/^A loop repeats/));
     selectWords("b1", 2, 6);
+    fireEvent.pointerUp(document);
+    act(() => jest.runOnlyPendingTimers());
 
     expect(
       screen.getByRole("dialog", { name: "Comment on “loop”" }),
@@ -195,18 +325,22 @@ describe("a comment on a few words", () => {
     });
   });
 
-  it("opens from a keyboard-made selection too, through the same selectionchange path", () => {
+  it("offers a Comment button for a selection made another way", () => {
     mount();
 
     // Shift + arrow keys only change the selection; nothing else fires
     selectWords("b2", 0, 5);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Comment on the selected text" }),
+    );
 
     expect(
       screen.getByRole("dialog", { name: "Comment on “Loops”" }),
     ).toBeInTheDocument();
   });
 
-  it("ignores a selection that spans two blocks", () => {
+  it("takes a selection across blocks (Round 2)", () => {
     mount();
     const first = document.querySelector(
       '[data-id="b1"] .bn-inline-content',
@@ -215,13 +349,24 @@ describe("a comment on a few words", () => {
       '[data-id="b2"] .bn-inline-content',
     )!.firstChild!;
     const range = new Range();
-    range.setStart(first, 2);
-    range.setEnd(second, 3);
+    range.setStart(first, 15);
+    range.setEnd(second, 5);
+    fireEvent.pointerDown(screen.getByText(/^A loop repeats/));
     window.getSelection()!.addRange(range);
-    document.dispatchEvent(new Event("selectionchange"));
-    act(() => jest.advanceTimersByTime(SELECTION_DELAY_MS));
+    fireEvent.pointerUp(document);
+    act(() => jest.runOnlyPendingTimers());
 
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("dialog")).toHaveAccessibleName(
+      /^Comment on “a block of code\. Marked Loops”/,
+    );
+    expect(onDraftChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        blockId: "b1",
+        endBlockId: "b2",
+        start: 15,
+        end: 5,
+      }),
+    );
   });
 
   it("does nothing while the layer is off (Read or Edit mode)", () => {
@@ -230,8 +375,9 @@ describe("a comment on a few words", () => {
     selectWords("b1", 2, 6);
 
     expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByTestId("block-bar")).toBeNull();
     expect(
-      screen.queryByRole("button", { name: /^Comment on this paragraph/ }),
+      screen.queryByRole("button", { name: "Comment on the selected text" }),
     ).toBeNull();
   });
 });
@@ -240,16 +386,20 @@ describe("the comment box", () => {
   async function openOnBlock() {
     const user = userEvent.setup();
     mount();
-    const bar = screen.getAllByRole("button", {
-      name: /^Comment on this paragraph:/,
-    })[0];
+    const bar = screen.getAllByTestId("block-bar")[0];
     await user.click(bar);
     return { user, bar };
   }
 
-  it("can't post an empty comment", async () => {
+  it("says what the comment will be numbered, and can't post when empty", async () => {
     await openOnBlock();
-    expect(screen.getByRole("button", { name: "Post" })).toBeDisabled();
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "1Comment on this block",
+    );
+    expect(screen.getByRole("button", { name: "Comment" })).toBeDisabled();
+    expect(
+      screen.getByText(/only you see it until you request changes/),
+    ).toBeInTheDocument();
   });
 
   it("keeps the text and says why when the save fails", async () => {
@@ -257,7 +407,7 @@ describe("the comment box", () => {
     const { user } = await openOnBlock();
 
     await user.type(screen.getByRole("textbox"), "Unclear.");
-    await user.click(screen.getByRole("button", { name: "Post" }));
+    await user.click(screen.getByRole("button", { name: "Comment" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "This review has been sent",
@@ -296,6 +446,82 @@ describe("the comment box", () => {
   });
 });
 
+describe("Comment with the keyboard", () => {
+  function mountWithKeyboard() {
+    render(
+      <CommentKeyboardProvider>
+        <CommentKeyboardButton />
+        <CommentLayer
+          enabled
+          field="blocks"
+          comments={[]}
+          numbers={new Map()}
+          outdatedIds={new Set()}
+          blockFor={() => ({ type: "paragraph", text: "" })}
+          canChange
+          onPost={onPost}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onResolve={onResolve}
+          onDraftChange={onDraftChange}
+          litMarkId={null}
+          onLitChange={onLitChange}
+        >
+          <Editor />
+        </CommentLayer>
+      </CommentKeyboardProvider>,
+    );
+    return screen.getByRole("button", { name: "Comment with the keyboard" });
+  }
+  const live = () => document.querySelector('[aria-live="polite"]')!;
+
+  it("chooses a block with the arrows and comments on it", async () => {
+    const user = userEvent.setup();
+    const button = mountWithKeyboard();
+
+    await user.click(button);
+    expect(live()).toHaveTextContent(/^Paragraph 1 of 2: A loop repeats/);
+    await user.keyboard("{ArrowDown}");
+    expect(live()).toHaveTextContent(/^Paragraph 2 of 2: Loops end/);
+    await user.keyboard("{Enter}");
+
+    expect(
+      screen.getByRole("dialog", { name: "Comment on this paragraph" }),
+    ).toBeInTheDocument();
+  });
+
+  it("moves a caret through a block's letters, and by word with Alt", async () => {
+    const user = userEvent.setup();
+    const button = mountWithKeyboard();
+
+    await user.click(button);
+    await user.keyboard("{ArrowRight}");
+    expect(live()).toHaveTextContent("Before “A”, at the start");
+    await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    expect(live()).toHaveTextContent("After “A”, before “loop”");
+    await user.keyboard("{ArrowRight}{ArrowRight}{Enter}");
+
+    expect(screen.getByRole("dialog")).toHaveAccessibleName(
+      /^Comment at “A l‸oop repeats/,
+    );
+  });
+
+  it("takes several blocks with Shift", async () => {
+    const user = userEvent.setup();
+    const button = mountWithKeyboard();
+
+    await user.click(button);
+    await user.keyboard("{Shift>}{ArrowDown}{/Shift}");
+    expect(live()).toHaveTextContent("2 blocks");
+    await user.keyboard("{Enter}");
+
+    expect(
+      screen.getByRole("dialog", { name: "Comment on these 2 blocks" }),
+    ).toBeInTheDocument();
+    expect(onDraftChange).toHaveBeenLastCalledWith(null);
+  });
+});
+
 describe("tags and the comment card (Task 6)", () => {
   const withComments = (over = {}) =>
     mount(true, {
@@ -314,7 +540,7 @@ describe("tags and the comment card (Task 6)", () => {
     withComments();
 
     expect(
-      screen.getByRole("button", { name: "Comment 1: “loop”" }),
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
     ).toHaveTextContent("1“loop”");
     // Resolved: no number, placed by its block, named by the block
     expect(
@@ -342,12 +568,12 @@ describe("tags and the comment card (Task 6)", () => {
     try {
       withComments();
       const snippet = screen
-        .getByRole("button", { name: "Comment 1: “loop”" })
+        .getByRole("button", { name: "Comment 1, pending: “loop”" })
         .querySelector("span:last-child")!;
       expect(snippet).toHaveClass(
         "hidden",
-        "group-hover:inline",
-        "group-focus-visible:inline",
+        "group-hover/tag:block",
+        "group-focus-visible/tag:block",
       );
     } finally {
       window.innerWidth = width;
@@ -357,7 +583,9 @@ describe("tags and the comment card (Task 6)", () => {
   it("lights the mark when its tag is hovered or focused, and the tag when the mark is", async () => {
     const user = userEvent.setup();
     withComments();
-    const tag = screen.getByRole("button", { name: "Comment 1: “loop”" });
+    const tag = screen.getByRole("button", {
+      name: "Comment 1, pending: “loop”",
+    });
 
     await user.hover(tag);
     expect(onLitChange).toHaveBeenLastCalledWith("comment-1");
@@ -410,19 +638,61 @@ describe("tags and the comment card (Task 6)", () => {
     ).toBeInTheDocument();
   });
 
-  it("rings the tag of the lit mark", () => {
+  it("lights the tag of the lit mark", () => {
     withComments({ litMarkId: "comment-1" });
 
     expect(
-      screen.getByRole("button", { name: "Comment 1: “loop”" }),
-    ).toHaveClass("ring-2");
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    ).toHaveClass("-translate-x-0.5", "border-solid");
+  });
+
+  it("shows a spot comment's tag with the caret between the words", () => {
+    const spot = {
+      ...wordsComment,
+      anchor: { ...wordsComment.anchor, point: "after" as const },
+    };
+    withComments({ comments: [spot] });
+
+    expect(
+      screen.getByRole("button", {
+        name: "Comment 1, pending: “A loop‸ repeats”",
+      }),
+    ).toBeInTheDocument();
+    expect(document.querySelector(".rc-caretmark")).not.toBeNull();
+  });
+
+  it("shows who wrote a comment and that it's private, in its card", async () => {
+    const user = userEvent.setup();
+    withComments({
+      comments: [
+        {
+          ...wordsComment,
+          author: { firstName: "Eli", lastName: "Editor" } as never,
+        },
+      ],
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
+
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    expect(card).toHaveTextContent("Pending");
+    expect(card).toHaveTextContent("Eli Editor");
+    expect(card).toHaveTextContent(
+      "Only you can see this until you request changes.",
+    );
+    await user.click(screen.getByRole("button", { name: "Close comment" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("opens the card from a tag, and from the mark", async () => {
     const user = userEvent.setup();
     withComments();
 
-    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
     expect(screen.getByRole("dialog", { name: "Comment 1" })).toHaveTextContent(
       "Which loop?",
     );
@@ -438,7 +708,9 @@ describe("tags and the comment card (Task 6)", () => {
   it("edits a comment from its card", async () => {
     const user = userEvent.setup();
     withComments();
-    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
 
     await user.click(screen.getByRole("button", { name: "Edit" }));
     const box = screen.getByRole("textbox", { name: "Edit your comment" });
@@ -452,7 +724,9 @@ describe("tags and the comment card (Task 6)", () => {
   it("deletes a comment after confirming", async () => {
     const user = userEvent.setup();
     withComments();
-    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
 
     await user.click(screen.getByRole("button", { name: "Delete" }));
     expect(onDelete).not.toHaveBeenCalled();
@@ -466,7 +740,9 @@ describe("tags and the comment card (Task 6)", () => {
     const user = userEvent.setup();
     withComments();
 
-    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
     await user.click(screen.getByRole("button", { name: "Resolve" }));
     expect(onResolve).toHaveBeenCalledWith(1, true);
 
@@ -482,7 +758,9 @@ describe("tags and the comment card (Task 6)", () => {
     onDelete.mockResolvedValue({ ok: false, error: "failed" });
     const user = userEvent.setup();
     withComments();
-    await user.click(screen.getByRole("button", { name: "Comment 1: “loop”" }));
+    await user.click(
+      screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    );
 
     await user.click(screen.getByRole("button", { name: "Delete" }));
     await user.click(screen.getByRole("button", { name: "Delete" }));

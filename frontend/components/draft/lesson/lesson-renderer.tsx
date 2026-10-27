@@ -51,17 +51,22 @@ import {
 } from "@/components/draft/review/review-mode-bar";
 import {
   blockTypes,
+  blocksSpanned,
   commentCounts,
   commentMarks,
-  commentStripText,
   commentsOnLesson,
   decorateMarks,
-  draftRangeIn,
+  draftMarkIn,
   numberComments,
 } from "@/lib/review-comments";
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
 import { OutdatedComments } from "@/components/draft/review/outdated-comments";
+import { CommentStrip } from "@/components/draft/review/comment-strip";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "@/components/draft/review/comment-keyboard";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
 import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
 import type { ReviewAnchor, ReviewComment } from "@/types";
@@ -207,7 +212,7 @@ export function LessonRenderer({
       decorateMarks(
         marks.drawn,
         litMarkId,
-        draftRangeIn(anchorContent, draftAnchor),
+        draftMarkIn(anchorContent, draftAnchor),
       ),
     [marks.drawn, litMarkId, draftAnchor, anchorContent],
   );
@@ -245,6 +250,10 @@ export function LessonRenderer({
     },
     [anchorContent, blockTypeById],
   );
+  const blocksFor = useCallback(
+    (anchor: ReviewAnchor) => blocksSpanned(anchorContent, anchor),
+    [anchorContent],
+  );
   // Comments change only while the review is open (or not opened yet)
   const canChangeComments =
     !reviewComments.review || reviewComments.review.state === "open";
@@ -261,6 +270,7 @@ export function LessonRenderer({
     numbers: commentNumbers,
     outdatedIds,
     blockFor,
+    blocksFor,
     canChange: canChangeComments,
     onPost: postComment,
     onEdit: reviewComments.edit,
@@ -689,7 +699,7 @@ export function LessonRenderer({
   const [newSlugInput, setNewSlugInput] = useState("");
 
   return (
-    <>
+    <CommentKeyboardProvider>
       {reviewEnded && (
         <div
           role="status"
@@ -834,20 +844,16 @@ export function LessonRenderer({
           </div>
         )}
         {showCommentLayer && (
-          <p
-            data-testid="review-comment-strip"
-            className="text-sm text-slate-500 dark:text-slate-400"
+          <CommentStrip
+            {...commentCounts(lessonComments, reviewComments.review?.state)}
+            isLoading={reviewComments.isLoading}
+            loadError={!!reviewComments.loadError}
+            blockBars={editorVersion === "v2"}
+            keyboard={<CommentKeyboardButton />}
           >
-            {reviewComments.isLoading
-              ? "Loading your comments..."
-              : reviewComments.loadError
-                ? "Couldn't load your comments. Reload to try again."
-                : commentStripText(
-                    commentCounts(lessonComments, reviewComments.review?.state),
-                  )}
-          </p>
+            <OutdatedComments comments={outdatedComments} />
+          </CommentStrip>
         )}
-        {showCommentLayer && <OutdatedComments comments={outdatedComments} />}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -989,6 +995,6 @@ export function LessonRenderer({
           </div>
         </div>
       )}
-    </>
+    </CommentKeyboardProvider>
   );
 }

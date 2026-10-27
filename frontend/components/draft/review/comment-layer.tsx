@@ -9,10 +9,10 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconMessage } from "@tabler/icons-react";
 import type { ReviewAnchor, ReviewComment, ReviewCommentField } from "@/types";
 import { cn } from "@/lib/utils";
-import { createAnchor } from "@/lib/anchors/create";
+import { createAnchor, pointAnchor } from "@/lib/anchors/create";
 import { toReviewAnchor } from "@/lib/validations/review";
 import {
   anchorIn,
@@ -22,31 +22,57 @@ import {
 } from "@/lib/selection";
 import {
   DRAFT_MARK_ID,
+  blockLabel,
   commentSnippet,
   isResolved,
   markIdFor,
   type TagBlock,
 } from "@/lib/review-comments";
+import {
+  caretUnits,
+  stopAt,
+  stopBox,
+  stopText,
+  stopsOf,
+  unitOf,
+  wordJump,
+  type CaretStop,
+  type CaretUnit,
+} from "@/lib/review-caret";
+import { useCommentCaret } from "@/hooks/use-comment-caret";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { CommentComposer } from "./comment-composer";
 import { CommentCard } from "./comment-card";
+import { SpotQuote } from "./comment-about";
+import { useKeyboardLayer } from "./comment-keyboard";
 
 // A block in the BlockNote editor, and the element holding its own text
 const BLOCK = '[data-node-type="blockContainer"][data-id]';
 const BLOCK_TEXT = ":scope > .bn-block-content";
 const MARK = '[data-anchor-id^="comment-"]';
-const SNIPPET = 40;
+const SNIPPET = 60;
 // A tag's height and the gap kept between stacked tags
-const TAG_HEIGHT = 24;
+const TAG_HEIGHT = 26;
 const TAG_GAP = 4;
-// Below this much room right of the text, tags show only their number (D8).
-// A full tag is at most 140px plus its 12px gap.
-const COMPACT_MARGIN = 160;
+// Tags sit this far right of the text; their width is the room up to the
+// window's edge, at most TAG_MAX. Below SHORT_ROOM they show only their
+// number until hovered or focused; with under TIGHT_ROOM right of the text
+// (a phone), they move inside it.
+const TAG_OFFSET = 18;
+const TAG_MAX = 240;
+const SHORT_ROOM = 110;
+const TIGHT_ROOM = 44;
+const EDGE = 16;
+// The block bars sit this far left of a block's text
+const BAR_OFFSET = 26;
 // Marks within this many px of each other are on one line
 const LINE = 8;
+// A pointer that moves less than this after a click hasn't moved on
+const HUSH_PX = 8;
 
 type BlockBox = {
   blockId: string;
+  type?: string;
   top: number;
   height: number;
   left: number;
@@ -56,15 +82,34 @@ type BlockBox = {
 
 type TagBox = { commentId: number; top: number; markTop: number };
 
+type Layout = {
+  blocks: BlockBox[];
+  tags: TagBox[];
+  /** Where tags go, in px from the layer's left */
+  tagLeft: number;
+  room: number;
+  tagMode: "full" | "short" | "tight";
+  /** No room left of the text for the "Whole paragraph" label */
+  narrow: boolean;
+};
+
 type Draft = {
   anchor: ReviewAnchor;
-  title: string;
+  title: ReactNode;
+  label: string;
   position: PopoverAnchor;
-  /** The block outlined as "Whole paragraph", for a block comment */
-  block?: BlockBox;
+  pointAt: number | null;
+  /** The blocks outlined, for a comment on whole blocks */
+  blocks?: BlockBox[];
 };
 
 type OpenCard = { commentId: number; position: PopoverAnchor };
+
+// The block the pointer takes whole (its bar, or Alt); the caret itself is
+// moved without state
+type Hover = { kind: "block"; blockId: string } | null;
+
+type KeyboardPosition = { unit: number; stop: number; through: number };
 
 const MESSAGES: Record<string, string> = {
   review_closed: "This review has been sent, so it can't take new comments.",
@@ -74,8 +119,26 @@ const MESSAGES: Record<string, string> = {
     "This comment couldn't be saved. Try selecting the text again.",
 };
 
-const shorten = (text: string) =>
-  text.length > SNIPPET ? `${text.slice(0, SNIPPET - 1).trimEnd()}…` : text;
+const WHOLE: Record<string, string> = {
+  Paragraph: "paragraph",
+  Heading: "heading",
+  "List item": "list item",
+  Table: "table",
+  Callout: "callout",
+  Image: "image",
+  Equation: "equation",
+  Code: "code block",
+  "Check-in": "check-in",
+};
+const wholeName = (type: string | undefined) =>
+  WHOLE[blockLabel(type)] ?? "block";
+
+const shorten = (text: string, length = SNIPPET) => {
+  const flat = text.replace(/\s*\n\s*/g, " ");
+  return flat.length > length
+    ? `${flat.slice(0, length - 1).trimEnd()}…`
+    : flat;
+};
 
 // A block's first line of text, for a tag with no mark of its own
 const blockLineIn = (content: Element, blockId: string) => {
@@ -85,23 +148,30 @@ const blockLineIn = (content: Element, blockId: string) => {
   return block?.querySelector(".bn-inline-content") ?? block;
 };
 
-/** Each block with text, measured relative to `root` */
-function measureBlocks(root: Element, content: Element): BlockBox[] {
+/** Each block, measured relative to `root` */
+function measureBlocks(
+  root: Element,
+  content: Element,
+  blockFor: (blockId: string) => TagBlock | undefined,
+): BlockBox[] {
   const rootRect = root.getBoundingClientRect();
   return Array.from(content.querySelectorAll<HTMLElement>(BLOCK)).flatMap(
     (block) => {
       const text = block.querySelector(BLOCK_TEXT);
-      const words = text?.textContent?.trim();
-      if (!text || !words) return [];
+      if (!text) return [];
+      const blockId = block.getAttribute("data-id")!;
       const rect = text.getBoundingClientRect();
+      const type = blockFor(blockId)?.type;
+      const words = text.textContent?.trim();
       return [
         {
-          blockId: block.getAttribute("data-id")!,
+          blockId,
+          type,
           top: rect.top - rootRect.top,
           height: rect.height,
           left: rect.left - rootRect.left,
           width: rect.width,
-          snippet: shorten(words),
+          snippet: words ? shorten(words, 40) : blockLabel(type),
         },
       ];
     },
@@ -109,9 +179,9 @@ function measureBlocks(root: Element, content: Element): BlockBox[] {
 }
 
 /**
- * Where each comment's tag goes: level with its mark, or with its block when
- * it has no mark (a resolved comment). Tags are stacked so none overlap, in
- * reading order.
+ * Where each comment's tag goes: centred on its mark's line, or on its
+ * block's first line when it has no mark (a whole block). Tags are stacked so
+ * none overlap, in reading order.
  */
 function measureTags(
   root: Element,
@@ -125,13 +195,15 @@ function measureTags(
     if (outdated.has(comment.id)) return [];
     const el =
       content.querySelector(
-        `[data-anchor-id="${CSS.escape(markIdFor(comment))}"]`,
+        `[data-anchor-id="${CSS.escape(markIdFor(comment))}"]:not(.anchor-caret)`,
       ) ??
       (comment.anchor.blockId
         ? blockLineIn(content, comment.anchor.blockId)
         : null);
     if (!el) return [];
-    const markTop = el.getBoundingClientRect().top - rootTop;
+    const rect = el.getBoundingClientRect();
+    const lineHeight = Math.min(rect.height, 32);
+    const markTop = rect.top - rootTop + lineHeight / 2 - TAG_HEIGHT / 2;
     return [
       {
         commentId: comment.id,
@@ -170,6 +242,8 @@ interface CommentLayerProps {
   outdatedIds: ReadonlySet<number>;
   /** The block a whole-block comment is on, for its tag */
   blockFor: (blockId: string) => TagBlock | undefined;
+  /** How many blocks a comment across blocks spans, for its tag */
+  blocksFor?: (anchor: ReviewAnchor) => number;
   /** Comments change only while the review is open */
   canChange: boolean;
   onPost: (anchor: ReviewAnchor, body: string) => Promise<CommentOutcome>;
@@ -185,12 +259,15 @@ interface CommentLayerProps {
 }
 
 /**
- * The reviewer's comment layer on the read-only BlockNote editor (ODY-806,
- * Tasks 5 and 6): a bar in each block's left margin comments on the whole
- * block, selecting text comments on those words, numbered tags in the right
- * margin open each comment's card, and hovering a tag or its mark lights the
- * other. Nothing here edits the editor's DOM; marks are drawn by the
- * editor's anchors plugin.
+ * The reviewer's comment layer (ODY-806), as the redesign prototype has it
+ * (ui-redesign/comments.js). In Comment mode the pointer stays an arrow and a
+ * drawn caret follows it between letters: a click comments at that spot,
+ * a drag on the words dragged across (in BlockNote, across blocks too), and
+ * Alt-click or the bar left of a block on the whole block. Numbered tags in
+ * the right margin open each comment's card, and hovering a tag or its mark
+ * lights the other. "Comment with the keyboard" reaches the same places.
+ * Nothing here edits the editor's DOM; marks are drawn by the editor's
+ * anchors plugin, or by ReviewTextView.
  */
 export function CommentLayer({
   enabled,
@@ -199,6 +276,7 @@ export function CommentLayer({
   numbers,
   outdatedIds,
   blockFor,
+  blocksFor,
   canChange,
   onPost,
   onEdit,
@@ -211,18 +289,53 @@ export function CommentLayer({
 }: CommentLayerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const caretRef = useRef<HTMLSpanElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const [blocks, setBlocks] = useState<BlockBox[]>([]);
-  const [tags, setTags] = useState<TagBox[]>([]);
-  const [compact, setCompact] = useState(false);
+  const [layout, setLayout] = useState<Layout>({
+    blocks: [],
+    tags: [],
+    tagLeft: 0,
+    room: TAG_MAX,
+    tagMode: "full",
+    narrow: false,
+  });
   const [draft, setDraft] = useState<Draft | null>(null);
   const [card, setCard] = useState<OpenCard | null>(null);
+  const [hover, setHover] = useState<Hover>(null);
+  const [selectionButton, setSelectionButton] = useState<{
+    anchor: ReviewAnchor;
+    rect: DOMRect;
+    position: PopoverAnchor;
+  } | null>(null);
+  const [keyboard, setKeyboard] = useState<KeyboardPosition | null>(null);
+  const { show: showCaret, press } = useCommentCaret(caretRef);
+
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
   const outdatedRef = useRef(outdatedIds);
   outdatedRef.current = outdatedIds;
   const numbersRef = useRef(numbers);
   numbersRef.current = numbers;
+  const blockForRef = useRef(blockFor);
+  blockForRef.current = blockFor;
+  // The caret's units, read again whenever the content changes
+  const unitsRef = useRef<CaretUnit[] | null>(null);
+  const units = useCallback(() => {
+    const content = contentRef.current;
+    if (!content) return [];
+    unitsRef.current ??= caretUnits(content);
+    return unitsRef.current;
+  }, []);
+  const pointer = useRef({
+    pressing: false,
+    dragged: false,
+    frame: 0,
+    hush: null as { x: number; y: number } | null,
+    stop: null as CaretStop | null,
+    written: false,
+  });
+  const keyboardRef = useRef(keyboard);
+  keyboardRef.current = keyboard;
 
   // The editor renders late, reflows and redraws marks, so the bars and tags
   // follow it
@@ -230,29 +343,45 @@ export function CommentLayer({
     const root = rootRef.current;
     const content = contentRef.current;
     if (!root || !content) return;
-    setBlocks(measureBlocks(root, content));
-    setTags(
-      measureTags(
+    unitsRef.current = null;
+    const rootRect = root.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    const blocks = measureBlocks(root, content, blockForRef.current);
+    const outside = window.innerWidth - rootRect.right;
+    const tagLeft = contentRect.right - rootRect.left + TAG_OFFSET;
+    const room = Math.min(
+      TAG_MAX,
+      window.innerWidth - EDGE - (rootRect.left + tagLeft),
+    );
+    const left = blocks.length
+      ? Math.min(...blocks.map((b) => b.left))
+      : contentRect.left - rootRect.left;
+    setLayout({
+      blocks,
+      tags: measureTags(
         root,
         content,
         commentsRef.current,
         numbersRef.current,
         outdatedRef.current,
       ),
-    );
-    const room = window.innerWidth - root.getBoundingClientRect().right;
-    setCompact(room < COMPACT_MARGIN);
+      tagLeft,
+      room,
+      tagMode:
+        outside < TIGHT_ROOM ? "tight" : room < SHORT_ROOM ? "short" : "full",
+      narrow: rootRect.left + left < 150,
+    });
   }, []);
 
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!enabled || !content) {
-      setBlocks([]);
-      setTags([]);
+      setLayout((current) => ({ ...current, blocks: [], tags: [] }));
       return;
     }
     let frame = 0;
     const later = () => {
+      unitsRef.current = null;
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     };
@@ -282,7 +411,10 @@ export function CommentLayer({
   }, [enabled, comments, numbers, outdatedIds, measure]);
 
   const remember = () => {
-    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    const active = document.activeElement as HTMLElement | null;
+    if (!active?.closest("[data-comment-composer]")) {
+      returnFocusRef.current = active;
+    }
   };
   const restoreFocus = () => {
     const target = returnFocusRef.current;
@@ -294,17 +426,25 @@ export function CommentLayer({
     (next: Draft) => {
       remember();
       setCard(null);
+      setSelectionButton(null);
+      pointer.current.written = false;
       setDraft(next);
-      onDraftChange(next.anchor);
+      // Whole blocks are outlined here rather than marked in the text
+      onDraftChange(next.blocks ? null : next.anchor);
     },
     [onDraftChange],
   );
 
-  const closeDraft = useCallback(() => {
-    setDraft(null);
-    onDraftChange(null);
-    restoreFocus();
-  }, [onDraftChange]);
+  const closeDraft = useCallback(
+    ({ restore = true }: { restore?: boolean } = {}) => {
+      setDraft(null);
+      pointer.current.written = false;
+      onDraftChange(null);
+      if (restore) restoreFocus();
+      else returnFocusRef.current = null;
+    },
+    [onDraftChange],
+  );
 
   const openCard = (commentId: number, position: PopoverAnchor) => {
     remember();
@@ -323,50 +463,212 @@ export function CommentLayer({
     if (enabled) return;
     if (draft) closeDraft();
     if (card) closeCard();
-  }, [enabled, draft, card, closeDraft, closeCard]);
+    setHover(null);
+    setSelectionButton(null);
+    showCaret(null);
+  }, [enabled, draft, card, closeDraft, closeCard, showCaret]);
 
-  // Selecting words, however it was done, opens the composer for them
-  useSelectionChange(() => {
+  /** A half-written comment isn't thrown away by a click elsewhere */
+  const holdDraft = () => {
+    if (!draft || !pointer.current.written) return false;
+    document
+      .querySelector<HTMLTextAreaElement>("[data-comment-composer] textarea")
+      ?.focus();
+    toast.info("Post or cancel this comment first.", { id: "comment-hold" });
+    return true;
+  };
+
+  const rectIn = (rect: { top: number; bottom: number; left: number }) => {
+    const rootRect = rootRef.current!.getBoundingClientRect();
+    return {
+      top: rect.top - rootRect.top,
+      bottom: rect.bottom - rootRect.top,
+      left: rect.left - rootRect.left,
+    };
+  };
+
+  // ---- Making a comment ---------------------------------------------------
+
+  const openWords = (
+    anchor: Extract<ReviewAnchor, { quote: string }>,
+    range: Range,
+  ) => {
     const root = rootRef.current;
-    const content = contentRef.current;
-    if (!root || !content || draft) return;
-    const selection = readSelection(content);
-    if (selection.kind !== "inside") return;
+    if (!root) return;
+    const rects = Array.from(range.getClientRects()).filter((r) => r.width);
+    // Under the line the selection ends on, its notch at that line's start
+    const last = rects[rects.length - 1] ?? range.getBoundingClientRect();
+    const at = rectIn(last);
+    const title = `Comment on “${shorten(anchor.quote)}”`;
+    openDraft({
+      anchor,
+      title,
+      label: title,
+      position: { ...at, centerX: at.left + last.width / 2 },
+      pointAt: at.left + Math.min(last.width / 2, 24),
+    });
+  };
 
-    // In a Classic lesson, whose blocks have no lasting ids, the anchor is a
-    // quote within the whole lesson
-    const anchor = createAnchor(selection.range, { field, root: content });
+  const openSpot = (stop: CaretStop) => {
+    const all = units();
+    const unit = all[stop.unit];
+    if (!unit) return;
+    const made = pointAnchor(
+      unit.map.text,
+      stop.i,
+      stop.side,
+      { field, ...(unit.blockId && { blockId: unit.blockId }) },
+      unit.map.breaks,
+    );
+    const anchor = made && toReviewAnchor(made);
+    if (!anchor || !("quote" in anchor)) {
+      if (unit.blockId) openBlocks([unit.blockId]);
+      return;
+    }
+    const box = stopBox(all, stop);
+    if (!box) return;
+    const at = rectIn({
+      top: box.top,
+      bottom: box.top + box.height,
+      left: box.x,
+    });
+    openDraft({
+      anchor,
+      title: (
+        <>
+          Comment at <SpotQuote anchor={anchor} length={24} draft />
+        </>
+      ),
+      label: `Comment at ${commentSnippet({ anchor } as ReviewComment, undefined, { long: true })}`,
+      position: { ...at, centerX: at.left },
+      pointAt: at.left,
+    });
+  };
+
+  const openBlocks = (blockIds: string[]) => {
+    const boxes = blockIds
+      .map((id) => layout.blocks.find((b) => b.blockId === id))
+      .filter((b): b is BlockBox => !!b);
+    const content = contentRef.current;
+    if (boxes.length === 0 || !content) return;
+    let anchor: ReviewAnchor | null;
+    if (boxes.length === 1) {
+      anchor = toReviewAnchor(
+        createAnchor({ blockId: boxes[0].blockId }, { field })!,
+      );
+    } else {
+      // Several whole blocks: their text from the first's start to the last's end
+      const element = (id: string) =>
+        content.querySelector(
+          `${BLOCK}[data-id="${CSS.escape(id)}"] > .bn-block-content`,
+        );
+      const first = element(boxes[0].blockId);
+      const last = element(boxes[boxes.length - 1].blockId);
+      if (!first || !last) return;
+      const range = new Range();
+      range.setStart(first, 0);
+      range.setEnd(last, last.childNodes.length);
+      const made = createAnchor(range, { field, root: content });
+      anchor = made && toReviewAnchor(made);
+    }
     if (!anchor) return;
-    const reviewAnchor = toReviewAnchor(anchor);
-    if (!reviewAnchor || !("quote" in reviewAnchor)) {
+    const top = boxes[0];
+    const bottom = boxes[boxes.length - 1];
+    const name =
+      boxes.length === 1
+        ? `this ${wholeName(top.type)}`
+        : `these ${boxes.length} blocks`;
+    const title = `Comment on ${name}`;
+    openDraft({
+      anchor,
+      title,
+      label: title,
+      position: {
+        top: top.top,
+        bottom: bottom.top + bottom.height,
+        centerX: top.left + top.width / 2,
+      },
+      pointAt: null,
+      blocks: boxes,
+    });
+  };
+
+  /** A selection inside the content: a drag opens the composer at once */
+  const checkSelection = (dragged: boolean) => {
+    const content = contentRef.current;
+    if (!content || draft) return;
+    const selection = readSelection(content);
+    if (selection.kind !== "inside") {
+      setSelectionButton(null);
+      return;
+    }
+    const made = createAnchor(selection.range, { field, root: content });
+    if (!made) return;
+    const anchor = toReviewAnchor(made);
+    if (!anchor || !("quote" in anchor)) {
       toast.info("That selection is too long to comment on. Select less.", {
         id: "comment-selection",
       });
       return;
     }
-    openDraft({
-      anchor: reviewAnchor,
-      title: `Comment on “${shorten(reviewAnchor.quote)}”`,
-      position: anchorIn(root, selection.range.getBoundingClientRect()),
-    });
-  }, enabled && !draft);
-
-  const openBlock = (block: BlockBox) => {
-    const anchor = toReviewAnchor(
-      createAnchor({ blockId: block.blockId }, { field })!,
-    );
-    if (!anchor) return;
-    openDraft({
+    if (dragged) {
+      const range = selection.range.cloneRange();
+      window.getSelection()?.removeAllRanges();
+      openWords(anchor, range);
+      return;
+    }
+    const rect = selection.range.getBoundingClientRect();
+    setSelectionButton({
       anchor,
-      title: "Comment on this paragraph",
-      position: {
-        top: block.top,
-        bottom: block.top + block.height,
-        centerX: block.left + block.width / 2,
-      },
-      block,
+      rect,
+      position: anchorIn(rootRef.current!, rect),
     });
   };
+
+  // A selection made without the pointer (Shift+arrows, a long-press) shows
+  // a Comment button; a drag is handled when the pointer comes up
+  useSelectionChange(() => {
+    if (pointer.current.pressing) return;
+    checkSelection(false);
+  }, enabled && !draft);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const release = () => {
+      press(false);
+      if (!pointer.current.pressing) return;
+      pointer.current.pressing = false;
+      // After the click this pointer-up makes, which a drag ignores
+      setTimeout(() => {
+        const content = contentRef.current;
+        if (!content) return;
+        const selection = readSelection(content);
+        if (selection.kind === "inside") {
+          pointer.current.dragged = true;
+          checkSelection(true);
+        }
+      }, 0);
+    };
+    document.addEventListener("pointerup", release);
+    document.addEventListener("pointercancel", release);
+    return () => {
+      document.removeEventListener("pointerup", release);
+      document.removeEventListener("pointercancel", release);
+    };
+  });
+
+  // A press outside the layer closes an empty composer
+  useEffect(() => {
+    if (!draft) return;
+    const handle = (e: PointerEvent) => {
+      const target = e.target as Element;
+      if (target.closest?.("[data-comment-composer]")) return;
+      if (rootRef.current?.contains(target)) return;
+      if (!pointer.current.written) closeDraft({ restore: false });
+    };
+    document.addEventListener("pointerdown", handle, true);
+    return () => document.removeEventListener("pointerdown", handle, true);
+  }, [draft, closeDraft]);
 
   const post = async (body: string): Promise<string | null> => {
     if (!draft) return null;
@@ -376,13 +678,13 @@ export function CommentLayer({
         MESSAGES[outcome.error] ?? "Couldn't save your comment. Try again."
       );
     }
-    window.getSelection()?.removeAllRanges();
     toast.success("Comment saved");
     closeDraft();
     return null;
   };
 
-  // A mark lights its tag on hover, and opens its card on a click
+  // ---- Marks ----------------------------------------------------------------
+
   // Marks nest where comments overlap, and which span is innermost is up to
   // the editor. So every mark around the point counts, and an open comment
   // on words wins over an open whole block, which wins over a resolved one.
@@ -403,78 +705,386 @@ export function CommentLayer({
       ? { mark: best.mark, id: markIdFor(best.comment), comment: best.comment }
       : null;
   };
+
+  // ---- The pointer ----------------------------------------------------------
+
+  const caretBoxFor = (stop: CaretStop | null) => {
+    const root = rootRef.current;
+    if (!stop || !root) return null;
+    const box = stopBox(units(), stop);
+    if (!box) return null;
+    const rootRect = root.getBoundingClientRect();
+    return {
+      x: box.x - rootRect.left,
+      top: box.top - rootRect.top,
+      height: box.height,
+    };
+  };
+
+  const keyboardStop = () => {
+    const k = keyboardRef.current;
+    if (!k || k.stop < 0) return null;
+    return stopsOf(units(), k.unit)[k.stop] ?? null;
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!enabled) return;
+    const event = {
+      target: e.target as Element,
+      x: e.clientX,
+      y: e.clientY,
+      alt: e.altKey,
+      held: !!e.buttons,
+    };
+    cancelAnimationFrame(pointer.current.frame);
+    pointer.current.frame = requestAnimationFrame(() => {
+      const p = pointer.current;
+      if (p.hush) {
+        if (Math.hypot(event.x - p.hush.x, event.y - p.hush.y) < HUSH_PX) {
+          return;
+        }
+        p.hush = null;
+      }
+      const leave = () => {
+        p.stop = null;
+        setHover(null);
+        showCaret(caretBoxFor(keyboardStop()));
+      };
+      // While a drag selects words, the selection is the mark
+      if (event.held) return leave();
+      // Over a comment's words, a click opens that comment
+      if (markAt(event.target)) return leave();
+      const all = units();
+      const unit = unitOf(all, event.target);
+      if (unit === -1) {
+        // In the gap between two blocks the caret stays where it was
+        const content = contentRef.current;
+        if (content?.contains(event.target) && p.stop) return;
+        return leave();
+      }
+      const blockId = all[unit].blockId;
+      const stop = event.alt ? null : stopAt(all, event.x, event.y);
+      if (!stop) {
+        p.stop = null;
+        setHover((current) =>
+          !blockId
+            ? null
+            : current?.blockId === blockId
+              ? current
+              : { kind: "block", blockId },
+        );
+        showCaret(caretBoxFor(keyboardStop()));
+        return;
+      }
+      p.stop = stop;
+      setHover(null);
+      showCaret(caretBoxFor(stop));
+    });
+  };
+
+  const onPointerLeave = () => {
+    cancelAnimationFrame(pointer.current.frame);
+    pointer.current.stop = null;
+    setHover(null);
+    showCaret(caretBoxFor(keyboardStop()));
+    onLitChange(null);
+  };
+
+  const onPointerDown = () => {
+    if (!enabled) return;
+    pointer.current.pressing = true;
+    pointer.current.dragged = false;
+    setSelectionButton(null);
+    press(true);
+    // A press in the lesson starts a new comment, unless one's half written
+    if (draft && !pointer.current.written) closeDraft({ restore: false });
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!enabled) return;
+    const target = e.target as Element;
+    // In Comment mode a click comments: links and buttons in the text don't act
+    if (target.closest?.("a, button, input, label, summary")) {
+      e.preventDefault();
+    }
+    const p = pointer.current;
+    if (p.dragged) {
+      p.dragged = false;
+      return;
+    }
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+
+    const found = markAt(target);
+    const root = rootRef.current;
+    if (found && root) {
+      e.stopPropagation();
+      openCard(
+        found.comment.id,
+        anchorIn(root, found.mark.getBoundingClientRect()),
+      );
+      return;
+    }
+    if (holdDraft()) return;
+    const all = units();
+    const unit = unitOf(all, target);
+    // A click in the gap between blocks drops the comment where the caret waits
+    const stop =
+      unit === -1
+        ? p.stop
+        : e.altKey
+          ? null
+          : stopAt(all, e.clientX, e.clientY) ?? null;
+    if (stop) {
+      openSpot(stop);
+    } else if (unit !== -1 && all[unit].blockId) {
+      openBlocks([all[unit].blockId!]);
+    } else {
+      return;
+    }
+    p.hush = { x: e.clientX, y: e.clientY };
+    p.stop = null;
+    setHover(null);
+    showCaret(null);
+  };
+
   const handleMouseOver = (e: React.MouseEvent) => {
     const id = markAt(e.target)?.id ?? null;
     if (id !== litMarkId) onLitChange(id);
   };
-  const handleClick = (e: React.MouseEvent) => {
-    if (!enabled || !window.getSelection()?.isCollapsed) return;
-    const found = markAt(e.target);
-    const root = rootRef.current;
-    if (!found || !root) return;
-    openCard(
-      found.comment.id,
-      anchorIn(root, found.mark.getBoundingClientRect()),
-    );
-  };
+
+  // ---- The keyboard -------------------------------------------------------
+
+  const keyboardUnits = () => units();
+  useKeyboardLayer(
+    {
+      root: () => rootRef.current,
+      unitCount: () => keyboardUnits().length,
+      stopCount: (unit) => stopsOf(keyboardUnits(), unit).length,
+      isBlock: (unit) => !!keyboardUnits()[unit]?.blockId,
+      wordJump: (unit, stop, direction) =>
+        wordJump(
+          keyboardUnits(),
+          stopsOf(keyboardUnits(), unit),
+          stop,
+          direction,
+        ),
+      show: (position) => {
+        setKeyboard(position);
+        const all = keyboardUnits();
+        if (!position) {
+          showCaret(caretBoxFor(pointer.current.stop));
+          return "";
+        }
+        const unit = all[position.unit];
+        const stops = stopsOf(all, position.unit);
+        const stop = position.stop >= 0 ? stops[position.stop] : null;
+        unit?.element.scrollIntoView?.({ block: "nearest" });
+        showCaret(caretBoxFor(stop));
+        if (stop) return `${stopText(all, stop)}. Press Enter to comment here.`;
+        const count = Math.abs(position.through - position.unit) + 1;
+        if (count > 1) {
+          return `${count} blocks. Press Enter to comment on them.`;
+        }
+        const text = unit
+          ? shorten(unit.map.text.slice(unit.from, unit.to), 80)
+          : "";
+        const box = unit?.blockId
+          ? layout.blocks.find((b) => b.blockId === unit.blockId)
+          : undefined;
+        const kind = box ? blockLabel(box.type) : "Text";
+        return `${kind} ${position.unit + 1} of ${all.length}: ${text}. Press Enter to comment${stops.length ? ", or Right to put the caret in it" : ""}.`;
+      },
+      comment: (position) => {
+        const all = keyboardUnits();
+        const stop =
+          position.stop >= 0
+            ? stopsOf(all, position.unit)[position.stop]
+            : null;
+        if (stop) return openSpot(stop);
+        const [a, z] = [position.unit, position.through].sort((x, y) => x - y);
+        const ids = all
+          .slice(a, z + 1)
+          .map((u) => u.blockId)
+          .filter((id): id is string => !!id);
+        if (ids.length > 0) return openBlocks(ids);
+        // A paragraph of a read-only text: comment on all its words
+        const unit = all[position.unit];
+        const content = contentRef.current;
+        if (!unit || !content) return;
+        const range = new Range();
+        range.selectNodeContents(unit.element);
+        const made = createAnchor(range, { field, root: content });
+        const anchor = made && toReviewAnchor(made);
+        if (anchor && "quote" in anchor) openWords(anchor, range);
+      },
+    },
+    enabled,
+  );
+
+  // ---- Drawing --------------------------------------------------------------
 
   const cardComment = card && comments.find((c) => c.id === card.commentId);
+  const litComment = comments.find((c) => markIdFor(c) === litMarkId);
+  const keyboardBlocks = (() => {
+    if (!keyboard || keyboard.stop >= 0) return [];
+    const all = units();
+    const [a, z] = [keyboard.unit, keyboard.through].sort((x, y) => x - y);
+    return all
+      .slice(a, z + 1)
+      .map((u) => layout.blocks.find((b) => b.blockId === u.blockId))
+      .filter((b): b is BlockBox => !!b);
+  })();
+  // Blocks outlined, a run of them as one: the draft's, the keyboard's, the
+  // hovered bar's or Alt, or a whole-block comment whose tag is lit
+  const around = (boxes: BlockBox[]) => {
+    if (boxes.length === 0) return null;
+    const top = Math.min(...boxes.map((b) => b.top));
+    const left = Math.min(...boxes.map((b) => b.left));
+    const bottom = Math.max(...boxes.map((b) => b.top + b.height));
+    const right = Math.max(...boxes.map((b) => b.left + b.width));
+    return {
+      key: boxes.map((b) => b.blockId).join(" "),
+      top,
+      left,
+      width: right - left,
+      height: bottom - top,
+    };
+  };
+  const blocksWith = (id: string | undefined) =>
+    layout.blocks.filter((b) => b.blockId === id);
+  const outlined = [
+    { box: around(draft?.blocks ?? []), target: true },
+    { box: around(keyboardBlocks), target: false },
+    {
+      box: around(hover?.kind === "block" ? blocksWith(hover.blockId) : []),
+      target: false,
+    },
+    {
+      box: around(
+        litComment && !("quote" in litComment.anchor)
+          ? blocksWith(litComment.anchor.blockId)
+          : [],
+      ),
+      target: false,
+    },
+  ].filter(
+    (o, i, all): o is { box: NonNullable<typeof o.box>; target: boolean } =>
+      !!o.box && all.findIndex((x) => x.box?.key === o.box!.key) === i,
+  );
+  const labelBlock =
+    hover?.kind === "block" && !draft
+      ? layout.blocks.find((b) => b.blockId === hover.blockId)
+      : keyboardBlocks.length === 1
+        ? keyboardBlocks[0]
+        : undefined;
+  const litBar = (blockId: string) =>
+    hover?.kind === "block" && hover.blockId === blockId
+      ? true
+      : !!draft?.blocks?.some((b) => b.blockId === blockId) ||
+        keyboardBlocks.some((b) => b.blockId === blockId);
+  const tight = layout.tagMode === "tight";
+  const short = layout.tagMode !== "full";
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={cn("relative", enabled && tight && "pr-10")}>
       {enabled &&
-        blocks.map((block) => (
+        outlined.map(({ box, target }) => (
+          <div
+            key={`outline-${box.key}`}
+            aria-hidden
+            className="pointer-events-none absolute z-[5] rounded-md bg-[var(--rc-wash)]"
+            style={{
+              top: box.top,
+              left: box.left,
+              width: box.width,
+              height: box.height,
+              boxShadow: "0 0 0 6px var(--rc-wash)",
+              outline: `${target ? 3 : 2}px solid var(--rc-accent)`,
+              outlineOffset: 6,
+            }}
+          />
+        ))}
+      {enabled && labelBlock && !layout.narrow && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute z-10 pt-[3px] text-xs leading-tight font-semibold whitespace-nowrap text-[var(--rc-accent-text)]"
+          style={{
+            top: labelBlock.top,
+            right: `calc(100% - ${labelBlock.left - BAR_OFFSET - 8}px)`,
+          }}
+        >
+          Whole {wholeName(labelBlock.type)}
+        </span>
+      )}
+      {enabled &&
+        layout.blocks.map((block) => (
           <button
             key={block.blockId}
             type="button"
-            aria-label={`Comment on this paragraph: ${block.snippet}`}
-            title="Comment on this paragraph"
-            onClick={() => openBlock(block)}
-            className="absolute -left-5 w-1.5 rounded-full bg-slate-200 transition-colors hover:bg-amber-400 focus-visible:bg-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:outline-none dark:bg-slate-700 dark:hover:bg-amber-500"
-            style={{ top: block.top, height: block.height }}
-          />
+            tabIndex={-1}
+            aria-hidden
+            title={`Comment on this ${wholeName(block.type)}`}
+            data-testid="block-bar"
+            data-block-id={block.blockId}
+            onClick={() => {
+              if (holdDraft()) return;
+              openBlocks([block.blockId]);
+            }}
+            onPointerEnter={() =>
+              setHover({ kind: "block", blockId: block.blockId })
+            }
+            onPointerLeave={() => setHover(null)}
+            className="group/bar absolute z-10 w-4 cursor-pointer"
+            style={{
+              top: block.top,
+              height: block.height,
+              left: block.left - BAR_OFFSET,
+            }}
+          >
+            <span
+              className={cn(
+                "absolute top-0.5 bottom-0.5 left-[7px] w-0.5 rounded-sm bg-slate-200 transition-[background-color,transform] duration-150 dark:bg-[#223047]",
+                litBar(block.blockId) &&
+                  "scale-x-[2] bg-[var(--rc-accent)] dark:bg-[var(--rc-accent)]",
+                "group-hover/bar:scale-x-[2] group-hover/bar:bg-[var(--rc-accent)]",
+              )}
+            />
+          </button>
         ))}
-      {draft?.block && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute rounded-md border-2 border-amber-400 bg-amber-100/40 dark:bg-amber-500/10"
-          style={{
-            top: draft.block.top - 4,
-            left: draft.block.left - 6,
-            width: draft.block.width + 12,
-            height: draft.block.height + 8,
-          }}
-        >
-          <span className="absolute -top-3 left-2 rounded bg-amber-400 px-1.5 text-xs font-medium text-amber-950">
-            Whole paragraph
-          </span>
-        </div>
-      )}
       <div
         ref={contentRef}
+        className={cn(enabled && "rc-commenting")}
+        onPointerMove={enabled ? onPointerMove : undefined}
+        onPointerLeave={enabled ? onPointerLeave : undefined}
+        onPointerDown={enabled ? onPointerDown : undefined}
         onMouseOver={enabled ? handleMouseOver : undefined}
-        onMouseLeave={enabled ? () => onLitChange(null) : undefined}
-        onClick={handleClick}
+        onClickCapture={enabled ? onClickCapture : undefined}
       >
         {children}
       </div>
+      {enabled && <span ref={caretRef} aria-hidden className="rc-caret" />}
       {enabled &&
-        tags.map((tag) => {
+        layout.tags.map((tag) => {
           const comment = comments.find((c) => c.id === tag.commentId);
           if (!comment) return null;
           const number = numbers.get(comment.id) ?? null;
           const block = comment.anchor.blockId
             ? blockFor(comment.anchor.blockId)
             : undefined;
+          const blocks = blocksFor?.(comment.anchor);
           const markId = markIdFor(comment);
           const resolved = isResolved(comment);
-          const lit = litMarkId === markId;
+          const pending = canChange && !resolved;
+          const lit = litMarkId === markId || card?.commentId === comment.id;
+          const { anchor } = comment;
           return (
             <button
               key={comment.id}
               type="button"
               data-testid="comment-tag"
-              aria-label={`${number ? `Comment ${number}` : "Resolved comment"}: ${commentSnippet(comment, block, { long: true })}`}
+              aria-label={`${number ? `Comment ${number}${pending ? ", pending" : ""}` : "Resolved comment"}: ${commentSnippet(comment, block, { long: true, blocks })}`}
+              aria-expanded={card?.commentId === comment.id}
               onMouseEnter={() => onLitChange(markId)}
               onMouseLeave={() => onLitChange(null)}
               onFocus={() => onLitChange(markId)}
@@ -489,37 +1099,93 @@ export function CommentLayer({
                 }
               }}
               className={cn(
-                "group absolute left-full z-10 ml-3 flex h-6 max-w-[140px] items-center gap-1 rounded border px-1.5 text-xs whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none",
-                resolved
-                  ? "border-slate-200 bg-white text-slate-400 dark:border-slate-700 dark:bg-slate-900"
-                  : canChange
-                    ? "border-dashed border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-                    : "border-amber-300 bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100",
-                lit && "ring-2 ring-amber-400",
+                "group/tag absolute z-10 inline-flex h-[26px] items-center gap-[7px] rounded-[7px] border bg-white py-0 pr-[9px] pl-[3px] text-xs font-medium whitespace-nowrap text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[transform,box-shadow,border-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rc-accent)] dark:bg-[#131c2e] dark:text-slate-300",
+                pending
+                  ? "border-dashed border-[var(--rc-accent)]"
+                  : "border-slate-200 dark:border-[#223047]",
+                resolved && "text-slate-500 dark:text-slate-400",
+                lit &&
+                  "-translate-x-0.5 border-solid border-[var(--rc-accent)] text-slate-900 shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--rc-accent-soft-border)] dark:text-slate-50 dark:shadow-[0_0_0_2px_#0b1220,0_0_0_4px_var(--rc-accent-soft-border)]",
+                "hover:-translate-x-0.5 hover:border-[var(--rc-accent)] hover:text-slate-900 dark:hover:text-slate-50",
+                short &&
+                  "px-0.5 hover:z-30 hover:max-w-[240px] hover:pr-[9px] hover:pl-[3px] hover:shadow-[0_12px_32px_rgba(15,23,42,0.12)] focus-visible:z-30 focus-visible:max-w-[240px] focus-visible:pr-[9px] focus-visible:pl-[3px]",
+                short && lit && "z-30 max-w-[240px] pr-[9px] pl-[3px]",
               )}
-              style={{ top: tag.top }}
+              style={{
+                top: tag.top,
+                ...(tight ? { right: 4 } : { left: layout.tagLeft }),
+                maxWidth: short ? undefined : Math.max(0, layout.room),
+              }}
             >
-              <span className="font-semibold">
+              <span
+                className={cn(
+                  "inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-[5px] px-[5px] text-[11px] font-bold tabular-nums",
+                  resolved
+                    ? "bg-slate-200 text-slate-600 dark:bg-[#26324a] dark:text-slate-300"
+                    : pending
+                      ? "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]"
+                      : "bg-[var(--rc-accent)] text-white",
+                )}
+              >
                 {number ?? <IconCheck className="h-3 w-3" aria-hidden />}
               </span>
               <span
                 className={cn(
-                  "truncate",
-                  compact &&
-                    "hidden group-hover:inline group-focus-visible:inline",
+                  "min-w-0 truncate leading-none",
+                  short &&
+                    !lit &&
+                    "hidden group-hover/tag:block group-focus-visible/tag:block",
                 )}
               >
-                {commentSnippet(comment, block)}
+                {"quote" in anchor && anchor.point ? (
+                  <SpotQuote anchor={anchor} length={10} />
+                ) : (
+                  commentSnippet(comment, block, { blocks })
+                )}
               </span>
             </button>
           );
         })}
+      {enabled && selectionButton && !draft && (
+        <button
+          type="button"
+          aria-label="Comment on the selected text"
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={() => {
+            const selection = window.getSelection();
+            const range =
+              selection && selection.rangeCount > 0
+                ? selection.getRangeAt(0).cloneRange()
+                : null;
+            selection?.removeAllRanges();
+            if (range && "quote" in selectionButton.anchor) {
+              openWords(selectionButton.anchor, range);
+            }
+          }}
+          className="absolute z-30 inline-flex h-[34px] items-center gap-1.5 rounded-full bg-slate-900 px-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(15,23,42,0.12)] hover:bg-[var(--rc-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rc-accent)] dark:bg-slate-100 dark:text-slate-900"
+          style={{
+            left: Math.max(0, selectionButton.position.centerX - 55),
+            top:
+              selectionButton.position.top - 44 < 0
+                ? selectionButton.position.bottom + 8
+                : selectionButton.position.top - 44,
+          }}
+        >
+          <IconMessage className="h-3.5 w-3.5" aria-hidden />
+          Comment
+        </button>
+      )}
       {draft && (
         <CommentComposer
+          key={JSON.stringify(draft.anchor)}
+          number={numbers.size + 1}
           title={draft.title}
+          label={draft.label}
           anchor={draft.position}
-          onCancel={closeDraft}
+          pointAt={draft.pointAt}
+          onCancel={() => closeDraft()}
           onPost={post}
+          onWrittenChange={(written) => (pointer.current.written = written)}
         />
       )}
       {card && cardComment && (
@@ -527,13 +1193,19 @@ export function CommentLayer({
           key={cardComment.id}
           comment={cardComment}
           number={numbers.get(cardComment.id) ?? null}
-          about={commentSnippet(
-            cardComment,
-            cardComment.anchor.blockId
-              ? blockFor(cardComment.anchor.blockId)
-              : undefined,
-            { long: true },
-          )}
+          about={(() => {
+            const { anchor } = cardComment;
+            if ("quote" in anchor && anchor.point) {
+              return <SpotQuote anchor={anchor} length={30} />;
+            }
+            return commentSnippet(
+              cardComment,
+              cardComment.anchor.blockId
+                ? blockFor(cardComment.anchor.blockId)
+                : undefined,
+              { long: true, blocks: blocksFor?.(cardComment.anchor) },
+            );
+          })()}
           anchor={card.position}
           canChange={canChange}
           onEdit={(body) => onEdit(cardComment.id, body)}

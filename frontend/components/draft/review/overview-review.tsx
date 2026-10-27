@@ -9,15 +9,16 @@ import {
   type OverviewField,
 } from "@/components/draft/metadata/frozen-overview";
 import { useDropletReviewComments } from "./review-comments-context";
-import {
-  commentCounts,
-  commentStripText,
-  numberComments,
-} from "@/lib/review-comments";
+import { commentCounts, numberComments } from "@/lib/review-comments";
 import { ReviewModeBar, type ReviewMode } from "./review-mode-bar";
 import { CommentLayer } from "./comment-layer";
 import { ReviewTextView } from "./review-text-view";
 import { OutdatedComments } from "./outdated-comments";
+import { CommentStrip } from "./comment-strip";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "./comment-keyboard";
 
 const escape = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -147,46 +148,43 @@ export function OverviewReview({
   const allOutdated = FIELDS.flatMap((f) => outdated[f]);
 
   return (
-    <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-      <div className="mx-40">
-        <ReviewModeBar
-          mode={mode}
-          subject="overview"
-          onModeChange={setMode}
-          onEdit={() => setMode("edit")}
-          onStopEditing={stopEditing}
-        />
-      </div>
-      {mode === "edit" ? (
-        children
-      ) : (
-        <>
-          {commenting && (
-            <div className="mx-40 mb-4">
-              <p
-                data-testid="review-comment-strip"
-                className="text-sm text-slate-500 dark:text-slate-400"
-              >
-                {reviewComments.isLoading
-                  ? "Loading your comments..."
-                  : reviewComments.loadError
-                    ? "Couldn't load your comments. Reload to try again."
-                    : commentStripText(
-                        commentCounts(comments, review?.state),
-                        "the Overview",
-                      )}
-              </p>
-              <OutdatedComments comments={allOutdated} />
-            </div>
-          )}
-          <FrozenOverview
-            droplet={droplet}
-            authors={authors}
-            renderField={renderField}
+    <CommentKeyboardProvider>
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div className="mx-40">
+          <ReviewModeBar
+            mode={mode}
+            subject="overview"
+            onModeChange={setMode}
+            onEdit={() => setMode("edit")}
+            onStopEditing={stopEditing}
           />
-          <div className="pb-16" />
-        </>
-      )}
-    </div>
+        </div>
+        {mode === "edit" ? (
+          children
+        ) : (
+          <>
+            {commenting && (
+              <div className="mx-40 mb-4">
+                <CommentStrip
+                  {...commentCounts(comments, review?.state)}
+                  place="the Overview"
+                  isLoading={reviewComments.isLoading}
+                  loadError={!!reviewComments.loadError}
+                  keyboard={<CommentKeyboardButton />}
+                >
+                  <OutdatedComments comments={allOutdated} />
+                </CommentStrip>
+              </div>
+            )}
+            <FrozenOverview
+              droplet={droplet}
+              authors={authors}
+              renderField={renderField}
+            />
+            <div className="pb-16" />
+          </>
+        )}
+      </div>
+    </CommentKeyboardProvider>
   );
 }

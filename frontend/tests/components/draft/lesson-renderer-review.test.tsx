@@ -224,11 +224,11 @@ describe("the comment strip", () => {
     await renderLesson();
 
     expect(await screen.findByTestId("review-comment-strip")).toHaveTextContent(
-      "3 comments on this lesson · 2 pending",
+      "3 comments on this lesson2 pending · sent when you request changes",
     );
   });
 
-  it("reads zero before the reviewer has a review", async () => {
+  it("says how to comment before the reviewer has made any", async () => {
     jest
       .mocked(getMyReview)
       .mockResolvedValue({ ok: true, error: null, data: null } as never);
@@ -236,7 +236,7 @@ describe("the comment strip", () => {
 
     await waitFor(() =>
       expect(screen.getByTestId("review-comment-strip")).toHaveTextContent(
-        "0 comments on this lesson · 0 pending",
+        /^Comment modeClick anywhere in the text to comment right there, or drag across words to comment on them\./,
       ),
     );
   });

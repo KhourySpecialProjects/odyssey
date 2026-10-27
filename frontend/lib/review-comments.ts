@@ -35,24 +35,34 @@ export function commentCounts(
   };
 }
 
-/** "3 comments on this lesson · 2 pending" */
+/** "3 comments on this lesson" */
+export const commentCountText = (total: number, place = "this lesson") =>
+  `${total} ${total === 1 ? "comment" : "comments"} on ${place}`;
+
+/** "2 pending · sent when you request changes", or null with none pending */
+export const pendingText = (pending: number) =>
+  pending > 0 ? `${pending} pending · sent when you request changes` : null;
+
+/** The strip's whole text, as a screen reader hears it */
 export function commentStripText(
   { total, pending }: { total: number; pending: number },
   place = "this lesson",
 ): string {
-  const comments = `${total} ${total === 1 ? "comment" : "comments"} on ${place}`;
-  return `${comments} · ${pending} pending`;
+  const waiting = pendingText(pending);
+  const count = commentCountText(total, place);
+  return waiting ? `${count} · ${waiting}` : count;
 }
 
 /** The id a comment's mark is drawn with (data-anchor-id) */
 export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
 
 /**
- * Finds each open comment's text in the current content. Drawn ones are
- * styled pending (dashed amber underline) until the review is sent, then
- * tinted; a whole block gets a wash instead. A resolved comment's mark is
- * invisible but keeps its tag in place. A comment whose text was edited away
- * is outdated, listed rather than dropped.
+ * Finds each comment's text in the current content. Drawn ones are styled
+ * pending (a dashed amber line) until the review is sent, then tinted over a
+ * solid line; a resolved one gets a dotted grey line. A whole block has no
+ * mark of its own (the comment layer outlines it), and a spot comment is a
+ * caret beside its letters. A comment whose text was edited away is
+ * outdated, listed rather than dropped.
  */
 export function commentMarks(
   comments: readonly ReviewComment[],
@@ -68,19 +78,20 @@ export function commentMarks(
       if (!isResolved(comment)) outdated.push(comment);
       continue;
     }
-    // A whole block gets only the wash, so a comment on words inside it
-    // still shows its own underline
-    const kind = isResolved(comment)
-      ? "review-mark--resolved"
-      : !("quote" in comment.anchor)
-        ? "review-mark--block"
+    const { anchor } = comment;
+    const kind = !("quote" in anchor)
+      ? "review-mark--block"
+      : isResolved(comment)
+        ? "review-mark--resolved"
         : sent
           ? "review-mark--sent"
           : "review-mark--pending";
+    const point = "quote" in anchor ? anchor.point : undefined;
     drawn.push({
       id: markIdFor(comment),
       range,
-      className: `review-mark ${kind}`,
+      className: `review-mark ${kind}${point ? " review-mark--point" : ""}`,
+      ...(point && { point }),
     });
   }
   return { drawn, outdated };
@@ -132,20 +143,90 @@ const trunc = (text: string, length: number) =>
 /** The block a whole-block comment is on, as the tag names it */
 export type TagBlock = { type?: string; text: string };
 
+/** The words either side of a spot comment, shortened at word boundaries */
+export function pointSides(
+  anchor: Pick<ReviewAnchorText, "prefix" | "quote" | "suffix" | "point">,
+  length = 24,
+): { left: string; right: string } {
+  const after = anchor.point === "after";
+  const left = after ? anchor.prefix + anchor.quote : anchor.prefix;
+  const right = after ? anchor.suffix : anchor.quote + anchor.suffix;
+  return {
+    left:
+      left.length > length
+        ? `…${left.slice(-length).replace(/^\S*\s/, "")}`
+        : left.trimStart(),
+    right:
+      right.length > length
+        ? `${right.slice(0, length).replace(/\s\S*$/, "")}…`
+        : right.trimEnd(),
+  };
+}
+
+type ReviewAnchorText = Extract<ReviewAnchor, { quote: string }>;
+
 /**
- * A few words of what a comment is about (D8): the quoted phrase, or the
- * block's kind and its first words. `long` is for labels read in full.
+ * A few words of what a comment is about (D8): the quoted phrase, the words
+ * around a spot with ‸ at the spot, or the block's kind and its first words.
+ * A selection across blocks adds how many it spans. `long` is for labels
+ * read in full.
  */
 export function commentSnippet(
   comment: ReviewComment,
   block: TagBlock | undefined,
-  { long = false }: { long?: boolean } = {},
+  { long = false, blocks }: { long?: boolean; blocks?: number } = {},
 ): string {
   const { anchor } = comment;
-  if ("quote" in anchor) return `“${trunc(anchor.quote, long ? 90 : 24)}”`;
+  if ("quote" in anchor) {
+    if (anchor.point) {
+      const { left, right } = pointSides(anchor, long ? 30 : 10);
+      return `“${left}‸${right}”`;
+    }
+    const quote = `“${trunc(anchor.quote.replace(/\s*\n\s*/g, " "), long ? 90 : 28)}”`;
+    return blocks && blocks > 1 ? `${quote} · ${blocks} blocks` : quote;
+  }
   const label = blockLabel(block?.type);
   const words = block?.text.trim();
   return words ? `${label} · “${trunc(words, long ? 70 : 20)}”` : label;
+}
+
+/** How many blocks an anchor across blocks spans in the current content */
+export function blocksSpanned(
+  content: AnchorContent,
+  anchor: ReviewAnchor,
+): number {
+  if (!("endBlockId" in anchor) || anchor.endBlockId === undefined) return 1;
+  const blocks = content[anchor.field] ?? [];
+  const range = resolveAnchor(content, anchor);
+  if (range === OUTDATED || range.endBlockId === undefined) return 1;
+  const from = blocks.findIndex((b) => b.id === range.blockId);
+  const to = blocks.findIndex((b) => b.id === range.endBlockId);
+  return from === -1 || to < from ? 1 : to - from + 1;
+}
+
+/** When a comment was written: "Today, 2:49 PM", or "Oct 20, 2:49 PM" */
+export function commentTime(
+  iso: string | undefined,
+  now: Date = new Date(),
+): string | null {
+  if (!iso) return null;
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return null;
+  const time = at.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const day = (d: Date) => d.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (day(at) === day(now)) return `Today, ${time}`;
+  if (day(at) === day(yesterday)) return `Yesterday, ${time}`;
+  const date = at.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(at.getFullYear() !== now.getFullYear() && { year: "numeric" }),
+  });
+  return `${date}, ${time}`;
 }
 
 type BlockLike = { id?: string; type?: string; children?: BlockLike[] };
@@ -164,36 +245,42 @@ export function blockTypes(blocks: readonly BlockLike[]): Map<string, string> {
 /** The id of the mark drawn under the text a comment is being written for */
 export const DRAFT_MARK_ID = "comment-draft";
 
+/** The text a draft comment is for, and its spot if it's at one */
+export type DraftMark = { range: AnchorRange; point?: "before" | "after" };
+
 /**
  * The marks as drawn: the lit one (its tag or text is hovered) gets
  * `review-mark--lit`, and the text a comment is being written for is added.
+ * A draft for a whole block is outlined by the comment layer instead.
  */
 export function decorateMarks(
   drawn: readonly DrawnAnchor[],
   litMarkId: string | null,
-  draftRange: AnchorRange | null,
+  draft: DraftMark | null,
 ): DrawnAnchor[] {
   const marks = drawn.map((mark) =>
     mark.id === litMarkId
       ? { ...mark, className: `${mark.className} review-mark--lit` }
       : mark,
   );
-  if (draftRange) {
+  if (draft) {
     marks.push({
       id: DRAFT_MARK_ID,
-      range: draftRange,
-      className: "review-mark review-mark--draft",
+      range: draft.range,
+      className: `review-mark review-mark--draft${draft.point ? " review-mark--point" : ""}`,
+      ...(draft.point && { point: draft.point }),
     });
   }
   return marks;
 }
 
 /** The text a draft comment is for, found in the current content */
-export function draftRangeIn(
+export function draftMarkIn(
   content: AnchorContent,
   anchor: ReviewAnchor | null,
-): AnchorRange | null {
-  if (!anchor) return null;
+): DraftMark | null {
+  if (!anchor || !("quote" in anchor)) return null;
   const range = resolveAnchor(content, anchor);
-  return range === OUTDATED ? null : range;
+  if (range === OUTDATED) return null;
+  return anchor.point ? { range, point: anchor.point } : { range };
 }

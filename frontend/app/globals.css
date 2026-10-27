@@ -227,37 +227,215 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   text-underline-offset: 0.2em;
 }
 
-/* Review comment marks (ODY-806), drawn by lib/anchors: a dashed amber
-   underline while pending, a tint once sent. A whole block gets only a wash,
-   so a comment on words inside it keeps its own underline. */
+/* Review comments (ODY-806), as the redesign prototype draws them
+   (ui-redesign/comments.css): teal is what the reviewer is doing, amber only
+   marks a comment. Marks are drawn by lib/anchors. */
+:root {
+  --rc-accent: #2d7597;
+  --rc-accent-text: #2d7597;
+  --rc-accent-soft: #eef7fb;
+  --rc-accent-soft-border: #aed8ea;
+  --rc-wash: rgba(45, 117, 151, 0.07);
+  --rc-caret-glow: rgba(45, 117, 151, 0.32);
+  --rc-tint: rgba(245, 158, 11, 0.2);
+  --rc-tint-strong: rgba(245, 158, 11, 0.38);
+  --rc-tint-line: #b45309;
+  --rc-draft: rgba(45, 117, 151, 0.16);
+  --rc-subtle: #64748b;
+}
+.dark {
+  --rc-accent-text: #6cc0e0;
+  --rc-accent-soft: rgba(74, 171, 207, 0.14);
+  --rc-accent-soft-border: rgba(74, 171, 207, 0.42);
+  --rc-wash: rgba(125, 191, 220, 0.09);
+  --rc-caret-glow: rgba(125, 191, 220, 0.45);
+  --rc-tint: rgba(251, 191, 36, 0.2);
+  --rc-tint-strong: rgba(251, 191, 36, 0.36);
+  --rc-tint-line: #fbbf24;
+  --rc-draft: rgba(125, 191, 220, 0.2);
+  --rc-subtle: #8a99ae;
+}
 .review-mark {
+  border-radius: 2px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
+/* Not sent yet: a dashed line under the words */
 .review-mark--pending {
-  text-decoration-line: underline;
-  text-decoration-style: dashed;
-  text-decoration-color: #d97706;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
+  border-bottom: 2px dashed var(--rc-tint-line);
 }
+/* Sent to the author: a tint over a solid line */
 .review-mark--sent {
-  background-color: rgb(251 191 36 / 0.25);
+  background-color: var(--rc-tint);
+  border-bottom: 2px solid var(--rc-tint-line);
 }
-.review-mark--block {
-  background-color: rgb(251 191 36 / 0.15);
+.review-mark--resolved {
+  border-bottom: 1px dotted var(--rc-subtle);
 }
+/* Lit by its tag or the pointer */
 .review-mark--lit {
-  background-color: rgb(251 191 36 / 0.45);
+  background-color: var(--rc-tint-strong);
 }
+/* A whole block has no mark of its own: the comment layer outlines it */
+.review-mark--block,
+.review-mark--block.review-mark--lit {
+  background-color: transparent;
+  border-bottom: 0;
+}
+/* The words a comment is being written for */
 .review-mark--draft {
-  background-color: rgb(251 191 36 / 0.4);
+  background-color: var(--rc-draft);
+  border-bottom: 2px solid var(--rc-accent);
 }
-.dark .review-mark--pending {
-  text-decoration-color: #fbbf24;
+/* A comment at a spot: its letters have no line, only the caret beside them,
+   and light up under the pointer */
+.review-mark--point {
+  background-color: transparent;
+  border-bottom: 0;
 }
-.dark .review-mark--sent {
-  background-color: rgb(251 191 36 / 0.2);
+.review-mark--point.review-mark--lit {
+  background-color: var(--rc-tint);
+}
+.review-mark--point.review-mark--draft {
+  background-color: transparent;
+}
+/* The caret at a spot: amber, dotted while pending, grey once resolved, and
+   teal with a small landing bounce while its comment is being written */
+/* Inline, not inline-block, so a word with a spot in it never wraps there */
+.anchor-caret {
+  position: relative;
+  border: 0 !important;
+  background: none !important;
+  pointer-events: none;
+}
+.anchor-caret::before {
+  content: "";
+  position: absolute;
+  top: -0.05em;
+  left: -1px;
+  width: 2px;
+  height: 1.3em;
+  border-radius: 1px;
+  background: var(--rc-tint-line);
+}
+.anchor-caret.review-mark--pending::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--rc-tint-line) 0 3px,
+    transparent 3px 5px
+  );
+}
+.anchor-caret.review-mark--resolved::before {
+  background: var(--rc-subtle);
+}
+.anchor-caret.review-mark--draft::before {
+  background: var(--rc-accent-text);
+  box-shadow: 0 0 10px var(--rc-caret-glow);
+  animation: rc-land 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes rc-land {
+  from {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+}
+/* The reviewer's caret, drawn by the comment layer: it eases along a line,
+   hops to a new one, and blinks once still */
+.rc-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 2px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rc-caret.is-on {
+  opacity: 1;
+}
+.rc-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1px;
+  background: var(--rc-accent-text);
+  box-shadow: 0 0 10px var(--rc-caret-glow);
+  transition: transform 90ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rc-caret.is-idle::before {
+  animation: rc-blink 1.06s ease-in-out infinite;
+}
+.rc-caret.is-hop::before {
+  animation: rc-hop 170ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.rc-caret.is-press::before {
+  transform: scale(1.5, 1.08);
+}
+@keyframes rc-blink {
+  0%,
+  40%,
+  100% {
+    opacity: 1;
+  }
+  55%,
+  85% {
+    opacity: 0;
+  }
+}
+@keyframes rc-hop {
+  from {
+    opacity: 0.2;
+    transform: scaleY(0.35);
+  }
+}
+/* In Comment mode the pointer stays an arrow, and a selection is teal */
+.rc-commenting,
+.rc-commenting * {
+  cursor: default;
+}
+.rc-commenting
+  [data-anchor-id^="comment-"]:not([data-anchor-id="comment-draft"]) {
+  cursor: pointer;
+}
+.rc-commenting ::selection {
+  background: var(--rc-draft);
+}
+/* The caret drawn inside quoted text: "…state‸ment…" */
+.rc-caretmark {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin: 0 1px;
+  border-radius: 1px;
+  background: var(--rc-tint-line);
+  vertical-align: -0.15em;
+}
+.rc-caretmark--draft {
+  background: var(--rc-accent);
+}
+/* The comment box opens with a small pop */
+.rc-pop-in {
+  animation: rc-pop-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes rc-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-caret,
+  .rc-caret::before {
+    transition: none;
+  }
+  .rc-caret.is-idle::before,
+  .rc-caret.is-hop::before,
+  .anchor-caret.review-mark--draft::before,
+  .rc-pop-in {
+    animation: none;
+  }
 }
 
 /* Fenced code block backgrounds: light by default, dark in dark mode.

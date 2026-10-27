@@ -14,7 +14,7 @@ import { textOf, textParts } from "@/lib/anchors/dom";
 import {
   commentMarks,
   decorateMarks,
-  draftRangeIn,
+  draftMarkIn,
 } from "@/lib/review-comments";
 
 function lightMark(root: Element, markId: string | null) {
@@ -74,15 +74,12 @@ export function ReviewTextView({
     root.innerHTML = html;
     const content = { [field]: [{ text: textOf(textParts(root, false)) }] };
     const { drawn, outdated } = commentMarks(comments, content, reviewState);
-    const marks = decorateMarks(
-      drawn,
-      null,
-      draftRangeIn(content, draftAnchor),
-    );
+    const marks = decorateMarks(drawn, null, draftMarkIn(content, draftAnchor));
     for (const mark of marks) {
-      for (const span of drawAnchor(root, mark.range, mark.id)) {
-        span.className = mark.className ?? "";
-      }
+      drawAnchor(root, mark.range, mark.id, {
+        className: mark.className,
+        point: mark.point,
+      });
     }
     lightMark(root, litRef.current);
     onOutdatedRef.current(outdated);

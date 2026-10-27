@@ -7,6 +7,8 @@ import {
   commentCounts,
   commentStripText,
   commentsOnLesson,
+  blocksSpanned,
+  commentTime,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
 
@@ -55,21 +57,21 @@ describe("commentCounts", () => {
 });
 
 describe("commentStripText", () => {
-  it("reads like the design", () => {
+  it("reads like the prototype", () => {
     expect(commentStripText({ total: 3, pending: 2 })).toBe(
-      "3 comments on this lesson · 2 pending",
+      "3 comments on this lesson · 2 pending · sent when you request changes",
     );
   });
 
   it("uses the singular for one", () => {
     expect(commentStripText({ total: 1, pending: 1 })).toBe(
-      "1 comment on this lesson · 1 pending",
+      "1 comment on this lesson · 1 pending · sent when you request changes",
     );
   });
 
-  it("names another place", () => {
-    expect(commentStripText({ total: 0, pending: 0 }, "the Overview")).toBe(
-      "0 comments on the Overview · 0 pending",
+  it("names another place, and leaves out pending when none are", () => {
+    expect(commentStripText({ total: 2, pending: 0 }, "the Overview")).toBe(
+      "2 comments on the Overview",
     );
   });
 });
@@ -99,7 +101,7 @@ describe("commentMarks", () => {
     anchor: { v: 1, field: "blocks", blockId: "b2" },
   });
 
-  it("draws open comments as pending, and a whole block with only a wash", () => {
+  it("draws open comments as pending, and a whole block with no mark of its own", () => {
     const { drawn, outdated } = commentMarks([words, block], content, "open");
 
     expect(outdated).toEqual([]);
@@ -134,13 +136,56 @@ describe("commentMarks", () => {
     expect(drawn[0].className).toBe("review-mark review-mark--sent");
   });
 
-  it("gives a resolved comment an invisible mark, to keep its tag in place", () => {
+  it("gives a resolved comment a dotted mark", () => {
     const resolved = { ...words, resolvedAt: "2026-10-27T12:00:00Z" };
     const { drawn, outdated } = commentMarks([resolved], content, "open");
     expect(drawn.map((m) => m.className)).toEqual([
       "review-mark review-mark--resolved",
     ]);
     expect(outdated).toEqual([]);
+  });
+
+  it("draws a spot comment with a caret at its side", () => {
+    const spot = comment({
+      id: 3,
+      anchor: { ...words.anchor, point: "after" } as never,
+    });
+
+    const [mark] = commentMarks([spot], content, "open").drawn;
+
+    expect(mark).toMatchObject({
+      className: "review-mark review-mark--pending review-mark--point",
+      point: "after",
+    });
+  });
+
+  it("finds a comment across blocks", () => {
+    const across = comment({
+      id: 4,
+      anchor: {
+        v: 1,
+        field: "blocks",
+        blockId: "b1",
+        endBlockId: "b2",
+        start: 23,
+        end: 6,
+        quote: "of code.\nSecond",
+        prefix: "",
+        suffix: "",
+      },
+    });
+
+    const [mark] = commentMarks([across], content, "open").drawn;
+
+    expect(mark.range).toEqual({
+      field: "blocks",
+      blockId: "b1",
+      endBlockId: "b2",
+      start: 23,
+      end: 6,
+      exact: true,
+    });
+    expect(blocksSpanned(content, across.anchor)).toBe(2);
   });
 
   it("doesn't list a resolved comment as outdated", () => {
@@ -210,7 +255,48 @@ describe("commentSnippet", () => {
   const block = comment({ anchor: { v: 1, field: "blocks", blockId: "b2" } });
 
   it("quotes the words, shortened", () => {
-    expect(commentSnippet(words, undefined)).toBe("“A loop repeats a block…”");
+    expect(commentSnippet(words, undefined)).toBe(
+      "“A loop repeats a block of c…”",
+    );
+  });
+
+  it("shows a spot as ‸ between the words either side", () => {
+    const spot = comment({
+      anchor: {
+        v: 1,
+        field: "blocks",
+        start: 6,
+        end: 13,
+        quote: "repeats",
+        prefix: "A loop ",
+        suffix: " a block of code until it's done",
+        point: "before",
+      },
+    });
+
+    expect(commentSnippet(spot, undefined, { long: true })).toBe(
+      "“A loop ‸repeats a block of code until…”",
+    );
+  });
+
+  it("says how many blocks a selection across blocks spans", () => {
+    const across = comment({
+      anchor: {
+        v: 1,
+        field: "blocks",
+        blockId: "b1",
+        endBlockId: "b3",
+        start: 0,
+        end: 3,
+        quote: "One\nTwo\nThr",
+        prefix: "",
+        suffix: "",
+      },
+    });
+
+    expect(commentSnippet(across, undefined, { blocks: 3 })).toBe(
+      "“One Two Thr” · 3 blocks",
+    );
   });
 
   it("names the block and its first words", () => {
@@ -250,5 +336,22 @@ describe("blocks", () => {
       ["a", "bulletListItem"],
       ["b", "paragraph"],
     ]);
+  });
+});
+
+describe("commentTime", () => {
+  const now = new Date(2026, 9, 27, 15, 0);
+
+  it("says today, yesterday, or the date", () => {
+    expect(commentTime(new Date(2026, 9, 27, 14, 49).toISOString(), now)).toBe(
+      "Today, 2:49 PM",
+    );
+    expect(commentTime(new Date(2026, 9, 26, 9, 5).toISOString(), now)).toBe(
+      "Yesterday, 9:05 AM",
+    );
+    expect(commentTime(new Date(2026, 9, 20, 9, 5).toISOString(), now)).toBe(
+      "Oct 20, 9:05 AM",
+    );
+    expect(commentTime(undefined, now)).toBeNull();
   });
 });

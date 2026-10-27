@@ -1,6 +1,6 @@
 "use client";
 
-import { IconLock } from "@tabler/icons-react";
+import { IconEye, IconLock, IconMessage } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +19,8 @@ interface ReviewModeBarProps {
 }
 
 const MODES = [
-  { mode: "comment", label: "Comment" },
-  { mode: "read", label: "Read" },
+  { mode: "comment", label: "Comment", Icon: IconMessage },
+  { mode: "read", label: "Read", Icon: IconEye },
 ] as const;
 
 /**
@@ -60,22 +60,29 @@ export function ReviewModeBar({
           <div
             role="group"
             aria-label="Review mode"
-            className="inline-flex rounded-md border border-amber-300 bg-white p-0.5 dark:border-amber-700 dark:bg-slate-900"
+            className="inline-flex rounded-lg bg-slate-100 p-0.5 dark:bg-[#26324a]"
           >
-            {MODES.map((option) => (
+            {MODES.map(({ mode: value, label, Icon }) => (
               <button
-                key={option.mode}
+                key={value}
                 type="button"
-                aria-pressed={mode === option.mode}
-                onClick={() => onModeChange(option.mode)}
+                aria-pressed={mode === value}
+                onClick={() => onModeChange(value)}
                 className={cn(
-                  "rounded px-3 py-1 text-sm font-medium focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none",
-                  mode === option.mode
-                    ? "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100"
+                  "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none",
+                  mode === value
+                    ? "bg-white text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.08)] dark:bg-[#131c2e] dark:text-slate-50"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white",
                 )}
               >
-                {option.label}
+                <Icon
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    mode === value && "text-[var(--rc-accent-text)]",
+                  )}
+                  aria-hidden
+                />
+                {label}
               </button>
             ))}
           </div>

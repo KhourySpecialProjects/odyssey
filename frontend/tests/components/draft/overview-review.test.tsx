@@ -34,6 +34,9 @@ beforeAll(() => {
       width: 40,
       height: 20,
     }) as DOMRect;
+  Range.prototype.getClientRects = function () {
+    return [this.getBoundingClientRect()] as unknown as DOMRectList;
+  };
 });
 
 const droplet = {
@@ -126,7 +129,7 @@ describe("OverviewReview", () => {
       "true",
     );
     expect(screen.getByTestId("review-comment-strip")).toHaveTextContent(
-      "3 comments on the Overview · 3 pending",
+      "3 comments on the Overview3 pending · sent when you request changes",
     );
     expect(getMyReview).toHaveBeenCalledWith(3);
   });
@@ -143,10 +146,10 @@ describe("OverviewReview", () => {
     await mount();
 
     expect(
-      screen.getByRole("button", { name: "Comment 1: “repeat”" }),
+      screen.getByRole("button", { name: "Comment 1, pending: “repeat”" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Comment 3: “Stop a loop”" }),
+      screen.getByRole("button", { name: "Comment 3, pending: “Stop a loop”" }),
     ).toBeInTheDocument();
   });
 
@@ -215,10 +218,14 @@ describe("OverviewReview", () => {
       jest.useRealTimers();
     }
 
+    // A selection made without a drag offers the Comment button
     const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: "Comment on the selected text" }),
+    );
     const dialog = screen.getByRole("dialog", { name: "Comment on “This”" });
     await user.type(within(dialog).getByRole("textbox"), "Say which loops.");
-    await user.click(within(dialog).getByRole("button", { name: "Post" }));
+    await user.click(within(dialog).getByRole("button", { name: "Comment" }));
 
     expect(addComment).toHaveBeenCalledWith({
       reviewId: 7,

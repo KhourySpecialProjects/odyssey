@@ -5,15 +5,16 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
-import { IconGripVertical } from "@tabler/icons-react";
+import { IconGripVertical, IconMessage } from "@tabler/icons-react";
 
 /** How many open review comments a sidebar item has */
 export function OpenCommentsBadge({ count }: { count: number }) {
   return (
     <span
-      className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center self-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-900 dark:bg-amber-900 dark:text-amber-100"
+      className="ml-auto inline-flex h-5 shrink-0 items-center gap-[3px] self-center rounded-full bg-[var(--rc-accent-soft)] px-[7px] text-xs font-semibold text-[#1f5a76] dark:text-[#8fd0ea]"
       aria-label={`${count} open ${count === 1 ? "comment" : "comments"}`}
     >
+      <IconMessage className="h-3 w-3" aria-hidden />
       {count}
     </span>
   );
