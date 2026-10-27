@@ -73,11 +73,14 @@ type Opts = {
   lessons?: object[];
   review?: object | null;
   commentDroplet?: number;
+  /** Authors of the review's droplet */
+  dropletAuthors?: number[];
 };
 
 /** Routes fetchAPI by path and mocks a successful raw write. */
 function arrange(o: Opts = {}) {
   const state = o.state ?? "open";
+  const authorized_users = (o.dropletAuthors ?? [5]).map((id) => ({ id }));
   mockedFetchAPI.mockImplementation((async (path: string) => {
     if (path === "/reviews") {
       if (o.review === null) return [];
@@ -86,7 +89,7 @@ function arrange(o: Opts = {}) {
           id: 7,
           documentId: "review-7",
           state,
-          droplet: { id: 3 },
+          droplet: { id: 3, authorized_users },
           reviewer: { id: o.reviewerId ?? 9 },
           ...o.review,
         },
@@ -99,7 +102,10 @@ function arrange(o: Opts = {}) {
           documentId: "comment-21",
           resolvedAt: null,
           author: { id: o.authorId ?? 9 },
-          review: { state, droplet: { id: o.commentDroplet ?? 3 } },
+          review: {
+            state,
+            droplet: { id: o.commentDroplet ?? 3, authorized_users },
+          },
         },
       ];
     }
@@ -294,6 +300,44 @@ describe("addComment", () => {
     );
 
     expectDenied(await addComment(validInput), "failed");
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+describe("whole-block anchors", () => {
+  it("accepts the anchor createAnchor makes for a whole block", async () => {
+    arrange();
+
+    const result = await addComment({
+      ...validInput,
+      anchor: { v: 1, field: "blocks", blockId: "b1" },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(sentBodies()[0].anchor).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+    });
+  });
+});
+
+describe("an author of the droplet (ODY-810)", () => {
+  beforeEach(() => {
+    mockedRequireRole.mockResolvedValue(admin());
+    arrange({ dropletAuthors: [9] });
+  });
+
+  it("can't comment on their own droplet, even as a SysAdmin", async () => {
+    expectDenied(await addComment(validInput), "forbidden");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("can't edit, delete or resolve comments on it", async () => {
+    expectDenied(await editComment(21, "Edited"), "forbidden");
+    expectDenied(await deleteComment(21), "forbidden");
+    expectDenied(await resolveComment(21), "forbidden");
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
 });

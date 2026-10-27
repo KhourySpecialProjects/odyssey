@@ -455,16 +455,19 @@ export type AiScoringRunState =
   | "partial"
   | "failed";
 
-export type ReviewAnchor = {
-  v: 1;
-  field: ReviewCommentField;
-  blockId?: string;
-  start?: number;
-  end?: number;
-  quote: string;
-  prefix: string;
-  suffix: string;
-};
+/** Text in a block or field (with its quote and context), or a whole block */
+export type ReviewAnchor =
+  | {
+      v: 1;
+      field: ReviewCommentField;
+      blockId?: string;
+      start?: number;
+      end?: number;
+      quote: string;
+      prefix: string;
+      suffix: string;
+    }
+  | { v: 1; field: ReviewCommentField; blockId: string };
 
 export type ReviewCriterion = {
   id: number;

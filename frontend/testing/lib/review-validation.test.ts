@@ -1,4 +1,6 @@
+import { createAnchor } from "@/lib/anchors";
 import {
+  toReviewAnchor,
   reviewAnchorSchema,
   reviewCommentBodySchema,
   reviewCommentInputSchema,
@@ -37,6 +39,56 @@ describe("reviewAnchorSchema", () => {
     ["end < start", { ...mockReviewAnchor, start: 9, end: 3 }],
   ])("rejects %s", (_name, anchor) => {
     expect(reviewAnchorSchema.safeParse(anchor).success).toBe(false);
+  });
+});
+
+describe("whole-block anchors (ODY-806)", () => {
+  const wholeBlock = { v: 1, field: "blocks", blockId: "block-1" };
+
+  it("accepts a block id with no quote or context", () => {
+    expect(reviewAnchorSchema.safeParse(wholeBlock).success).toBe(true);
+  });
+
+  it.each([
+    ["no block id", { v: 1, field: "blocks" }],
+    ["offsets but no quote", { ...wholeBlock, start: 0, end: 4 }],
+    ["context but no quote", { ...wholeBlock, prefix: "", suffix: "" }],
+    ["an unknown field", { ...wholeBlock, field: "notes" }],
+    ["an unknown key", { ...wholeBlock, extra: 1 }],
+  ])("rejects %s", (_name, anchor) => {
+    expect(reviewAnchorSchema.safeParse(anchor).success).toBe(false);
+  });
+
+  it("still requires context with a quote", () => {
+    const { prefix: _prefix, ...noPrefix } = mockReviewAnchor as {
+      prefix: string;
+    };
+    expect(reviewAnchorSchema.safeParse(noPrefix).success).toBe(false);
+  });
+});
+
+describe("toReviewAnchor", () => {
+  it("passes createAnchor's whole-block anchor through", () => {
+    const anchor = createAnchor({ blockId: "b1" }, { field: "blocks" })!;
+    expect(toReviewAnchor(anchor)).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+    });
+  });
+
+  it("passes a text anchor through", () => {
+    expect(toReviewAnchor(mockReviewAnchor)).toEqual(mockReviewAnchor);
+  });
+
+  it("is null for a field reviews don't comment on", () => {
+    expect(toReviewAnchor({ v: 1, field: "notes", blockId: "b1" })).toBeNull();
+  });
+
+  it("is null for a quote over 2000 characters", () => {
+    expect(
+      toReviewAnchor({ ...mockReviewAnchor, quote: "x".repeat(2001) }),
+    ).toBeNull();
   });
 });
 

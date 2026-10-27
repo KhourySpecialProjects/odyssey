@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ReviewAnchor } from "@/types";
+import type { Anchor } from "@/lib/anchors";
 
 const id = z.number().int().positive();
 
@@ -18,11 +19,13 @@ export const aiScoringRunStateSchema = z.enum([
   "failed",
 ]);
 
-// Stored as JSON, so strict. start/end come together, and end >= start.
-export const reviewAnchorSchema = z
+const anchorBase = { v: z.literal(1), field: reviewCommentFieldSchema };
+
+// Text in a block or field: its quote and context, with offsets when known.
+// start/end come together, and end >= start.
+const textAnchorSchema = z
   .object({
-    v: z.literal(1),
-    field: reviewCommentFieldSchema,
+    ...anchorBase,
     blockId: z.string().min(1).optional(),
     start: z.number().int().min(0).optional(),
     end: z.number().int().min(0).optional(),
@@ -41,7 +44,28 @@ export const reviewAnchorSchema = z
       message: "end must be >= start",
       path: ["end"],
     },
-  ) satisfies z.ZodType<ReviewAnchor>;
+  );
+
+// A whole block: its id and nothing else (lib/anchors' createAnchor, ODY-801)
+const wholeBlockAnchorSchema = z
+  .object({ ...anchorBase, blockId: z.string().min(1) })
+  .strict();
+
+// Stored as JSON, so strict. Text first, so its issues are the ones reported.
+export const reviewAnchorSchema = z.union([
+  textAnchorSchema,
+  wholeBlockAnchorSchema,
+]) satisfies z.ZodType<ReviewAnchor>;
+
+/**
+ * An anchor from createAnchor as a review comment's anchor, or null when it
+ * can't be one (a field reviews don't comment on, or a quote over 2000
+ * characters).
+ */
+export function toReviewAnchor(anchor: Anchor): ReviewAnchor | null {
+  const parsed = reviewAnchorSchema.safeParse(anchor);
+  return parsed.success ? parsed.data : null;
+}
 
 export const reviewScoreValueSchema = z.number().int().min(1).max(5);
 
