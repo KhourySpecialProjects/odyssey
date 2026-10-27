@@ -256,6 +256,18 @@ It depends on content-manager internals. Services are lazy, so a bootstrap hook 
 - **`acquireLock` stays on the Query Engine** (`strapi.db.query`) inside `strapi.db.transaction`. A throw after its write rolls the write back (tested). The Query Engine is not deprecated.
 - **Known race, not fixed (pre-existing):** on Postgres (READ COMMITTED) two concurrent acquires can both read "unlocked" and both write, because the transaction does not serialize them. A real fix needs a conditional update (compare-and-swap in one `UPDATE ... WHERE`) or a row lock (`SELECT ... FOR UPDATE`). Worth its own ticket.
 
+### Review score routes (`custom-review-score` controller, ODY-803)
+
+`POST /api/review-scores/upsert` (`{ reviewId, lessonId | null, criterionId, value, userId }`) and `POST /api/review-scores/accept-ai` (`{ reviewId, lessonId | null, userId }`). Logic in `src/lib/review-scores.ts`, tested in `tests/api/review-score-upsert.test.js`. Called by `saveReviewScore` / `acceptAiScores` in `frontend/lib/requests/reviews.ts`.
+
+- **POST, not PUT:** `PUT /review-scores/upsert` would match the core `PUT /review-scores/:id`.
+- **One transaction each.** It locks the review row (`FOR UPDATE`), then refuses: not the reviewer (403), review not `open` (409), inactive criterion, a lesson outside the review's droplet, or a value outside 1–5 (400). Unknown body keys are a 400 (custom routes get no strict input check).
+- **Upsert by `key`** (`<reviewId>:<lessonId|overall>:<criterionId>`). If a concurrent create wins the `review_scores_key_uq` index, the whole transaction runs once more and updates. It is rerun, not retried in place, because on Postgres a failed insert aborts its transaction. It checks whether the key now exists instead of matching error codes: SQLite reports the violation as `NotNullError` (errno 19), Postgres as `23505`.
+- **Tests run on SQLite**, which has one connection and ignores `FOR UPDATE`, so the row lock itself is not tested. The race is simulated by making the first key lookup miss.
+- **Reviewer saves never reach the rerun on Postgres:** the review lock serializes them. Only a writer that skips the lock can race them, so Score with AI (ODY-814) must take the same review `FOR UPDATE` lock, or handle a taken key the same way.
+- **Separate writers:** these routes write only `value`. Score with AI (ODY-814) writes only `aiValue`/`aiRationale`. `accept-ai` copies `aiValue` into `value` where `value` is null and the criterion is active.
+- Responses are `{ data: { dropletId, score } }` / `{ data: { dropletId, scores } }`, not v4 entries. The action revalidates `CACHE_TAGS.review(dropletId)` from that answer.
+
 Run the backend tests with `npm --prefix backend test` (see `testing-and-deployment.md`).
 
 ## Database

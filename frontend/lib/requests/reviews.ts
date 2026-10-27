@@ -15,7 +15,10 @@ import { withAuth, assertOwner, type AuthUser } from "@/lib/auth/guards";
 import {
   reviewCommentBodySchema,
   reviewCommentInputSchema,
+  reviewScoreSaveSchema,
+  reviewScoreScopeSchema,
   type ReviewCommentInput,
+  type ReviewScoreSave,
 } from "@/lib/validations/review";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
@@ -391,6 +394,110 @@ export async function resolveComment(
       return { ok: true, error: null, data: updated.data };
     } catch (error) {
       console.error("resolveComment failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+type SavedScore = Pick<
+  ReviewScore,
+  "id" | "key" | "criterionName" | "value" | "aiValue"
+>;
+
+const SCORE_ROUTE_ERRORS: Record<number, ReviewActionError> = {
+  400: "invalid_input",
+  403: "forbidden",
+  404: "not_found",
+  409: "review_closed",
+};
+
+/**
+ * Calls a custom score route (`backend/src/api/review-score`). The route checks
+ * that `userId` is the review's reviewer and the review is open, in one
+ * transaction. Its body is `{ data }`, not a v4 entry, so nothing is flattened.
+ */
+async function postScoreRoute<T extends { dropletId: number }>(
+  path: "upsert" | "accept-ai",
+  body: object,
+): Promise<{ ok: true; data: T } | { ok: false; error: ReviewActionError }> {
+  const url = `${NEXT_PUBLIC_STRAPI_API_URL}/api/review-scores/${path}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    console.error(
+      `POST ${url} failed:`,
+      response.status,
+      await response.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: SCORE_ROUTE_ERRORS[response.status] ?? "failed",
+    };
+  }
+  const json = await readJsonOrNull(response);
+  if (!json?.data) return { ok: false, error: "failed" };
+  return { ok: true, data: json.data };
+}
+
+/** Saves the caller's score for one criterion on their own open review, in one request. */
+export async function saveReviewScore(
+  input: ReviewScoreSave,
+): Promise<ReviewActionResult<SavedScore>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const parsed = reviewScoreSaveSchema.safeParse(input);
+      if (!parsed.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const saved = await postScoreRoute<{
+        dropletId: number;
+        score: SavedScore;
+      }>("upsert", { ...parsed.data, userId: user.id });
+      if (!saved.ok) return { ok: false, error: saved.error, data: null };
+
+      revalidateTag(CACHE_TAGS.review(saved.data.dropletId));
+      return { ok: true, error: null, data: saved.data.score };
+    } catch (error) {
+      console.error("saveReviewScore failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/**
+ * Confirms every AI suggestion the caller hasn't scored yet, for one lesson or
+ * (with `lessonId` null) the Overall Score. Scores the caller already set are
+ * left alone. Returns the scores it confirmed.
+ */
+export async function acceptAiScores(
+  reviewId: number,
+  lessonId: number | null,
+): Promise<ReviewActionResult<SavedScore[]>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const parsed = reviewScoreScopeSchema.safeParse({ reviewId, lessonId });
+      if (!parsed.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const accepted = await postScoreRoute<{
+        dropletId: number;
+        scores: SavedScore[];
+      }>("accept-ai", { ...parsed.data, userId: user.id });
+      if (!accepted.ok) return { ok: false, error: accepted.error, data: null };
+
+      revalidateTag(CACHE_TAGS.review(accepted.data.dropletId));
+      return { ok: true, error: null, data: accepted.data.scores };
+    } catch (error) {
+      console.error("acceptAiScores failed", error);
       return { ok: false, error: "failed", data: null };
     }
   });

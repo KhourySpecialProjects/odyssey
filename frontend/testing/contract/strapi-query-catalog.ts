@@ -907,6 +907,10 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     fetchLessonScrollDepth: "PostHog only, no Strapi",
     fetchAvgSessionDuration: "PostHog only, no Strapi",
   },
+  reviews: {
+    saveReviewScore: "custom review-score upsert route (ODY-803)",
+    acceptAiScores: "custom review-score accept-ai route (ODY-803)",
+  },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {
     publishVoyage: WRITE,

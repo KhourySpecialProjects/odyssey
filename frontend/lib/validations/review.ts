@@ -77,5 +77,17 @@ export const reviewScoreInputSchema = z.object({
   value: reviewScoreValueSchema.nullable(),
 });
 
+/** A reviewer's save from a slider: the upsert route takes only 1–5. */
+export const reviewScoreSaveSchema = reviewScoreInputSchema.extend({
+  value: reviewScoreValueSchema,
+});
+
+/** One lesson's scores, or the Overall Score when `lessonId` is null. */
+export const reviewScoreScopeSchema = z.object({
+  reviewId: id,
+  lessonId: id.nullable(),
+});
+
 export type ReviewCommentInput = z.infer<typeof reviewCommentInputSchema>;
 export type ReviewScoreInput = z.infer<typeof reviewScoreInputSchema>;
+export type ReviewScoreSave = z.infer<typeof reviewScoreSaveSchema>;
