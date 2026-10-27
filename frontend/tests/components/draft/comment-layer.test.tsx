@@ -754,6 +754,29 @@ describe("tags and the comment card (Task 6)", () => {
     expect(onResolve).toHaveBeenCalledWith(2, false);
   });
 
+  it("doesn't close a card opened while a Resolve was still saving", async () => {
+    let finish: (value: { ok: true }) => void = () => {};
+    onResolve.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const user = userEvent.setup();
+    withComments({
+      comments: [wordsComment, { ...blockComment, resolvedAt: null }],
+      numbers: new Map([
+        [1, 1],
+        [2, 2],
+      ]),
+    });
+
+    await user.click(screen.getByRole("button", { name: /^Comment 2,/ }));
+    await user.click(screen.getByRole("button", { name: "Resolve" }));
+    // Before the save returns, open comment 1
+    await user.click(screen.getByText("Marked"));
+    await act(async () => finish({ ok: true }));
+
+    expect(
+      screen.getByRole("dialog", { name: "Comment 1" }),
+    ).toBeInTheDocument();
+  });
+
   it("says so when a change doesn't save, and stays open", async () => {
     onDelete.mockResolvedValue({ ok: false, error: "failed" });
     const user = userEvent.setup();

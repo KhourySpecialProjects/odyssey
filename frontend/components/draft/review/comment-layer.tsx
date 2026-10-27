@@ -453,7 +453,15 @@ export function CommentLayer({
     setCard({ commentId, position });
   };
 
-  const closeCard = useCallback(() => {
+  const cardRef = useRef(card);
+  cardRef.current = card;
+  // Only that comment's card: a Resolve or Delete that returns late mustn't
+  // close a card opened since
+  const closeCard = useCallback((commentId?: number) => {
+    const open = cardRef.current;
+    if (!open || (commentId !== undefined && open.commentId !== commentId)) {
+      return;
+    }
     setCard(null);
     restoreFocus();
   }, []);
@@ -1211,7 +1219,7 @@ export function CommentLayer({
           onEdit={(body) => onEdit(cardComment.id, body)}
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
-          onClose={closeCard}
+          onClose={() => closeCard(cardComment.id)}
         />
       )}
     </div>

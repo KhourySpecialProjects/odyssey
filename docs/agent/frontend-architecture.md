@@ -134,16 +134,44 @@ Pattern for every action:
 
 ## Review comments
 
-A reviewer of a droplet in review (System Admin or Content Editor, never an author: `isReviewerFor` in `lib/review-roles.ts`) comments on its lessons and Overview (ODY-806). Plan and decisions: `docs/plans/ODY-806.md`.
+A reviewer of a droplet in review (System Admin or Content Editor, never an author: `isReviewerFor` in `lib/review-roles.ts`) comments on its lessons and Overview (ODY-806). The look and behaviour follow UI example 1's iteration 8 in the redesign prototype (`ui-redesign/comments.js` and `comments.css`). Plan and decisions: `docs/plans/ODY-806.md` (Round 2 for the prototype match).
 
 - **Modes.** `components/draft/review/review-mode-bar.tsx`: Comment (the default), Read (no comments shown) and Edit (takes the lesson's lock, ODY-810; on the Overview it shows the editors).
 - **Data.** `useReviewComments` (`hooks/use-review-comments.ts`) reads the reviewer's own review with `getMyReview` and adds, edits, deletes and resolves comments optimistically, rolling back on failure. The first comment opens the review; looking never does. The draft layout loads it once (`review-comments-context.tsx`) so the sidebar's counts and the page share it.
-- **Anchors** come from `lib/anchors` (ODY-801) and are checked by `reviewAnchorSchema` (`lib/validations/review.ts`): a whole BlockNote block (`blockId`) or a quote with context. `lib/review-comments.ts` has the pure rules: counts, numbering, marks, snippets.
+- **Anchors** come from `lib/anchors` (ODY-801) and are checked by `reviewAnchorSchema` (`lib/validations/review.ts`). There are four kinds:
+
+  - **A whole BlockNote block:** `blockId` only.
+  - **A quote with context:** `quote`, `prefix` and `suffix`, plus offsets.
+  - **A spot between letters:** a quote of the letters beside it, plus `point: "before" | "after"`.
+  - **A selection across blocks:** `blockId` and `start` in the first block, `endBlockId` and `end` in the last.
+
+  `lib/review-comments.ts` has the pure rules: counts, numbering, marks, snippets.
+
+- **Colour.** Teal (the `--rc-*` variables in `globals.css`) is for what the reviewer is doing. Amber only marks a comment:
+  - **Pending:** a dashed line.
+  - **Sent:** a tint over a solid line.
+  - **Resolved:** a dotted grey line.
+  - **A spot:** a caret beside its letters, drawn as an `anchor-caret` span.
+  - **A whole block:** no mark of its own; the layer outlines it.
 - **Drawing, by kind of content:**
-  - **BlockNote lessons:** ProseMirror decorations from `anchorsPlugin`, added through `createBlockNoteExtension` (BlockNote drops TipTap extensions made with our copy of `@tiptap/core`). Never edit the editor's DOM by hand.
+  - **BlockNote lessons:** ProseMirror decorations from `anchorsPlugin`, added through `createBlockNoteExtension` (BlockNote drops TipTap extensions made with our copy of `@tiptap/core`). A spot is a widget decoration. Never edit the editor's DOM by hand.
   - **Classic lessons and the Overview:** `ReviewTextView` writes read-only HTML outside React and draws marks with `drawAnchor`. Classic blocks have no lasting ids, so their comments are quotes within the whole lesson, and there are no whole-block comments.
-- **Making and opening comments.** `comment-layer.tsx` wraps the content: block bars (BlockNote only), selection to `comment-composer.tsx`, numbered margin tags, two-way hover lighting, and `comment-card.tsx` (Edit, Delete, Resolve). Selection timing, popover placement and dismissal come from `lib/selection`, shared with learner highlights.
-- **Keyboard.** Block bars, tags, the composer and the card all work by keyboard. A comment on a few words needs a selection, and a read-only editor takes no caret, so by keyboard that needs the browser's caret browsing.
+- **Making and opening comments.** `comment-layer.tsx` wraps the content:
+  - **The caret:** the pointer stays an arrow and a drawn caret follows it between letters. `lib/review-caret.ts` finds the stops, and `hooks/use-comment-caret.ts` moves the caret.
+  - **Making a comment:**
+    - a click comments at a spot;
+    - a drag on the words (across BlockNote blocks too);
+    - Alt-click or a block's bar on the whole block;
+    - a selection made another way shows a Comment button.
+  - **Showing them:** numbered margin tags with two-way hover lighting, the composer (`comment-composer.tsx`) and the card (`comment-card.tsx`: Edit, Delete, Resolve).
+  - **Shared code:** selection timing, popover placement and dismissal come from `lib/selection`, shared with learner highlights.
+- **Keyboard.** "Comment with the keyboard" (`comment-keyboard.tsx`) reaches every place the pointer does, across all the comment layers on a page (the Overview has one per field):
+
+  - ↑ ↓ move by block, and → enters a block;
+  - ← → move by letter, and Alt+← → by word;
+  - Shift+↑ ↓ take several blocks, and Enter comments.
+
+  A live region says where the caret is. Block bars are pointer-only.
 
 ## Static Assets and Media
 
