@@ -197,32 +197,6 @@ const DUPLICATE_DROPLET = routes([
   ["GET", /^\/droplets$/, list(dropletEnt(1))],
 ]);
 
-<<<<<<< HEAD
-=======
-const PUBLISH_DRAFT = routes([
-  ME_ROUTE,
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(1, {
-        status: "draft",
-        lessons: rel(lessonEnt(5, "v1"), lessonEnt(7, "v2")),
-      }),
-    ),
-    /id\]\[\$eq\]=1(&|$)/,
-  ],
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(2, { lessons: rel(lessonEnt(6, "v1"), lessonEnt(8, "v1")) }),
-    ),
-    /id\]\[\$eq\]=2(&|$)/,
-  ],
-  ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
-]);
-
 const REVIEW_ROW = ent(5, {
   round: 1,
   key: "1:1:1",
@@ -249,7 +223,6 @@ const REVIEW_WRITE_ROUTES = routes([
   ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
 ]);
 
->>>>>>> feature/highlighting-and-inline-suggestions
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
