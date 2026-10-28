@@ -300,7 +300,8 @@ export function LessonRenderer({
     const removed = highlights.filter((h) => highlightIds.includes(h.id ?? 0));
     if (removed.length === 0) return;
 
-    setHighlights((prev) => prev.filter((h) => !removed.includes(h)));
+    const removedIds = new Set(removed.map((h) => h.id));
+    setHighlights((prev) => prev.filter((h) => !removedIds.has(h.id)));
     const results = await Promise.all(
       removed.map((h) => deleteHighlight(h.id ?? 0)),
     );
@@ -308,7 +309,10 @@ export function LessonRenderer({
     if (kept.length === 0) {
       toast.success("Highlight removed");
     } else {
-      setHighlights((prev) => [...prev, ...kept]);
+      setHighlights((prev) => [
+        ...prev,
+        ...kept.filter((k) => !prev.some((h) => h.id === k.id)),
+      ]);
       toast.error("Failed to remove highlight");
     }
   };

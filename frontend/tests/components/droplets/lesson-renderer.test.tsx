@@ -309,6 +309,37 @@ describe("LessonRenderer (viewer)", () => {
       expect(toast.error).toHaveBeenCalledWith("Failed to remove highlight");
     });
 
+    it("removes a highlight whose state was replaced by a recolour while it saves", async () => {
+      const recolour = deferred<Awaited<ReturnType<typeof updateHighlight>>>();
+      jest.mocked(updateHighlight).mockReturnValue(recolour.promise);
+      const { container } = render(<LessonRenderer {...props} />);
+
+      fireEvent.click(pieces(container, 7)[0]);
+      fireEvent.click(button("Highlight Blue"));
+      fireEvent.click(pieces(container, 7)[0]);
+      fireEvent.click(button("Remove highlight"));
+
+      expect(pieces(container, 7)).toHaveLength(0);
+      await act(async () =>
+        recolour.resolve({ ok: true, error: null, data: serverHighlight }),
+      );
+      expect(pieces(container, 7)).toHaveLength(0);
+    });
+
+    it("leaves one copy, not two, when a delete fails after a recolour", async () => {
+      const removal = deferred<Awaited<ReturnType<typeof deleteHighlight>>>();
+      jest.mocked(deleteHighlight).mockReturnValue(removal.promise);
+      const { container } = render(<LessonRenderer {...props} />);
+
+      fireEvent.click(pieces(container, 7)[0]);
+      fireEvent.click(button("Remove highlight"));
+      await act(async () =>
+        removal.resolve({ ok: false, error: "Failed", data: null }),
+      );
+
+      expect(pieces(container, 7)).toHaveLength(3);
+    });
+
     it("recolours a highlight that crosses bold text by updating that record", async () => {
       const { container } = render(<LessonRenderer {...props} />);
 

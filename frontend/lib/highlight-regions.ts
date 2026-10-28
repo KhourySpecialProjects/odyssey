@@ -75,8 +75,10 @@ export function codeEditorReader(view: EditorView): RegionReader {
   return {
     offsetOf(node, offset) {
       if (view.contentDOM.contains(node)) return view.posAtDOM(node, offset);
-      return view.contentDOM.compareDocumentPosition(node) &
-        Node.DOCUMENT_POSITION_PRECEDING
+      // Decide by the point, not the node: an ancestor can be read before or after
+      const point = document.createRange();
+      point.setStart(node, offset);
+      return point.comparePoint(view.contentDOM, 0) > 0
         ? 0
         : view.state.doc.length;
     },

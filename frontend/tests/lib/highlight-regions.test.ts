@@ -101,6 +101,17 @@ describe("codeEditorReader", () => {
     expect(reader.text()).toBe("x = 1\ny = 2");
     expect(reader.slice(4, 9)).toBe("1\ny =");
   });
+
+  it("reads a point on an ancestor of the code by which side of it the point is", () => {
+    const { view, editor } = fakeView("x = 1\ny = 2");
+    const reader = codeEditorReader(view);
+    const index = Array.from(editor.childNodes).indexOf(view.contentDOM);
+
+    expect(reader.offsetOf(editor, index + 1)).toBe(11);
+    expect(reader.offsetOf(editor, index)).toBe(0);
+    expect(reader.offsetOf(editor, 0)).toBe(0);
+    expect(reader.offsetOf(editor, editor.childNodes.length)).toBe(11);
+  });
 });
 
 describe("codeMarks", () => {
