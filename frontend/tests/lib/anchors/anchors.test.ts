@@ -236,6 +236,65 @@ describe("createAnchor", () => {
   });
 });
 
+describe("createAnchor with Odyssey's React blocks (an image, code, a check-in)", () => {
+  // As the editor draws them: the block's content is inside a React renderer,
+  // and the text it shows isn't saved as its text
+  const editor = () => {
+    document.body.innerHTML = `
+      <div data-node-type="blockContainer" data-id="q-1">
+        <div class="bn-block-content"><p class="bn-inline-content">Look at the diagram below.</p></div>
+      </div>
+      <div data-node-type="blockContainer" data-id="q-2">
+        <div class="react-renderer node-image" contenteditable="false">
+          <div class="bn-block-content" data-content-type="image"><p>A diagram of a loop</p></div>
+        </div>
+      </div>
+      <div data-node-type="blockContainer" data-id="q-3">
+        <div class="bn-block-content"><p class="bn-inline-content">Then try it yourself.</p></div>
+      </div>`;
+  };
+  const text = (id: string) =>
+    document.querySelector(`[data-id="${id}"] p`)!.firstChild!;
+  const saved = {
+    blocks: [
+      { id: "q-1", text: "Look at the diagram below." },
+      { id: "q-2", text: "" },
+      { id: "q-3", text: "Then try it yourself." },
+    ],
+  };
+
+  afterEach(() => (document.body.innerHTML = ""));
+
+  it("anchors a selection inside one to the whole block", () => {
+    editor();
+    const range = new Range();
+    range.setStart(text("q-2"), 2);
+    range.setEnd(text("q-2"), 9);
+
+    expect(createAnchor(range, { field: "blocks" })).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "q-2",
+    });
+  });
+
+  it("counts one as no text in a selection across it, as it's saved", () => {
+    editor();
+    const range = new Range();
+    range.setStart(text("q-1"), 12);
+    range.setEnd(text("q-3"), 4);
+
+    const anchor = createAnchor(range, { field: "blocks" })!;
+
+    expect(anchor).toMatchObject({
+      blockId: "q-1",
+      endBlockId: "q-3",
+      quote: "diagram below.\n\nThen",
+    });
+    expect(resolveAnchor(saved, anchor)).toMatchObject({ exact: true });
+  });
+});
+
 describe("pointAnchor", () => {
   const base = { field: "blocks", blockId: "joins" };
   const text = "Inner joins keep rows.";

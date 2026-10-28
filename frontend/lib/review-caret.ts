@@ -1,4 +1,9 @@
-import { offsetOf, textParts } from "@/lib/anchors/dom";
+import {
+  blockContentOf,
+  hasSavedText,
+  offsetOf,
+  textParts,
+} from "@/lib/anchors/dom";
 
 /**
  * Where the reviewer's caret can stop in Comment mode (ODY-806), ported from
@@ -65,7 +70,6 @@ export type CaretUnit = {
 export type CaretStop = { unit: number; i: number; side: "before" | "after" };
 
 const BLOCK = '[data-node-type="blockContainer"][data-id]';
-const BLOCK_TEXT = ":scope > .bn-block-content";
 // The paragraphs of a read-only text the keyboard moves through
 const TEXT_UNIT = "p, li, h1, h2, h3, h4, h5, h6, pre, blockquote, summary";
 
@@ -77,9 +81,13 @@ export function caretUnits(content: Element): CaretUnit[] {
   const blocks = Array.from(content.querySelectorAll(BLOCK));
   if (blocks.length > 0) {
     return blocks.flatMap((block) => {
-      const element = block.querySelector(BLOCK_TEXT);
+      const element = blockContentOf(block);
       if (!element) return [];
-      const map = textMap(element, true);
+      // A block with no saved text (an image, code) takes only whole-block
+      // comments, so the caret has nowhere to stop in it
+      const map = hasSavedText(element)
+        ? textMap(element, true)
+        : { text: "", parts: [], nodes: [], breaks: new Set<number>() };
       return [
         {
           element,

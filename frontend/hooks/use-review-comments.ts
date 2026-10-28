@@ -68,6 +68,20 @@ export function useReviewComments(
   commentsRef.current = comments;
   // Comments not saved yet have negative ids
   const nextTempId = useRef(-1);
+  // Comments added here, which a load that began before they were saved
+  // doesn't have
+  const addedHere = useRef(new Set<number>());
+
+  // What's held belongs to one droplet; another starts afresh
+  const heldFor = useRef(dropletId);
+  useEffect(() => {
+    if (heldFor.current === dropletId) return;
+    heldFor.current = dropletId;
+    reviewRef.current = null;
+    setReview(null);
+    setComments([]);
+    addedHere.current.clear();
+  }, [dropletId]);
 
   useEffect(() => {
     if (!enabled || dropletId == null) return;
@@ -76,8 +90,20 @@ export function useReviewComments(
     attempt(() => getMyReview(dropletId)).then((result) => {
       if (cancelled) return;
       if (result.ok) {
-        setReview(result.data);
-        setComments(result.data?.comments ?? []);
+        // A comment may already have opened the review, and be saving or
+        // saved; the load doesn't know about it
+        setReview((current) => result.data ?? current);
+        setComments((current) => {
+          const loaded = result.data?.comments ?? [];
+          const ids = new Set(loaded.map((c) => c.id));
+          return [
+            ...loaded,
+            ...current.filter(
+              (c) =>
+                !ids.has(c.id) && (c.id < 0 || addedHere.current.has(c.id)),
+            ),
+          ];
+        });
         setLoadError(null);
       } else {
         setLoadError(result.error);
@@ -140,6 +166,7 @@ export function useReviewComments(
         return failed(saved.error);
       }
       // The write's response has no relations, so the lesson is kept
+      addedHere.current.add(saved.data.id);
       replace(id, { ...optimistic, ...saved.data, lesson });
       return OK;
     },

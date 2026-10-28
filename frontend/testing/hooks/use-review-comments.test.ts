@@ -87,6 +87,72 @@ describe("loading", () => {
   });
 });
 
+describe("a comment made before the first load returns", () => {
+  /** getMyReview that returns `data` only when `finish` is called */
+  function slowLoad(data: unknown) {
+    let finish = () => {};
+    jest.mocked(getMyReview).mockReturnValue(
+      new Promise((resolve) => {
+        finish = () => resolve(ok(data) as never);
+      }) as never,
+    );
+    return () => act(async () => finish());
+  }
+
+  it("keeps it while it's still saving", async () => {
+    const finish = slowLoad({ ...review, comments: [saved] });
+    jest.mocked(getOrOpenReview).mockResolvedValue(ok(review) as never);
+    jest.mocked(addComment).mockReturnValue(new Promise(() => {}) as never);
+    const { result } = renderHook(() => useReviewComments(3, true));
+
+    act(() => {
+      void result.current.add(input);
+    });
+    await finish();
+
+    expect(result.current.comments.map((c) => c.id)).toEqual([21, -1]);
+    expect(result.current.review).toMatchObject({ id: 7 });
+  });
+
+  it("keeps it once saved, though the load began before the save", async () => {
+    const finish = slowLoad(null);
+    jest.mocked(getOrOpenReview).mockResolvedValue(ok(review) as never);
+    jest
+      .mocked(addComment)
+      .mockResolvedValue(ok({ ...saved, id: 30, body: "New one" }) as never);
+    const { result } = renderHook(() => useReviewComments(3, true));
+
+    await act(async () => {
+      await result.current.add(input);
+    });
+    await finish();
+
+    expect(result.current.comments.map((c) => c.id)).toEqual([30]);
+    // The review it opened isn't lost to the load's older answer
+    expect(result.current.review).toMatchObject({ id: 7 });
+  });
+});
+
+describe("another droplet", () => {
+  it("starts afresh, keeping nothing of the last one's review", async () => {
+    jest
+      .mocked(getMyReview)
+      .mockResolvedValueOnce(ok({ ...review, comments: [saved] }) as never)
+      .mockResolvedValueOnce(ok(null) as never);
+    const hook = renderHook(({ id }) => useReviewComments(id, true), {
+      initialProps: { id: 3 },
+    });
+    await waitFor(() => expect(hook.result.current.review).not.toBeNull());
+
+    hook.rerender({ id: 4 });
+    await waitFor(() => expect(getMyReview).toHaveBeenCalledWith(4));
+    await waitFor(() => expect(hook.result.current.isLoading).toBe(false));
+
+    expect(hook.result.current.review).toBeNull();
+    expect(hook.result.current.comments).toEqual([]);
+  });
+});
+
 describe("add", () => {
   it("opens the review on the first comment, then adds it", async () => {
     jest.mocked(getMyReview).mockResolvedValue(ok(null) as never);

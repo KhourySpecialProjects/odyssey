@@ -15,10 +15,32 @@ const isText = (node: Node): node is Text => node.nodeType === Node.TEXT_NODE;
 
 const partText = (part: TextPart) => (isText(part) ? part.data : "\n");
 
-/** The block a node is in: its id, and the element holding its own text */
+/**
+ * A BlockNote block's own content element: a child of the block, or, for a
+ * block drawn by React (Odyssey's images, code, check-ins), inside its
+ * renderer
+ */
+export const blockContentOf = (block: Element) =>
+  block.querySelector(
+    ":scope > .bn-block-content, :scope > .react-renderer > .bn-block-content",
+  );
+
+/**
+ * Whether a BlockNote block's content holds text that's saved as its text:
+ * inline content, or a table's cells. A block with none (an image, code, a
+ * check-in, a formula) shows text it makes itself, which content.ts reads as
+ * "", so it takes only whole-block anchors.
+ */
+export const hasSavedText = (content: Element) =>
+  content.querySelector(".bn-inline-content, table") !== null;
+
+/**
+ * The block a node is in: its id, the element holding its own text, and, in
+ * the editor, whether that text is saved (see hasSavedText)
+ */
 export function blockAt(
   node: Node,
-): { blockId: string; element: Element } | null {
+): { blockId: string; element: Element; noText?: true } | null {
   const start = isText(node) ? node.parentElement : (node as Element);
   const block = start?.closest(BLOCK_SELECTOR);
   if (!block) return null;
@@ -27,9 +49,12 @@ export function blockAt(
   if (blockId !== null) return { blockId, element: block };
 
   // In the editor a block's own text is in its content, apart from its children
-  const content = block.querySelector(":scope > .bn-block-content");
+  const content = blockContentOf(block);
   const editorId = block.getAttribute("data-id");
-  return content && editorId ? { blockId: editorId, element: content } : null;
+  if (!content || !editorId) return null;
+  return hasSavedText(content)
+    ? { blockId: editorId, element: content }
+    : { blockId: editorId, element: content, noText: true };
 }
 
 /**

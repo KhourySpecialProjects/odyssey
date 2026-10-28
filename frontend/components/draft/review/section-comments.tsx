@@ -194,14 +194,18 @@ export function SectionComments({
     if (target?.isConnected) target.focus();
   };
 
+  /** A half-written comment isn't thrown away by a click elsewhere */
+  const holdDraft = () => {
+    if (!drafting || !writtenRef.current) return false;
+    document
+      .querySelector<HTMLTextAreaElement>("[data-comment-composer] textarea")
+      ?.focus();
+    toast.info("Post or cancel this comment first.", { id: "comment-hold" });
+    return true;
+  };
+
   const openDraft = () => {
-    if (drafting && writtenRef.current) {
-      document
-        .querySelector<HTMLTextAreaElement>("[data-comment-composer] textarea")
-        ?.focus();
-      toast.info("Post or cancel this comment first.", { id: "comment-hold" });
-      return;
-    }
+    if (holdDraft()) return;
     remember();
     setCard(null);
     writtenRef.current = false;
@@ -333,7 +337,7 @@ export function SectionComments({
             onLight={(on) => onLitChange(on ? markId : null)}
             onOpen={(rect) => {
               const root = rootRef.current;
-              if (!root) return;
+              if (!root || holdDraft()) return;
               remember();
               closeDraft({ restore: false });
               setCard({

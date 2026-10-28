@@ -10,6 +10,7 @@ import {
   type OverviewField,
   type OverviewSection,
 } from "@/components/draft/metadata/frozen-overview";
+import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { useDropletReviewComments } from "./review-comments-context";
 import {
   commentCounts,
@@ -37,8 +38,6 @@ const FIELDS: OverviewField[] = [
   "overview",
   "objective",
 ];
-// Longer than the Overview editors' 1 s autosave debounce (useDropletUpdate)
-const SAVE_SETTLE_MS = 1500;
 
 type OverviewReviewProps = Omit<
   React.ComponentProps<typeof FrozenOverview>,
@@ -64,11 +63,11 @@ export function OverviewReview({
 }: OverviewReviewProps) {
   const router = useRouter();
   const [mode, setMode] = useState<ReviewMode>("comment");
-  // The editors autosave a second after the last change; once that has
-  // gone, reload the page data so Comment mode shows the edits
   const stopEditing = () => {
+    // Send the editors' last change now, and once every save has finished,
+    // reload the page data so Comment mode shows the edits
+    void settleDropletUpdates().then(() => router.refresh());
     setMode("comment");
-    setTimeout(() => router.refresh(), SAVE_SETTLE_MS);
   };
   const commenting = mode === "comment";
   const reviewComments = useDropletReviewComments(dropletId, true);

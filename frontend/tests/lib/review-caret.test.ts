@@ -39,10 +39,10 @@ function html(markup: string) {
 const blockNote = () =>
   html(`
     <div data-node-type="blockContainer" data-id="b1">
-      <div class="bn-block-content"><p>Inner joins</p></div>
+      <div class="bn-block-content"><p class="bn-inline-content">Inner joins</p></div>
     </div>
     <div data-node-type="blockContainer" data-id="b2">
-      <div class="bn-block-content"><p>Keep rows</p></div>
+      <div class="bn-block-content"><p class="bn-inline-content">Keep rows</p></div>
     </div>`);
 
 describe("textMap", () => {
@@ -64,6 +64,29 @@ describe("caretUnits", () => {
       ["b1", "Inner joins", 0, 11],
       ["b2", "Keep rows", 0, 9],
     ]);
+  });
+
+  it("gives a block without text of its own (an image, code, a check-in) no stops", () => {
+    const units = caretUnits(
+      html(`
+        <div data-node-type="blockContainer" data-id="pic">
+          <div class="react-renderer node-image" contenteditable="false">
+            <div class="bn-block-content" data-content-type="image">
+              <img alt="" /><p>A diagram</p>
+            </div>
+          </div>
+        </div>
+        <div data-node-type="blockContainer" data-id="grid">
+          <div class="bn-block-content" data-content-type="table"><table><tbody><tr><td><p>A1</p></td></tr></tbody></table></div>
+        </div>`),
+    );
+
+    expect(units.map((u) => [u.blockId, u.map.text])).toEqual([
+      ["pic", ""],
+      // A table's cells are its text, as saved
+      ["grid", "A1"],
+    ]);
+    expect(stopsOf(units, 0)).toEqual([]);
   });
 
   it("makes each paragraph of a read-only text a unit, in the whole text", () => {

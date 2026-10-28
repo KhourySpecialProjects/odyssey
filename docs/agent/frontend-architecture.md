@@ -156,6 +156,7 @@ A reviewer of a droplet in review (System Admin or Content Editor, never an auth
   - **A whole block or section:** no mark of its own; the layer, or the section, outlines it.
 - **Drawing, by kind of content:**
   - **BlockNote lessons:** ProseMirror decorations from `anchorsPlugin`, added through `createBlockNoteExtension` (BlockNote drops TipTap extensions made with our copy of `@tiptap/core`). A spot is a widget decoration. Never edit the editor's DOM by hand.
+    - **Blocks with no saved text** (images, code, check-ins, formulas) take whole-block comments only: the text they show isn't saved as their text (`hasSavedText` in `lib/anchors/dom.ts`), and in a selection across blocks they count as "". Odyssey draws these blocks with React, which puts their `.bn-block-content` inside a `.react-renderer`, so find a block's content with `blockContentOf`, never `:scope > .bn-block-content`.
   - **Classic lessons and the Overview:** `ReviewTextView` writes read-only HTML outside React and draws marks with `drawAnchor`. Classic blocks have no lasting ids, so their comments are quotes within the whole lesson, and there are no whole-block comments.
 - **Making and opening comments.** `comment-layer.tsx` wraps the content:
   - **The caret:** the pointer stays an arrow and a drawn caret follows it between letters. `lib/review-caret.ts` finds the stops, and `hooks/use-comment-caret.ts` moves the caret.

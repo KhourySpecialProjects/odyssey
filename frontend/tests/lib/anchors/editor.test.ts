@@ -279,4 +279,63 @@ describe("anchors in the BlockNote editor", () => {
       expect(root.querySelector('[data-anchor-id="c5"]')).not.toBeNull();
     });
   });
+
+  describe("a block without text of its own (an image)", () => {
+    let withImage: Editor;
+    let host: HTMLElement;
+
+    beforeEach(() => {
+      withImage = BlockNoteEditor.create({
+        initialContent: [
+          { id: "before", type: "paragraph", content: "Look at this." },
+          {
+            id: "pic",
+            type: "image",
+            props: { url: "diagram.png", caption: "A diagram" },
+          },
+          { id: "after", type: "paragraph", content: "Then this." },
+        ],
+      });
+      host = document.createElement("div");
+      document.body.appendChild(host);
+      withImage.mount(host);
+    });
+
+    afterEach(() => {
+      withImage.unmount();
+      host.remove();
+    });
+
+    const textIn = (id: string, selector: string) =>
+      host.querySelector(`[data-id="${id}"] ${selector}`)!.firstChild!;
+
+    it("anchors a selection in it to the whole block: its text isn't saved", () => {
+      const caption = textIn("pic", ".bn-file-caption");
+      const range = new Range();
+      range.setStart(caption, 2);
+      range.setEnd(caption, 9);
+
+      expect(createAnchor(range, { field: "blocks" })).toEqual({
+        v: 1,
+        field: "blocks",
+        blockId: "pic",
+      });
+    });
+
+    it("anchors a selection across it so it's found where it was", () => {
+      const range = new Range();
+      range.setStart(textIn("before", ".bn-inline-content"), 8);
+      range.setEnd(textIn("after", ".bn-inline-content"), 4);
+
+      const anchor = createAnchor(range, { field: "blocks" })!;
+      expect(anchor).toMatchObject({
+        blockId: "before",
+        endBlockId: "after",
+        quote: "this.\n\nThen",
+      });
+      expect(
+        resolveAnchor({ blocks: blockNoteContent(withImage.document) }, anchor),
+      ).toMatchObject({ blockId: "before", endBlockId: "after", exact: true });
+    });
+  });
 });

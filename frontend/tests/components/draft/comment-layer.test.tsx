@@ -114,7 +114,7 @@ function mount(
       onLitChange={onLitChange}
       {...over}
     >
-      <Editor />
+      {over.children ?? <Editor />}
     </CommentLayer>,
   );
 }
@@ -205,6 +205,82 @@ describe("a whole-block comment", () => {
     expect(
       screen.getByRole("dialog", { name: "Comment on this paragraph" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("a block without text of its own (an image, code, a check-in)", () => {
+  // Its caption is drawn by the block, not saved as its text
+  const WithImage = () => (
+    <div className="bn-editor">
+      <div data-node-type="blockContainer" data-id="b1">
+        <div className="bn-block-content">
+          <p className="bn-inline-content">A loop repeats a block of code.</p>
+        </div>
+      </div>
+      {/* Odyssey's blocks are drawn by React, inside a renderer */}
+      <div data-node-type="blockContainer" data-id="pic">
+        <div className="react-renderer node-image" contentEditable={false}>
+          <div className="bn-block-content" data-content-type="image">
+            <p>A diagram of a loop</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  const mountWithImage = () =>
+    mount(true, {
+      children: <WithImage />,
+      blockFor: (id) =>
+        id === "pic" ? { type: "image", text: "" } : undefined,
+    });
+  const caption = () => screen.getByText("A diagram of a loop");
+
+  it("gives it a bar, like any block", () => {
+    mountWithImage();
+
+    expect(
+      screen
+        .getAllByTestId("block-bar")
+        .map((bar) => bar.getAttribute("data-block-id")),
+    ).toEqual(["b1", "pic"]);
+  });
+
+  it("takes a click as a comment on the whole block", () => {
+    mountWithImage();
+    (
+      document as unknown as { caretPositionFromPoint: unknown }
+    ).caretPositionFromPoint = () => ({
+      offsetNode: caption().firstChild,
+      offset: 3,
+    });
+
+    fireEvent.click(caption());
+
+    expect(
+      screen.getByRole("dialog", { name: "Comment on this image" }),
+    ).toBeInTheDocument();
+  });
+
+  it("takes a drag across its text as a comment on the whole block", () => {
+    jest.useFakeTimers();
+    try {
+      mountWithImage();
+      fireEvent.pointerDown(caption());
+      const range = new Range();
+      range.setStart(caption().firstChild!, 2);
+      range.setEnd(caption().firstChild!, 9);
+      window.getSelection()!.removeAllRanges();
+      window.getSelection()!.addRange(range);
+      fireEvent.pointerUp(document);
+      act(() => jest.advanceTimersByTime(0));
+
+      expect(
+        screen.getByRole("dialog", { name: "Comment on this image" }),
+      ).toBeInTheDocument();
+      expect(toast.info).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
@@ -704,6 +780,33 @@ describe("tags and the comment card (Task 6)", () => {
       screen.getByRole("dialog", { name: "Comment 1" }),
     ).toBeInTheDocument();
   });
+
+  it.each([
+    ["its mark", () => screen.getByText("Marked")],
+    [
+      "its tag",
+      () => screen.getByRole("button", { name: "Comment 1, pending: “loop”" }),
+    ],
+  ])(
+    "keeps a half-written comment when another comment's %s is clicked",
+    async (_name, target) => {
+      const user = userEvent.setup();
+      withComments();
+      caretAt("b2", 3);
+      fireEvent.click(screen.getByText(/^Loops end/));
+      await user.type(screen.getByRole("textbox"), "Half a thought");
+
+      fireEvent.pointerDown(target());
+      fireEvent.click(target());
+
+      expect(screen.getByRole("textbox")).toHaveValue("Half a thought");
+      expect(screen.queryByRole("dialog", { name: "Comment 1" })).toBeNull();
+      expect(toast.info).toHaveBeenCalledWith(
+        "Post or cancel this comment first.",
+        { id: "comment-hold" },
+      );
+    },
+  );
 
   it("edits a comment from its card", async () => {
     const user = userEvent.setup();

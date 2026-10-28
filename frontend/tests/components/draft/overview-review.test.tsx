@@ -18,6 +18,13 @@ jest.mock("@/lib/requests/reviews", () => ({
   resolveComment: jest.fn(),
 }));
 const refresh = jest.fn();
+// The editors' saves, which Stop editing waits for
+let settle = () => {};
+jest.mock("@/components/draft/metadata/hooks/useDropletUpdate", () => ({
+  settleDropletUpdates: jest.fn(
+    () => new Promise<void>((resolve) => (settle = resolve)),
+  ),
+}));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), info: jest.fn(), error: jest.fn() },
@@ -181,24 +188,21 @@ describe("OverviewReview", () => {
     expect(screen.queryByTestId("review-comment-strip")).toBeNull();
   });
 
-  it("Edit shows the editors, and Stop editing comes back and reloads after the autosave", async () => {
-    jest.useFakeTimers();
-    try {
-      await mount();
-      act(() => screen.getByRole("button", { name: "Edit" }).click());
-      expect(screen.getByTestId("overview-editors")).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "You're editing the Overview during its review.",
-      );
+  it("Edit shows the editors, and Stop editing comes back and reloads once the editors have saved", async () => {
+    await mount();
+    act(() => screen.getByRole("button", { name: "Edit" }).click());
+    expect(screen.getByTestId("overview-editors")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "You're editing the Overview during its review.",
+    );
 
-      act(() => screen.getByRole("button", { name: "Stop editing" }).click());
-      expect(screen.queryByTestId("overview-editors")).toBeNull();
-      expect(refresh).not.toHaveBeenCalled();
-      act(() => jest.advanceTimersByTime(1500));
-      expect(refresh).toHaveBeenCalled();
-    } finally {
-      jest.useRealTimers();
-    }
+    act(() => screen.getByRole("button", { name: "Stop editing" }).click());
+    expect(screen.queryByTestId("overview-editors")).toBeNull();
+    // However long the last save takes
+    await act(async () => {});
+    expect(refresh).not.toHaveBeenCalled();
+    await act(async () => settle());
+    expect(refresh).toHaveBeenCalled();
   });
 
   it("posts a comment on a field with no lesson", async () => {
@@ -335,6 +339,28 @@ describe("OverviewReview", () => {
       const card = screen.getByRole("dialog", { name: "Comment 1" });
       expect(card).toHaveTextContent("Section · “Fun Fact”");
       expect(card).toHaveTextContent("About the section");
+    });
+
+    it("keeps a half-written section comment when a tag is clicked", async () => {
+      const user = userEvent.setup();
+      withComments([section(2, "funFact")]);
+      await mount();
+
+      await user.click(screen.getByRole("heading", { name: "Fun Fact" }));
+      await user.type(
+        screen.getByRole("textbox", { name: "Comment" }),
+        "Half a thought",
+      );
+      await user.click(
+        screen.getByRole("button", {
+          name: "Comment 1, pending: Section · “Fun Fact”",
+        }),
+      );
+
+      expect(screen.getByRole("textbox", { name: "Comment" })).toHaveValue(
+        "Half a thought",
+      );
+      expect(screen.queryByRole("dialog", { name: "Comment 1" })).toBeNull();
     });
 
     it("comments on a whole section from its heading", async () => {

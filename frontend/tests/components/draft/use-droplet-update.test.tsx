@@ -1,6 +1,9 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import { useDropletUpdate } from "@/components/draft/metadata/hooks/useDropletUpdate";
+import {
+  settleDropletUpdates,
+  useDropletUpdate,
+} from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { updateDroplet } from "@/lib/requests/droplet";
 
 jest.mock("next/navigation", () => ({
@@ -83,5 +86,46 @@ describe("useDropletUpdate", () => {
         ),
       { timeout: 4000 },
     );
+  });
+
+  describe("settleDropletUpdates (ODY-806: Stop editing on the Overview)", () => {
+    it("sends a change still waiting out its debounce, and resolves once it's saved", async () => {
+      let saved = () => {};
+      (updateDroplet as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          saved = () => resolve({ error: null, data: { attributes: {} } });
+        }),
+      );
+      const { result } = renderHook(() => useDropletUpdate(1));
+      act(() => result.current.handleChange({ overview: "<p>New</p>" }));
+
+      let settled = false;
+      const settling = settleDropletUpdates().then(() => (settled = true));
+      expect(updateDroplet).toHaveBeenCalledWith(1, { overview: "<p>New</p>" });
+      await act(async () => {});
+      expect(settled).toBe(false);
+
+      await act(async () => saved());
+      await settling;
+      expect(settled).toBe(true);
+    });
+
+    it("sends a waiting change when its editor closes", () => {
+      (updateDroplet as jest.Mock).mockResolvedValue({
+        error: null,
+        data: { attributes: {} },
+      });
+      const { result, unmount } = renderHook(() => useDropletUpdate(1));
+      act(() => result.current.handleChange({ description: "Closed" }));
+
+      unmount();
+
+      expect(updateDroplet).toHaveBeenCalledWith(1, { description: "Closed" });
+    });
+
+    it("resolves at once with nothing to save", async () => {
+      await expect(settleDropletUpdates()).resolves.toBeUndefined();
+      expect(updateDroplet).not.toHaveBeenCalled();
+    });
   });
 });

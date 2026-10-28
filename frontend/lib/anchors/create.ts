@@ -10,6 +10,10 @@ import { BLOCK_SELECTOR, blockAt, offsetOf, textOf, textParts } from "./dom";
  * (a Classic-editor lesson or the Overview, whose blocks have no lasting ids)
  * is anchored by its quote, with offsets in `root`'s text as a hint.
  *
+ * A selection inside a BlockNote block with no saved text of its own (an
+ * image, code, a check-in) is anchored to the whole block; across blocks,
+ * such a block counts as no text.
+ *
  * Returns null for a collapsed or whitespace-only selection, or one that
  * starts or ends outside a block.
  */
@@ -27,6 +31,8 @@ export function createAnchor(
   if (startBlock || endBlock) {
     if (!startBlock || !endBlock) return null;
     if (startBlock.element === endBlock.element) {
+      if (startBlock.noText)
+        return { v: 1, field, blockId: startBlock.blockId };
       return anchorIn(startBlock.element, true, target, {
         field,
         blockId: startBlock.blockId,
@@ -84,7 +90,8 @@ function anchorAcross(
   if (from === -1 || to < from) return null;
 
   const blocks = all.slice(from, to + 1).map((block) => {
-    const parts = textParts(block.element, true);
+    // As content.ts reads it: a block with no saved text is ""
+    const parts = block.noText ? [] : textParts(block.element, true);
     return { blockId: block.blockId, parts, text: textOf(parts) };
   });
   const text = blocks.map((block) => block.text).join("\n");

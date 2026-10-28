@@ -14,6 +14,7 @@ import { IconMessage } from "@tabler/icons-react";
 import type { ReviewAnchor, ReviewComment, ReviewCommentField } from "@/types";
 import { cn } from "@/lib/utils";
 import { createAnchor, pointAnchor } from "@/lib/anchors/create";
+import { blockContentOf } from "@/lib/anchors/dom";
 import { toReviewAnchor } from "@/lib/validations/review";
 import {
   anchorIn,
@@ -57,9 +58,8 @@ import {
   type TagMode,
 } from "./comment-tag";
 
-// A block in the BlockNote editor, and the element holding its own text
+// A block in the BlockNote editor; blockContentOf finds its own content
 const BLOCK = '[data-node-type="blockContainer"][data-id]';
-const BLOCK_TEXT = ":scope > .bn-block-content";
 const MARK = '[data-anchor-id^="comment-"]';
 const SNIPPET = 60;
 // The tags' height, for centring one on its line
@@ -146,10 +146,14 @@ const shorten = (text: string, length = SNIPPET) => {
 };
 
 // A block's first line of text, for a tag with no mark of its own
-const blockLineIn = (content: Element, blockId: string) => {
+const blockIn = (content: Element, blockId: string) => {
   const block = content.querySelector(
-    `${BLOCK}[data-id="${CSS.escape(blockId)}"] > .bn-block-content`,
+    `${BLOCK}[data-id="${CSS.escape(blockId)}"]`,
   );
+  return block && blockContentOf(block);
+};
+const blockLineIn = (content: Element, blockId: string) => {
+  const block = blockIn(content, blockId);
   return block?.querySelector(".bn-inline-content") ?? block;
 };
 
@@ -162,7 +166,7 @@ function measureBlocks(
   const rootRect = root.getBoundingClientRect();
   return Array.from(content.querySelectorAll<HTMLElement>(BLOCK)).flatMap(
     (block) => {
-      const text = block.querySelector(BLOCK_TEXT);
+      const text = blockContentOf(block);
       if (!text) return [];
       const blockId = block.getAttribute("data-id")!;
       const rect = text.getBoundingClientRect();
@@ -566,12 +570,8 @@ export function CommentLayer({
       );
     } else {
       // Several whole blocks: their text from the first's start to the last's end
-      const element = (id: string) =>
-        content.querySelector(
-          `${BLOCK}[data-id="${CSS.escape(id)}"] > .bn-block-content`,
-        );
-      const first = element(boxes[0].blockId);
-      const last = element(boxes[boxes.length - 1].blockId);
+      const first = blockIn(content, boxes[0].blockId);
+      const last = blockIn(content, boxes[boxes.length - 1].blockId);
       if (!first || !last) return;
       const range = new Range();
       range.setStart(first, 0);
@@ -613,7 +613,16 @@ export function CommentLayer({
     const made = createAnchor(selection.range, { field, root: content });
     if (!made) return;
     const anchor = toReviewAnchor(made);
-    if (!anchor || !("quote" in anchor)) {
+    // In a block with no saved text (an image, code), a drag takes the block
+    if (anchor && !("quote" in anchor)) {
+      setSelectionButton(null);
+      if (dragged && anchor.blockId) {
+        window.getSelection()?.removeAllRanges();
+        openBlocks([anchor.blockId]);
+      }
+      return;
+    }
+    if (!anchor) {
       toast.info("That selection is too long to comment on. Select less.", {
         id: "comment-selection",
       });
@@ -821,6 +830,11 @@ export function CommentLayer({
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) return;
 
+    // A half-written comment stays, whatever was clicked
+    if (holdDraft()) {
+      e.stopPropagation();
+      return;
+    }
     const found = markAt(target);
     const root = rootRef.current;
     if (found && root) {
@@ -831,7 +845,6 @@ export function CommentLayer({
       );
       return;
     }
-    if (holdDraft()) return;
     const all = units();
     const unit = unitOf(all, target);
     // A click in the gap between blocks drops the comment where the caret waits
@@ -899,7 +912,7 @@ export function CommentLayer({
           ? layout.blocks.find((b) => b.blockId === unit.blockId)
           : undefined;
         const kind = box ? blockLabel(box.type) : "Text";
-        return `${kind} ${position.unit + 1} of ${all.length}: ${text}. Press Enter to comment${stops.length ? ", or Right to put the caret in it" : ""}.`;
+        return `${kind} ${position.unit + 1} of ${all.length}${text ? `: ${text}` : ""}. Press Enter to comment${stops.length ? ", or Right to put the caret in it" : ""}.`;
       },
       comment: (position) => {
         const all = keyboardUnits();
@@ -1094,7 +1107,9 @@ export function CommentLayer({
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {
                 const root = rootRef.current;
-                if (root) openCard(comment.id, anchorIn(root, rect));
+                if (root && !holdDraft()) {
+                  openCard(comment.id, anchorIn(root, rect));
+                }
               }}
             >
               {"quote" in anchor && anchor.point ? (
