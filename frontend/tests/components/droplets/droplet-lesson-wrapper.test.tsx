@@ -118,6 +118,29 @@ describe("DropletLessonWrapper", () => {
     expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();
   });
 
+  it("announces only the loading message while the notes panel loads", async () => {
+    // Fresh module so the notes bar chunk isn't already loaded by other tests
+    let Fresh: typeof DropletLessonWrapper = DropletLessonWrapper;
+    jest.isolateModules(() => {
+      Fresh =
+        require("@/components/droplets/lessons/droplet-lesson-wrapper").DropletLessonWrapper;
+    });
+    render(<Fresh {...props} />);
+
+    fireEvent.click(screen.getByText("Toggle notes"));
+
+    const liveRegion = screen.getByText("Loading notes").closest("[aria-live]");
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+    expect(liveRegion).not.toHaveTextContent("My Notes");
+    // The footer's quiz gate counts [role="status"] as answered questions
+    expect(document.querySelector('[role="status"]')).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "My Notes" }),
+    ).toBeInTheDocument();
+
+    expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();
+  });
+
   it("keeps the notes bar mounted after the panel is collapsed", async () => {
     render(<DropletLessonWrapper {...props} />);
 

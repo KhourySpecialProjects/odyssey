@@ -42,14 +42,18 @@ export default function DropletFooter({
   const isViewed = (lessonId: number) => viewedLessonIds.includes(lessonId);
 
   /**
-   * Saves the current lesson as viewed. Returns true when server data changed
+   * Saves the current lesson as viewed. "changed" means server data changed
    * (the lesson was newly viewed, or the droplet became complete).
    */
-  const saveLessonViewed = async (): Promise<boolean> => {
-    if (!enrollmentId || !currentLessonId || !droplet.lessons) return false;
+  const saveLessonViewed = async (): Promise<
+    "changed" | "unchanged" | "failed"
+  > => {
+    if (!enrollmentId || !currentLessonId || !droplet.lessons) {
+      return "unchanged";
+    }
     // Already recorded: nothing to save (missing completion data on legacy
     // enrollments is filled in by <CompletionBackfill> on the page).
-    if (isViewed(currentLessonId)) return false;
+    if (isViewed(currentLessonId)) return "unchanged";
 
     const lessonId = currentLessonId;
     // Show it as viewed in the sidebar right away; see viewed-lessons-store.
@@ -62,16 +66,17 @@ export default function DropletFooter({
 
     if (!result.success) {
       unmarkViewed(enrollmentId, lessonId);
-      toast.error("Couldn't save your progress on this lesson.");
-      return false;
+      return "failed";
     }
-    return !result.alreadyViewed;
+    return result.alreadyViewed ? "unchanged" : "changed";
   };
 
   // The recap page shows the droplet as completed based on this save, so
-  // wait for it before going there.
+  // wait for it before going there. Throwing keeps the user on the lesson.
   const saveBeforeRecap = async () => {
-    await saveLessonViewed();
+    if ((await saveLessonViewed()) === "failed") {
+      throw new Error("Lesson progress wasn't saved");
+    }
   };
 
   // Lesson to lesson: navigate first and save in the background, then
@@ -80,7 +85,18 @@ export default function DropletFooter({
   // Action runs when the navigation finishes, which can be before the save
   // lands, so it can't be relied on for this.
   const saveInBackground = async () => {
-    if (await saveLessonViewed()) router.refresh();
+    const lessonId = currentLessonId;
+    const outcome = await saveLessonViewed();
+    if (outcome === "changed") router.refresh();
+    if (outcome === "failed") {
+      // Usually shown after moving on, so name the lesson it's about
+      const lessonName = droplet.lessons?.find((l) => l.id === lessonId)?.name;
+      toast.error(
+        lessonName
+          ? `Failed to save progress for ${lessonName}`
+          : "Failed to save lesson progress",
+      );
+    }
   };
 
   const handleMarkAsComplete = () => {
@@ -89,15 +105,18 @@ export default function DropletFooter({
     startTransition(async () => {
       // Same action as "Next" so finishing the last lesson here also records
       // the droplet's completion (isComplete + completionDate).
+      // A rejected call (network drop, redeployed action) is a failure too;
+      // left uncaught it would reach the lesson's error boundary
       const { success } = await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
-      );
+      ).catch(() => ({ success: false as const }));
       // No router.refresh(): the action's revalidateTag already re-renders
       // the route, and a refresh here would be a second full server render.
       if (!success) {
         console.error("Failed to mark lesson as complete");
+        toast.error("Failed to mark lesson as complete");
       }
     });
   };
@@ -261,10 +280,22 @@ const PaginationLinkWrapper = ({
   awaitOnClick?: boolean;
 }) => {
   const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleClick = async () => {
     if (onClick && awaitOnClick) {
-      await onClick();
+      // Same "Saving..." feedback as "Mark as complete" while the save runs.
+      // It stays on until the next page replaces this one.
+      setIsSaving(true);
+      try {
+        await onClick();
+      } catch (error) {
+        // Stay on the lesson with the button usable so the user can retry
+        console.error("Failed to save lesson progress:", error);
+        toast.error("Failed to save lesson progress");
+        setIsSaving(false);
+        return;
+      }
     } else if (onClick) {
       // Navigate right away; the save finishes in the background and onClick
       // handles its own result (see saveInBackground).
@@ -278,12 +309,13 @@ const PaginationLinkWrapper = ({
   return canProceed ? (
     <button
       onClick={handleClick}
+      disabled={isSaving}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
         className,
       )}
     >
-      {children}
+      {isSaving ? "Saving..." : children}
     </button>
   ) : (
     <div className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] opacity-40 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">

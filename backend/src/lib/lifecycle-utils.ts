@@ -22,13 +22,14 @@ export async function generateSlug(contentTypeUID: string, data: object): Promis
 export async function markClaimedVoyageNodesAuthored(
   dropletFilter: Record<string, unknown>
 ): Promise<number> {
-  const nodes = (await strapi.entityService.findMany('api::voyage-node.voyage-node', {
+  const nodes = await strapi.documents('api::voyage-node.voyage-node').findMany({
     filters: { claimStatus: 'claimed', droplet: dropletFilter },
-    fields: ['id'],
-  } as any)) as { id: number }[];
+    fields: ['documentId'],
+  } as any);
 
   for (const node of nodes) {
-    await strapi.entityService.update('api::voyage-node.voyage-node', node.id, {
+    await strapi.documents('api::voyage-node.voyage-node').update({
+      documentId: node.documentId,
       data: { claimStatus: 'authored' },
     });
   }

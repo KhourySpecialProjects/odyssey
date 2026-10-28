@@ -402,12 +402,12 @@ describe("Droplet tests", () => {
         isHidden: false,
       };
 
-      fetchAPI.mockResolvedValue(mockDroplet);
+      fetchAPI.mockResolvedValue([mockDroplet]);
 
       const result = await getDropletById(1);
 
       expect(result).toEqual(mockDroplet);
-      expect(fetchAPI).toHaveBeenCalledWith("/droplets/1", expect.any(Object));
+      expect(fetchAPI).toHaveBeenCalledWith("/droplets", expect.any(Object));
     });
     it("should handle fetch errors", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch droplets"));
@@ -508,7 +508,7 @@ describe("Playlist enrollment tests", () => {
       const result = await togglePlaylistEnrollment(2);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/12"),
+        expect.stringContaining("/api/authorized-users/doc12"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -518,7 +518,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                disconnect: [2],
+                disconnect: ["doc2"],
               },
             },
           }),
@@ -562,7 +562,7 @@ describe("Playlist enrollment tests", () => {
       const result = await togglePlaylistEnrollment(4);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/12"),
+        expect.stringContaining("/api/authorized-users/doc12"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -572,7 +572,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["doc4"],
               },
             },
           }),
@@ -645,7 +645,7 @@ describe("Playlist enrollment tests", () => {
       const result = await enrollInPlaylist(4, 1);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users/1"),
+        expect.stringContaining("/api/authorized-users/doc1"),
         expect.objectContaining({
           method: "PUT",
           headers: expect.objectContaining({
@@ -655,7 +655,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4],
+                connect: ["doc4"],
               },
             },
           }),
@@ -713,11 +713,28 @@ describe("Playlist tests", () => {
       };
 
       fetchAPI.mockReset();
-      fetchAPI.mockResolvedValueOnce(mockPlaylist);
+      fetchAPI.mockResolvedValueOnce([mockPlaylist]);
 
       const result = await getPlaylistById(1);
 
       expect(result).toEqual(mockPlaylist);
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/playlists",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: { id: { $eq: 1 } },
+          }),
+        }),
+      );
+    });
+
+    it("should throw a 404-style error when no playlist matches", async () => {
+      fetchAPI.mockReset();
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await expect(getPlaylistById(1)).rejects.toThrow(
+        "Failed to fetch data: HTTP error! status: 404",
+      );
     });
 
     it("should handle fetch errors", async () => {
