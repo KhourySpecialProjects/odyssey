@@ -21,7 +21,9 @@ import {
   type ReviewScoreSave,
 } from "@/lib/validations/review";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { loadDropletForWrite } from "@/lib/auth/review-freeze";
 import { isReviewerFor } from "@/lib/review-roles";
+import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -42,11 +44,19 @@ export type ReviewActionError =
   | "invalid_input"
   | "not_in_review"
   | "review_closed"
+  | "conflict"
+  | "unconfirmed"
   | "failed";
 
 export type ReviewActionResult<T> =
   | { ok: true; error: null; data: T }
-  | { ok: false; error: ReviewActionError; data: null };
+  | {
+      ok: false;
+      error: ReviewActionError;
+      data: null;
+      /** Strapi's own message for a 400, 404, 409 or 5xx. */
+      message?: string | null;
+    };
 
 /** One raw write to Strapi; DELETE's empty 204 is read with `readJsonOrNull`. */
 async function writeStrapi(
@@ -630,24 +640,25 @@ export async function getReviewForDroplet(
       }
       const id = parsedId.data;
 
-      const isReviewer = user.roles.some((r) => REVIEWER_ROLES.includes(r));
-      if (!isReviewer) {
-        const droplets = await fetchAPI<
-          { id: number; authorized_users?: { id: number }[] | null }[] | null
-        >("/droplets", {
-          urlParams: {
-            filters: { id: { $eq: id } },
-            populate: { authorized_users: { fields: ["id"] } },
-            pagination: { pageSize: 1 },
-          },
-          cache: "no-store",
-        });
-        const owner = assertOwner(
-          droplets?.[0]?.authorized_users?.map((u) => u.id),
-          user,
-          { bypassRoles: [] },
-        );
-        if (!owner.ok) return { ok: false, error: owner.error, data: null };
+      const droplets = await fetchAPI<
+        { id: number; authorized_users?: { id: number }[] | null }[] | null
+      >("/droplets", {
+        urlParams: {
+          filters: { id: { $eq: id } },
+          populate: { authorized_users: { fields: ["id"] } },
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+      });
+      const owner = assertOwner(
+        droplets?.[0]?.authorized_users?.map((u) => u.id),
+        user,
+        { bypassRoles: [] },
+      );
+      // No author reviews their own droplet, whatever their role.
+      const isReviewer = isReviewerFor(user.roles, true, owner.ok);
+      if (!isReviewer && !owner.ok) {
+        return { ok: false, error: owner.error, data: null };
       }
 
       const reviews = await fetchAPI<Review[] | null>("/reviews", {
@@ -671,8 +682,14 @@ export async function getReviewForDroplet(
         fetchAllPages<ReviewScore>(
           "/review-scores",
           {
-            filters: { review: { id: { $eq: review.id } } },
-            fields: ["criterionName", "value", "aiValue", "aiRationale", "key"],
+            filters: {
+              review: { id: { $eq: review.id } },
+              ...(!isReviewer && { value: { $notNull: true } }),
+            },
+            // Authors never request AI fields; they are nulled below.
+            fields: isReviewer
+              ? ["criterionName", "value", "aiValue", "aiRationale", "key"]
+              : ["criterionName", "value", "key"],
             populate: {
               lesson: { fields: ["name"] },
               criterion: { fields: ["name", "order"] },
@@ -683,9 +700,245 @@ export async function getReviewForDroplet(
         ),
       ]);
 
-      return { ok: true, error: null, data: { ...review, comments, scores } };
+      const safeScores = isReviewer
+        ? scores
+        : scores.map((s) => ({ ...s, aiValue: null, aiRationale: null }));
+      return {
+        ok: true,
+        error: null,
+        data: { ...review, comments, scores: safeScores },
+      };
     } catch (error) {
       console.error("getReviewForDroplet failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+const SUMMARY_NOTE_MAX = 5000;
+const summaryNoteSchema = z.string().max(SUMMARY_NOTE_MAX).nullish();
+
+type WorkflowAction =
+  | "submit-review"
+  | "withdraw-review"
+  | "send-feedback"
+  | "publish-review";
+
+type WorkflowResponse =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { kind: "ok"; data: any }
+  | { kind: "error"; error: ReviewActionError; message: string | null };
+
+/** One POST to a review-workflow route, mapped to a result. Flushes caches when the write may have landed. */
+async function postDropletWorkflow(
+  documentId: string,
+  action: WorkflowAction,
+  body: object,
+  revalidate: () => void,
+): Promise<WorkflowResponse> {
+  const safeDocumentId = encodeURIComponent(documentId);
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/droplets/${safeDocumentId}/${action}`,
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    const json = await readJsonOrNull(response);
+    // A 4xx wrote nothing; success and server errors may have committed.
+    if (response.ok || response.status >= 500) revalidate();
+    if (response.ok) return { kind: "ok", data: json?.data ?? null };
+
+    const message: string | null = json?.error?.message ?? null;
+    const status = response.status;
+    const error: ReviewActionError =
+      status === 400
+        ? "invalid_input"
+        : status === 404
+          ? "not_found"
+          : status === 409
+            ? "conflict"
+            : status >= 500
+              ? message
+                ? "failed"
+                : "unconfirmed"
+              : "failed";
+    return { kind: "error", error, message };
+  } catch (error) {
+    // The request may have committed before the connection failed.
+    console.error(`${action} failed`, error);
+    revalidate();
+    return { kind: "error", error: "unconfirmed", message: null };
+  }
+}
+
+type WorkflowDroplet = NonNullable<
+  Awaited<ReturnType<typeof loadDropletForWrite>>
+>;
+
+/** Reads the droplet fresh and checks the caller's part (author, or reviewer) before any POST. */
+async function loadForWorkflow(
+  dropletId: number,
+  user: AuthUser,
+  who: "author" | "reviewer",
+): Promise<
+  | { ok: true; droplet: WorkflowDroplet; documentId: string }
+  | { ok: false; error: ReviewActionError }
+> {
+  const parsed = idSchema.safeParse(dropletId);
+  if (!parsed.success) return { ok: false, error: "invalid_input" };
+  const droplet = await loadDropletForWrite(parsed.data);
+  if (!droplet?.documentId) return { ok: false, error: "not_found" };
+  const isAuthor = assertOwner(droplet.ownerIds, user, {
+    bypassRoles: [],
+  }).ok;
+  const allowed =
+    who === "author" ? isAuthor : isReviewerFor(user.roles, true, isAuthor);
+  if (!allowed) return { ok: false, error: "forbidden" };
+  return { ok: true, droplet, documentId: droplet.documentId };
+}
+
+function toResult<T>(
+  response: WorkflowResponse,
+  map: (data: Record<string, any>) => T, // eslint-disable-line @typescript-eslint/no-explicit-any
+): ReviewActionResult<T> {
+  return response.kind === "ok"
+    ? { ok: true, error: null, data: map(response.data ?? {}) }
+    : {
+        ok: false,
+        error: response.error,
+        data: null,
+        message: response.message,
+      };
+}
+
+function revalidateDropletReview(dropletId: number, announce = false) {
+  revalidateTag(CACHE_TAGS.droplets);
+  revalidateTag(CACHE_TAGS.allUserContent);
+  revalidateTag(CACHE_TAGS.review(dropletId));
+  if (announce) revalidateTag(CACHE_TAGS.announcements);
+}
+
+/** Puts the caller's own droplet in review. A repeat call is a success with `changed: false`. */
+export async function submitForReview(
+  dropletId: number,
+): Promise<ReviewActionResult<{ changed: boolean; round: number }>> {
+  return withAuth([], async (user) => {
+    try {
+      const loaded = await loadForWorkflow(dropletId, user, "author");
+      if (!loaded.ok) return { ok: false, error: loaded.error, data: null };
+      const id = loaded.droplet.id;
+      const response = await postDropletWorkflow(
+        loaded.documentId,
+        "submit-review",
+        {},
+        () => revalidateDropletReview(id),
+      );
+      return toResult(response, (d) => ({
+        changed: d.changed !== false,
+        round: Number(d.round ?? 0),
+      }));
+    } catch (error) {
+      console.error("submitForReview failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** Takes the caller's own droplet out of review. A repeat call is a success with `changed: false`. */
+export async function withdrawFromReview(
+  dropletId: number,
+): Promise<ReviewActionResult<{ changed: boolean }>> {
+  return withAuth([], async (user) => {
+    try {
+      const loaded = await loadForWorkflow(dropletId, user, "author");
+      if (!loaded.ok) return { ok: false, error: loaded.error, data: null };
+      const id = loaded.droplet.id;
+      const response = await postDropletWorkflow(
+        loaded.documentId,
+        "withdraw-review",
+        {},
+        () => revalidateDropletReview(id),
+      );
+      return toResult(response, (d) => ({ changed: d.changed !== false }));
+    } catch (error) {
+      console.error("withdrawFromReview failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** Sends the caller's open review back to the authors, with an optional summary note. */
+export async function sendFeedback(
+  dropletId: number,
+  summaryNote?: string | null,
+): Promise<ReviewActionResult<{ reviewId: number }>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const note = summaryNoteSchema.safeParse(summaryNote);
+      if (!note.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+      const loaded = await loadForWorkflow(dropletId, user, "reviewer");
+      if (!loaded.ok) return { ok: false, error: loaded.error, data: null };
+      const id = loaded.droplet.id;
+      const response = await postDropletWorkflow(
+        loaded.documentId,
+        "send-feedback",
+        {
+          reviewerId: user.id,
+          ...(note.data != null &&
+            note.data !== "" && { summaryNote: note.data }),
+        },
+        () => revalidateDropletReview(id, true),
+      );
+      return toResult(response, (d) => ({ reviewId: Number(d.reviewId) }));
+    } catch (error) {
+      console.error("sendFeedback failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** Publishes a droplet in review with the caller's own review, in one Strapi transaction. */
+export async function publishWithReview(dropletId: number): Promise<
+  ReviewActionResult<{
+    slug: string | null;
+    reviewId: number;
+    dropletId: number;
+  }>
+> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const loaded = await loadForWorkflow(dropletId, user, "reviewer");
+      if (!loaded.ok) return { ok: false, error: loaded.error, data: null };
+      const draftId = loaded.droplet.id;
+      const originalId = loaded.droplet.originalDropletId;
+      const response = await postDropletWorkflow(
+        loaded.documentId,
+        "publish-review",
+        { reviewerId: user.id, originalDropletId: originalId },
+        () => {
+          revalidatePublishedEdit();
+          revalidateTag(CACHE_TAGS.review(draftId));
+          revalidateTag(CACHE_TAGS.review(originalId ?? draftId));
+          revalidateTag(CACHE_TAGS.announcements);
+        },
+      );
+      return toResult(response, (d) => ({
+        slug: d.slug ?? null,
+        reviewId: Number(d.reviewId),
+        dropletId: Number(d.dropletId),
+      }));
+    } catch (error) {
+      console.error("publishWithReview failed", error);
       return { ok: false, error: "failed", data: null };
     }
   });

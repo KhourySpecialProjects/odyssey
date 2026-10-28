@@ -597,21 +597,21 @@ describe("Droplet API Functions", () => {
           }),
       });
 
-      await updateDroplet(123, { status: "published", inReview: false });
+      await updateDroplet(123, { status: "published" });
 
       expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
     });
 
-    it("never sends a client reviewRound", async () => {
+    it("never sends a client inReview or reviewRound", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 123, attributes: {} } }),
       });
 
-      await updateDroplet(123, { inReview: true, reviewRound: 5 });
+      await updateDroplet(123, { name: "N", inReview: true, reviewRound: 5 });
 
       const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-      expect(body.data.inReview).toBe(true);
+      expect(body.data).not.toHaveProperty("inReview");
       expect(body.data).not.toHaveProperty("reviewRound");
     });
 

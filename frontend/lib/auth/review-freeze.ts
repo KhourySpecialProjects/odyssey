@@ -25,8 +25,10 @@ export type FreezeResult = { ok: true } | { ok: false; error: FreezeError };
 
 export type DropletForWrite = {
   id: number;
+  documentId: string | null;
   name: string;
   inReview: boolean;
+  status: string | null;
   originalDropletId: number | null;
   ownerIds: number[];
 };
@@ -36,6 +38,7 @@ export type DropletForWrite = {
 const WRITE_BYPASS_ROLES = [Role.SysAdmin, Role.ContentEditor];
 const DROPLET_FIELDS = [
   "id",
+  "documentId",
   "name",
   "inReview",
   "status",
@@ -50,8 +53,10 @@ const LOOKUP_FAILED = fail("Could not verify edit access.");
 
 type RawDroplet = {
   id: number;
+  documentId?: string | null;
   name?: string | null;
   inReview?: boolean | null;
+  status?: string | null;
   originalDropletId?: number | null;
   authorized_users?: { id: number }[] | null;
 };
@@ -59,32 +64,41 @@ type RawDroplet = {
 function toShape(raw: RawDroplet): DropletForWrite {
   return {
     id: raw.id,
+    documentId: raw.documentId ?? null,
     name: raw.name ?? "",
     inReview: !!raw.inReview,
+    status: raw.status ?? null,
     originalDropletId: raw.originalDropletId ?? null,
     ownerIds: (raw.authorized_users ?? []).map((u) => u.id),
   };
 }
 
-/** Review keys are inReview, status and afterReview; everything else is content. */
+/** Review keys are inReview, status and afterReview; the rest is content. */
 export function classifyDropletChange(
   data: Record<string, unknown>,
   stored: { name?: string },
   options: { regenerateSlug?: boolean } = {},
-): { status: boolean; content: boolean; inReview: boolean | undefined } {
+): {
+  status: boolean;
+  afterReview: boolean;
+  content: boolean;
+  inReview: boolean | undefined;
+} {
   let status = false;
+  let afterReview = false;
   // Regenerating the slug rewrites the droplet's URL, so it is a content change
   // even when the payload itself is only a status change.
   let content = !!options.regenerateSlug;
   let inReview: boolean | undefined;
   for (const [key, value] of Object.entries(data)) {
     if (value === undefined) continue;
-    if (key === "status" || key === "afterReview") status = true;
+    if (key === "status") status = true;
+    else if (key === "afterReview") afterReview = true;
     else if (key === "inReview") inReview = !!value;
     else if (key === "name" && value === stored.name) continue;
     else content = true;
   }
-  return { status, content, inReview };
+  return { status, afterReview, content, inReview };
 }
 
 export async function loadDropletForWrite(
@@ -228,16 +242,19 @@ export async function checkDropletUpdate(
     const droplet = await loadDropletForWrite(dropletId);
     if (!droplet) return fail("Not Found");
     const isAuthor = droplet.ownerIds.includes(user.id);
+    const change = classifyDropletChange(data, { name: droplet.name }, options);
+    // inReview and afterReview never go through updateDroplet; status is shut in review.
+    if (change.inReview !== undefined || change.afterReview) {
+      return fail("forbidden");
+    }
+    if (droplet.inReview && change.status) return fail("forbidden");
     if (isReviewerFor(user.roles, droplet.inReview, isAuthor)) return OK;
 
-    const change = classifyDropletChange(data, { name: droplet.name }, options);
     if (change.status) return fail("forbidden");
     if (!hasBypass(user) && !isAuthor) return fail("forbidden");
 
     if (droplet.inReview) {
       if (change.content) return fail(REVIEW_FROZEN_ERROR);
-      // Withdraw (inReview: false) and a harmless repeat submit pass.
-      return OK;
     }
     return OK;
   } catch {
@@ -257,6 +274,7 @@ export async function checkPublishDraft(
     if (Number(draft.originalDropletId) !== Number(originalId)) {
       return fail("forbidden");
     }
+    if (draft.inReview) return fail("in_review");
     const isAuthor = draft.ownerIds.includes(user.id);
     return isReviewerFor(user.roles, draft.inReview, isAuthor)
       ? OK

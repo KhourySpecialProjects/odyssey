@@ -24,6 +24,7 @@ const REVIEW_CRITERION_UID = 'api::review-criterion.review-criterion';
 const REVIEW_UID = 'api::review.review';
 const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
+const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
 
 const dropletData = (overrides = {}) => ({
@@ -84,7 +85,14 @@ const reviewData = (overrides = {}) => ({
   ...overrides,
 });
 
-const reviewScoreData = (overrides = {}) => ({
+const reviewCommentData = (overrides = {}) => ({
+  field: 'blocks',
+  anchor: { blockId: 'bn-1' },
+  body: 'Please fix this',
+  ...overrides,
+});
+
+const reviewScoreData =(overrides = {}) => ({
   criterionName: 'Tone',
   key: `${++keyCounter}:overall:1`,
   ...overrides,
@@ -105,7 +113,9 @@ module.exports = {
   REVIEW_COMMENT_UID,
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
+  ANNOUNCEMENT_UID,
   reviewData,
+  reviewCommentData,
   reviewScoreData,
   reviewCriterionData,
   SLUG_PLACEHOLDER,

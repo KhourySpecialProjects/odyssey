@@ -157,6 +157,12 @@ export async function fetchAnnouncements(
       ],
     });
 
+    // Review outcomes reach only the recipient
+    orFilters.push({
+      type: { $in: ["review_feedback", "review_published"] },
+      authorized_user: { id: { $eq: userId } },
+    });
+
     const readAtFilter = archived
       ? { readAt: { $notNull: true } }
       : { readAt: { $null: true } };

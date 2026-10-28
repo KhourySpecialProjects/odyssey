@@ -206,6 +206,19 @@ describe("Feed tests", () => {
       expect(url).toContain("pagination[page]=2");
     });
 
+    it("includes the user's own review announcements and no one else's", async () => {
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[type][$in][0]=review_feedback");
+      expect(url).toContain("[type][$in][1]=review_published");
+      const i = url.indexOf("[type][$in][1]=review_published");
+      expect(url.slice(i)).toContain("[authorized_user][id][$eq]=5");
+    });
+
     it("ignores a user object passed by the caller", async () => {
       const { fetchAPI } = require("../../lib/utils");
       mockPrecompute();

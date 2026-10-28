@@ -1,7 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getPath, isContentCreator } from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
@@ -394,18 +394,17 @@ export function Sidebar({
   if (!user) return <UnauthorizedRoute />;
 
   const isDraft = droplet.status !== "published";
-  const isCreator = isContentCreator(user.roles);
-  // While a droplet is in review, only a reviewer who isn't one of its authors
-  // can publish it or send it back. Outside review, Admin and Faculty can
-  // publish any draft. Authors are frozen out of editing and can withdraw.
+  // In review, only a reviewer who isn't an author publishes (with the review)
+  // or sends feedback; authors can withdraw. Outside review, Admin and Faculty
+  // authors publish directly, and other authors submit.
   const canPublish =
-    isDraft && isReviewerFor(user.roles, droplet.inReview, isAuthor);
-  const canRequestChanges =
+    isDraft && !droplet.inReview && isReviewerFor(user.roles, false, isAuthor);
+  const canReview =
     isDraft && !!droplet.inReview && isReviewerFor(user.roles, true, isAuthor);
   const canWithdrawReview = isDraft && !!droplet.inReview && isAuthor;
 
   const canRequestReview =
-    isDraft && !droplet.inReview && isCreator && !canPublish;
+    isDraft && !droplet.inReview && isAuthor && !canPublish;
   const isFrozen =
     isDraft && isFrozenFor(user.roles, droplet.inReview, isAuthor);
 
@@ -413,19 +412,22 @@ export function Sidebar({
     Parameters<typeof ContentActionButton>[0],
     "actionType" | "buttonText"
   >[] = [];
+  // An edit draft overwrites its live droplet when published
+  const publishLabel = droplet.originalDropletId
+    ? "Publish changes"
+    : "Publish";
   if (canPublish) {
-    // An edit draft overwrites its live droplet when published
     actionButtons.push(
       droplet.originalDropletId
-        ? { actionType: "publishDraft", buttonText: "Publish changes" }
-        : { actionType: "publish", buttonText: "Publish" },
+        ? { actionType: "publishDraft", buttonText: publishLabel }
+        : { actionType: "publish", buttonText: publishLabel },
     );
   }
-  if (canRequestChanges) {
-    actionButtons.push({
-      actionType: "requestChanges",
-      buttonText: "Request changes",
-    });
+  if (canReview) {
+    actionButtons.push(
+      { actionType: "publishWithReview", buttonText: publishLabel },
+      { actionType: "sendFeedback", buttonText: "Send feedback" },
+    );
   }
   if (canWithdrawReview) {
     actionButtons.push({
@@ -780,8 +782,8 @@ export function Sidebar({
                 />
               </button>
             </div>
-            {/* Wraps so a long action label ("Submit for review", "Request
-                changes") gets its own full-width row instead of overflowing
+            {/* Wraps so a long action label ("Submit for review", "Send
+                feedback") gets its own full-width row instead of overflowing
                 the sidebar */}
             <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
