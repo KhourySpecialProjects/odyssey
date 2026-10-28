@@ -153,6 +153,21 @@ describe("OverviewReview", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps the text on the page while a tag is hovered", async () => {
+    const user = userEvent.setup();
+    await mount();
+    // A selection being dragged out lives in these nodes
+    const paragraph = screen
+      .getByTestId("overview-review-overview")
+      .querySelector("p")!;
+
+    await user.hover(
+      screen.getByRole("button", { name: "Comment 1, pending: “repeat”" }),
+    );
+
+    expect(paragraph.isConnected).toBe(true);
+  });
+
   it("Read shows the Overview with no comments", async () => {
     const user = userEvent.setup();
     await mount();

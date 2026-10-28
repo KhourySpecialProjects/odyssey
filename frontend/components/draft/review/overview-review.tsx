@@ -30,6 +30,7 @@ import {
 const escape = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+const NONE: ReviewComment[] = [];
 const FIELDS: OverviewField[] = [
   "name",
   "description",
@@ -78,6 +79,18 @@ export function OverviewReview({
     [reviewComments.comments],
   );
   const numbers = useMemo(() => numberComments(comments), [comments]);
+  // Each field's text comments and each section's whole ones, built once per
+  // change: a new list makes ReviewTextView rewrite its text, which would
+  // drop a selection being dragged out
+  const grouped = useMemo(() => {
+    const text = new Map<string, ReviewComment[]>();
+    const whole = new Map<string, ReviewComment[]>();
+    for (const c of comments) {
+      const into = isWholeSection(c.anchor) ? whole : text;
+      into.set(c.field, [...(into.get(c.field) ?? []), c]);
+    }
+    return { text, whole };
+  }, [comments]);
   const [draft, setDraft] = useState<{
     field: OverviewField;
     anchor: ReviewAnchor;
@@ -132,9 +145,7 @@ export function OverviewReview({
 
   const renderField = (field: OverviewField, standard: ReactNode) => {
     if (!commenting) return standard;
-    const fieldComments = comments.filter(
-      (c) => c.field === field && !isWholeSection(c.anchor),
-    );
+    const fieldComments = grouped.text.get(field) ?? NONE;
     return (
       <CommentLayer
         enabled
@@ -177,9 +188,7 @@ export function OverviewReview({
       <SectionComments
         field={section}
         title={title}
-        comments={comments.filter(
-          (c) => c.field === section && isWholeSection(c.anchor),
-        )}
+        comments={grouped.whole.get(section) ?? NONE}
         numbers={numbers}
         canChange={canChange}
         onPost={(anchor, body) =>
