@@ -379,7 +379,6 @@ describe("droplet-coverage — updateDroplet", () => {
       ],
       description: "desc",
       overview: "overview",
-      inReview: true,
       status: "published",
     });
 
@@ -398,7 +397,7 @@ describe("droplet-coverage — updateDroplet", () => {
     ]);
     expect(body.data.description).toBe("desc");
     expect(body.data.overview).toBe("overview");
-    expect(body.data.inReview).toBe(true);
+    expect(body.data).not.toHaveProperty("inReview");
     expect(body.data.status).toBe("published");
   });
 

@@ -391,52 +391,90 @@ describe("Sidebar", () => {
 
     const publish = ["publish", "Publish"];
     const publishChanges = ["publishDraft", "Publish changes"];
-    const requestChanges = ["requestChanges", "Request changes"];
+    const publishWithReview = ["publishWithReview", "Publish"];
+    const publishChangesWithReview = ["publishWithReview", "Publish changes"];
+    const sendFeedback = ["sendFeedback", "Send feedback"];
     const submitForReview = ["requestReview", "Submit for review"];
+    const withdraw = ["withdrawReview", "Withdraw from review"];
 
-    it.each<[AuthorizedUserRoleTitle, keyof typeof draftStates, string[][]]>([
-      [SysAdmin, "new draft", [publish]],
-      [SysAdmin, "new draft in review", [publish, requestChanges]],
-      [SysAdmin, "edit draft", [publishChanges]],
-      [SysAdmin, "edit draft in review", [publishChanges, requestChanges]],
-      // Faculty skip the manual review and never act on someone else's
-      // droplet (ODY-798, 2026-10-26); these rows are non-authors.
-      [Faculty, "new draft", []],
-      [Faculty, "new draft in review", []],
-      [Faculty, "edit draft", []],
-      [Faculty, "edit draft in review", []],
-      // Content Editors publish only once a draft has been submitted for review
-      [ContentEditor, "new draft", []],
-      [ContentEditor, "new draft in review", [publish, requestChanges]],
-      [ContentEditor, "edit draft", []],
-      [ContentEditor, "edit draft in review", [publishChanges, requestChanges]],
-      [ContentCreator, "new draft", [submitForReview]],
-      [ContentCreator, "new draft in review", []],
-      [ContentCreator, "edit draft", [submitForReview]],
-      [ContentCreator, "edit draft in review", []],
-      [User, "new draft", []],
-      [User, "new draft in review", []],
-      [User, "edit draft", []],
-      [User, "edit draft in review", []],
-    ])("%s, %s: %j", (role, state, expectedActions) => {
-      expect(renderActions([role], draftStates[state])).toEqual(
+    // [role, state, isAuthor, expected]; isAuthor false means a non-author.
+    it.each<
+      [AuthorizedUserRoleTitle, keyof typeof draftStates, boolean, string[][]]
+    >([
+      [SysAdmin, "new draft", false, [publish]],
+      [
+        SysAdmin,
+        "new draft in review",
+        false,
+        [publishWithReview, sendFeedback],
+      ],
+      [SysAdmin, "edit draft", false, [publishChanges]],
+      [
+        SysAdmin,
+        "edit draft in review",
+        false,
+        [publishChangesWithReview, sendFeedback],
+      ],
+      // Faculty never act on someone else's droplet (ODY-798, 2026-10-26).
+      [Faculty, "new draft", false, []],
+      [Faculty, "new draft in review", false, []],
+      [Faculty, "edit draft", false, []],
+      [Faculty, "edit draft in review", false, []],
+      // Faculty publish their own droplet directly, and withdraw it in review.
+      [Faculty, "new draft", true, [publish]],
+      [Faculty, "edit draft", true, [publishChanges]],
+      [Faculty, "new draft in review", true, [withdraw]],
+      [Faculty, "edit draft in review", true, [withdraw]],
+      // Content Editors act only on a droplet that is in review
+      [ContentEditor, "new draft", false, []],
+      [
+        ContentEditor,
+        "new draft in review",
+        false,
+        [publishWithReview, sendFeedback],
+      ],
+      [ContentEditor, "edit draft", false, []],
+      [
+        ContentEditor,
+        "edit draft in review",
+        false,
+        [publishChangesWithReview, sendFeedback],
+      ],
+      [ContentEditor, "new draft in review", true, [withdraw]],
+      [ContentCreator, "new draft", true, [submitForReview]],
+      [ContentCreator, "new draft in review", true, [withdraw]],
+      [ContentCreator, "edit draft", true, [submitForReview]],
+      [ContentCreator, "edit draft in review", true, [withdraw]],
+      // A non-author with no reviewer role sees nothing
+      [ContentCreator, "new draft", false, []],
+      [ContentCreator, "new draft in review", false, []],
+      [User, "new draft", false, []],
+      [User, "new draft in review", false, []],
+      [User, "edit draft", true, [submitForReview]],
+    ])("%s, %s, author %s: %j", (role, state, isAuthor, expectedActions) => {
+      expect(renderActions([role], draftStates[state], isAuthor)).toEqual(
         expectedActions,
       );
     });
 
     it("offers Resubmit for review once changes were requested", () => {
       expect(
-        renderActions([ContentCreator], {
-          ...mockDroplet,
-          afterReview: "Please fix the quiz answers",
-        }),
+        renderActions(
+          [ContentCreator],
+          { ...mockDroplet, afterReview: "Please fix the quiz answers" },
+          true,
+        ),
       ).toEqual([["requestReview", "Resubmit for review"]]);
     });
 
     it("lets a Content Editor who is also a Content Creator submit their draft for review", () => {
       expect(
-        renderActions([ContentEditor, ContentCreator], mockDroplet),
+        renderActions([ContentEditor, ContentCreator], mockDroplet, true),
       ).toEqual([submitForReview]);
+      cleanup();
+      expect(
+        renderActions([ContentEditor, ContentCreator], mockDroplet, false),
+      ).toEqual([]);
     });
 
     it("gives an Admin who is also a Content Creator Publish instead of Submit for review", () => {
@@ -448,8 +486,6 @@ describe("Sidebar", () => {
     it("shows no action buttons on a published droplet", () => {
       expect(renderActions([SysAdmin], mockPublishedDroplet)).toEqual([]);
     });
-
-    const withdraw = ["withdrawReview", "Withdraw from review"];
 
     it.each<[string, AuthorizedUserRoleTitle[]]>([
       ["Content Creator", [ContentCreator]],
@@ -469,14 +505,14 @@ describe("Sidebar", () => {
       },
     );
 
-    it("a non-author Content Editor sees Publish and Request changes, not Withdraw", () => {
+    it("a non-author Content Editor sees Publish and Send feedback, not Withdraw or Request changes", () => {
       expect(
         renderActions(
           [ContentEditor],
           draftStates["new draft in review"],
           false,
         ),
-      ).toEqual([publish, requestChanges]);
+      ).toEqual([publishWithReview, sendFeedback]);
     });
 
     it("a Faculty author still sees Publish when the droplet is not in review", () => {

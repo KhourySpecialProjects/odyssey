@@ -62,6 +62,8 @@ const ALL_TAGS = [
   CACHE_TAGS.allGroups,
   CACHE_TAGS.allUserContent,
   CACHE_TAGS.allUserDashboards,
+  CACHE_TAGS.review(DRAFT_ID),
+  CACHE_TAGS.review(ORIGINAL_ID),
 ];
 
 const revalidated = () => mockedRevalidateTag.mock.calls.map(([tag]) => tag);
@@ -112,13 +114,16 @@ describe("publishDraftToOriginal: who may publish", () => {
     expect((await publish()).ok).toBe(true);
   });
 
-  it("allows an Editor on a draft that is in review", async () => {
+  it("refuses an Editor on a draft that is in review, with no request", async () => {
     mockedRequireRole.mockResolvedValue(
       authFixtures.as({ id: 99, roles: [ContentEditor] }),
     );
     mockedFetchAPI.mockResolvedValue([draftRow({ inReview: true })]);
 
-    expect((await publish()).ok).toBe(true);
+    const result = await publish();
+
+    expect(result).toEqual({ ok: false, error: "in_review", slug: null });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("refuses an Editor on a draft that is not in review, with no request or revalidation", async () => {
@@ -144,14 +149,14 @@ describe("publishDraftToOriginal: who may publish", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("refuses an author while the draft is in review, whatever their role (ODY-810)", async () => {
+  it("refuses an author while the draft is in review, whatever their role", async () => {
     mockedFetchAPI.mockResolvedValue([draftRow({ inReview: true })]);
     for (const roles of [[Faculty], [ContentEditor], [SysAdmin]]) {
       mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7, roles }));
 
       const result = await publish();
 
-      expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+      expect(result).toEqual({ ok: false, error: "in_review", slug: null });
     }
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
@@ -241,6 +246,30 @@ describe("publishDraftToOriginal: the request", () => {
 
     expect(result).toEqual({ ok: true, error: null, slug: "live-droplet" });
     expect(revalidated().sort()).toEqual([...ALL_TAGS].sort());
+  });
+
+  it("flushes both review tags on a 2xx and a 5xx, and on a 4xx neither", async () => {
+    const review = [
+      CACHE_TAGS.review(DRAFT_ID),
+      CACHE_TAGS.review(ORIGINAL_ID),
+    ];
+
+    await publish();
+    expect(revalidated()).toEqual(expect.arrayContaining(review));
+
+    mockedRevalidateTag.mockClear();
+    fetchMock.mockResolvedValue(
+      makeFetchResponse({ error: { message: "Boom" } }, 500),
+    );
+    await publish();
+    expect(revalidated()).toEqual(expect.arrayContaining(review));
+
+    mockedRevalidateTag.mockClear();
+    fetchMock.mockResolvedValue(
+      makeFetchResponse({ error: { message: "Nope" } }, 409),
+    );
+    await publish();
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
 
   it("returns Strapi's message and revalidates nothing on a 400", async () => {

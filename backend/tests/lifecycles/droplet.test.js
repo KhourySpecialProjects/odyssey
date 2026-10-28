@@ -329,21 +329,40 @@ describe('droplet reviewRound', () => {
     expect(await round(documentId)).toBe(1);
   });
 
-  it('ignores reviewRound over REST and bumps on REST inReview', async () => {
+  it('ignores a reviewRound sent over REST', async () => {
     const { documentId } = await create();
-    let res = await rest()
+    const res = await rest()
       .put(`/api/droplets/${documentId}`)
       .set(auth())
       .send({ data: { reviewRound: 50 } });
     expect(res.status).toBe(200);
     expect(await round(documentId)).toBe(0);
+  });
 
-    res = await rest()
+  it('rejects inReview over REST with 400 and writes nothing', async () => {
+    const { documentId } = await create();
+    const res = await rest()
       .put(`/api/droplets/${documentId}`)
       .set(auth())
       .send({ data: { inReview: true } });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe(
+      'inReview can only change through the review routes.'
+    );
+    const row = await strapi.documents(DROPLET_UID).findOne({ documentId });
+    expect(row.inReview).toBeFalsy();
+    expect(row.reviewRound).toBe(0);
+  });
+
+  it('still accepts other keys over REST', async () => {
+    const { documentId } = await create();
+    const name = unique('REST Other Key');
+    const res = await rest()
+      .put(`/api/droplets/${documentId}`)
+      .set(auth())
+      .send({ data: { name } });
     expect(res.status).toBe(200);
-    expect(await round(documentId)).toBe(1);
+    expect(res.body.data.name).toBe(name);
   });
 
   it('bumps and still notifies Slack on { status: edit, inReview: true }', async () => {

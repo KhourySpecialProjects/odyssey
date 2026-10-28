@@ -21,6 +21,8 @@ const mockedFetchAPI = jest.mocked(fetchAPI);
 const reviewer = () =>
   authFixtures.as({ id: 9, roles: [AuthorizedUserRoleTitle.ContentEditor] });
 const author = () => authFixtures.as({ id: 5, roles: [] });
+const authorWith = (role: AuthorizedUserRoleTitle) =>
+  authFixtures.as({ id: 5, roles: [role] });
 const stranger = () => authFixtures.as({ id: 6, roles: [] });
 
 type Cfg = {
@@ -29,6 +31,7 @@ type Cfg = {
     populate?: Record<string, any>;
     pagination?: { page?: number; pageSize?: number };
     sort?: string[];
+    fields?: string[];
   };
   next?: { tags?: string[] };
   cache?: string;
@@ -42,6 +45,7 @@ function arrange(opts: {
   review?: object | null;
   comments?: number;
   scores?: number;
+  scoreRows?: object[];
   droplets?: object[];
 }) {
   const review =
@@ -57,7 +61,9 @@ function arrange(opts: {
     }
     if (path === "/reviews") return review ? [review] : [];
     if (path === "/review-comments") return slice(opts.comments ?? 0);
-    if (path === "/review-scores") return slice(opts.scores ?? 0);
+    if (path === "/review-scores") {
+      return opts.scoreRows ?? slice(opts.scores ?? 0);
+    }
     return [];
   }) as any);
 }
@@ -142,17 +148,80 @@ describe("getReviewForDroplet", () => {
     expect(calls[0][1].urlParams?.pagination?.pageSize).toBe(100);
   });
 
-  it("gives a reviewer the latest review with no state filter or ownership fetch", async () => {
+  it("gives a reviewer the latest review with no state filter", async () => {
     mockedRequireRole.mockResolvedValue(reviewer());
     arrange({ review: { id: 70, round: 2, state: "open" }, scores: 101 });
     const result = await getReviewForDroplet(3);
     expect(result.ok && result.data?.state).toBe("open");
     expect(result.ok && result.data?.scores).toHaveLength(101);
-    expect(callsTo("/droplets")).toHaveLength(0);
     const cfg = callsTo("/reviews")[0][1];
     expect(cfg.urlParams?.filters?.state).toBeUndefined();
     expect(cfg.urlParams?.sort).toEqual(["round:desc", "id:desc"]);
     expect(cfg.urlParams?.pagination?.pageSize).toBe(1);
+  });
+
+  it("hides AI fields and unconfirmed scores from an author", async () => {
+    mockedRequireRole.mockResolvedValue(author());
+    arrange({
+      scoreRows: [{ id: 1, criterionName: "Clarity", value: 4, key: "k" }],
+    });
+    const result = await getReviewForDroplet(3);
+    const cfg = callsTo("/review-scores")[0][1];
+    expect(cfg.urlParams?.filters?.value).toEqual({ $notNull: true });
+    expect(cfg.urlParams?.fields).not.toContain("aiValue");
+    expect(cfg.urlParams?.fields).not.toContain("aiRationale");
+    expect(cfg.urlParams?.fields).toContain("value");
+    expect(result.ok && result.data?.scores?.[0]).toMatchObject({
+      value: 4,
+      aiValue: null,
+      aiRationale: null,
+    });
+  });
+
+  it("still gives a reviewer AI fields and unconfirmed scores", async () => {
+    mockedRequireRole.mockResolvedValue(reviewer());
+    arrange({ scores: 1 });
+    await getReviewForDroplet(3);
+    const cfg = callsTo("/review-scores")[0][1];
+    expect(cfg.urlParams?.filters?.value).toBeUndefined();
+    expect(cfg.urlParams?.fields).toEqual(
+      expect.arrayContaining(["aiValue", "aiRationale", "value"]),
+    );
+  });
+
+  it.each([
+    ["Content Editor", AuthorizedUserRoleTitle.ContentEditor],
+    ["System Admin", AuthorizedUserRoleTitle.SysAdmin],
+    ["Faculty", AuthorizedUserRoleTitle.Faculty],
+  ])("gives a %s author the author-safe view", async (_n, role) => {
+    mockedRequireRole.mockResolvedValue(authorWith(role));
+    arrange({
+      scoreRows: [{ id: 1, criterionName: "Clarity", value: 4, key: "k" }],
+    });
+    const result = await getReviewForDroplet(3);
+    expect(callsTo("/droplets")).toHaveLength(1);
+    expect(callsTo("/reviews")[0][1].urlParams?.filters?.state).toEqual({
+      $in: ["sent", "published"],
+    });
+    const cfg = callsTo("/review-scores")[0][1];
+    expect(cfg.urlParams?.filters?.value).toEqual({ $notNull: true });
+    expect(cfg.urlParams?.fields).not.toContain("aiValue");
+    expect(cfg.urlParams?.fields).not.toContain("aiRationale");
+    expect(result.ok && result.data?.scores?.[0]).toMatchObject({
+      aiValue: null,
+      aiRationale: null,
+    });
+  });
+
+  it("still gives a non-author Content Editor open reviews and AI fields", async () => {
+    mockedRequireRole.mockResolvedValue(reviewer());
+    arrange({ scoreRows: [{ id: 1, aiValue: 3, aiRationale: "r" }] });
+    const result = await getReviewForDroplet(3);
+    expect(callsTo("/reviews")[0][1].urlParams?.filters?.state).toBeUndefined();
+    expect(callsTo("/review-scores")[0][1].urlParams?.fields).toContain(
+      "aiValue",
+    );
+    expect(result.ok && result.data?.scores?.[0]).toMatchObject({ aiValue: 3 });
   });
 
   it("tags reads with the droplet tag and never sets cache", async () => {

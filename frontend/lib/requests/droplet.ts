@@ -27,6 +27,7 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -439,9 +440,7 @@ async function applyDropletUpdate(
       ...(data.description !== undefined && { description: data.description }),
       ...(data.overview !== undefined && { overview: data.overview }),
       ...relationData,
-      ...(data.inReview !== undefined && { inReview: data.inReview }),
       ...(data.status !== undefined && { status: data.status }),
-      ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
     };
 
     dataToSend.regenerateSlug = options.regenerateSlug;
@@ -1215,19 +1214,6 @@ function strapiErrorMessage(body: any, fallback: string): string {
 const PUBLISH_UNCONFIRMED =
   "Publishing could not be confirmed. Reload to check whether it went through.";
 
-/** Flushes every cache a publish can change. */
-function revalidatePublishedEdit() {
-  revalidateTag(CACHE_TAGS.authors);
-  revalidateTag(CACHE_TAGS.droplets);
-  revalidateTag(CACHE_TAGS.lesson);
-  revalidateTag(CACHE_TAGS.playlists);
-  revalidateTag(CACHE_TAGS.voyages);
-  revalidateTag(CACHE_TAGS.allEnrollments);
-  revalidateTag(CACHE_TAGS.allGroups);
-  revalidateTag(CACHE_TAGS.allUserContent);
-  revalidateTag(CACHE_TAGS.allUserDashboards);
-}
-
 /**
  * Publishes an [EDIT] draft over the live droplet it was cloned from (ODY-800).
  * The role check and one POST live here; the whole publish is one Strapi transaction.
@@ -1264,6 +1250,12 @@ export async function publishDraftToOriginal(
   }
 
   const draftDocumentId = encodeURIComponent(draft.documentId);
+  // The reviews move onto the live droplet; the check above tied the two ids together.
+  const flushCaches = () => {
+    revalidatePublishedEdit();
+    revalidateTag(CACHE_TAGS.review(draft.id));
+    revalidateTag(CACHE_TAGS.review(originalDropletId));
+  };
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/droplets/${draftDocumentId}/publish-edit`,
@@ -1282,7 +1274,7 @@ export async function publishDraftToOriginal(
     const body = await response.json().catch(() => null);
 
     // A 4xx wrote nothing, so only success and server errors flush caches.
-    if (response.ok || response.status >= 500) revalidatePublishedEdit();
+    if (response.ok || response.status >= 500) flushCaches();
     if (!response.ok) {
       // A 5xx with no Strapi message (a gateway page) may still have committed.
       const unconfirmed = response.status >= 500 && !body?.error?.message;
@@ -1301,7 +1293,7 @@ export async function publishDraftToOriginal(
   } catch (err) {
     // The request may have committed before the connection failed.
     console.error("publishDraftToOriginal failed", err);
-    revalidatePublishedEdit();
+    flushCaches();
     return { ok: false, error: PUBLISH_UNCONFIRMED, slug: null };
   }
 }

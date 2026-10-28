@@ -7,6 +7,13 @@ const {
   ENROLLMENT_UID,
   USER_UID,
   unique,
+  REVIEW_UID,
+  REVIEW_COMMENT_UID,
+  REVIEW_SCORE_UID,
+  REVIEW_CRITERION_UID,
+  reviewData,
+  reviewCommentData,
+  reviewScoreData,
   dropletData,
   lessonData,
   userData,
@@ -210,10 +217,19 @@ async function snapshot({
       viewedLessons: { fields: ['id'] },
     },
   });
+  const reviews = await strapi.documents(REVIEW_UID).findMany({
+    filters: { droplet: { id: { $in: [original.id, draft.id] } } },
+    populate: {
+      droplet: { fields: ['id'] },
+      comments: { populate: { lesson: { fields: ['id'] } } },
+      scores: { populate: { lesson: { fields: ['id'] } } },
+    },
+  });
   return json({
     original: await readDroplet(original.id),
     draft: await readDroplet(draft.id),
     enrollments: enrollments.sort(byId),
+    reviews: reviews.sort(byId),
   });
 }
 
@@ -807,6 +823,16 @@ describe('publish-edit steps outside a transaction', () => {
   );
 });
 
+describe('moveReviewsToLive outside a transaction', () => {
+  it('throws before touching anything', async () => {
+    const { moveReviewsToLive } = require('../../dist/src/lib/review-move');
+
+    await expect(
+      moveReviewsToLive({ draft: { id: 1 }, original: {} }, new Map()),
+    ).rejects.toThrow(/moveReviewsToLive must run inside strapi.db.transaction/);
+  });
+});
+
 describe('concurrent publishes', () => {
   it('lets exactly one of two publishes of the same draft win', async () => {
     const s = await setup();
@@ -820,5 +846,137 @@ describe('concurrent publishes', () => {
     expect(statuses).toEqual([200, 404]);
     const after = await readDroplet(s.original.id);
     expect(after.lessons).toHaveLength(s.draftLessons.length);
+  });
+});
+
+describe('reviews on publish-edit', () => {
+  const activeCriterion = async () =>
+    (await strapi.documents(REVIEW_CRITERION_UID).findMany({
+      filters: { active: true },
+      sort: ['order:asc'],
+    }))[0];
+
+  /** A draft review with a lesson comment, an overview comment, a lesson score and an Overall score. */
+  async function addReview(s, { state = 'sent' } = {}) {
+    const criterion = await activeCriterion();
+    const reviewer = await strapi.documents(USER_UID).create({ data: userData() });
+    const review = await strapi.documents(REVIEW_UID).create({
+      data: reviewData({
+        key: `${s.draft.id}:${reviewer.id}:1`,
+        state,
+        droplet: s.draft.documentId,
+        reviewer: reviewer.documentId,
+      }),
+    });
+    const lessonComment = await strapi.documents(REVIEW_COMMENT_UID).create({
+      data: reviewCommentData({
+        review: review.documentId,
+        lesson: s.draftLessons[0].documentId,
+      }),
+    });
+    const overviewComment = await strapi.documents(REVIEW_COMMENT_UID).create({
+      data: reviewCommentData({
+        field: 'overview',
+        anchor: {},
+        review: review.documentId,
+      }),
+    });
+    const lessonScore = await strapi.documents(REVIEW_SCORE_UID).create({
+      data: reviewScoreData({
+        key: `${review.id}:${s.draftLessons[0].id}:${criterion.id}`,
+        review: review.documentId,
+        lesson: s.draftLessons[0].documentId,
+        criterion: criterion.documentId,
+        value: 4,
+      }),
+    });
+    const overallScore = await strapi.documents(REVIEW_SCORE_UID).create({
+      data: reviewScoreData({
+        key: `${review.id}:overall:${criterion.id}`,
+        review: review.documentId,
+        criterion: criterion.documentId,
+        value: 5,
+      }),
+    });
+    return {
+      review,
+      lessonComment,
+      overviewComment,
+      lessonScore,
+      overallScore,
+      criterion,
+    };
+  }
+
+  it('moves the reviews, comments and scores onto the live droplet and lessons', async () => {
+    const s = await setup();
+    const r = await addReview(s);
+
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+
+    expect(res.status).toBe(200);
+    const review = await strapi.documents(REVIEW_UID).findOne({
+      documentId: r.review.documentId,
+      populate: { droplet: { fields: ['id'] } },
+    });
+    expect(review.droplet.id).toBe(s.original.id);
+    expect(review.state).toBe('sent');
+    expect(review.key).toBe(r.review.key);
+
+    const liveIntro = s.liveLessons[0];
+    const comment = await strapi.documents(REVIEW_COMMENT_UID).findOne({
+      documentId: r.lessonComment.documentId,
+      populate: { lesson: { fields: ['id', 'blocksV2'] } },
+    });
+    expect(comment.lesson.id).toBe(liveIntro.id);
+    expect(comment.lesson.blocksV2.map((b) => b.id)).toContain('bn-1');
+    const overview = await strapi.documents(REVIEW_COMMENT_UID).findOne({
+      documentId: r.overviewComment.documentId,
+      populate: { lesson: { fields: ['id'] } },
+    });
+    expect(overview.lesson).toBeNull();
+
+    const score = await strapi.documents(REVIEW_SCORE_UID).findOne({
+      documentId: r.lessonScore.documentId,
+      populate: { lesson: { fields: ['id'] } },
+    });
+    expect(score.lesson.id).toBe(liveIntro.id);
+    expect(score.key).toBe(`${review.id}:${liveIntro.id}:${r.criterion.id}`);
+    const overall = await strapi
+      .documents(REVIEW_SCORE_UID)
+      .findOne({ documentId: r.overallScore.documentId });
+    expect(overall.key).toBe(r.overallScore.key);
+  });
+
+  it('refuses an in-review draft with 409 and changes nothing', async () => {
+    const s = await setup({ draftOverrides: { inReview: true } });
+    await addReview(s, { state: 'open' });
+    const before = await snapshot(s);
+
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.message).toMatch(/in review/);
+    expect(await snapshot(s)).toEqual(before);
+  });
+
+  it('rolls back the moved reviews when a score write fails', async () => {
+    const s = await setup();
+    await addReview(s);
+    const before = await snapshot(s);
+    const spy = failAfter(REVIEW_SCORE_UID, 'update');
+    const logSpy = jest.spyOn(strapi.log, 'error').mockImplementation(() => {});
+    try {
+      const res = await publish(s.draft.id, {
+        originalDropletId: s.original.id,
+      });
+      expect(spy).toHaveBeenCalled();
+      expect(res.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+      logSpy.mockRestore();
+    }
+
+    expect(await snapshot(s)).toEqual(before);
   });
 });

@@ -95,65 +95,41 @@ describeServerActionAuth("updateDroplet", {
 });
 
 describe("updateDroplet: status changes", () => {
-  it("lets author 7 submit when not in review", async () => {
+  it("sends no inReview or afterReview key on an allowed update", async () => {
     routeDroplet(false);
     mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
 
-    const result = await updateDroplet(
-      1,
-      { name: "N", inReview: true },
-      { regenerateSlug: false },
-    );
+    const result = await updateDroplet(1, { name: "N", description: "d" });
 
     expect(result).toMatchObject({ ok: true });
     expect(putBodies()).toEqual([
-      { name: "N", inReview: true, regenerateSlug: false },
+      { name: "N", description: "d", regenerateSlug: false },
     ]);
   });
 
-  it("lets author 7 withdraw while in review, sending only inReview", async () => {
-    routeDroplet(true);
-    mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
+  it.each([
+    ["Submit", { name: "N", inReview: true }],
+    ["Withdraw", { inReview: false }],
+    ["Request changes", { name: "N", inReview: false, afterReview: "x" }],
+    ["afterReview alone", { afterReview: "x" }],
+  ])("refuses %s at runtime, with no PUT", async (_n, data) => {
+    for (const inReview of [false, true]) {
+      routeDroplet(inReview);
+      mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
 
-    const result = await updateDroplet(1, { inReview: false });
+      const result = await updateDroplet(1, data as never);
 
-    expect(result).toMatchObject({ ok: true });
-    expect(putBodies()).toEqual([{ inReview: false, regenerateSlug: false }]);
-  });
-
-  it("refuses a Withdraw that regenerates the slug, with no PUT", async () => {
-    routeDroplet(true);
-    mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
-
-    const result = await updateDroplet(
-      1,
-      { inReview: false },
-      { regenerateSlug: true },
-    );
-
-    expect(result).toEqual({ ok: false, error: "in_review", data: null });
+      expect(result).toEqual({ ok: false, error: "forbidden", data: null });
+    }
     expect(putBodies()).toEqual([]);
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });
 
   it("refuses status from a creator author and sends no PUT", async () => {
     routeDroplet(true);
     mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
 
-    const result = await updateDroplet(1, {
-      name: "N",
-      inReview: false,
-      status: "published",
-    });
-
-    expect(result).toEqual({ ok: false, error: "forbidden", data: null });
-    expect(putBodies()).toEqual([]);
-  });
-
-  it("refuses afterReview from a creator author", async () => {
-    routeDroplet(true);
-    mockedRequireRole.mockResolvedValue(as(7, Role.ContentCreator));
-
-    const result = await updateDroplet(1, { afterReview: "x" });
+    const result = await updateDroplet(1, { name: "N", status: "published" });
 
     expect(result).toEqual({ ok: false, error: "forbidden", data: null });
     expect(putBodies()).toEqual([]);
@@ -178,57 +154,36 @@ describe("updateDroplet: status changes", () => {
     routeDroplet(true);
     mockedRequireRole.mockResolvedValue(as(7, role));
 
-    const requestChanges = await updateDroplet(1, {
-      name: "N",
-      inReview: false,
-      afterReview: "x",
-    });
     const publish = await updateDroplet(1, {
       name: "N",
       status: "published",
-      inReview: false,
     });
     const direct = await publishDraftToOriginal(1, 2);
 
-    expect(requestChanges).toEqual({
-      ok: false,
-      error: "forbidden",
-      data: null,
-    });
     expect(publish).toEqual({ ok: false, error: "forbidden", data: null });
     expect(direct).toEqual({ ok: false, error: "forbidden", slug: null });
     expect(putBodies()).toEqual([]);
-
-    const withdraw = await updateDroplet(1, { inReview: false });
-    expect(withdraw).toMatchObject({ ok: true });
-    expect(putBodies()).toEqual([{ inReview: false, regenerateSlug: false }]);
   });
 
-  it("lets a non-author Editor request changes and publish in review", async () => {
+  it("refuses a non-author Editor's publish in review, with no PUT", async () => {
     routeDroplet(true);
     mockedRequireRole.mockResolvedValue(as(9, Role.ContentEditor));
 
-    const requestChanges = await updateDroplet(1, {
-      name: "N",
-      inReview: false,
-      afterReview: "fix",
-    });
-    const publish = await updateDroplet(1, {
-      name: "N",
-      status: "published",
-      inReview: false,
-    });
+    const publish = await updateDroplet(1, { name: "N", status: "published" });
 
-    expect(requestChanges).toMatchObject({ ok: true });
-    expect(publish).toMatchObject({ ok: true });
+    expect(publish).toEqual({ ok: false, error: "forbidden", data: null });
+    expect(putBodies()).toEqual([]);
+  });
+
+  it("lets a non-author Editor edit content in review", async () => {
+    routeDroplet(true);
+    mockedRequireRole.mockResolvedValue(as(9, Role.ContentEditor));
+
+    const result = await updateDroplet(1, { description: "fix" });
+
+    expect(result).toMatchObject({ ok: true });
     expect(putBodies()).toEqual([
-      { name: "N", inReview: false, afterReview: "fix", regenerateSlug: false },
-      {
-        name: "N",
-        inReview: false,
-        status: "published",
-        regenerateSlug: false,
-      },
+      { description: "fix", regenerateSlug: false },
     ]);
   });
 
@@ -351,7 +306,7 @@ describe("publishDraftToOriginal auth", () => {
   });
 
   it("refuses a non-reviewer", async () => {
-    draft();
+    draft({ inReview: false });
     mockedRequireRole.mockResolvedValue(as(9, Role.ContentCreator));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -360,9 +315,19 @@ describe("publishDraftToOriginal auth", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("publishes for a non-author Editor in review", async () => {
+  it("refuses a non-author Editor while in review, with no POST", async () => {
     draft();
     mockedRequireRole.mockResolvedValue(as(9, Role.ContentEditor));
+
+    const result = await publishDraftToOriginal(1, 2);
+
+    expect(result).toEqual({ ok: false, error: "in_review", slug: null });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("publishes for a non-author Admin outside review", async () => {
+    draft({ inReview: false });
+    mockedRequireRole.mockResolvedValue(as(9, Role.SysAdmin));
     fetchMock.mockResolvedValue(makeFetchResponse({ data: { slug: "live" } }));
 
     const result = await publishDraftToOriginal(1, 2);
@@ -380,7 +345,7 @@ describe("publishDraftToOriginal auth", () => {
 
     const result = await publishDraftToOriginal(1, 2);
 
-    expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+    expect(result).toEqual({ ok: false, error: "in_review", slug: null });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });

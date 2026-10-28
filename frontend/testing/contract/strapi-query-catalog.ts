@@ -441,9 +441,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
             postrequisiteIds: [3],
             lessons: [{ id: 1 }],
             datasets: [1] as never,
-            inReview: false,
             status: "draft",
-            afterReview: "",
           },
           { regenerateSlug: false },
         ),
@@ -821,6 +819,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
 };
 
 const WRITE = "write: not in curated set";
+const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
@@ -921,6 +920,10 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",
     acceptAiScores: "custom review-score accept-ai route (ODY-803)",
+    submitForReview: REVIEW_WORKFLOW,
+    withdrawFromReview: REVIEW_WORKFLOW,
+    sendFeedback: REVIEW_WORKFLOW,
+    publishWithReview: REVIEW_WORKFLOW,
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

@@ -27,6 +27,7 @@ const user = (id: number, roles: Role[]) => ({
 
 const droplet = (over: Record<string, unknown> = {}) => ({
   id: 1,
+  documentId: "doc1",
   name: "N",
   inReview: false,
   status: "draft",
@@ -42,27 +43,27 @@ beforeEach(() => {
 });
 
 describe("classifyDropletChange", () => {
+  const base = {
+    status: false,
+    afterReview: false,
+    content: false,
+    inReview: undefined,
+  };
   it.each([
-    [{}, { status: false, content: false, inReview: undefined }],
-    [{ name: "N" }, { status: false, content: false, inReview: undefined }],
-    [{ name: "Other" }, { status: false, content: true, inReview: undefined }],
-    [
-      { name: undefined, description: undefined },
-      { status: false, content: false, inReview: undefined },
-    ],
-    [
-      { description: "x" },
-      { status: false, content: true, inReview: undefined },
-    ],
-    [{ inReview: true }, { status: false, content: false, inReview: true }],
-    [{ inReview: false }, { status: false, content: false, inReview: false }],
+    [{}, base],
+    [{ name: "N" }, base],
+    [{ name: "Other" }, { ...base, content: true }],
+    [{ name: undefined, description: undefined }, base],
+    [{ description: "x" }, { ...base, content: true }],
+    [{ inReview: true }, { ...base, inReview: true }],
+    [{ inReview: false }, { ...base, inReview: false }],
     [
       { name: "N", inReview: false, status: "published" },
-      { status: true, content: false, inReview: false },
+      { ...base, status: true, inReview: false },
     ],
     [
       { inReview: false, afterReview: "x" },
-      { status: true, content: false, inReview: false },
+      { ...base, afterReview: true, inReview: false },
     ],
   ])("classifies %j", (data, expected) => {
     expect(classifyDropletChange(data as never, { name: "N" })).toEqual(
@@ -72,24 +73,18 @@ describe("classifyDropletChange", () => {
 });
 
 describe("regenerateSlug", () => {
-  it("counts a status-only change as content when it regenerates the slug", () => {
+  it("counts a slug regeneration as a content change", () => {
     expect(
-      classifyDropletChange(
-        { inReview: false },
-        { name: "N" },
-        { regenerateSlug: true },
-      ),
-    ).toEqual({ status: false, content: true, inReview: false });
-    expect(
-      classifyDropletChange(
-        { inReview: false },
-        { name: "N" },
-        { regenerateSlug: false },
-      ),
-    ).toEqual({ status: false, content: false, inReview: false });
+      classifyDropletChange({}, { name: "N" }, { regenerateSlug: true }),
+    ).toEqual({
+      status: false,
+      afterReview: false,
+      content: true,
+      inReview: undefined,
+    });
   });
 
-  it("refuses an author's Withdraw that regenerates the slug", async () => {
+  it("refuses an in-review author's slug regeneration", async () => {
     mockFetch.mockResolvedValue([stored({ inReview: true })]);
     const author = user(7, [Role.ContentCreator]) as never;
 
@@ -97,7 +92,7 @@ describe("regenerateSlug", () => {
       await checkDropletUpdate(
         author,
         1,
-        { inReview: false },
+        { name: "N" },
         { regenerateSlug: true },
       ),
     ).toEqual({ ok: false, error: "in_review" });
@@ -105,7 +100,7 @@ describe("regenerateSlug", () => {
       await checkDropletUpdate(
         author,
         1,
-        { inReview: false },
+        { name: "N" },
         { regenerateSlug: false },
       ),
     ).toEqual({ ok: true });
@@ -118,7 +113,7 @@ describe("regenerateSlug", () => {
       await checkDropletUpdate(
         user(9, [Role.ContentEditor]) as never,
         1,
-        { inReview: false },
+        { name: "N" },
         { regenerateSlug: true },
       ),
     ).toEqual({ ok: true });
@@ -132,7 +127,14 @@ describe("loaders", () => {
     expect(mockFetch).toHaveBeenCalledWith("/droplets", {
       urlParams: {
         filters: { id: { $eq: 1 } },
-        fields: ["id", "name", "inReview", "status", "originalDropletId"],
+        fields: [
+          "id",
+          "documentId",
+          "name",
+          "inReview",
+          "status",
+          "originalDropletId",
+        ],
         populate: { authorized_users: { fields: ["id"] } },
         pagination: { pageSize: 1, page: 1 },
       },
@@ -140,8 +142,10 @@ describe("loaders", () => {
     });
     expect(result).toEqual({
       id: 1,
+      documentId: "doc1",
       name: "N",
       inReview: false,
+      status: "draft",
       originalDropletId: null,
       ownerIds: [7],
     });
@@ -161,7 +165,14 @@ describe("loaders", () => {
         fields: ["id"],
         populate: {
           droplets: {
-            fields: ["id", "name", "inReview", "status", "originalDropletId"],
+            fields: [
+              "id",
+              "documentId",
+              "name",
+              "inReview",
+              "status",
+              "originalDropletId",
+            ],
             populate: { authorized_users: { fields: ["id"] } },
           },
         },
@@ -187,7 +198,14 @@ describe("loaders", () => {
         fields: ["id"],
         populate: {
           droplet: {
-            fields: ["id", "name", "inReview", "status", "originalDropletId"],
+            fields: [
+              "id",
+              "documentId",
+              "name",
+              "inReview",
+              "status",
+              "originalDropletId",
+            ],
             populate: { authorized_users: { fields: ["id"] } },
           },
         },
@@ -211,6 +229,31 @@ describe("checkDropletUpdate", () => {
     mockFetch.mockResolvedValue([stored(over)]);
     return checkDropletUpdate(u as never, 1, data as never);
   };
+  const FORBIDDEN = { ok: false, error: "forbidden" };
+
+  describe.each([
+    ["Creator author", 7, Role.ContentCreator],
+    ["Editor author", 7, Role.ContentEditor],
+    ["Faculty author", 7, Role.Faculty],
+    ["SysAdmin author", 7, Role.SysAdmin],
+    ["non-author Editor", 9, Role.ContentEditor],
+    ["non-author Admin", 9, Role.SysAdmin],
+  ])("%s", (_n, id, role) => {
+    const u = user(id, [role]);
+    it.each([
+      ["inReview: true", { inReview: true }],
+      ["inReview: false", { inReview: false }],
+      ["afterReview", { afterReview: "x" }],
+    ])("refuses %s in or out of review", async (_k, data) => {
+      expect(await run(u, data)).toEqual(FORBIDDEN);
+      expect(await run(u, data, { inReview: true })).toEqual(FORBIDDEN);
+    });
+    it("refuses status in review", async () => {
+      expect(await run(u, { status: "published" }, { inReview: true })).toEqual(
+        FORBIDDEN,
+      );
+    });
+  });
 
   describe("Content Creator author", () => {
     const creator = user(7, [Role.ContentCreator]);
@@ -219,37 +262,9 @@ describe("checkDropletUpdate", () => {
         await run(creator, { description: "x" }, { inReview: true }),
       ).toEqual({ ok: false, error: "in_review" });
     });
-    it("in review: Withdraw is ok", async () => {
-      expect(
-        await run(creator, { inReview: false }, { inReview: true }),
-      ).toEqual({ ok: true });
-    });
-    it("in review: status and afterReview are forbidden", async () => {
-      expect(
-        await run(
-          creator,
-          { name: "N", inReview: false, status: "published" },
-          { inReview: true },
-        ),
-      ).toEqual({ ok: false, error: "forbidden" });
-      expect(
-        await run(creator, { afterReview: "x" }, { inReview: true }),
-      ).toEqual({ ok: false, error: "forbidden" });
-    });
-    it("not in review: content and Submit are ok, status forbidden", async () => {
+    it("not in review: content is ok, status forbidden", async () => {
       expect(await run(creator, { description: "x" })).toEqual({ ok: true });
-      expect(await run(creator, { name: "N", inReview: true })).toEqual({
-        ok: true,
-      });
-      expect(await run(creator, { status: "published" })).toEqual({
-        ok: false,
-        error: "forbidden",
-      });
-    });
-    it("in review: a repeated submit is harmless", async () => {
-      expect(
-        await run(creator, { inReview: true }, { inReview: true }),
-      ).toEqual({ ok: true });
+      expect(await run(creator, { status: "published" })).toEqual(FORBIDDEN);
     });
   });
 
@@ -258,26 +273,10 @@ describe("checkDropletUpdate", () => {
     ["Faculty", Role.Faculty],
     ["SysAdmin", Role.SysAdmin],
   ])("%s-author in review", (_n, role) => {
-    const author = user(7, [role]);
-    const inReview = { inReview: true };
     it("content gives in_review", async () => {
-      expect(await run(author, { overview: "x" }, inReview)).toEqual({
-        ok: false,
-        error: "in_review",
-      });
-    });
-    it("Withdraw is ok", async () => {
-      expect(await run(author, { inReview: false }, inReview)).toEqual({
-        ok: true,
-      });
-    });
-    it("publish and request changes are forbidden", async () => {
       expect(
-        await run(author, { status: "published", inReview: false }, inReview),
-      ).toEqual({ ok: false, error: "forbidden" });
-      expect(
-        await run(author, { inReview: false, afterReview: "x" }, inReview),
-      ).toEqual({ ok: false, error: "forbidden" });
+        await run(user(7, [role]), { overview: "x" }, { inReview: true }),
+      ).toEqual({ ok: false, error: "in_review" });
     });
   });
 
@@ -293,7 +292,7 @@ describe("checkDropletUpdate", () => {
   it("Editor-author not in review cannot set status", async () => {
     expect(
       await run(user(7, [Role.ContentEditor]), { status: "published" }),
-    ).toEqual({ ok: false, error: "forbidden" });
+    ).toEqual(FORBIDDEN);
   });
 
   describe("non-author Editor", () => {
@@ -302,25 +301,11 @@ describe("checkDropletUpdate", () => {
       expect(await run(editor, { description: "x" })).toEqual({ ok: true });
     });
     it("status is forbidden when not in review", async () => {
-      expect(await run(editor, { status: "published" })).toEqual({
-        ok: false,
-        error: "forbidden",
-      });
+      expect(await run(editor, { status: "published" })).toEqual(FORBIDDEN);
     });
-    it("status and request changes are ok in review", async () => {
+    it("content is ok in review", async () => {
       expect(
-        await run(
-          editor,
-          { status: "published", inReview: false },
-          { inReview: true },
-        ),
-      ).toEqual({ ok: true });
-      expect(
-        await run(
-          editor,
-          { inReview: false, afterReview: "x" },
-          { inReview: true },
-        ),
+        await run(editor, { description: "x" }, { inReview: true }),
       ).toEqual({ ok: true });
     });
   });
@@ -484,16 +469,19 @@ describe("checkPublishDraft", () => {
       await checkPublishDraft(user(9, [Role.ContentEditor]) as never, 1, 51),
     ).toEqual({ ok: false, error: "forbidden" });
   });
-  it("refuses an author", async () => {
+  it("gives in_review to an author and to a non-author Editor", async () => {
     mockFetch.mockResolvedValue([droplet(inReviewDraft)]);
     expect(
       await checkPublishDraft(user(7, [Role.SysAdmin]) as never, 1, 50),
-    ).toEqual({ ok: false, error: "forbidden" });
-  });
-  it("allows a non-author Editor in review", async () => {
-    mockFetch.mockResolvedValue([droplet(inReviewDraft)]);
+    ).toEqual({ ok: false, error: "in_review" });
     expect(
       await checkPublishDraft(user(9, [Role.ContentEditor]) as never, 1, 50),
+    ).toEqual({ ok: false, error: "in_review" });
+  });
+  it("allows a non-author Admin outside review", async () => {
+    mockFetch.mockResolvedValue([droplet({ originalDropletId: 50 })]);
+    expect(
+      await checkPublishDraft(user(9, [Role.SysAdmin]) as never, 1, 50),
     ).toEqual({ ok: true });
   });
   it("fails closed", async () => {

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { moveReviewsToLive } from './review-move';
 import {
   planLessonSync,
   type LessonSyncPlan,
@@ -32,7 +33,7 @@ const slugPlaceholder = () => `publish-${randomUUID()}`;
 export const DRAFT_GONE_MESSAGE =
   'This draft no longer exists. It may already have been published.';
 
-function assertInTransaction(step: string): void {
+export function assertInTransaction(step: string): void {
   if (!strapi.db.inTransaction()) {
     throw new Error(`${step} must run inside strapi.db.transaction()`);
   }
@@ -79,7 +80,7 @@ const lessonsPopulate = {
 };
 
 /** Locks a droplet row until the transaction ends (no-op on SQLite). */
-async function lockDroplet(id: number): Promise<void> {
+export async function lockDroplet(id: number): Promise<void> {
   await strapi.db
     .queryBuilder(DROPLET_UID)
     .select(['id'])
@@ -121,6 +122,7 @@ export async function preparePublishEdit(input: {
       tags: { fields: ['id'] },
       prerequisites: { fields: ['id'] },
       postrequisites: { fields: ['id'] },
+      authorized_users: { fields: ['id'] },
       learningObjectives: true,
       nextSteps: true,
       lessons: lessonsPopulate,
@@ -328,7 +330,14 @@ export async function publishEdit(input: {
 }): Promise<PublishEditSummary> {
   return strapi.db.transaction(async () => {
     const ctx = await preparePublishEdit(input);
-    const { counts } = await applyPublishEdit(ctx);
+    if (ctx.draft.inReview === true) {
+      throw new PublishEditError(
+        409,
+        'This draft is in review. Publish it from the review, or withdraw it first.',
+      );
+    }
+    const { lessonMap, counts } = await applyPublishEdit(ctx);
+    await moveReviewsToLive(ctx, lessonMap);
     await deleteEditDraft(ctx);
     const { enrollmentsMoved, ...lessons } = counts;
     return {
