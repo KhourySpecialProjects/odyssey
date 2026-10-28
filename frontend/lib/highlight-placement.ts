@@ -115,14 +115,20 @@ function place(
     if (found === OUTDATED) return null;
     const block = blocks.find(({ id }) => String(id) === found.blockId);
     if (!block) return null;
-    if (
-      found.exact &&
-      !unmoved(block, found.start, found.end) &&
-      !isUnique(blocks, context.quote) &&
-      contextAround(block.text, found.start, found.end, context) <
-        Math.min(MIN_CONTEXT, context.prefix.length + context.suffix.length)
-    ) {
-      return null;
+    if (found.exact && !unmoved(block, found.start, found.end)) {
+      // A whole-block highlight has no surroundings to compare, so the match
+      // must be a whole block too, else it's only the same word elsewhere
+      const wholeBlock = found.start === 0 && found.end === block.text.length;
+      const noContext = !context.prefix && !context.suffix;
+      if (noContext && !wholeBlock) return null;
+      if (
+        !noContext &&
+        !isUnique(blocks, context.quote) &&
+        contextAround(block.text, found.start, found.end, context) <
+          Math.min(MIN_CONTEXT, context.prefix.length + context.suffix.length)
+      ) {
+        return null;
+      }
     }
     return at(block, found.start, found.end, !found.exact);
   }

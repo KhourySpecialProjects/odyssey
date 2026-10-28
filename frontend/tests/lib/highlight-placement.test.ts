@@ -140,6 +140,29 @@ describe("placeHighlights", () => {
       ]);
     });
 
+    it("detaches a whole-block highlight whose block was deleted, not moving it onto its word elsewhere", () => {
+      const highlight = highlightOn("Joins", "Joins", { blockId: 9 });
+      const blocks = [
+        { id: 10, text: INTRO },
+        { id: 11, text: "Joins are used a lot." },
+      ];
+
+      expect(placeHighlights([highlight], blocks)).toEqual({
+        placed: [],
+        detached: [highlight],
+      });
+    });
+
+    it("still follows a whole-block highlight to the same block under a new id", () => {
+      const highlight = highlightOn("Joins", "Joins", { blockId: 9 });
+      const blocks = [
+        { id: 10, text: "Count the rows first." },
+        { id: 11, text: "Joins" },
+      ];
+
+      expect(placedText(blocks, [highlight])).toEqual(["Joins"]);
+    });
+
     it("moves a short highlight to the only copy of its words left", () => {
       const highlight = highlightOn(DETAIL, "match");
       const blocks = [{ id: 11, text: "Rows that don't match are dropped." }];
