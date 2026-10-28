@@ -18,6 +18,7 @@ const EDGE = 10;
  * 3. otherwise, if the quoted text itself was edited but the text either
  *    side of it wasn't, the text now between them;
  * 4. otherwise "outdated". An anchor is never dropped silently.
+ * A selection across blocks is found by resolveAcross instead.
  */
 export function resolveAnchor(
   content: AnchorContent,
@@ -45,6 +46,9 @@ export function resolveAnchor(
   });
 
   const { quote, start, end } = anchor;
+  if (quote && anchor.endBlockId !== undefined) {
+    return resolveAcross(blocks, anchor, quote);
+  }
   if (!quote) {
     // A whole block
     return anchor.blockId !== undefined && home
@@ -81,6 +85,79 @@ export function resolveAnchor(
   return edited
     ? rangeIn(edited.block, edited.start, edited.end, false)
     : OUTDATED;
+}
+
+/**
+ * A selection across blocks (ODY-806): from its first block to its last, if
+ * the text between them is still the quote; otherwise the quote anywhere in
+ * the field's blocks joined with "\n", chosen by its surroundings and then
+ * by nearness to where it was; otherwise "outdated".
+ */
+function resolveAcross(
+  blocks: AnchorBlock[],
+  anchor: Anchor,
+  quote: string,
+): AnchorRange | typeof OUTDATED {
+  const { field, start = 0, end = 0 } = anchor;
+  const from = blocks.findIndex((block) => block.id === anchor.blockId);
+  const to = blocks.findIndex((block) => block.id === anchor.endBlockId);
+  if (from !== -1 && to > from) {
+    const text = blocks
+      .slice(from, to + 1)
+      .map((block) => block.text)
+      .join("\n");
+    const lastAt = text.length - blocks[to].text.length;
+    if (text.slice(start, lastAt + end) === quote) {
+      return {
+        field,
+        blockId: anchor.blockId,
+        endBlockId: anchor.endBlockId,
+        start,
+        end,
+        exact: true,
+      };
+    }
+  }
+
+  const text = blocks.map((block) => block.text).join("\n");
+  const offsets: number[] = [];
+  let at = 0;
+  for (const block of blocks) {
+    offsets.push(at);
+    at += block.text.length + 1;
+  }
+  const blockOf = (offset: number) => {
+    let i = offsets.length - 1;
+    while (i > 0 && offsets[i] > offset) i--;
+    return i;
+  };
+  const near = from === -1 ? 0 : offsets[from] + start;
+
+  let best: { start: number; score: number } | undefined;
+  for (
+    let found = text.indexOf(quote);
+    found !== -1;
+    found = text.indexOf(quote, found + 1)
+  ) {
+    const score =
+      contextMatch(text, found, found + quote.length, anchor) -
+      Math.abs(found - near) * 1e-6;
+    if (!best || score > best.score) best = { start: found, score };
+  }
+  if (!best) return OUTDATED;
+
+  const a = blockOf(best.start);
+  const z = blockOf(best.start + quote.length - 1);
+  const first = blocks[a];
+  const last = blocks[z];
+  return {
+    field,
+    ...(first.id !== undefined && { blockId: first.id }),
+    ...(z !== a && last.id !== undefined && { endBlockId: last.id }),
+    start: best.start - offsets[a],
+    end: best.start + quote.length - offsets[z],
+    exact: true,
+  };
 }
 
 /** How many characters of the saved prefix and suffix still sit either side */

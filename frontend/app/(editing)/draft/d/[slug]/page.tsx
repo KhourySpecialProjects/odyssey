@@ -28,8 +28,10 @@ import {
   REVIEW_FROZEN_ERROR,
   REVIEW_FROZEN_MESSAGE,
   isFrozenFor,
+  isReviewerFor,
 } from "@/lib/review-roles";
 import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
+import { OverviewReview } from "@/components/draft/review/overview-review";
 import { getAuthorNames } from "@/lib/requests/droplet-authors";
 import { IconLock } from "@tabler/icons-react";
 
@@ -198,7 +200,7 @@ export default async function Droplet({ params }: Props) {
     await updateDropletFunFact("", dropletId);
   };
 
-  return (
+  const editors = (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
         <div className="px-40">
@@ -294,4 +296,26 @@ export default async function Droplet({ params }: Props) {
       </div>
     </>
   );
+
+  // A reviewer comments on the Overview, or reads it, or edits it (ODY-806)
+  if (
+    droplet.status !== "published" &&
+    droplet.inReview &&
+    isReviewerFor(user.roles, true, isAuthor)
+  ) {
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+    return (
+      <OverviewReview
+        droplet={droplet}
+        authors={authors}
+        dropletId={droplet.id}
+      >
+        {editors}
+      </OverviewReview>
+    );
+  }
+
+  return editors;
 }

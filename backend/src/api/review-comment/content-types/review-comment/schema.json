@@ -29,7 +29,14 @@
         "blocks",
         "description",
         "overview",
-        "objective"
+        "objective",
+        "name",
+        "authors",
+        "nextSteps",
+        "prerequisites",
+        "postrequisites",
+        "funFact",
+        "datasets"
       ],
       "required": true
     },

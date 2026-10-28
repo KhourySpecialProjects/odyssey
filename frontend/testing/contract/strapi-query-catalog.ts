@@ -235,6 +235,12 @@ const REVIEW_WRITE_ROUTES = routes([
   ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
 ]);
 
+const MY_REVIEW_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+]);
+
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -723,6 +729,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       (m) => m.getReviewForDroplet(1),
       REVIEW_WRITE_ROUTES,
     ),
+    call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
   ]),
   "droplet-authors": defineModule<
     typeof import("@/lib/requests/droplet-authors")

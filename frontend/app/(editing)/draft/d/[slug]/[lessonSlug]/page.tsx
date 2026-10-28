@@ -63,6 +63,7 @@ export default async function Lesson({ params }: Props) {
       <LessonRenderer
         lesson={lesson}
         dropletSlug={p.slug}
+        dropletId={droplet?.id}
         datasets={droplet?.datasets ?? []}
       />
     </div>

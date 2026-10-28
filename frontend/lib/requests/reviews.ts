@@ -21,6 +21,7 @@ import {
   type ReviewScoreSave,
 } from "@/lib/validations/review";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { isReviewerFor } from "@/lib/review-roles";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -78,6 +79,18 @@ async function writeStrapi(
   };
 }
 
+type DropletAuthors = { authorized_users?: { id: number }[] | null };
+
+const AUTHORS_POPULATE = { authorized_users: { fields: ["id"] } };
+
+/** No author reviews their own droplet, whatever their role (ODY-810). */
+const isOwnDroplet = (droplet: DropletAuthors, user: AuthUser) =>
+  !isReviewerFor(
+    user.roles,
+    true,
+    (droplet.authorized_users ?? []).some((u) => u.id === user.id),
+  );
+
 /** The caller's documentId from the gate, else looked up by their id. */
 async function callerDocumentId(user: AuthUser): Promise<string> {
   return user.documentId ?? resolveDocumentId("authorized-users", user.id);
@@ -96,6 +109,29 @@ async function findReviewByKey(key: string): Promise<Review | null> {
   return rows?.[0] ?? null;
 }
 
+type DropletForReview = DropletAuthors & {
+  id: number;
+  documentId: string;
+  inReview?: boolean | null;
+  reviewRound?: number | null;
+};
+
+/** The droplet's review round and authors, never from cache. */
+async function findDropletForReview(
+  id: number,
+): Promise<DropletForReview | null> {
+  const droplets = await fetchAPI<DropletForReview[] | null>("/droplets", {
+    urlParams: {
+      filters: { id: { $eq: id } },
+      fields: ["inReview", "reviewRound"],
+      populate: AUTHORS_POPULATE,
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  return droplets?.[0] ?? null;
+}
+
 /** Returns the caller's review for the droplet's current round, opening it if needed. */
 export async function getOrOpenReview(
   dropletId: number,
@@ -107,24 +143,11 @@ export async function getOrOpenReview(
         return { ok: false, error: "invalid_input", data: null };
       }
 
-      const droplets = await fetchAPI<
-        | {
-            id: number;
-            documentId: string;
-            inReview?: boolean | null;
-            reviewRound?: number | null;
-          }[]
-        | null
-      >("/droplets", {
-        urlParams: {
-          filters: { id: { $eq: parsedId.data } },
-          fields: ["inReview", "reviewRound"],
-          pagination: { pageSize: 1 },
-        },
-        cache: "no-store",
-      });
-      const droplet = droplets?.[0];
+      const droplet = await findDropletForReview(parsedId.data);
       if (!droplet) return { ok: false, error: "not_found", data: null };
+      if (isOwnDroplet(droplet, user)) {
+        return { ok: false, error: "forbidden", data: null };
+      }
 
       const round = droplet.reviewRound ?? 0;
       if (round < 1) return { ok: false, error: "not_in_review", data: null };
@@ -166,7 +189,7 @@ type ReviewForWrite = {
   id: number;
   documentId: string;
   state: string;
-  droplet: { id: number } | null;
+  droplet: (DropletAuthors & { id: number }) | null;
   reviewer: { id: number } | null;
 };
 
@@ -174,7 +197,10 @@ type CommentForWrite = {
   id: number;
   documentId: string;
   author: { id: number } | null;
-  review: { state: string; droplet: { id: number } | null } | null;
+  review: {
+    state: string;
+    droplet: (DropletAuthors & { id: number }) | null;
+  } | null;
 };
 
 /** Looks a review up by id, never from cache. */
@@ -183,7 +209,10 @@ async function findReviewById(id: number): Promise<ReviewForWrite | null> {
     urlParams: {
       filters: { id: { $eq: id } },
       fields: ["state"],
-      populate: { droplet: { fields: ["id"] }, reviewer: { fields: ["id"] } },
+      populate: {
+        droplet: { fields: ["id"], populate: AUTHORS_POPULATE },
+        reviewer: { fields: ["id"] },
+      },
       pagination: { pageSize: 1 },
     },
     cache: "no-store",
@@ -201,7 +230,9 @@ async function findCommentById(id: number): Promise<CommentForWrite | null> {
         author: { fields: ["id"] },
         review: {
           fields: ["state"],
-          populate: { droplet: { fields: ["id"] } },
+          populate: {
+            droplet: { fields: ["id"], populate: AUTHORS_POPULATE },
+          },
         },
       },
       pagination: { pageSize: 1 },
@@ -215,27 +246,31 @@ type WritableComment =
   | { ok: true; comment: CommentForWrite; dropletId: number }
   | { ok: false; error: ReviewActionError };
 
-/** Fetches a comment and checks its review is open (and the author, if `ownOnly`). */
+/**
+ * Fetches a comment and checks its review is open, that the caller isn't an
+ * author of the droplet, and (with `ownOnly`) that they wrote the comment.
+ */
 async function loadWritableComment(
   id: number,
   user: AuthUser,
   { ownOnly }: { ownOnly: boolean },
 ): Promise<WritableComment> {
   const comment = await findCommentById(id);
-  const dropletId = comment?.review?.droplet?.id;
-  if (!comment || !comment.review || dropletId == null) {
+  const droplet = comment?.review?.droplet;
+  if (!comment || !comment.review || !droplet) {
     return { ok: false, error: "not_found" };
   }
   if (comment.review.state !== "open") {
     return { ok: false, error: "review_closed" };
   }
+  if (isOwnDroplet(droplet, user)) return { ok: false, error: "forbidden" };
   if (
     ownOnly &&
     !assertOwner(comment.author?.id, user, { bypassRoles: [] }).ok
   ) {
     return { ok: false, error: "forbidden" };
   }
-  return { ok: true, comment, dropletId };
+  return { ok: true, comment, dropletId: droplet.id };
 }
 
 /** Adds an anchored comment to the caller's own open review. */
@@ -256,7 +291,10 @@ export async function addComment(
       if (review.state !== "open") {
         return { ok: false, error: "review_closed", data: null };
       }
-      if (!assertOwner(review.reviewer?.id, user, { bypassRoles: [] }).ok) {
+      if (
+        !assertOwner(review.reviewer?.id, user, { bypassRoles: [] }).ok ||
+        isOwnDroplet(review.droplet, user)
+      ) {
         return { ok: false, error: "forbidden", data: null };
       }
 
@@ -525,6 +563,61 @@ async function fetchAllPages<T>(
   return all;
 }
 
+/** Every comment on a review, oldest first. */
+function fetchComments(
+  reviewId: number,
+  dropletId: number,
+): Promise<ReviewComment[]> {
+  return fetchAllPages<ReviewComment>(
+    "/review-comments",
+    {
+      filters: { review: { id: { $eq: reviewId } } },
+      fields: ["field", "anchor", "body", "resolvedAt", "createdAt"],
+      populate: {
+        lesson: { fields: ["name"] },
+        author: { fields: ["firstName", "lastName"] },
+      },
+      sort: ["id:asc"],
+    },
+    dropletId,
+  );
+}
+
+/**
+ * The caller's own review for the droplet's current round, with its comments
+ * (ODY-806), or null when they haven't opened one. Never opens a review.
+ */
+export async function getMyReview(
+  dropletId: number,
+): Promise<ReviewActionResult<Review | null>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const parsedId = idSchema.safeParse(dropletId);
+      if (!parsedId.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const droplet = await findDropletForReview(parsedId.data);
+      if (!droplet) return { ok: false, error: "not_found", data: null };
+      if (isOwnDroplet(droplet, user)) {
+        return { ok: false, error: "forbidden", data: null };
+      }
+
+      const round = droplet.reviewRound ?? 0;
+      if (round < 1) return { ok: true, error: null, data: null };
+
+      const review = await findReviewByKey(`${droplet.id}:${user.id}:${round}`);
+      if (!review) return { ok: true, error: null, data: null };
+
+      const comments = await fetchComments(review.id, droplet.id);
+      return { ok: true, error: null, data: { ...review, comments } };
+    } catch (error) {
+      console.error("getMyReview failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
 /** Latest review with comments and scores: any state for reviewers, sent/published for authors. */
 export async function getReviewForDroplet(
   dropletId: number,
@@ -574,19 +667,7 @@ export async function getReviewForDroplet(
       if (!review) return { ok: true, error: null, data: null };
 
       const [comments, scores] = await Promise.all([
-        fetchAllPages<ReviewComment>(
-          "/review-comments",
-          {
-            filters: { review: { id: { $eq: review.id } } },
-            fields: ["field", "anchor", "body", "resolvedAt", "createdAt"],
-            populate: {
-              lesson: { fields: ["name"] },
-              author: { fields: ["firstName", "lastName"] },
-            },
-            sort: ["id:asc"],
-          },
-          id,
-        ),
+        fetchComments(review.id, id),
         fetchAllPages<ReviewScore>(
           "/review-scores",
           {

@@ -11,6 +11,12 @@ export type Anchor = {
    * Classic-editor lessons (new ids on every save) and plain fields.
    */
   blockId?: string;
+  /**
+   * A selection across BlockNote blocks: the last block's id. `start` is then
+   * in `blockId`'s text and `end` in this block's, and the quote joins the
+   * blocks' text with "\n" (ODY-806).
+   */
+  endBlockId?: string;
   /** Offsets in the block's own text (or the field's). Absent for a whole block. */
   start?: number;
   end?: number;
@@ -18,6 +24,11 @@ export type Anchor = {
   quote?: string;
   prefix?: string;
   suffix?: string;
+  /**
+   * A comment at one spot between letters: just before the quote or just
+   * after it. The quote is the letters beside the spot (ODY-806).
+   */
+  point?: "before" | "after";
 };
 
 /** One block's own text (not its children's), with a line break as "\n" */
@@ -34,6 +45,8 @@ export type AnchorContent = Record<string, AnchorBlock[]>;
 export type AnchorRange = {
   field: string;
   blockId?: string;
+  /** Across blocks: the last block, which `end` is in */
+  endBlockId?: string;
   start: number;
   end: number;
   /** False when the quoted text itself has changed since the comment */

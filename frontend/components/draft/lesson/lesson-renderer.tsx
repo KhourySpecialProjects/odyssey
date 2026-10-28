@@ -44,6 +44,34 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
+import { useDropletReviewComments } from "@/components/draft/review/review-comments-context";
+import {
+  ReviewModeBar,
+  type ReviewMode,
+} from "@/components/draft/review/review-mode-bar";
+import {
+  blockTypes,
+  blocksSpanned,
+  commentCounts,
+  commentMarks,
+  commentsOnLesson,
+  decorateMarks,
+  draftMarkIn,
+  numberComments,
+} from "@/lib/review-comments";
+import { blockNoteContent } from "@/lib/anchors/content";
+import type { DrawnAnchor } from "@/lib/anchors/editor";
+import { OutdatedComments } from "@/components/draft/review/outdated-comments";
+import { CommentStrip } from "@/components/draft/review/comment-strip";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "@/components/draft/review/comment-keyboard";
+import { CommentLayer } from "@/components/draft/review/comment-layer";
+import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
+import type { ReviewAnchor, ReviewComment } from "@/types";
+
+const NO_MARKS: DrawnAnchor[] = [];
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
@@ -75,12 +103,15 @@ export interface OpenEndedQuizBlock extends BaseBlock {
 interface LessonRendererProps {
   lesson: Lesson;
   dropletSlug: string;
+  /** The draft's id, for the reviewer's comments (ODY-806) */
+  dropletId?: number;
   datasets?: Dataset[];
 }
 
 export function LessonRenderer({
   lesson,
   dropletSlug,
+  dropletId,
   datasets = [],
 }: LessonRendererProps) {
   const router = useRouter();
@@ -105,6 +136,17 @@ export function LessonRenderer({
   } = useEditingLock(lesson.id, refreshForLock);
   const frozen = inReview && !isReviewer;
   const isReadOnly = lockLoading || !isOwnLock || frozen;
+
+  // A reviewer comments or reads without the lock, or takes it to edit (ODY-806)
+  const isReviewing = !reviewEnded && inReview && isReviewer && !lockLoading;
+  const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
+  const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
+  const reviewComments = useDropletReviewComments(dropletId, isReviewing);
+  const lessonComments = useMemo(
+    () => commentsOnLesson(reviewComments.comments, lesson.id),
+    [reviewComments.comments, lesson.id],
+  );
+  const showCommentLayer = isReviewing && reviewMode === "comment";
 
   // Kept in refs so handleSaveResult stays stable and can cancel debounces
   // that are created after it.
@@ -146,6 +188,98 @@ export function LessonRenderer({
   // after a lock takeover bumps it, which remounts them on the latest content.
   const [blocksV2, setBlocksV2] = useState<unknown>(lesson.blocksV2);
   const [contentVersion, setContentVersion] = useState(0);
+
+  // Each comment found in the current content, or listed as outdated
+  const anchorContent = useMemo(
+    () => ({
+      blocks: blockNoteContent(
+        Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : [],
+      ),
+    }),
+    [blocksV2],
+  );
+  const marks = useMemo(
+    () =>
+      commentMarks(lessonComments, anchorContent, reviewComments.review?.state),
+    [lessonComments, anchorContent, reviewComments.review?.state],
+  );
+  // The text a comment is being written for stays marked while the reviewer
+  // types, and hovering a tag or a mark lights the mark
+  const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
+  const [litMarkId, setLitMarkId] = useState<string | null>(null);
+  const drawnMarks = useMemo(
+    () =>
+      decorateMarks(
+        marks.drawn,
+        litMarkId,
+        draftMarkIn(anchorContent, draftAnchor),
+      ),
+    [marks.drawn, litMarkId, draftAnchor, anchorContent],
+  );
+  const commentNumbers = useMemo(
+    () => numberComments(lessonComments),
+    [lessonComments],
+  );
+  // A Classic lesson finds its outdated comments once its text is on the page
+  const [classicOutdated, setClassicOutdated] = useState<ReviewComment[]>([]);
+  const handleClassicOutdated = useCallback((list: ReviewComment[]) => {
+    setClassicOutdated((current) =>
+      current.length === list.length &&
+      current.every((c, i) => c.id === list[i].id)
+        ? current
+        : list,
+    );
+  }, []);
+  const outdatedComments =
+    editorVersion === "v2" ? marks.outdated : classicOutdated;
+  const outdatedIds = useMemo(
+    () => new Set(outdatedComments.map((c) => c.id)),
+    [outdatedComments],
+  );
+  const blockTypeById = useMemo(
+    () =>
+      blockTypes(Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : []),
+    [blocksV2],
+  );
+  const blockFor = useCallback(
+    (blockId: string) => {
+      const text = anchorContent.blocks.find((b) => b.id === blockId)?.text;
+      return text === undefined
+        ? undefined
+        : { type: blockTypeById.get(blockId), text };
+    },
+    [anchorContent, blockTypeById],
+  );
+  const blocksFor = useCallback(
+    (anchor: ReviewAnchor) => blocksSpanned(anchorContent, anchor),
+    [anchorContent],
+  );
+  // Comments change only while the review is open (or not opened yet)
+  const canChangeComments =
+    !reviewComments.review || reviewComments.review.state === "open";
+  const { add: addReviewComment } = reviewComments;
+  const postComment = useCallback(
+    (anchor: ReviewAnchor, body: string) =>
+      addReviewComment({ field: "blocks", lessonId: lesson.id, anchor, body }),
+    [addReviewComment, lesson.id],
+  );
+  const commentLayerProps = {
+    enabled: showCommentLayer,
+    field: "blocks" as const,
+    comments: lessonComments,
+    numbers: commentNumbers,
+    outdatedIds,
+    blockFor,
+    blocksFor,
+    canChange: canChangeComments,
+    onPost: postComment,
+    onEdit: reviewComments.edit,
+    onDelete: reviewComments.remove,
+    onResolve: reviewComments.resolve,
+    onDraftChange: setDraftAnchor,
+    litMarkId,
+    onLitChange: setLitMarkId,
+  };
 
   // Check if the lesson is truly new. Read from state, not props: after a lock
   // takeover the props are the copy from when the page loaded.
@@ -559,13 +693,13 @@ export function LessonRenderer({
   const classicBlocksRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
-  }, [isReadOnly, editorVersion, contentVersion]);
+  }, [isReadOnly, editorVersion, contentVersion, showCommentLayer]);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
 
   return (
-    <>
+    <CommentKeyboardProvider>
       {reviewEnded && (
         <div
           role="status"
@@ -593,37 +727,14 @@ export function LessonRenderer({
           <span>{REVIEW_FROZEN_MESSAGE}</span>
         </div>
       )}
-      {!reviewEnded && inReview && isReviewer && !lockLoading && (
-        <div
-          role="status"
-          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
-        >
-          <IconLock className="h-4 w-4 shrink-0" />
-          {isOwnLock ? (
-            <>
-              <span className="flex-1">
-                You&apos;re editing this lesson during its review.
-              </span>
-              <Button size="sm" variant="outline" onClick={handleStopEditing}>
-                Stop editing
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className="flex-1">
-                In review. This lesson is read-only while you review it.
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isRefreshing}
-                onClick={() => startEditing()}
-              >
-                Edit
-              </Button>
-            </>
-          )}
-        </div>
+      {isReviewing && (
+        <ReviewModeBar
+          mode={reviewMode}
+          onModeChange={setViewMode}
+          onEdit={() => startEditing()}
+          onStopEditing={handleStopEditing}
+          editDisabled={isRefreshing}
+        />
       )}
       {isReadOnly && lockedBy && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
@@ -732,6 +843,17 @@ export function LessonRenderer({
             )}
           </div>
         )}
+        {showCommentLayer && (
+          <CommentStrip
+            {...commentCounts(lessonComments, reviewComments.review?.state)}
+            isLoading={reviewComments.isLoading}
+            loadError={!!reviewComments.loadError}
+            blockBars={editorVersion === "v2"}
+            keyboard={<CommentKeyboardButton />}
+          >
+            <OutdatedComments comments={outdatedComments} />
+          </CommentStrip>
+        )}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -821,7 +943,21 @@ export function LessonRenderer({
         </div>
       )}
 
-      {editorVersion === "v1" ? (
+      {editorVersion === "v1" && showCommentLayer ? (
+        // Comment mode shows Classic blocks as one read-only text (Task 7)
+        <div className="w-full px-10 md:px-40">
+          <CommentLayer {...commentLayerProps}>
+            <ClassicReviewView
+              blocks={blocks}
+              comments={lessonComments}
+              reviewState={reviewComments.review?.state}
+              draftAnchor={draftAnchor}
+              litMarkId={litMarkId}
+              onOutdated={handleClassicOutdated}
+            />
+          </CommentLayer>
+        </div>
+      ) : editorVersion === "v1" ? (
         <>
           {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
           <div
@@ -845,17 +981,20 @@ export function LessonRenderer({
             </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
-                <BlockNoteEditor
-                  key={`editor-${lesson.id}-${contentVersion}`}
-                  initialContent={blocksV2 as unknown as BlockNoteBlock[]}
-                  onChange={isReadOnly ? () => {} : debounceUpdateV2}
-                  editable={!isReadOnly}
-                />
+                <CommentLayer {...commentLayerProps}>
+                  <BlockNoteEditor
+                    key={`editor-${lesson.id}-${contentVersion}`}
+                    initialContent={blocksV2 as unknown as BlockNoteBlock[]}
+                    onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                    editable={!isReadOnly}
+                    anchors={showCommentLayer ? drawnMarks : NO_MARKS}
+                  />
+                </CommentLayer>
               </PyodideProvider>
             </DatasetProvider>
           </div>
         </div>
       )}
-    </>
+    </CommentKeyboardProvider>
   );
 }

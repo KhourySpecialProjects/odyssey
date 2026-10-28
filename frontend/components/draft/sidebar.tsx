@@ -61,7 +61,12 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableLesson } from "@/components/draft/sortable-lesson";
+import {
+  OpenCommentsBadge,
+  SortableLesson,
+} from "@/components/draft/sortable-lesson";
+import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
+import { isResolved } from "@/lib/review-comments";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
@@ -366,6 +371,24 @@ export function Sidebar({
     setMounted(true);
   }, []);
 
+  // A reviewer sees their open comments per lesson and on the Overview
+  const reviewComments = useSharedReviewComments();
+  const openComments = useMemo(() => {
+    const lessons = new Map<number, number>();
+    let overview = 0;
+    for (const comment of reviewComments?.comments ?? []) {
+      if (isResolved(comment)) continue;
+      if (comment.field !== "blocks") overview++;
+      else if (comment.lesson?.id) {
+        lessons.set(
+          comment.lesson.id,
+          (lessons.get(comment.lesson.id) ?? 0) + 1,
+        );
+      }
+    }
+    return { lessons, overview };
+  }, [reviewComments?.comments]);
+
   if (!mounted) return null;
 
   if (!user) return <UnauthorizedRoute />;
@@ -380,6 +403,7 @@ export function Sidebar({
   const canRequestChanges =
     isDraft && !!droplet.inReview && isReviewerFor(user.roles, true, isAuthor);
   const canWithdrawReview = isDraft && !!droplet.inReview && isAuthor;
+
   const canRequestReview =
     isDraft && !droplet.inReview && isCreator && !canPublish;
   const isFrozen =
@@ -627,6 +651,9 @@ export function Sidebar({
                 <span className="text-sm leading-none font-medium">
                   Overview
                 </span>
+                {!!openComments.overview && (
+                  <OpenCommentsBadge count={openComments.overview} />
+                )}
               </Link>
               <AlertDialog
                 open={showAutoFormatConfirm}
@@ -692,6 +719,7 @@ export function Sidebar({
                           droplet={droplet}
                           pathname={pathname}
                           dragDisabled={isFrozen}
+                          openComments={openComments.lessons.get(lesson.id)}
                         />
                       ))}
                     </ul>

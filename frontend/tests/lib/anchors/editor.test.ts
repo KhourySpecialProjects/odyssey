@@ -30,6 +30,8 @@ import type { BlockNoteEditor as Editor } from "@blocknote/core";
 import {
   AnchorRange,
   anchorsPlugin,
+  refreshAnchors,
+  type DrawnAnchor,
   blockNoteContent,
   createAnchor,
   resolveAnchor,
@@ -139,5 +141,201 @@ describe("anchors in the BlockNote editor", () => {
 
     expect(anchor.quote).toBe("second");
     expect(saved.text.slice(anchor.start, anchor.end)).toBe("second");
+  });
+
+  describe("review comment marks (ODY-806)", () => {
+    const whole = (id: string): DrawnAnchor => ({
+      id,
+      range: {
+        field: "blocks",
+        blockId: "intro",
+        start: 0,
+        end: 21,
+        exact: true,
+      },
+      className: "review-mark review-mark--pending",
+    });
+
+    it("gives each span the mark's class", () => {
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [whole("c2")]));
+
+      const span = root.querySelector('[data-anchor-id="c2"]')!;
+      expect(span.textContent).toBe("Databases store data.");
+      expect(span).toHaveClass("review-mark", "review-mark--pending");
+    });
+
+    it("keeps a mark through an edit to another block", () => {
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [whole("c3")]));
+
+      editor.updateBlock("joins", { content: "Rewritten." });
+
+      expect(root.querySelector('[data-anchor-id="c3"]')?.textContent).toBe(
+        "Databases store data.",
+      );
+    });
+
+    it("keeps both ids where two anchors overlap", () => {
+      const words: DrawnAnchor = {
+        id: "c7",
+        range: {
+          field: "blocks",
+          blockId: "intro",
+          start: 0,
+          end: 9,
+          exact: true,
+        },
+      };
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [whole("c8"), words]),
+      );
+
+      const outer = root.querySelector('[data-anchor-id="c8"]');
+      const inner = root.querySelector('[data-anchor-id="c7"]');
+      expect(inner?.textContent).toBe("Databases");
+      expect(
+        Array.from(root.querySelectorAll('[data-anchor-id="c8"]'))
+          .map((span) => span.textContent)
+          .join(""),
+      ).toBe("Databases store data.");
+      expect(outer).not.toBeNull();
+    });
+
+    it("anchors and draws a selection across blocks (Round 2)", () => {
+      const intro = root.querySelector(
+        '[data-id="intro"] .bn-inline-content',
+      )!.firstChild!;
+      const joins = root.querySelector(
+        '[data-id="joins"] .bn-inline-content',
+      )!.firstChild!;
+      const range = new Range();
+      range.setStart(intro, "Databases ".length);
+      range.setEnd(joins, "A join".length);
+
+      const anchor = createAnchor(range, { field: "blocks" })!;
+      expect(anchor).toMatchObject({
+        blockId: "intro",
+        endBlockId: "joins",
+        start: 10,
+        end: 6,
+        quote: "store data.\nA join",
+      });
+
+      const found = resolveAnchor(
+        { blocks: blockNoteContent(editor.document) },
+        anchor,
+      ) as AnchorRange;
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [{ id: "c9", range: found }]),
+      );
+
+      const spans = Array.from(root.querySelectorAll('[data-anchor-id="c9"]'));
+      expect(spans.map((span) => span.textContent).join("|")).toBe(
+        "store data.|A join",
+      );
+    });
+
+    it("draws a caret at a spot comment, beside its letters", () => {
+      const spot = (point: "before" | "after"): DrawnAnchor => ({
+        id: `spot-${point}`,
+        range: {
+          field: "blocks",
+          blockId: "intro",
+          start: 10,
+          end: 15,
+          exact: true,
+        },
+        className: "review-mark",
+        point,
+      });
+      editor._tiptapEditor.registerPlugin(
+        anchorsPlugin(() => [spot("before"), spot("after")]),
+      );
+
+      const before = root.querySelector(
+        '.anchor-caret[data-anchor-id="spot-before"]',
+      )!;
+      const after = root.querySelector(
+        '.anchor-caret[data-anchor-id="spot-after"]',
+      )!;
+      expect(before).toHaveClass("review-mark");
+      expect(before.nextElementSibling).toHaveTextContent("store");
+      expect(after.previousElementSibling).toHaveTextContent("store");
+      // The carets are drawn, not text
+      expect(blockNoteContent(editor.document)[0].text).toBe(
+        "Databases store data.",
+      );
+    });
+
+    it("redraws when the anchors change and refreshAnchors is called", () => {
+      let anchors: DrawnAnchor[] = [whole("c4")];
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => anchors));
+
+      anchors = [];
+      refreshAnchors(editor.prosemirrorView!);
+      expect(root.querySelector('[data-anchor-id="c4"]')).toBeNull();
+
+      anchors = [whole("c5")];
+      refreshAnchors(editor.prosemirrorView!);
+      expect(root.querySelector('[data-anchor-id="c5"]')).not.toBeNull();
+    });
+  });
+
+  describe("a block without text of its own (an image)", () => {
+    let withImage: Editor;
+    let host: HTMLElement;
+
+    beforeEach(() => {
+      withImage = BlockNoteEditor.create({
+        initialContent: [
+          { id: "before", type: "paragraph", content: "Look at this." },
+          {
+            id: "pic",
+            type: "image",
+            props: { url: "diagram.png", caption: "A diagram" },
+          },
+          { id: "after", type: "paragraph", content: "Then this." },
+        ],
+      });
+      host = document.createElement("div");
+      document.body.appendChild(host);
+      withImage.mount(host);
+    });
+
+    afterEach(() => {
+      withImage.unmount();
+      host.remove();
+    });
+
+    const textIn = (id: string, selector: string) =>
+      host.querySelector(`[data-id="${id}"] ${selector}`)!.firstChild!;
+
+    it("anchors a selection in it to the whole block: its text isn't saved", () => {
+      const caption = textIn("pic", ".bn-file-caption");
+      const range = new Range();
+      range.setStart(caption, 2);
+      range.setEnd(caption, 9);
+
+      expect(createAnchor(range, { field: "blocks" })).toEqual({
+        v: 1,
+        field: "blocks",
+        blockId: "pic",
+      });
+    });
+
+    it("anchors a selection across it so it's found where it was", () => {
+      const range = new Range();
+      range.setStart(textIn("before", ".bn-inline-content"), 8);
+      range.setEnd(textIn("after", ".bn-inline-content"), 4);
+
+      const anchor = createAnchor(range, { field: "blocks" })!;
+      expect(anchor).toMatchObject({
+        blockId: "before",
+        endBlockId: "after",
+        quote: "this.\n\nThen",
+      });
+      expect(
+        resolveAnchor({ blocks: blockNoteContent(withImage.document) }, anchor),
+      ).toMatchObject({ blockId: "before", endBlockId: "after", exact: true });
+    });
   });
 });

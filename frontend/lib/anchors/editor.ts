@@ -2,8 +2,18 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { AnchorRange } from "./types";
+import { caretElement } from "./dom";
 
-export type DrawnAnchor = { id: string; range: AnchorRange };
+/**
+ * An anchor to draw, with an optional class for its span (ODY-806). `point`
+ * also draws a caret at that end of the range: a comment at one spot.
+ */
+export type DrawnAnchor = {
+  id: string;
+  range: AnchorRange;
+  className?: string;
+  point?: "before" | "after";
+};
 
 const anchorsKey = new PluginKey("anchors");
 
@@ -14,28 +24,68 @@ const anchorsKey = new PluginKey("anchors");
  *
  * An anchor's offsets are positions in its block's text: the lesson schema's
  * inline content is text and links (marks), and a line break is one position
- * and one "\n".
+ * and one "\n". An anchor across blocks marks the rest of its first block,
+ * every block in between, and the start of its last.
  */
 export function anchorDecorations(
   doc: ProseMirrorNode,
   anchors: DrawnAnchor[],
 ): DecorationSet {
   const decorations: Decoration[] = [];
+  // Anchors across blocks whose first block has been passed
+  const open = new Set<DrawnAnchor>();
   doc.descendants((node, pos) => {
     if (node.type.name !== "blockContainer") return true;
     const content = node.firstChild;
-    if (!content?.isTextblock) return true;
+    if (!content?.isTextblock) {
+      // An anchor across blocks can end on one without text (an image)
+      for (const anchor of open) {
+        if (anchor.range.endBlockId === node.attrs.id) open.delete(anchor);
+      }
+      return true;
+    }
 
     // Inside the container, then inside its content node
     const textStart = pos + 2;
-    for (const { id, range } of anchors) {
-      if (range.blockId !== node.attrs.id) continue;
-      const end = Math.min(range.end, content.content.size);
-      if (range.start < end) {
+    const size = content.content.size;
+    for (const anchor of anchors) {
+      const { id, range, className, point } = anchor;
+      let from: number;
+      let to: number;
+      if (range.blockId === node.attrs.id) {
+        from = range.start;
+        to = range.endBlockId === undefined ? range.end : size;
+        if (range.endBlockId !== undefined) open.add(anchor);
+      } else if (open.has(anchor)) {
+        from = 0;
+        to = range.endBlockId === node.attrs.id ? range.end : size;
+        if (range.endBlockId === node.attrs.id) open.delete(anchor);
+      } else {
+        continue;
+      }
+      const end = Math.min(to, size);
+      if (from < end) {
         decorations.push(
-          Decoration.inline(textStart + range.start, textStart + end, {
+          // nodeName gives each anchor its own span: without it ProseMirror
+          // merges overlapping decorations into one, and one id wins
+          Decoration.inline(textStart + from, textStart + end, {
+            nodeName: "span",
             "data-anchor-id": id,
+            ...(className && { class: className }),
           }),
+        );
+      }
+      if (point) {
+        decorations.push(
+          Decoration.widget(
+            textStart + (point === "before" ? from : end),
+            () => caretElement(id, className),
+            {
+              side: point === "before" ? -1 : 1,
+              key: `${id} ${className ?? ""}`,
+              ignoreSelection: true,
+            },
+          ),
         );
       }
     }

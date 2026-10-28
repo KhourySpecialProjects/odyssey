@@ -23,7 +23,46 @@ type FrozenOverviewProps = {
   >;
   /** The droplet's authors. Empty when they couldn't be loaded. */
   authors: { id: number; name: string }[];
+  /**
+   * Replaces how a field a reviewer comments on the text of is shown
+   * (ODY-806): the title, the description, the overview text, or the
+   * learning objectives. Given the default.
+   */
+  renderField?: (
+    field: OverviewField,
+    standard: React.ReactNode,
+  ) => React.ReactNode;
+  /**
+   * Replaces how a section is shown, heading and all (ODY-806: a reviewer
+   * comments on a whole section from its heading). Given the default.
+   */
+  renderSection?: (
+    section: OverviewSection,
+    title: string,
+    body: React.ReactNode,
+    standard: React.ReactNode,
+  ) => React.ReactNode;
 };
+
+/** The Overview fields a reviewer can comment on the text of */
+export type OverviewField = "name" | "description" | "overview" | "objective";
+
+/** The Overview's sections, each of which takes whole-section comments */
+export type OverviewSection =
+  | "authors"
+  | "overview"
+  | "objective"
+  | "nextSteps"
+  | "prerequisites"
+  | "postrequisites"
+  | "funFact"
+  | "datasets";
+
+export const TITLE_CLASS =
+  "text-[2.5rem] font-bold text-slate-900 dark:text-white";
+export const SECTION_HEADING_CLASS =
+  "text-2xl font-bold text-slate-900 dark:text-white";
+export const SECTION_BODY_CLASS = "mt-3 text-slate-700 dark:text-slate-300";
 
 function Pill({ name }: { name: string }) {
   const colors = getTagColors(name);
@@ -46,10 +85,8 @@ function Section({
 }) {
   return (
     <section className="w-full">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-        {title}
-      </h2>
-      <div className="mt-3 text-slate-700 dark:text-slate-300">{children}</div>
+      <h2 className={SECTION_HEADING_CLASS}>{title}</h2>
+      <div className={SECTION_BODY_CLASS}>{children}</div>
     </section>
   );
 }
@@ -59,7 +96,18 @@ function Section({
  * editors while the droplet is in review and the caller can't change it. It
  * is its own view rather than a `readOnly` flag threaded through every editor.
  */
-export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
+export function FrozenOverview({
+  droplet,
+  authors,
+  renderField = (_field, standard) => standard,
+  renderSection = (_section, _title, _body, standard) => standard,
+}: FrozenOverviewProps) {
+  const section = (
+    name: OverviewSection,
+    title: string,
+    body: React.ReactNode,
+  ) =>
+    renderSection(name, title, body, <Section title={title}>{body}</Section>);
   const tags = droplet.tags ?? [];
   const objectives = droplet.learningObjectives ?? [];
   const nextSteps = droplet.nextSteps ?? [];
@@ -79,19 +127,24 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
           ))}
         </div>
 
-        <h1 className="mt-6 text-[2.5rem] font-bold text-slate-900 dark:text-white">
-          {droplet.name}
-        </h1>
+        <div className="mt-6">
+          {renderField("name", <h1 className={TITLE_CLASS}>{droplet.name}</h1>)}
+        </div>
         {droplet.description ? (
-          <p className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed dark:text-slate-300">
-            {stripHtmlTags(droplet.description)}
-          </p>
+          <div className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed dark:text-slate-300">
+            {renderField(
+              "description",
+              <p>{stripHtmlTags(droplet.description)}</p>,
+            )}
+          </div>
         ) : null}
       </div>
 
       <div className="w-full space-y-10 px-40 pt-6">
-        <Section title="Author(s)">
-          {authors.length > 0 ? (
+        {section(
+          "authors",
+          "Author(s)",
+          authors.length > 0 ? (
             <ul className="list-disc pl-5">
               {authors.map((author) => (
                 <li key={author.id}>{author.name}</li>
@@ -99,34 +152,47 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
             </ul>
           ) : (
             <p>No authors listed.</p>
-          )}
-        </Section>
+          ),
+        )}
 
-        {droplet.overview ? (
-          <Section title="Overview">
-            <div
-              className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit max-w-none dark:text-slate-300"
-              dangerouslySetInnerHTML={{
-                __html: createDOMPurifier.sanitize(droplet.overview),
-              }}
-            />
-          </Section>
-        ) : null}
+        {droplet.overview
+          ? section(
+              "overview",
+              "Overview",
+              <div className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit max-w-none dark:text-slate-300">
+                {renderField(
+                  "overview",
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: createDOMPurifier.sanitize(droplet.overview),
+                    }}
+                  />,
+                )}
+              </div>,
+            )
+          : null}
 
-        <Section title="Learning Objectives">
-          {objectives.length > 0 ? (
-            <ul className="list-disc pl-5">
-              {objectives.map((objective) => (
-                <li key={objective.id}>{objective.objective}</li>
-              ))}
-            </ul>
+        {section(
+          "objective",
+          "Learning Objectives",
+          objectives.length > 0 ? (
+            renderField(
+              "objective",
+              <ul className="list-disc pl-5">
+                {objectives.map((objective) => (
+                  <li key={objective.id}>{objective.objective}</li>
+                ))}
+              </ul>,
+            )
           ) : (
             <p>None yet.</p>
-          )}
-        </Section>
+          ),
+        )}
 
-        <Section title="Next Steps">
-          {nextSteps.length > 0 ? (
+        {section(
+          "nextSteps",
+          "Next Steps",
+          nextSteps.length > 0 ? (
             <ul className="list-disc pl-5">
               {nextSteps.map((step) => (
                 <li key={step.id}>
@@ -143,11 +209,13 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
             </ul>
           ) : (
             <p>None yet.</p>
-          )}
-        </Section>
+          ),
+        )}
 
-        <Section title="Recommended Background">
-          {prerequisites.length > 0 ? (
+        {section(
+          "prerequisites",
+          "Recommended Background",
+          prerequisites.length > 0 ? (
             <ul className="list-disc pl-5">
               {prerequisites.map((d) => (
                 <li key={d.id}>{d.name}</li>
@@ -155,11 +223,13 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
             </ul>
           ) : (
             <p>None yet.</p>
-          )}
-        </Section>
+          ),
+        )}
 
-        <Section title="Similar Droplets">
-          {postrequisites.length > 0 ? (
+        {section(
+          "postrequisites",
+          "Similar Droplets",
+          postrequisites.length > 0 ? (
             <ul className="list-disc pl-5">
               {postrequisites.map((d) => (
                 <li key={d.id}>{d.name}</li>
@@ -167,15 +237,19 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
             </ul>
           ) : (
             <p>None yet.</p>
-          )}
-        </Section>
+          ),
+        )}
 
-        <Section title="Fun Fact">
-          {droplet.funFact ? <p>{droplet.funFact}</p> : <p>None yet.</p>}
-        </Section>
+        {section(
+          "funFact",
+          "Fun Fact",
+          droplet.funFact ? <p>{droplet.funFact}</p> : <p>None yet.</p>,
+        )}
 
-        <Section title="Datasets">
-          {datasets.length > 0 ? (
+        {section(
+          "datasets",
+          "Datasets",
+          datasets.length > 0 ? (
             <ul className="list-disc pl-5">
               {datasets.map((dataset) => (
                 <li key={dataset.id}>{dataset.name}</li>
@@ -183,8 +257,8 @@ export function FrozenOverview({ droplet, authors }: FrozenOverviewProps) {
             </ul>
           ) : (
             <p>None yet.</p>
-          )}
-        </Section>
+          ),
+        )}
       </div>
     </div>
   );

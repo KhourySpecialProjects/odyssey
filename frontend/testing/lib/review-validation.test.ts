@@ -1,4 +1,6 @@
+import { createAnchor } from "@/lib/anchors";
 import {
+  toReviewAnchor,
   reviewAnchorSchema,
   reviewCommentBodySchema,
   reviewCommentInputSchema,
@@ -37,6 +39,106 @@ describe("reviewAnchorSchema", () => {
     ["end < start", { ...mockReviewAnchor, start: 9, end: 3 }],
   ])("rejects %s", (_name, anchor) => {
     expect(reviewAnchorSchema.safeParse(anchor).success).toBe(false);
+  });
+});
+
+describe("whole-block anchors (ODY-806)", () => {
+  const wholeBlock = { v: 1, field: "blocks", blockId: "block-1" };
+
+  it("accepts a block id with no quote or context", () => {
+    expect(reviewAnchorSchema.safeParse(wholeBlock).success).toBe(true);
+  });
+
+  it.each([
+    ["no block id", { v: 1, field: "blocks" }],
+    ["offsets but no quote", { ...wholeBlock, start: 0, end: 4 }],
+    ["context but no quote", { ...wholeBlock, prefix: "", suffix: "" }],
+    ["an unknown field", { ...wholeBlock, field: "notes" }],
+    ["an unknown key", { ...wholeBlock, extra: 1 }],
+  ])("rejects %s", (_name, anchor) => {
+    expect(reviewAnchorSchema.safeParse(anchor).success).toBe(false);
+  });
+
+  it("still requires context with a quote", () => {
+    const { prefix: _prefix, ...noPrefix } = mockReviewAnchor as {
+      prefix: string;
+    };
+    expect(reviewAnchorSchema.safeParse(noPrefix).success).toBe(false);
+  });
+});
+
+describe("whole-section anchors (ODY-806)", () => {
+  it.each(["nextSteps", "overview", "authors", "funFact"])(
+    "accepts a whole %s section: its field and nothing else",
+    (field) => {
+      expect(reviewAnchorSchema.safeParse({ v: 1, field }).success).toBe(true);
+    },
+  );
+
+  it("rejects a whole lesson, which has no section", () => {
+    expect(
+      reviewAnchorSchema.safeParse({ v: 1, field: "blocks" }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown key", () => {
+    expect(
+      reviewAnchorSchema.safeParse({ v: 1, field: "nextSteps", extra: 1 })
+        .success,
+    ).toBe(false);
+  });
+
+  it("is a droplet-level comment, with no lesson", () => {
+    const section = {
+      reviewId: 7,
+      field: "nextSteps",
+      anchor: { v: 1, field: "nextSteps" },
+      body: "Link the next droplet.",
+    };
+    expect(
+      reviewCommentInputSchema.safeParse({ ...section, lessonId: null })
+        .success,
+    ).toBe(true);
+    expect(
+      reviewCommentInputSchema.safeParse({ ...section, lessonId: 5 }).success,
+    ).toBe(false);
+  });
+
+  it("takes text comments on the title", () => {
+    expect(
+      reviewAnchorSchema.safeParse({
+        v: 1,
+        field: "name",
+        quote: "Loops",
+        prefix: "",
+        suffix: " in Python",
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("toReviewAnchor", () => {
+  it("passes createAnchor's whole-block anchor through", () => {
+    const anchor = createAnchor({ blockId: "b1" }, { field: "blocks" })!;
+    expect(toReviewAnchor(anchor)).toEqual({
+      v: 1,
+      field: "blocks",
+      blockId: "b1",
+    });
+  });
+
+  it("passes a text anchor through", () => {
+    expect(toReviewAnchor(mockReviewAnchor)).toEqual(mockReviewAnchor);
+  });
+
+  it("is null for a field reviews don't comment on", () => {
+    expect(toReviewAnchor({ v: 1, field: "notes", blockId: "b1" })).toBeNull();
+  });
+
+  it("is null for a quote over 2000 characters", () => {
+    expect(
+      toReviewAnchor({ ...mockReviewAnchor, quote: "x".repeat(2001) }),
+    ).toBeNull();
   });
 });
 

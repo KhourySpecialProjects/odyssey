@@ -40,7 +40,11 @@ type Cfg = { urlParams?: { filters?: Record<string, any> } };
 
 /** Routes fetchAPI by path; `rows` maps a review key to its stored row. */
 function arrangeFetch(
-  droplet: { inReview: boolean; reviewRound: number | null } | null,
+  droplet: {
+    inReview: boolean;
+    reviewRound: number | null;
+    authorized_users?: { id: number }[];
+  } | null,
   rows: Record<string, object> = {},
 ) {
   mockedFetchAPI.mockImplementation((async (path: string, cfg: Cfg) => {
@@ -300,6 +304,36 @@ describe("getOrOpenReview", () => {
     ).toMatchObject({ droplet: "droplet-4", key: "4:9:1" });
     expect(mockedRevalidateTag).toHaveBeenCalledWith("review-4");
     expect(mockedRevalidateTag).not.toHaveBeenCalledWith("review-3");
+  });
+
+  it("refuses an author of the droplet, even as a SysAdmin, and opens nothing", async () => {
+    mockedRequireRole.mockResolvedValue(
+      authFixtures.as({ id: 9, roles: [AuthorizedUserRoleTitle.SysAdmin] }),
+    );
+    arrangeFetch({
+      inReview: true,
+      reviewRound: 1,
+      authorized_users: [{ id: 9 }],
+    });
+
+    expect(await getOrOpenReview(3)).toEqual({
+      ok: false,
+      error: "forbidden",
+      data: null,
+    });
+    expect(reviewLookups()).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reads the droplet's authors", async () => {
+    arrangeFetch({ inReview: true, reviewRound: 1 }, { "3:9:1": created });
+
+    await getOrOpenReview(3);
+
+    const [, cfg] = mockedFetchAPI.mock.calls[0] as [string, any];
+    expect(cfg.urlParams.populate).toEqual({
+      authorized_users: { fields: ["id"] },
+    });
   });
 
   it("returns not_found for an unknown droplet", async () => {

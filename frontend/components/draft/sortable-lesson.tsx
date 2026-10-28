@@ -5,7 +5,20 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
-import { IconGripVertical } from "@tabler/icons-react";
+import { IconGripVertical, IconMessage } from "@tabler/icons-react";
+
+/** How many open review comments a sidebar item has */
+export function OpenCommentsBadge({ count }: { count: number }) {
+  return (
+    <span
+      className="ml-auto inline-flex h-5 shrink-0 items-center gap-[3px] self-center rounded-full bg-[var(--rc-accent-soft)] px-[7px] text-xs font-semibold text-[#1f5a76] dark:text-[#8fd0ea]"
+      aria-label={`${count} open ${count === 1 ? "comment" : "comments"}`}
+    >
+      <IconMessage className="h-3 w-3" aria-hidden />
+      {count}
+    </span>
+  );
+}
 
 interface SortableLessonProps {
   lesson: Lesson;
@@ -13,6 +26,8 @@ interface SortableLessonProps {
   pathname: string;
   /** Hides the drag handle and turns reordering off. */
   dragDisabled?: boolean;
+  /** The reviewer's open comments on this lesson (ODY-806), if reviewing */
+  openComments?: number;
 }
 
 export function SortableLesson({
@@ -20,6 +35,7 @@ export function SortableLesson({
   droplet,
   pathname,
   dragDisabled = false,
+  openComments,
 }: SortableLessonProps) {
   const router = useRouter();
 
@@ -91,6 +107,7 @@ export function SortableLesson({
           <span className="pl-1 text-sm leading-snug font-medium">
             {lesson.name}
           </span>
+          {!!openComments && <OpenCommentsBadge count={openComments} />}
         </Link>
       </div>
     </li>
