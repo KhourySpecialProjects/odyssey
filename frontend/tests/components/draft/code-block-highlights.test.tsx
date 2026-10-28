@@ -132,6 +132,7 @@ describe("CodeBlockViewer highlights", () => {
           position: { start: 0, end: 5 },
           color: "#93c5fd",
           blockId: 40,
+          context: { quote: "print", prefix: "", suffix: '("hello")' },
         },
       },
     ]);

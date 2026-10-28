@@ -220,6 +220,12 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 .cm-gutters {
   user-select: none;
 }
+/* A highlight whose words the author edited since it was made (ODY-198).
+   Highlighted text is always black, so this reads in both themes. */
+.lesson-highlight[data-highlight-edited] {
+  text-decoration: underline dashed rgb(0 0 0 / 0.6);
+  text-underline-offset: 0.2em;
+}
 
 /* Fenced code block backgrounds: light by default, dark in dark mode.
    Tailwind Typography hardcodes a dark pre background; override it here

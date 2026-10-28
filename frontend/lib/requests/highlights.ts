@@ -1,7 +1,8 @@
 "use server";
 
-import { Highlight, HighlightColor } from "@/types";
+import { Highlight, HighlightColor, HighlightContext } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
+import { CONTEXT } from "../anchors/types";
 import {
   fetchAPI,
   flattenAttributes,
@@ -102,7 +103,17 @@ export async function getHighlightsByAuthorizedUserAndLesson(
   {
     sort,
     pagination = { pageSize: 250, page: 1 },
-    fields = ["text", "position", "color", "blockId", "yLevel"],
+    // context and createdAt find each highlight again after the lesson's
+    // text is edited (lib/highlight-placement)
+    fields = [
+      "text",
+      "position",
+      "color",
+      "blockId",
+      "yLevel",
+      "context",
+      "createdAt",
+    ],
   }: StrapiRequestParams = {},
 ): Promise<Highlight[]> {
   const path = `/highlights`;
@@ -161,6 +172,25 @@ const isPosition = (value: unknown): value is HighlightPosition => {
   );
 };
 
+const isContext = (value: unknown): value is HighlightContext => {
+  if (typeof value !== "object" || value === null) return false;
+  const { quote, prefix, suffix } = value as Record<string, unknown>;
+  return (
+    isText(quote) &&
+    typeof prefix === "string" &&
+    prefix.length <= CONTEXT &&
+    typeof suffix === "string" &&
+    suffix.length <= CONTEXT
+  );
+};
+
+// Rebuilt from the checked strings, never the client's object
+const contextOf = ({ quote, prefix, suffix }: HighlightContext) => ({
+  quote,
+  prefix,
+  suffix,
+});
+
 /**
  * Loads a highlight for a write and checks the caller owns it. No role
  * bypasses this: highlights are private study data (ODY-508).
@@ -206,16 +236,18 @@ export async function createHighlight(highlight: {
   color: HighlightColor;
   blockId: number;
   lessonId: number;
+  context?: HighlightContext;
 }): Promise<HighlightResult<Highlight>> {
   return withAuth([], async (user) => {
     if (typeof highlight !== "object" || highlight === null) return INVALID;
-    const { text, position, color, blockId, lessonId } = highlight;
+    const { text, position, color, blockId, lessonId, context } = highlight;
     if (
       !isText(text) ||
       !isPosition(position) ||
       !isHighlightColor(color) ||
       !Number.isSafeInteger(blockId) ||
-      !isId(lessonId)
+      !isId(lessonId) ||
+      (context !== undefined && !isContext(context))
     ) {
       return INVALID;
     }
@@ -235,6 +267,7 @@ export async function createHighlight(highlight: {
             position: { start: position.start, end: position.end },
             color,
             blockId,
+            ...(context !== undefined && { context: contextOf(context) }),
             lesson: await resolveDocumentId("lessons", lessonId),
             authorized_user: await resolveDocumentId("authorized-users", {
               id: user.id,
@@ -260,8 +293,9 @@ export async function createHighlight(highlight: {
 }
 
 /**
- * Changes a highlight's colour, or its range and text when another highlight
- * is merged into it. Only its owner can. Never throws.
+ * Changes a highlight's colour, or where it is: its range and text when
+ * another highlight is merged into it, and its block and context too when
+ * the reader moves it to new text. Only its owner can. Never throws.
  */
 export async function updateHighlight(
   id: number,
@@ -269,17 +303,23 @@ export async function updateHighlight(
     color?: HighlightColor;
     position?: HighlightPosition;
     text?: string;
+    blockId?: number;
+    context?: HighlightContext;
   },
 ): Promise<HighlightResult<Highlight>> {
   return withAuth([], async (user) => {
     if (typeof changes !== "object" || changes === null) return INVALID;
-    const { color, position, text } = changes;
+    const { color, position, text, blockId, context } = changes;
     if (
       !isId(id) ||
-      (color === undefined && position === undefined && text === undefined) ||
+      [color, position, text, blockId, context].every(
+        (change) => change === undefined,
+      ) ||
       (color !== undefined && !isHighlightColor(color)) ||
       (position !== undefined && !isPosition(position)) ||
-      (text !== undefined && !isText(text))
+      (text !== undefined && !isText(text)) ||
+      (blockId !== undefined && !Number.isSafeInteger(blockId)) ||
+      (context !== undefined && !isContext(context))
     ) {
       return INVALID;
     }
@@ -289,12 +329,16 @@ export async function updateHighlight(
       if (!found.ok) return { ok: false, error: found.error, data: null };
 
       // Only these fields can change; anything else the client sent is dropped
-      const data: Partial<Pick<Highlight, "color" | "position" | "text">> = {};
+      const data: Partial<
+        Pick<Highlight, "color" | "position" | "text" | "blockId" | "context">
+      > = {};
       if (color !== undefined) data.color = color;
       if (position !== undefined) {
         data.position = { start: position.start, end: position.end };
       }
       if (text !== undefined) data.text = text;
+      if (blockId !== undefined) data.blockId = blockId;
+      if (context !== undefined) data.context = contextOf(context);
 
       const response = await fetch(
         await strapiEntryUrl("highlights", found.highlight),

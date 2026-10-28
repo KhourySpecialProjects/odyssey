@@ -21,7 +21,19 @@ import {
   type HighlightMerge,
   type HighlightRequest,
 } from "./highlight-layer";
-import { useEffect, useRef, useState } from "react";
+import { DetachedHighlights } from "./detached-highlights";
+import {
+  placeHighlights,
+  type HighlightBlock,
+  type PlacedHighlight,
+} from "@/lib/highlight-placement";
+import {
+  READER_EVENT,
+  REGION_ATTR,
+  regionIds,
+  regionReader,
+} from "@/lib/highlight-regions";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
@@ -106,11 +118,51 @@ export function LessonRenderer({
   const nextTempId = useRef(-1);
   const lessonContentRef = useRef<HTMLDivElement>(null);
   const firedMilestones = useRef<Set<number>>(new Set());
+  // A highlight whose text was deleted, while the reader picks new text for it
+  const [movingId, setMovingId] = useState<number | null>(null);
 
-  const displayBlocks =
-    lesson.blocksVersion === "v2" && lesson.blocksV2
-      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
-      : lesson.blocks;
+  const displayBlocks = useMemo(
+    () =>
+      lesson.blocksVersion === "v2" && lesson.blocksV2
+        ? convertBlockNoteToV1Blocks(lesson.blocksV2)
+        : lesson.blocks,
+    [lesson.blocksVersion, lesson.blocksV2, lesson.blocks],
+  );
+
+  // Highlights are found in each region's text as it's drawn, which needs the
+  // browser, so they're placed once the lesson has mounted. A code editor
+  // sets its reader once it has loaded, which reads its placement again.
+  const [highlightBlocks, setHighlightBlocks] = useState<
+    HighlightBlock[] | null
+  >(null);
+  useEffect(() => {
+    const content = lessonContentRef.current;
+    if (!content) return;
+    const readRegions = () =>
+      setHighlightBlocks(
+        Array.from(
+          content.querySelectorAll<HTMLElement>(`[${REGION_ATTR}]`),
+        ).flatMap((region) => {
+          const [id, ...sourceBlockIds] = regionIds(region);
+          return id === undefined
+            ? []
+            : [{ id, sourceBlockIds, text: regionReader(region).text() }];
+        }),
+      );
+    readRegions();
+    content.addEventListener(READER_EVENT, readRegions);
+    return () => content.removeEventListener(READER_EVENT, readRegions);
+  }, [displayBlocks]);
+
+  // Where each highlight is now that the author may have edited the lesson.
+  // Ones whose text was deleted are listed for the reader instead of drawn.
+  const placement = useMemo(
+    () =>
+      highlightBlocks &&
+      placeHighlights(highlights, highlightBlocks, lesson.updatedAt),
+    [highlights, highlightBlocks, lesson.updatedAt],
+  );
+  const placedHighlights: PlacedHighlight[] = placement?.placed ?? [];
 
   let headings: Heading[] = [];
   displayBlocks
@@ -247,6 +299,10 @@ export function LessonRenderer({
       color: draft.color,
       position: draft.position,
       text: draft.text,
+      // Measured on the lesson as it is now, which may differ from when the
+      // base highlight was saved
+      blockId: draft.blockId,
+      ...(draft.context && { context: draft.context }),
     });
     if (!updated.ok) {
       setHighlights((prev) => [
@@ -314,6 +370,31 @@ export function LessonRenderer({
         ...kept.filter((k) => !prev.some((h) => h.id === k.id)),
       ]);
       toast.error("Failed to remove highlight");
+    }
+  };
+
+  // A highlight whose text was deleted goes onto the text the reader picked,
+  // keeping its colour and note
+  const handleMoveHighlight = async (target: HighlightDraft) => {
+    const before = highlights.find((h) => h.id === movingId);
+    setMovingId(null);
+    if (!before?.id) return;
+    const { text, position, blockId, context } = target;
+    const replace = (next: Highlight) =>
+      setHighlights((prev) => prev.map((h) => (h.id === before.id ? next : h)));
+
+    replace({ ...before, text, position, blockId, context });
+    const result = await updateHighlight(before.id, {
+      text,
+      position,
+      blockId,
+      ...(context && { context }),
+    });
+    if (result.ok) {
+      toast.success("Highlight moved");
+    } else {
+      replace(before);
+      toast.error("Failed to move highlight");
     }
   };
 
@@ -388,16 +469,29 @@ export function LessonRenderer({
 
       {enrollmentId && !author && <HighlightHintBanner />}
 
+      {enrollmentId && !author && (
+        <DetachedHighlights
+          highlights={placement?.detached ?? []}
+          movingId={movingId}
+          onMove={setMovingId}
+          onCancelMove={() => setMovingId(null)}
+          onRemove={(id) => handleDeleteHighlight([id])}
+        />
+      )}
+
       <DatasetProvider datasets={droplet.datasets ?? []}>
         <PyodideProvider>
           <HighlightLayer
             className="mt-8 space-y-2"
-            highlights={highlights}
+            highlights={placedHighlights}
             canHighlight={!!enrollmentId && !author}
             onHighlight={handleHighlight}
             onRecolorHighlight={handleRecolorHighlight}
             onDeleteHighlight={handleDeleteHighlight}
             onNote={handleCreateNote}
+            onMoveHighlight={
+              movingId !== null ? handleMoveHighlight : undefined
+            }
           >
             {displayBlocks.map((b: Block, i: number) => (
               <LessonBlockRenderer

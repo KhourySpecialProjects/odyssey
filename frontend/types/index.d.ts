@@ -35,6 +35,17 @@ export type HighlightColor =
   | "#86efac"
   | "#93c5fd";
 
+/**
+ * The exact text a highlight covered when it was saved, and up to 30
+ * characters either side of it, so it can be found again after the lesson
+ * is edited. Highlights saved before ODY-198 have none.
+ */
+export type HighlightContext = {
+  quote: string;
+  prefix: string;
+  suffix: string;
+};
+
 export type AuthorizedUserRole = {
   id: number;
   documentId?: string;
@@ -55,6 +66,8 @@ export type Highlight = {
   lesson?: Lesson;
   yLevel?: number;
   blockId: number;
+  context?: HighlightContext | null;
+  createdAt?: string;
   /**
    * The note linked to this highlight (one-to-one). Only the lesson viewer's
    * highlight fetch populates it; `id` is unknown for a note made since.
@@ -223,6 +236,7 @@ export type Lesson = {
   notes: string;
   orderIndex: number;
   originalLessonId?: number | null; // [EDIT]-draft lessons only: id of the live lesson this was cloned from
+  updatedAt?: string;
 };
 
 export type Tag = {

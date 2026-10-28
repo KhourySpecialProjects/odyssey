@@ -19,6 +19,11 @@ interface SelectionToolbarProps {
   onApplyColor: (color: HighlightColor) => void;
   onDelete: () => void;
   onNote: () => void;
+  /**
+   * Set while the reader is moving a highlight whose text was deleted. The
+   * toolbar then only offers to move it onto the selected text.
+   */
+  onMoveHere?: () => void;
   onClose: () => void;
 }
 
@@ -41,6 +46,7 @@ export function SelectionToolbar({
   onApplyColor,
   onDelete,
   onNote,
+  onMoveHere,
   onClose,
 }: SelectionToolbarProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -49,7 +55,9 @@ export function SelectionToolbar({
   // Only one button is in the tab order; the arrow keys move between them
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const buttonCount = HIGHLIGHT_COLORS.length + (isOnHighlight ? 2 : 1);
+  const buttonCount = onMoveHere
+    ? 1
+    : HIGHLIGHT_COLORS.length + (isOnHighlight ? 2 : 1);
   const activeIndex = Math.min(focusIndex, buttonCount - 1);
 
   // Above the selection, or below it when it would go under the site header,
@@ -128,46 +136,60 @@ export function SelectionToolbar({
     <div
       ref={ref}
       role="toolbar"
-      aria-label="Highlight text"
+      aria-label={onMoveHere ? "Move highlight" : "Highlight text"}
       onKeyDown={handleKeyDown}
       className="absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
       // No margin from a block that spaces out its children (a callout's do)
       style={{ ...placement, margin: 0 }}
     >
-      {HIGHLIGHT_COLORS.map(({ color, label }, i) => (
+      {onMoveHere ? (
         <button
-          key={color}
-          {...rovingProps(i)}
-          title={`Highlight ${label}`}
-          aria-label={`Highlight ${label}`}
-          aria-pressed={selectedColor === color}
-          onClick={() => onApplyColor(color)}
-          className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
-            selectedColor === color ? "ring-2 ring-[#2D7597] ring-offset-1" : ""
-          }`}
-          style={{ backgroundColor: color }}
-        />
-      ))}
-      <div className="mx-0.5 h-4 w-px bg-slate-200" />
-      <button
-        {...rovingProps(HIGHLIGHT_COLORS.length)}
-        title="Add note"
-        aria-label="Add note"
-        onClick={onNote}
-        className="rounded p-0.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-      >
-        <IconNotebook className="h-4 w-4" aria-hidden />
-      </button>
-      {isOnHighlight && (
-        <button
-          {...rovingProps(HIGHLIGHT_COLORS.length + 1)}
-          title="Remove highlight"
-          aria-label="Remove highlight"
-          onClick={onDelete}
-          className="rounded p-0.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+          {...rovingProps(0)}
+          onClick={onMoveHere}
+          className="rounded px-1.5 py-0.5 text-sm font-medium text-[#2D7597] hover:bg-slate-100"
         >
-          <IconTrash className="h-4 w-4" aria-hidden />
+          Move highlight here
         </button>
+      ) : (
+        <>
+          {HIGHLIGHT_COLORS.map(({ color, label }, i) => (
+            <button
+              key={color}
+              {...rovingProps(i)}
+              title={`Highlight ${label}`}
+              aria-label={`Highlight ${label}`}
+              aria-pressed={selectedColor === color}
+              onClick={() => onApplyColor(color)}
+              className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
+                selectedColor === color
+                  ? "ring-2 ring-[#2D7597] ring-offset-1"
+                  : ""
+              }`}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+          <div className="mx-0.5 h-4 w-px bg-slate-200" />
+          <button
+            {...rovingProps(HIGHLIGHT_COLORS.length)}
+            title="Add note"
+            aria-label="Add note"
+            onClick={onNote}
+            className="rounded p-0.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <IconNotebook className="h-4 w-4" aria-hidden />
+          </button>
+          {isOnHighlight && (
+            <button
+              {...rovingProps(HIGHLIGHT_COLORS.length + 1)}
+              title="Remove highlight"
+              aria-label="Remove highlight"
+              onClick={onDelete}
+              className="rounded p-0.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+            >
+              <IconTrash className="h-4 w-4" aria-hidden />
+            </button>
+          )}
+        </>
       )}
     </div>
   );
