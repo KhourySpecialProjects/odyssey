@@ -9,6 +9,13 @@ export const reviewCommentFieldSchema = z.enum([
   "description",
   "overview",
   "objective",
+  "name",
+  "authors",
+  "nextSteps",
+  "prerequisites",
+  "postrequisites",
+  "funFact",
+  "datasets",
 ]);
 export const reviewStateSchema = z.enum(["open", "sent", "published"]);
 export const aiScoringRunStateSchema = z.enum([
@@ -74,10 +81,21 @@ const wholeBlockAnchorSchema = z
   .object({ ...anchorBase, blockId: z.string().min(1) })
   .strict();
 
+// A whole Overview section: its field and nothing else. A lesson's blocks
+// are never one comment.
+const wholeSectionAnchorSchema = z
+  .object(anchorBase)
+  .strict()
+  .refine((a) => a.field !== "blocks", {
+    message: "a lesson comment needs a block or text",
+    path: ["field"],
+  });
+
 // Stored as JSON, so strict. Text first, so its issues are the ones reported.
 export const reviewAnchorSchema = z.union([
   textAnchorSchema,
   wholeBlockAnchorSchema,
+  wholeSectionAnchorSchema,
 ]) satisfies z.ZodType<ReviewAnchor>;
 
 /**

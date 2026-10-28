@@ -446,7 +446,15 @@ export type ReviewCommentField =
   | "blocks"
   | "description"
   | "overview"
-  | "objective";
+  | "objective"
+  // The Overview's title, and its other sections (whole-section comments)
+  | "name"
+  | "authors"
+  | "nextSteps"
+  | "prerequisites"
+  | "postrequisites"
+  | "funFact"
+  | "datasets";
 
 export type AiScoringRunState =
   | "queued"
@@ -455,7 +463,10 @@ export type AiScoringRunState =
   | "partial"
   | "failed";
 
-/** Text in a block or field (with its quote and context), or a whole block */
+/**
+ * Text in a block or field (with its quote and context), a whole block, or a
+ * whole Overview section
+ */
 export type ReviewAnchor =
   | {
       v: 1;
@@ -471,7 +482,8 @@ export type ReviewAnchor =
       /** At one spot: just before the quote, or just after it */
       point?: "before" | "after";
     }
-  | { v: 1; field: ReviewCommentField; blockId: string };
+  | { v: 1; field: ReviewCommentField; blockId: string }
+  | { v: 1; field: ReviewCommentField; blockId?: never };
 
 export type ReviewCriterion = {
   id: number;

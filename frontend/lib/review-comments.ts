@@ -20,6 +20,10 @@ export const commentsOnLesson = (
 
 export const isResolved = (comment: ReviewComment) => !!comment.resolvedAt;
 
+/** A comment on a whole Overview section: its field and nothing else */
+export const isWholeSection = (anchor: ReviewAnchor) =>
+  !("quote" in anchor) && anchor.blockId === undefined;
+
 /**
  * For the strip under a lesson's title: every comment, and how many are
  * pending (still open and not yet sent to the author).
@@ -62,7 +66,8 @@ export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
  * solid line; a resolved one gets a dotted grey line. A whole block has no
  * mark of its own (the comment layer outlines it), and a spot comment is a
  * caret beside its letters. A comment whose text was edited away is
- * outdated, listed rather than dropped.
+ * outdated, listed rather than dropped. A whole Overview section has no text
+ * to find (its heading takes the tag), so it's left out.
  */
 export function commentMarks(
   comments: readonly ReviewComment[],
@@ -73,6 +78,7 @@ export function commentMarks(
   const drawn: DrawnAnchor[] = [];
   const outdated: ReviewComment[] = [];
   for (const comment of comments) {
+    if (isWholeSection(comment.anchor)) continue;
     const range = resolveAnchor(content, comment.anchor);
     if (range === OUTDATED) {
       if (!isResolved(comment)) outdated.push(comment);
@@ -131,6 +137,8 @@ const BLOCK_LABELS: Record<string, string> = {
   "quiz-multiple-choice": "Check-in",
   "quiz-true-false": "Check-in",
   "quiz-open-ended": "Check-in",
+  // An Overview section, named by its heading
+  section: "Section",
 };
 
 /** What a BlockNote block type is called in a tag, e.g. "Paragraph" */
@@ -167,7 +175,8 @@ type ReviewAnchorText = Extract<ReviewAnchor, { quote: string }>;
 
 /**
  * A few words of what a comment is about (D8): the quoted phrase, the words
- * around a spot with ‸ at the spot, or the block's kind and its first words.
+ * around a spot with ‸ at the spot, or the block's kind and its first words
+ * (for an Overview section, "Section" and its heading).
  * A selection across blocks adds how many it spans. `long` is for labels
  * read in full.
  */

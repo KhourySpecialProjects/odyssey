@@ -1571,7 +1571,19 @@ export interface ApiReviewCommentReviewComment
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     field: Schema.Attribute.Enumeration<
-      ['blocks', 'description', 'overview', 'objective']
+      [
+        'blocks',
+        'description',
+        'overview',
+        'objective',
+        'name',
+        'authors',
+        'nextSteps',
+        'prerequisites',
+        'postrequisites',
+        'funFact',
+        'datasets',
+      ]
     > &
       Schema.Attribute.Required;
     lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;

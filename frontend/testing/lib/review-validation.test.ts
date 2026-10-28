@@ -67,6 +67,56 @@ describe("whole-block anchors (ODY-806)", () => {
   });
 });
 
+describe("whole-section anchors (ODY-806)", () => {
+  it.each(["nextSteps", "overview", "authors", "funFact"])(
+    "accepts a whole %s section: its field and nothing else",
+    (field) => {
+      expect(reviewAnchorSchema.safeParse({ v: 1, field }).success).toBe(true);
+    },
+  );
+
+  it("rejects a whole lesson, which has no section", () => {
+    expect(
+      reviewAnchorSchema.safeParse({ v: 1, field: "blocks" }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown key", () => {
+    expect(
+      reviewAnchorSchema.safeParse({ v: 1, field: "nextSteps", extra: 1 })
+        .success,
+    ).toBe(false);
+  });
+
+  it("is a droplet-level comment, with no lesson", () => {
+    const section = {
+      reviewId: 7,
+      field: "nextSteps",
+      anchor: { v: 1, field: "nextSteps" },
+      body: "Link the next droplet.",
+    };
+    expect(
+      reviewCommentInputSchema.safeParse({ ...section, lessonId: null })
+        .success,
+    ).toBe(true);
+    expect(
+      reviewCommentInputSchema.safeParse({ ...section, lessonId: 5 }).success,
+    ).toBe(false);
+  });
+
+  it("takes text comments on the title", () => {
+    expect(
+      reviewAnchorSchema.safeParse({
+        v: 1,
+        field: "name",
+        quote: "Loops",
+        prefix: "",
+        suffix: " in Python",
+      }).success,
+    ).toBe(true);
+  });
+});
+
 describe("toReviewAnchor", () => {
   it("passes createAnchor's whole-block anchor through", () => {
     const anchor = createAnchor({ blockId: "b1" }, { field: "blocks" })!;

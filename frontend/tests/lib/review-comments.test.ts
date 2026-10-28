@@ -9,6 +9,7 @@ import {
   commentsOnLesson,
   blocksSpanned,
   commentTime,
+  isWholeSection,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
 
@@ -204,6 +205,42 @@ describe("commentMarks", () => {
 
     expect(drawn).toEqual([]);
     expect(outdated.map((c) => c.id)).toEqual([1, 2]);
+  });
+});
+
+describe("whole Overview sections", () => {
+  const section = comment({
+    id: 5,
+    field: "nextSteps",
+    anchor: { v: 1, field: "nextSteps" },
+  });
+
+  it("tells a whole section from a whole block and from text", () => {
+    expect(isWholeSection(section.anchor)).toBe(true);
+    expect(isWholeSection({ v: 1, field: "blocks", blockId: "b1" })).toBe(
+      false,
+    );
+    expect(
+      isWholeSection({
+        v: 1,
+        field: "overview",
+        quote: "loops",
+        prefix: "",
+        suffix: "",
+      }),
+    ).toBe(false);
+  });
+
+  it("draws no mark for one and never calls it outdated", () => {
+    expect(
+      commentMarks([section], { nextSteps: [{ text: "" }] }, "open"),
+    ).toEqual({ drawn: [], outdated: [] });
+  });
+
+  it("names it by its heading", () => {
+    const heading = { type: "section", text: "Next Steps" };
+    expect(commentSnippet(section, heading)).toBe("Section · “Next Steps”");
+    expect(blockLabel("section")).toBe("Section");
   });
 });
 

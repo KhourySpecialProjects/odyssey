@@ -13,6 +13,8 @@ interface CommentStripProps {
   loadError?: boolean;
   /** Whether blocks have a bar for whole-block comments (BlockNote only) */
   blockBars?: boolean;
+  /** Whether headings take whole-section comments (the Overview) */
+  sections?: boolean;
   /** The "Comment with the keyboard" button */
   keyboard?: ReactNode;
   children?: ReactNode;
@@ -30,6 +32,7 @@ export function CommentStrip({
   isLoading = false,
   loadError = false,
   blockBars = false,
+  sections = false,
   keyboard,
   children,
 }: CommentStripProps) {
@@ -68,6 +71,7 @@ export function CommentStrip({
               Click anywhere in the text to comment right there, or drag across
               words to comment on them.
               {blockBars && " The bar beside a block takes the whole block."}
+              {sections && " Click a heading to comment on its whole section."}
             </span>
           </>
         )}

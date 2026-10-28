@@ -6,15 +6,22 @@ import type { ReviewAnchor, ReviewComment } from "@/types";
 import { stripHtmlTags } from "@/lib/utils";
 import {
   FrozenOverview,
+  TITLE_CLASS,
   type OverviewField,
+  type OverviewSection,
 } from "@/components/draft/metadata/frozen-overview";
 import { useDropletReviewComments } from "./review-comments-context";
-import { commentCounts, numberComments } from "@/lib/review-comments";
+import {
+  commentCounts,
+  isWholeSection,
+  numberComments,
+} from "@/lib/review-comments";
 import { ReviewModeBar, type ReviewMode } from "./review-mode-bar";
 import { CommentLayer } from "./comment-layer";
 import { ReviewTextView } from "./review-text-view";
 import { OutdatedComments } from "./outdated-comments";
 import { CommentStrip } from "./comment-strip";
+import { SectionComments } from "./section-comments";
 import {
   CommentKeyboardButton,
   CommentKeyboardProvider,
@@ -23,7 +30,12 @@ import {
 const escape = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const FIELDS: OverviewField[] = ["description", "overview", "objective"];
+const FIELDS: OverviewField[] = [
+  "name",
+  "description",
+  "overview",
+  "objective",
+];
 // Longer than the Overview editors' 1 s autosave debounce (useDropletUpdate)
 const SAVE_SETTLE_MS = 1500;
 
@@ -38,9 +50,10 @@ type OverviewReviewProps = Omit<
 
 /**
  * The Overview for a reviewer of a droplet in review (ODY-806, Task 8):
- * Comment (the read-only Overview with comments on its description,
- * overview and learning objectives), Read, or Edit (the editors). Comments
- * anchor by quote within each field and are numbered across the Overview.
+ * Comment (the read-only Overview with comments on the text of its title,
+ * description, overview and learning objectives, and on any whole section
+ * from its heading), Read, or Edit (the editors). Text comments anchor by
+ * quote within each field; all are numbered across the Overview.
  */
 export function OverviewReview({
   droplet,
@@ -72,10 +85,11 @@ export function OverviewReview({
   const [litMarkId, setLitMarkId] = useState<string | null>(null);
   const [outdated, setOutdated] = useState<
     Record<OverviewField, ReviewComment[]>
-  >({ description: [], overview: [], objective: [] });
+  >({ name: [], description: [], overview: [], objective: [] });
 
   const html: Record<OverviewField, string> = useMemo(
     () => ({
+      name: `<h1 class="${TITLE_CLASS}">${escape(droplet.name ?? "")}</h1>`,
       description: `<p>${escape(stripHtmlTags(droplet.description ?? ""))}</p>`,
       overview: droplet.overview ?? "",
       objective: `<ul class="list-disc pl-5">${(
@@ -84,7 +98,12 @@ export function OverviewReview({
         .map((o) => `<li>${escape(o.objective)}</li>`)
         .join("")}</ul>`,
     }),
-    [droplet.description, droplet.overview, droplet.learningObjectives],
+    [
+      droplet.name,
+      droplet.description,
+      droplet.overview,
+      droplet.learningObjectives,
+    ],
   );
 
   const reportOutdated = useCallback(
@@ -113,7 +132,9 @@ export function OverviewReview({
 
   const renderField = (field: OverviewField, standard: ReactNode) => {
     if (!commenting) return standard;
-    const fieldComments = comments.filter((c) => c.field === field);
+    const fieldComments = comments.filter(
+      (c) => c.field === field && !isWholeSection(c.anchor),
+    );
     return (
       <CommentLayer
         enabled
@@ -145,6 +166,36 @@ export function OverviewReview({
     );
   };
 
+  const renderSection = (
+    section: OverviewSection,
+    title: string,
+    body: ReactNode,
+    standard: ReactNode,
+  ) => {
+    if (!commenting) return standard;
+    return (
+      <SectionComments
+        field={section}
+        title={title}
+        comments={comments.filter(
+          (c) => c.field === section && isWholeSection(c.anchor),
+        )}
+        numbers={numbers}
+        canChange={canChange}
+        onPost={(anchor, body) =>
+          add({ field: section, lessonId: null, anchor, body })
+        }
+        onEdit={edit}
+        onDelete={remove}
+        onResolve={resolve}
+        litMarkId={litMarkId}
+        onLitChange={setLitMarkId}
+      >
+        {body}
+      </SectionComments>
+    );
+  };
+
   const allOutdated = FIELDS.flatMap((f) => outdated[f]);
 
   return (
@@ -170,6 +221,7 @@ export function OverviewReview({
                   place="the Overview"
                   isLoading={reviewComments.isLoading}
                   loadError={!!reviewComments.loadError}
+                  sections
                   keyboard={<CommentKeyboardButton />}
                 >
                   <OutdatedComments comments={allOutdated} />
@@ -180,6 +232,7 @@ export function OverviewReview({
               droplet={droplet}
               authors={authors}
               renderField={renderField}
+              renderSection={renderSection}
             />
             <div className="pb-16" />
           </>

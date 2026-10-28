@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -9,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { IconCheck, IconMessage } from "@tabler/icons-react";
+import { IconMessage } from "@tabler/icons-react";
 import type { ReviewAnchor, ReviewComment, ReviewCommentField } from "@/types";
 import { cn } from "@/lib/utils";
 import { createAnchor, pointAnchor } from "@/lib/anchors/create";
@@ -45,24 +46,24 @@ import { CommentComposer } from "./comment-composer";
 import { CommentCard } from "./comment-card";
 import { SpotQuote } from "./comment-about";
 import { useKeyboardLayer } from "./comment-keyboard";
+import {
+  CommentOutline,
+  CommentTag,
+  TAG_MAX,
+  TagFloorContext,
+  stackTags,
+  tagLabel,
+  tagSpace,
+  type TagMode,
+} from "./comment-tag";
 
 // A block in the BlockNote editor, and the element holding its own text
 const BLOCK = '[data-node-type="blockContainer"][data-id]';
 const BLOCK_TEXT = ":scope > .bn-block-content";
 const MARK = '[data-anchor-id^="comment-"]';
 const SNIPPET = 60;
-// A tag's height and the gap kept between stacked tags
+// The tags' height, for centring one on its line
 const TAG_HEIGHT = 26;
-const TAG_GAP = 4;
-// Tags sit this far right of the text; their width is the room up to the
-// window's edge, at most TAG_MAX. Below SHORT_ROOM they show only their
-// number until hovered or focused; with under TIGHT_ROOM right of the text
-// (a phone), they move inside it.
-const TAG_OFFSET = 18;
-const TAG_MAX = 240;
-const SHORT_ROOM = 110;
-const TIGHT_ROOM = 44;
-const EDGE = 16;
 // The block bars sit this far left of a block's text
 const BAR_OFFSET = 26;
 // Marks within this many px of each other are on one line
@@ -88,7 +89,7 @@ type Layout = {
   /** Where tags go, in px from the layer's left */
   tagLeft: number;
   room: number;
-  tagMode: "full" | "short" | "tight";
+  tagMode: TagMode;
   /** No room left of the text for the "Whole paragraph" label */
   narrow: boolean;
 };
@@ -118,6 +119,10 @@ const MESSAGES: Record<string, string> = {
   invalid_input:
     "This comment couldn't be saved. Try selecting the text again.",
 };
+
+/** What the composer says when a comment didn't save */
+export const postFailure = (error: string) =>
+  MESSAGES[error] ?? "Couldn't save your comment. Try again.";
 
 const WHOLE: Record<string, string> = {
   Paragraph: "paragraph",
@@ -181,7 +186,7 @@ function measureBlocks(
 /**
  * Where each comment's tag goes: centred on its mark's line, or on its
  * block's first line when it has no mark (a whole block). Tags are stacked so
- * none overlap, in reading order.
+ * none overlap, in reading order, from `floor` down.
  */
 function measureTags(
   root: Element,
@@ -189,6 +194,7 @@ function measureTags(
   comments: readonly ReviewComment[],
   numbers: ReadonlyMap<number, number>,
   outdated: ReadonlySet<number>,
+  floor: number,
 ): TagBox[] {
   const rootTop = root.getBoundingClientRect().top;
   const placed = comments.flatMap((comment) => {
@@ -221,12 +227,7 @@ function measureTags(
       a.order - b.order ||
       a.commentId - b.commentId,
   );
-  let next = -Infinity;
-  for (const tag of placed) {
-    tag.top = Math.max(tag.markTop, next);
-    next = tag.top + TAG_HEIGHT + TAG_GAP;
-  }
-  return placed.map(({ commentId, top, markTop }) => ({
+  return stackTags(placed, floor).map(({ commentId, top, markTop }) => ({
     commentId,
     top,
     markTop,
@@ -318,6 +319,9 @@ export function CommentLayer({
   numbersRef.current = numbers;
   const blockForRef = useRef(blockFor);
   blockForRef.current = blockFor;
+  const tagFloor = useContext(TagFloorContext);
+  const tagFloorRef = useRef(tagFloor);
+  tagFloorRef.current = tagFloor;
   // The caret's units, read again whenever the content changes
   const unitsRef = useRef<CaretUnit[] | null>(null);
   const units = useCallback(() => {
@@ -347,15 +351,12 @@ export function CommentLayer({
     const rootRect = root.getBoundingClientRect();
     const contentRect = content.getBoundingClientRect();
     const blocks = measureBlocks(root, content, blockForRef.current);
-    const outside = window.innerWidth - rootRect.right;
-    const tagLeft = contentRect.right - rootRect.left + TAG_OFFSET;
-    const room = Math.min(
-      TAG_MAX,
-      window.innerWidth - EDGE - (rootRect.left + tagLeft),
-    );
     const left = blocks.length
       ? Math.min(...blocks.map((b) => b.left))
       : contentRect.left - rootRect.left;
+    const floor = tagFloorRef.current
+      ? tagFloorRef.current() - rootRect.top
+      : -Infinity;
     setLayout({
       blocks,
       tags: measureTags(
@@ -364,11 +365,9 @@ export function CommentLayer({
         commentsRef.current,
         numbersRef.current,
         outdatedRef.current,
+        floor,
       ),
-      tagLeft,
-      room,
-      tagMode:
-        outside < TIGHT_ROOM ? "tight" : room < SHORT_ROOM ? "short" : "full",
+      ...tagSpace(rootRect, contentRect),
       narrow: rootRect.left + left < 150,
     });
   }, []);
@@ -405,10 +404,11 @@ export function CommentLayer({
     };
   }, [enabled, measure]);
 
-  // New, resolved or deleted comments move tags without any DOM change
+  // New, resolved or deleted comments move tags without any DOM change, and
+  // so do the tags of the section this text is in
   useLayoutEffect(() => {
     if (enabled) measure();
-  }, [enabled, comments, numbers, outdatedIds, measure]);
+  }, [enabled, comments, numbers, outdatedIds, tagFloor, measure]);
 
   const remember = () => {
     const active = document.activeElement as HTMLElement | null;
@@ -682,9 +682,7 @@ export function CommentLayer({
     if (!draft) return null;
     const outcome = await onPost(draft.anchor, body);
     if (!outcome.ok) {
-      return (
-        MESSAGES[outcome.error] ?? "Couldn't save your comment. Try again."
-      );
+      return postFailure(outcome.error);
     }
     toast.success("Comment saved");
     closeDraft();
@@ -992,25 +990,15 @@ export function CommentLayer({
       : !!draft?.blocks?.some((b) => b.blockId === blockId) ||
         keyboardBlocks.some((b) => b.blockId === blockId);
   const tight = layout.tagMode === "tight";
-  const short = layout.tagMode !== "full";
 
   return (
     <div ref={rootRef} className={cn("relative", enabled && tight && "pr-10")}>
       {enabled &&
         outlined.map(({ box, target }) => (
-          <div
+          <CommentOutline
             key={`outline-${box.key}`}
-            aria-hidden
-            className="pointer-events-none absolute z-[5] rounded-md bg-[var(--rc-wash)]"
-            style={{
-              top: box.top,
-              left: box.left,
-              width: box.width,
-              height: box.height,
-              boxShadow: "0 0 0 6px var(--rc-wash)",
-              outline: `${target ? 3 : 2}px solid var(--rc-accent)`,
-              outlineOffset: 6,
-            }}
+            box={box}
+            target={target}
           />
         ))}
       {enabled && labelBlock && !layout.narrow && (
@@ -1087,71 +1075,34 @@ export function CommentLayer({
           const lit = litMarkId === markId || card?.commentId === comment.id;
           const { anchor } = comment;
           return (
-            <button
+            <CommentTag
               key={comment.id}
-              type="button"
-              data-testid="comment-tag"
-              aria-label={`${number ? `Comment ${number}${pending ? ", pending" : ""}` : "Resolved comment"}: ${commentSnippet(comment, block, { long: true, blocks })}`}
-              aria-expanded={card?.commentId === comment.id}
-              onMouseEnter={() => onLitChange(markId)}
-              onMouseLeave={() => onLitChange(null)}
-              onFocus={() => onLitChange(markId)}
-              onBlur={() => onLitChange(null)}
-              onClick={(e) => {
-                const root = rootRef.current;
-                if (root) {
-                  openCard(
-                    comment.id,
-                    anchorIn(root, e.currentTarget.getBoundingClientRect()),
-                  );
-                }
-              }}
-              className={cn(
-                "group/tag absolute z-10 inline-flex h-[26px] items-center gap-[7px] rounded-[7px] border bg-white py-0 pr-[9px] pl-[3px] text-xs font-medium whitespace-nowrap text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[transform,box-shadow,border-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rc-accent)] dark:bg-[#131c2e] dark:text-slate-300",
-                pending
-                  ? "border-dashed border-[var(--rc-accent)]"
-                  : "border-slate-200 dark:border-[#223047]",
-                resolved && "text-slate-500 dark:text-slate-400",
-                lit &&
-                  "-translate-x-0.5 border-solid border-[var(--rc-accent)] text-slate-900 shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--rc-accent-soft-border)] dark:text-slate-50 dark:shadow-[0_0_0_2px_#0b1220,0_0_0_4px_var(--rc-accent-soft-border)]",
-                "hover:-translate-x-0.5 hover:border-[var(--rc-accent)] hover:text-slate-900 dark:hover:text-slate-50",
-                short &&
-                  "px-0.5 hover:z-30 hover:max-w-[240px] hover:pr-[9px] hover:pl-[3px] hover:shadow-[0_12px_32px_rgba(15,23,42,0.12)] focus-visible:z-30 focus-visible:max-w-[240px] focus-visible:pr-[9px] focus-visible:pl-[3px]",
-                short && lit && "z-30 max-w-[240px] pr-[9px] pl-[3px]",
+              number={number}
+              pending={pending}
+              resolved={resolved}
+              lit={lit}
+              expanded={card?.commentId === comment.id}
+              mode={layout.tagMode}
+              top={tag.top}
+              left={layout.tagLeft}
+              room={layout.room}
+              label={tagLabel(
+                number,
+                pending,
+                commentSnippet(comment, block, { long: true, blocks }),
               )}
-              style={{
-                top: tag.top,
-                ...(tight ? { right: 4 } : { left: layout.tagLeft }),
-                maxWidth: short ? undefined : Math.max(0, layout.room),
+              onLight={(on) => onLitChange(on ? markId : null)}
+              onOpen={(rect) => {
+                const root = rootRef.current;
+                if (root) openCard(comment.id, anchorIn(root, rect));
               }}
             >
-              <span
-                className={cn(
-                  "inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-[5px] px-[5px] text-[11px] font-bold tabular-nums",
-                  resolved
-                    ? "bg-slate-200 text-slate-600 dark:bg-[#26324a] dark:text-slate-300"
-                    : pending
-                      ? "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]"
-                      : "bg-[var(--rc-accent)] text-white",
-                )}
-              >
-                {number ?? <IconCheck className="h-3 w-3" aria-hidden />}
-              </span>
-              <span
-                className={cn(
-                  "min-w-0 truncate leading-none",
-                  short &&
-                    !lit &&
-                    "hidden group-hover/tag:block group-focus-visible/tag:block",
-                )}
-              >
-                {"quote" in anchor && anchor.point ? (
-                  <SpotQuote anchor={anchor} length={10} />
-                ) : (
-                  commentSnippet(comment, block, { blocks })
-                )}
-              </span>
-            </button>
+              {"quote" in anchor && anchor.point ? (
+                <SpotQuote anchor={anchor} length={10} />
+              ) : (
+                commentSnippet(comment, block, { blocks })
+              )}
+            </CommentTag>
           );
         })}
       {enabled && selectionButton && !draft && (
