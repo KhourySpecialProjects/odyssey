@@ -149,7 +149,7 @@ Group
 
 - **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published. Relations to droplet, playlist, group, sender/receiver users.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
-- **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `selectedText`, `startOffset`/`endOffset` for position.
+- **Highlight** — A learner's highlight of one block's text: `color` (pink #f9a8d4, orange #fbd38d, yellow #fff300, green #86efac, blue #93c5fd), `text`, `position` (`{ start, end }` character offsets in the block's text) and `blockId`. A generic block's highlights use its id; other blocks' (callouts, expandables, code) use `blockNoteIdToNumber("<__component>:<id>")`, since Classic lessons' block ids are only unique within a type. A selection across blocks is saved as one highlight per block. Drawn by `HighlightLayer` (`components/droplets/lessons/highlight-layer.tsx`) and `lib/highlight-regions.ts`.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
 - **Tag** — Simple `name` field, many-to-many with Droplet.
 

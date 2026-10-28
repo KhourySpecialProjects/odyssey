@@ -211,6 +211,15 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   padding-top: 0.26em;
   padding-bottom: 0.13em;
 }
+/* In a code editor, a highlight's marks wrap the syntax colouring's, so its
+   black text has to reach them */
+.cm-content .lesson-highlight * {
+  color: inherit !important;
+}
+/* Line numbers aren't part of the code a reader selects or copies */
+.cm-gutters {
+  user-select: none;
+}
 
 /* Fenced code block backgrounds: light by default, dark in dark mode.
    Tailwind Typography hardcodes a dark pre background; override it here

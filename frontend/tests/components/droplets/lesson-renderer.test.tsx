@@ -13,6 +13,7 @@ import {
   updateHighlight,
 } from "@/lib/requests/highlights";
 import { createNote } from "@/lib/requests/notes";
+import { blockNoteIdToNumber } from "@/lib/blocknote/convert-blocks";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { toast } from "sonner";
 import { AuthorizedUser, Highlight, Lesson } from "@/types";
@@ -503,6 +504,206 @@ describe("LessonRenderer (viewer)", () => {
         id: 7,
       });
       expect(createHighlight).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("across blocks", () => {
+    // From "joins" in block 1 to the end of "inner" in block 2
+    const selectAcrossBlocks = (container: HTMLElement) => {
+      const [first, second] = blocks(container);
+      const start = textNode(first, "joins");
+      const end = textNode(second, "inner");
+      select(
+        start,
+        start.data.indexOf("joins"),
+        end,
+        end.data.indexOf("inner") + 5,
+      );
+    };
+    const joinsToday: Highlight = {
+      id: 4,
+      text: "joins today",
+      color: "#86efac",
+      position: { start: 10, end: 21 },
+      blockId: 1,
+    };
+    const useInner: Highlight = {
+      id: 5,
+      text: "Use inner",
+      color: "#86efac",
+      position: { start: 0, end: 9 },
+      blockId: 2,
+    };
+
+    it("saves a highlight in each block the selection covers, and says so once", async () => {
+      jest
+        .mocked(createHighlight)
+        .mockResolvedValueOnce({ ok: true, error: null, data: joinsToday })
+        .mockResolvedValueOnce({ ok: true, error: null, data: useInner });
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+
+      selectAcrossBlocks(container);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Green" }),
+      );
+
+      const { id: _, ...first } = joinsToday;
+      const { id: __, ...second } = useInner;
+      expect(createHighlight).toHaveBeenCalledWith({ ...first, lessonId: 1 });
+      expect(createHighlight).toHaveBeenCalledWith({ ...second, lessonId: 1 });
+      await waitFor(() => expect(pieces(container, 5)).toHaveLength(2));
+      expect(pieces(container, 4)[0]).toHaveTextContent(/^joins today$/);
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith("Highlight saved");
+    });
+
+    it("saves only a block's own text when the selection starts above the blocks", async () => {
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+      const [first] = blocks(container);
+
+      // From the lesson's title to the end of "SQL"
+      select(
+        screen.getByText("Test Lesson").firstChild!,
+        0,
+        textNode(first, "SQL"),
+        9,
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Green" }),
+      );
+
+      expect(createHighlight).toHaveBeenCalledTimes(1);
+      expect(createHighlight).toHaveBeenCalledWith({
+        text: "Learn SQL",
+        position: { start: 0, end: 9 },
+        color: "#86efac",
+        blockId: 1,
+        lessonId: 1,
+      });
+    });
+
+    it("shows the toolbar in the block where the selection ends", async () => {
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+      const [, second] = blocks(container);
+
+      selectAcrossBlocks(container);
+
+      const toolbar = await screen.findByRole("toolbar");
+      expect(second.parentElement!.parentElement).toContainElement(toolbar);
+    });
+
+    it("removes them together when the same text is selected again", async () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          initialHighlights={[joinsToday, useInner]}
+        />,
+      );
+
+      selectAcrossBlocks(container);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Remove highlight" }),
+      );
+
+      expect(deleteHighlight).toHaveBeenCalledWith(4);
+      expect(deleteHighlight).toHaveBeenCalledWith(5);
+      expect(container.querySelector(".lesson-highlight")).toBeNull();
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlight removed"),
+      );
+      expect(toast.success).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("other kinds of block", () => {
+    // A Classic lesson's callout with the same id as the generic block 1
+    const callout = {
+      id: 1,
+      __component: "droplets.callout",
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { type: "text", text: "Mind the " },
+            { type: "text", text: "ON", code: true },
+            { type: "text", text: " clause" },
+          ],
+        },
+      ],
+    };
+    const calloutBlockId = blockNoteIdToNumber("droplets.callout:1");
+    const expandable = {
+      id: 1,
+      __component: "droplets.expandable",
+      title: "Why?",
+      content: "<p>Rows pair up by their keys.</p>",
+    };
+    const withBlocks = (...extra: object[]) =>
+      ({
+        ...lesson,
+        blocks: [...(lesson.blocks as object[]), ...extra],
+      }) as unknown as Lesson;
+
+    it("draws and saves a callout's highlights, apart from a block with the same id", async () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          lesson={withBlocks(callout)}
+          initialHighlights={[
+            {
+              id: 6,
+              text: "Mind",
+              color: "#fff300",
+              position: { start: 0, end: 4 },
+              blockId: calloutBlockId,
+            },
+          ]}
+        />,
+      );
+      const calloutText = screen.getByText(
+        (_, element) => element?.textContent === "Mind the ON clause",
+        { selector: "p" },
+      );
+
+      expect(pieces(calloutText, 6)[0]).toHaveTextContent(/^Mind$/);
+      expect(pieces(blocks(container)[0], 6)).toHaveLength(0);
+
+      selectText(calloutText, "clause");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Blue" }),
+      );
+
+      expect(createHighlight).toHaveBeenCalledWith({
+        text: "clause",
+        position: { start: 12, end: 18 },
+        color: "#93c5fd",
+        blockId: calloutBlockId,
+        lessonId: 1,
+      });
+    });
+
+    it("saves a highlight in an expandable once it's open", async () => {
+      render(<LessonRenderer {...props} lesson={withBlocks(expandable)} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Why?" }));
+      selectText(screen.getByText(/Rows pair up/), "keys");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Blue" }),
+      );
+
+      expect(createHighlight).toHaveBeenCalledWith({
+        text: "keys",
+        position: { start: 22, end: 26 },
+        color: "#93c5fd",
+        blockId: blockNoteIdToNumber("droplets.expandable:1"),
+        lessonId: 1,
+      });
     });
   });
 
