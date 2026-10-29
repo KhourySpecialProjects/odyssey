@@ -178,6 +178,19 @@ A reviewer of a droplet in review (System Admin or Content Editor, never an auth
 
   A live region says where the caret is. Block bars are pointer-only.
 
+### Reviewer Transcript panel (ODY-805)
+
+The same reviewer sees the panel on every page of the draft (`review/review-panel.tsx`, wired by `review-transcript.tsx`). Plan: `docs/plans/ODY-805.md`.
+
+- **Gate (D1).** `draft/d/[slug]/layout.tsx` calls `getReviewPanel` only when the draft is in review and the caller is a reviewer who isn't an author (the shell's `reviewing`). `DraftLayoutShell` renders the panel in `ReviewPanelDock`, so it survives lesson navigation.
+- **Data (D2).** `getReviewPanel` (`lib/requests/reviews.ts`) reads the caller's own review by key: active criteria, scores with `aiFindings`, the latest `ai-scoring-run`, and `positions` (`c<commentId>` / `f<findingId>`, computed by `lib/review-panel/positions.ts`). It is never cached, and returns no comments: they come from the shared `useSharedReviewComments`. While a run is queued or running the panel calls `router.refresh()` every 4 s.
+- **One review (D3).** `useReviewComments` returns `ensureReview()`, which opens the review once and shares the in-flight call. Comment adds and score writes both use it. Viewing creates nothing.
+- **Scores (D4).** `useReviewScores` keeps server rows plus optimistic changes for Confirm (`acceptAiScores`), Undo (`unconfirmScores`) and Change (`saveReviewScore`), rolling back with a toast. A score counts as confirmed when `value` is set. "Not an issue" is kept per browser in `localStorage` (`useDismissedFindings`), and the summary note too (`useSummaryNote`).
+- **Width (D6).** The shell owns the sidebar and panel state. Below 1440 only one is open (the other becomes the 48 px rail or collapses); below 1280 the panel is an overlay drawer that starts as the rail. `<main>` has `group` and `data-review-panel="open|rail"`, and lesson and Overview padding uses `group-data-[review-panel=open]:`. `tagSpace` (`comment-tag.tsx`) measures the content column, so margin tags stay clear of the panel.
+- **Actions (D7).** Publish droplet and Send feedback live in the panel footer (`ContentActionButton`, with `disabledReason`, `initialNote` and the type-the-name step on `publishWithReview`). The footer renders even when the panel data failed to load. The sidebar then shows only Preview (`hideReviewActions`).
+- **Pure rules** are in `lib/review-panel/` (`model`, `positions`, `criteria-icons`, `colors`); they import `lib/anchors/resolve` and `content` only.
+- **Not here yet (PR B, ODY-849):** passage highlights in the lesson, Show in lesson scrolling and Add as comment.
+
 ## Static Assets and Media
 
 - Static assets (logos, icons, default images) live in `frontend/public/`
