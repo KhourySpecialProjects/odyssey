@@ -325,3 +325,49 @@ describe("edit, remove and resolve", () => {
     expect(deleteComment).not.toHaveBeenCalled();
   });
 });
+
+describe("ensureReview", () => {
+  it("shares one open between concurrent callers and add reuses it", async () => {
+    jest.mocked(getMyReview).mockResolvedValue(ok(null) as never);
+    jest.mocked(getOrOpenReview).mockResolvedValue(ok(review) as never);
+    jest.mocked(addComment).mockResolvedValue(ok(saved) as never);
+    const { result } = await mount();
+
+    let both: unknown;
+    await act(async () => {
+      both = await Promise.all([
+        result.current.ensureReview(),
+        result.current.ensureReview(),
+      ]);
+      await result.current.add(input);
+    });
+
+    expect(both).toEqual([
+      { ok: true, data: review },
+      { ok: true, data: review },
+    ]);
+    expect(result.current.review).toEqual(review);
+    expect(getOrOpenReview).toHaveBeenCalledTimes(1);
+    expect(addComment).toHaveBeenCalledWith(
+      expect.objectContaining({ reviewId: 7 }),
+    );
+  });
+
+  it("returns the error when opening fails, and tries again next time", async () => {
+    jest.mocked(getMyReview).mockResolvedValue(ok(null) as never);
+    jest
+      .mocked(getOrOpenReview)
+      .mockResolvedValueOnce(fail("forbidden") as never)
+      .mockResolvedValueOnce(ok(review) as never);
+    const { result } = await mount();
+
+    let bad, good;
+    await act(async () => {
+      bad = await result.current.ensureReview();
+      good = await result.current.ensureReview();
+    });
+
+    expect(bad).toEqual({ ok: false, error: "forbidden" });
+    expect(good).toEqual({ ok: true, data: review });
+  });
+});

@@ -485,6 +485,26 @@ export type ReviewAnchor =
   | { v: 1; field: ReviewCommentField; blockId: string }
   | { v: 1; field: ReviewCommentField; blockId?: never };
 
+/** The text-quote member of ReviewAnchor */
+export type ReviewTextAnchor = Extract<ReviewAnchor, { quote: string }>;
+
+/** A passage the AI flagged in a score (ODY-805 contract) */
+export type AiFinding = {
+  id: string;
+  quote: string;
+  reason: string;
+  /** Null: an Overview field */
+  lessonId: number | null;
+  anchor: ReviewTextAnchor;
+};
+
+export type AiRunSection = number | "overall";
+
+export type AiRunProgress = {
+  done: AiRunSection[];
+  current: AiRunSection | null;
+};
+
 export type ReviewCriterion = {
   id: number;
   documentId?: string;
@@ -539,6 +559,8 @@ export type ReviewScore = {
   value: number | null;
   aiValue: number | null;
   aiRationale?: string | null;
+  /** Reviewer-only: never returned to authors */
+  aiFindings?: AiFinding[] | null;
   key: string;
 };
 
@@ -550,7 +572,8 @@ export type AiScoringRun = {
   model?: string | null;
   promptVersion?: string | null;
   criteria?: ReviewCriterionSnapshot[] | null;
-  failedLessons?: number[] | null;
+  failedLessons?: AiRunSection[] | null;
+  progress?: AiRunProgress | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
   error?: string | null;

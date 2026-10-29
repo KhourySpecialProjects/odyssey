@@ -541,6 +541,7 @@ export interface ApiAiScoringRunAiScoringRun
         },
         number
       >;
+    progress: Schema.Attribute.JSON;
     promptVersion: Schema.Attribute.String &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 50;
@@ -1666,6 +1667,7 @@ export interface ApiReviewScoreReviewScore extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    aiFindings: Schema.Attribute.JSON;
     aiRationale: Schema.Attribute.Text;
     aiValue: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<

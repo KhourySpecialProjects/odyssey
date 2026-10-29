@@ -163,18 +163,28 @@ describe("getReviewForDroplet", () => {
   it("hides AI fields and unconfirmed scores from an author", async () => {
     mockedRequireRole.mockResolvedValue(author());
     arrange({
-      scoreRows: [{ id: 1, criterionName: "Clarity", value: 4, key: "k" }],
+      scoreRows: [
+        {
+          id: 1,
+          criterionName: "Clarity",
+          value: 4,
+          key: "k",
+          aiFindings: [{ id: "x" }],
+        },
+      ],
     });
     const result = await getReviewForDroplet(3);
     const cfg = callsTo("/review-scores")[0][1];
     expect(cfg.urlParams?.filters?.value).toEqual({ $notNull: true });
     expect(cfg.urlParams?.fields).not.toContain("aiValue");
     expect(cfg.urlParams?.fields).not.toContain("aiRationale");
+    expect(cfg.urlParams?.fields).not.toContain("aiFindings");
     expect(cfg.urlParams?.fields).toContain("value");
     expect(result.ok && result.data?.scores?.[0]).toMatchObject({
       value: 4,
       aiValue: null,
       aiRationale: null,
+      aiFindings: null,
     });
   });
 
@@ -185,7 +195,7 @@ describe("getReviewForDroplet", () => {
     const cfg = callsTo("/review-scores")[0][1];
     expect(cfg.urlParams?.filters?.value).toBeUndefined();
     expect(cfg.urlParams?.fields).toEqual(
-      expect.arrayContaining(["aiValue", "aiRationale", "value"]),
+      expect.arrayContaining(["aiValue", "aiRationale", "aiFindings", "value"]),
     );
   });
 

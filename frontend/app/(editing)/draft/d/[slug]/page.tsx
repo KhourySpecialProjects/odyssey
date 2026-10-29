@@ -97,7 +97,7 @@ export default async function Droplet({ params }: Props) {
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
         <div
           role="status"
-          className="mx-40 mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mx-40 mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 group-data-[review-panel=open]:mx-12 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
         >
           <IconLock className="h-4 w-4 shrink-0" />
           <span>{REVIEW_FROZEN_MESSAGE}</span>
@@ -203,7 +203,7 @@ export default async function Droplet({ params }: Props) {
   const editors = (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-        <div className="px-40">
+        <div className="px-40 group-data-[review-panel=open]:px-12">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <ClickableBadges
               focusArea={droplet.focusArea}
@@ -249,7 +249,7 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="w-full space-y-10 px-40 pt-6">
+        <div className="w-full space-y-10 px-40 pt-6 group-data-[review-panel=open]:px-12">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}

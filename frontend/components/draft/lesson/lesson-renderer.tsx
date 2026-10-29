@@ -778,7 +778,7 @@ export function LessonRenderer({
           Checking editing access...
         </div>
       )}
-      <div className="mb-2 flex flex-col items-start justify-start rounded-md px-10 pt-6 pb-1 md:px-40">
+      <div className="mb-2 flex flex-col items-start justify-start rounded-md px-10 pt-6 pb-1 md:px-40 group-data-[review-panel=open]:md:px-12">
         {isEditingName ? (
           <div className="mb-3 w-full">
             <LessonNameInput
@@ -887,7 +887,7 @@ export function LessonRenderer({
       </Dialog>
 
       {!isReadOnly && shouldShowEditorToggle && (
-        <div className="mb-4 px-10 md:px-40">
+        <div className="mb-4 px-10 md:px-40 group-data-[review-panel=open]:md:px-12">
           <div className="inline-flex rounded-lg border border-[#D0D5DD] bg-slate-50 p-1 dark:border-slate-600 dark:bg-slate-800">
             <button
               onClick={async () => {
@@ -945,7 +945,7 @@ export function LessonRenderer({
 
       {editorVersion === "v1" && showCommentLayer ? (
         // Comment mode shows Classic blocks as one read-only text (Task 7)
-        <div className="w-full px-10 md:px-40">
+        <div className="w-full px-10 md:px-40 group-data-[review-panel=open]:md:px-12">
           <CommentLayer {...commentLayerProps}>
             <ClassicReviewView
               blocks={blocks}
@@ -962,7 +962,7 @@ export function LessonRenderer({
           {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
           <div
             key={contentVersion}
-            className="w-full px-10 md:px-40"
+            className="w-full px-10 md:px-40 group-data-[review-panel=open]:md:px-12"
             ref={classicBlocksRef}
           >
             <BlockList
@@ -974,7 +974,7 @@ export function LessonRenderer({
           </div>
         </>
       ) : (
-        <div className="mt-8 w-full px-10 md:px-40">
+        <div className="mt-8 w-full px-10 md:px-40 group-data-[review-panel=open]:md:px-12">
           <div className="w-full min-w-[300px] md:min-w-[700px]">
             <p className="mb-4 text-right text-sm text-slate-400 italic dark:text-slate-400">
               Changes saved automatically

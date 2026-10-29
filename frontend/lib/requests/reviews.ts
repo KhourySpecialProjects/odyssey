@@ -1,7 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import type { Review, ReviewComment, ReviewScore } from "@/types";
+import type {
+  AiFinding,
+  Review,
+  ReviewComment,
+  ReviewScore,
+  ReviewState,
+} from "@/types";
 import {
   fetchAPI,
   flattenAttributes,
@@ -13,6 +19,8 @@ import { resolveDocumentId, strapiEntryUrl } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import { withAuth, assertOwner, type AuthUser } from "@/lib/auth/guards";
 import {
+  aiFindingSchema,
+  aiRunProgressSchema,
   reviewCommentBodySchema,
   reviewCommentInputSchema,
   reviewScoreSaveSchema,
@@ -24,6 +32,14 @@ import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { loadDropletForWrite } from "@/lib/auth/review-freeze";
 import { isReviewerFor } from "@/lib/review-roles";
 import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
+import { blockNoteContent } from "@/lib/anchors/content";
+import type { AnchorBlock } from "@/lib/anchors/types";
+import {
+  computePositions,
+  type Position,
+  type PositionItem,
+} from "@/lib/review-panel/positions";
+import type { PanelScore, PanelRun } from "@/lib/review-panel/model";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -465,7 +481,7 @@ const SCORE_ROUTE_ERRORS: Record<number, ReviewActionError> = {
  * transaction. Its body is `{ data }`, not a v4 entry, so nothing is flattened.
  */
 async function postScoreRoute<T extends { dropletId: number }>(
-  path: "upsert" | "accept-ai",
+  path: "upsert" | "accept-ai" | "unconfirm",
   body: object,
 ): Promise<{ ok: true; data: T } | { ok: false; error: ReviewActionError }> {
   const url = `${NEXT_PUBLIC_STRAPI_API_URL}/api/review-scores/${path}`;
@@ -551,6 +567,36 @@ export async function acceptAiScores(
   });
 }
 
+/**
+ * Undoes Confirm for one lesson or (null) the Overall Score: clears `value`
+ * where it equals `aiValue`. Returns the scores it cleared.
+ */
+export async function unconfirmScores(
+  reviewId: number,
+  lessonId: number | null,
+): Promise<ReviewActionResult<SavedScore[]>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const parsed = reviewScoreScopeSchema.safeParse({ reviewId, lessonId });
+      if (!parsed.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const cleared = await postScoreRoute<{
+        dropletId: number;
+        scores: SavedScore[];
+      }>("unconfirm", { ...parsed.data, userId: user.id });
+      if (!cleared.ok) return { ok: false, error: cleared.error, data: null };
+
+      revalidateTag(CACHE_TAGS.review(cleared.data.dropletId));
+      return { ok: true, error: null, data: cleared.data.scores };
+    } catch (error) {
+      console.error("unconfirmScores failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
 
@@ -559,12 +605,15 @@ async function fetchAllPages<T>(
   path: string,
   urlParams: Record<string, unknown>,
   dropletId: number,
+  fresh = false,
 ): Promise<T[]> {
   const all: T[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const rows = await fetchAPI<T[] | null>(path, {
       urlParams: { ...urlParams, pagination: { page, pageSize: PAGE_SIZE } },
-      next: { tags: [CACHE_TAGS.review(dropletId)], revalidate: 900 },
+      ...(fresh
+        ? { cache: "no-store" as const }
+        : { next: { tags: [CACHE_TAGS.review(dropletId)], revalidate: 900 } }),
     });
     if (!rows || rows.length === 0) break;
     all.push(...rows);
@@ -577,6 +626,7 @@ async function fetchAllPages<T>(
 function fetchComments(
   reviewId: number,
   dropletId: number,
+  fresh = false,
 ): Promise<ReviewComment[]> {
   return fetchAllPages<ReviewComment>(
     "/review-comments",
@@ -590,6 +640,7 @@ function fetchComments(
       sort: ["id:asc"],
     },
     dropletId,
+    fresh,
   );
 }
 
@@ -623,6 +674,218 @@ export async function getMyReview(
       return { ok: true, error: null, data: { ...review, comments } };
     } catch (error) {
       console.error("getMyReview failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+export type PanelCriterion = {
+  id: number;
+  name: string;
+  order: number;
+  active: boolean;
+  lessonDescription?: string;
+  overallDescription?: string;
+};
+
+export type PanelRunData = PanelRun & {
+  id: number;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  error?: string | null;
+};
+
+/** What the Reviewer Transcript panel reads: no comments (the shared context has them). */
+export type ReviewPanelData = {
+  review: { id: number; round: number; state: ReviewState } | null;
+  criteria: PanelCriterion[];
+  scores: (PanelScore & {
+    id: number;
+    key: string;
+    criterionName: string;
+  })[];
+  latestRun: PanelRunData | null;
+  /** Keyed `c<commentId>` and `f<findingId>`; see lib/review-panel/positions */
+  positions: Record<string, Position>;
+};
+
+type PanelLesson = {
+  id: number;
+  blocksVersion?: string | null;
+  blocksV2?: unknown;
+};
+
+/** "<reviewId>:<lessonId|overall>:<criterionId>" */
+function parseScoreKey(key: string) {
+  const [, section, criterion] = key.split(":");
+  return {
+    lessonId: section === "overall" ? null : Number(section),
+    criterionId: Number(criterion),
+  };
+}
+
+const failedLessonsSchema = z.array(z.union([idSchema, z.literal("overall")]));
+
+/** Drops malformed AI JSON from a run so one bad value can't fail the panel. */
+function cleanRun(run: PanelRunData | null | undefined): PanelRunData | null {
+  if (!run) return null;
+  return {
+    ...run,
+    progress: aiRunProgressSchema.safeParse(run.progress).success
+      ? run.progress
+      : null,
+    failedLessons: failedLessonsSchema.safeParse(run.failedLessons).success
+      ? run.failedLessons
+      : null,
+  };
+}
+
+/** The caller's own review for the panel (ODY-805); null when not in review. Never opens a review or caches. */
+export async function getReviewPanel(
+  dropletId: number,
+): Promise<ReviewActionResult<ReviewPanelData | null>> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const parsedId = idSchema.safeParse(dropletId);
+      if (!parsedId.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const droplets = await fetchAPI<
+        (DropletForReview & { lessons?: PanelLesson[] | null })[] | null
+      >("/droplets", {
+        urlParams: {
+          filters: { id: { $eq: parsedId.data } },
+          fields: ["inReview", "reviewRound"],
+          populate: {
+            ...AUTHORS_POPULATE,
+            lessons: {
+              fields: ["blocksVersion", "blocksV2"],
+              sort: ["orderIndex:asc"],
+            },
+          },
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+      });
+      const droplet = droplets?.[0];
+      if (!droplet) return { ok: false, error: "not_found", data: null };
+      if (isOwnDroplet(droplet, user)) {
+        return { ok: false, error: "forbidden", data: null };
+      }
+      const round = droplet.reviewRound ?? 0;
+      if (round < 1 || !droplet.inReview) {
+        return { ok: true, error: null, data: null };
+      }
+
+      const [review, criteria] = await Promise.all([
+        findReviewByKey(`${droplet.id}:${user.id}:${round}`),
+        fetchAPI<PanelCriterion[] | null>("/review-criteria", {
+          urlParams: {
+            filters: { active: { $eq: true } },
+            fields: [
+              "name",
+              "order",
+              "active",
+              "lessonDescription",
+              "overallDescription",
+            ],
+            sort: ["order:asc"],
+            pagination: { pageSize: 100 },
+          },
+          cache: "no-store",
+        }),
+      ]);
+      const base = { criteria: criteria ?? [] };
+      if (!review) {
+        const empty = { ...base, review: null, scores: [], latestRun: null };
+        return { ok: true, error: null, data: { ...empty, positions: {} } };
+      }
+
+      const [rows, comments, runs] = await Promise.all([
+        fetchAllPages<ReviewScore & { aiFindings?: AiFinding[] | null }>(
+          "/review-scores",
+          {
+            filters: { review: { id: { $eq: review.id } } },
+            fields: [
+              "criterionName",
+              "value",
+              "aiValue",
+              "aiRationale",
+              "aiFindings",
+              "key",
+            ],
+            sort: ["id:asc"],
+          },
+          droplet.id,
+          true,
+        ),
+        fetchComments(review.id, droplet.id, true),
+        fetchAPI<PanelRunData[] | null>("/ai-scoring-runs", {
+          urlParams: {
+            filters: { review: { id: { $eq: review.id } } },
+            fields: [
+              "runState",
+              "progress",
+              "failedLessons",
+              "startedAt",
+              "finishedAt",
+              "error",
+            ],
+            sort: ["id:desc"],
+            pagination: { pageSize: 1 },
+          },
+          cache: "no-store",
+        }),
+      ]);
+
+      const scores = rows.map((row) => ({
+        id: row.id,
+        key: row.key,
+        criterionName: row.criterionName,
+        ...parseScoreKey(row.key),
+        value: row.value ?? null,
+        aiValue: row.aiValue ?? null,
+        aiRationale: row.aiRationale ?? null,
+        aiFindings: Array.isArray(row.aiFindings)
+          ? row.aiFindings.filter((f) => aiFindingSchema.safeParse(f).success)
+          : null,
+      }));
+
+      const contents: Record<number, AnchorBlock[]> = {};
+      for (const lesson of droplet.lessons ?? []) {
+        if (lesson.blocksVersion === "v2" && Array.isArray(lesson.blocksV2)) {
+          contents[lesson.id] = blockNoteContent(lesson.blocksV2);
+        }
+      }
+      const items: PositionItem[] = [
+        ...comments.map((c) => ({
+          key: `c${c.id}`,
+          lessonId: c.lesson?.id ?? null,
+          anchor: c.anchor,
+        })),
+        ...scores.flatMap((s) =>
+          (s.aiFindings ?? []).map((f) => ({
+            key: `f${f.id}`,
+            lessonId: f.lessonId ?? s.lessonId,
+            anchor: f.anchor,
+          })),
+        ),
+      ];
+
+      return {
+        ok: true,
+        error: null,
+        data: {
+          ...base,
+          review: { id: review.id, round: review.round, state: review.state },
+          scores,
+          latestRun: cleanRun(runs?.[0]),
+          positions: computePositions(items, contents),
+        },
+      };
+    } catch (error) {
+      console.error("getReviewPanel failed", error);
       return { ok: false, error: "failed", data: null };
     }
   });
@@ -688,7 +951,14 @@ export async function getReviewForDroplet(
             },
             // Authors never request AI fields; they are nulled below.
             fields: isReviewer
-              ? ["criterionName", "value", "aiValue", "aiRationale", "key"]
+              ? [
+                  "criterionName",
+                  "value",
+                  "aiValue",
+                  "aiRationale",
+                  "aiFindings",
+                  "key",
+                ]
               : ["criterionName", "value", "key"],
             populate: {
               lesson: { fields: ["name"] },
@@ -702,7 +972,12 @@ export async function getReviewForDroplet(
 
       const safeScores = isReviewer
         ? scores
-        : scores.map((s) => ({ ...s, aiValue: null, aiRationale: null }));
+        : scores.map((s) => ({
+            ...s,
+            aiValue: null,
+            aiRationale: null,
+            aiFindings: null,
+          }));
       return {
         ok: true,
         error: null,

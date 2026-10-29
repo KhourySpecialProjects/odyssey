@@ -166,6 +166,35 @@ describe("Sidebar", () => {
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
   });
 
+  it("shows a lesson's score dot with its screen-reader text", () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+        {...defaultProps}
+        lessonDots={{ 1: "needs_work" }}
+      />,
+    );
+
+    const link = screen.getByText("Test Lesson").closest("a")!;
+    expect(link).toHaveTextContent("Lowest score: Needs work");
+  });
+
+  it("shows no dot for a lesson without one", () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+        {...defaultProps}
+        lessonDots={{ 99: "ok" }}
+      />,
+    );
+
+    expect(screen.queryByText(/Lowest score/)).not.toBeInTheDocument();
+  });
+
   it("toggles mobile menu", () => {
     render(
       <Sidebar
@@ -513,6 +542,41 @@ describe("Sidebar", () => {
           false,
         ),
       ).toEqual([publishWithReview, sendFeedback]);
+    });
+
+    it("shows only Preview in review while the reviewer panel is shown", () => {
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles: [ContentEditor] } as any}
+          droplet={draftStates["new draft in review"] as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={false}
+          hideReviewActions
+        />,
+      );
+
+      expect(screen.queryAllByTestId("content-action-button")).toHaveLength(0);
+      expect(screen.getByText("Preview")).toBeInTheDocument();
+    });
+
+    it("keeps Withdraw for an author even with the panel flag set", () => {
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles: [ContentEditor] } as any}
+          droplet={draftStates["new draft in review"] as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor
+          hideReviewActions
+        />,
+      );
+
+      expect(
+        screen
+          .getAllByTestId("content-action-button")
+          .map((b) => b.getAttribute("data-action-type")),
+      ).toEqual(["withdrawReview"]);
     });
 
     it("a Faculty author still sees Publish when the droplet is not in review", () => {

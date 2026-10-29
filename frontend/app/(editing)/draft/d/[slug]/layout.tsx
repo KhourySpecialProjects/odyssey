@@ -10,6 +10,8 @@ import {
 } from "@/lib/requests/cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { SLIDE_BREAK_TYPE } from "@/lib/blocknote/slide-break";
+import { getReviewPanel } from "@/lib/requests/reviews";
+import { isReviewerFor } from "@/lib/review-roles";
 
 type params = {
   slug: string;
@@ -68,6 +70,13 @@ export default async function CheckPermission({ params, children }: Props) {
     return notFound();
   }
 
+  // Only a reviewer who isn't an author, on an in-review draft, gets the panel
+  const reviewing =
+    droplet.status !== "published" &&
+    !!droplet.inReview &&
+    isReviewerFor(user.roles, true, isAuthor);
+  const panel = reviewing ? await getReviewPanel(droplet.id) : null;
+
   // DraftLayoutShell is a Client Component: pass only what the sidebar reads
   // so the overview, datasets, relations, etc. aren't serialized to the browser.
   const shellDroplet = {
@@ -93,6 +102,7 @@ export default async function CheckPermission({ params, children }: Props) {
       isAuthor={isAuthor}
       user={user}
       availableDroplets={availableDroplets}
+      reviewPanel={panel?.ok ? panel.data : null}
     >
       {children}
     </DraftLayoutShell>

@@ -149,7 +149,8 @@
  * review          Per-droplet tag "review-{dropletId}": read by              900s
  *                 getReviewForDroplet; invalidated by getOrOpenReview
  *                 (create), addComment, editComment, deleteComment,
- *                 resolveComment, submitForReview, withdrawFromReview,
+ *                 resolveComment, saveReviewScore, acceptAiScores,
+ *                 unconfirmScores, submitForReview, withdrawFromReview,
  *                 sendFeedback, publishWithReview and publishDraftToOriginal
  *                 (both also flush the live droplet's tag; ODY-803 adds
  *                 its own)

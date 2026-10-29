@@ -53,6 +53,9 @@
     "aiRationale": {
       "type": "text"
     },
+    "aiFindings": {
+      "type": "json"
+    },
     "key": {
       "type": "string",
       "required": true,

@@ -103,6 +103,35 @@ describe("SortableLesson", () => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
+  it("shows a score dot with its meaning next to the comment badge", () => {
+    render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname="/"
+        openComments={2}
+        dot="needs_work"
+      />,
+    );
+
+    expect(screen.getByText("Lowest score: Needs work")).toBeInTheDocument();
+    expect(screen.getByLabelText("2 open comments")).toBeInTheDocument();
+    const link = screen.getByRole("link");
+    const title = screen.getByText("Test Lesson");
+    const dot = link.querySelector("[aria-hidden].rounded-full")!;
+    expect(
+      dot.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows no dot by default", () => {
+    render(
+      <SortableLesson lesson={mockLesson} droplet={mockDroplet} pathname="/" />,
+    );
+
+    expect(screen.queryByText(/Lowest score/)).not.toBeInTheDocument();
+  });
+
   it("shows the drag handle and enables sorting by default", () => {
     const { container } = render(
       <SortableLesson

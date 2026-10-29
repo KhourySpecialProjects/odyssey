@@ -7,10 +7,9 @@ import { cn } from "@/lib/utils";
 // A tag's height and the gap kept between stacked tags
 export const TAG_HEIGHT = 26;
 export const TAG_GAP = 4;
-// Tags sit this far right of the text; their width is the room up to the
-// window's edge, at most TAG_MAX. Below SHORT_ROOM they show only their
-// number until hovered or focused; with under TIGHT_ROOM right of the text
-// (a phone), they move inside it.
+// Tags sit TAG_OFFSET right of the text, up to TAG_MAX wide, in the room left in
+// the content column. Under SHORT_ROOM they show only a number; under TIGHT_ROOM
+// they move inside the text.
 const TAG_OFFSET = 18;
 export const TAG_MAX = 240;
 const SHORT_ROOM = 110;
@@ -19,14 +18,26 @@ const EDGE = 16;
 
 export type TagMode = "full" | "short" | "tight";
 
+/**
+ * The right edge tags may reach: the window's, or the content column's when
+ * the Reviewer Transcript panel takes the right of `<main>` (ODY-805 D6).
+ */
+function availableRight(): number {
+  const main = document.querySelector<HTMLElement>("main[data-review-panel]");
+  if (!main) return window.innerWidth;
+  const padding = parseFloat(getComputedStyle(main).paddingRight) || 0;
+  return Math.min(
+    window.innerWidth,
+    main.getBoundingClientRect().right - padding,
+  );
+}
+
 /** Where a layer's tags go: right of its text, or inside it on a phone */
 export function tagSpace(rootRect: DOMRect, contentRect: DOMRect) {
-  const outside = window.innerWidth - rootRect.right;
+  const limit = availableRight();
+  const outside = limit - rootRect.right;
   const tagLeft = contentRect.right - rootRect.left + TAG_OFFSET;
-  const room = Math.min(
-    TAG_MAX,
-    window.innerWidth - EDGE - (rootRect.left + tagLeft),
-  );
+  const room = Math.min(TAG_MAX, limit - EDGE - (rootRect.left + tagLeft));
   const tagMode: TagMode =
     outside < TIGHT_ROOM ? "tight" : room < SHORT_ROOM ? "short" : "full";
   return { tagLeft, room, tagMode };

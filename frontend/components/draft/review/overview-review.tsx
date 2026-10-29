@@ -209,7 +209,7 @@ export function OverviewReview({
   return (
     <CommentKeyboardProvider>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-        <div className="mx-40">
+        <div className="mx-40 group-data-[review-panel=open]:mx-12">
           <ReviewModeBar
             mode={mode}
             subject="overview"
@@ -223,7 +223,7 @@ export function OverviewReview({
         ) : (
           <>
             {commenting && (
-              <div className="mx-40 mb-4">
+              <div className="mx-40 mb-4 group-data-[review-panel=open]:mx-12">
                 <CommentStrip
                   {...commentCounts(comments, review?.state)}
                   place="the Overview"

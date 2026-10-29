@@ -489,11 +489,16 @@ describe("ContentActionButton", () => {
         />,
       );
 
-    it("renders a red button and opens a modal with an empty textarea", () => {
+    it("renders an outlined button and opens a modal with an empty textarea", () => {
       renderIt();
 
       const button = screen.getByRole("button", { name: "Send feedback" });
-      expect(button).toHaveClass("bg-red-400");
+      expect(button).toHaveClass(
+        "border-[#D0D5DD]",
+        "bg-white",
+        "text-[#344054]",
+      );
+      expect(button).not.toHaveClass("bg-red-400");
       fireEvent.click(button);
 
       expect(
@@ -630,8 +635,27 @@ describe("ContentActionButton", () => {
       );
     const confirm = () => {
       fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.change(screen.getByPlaceholderText("Enter droplet name"), {
+        target: { value: inReview.name },
+      });
       fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
     };
+
+    it("needs the exact droplet name: Confirm stays disabled and submit does nothing", () => {
+      renderIt();
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      const confirmButton = screen.getByRole("button", { name: /confirm/i });
+      const input = screen.getByPlaceholderText("Enter droplet name");
+
+      expect(confirmButton).toBeDisabled();
+      fireEvent.change(input, { target: { value: "test droplet" } });
+      expect(confirmButton).toBeDisabled();
+      fireEvent.submit(input.closest("form")!);
+      expect(mockPublishWithReview).not.toHaveBeenCalled();
+
+      fireEvent.change(input, { target: { value: inReview.name } });
+      expect(confirmButton).toBeEnabled();
+    });
 
     it("renders the primary button", () => {
       renderIt();
@@ -1294,6 +1318,70 @@ describe("ContentActionButton", () => {
         );
       });
       expect(window.location.reload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("disabledReason and initialNote", () => {
+    const inReview: Droplet = { ...mockDroplet, inReview: true };
+
+    it("blocks the click, is aria-disabled and links its helper text", () => {
+      render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="publishWithReview"
+          buttonText="Publish droplet"
+          disabledReason="Confirm the Overall Score to publish."
+        />,
+      );
+      const button = screen.getByRole("button", { name: "Publish droplet" });
+
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      const helper = screen.getByText("Confirm the Overall Score to publish.");
+      expect(button).toHaveAttribute("aria-describedby", helper.id);
+      fireEvent.click(button);
+      expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    });
+
+    it("has no aria-disabled without a reason", () => {
+      render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="publishWithReview"
+          buttonText="Publish droplet"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Publish droplet" }),
+      ).not.toHaveAttribute("aria-disabled");
+    });
+
+    it("pre-fills the Send feedback note, and the reviewer's edit wins", () => {
+      const { rerender } = render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="sendFeedback"
+          buttonText="Send feedback"
+          initialNote="Draft summary"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      expect(screen.getByRole("textbox")).toHaveValue("Draft summary");
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Edited here" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+      rerender(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="sendFeedback"
+          buttonText="Send feedback"
+          initialNote="Newer summary"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      expect(screen.getByRole("textbox")).toHaveValue("Edited here");
     });
   });
 });

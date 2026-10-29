@@ -12,5 +12,10 @@ export default {
       path: '/review-scores/accept-ai',
       handler: 'custom-review-score.acceptAi',
     },
+    {
+      method: 'POST',
+      path: '/review-scores/unconfirm',
+      handler: 'custom-review-score.unconfirm',
+    },
   ],
 };

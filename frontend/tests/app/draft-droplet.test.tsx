@@ -14,6 +14,7 @@ import {
   getCachedUser,
 } from "@/lib/requests/cached";
 import { getLessonBySlug } from "@/lib/requests/lesson";
+import { getReviewPanel } from "@/lib/requests/reviews";
 import { getTags } from "@/lib/requests/tag";
 import { DraftLayoutShell } from "@/components/draft/draft-layout-shell";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
@@ -37,6 +38,10 @@ jest.mock("@/lib/requests/cached", () => ({
 
 jest.mock("@/lib/requests/droplet", () => ({
   updateDropletFunFact: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/reviews", () => ({
+  getReviewPanel: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/lesson", () => ({
@@ -292,6 +297,71 @@ describe("draft droplet layout", () => {
     mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
 
     expect((await renderLayout()).isAuthor).toBe(false);
+  });
+
+  describe("reviewer panel data (ODY-805)", () => {
+    const IN_REVIEW = {
+      ...DRAFT_DROPLET,
+      inReview: true,
+    } as unknown as Droplet;
+    const PANEL = { review: null, criteria: [], scores: [], positions: {} };
+    const asEditor = () => {
+      mockedGetCurrentUser.mockResolvedValue({
+        ...SESSION_USER,
+        roles: [AuthorizedUserRoleTitle.ContentEditor],
+      } as User);
+      mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+    };
+
+    beforeEach(() => {
+      mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+      jest.mocked(getReviewPanel).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: PANEL,
+      } as never);
+    });
+
+    it("loads it for a non-author reviewer of an in-review draft", async () => {
+      asEditor();
+
+      const props = await renderLayout();
+
+      expect(getReviewPanel).toHaveBeenCalledWith(5);
+      expect(props.reviewPanel).toBe(PANEL);
+    });
+
+    it("passes null when the load fails", async () => {
+      asEditor();
+      jest.mocked(getReviewPanel).mockResolvedValue({
+        ok: false,
+        error: "failed",
+        data: null,
+      } as never);
+
+      expect((await renderLayout()).reviewPanel).toBeNull();
+    });
+
+    it("never calls it for an author, even a Content Editor", async () => {
+      mockedGetCurrentUser.mockResolvedValue({
+        ...SESSION_USER,
+        roles: [AuthorizedUserRoleTitle.ContentEditor],
+      } as User);
+
+      const props = await renderLayout();
+
+      expect(getReviewPanel).not.toHaveBeenCalled();
+      expect(props.reviewPanel).toBeNull();
+    });
+
+    it("never calls it when the draft is not in review", async () => {
+      asEditor();
+      mockedGetDraftDroplet.mockResolvedValue(DRAFT_DROPLET);
+
+      await renderLayout();
+
+      expect(getReviewPanel).not.toHaveBeenCalled();
+    });
   });
 
   it("returns notFound for users who are not authors, editors or admins", async () => {

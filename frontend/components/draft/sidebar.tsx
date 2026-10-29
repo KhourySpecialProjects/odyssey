@@ -81,6 +81,8 @@ export function Sidebar({
   expanded,
   setExpanded,
   onRestartTour,
+  hideReviewActions = false,
+  lessonDots,
 }: {
   user: User;
   /** The caller is an author of this droplet (any role). */
@@ -106,6 +108,10 @@ export function Sidebar({
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onRestartTour: () => void;
+  /** The Reviewer Transcript panel has Publish and Send feedback, so only Preview stays here */
+  hideReviewActions?: boolean;
+  /** Lowest score per lesson, for the dot beside its title */
+  lessonDots?: Record<number, "ok" | "needs_work">;
 }) {
   const [headerHeight, setHeaderHeight] = useState(69);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -423,7 +429,7 @@ export function Sidebar({
         : { actionType: "publish", buttonText: publishLabel },
     );
   }
-  if (canReview) {
+  if (canReview && !hideReviewActions) {
     actionButtons.push(
       { actionType: "publishWithReview", buttonText: publishLabel },
       { actionType: "sendFeedback", buttonText: "Send feedback" },
@@ -722,6 +728,7 @@ export function Sidebar({
                           pathname={pathname}
                           dragDisabled={isFrozen}
                           openComments={openComments.lessons.get(lesson.id)}
+                          dot={lessonDots?.[lesson.id]}
                         />
                       ))}
                     </ul>

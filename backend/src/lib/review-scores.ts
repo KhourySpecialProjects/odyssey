@@ -100,6 +100,24 @@ async function retryIfKeyTaken<T>(
   }
 }
 
+/** Refuses (400) a lesson that isn't part of the review's droplet; null (Overall) passes. */
+async function assertLessonInDroplet(
+  lessonId: number | null,
+  dropletId: unknown,
+): Promise<void> {
+  if (lessonId === null) return;
+  const lesson = await strapi.documents(LESSON_UID).findFirst({
+    filters: { id: lessonId, droplets: { id: dropletId } },
+    fields: ['id'],
+  } as any);
+  if (!lesson) {
+    throw new ReviewScoreError(
+      400,
+      "This lesson is not part of the review's droplet",
+    );
+  }
+}
+
 /** Sets the reviewer's `value` for one criterion, creating the score row if needed. Never touches `aiValue`. */
 export async function upsertReviewScore(
   input: UpsertScoreInput,
@@ -164,12 +182,14 @@ export async function upsertReviewScore(
  * Confirms every AI suggestion the reviewer hasn't scored yet, for one lesson
  * or the Overall Score: copies `aiValue` into `value`. A score the reviewer
  * already set is left alone, and so is a score on an inactive criterion.
+ * A lesson outside the droplet is a 400, as in unconfirm.
  */
 export async function acceptAiScores(
   scope: ScoreScope,
 ): Promise<AcceptAiScoresResult> {
   return strapi.db.transaction(async () => {
     const review = await lockOpenReview(scope);
+    await assertLessonInDroplet(scope.lessonId, review.droplet.id);
 
     const pending = (await strapi.documents(SCORE_UID).findMany({
       filters: {
@@ -188,6 +208,46 @@ export async function acceptAiScores(
       const updated = await strapi.documents(SCORE_UID).update({
         documentId: row.documentId,
         data: { value: row.aiValue },
+        fields: SCORE_FIELDS,
+      } as any);
+      scores.push(pick(updated as Row));
+    }
+
+    return { dropletId: Number(review.droplet.id), scores };
+  });
+}
+
+/**
+ * Undoes a confirm for one lesson or the Overall Score: clears `value` where it
+ * still equals `aiValue`, on active criteria only (as accept-ai). Scores the
+ * reviewer changed or set themselves stay.
+ */
+export async function unconfirmScores(
+  scope: ScoreScope,
+): Promise<AcceptAiScoresResult> {
+  return strapi.db.transaction(async () => {
+    const review = await lockOpenReview(scope);
+
+    await assertLessonInDroplet(scope.lessonId, review.droplet.id);
+
+    const confirmed = (await strapi.documents(SCORE_UID).findMany({
+      filters: {
+        key: { $startsWith: `${scope.reviewId}:${scope.lessonId ?? 'overall'}:` },
+        review: { id: scope.reviewId },
+        aiValue: { $notNull: true },
+        value: { $notNull: true },
+        criterion: { active: true },
+      },
+      fields: SCORE_FIELDS,
+      sort: ['id:asc'],
+    } as any)) as Row[];
+
+    const scores: Row[] = [];
+    for (const row of confirmed) {
+      if (row.value !== row.aiValue) continue;
+      const updated = await strapi.documents(SCORE_UID).update({
+        documentId: row.documentId,
+        data: { value: null },
         fields: SCORE_FIELDS,
       } as any);
       scores.push(pick(updated as Row));

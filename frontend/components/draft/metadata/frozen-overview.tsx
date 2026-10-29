@@ -117,7 +117,7 @@ export function FrozenOverview({
 
   return (
     <div data-testid="frozen-overview">
-      <div className="px-40">
+      <div className="px-40 group-data-[review-panel=open]:px-12">
         <div className="flex flex-row flex-wrap gap-1.5">
           <Pill name={droplet.focusArea} />
           <Pill name={droplet.type} />
@@ -140,7 +140,7 @@ export function FrozenOverview({
         ) : null}
       </div>
 
-      <div className="w-full space-y-10 px-40 pt-6">
+      <div className="w-full space-y-10 px-40 pt-6 group-data-[review-panel=open]:px-12">
         {section(
           "authors",
           "Author(s)",
