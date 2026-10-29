@@ -185,7 +185,7 @@ describe("FeedbackLayer (ODY-807)", () => {
     await userEvent.click(screen.getByText("loop"));
 
     expect(
-      screen.getByText("You marked this addressed. The reviewer resolves it."),
+      screen.getByText("Marked addressed. The reviewer resolves it."),
     ).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Not addressed yet" }),
@@ -200,6 +200,22 @@ describe("FeedbackLayer (ODY-807)", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
+  });
+
+  it("says a comment was marked addressed in the creator's words while frozen", async () => {
+    mount({
+      onAddress: undefined,
+      comments: [
+        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
+        wholeBlock,
+      ] as never,
+    });
+    await userEvent.click(screen.getByText("loop"));
+
+    expect(
+      screen.getByText("Marked addressed. The reviewer resolves it."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("The creator marked this addressed.")).toBeNull();
   });
 
   it("says when the feedback can't change any more", async () => {
@@ -223,6 +239,14 @@ describe("FeedbackLayer (ODY-807)", () => {
     await userEvent.hover(screen.getByText("loop"));
 
     expect(onLitChange).toHaveBeenCalledWith("comment-1");
+  });
+
+  it("lights the lit mark with a style rule, never by redrawing the editor", async () => {
+    const { container } = mount({ litMarkId: "comment-1" });
+
+    const rule = container.querySelector("style")?.textContent ?? "";
+    expect(rule).toContain('[data-anchor-id="comment-1"].review-mark');
+    expect(rule).toContain("var(--rc-tint-strong)");
   });
 
   it("does nothing while disabled", async () => {

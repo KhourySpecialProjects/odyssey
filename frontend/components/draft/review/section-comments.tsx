@@ -394,6 +394,7 @@ export function SectionComments({
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
           meta={meta ?? carriedMeta(cardComment, canChange)}
+          forCreator={readOnly}
           onAddress={
             onAddress && ((addressed) => onAddress(cardComment.id, addressed))
           }

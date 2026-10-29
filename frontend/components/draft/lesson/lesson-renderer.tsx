@@ -320,10 +320,8 @@ export function LessonRenderer({
         : NO_FEEDBACK,
     [feedbackComments, feedbackContent],
   );
-  const feedbackDrawn = useMemo(
-    () => decorateMarks(feedbackMarks.drawn, litMarkId, null),
-    [feedbackMarks.drawn, litMarkId],
-  );
+  // Lit by FeedbackLayer's style rule, so a hover never redraws the editor
+  const feedbackDrawn = feedbackMarks.drawn;
   const feedbackNumbers = useMemo(
     () => numberComments(feedbackComments),
     [feedbackComments],

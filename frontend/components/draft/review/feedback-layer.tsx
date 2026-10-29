@@ -80,6 +80,10 @@ interface FeedbackLayerProps {
  * from its tag or from a click on its mark. The click still puts the caret
  * where it was clicked: nothing here stops an edit, and the card opened from
  * the text doesn't take focus.
+ *
+ * The lit mark is lit by a style rule here, not by the editor redrawing its
+ * marks: a redraw is an editor transaction, and one landing between a press
+ * and the editor reading the click would put the caret back where it was.
  */
 export function FeedbackLayer({
   enabled,
@@ -229,6 +233,12 @@ export function FeedbackLayer({
     );
   };
 
+  // Matches review-mark--lit in globals.css
+  const litStyle =
+    enabled && litMarkId
+      ? `[data-anchor-id="${CSS.escape(litMarkId)}"].review-mark:not(.review-mark--block):not(.review-mark--point){background-color:var(--rc-tint-strong)}[data-anchor-id="${CSS.escape(litMarkId)}"].review-mark--point:not(.anchor-caret){background-color:var(--rc-tint)}`
+      : null;
+
   return (
     <div
       ref={rootRef}
@@ -237,6 +247,7 @@ export function FeedbackLayer({
         enabled && layout.tagMode === "tight" && "pr-10",
       )}
     >
+      {litStyle && <style>{litStyle}</style>}
       {enabled &&
         litBlocks.map((box) => (
           <CommentOutline
@@ -311,6 +322,7 @@ export function FeedbackLayer({
           canChange={false}
           focusOnOpen={card.focus}
           meta={meta}
+          forCreator
           onEdit={refused}
           onDelete={refused}
           onResolve={refused}
