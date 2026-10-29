@@ -13,6 +13,7 @@ import type { ReviewAnchor, ReviewComment } from "@/types";
 import { cn } from "@/lib/utils";
 import { anchorIn, type PopoverAnchor } from "@/lib/selection";
 import {
+  carriedNotes,
   commentSnippet,
   isResolved,
   markIdFor,
@@ -275,6 +276,7 @@ export function FeedbackLayer({
               number={number}
               pending={false}
               resolved={isResolved(comment)}
+              addressed={!!comment.addressedAt}
               lit={litMarkId === markId || card?.commentId === comment.id}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -291,6 +293,7 @@ export function FeedbackLayer({
                     : undefined,
                   { long: true, blocks: blocksFor?.(comment.anchor) },
                 ),
+                carriedNotes(comment),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {

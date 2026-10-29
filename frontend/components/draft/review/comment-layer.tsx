@@ -25,6 +25,8 @@ import {
 import {
   DRAFT_MARK_ID,
   blockLabel,
+  carriedMeta,
+  carriedNotes,
   commentSnippet,
   isResolved,
   markIdFor,
@@ -1102,6 +1104,7 @@ export function CommentLayer({
               number={number}
               pending={pending}
               resolved={resolved}
+              addressed={!!comment.addressedAt}
               lit={lit}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -1112,6 +1115,7 @@ export function CommentLayer({
                 number,
                 pending,
                 commentSnippet(comment, block, { long: true, blocks }),
+                carriedNotes(comment),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {
@@ -1191,6 +1195,7 @@ export function CommentLayer({
           })()}
           anchor={card.position}
           canChange={canChange}
+          meta={carriedMeta(cardComment, canChange)}
           onEdit={(body) => onEdit(cardComment.id, body)}
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
