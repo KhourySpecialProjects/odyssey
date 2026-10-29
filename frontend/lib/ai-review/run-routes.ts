@@ -25,6 +25,11 @@ export type StartedRun = {
 
 export type RunProgress = { dropletId: number; run: RunSummary };
 
+export type RunHeartbeat = RunProgress & {
+  /** The run has spent its per-run ceiling and should stop (ODY-815) */
+  overCeiling: boolean;
+};
+
 export type FinishedRun = RunProgress & {
   saved: number;
   kept: number;
@@ -101,7 +106,7 @@ export const heartbeatRunRoute = (body: {
   userId: number;
   inputTokens: number;
   outputTokens: number;
-}) => postRunRoute<RunProgress>("heartbeat", body);
+}) => postRunRoute<RunHeartbeat>("heartbeat", body);
 
 export const finishRunRoute = (body: FinishRunInput) =>
   postRunRoute<FinishedRun>("finish", body);
