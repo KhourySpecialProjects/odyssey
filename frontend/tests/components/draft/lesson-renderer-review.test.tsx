@@ -241,6 +241,31 @@ describe("the comment strip", () => {
     );
   });
 
+  it("says how many were carried over and marked addressed (ODY-807)", async () => {
+    const from = { id: 100, review: { round: 1 } };
+    jest.mocked(getMyReview).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: {
+        ...myReview,
+        round: 2,
+        comments: [
+          { ...myReview.comments[0], carriedFrom: from },
+          {
+            ...myReview.comments[3],
+            carriedFrom: from,
+            addressedAt: "2026-10-28T12:00:00Z",
+          },
+        ],
+      },
+    } as never);
+    await renderLesson();
+
+    const strip = await screen.findByTestId("review-comment-strip");
+    expect(strip).toHaveTextContent("2 carried over from round 1");
+    expect(strip).toHaveTextContent("1 marked addressed by the creator");
+  });
+
   it("says when the comments couldn't load", async () => {
     jest
       .mocked(getMyReview)

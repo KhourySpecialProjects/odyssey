@@ -14,6 +14,8 @@ import type { ReviewAnchor, ReviewComment, ReviewCommentField } from "@/types";
 import { cn } from "@/lib/utils";
 import { anchorIn, type PopoverAnchor } from "@/lib/selection";
 import {
+  carriedMeta,
+  carriedNotes,
   commentSnippet,
   isResolved,
   markIdFor,
@@ -335,6 +337,7 @@ export function SectionComments({
             number={number}
             pending={pending}
             resolved={resolved}
+            addressed={!!comment.addressedAt}
             lit={litMarkId === markId || card?.commentId === comment.id}
             expanded={card?.commentId === comment.id}
             mode={layout.tagMode}
@@ -345,6 +348,7 @@ export function SectionComments({
               number,
               pending,
               commentSnippet(comment, block, { long: true }),
+              carriedNotes(comment),
             )}
             onLight={(on) => onLitChange(on ? markId : null)}
             onOpen={(rect) => {
@@ -389,7 +393,7 @@ export function SectionComments({
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
-          meta={meta}
+          meta={meta ?? carriedMeta(cardComment, canChange)}
           onAddress={
             onAddress && ((addressed) => onAddress(cardComment.id, addressed))
           }

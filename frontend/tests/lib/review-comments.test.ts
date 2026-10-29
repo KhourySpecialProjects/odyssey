@@ -12,6 +12,9 @@ import {
   isWholeSection,
   feedbackMeta,
   reviewerName,
+  carriedMeta,
+  carriedNotes,
+  carriedText,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
 
@@ -47,15 +50,18 @@ describe("commentCounts", () => {
   ];
 
   it("counts every comment, and the unresolved ones as pending while open", () => {
-    expect(commentCounts(list, "open")).toEqual({ total: 3, pending: 2 });
+    expect(commentCounts(list, "open")).toMatchObject({ total: 3, pending: 2 });
   });
 
   it("treats no review yet as open", () => {
-    expect(commentCounts(list, undefined)).toEqual({ total: 3, pending: 2 });
+    expect(commentCounts(list, undefined)).toMatchObject({
+      total: 3,
+      pending: 2,
+    });
   });
 
   it("has nothing pending once the review is sent", () => {
-    expect(commentCounts(list, "sent")).toEqual({ total: 3, pending: 0 });
+    expect(commentCounts(list, "sent")).toMatchObject({ total: 3, pending: 0 });
   });
 });
 
@@ -416,5 +422,85 @@ describe("the feedback an author reads (ODY-807)", () => {
       feedbackMeta({ round: 1, sentAt: "2026-10-20T09:30:00" }, now),
     ).toMatch(/^Round 1 · sent Oct 20, 9:30\sAM$/);
     expect(feedbackMeta({ round: 1, sentAt: null }, now)).toBe("Round 1");
+  });
+});
+
+describe("carried comments in the reviewer's next round (ODY-807)", () => {
+  const carried = (id: number, round: number, extra = {}) =>
+    ({
+      id,
+      field: "blocks",
+      anchor: { v: 1, field: "blocks", blockId: "b1" },
+      body: "x",
+      carriedFrom: { id: id + 100, review: { round } },
+      ...extra,
+    }) as ReviewComment;
+  const fresh = {
+    id: 9,
+    field: "blocks",
+    anchor: { v: 1, field: "blocks", blockId: "b1" },
+    body: "y",
+  } as ReviewComment;
+
+  it("counts the carried and addressed ones, and their round when it's one", () => {
+    expect(
+      commentCounts(
+        [
+          carried(1, 1),
+          carried(2, 1, { addressedAt: "2026-10-29T09:00:00Z" }),
+          fresh,
+        ],
+        "open",
+      ),
+    ).toEqual({
+      total: 3,
+      pending: 3,
+      carried: 2,
+      carriedRound: 1,
+      addressed: 1,
+    });
+    expect(
+      commentCounts([carried(1, 1), carried(2, 2)], "open").carriedRound,
+    ).toBeNull();
+  });
+
+  it("leaves resolved ones out", () => {
+    expect(
+      commentCounts(
+        [
+          carried(1, 1, {
+            resolvedAt: "2026-10-29T10:00:00Z",
+            addressedAt: "2026-10-29T09:00:00Z",
+          }),
+        ],
+        "open",
+      ),
+    ).toMatchObject({ carried: 0, addressed: 0 });
+  });
+
+  it("says so on the strip", () => {
+    expect(
+      commentStripText({
+        total: 3,
+        pending: 3,
+        carried: 2,
+        carriedRound: 1,
+        addressed: 1,
+      }),
+    ).toBe(
+      "3 comments on this lesson · 3 pending · sent when you request changes · 2 carried over from round 1 · 1 marked addressed by the creator",
+    );
+    expect(carriedText(2, null)).toBe("2 carried over from earlier rounds");
+  });
+
+  it("tells a screen reader, and the card", () => {
+    const one = carried(1, 1, { addressedAt: "2026-10-29T09:00:00Z" });
+    expect(carriedNotes(one)).toEqual([
+      "carried from round 1",
+      "marked addressed",
+    ]);
+    expect(carriedNotes(fresh)).toEqual([]);
+    expect(carriedMeta(one, true)).toBe("Pending · carried from round 1");
+    expect(carriedMeta(fresh, true)).toBeUndefined();
   });
 });
