@@ -1,0 +1,36 @@
+{
+  "version": "2026-10-26-seed",
+  "source": "Copied from backend/src/lib/review-criteria-seed.ts (ODY-799). Reword here during the spike; ids match the seed order, not Strapi row ids.",
+  "criteria": [
+    {
+      "id": 1,
+      "name": "Tone",
+      "lessonDescription": "Is the lesson engaging? Does it speak to the learner, say why the topic matters, and use concrete examples?\n1: Flat and dry; reads like reference docs.\n5: Lively, consistent voice; the learner wants to keep going.",
+      "overallDescription": "Is the voice consistent from lesson to lesson?\n1: Flat and dry; reads like reference docs.\n5: Lively, consistent voice; the learner wants to keep going."
+    },
+    {
+      "id": 2,
+      "name": "Style",
+      "lessonDescription": "Is it easy to read on screen? Headings fit the structure, bold and italics are used sparingly and consistently, and text is broken into short paragraphs, lists and visuals.\n1: Walls of text; headings or emphasis everywhere, or none at all.\n5: Scannable; formatting helps rather than distracts.",
+      "overallDescription": "Is formatting consistent across lessons?\n1: Walls of text; headings or emphasis everywhere, or none at all.\n5: Scannable; formatting helps rather than distracts."
+    },
+    {
+      "id": 3,
+      "name": "Flow",
+      "lessonDescription": "Does the lesson follow one thread? One topic, each idea building on the one before, transitions between sections, an opening that says what the lesson is for, and a close that wraps it up.\n1: Jumps between unrelated topics; uses ideas before introducing them; ends abruptly.\n5: Reads as one connected explanation; every section leads into the next.",
+      "overallDescription": "Are the lessons in a sensible order, with links between them?\n1: Jumps between unrelated topics; uses ideas before introducing them; ends abruptly.\n5: Reads as one connected explanation; every section leads into the next."
+    },
+    {
+      "id": 4,
+      "name": "Scaffolding",
+      "lessonDescription": "Could a learner who has done the prerequisite droplets and this droplet's earlier lessons follow this lesson? Everything it relies on is explained here, taught in an earlier lesson, or covered by a prerequisite droplet. Difficulty climbs steadily and fits the droplet's difficulty setting. Lesson 1 is judged against the prerequisites alone. Relying on a later lesson counts against it; pointing ahead is fine.\n1: Relies on things never taught earlier or covered by a prerequisite, or on a later lesson; unexplained jargon; a sudden jump in difficulty.\n5: Nothing assumed that wasn't taught earlier, covered by a prerequisite, or explained here.",
+      "overallDescription": "Does difficulty climb steadily across the droplet, and do the prerequisites cover what Lesson 1 assumes?\n1: Relies on things never taught earlier or covered by a prerequisite, or on a later lesson; unexplained jargon; a sudden jump in difficulty.\n5: Nothing assumed that wasn't taught earlier, covered by a prerequisite, or explained here."
+    },
+    {
+      "id": 5,
+      "name": "Quality",
+      "lessonDescription": "Does the lesson use Odyssey's block types well for its own content, and give the learner a way to check what it taught (a quiz, an exercise or a check-in)?\n1: Text only, or blocks used for decoration; nothing to check understanding.\n5: Each block type earns its place; the learner can check what they learned here.",
+      "overallDescription": "Is every learning objective taught and checked somewhere in the droplet?\n1: Text only, or blocks used for decoration; nothing to check understanding.\n5: Each block type earns its place; the learner can check what they learned here."
+    }
+  ]
+}
