@@ -545,8 +545,15 @@ export type ReviewComment = {
   body: string;
   author?: AuthorizedUser | null;
   resolvedAt?: string | null;
+  /** The creator marked it addressed; only the reviewer resolves it (ODY-807) */
+  addressedAt?: string | null;
   createdAt?: string;
   parent?: ReviewComment | null;
+  /**
+   * A comment carried into a later round is a copy: this is the comment as
+   * first written, with its date and its review's round (ODY-807)
+   */
+  carriedFrom?: Pick<ReviewComment, "id" | "createdAt" | "review"> | null;
 };
 
 export type ReviewScore = {

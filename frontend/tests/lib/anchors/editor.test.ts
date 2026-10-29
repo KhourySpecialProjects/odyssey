@@ -266,6 +266,104 @@ describe("anchors in the BlockNote editor", () => {
       );
     });
 
+    describe("while the creator types (ODY-807)", () => {
+      // "Inner joins" in the second block
+      const words: DrawnAnchor = {
+        id: "c8",
+        range: {
+          field: "blocks",
+          blockId: "joins",
+          start: 22,
+          end: 33,
+          exact: true,
+        },
+      };
+      const marked = (id: string) =>
+        Array.from(root.querySelectorAll(`[data-anchor-id="${id}"]`))
+          .map((span) => span.textContent)
+          .join("");
+      const typeAt = (offset: number, value: string) => {
+        const view = editor.prosemirrorView!;
+        let pos = -1;
+        view.state.doc.descendants((node, at) => {
+          if (node.attrs.id === "joins") pos = at + 2 + offset;
+          return pos < 0;
+        });
+        view.dispatch(view.state.tr.insertText(value, pos));
+      };
+
+      it("keeps a mark on its words when text is typed before them", () => {
+        editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [words]));
+
+        typeAt(2, "SQL ");
+
+        expect(marked("c8")).toBe("Inner joins");
+      });
+
+      it("keeps a spot's caret beside its letters", () => {
+        const spot: DrawnAnchor = {
+          id: "c9",
+          range: { ...words.range, start: 22, end: 27 },
+          point: "before",
+        };
+        editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [spot]));
+
+        typeAt(0, "So, ");
+
+        const caret = root.querySelector('[data-anchor-id="c9"]')!;
+        const block = root.querySelector(
+          '[data-id="joins"] .bn-inline-content',
+        )!;
+        const before = block.textContent!.slice(
+          0,
+          block.textContent!.indexOf("Inner"),
+        );
+        expect(before).toBe("So, A join combines rows. ");
+        expect(caret.nextSibling?.textContent).toMatch(/^Inner/);
+      });
+
+      it("drops a mark whose words are deleted", () => {
+        editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [words]));
+        const view = editor.prosemirrorView!;
+        const from = view.state.doc.textBetween(0, view.state.doc.content.size);
+        expect(from).toContain("Inner joins");
+
+        let start = -1;
+        view.state.doc.descendants((node, at) => {
+          if (node.attrs.id === "joins") start = at + 2;
+          return start < 0;
+        });
+        view.dispatch(view.state.tr.delete(start + 22, start + 33));
+
+        expect(root.querySelector('[data-anchor-id="c8"]')).toBeNull();
+      });
+
+      it("ignores anchors found in an older copy of the text", () => {
+        let anchors: DrawnAnchor[] = [words];
+        editor._tiptapEditor.registerPlugin(anchorsPlugin(() => anchors));
+        const view = editor.prosemirrorView!;
+        const older = view.state.doc;
+
+        typeAt(2, "SQL ");
+        // Offsets found before "SQL " was typed, which would now be 4 short
+        anchors = [{ ...words, id: "c10" }];
+        refreshAnchors(view, older);
+        expect(marked("c8")).toBe("Inner joins");
+        expect(root.querySelector('[data-anchor-id="c10"]')).toBeNull();
+
+        // Found in the text as it is now
+        anchors = [
+          {
+            ...words,
+            id: "c10",
+            range: { ...words.range, start: 26, end: 37 },
+          },
+        ];
+        refreshAnchors(view, view.state.doc);
+        expect(marked("c10")).toBe("Inner joins");
+      });
+    });
+
     it.each([
       ["a single block", { blockId: "intro", start: 10, end: 15 }],
       [

@@ -44,9 +44,12 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
+import {
+  useDropletReviewComments,
+  useSharedSentFeedback,
+} from "@/components/draft/review/review-comments-context";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
-import { useDropletReviewComments } from "@/components/draft/review/review-comments-context";
 import {
   ReviewModeBar,
   type ReviewMode,
@@ -59,10 +62,14 @@ import {
   commentsOnLesson,
   decorateMarks,
   draftMarkIn,
+  feedbackMeta,
+  isResolved,
   numberComments,
 } from "@/lib/review-comments";
-import { blockNoteContent } from "@/lib/anchors/content";
-import type { DrawnAnchor } from "@/lib/anchors/editor";
+import { blockNoteContent, htmlContent } from "@/lib/anchors/content";
+import type { AnchorsDoc, DrawnAnchor } from "@/lib/anchors/editor";
+import type { AnchorContent } from "@/lib/anchors/types";
+import { classicLessonHtml } from "@/lib/review-classic";
 import { OutdatedComments } from "@/components/draft/review/outdated-comments";
 import { CommentStrip } from "@/components/draft/review/comment-strip";
 import {
@@ -71,9 +78,13 @@ import {
 } from "@/components/draft/review/comment-keyboard";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
 import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
+import { FeedbackLayer } from "@/components/draft/review/feedback-layer";
+import { FeedbackStrip } from "@/components/draft/review/feedback-strip";
 import type { ReviewAnchor, ReviewComment } from "@/types";
 
 const NO_MARKS: DrawnAnchor[] = [];
+const NO_COMMENTS: ReviewComment[] = [];
+const NO_FEEDBACK = { drawn: NO_MARKS, outdated: NO_COMMENTS };
 const NO_FINDINGS: { finding: AiFinding; number: number }[] = [];
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
@@ -151,6 +162,21 @@ export function LessonRenderer({
   );
   const showCommentLayer = isReviewing && reviewMode === "comment";
 
+  // The feedback sent to the droplet's authors, beside their editor (ODY-807).
+  // The layout loads it only for an author; the server shows them nothing of
+  // an open review.
+  const sentFeedback = useSharedSentFeedback();
+  const sentComments = sentFeedback?.comments;
+  const feedbackComments = useMemo(
+    () =>
+      sentComments && !isReviewing
+        ? commentsOnLesson(sentComments, lesson.id)
+        : NO_COMMENTS,
+    [sentComments, isReviewing, lesson.id],
+  );
+  const feedbackReview = sentFeedback?.review ?? null;
+  const showFeedback = !!feedbackReview && feedbackComments.length > 0;
+
   // Kept in refs so handleSaveResult stays stable and can cancel debounces
   // that are created after it.
   const markFrozenRef = useRef(markFrozen);
@@ -206,6 +232,24 @@ export function LessonRenderer({
       commentMarks(lessonComments, anchorContent, reviewComments.review?.state),
     [lessonComments, anchorContent, reviewComments.review?.state],
   );
+
+  // What the creator's editor holds now, saved or not, so their feedback is
+  // found in the text being edited rather than the last saved copy (ODY-807)
+  const [live, setLive] = useState<{
+    content: AnchorContent;
+    types: Map<string, string>;
+    doc: AnchorsDoc;
+  } | null>(null);
+  const handleContent = useCallback(
+    (content: BlockNoteBlock[], doc: AnchorsDoc) =>
+      setLive({
+        content: { blocks: blockNoteContent(content) },
+        types: blockTypes(content),
+        doc,
+      }),
+    [],
+  );
+  useEffect(() => setLive(null), [contentVersion, editorVersion]);
   // The text a comment is being written for stays marked while the reviewer
   // types, and hovering a tag or a mark lights the mark
   const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
@@ -259,18 +303,50 @@ export function LessonRenderer({
       blockTypes(Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : []),
     [blocksV2],
   );
+  // The editor's live text once it has sent it (the creator's), else as loaded
+  const currentContent = live?.content ?? anchorContent;
+  const currentTypes = live?.types ?? blockTypeById;
   const blockFor = useCallback(
     (blockId: string) => {
-      const text = anchorContent.blocks.find((b) => b.id === blockId)?.text;
+      const text = currentContent.blocks.find((b) => b.id === blockId)?.text;
       return text === undefined
         ? undefined
-        : { type: blockTypeById.get(blockId), text };
+        : { type: currentTypes.get(blockId), text };
     },
-    [anchorContent, blockTypeById],
+    [currentContent, currentTypes],
   );
   const blocksFor = useCallback(
-    (anchor: ReviewAnchor) => blocksSpanned(anchorContent, anchor),
-    [anchorContent],
+    (anchor: ReviewAnchor) => blocksSpanned(currentContent, anchor),
+    [currentContent],
+  );
+
+  // The creator's feedback: marked in the BlockNote editor, or for a Classic
+  // lesson found in its saved text and only listed when outdated
+  const feedbackContent = useMemo(
+    () =>
+      !showFeedback
+        ? null
+        : editorVersion === "v2"
+          ? currentContent
+          : { blocks: htmlContent(classicLessonHtml(blocks)) },
+    [showFeedback, editorVersion, currentContent, blocks],
+  );
+  const feedbackMarks = useMemo(
+    () =>
+      feedbackContent
+        ? commentMarks(feedbackComments, feedbackContent, "sent")
+        : NO_FEEDBACK,
+    [feedbackComments, feedbackContent],
+  );
+  // Lit by FeedbackLayer's style rule, so a hover never redraws the editor
+  const feedbackDrawn = feedbackMarks.drawn;
+  const feedbackNumbers = useMemo(
+    () => numberComments(feedbackComments),
+    [feedbackComments],
+  );
+  const feedbackOutdatedIds = useMemo(
+    () => new Set(feedbackMarks.outdated.map((c) => c.id)),
+    [feedbackMarks.outdated],
   );
   // Comments change only while the review is open (or not opened yet)
   const canChangeComments =
@@ -872,6 +948,19 @@ export function LessonRenderer({
             <OutdatedComments comments={outdatedComments} />
           </CommentStrip>
         )}
+        {showFeedback && feedbackReview && (
+          <FeedbackStrip
+            review={feedbackReview}
+            total={feedbackComments.length}
+            addressed={
+              feedbackComments.filter((c) => c.addressedAt && !isResolved(c))
+                .length
+            }
+            inReview={inReview}
+          >
+            <OutdatedComments comments={feedbackMarks.outdated} />
+          </FeedbackStrip>
+        )}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -1001,15 +1090,36 @@ export function LessonRenderer({
             </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
-                <CommentLayer {...commentLayerProps}>
-                  <BlockNoteEditor
-                    key={`editor-${lesson.id}-${contentVersion}`}
-                    initialContent={blocksV2 as unknown as BlockNoteBlock[]}
-                    onChange={isReadOnly ? () => {} : debounceUpdateV2}
-                    editable={!isReadOnly}
-                    anchors={showCommentLayer ? drawnMarks : NO_MARKS}
-                  />
-                </CommentLayer>
+                <FeedbackLayer
+                  enabled={showFeedback}
+                  comments={feedbackComments}
+                  numbers={feedbackNumbers}
+                  outdatedIds={feedbackOutdatedIds}
+                  blockFor={blockFor}
+                  blocksFor={blocksFor}
+                  meta={feedbackReview ? feedbackMeta(feedbackReview) : null}
+                  onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+                  litMarkId={litMarkId}
+                  onLitChange={setLitMarkId}
+                >
+                  <CommentLayer {...commentLayerProps}>
+                    <BlockNoteEditor
+                      key={`editor-${lesson.id}-${contentVersion}`}
+                      initialContent={blocksV2 as unknown as BlockNoteBlock[]}
+                      onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                      editable={!isReadOnly}
+                      anchors={
+                        showCommentLayer
+                          ? drawnMarks
+                          : showFeedback
+                            ? feedbackDrawn
+                            : NO_MARKS
+                      }
+                      anchorsFoundIn={showFeedback ? live?.doc : undefined}
+                      onContent={showFeedback ? handleContent : undefined}
+                    />
+                  </CommentLayer>
+                </FeedbackLayer>
               </PyodideProvider>
             </DatasetProvider>
           </div>

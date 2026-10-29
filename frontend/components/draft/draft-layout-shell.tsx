@@ -6,7 +6,10 @@ import { Sidebar } from "./sidebar";
 import { DraftTour, TOUR_KEY } from "./draft-tour";
 import { Droplet, User } from "@/types";
 import { isReviewerFor } from "@/lib/review-roles";
-import { ReviewCommentsProvider } from "./review/review-comments-context";
+import {
+  ReviewCommentsProvider,
+  SentFeedbackProvider,
+} from "./review/review-comments-context";
 import { ReviewFocusProvider } from "./review/review-focus-context";
 import { ReviewPanelDock } from "./review/review-panel-dock";
 import { ReviewTranscript } from "./review/review-transcript";
@@ -128,8 +131,12 @@ export function DraftLayoutShell({
     [reviewing, liveScores, reviewPanel?.scores, reviewPanel?.criteria],
   );
 
+  // The feedback sent to the authors, while they edit or wait (ODY-807)
+  const readingFeedback = isAuthor && droplet.status !== "published";
+
   return (
     <ReviewCommentsProvider dropletId={droplet.id} enabled={reviewing}>
+      <SentFeedbackProvider dropletId={droplet.id} enabled={readingFeedback}>
       <ReviewFocusProvider active={reviewing && panelMode === "open"}>
         <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
           <DraftTour run={tourRun} setRun={setTourRun} />
@@ -174,6 +181,7 @@ export function DraftLayoutShell({
           )}
         </div>
       </ReviewFocusProvider>
+      </SentFeedbackProvider>
     </ReviewCommentsProvider>
   );
 }

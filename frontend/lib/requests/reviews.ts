@@ -464,6 +464,98 @@ export async function resolveComment(
   });
 }
 
+type CommentForAuthor = {
+  id: number;
+  documentId: string;
+  review: {
+    state: string;
+    round: number;
+    droplet:
+      | (DropletAuthors & {
+          id: number;
+          inReview?: boolean | null;
+          reviewRound?: number | null;
+        })
+      | null;
+  } | null;
+};
+
+/**
+ * An author of the droplet marks a comment of the feedback sent to them as
+ * addressed (or with `false`, not addressed), whatever their role (ODY-807).
+ * It doesn't resolve it: only the reviewer does, in the next round, which the
+ * mark carries into. Only the latest round's sent feedback, and only until
+ * the draft is back in review.
+ */
+export async function markAddressed(
+  commentId: number,
+  addressed: boolean = true,
+): Promise<ReviewActionResult<ReviewComment>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(commentId);
+      const flag = z.boolean().safeParse(addressed);
+      if (!id.success || !flag.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const rows = await fetchAPI<CommentForAuthor[] | null>(
+        "/review-comments",
+        {
+          urlParams: {
+            filters: { id: { $eq: id.data } },
+            fields: ["id"],
+            populate: {
+              review: {
+                fields: ["state", "round"],
+                populate: {
+                  droplet: {
+                    fields: ["inReview", "reviewRound"],
+                    populate: AUTHORS_POPULATE,
+                  },
+                },
+              },
+            },
+            pagination: { pageSize: 1 },
+          },
+          cache: "no-store",
+        },
+      );
+      const comment = rows?.[0];
+      const droplet = comment?.review?.droplet;
+      if (!comment?.review || !droplet) {
+        return { ok: false, error: "not_found", data: null };
+      }
+      const owner = assertOwner(
+        droplet.authorized_users?.map((u) => u.id),
+        user,
+        { bypassRoles: [] },
+      );
+      if (!owner.ok) return { ok: false, error: owner.error, data: null };
+      if (
+        comment.review.state !== "sent" ||
+        droplet.inReview === true ||
+        comment.review.round !== droplet.reviewRound
+      ) {
+        return { ok: false, error: "review_closed", data: null };
+      }
+
+      const updated = await writeStrapi(
+        "PUT",
+        await strapiEntryUrl("review-comments", comment),
+        { addressedAt: flag.data ? new Date().toISOString() : null },
+      );
+      if (!updated.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(droplet.id));
+      return { ok: true, error: null, data: updated.data };
+    } catch (error) {
+      console.error("markAddressed failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
 type SavedScore = Pick<
   ReviewScore,
   "id" | "key" | "criterionName" | "value" | "aiValue"
@@ -633,10 +725,21 @@ function fetchComments(
     "/review-comments",
     {
       filters: { review: { id: { $eq: reviewId } } },
-      fields: ["field", "anchor", "body", "resolvedAt", "createdAt"],
+      fields: [
+        "field",
+        "anchor",
+        "body",
+        "resolvedAt",
+        "addressedAt",
+        "createdAt",
+      ],
       populate: {
         lesson: { fields: ["name"] },
         author: { fields: ["firstName", "lastName"] },
+        carriedFrom: {
+          fields: ["createdAt"],
+          populate: { review: { fields: ["round", "sentAt"] } },
+        },
       },
       sort: ["id:asc"],
     },

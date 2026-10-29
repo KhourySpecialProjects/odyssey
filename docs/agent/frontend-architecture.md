@@ -193,6 +193,26 @@ The same reviewer sees the panel on every page of the draft (`review/review-pane
 - **Badge marker.** A finding's number is an empty `.anchor-badge` marker (`DrawnAnchor.badge`, a widget in BlockNote, a span in `drawAnchor`) with no text node, so it can't shift offsets; CSS draws the digit from `data-badge`. It shares the mark's `data-anchor-id`, so exclude it with `:not(.anchor-badge)` when picking a mark's text span (scroll, flash, ring). The last detail opened drives the marks; closing it clears them even if another detail is still open.
 - **Not here yet (ODY-849 PRs 2 and 3):** Show in lesson scrolling and ringing, and Add as comment.
 
+### The creator's view of sent feedback (ODY-807)
+
+After Send feedback, a droplet's authors see the sent comments beside the text they edit. Plan and decisions: `docs/plans/ODY-807.md`.
+
+- **Data.** `useSentFeedback` (`hooks/use-sent-feedback.ts`) reads `getReviewForDroplet`, which already shows an author nothing of an open review and nothing from AI, so the UI doesn't check again. Only a `sent` review shows. The draft layout loads it once for an author (`SentFeedbackProvider` in `review-comments-context.tsx`), for the sidebar's counts and the page.
+- **Mark addressed.** `markAddressed` is the one comment write an author makes. It sets `addressedAt` on the latest round's sent feedback until the draft is back in review. The comment stays open, and only the reviewer resolves it. Submitting again copies the mark with the comment.
+- **Lessons.** The marks are drawn in the BlockNote editor the creator is typing in:
+  - **Following the text:** `anchorsPlugin` maps its decorations through each edit, so typing before a mark keeps it on its words.
+  - **Finding comments again:** the editor reports its live content once a frame (`onContent`), and the lesson finds the comments again in that, never in the last saved copy. A sentence edited away goes to Outdated before the save.
+  - **Old offsets:** offsets found in older text are ignored (`anchorsFoundIn`).
+  - **Tags and cards:** `FeedbackLayer` (`feedback-layer.tsx`) adds the tags and the card. A click on a mark opens its card without taking focus, and the click still places the caret.
+  - **Lighting:** the lit mark is lit by a style rule, never by redrawing the decorations. A redraw is an editor transaction, and one landing between a press and the editor reading the click puts the caret back where it was.
+  - **Classic lessons:** the strip lists their comments and their Outdated group, but there are no marks.
+- **The Overview.** `overview-feedback.tsx` offers Feedback and Edit:
+  - **Feedback:** `FrozenOverview` with `ReviewTextView` marks, and `SectionComments` with `readOnly`.
+  - **Edit:** the editors. Switching back runs `settleDropletUpdates()` and then `router.refresh()`.
+  - **The strip:** shows the summary note, and how many comments are on lessons.
+- **Carried comments.** Submit copies each unresolved comment into the next round with `carriedFrom` pointing at the comment as first written. The reviewer's card reads "Pending · carried from round 1" with the original's date, and the strip and tags count the carried and addressed comments (`carriedRound`, `carriedNotes` and `carriedMeta` in `lib/review-comments.ts`).
+- **Not here:** a read-only Transcript panel for authors (confirmed scores, the summary note and a comment list that jumps to each comment's text). ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
+
 ## Static Assets and Media
 
 - Static assets (logos, icons, default images) live in `frontend/public/`

@@ -56,14 +56,23 @@ async function lockAndRead(ref: DraftRef): Promise<Row> {
 
 const reviewerIdOf = (key: string) => Number(key.split(':')[1]);
 
-/** Copies a sent review's unresolved comments (and replies) into a new open review. */
+/**
+ * Copies a sent review's unresolved comments (and replies) into a new open
+ * review. Each copy points at the comment as first written, however many
+ * rounds ago, and keeps the creator's addressed mark (ODY-807).
+ */
 async function carryComments(
   sent: Row,
   target: Row,
 ): Promise<number> {
   const comments = (await strapi.documents(REVIEW_COMMENT_UID).findMany({
     filters: { review: { id: sent.id } },
-    populate: { lesson: { fields: ['id'] }, author: { fields: ['id'] }, parent: { fields: ['id'] } },
+    populate: {
+      lesson: { fields: ['id'] },
+      author: { fields: ['id'] },
+      parent: { fields: ['id'] },
+      carriedFrom: { fields: ['id'] },
+    },
     sort: ['id:asc'],
   } as any)) as Row[];
 
@@ -79,6 +88,8 @@ async function carryComments(
     field: c.field,
     anchor: c.anchor,
     body: c.body,
+    addressedAt: c.addressedAt ?? null,
+    carriedFrom: c.carriedFrom?.documentId ?? c.documentId,
     ...(c.lesson ? { lesson: c.lesson.documentId } : {}),
     ...(c.author ? { author: c.author.documentId } : {}),
     ...(parent ? { parent } : {}),
