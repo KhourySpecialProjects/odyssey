@@ -313,15 +313,8 @@ export function FeedbackLayer({
           onResolve={refused}
           onAddress={
             onAddress &&
-            (async (addressed) => {
-              const outcome = await onAddress(cardComment.id, addressed);
-              if (!outcome.ok && outcome.error === "review_closed") {
-                toast.info("This feedback can't change now.", {
-                  id: "feedback-closed",
-                });
-              }
-              return outcome;
-            })
+            ((addressed) =>
+              withClosedNotice(onAddress)(cardComment.id, addressed))
           }
           onClose={() => closeCard(cardComment.id)}
         />
@@ -329,6 +322,17 @@ export function FeedbackLayer({
     </div>
   );
 }
+
+/** Mark addressed, saying so when the feedback can no longer change */
+export const withClosedNotice =
+  (onAddress: (id: number, addressed: boolean) => Promise<CommentOutcome>) =>
+  async (id: number, addressed: boolean): Promise<CommentOutcome> => {
+    const outcome = await onAddress(id, addressed);
+    if (!outcome.ok && outcome.error === "review_closed") {
+      toast.info("This feedback can't change now.", { id: "feedback-closed" });
+    }
+    return outcome;
+  };
 
 // A creator never edits, deletes or resolves a reviewer's comment
 const refused = async (): Promise<CommentOutcome> => ({
