@@ -65,7 +65,10 @@ import {
   OpenCommentsBadge,
   SortableLesson,
 } from "@/components/draft/sortable-lesson";
-import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
+import {
+  useSharedReviewComments,
+  useSharedSentFeedback,
+} from "@/components/draft/review/review-comments-context";
 import { ScoreWithAiButton } from "@/components/draft/review/score-with-ai-button";
 import { isResolved } from "@/lib/review-comments";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
@@ -378,12 +381,15 @@ export function Sidebar({
     setMounted(true);
   }, []);
 
-  // A reviewer sees their open comments per lesson and on the Overview
+  // A reviewer sees their open comments per lesson and on the Overview, and
+  // an author the open ones of the feedback sent to them (ODY-807)
   const reviewComments = useSharedReviewComments();
+  const sentFeedback = useSharedSentFeedback();
+  const counted = reviewComments?.comments ?? sentFeedback?.comments;
   const openComments = useMemo(() => {
     const lessons = new Map<number, number>();
     let overview = 0;
-    for (const comment of reviewComments?.comments ?? []) {
+    for (const comment of counted ?? []) {
       if (isResolved(comment)) continue;
       if (comment.field !== "blocks") overview++;
       else if (comment.lesson?.id) {
@@ -394,7 +400,7 @@ export function Sidebar({
       }
     }
     return { lessons, overview };
-  }, [reviewComments?.comments]);
+  }, [counted]);
 
   if (!mounted) return null;
 

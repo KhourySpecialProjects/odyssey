@@ -188,6 +188,40 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
   });
 
+  it("shows the reviewer's summary note and how many comments are on lessons", async () => {
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { ...sent, summaryNote: "Nearly there: tighten lesson 2." },
+    } as never);
+
+    await mount();
+
+    const strip = screen.getByRole("region", { name: "Reviewer feedback" });
+    expect(strip).toHaveTextContent("Nearly there: tighten lesson 2.");
+    expect(strip).toHaveTextContent("1 comment on 1 lesson");
+  });
+
+  it("shows the strip above the editors when every comment is on a lesson", async () => {
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: {
+        ...sent,
+        summaryNote: "See the lessons.",
+        comments: [sent.comments[3]],
+      },
+    } as never);
+
+    await mount();
+
+    expect(screen.getByTestId("overview-editors")).toBeInTheDocument();
+    const strip = screen.getByRole("region", { name: "Reviewer feedback" });
+    expect(strip).toHaveTextContent("Feedback from Nadia Reviewer");
+    expect(strip).toHaveTextContent("See the lessons.");
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+  });
+
   it("shows only what it was given when no feedback was sent", async () => {
     jest
       .mocked(getReviewForDroplet)

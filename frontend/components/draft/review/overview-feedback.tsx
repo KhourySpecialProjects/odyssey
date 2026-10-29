@@ -134,7 +134,18 @@ export function OverviewFeedback({
     [outdated],
   );
 
-  if (!review || comments.length === 0) return <>{children}</>;
+  if (!review) return <>{children}</>;
+
+  const lessonComments = (() => {
+    const lessons = new Set<number>();
+    let total = 0;
+    for (const c of feedback.comments) {
+      if (c.field !== "blocks" || isResolved(c) || !c.lesson?.id) continue;
+      total++;
+      lessons.add(c.lesson.id);
+    }
+    return { total, lessons: lessons.size };
+  })();
 
   const meta = feedbackMeta(review);
   const onAddress = canEdit ? withClosedNotice(markAddressed) : undefined;
@@ -248,8 +259,10 @@ export function OverviewFeedback({
         }
         place="the Overview"
         inReview={!canEdit}
-        actions={toggle || undefined}
+        actions={(comments.length > 0 && toggle) || undefined}
         showHint={showFeedback}
+        summary
+        lessonComments={lessonComments}
       >
         {showFeedback && (
           <OutdatedComments comments={FIELDS.flatMap((f) => outdated[f])} />
@@ -266,6 +279,21 @@ export function OverviewFeedback({
       renderSection={renderSection}
     />
   );
+
+  // Feedback on lessons only: the note and where to look, then the Overview
+  if (comments.length === 0) {
+    return canEdit ? (
+      <div className="bg-white pt-6 dark:bg-zinc-950">
+        {strip}
+        {children}
+      </div>
+    ) : (
+      <>
+        {strip}
+        {children}
+      </>
+    );
+  }
 
   // Frozen, the page around it already holds the Overview's frame
   if (!canEdit) {
