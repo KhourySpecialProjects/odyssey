@@ -6,7 +6,7 @@ import type { Review } from "@/types";
 import { feedbackMeta, reviewerName } from "@/lib/review-comments";
 
 interface FeedbackStripProps {
-  review: Pick<Review, "round" | "sentAt" | "reviewer">;
+  review: Pick<Review, "round" | "sentAt" | "reviewer" | "summaryNote">;
   /** Comments here, and how many the creator has marked addressed */
   total: number;
   addressed: number;
@@ -18,6 +18,9 @@ interface FeedbackStripProps {
   actions?: ReactNode;
   /** How to read the comments: not while the editors are showing */
   showHint?: boolean;
+  /** The Overview: the reviewer's summary note, and the lessons' comments */
+  summary?: boolean;
+  lessonComments?: { total: number; lessons: number };
   /** Outdated comments, listed under it */
   children?: ReactNode;
 }
@@ -35,8 +38,11 @@ export function FeedbackStrip({
   inReview = false,
   actions,
   showHint = true,
+  summary = false,
+  lessonComments,
   children,
 }: FeedbackStripProps) {
+  const note = summary ? review.summaryNote?.trim() : null;
   return (
     <div
       role="region"
@@ -47,8 +53,9 @@ export function FeedbackStrip({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--rc-accent-text)]">
           <IconMessage className="h-3.5 w-3.5" aria-hidden />
-          {total} {total === 1 ? "comment" : "comments"} from{" "}
-          {reviewerName(review)} on {place}
+          {total > 0
+            ? `${total} ${total === 1 ? "comment" : "comments"} from ${reviewerName(review)} on ${place}`
+            : `Feedback from ${reviewerName(review)}`}
         </span>
         <span>{feedbackMeta(review)}</span>
         {addressed > 0 && (
@@ -56,8 +63,21 @@ export function FeedbackStrip({
             {addressed} marked addressed
           </span>
         )}
+        {lessonComments && lessonComments.total > 0 && (
+          <span>
+            {lessonComments.total}{" "}
+            {lessonComments.total === 1 ? "comment" : "comments"} on{" "}
+            {lessonComments.lessons}{" "}
+            {lessonComments.lessons === 1 ? "lesson" : "lessons"}
+          </span>
+        )}
         {actions && <span className="ml-auto">{actions}</span>}
       </div>
+      {note && (
+        <blockquote className="border-l-2 border-[var(--rc-accent)] pl-3 whitespace-pre-wrap text-slate-800 dark:text-slate-100">
+          {note}
+        </blockquote>
+      )}
       {total > 0 && showHint && (
         <p>
           {inReview
