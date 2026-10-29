@@ -37,7 +37,10 @@ export function useSentFeedback(
     setIsLoading(true);
     getReviewForDroplet(dropletId)
       .catch((error) => {
-        console.error("Loading the review feedback failed", error);
+        // A page left mid-load drops its request; that's no failure
+        if (!cancelled) {
+          console.error("Loading the review feedback failed", error);
+        }
         return { ok: false as const, error: "failed" as const, data: null };
       })
       .then((result) => {
