@@ -87,3 +87,7 @@ Ready to push: YES / NO — [reason if no]
 
 If everything passes, tell the human: "Branch is ready. Push when you're ready."
 Do NOT push — the human pushes manually per project policy.
+
+Once the human says the PR is open, post a `[PR]` message with its link and the
+tickets it unblocks to the team's Slack group DM (see "Multi-Agent Development
+Coordination" in `CLAUDE.md`).
