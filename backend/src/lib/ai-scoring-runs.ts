@@ -1,3 +1,5 @@
+import { lockAiScoringSettings } from './ai-scoring-settings';
+import { runCostUsd, spendThisMonthUsd, type RunUsage } from './ai-scoring-spend';
 import {
   findScore,
   lockOpenReview,
@@ -73,11 +75,41 @@ export type StartRunResult = {
 };
 
 /**
+ * Refuses once this month's spend, plus what runs still going may yet spend,
+ * reaches the monthly cap (ODY-815). A run's tokens count only as it reports
+ * them, so each queued or running run holds back the rest of its per-run
+ * ceiling; a dead one (no progress for 10 minutes) holds back nothing. The
+ * settings row lock makes starts on different reviews check one at a time, so
+ * two can't both pass at the edge. A cap of $0 turns Score with AI off.
+ */
+async function checkMonthlyBudget(): Promise<void> {
+  const { monthlyCapUsd, perRunCapUsd, prices } = await lockAiScoringSettings();
+  const active = (await strapi.documents(RUN_UID).findMany({
+    filters: {
+      runState: { $in: ACTIVE_STATES },
+      updatedAt: { $gte: new Date(Date.now() - STALE_RUN_MS).toISOString() },
+    },
+    fields: ['model', 'inputTokens', 'outputTokens'],
+  } as any)) as RunUsage[];
+  const heldBack = active.reduce(
+    (sum, run) => sum + Math.max(0, perRunCapUsd - runCostUsd(run, prices)),
+    0,
+  );
+  if ((await spendThisMonthUsd(prices)) + heldBack >= monthlyCapUsd) {
+    throw new ReviewScoreError(
+      409,
+      "This month's Score with AI budget is used up",
+    );
+  }
+}
+
+/**
  * Starts Score with AI on a review, one run at a time. Under the review's row
  * lock it marks dead runs failed, refuses while another is queued or running,
- * then creates the run with the active criteria it will score. Two starts at
- * once wait on the lock, so only one creates a run. ODY-815's cost cap
- * belongs under the same lock.
+ * checks the monthly budget, then creates the run with the active criteria it
+ * will score. Two starts on one review wait on the review lock, so only one
+ * creates a run; starts on different reviews wait on the settings lock for
+ * the budget check.
  */
 export async function startRun(input: StartRunInput): Promise<StartRunResult> {
   return strapi.db.transaction(async () => {
@@ -137,6 +169,7 @@ export async function startRun(input: StartRunInput): Promise<StartRunResult> {
     if (!criteria.length) {
       throw new ReviewScoreError(409, 'There are no active criteria to score');
     }
+    await checkMonthlyBudget();
 
     const run = await strapi.documents(RUN_UID).create({
       data: {

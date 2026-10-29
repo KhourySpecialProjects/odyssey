@@ -94,6 +94,8 @@ afterAll(async () => {
 beforeEach(async () => {
   // Only this test's criteria are active, so the run's snapshot is exact.
   await strapi.db.query(REVIEW_CRITERION_UID).updateMany({ where: {}, data: { active: false } });
+  // No runs from earlier tests, so they don't count against the monthly budget.
+  await strapi.db.query(AI_SCORING_RUN_UID).deleteMany({ where: {} });
   droplet = await strapi.documents(DROPLET_UID).create({ data: dropletData({ inReview: true }) });
   lesson = await strapi
     .documents(LESSON_UID)
@@ -229,6 +231,104 @@ describe('POST /ai-scoring-runs/start', () => {
     expect((await post('start', startBody({ reviewId: 'x' }))).status).toBe(400);
     expect((await post('start', startBody({ model: '' }))).status).toBe(400);
     expect(await runsOf(review.id)).toHaveLength(0);
+  });
+});
+
+describe('POST /ai-scoring-runs/start, monthly budget', () => {
+  const SETTINGS_UID = 'api::ai-scoring-setting.ai-scoring-setting';
+  const USED_UP = "This month's Score with AI budget is used up";
+
+  const settingsRow = () => strapi.documents(SETTINGS_UID).findFirst();
+  const setBudget = async (data) =>
+    strapi.documents(SETTINGS_UID).update({ documentId: (await settingsRow()).documentId, data });
+  // A run on no review that has spent `usd`: Sonnet input is $2 a million tokens.
+  const runCosting = (usd, data = {}) =>
+    strapi.documents(AI_SCORING_RUN_UID).create({
+      data: { runState: 'done', model: 'claude-sonnet-5-5', inputTokens: usd * 500_000, ...data },
+    });
+  const goingRun = (usd) => runCosting(usd, { runState: 'running' });
+  const moveToLastMonth = (id) =>
+    strapi.db
+      .connection('ai_scoring_runs')
+      .where({ id })
+      .update({ created_at: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000) });
+
+  beforeEach(() => setBudget({ monthlyCapUsd: 10, perRunCapUsd: 2 }));
+  afterAll(() => setBudget({ monthlyCapUsd: 25, perRunCapUsd: 2 }));
+
+  it.each([
+    ['this month has spent the cap', () => runCosting(10)],
+    [
+      'a run going on another review holds back its ceiling',
+      async () => {
+        await runCosting(8);
+        await goingRun(0);
+      },
+    ],
+    ['the cap is $0, which turns Score with AI off', () => setBudget({ monthlyCapUsd: 0 })],
+  ])('refuses when %s', async (_, arrange) => {
+    await arrange();
+
+    const res = await start();
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.message).toBe(USED_UP);
+    expect(await runsOf(review.id)).toHaveLength(0);
+  });
+
+  it.each([
+    ['this month is just under the cap', () => runCosting(9.5)],
+    ['the cap was spent last month', async () => moveToLastMonth((await runCosting(10)).id)],
+    [
+      'a dead run holds back nothing',
+      async () => {
+        await runCosting(8);
+        await makeStale((await goingRun(0)).id);
+      },
+    ],
+    [
+      // $7 + $1.50 spent so far + the $0.50 left of its ceiling = $9.
+      'a running run counts what it has spent once',
+      async () => {
+        await runCosting(7);
+        await goingRun(1.5);
+      },
+    ],
+  ])('starts when %s', async (_, arrange) => {
+    await arrange();
+
+    expect((await start()).status).toBe(200);
+  });
+
+  // On SQLite the two run one after the other, so this checks the outcome,
+  // not the Postgres lock on the settings row.
+  it('lets only one of two starts on different reviews through at the edge', async () => {
+    await runCosting(8);
+    const otherDroplet = await strapi
+      .documents(DROPLET_UID)
+      .create({ data: dropletData({ inReview: true }) });
+    const otherReviewer = await strapi.documents(USER_UID).create({ data: userData() });
+    const otherReview = await strapi.documents(REVIEW_UID).create({
+      data: reviewData({
+        droplet: otherDroplet.documentId,
+        reviewer: otherReviewer.documentId,
+        state: 'open',
+      }),
+    });
+
+    const results = await Promise.all([
+      start(),
+      start({ reviewId: otherReview.id, userId: otherReviewer.id }),
+    ]);
+
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+  });
+
+  it('seeds the settings if they are missing, so there is a row to lock', async () => {
+    await strapi.documents(SETTINGS_UID).delete({ documentId: (await settingsRow()).documentId });
+
+    expect((await start()).status).toBe(200);
+    expect(await strapi.db.query(SETTINGS_UID).count()).toBe(1);
   });
 });
 
