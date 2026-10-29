@@ -247,6 +247,47 @@ describe('POST /droplets/:id/submit-review', () => {
     expect(byBody.R1.parent.id).toBe(byBody['Please fix this'].id);
   });
 
+  it('points each copy at the comment as first written, and keeps its addressed mark', async () => {
+    const { draft, lesson, made } = await setupReviewDraft({
+      inReview: true,
+      reviews: [{ state: 'sent' }],
+    });
+    const { review, reviewer } = made[0];
+    const lessonRef = { lesson: lesson.documentId };
+    const addressedAt = '2026-10-28T12:00:00.000Z';
+    const top = await comment(review, { ...lessonRef, addressedAt });
+    const reply = await comment(review, { ...lessonRef, body: 'R1', parent: top.documentId });
+    await withdraw(draft);
+
+    await post(draft.id, 'submit-review');
+
+    const copies = await strapi.documents(REVIEW_COMMENT_UID).findMany({
+      filters: { review: { round: 2 } },
+      populate: { carriedFrom: { fields: ['id'] } },
+    });
+    const byBody = Object.fromEntries(copies.map((c) => [c.body, c]));
+    expect(byBody['Please fix this'].carriedFrom.id).toBe(top.id);
+    expect(byBody['Please fix this'].addressedAt).toBe(addressedAt);
+    expect(byBody.R1.carriedFrom.id).toBe(reply.id);
+    expect(byBody.R1.addressedAt).toBeNull();
+
+    // Round 2 is sent too, then submitted again: round 3's copy still points
+    // at round 1's comment
+    const round2 = (await reviewsOf(draft.id))[1];
+    await strapi.documents(REVIEW_UID).update({
+      documentId: round2.documentId,
+      data: { state: 'sent' },
+    });
+    await withdraw(draft);
+    await post(draft.id, 'submit-review');
+
+    const round3 = await strapi.documents(REVIEW_COMMENT_UID).findFirst({
+      filters: { review: { key: `${draft.id}:${reviewer.id}:3` }, parent: { $null: true } },
+      populate: { carriedFrom: { fields: ['id'] } },
+    });
+    expect(round3.carriedFrom.id).toBe(top.id);
+  });
+
   it('is idempotent: a second Submit changes nothing', async () => {
     const { draft, lesson, made } = await setupReviewDraft({
       inReview: true,

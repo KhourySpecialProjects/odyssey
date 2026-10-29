@@ -78,6 +78,22 @@ jest.mock("@/components/draft/review/overview-review", () => ({
   ),
 }));
 
+// The author's Overview with sent feedback (ODY-807); what it shows without
+// feedback arrives as children
+jest.mock("@/components/draft/review/overview-feedback", () => ({
+  OverviewFeedback: ({
+    children,
+    canEdit,
+  }: {
+    children: React.ReactNode;
+    canEdit: boolean;
+  }) => (
+    <div data-testid="overview-feedback" data-can-edit={String(canEdit)}>
+      {children}
+    </div>
+  ),
+}));
+
 jest.mock("@/components/draft/draft-layout-shell", () => ({
   DraftLayoutShell: jest.fn(() => null),
 }));
@@ -485,6 +501,36 @@ describe("draft droplet overview page: review freeze", () => {
     expect(screen.queryByTestId("overview-review")).toBeNull();
     expect(screen.queryByTestId("frozen-overview")).toBeNull();
     expect(mockedGeneralInfo).toHaveBeenCalled();
+  });
+
+  it("gives an author the sent feedback beside the editors (ODY-807)", async () => {
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "true");
+    expect(mockedGeneralInfo).toHaveBeenCalled();
+  });
+
+  it("gives a frozen author the earlier feedback read-only (ODY-807)", async () => {
+    mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "false");
+    expect(feedback).toContainElement(screen.getByTestId("frozen-overview"));
+  });
+
+  it("gives a reviewer who isn't an author no creator's feedback (ODY-807)", async () => {
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [ContentEditor],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+
+    await renderOverview();
+
+    expect(screen.queryByTestId("overview-feedback")).toBeNull();
   });
 
   it("is never frozen once published", async () => {

@@ -2,11 +2,20 @@
 
 import type { ReactNode } from "react";
 import { IconMessage } from "@tabler/icons-react";
-import { commentCountText, pendingText } from "@/lib/review-comments";
+import {
+  addressedText,
+  carriedText,
+  commentCountText,
+  pendingText,
+} from "@/lib/review-comments";
 
 interface CommentStripProps {
   total: number;
   pending: number;
+  /** Carried over from an earlier round, and marked addressed (ODY-807) */
+  carried?: number;
+  carriedRound?: number | null;
+  addressed?: number;
   /** "this lesson" or "the Overview" */
   place?: string;
   isLoading?: boolean;
@@ -28,6 +37,9 @@ interface CommentStripProps {
 export function CommentStrip({
   total,
   pending,
+  carried = 0,
+  carriedRound = null,
+  addressed = 0,
   place = "this lesson",
   isLoading = false,
   loadError = false,
@@ -60,6 +72,11 @@ export function CommentStrip({
                 {waiting}
               </span>
             )}
+            {[carriedText(carried, carriedRound), addressedText(addressed)]
+              .filter(Boolean)
+              .map((text) => (
+                <span key={text}>{text}</span>
+              ))}
           </>
         ) : (
           <>

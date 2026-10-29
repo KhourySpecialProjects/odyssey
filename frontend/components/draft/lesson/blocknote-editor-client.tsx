@@ -19,6 +19,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import {
   anchorsPlugin,
   refreshAnchors,
+  type AnchorsDoc,
   type DrawnAnchor,
 } from "@/lib/anchors/editor";
 import { blockNoteSchema } from "@/lib/blocknote/schema";
@@ -188,6 +189,16 @@ interface BlockNoteEditorClientProps {
   editable?: boolean;
   /** Review comment marks to draw as decorations (ODY-806) */
   anchors?: DrawnAnchor[];
+  /**
+   * The text `anchors` were found in, from `onContent`. While the editor has
+   * changed since, the marks keep following the edits instead (ODY-807).
+   */
+  anchorsFoundIn?: AnchorsDoc;
+  /**
+   * The content as the editor holds it, once it's ready and then at most once
+   * a frame after each change, whether or not it's saved yet (ODY-807)
+   */
+  onContent?: (content: Block[], doc: AnchorsDoc) => void;
 }
 
 const NO_ANCHORS: DrawnAnchor[] = [];
@@ -197,6 +208,8 @@ export function BlockNoteEditorClient({
   onChange,
   editable = true,
   anchors = NO_ANCHORS,
+  anchorsFoundIn,
+  onContent,
 }: BlockNoteEditorClientProps) {
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
@@ -282,8 +295,36 @@ export function BlockNoteEditorClient({
   // Redraw the review comment marks when they change
   useEffect(() => {
     const view = isReady ? editor.prosemirrorView : undefined;
-    if (view) refreshAnchors(view);
-  }, [editor, isReady, anchors]);
+    if (view) refreshAnchors(view, anchorsFoundIn);
+  }, [editor, isReady, anchors, anchorsFoundIn]);
+
+  // The live content, for finding comments again as the creator edits
+  const onContentRef = useRef(onContent);
+  onContentRef.current = onContent;
+  const wantsContent = !!onContent;
+  useEffect(() => {
+    if (!wantsContent || !isReady) return;
+    let frame = 0;
+    const send = () => {
+      frame = 0;
+      const view = editor.prosemirrorView;
+      if (view) {
+        onContentRef.current?.(
+          editor.document as unknown as Block[],
+          view.state.doc,
+        );
+      }
+    };
+    const later = () => {
+      if (!frame) frame = requestAnimationFrame(send);
+    };
+    later();
+    const unsubscribe = editor.onChange(later);
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe?.();
+    };
+  }, [editor, isReady, wantsContent]);
 
   // Intercept Tab in tables at the DOM level to prevent block nesting
   useEffect(() => {

@@ -25,5 +25,6 @@ export {
   anchorDecorations,
   anchorsPlugin,
   refreshAnchors,
+  type AnchorsDoc,
   type DrawnAnchor,
 } from "./editor";

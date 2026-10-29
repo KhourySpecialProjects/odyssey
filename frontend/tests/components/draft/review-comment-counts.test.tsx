@@ -3,9 +3,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/draft/sidebar";
 import {
   ReviewCommentsProvider,
+  SentFeedbackProvider,
   useDropletReviewComments,
 } from "@/components/draft/review/review-comments-context";
-import { getMyReview } from "@/lib/requests/reviews";
+import { getMyReview, getReviewForDroplet } from "@/lib/requests/reviews";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 jest.mock("next/navigation", () => ({
@@ -27,6 +28,8 @@ jest.mock("@/components/draft/metadata/content-action-button", () => ({
 }));
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
+  getReviewForDroplet: jest.fn(),
+  markAddressed: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),
@@ -175,5 +178,55 @@ describe("useDropletReviewComments", () => {
     await act(async () => {});
 
     expect(result.current.comments).toHaveLength(4);
+  });
+});
+
+describe("an author's counts of the feedback sent to them (ODY-807)", () => {
+  const faculty = {
+    ...editor,
+    roles: [AuthorizedUserRoleTitle.Faculty],
+  };
+
+  async function renderAuthorSidebar() {
+    render(
+      <ReviewCommentsProvider dropletId={3} enabled={false}>
+        <SentFeedbackProvider dropletId={3} enabled>
+          <Sidebar
+            user={faculty as never}
+            droplet={{ ...droplet, inReview: false } as never}
+            availableDroplets={[]}
+            isAuthor
+            expanded
+            setExpanded={jest.fn()}
+            onRestartTour={jest.fn()}
+          />
+        </SentFeedbackProvider>
+      </ReviewCommentsProvider>,
+    );
+    await act(async () => {});
+  }
+
+  it("counts each lesson's open sent comments and the Overview's", async () => {
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { ...review, state: "sent" },
+    } as never);
+
+    await renderAuthorSidebar();
+
+    expect(getMyReview).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("2 open comments")).toHaveTextContent("2");
+    expect(screen.getByLabelText("1 open comment")).toHaveTextContent("1");
+  });
+
+  it("counts nothing before any feedback is sent", async () => {
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue({ ok: true, error: null, data: null } as never);
+
+    await renderAuthorSidebar();
+
+    expect(screen.queryByLabelText(/open comments?$/)).toBeNull();
   });
 });

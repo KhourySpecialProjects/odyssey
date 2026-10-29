@@ -32,6 +32,7 @@ import {
 } from "@/lib/review-roles";
 import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
 import { OverviewReview } from "@/components/draft/review/overview-review";
+import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
 import { getAuthorNames } from "@/lib/requests/droplet-authors";
 import { IconLock } from "@tabler/icons-react";
 
@@ -102,7 +103,15 @@ export default async function Droplet({ params }: Props) {
           <IconLock className="h-4 w-4 shrink-0" />
           <span>{REVIEW_FROZEN_MESSAGE}</span>
         </div>
-        <FrozenOverview droplet={droplet} authors={authors} />
+        {/* The feedback sent before this round, read-only (ODY-807) */}
+        <OverviewFeedback
+          droplet={droplet}
+          authors={authors}
+          dropletId={droplet.id}
+          canEdit={false}
+        >
+          <FrozenOverview droplet={droplet} authors={authors} />
+        </OverviewFeedback>
         <div className="pb-16" />
       </div>
     );
@@ -314,6 +323,23 @@ export default async function Droplet({ params }: Props) {
       >
         {editors}
       </OverviewReview>
+    );
+  }
+
+  // An author reads the feedback sent to them beside the editors (ODY-807)
+  if (droplet.status !== "published" && isAuthor) {
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+    return (
+      <OverviewFeedback
+        droplet={droplet}
+        authors={authors}
+        dropletId={droplet.id}
+        canEdit
+      >
+        {editors}
+      </OverviewFeedback>
     );
   }
 
