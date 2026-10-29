@@ -3,7 +3,8 @@
 Scores droplets against the review rubric with Claude, and measures how often
 those scores agree with the client's. The prompt itself lives in
 `lib/ai-review/prompt.ts` (`PROMPT_VERSION`), and Score with AI (ODY-814) runs
-the same code.
+the same code: one request per lesson, then an Overall request that also gets
+each lesson's scores and reasons.
 
 Allowed models: `claude-sonnet-5-5` (default) and `claude-haiku-5-5`, set in
 `lib/ai-review/models.ts`. Effort defaults to `high`.
@@ -48,8 +49,9 @@ npx tsx --env-file=.env.local scripts/ai-review/eval.ts
 npx tsx --env-file=.env.local scripts/ai-review/eval.ts --model claude-haiku-5-5 --effort medium --runs 2
 ```
 
-Uses every fixture with a complete score sheet, as one Message Batch at half
-price (`--sync` sends them one by one instead). For each criterion it reports
+Uses every fixture with a complete score sheet, as two Message Batches at half
+price: the lessons, then the Overall Scores built from their answers
+(`--sync` sends them one by one instead). For each criterion it reports
 exact agreement, agreement within one point, and AI minus client on average
 (above 0: the AI scores high), for lessons and the Overall Score separately,
 plus the biggest gaps. `--runs 2` adds run 1 against run 2: the noise floor.

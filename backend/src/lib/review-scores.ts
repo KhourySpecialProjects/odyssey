@@ -49,24 +49,33 @@ const pick = (row: Row): Row => ({
 });
 
 /**
- * Locks the review row, then checks the caller is its reviewer and it is open.
- * The lock serializes score writes for one review, and holds off a concurrent
- * send. Must run inside a transaction.
+ * Locks the review row and reads its state, reviewer and droplet. The lock
+ * serializes score writes and AI runs for one review, and holds off a
+ * concurrent send. Must run inside a transaction.
  */
-async function lockOpenReview(scope: ScoreScope): Promise<Row> {
+export async function lockReview(reviewId: number): Promise<Row> {
   await strapi.db
     .queryBuilder(REVIEW_UID)
     .select(['id'])
-    .where({ id: scope.reviewId })
+    .where({ id: reviewId })
     .forUpdate()
     .first()
     .execute();
   const review = (await strapi.documents(REVIEW_UID).findFirst({
-    filters: { id: scope.reviewId },
+    filters: { id: reviewId },
     fields: ['state'],
-    populate: { reviewer: { fields: ['id'] }, droplet: { fields: ['id'] } },
+    populate: {
+      reviewer: { fields: ['id'] },
+      droplet: { fields: ['id', 'inReview'] },
+    },
   } as any)) as Row | null;
   if (!review?.droplet) throw new ReviewScoreError(404, 'Review not found');
+  return review;
+}
+
+/** `lockReview`, then checks the caller is its reviewer and it is open. */
+export async function lockOpenReview(scope: ScoreScope): Promise<Row> {
+  const review = await lockReview(scope.reviewId);
   if (review.reviewer?.id !== scope.userId) {
     throw new ReviewScoreError(403, 'Only the reviewer can score this review');
   }
@@ -76,7 +85,7 @@ async function lockOpenReview(scope: ScoreScope): Promise<Row> {
   return review;
 }
 
-async function findScore(key: string): Promise<Row | null> {
+export async function findScore(key: string): Promise<Row | null> {
   return (await strapi
     .documents(SCORE_UID)
     .findFirst({ filters: { key }, fields: SCORE_FIELDS } as any)) as Row | null;

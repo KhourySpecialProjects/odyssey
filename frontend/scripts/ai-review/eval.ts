@@ -6,8 +6,9 @@ To run, from frontend/:
   npx tsx --env-file=.env.local scripts/ai-review/eval.ts
   npx tsx --env-file=.env.local scripts/ai-review/eval.ts --model claude-haiku-5-5 --effort medium --runs 2
 
-Uses every fixture whose score sheet is complete. Sends one Message Batch
-(half price; usually under an hour) unless --sync is given. --runs 2 runs
+Uses every fixture whose score sheet is complete. Sends two Message Batches
+at half price, the lessons and then the Overall Scores built from their
+answers (each usually under an hour), unless --sync is given. --runs 2 runs
 everything twice, to show how much the AI disagrees with itself. Droplets with
 "split": "holdout" are reported separately: don't tune the prompt on them.
 It prints the cost estimate and asks before sending; --yes skips that.
@@ -38,8 +39,9 @@ import {
   COMMON_OPTIONS,
   makeClient,
   metaMarkdown,
-  planRequests,
+  planForEstimate,
   runMeta,
+  scoreFixtures,
   settings,
 } from "./lib/plan";
 import {
@@ -122,21 +124,27 @@ async function main() {
   if (!fixtures.length)
     throw new Error("No fixture has a complete score sheet yet");
 
-  const requests = planRequests(fixtures, rubric.criteria, {
+  const client = makeClient();
+  const estimate = planForEstimate(fixtures, rubric.criteria, {
     model,
     effort,
     runs,
   });
-  const client = makeClient();
-  if (!(await confirmSpend(requests, model, { batch, yes: values.yes }))) {
+  if (!(await confirmSpend(estimate, model, { batch, yes: values.yes }))) {
     console.log("Nothing sent.");
     return;
   }
 
   const startedAt = new Date().toISOString();
-  const results: RequestResult[] = batch
-    ? await runAsBatch(client, requests, rubric.criteria, model)
-    : await runInOrder(client, requests, rubric.criteria, model);
+  const results: RequestResult[] = await scoreFixtures(
+    fixtures,
+    rubric.criteria,
+    { model, effort, runs },
+    (requests) =>
+      batch
+        ? runAsBatch(client, requests, rubric.criteria, model)
+        : runInOrder(client, requests, rubric.criteria, model),
+  );
   const meta = runMeta(
     { model, effort, batch, runs, startedAt },
     rubric,

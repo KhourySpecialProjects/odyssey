@@ -32,6 +32,9 @@ jest.mock("@/components/draft/add-lesson", () => ({
 // Mock the ContentActionButton component to avoid complex setup.
 // Surface the actionType and buttonText so permission tests can assert on
 // which buttons the sidebar hands to a given user role.
+jest.mock("@/components/draft/review/score-with-ai-button", () => ({
+  ScoreWithAiButton: () => <div data-testid="score-with-ai" />,
+}));
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: ({
     actionType,
@@ -514,6 +517,22 @@ describe("Sidebar", () => {
         ),
       ).toEqual([publishWithReview, sendFeedback]);
     });
+
+    it.each<
+      [AuthorizedUserRoleTitle, keyof typeof draftStates, boolean, boolean]
+    >([
+      [ContentEditor, "new draft in review", false, true],
+      [SysAdmin, "edit draft in review", false, true],
+      [ContentEditor, "new draft in review", true, false],
+      [SysAdmin, "new draft", false, false],
+      [ContentCreator, "new draft in review", false, false],
+    ])(
+      "Score with AI for %s, %s, author %s: %s",
+      (role, state, isAuthor, shown) => {
+        renderActions([role], draftStates[state], isAuthor);
+        expect(!!screen.queryByTestId("score-with-ai")).toBe(shown);
+      },
+    );
 
     it("a Faculty author still sees Publish when the droplet is not in review", () => {
       expect(renderActions([Faculty], draftStates["new draft"], true)).toEqual([

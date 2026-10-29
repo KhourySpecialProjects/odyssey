@@ -24,8 +24,9 @@ import {
   COMMON_OPTIONS,
   makeClient,
   metaMarkdown,
-  planRequests,
+  planForEstimate,
   runMeta,
+  scoreFixtures,
   settings,
 } from "./lib/plan";
 import { confirmSpend, runInOrder, type RequestResult } from "./lib/run";
@@ -65,17 +66,25 @@ async function main() {
       "No fixtures chosen: pass --droplet <slug> (as saved by snapshot.ts) or --all",
     );
 
-  const requests = planRequests(fixtures, rubric.criteria, { model, effort });
   const client = makeClient();
+  const estimate = planForEstimate(fixtures, rubric.criteria, {
+    model,
+    effort,
+  });
   if (
-    !(await confirmSpend(requests, model, { batch: false, yes: values.yes }))
+    !(await confirmSpend(estimate, model, { batch: false, yes: values.yes }))
   ) {
     console.log("Nothing sent.");
     return;
   }
 
   const startedAt = new Date().toISOString();
-  const results = await runInOrder(client, requests, rubric.criteria, model);
+  const results = await scoreFixtures(
+    fixtures,
+    rubric.criteria,
+    { model, effort },
+    (requests) => runInOrder(client, requests, rubric.criteria, model),
+  );
   const meta = runMeta(
     { model, effort, batch: false, runs: 1, startedAt },
     rubric,

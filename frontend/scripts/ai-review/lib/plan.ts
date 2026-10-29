@@ -5,8 +5,12 @@ import {
   type AiReviewModel,
   type Effort,
 } from "@/lib/ai-review/models";
-import { buildDropletRequests, PROMPT_VERSION } from "@/lib/ai-review/prompt";
-import type { Criterion } from "@/lib/ai-review/types";
+import {
+  buildLessonRequests,
+  buildOverallRequest,
+  PROMPT_VERSION,
+} from "@/lib/ai-review/prompt";
+import type { Criterion, LessonScores } from "@/lib/ai-review/types";
 import type { Fixture, Rubric } from "./files";
 import { totals, type RunTotals } from "./metrics";
 import type { PlannedRequest, RequestResult } from "./run";
@@ -28,33 +32,107 @@ export function settings(values: { model?: string; effort?: string }): {
   };
 }
 
-export function planRequests(
+type PlanOptions = { model: AiReviewModel; effort: Effort; runs?: number };
+
+const tag = (f: Fixture, run: number) => ({
+  run,
+  dropletId: f.snapshot.droplet.id,
+  dropletName: f.snapshot.droplet.name,
+});
+
+/** Every lesson request, for each run. */
+export function planLessonRequests(
   fixtures: Fixture[],
   criteria: Criterion[],
-  {
-    model,
-    effort,
-    runs = 1,
-  }: { model: AiReviewModel; effort: Effort; runs?: number },
+  { model, effort, runs = 1 }: PlanOptions,
 ): PlannedRequest[] {
   const planned: PlannedRequest[] = [];
   for (let run = 1; run <= runs; run++) {
     for (const f of fixtures) {
-      for (const r of buildDropletRequests(f.snapshot, criteria, {
+      for (const r of buildLessonRequests(f.snapshot, criteria, {
         model,
         effort,
         idPrefix: `r${run}-`,
       })) {
-        planned.push({
-          ...r,
-          run,
-          dropletId: f.snapshot.droplet.id,
-          dropletName: f.snapshot.droplet.name,
-        });
+        planned.push({ ...r, ...tag(f, run) });
       }
     }
   }
   return planned;
+}
+
+/** Each fixture's Overall request, built from `lessonScores(fixture, run)`. */
+function planOverall(
+  fixtures: Fixture[],
+  criteria: Criterion[],
+  { model, effort, runs = 1 }: PlanOptions,
+  lessonScores: (f: Fixture, run: number) => LessonScores[],
+): PlannedRequest[] {
+  const planned: PlannedRequest[] = [];
+  for (let run = 1; run <= runs; run++) {
+    for (const f of fixtures) {
+      planned.push({
+        ...buildOverallRequest(f.snapshot, criteria, lessonScores(f, run), {
+          model,
+          effort,
+          idPrefix: `r${run}-`,
+        }),
+        ...tag(f, run),
+      });
+    }
+  }
+  return planned;
+}
+
+/**
+ * Everything a run will send, for the cost estimate. Placeholder lesson
+ * scores stand in for the answers the Overall requests will carry.
+ */
+export function planForEstimate(
+  fixtures: Fixture[],
+  criteria: Criterion[],
+  options: PlanOptions,
+): PlannedRequest[] {
+  const placeholder = criteria.map((c) => ({
+    criterionId: c.id,
+    score: 3,
+    rationale: "x".repeat(250),
+  }));
+  return [
+    ...planLessonRequests(fixtures, criteria, options),
+    ...planOverall(fixtures, criteria, options, (f) =>
+      f.snapshot.lessons.map((l) => ({ lessonId: l.id, scores: placeholder })),
+    ),
+  ];
+}
+
+/**
+ * Scores the fixtures as Score with AI (ODY-814) does: every lesson, then the
+ * Overall Score with those lessons' answers. `send` runs one set of requests.
+ */
+export async function scoreFixtures(
+  fixtures: Fixture[],
+  criteria: Criterion[],
+  options: PlanOptions,
+  send: (requests: PlannedRequest[]) => Promise<RequestResult[]>,
+): Promise<RequestResult[]> {
+  const lessons = await send(planLessonRequests(fixtures, criteria, options));
+  const overall = await send(
+    planOverall(fixtures, criteria, options, (f, run) =>
+      lessons
+        .filter(
+          (r) =>
+            r.run === run &&
+            r.dropletId === f.snapshot.droplet.id &&
+            r.request.kind === "lesson",
+        )
+        .map((r) => ({
+          lessonId: r.request.lessonId!,
+          scores: r.parsed.ok ? r.parsed.scores : null,
+        })),
+    ),
+  );
+  return [...lessons, ...overall];
 }
 
 /** Fails early, before anything is sent, if there is no API key to send with. */
