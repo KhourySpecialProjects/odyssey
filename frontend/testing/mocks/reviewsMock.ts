@@ -1,10 +1,12 @@
 import type {
+  AiFinding,
   AiScoringRun,
   Review,
   ReviewAnchor,
   ReviewComment,
   ReviewCriterion,
   ReviewScore,
+  ReviewTextAnchor,
 } from "@/types";
 
 const names = ["Tone", "Style", "Flow", "Scaffolding", "Quality"];
@@ -49,6 +51,17 @@ export const mockReviewComment: ReviewComment = {
   resolvedAt: null,
   parent: null,
 };
+
+export const mockAiFinding = (
+  overrides: Partial<AiFinding> = {},
+): AiFinding => ({
+  id: "f1",
+  quote: "example",
+  reason: "Too vague.",
+  lessonId: 3,
+  anchor: mockReviewAnchor as ReviewTextAnchor,
+  ...overrides,
+});
 
 export const mockReviewScore: ReviewScore = {
   id: 31,
