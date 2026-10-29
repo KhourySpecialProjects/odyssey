@@ -10,6 +10,8 @@ import {
   blocksSpanned,
   commentTime,
   isWholeSection,
+  feedbackMeta,
+  reviewerName,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
 
@@ -390,5 +392,29 @@ describe("commentTime", () => {
       "Oct 20, 9:05 AM",
     );
     expect(commentTime(undefined, now)).toBeNull();
+  });
+});
+
+describe("the feedback an author reads (ODY-807)", () => {
+  const now = new Date("2026-10-29T12:00:00");
+
+  it("names the reviewer, or says the reviewer", () => {
+    expect(
+      reviewerName({
+        reviewer: { firstName: "Nadia", lastName: "Reviewer" } as never,
+      }),
+    ).toBe("Nadia Reviewer");
+    expect(reviewerName({ reviewer: null })).toBe("the reviewer");
+    expect(reviewerName(null)).toBe("the reviewer");
+  });
+
+  it("says the round and when it was sent", () => {
+    expect(
+      feedbackMeta({ round: 2, sentAt: "2026-10-28T15:04:00" }, now),
+    ).toMatch(/^Round 2 · sent yesterday, 3:04\sPM$/);
+    expect(
+      feedbackMeta({ round: 1, sentAt: "2026-10-20T09:30:00" }, now),
+    ).toMatch(/^Round 1 · sent Oct 20, 9:30\sAM$/);
+    expect(feedbackMeta({ round: 1, sentAt: null }, now)).toBe("Round 1");
   });
 });

@@ -34,6 +34,12 @@ interface CommentCardProps {
   onDelete: () => Promise<CommentOutcome>;
   onResolve: (resolved: boolean) => Promise<CommentOutcome>;
   onClose: () => void;
+  /** Takes focus when it opens; not when a click in the editor opened it */
+  focusOnOpen?: boolean;
+  /** Said under what it's about, in place of Pending, Sent or Resolved */
+  meta?: ReactNode;
+  /** The creator's Mark addressed (ODY-807): shown only when given */
+  onAddress?: (addressed: boolean) => Promise<CommentOutcome>;
 }
 
 type Mode = "view" | "edit" | "confirm-delete";
@@ -71,6 +77,9 @@ export function CommentCard({
   onDelete,
   onResolve,
   onClose,
+  focusOnOpen = true,
+  meta,
+  onAddress,
 }: CommentCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<Mode>("view");
@@ -90,7 +99,9 @@ export function CommentCard({
         .filter(Boolean)
         .join(" ") || "You"
     : "You";
-  const time = commentTime(comment.createdAt);
+  // A carried comment's date is the original's (ODY-807)
+  const time = commentTime(comment.carriedFrom?.createdAt ?? comment.createdAt);
+  const addressed = !!comment.addressedAt;
 
   useDismiss(ref, onClose);
 
@@ -109,8 +120,8 @@ export function CommentCard({
   }, [anchor]);
 
   useEffect(() => {
-    ref.current?.focus();
-  }, []);
+    if (focusOnOpen) ref.current?.focus();
+  }, [focusOnOpen]);
 
   const run = async (
     action: () => Promise<CommentOutcome>,
@@ -155,7 +166,7 @@ export function CommentCard({
             {about}
           </p>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {resolved ? "Resolved" : pending ? "Pending" : "Sent"}
+            {meta ?? (resolved ? "Resolved" : pending ? "Pending" : "Sent")}
           </p>
         </div>
         <button
@@ -206,6 +217,18 @@ export function CommentCard({
           )}
         </div>
       </div>
+
+      {addressed && !resolved && (
+        <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
+          <IconCheck
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--rc-accent-text)]"
+            aria-hidden
+          />
+          {onAddress
+            ? "You marked this addressed. The reviewer resolves it."
+            : "The creator marked this addressed."}
+        </p>
+      )}
 
       {mode === "view" && pending && (
         <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
@@ -271,7 +294,25 @@ export function CommentCard({
         </div>
       )}
 
-      {mode === "view" && (
+      {mode === "view" && onAddress && !resolved && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            className={addressed ? GHOST : SECONDARY}
+            disabled={busy}
+            onClick={() => run(() => onAddress(!addressed))}
+          >
+            {addressed ? (
+              <IconRotate className="h-3.5 w-3.5" aria-hidden />
+            ) : (
+              <IconCheck className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {addressed ? "Not addressed yet" : "Mark addressed"}
+          </button>
+        </div>
+      )}
+
+      {mode === "view" && !onAddress && (
         <div className="flex flex-wrap justify-end gap-2">
           {saving ? (
             <span className="text-slate-500">Saving...</span>

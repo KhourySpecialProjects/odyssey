@@ -293,3 +293,20 @@ export function draftMarkIn(
   if (range === OUTDATED) return null;
   return anchor.point ? { range, point: anchor.point } : { range };
 }
+
+/** Who sent feedback, by name, or "the reviewer" (ODY-807) */
+export function reviewerName(review: Pick<Review, "reviewer"> | null): string {
+  const name = [review?.reviewer?.firstName, review?.reviewer?.lastName]
+    .filter(Boolean)
+    .join(" ");
+  return name || "the reviewer";
+}
+
+/** "Round 1 · sent Oct 28, 3:04 PM", for feedback an author reads (ODY-807) */
+export function feedbackMeta(
+  review: Pick<Review, "round" | "sentAt">,
+  now?: Date,
+): string {
+  const sent = commentTime(review.sentAt ?? undefined, now);
+  return `Round ${review.round}${sent ? ` · sent ${sent.replace(/^(Today|Yesterday)/, (d) => d.toLowerCase())}` : ""}`;
+}
