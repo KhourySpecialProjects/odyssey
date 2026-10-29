@@ -212,14 +212,13 @@ export function LessonRenderer({
   const [litMarkId, setLitMarkId] = useState<string | null>(null);
   // The open criterion's findings on this lesson, marked in Comment mode
   const openDetail = useReviewFocus()?.openDetail;
-  const lessonFindings = useMemo(
-    () =>
-      openDetail?.findings.filter(
-        ({ finding }) =>
-          finding.lessonId === lesson.id && finding.anchor.field === "blocks",
-      ) ?? NO_FINDINGS,
-    [openDetail, lesson.id],
-  );
+  const lessonFindings = useMemo(() => {
+    const here = openDetail?.findings.filter(
+      ({ finding }) =>
+        finding.lessonId === lesson.id && finding.anchor.field === "blocks",
+    );
+    return here?.length ? here : NO_FINDINGS;
+  }, [openDetail, lesson.id]);
   const findingDrawn = useMemo(
     () =>
       lessonFindings.length > 0
@@ -973,7 +972,7 @@ export function LessonRenderer({
               draftAnchor={draftAnchor}
               litMarkId={litMarkId}
               findings={lessonFindings}
-              band={openDetail?.band}
+              band={lessonFindings.length ? openDetail?.band : undefined}
               onOutdated={handleClassicOutdated}
             />
           </CommentLayer>

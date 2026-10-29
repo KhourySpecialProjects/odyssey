@@ -20,8 +20,7 @@ const byAttribute = (root: Element, name: string, value: string) =>
  * `root` is the lesson's content, or the field's element for an anchor
  * without a block id. An anchor across blocks wraps every block from its
  * first to its last. With `point`, an empty caret span (`anchor-caret`) also
- * goes at that end: a comment at one spot (ODY-806). `badge` puts an empty
- * numbered marker (`anchor-badge`) before the first span. Not for the BlockNote
+ * goes at that end: a comment at one spot (ODY-806). Not for the BlockNote
  * editor: see anchorsPlugin.
  */
 export function drawAnchor(
@@ -32,7 +31,12 @@ export function drawAnchor(
     className,
     point,
     badge,
-  }: { className?: string; point?: "before" | "after"; badge?: number } = {},
+  }: {
+    className?: string;
+    point?: "before" | "after";
+    /** An empty numbered marker (`anchor-badge`) before the first span */
+    badge?: number;
+  } = {},
 ): HTMLElement[] {
   const makeSpan = () => {
     const span = document.createElement("span");

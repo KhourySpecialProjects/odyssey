@@ -285,6 +285,7 @@ describe("anchors in the BlockNote editor", () => {
       expect(badges[0]).toHaveAttribute("data-badge", "2");
       expect(badges[0]).toHaveAttribute("aria-hidden", "true");
       expect(badges[0].childNodes).toHaveLength(0);
+      expect(badges[0].nextElementSibling).toHaveTextContent("store");
     });
 
     it("draws no badge without one", () => {

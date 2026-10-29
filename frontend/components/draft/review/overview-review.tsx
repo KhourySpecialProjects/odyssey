@@ -186,7 +186,7 @@ export function OverviewReview({
           draftAnchor={draft?.field === field ? draft.anchor : null}
           litMarkId={litMarkId}
           findings={findingsByField.get(field)}
-          band={openDetail?.band}
+          band={findingsByField.has(field) ? openDetail?.band : undefined}
           onOutdated={reporters[field]}
           testId={`overview-review-${field}`}
         />

@@ -190,7 +190,7 @@ The same reviewer sees the panel on every page of the draft (`review/review-pane
 - **Actions (D7).** Publish droplet and Send feedback live in the panel footer (`ContentActionButton`, with `disabledReason`, `initialNote` and the type-the-name step on `publishWithReview`). The footer renders even when the panel data failed to load. The sidebar then shows only Preview (`hideReviewActions`).
 - **Pure rules** are in `lib/review-panel/` (`model`, `positions`, `criteria-icons`, `colors`); they import `lib/anchors/resolve` and `content` only.
 - **Finding marks (ODY-849).** `CriterionDetail` registers its band and numbered findings in `ReviewFocusProvider.openDetail` (null while the panel is a rail); lessons and the Overview draw them in Comment mode with `findingMarks` (`finding-<id>` ids, so the comment layer ignores them) and dim comment tags via `.rc-tag`.
-- **Badge marker.** A finding's number is an empty `.anchor-badge` marker (`DrawnAnchor.badge`, a widget in BlockNote, a span in `drawAnchor`) with no text node, so it can't shift offsets; CSS draws the digit from `data-badge`.
+- **Badge marker.** A finding's number is an empty `.anchor-badge` marker (`DrawnAnchor.badge`, a widget in BlockNote, a span in `drawAnchor`) with no text node, so it can't shift offsets; CSS draws the digit from `data-badge`. It shares the mark's `data-anchor-id`, so exclude it with `:not(.anchor-badge)` when picking a mark's text span (scroll, flash, ring). The last detail opened drives the marks; closing it clears them even if another detail is still open.
 - **Not here yet (ODY-849 PRs 2 and 3):** Show in lesson scrolling and ringing, and Add as comment.
 
 ## Static Assets and Media

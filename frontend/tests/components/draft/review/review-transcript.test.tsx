@@ -237,31 +237,34 @@ describe("open detail for the lesson's finding marks", () => {
   const Probe = () => {
     const open = useReviewFocus()?.openDetail;
     return (
-      <output data-testid="probe">
+      <output
+        data-testid="probe"
+        data-quote={open?.findings[0]?.finding.anchor.quote}
+      >
         {open
           ? `${open.band}:${open.findings.map((f) => `${f.number}=${f.finding.id}`).join(",")}`
           : "none"}
       </output>
     );
   };
-  const mount = (active: boolean) =>
-    render(
-      <ReviewFocusProvider active={active}>
-        <Probe />
-        <ReviewTranscript
-          droplet={droplet}
-          panel={panel([
-            score(12, {
-              aiValue: 2,
-              aiFindings: [
-                mockAiFinding({ id: "a", lessonId: 12 }),
-                mockAiFinding({ id: "b", lessonId: 12 }),
-              ],
-            }),
-          ])}
-        />
-      </ReviewFocusProvider>,
-    );
+  const tree = (active: boolean) => (
+    <ReviewFocusProvider active={active}>
+      <Probe />
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([
+          score(12, {
+            aiValue: 2,
+            aiFindings: [
+              mockAiFinding({ id: "a", lessonId: 12 }),
+              mockAiFinding({ id: "b", lessonId: 12 }),
+            ],
+          }),
+        ])}
+      />
+    </ReviewFocusProvider>
+  );
+  const mount = (active: boolean) => render(tree(active));
 
   it("follows the open circle and its undismissed findings", async () => {
     mount(true);
@@ -280,11 +283,45 @@ describe("open detail for the lesson's finding marks", () => {
     expect(screen.getByTestId("probe")).toHaveTextContent("none");
   });
 
-  it("is hidden while the panel is a rail", async () => {
-    mount(false);
+  it("is hidden while the panel is a rail, and back when it opens", async () => {
+    const { rerender } = mount(false);
     const card = screen.getByRole("region", { name: "Loops" });
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     expect(screen.getByTestId("probe")).toHaveTextContent("none");
+
+    rerender(tree(true));
+    expect(screen.getByTestId("probe")).toHaveTextContent("needs_work:1=a,2=b");
+  });
+
+  it("follows a re-run that keeps the ids but moves the passage", async () => {
+    const run = (quote: string) => (
+      <ReviewFocusProvider active>
+        <Probe />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel([
+            score(12, {
+              aiValue: 2,
+              aiFindings: [
+                mockAiFinding({
+                  id: "a",
+                  lessonId: 12,
+                  anchor: { ...mockAiFinding().anchor, quote },
+                }),
+              ],
+            }),
+          ])}
+        />
+      </ReviewFocusProvider>
+    );
+    const { rerender } = render(run("old"));
+    const card = screen.getByRole("region", { name: "Loops" });
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    const quoteNow = () => screen.getByTestId("probe").dataset.quote;
+    expect(quoteNow()).toBe("old");
+
+    rerender(run("new"));
+    expect(quoteNow()).toBe("new");
   });
 });
 

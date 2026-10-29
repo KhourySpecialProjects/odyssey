@@ -95,10 +95,12 @@ export function CriterionDetail({
 
   // Tell the lesson which findings to mark; clear only if still ours
   const setOpenDetail = useReviewFocus()?.setOpenDetail;
-  const signature = findings.map((f) => `${f.finding.id}:${f.number}`).join();
+  const signature = JSON.stringify(
+    findings.map((f) => [f.finding.id, f.number, f.finding.anchor]),
+  );
   const mine = useMemo<OpenDetail>(
     () => ({ band, findings }),
-    // `signature` stands for `findings`: a new array alone doesn't redraw
+    // `signature` (ids, numbers, anchors) stands for `findings`
     [band, signature],
   );
   useEffect(() => {

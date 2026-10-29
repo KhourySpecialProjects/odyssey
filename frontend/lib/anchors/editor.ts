@@ -112,8 +112,7 @@ export function anchorDecorations(
 
 /**
  * A ProseMirror plugin that draws whatever anchors `getAnchors` returns.
- * It's registered as a BlockNote extension (blocknote-editor-client.tsx);
- * call refreshAnchors after the anchors change.
+ * Registered as a BlockNote extension; call refreshAnchors after they change.
  */
 export function anchorsPlugin(getAnchors: () => DrawnAnchor[]): Plugin {
   return new Plugin({

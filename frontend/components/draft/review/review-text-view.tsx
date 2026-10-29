@@ -89,8 +89,8 @@ export function ReviewTextView({
         point: mark.point,
       });
     }
-    for (const mark of findingMarks(findings ?? [], content, band ?? "unscored")
-      .drawn) {
+    const found = band ? findingMarks(findings ?? [], content, band).drawn : [];
+    for (const mark of found) {
       drawAnchor(root, mark.range, mark.id, {
         className: mark.className,
         badge: mark.badge,

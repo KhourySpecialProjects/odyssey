@@ -27,7 +27,7 @@ export function FindingItem({
   onShowInLesson,
   onDismiss,
 }: Props) {
-  const { outline: colour, tint, line } = BAND_COLORS[band];
+  const { text: colour, tint, line } = BAND_COLORS[band];
   return (
     <li className="rounded-lg border border-transparent p-1">
       <div className="flex items-start gap-2 p-1.5">
