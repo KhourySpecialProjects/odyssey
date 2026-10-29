@@ -1,6 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import { markClaimedVoyageNodesAuthored } from './lib/lifecycle-utils';
 import { seedReviewCriteria } from './lib/review-criteria-seed';
+import { seedAiScoringSettings } from './lib/ai-scoring-settings';
 import { backfillReviewRounds } from './lib/review-round-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
@@ -52,6 +53,13 @@ export default {
       if (seeded > 0) strapi.log.info(`Seeded ${seeded} review criteria`);
     } catch (error) {
       strapi.log.error('Could not seed review criteria', error);
+    }
+
+    // Score with AI's cost limits start as placeholders; never blocks startup.
+    try {
+      if (await seedAiScoringSettings()) strapi.log.info('Seeded the AI scoring settings');
+    } catch (error) {
+      strapi.log.error('Could not seed the AI scoring settings', error);
     }
 
     // Droplets already in review start at round 1; never blocks startup.

@@ -24,6 +24,7 @@ The `schema.json` is the authoritative definition of every field, relation, enum
 api/
 ├── access-request/       User requests for platform access
 ├── ai-scoring-run/       One AI scoring attempt for a review (tokens, runState)
+├── ai-scoring-setting/   Single type: Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)
 ├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist, review_feedback, review_published)
 ├── authorized-user/      User profiles (email-based, linked to roles)
 ├── authorized-user-role/ Role definitions (System Admin, Content Creator, etc.)
@@ -294,6 +295,7 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   - **Caching:** each lesson request puts its cache marker on its last lesson block, not after the closing instruction (which differs every time), so the next lesson's request reads the shared prefix back. On a real run, check `cache_read_input_tokens` is above 0 from the second lesson on.
 - **Known gaps:** the rate limit is taken before `start`, so a refused start (already running) still uses one. ODY-630's limiter bug applies.
 - **Polling:** `getAiScoringRun` reads the latest run uncached, and shows a stale active run as failed. The sidebar's `ScoreWithAiButton` checks it every 5 seconds, one check at a time, stops when refused, and refreshes when the run ends.
+- **Cost settings (ODY-851, ODY-815 T1):** `ai-scoring-setting` is Odyssey's only single type. It holds `monthlyCapUsd`, `perRunCapUsd` and `prices`, a repeatable `ai-scoring.model-price` component (`model`, `inputPerMillionUsd`, `outputPerMillionUsd`). Bootstrap seeds placeholders ($25 a month, $2 a run, the Sonnet 5.5 and Haiku 5.5 list prices) only when the row is missing, so an admin edit is never overwritten. Read it with `loadAiScoringSettings()` (`src/lib/ai-scoring-settings.ts`), which returns numbers (Postgres returns decimals as strings), prices keyed by model, and the placeholders if the row is gone. REST is read-only (`find`); change the amounts in the admin. Tested in `tests/lib/ai-scoring-settings.test.js`. The cap and ceiling checks come in ODY-853 and ODY-854.
 
 ### Publish-edit route (`custom-droplet` controller)
 
