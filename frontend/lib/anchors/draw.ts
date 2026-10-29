@@ -1,5 +1,11 @@
 import { AnchorRange } from "./types";
-import { caretElement, textOf, textParts, wrapRange } from "./dom";
+import {
+  badgeElement,
+  caretElement,
+  textOf,
+  textParts,
+  wrapRange,
+} from "./dom";
 
 const byAttribute = (root: Element, name: string, value: string) =>
   Array.from(root.querySelectorAll(`[${name}]`)).find(
@@ -14,14 +20,19 @@ const byAttribute = (root: Element, name: string, value: string) =>
  * `root` is the lesson's content, or the field's element for an anchor
  * without a block id. An anchor across blocks wraps every block from its
  * first to its last. With `point`, an empty caret span (`anchor-caret`) also
- * goes at that end: a comment at one spot (ODY-806). Not for the BlockNote
+ * goes at that end: a comment at one spot (ODY-806). `badge` puts an empty
+ * numbered marker (`anchor-badge`) before the first span. Not for the BlockNote
  * editor: see anchorsPlugin.
  */
 export function drawAnchor(
   root: Element,
   range: AnchorRange,
   anchorId: string,
-  { className, point }: { className?: string; point?: "before" | "after" } = {},
+  {
+    className,
+    point,
+    badge,
+  }: { className?: string; point?: "before" | "after"; badge?: number } = {},
 ): HTMLElement[] {
   const makeSpan = () => {
     const span = document.createElement("span");
@@ -54,6 +65,9 @@ export function drawAnchor(
       });
   }
 
+  if (badge !== undefined && spans.length > 0) {
+    spans[0].before(badgeElement(anchorId, badge, className));
+  }
   if (point && spans.length > 0) {
     const caret = caretElement(anchorId, className);
     if (point === "before") spans[0].before(caret);

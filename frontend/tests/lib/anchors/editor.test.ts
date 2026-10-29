@@ -266,6 +266,32 @@ describe("anchors in the BlockNote editor", () => {
       );
     });
 
+    it.each([
+      ["a single block", { blockId: "intro", start: 10, end: 15 }],
+      [
+        "a range across blocks",
+        { blockId: "intro", endBlockId: "joins", start: 10, end: 6 },
+      ],
+    ])("draws one empty badge for %s", (_name, range) => {
+      const anchor: DrawnAnchor = {
+        id: "finding-1",
+        range: { field: "blocks", exact: true, ...range },
+        badge: 2,
+      };
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [anchor]));
+
+      const badges = root.querySelectorAll(".anchor-badge");
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveAttribute("data-badge", "2");
+      expect(badges[0]).toHaveAttribute("aria-hidden", "true");
+      expect(badges[0].childNodes).toHaveLength(0);
+    });
+
+    it("draws no badge without one", () => {
+      editor._tiptapEditor.registerPlugin(anchorsPlugin(() => [whole("c6")]));
+      expect(root.querySelector(".anchor-badge")).toBeNull();
+    });
+
     it("redraws when the anchors change and refreshAnchors is called", () => {
       let anchors: DrawnAnchor[] = [whole("c4")];
       editor._tiptapEditor.registerPlugin(anchorsPlugin(() => anchors));

@@ -144,3 +144,20 @@ export function caretElement(id: string, className?: string): HTMLElement {
   caret.setAttribute("aria-hidden", "true");
   return caret;
 }
+
+/**
+ * A finding's number badge: an empty span with no text node, so it can't
+ * shift offsets. CSS draws the digit from `data-badge`.
+ */
+export function badgeElement(
+  id: string,
+  number: number,
+  className?: string,
+): HTMLElement {
+  const badge = document.createElement("span");
+  badge.dataset.anchorId = id;
+  badge.dataset.badge = String(number);
+  badge.className = className ? `anchor-badge ${className}` : "anchor-badge";
+  badge.setAttribute("aria-hidden", "true");
+  return badge;
+}

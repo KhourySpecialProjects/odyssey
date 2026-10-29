@@ -2,7 +2,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { AnchorRange } from "./types";
-import { caretElement } from "./dom";
+import { badgeElement, caretElement } from "./dom";
 
 /**
  * An anchor to draw, with an optional class for its span (ODY-806). `point`
@@ -13,6 +13,8 @@ export type DrawnAnchor = {
   range: AnchorRange;
   className?: string;
   point?: "before" | "after";
+  /** A finding's number, drawn as one empty marker at the start of the range */
+  badge?: number;
 };
 
 const anchorsKey = new PluginKey("anchors");
@@ -49,7 +51,7 @@ export function anchorDecorations(
     const textStart = pos + 2;
     const size = content.content.size;
     for (const anchor of anchors) {
-      const { id, range, className, point } = anchor;
+      const { id, range, className, point, badge } = anchor;
       let from: number;
       let to: number;
       if (range.blockId === node.attrs.id) {
@@ -75,6 +77,20 @@ export function anchorDecorations(
           }),
         );
       }
+      // Only on the anchor's first block
+      if (badge !== undefined && range.blockId === node.attrs.id) {
+        decorations.push(
+          Decoration.widget(
+            textStart + from,
+            () => badgeElement(id, badge, className),
+            {
+              side: -1,
+              key: `${id} badge ${badge} ${className ?? ""}`,
+              ignoreSelection: true,
+            },
+          ),
+        );
+      }
       if (point) {
         decorations.push(
           Decoration.widget(
@@ -96,8 +112,8 @@ export function anchorDecorations(
 
 /**
  * A ProseMirror plugin that draws whatever anchors `getAnchors` returns.
- * Register it with `editor._tiptapEditor.registerPlugin`, and call
- * refreshAnchors after the anchors change.
+ * It's registered as a BlockNote extension (blocknote-editor-client.tsx);
+ * call refreshAnchors after the anchors change.
  */
 export function anchorsPlugin(getAnchors: () => DrawnAnchor[]): Plugin {
   return new Plugin({
