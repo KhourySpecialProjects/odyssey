@@ -247,6 +247,15 @@ const AI_RUN_ROUTES = routes([
   ["GET", /^\/ai-scoring-runs$/, list(ent(40, { runState: "done" }))],
 ]);
 
+const REVIEW_PANEL_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/review-criteria$/, list(ent(2, { name: "Tone", order: 0 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { key: "5:6:2", value: 3 }))],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/ai-scoring-runs$/, list(ent(4, { runState: "done" }))],
+]);
+
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -738,6 +747,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       REVIEW_WRITE_ROUTES,
     ),
     call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
+    call("getReviewPanel", (m) => m.getReviewPanel(1), REVIEW_PANEL_ROUTES),
   ]),
   "droplet-authors": defineModule<
     typeof import("@/lib/requests/droplet-authors")
@@ -933,6 +943,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",
     acceptAiScores: "custom review-score accept-ai route (ODY-803)",
+    unconfirmScores: "custom review-score unconfirm route (ODY-805)",
     submitForReview: REVIEW_WORKFLOW,
     withdrawFromReview: REVIEW_WORKFLOW,
     sendFeedback: REVIEW_WORKFLOW,

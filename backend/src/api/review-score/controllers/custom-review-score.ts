@@ -1,6 +1,7 @@
 import {
   acceptAiScores,
   ReviewScoreError,
+  unconfirmScores,
   upsertReviewScore,
 } from '../../../lib/review-scores';
 
@@ -112,6 +113,26 @@ export default {
           userId: body.userId as number,
         }),
       'Failed to accept the AI scores.',
+    );
+  },
+
+  async unconfirm(ctx) {
+    const body = parseBody(ctx.request.body ?? {}, [
+      'reviewId',
+      'lessonId',
+      'userId',
+    ]);
+    if ('error' in body) return fail(ctx, 400, body.error as string);
+
+    return run(
+      ctx,
+      () =>
+        unconfirmScores({
+          reviewId: body.reviewId as number,
+          lessonId: body.lessonId as number | null,
+          userId: body.userId as number,
+        }),
+      'Failed to unconfirm the AI scores.',
     );
   },
 };

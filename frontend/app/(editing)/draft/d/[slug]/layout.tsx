@@ -10,6 +10,9 @@ import {
 } from "@/lib/requests/cached";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { SLIDE_BREAK_TYPE } from "@/lib/blocknote/slide-break";
+import { getReviewPanel } from "@/lib/requests/reviews";
+import { getAuthorNames } from "@/lib/requests/droplet-authors";
+import { isReviewerFor } from "@/lib/review-roles";
 
 type params = {
   slug: string;
@@ -68,6 +71,24 @@ export default async function CheckPermission({ params, children }: Props) {
     return notFound();
   }
 
+  // Only a reviewer who isn't an author, on an in-review draft, gets the panel
+  const reviewing =
+    droplet.status !== "published" &&
+    !!droplet.inReview &&
+    isReviewerFor(user.roles, true, isAuthor);
+  const [panel, authors] = reviewing
+    ? await Promise.all([
+        getReviewPanel(droplet.id),
+        getAuthorNames(droplet.authorized_users.map((a) => a.id)),
+      ])
+    : [null, []];
+  const reviewerName =
+    [authorizedUser?.firstName, authorizedUser?.lastName]
+      .filter(Boolean)
+      .join(" ") ||
+    user.name ||
+    null;
+
   // DraftLayoutShell is a Client Component: pass only what the sidebar reads
   // so the overview, datasets, relations, etc. aren't serialized to the browser.
   const shellDroplet = {
@@ -93,6 +114,12 @@ export default async function CheckPermission({ params, children }: Props) {
       isAuthor={isAuthor}
       user={user}
       availableDroplets={availableDroplets}
+      reviewPanel={panel?.ok ? panel.data : null}
+      reviewMeta={
+        reviewing
+          ? { reviewerName, authorNames: authors.map((a) => a.name) }
+          : undefined
+      }
     >
       {children}
     </DraftLayoutShell>

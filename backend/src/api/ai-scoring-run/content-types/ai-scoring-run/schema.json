@@ -44,6 +44,9 @@
     "failedLessons": {
       "type": "json"
     },
+    "progress": {
+      "type": "json"
+    },
     "inputTokens": {
       "type": "integer",
       "min": 0

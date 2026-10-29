@@ -7,12 +7,13 @@ import {
   withdrawFromReview,
   sendFeedback,
   publishWithReview,
-  type ReviewActionResult,
 } from "@/lib/requests/reviews";
 import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useId, useState } from "react";
 import { toast } from "sonner";
+import { IconSend } from "@tabler/icons-react";
+import { reviewFailureMessage } from "@/lib/review-panel/failure-message";
 import { createPortal } from "react-dom";
 type ActionType =
   | "publish"
@@ -23,20 +24,6 @@ type ActionType =
   | "publishDraft";
 
 const SUMMARY_NOTE_MAX = 5000;
-const UNCONFIRMED_MESSAGE =
-  "This could not be confirmed. Reload to check whether it went through.";
-
-/** A review action's failure, as the message to show. */
-function reviewFailureMessage(
-  result: Extract<ReviewActionResult<unknown>, { ok: false }>,
-  fallback: string,
-): string {
-  if (result.error === "unconfirmed") return UNCONFIRMED_MESSAGE;
-  if (result.error === "forbidden") return "You can't do this.";
-  if (result.error === "unauthenticated") return "Please sign in again.";
-  return result.message || fallback;
-}
-
 /** The publish action returns codes for denials; anything else is a message for the author. */
 function publishErrorMessage(error: string | null | undefined): string {
   if (error === "forbidden") return "You can't publish this draft.";
@@ -60,22 +47,33 @@ const REVIEW_FAILURES = {
   publishWithReview: "Error publishing droplet",
 };
 
-type ContentActionButtonProps = {
+export type ContentActionButtonProps = {
   droplet: Droplet;
   actionType: ActionType;
   buttonText: string;
+  /** Disables the button (aria-disabled) and shows this as its helper text */
+  disabledReason?: string;
+  /** Pre-fills the Send feedback note until the reviewer edits it there */
+  initialNote?: string;
+  /** An element that explains the button; when set, the caller shows `disabledReason` itself */
+  describedBy?: string;
 };
 
 export function ContentActionButton({
   droplet,
   actionType,
   buttonText,
+  disabledReason,
+  initialNote,
+  describedBy,
 }: ContentActionButtonProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userTxt, setUserTxt] = useState<string>("");
   const [note, setNote] = useState("");
+  const [noteTouched, setNoteTouched] = useState(false);
   const noteId = useId();
+  const reasonId = useId();
   const router = useRouter();
 
   const handleAction = async () => {
@@ -175,9 +173,12 @@ export function ContentActionButton({
     }
   };
 
+  const needsName =
+    actionType === "publish" || actionType === "publishWithReview";
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (actionType === "publish") {
+    if (needsName) {
       if (userTxt === droplet.name) {
         handleAction();
       }
@@ -191,8 +192,20 @@ export function ContentActionButton({
     setUserTxt("");
   };
 
-  const isConfirmEnabled =
-    actionType === "publish" ? userTxt === droplet.name : true;
+  const isConfirmEnabled = needsName ? userTxt === droplet.name : true;
+
+  const nameInput = (
+    <input
+      type="text"
+      value={userTxt}
+      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+        setUserTxt(e.target.value)
+      }
+      placeholder="Enter droplet name"
+      className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400"
+      autoFocus
+    />
+  );
 
   const getModalContent = () => {
     switch (actionType) {
@@ -224,16 +237,7 @@ export function ContentActionButton({
                 </span>{" "}
                 to confirm
               </p>
-              <input
-                type="text"
-                value={userTxt}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setUserTxt(e.target.value)
-                }
-                placeholder="Enter droplet name"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400"
-                autoFocus
-              />
+              {nameInput}
             </>
           ),
         };
@@ -276,7 +280,10 @@ export function ContentActionButton({
               <Textarea
                 id={noteId}
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={(e) => {
+                  setNote(e.target.value);
+                  setNoteTouched(true);
+                }}
                 maxLength={SUMMARY_NOTE_MAX}
                 placeholder="Optional summary..."
                 className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
@@ -290,10 +297,20 @@ export function ContentActionButton({
         return {
           title: "Publish with your review?",
           content: (
-            <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
-              This publishes the droplet and closes your review. It needs a
-              confirmed Overall score for every criterion.
-            </p>
+            <>
+              <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+                This publishes the droplet and closes your review. It needs a
+                confirmed Overall score for every criterion.
+              </p>
+              <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+                Type{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  "{droplet.name}"
+                </span>{" "}
+                to confirm
+              </p>
+              {nameInput}
+            </>
           ),
         };
     }
@@ -339,19 +356,33 @@ export function ContentActionButton({
       ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
       : actionType === "requestReview"
         ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
-        : actionType === "withdrawReview"
-          ? "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800"
-          : "border-red-400 bg-red-400 text-white hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
+        : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800";
 
   return (
     <>
       <button
-        onClick={() => setIsPopupOpen(true)}
+        onClick={() => {
+          if (disabledReason) return;
+          if (!noteTouched && initialNote !== undefined) setNote(initialNote);
+          setIsPopupOpen(true);
+        }}
+        aria-disabled={disabledReason ? true : undefined}
+        aria-describedby={
+          describedBy ?? (disabledReason ? reasonId : undefined)
+        }
         disabled={isLoading}
-        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
+        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses} ${disabledReason ? "cursor-not-allowed opacity-50" : ""}`}
       >
+        {actionType === "sendFeedback" && (
+          <IconSend className="mr-1.5 h-4 w-4" aria-hidden />
+        )}
         {isLoading ? "Processing..." : buttonText}
       </button>
+      {disabledReason && !describedBy && (
+        <p id={reasonId} className="mt-1 text-xs text-slate-600">
+          {disabledReason}
+        </p>
+      )}
 
       {typeof document !== "undefined" &&
         modalContent &&

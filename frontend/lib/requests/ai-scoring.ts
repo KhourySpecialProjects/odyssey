@@ -3,7 +3,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
-import type { AiScoringRun, AiScoringRunState, Review } from "@/types";
+import type {
+  AiRunSection,
+  AiScoringRun,
+  AiScoringRunState,
+  Review,
+} from "@/types";
 import { fetchAPI } from "@/lib/utils";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { withAuth } from "@/lib/auth/guards";
@@ -36,8 +41,8 @@ export type AiRunStatus = {
   runState: AiScoringRunState;
   startedAt: string | null;
   finishedAt: string | null;
-  /** Lessons whose request failed */
-  failedLessons: number[];
+  /** Lessons (and "overall") whose request failed */
+  failedLessons: AiRunSection[];
   error: string | null;
 };
 

@@ -29,9 +29,13 @@ export type CommentOutcome =
   | { ok: true }
   | { ok: false; error: ReviewActionError };
 
+export type OpenOutcome =
+  | { ok: true; data: Review }
+  | { ok: false; error: ReviewActionError };
+
 const OK: CommentOutcome = { ok: true };
-const failed = (error: ReviewActionError): CommentOutcome => ({
-  ok: false,
+const failed = (error: ReviewActionError) => ({
+  ok: false as const,
   error,
 });
 
@@ -72,12 +76,16 @@ export function useReviewComments(
   // doesn't have
   const addedHere = useRef(new Set<number>());
 
+  // An open in flight, shared by every caller of ensureReview
+  const opening = useRef<Promise<OpenOutcome> | null>(null);
+
   // What's held belongs to one droplet; another starts afresh
   const heldFor = useRef(dropletId);
   useEffect(() => {
     if (heldFor.current === dropletId) return;
     heldFor.current = dropletId;
     reviewRef.current = null;
+    opening.current = null;
     setReview(null);
     setComments([]);
     addedHere.current.clear();
@@ -122,6 +130,24 @@ export function useReviewComments(
         : current.filter((c) => c.id !== id),
     );
 
+  /** The caller's review, opened on first use; score and comment writes share it */
+  const ensureReview = useCallback((): Promise<OpenOutcome> => {
+    if (reviewRef.current) {
+      return Promise.resolve({ ok: true, data: reviewRef.current });
+    }
+    if (dropletId == null) return Promise.resolve(failed("not_found"));
+    opening.current ??= attempt(() => getOrOpenReview(dropletId)).then(
+      (opened): OpenOutcome => {
+        opening.current = null;
+        if (!opened.ok) return failed(opened.error);
+        reviewRef.current = opened.data;
+        setReview(opened.data);
+        return { ok: true, data: opened.data };
+      },
+    );
+    return opening.current;
+  }, [dropletId]);
+
   const add = useCallback(
     async (input: NewComment): Promise<CommentOutcome> => {
       if (dropletId == null) return failed("not_found");
@@ -140,17 +166,12 @@ export function useReviewComments(
       setComments((current) => [...current, optimistic]);
 
       // The first comment opens the review
-      let current = reviewRef.current;
-      if (!current) {
-        const opened = await attempt(() => getOrOpenReview(dropletId));
-        if (!opened.ok) {
-          replace(id, null);
-          return failed(opened.error);
-        }
-        current = opened.data;
-        reviewRef.current = current;
-        setReview(current);
+      const opened = await ensureReview();
+      if (!opened.ok) {
+        replace(id, null);
+        return failed(opened.error);
       }
+      const current = opened.data;
 
       const saved = await attempt(() =>
         addComment({
@@ -170,7 +191,7 @@ export function useReviewComments(
       replace(id, { ...optimistic, ...saved.data, lesson });
       return OK;
     },
-    [dropletId],
+    [dropletId, ensureReview],
   );
 
   /** Shows `next` for comment `id` until the action settles, else restores it */
@@ -232,6 +253,7 @@ export function useReviewComments(
     comments,
     isLoading,
     loadError,
+    ensureReview,
     add,
     edit,
     remove,

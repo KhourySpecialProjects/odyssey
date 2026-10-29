@@ -9,18 +9,14 @@ import {
   startAiScoring,
   type AiRunStatus,
 } from "@/lib/requests/ai-scoring";
-import type { ReviewActionError } from "@/lib/requests/reviews";
+import {
+  START_FAILED,
+  startErrorMessage,
+} from "@/lib/review-panel/ai-messages";
 import type { AiScoringRunState } from "@/types";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 5000;
-
-const START_ERRORS: Partial<Record<ReviewActionError, string>> = {
-  conflict: "Score with AI is already running on your review.",
-  review_closed: "Your review has been sent, so it can't be scored now.",
-  not_in_review: "This droplet isn't in review.",
-  forbidden: "Only a reviewer who isn't an author can use Score with AI.",
-};
 
 const isActive = (state?: AiScoringRunState) =>
   state === "queued" || state === "running";
@@ -110,14 +106,10 @@ export function ScoreWithAiButton({ dropletId }: { dropletId: number }) {
         setRun(result.data);
         toast.success("Score with AI started. It takes a minute or two.");
       } else {
-        toast.error(
-          result.message ??
-            START_ERRORS[result.error] ??
-            "Couldn't start Score with AI. Try again.",
-        );
+        toast.error(startErrorMessage(result));
       }
     } catch {
-      toast.error("Couldn't start Score with AI. Try again.");
+      toast.error(START_FAILED);
     } finally {
       setStarting(false);
     }

@@ -32,7 +32,7 @@ const anchorBase = { v: z.literal(1), field: reviewCommentFieldSchema };
 // start/end come together, and end >= start. Across blocks (endBlockId), the
 // offsets are in different blocks, so only their presence is checked. A spot
 // (point) is the letters beside it, in one block.
-const textAnchorSchema = z
+export const textAnchorSchema = z
   .object({
     ...anchorBase,
     blockId: z.string().min(1).optional(),
@@ -97,6 +97,34 @@ export const reviewAnchorSchema = z.union([
   wholeBlockAnchorSchema,
   wholeSectionAnchorSchema,
 ]) satisfies z.ZodType<ReviewAnchor>;
+
+// One AI-found passage (ODY-805 contract). Its anchor is a text quote of the same text.
+export const aiFindingSchema = z
+  .object({
+    id: z.string().min(1).max(100),
+    quote: z.string().min(1).max(2000),
+    reason: z.string().min(1).max(500),
+    lessonId: id.nullable(),
+    anchor: textAnchorSchema,
+  })
+  .strict()
+  .refine((f) => f.anchor.quote === f.quote, {
+    message: "the anchor must quote the same text",
+    path: ["anchor", "quote"],
+  })
+  .refine((f) => (f.anchor.field === "blocks") === (f.lessonId !== null), {
+    message: "Lesson passages need a lessonId, Overview passages none",
+    path: ["lessonId"],
+  });
+
+// Per-section progress of an AI scoring run: lesson ids, or "overall".
+const aiSectionSchema = z.union([id, z.literal("overall")]);
+export const aiRunProgressSchema = z
+  .object({
+    done: z.array(aiSectionSchema),
+    current: aiSectionSchema.nullable(),
+  })
+  .strict();
 
 /**
  * An anchor from createAnchor as a review comment's anchor, or null when it

@@ -1,5 +1,7 @@
 import { createAnchor } from "@/lib/anchors";
 import {
+  aiFindingSchema,
+  aiRunProgressSchema,
   toReviewAnchor,
   reviewAnchorSchema,
   reviewCommentBodySchema,
@@ -272,5 +274,104 @@ describe("reviewCommentBodySchema", () => {
 
   it("returns trimmed text", () => {
     expect(reviewCommentBodySchema.parse("  ok  ")).toBe("ok");
+  });
+});
+
+describe("aiFindingSchema", () => {
+  const finding = {
+    id: "9-1",
+    quote: "example",
+    reason: "Too vague.",
+    lessonId: 5,
+    anchor: mockReviewAnchor,
+  };
+
+  it("accepts the contract shape", () => {
+    expect(aiFindingSchema.safeParse(finding).success).toBe(true);
+  });
+
+  it("rejects a quote over 2000 characters", () => {
+    const r = aiFindingSchema.safeParse({
+      ...finding,
+      quote: "a".repeat(2001),
+    });
+    expect(r.success).toBe(false);
+    expect(r.error!.issues.some((i) => i.path[0] === "quote")).toBe(true);
+  });
+
+  it("rejects a reason over 500 characters", () => {
+    const r = aiFindingSchema.safeParse({
+      ...finding,
+      reason: "a".repeat(501),
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a missing anchor", () => {
+    const { anchor: _anchor, ...rest } = finding;
+    expect(aiFindingSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it("rejects whole-block and whole-section anchors", () => {
+    const block = { v: 1, field: "blocks", blockId: "block-1" };
+    const section = { v: 1, field: "description" };
+    for (const anchor of [block, section]) {
+      const r = aiFindingSchema.safeParse({ ...finding, anchor });
+      expect(r.success).toBe(false);
+      // from the text-only anchor schema, not the quote-equality refine
+      expect(
+        r.error!.issues.some(
+          (i) => i.code !== "custom" && i.path[0] === "anchor",
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("requires a lessonId exactly when the anchor is in a lesson", () => {
+    const overviewAnchor = { ...mockReviewAnchor, field: "description" };
+    delete (overviewAnchor as { blockId?: string }).blockId;
+    const overview = { ...finding, anchor: overviewAnchor };
+
+    expect(
+      aiFindingSchema.safeParse({ ...overview, lessonId: null }).success,
+    ).toBe(true);
+    const lessonNull = aiFindingSchema.safeParse({
+      ...finding,
+      lessonId: null,
+    });
+    const overviewLesson = aiFindingSchema.safeParse({
+      ...overview,
+      lessonId: 5,
+    });
+    for (const r of [lessonNull, overviewLesson]) {
+      expect(r.success).toBe(false);
+      expect(r.error!.issues.some((i) => i.path[0] === "lessonId")).toBe(true);
+    }
+  });
+
+  it("rejects an anchor whose quote differs from the finding's", () => {
+    const r = aiFindingSchema.safeParse({ ...finding, quote: "other" });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects extra keys", () => {
+    expect(aiFindingSchema.safeParse({ ...finding, extra: 1 }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("aiRunProgressSchema", () => {
+  it("accepts lesson ids and overall", () => {
+    const r = aiRunProgressSchema.safeParse({
+      done: [3, "overall"],
+      current: null,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects an unknown section name", () => {
+    const r = aiRunProgressSchema.safeParse({ done: ["x"], current: null });
+    expect(r.success).toBe(false);
   });
 });

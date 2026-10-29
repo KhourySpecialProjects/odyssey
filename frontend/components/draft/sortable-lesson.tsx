@@ -7,6 +7,25 @@ import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
 import { IconGripVertical, IconMessage } from "@tabler/icons-react";
 
+const DOT = {
+  ok: { color: "#D97706", label: "OK" },
+  needs_work: { color: "#DC2626", label: "Needs work" },
+} as const;
+
+/** The lowest score in a lesson: a decorative dot, with its meaning for screen readers */
+function ScoreDot({ band }: { band: keyof typeof DOT }) {
+  return (
+    <>
+      <span
+        aria-hidden
+        className="mr-1.5 h-2 w-2 shrink-0 self-center rounded-full"
+        style={{ backgroundColor: DOT[band].color }}
+      />
+      <span className="sr-only">Lowest score: {DOT[band].label}</span>
+    </>
+  );
+}
+
 /** How many open review comments a sidebar item has */
 export function OpenCommentsBadge({ count }: { count: number }) {
   return (
@@ -28,6 +47,8 @@ interface SortableLessonProps {
   dragDisabled?: boolean;
   /** The reviewer's open comments on this lesson (ODY-806), if reviewing */
   openComments?: number;
+  /** The lowest score band in the lesson, when it needs attention (ODY-805) */
+  dot?: "ok" | "needs_work";
 }
 
 export function SortableLesson({
@@ -36,6 +57,7 @@ export function SortableLesson({
   pathname,
   dragDisabled = false,
   openComments,
+  dot,
 }: SortableLessonProps) {
   const router = useRouter();
 
@@ -104,6 +126,7 @@ export function SortableLesson({
           className="flex flex-grow py-2.5"
           passHref
         >
+          {dot && <ScoreDot band={dot} />}
           <span className="pl-1 text-sm leading-snug font-medium">
             {lesson.name}
           </span>

@@ -25,6 +25,8 @@ const upsert = (body) =>
   rest().post('/api/review-scores/upsert').set(auth()).send(body);
 const acceptAi = (body) =>
   rest().post('/api/review-scores/accept-ai').set(auth()).send(body);
+const unconfirm = (body) =>
+  rest().post('/api/review-scores/unconfirm').set(auth()).send(body);
 
 let droplet;
 let lesson;
@@ -327,6 +329,55 @@ describe('POST /review-scores/accept-ai', () => {
     expect((await rowsFor(score.key))[0].value).toBeNull();
   });
 
+  it("answers 400 for a lesson outside the review's droplet and changes nothing", async () => {
+    const stray = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    const score = await seedScore(tone, { lessonId: lesson.id, aiValue: 4 });
+
+    const res = await acceptAi(acceptBody({ lessonId: stray.id }));
+
+    expect(res.status).toBe(400);
+    expect((await rowsFor(score.key))[0].value).toBeNull();
+  });
+
+  it("doesn't confirm a lesson id sharing the digits, or another review's rows", async () => {
+    const target = await seedScore(tone, { lessonId: lesson.id, aiValue: 4 });
+    const lookalike = await strapi.documents(LESSON_UID).create({
+      data: lessonData({ droplets: [droplet.documentId] }),
+    });
+    const lookalikeKey = `${review.id}:${lesson.id}1:${tone.id}`;
+    await strapi.documents(REVIEW_SCORE_UID).create({
+      data: {
+        key: lookalikeKey,
+        criterionName: tone.name,
+        review: review.documentId,
+        criterion: tone.documentId,
+        lesson: lookalike.documentId,
+        aiValue: 4,
+      },
+    });
+    const otherReview = await createReview({ round: 2 });
+    // Same key prefix as the target, but on another review: only the review filter excludes it.
+    const otherKey = `${review.id}:${lesson.id}:${clarity.id}`;
+    await strapi.documents(REVIEW_SCORE_UID).create({
+      data: {
+        key: otherKey,
+        criterionName: clarity.name,
+        review: otherReview.documentId,
+        criterion: clarity.documentId,
+        lesson: lesson.documentId,
+        aiValue: 2,
+      },
+    });
+
+    const res = await acceptAi(acceptBody());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.scores).toEqual([expect.objectContaining({ key: target.key })]);
+    expect((await rowsFor(target.key))[0].value).toBe(4);
+    expect((await rowsFor(lookalikeKey))[0].value).toBeNull();
+    expect((await rowsFor(otherKey))[0].value).toBeNull();
+  });
+
   it("refuses a user who isn't the review's reviewer", async () => {
     const score = await seedScore(tone, { lessonId: lesson.id, aiValue: 4 });
 
@@ -348,6 +399,119 @@ describe('POST /review-scores/accept-ai', () => {
 
   it('answers 400 for an unknown key', async () => {
     const res = await acceptAi(acceptBody({ value: 3 }));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /review-scores/unconfirm', () => {
+  const unconfirmBody = (overrides = {}) => ({
+    reviewId: review.id,
+    lessonId: lesson.id,
+    userId: reviewer.id,
+    ...overrides,
+  });
+
+  it("clears confirmed suggestions and keeps the reviewer's own scores", async () => {
+    const confirmed = await seedScore(tone, { lessonId: lesson.id, aiValue: 4, value: 4 });
+    const changed = await seedScore(clarity, { lessonId: lesson.id, aiValue: 2, value: 5 });
+    const manual = await seedScore(await createCriterion({ order: 3 }), {
+      lessonId: lesson.id,
+      value: 3,
+    });
+    const overall = await seedScore(tone, { lessonId: null, aiValue: 3, value: 3 });
+
+    const res = await unconfirm(unconfirmBody());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.dropletId).toBe(droplet.id);
+    expect(res.body.data.scores).toEqual([
+      expect.objectContaining({ key: confirmed.key, value: null, aiValue: 4 }),
+    ]);
+    expect((await rowsFor(confirmed.key))[0].value).toBeNull();
+    expect((await rowsFor(changed.key))[0].value).toBe(5);
+    expect((await rowsFor(manual.key))[0].value).toBe(3);
+    // Another scope (the Overall Score) is untouched.
+    expect((await rowsFor(overall.key))[0].value).toBe(3);
+  });
+
+  it('clears the Overall Score with lessonId null and leaves lessons alone', async () => {
+    const overall = await seedScore(tone, { lessonId: null, aiValue: 3, value: 3 });
+    const lessonScore = await seedScore(clarity, { lessonId: lesson.id, aiValue: 1, value: 1 });
+
+    const res = await unconfirm(unconfirmBody({ lessonId: null }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.scores).toHaveLength(1);
+    expect((await rowsFor(overall.key))[0].value).toBeNull();
+    expect((await rowsFor(lessonScore.key))[0].value).toBe(1);
+  });
+
+  it("doesn't touch a lesson id sharing the digits, or another review's rows", async () => {
+    const target = await seedScore(tone, { lessonId: lesson.id, aiValue: 4, value: 4 });
+    const lookalike = await strapi.documents(LESSON_UID).create({
+      data: lessonData({ droplets: [droplet.documentId] }),
+    });
+    const lookalikeKey = `${review.id}:${lesson.id}1:${tone.id}`;
+    await strapi.documents(REVIEW_SCORE_UID).create({
+      data: {
+        key: lookalikeKey,
+        criterionName: tone.name,
+        review: review.documentId,
+        criterion: tone.documentId,
+        lesson: lookalike.documentId,
+        aiValue: 4,
+        value: 4,
+      },
+    });
+    const otherReview = await createReview({ round: 2 });
+    // Same key prefix as the target, but on another review: only the review filter excludes it.
+    const otherKey = `${review.id}:${lesson.id}:${clarity.id}`;
+    await strapi.documents(REVIEW_SCORE_UID).create({
+      data: {
+        key: otherKey,
+        criterionName: clarity.name,
+        review: otherReview.documentId,
+        criterion: clarity.documentId,
+        lesson: lesson.documentId,
+        aiValue: 2,
+        value: 2,
+      },
+    });
+
+    const res = await unconfirm(unconfirmBody());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.scores).toEqual([expect.objectContaining({ key: target.key })]);
+    expect((await rowsFor(target.key))[0].value).toBeNull();
+    expect((await rowsFor(lookalikeKey))[0].value).toBe(4);
+    expect((await rowsFor(otherKey))[0].value).toBe(2);
+  });
+
+  it("refuses a user who isn't the review's reviewer", async () => {
+    const score = await seedScore(tone, { lessonId: lesson.id, aiValue: 4, value: 4 });
+
+    const res = await unconfirm(unconfirmBody({ userId: other.id }));
+
+    expect(res.status).toBe(403);
+    expect((await rowsFor(score.key))[0].value).toBe(4);
+  });
+
+  it('leaves a confirmed row on an inactive criterion untouched', async () => {
+    const retired = await createCriterion({ active: false });
+    const score = await seedScore(retired, { lessonId: lesson.id, aiValue: 4, value: 4 });
+
+    const res = await unconfirm(unconfirmBody());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.scores).toEqual([]);
+    expect((await rowsFor(score.key))[0].value).toBe(4);
+  });
+
+  it("answers 400 for a lesson outside the review's droplet", async () => {
+    const stray = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+
+    const res = await unconfirm(unconfirmBody({ lessonId: stray.id }));
+
     expect(res.status).toBe(400);
   });
 });
