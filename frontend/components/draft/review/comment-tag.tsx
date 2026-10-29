@@ -94,6 +94,8 @@ interface CommentTagProps {
   number: number | null;
   pending: boolean;
   resolved: boolean;
+  /** The creator marked it addressed (ODY-807) */
+  addressed?: boolean;
   /** Its mark is hovered, or its card is open */
   lit: boolean;
   expanded: boolean;
@@ -118,6 +120,7 @@ export function CommentTag({
   number,
   pending,
   resolved,
+  addressed = false,
   lit,
   expanded,
   mode,
@@ -174,6 +177,12 @@ export function CommentTag({
       >
         {number ?? <IconCheck className="h-3 w-3" aria-hidden />}
       </span>
+      {addressed && !resolved && (
+        <IconCheck
+          className="-ml-1 h-3 w-3 shrink-0 text-[var(--rc-accent-text)]"
+          aria-hidden
+        />
+      )}
       <span
         className={cn(
           "min-w-0 truncate leading-none",
@@ -188,10 +197,14 @@ export function CommentTag({
   );
 }
 
-/** "Comment 2, pending: …", or "Resolved comment: …" */
+/**
+ * "Comment 2, pending: …", or "Resolved comment: …", with any `notes`
+ * ("carried from round 1") after the state
+ */
 export const tagLabel = (
   number: number | null,
   pending: boolean,
   about: string,
+  notes: readonly string[] = [],
 ) =>
-  `${number ? `Comment ${number}${pending ? ", pending" : ""}` : "Resolved comment"}: ${about}`;
+  `${number ? `Comment ${number}${pending ? ", pending" : ""}` : "Resolved comment"}${notes.map((n) => `, ${n}`).join("")}: ${about}`;

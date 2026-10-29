@@ -909,3 +909,49 @@ describe("tags and the comment card (Task 6)", () => {
     }
   });
 });
+
+describe("a comment carried into the reviewer's next round (ODY-807)", () => {
+  const carried = {
+    ...wordsComment,
+    createdAt: "2026-10-29T08:00:00.000Z",
+    carriedFrom: {
+      id: 101,
+      createdAt: "2026-10-20T09:30:00.000Z",
+      review: { round: 1 } as never,
+    },
+    addressedAt: "2026-10-28T12:00:00.000Z",
+  };
+
+  it("says on its tag that it was carried and marked addressed", async () => {
+    mount(true, { comments: [carried], numbers: new Map([[1, 1]]) });
+    await act(async () => {});
+
+    expect(screen.getByTestId("comment-tag")).toHaveAccessibleName(
+      /^Comment 1, pending, carried from round 1, marked addressed: /,
+    );
+  });
+
+  it("says so on its card, with the date it was first written", async () => {
+    mount(true, { comments: [carried], numbers: new Map([[1, 1]]) });
+    await act(async () => {});
+
+    await userEvent.click(screen.getByTestId("comment-tag"));
+
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    expect(card).toHaveTextContent("Pending · carried from round 1");
+    expect(card).toHaveTextContent("The creator marked this addressed.");
+    expect(card).toHaveTextContent(/Oct 20/);
+    // The reviewer still decides: Resolve, not Mark addressed
+    expect(screen.getByRole("button", { name: "Resolve" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
+  });
+
+  it("keeps a comment written this round as it was", async () => {
+    mount(true, { comments: [wordsComment], numbers: new Map([[1, 1]]) });
+    await act(async () => {});
+
+    expect(screen.getByTestId("comment-tag")).toHaveAccessibleName(
+      /^Comment 1, pending: /,
+    );
+  });
+});
