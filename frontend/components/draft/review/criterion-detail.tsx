@@ -13,6 +13,7 @@ import { BAND_COLORS, BAND_LABEL, type Band } from "@/lib/review-panel/colors";
 import { bandOf, effective, type PanelScore } from "@/lib/review-panel/model";
 import type { PanelCriterion } from "@/lib/requests/reviews";
 import type { AiFinding } from "@/types";
+import { findingMarkId } from "@/lib/review-panel/finding-marks";
 import { DismissedFinding, FindingItem } from "./finding-item";
 import { useReviewFocus, type OpenDetail } from "./review-focus-context";
 
@@ -41,6 +42,8 @@ export type CriterionDetailProps = {
   onClose: () => void;
   /** Shown only when given */
   onShowInLesson?: (finding: AiFinding) => void;
+  /** The mark the panel last pointed at, to mark its finding as picked */
+  focusedMarkId?: string | null;
   /** The lesson tag on an Overall finding */
   lessonLabel?: (finding: AiFinding) => string | null;
   pending?: boolean;
@@ -58,6 +61,7 @@ export function CriterionDetail({
   onChange,
   onClose,
   onShowInLesson,
+  focusedMarkId,
   lessonLabel,
   pending,
 }: CriterionDetailProps) {
@@ -192,7 +196,14 @@ export function CriterionDetail({
                   number={number}
                   band={band}
                   lessonLabel={lessonLabel?.(finding)}
-                  onShowInLesson={onShowInLesson}
+                  onShowInLesson={
+                    onShowInLesson &&
+                    ((f) => {
+                      setOpenDetail?.(mine);
+                      onShowInLesson(f);
+                    })
+                  }
+                  selected={focusedMarkId === findingMarkId(finding.id)}
                   onDismiss={onDismiss}
                 />
               ))}

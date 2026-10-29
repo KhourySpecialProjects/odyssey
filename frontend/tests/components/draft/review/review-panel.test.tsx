@@ -12,6 +12,11 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh }),
   usePathname: () => pathname,
 }));
+const focusShow = jest.fn();
+let focused: object | null = null;
+jest.mock("@/components/draft/review/review-focus-context", () => ({
+  useReviewFocus: () => ({ show: focusShow, focused }),
+}));
 jest.mock("@/components/draft/review/review-comments-context", () => ({
   useSharedReviewComments: jest.fn(),
 }));
@@ -391,33 +396,58 @@ describe("comments", () => {
     expect(screen.getByText("Resolved")).toBeInTheDocument();
   });
 
-  it("opens the comment's lesson when clicked", async () => {
-    setComments([comment(3, { lesson: { id: 12 } as never })]);
+  it.each([
+    [
+      "a lesson comment",
+      comment(3, { lesson: { id: 12 } as never }),
+      "/draft/d/intro/loops",
+      { kind: "comment", markId: "comment-3", lessonId: 12, place: "Lesson 2" },
+    ],
+    [
+      "an Overview text comment",
+      comment(4, { field: "description", lesson: null }),
+      "/draft/d/intro",
+      { kind: "comment", markId: "comment-4", lessonId: null },
+    ],
+    [
+      "a whole-section comment",
+      comment(5, {
+        field: "overview",
+        lesson: null,
+        anchor: { v: 1, field: "overview" },
+      }),
+      "/draft/d/intro",
+      { kind: "section", field: "overview", place: "the Overview" },
+    ],
+  ])("shows %s in the lesson when clicked", async (_n, c, url, target) => {
+    setComments([c]);
     show();
 
-    await expand("Loops");
+    await expand(
+      "lessonId" in target && target.lessonId === 12 ? "Loops" : "Overview",
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Body/ }));
 
-    await userEvent.click(screen.getByRole("button", { name: /Body 3/ }));
-
-    expect(push).toHaveBeenCalledWith("/draft/d/intro/loops");
+    expect(focusShow).toHaveBeenCalledWith(
+      expect.objectContaining(target),
+      url,
+    );
   });
 
-  it("opens the Overview for an Overview comment", async () => {
-    setComments([
-      comment(4, {
-        field: "description",
-        lesson: null,
-        anchor: { v: 1, field: "description" },
-      }),
-    ]);
-    pathname = "/draft/d/intro/loops";
+  it("marks the picked comment as current", async () => {
+    focused = { target: { markId: "comment-1" } };
+    setComments([comment(1), comment(2)]);
     show();
 
-    await expand("Overview");
+    await expand("Variables");
 
-    await userEvent.click(screen.getByRole("button", { name: /Body 4/ }));
-
-    expect(push).toHaveBeenCalledWith("/draft/d/intro");
+    expect(screen.getByRole("button", { name: /Body 1/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /Body 2/ })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 
   it("works with no shared comments", () => {

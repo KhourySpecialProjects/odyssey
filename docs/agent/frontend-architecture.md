@@ -191,7 +191,8 @@ The same reviewer sees the panel on every page of the draft (`review/review-pane
 - **Pure rules** are in `lib/review-panel/` (`model`, `positions`, `criteria-icons`, `colors`); they import `lib/anchors/resolve` and `content` only.
 - **Finding marks (ODY-849).** `CriterionDetail` registers its band and numbered findings in `ReviewFocusProvider.openDetail` (null while the panel is a rail); lessons and the Overview draw them in Comment mode with `findingMarks` (`finding-<id>` ids, so the comment layer ignores them) and dim comment tags via `.rc-tag`.
 - **Badge marker.** A finding's number is an empty `.anchor-badge` marker (`DrawnAnchor.badge`, a widget in BlockNote, a span in `drawAnchor`) with no text node, so it can't shift offsets; CSS draws the digit from `data-badge`. It shares the mark's `data-anchor-id`, so exclude it with `:not(.anchor-badge)` when picking a mark's text span (scroll, flash, ring). The last detail opened drives the marks; closing it clears them even if another detail is still open.
-- **Not here yet (ODY-849 PRs 2 and 3):** Show in lesson scrolling and ringing, and Add as comment.
+- **Show in lesson (ODY-849).** The panel calls `ReviewFocusProvider.show(target, url)` (or `select`, ring only); the page that owns the target runs `useShowInLesson`: switch to Comment (Edit stops editing first), scroll the mark to the centre, flash it (`review-mark--flash`), keep the ring (`review-mark--focus`) and `report` the outcome. The provider's `sr-only` live region announces it. A whole-section comment scrolls to `[data-review-section]`. No flash or smooth scroll under reduced motion.
+- **Not here yet (ODY-849 PR 3):** Add as comment.
 
 ## Static Assets and Media
 
