@@ -118,7 +118,7 @@ export function CriterionDetail({
             </span>
             <span
               className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[11px] font-semibold"
-              style={{ color: colour.text, background: `${colour.outline}1F` }}
+              style={{ color: colour.text, background: colour.tint }}
             >
               {Glyph && <Glyph size={11} aria-hidden="true" />}
               {BAND_LABEL[band]}

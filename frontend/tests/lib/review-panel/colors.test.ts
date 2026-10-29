@@ -21,10 +21,18 @@ describe("BAND_COLORS contrast on white", () => {
   });
 
   it("uses the planned values", () => {
-    expect(BAND_COLORS.good).toEqual({ outline: "#16A34A", text: "#15803D" });
-    expect(BAND_COLORS.unscored).toEqual({
+    expect(BAND_COLORS.good).toMatchObject({
+      outline: "#16A34A",
+      text: "#15803D",
+    });
+    expect(BAND_COLORS.unscored).toMatchObject({
       outline: "#858F9F",
       text: "#475467",
     });
+  });
+
+  it.each(Object.entries(BAND_COLORS))("%s text on its tint", (_b, c) => {
+    const ratio = (luminance(c.tint) + 0.05) / (luminance(c.text) + 0.05);
+    expect(Math.max(ratio, 1 / ratio)).toBeGreaterThanOrEqual(4.5);
   });
 });

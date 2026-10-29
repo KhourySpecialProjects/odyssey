@@ -34,22 +34,28 @@ export function ReviewPanel({
   scores,
   footer,
   onStart,
+  starting,
   renderDetail,
   renderActions,
   issuesFor,
   overallExtra,
+  meta,
 }: {
-  droplet: { slug: string; lessons: PanelLesson[] };
+  droplet: { name: string; slug: string; lessons: PanelLesson[] };
   panel: ReviewPanelData;
   scores: PanelScore[];
   footer?: ReactNode;
   /** Shows Score with AI and Run again; none in ODY-805 */
   onStart?: () => void;
+  /** A start request is in flight */
+  starting?: boolean;
   renderDetail?: RenderDetail;
   renderActions?: (lessonId: number | null) => ReactNode;
   issuesFor?: (score: PanelScore) => number;
   /** Under the Overall Score card's circles (the summary note) */
   overallExtra?: ReactNode;
+  /** The header's "Reviewed by … · Created by …" line */
+  meta?: { reviewerName?: string | null; authorNames?: string[] };
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,40 +136,59 @@ export function ReviewPanel({
       aria-label="Reviewer Transcript"
       className="flex h-full min-h-0 flex-col"
     >
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-        <h2 className="text-base font-semibold text-slate-900">
+      <div className="shrink-0 border-b border-slate-200 px-4 pt-4 pb-3">
+        <h2 className="pr-8 text-base font-semibold text-slate-900">
           Reviewer Transcript
         </h2>
+        <p className="mt-0.5 truncate text-sm font-medium text-[#344054]">
+          {droplet.name}
+        </p>
+        {meta && (
+          <p className="text-xs text-[#667085]">
+            {[
+              meta.reviewerName && `Reviewed by ${meta.reviewerName}`,
+              meta.authorNames?.length &&
+                `Created by ${meta.authorNames.join(", ")}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
         <AiStatusBar
           state={barState}
           counts={counts}
           finishedAt={run?.finishedAt}
           onStart={onStart}
+          starting={starting}
+          criteriaCount={panel.criteria.length}
         />
+      </div>
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
         <SectionCard
           {...common}
           title="Overview"
+          heading="Description, objectives and details"
+          eyebrow="Overview"
           kind="overview"
           lessonId={null}
           scores={[]}
           viewing={pathname === base}
-          href={base}
           commentCount={total(overview)}
         >
           {list(overview, orphans)}
         </SectionCard>
-        {lessons.map((lesson) => {
+        {lessons.map((lesson, index) => {
           const items = byLesson.get(lesson.id) ?? [];
           return (
             <SectionCard
               {...common}
               key={lesson.id}
               title={lesson.name}
+              eyebrow={`Lesson ${index + 1}`}
               kind="lesson"
               lessonId={lesson.id}
               scores={scopeScores(lesson.id)}
               viewing={pathname === `${base}/${lesson.slug}`}
-              href={`${base}/${lesson.slug}`}
               commentCount={total(items)}
             >
               {list(items)}

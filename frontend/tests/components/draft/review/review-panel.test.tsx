@@ -17,6 +17,7 @@ jest.mock("@/components/draft/review/review-comments-context", () => ({
 }));
 
 const droplet = {
+  name: "Intro",
   slug: "intro",
   lessons: [
     { id: 12, name: "Loops", slug: "loops", orderIndex: 1 },
@@ -84,8 +85,17 @@ const show = (data = panel(), extra: object = {}) =>
     />,
   );
 
-const cardTitles = () =>
-  screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+const cardNames = () =>
+  screen
+    .getAllByRole("region")
+    .map((r) => r.getAttribute("aria-label"))
+    .filter((name) => name !== "Reviewer Transcript");
+
+/** Opens a card's comments (its header is the first button) */
+const expand = (name: string) =>
+  userEvent.click(
+    within(screen.getByRole("region", { name })).getAllByRole("button")[0],
+  );
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -93,17 +103,79 @@ beforeEach(() => {
   setComments([]);
 });
 
+describe("header", () => {
+  it("shows the droplet name and who reviewed and created it", () => {
+    show(panel(), {
+      meta: {
+        reviewerName: "Theo Abara",
+        authorNames: ["Maya Lindqvist", "Sam Roe"],
+      },
+    });
+
+    expect(screen.getByText("Intro")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Reviewed by Theo Abara · Created by Maya Lindqvist, Sam Roe",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the line out without names", () => {
+    show();
+
+    expect(screen.queryByText(/Reviewed by/)).not.toBeInTheDocument();
+  });
+});
+
+describe("collapsing a card", () => {
+  it("hides the comments until the header is opened, and toggles aria-expanded", async () => {
+    setComments([comment(1)]);
+    show();
+    const header = within(
+      screen.getByRole("region", { name: "Variables" }),
+    ).getAllByRole("button")[0];
+
+    expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+
+    await userEvent.click(header);
+    expect(header).toHaveAttribute("aria-expanded", "true");
+    expect(header).toHaveAttribute("aria-controls", "review-comments-11");
+    expect(document.getElementById("review-comments-11")).toHaveTextContent(
+      "Body 1",
+    );
+
+    await userEvent.click(header);
+    expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+  });
+
+  it("says when a card has no comments", async () => {
+    show();
+    await expand("Loops");
+
+    expect(screen.getByText(/No comments yet/)).toBeInTheDocument();
+  });
+});
+
 describe("cards", () => {
   it("lists Overview, lessons by orderIndex, then Overall Score", () => {
     show();
 
-    expect(cardTitles()).toEqual([
+    expect(cardNames()).toEqual([
       "Overview",
       "Variables",
       "Loops",
       "Overall Score",
     ]);
-    expect(screen.getByText(/isn't scored on its own/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Description, objectives and details"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Lesson 1")).toBeInTheDocument();
+    expect(screen.getByText("Lesson 2")).toBeInTheDocument();
+    expect(screen.getByText("Whole droplet")).toBeInTheDocument();
+    expect(
+      screen.getByText(/It counts toward the Overall Score below/),
+    ).toBeInTheDocument();
   });
 
   it("marks the card for the page on screen as Viewing", () => {
@@ -247,7 +319,7 @@ describe("detail and action slots", () => {
 });
 
 describe("comments", () => {
-  it("counts and lists the caller's comments in position order", () => {
+  it("counts and lists the caller's comments in position order", async () => {
     setComments([
       comment(1),
       comment(2),
@@ -258,6 +330,9 @@ describe("comments", () => {
         positions: { c1: { order: [4, 0] }, c2: { order: [1, 0] } },
       }),
     );
+
+    await expand("Variables");
+    await expand("Loops");
 
     const vars = screen.getByRole("region", { name: "Variables" });
     expect(within(vars).getByText("2 comments")).toBeInTheDocument();
@@ -271,13 +346,15 @@ describe("comments", () => {
     ).toBeInTheDocument();
   });
 
-  it("sorts a comment with no position last, and shows outdated wording", () => {
+  it("sorts a comment with no position last, and shows outdated wording", async () => {
     setComments([comment(1), comment(2), comment(3)]);
     show(
       panel({
         positions: { c2: { order: [0, 0] }, c3: { outdated: true } },
       }),
     );
+
+    await expand("Variables");
 
     const vars = screen.getByRole("region", { name: "Variables" });
     const items = within(vars).getAllByRole("listitem");
@@ -292,9 +369,11 @@ describe("comments", () => {
     expect(items[0]).not.toHaveTextContent("Outdated");
   });
 
-  it("puts a comment on a deleted lesson in the Overview, as outdated", () => {
+  it("puts a comment on a deleted lesson in the Overview, as outdated", async () => {
     setComments([comment(5, { lesson: { id: 99 } as never })]);
     show();
+
+    await expand("Overview");
 
     const overview = screen.getByRole("region", { name: "Overview" });
     expect(within(overview).getByText("Body 5")).toBeInTheDocument();
@@ -303,9 +382,11 @@ describe("comments", () => {
     );
   });
 
-  it("mutes a resolved comment", () => {
+  it("mutes a resolved comment", async () => {
     setComments([comment(1, { resolvedAt: "2026-10-29T13:00:00.000Z" })]);
     show();
+
+    await expand("Variables");
 
     expect(screen.getByText("Resolved")).toBeInTheDocument();
   });
@@ -313,6 +394,8 @@ describe("comments", () => {
   it("opens the comment's lesson when clicked", async () => {
     setComments([comment(3, { lesson: { id: 12 } as never })]);
     show();
+
+    await expand("Loops");
 
     await userEvent.click(screen.getByRole("button", { name: /Body 3/ }));
 
@@ -329,6 +412,8 @@ describe("comments", () => {
     ]);
     pathname = "/draft/d/intro/loops";
     show();
+
+    await expand("Overview");
 
     await userEvent.click(screen.getByRole("button", { name: /Body 4/ }));
 
@@ -371,7 +456,9 @@ describe("AI bar and polling", () => {
       jest.advanceTimersByTime(20000);
     });
     expect(refresh).toHaveBeenCalledTimes(3);
-    expect(screen.getByText("0 of 3 confirmed")).toBeInTheDocument();
+    expect(screen.getByText("confirmed", { exact: false })).toHaveTextContent(
+      "0 of 3 confirmed",
+    );
   });
 
   it("stops polling on unmount", () => {

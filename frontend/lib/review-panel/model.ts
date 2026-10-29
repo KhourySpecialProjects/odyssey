@@ -32,6 +32,8 @@ export type AiBarState =
       currentName: string | null;
       done: number;
       total: number;
+      /** The run reports no progress (ODY-814): show a bar with no value */
+      indeterminate: boolean;
     }
   | { kind: "scored" }
   | { kind: "partial"; failedNames: string[] }
@@ -118,6 +120,7 @@ export function aiBarState(
         currentName: nameOf(run.progress?.current),
         done: run.progress?.done.length ?? 0,
         total: lessons.length + 1,
+        indeterminate: !run.progress,
       };
     case "done":
       return { kind: "scored" };

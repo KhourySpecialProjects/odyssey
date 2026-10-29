@@ -147,6 +147,7 @@ describe("aiBarState", () => {
       currentName: "Loops",
       done: 1,
       total: 3,
+      indeterminate: false,
     });
   });
 
@@ -164,6 +165,7 @@ describe("aiBarState", () => {
       currentName: null,
       done: 0,
       total: 3,
+      indeterminate: true,
     });
   });
 

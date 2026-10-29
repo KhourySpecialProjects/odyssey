@@ -29,8 +29,8 @@ export function CommentList({
   const sorted = sortByPosition([...comments], (c) => `c${c.id}`, positions);
 
   return (
-    <ul className="mt-2 space-y-1.5">
-      {sorted.map((comment) => {
+    <ul className="space-y-1.5">
+      {sorted.map((comment, index) => {
         const position = positions[`c${comment.id}`];
         const outdated =
           outdatedIds?.has(comment.id) ||
@@ -52,31 +52,39 @@ export function CommentList({
               type="button"
               onClick={() => onOpen(comment)}
               className={cn(
-                "w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-left text-xs hover:bg-slate-50",
+                "flex w-full items-start gap-2 rounded-lg border border-transparent p-1.5 text-left text-xs hover:border-[#D0D5DD]",
                 resolved && "opacity-60",
               )}
             >
-              <span className="block text-slate-500 italic">
-                {"quote" in anchor && anchor.point ? (
-                  <SpotQuote anchor={anchor} length={10} />
-                ) : (
-                  commentSnippet(comment, undefined)
+              <span
+                aria-hidden
+                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-[#344054]"
+              >
+                {index + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block border-l-2 border-amber-400 bg-amber-50 py-1 pr-1 pl-2 text-slate-700">
+                  {"quote" in anchor && anchor.point ? (
+                    <SpotQuote anchor={anchor} length={10} />
+                  ) : (
+                    commentSnippet(comment, undefined)
+                  )}
+                </span>
+                <span className="mt-1.5 block text-sm leading-snug text-slate-900">
+                  {comment.body}
+                </span>
+                {outdated && (
+                  <span className="mt-0.5 block text-slate-600">
+                    {OUTDATED_TEXT}
+                  </span>
+                )}
+                {(meta || resolved) && (
+                  <span className="mt-1 flex gap-1.5 text-[#667085]">
+                    {meta && <span>{meta}</span>}
+                    {resolved && <span className="font-medium">Resolved</span>}
+                  </span>
                 )}
               </span>
-              <span className="mt-0.5 block text-slate-800">
-                {comment.body}
-              </span>
-              {outdated && (
-                <span className="mt-0.5 block text-slate-600">
-                  {OUTDATED_TEXT}
-                </span>
-              )}
-              {(meta || resolved) && (
-                <span className="mt-0.5 flex gap-1.5 text-slate-500">
-                  {meta && <span>{meta}</span>}
-                  {resolved && <span className="font-medium">Resolved</span>}
-                </span>
-              )}
             </button>
           </li>
         );

@@ -12,6 +12,7 @@ import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useId, useState } from "react";
 import { toast } from "sonner";
+import { IconSend } from "@tabler/icons-react";
 import { reviewFailureMessage } from "@/lib/review-panel/failure-message";
 import { createPortal } from "react-dom";
 type ActionType =
@@ -54,6 +55,8 @@ export type ContentActionButtonProps = {
   disabledReason?: string;
   /** Pre-fills the Send feedback note until the reviewer edits it there */
   initialNote?: string;
+  /** An element that explains the button; when set, the caller shows `disabledReason` itself */
+  describedBy?: string;
 };
 
 export function ContentActionButton({
@@ -62,6 +65,7 @@ export function ContentActionButton({
   buttonText,
   disabledReason,
   initialNote,
+  describedBy,
 }: ContentActionButtonProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -363,13 +367,18 @@ export function ContentActionButton({
           setIsPopupOpen(true);
         }}
         aria-disabled={disabledReason ? true : undefined}
-        aria-describedby={disabledReason ? reasonId : undefined}
+        aria-describedby={
+          describedBy ?? (disabledReason ? reasonId : undefined)
+        }
         disabled={isLoading}
         className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses} ${disabledReason ? "cursor-not-allowed opacity-50" : ""}`}
       >
+        {actionType === "sendFeedback" && (
+          <IconSend className="mr-1.5 h-4 w-4" aria-hidden />
+        )}
         {isLoading ? "Processing..." : buttonText}
       </button>
-      {disabledReason && (
+      {disabledReason && !describedBy && (
         <p id={reasonId} className="mt-1 text-xs text-slate-600">
           {disabledReason}
         </p>

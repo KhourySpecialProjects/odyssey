@@ -320,6 +320,9 @@ describe("draft droplet layout", () => {
         error: null,
         data: PANEL,
       } as never);
+      jest
+        .requireMock("@/lib/requests/droplet-authors")
+        .getAuthorNames.mockResolvedValue([{ id: 7, name: "Ada Lovelace" }]);
     });
 
     it("loads it for a non-author reviewer of an in-review draft", async () => {
@@ -329,6 +332,29 @@ describe("draft droplet layout", () => {
 
       expect(getReviewPanel).toHaveBeenCalledWith(5);
       expect(props.reviewPanel).toBe(PANEL);
+    });
+
+    it("passes the reviewer and author names for the panel header", async () => {
+      asEditor();
+      mockedGetCachedUser.mockResolvedValue({
+        id: 99,
+        firstName: "Grace",
+        lastName: "Hopper",
+      } as AuthorizedUser);
+
+      const props = await renderLayout();
+
+      expect(props.reviewMeta).toEqual({
+        reviewerName: "Grace Hopper",
+        authorNames: ["Ada Lovelace"],
+      });
+    });
+
+    it("passes no reviewMeta when the draft is not in review", async () => {
+      asEditor();
+      mockedGetDraftDroplet.mockResolvedValue(DRAFT_DROPLET);
+
+      expect((await renderLayout()).reviewMeta).toBeUndefined();
     });
 
     it("passes null when the load fails", async () => {

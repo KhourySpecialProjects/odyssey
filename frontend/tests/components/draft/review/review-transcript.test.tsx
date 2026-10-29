@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { ReviewTranscript } from "@/components/draft/review/review-transcript";
 import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
 import {
@@ -7,15 +8,18 @@ import {
   sendFeedback,
   unconfirmScores,
 } from "@/lib/requests/reviews";
+import { startAiScoring } from "@/lib/requests/ai-scoring";
 import type { ReviewPanelData } from "@/lib/requests/reviews";
 
 const push = jest.fn();
+const refresh = jest.fn();
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push, refresh: jest.fn() }),
+  useRouter: () => ({ push, refresh }),
   usePathname: () => "/draft/d/intro",
 }));
 jest.mock("@/lib/requests/reviews");
 jest.mock("@/lib/requests/droplet");
+jest.mock("@/lib/requests/ai-scoring", () => ({ startAiScoring: jest.fn() }));
 jest.mock("sonner");
 jest.mock("@/components/draft/review/review-comments-context", () => ({
   useSharedReviewComments: jest.fn(),
@@ -123,6 +127,15 @@ describe("footer", () => {
 });
 
 describe("summary note", () => {
+  it("is labelled optional and has a placeholder", () => {
+    render(<ReviewTranscript droplet={droplet} panel={panel()} />);
+
+    expect(screen.getByLabelText("Summary note (optional)")).toHaveAttribute(
+      "placeholder",
+      "Anything the creator should know about the droplet as a whole",
+    );
+  });
+
   it("is saved in localStorage and pre-fills Send feedback", async () => {
     render(<ReviewTranscript droplet={droplet} panel={panel()} />);
 
@@ -319,5 +332,110 @@ describe("confirm and undo end to end", () => {
     expect(
       within(card).getByRole("button", { name: "Confirm scores" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Score with AI in the panel", () => {
+  const withRun = (latestRun: object | null): ReviewPanelData =>
+    ({ ...panel(), latestRun }) as never;
+  const scoreButton = () =>
+    screen.getByRole("button", { name: /score with ai|scoring with ai/i });
+
+  it("starts a run, toasts and refreshes so the queued run loads", async () => {
+    jest.mocked(startAiScoring).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { runId: 9 },
+    } as never);
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+
+    expect(startAiScoring).toHaveBeenCalledWith(3);
+    expect(toast.success).toHaveBeenCalled();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["conflict", undefined, "Score with AI is already running on your review."],
+    [
+      "rate_limited",
+      undefined,
+      "You've used Score with AI too often. Try again later.",
+    ],
+    ["rate_limited", "Try again in 2 minutes.", "Try again in 2 minutes."],
+  ])(
+    "toasts a %s refusal and does not refresh",
+    async (error, message, text) => {
+      jest
+        .mocked(startAiScoring)
+        .mockResolvedValue({ ok: false, error, data: null, message } as never);
+      render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+      await userEvent.click(scoreButton());
+
+      expect(toast.error).toHaveBeenCalledWith(text);
+      expect(refresh).not.toHaveBeenCalled();
+    },
+  );
+
+  it("toasts a fixed message when the start throws", async () => {
+    jest.mocked(startAiScoring).mockRejectedValue(new Error("offline"));
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't start Score with AI. Try again.",
+    );
+  });
+
+  it("is disabled while a start is in flight", async () => {
+    let finish!: (v: unknown) => void;
+    jest
+      .mocked(startAiScoring)
+      .mockReturnValue(new Promise((r) => (finish = r)) as never);
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+    const button = screen.getByRole("button", { name: "Starting…" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).toHaveAttribute("aria-busy", "true");
+    await userEvent.click(button);
+    expect(startAiScoring).toHaveBeenCalledTimes(1);
+
+    finish({ ok: false, error: "conflict", data: null });
+  });
+
+  it("is disabled while a run is running", async () => {
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={withRun({ id: 4, runState: "running", progress: null })}
+      />,
+    );
+
+    const button = scoreButton();
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(button);
+    expect(startAiScoring).not.toHaveBeenCalled();
+  });
+
+  it("offers Run again once a run is done", async () => {
+    jest.mocked(startAiScoring).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { runId: 10 },
+    } as never);
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={withRun({ id: 4, runState: "done" })}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Run again" }));
+
+    expect(startAiScoring).toHaveBeenCalledWith(3);
   });
 });

@@ -579,6 +579,21 @@ describe("Sidebar", () => {
       expect(screen.getByText("Preview")).toBeInTheDocument();
     });
 
+    it("hides Score with AI while the reviewer panel is shown, and shows it otherwise", () => {
+      const props = {
+        user: { ...mockUser, roles: [ContentEditor] } as any,
+        droplet: draftStates["new draft in review"] as any,
+        availableDroplets: [],
+        ...defaultProps,
+        isAuthor: false,
+      };
+      const { rerender } = render(<Sidebar {...props} hideReviewActions />);
+      expect(screen.queryByTestId("score-with-ai")).not.toBeInTheDocument();
+
+      rerender(<Sidebar {...props} />);
+      expect(screen.getByTestId("score-with-ai")).toBeInTheDocument();
+    });
+
     it("keeps Withdraw for an author even with the panel flag set", () => {
       render(
         <Sidebar

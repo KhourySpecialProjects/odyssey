@@ -26,6 +26,9 @@ describe("CriterionCircle", () => {
     render(<CriterionCircle {...base} value={null} issues={0} />);
 
     const button = screen.getByRole("button", { name: "Style, not scored" });
+    // Only the name shows under the circle; "not scored" lives in its accessible name
+    expect(screen.queryByText("Not scored")).not.toBeInTheDocument();
+    expect(screen.getByText("Style")).toBeInTheDocument();
     expect(button.querySelector("[data-circle]")).toHaveStyle({
       borderStyle: "dashed",
     });

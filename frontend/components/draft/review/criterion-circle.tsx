@@ -41,39 +41,53 @@ export const CriterionCircle = forwardRef<
       aria-controls={controlsId}
       data-suggested={suggested}
       onClick={onToggle}
-      className="flex w-16 flex-col items-center gap-1 rounded-lg p-1 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A]"
+      className={cn(
+        "flex min-w-0 flex-col items-center gap-1 rounded-lg px-0.5 py-1 text-center hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A]",
+        expanded && "bg-slate-100",
+      )}
     >
       <span
         data-circle
         className={cn(
-          "relative flex h-12 w-12 items-center justify-center rounded-full",
-          expanded && "ring-2 ring-[#1F5E7A] ring-offset-2",
-          suggested ? "bg-slate-50" : "bg-white",
+          "relative flex aspect-square w-11 max-w-full shrink items-center justify-center rounded-full",
+          "bg-white",
         )}
         style={{
+          boxShadow: expanded
+            ? `0 0 0 3px #fff, 0 0 0 5px ${colors.outline}`
+            : undefined,
           borderWidth: 3,
           borderStyle: band === "unscored" ? "dashed" : "solid",
           borderColor: colors.outline,
-          color: colors.text,
+          color: band === "unscored" ? colors.outline : "#344054",
         }}
       >
         <Icon className="h-5 w-5" aria-hidden />
         {band !== "unscored" && (
           <span
             aria-hidden
-            className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
+            className="absolute -right-1 -bottom-1 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white"
             style={{ backgroundColor: colors.text }}
           >
             {BADGE[band]}
           </span>
         )}
       </span>
-      <span aria-hidden className="text-xs font-medium text-slate-800">
+      <span
+        aria-hidden
+        className="text-[11px] leading-tight font-medium whitespace-nowrap text-[#344054]"
+      >
         {name}
       </span>
-      <span aria-hidden className="text-[11px]" style={{ color: colors.text }}>
-        {band === "unscored" ? "Not scored" : issuesText(issues)}
-      </span>
+      {band !== "unscored" && (
+        <span
+          aria-hidden
+          className="text-[10px] leading-none whitespace-nowrap"
+          style={{ color: issues ? colors.text : "#667085" }}
+        >
+          {issuesText(issues)}
+        </span>
+      )}
     </button>
   );
 });

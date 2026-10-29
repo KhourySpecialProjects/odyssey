@@ -37,6 +37,8 @@ interface DraftLayoutShellProps {
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
   /** The reviewer's panel data; null when it didn't load (only read while reviewing) */
   reviewPanel?: ReviewPanelData | null;
+  /** Names for the panel header's "Reviewed by … · Created by …" line */
+  reviewMeta?: { reviewerName?: string | null; authorNames?: string[] };
   children: React.ReactNode;
 }
 
@@ -46,6 +48,7 @@ export function DraftLayoutShell({
   droplet,
   availableDroplets,
   reviewPanel = null,
+  reviewMeta,
   children,
 }: DraftLayoutShellProps) {
   const [expanded, setExpandedState] = useState(true);
@@ -143,7 +146,7 @@ export function DraftLayoutShell({
           data-review-panel={reviewing ? panelMode : undefined}
           ref={mainRef}
           className={cn(
-            "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300",
+            "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
             expanded ? "xl:pl-64" : "xl:pl-0",
             reviewing && [
               "group",
@@ -162,6 +165,7 @@ export function DraftLayoutShell({
             <ReviewTranscript
               droplet={droplet}
               panel={reviewPanel}
+              meta={reviewMeta}
               onScoresChange={setLiveScores}
             />
           </ReviewPanelDock>

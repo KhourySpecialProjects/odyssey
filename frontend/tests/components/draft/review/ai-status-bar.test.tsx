@@ -12,6 +12,7 @@ describe("AiStatusBar", () => {
   it("explains AI scoring with no run, and has no button without onStart", () => {
     bar({ kind: "none" });
 
+    expect(screen.getByText("Not scored yet")).toBeInTheDocument();
     expect(screen.getByText(/you confirm every score/i)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /score with ai/i }),
@@ -30,19 +31,71 @@ describe("AiStatusBar", () => {
   });
 
   it("shows progress while scoring", () => {
-    bar({ kind: "scoring", currentName: "Lesson 3", done: 2, total: 5 });
+    bar({
+      kind: "scoring",
+      currentName: "Lesson 3",
+      done: 2,
+      total: 5,
+      indeterminate: false,
+    });
 
     expect(screen.getByText("Scoring Lesson 3…")).toBeInTheDocument();
-    expect(screen.getByText("2 of 5 done")).toBeInTheDocument();
+    expect(
+      screen.getByText(/2 of 5 done\. You can keep reading/),
+    ).toBeInTheDocument();
     const progress = screen.getByRole("progressbar");
     expect(progress).toHaveAttribute("aria-valuenow", "2");
     expect(progress).toHaveAttribute("aria-valuemax", "5");
   });
 
+  it("shows an indeterminate bar and ODY-814's wording when the run reports no progress", () => {
+    bar({
+      kind: "scoring",
+      currentName: null,
+      done: 0,
+      total: 3,
+      indeterminate: true,
+    });
+
+    expect(
+      screen.getByText("Scoring every lesson. You can keep reviewing."),
+    ).toBeInTheDocument();
+    const progress = screen.getByRole("progressbar", {
+      name: "AI scoring progress",
+    });
+    expect(progress).not.toHaveAttribute("aria-valuenow");
+    expect(progress.firstElementChild).toHaveClass(
+      "motion-reduce:animate-none",
+    );
+    expect(screen.queryByText(/of 3 done/)).not.toBeInTheDocument();
+  });
+
+  it("shows a disabled Scoring with AI button while a run goes, only with onStart", async () => {
+    const onStart = jest.fn();
+    const state = {
+      kind: "scoring" as const,
+      currentName: null,
+      done: 0,
+      total: 3,
+      indeterminate: true,
+    };
+    const { rerender } = bar(state);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    rerender(<AiStatusBar state={state} counts={counts} onStart={onStart} />);
+    const button = screen.getByRole("button", { name: "Scoring with AI…" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(button);
+    expect(onStart).not.toHaveBeenCalled();
+  });
+
   it("shows confirmed count and Run again only with onStart", () => {
     const { rerender } = bar({ kind: "scored" });
 
-    expect(screen.getByText("0 of 3 confirmed")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "Confirmed scores" }),
+    ).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText(/confirmed/)).toHaveTextContent("0 of 3 confirmed");
     expect(
       screen.queryByRole("button", { name: /run again/i }),
     ).not.toBeInTheDocument();

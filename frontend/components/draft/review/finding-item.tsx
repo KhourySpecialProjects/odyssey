@@ -27,7 +27,7 @@ export function FindingItem({
   onShowInLesson,
   onDismiss,
 }: Props) {
-  const colour = BAND_COLORS[band].outline;
+  const { outline: colour, tint, line } = BAND_COLORS[band];
   return (
     <li className="rounded-lg border border-transparent p-1">
       <div className="flex items-start gap-2 p-1.5">
@@ -46,8 +46,8 @@ export function FindingItem({
           <blockquote
             className="block rounded-sm py-1 pr-1 pl-2 text-xs text-slate-700"
             style={{
-              background: `${colour}14`,
-              borderLeft: `2px solid ${colour}`,
+              background: tint,
+              borderLeft: `2px solid ${line}`,
             }}
           >
             <span className="sr-only">Highlighted text: </span>“{finding.quote}”

@@ -817,7 +817,9 @@ export function Sidebar({
                 />
               ))}
             </div>
-            {canReview && <ScoreWithAiButton dropletId={droplet.id} />}
+            {canReview && !hideReviewActions && (
+              <ScoreWithAiButton dropletId={droplet.id} />
+            )}
           </div>
         </div>
       </aside>
