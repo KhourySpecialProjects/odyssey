@@ -2,16 +2,63 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
+import {
+  submitForReview,
+  withdrawFromReview,
+  sendFeedback,
+  publishWithReview,
+  type ReviewActionResult,
+} from "@/lib/requests/reviews";
 import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useId, useState } from "react";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 type ActionType =
   | "publish"
   | "requestReview"
-  | "requestChanges"
+  | "withdrawReview"
+  | "sendFeedback"
+  | "publishWithReview"
   | "publishDraft";
+
+const SUMMARY_NOTE_MAX = 5000;
+const UNCONFIRMED_MESSAGE =
+  "This could not be confirmed. Reload to check whether it went through.";
+
+/** A review action's failure, as the message to show. */
+function reviewFailureMessage(
+  result: Extract<ReviewActionResult<unknown>, { ok: false }>,
+  fallback: string,
+): string {
+  if (result.error === "unconfirmed") return UNCONFIRMED_MESSAGE;
+  if (result.error === "forbidden") return "You can't do this.";
+  if (result.error === "unauthenticated") return "Please sign in again.";
+  return result.message || fallback;
+}
+
+/** The publish action returns codes for denials; anything else is a message for the author. */
+function publishErrorMessage(error: string | null | undefined): string {
+  if (error === "forbidden") return "You can't publish this draft.";
+  if (error === "unauthenticated") return "Please sign in again.";
+  if (error === "in_review") {
+    return "This draft is in review. Publish it from the review.";
+  }
+  return error || "Failed to publish draft";
+}
+
+const REVIEW_SUCCESS = {
+  requestReview: "Droplet submitted for review",
+  withdrawReview: "Withdrawn from review",
+  sendFeedback: "Feedback sent",
+  publishWithReview: "Droplet published successfully!",
+};
+const REVIEW_FAILURES = {
+  requestReview: "Error submitting droplet for review",
+  withdrawReview: "Error withdrawing from review",
+  sendFeedback: "Error sending feedback",
+  publishWithReview: "Error publishing droplet",
+};
 
 type ContentActionButtonProps = {
   droplet: Droplet;
@@ -27,7 +74,8 @@ export function ContentActionButton({
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userTxt, setUserTxt] = useState<string>("");
-  const [changes, setChanges] = useState(droplet.afterReview || "");
+  const [note, setNote] = useState("");
+  const noteId = useId();
   const router = useRouter();
 
   const handleAction = async () => {
@@ -36,7 +84,6 @@ export function ContentActionButton({
     let successMessage = "";
     let errorMessage = "";
     let redirectPath: string | null = null;
-    let shouldReload = false;
 
     try {
       switch (actionType) {
@@ -53,18 +100,21 @@ export function ContentActionButton({
             droplet.originalDropletId,
           );
           if (!publishResult.ok) {
-            throw new Error(publishResult.error || "Failed to publish draft");
+            throw new Error(publishErrorMessage(publishResult.error));
           }
 
           toast.success("Changes published successfully!");
-          router.push(`/d/${publishResult.slug}`);
+          // /my-content is where the sidebar sends authors after publishing.
+          router.push(
+            publishResult.slug ? `/d/${publishResult.slug}` : "/my-content",
+          );
           return;
         }
 
         case "publish":
           response = await updateDroplet(
             droplet.id,
-            { name: droplet.name, status: "published", inReview: false },
+            { name: droplet.name, status: "published" },
             { regenerateSlug: false },
           );
           successMessage = "Droplet published successfully!";
@@ -73,26 +123,36 @@ export function ContentActionButton({
           break;
 
         case "requestReview":
-          response = await updateDroplet(
-            droplet.id,
-            { name: droplet.name, inReview: true },
-            { regenerateSlug: false },
-          );
-          successMessage = "Droplet submitted for review";
-          errorMessage = "Error submitting droplet for review";
-          shouldReload = true;
-          break;
+        case "withdrawReview":
+        case "sendFeedback":
+        case "publishWithReview": {
+          const result =
+            actionType === "requestReview"
+              ? await submitForReview(droplet.id)
+              : actionType === "withdrawReview"
+                ? await withdrawFromReview(droplet.id)
+                : actionType === "sendFeedback"
+                  ? await sendFeedback(droplet.id, note.trim() || null)
+                  : await publishWithReview(droplet.id);
+          if (!result.ok) {
+            throw new Error(
+              reviewFailureMessage(result, REVIEW_FAILURES[actionType]),
+            );
+          }
 
-        case "requestChanges":
-          response = await updateDroplet(
-            droplet.id,
-            { name: droplet.name, inReview: false, afterReview: changes },
-            { regenerateSlug: false },
-          );
-          successMessage = "Request for review submitted successfully";
-          errorMessage = "Error requesting changes";
-          redirectPath = "/review";
-          break;
+          setIsPopupOpen(false);
+          setNote("");
+          toast.success(REVIEW_SUCCESS[actionType]);
+          if (actionType === "publishWithReview") {
+            const slug = "slug" in result.data ? result.data.slug : null;
+            router.push(slug ? `/d/${slug}` : "/my-content");
+          } else if (actionType === "sendFeedback") {
+            router.push("/review");
+          } else {
+            window.location.reload();
+          }
+          return;
+        }
       }
 
       if (response && response.ok && !response.error) {
@@ -100,11 +160,7 @@ export function ContentActionButton({
         setUserTxt("");
         toast.success(successMessage);
 
-        if (shouldReload) {
-          window.location.reload();
-        } else if (redirectPath) {
-          router.push(redirectPath);
-        }
+        if (redirectPath) router.push(redirectPath);
       } else if (response) {
         toast.error(errorMessage);
         setIsPopupOpen(false);
@@ -195,22 +251,49 @@ export function ContentActionButton({
           ),
         };
 
-      case "requestChanges":
+      case "withdrawReview":
         return {
-          title: "Request Changes",
+          title: "Withdraw from review?",
+          content: (
+            <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+              The droplet leaves the review queue and you can edit it again.
+              Submit it again when it&apos;s ready.
+            </p>
+          ),
+        };
+
+      case "sendFeedback":
+        return {
+          title: "Send feedback",
           content: (
             <>
-              <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
-                Enter what changes you want for this droplet:
-              </p>
+              <label
+                htmlFor={noteId}
+                className="mb-2 block text-sm text-slate-600 dark:text-slate-400"
+              >
+                Your review goes back to the authors. Add an optional summary:
+              </label>
               <Textarea
-                value={changes}
-                onChange={(e) => setChanges(e.target.value)}
-                placeholder="Enter changes here..."
+                id={noteId}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={SUMMARY_NOTE_MAX}
+                placeholder="Optional summary..."
                 className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
                 rows={5}
               />
             </>
+          ),
+        };
+
+      case "publishWithReview":
+        return {
+          title: "Publish with your review?",
+          content: (
+            <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+              This publishes the droplet and closes your review. It needs a
+              confirmed Overall score for every criterion.
+            </p>
           ),
         };
     }
@@ -250,18 +333,22 @@ export function ContentActionButton({
   ) : null;
 
   const buttonColorClasses =
-    actionType === "publish" || actionType === "publishDraft"
-      ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
+    actionType === "publish" ||
+    actionType === "publishDraft" ||
+    actionType === "publishWithReview"
+      ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
       : actionType === "requestReview"
-        ? "border-[#2D7597] bg-[#2D7597] hover:bg-[#255e78]"
-        : "border-red-400 bg-red-400 hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
+        ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
+        : actionType === "withdrawReview"
+          ? "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800"
+          : "border-red-400 bg-red-400 text-white hover:bg-red-500 dark:border-red-600 dark:bg-red-600 dark:hover:bg-red-800";
 
   return (
     <>
       <button
         onClick={() => setIsPopupOpen(true)}
         disabled={isLoading}
-        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
+        className={`flex h-10 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium whitespace-nowrap shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors disabled:pointer-events-none disabled:opacity-50 ${buttonColorClasses}`}
       >
         {isLoading ? "Processing..." : buttonText}
       </button>

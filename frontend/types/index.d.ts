@@ -24,7 +24,9 @@ export type AnnouncementType =
   | "friend"
   | "system"
   | "group"
-  | "kudos";
+  | "kudos"
+  | "review_feedback"
+  | "review_published";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -32,6 +34,17 @@ export type HighlightColor =
   | "#fff300"
   | "#86efac"
   | "#93c5fd";
+
+/**
+ * The exact text a highlight covered when it was saved, and up to 30
+ * characters either side of it, so it can be found again after the lesson
+ * is edited. Highlights saved before ODY-198 have none.
+ */
+export type HighlightContext = {
+  quote: string;
+  prefix: string;
+  suffix: string;
+};
 
 export type AuthorizedUserRole = {
   id: number;
@@ -53,6 +66,13 @@ export type Highlight = {
   lesson?: Lesson;
   yLevel?: number;
   blockId: number;
+  context?: HighlightContext | null;
+  createdAt?: string;
+  /**
+   * The note linked to this highlight (one-to-one). Only the lesson viewer's
+   * highlight fetch populates it; `id` is unknown for a note made since.
+   */
+  note?: { id?: number } | null;
 };
 
 export type User = {
@@ -216,6 +236,7 @@ export type Lesson = {
   notes: string;
   orderIndex: number;
   originalLessonId?: number | null; // [EDIT]-draft lessons only: id of the live lesson this was cloned from
+  updatedAt?: string;
 };
 
 export type Tag = {
@@ -259,6 +280,7 @@ export type Droplet = {
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;
+  reviewRound?: number | null;
   afterReview?: string;
   funFact?: string;
   averageRating?: number;
@@ -416,6 +438,124 @@ export type Announcement = {
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
   readAt?: string | null;
+};
+
+export type ReviewState = "open" | "sent" | "published";
+
+export type ReviewCommentField =
+  | "blocks"
+  | "description"
+  | "overview"
+  | "objective"
+  // The Overview's title, and its other sections (whole-section comments)
+  | "name"
+  | "authors"
+  | "nextSteps"
+  | "prerequisites"
+  | "postrequisites"
+  | "funFact"
+  | "datasets";
+
+export type AiScoringRunState =
+  | "queued"
+  | "running"
+  | "done"
+  | "partial"
+  | "failed";
+
+/**
+ * Text in a block or field (with its quote and context), a whole block, or a
+ * whole Overview section
+ */
+export type ReviewAnchor =
+  | {
+      v: 1;
+      field: ReviewCommentField;
+      blockId?: string;
+      /** Across BlockNote blocks: the last block, which `end` is in */
+      endBlockId?: string;
+      start?: number;
+      end?: number;
+      quote: string;
+      prefix: string;
+      suffix: string;
+      /** At one spot: just before the quote, or just after it */
+      point?: "before" | "after";
+    }
+  | { v: 1; field: ReviewCommentField; blockId: string }
+  | { v: 1; field: ReviewCommentField; blockId?: never };
+
+export type ReviewCriterion = {
+  id: number;
+  documentId?: string;
+  name: string;
+  lessonDescription: string;
+  overallDescription: string;
+  order: number;
+  active: boolean;
+};
+
+export type ReviewCriterionSnapshot = Pick<
+  ReviewCriterion,
+  "id" | "name" | "lessonDescription" | "overallDescription" | "order"
+>;
+
+export type Review = {
+  id: number;
+  documentId?: string;
+  droplet?: Droplet | null;
+  reviewer?: AuthorizedUser | null;
+  round: number;
+  key: string;
+  state: ReviewState;
+  summaryNote?: string | null;
+  sentAt?: string | null;
+  comments?: ReviewComment[];
+  scores?: ReviewScore[];
+  aiScoringRuns?: AiScoringRun[];
+};
+
+export type ReviewComment = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  field: ReviewCommentField;
+  anchor: ReviewAnchor;
+  body: string;
+  author?: AuthorizedUser | null;
+  resolvedAt?: string | null;
+  createdAt?: string;
+  parent?: ReviewComment | null;
+};
+
+export type ReviewScore = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  criterion?: ReviewCriterion | null;
+  criterionName: string;
+  value: number | null;
+  aiValue: number | null;
+  aiRationale?: string | null;
+  key: string;
+};
+
+export type AiScoringRun = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  runState: AiScoringRunState;
+  model?: string | null;
+  promptVersion?: string | null;
+  criteria?: ReviewCriterionSnapshot[] | null;
+  failedLessons?: number[] | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  error?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
 };
 
 export type Note = {

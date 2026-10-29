@@ -156,6 +156,8 @@ All cache tags are defined in `frontend/lib/cache-tags.ts`. Two scoping levels:
 - `CACHE_TAGS.notes(userId)` → `"notes-{userId}"`
 - `CACHE_TAGS.highlights(userId)` → `"highlights-{userId}"`
 
+Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (read by `getReviewForDroplet` and `getMyReview`, invalidated by the `lib/requests/reviews.ts` writes).
+
 ### Invalidation Pattern
 
 Every Server Action that mutates data must call `revalidateTag()`:
@@ -236,7 +238,7 @@ Single-entry REST routes (`/api/droplets/:id`) and relation writes only accept a
 Test conventions:
 
 - `jest.setup.ts` mocks the helper globally with fake documentIds (`5` becomes `"doc5"`, an entity gives its `documentId`), so assert `/api/droplets/doc5` and `connect: ["doc5"]`. A test that sees a bare numeric id has found a missed conversion. The mapping lives in `lib/testing/document-id-mock.ts`; call `installDocumentIdMock()` after `jest.resetAllMocks()`. `strapi-document-id.test.ts` calls `jest.unmock` to test the real module.
-- A test file that calls `jest.resetAllMocks()` wipes that mock and must re-install the identity implementation in `beforeEach`. See `droplet-coverage.test.ts`, `publish-draft-lesson-sync.test.ts`, `groups.test.js` and `voyage-branches.test.ts`.
+- A test file that calls `jest.resetAllMocks()` wipes that mock and must re-install the identity implementation in `beforeEach`. See `droplet-coverage.test.ts`, `groups.test.js` and `voyage-branches.test.ts`.
 
 ## Common Mistakes
 

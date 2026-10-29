@@ -11,22 +11,40 @@ import {
   parseSandpackFiles,
 } from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
-import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useRef, useState } from "react";
+import {
+  HighlightLayer,
+  HighlightableHtml,
+  type HighlightDraft,
+  type HighlightMerge,
+  type HighlightRequest,
+} from "./highlight-layer";
+import { DetachedHighlights } from "./detached-highlights";
+import {
+  placeHighlights,
+  type HighlightBlock,
+  type PlacedHighlight,
+} from "@/lib/highlight-placement";
+import {
+  READER_EVENT,
+  REGION_ATTR,
+  regionIds,
+  regionReader,
+} from "@/lib/highlight-regions";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
-import { Highlight } from "@/types";
+import { Highlight, HighlightColor } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import {
   createHighlight,
   deleteHighlight,
-  getHighlights,
+  updateHighlight,
 } from "@/lib/requests/highlights";
 import { Block } from "@/types";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
@@ -53,7 +71,11 @@ const SandpackViewer = dynamic(
     ),
   },
 );
-import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import {
+  blockNoteIdToNumber,
+  convertBlockNoteToV1Blocks,
+} from "@/lib/blocknote/convert-blocks";
+import { blocksToHtml } from "@/lib/strapi-blocks-html";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -92,13 +114,55 @@ export function LessonRenderer({
   // Highlights come from the lesson page, then are kept in sync locally on
   // create/delete (the wrapper is keyed by lesson, so this resets per lesson).
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  // A new highlight is shown under a temporary (negative) id until it's saved
+  const nextTempId = useRef(-1);
   const lessonContentRef = useRef<HTMLDivElement>(null);
   const firedMilestones = useRef<Set<number>>(new Set());
+  // A highlight whose text was deleted, while the reader picks new text for it
+  const [movingId, setMovingId] = useState<number | null>(null);
 
-  const displayBlocks =
-    lesson.blocksVersion === "v2" && lesson.blocksV2
-      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
-      : lesson.blocks;
+  const displayBlocks = useMemo(
+    () =>
+      lesson.blocksVersion === "v2" && lesson.blocksV2
+        ? convertBlockNoteToV1Blocks(lesson.blocksV2)
+        : lesson.blocks,
+    [lesson.blocksVersion, lesson.blocksV2, lesson.blocks],
+  );
+
+  // Highlights are found in each region's text as it's drawn, which needs the
+  // browser, so they're placed once the lesson has mounted. A code editor
+  // sets its reader once it has loaded, which reads its placement again.
+  const [highlightBlocks, setHighlightBlocks] = useState<
+    HighlightBlock[] | null
+  >(null);
+  useEffect(() => {
+    const content = lessonContentRef.current;
+    if (!content) return;
+    const readRegions = () =>
+      setHighlightBlocks(
+        Array.from(
+          content.querySelectorAll<HTMLElement>(`[${REGION_ATTR}]`),
+        ).flatMap((region) => {
+          const [id, ...sourceBlockIds] = regionIds(region);
+          return id === undefined
+            ? []
+            : [{ id, sourceBlockIds, text: regionReader(region).text() }];
+        }),
+      );
+    readRegions();
+    content.addEventListener(READER_EVENT, readRegions);
+    return () => content.removeEventListener(READER_EVENT, readRegions);
+  }, [displayBlocks]);
+
+  // Where each highlight is now that the author may have edited the lesson.
+  // Ones whose text was deleted are listed for the reader instead of drawn.
+  const placement = useMemo(
+    () =>
+      highlightBlocks &&
+      placeHighlights(highlights, highlightBlocks, lesson.updatedAt),
+    [highlights, highlightBlocks, lesson.updatedAt],
+  );
+  const placedHighlights: PlacedHighlight[] = placement?.placed ?? [];
 
   let headings: Heading[] = [];
   displayBlocks
@@ -106,10 +170,6 @@ export function LessonRenderer({
     .forEach((b: Block) => {
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
-
-  const [activeBlock, setActiveBlock] = useState<number | undefined>(
-    displayBlocks[0]?.id,
-  );
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
@@ -180,46 +240,165 @@ export function LessonRenderer({
     );
   }
 
-  const handleHighlight = async (
-    highlight: Highlight,
-    isWithNote?: boolean,
-  ) => {
-    const response = await createHighlight({
-      data: {
-        text: highlight.text,
-        position: highlight.position,
-        color: highlight.color,
-        lesson: lesson.id,
-        authorized_user: authUser?.id,
-        blockId: highlight.blockId,
-      },
-    });
+  // Every change shows straight away and is undone if its save fails. A
+  // selection over several blocks saves one highlight in each.
 
-    if (response.data) {
-      const formattedHighlight = {
-        ...response.data.attributes,
-        id: response.data.id,
-      };
-      setHighlights((prev) => [...prev, formattedHighlight]);
-      if (!(isWithNote === true)) {
-        toast.success("Highlight saved");
-      }
+  const handleHighlight = async (
+    requests: HighlightRequest[],
+    { withNote = false }: { withNote?: boolean } = {},
+  ): Promise<(Highlight | null)[]> => {
+    const saved = await Promise.all(
+      requests.map(({ draft, merge }) =>
+        merge ? mergeHighlight(draft, merge) : saveHighlight(draft),
+      ),
+    );
+    if (!withNote && saved.every(Boolean)) toast.success("Highlight saved");
+    return saved;
+  };
+
+  const saveHighlight = async (
+    draft: HighlightDraft,
+  ): Promise<Highlight | null> => {
+    const tempId = nextTempId.current--;
+    setHighlights((prev) => [...prev, { ...draft, id: tempId }]);
+
+    const result = await createHighlight({ ...draft, lessonId: lesson.id });
+    if (!result.ok) {
+      setHighlights((prev) => prev.filter((h) => h.id !== tempId));
+      toast.error("Failed to save highlight");
+      return null;
+    }
+
+    const saved: Highlight = { ...draft, id: result.data.id };
+    setHighlights((prev) => prev.map((h) => (h.id === tempId ? saved : h)));
+    return saved;
+  };
+
+  // A selection over saved highlights extends one of them over the rest
+  const mergeHighlight = async (
+    draft: HighlightDraft,
+    { baseId, removeIds }: HighlightMerge,
+  ): Promise<Highlight | null> => {
+    const base = highlights.find((h) => h.id === baseId);
+    const removed = highlights.filter((h) => removeIds.includes(h.id ?? 0));
+    if (!base) return null;
+    // A highlight holds one note, so two with notes can't become one
+    if ([base, ...removed].filter((h) => h.note).length > 1) {
+      toast.error("These highlights both have notes, so they can't be merged");
+      return null;
+    }
+
+    const merged: Highlight = { ...base, ...draft };
+    setHighlights((prev) =>
+      prev
+        .filter((h) => !removeIds.includes(h.id ?? 0))
+        .map((h) => (h.id === baseId ? merged : h)),
+    );
+
+    const updated = await updateHighlight(baseId, {
+      color: draft.color,
+      position: draft.position,
+      text: draft.text,
+      // Measured on the lesson as it is now, which may differ from when the
+      // base highlight was saved
+      blockId: draft.blockId,
+      ...(draft.context && { context: draft.context }),
+    });
+    if (!updated.ok) {
+      setHighlights((prev) => [
+        ...prev.map((h) => (h.id === baseId ? base : h)),
+        ...removed,
+      ]);
+      toast.error("Failed to save highlight");
+      return null;
+    }
+
+    const deleted = await Promise.all(
+      removeIds.map((id) => deleteHighlight(id)),
+    );
+    // Any that couldn't be deleted are still saved, so show them again
+    const kept = removed.filter((_, i) => !deleted[i].ok);
+    if (kept.length > 0) {
+      setHighlights((prev) => [...prev, ...kept]);
+      toast.error("Failed to merge highlights");
+    }
+    return merged;
+  };
+
+  const handleRecolorHighlight = async (
+    highlightIds: number[],
+    color: HighlightColor,
+  ) => {
+    const before = highlights.filter(
+      (h) => highlightIds.includes(h.id ?? 0) && h.color !== color,
+    );
+    if (before.length === 0) return;
+    const setColor = (id: number | undefined, next: HighlightColor) =>
+      setHighlights((prev) =>
+        prev.map((h) => (h.id === id ? { ...h, color: next } : h)),
+      );
+
+    before.forEach((h) => setColor(h.id, color));
+    const results = await Promise.all(
+      before.map((h) => updateHighlight(h.id ?? 0, { color })),
+    );
+    before.forEach((h, i) => {
+      if (!results[i].ok) setColor(h.id, h.color);
+    });
+    if (results.every((result) => result.ok)) {
+      toast.success("Highlight saved");
     } else {
       toast.error("Failed to save highlight");
     }
   };
 
-  const handleDeleteHighlight = async (highlightId: number) => {
-    const response = await deleteHighlight(highlightId, authUser!.id);
-    if (response && !response.error) {
-      setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
+  const handleDeleteHighlight = async (highlightIds: number[]) => {
+    const removed = highlights.filter((h) => highlightIds.includes(h.id ?? 0));
+    if (removed.length === 0) return;
+
+    const removedIds = new Set(removed.map((h) => h.id));
+    setHighlights((prev) => prev.filter((h) => !removedIds.has(h.id)));
+    const results = await Promise.all(
+      removed.map((h) => deleteHighlight(h.id ?? 0)),
+    );
+    const kept = removed.filter((_, i) => !results[i].ok);
+    if (kept.length === 0) {
       toast.success("Highlight removed");
     } else {
+      setHighlights((prev) => [
+        ...prev,
+        ...kept.filter((k) => !prev.some((h) => h.id === k.id)),
+      ]);
       toast.error("Failed to remove highlight");
     }
   };
 
-  const handleCreateNote = async (notePos: number, text: string) => {
+  // A highlight whose text was deleted goes onto the text the reader picked,
+  // keeping its colour and note
+  const handleMoveHighlight = async (target: HighlightDraft) => {
+    const before = highlights.find((h) => h.id === movingId);
+    setMovingId(null);
+    if (!before?.id) return;
+    const { text, position, blockId, context } = target;
+    const replace = (next: Highlight) =>
+      setHighlights((prev) => prev.map((h) => (h.id === before.id ? next : h)));
+
+    replace({ ...before, text, position, blockId, context });
+    const result = await updateHighlight(before.id, {
+      text,
+      position,
+      blockId,
+      ...(context && { context }),
+    });
+    if (result.ok) {
+      toast.success("Highlight moved");
+    } else {
+      replace(before);
+      toast.error("Failed to move highlight");
+    }
+  };
+
+  const handleCreateNote = async (notePos: number, highlight: Highlight) => {
     setExpanded(true);
     const enrollment = await getEnrollByID(String(enrollmentId), {
       fields: ["id"],
@@ -227,15 +406,17 @@ export function LessonRenderer({
     });
 
     if (authUser) {
-      const highlight = await getHighlights(authUser.id, text);
       const result = await createNote(
         lesson,
         enrollment,
         notePos,
         authUser.id,
-        highlight[0],
+        highlight,
       );
       if (result.success) {
+        setHighlights((prev) =>
+          prev.map((h) => (h.id === highlight.id ? { ...h, note: {} } : h)),
+        );
         toast.success("Note created");
       } else {
         toast.error("Failed to create note");
@@ -288,9 +469,30 @@ export function LessonRenderer({
 
       {enrollmentId && !author && <HighlightHintBanner />}
 
+      {enrollmentId && !author && (
+        <DetachedHighlights
+          highlights={placement?.detached ?? []}
+          movingId={movingId}
+          onMove={setMovingId}
+          onCancelMove={() => setMovingId(null)}
+          onRemove={(id) => handleDeleteHighlight([id])}
+        />
+      )}
+
       <DatasetProvider datasets={droplet.datasets ?? []}>
         <PyodideProvider>
-          <div className="mt-8 space-y-2">
+          <HighlightLayer
+            className="mt-8 space-y-2"
+            highlights={placedHighlights}
+            canHighlight={!!enrollmentId && !author}
+            onHighlight={handleHighlight}
+            onRecolorHighlight={handleRecolorHighlight}
+            onDeleteHighlight={handleDeleteHighlight}
+            onNote={handleCreateNote}
+            onMoveHighlight={
+              movingId !== null ? handleMoveHighlight : undefined
+            }
+          >
             {displayBlocks.map((b: Block, i: number) => (
               <LessonBlockRenderer
                 key={i}
@@ -300,42 +502,35 @@ export function LessonRenderer({
                 dropletName={droplet.name}
                 lessonName={lesson.name}
                 userId={authUser?.id}
-                highlights={highlights}
-                onHighlight={handleHighlight}
-                onDeleteHighlight={handleDeleteHighlight}
-                onNote={handleCreateNote}
-                enrollmentId={enrollmentId}
-                expanded={expanded}
-                setExpanded={setExpanded}
-                activeBlock={activeBlock}
-                setActiveBlock={(id: number) => setActiveBlock(id)}
-                author={author}
               />
             ))}
-          </div>
+          </HighlightLayer>
         </PyodideProvider>
       </DatasetProvider>
     </div>
   );
 }
 
-function LessonBlockRenderer({
+/**
+ * The ids a block's highlights are saved under. A generic block's is its own,
+ * as it always was. Classic lessons' block ids are only unique within a block
+ * type, so other blocks' are made from the type and the id.
+ */
+const highlightIdsOf = (block: { __component: string; id: number }) => [
+  blockNoteIdToNumber(`${block.__component}:${block.id}`),
+];
+
+/**
+ * One block of the lesson. Each block's outermost element is positioned: the
+ * highlight toolbar is shown at the end of it.
+ */
+export function LessonBlockRenderer({
   block,
   lessonId,
   dropletId,
   dropletName,
   lessonName,
   userId,
-  highlights,
-  onHighlight,
-  onDeleteHighlight,
-  onNote,
-  enrollmentId,
-  expanded,
-  setExpanded,
-  activeBlock,
-  setActiveBlock,
-  author,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   block: any;
@@ -344,34 +539,10 @@ function LessonBlockRenderer({
   dropletName?: string;
   lessonName: string;
   userId?: number;
-  highlights: Highlight[];
-  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
-  onDeleteHighlight: (id: number) => void;
-  onNote: (notePos: number, text: string) => void;
-  enrollmentId: string | undefined;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
-  activeBlock: number | undefined;
-  setActiveBlock: (id: number) => void;
-  author: boolean;
 }) {
   switch (block.__component) {
     case "droplets.generic":
-      return (
-        <GenericBlockRenderer
-          block={block}
-          highlights={highlights}
-          onHighlight={onHighlight}
-          onDeleteHighlight={onDeleteHighlight}
-          onNote={onNote}
-          enrollmentId={enrollmentId}
-          expanded={expanded}
-          setExpanded={setExpanded}
-          activeBlock={activeBlock}
-          setActiveBlock={setActiveBlock}
-          author={author}
-        />
-      );
+      return <GenericBlockRenderer block={block} />;
 
     case "droplets.video":
       return (
@@ -415,7 +586,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-800"}`}
+          className={`relative flex flex-col items-center space-y-4 rounded-md border px-6 py-6 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-800"}`}
         >
           {block?.iconEnabled && (
             <div className="">
@@ -424,27 +595,30 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto max-w-none text-black">
-              <BlocksRenderer content={block.content} />
-            </div>
+            {/* As HTML rather than BlocksRenderer: highlights change its DOM,
+                which React mustn't own */}
+            <HighlightableHtml
+              ids={highlightIdsOf(block)}
+              html={DOMPurify.sanitize(blocksToHtml(block.content))}
+              className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto max-w-none text-black"
+            />
           </div>
         </div>
       );
 
     case "droplets.expandable":
       return (
-        <Collapsible className="w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
+        <Collapsible className="relative w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
           <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
             {block.title}
             <ArrowDownFromLineIcon className="h-4 w-4 text-sky-400" />
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 border-t border-t-slate-200 pt-3 dark:border-slate-500">
-            <div
+            <HighlightableHtml
+              ids={highlightIdsOf(block)}
+              html={DOMPurify.sanitize(block.content)}
               className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit max-w-none dark:text-slate-300"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(block.content),
-              }}
-            ></div>
+            />
           </CollapsibleContent>
         </Collapsible>
       );
@@ -460,13 +634,17 @@ function LessonBlockRenderer({
           />
         );
       }
+      // Its frame clips what overflows it, so the toolbar goes around it
       return (
-        <CodeBlockViewer
-          language={block.language}
-          code={block.code}
-          editable={block.editable}
-          runnable={block.runnable}
-        />
+        <div className="relative">
+          <CodeBlockViewer
+            language={block.language}
+            code={block.code}
+            editable={block.editable}
+            runnable={block.runnable}
+            highlightIds={highlightIdsOf(block)}
+          />
+        </div>
       );
 
     case "droplets.sandpack-block":

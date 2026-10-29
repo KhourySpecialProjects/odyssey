@@ -1,0 +1,66 @@
+{
+  "kind": "collectionType",
+  "collectionName": "review_comments",
+  "info": {
+    "singularName": "review-comment",
+    "pluralName": "review-comments",
+    "displayName": "Review Comment",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "review": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review.review",
+      "inversedBy": "comments"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson"
+    },
+    "field": {
+      "type": "enumeration",
+      "enum": [
+        "blocks",
+        "description",
+        "overview",
+        "objective",
+        "name",
+        "authors",
+        "nextSteps",
+        "prerequisites",
+        "postrequisites",
+        "funFact",
+        "datasets"
+      ],
+      "required": true
+    },
+    "anchor": {
+      "type": "json",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true,
+      "maxLength": 5000
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "resolvedAt": {
+      "type": "datetime"
+    },
+    "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review-comment.review-comment"
+    }
+  }
+}

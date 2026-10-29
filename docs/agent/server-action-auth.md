@@ -58,7 +58,22 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
 
 ## Error codes
 
-Always `"unauthenticated"` or `"forbidden"`. No caller reads the error text.
+`"unauthenticated"` or `"forbidden"` from the gate, plus `"in_review"` (`REVIEW_FROZEN_ERROR` in `lib/review-roles.ts`) when the droplet is frozen for the caller. The lesson editor, `useDropletUpdate` and the fun fact generator read `"in_review"` to show the freeze message; nothing else reads the error text. The review checks can also return `"Not Found"` and `"Could not verify edit access."` (a failed lookup fails closed).
+
+## Review freeze
+
+While a droplet is in review, every one of its authors (any role, System Admin included) can read the draft but not change, review or publish it. Only a reviewer who isn't an author reviews it. Editing reopens when the reviewer sends feedback, when it's published, or when an author withdraws it (`withdrawFromReview`).
+
+- `lib/review-roles.ts` is client-safe (imports only `@/lib/globals`). `isReviewerFor(roles, inReview, isAuthor)` and `isFrozenFor(...)` are used by the sidebar and the server. Reviewer roles are System Admin and Content Editor (ODY-798, 2026-10-26). Not in review, a System Admin, or a Faculty author on their own droplet, publishes directly (known gap: an author can Withdraw and then publish; see the ODY-810 PR notes).
+- `lib/auth/review-freeze.ts` is server only and not a `"use server"` file. It reads the droplet fresh (`cache: "no-store"`, by numeric id through the list endpoint, through the lesson's or dataset's droplet where needed) and returns results; it never throws, so it is safe inside `withAuth` handlers. Entry points: `checkDropletContentWrite`, `checkLessonWrite`, `checkDatasetWrite`, `checkDropletUpdate`, `checkPublishDraft` and `getLessonReviewState`.
+- Write rights are an author of the droplet, or System Admin or Content Editor (the same people the draft layout lets in). Faculty write only their own droplets. Something with no droplet is writable by System Admin only. A lesson in several droplets needs rights on all of them and is frozen if any is.
+- `updateDroplet` refuses `inReview` and `afterReview` outright (ODY-804), and refuses `status` while in review. Outside review, `status` needs a reviewer; in review, only an unchanged `name` passes for an author.
+- The four workflow actions in `lib/requests/reviews.ts` (`submitForReview`, `withdrawFromReview`, `sendFeedback`, `publishWithReview`) are the only way `inReview` changes from the app (Strapi's core `create` route and the admin still can; see the PR notes), and an in-review draft publishes only through `publishWithReview` (`checkPublishDraft` refuses it with `in_review`). They reuse `loadDropletForWrite` and `isReviewerFor`: Submit and Withdraw need an author (`assertOwner`, no bypass roles); Send and Publish need a System Admin or Content Editor and refuse authors. The route decides state (409 for a repeat or a published droplet). No `PENDING_AUTH` entries were added.
+- `getReviewForDroplet` treats an author as a non-reviewer whatever their role (`isReviewerFor`): only sent/published reviews, confirmed scores, no AI fields. Write actions still gate on role alone (follow-up ODY-846).
+- `deleteLessonRecord` (`lib/requests/lesson-delete.ts`, no `"use server"`) is the raw delete for server callers (`deepDeleteDroplet`, publish). The guarded `deleteLesson` action wraps it.
+- `applyDropletUpdate` in `droplet.ts` is not exported and does no auth. Only call it from code that has already checked (`togglePresentationEnabled`, `setDropletHidden`, `updateDroplet`).
+- `getLessonLockStatus` returns `review: { inReview, isReviewer } | null`, and `acquireLessonLock` refuses a frozen caller, so `useEditingLock` never takes the lock for an author during review.
+- Tests mock `@/lib/auth/review-freeze` to `{ ok: true }` in files that don't care about auth (and set it again after any `jest.resetAllMocks()`).
 
 ## Roles come from Strapi, and the dev persona override
 

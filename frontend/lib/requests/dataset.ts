@@ -10,6 +10,12 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { datasetSchema, DatasetInput } from "../validations/dataset";
 import { z } from "zod";
+import { requireRole } from "../auth/require-role";
+import { withAuth } from "../auth/guards";
+import {
+  checkDatasetWrite,
+  checkDropletContentWrite,
+} from "../auth/review-freeze";
 import {
   resolveDocumentId,
   strapiEntryUrl,
@@ -49,57 +55,62 @@ export async function getDatasetsByDropletId(
 export async function createDataset(
   data: DatasetInput,
 ): Promise<{ ok: boolean; error: string | null; data: Dataset | null }> {
-  try {
-    const validated = datasetSchema.parse(data);
+  return withAuth([], async (user) => {
+    try {
+      const validated = datasetSchema.parse(data);
 
-    // Strapi v5 relation writes take a documentId, not the numeric id.
-    const droplet = await resolveDocumentId("droplets", validated.droplet);
+      const check = await checkDropletContentWrite(user, validated.droplet);
+      if (!check.ok) return { ok: false, error: check.error, data: null };
 
-    const response = await fetch(`${STRAPI_API_URL}/api/datasets`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-      body: JSON.stringify({ data: { ...validated, droplet } }),
-    });
+      // Strapi v5 relation writes take a documentId, not the numeric id.
+      const droplet = await resolveDocumentId("droplets", validated.droplet);
 
-    const responseData = await response.json();
+      const response = await fetch(`${STRAPI_API_URL}/api/datasets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        body: JSON.stringify({ data: { ...validated, droplet } }),
+      });
 
-    if (!response.ok || responseData.error) {
-      const errorMessage =
-        responseData.error?.message ?? "Failed to create dataset";
-      return { ok: false, error: errorMessage, data: null };
-    }
+      const responseData = await response.json();
 
-    revalidateTag(CACHE_TAGS.datasets);
-    revalidateTag(CACHE_TAGS.droplets);
+      if (!response.ok || responseData.error) {
+        const errorMessage =
+          responseData.error?.message ?? "Failed to create dataset";
+        return { ok: false, error: errorMessage, data: null };
+      }
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data) as Dataset,
-    };
-  } catch (err) {
-    if (err instanceof z.ZodError) {
+      revalidateTag(CACHE_TAGS.datasets);
+      revalidateTag(CACHE_TAGS.droplets);
+
+      return {
+        ok: true,
+        error: null,
+        data: flattenAttributes(responseData.data) as Dataset,
+      };
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return {
+          ok: false,
+          error: err.issues[0]?.message ?? "Validation failed",
+          data: null,
+        };
+      }
+      if (err instanceof StrapiEntryNotFoundError) {
+        // Same outcome as Strapi rejecting a non-existent droplet relation.
+        return { ok: false, error: "Failed to create dataset", data: null };
+      }
+      console.error(err);
       return {
         ok: false,
-        error: err.issues[0]?.message ?? "Validation failed",
+        error: "Database Error: Failed to create dataset.",
         data: null,
       };
     }
-    if (err instanceof StrapiEntryNotFoundError) {
-      // Same outcome as Strapi rejecting a non-existent droplet relation.
-      return { ok: false, error: "Failed to create dataset", data: null };
-    }
-    console.error(err);
-    return {
-      ok: false,
-      error: "Database Error: Failed to create dataset.",
-      data: null,
-    };
-  }
+  });
 }
 
 /**
@@ -109,6 +120,11 @@ export async function createDataset(
 export async function deleteDataset(
   datasetId: number,
 ): Promise<{ ok: boolean; error: string | null }> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error };
+  const check = await checkDatasetWrite(gate.user, datasetId);
+  if (!check.ok) return { ok: false, error: check.error };
+
   try {
     const response = await fetch(await strapiEntryUrl("datasets", datasetId), {
       method: "DELETE",

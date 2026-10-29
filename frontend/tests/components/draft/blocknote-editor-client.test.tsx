@@ -42,6 +42,7 @@ jest.mock("@blocknote/core", () => ({
     propSchema: config.propSchema,
     ...spec,
   })),
+  createBlockNoteExtension: jest.fn((options) => options),
 }));
 
 jest.mock("@/components/ui/blocknote/blocks/callout-block", () => ({
@@ -72,6 +73,7 @@ jest.mock("next-themes", () => ({
 jest.mock("@blocknote/react", () => ({
   useCreateBlockNote: jest.fn(() => ({
     document: [],
+    _tiptapEditor: { registerPlugin: jest.fn(), unregisterPlugin: jest.fn() },
     onChange: jest.fn(),
     dictionary: {},
   })),
@@ -184,6 +186,7 @@ describe("BlockNoteEditorClient", () => {
   it("should call onChange when content changes", async () => {
     const { useCreateBlockNote } = require("@blocknote/react");
     const mockEditor = {
+      _tiptapEditor: { registerPlugin: jest.fn(), unregisterPlugin: jest.fn() },
       document: [],
       onChange: jest.fn((callback) => {
         // Simulate a change
@@ -209,6 +212,7 @@ describe("BlockNoteEditorClient", () => {
     const { useCreateBlockNote } = require("@blocknote/react");
 
     const mockEditor = {
+      _tiptapEditor: { registerPlugin: jest.fn(), unregisterPlugin: jest.fn() },
       get document() {
         throw new Error("Test error");
       },
@@ -249,6 +253,7 @@ describe("BlockNoteEditorClient", () => {
     const { useCreateBlockNote } = require("@blocknote/react");
 
     const mockEditor = {
+      _tiptapEditor: { registerPlugin: jest.fn(), unregisterPlugin: jest.fn() },
       get document() {
         throw new Error("Cannot find node position");
       },
@@ -307,5 +312,63 @@ describe("BlockNoteEditorClient", () => {
     expect(editorContainer).toHaveClass("w-full");
     expect(editorContainer).toHaveClass("rounded-lg");
     expect(editorContainer).toHaveClass("border");
+  });
+
+  describe("review comment marks (ODY-806)", () => {
+    const anchor = {
+      id: "comment-1",
+      range: { field: "blocks", blockId: "b1", start: 0, end: 4, exact: true },
+    };
+
+    function fakeEditor() {
+      const view = {
+        state: {
+          schema: { marks: {} },
+          tr: { setMeta: jest.fn(() => "refresh-tr") },
+        },
+        dispatch: jest.fn(),
+      };
+      const editor = {
+        document: [],
+        onChange: jest.fn(),
+        dictionary: {},
+        prosemirrorView: view,
+        _tiptapEditor: {
+          registerPlugin: jest.fn(),
+          unregisterPlugin: jest.fn(),
+        },
+      };
+      require("@blocknote/react").useCreateBlockNote.mockReturnValue(editor);
+      return { editor, view };
+    }
+
+    it("creates the editor with the review anchors plugin", async () => {
+      fakeEditor();
+      render(
+        <BlockNoteEditorClient onChange={mockOnChange} anchors={[anchor]} />,
+      );
+
+      const { useCreateBlockNote } = require("@blocknote/react");
+      const options = useCreateBlockNote.mock.calls[0][0];
+      const extension = options.extensions.find(
+        (e: { key: string }) => e.key === "reviewAnchors",
+      );
+      expect(extension.plugins[0].spec.key.key).toMatch(/^anchors\$/);
+    });
+
+    it("redraws when the anchors change", async () => {
+      const { view } = fakeEditor();
+      const { rerender } = render(
+        <BlockNoteEditorClient onChange={mockOnChange} anchors={[]} />,
+      );
+      await waitFor(() => expect(view.dispatch).toHaveBeenCalled());
+      view.dispatch.mockClear();
+
+      rerender(
+        <BlockNoteEditorClient onChange={mockOnChange} anchors={[anchor]} />,
+      );
+
+      expect(view.dispatch).toHaveBeenCalledWith("refresh-tr");
+    });
   });
 });

@@ -1,0 +1,251 @@
+"use client";
+
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import type { ReviewAnchor, ReviewComment } from "@/types";
+import { stripHtmlTags } from "@/lib/utils";
+import {
+  FrozenOverview,
+  TITLE_CLASS,
+  type OverviewField,
+  type OverviewSection,
+} from "@/components/draft/metadata/frozen-overview";
+import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
+import { useDropletReviewComments } from "./review-comments-context";
+import {
+  commentCounts,
+  isWholeSection,
+  numberComments,
+} from "@/lib/review-comments";
+import { ReviewModeBar, type ReviewMode } from "./review-mode-bar";
+import { CommentLayer } from "./comment-layer";
+import { ReviewTextView } from "./review-text-view";
+import { OutdatedComments } from "./outdated-comments";
+import { CommentStrip } from "./comment-strip";
+import { SectionComments } from "./section-comments";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "./comment-keyboard";
+
+const escape = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const NONE: ReviewComment[] = [];
+const FIELDS: OverviewField[] = [
+  "name",
+  "description",
+  "overview",
+  "objective",
+];
+
+type OverviewReviewProps = Omit<
+  React.ComponentProps<typeof FrozenOverview>,
+  "renderField"
+> & {
+  dropletId: number;
+  /** The Overview's editors, for Edit mode */
+  children: ReactNode;
+};
+
+/**
+ * The Overview for a reviewer of a droplet in review (ODY-806, Task 8):
+ * Comment (the read-only Overview with comments on the text of its title,
+ * description, overview and learning objectives, and on any whole section
+ * from its heading), Read, or Edit (the editors). Text comments anchor by
+ * quote within each field; all are numbered across the Overview.
+ */
+export function OverviewReview({
+  droplet,
+  authors,
+  dropletId,
+  children,
+}: OverviewReviewProps) {
+  const router = useRouter();
+  const [mode, setMode] = useState<ReviewMode>("comment");
+  const stopEditing = () => {
+    // Send the editors' last change now, and once every save has finished,
+    // reload the page data so Comment mode shows the edits
+    void settleDropletUpdates().then(() => router.refresh());
+    setMode("comment");
+  };
+  const commenting = mode === "comment";
+  const reviewComments = useDropletReviewComments(dropletId, true);
+  const { review, add, edit, remove, resolve } = reviewComments;
+
+  const comments = useMemo(
+    () => reviewComments.comments.filter((c) => c.field !== "blocks"),
+    [reviewComments.comments],
+  );
+  const numbers = useMemo(() => numberComments(comments), [comments]);
+  // Each field's text comments and each section's whole ones, built once per
+  // change: a new list makes ReviewTextView rewrite its text, which would
+  // drop a selection being dragged out
+  const grouped = useMemo(() => {
+    const text = new Map<string, ReviewComment[]>();
+    const whole = new Map<string, ReviewComment[]>();
+    for (const c of comments) {
+      const into = isWholeSection(c.anchor) ? whole : text;
+      into.set(c.field, [...(into.get(c.field) ?? []), c]);
+    }
+    return { text, whole };
+  }, [comments]);
+  const [draft, setDraft] = useState<{
+    field: OverviewField;
+    anchor: ReviewAnchor;
+  } | null>(null);
+  const [litMarkId, setLitMarkId] = useState<string | null>(null);
+  const [outdated, setOutdated] = useState<
+    Record<OverviewField, ReviewComment[]>
+  >({ name: [], description: [], overview: [], objective: [] });
+
+  const html: Record<OverviewField, string> = useMemo(
+    () => ({
+      name: `<h1 class="${TITLE_CLASS}">${escape(droplet.name ?? "")}</h1>`,
+      description: `<p>${escape(stripHtmlTags(droplet.description ?? ""))}</p>`,
+      overview: droplet.overview ?? "",
+      objective: `<ul class="list-disc pl-5">${(
+        droplet.learningObjectives ?? []
+      )
+        .map((o) => `<li>${escape(o.objective)}</li>`)
+        .join("")}</ul>`,
+    }),
+    [
+      droplet.name,
+      droplet.description,
+      droplet.overview,
+      droplet.learningObjectives,
+    ],
+  );
+
+  const reportOutdated = useCallback(
+    (field: OverviewField) => (list: ReviewComment[]) =>
+      setOutdated((current) =>
+        current[field].length === list.length &&
+        current[field].every((c, i) => c.id === list[i].id)
+          ? current
+          : { ...current, [field]: list },
+      ),
+    [],
+  );
+  const reporters = useMemo(
+    () =>
+      Object.fromEntries(FIELDS.map((f) => [f, reportOutdated(f)])) as Record<
+        OverviewField,
+        (list: ReviewComment[]) => void
+      >,
+    [reportOutdated],
+  );
+  const outdatedIds = useMemo(
+    () => new Set(Object.values(outdated).flatMap((l) => l.map((c) => c.id))),
+    [outdated],
+  );
+  const canChange = !review || review.state === "open";
+
+  const renderField = (field: OverviewField, standard: ReactNode) => {
+    if (!commenting) return standard;
+    const fieldComments = grouped.text.get(field) ?? NONE;
+    return (
+      <CommentLayer
+        enabled
+        field={field}
+        comments={fieldComments}
+        numbers={numbers}
+        outdatedIds={outdatedIds}
+        blockFor={() => undefined}
+        canChange={canChange}
+        onPost={(anchor, body) => add({ field, lessonId: null, anchor, body })}
+        onEdit={edit}
+        onDelete={remove}
+        onResolve={resolve}
+        onDraftChange={(anchor) => setDraft(anchor ? { field, anchor } : null)}
+        litMarkId={litMarkId}
+        onLitChange={setLitMarkId}
+      >
+        <ReviewTextView
+          html={html[field]}
+          field={field}
+          comments={fieldComments}
+          reviewState={review?.state}
+          draftAnchor={draft?.field === field ? draft.anchor : null}
+          litMarkId={litMarkId}
+          onOutdated={reporters[field]}
+          testId={`overview-review-${field}`}
+        />
+      </CommentLayer>
+    );
+  };
+
+  const renderSection = (
+    section: OverviewSection,
+    title: string,
+    body: ReactNode,
+    standard: ReactNode,
+  ) => {
+    if (!commenting) return standard;
+    return (
+      <SectionComments
+        field={section}
+        title={title}
+        comments={grouped.whole.get(section) ?? NONE}
+        numbers={numbers}
+        canChange={canChange}
+        onPost={(anchor, body) =>
+          add({ field: section, lessonId: null, anchor, body })
+        }
+        onEdit={edit}
+        onDelete={remove}
+        onResolve={resolve}
+        litMarkId={litMarkId}
+        onLitChange={setLitMarkId}
+      >
+        {body}
+      </SectionComments>
+    );
+  };
+
+  const allOutdated = FIELDS.flatMap((f) => outdated[f]);
+
+  return (
+    <CommentKeyboardProvider>
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div className="mx-40">
+          <ReviewModeBar
+            mode={mode}
+            subject="overview"
+            onModeChange={setMode}
+            onEdit={() => setMode("edit")}
+            onStopEditing={stopEditing}
+          />
+        </div>
+        {mode === "edit" ? (
+          children
+        ) : (
+          <>
+            {commenting && (
+              <div className="mx-40 mb-4">
+                <CommentStrip
+                  {...commentCounts(comments, review?.state)}
+                  place="the Overview"
+                  isLoading={reviewComments.isLoading}
+                  loadError={!!reviewComments.loadError}
+                  sections
+                  keyboard={<CommentKeyboardButton />}
+                >
+                  <OutdatedComments comments={allOutdated} />
+                </CommentStrip>
+              </div>
+            )}
+            <FrozenOverview
+              droplet={droplet}
+              authors={authors}
+              renderField={renderField}
+              renderSection={renderSection}
+            />
+            <div className="pb-16" />
+          </>
+        )}
+      </div>
+    </CommentKeyboardProvider>
+  );
+}

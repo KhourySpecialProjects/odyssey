@@ -1,14 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getPath,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-  isContentEditor,
-} from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
@@ -68,14 +61,21 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableLesson } from "@/components/draft/sortable-lesson";
+import {
+  OpenCommentsBadge,
+  SortableLesson,
+} from "@/components/draft/sortable-lesson";
+import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
+import { isResolved } from "@/lib/review-comments";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
+import { isFrozenFor, isReviewerFor } from "@/lib/review-roles";
 
 export function Sidebar({
   user,
+  isAuthor,
   droplet,
   availableDroplets,
   expanded,
@@ -83,6 +83,8 @@ export function Sidebar({
   onRestartTour,
 }: {
   user: User;
+  /** The caller is an author of this droplet (any role). */
+  isAuthor: boolean;
   droplet: Pick<
     Droplet,
     | "id"
@@ -369,41 +371,68 @@ export function Sidebar({
     setMounted(true);
   }, []);
 
+  // A reviewer sees their open comments per lesson and on the Overview
+  const reviewComments = useSharedReviewComments();
+  const openComments = useMemo(() => {
+    const lessons = new Map<number, number>();
+    let overview = 0;
+    for (const comment of reviewComments?.comments ?? []) {
+      if (isResolved(comment)) continue;
+      if (comment.field !== "blocks") overview++;
+      else if (comment.lesson?.id) {
+        lessons.set(
+          comment.lesson.id,
+          (lessons.get(comment.lesson.id) ?? 0) + 1,
+        );
+      }
+    }
+    return { lessons, overview };
+  }, [reviewComments?.comments]);
+
   if (!mounted) return null;
 
   if (!user) return <UnauthorizedRoute />;
 
   const isDraft = droplet.status !== "published";
-  const isAdmin = isAuthorizedUserAdmin(user.roles);
-  const isEditor = isContentEditor(user.roles);
-  const isFaculty = isAuthorizedUserFaculty(user.roles);
-  const isCreator = isContentCreator(user.roles);
-  // Admin and Faculty can publish any draft; Content Editors only once it has
-  // been submitted for review. Whoever can publish an in-review draft can also
-  // send it back with requested changes.
+  // In review, only a reviewer who isn't an author publishes (with the review)
+  // or sends feedback; authors can withdraw. Outside review, Admin and Faculty
+  // authors publish directly, and other authors submit.
   const canPublish =
-    isDraft && (isAdmin || isFaculty || (isEditor && droplet.inReview));
-  const canRequestChanges =
-    isDraft && droplet.inReview && (isAdmin || isFaculty || isEditor);
+    isDraft && !droplet.inReview && isReviewerFor(user.roles, false, isAuthor);
+  const canReview =
+    isDraft && !!droplet.inReview && isReviewerFor(user.roles, true, isAuthor);
+  const canWithdrawReview = isDraft && !!droplet.inReview && isAuthor;
+
   const canRequestReview =
-    isDraft && !droplet.inReview && isCreator && !canPublish;
+    isDraft && !droplet.inReview && isAuthor && !canPublish;
+  const isFrozen =
+    isDraft && isFrozenFor(user.roles, droplet.inReview, isAuthor);
 
   const actionButtons: Pick<
     Parameters<typeof ContentActionButton>[0],
     "actionType" | "buttonText"
   >[] = [];
+  // An edit draft overwrites its live droplet when published
+  const publishLabel = droplet.originalDropletId
+    ? "Publish changes"
+    : "Publish";
   if (canPublish) {
-    // An edit draft overwrites its live droplet when published
     actionButtons.push(
       droplet.originalDropletId
-        ? { actionType: "publishDraft", buttonText: "Publish changes" }
-        : { actionType: "publish", buttonText: "Publish" },
+        ? { actionType: "publishDraft", buttonText: publishLabel }
+        : { actionType: "publish", buttonText: publishLabel },
     );
   }
-  if (canRequestChanges) {
+  if (canReview) {
+    actionButtons.push(
+      { actionType: "publishWithReview", buttonText: publishLabel },
+      { actionType: "sendFeedback", buttonText: "Send feedback" },
+    );
+  }
+  if (canWithdrawReview) {
     actionButtons.push({
-      actionType: "requestChanges",
-      buttonText: "Request changes",
+      actionType: "withdrawReview",
+      buttonText: "Withdraw from review",
     });
   }
   if (canRequestReview) {
@@ -483,40 +512,42 @@ export function Sidebar({
                   <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
                 </span>
               </button>
-              <div id="tour-auto-format">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {hasAutoFormatted ? (
-                        <button
-                          aria-disabled="true"
-                          onClick={(e) => e.preventDefault()}
-                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
-                        >
-                          <IconLayoutRows className="h-5 w-5" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setShowAutoFormatConfirm(true)}
-                          disabled={isAutoFormatting}
-                          className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
-                        >
-                          {isAutoFormatting ? (
-                            <IconLoader2 className="h-5 w-5 animate-spin" />
-                          ) : (
+              {!isFrozen && (
+                <div id="tour-auto-format">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {hasAutoFormatted ? (
+                          <button
+                            aria-disabled="true"
+                            onClick={(e) => e.preventDefault()}
+                            className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                          >
                             <IconLayoutRows className="h-5 w-5" />
-                          )}
-                        </button>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {hasAutoFormatted
-                        ? "Auto-format limit reached (10/10)"
-                        : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setShowAutoFormatConfirm(true)}
+                            disabled={isAutoFormatting}
+                            className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
+                          >
+                            {isAutoFormatting ? (
+                              <IconLoader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <IconLayoutRows className="h-5 w-5" />
+                            )}
+                          </button>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {hasAutoFormatted
+                          ? "Auto-format limit reached (10/10)"
+                          : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
               <div id="tour-present">
                 <TooltipProvider>
                   <Tooltip>
@@ -594,6 +625,11 @@ export function Sidebar({
               <p className="mt-6 px-4 pb-3 text-2xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
+              {isDraft && droplet.inReview && (
+                <p className="-mt-3 px-4 pb-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  In review
+                </p>
+              )}
 
               <Link
                 id="tour-overview"
@@ -617,6 +653,9 @@ export function Sidebar({
                 <span className="text-sm leading-none font-medium">
                   Overview
                 </span>
+                {!!openComments.overview && (
+                  <OpenCommentsBadge count={openComments.overview} />
+                )}
               </Link>
               <AlertDialog
                 open={showAutoFormatConfirm}
@@ -651,15 +690,17 @@ export function Sidebar({
               </AlertDialog>
 
               {/* Add lesson section */}
-              <div id="tour-add-lesson">
-                <AddLesson
-                  droplet={droplet}
-                  onAddLesson={addLessonCallback}
-                  onAddLessons={addLessonsCallback}
-                  availableDroplets={availableDroplets}
-                  currentLessonCount={dropletLessons.length}
-                />
-              </div>
+              {!isFrozen && (
+                <div id="tour-add-lesson">
+                  <AddLesson
+                    droplet={droplet}
+                    onAddLesson={addLessonCallback}
+                    onAddLessons={addLessonsCallback}
+                    availableDroplets={availableDroplets}
+                    currentLessonCount={dropletLessons.length}
+                  />
+                </div>
+              )}
 
               {/* Sortable lessons list */}
               <div id="tour-lessons-list">
@@ -679,6 +720,8 @@ export function Sidebar({
                           lesson={lesson}
                           droplet={droplet}
                           pathname={pathname}
+                          dragDisabled={isFrozen}
+                          openComments={openComments.lessons.get(lesson.id)}
                         />
                       ))}
                     </ul>
@@ -739,8 +782,8 @@ export function Sidebar({
                 />
               </button>
             </div>
-            {/* Wraps so a long action label ("Submit for review", "Request
-                changes") gets its own full-width row instead of overflowing
+            {/* Wraps so a long action label ("Submit for review", "Send
+                feedback") gets its own full-width row instead of overflowing
                 the sidebar */}
             <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link

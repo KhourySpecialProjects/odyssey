@@ -143,6 +143,11 @@
     "inReview": {
       "type": "boolean"
     },
+    "reviewRound": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
     "afterReview": {
       "type": "text"
     },

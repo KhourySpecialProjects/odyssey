@@ -73,6 +73,7 @@ export const GROUP = {
 // Record<StrapiCollection, true> fails to compile when a collection is added without updating this list.
 const COLLECTIONS: Record<StrapiCollection, true> = {
   "access-requests": true,
+  "ai-scoring-runs": true,
   announcements: true,
   "authorized-users": true,
   "authorized-user-roles": true,
@@ -90,6 +91,10 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   notes: true,
   playlists: true,
   reports: true,
+  "review-comments": true,
+  "review-criteria": true,
+  "review-scores": true,
+  reviews: true,
   tags: true,
   voyages: true,
   "voyage-enrollments": true,
@@ -186,34 +191,54 @@ const dropletEnt = (id: number, extra: Record<string, unknown> = {}) =>
     ...extra,
   });
 
+// What the review-freeze lookups read: a draft droplet (not in review) in a lesson.
+const FREEZE_DROPLET = ent(1, {
+  name: "Sentinel droplet",
+  inReview: false,
+  status: "draft",
+  authorized_users: rel(),
+});
+const FREEZE_LOOKUPS: Route[] = [
+  ["GET", /^\/lessons$/, list(ent(1, { droplets: rel(FREEZE_DROPLET) }))],
+  ["GET", /^\/droplets$/, list(FREEZE_DROPLET)],
+];
+
 const DUPLICATE_DROPLET = routes([
   ME_ROUTE,
   ["GET", /^\/droplets$/, list(), /originalDropletId/],
   ["GET", /^\/droplets$/, list(dropletEnt(1))],
 ]);
 
-const PUBLISH_DRAFT = routes([
-  ME_ROUTE,
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(1, {
-        status: "draft",
-        lessons: rel(lessonEnt(5, "v1"), lessonEnt(7, "v2")),
-      }),
-    ),
-    /id\]\[\$eq\]=1(&|$)/,
-  ],
-  [
-    "GET",
-    /^\/droplets$/,
-    list(
-      dropletEnt(2, { lessons: rel(lessonEnt(6, "v1"), lessonEnt(8, "v1")) }),
-    ),
-    /id\]\[\$eq\]=2(&|$)/,
-  ],
-  ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
+const REVIEW_ROW = ent(5, {
+  round: 1,
+  key: "1:1:1",
+  state: "open",
+  droplet: { data: ent(1) },
+  reviewer: { data: ent(1) },
+});
+const REVIEW_COMMENT_ROW = ent(7, {
+  field: "description",
+  body: "Sentinel comment",
+  author: { data: ent(1) },
+  review: { data: ent(5, { state: "open", droplet: { data: ent(1) } }) },
+});
+
+const REVIEW_OPEN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["POST", /^\/reviews$/, { data: REVIEW_ROW }],
+]);
+
+const REVIEW_WRITE_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { value: 3 }))],
+  ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
+]);
+
+const MY_REVIEW_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
 ]);
 
 type Mod = Record<string, unknown>;
@@ -240,12 +265,15 @@ export const MODULE_PATHS: Record<string, string> = {
   galleries: "@/lib/requests/galleries",
   groups: "@/lib/requests/groups",
   highlights: "@/lib/requests/highlights",
+  "droplet-authors": "@/lib/requests/droplet-authors",
+  "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
+  reviews: "@/lib/requests/reviews",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -390,33 +418,34 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call("getInReviewDroplets", (m) => m.getInReviewDroplets()),
     call("getRandomFunFactDroplet", (m) => m.getRandomFunFactDroplet()),
     call("getFavoritedDropletIds", (m) => m.getFavoritedDropletIds(1)),
-    call("updateDroplet", (m) =>
-      m.updateDroplet(
-        1,
-        {
-          name: "Sentinel droplet",
-          slug: SLUG,
-          focusArea: "technical",
-          type: "knowledge",
-          difficulty: "beginner",
-          isHidden: false,
-          presentationEnabled: true,
-          learningObjectives: ["Learn"],
-          nextSteps: [{ label: "Next", url: "https://example.com" }],
-          description: "d",
-          overview: "o",
-          authorized_users: [1],
-          tagIds: [1],
-          prerequisiteIds: [2],
-          postrequisiteIds: [3],
-          lessons: [{ id: 1 }],
-          datasets: [1] as never,
-          inReview: false,
-          status: "draft",
-          afterReview: "",
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "updateDroplet",
+      (m) =>
+        m.updateDroplet(
+          1,
+          {
+            name: "Sentinel droplet",
+            slug: SLUG,
+            focusArea: "technical",
+            type: "knowledge",
+            difficulty: "beginner",
+            isHidden: false,
+            presentationEnabled: true,
+            learningObjectives: ["Learn"],
+            nextSteps: [{ label: "Next", url: "https://example.com" }],
+            description: "d",
+            overview: "o",
+            authorized_users: [1],
+            tagIds: [1],
+            prerequisiteIds: [2],
+            postrequisiteIds: [3],
+            lessons: [{ id: 1 }],
+            datasets: [1] as never,
+            status: "draft",
+          },
+          { regenerateSlug: false },
+        ),
+      routes([["GET", /^\/droplets$/, list(FREEZE_DROPLET)]]),
     ),
     call(
       "createDroplet",
@@ -432,11 +461,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       routes([ME_ROUTE]),
     ),
     call("duplicateDroplet", (m) => m.duplicateDroplet(1), DUPLICATE_DROPLET),
-    call(
-      "publishDraftToOriginal",
-      (m) => m.publishDraftToOriginal(1, 2),
-      PUBLISH_DRAFT,
-    ),
     call(
       "favoriteDroplet",
       (m) => m.favoriteDroplet(DROPLET, true),
@@ -561,19 +585,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
   ]),
   highlights: defineModule<typeof import("@/lib/requests/highlights")>([
-    call("getHighlights", (m) => m.getHighlights(1, "text")),
     call("createHighlight", (m) =>
       m.createHighlight({
-        data: {
-          text: "t",
-          color: "yellow",
-          position: { x: 1 },
-          yLevel: 1.5,
-          blockId: 1,
-          lesson: 1,
-          authorized_user: 1,
-          note: 1,
-        },
+        text: "t",
+        color: "#fff300",
+        position: { start: 0, end: 1 },
+        blockId: 1,
+        lessonId: 1,
       }),
     ),
     call("getHighlightsByDroplet", (m) => m.getHighlightsByDroplet(1, 1)),
@@ -584,38 +602,55 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   ]),
   lesson: defineModule<typeof import("@/lib/requests/lesson")>([
     call("getLessonBySlug", (m) => m.getLessonBySlug(SLUG)),
-    call("updateLesson", (m) =>
-      m.updateLesson(
-        1,
-        {
-          name: "Sentinel lesson",
-          slug: SLUG,
-          blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
-          blocksV2: [{ type: "paragraph", content: "x" }],
-          blocksVersion: "v1",
-          orderIndex: 0,
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "getLatestLessonContent",
+      (m) => m.getLatestLessonContent(1),
+      routes(FREEZE_LOOKUPS),
     ),
-    call("addLesson", (m) =>
-      m.addLesson({
-        name: "Sentinel lesson",
-        dropletId: 1,
-        orderIndex: 1,
-        blocksV2: [{ type: "paragraph", content: "x" }],
-        blocksVersion: "v2",
-      }),
+    call(
+      "updateLesson",
+      (m) =>
+        m.updateLesson(
+          1,
+          {
+            name: "Sentinel lesson",
+            slug: SLUG,
+            blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
+            blocksV2: [{ type: "paragraph", content: "x" }],
+            blocksVersion: "v1",
+            orderIndex: 0,
+          },
+          { regenerateSlug: false },
+        ),
+      routes(FREEZE_LOOKUPS),
+    ),
+    call(
+      "addLesson",
+      (m) =>
+        m.addLesson({
+          name: "Sentinel lesson",
+          dropletId: 1,
+          orderIndex: 1,
+          blocksV2: [{ type: "paragraph", content: "x" }],
+          blocksVersion: "v2",
+        }),
+      routes(FREEZE_LOOKUPS),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(5, 1, 3),
-      routes([["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }],
+      ]),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(6, 1, 4),
-      routes([["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }],
+      ]),
     ),
   ]),
   notes: defineModule<typeof import("@/lib/requests/notes")>([
@@ -659,6 +694,44 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       }),
     ),
   ]),
+  reviews: defineModule<typeof import("@/lib/requests/reviews")>([
+    call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
+    call(
+      "addComment",
+      (m) =>
+        m.addComment({
+          reviewId: 5,
+          lessonId: 6,
+          field: "blocks",
+          anchor: {
+            v: 1,
+            field: "blocks",
+            blockId: "b1",
+            quote: "q",
+            prefix: "",
+            suffix: "",
+          },
+          body: "Sentinel comment",
+        }),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("editComment", (m) => m.editComment(7, "Edited"), REVIEW_WRITE_ROUTES),
+    call("deleteComment", (m) => m.deleteComment(7), REVIEW_WRITE_ROUTES),
+    call(
+      "resolveComment",
+      (m) => m.resolveComment(7, true),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewForDroplet",
+      (m) => m.getReviewForDroplet(1),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
+  ]),
+  "droplet-authors": defineModule<
+    typeof import("@/lib/requests/droplet-authors")
+  >([call("getAuthorNames", (m) => m.getAuthorNames([1, 2]))]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([
     call("getTags", (m) => m.getTags()),
     call("getTagBySlug", (m) => m.getTagBySlug(SLUG)),
@@ -746,6 +819,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
 };
 
 const WRITE = "write: not in curated set";
+const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
@@ -764,6 +838,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     setDropletHidden: WRITE,
     createNewTag: WRITE,
     updateDropletLearningObjective: WRITE,
+    publishDraftToOriginal: "custom publish-edit route (ODY-800)",
   },
   enrollment: {
     changeEnrollmentRating: WRITE,
@@ -805,7 +880,8 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     archiveGroup: WRITE,
     setGroupArchivedForMe: WRITE,
   },
-  highlights: { deleteHighlight: WRITE },
+  highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
+  "lesson-delete": { deleteLessonRecord: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",
@@ -840,6 +916,14 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     fetchWeeklyNewUsers: "PostHog only, no Strapi",
     fetchLessonScrollDepth: "PostHog only, no Strapi",
     fetchAvgSessionDuration: "PostHog only, no Strapi",
+  },
+  reviews: {
+    saveReviewScore: "custom review-score upsert route (ODY-803)",
+    acceptAiScores: "custom review-score accept-ai route (ODY-803)",
+    submitForReview: REVIEW_WORKFLOW,
+    withdrawFromReview: REVIEW_WORKFLOW,
+    sendFeedback: REVIEW_WORKFLOW,
+    publishWithReview: REVIEW_WORKFLOW,
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

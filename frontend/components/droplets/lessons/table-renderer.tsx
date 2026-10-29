@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { useTheme } from "next-themes";
 
@@ -51,6 +51,16 @@ interface TableRendererProps {
 export function TableRenderer({ tableData }: TableRendererProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  // React 19 sets a cell's HTML again whenever its {__html} object is new,
+  // which would wipe the highlights drawn in it (on a theme change, say), so
+  // they're made once per table
+  const cellHtml = useMemo(
+    () =>
+      tableData.rows?.map((row) =>
+        row.cells.map((cell) => ({ __html: DOMPurify.sanitize(cell.content) })),
+      ) ?? [],
+    [tableData],
+  );
 
   // Render table directly from data to have full control over styling
   const renderTableFromData = () => {
@@ -76,7 +86,6 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                   cell.backgroundColor,
                   isDark,
                 );
-                const sanitizedContent = DOMPurify.sanitize(cell.content);
                 return (
                   <th
                     key={cellIndex}
@@ -84,7 +93,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                     style={{
                       backgroundColor: bgColor,
                     }}
-                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+                    dangerouslySetInnerHTML={cellHtml[0][cellIndex]}
                   />
                 );
               })}
@@ -106,7 +115,6 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                     cell.backgroundColor,
                     isDark,
                   );
-                  const sanitizedContent = DOMPurify.sanitize(cell.content);
                   return (
                     <td
                       key={cellIndex}
@@ -114,7 +122,9 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                       style={{
                         backgroundColor: bgColor,
                       }}
-                      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+                      dangerouslySetInnerHTML={
+                        cellHtml[actualRowIndex][cellIndex]
+                      }
                     />
                   );
                 })}

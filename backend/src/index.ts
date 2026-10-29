@@ -1,5 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import { markClaimedVoyageNodesAuthored } from './lib/lifecycle-utils';
+import { seedReviewCriteria } from './lib/review-criteria-seed';
+import { backfillReviewRounds } from './lib/review-round-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
   "api::droplet.droplet.update",
@@ -42,6 +44,22 @@ export default {
       if (count > 0) strapi.log.info(`Marked ${count} claimed voyage node(s) as authored`);
     } catch (error) {
       strapi.log.error('Could not mark published voyage claims as authored', error);
+    }
+
+    // Seeds the starter rubric only into an empty table; never blocks startup.
+    try {
+      const seeded = await seedReviewCriteria();
+      if (seeded > 0) strapi.log.info(`Seeded ${seeded} review criteria`);
+    } catch (error) {
+      strapi.log.error('Could not seed review criteria', error);
+    }
+
+    // Droplets already in review start at round 1; never blocks startup.
+    try {
+      const count = await backfillReviewRounds();
+      if (count > 0) strapi.log.info(`Backfilled reviewRound on ${count} in-review droplet(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill review rounds', error);
     }
   },
 };

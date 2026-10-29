@@ -4,12 +4,17 @@
  * Every `next: { tags }` fetch option and every `revalidateTag()` call should
  * reference constants from this file so invalidation stays consistent.
  *
+ * publishDraftToOriginal and the four review workflow actions also flush on a
+ * 5xx or network error (the write may have committed), never on a 4xx.
+ *
  * ── Tag → Invalidated by ──────────────────────── Revalidate ────────────
  *
  * droplets        createDroplet, updateDroplet, deepDeleteDroplet,          900s
  *                 duplicateDroplet, publishDraftToOriginal, addLesson,
  *                 updateLesson, deleteLesson, duplicateLessonToDroplet,
- *                 updateDropletFunFact, updateDropletLearningObjective
+ *                 updateDropletFunFact, updateDropletLearningObjective,
+ *                 submitForReview, withdrawFromReview, sendFeedback,
+ *                 publishWithReview
  *                 (favoriteDroplet does NOT invalidate: explore hearts read
  *                 the per-user favorites-{userId} tag instead)
  *                 (updateDropletAverageRating does NOT invalidate: the
@@ -27,34 +32,45 @@
  *                   updateCompletionDate also do, but have no callers)
  *                 ↳ Global tag "enrollments" (sweeps all users):
  *                   updateDroplet (incl. draft saves), deepDeleteDroplet,
- *                   duplicateDroplet, publishDraftToOriginal, addLesson,
- *                   deleteLesson, duplicateLessonToDroplet
+ *                   duplicateDroplet, publishDraftToOriginal,
+ *                   publishWithReview, addLesson, deleteLesson,
+ *                   duplicateLessonToDroplet
  *                 ↳ shared by all presets: minimal, withLessonIds,
  *                   dashboard, favorites (see enrollment-populates.ts)
  * playlists       createPlaylist, updatePlaylist, deletePlaylist,           900s
  *                 archivePlaylist, togglePlaylistEnrollment,
  *                 enrollInPlaylist, updateDroplet (not draft saves),
- *                 publishDraftToOriginal
+ *                 publishDraftToOriginal, publishWithReview
  *                 (playlist reads carry authorized_users, which is how the
  *                 playlist page decides "enrolled" — so enrollment toggles
  *                 still sweep this tag)
  * groups          createGroup, updateGroup, updateGroupMembers,             900s
  *                 deleteGroup, archiveGroup, setGroupArchivedForMe,
- *                 deletePlaylist, updateDroplet (not draft saves)
+ *                 deletePlaylist, updateDroplet (not draft saves),
+ *                 publishDraftToOriginal, publishWithReview
  * authors         createDroplet, updateDroplet (draft saves only when       900s
  *                 authorized_users changes), deepDeleteDroplet,
  *                 duplicateDroplet, publishDraftToOriginal,
- *                 deletePlaylist, deleteGroup, approveCreationRequest,
+ *                 publishWithReview, deletePlaylist, deleteGroup,
+ *                 approveCreationRequest,
  *                 updateUserInfo (only when name/bio/photo/links/roles/
  *                 isEnabled change), deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
- *                 deleteNote
- * highlights      createHighlight, deleteHighlight                          900s
+ *                 deleteNote, updateHighlight, deleteHighlight (notes show
+ *                 their highlight). getHighlightsByAuthorizedUserAndLesson
+ *                 also carries it, since it populates each highlight's note.
+ * highlights      createHighlight, updateHighlight, deleteHighlight         900s
  * lesson          addLesson, updateLesson, deleteLesson,                    900s
  *                 duplicateLessonToDroplet, deepDeleteDroplet,
- *                 publishDraftToOriginal
+ *                 publishDraftToOriginal, publishWithReview
  *                 (getLessonBySlug carries only this tag — it returns no
  *                 droplet data, so droplet-level mutations don't flush it)
+ * voyages         publishDraftToOriginal, publishWithReview,                900s
+ *                 updateDroplet (on publish),
+ *                 createVoyageWithNodes, publishVoyage,
+ *                 updateVoyageWithNodes, deleteVoyage, archiveVoyage,
+ *                 claimNodeForUser, unclaimVoyageDropletNode,
+ *                 approveCreationRequest
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
@@ -63,7 +79,8 @@
  *                   createFriendAnnouncement, createKudosAnnouncement,
  *                   createPlaylistAnnouncement, createGroupAnnouncement,
  *                   createDropletAnnouncement, createSystemAnnouncement,
- *                   createSystemBroadcast, markAnnouncementRead/Unread
+ *                   createSystemBroadcast, sendFeedback,
+ *                   publishWithReview, markAnnouncementRead/Unread
  *                   (friend/kudos only — those rows show in friends' feeds)
  *                 ↳ Per-user tag "user-feed-{userId}" (fetchAnnouncements):
  *                   markAnnouncementRead/Unread on a targeted system
@@ -96,7 +113,9 @@
  *                 ↳ Global tag "user-content" (co-authors / playlist
  *                   creators affected): updateDroplet, deepDeleteDroplet,
  *                   updatePlaylist, deletePlaylist, archivePlaylist,
- *                   publishDraftToOriginal (via finally), voyage mutations
+ *                   publishDraftToOriginal, voyage mutations,
+ *                   submitForReview, withdrawFromReview, sendFeedback,
+ *                   publishWithReview
  *                 (droplets + playlists on /my-content)
  * user-dashboard  Two-level tag system (getCachedUserDashboardFull):         900s
  *                 ↳ Per-user tag "user-dashboard-{userId}":
@@ -107,7 +126,7 @@
  *                   createGroup, updateGroup, updateGroupMembers,
  *                   deleteGroup, archiveGroup, updateDroplet (not draft
  *                   saves), deepDeleteDroplet, archiveVoyage,
- *                   publishDraftToOriginal (via finally)
+ *                   publishDraftToOriginal, publishWithReview
  *                 (playlists + groups on /dashboard)
  * voyage-enrollments Two-level tag system:                                   900s
  *                 ↳ Per-user tag "voyage-enrollments-{userId}":
@@ -127,6 +146,13 @@
  *                 "groups" tag, since getUserGroups carries both.
  * favorites      Per-user tag "favorites-{userId}"                          900s
  *                 (getFavoritedDropletIds, explore hearts): favoriteDroplet
+ * review          Per-droplet tag "review-{dropletId}": read by              900s
+ *                 getReviewForDroplet; invalidated by getOrOpenReview
+ *                 (create), addComment, editComment, deleteComment,
+ *                 resolveComment, submitForReview, withdrawFromReview,
+ *                 sendFeedback, publishWithReview and publishDraftToOriginal
+ *                 (both also flush the live droplet's tag; ODY-803 adds
+ *                 its own)
  */
 
 export const CACHE_TAGS = {
@@ -166,4 +192,7 @@ export const CACHE_TAGS = {
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
+
+  // Per-droplet (scoped to one droplet)
+  review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores
 };

@@ -35,6 +35,7 @@ import {
   deleteLesson,
   updateLesson,
   revalidateLesson,
+  getLatestLessonContent,
 } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
 import { BlockNoteEditor } from "./blocknote-editor";
@@ -43,7 +44,41 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
+import { useDropletReviewComments } from "@/components/draft/review/review-comments-context";
+import {
+  ReviewModeBar,
+  type ReviewMode,
+} from "@/components/draft/review/review-mode-bar";
+import {
+  blockTypes,
+  blocksSpanned,
+  commentCounts,
+  commentMarks,
+  commentsOnLesson,
+  decorateMarks,
+  draftMarkIn,
+  numberComments,
+} from "@/lib/review-comments";
+import { blockNoteContent } from "@/lib/anchors/content";
+import type { DrawnAnchor } from "@/lib/anchors/editor";
+import { OutdatedComments } from "@/components/draft/review/outdated-comments";
+import { CommentStrip } from "@/components/draft/review/comment-strip";
+import {
+  CommentKeyboardButton,
+  CommentKeyboardProvider,
+} from "@/components/draft/review/comment-keyboard";
+import { CommentLayer } from "@/components/draft/review/comment-layer";
+import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
+import type { ReviewAnchor, ReviewComment } from "@/types";
+
+const NO_MARKS: DrawnAnchor[] = [];
 import { IconLock } from "@tabler/icons-react";
+import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
+
+const NOTICE_MS = 8_000;
+
+const REVIEW_FROZEN_TOAST =
+  "This droplet is in review, so your last change wasn't saved.";
 
 export interface BaseBlock {
   __component: string;
@@ -68,22 +103,75 @@ export interface OpenEndedQuizBlock extends BaseBlock {
 interface LessonRendererProps {
   lesson: Lesson;
   dropletSlug: string;
+  /** The draft's id, for the reviewer's comments (ODY-806) */
+  dropletId?: number;
   datasets?: Dataset[];
 }
 
 export function LessonRenderer({
   lesson,
   dropletSlug,
+  dropletId,
   datasets = [],
 }: LessonRendererProps) {
   const router = useRouter();
+  // The hook calls this after it takes a lock on a copy that may be old. It is
+  // defined further down, once the state it replaces exists.
+  const refreshLessonRef = useRef<() => Promise<boolean>>(async () => false);
+  const refreshForLock = useCallback(() => refreshLessonRef.current(), []);
   const {
     isOwnLock,
     lockedBy,
     isLoading: lockLoading,
     error: lockError,
-  } = useEditingLock(lesson.id);
-  const isReadOnly = lockLoading || !isOwnLock;
+    inReview = false,
+    isReviewer = false,
+    reviewEnded = false,
+    startEditing,
+    stopEditing,
+    markFrozen,
+    isRefreshing = false,
+    tookOver = false,
+    tookOverFrom = null,
+  } = useEditingLock(lesson.id, refreshForLock);
+  const frozen = inReview && !isReviewer;
+  const isReadOnly = lockLoading || !isOwnLock || frozen;
+
+  // A reviewer comments or reads without the lock, or takes it to edit (ODY-806)
+  const isReviewing = !reviewEnded && inReview && isReviewer && !lockLoading;
+  const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
+  const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
+  const reviewComments = useDropletReviewComments(dropletId, isReviewing);
+  const lessonComments = useMemo(
+    () => commentsOnLesson(reviewComments.comments, lesson.id),
+    [reviewComments.comments, lesson.id],
+  );
+  const showCommentLayer = isReviewing && reviewMode === "comment";
+
+  // Kept in refs so handleSaveResult stays stable and can cancel debounces
+  // that are created after it.
+  const markFrozenRef = useRef(markFrozen);
+  markFrozenRef.current = markFrozen;
+  const cancelSavesRef = useRef<() => void>(() => {});
+  // Read in effect cleanups, which run after the render that set it.
+  const discardSavesRef = useRef(false);
+  discardSavesRef.current = frozen || reviewEnded;
+
+  /**
+   * Handles the result of every lesson write. A refused write (the droplet went
+   * into review) freezes the editor, cancels pending saves, shows one info
+   * toast and is never retried. Returns true when the result was that refusal.
+   */
+  const handleSaveResult = useCallback(
+    (response: { error?: unknown } | null | undefined) => {
+      if (response?.error !== REVIEW_FROZEN_ERROR) return false;
+      markFrozenRef.current?.();
+      cancelSavesRef.current();
+      toast.info(REVIEW_FROZEN_TOAST, { id: "review-frozen" });
+      return true;
+    },
+    [],
+  );
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(
@@ -93,13 +181,109 @@ export function LessonRenderer({
   const [name, setName] = useState(lesson.name);
   const [isEditingName, setIsEditingName] = useState(false);
 
-  // Check if lesson is truly new (empty from props and no blocksV2)
-  const isLessonEmpty =
-    (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
-
   const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
     lesson.blocksVersion || "v1",
   );
+  // BlockNote and the classic blocks mount once per content version: a refresh
+  // after a lock takeover bumps it, which remounts them on the latest content.
+  const [blocksV2, setBlocksV2] = useState<unknown>(lesson.blocksV2);
+  const [contentVersion, setContentVersion] = useState(0);
+
+  // Each comment found in the current content, or listed as outdated
+  const anchorContent = useMemo(
+    () => ({
+      blocks: blockNoteContent(
+        Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : [],
+      ),
+    }),
+    [blocksV2],
+  );
+  const marks = useMemo(
+    () =>
+      commentMarks(lessonComments, anchorContent, reviewComments.review?.state),
+    [lessonComments, anchorContent, reviewComments.review?.state],
+  );
+  // The text a comment is being written for stays marked while the reviewer
+  // types, and hovering a tag or a mark lights the mark
+  const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
+  const [litMarkId, setLitMarkId] = useState<string | null>(null);
+  const drawnMarks = useMemo(
+    () =>
+      decorateMarks(
+        marks.drawn,
+        litMarkId,
+        draftMarkIn(anchorContent, draftAnchor),
+      ),
+    [marks.drawn, litMarkId, draftAnchor, anchorContent],
+  );
+  const commentNumbers = useMemo(
+    () => numberComments(lessonComments),
+    [lessonComments],
+  );
+  // A Classic lesson finds its outdated comments once its text is on the page
+  const [classicOutdated, setClassicOutdated] = useState<ReviewComment[]>([]);
+  const handleClassicOutdated = useCallback((list: ReviewComment[]) => {
+    setClassicOutdated((current) =>
+      current.length === list.length &&
+      current.every((c, i) => c.id === list[i].id)
+        ? current
+        : list,
+    );
+  }, []);
+  const outdatedComments =
+    editorVersion === "v2" ? marks.outdated : classicOutdated;
+  const outdatedIds = useMemo(
+    () => new Set(outdatedComments.map((c) => c.id)),
+    [outdatedComments],
+  );
+  const blockTypeById = useMemo(
+    () =>
+      blockTypes(Array.isArray(blocksV2) ? (blocksV2 as BlockNoteBlock[]) : []),
+    [blocksV2],
+  );
+  const blockFor = useCallback(
+    (blockId: string) => {
+      const text = anchorContent.blocks.find((b) => b.id === blockId)?.text;
+      return text === undefined
+        ? undefined
+        : { type: blockTypeById.get(blockId), text };
+    },
+    [anchorContent, blockTypeById],
+  );
+  const blocksFor = useCallback(
+    (anchor: ReviewAnchor) => blocksSpanned(anchorContent, anchor),
+    [anchorContent],
+  );
+  // Comments change only while the review is open (or not opened yet)
+  const canChangeComments =
+    !reviewComments.review || reviewComments.review.state === "open";
+  const { add: addReviewComment } = reviewComments;
+  const postComment = useCallback(
+    (anchor: ReviewAnchor, body: string) =>
+      addReviewComment({ field: "blocks", lessonId: lesson.id, anchor, body }),
+    [addReviewComment, lesson.id],
+  );
+  const commentLayerProps = {
+    enabled: showCommentLayer,
+    field: "blocks" as const,
+    comments: lessonComments,
+    numbers: commentNumbers,
+    outdatedIds,
+    blockFor,
+    blocksFor,
+    canChange: canChangeComments,
+    onPost: postComment,
+    onEdit: reviewComments.edit,
+    onDelete: reviewComments.remove,
+    onResolve: reviewComments.resolve,
+    onDraftChange: setDraftAnchor,
+    litMarkId,
+    onLitChange: setLitMarkId,
+  };
+
+  // Check if the lesson is truly new. Read from state, not props: after a lock
+  // takeover the props are the copy from when the page loaded.
+  const isLessonEmpty = (blocks?.length === 0 || !blocks) && !blocksV2;
 
   // Show toggle button if:
   // 1. Lesson is truly empty (new lesson), OR
@@ -118,6 +302,7 @@ export function LessonRenderer({
       (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
     if (
+      !isReadOnly &&
       isNew &&
       (!lesson.blocksVersion || lesson.blocksVersion === "v1") &&
       !hasSetVersionRef.current
@@ -126,11 +311,20 @@ export function LessonRenderer({
       setEditorVersion("v2");
       updateLesson(lesson.id, {
         blocksVersion: "v2",
-      }).catch(() => {
-        // Ignore errors - lesson might not be fully created yet
-      });
+      })
+        .then(handleSaveResult)
+        .catch(() => {
+          // Ignore errors - lesson might not be fully created yet
+        });
     }
-  }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
+  }, [
+    lesson.blocks,
+    lesson.blocksV2,
+    lesson.blocksVersion,
+    lesson.id,
+    isReadOnly,
+    handleSaveResult,
+  ]);
 
   const updateBlocksBackend = useCallback(
     async (blocks: Block[]) => {
@@ -140,11 +334,12 @@ export function LessonRenderer({
         { skipRevalidation: true },
       );
 
+      if (handleSaveResult(response)) return;
       if (!response || response.error || !response.ok) {
         return;
       }
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const updateBlocksV2Backend = useCallback(
@@ -155,11 +350,12 @@ export function LessonRenderer({
         { skipRevalidation: true },
       );
 
+      if (handleSaveResult(response)) return;
       if (!response || response.error || !response.ok) {
         return;
       }
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const debounceUpdateV2 = useMemo(
@@ -169,13 +365,14 @@ export function LessonRenderer({
 
   const updateBlocksBackendReload = useCallback(
     async (blocks: Block[]) => {
-      await updateLesson(
+      const response = await updateLesson(
         lesson.id,
         { blocks: blocks as unknown as BaseBlock[] },
         { reload: true },
       );
+      handleSaveResult(response);
     },
-    [lesson.id],
+    [lesson.id, handleSaveResult],
   );
 
   const deleteBlock = useCallback(
@@ -203,12 +400,15 @@ export function LessonRenderer({
   }, []);
 
   useEffect(() => {
-    if (editorVersion !== "v1") return;
+    if (editorVersion !== "v1" || isReadOnly) return;
     debounceUpdate(blocks);
     return () => {
-      debounceUpdate.flush();
+      // Once the tab is frozen or the review is over, the server would refuse
+      // the pending save, so drop it instead of flushing it.
+      if (discardSavesRef.current) debounceUpdate.cancel();
+      else debounceUpdate.flush();
     };
-  }, [blocks, debounceUpdate, editorVersion]);
+  }, [blocks, debounceUpdate, editorVersion, isReadOnly]);
 
   useEffect(() => {
     setBlocks(lesson.blocks);
@@ -245,12 +445,13 @@ export function LessonRenderer({
   const updateNameBackend = useCallback(
     async (name: string) => {
       const response = await updateLesson(lesson.id, { name });
+      if (handleSaveResult(response)) return;
       if (response && !response.error) {
         const slug = response.data.attributes.slug;
         router.replace(`/draft/d/${dropletSlug}/${slug}`);
       }
     },
-    [lesson.id, dropletSlug, router],
+    [lesson.id, dropletSlug, router, handleSaveResult],
   );
 
   const handleRegenerateSlug = async () => {
@@ -263,7 +464,9 @@ export function LessonRenderer({
       { name, slug: newSlugInput.trim() },
       { regenerateSlug: false },
     );
-    if (response.ok && !response.error) {
+    if (handleSaveResult(response)) {
+      setIsPopupOpen(false);
+    } else if (response.ok && !response.error) {
       router.replace(
         `/draft/d/${dropletSlug}/${response.data.attributes.slug}`,
       );
@@ -290,16 +493,81 @@ export function LessonRenderer({
       fields: ["id"],
       populate: {},
     }).then(() => deleteLesson(lesson.id, true));
+    if (handleSaveResult(response)) return;
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
       return;
     }
-  }, [lesson.id, dropletSlug, router]);
+  }, [lesson.id, dropletSlug, router, handleSaveResult]);
 
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
     [updateNameBackend],
   );
+  cancelSavesRef.current = () => {
+    debounceUpdate.cancel();
+    debounceUpdateV2.cancel();
+    debouncedNameUpdate.cancel();
+  };
+
+  // The takeover notice shows for a few seconds after the tab turns editable.
+  const [noticeVisible, setNoticeVisible] = useState(false);
+  const takeoverNoticeDue = isOwnLock && tookOver && !inReview;
+  useEffect(() => {
+    if (!takeoverNoticeDue) {
+      setNoticeVisible(false);
+      return;
+    }
+    setNoticeVisible(true);
+    const timer = setTimeout(() => setNoticeVisible(false), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [takeoverNoticeDue, tookOverFrom]);
+  const showTakeoverNotice = takeoverNoticeDue && noticeVisible;
+  const liveMessage = isRefreshing
+    ? "Loading the latest version..."
+    : showTakeoverNotice
+      ? tookOverFrom
+        ? `${tookOverFrom.firstName} ${tookOverFrom.lastName} finished editing. You're now editing the latest version.`
+        : "You're now editing the latest version."
+      : "";
+
+  // Loads the latest saved content before the tab turns editable. Pending
+  // saves are dropped first: they hold the old copy. The editor stays
+  // read-only (no onChange, no autosave) until this resolves, and BlockNote's
+  // onChange only fires on edits, so remounting unchanged content saves nothing.
+  refreshLessonRef.current = async () => {
+    cancelSavesRef.current();
+    const response = await getLatestLessonContent(lesson.id);
+    // A refusal because the droplet went into review freezes the tab at once.
+    if (handleSaveResult(response)) return false;
+    if (!response?.ok || !response.data) return false;
+    const fresh = response.data;
+    setIsEditingName(false);
+    const freshBlocks = (fresh.blocks ?? []) as Block[];
+    hasSetVersionRef.current = true;
+    setBlocks(freshBlocks);
+    setLastSavedBlocks(freshBlocks);
+    setName(fresh.name);
+    setEditorVersion(fresh.blocksVersion === "v2" ? "v2" : "v1");
+    setBlocksV2(fresh.blocksV2);
+    setContentVersion((v) => v + 1);
+    return true;
+  };
+
+  // Picked up by the poll: drop every pending save rather than send it.
+  useEffect(() => {
+    if (frozen || reviewEnded) cancelSavesRef.current();
+  }, [frozen, reviewEnded]);
+
+  // Stop editing: send what is pending, wait for it, then release the lock.
+  const handleStopEditing = async () => {
+    await Promise.all([
+      debounceUpdate.flush(),
+      debounceUpdateV2.flush(),
+      debouncedNameUpdate.flush(),
+    ]);
+    await stopEditing();
+  };
 
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
@@ -419,12 +687,56 @@ export function LessonRenderer({
     updateBlocksBackendReload(newItems);
   };
 
+  // The classic blocks are inert while read-only. Set the attribute on the DOM
+  // node rather than as a prop: React 18 doesn't type `inert`, and the React 19
+  // runtime Next's App Router bundles treats `inert=""` as false.
+  const classicBlocksRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
+  }, [isReadOnly, editorVersion, contentVersion, showCommentLayer]);
+
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
 
   return (
-    <>
-      {isReadOnly && lockedBy && (
+    <CommentKeyboardProvider>
+      {reviewEnded && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span className="flex-1">
+            The review is over. Reload to edit the latest version.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </Button>
+        </div>
+      )}
+      {!reviewEnded && frozen && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>{REVIEW_FROZEN_MESSAGE}</span>
+        </div>
+      )}
+      {isReviewing && (
+        <ReviewModeBar
+          mode={reviewMode}
+          onModeChange={setViewMode}
+          onEdit={() => startEditing()}
+          onStopEditing={handleStopEditing}
+          editDisabled={isRefreshing}
+        />
+      )}
+      {isReadOnly && lockedBy && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
           <IconLock className="h-4 w-4 shrink-0" />
           <span>
@@ -435,12 +747,32 @@ export function LessonRenderer({
           </span>
         </div>
       )}
-      {isReadOnly && !lockedBy && lockError && (
+      {isReadOnly && !lockedBy && lockError && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
           <IconLock className="h-4 w-4 shrink-0" />
           <span>Unable to acquire editing lock. {lockError}</span>
         </div>
       )}
+      {/* Always mounted, so screen readers announce text that appears in it. */}
+      <div
+        role="status"
+        className={cn(
+          liveMessage &&
+            "mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200",
+        )}
+      >
+        {liveMessage && <span className="flex-1">{liveMessage}</span>}
+        {showTakeoverNotice && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Dismiss notice"
+            onClick={() => setNoticeVisible(false)}
+          >
+            Dismiss
+          </Button>
+        )}
+      </div>
       {lockLoading && (
         <div className="mx-auto mb-4 max-w-2xl px-4 py-3 text-center text-sm text-slate-500">
           Checking editing access...
@@ -511,6 +843,17 @@ export function LessonRenderer({
             )}
           </div>
         )}
+        {showCommentLayer && (
+          <CommentStrip
+            {...commentCounts(lessonComments, reviewComments.review?.state)}
+            isLoading={reviewComments.isLoading}
+            loadError={!!reviewComments.loadError}
+            blockBars={editorVersion === "v2"}
+            keyboard={<CommentKeyboardButton />}
+          >
+            <OutdatedComments comments={outdatedComments} />
+          </CommentStrip>
+        )}
       </div>
 
       <Dialog open={isPopupOpen} onOpenChange={setIsPopupOpen}>
@@ -551,10 +894,15 @@ export function LessonRenderer({
                 if (editorVersion === "v1") return;
                 hasSetVersionRef.current = true;
                 debounceUpdateV2.flush();
-                await updateLesson(lesson.id, {
+                const response = await updateLesson(lesson.id, {
                   blocksVersion: "v1",
                   blocksV2: null,
                 });
+                if (handleSaveResult(response)) return;
+                if (!response?.ok || response.error) {
+                  toast.error("Could not switch the editor. Please try again.");
+                  return;
+                }
                 setEditorVersion("v1");
               }}
               className={cn(
@@ -571,10 +919,15 @@ export function LessonRenderer({
                 if (editorVersion === "v2") return;
                 debounceUpdate.flush();
                 hasSetVersionRef.current = true;
-                await updateLesson(lesson.id, {
+                const response = await updateLesson(lesson.id, {
                   blocksVersion: "v2",
                   blocksV2: null,
                 });
+                if (handleSaveResult(response)) return;
+                if (!response?.ok || response.error) {
+                  toast.error("Could not switch the editor. Please try again.");
+                  return;
+                }
                 setEditorVersion("v2");
               }}
               className={cn(
@@ -590,10 +943,28 @@ export function LessonRenderer({
         </div>
       )}
 
-      {editorVersion === "v1" ? (
+      {editorVersion === "v1" && showCommentLayer ? (
+        // Comment mode shows Classic blocks as one read-only text (Task 7)
+        <div className="w-full px-10 md:px-40">
+          <CommentLayer {...commentLayerProps}>
+            <ClassicReviewView
+              blocks={blocks}
+              comments={lessonComments}
+              reviewState={reviewComments.review?.state}
+              draftAnchor={draftAnchor}
+              litMarkId={litMarkId}
+              onOutdated={handleClassicOutdated}
+            />
+          </CommentLayer>
+        </div>
+      ) : editorVersion === "v1" ? (
         <>
-          <AddLessonBlock onAddBlock={handleAddTool} />
-          <div className="w-full px-10 md:px-40">
+          {!isReadOnly && <AddLessonBlock onAddBlock={handleAddTool} />}
+          <div
+            key={contentVersion}
+            className="w-full px-10 md:px-40"
+            ref={classicBlocksRef}
+          >
             <BlockList
               blocks={blocks}
               onReorder={handleReorderSource}
@@ -610,19 +981,20 @@ export function LessonRenderer({
             </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
-                <BlockNoteEditor
-                  key={`editor-${lesson.id}`}
-                  initialContent={
-                    lesson.blocksV2 as unknown as BlockNoteBlock[]
-                  }
-                  onChange={isReadOnly ? () => {} : debounceUpdateV2}
-                  editable={!isReadOnly}
-                />
+                <CommentLayer {...commentLayerProps}>
+                  <BlockNoteEditor
+                    key={`editor-${lesson.id}-${contentVersion}`}
+                    initialContent={blocksV2 as unknown as BlockNoteBlock[]}
+                    onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                    editable={!isReadOnly}
+                    anchors={showCommentLayer ? drawnMarks : NO_MARKS}
+                  />
+                </CommentLayer>
               </PyodideProvider>
             </DatasetProvider>
           </div>
         </div>
       )}
-    </>
+    </CommentKeyboardProvider>
   );
 }

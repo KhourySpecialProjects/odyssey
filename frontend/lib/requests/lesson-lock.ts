@@ -3,6 +3,12 @@
 import { requireRole } from "@/lib/auth/require-role";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import {
+  checkLessonWrite,
+  getLessonReviewState,
+} from "@/lib/auth/review-freeze";
+import { isValidId } from "@/lib/auth/valid-id";
+import type { LessonReviewState } from "@/lib/review-roles";
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 
 const STRAPI_BASE_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -21,6 +27,8 @@ export type LockStatus = {
   isLocked: boolean;
   lockedBy: { id: number; firstName: string; lastName: string } | null;
   lockedAt: string | null;
+  /** The review state of the lesson's droplets, or null when unknown. */
+  review: LessonReviewState | null;
 };
 
 /** Resolve the current user's authorized-user ID. Called once on mount. */
@@ -52,6 +60,11 @@ export async function acquireLessonLock(lessonId: number): Promise<{
     return { success: false, error: auth.error };
   }
   const userId = auth.user.id;
+
+  const check = await checkLessonWrite(auth.user, lessonId);
+  if (!check.ok) {
+    return { success: false, error: check.error };
+  }
 
   const res = await fetch(`${STRAPI_API_URL}/lessons/${lessonId}/lock`, {
     method: "POST",
@@ -112,6 +125,16 @@ export async function heartbeatLessonLock(lessonId: number): Promise<boolean> {
 export async function getLessonLockStatus(
   lessonId: number,
 ): Promise<LockStatus> {
+  const unlocked: LockStatus = {
+    isLocked: false,
+    lockedBy: null,
+    lockedAt: null,
+    review: null,
+  };
+  const auth = await requireRole([]);
+  if (!auth.ok) return unlocked;
+  if (!isValidId(lessonId)) return unlocked;
+
   try {
     const res = await fetch(
       `${STRAPI_API_URL}/lessons/${lessonId}/lock-status`,
@@ -119,11 +142,15 @@ export async function getLessonLockStatus(
     );
 
     if (!res.ok) {
-      return { isLocked: false, lockedBy: null, lockedAt: null };
+      return unlocked;
     }
 
-    return res.json();
+    const status = await res.json();
+    return {
+      ...status,
+      review: await getLessonReviewState(auth.user, lessonId),
+    };
   } catch {
-    return { isLocked: false, lockedBy: null, lockedAt: null };
+    return unlocked;
   }
 }
