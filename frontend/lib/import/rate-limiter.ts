@@ -6,7 +6,8 @@ export type AIAction =
   | "custom-prompt"
   | "auto-format"
   | "bug-report"
-  | "fun-fact";
+  | "fun-fact"
+  | "ai-scoring";
 
 type RoleTier = "system-admin" | "faculty" | "creator-editor";
 
@@ -39,6 +40,12 @@ export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
   "fun-fact": {
     "system-admin": 1000,
     faculty: 20,
+    "creator-editor": 10,
+  },
+  // A whole droplet per call, so far lower. ODY-815 adds a cost cap.
+  "ai-scoring": {
+    "system-admin": 30,
+    faculty: 10,
     "creator-editor": 10,
   },
 };

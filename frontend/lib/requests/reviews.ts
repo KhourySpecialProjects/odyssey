@@ -46,6 +46,7 @@ export type ReviewActionError =
   | "review_closed"
   | "conflict"
   | "unconfirmed"
+  | "rate_limited"
   | "failed";
 
 export type ReviewActionResult<T> =

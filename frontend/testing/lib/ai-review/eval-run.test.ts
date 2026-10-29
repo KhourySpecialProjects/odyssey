@@ -4,18 +4,23 @@ import {
   runInOrder,
   type PlannedRequest,
 } from "@/scripts/ai-review/lib/run";
-import { buildDropletRequests } from "@/lib/ai-review/prompt";
+import {
+  buildLessonRequests,
+  buildOverallRequest,
+} from "@/lib/ai-review/prompt";
+import { scoreFixtures } from "@/scripts/ai-review/lib/plan";
+import type { Fixture } from "@/scripts/ai-review/lib/files";
 import { mockCriteria, mockSnapshot } from "@/testing/mocks/aiReviewMock";
 
-const planned: PlannedRequest[] = buildDropletRequests(
-  mockSnapshot,
-  mockCriteria,
-  {
-    model: "claude-sonnet-5-5",
-    effort: "high",
-    idPrefix: "r1-",
-  },
-).map((r) => ({ ...r, run: 1, dropletId: 7, dropletName: "Intro to Git" }));
+const options = {
+  model: "claude-sonnet-5-5",
+  effort: "high",
+  idPrefix: "r1-",
+} as const;
+const planned: PlannedRequest[] = [
+  ...buildLessonRequests(mockSnapshot, mockCriteria, options),
+  buildOverallRequest(mockSnapshot, mockCriteria, [], options),
+].map((r) => ({ ...r, run: 1, dropletId: 7, dropletName: "Intro to Git" }));
 
 const reply = (score: number): Anthropic.Message =>
   ({
@@ -145,5 +150,44 @@ describe("runAsBatch", () => {
       ok: false,
       detail: "no result returned",
     });
+  });
+});
+
+describe("scoreFixtures", () => {
+  it("sends the lessons first, then the Overall request with their answers", async () => {
+    const fixture: Fixture = {
+      slug: "intro-to-git",
+      snapshot: mockSnapshot,
+      scores: null,
+    };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce(reply(4))
+      .mockRejectedValueOnce(new Error("socket hang up"))
+      .mockResolvedValueOnce(reply(3));
+    const client = { messages: { create } } as unknown as Anthropic;
+    const sent: string[][] = [];
+
+    const results = await scoreFixtures(
+      [fixture],
+      mockCriteria,
+      { model: "claude-sonnet-5-5", effort: "high" },
+      (requests) => {
+        sent.push(requests.map((r) => r.customId));
+        return runInOrder(client, requests, mockCriteria, "claude-sonnet-5-5");
+      },
+    );
+
+    expect(sent).toEqual([["r1-d7-l11", "r1-d7-l12"], ["r1-d7-overall"]]);
+    const overallText = JSON.stringify(create.mock.calls[2][0].messages);
+    expect(overallText).toContain("- Tone: 4. ok");
+    expect(overallText).toContain(
+      'Lesson 2, \\"Your first commit\\": not scored (its request failed).',
+    );
+    expect(results.map((r) => r.request.kind)).toEqual([
+      "lesson",
+      "lesson",
+      "overall",
+    ]);
   });
 });

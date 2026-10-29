@@ -54,6 +54,9 @@ export type ScoreItem = {
   score: number;
 };
 
+/** One lesson's scores, for the Overall request; null when its request failed. */
+export type LessonScores = { lessonId: number; scores: ScoreItem[] | null };
+
 export type ScoreFailure =
   | "refusal"
   | "max_tokens"

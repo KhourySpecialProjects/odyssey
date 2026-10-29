@@ -265,11 +265,34 @@ It depends on content-manager internals. Services are lazy, so a bootstrap hook 
 - **One transaction each.** It locks the review row (`FOR UPDATE`), then refuses: not the reviewer (403), review not `open` (409), inactive criterion, a lesson outside the review's droplet, or a value outside 1–5 (400). Unknown body keys are a 400 (custom routes get no strict input check).
 - **Upsert by `key`** (`<reviewId>:<lessonId|overall>:<criterionId>`). If a concurrent create wins the `review_scores_key_uq` index, the whole transaction runs once more and updates. It is rerun, not retried in place, because on Postgres a failed insert aborts its transaction. It checks whether the key now exists instead of matching error codes: SQLite reports the violation as `NotNullError` (errno 19), Postgres as `23505`.
 - **Tests run on SQLite**, which has one connection and ignores `FOR UPDATE`, so the row lock itself is not tested. The race is simulated by making the first key lookup miss.
-- **Reviewer saves never reach the rerun on Postgres:** the review lock serializes them. Only a writer that skips the lock can race them, so Score with AI (ODY-814) must take the same review `FOR UPDATE` lock, or handle a taken key the same way.
+- **Reviewer saves never reach the rerun on Postgres:** the review lock serializes them. Only a writer that skips the lock can race them; Score with AI's `finish` (below) takes the same lock.
 - **Separate writers:** these routes write only `value`. Score with AI (ODY-814) writes only `aiValue`/`aiRationale`. `accept-ai` copies `aiValue` into `value` where `value` is null and the criterion is active.
 - Responses are `{ data: { dropletId, score } }` / `{ data: { dropletId, scores } }`, not v4 entries. The action revalidates `CACHE_TAGS.review(dropletId)` from that answer.
 
 Run the backend tests with `npm --prefix backend test` (see `testing-and-deployment.md`).
+
+### Score with AI routes (`custom-ai-scoring-run` controller, ODY-814)
+
+`POST /api/ai-scoring-runs/start`, `/heartbeat` and `/finish`. Logic in `src/lib/ai-scoring-runs.ts` (it reuses `lockReview`, `lockOpenReview`, `findScore` and `scoreKey` from `review-scores.ts`), tested in `tests/api/ai-scoring-run.test.js`. Called by `startAiScoring` (`frontend/lib/requests/ai-scoring.ts`) and the background run (`frontend/lib/ai-review/score-run.ts`). Strict bodies and `userId` from the Server Action, as for the score routes.
+
+| Route       | Body                                                                                                                                              | 200 `data`                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `start`     | `{ reviewId, userId, model, promptVersion }`                                                                                                      | `{ dropletId, run, criteria }`             |
+| `heartbeat` | `{ runId, userId, inputTokens, outputTokens }`                                                                                                    | `{ dropletId, run }`                       |
+| `finish`    | `{ runId, userId, runState, failedLessons, inputTokens, outputTokens, error, scores: [{ lessonId \| null, criterionId, aiValue, aiRationale }] }` | `{ dropletId, run, saved, kept, dropped }` |
+
+- **One run at a time.** `start` locks the review row (`lockOpenReview`: reviewer, `open`) and refuses with 409 unless the droplet is `inReview` (withdrawing leaves the review open). It marks every `queued`/`running` run whose `updatedAt` is more than 10 minutes old `failed` ("Stopped: no progress for 10 minutes."), then refuses with 409 if one is left. It snapshots the active criteria (in `order`) into the run's `criteria` and returns them, and creates the run `queued`. ODY-815's cost cap belongs under the same lock. 409 too when no criterion is active.
+- **Heartbeat** sets `running` (and `startedAt` once) and saves the token totals so far, so a run cut short still records what it spent. The run calls it after every lesson, so `updatedAt` measures progress, not age: a long droplet isn't taken for dead. It is 409 on a run that has ended, so a run marked dead stops.
+- **`finish` writes only `aiValue`/`aiRationale`**, by score key, in one transaction under the review lock. A score whose `value` the reviewer set is skipped (`kept`), so running again replaces unconfirmed suggestions only. A suggestion for a lesson that left the droplet mid-run, or a criterion deleted since the start, is skipped (`dropped`) and the rest are saved. A criterion outside the run's snapshot is a 400 and nothing is written.
+- **A review sent mid-run** (`heartbeat` or `finish` finds it not `open`) ends the run `failed` ("The review was sent before scoring finished."), keeps its token counts and saves nothing; both answer 200 with that run.
+- **Tests run on SQLite**, so two starts at once run one after the other; the test checks the outcome (one run), not the Postgres lock. They age a run with raw SQL on `ai_scoring_runs.updated_at`, because the Query Engine sets `updatedAt` itself.
+- **Frontend:** `startAiScoring(dropletId)` (System Admin or Content Editor, not an author) needs `ANTHROPIC_API_KEY`, opens the review with `getOrOpenReview`, checks the `ai-scoring` rate limit, calls `start`, then answers at once and runs `runAiScoring` in `after()` (Sonnet 5.5, effort `high`, `PROMPT_VERSION`). `next/server` is imported inside `startAiScoring`, because jsdom tests that import the sidebar have no Fetch API globals.
+- **The run** streams one request per lesson, then the Overall Score (given the lessons' scores), and saves everything with one `finish`. A refusal, `max_tokens`, an 8-minute timeout or any other error is that request's failure, and the run ends `partial`.
+  - **Retries:** the SDK retries 429, 5xx and failed connections twice (`maxRetries`, honouring `retry-after`). The run itself retries only a stream that broke on an `overloaded_error`, `api_error` or `rate_limit_error` event, twice. `finish` is retried twice on a network error or a 5xx; a retry after a save that did commit gets 409 and stops.
+  - **Tokens:** a request that failed mid-stream and was retried isn't counted.
+  - **Caching:** each lesson request puts its cache marker on its last lesson block, not after the closing instruction (which differs every time), so the next lesson's request reads the shared prefix back. On a real run, check `cache_read_input_tokens` is above 0 from the second lesson on.
+- **Known gaps:** the rate limit is taken before `start`, so a refused start (already running) still uses one. ODY-630's limiter bug applies.
+- **Polling:** `getAiScoringRun` reads the latest run uncached, and shows a stale active run as failed. The sidebar's `ScoreWithAiButton` checks it every 5 seconds, one check at a time, stops when refused, and refreshes when the run ends.
 
 ### Publish-edit route (`custom-droplet` controller)
 
