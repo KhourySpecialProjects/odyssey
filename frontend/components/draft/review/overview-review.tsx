@@ -11,10 +11,12 @@ import {
   type OverviewSection,
 } from "@/components/draft/metadata/frozen-overview";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
+import { useShowInLesson } from "@/hooks/use-show-in-lesson";
 import { useDropletReviewComments } from "./review-comments-context";
 import { useReviewFocus } from "./review-focus-context";
 import {
   commentCounts,
+  isOutdatedMark,
   isWholeSection,
   numberComments,
 } from "@/lib/review-comments";
@@ -93,7 +95,9 @@ export function OverviewReview({
   }, [comments]);
   // The open criterion's findings with no lesson, per field (memoized: a new
   // list makes ReviewTextView redraw)
-  const openDetail = useReviewFocus()?.openDetail;
+  const focus = useReviewFocus();
+  const openDetail = focus?.openDetail;
+  const focusedId = focus?.focused?.target.markId;
   const findingsByField = useMemo(() => {
     const byField = new Map<
       string,
@@ -157,6 +161,15 @@ export function OverviewReview({
     [outdated],
   );
   const canChange = !review || review.state === "open";
+  // Show in lesson from the panel: leave Read or Edit for Comment, then scroll and ring
+  useShowInLesson({
+    lessonId: null,
+    enabled: true,
+    ready: commenting && !reviewComments.isLoading,
+    mode,
+    onComment: () => (mode === "edit" ? stopEditing() : setMode("comment")),
+    isOutdated: (markId) => isOutdatedMark(markId, outdatedIds),
+  });
 
   const renderField = (field: OverviewField, standard: ReactNode) => {
     if (!commenting) return standard;
@@ -185,6 +198,7 @@ export function OverviewReview({
           reviewState={review?.state}
           draftAnchor={draft?.field === field ? draft.anchor : null}
           litMarkId={litMarkId}
+          focusedMarkId={focusedId}
           findings={findingsByField.get(field)}
           band={findingsByField.has(field) ? openDetail?.band : undefined}
           onOutdated={reporters[field]}

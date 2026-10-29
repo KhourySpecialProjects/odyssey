@@ -277,6 +277,7 @@ export function SectionComments({
       ref={rootRef}
       className="relative w-full"
       data-testid={`overview-section-${field}`}
+      data-review-section={field}
     >
       {outlined && (
         <CommentOutline

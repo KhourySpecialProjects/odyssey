@@ -31,7 +31,10 @@ jest.mock("@/components/draft/metadata/hooks/useDropletUpdate", () => ({
     () => new Promise<void>((resolve) => (settle = resolve)),
   ),
 }));
-jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh, push: jest.fn() }),
+  usePathname: () => "/draft/d/intro",
+}));
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), info: jest.fn(), error: jest.fn() },
 }));
@@ -198,6 +201,91 @@ describe("finding marks (ODY-849)", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Read" }));
     expect(document.querySelector(".review-finding")).toBeNull();
+  });
+});
+
+describe("Show in lesson (ODY-849)", () => {
+  const Ask = ({
+    kind,
+    field,
+  }: {
+    kind: "comment" | "section";
+    field: string;
+  }) => {
+    const focus = useReviewFocus();
+    return (
+      <button
+        onClick={() =>
+          focus?.show(
+            {
+              kind,
+              markId: kind === "section" ? "comment-99" : "comment-1",
+              lessonId: null,
+              field,
+              place: "the Overview",
+              quote: "repeat",
+            },
+            "/draft/d/intro",
+          )
+        }
+      >
+        ask
+      </button>
+    );
+  };
+  const mountAsk = async (
+    kind: "comment" | "section" = "comment",
+    field = "description",
+  ) => {
+    render(
+      <ReviewFocusProvider active>
+        <Ask kind={kind} field={field} />
+        <OverviewReview droplet={droplet} authors={[]} dropletId={3}>
+          <div />
+        </OverviewReview>
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+  };
+  const ask = () =>
+    userEvent.click(screen.getByRole("button", { name: "ask" }));
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  it("rings the comment's text from Read, back in Comment mode", async () => {
+    await mountAsk();
+    await userEvent.click(screen.getByRole("button", { name: "Read" }));
+    await ask();
+
+    expect(screen.getByRole("button", { name: "Comment" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(
+      document.querySelector('[data-anchor-id="comment-1"].review-mark--focus'),
+    ).toHaveTextContent("repeat");
+  });
+
+  it("settles the editors first when the reviewer is editing", async () => {
+    await mountAsk();
+    act(() => screen.getByRole("button", { name: "Edit" }).click());
+    await ask();
+    expect(refresh).not.toHaveBeenCalled();
+
+    await act(async () => settle());
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("scrolls a whole section and rings no text", async () => {
+    await mountAsk("section", "overview");
+    await ask();
+
+    const section = document.querySelector('[data-review-section="overview"]');
+    expect(section).not.toBeNull();
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".review-mark--focus")).toBeNull();
   });
 });
 

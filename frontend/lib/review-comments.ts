@@ -60,6 +60,10 @@ export function commentStripText(
 /** The id a comment's mark is drawn with (data-anchor-id) */
 export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
 
+/** Whether a mark id is one of these (outdated) comments */
+export const isOutdatedMark = (markId: string, ids: ReadonlySet<number>) =>
+  markId.startsWith("comment-") && ids.has(Number(markId.slice(8)));
+
 /**
  * Finds each comment's text in the current content. Drawn ones are styled
  * pending (a dashed amber line) until the review is sent, then tinted over a
@@ -260,18 +264,22 @@ export type DraftMark = { range: AnchorRange; point?: "before" | "after" };
 /**
  * The marks as drawn: the lit one (its tag or text is hovered) gets
  * `review-mark--lit`, and the text a comment is being written for is added.
+ * The one the panel pointed at gets `review-mark--focus` (ODY-849).
  * A draft for a whole block is outlined by the comment layer instead.
  */
 export function decorateMarks(
   drawn: readonly DrawnAnchor[],
   litMarkId: string | null,
   draft: DraftMark | null,
+  focusedId?: string | null,
 ): DrawnAnchor[] {
-  const marks = drawn.map((mark) =>
-    mark.id === litMarkId
-      ? { ...mark, className: `${mark.className} review-mark--lit` }
-      : mark,
-  );
+  const marks = drawn.map((mark) => {
+    const lit = mark.id === litMarkId ? " review-mark--lit" : "";
+    const focus = mark.id === focusedId ? " review-mark--focus" : "";
+    return lit || focus
+      ? { ...mark, className: `${mark.className}${lit}${focus}` }
+      : mark;
+  });
   if (draft) {
     marks.push({
       id: DRAFT_MARK_ID,
