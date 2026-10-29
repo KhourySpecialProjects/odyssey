@@ -370,5 +370,87 @@ describe("BlockNoteEditorClient", () => {
 
       expect(view.dispatch).toHaveBeenCalledWith("refresh-tr");
     });
+
+    it("says which text the anchors were found in when it redraws (ODY-807)", async () => {
+      const { view } = fakeEditor();
+      const foundIn = { doc: "found" } as any;
+      render(
+        <BlockNoteEditorClient
+          onChange={mockOnChange}
+          anchors={[anchor]}
+          anchorsFoundIn={foundIn}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(view.state.tr.setMeta).toHaveBeenCalledWith(expect.anything(), {
+          foundIn,
+        }),
+      );
+    });
+  });
+
+  describe("the live content (ODY-807)", () => {
+    function liveEditor() {
+      const listeners: (() => void)[] = [];
+      const doc = { doc: 1 };
+      const editor = {
+        document: [{ id: "b1", type: "paragraph" }],
+        onChange: jest.fn((fn: () => void) => {
+          listeners.push(fn);
+          return jest.fn();
+        }),
+        dictionary: {},
+        prosemirrorView: {
+          state: {
+            doc,
+            schema: { marks: {} },
+            tr: { setMeta: jest.fn(() => "refresh-tr") },
+          },
+          dispatch: jest.fn(),
+        },
+        _tiptapEditor: {
+          registerPlugin: jest.fn(),
+          unregisterPlugin: jest.fn(),
+        },
+      };
+      require("@blocknote/react").useCreateBlockNote.mockReturnValue(editor);
+      return { editor, doc, change: () => listeners.forEach((fn) => fn()) };
+    }
+
+    it("sends the content once ready, then once a frame however many changes", async () => {
+      const { editor, doc, change } = liveEditor();
+      const onContent = jest.fn();
+      render(
+        <BlockNoteEditorClient
+          onChange={mockOnChange}
+          editable={false}
+          onContent={onContent}
+        />,
+      );
+
+      await waitFor(() => expect(onContent).toHaveBeenCalledTimes(1));
+      expect(onContent).toHaveBeenCalledWith(editor.document, doc);
+
+      change();
+      change();
+      change();
+      await waitFor(() => expect(onContent).toHaveBeenCalledTimes(2));
+      await new Promise((r) => setTimeout(r, 50));
+      expect(onContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("doesn't listen without onContent", async () => {
+      const { editor } = liveEditor();
+      render(
+        <BlockNoteEditorClient onChange={mockOnChange} editable={false} />,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByTestId("blocknote-view")).toBeInTheDocument(),
+      );
+      await new Promise((r) => setTimeout(r, 200));
+      expect(editor.onChange).not.toHaveBeenCalled();
+    });
   });
 });

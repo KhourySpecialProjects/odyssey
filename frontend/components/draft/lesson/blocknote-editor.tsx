@@ -5,7 +5,7 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import "katex/dist/katex.min.css";
 import type { Block } from "@blocknote/core";
-import type { DrawnAnchor } from "@/lib/anchors/editor";
+import type { AnchorsDoc, DrawnAnchor } from "@/lib/anchors/editor";
 
 interface BlockNoteEditorProps {
   initialContent?: Block[];
@@ -13,6 +13,10 @@ interface BlockNoteEditorProps {
   editable?: boolean;
   /** Review comment marks to draw (ODY-806) */
   anchors?: DrawnAnchor[];
+  /** The text `anchors` were found in, from `onContent` (ODY-807) */
+  anchorsFoundIn?: AnchorsDoc;
+  /** The live content, at most once a frame after each change (ODY-807) */
+  onContent?: (content: Block[], doc: AnchorsDoc) => void;
 }
 
 const BlockNoteEditorClient = dynamic(
@@ -35,6 +39,8 @@ export function BlockNoteEditor({
   onChange,
   editable,
   anchors,
+  anchorsFoundIn,
+  onContent,
 }: BlockNoteEditorProps) {
   return (
     <BlockNoteEditorClient
@@ -42,6 +48,8 @@ export function BlockNoteEditor({
       onChange={onChange}
       editable={editable}
       anchors={anchors}
+      anchorsFoundIn={anchorsFoundIn}
+      onContent={onContent}
     />
   );
 }
