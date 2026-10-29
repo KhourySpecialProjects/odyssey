@@ -31,12 +31,54 @@ export const isWholeSection = (anchor: ReviewAnchor) =>
 export function commentCounts(
   comments: readonly ReviewComment[],
   reviewState: Review["state"] | undefined,
-): { total: number; pending: number } {
+): {
+  total: number;
+  pending: number;
+  carried: number;
+  carriedRound: number | null;
+  addressed: number;
+} {
   const unsent = reviewState === undefined || reviewState === "open";
+  const open = comments.filter((c) => !isResolved(c));
+  // Carried from an earlier round (ODY-807): the round, when it's only one
+  const rounds = new Set(open.map(carriedRound).filter((r) => r !== null));
   return {
     total: comments.length,
-    pending: unsent ? comments.filter((c) => !isResolved(c)).length : 0,
+    pending: unsent ? open.length : 0,
+    carried: open.filter((c) => carriedRound(c) !== null).length,
+    carriedRound: rounds.size === 1 ? [...rounds][0] : null,
+    addressed: open.filter((c) => !!c.addressedAt).length,
   };
+}
+
+/**
+ * The round a carried comment was first written in, or null for one written
+ * in this round (ODY-807)
+ */
+export const carriedRound = (comment: ReviewComment): number | null =>
+  comment.carriedFrom ? comment.carriedFrom.review?.round ?? 0 : null;
+
+/** What a reviewer's tag adds about a carried comment, for a screen reader */
+export function carriedNotes(comment: ReviewComment): string[] {
+  const round = carriedRound(comment);
+  return [
+    ...(round !== null
+      ? [round > 0 ? `carried from round ${round}` : "carried over"]
+      : []),
+    ...(comment.addressedAt && !isResolved(comment)
+      ? ["marked addressed"]
+      : []),
+  ];
+}
+
+/** "Pending · carried from round 1", for a carried comment's card */
+export function carriedMeta(
+  comment: ReviewComment,
+  pending: boolean,
+): string | undefined {
+  const round = carriedRound(comment);
+  if (round === null || isResolved(comment)) return undefined;
+  return `${pending ? "Pending" : "Sent"} · ${round > 0 ? `carried from round ${round}` : "carried over"}`;
 }
 
 /** "3 comments on this lesson" */
@@ -49,13 +91,40 @@ export const pendingText = (pending: number) =>
 
 /** The strip's whole text, as a screen reader hears it */
 export function commentStripText(
-  { total, pending }: { total: number; pending: number },
+  {
+    total,
+    pending,
+    carried = 0,
+    carriedRound = null,
+    addressed = 0,
+  }: {
+    total: number;
+    pending: number;
+    carried?: number;
+    carriedRound?: number | null;
+    addressed?: number;
+  },
   place = "this lesson",
 ): string {
-  const waiting = pendingText(pending);
-  const count = commentCountText(total, place);
-  return waiting ? `${count} · ${waiting}` : count;
+  return [
+    commentCountText(total, place),
+    pendingText(pending),
+    carriedText(carried, carriedRound),
+    addressedText(addressed),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
+
+/** "3 carried over from round 1", or null with none carried (ODY-807) */
+export const carriedText = (carried: number, round: number | null) =>
+  carried > 0
+    ? `${carried} carried over from ${round ? `round ${round}` : "earlier rounds"}`
+    : null;
+
+/** "2 marked addressed by the creator", or null with none (ODY-807) */
+export const addressedText = (addressed: number) =>
+  addressed > 0 ? `${addressed} marked addressed by the creator` : null;
 
 /** The id a comment's mark is drawn with (data-anchor-id) */
 export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;
@@ -300,4 +369,21 @@ export function draftMarkIn(
   const range = resolveAnchor(content, anchor);
   if (range === OUTDATED) return null;
   return anchor.point ? { range, point: anchor.point } : { range };
+}
+
+/** Who sent feedback, by name, or "the reviewer" (ODY-807) */
+export function reviewerName(review: Pick<Review, "reviewer"> | null): string {
+  const name = [review?.reviewer?.firstName, review?.reviewer?.lastName]
+    .filter(Boolean)
+    .join(" ");
+  return name || "the reviewer";
+}
+
+/** "Round 1 · sent Oct 28, 3:04 PM", for feedback an author reads (ODY-807) */
+export function feedbackMeta(
+  review: Pick<Review, "round" | "sentAt">,
+  now?: Date,
+): string {
+  const sent = commentTime(review.sentAt ?? undefined, now);
+  return `Round ${review.round}${sent ? ` · sent ${sent.replace(/^(Today|Yesterday)/, (d) => d.toLowerCase())}` : ""}`;
 }

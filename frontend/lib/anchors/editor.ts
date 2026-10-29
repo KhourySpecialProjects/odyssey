@@ -17,7 +17,10 @@ export type DrawnAnchor = {
   badge?: number;
 };
 
-const anchorsKey = new PluginKey("anchors");
+/** The editor's text, as `onContent` gives it, that anchors were found in */
+export type AnchorsDoc = ProseMirrorNode;
+
+const anchorsKey = new PluginKey<DecorationSet>("anchors");
 
 /**
  * Decorations that draw anchors in the BlockNote editor as spans tagged
@@ -112,18 +115,40 @@ export function anchorDecorations(
 
 /**
  * A ProseMirror plugin that draws whatever anchors `getAnchors` returns.
- * Registered as a BlockNote extension; call refreshAnchors after they change.
+ * Register it with `editor._tiptapEditor.registerPlugin`, and call
+ * refreshAnchors after the anchors change.
+ *
+ * An edit moves the drawn anchors with the text (ODY-807): typing before a
+ * mark keeps it on its words, and deleting its words drops it. Their offsets
+ * are only read again on refreshAnchors, once they have been found again in
+ * the edited text.
  */
 export function anchorsPlugin(getAnchors: () => DrawnAnchor[]): Plugin {
-  return new Plugin({
+  return new Plugin<DecorationSet>({
     key: anchorsKey,
+    state: {
+      init: (_, state) => anchorDecorations(state.doc, getAnchors()),
+      apply: (tr, drawn) => {
+        const refresh = tr.getMeta(anchorsKey) as
+          | { foundIn?: AnchorsDoc }
+          | undefined;
+        if (refresh && (!refresh.foundIn || refresh.foundIn === tr.doc)) {
+          return anchorDecorations(tr.doc, getAnchors());
+        }
+        return tr.docChanged ? drawn.map(tr.mapping, tr.doc) : drawn;
+      },
+    },
     props: {
-      decorations: (state) => anchorDecorations(state.doc, getAnchors()),
+      decorations: (state) => anchorsKey.getState(state),
     },
   });
 }
 
-/** Redraws the anchors after they change */
-export function refreshAnchors(view: EditorView): void {
-  view.dispatch(view.state.tr.setMeta(anchorsKey, true));
+/**
+ * Redraws the anchors after they change. `foundIn` is the text they were
+ * found in: when the editor has changed since, they're ignored and the drawn
+ * ones keep following the text until anchors found in it arrive.
+ */
+export function refreshAnchors(view: EditorView, foundIn?: AnchorsDoc): void {
+  view.dispatch(view.state.tr.setMeta(anchorsKey, { foundIn }));
 }

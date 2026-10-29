@@ -14,6 +14,8 @@ import type { ReviewAnchor, ReviewComment, ReviewCommentField } from "@/types";
 import { cn } from "@/lib/utils";
 import { anchorIn, type PopoverAnchor } from "@/lib/selection";
 import {
+  carriedMeta,
+  carriedNotes,
   commentSnippet,
   isResolved,
   markIdFor,
@@ -71,6 +73,13 @@ interface SectionCommentsProps {
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
+  /**
+   * The creator reading sent feedback (ODY-807): the heading takes no new
+   * comment, and cards show `meta` and offer `onAddress` when given
+   */
+  readOnly?: boolean;
+  meta?: ReactNode;
+  onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** The section's content, which may have comment layers of its own */
   children: ReactNode;
 }
@@ -94,6 +103,9 @@ export function SectionComments({
   onResolve,
   litMarkId,
   onLitChange,
+  readOnly = false,
+  meta,
+  onAddress,
   children,
 }: SectionCommentsProps) {
   const rootRef = useRef<HTMLElement>(null);
@@ -264,11 +276,12 @@ export function SectionComments({
       },
       comment: openDraft,
     },
-    true,
+    !readOnly,
   );
 
   const litComment = comments.find((c) => markIdFor(c) === litMarkId);
-  const outlined = drafting || keyboard || hovered || !!litComment;
+  const outlined =
+    drafting || keyboard || (hovered && !readOnly) || !!litComment;
   const cardComment = card && comments.find((c) => c.id === card.commentId);
   const name = `Comment on the ${title} section`;
 
@@ -285,7 +298,7 @@ export function SectionComments({
           target={drafting}
         />
       )}
-      {(hovered || keyboard) && !drafting && !layout.narrow && (
+      {(hovered || keyboard) && !readOnly && !drafting && !layout.narrow && (
         <span
           aria-hidden
           className="pointer-events-none absolute z-10 pt-[7px] text-xs leading-tight font-semibold whitespace-nowrap text-[var(--rc-accent-text)]"
@@ -296,13 +309,14 @@ export function SectionComments({
       )}
       <h2
         ref={headingRef}
-        title={name}
-        onClick={openDraft}
+        title={readOnly ? undefined : name}
+        onClick={readOnly ? undefined : openDraft}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
         className={cn(
           SECTION_HEADING_CLASS,
-          "relative z-10 cursor-pointer",
+          "relative z-10",
+          !readOnly && "cursor-pointer",
           layout.tagMode === "tight" && comments.length > 0 && "pr-10",
         )}
       >
@@ -324,6 +338,7 @@ export function SectionComments({
             number={number}
             pending={pending}
             resolved={resolved}
+            addressed={!!comment.addressedAt}
             lit={litMarkId === markId || card?.commentId === comment.id}
             expanded={card?.commentId === comment.id}
             mode={layout.tagMode}
@@ -334,6 +349,7 @@ export function SectionComments({
               number,
               pending,
               commentSnippet(comment, block, { long: true }),
+              carriedNotes(comment),
             )}
             onLight={(on) => onLitChange(on ? markId : null)}
             onOpen={(rect) => {
@@ -378,6 +394,11 @@ export function SectionComments({
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
+          meta={meta ?? carriedMeta(cardComment, canChange)}
+          forCreator={readOnly}
+          onAddress={
+            onAddress && ((addressed) => onAddress(cardComment.id, addressed))
+          }
         />
       )}
     </section>
