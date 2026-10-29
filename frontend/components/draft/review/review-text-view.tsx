@@ -7,10 +7,13 @@ import type {
   ReviewAnchor,
   ReviewComment,
   ReviewCommentField,
+  AiFinding,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { drawAnchor } from "@/lib/anchors/draw";
 import { textOf, textParts } from "@/lib/anchors/dom";
+import { findingMarks } from "@/lib/review-panel/finding-marks";
+import type { Band } from "@/lib/review-panel/colors";
 import {
   commentMarks,
   decorateMarks,
@@ -35,6 +38,9 @@ interface ReviewTextViewProps {
   reviewState: Review["state"] | undefined;
   draftAnchor: ReviewAnchor | null;
   litMarkId: string | null;
+  /** The open criterion's findings here (memoized: a new list redraws), and its band */
+  findings?: readonly { finding: AiFinding; number: number }[];
+  band?: Band;
   /** Comments whose text is gone, found once the text is on the page */
   onOutdated: (comments: ReviewComment[]) => void;
   className?: string;
@@ -56,6 +62,8 @@ export function ReviewTextView({
   reviewState,
   draftAnchor,
   litMarkId,
+  findings,
+  band,
   onOutdated,
   className,
   testId,
@@ -81,9 +89,16 @@ export function ReviewTextView({
         point: mark.point,
       });
     }
+    for (const mark of findingMarks(findings ?? [], content, band ?? "unscored")
+      .drawn) {
+      drawAnchor(root, mark.range, mark.id, {
+        className: mark.className,
+        badge: mark.badge,
+      });
+    }
     lightMark(root, litRef.current);
     onOutdatedRef.current(outdated);
-  }, [html, field, comments, reviewState, draftAnchor]);
+  }, [html, field, comments, reviewState, draftAnchor, findings, band]);
 
   // Lighting only toggles a class: rewriting the HTML would drop a selection
   // the reviewer is still dragging out

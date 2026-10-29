@@ -12,6 +12,7 @@ import {
 } from "@/components/draft/metadata/frozen-overview";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { useDropletReviewComments } from "./review-comments-context";
+import { useReviewFocus } from "./review-focus-context";
 import {
   commentCounts,
   isWholeSection,
@@ -90,6 +91,21 @@ export function OverviewReview({
     }
     return { text, whole };
   }, [comments]);
+  // The open criterion's findings with no lesson, per field (memoized: a new
+  // list makes ReviewTextView redraw)
+  const openDetail = useReviewFocus()?.openDetail;
+  const findingsByField = useMemo(() => {
+    const byField = new Map<
+      string,
+      NonNullable<typeof openDetail>["findings"]
+    >();
+    for (const item of openDetail?.findings ?? []) {
+      if (item.finding.lessonId !== null) continue;
+      const { field } = item.finding.anchor;
+      byField.set(field, [...(byField.get(field) ?? []), item]);
+    }
+    return byField;
+  }, [openDetail]);
   const [draft, setDraft] = useState<{
     field: OverviewField;
     anchor: ReviewAnchor;
@@ -169,6 +185,8 @@ export function OverviewReview({
           reviewState={review?.state}
           draftAnchor={draft?.field === field ? draft.anchor : null}
           litMarkId={litMarkId}
+          findings={findingsByField.get(field)}
+          band={openDetail?.band}
           onOutdated={reporters[field]}
           testId={`overview-review-${field}`}
         />

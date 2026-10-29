@@ -189,7 +189,9 @@ The same reviewer sees the panel on every page of the draft (`review/review-pane
 - **Width (D6).** The shell owns the sidebar and panel state. Below 1440 only one is open (the other becomes the 48 px rail or collapses); below 1280 the panel is an overlay drawer that starts as the rail. `<main>` has `group` and `data-review-panel="open|rail"`, and lesson and Overview padding uses `group-data-[review-panel=open]:`. `tagSpace` (`comment-tag.tsx`) measures the content column, so margin tags stay clear of the panel.
 - **Actions (D7).** Publish droplet and Send feedback live in the panel footer (`ContentActionButton`, with `disabledReason`, `initialNote` and the type-the-name step on `publishWithReview`). The footer renders even when the panel data failed to load. The sidebar then shows only Preview (`hideReviewActions`).
 - **Pure rules** are in `lib/review-panel/` (`model`, `positions`, `criteria-icons`, `colors`); they import `lib/anchors/resolve` and `content` only.
-- **Not here yet (PR B, ODY-849):** passage highlights in the lesson, Show in lesson scrolling and Add as comment.
+- **Finding marks (ODY-849).** `CriterionDetail` registers its band and numbered findings in `ReviewFocusProvider.openDetail` (null while the panel is a rail); lessons and the Overview draw them in Comment mode with `findingMarks` (`finding-<id>` ids, so the comment layer ignores them) and dim comment tags via `.rc-tag`.
+- **Badge marker.** A finding's number is an empty `.anchor-badge` marker (`DrawnAnchor.badge`, a widget in BlockNote, a span in `drawAnchor`) with no text node, so it can't shift offsets; CSS draws the digit from `data-badge`.
+- **Not here yet (ODY-849 PRs 2 and 3):** Show in lesson scrolling and ringing, and Add as comment.
 
 ## Static Assets and Media
 

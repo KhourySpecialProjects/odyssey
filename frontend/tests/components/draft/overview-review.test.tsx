@@ -1,5 +1,11 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
+import {
+  ReviewFocusProvider,
+  useReviewFocus,
+} from "@/components/draft/review/review-focus-context";
+import { mockAiFinding } from "@/testing/mocks/reviewsMock";
 import { OverviewReview } from "@/components/draft/review/overview-review";
 import {
   addComment,
@@ -125,6 +131,74 @@ beforeEach(() => {
   jest
     .mocked(getMyReview)
     .mockResolvedValue({ ok: true, error: null, data: review } as never);
+});
+
+describe("finding marks (ODY-849)", () => {
+  const finding = (id: string, quote: string, over = {}) =>
+    mockAiFinding({
+      id,
+      lessonId: null,
+      anchor: {
+        v: 1,
+        field: "description",
+        start: 0,
+        end: 0,
+        quote,
+        // Context that is not on the page, so a missing quote stays missing
+        prefix: "zz ",
+        suffix: " qq",
+      },
+      ...over,
+    });
+  const Seed = () => {
+    const set = useReviewFocus()?.setOpenDetail;
+    useEffect(
+      () =>
+        set?.({
+          band: "needs_work",
+          findings: [
+            { finding: finding("a", "repeat"), number: 1 },
+            { finding: finding("b", "never written"), number: 2 },
+            { finding: finding("c", "loops", { lessonId: 5 }), number: 3 },
+          ],
+        }),
+      [set],
+    );
+    return null;
+  };
+  const mountWithFindings = async () => {
+    render(
+      <ReviewFocusProvider active>
+        <Seed />
+        <OverviewReview droplet={droplet} authors={[]} dropletId={3}>
+          <div />
+        </OverviewReview>
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+  };
+  const inField = (field: string) =>
+    screen.getByTestId(`overview-review-${field}`);
+
+  it("draws an Overview finding with its badge in its own field, only in Comment mode", async () => {
+    await mountWithFindings();
+
+    const description = inField("description");
+    expect(
+      description.querySelector(
+        '[data-anchor-id="finding-a"]:not(.anchor-badge)',
+      ),
+    ).toHaveTextContent("repeat");
+    expect(description.querySelectorAll(".anchor-badge")).toHaveLength(1);
+    expect(description.querySelector(".anchor-badge")).toHaveAttribute(
+      "data-badge",
+      "1",
+    );
+    expect(inField("overview").querySelector(".review-finding")).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Read" }));
+    expect(document.querySelector(".review-finding")).toBeNull();
+  });
 });
 
 describe("OverviewReview", () => {
