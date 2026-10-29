@@ -6,7 +6,10 @@ import { Sidebar } from "./sidebar";
 import { DraftTour, TOUR_KEY } from "./draft-tour";
 import { Droplet, User } from "@/types";
 import { isReviewerFor } from "@/lib/review-roles";
-import { ReviewCommentsProvider } from "./review/review-comments-context";
+import {
+  ReviewCommentsProvider,
+  SentFeedbackProvider,
+} from "./review/review-comments-context";
 import { ReviewPanelDock } from "./review/review-panel-dock";
 import { ReviewTranscript } from "./review/review-transcript";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -127,50 +130,55 @@ export function DraftLayoutShell({
     [reviewing, liveScores, reviewPanel?.scores, reviewPanel?.criteria],
   );
 
+  // The feedback sent to the authors, while they edit or wait (ODY-807)
+  const readingFeedback = isAuthor && droplet.status !== "published";
+
   return (
     <ReviewCommentsProvider dropletId={droplet.id} enabled={reviewing}>
-      <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
-        <DraftTour run={tourRun} setRun={setTourRun} />
-        <Sidebar
-          droplet={droplet}
-          user={user}
-          isAuthor={isAuthor}
-          availableDroplets={availableDroplets}
-          expanded={expanded}
-          setExpanded={setExpanded}
-          onRestartTour={restartTour}
-          hideReviewActions={reviewing}
-          lessonDots={dots}
-        />
-        <main
-          data-review-panel={reviewing ? panelMode : undefined}
-          ref={mainRef}
-          className={cn(
-            "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
-            expanded ? "xl:pl-64" : "xl:pl-0",
-            reviewing && [
-              "group",
-              panelMode === "open" ? "xl:pr-[384px]" : "xl:pr-12",
-            ],
-          )}
-        >
-          {children}
-        </main>
-        {reviewing && (
-          <ReviewPanelDock
-            mode={panelMode}
-            onOpen={openPanel}
-            onCollapse={() => setPanelMode("rail")}
+      <SentFeedbackProvider dropletId={droplet.id} enabled={readingFeedback}>
+        <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
+          <DraftTour run={tourRun} setRun={setTourRun} />
+          <Sidebar
+            droplet={droplet}
+            user={user}
+            isAuthor={isAuthor}
+            availableDroplets={availableDroplets}
+            expanded={expanded}
+            setExpanded={setExpanded}
+            onRestartTour={restartTour}
+            hideReviewActions={reviewing}
+            lessonDots={dots}
+          />
+          <main
+            data-review-panel={reviewing ? panelMode : undefined}
+            ref={mainRef}
+            className={cn(
+              "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
+              expanded ? "xl:pl-64" : "xl:pl-0",
+              reviewing && [
+                "group",
+                panelMode === "open" ? "xl:pr-[384px]" : "xl:pr-12",
+              ],
+            )}
           >
-            <ReviewTranscript
-              droplet={droplet}
-              panel={reviewPanel}
-              meta={reviewMeta}
-              onScoresChange={setLiveScores}
-            />
-          </ReviewPanelDock>
-        )}
-      </div>
+            {children}
+          </main>
+          {reviewing && (
+            <ReviewPanelDock
+              mode={panelMode}
+              onOpen={openPanel}
+              onCollapse={() => setPanelMode("rail")}
+            >
+              <ReviewTranscript
+                droplet={droplet}
+                panel={reviewPanel}
+                meta={reviewMeta}
+                onScoresChange={setLiveScores}
+              />
+            </ReviewPanelDock>
+          )}
+        </div>
+      </SentFeedbackProvider>
     </ReviewCommentsProvider>
   );
 }
