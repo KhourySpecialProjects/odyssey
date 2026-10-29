@@ -133,3 +133,20 @@ describe("useSentFeedback (ODY-807)", () => {
     expect(result.current.comments[0].addressedAt).toBe(addressedAt);
   });
 });
+
+describe("a load the page leaves before it answers", () => {
+  it("logs nothing", async () => {
+    let reject: (e: Error) => void = () => {};
+    jest
+      .mocked(getReviewForDroplet)
+      .mockReturnValue(new Promise((_, no) => (reject = no)) as never);
+    const errors = jest.spyOn(console, "error").mockImplementation(() => {});
+    const { unmount } = renderHook(() => useSentFeedback(3, true));
+
+    unmount();
+    await act(async () => reject(new Error("network error")));
+
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+});
