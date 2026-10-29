@@ -71,7 +71,7 @@ const LINE = 8;
 // A pointer that moves less than this after a click hasn't moved on
 const HUSH_PX = 8;
 
-type BlockBox = {
+export type BlockBox = {
   blockId: string;
   type?: string;
   top: number;
@@ -81,7 +81,7 @@ type BlockBox = {
   snippet: string;
 };
 
-type TagBox = { commentId: number; top: number; markTop: number };
+export type TagBox = { commentId: number; top: number; markTop: number };
 
 type Layout = {
   blocks: BlockBox[];
@@ -158,7 +158,7 @@ const blockLineIn = (content: Element, blockId: string) => {
 };
 
 /** Each block, measured relative to `root` */
-function measureBlocks(
+export function measureBlocks(
   root: Element,
   content: Element,
   blockFor: (blockId: string) => TagBlock | undefined,
@@ -192,7 +192,7 @@ function measureBlocks(
  * block's first line when it has no mark (a whole block). Tags are stacked so
  * none overlap, in reading order, from `floor` down.
  */
-function measureTags(
+export function measureTags(
   root: Element,
   content: Element,
   comments: readonly ReviewComment[],
@@ -236,6 +236,33 @@ function measureTags(
     top,
     markTop,
   }));
+}
+
+/**
+ * The comment whose mark is at `target` in `content`. Marks nest where
+ * comments overlap, and which span is innermost is up to the editor. So every
+ * mark around the point counts, and an open comment on words wins over an
+ * open whole block, which wins over a resolved one.
+ */
+export function commentMarkAt(
+  content: Element | null,
+  target: EventTarget,
+  comments: readonly ReviewComment[],
+) {
+  const found: { mark: Element; comment: ReviewComment }[] = [];
+  let mark = (target as Element).closest?.(MARK) ?? null;
+  while (mark && content?.contains(mark)) {
+    const id = mark.getAttribute("data-anchor-id");
+    const comment = comments.find((c) => markIdFor(c) === id);
+    if (comment && id !== DRAFT_MARK_ID) found.push({ mark, comment });
+    mark = mark.parentElement?.closest(MARK) ?? null;
+  }
+  const rank = ({ comment }: { comment: ReviewComment }) =>
+    isResolved(comment) ? 2 : "quote" in comment.anchor ? 0 : 1;
+  const best = found.sort((a, b) => rank(a) - rank(b))[0];
+  return best
+    ? { mark: best.mark, id: markIdFor(best.comment), comment: best.comment }
+    : null;
 }
 
 interface CommentLayerProps {
@@ -700,26 +727,8 @@ export function CommentLayer({
 
   // ---- Marks ----------------------------------------------------------------
 
-  // Marks nest where comments overlap, and which span is innermost is up to
-  // the editor. So every mark around the point counts, and an open comment
-  // on words wins over an open whole block, which wins over a resolved one.
-  const markAt = (target: EventTarget) => {
-    const content = contentRef.current;
-    const found: { mark: Element; comment: ReviewComment }[] = [];
-    let mark = (target as Element).closest?.(MARK) ?? null;
-    while (mark && content?.contains(mark)) {
-      const id = mark.getAttribute("data-anchor-id");
-      const comment = comments.find((c) => markIdFor(c) === id);
-      if (comment && id !== DRAFT_MARK_ID) found.push({ mark, comment });
-      mark = mark.parentElement?.closest(MARK) ?? null;
-    }
-    const rank = ({ comment }: { comment: ReviewComment }) =>
-      isResolved(comment) ? 2 : "quote" in comment.anchor ? 0 : 1;
-    const best = found.sort((a, b) => rank(a) - rank(b))[0];
-    return best
-      ? { mark: best.mark, id: markIdFor(best.comment), comment: best.comment }
-      : null;
-  };
+  const markAt = (target: EventTarget) =>
+    commentMarkAt(contentRef.current, target, comments);
 
   // ---- The pointer ----------------------------------------------------------
 
