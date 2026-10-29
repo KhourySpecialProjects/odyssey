@@ -125,6 +125,12 @@ describe("getMyReview", () => {
     expect(commentCfg.urlParams?.filters).toEqual({
       review: { id: { $eq: 70 } },
     });
+    // The creator's mark, and where a carried comment came from (ODY-807)
+    expect(commentCfg.urlParams?.fields).toContain("addressedAt");
+    expect(commentCfg.urlParams?.populate?.carriedFrom).toEqual({
+      fields: ["createdAt"],
+      populate: { review: { fields: ["round", "sentAt"] } },
+    });
   });
 
   it("returns every comment, past one page", async () => {

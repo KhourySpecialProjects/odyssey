@@ -57,7 +57,15 @@
     "resolvedAt": {
       "type": "datetime"
     },
+    "addressedAt": {
+      "type": "datetime"
+    },
     "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::review-comment.review-comment"
+    },
+    "carriedFrom": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::review-comment.review-comment"

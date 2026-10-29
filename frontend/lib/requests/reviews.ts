@@ -633,10 +633,21 @@ function fetchComments(
     "/review-comments",
     {
       filters: { review: { id: { $eq: reviewId } } },
-      fields: ["field", "anchor", "body", "resolvedAt", "createdAt"],
+      fields: [
+        "field",
+        "anchor",
+        "body",
+        "resolvedAt",
+        "addressedAt",
+        "createdAt",
+      ],
       populate: {
         lesson: { fields: ["name"] },
         author: { fields: ["firstName", "lastName"] },
+        carriedFrom: {
+          fields: ["createdAt"],
+          populate: { review: { fields: ["round", "sentAt"] } },
+        },
       },
       sort: ["id:asc"],
     },
