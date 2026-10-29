@@ -40,6 +40,8 @@ interface CommentCardProps {
   meta?: ReactNode;
   /** The creator's Mark addressed (ODY-807): shown only when given */
   onAddress?: (addressed: boolean) => Promise<CommentOutcome>;
+  /** Shown to a droplet's author, reading the feedback sent to them */
+  forCreator?: boolean;
 }
 
 type Mode = "view" | "edit" | "confirm-delete";
@@ -80,6 +82,7 @@ export function CommentCard({
   focusOnOpen = true,
   meta,
   onAddress,
+  forCreator = false,
 }: CommentCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<Mode>("view");
@@ -224,8 +227,8 @@ export function CommentCard({
             className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--rc-accent-text)]"
             aria-hidden
           />
-          {onAddress
-            ? "You marked this addressed. The reviewer resolves it."
+          {forCreator
+            ? "Marked addressed. The reviewer resolves it."
             : "The creator marked this addressed."}
         </p>
       )}
