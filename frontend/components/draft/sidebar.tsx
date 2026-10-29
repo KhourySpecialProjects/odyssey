@@ -66,6 +66,7 @@ import {
   SortableLesson,
 } from "@/components/draft/sortable-lesson";
 import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
+import { ScoreWithAiButton } from "@/components/draft/review/score-with-ai-button";
 import { isResolved } from "@/lib/review-comments";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
@@ -816,6 +817,7 @@ export function Sidebar({
                 />
               ))}
             </div>
+            {canReview && <ScoreWithAiButton dropletId={droplet.id} />}
           </div>
         </div>
       </aside>

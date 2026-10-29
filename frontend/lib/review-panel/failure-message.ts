@@ -9,5 +9,10 @@ export function reviewFailureMessage(
   if (result.error === "unconfirmed") return UNCONFIRMED_MESSAGE;
   if (result.error === "forbidden") return "You can't do this.";
   if (result.error === "unauthenticated") return "Please sign in again.";
+  if (result.error === "rate_limited") {
+    return (
+      result.message || "You've used Score with AI too often. Try again later."
+    );
+  }
   return result.message || fallback;
 }

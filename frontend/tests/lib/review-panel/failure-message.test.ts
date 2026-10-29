@@ -23,6 +23,18 @@ describe("reviewFailureMessage", () => {
     ).toBe("Already sent.");
   });
 
+  it("explains a rate limit, using the server's wait time when it has one", () => {
+    expect(
+      reviewFailureMessage(
+        { error: "rate_limited", message: "Try in 2 min." },
+        "fb",
+      ),
+    ).toBe("Try in 2 min.");
+    expect(reviewFailureMessage({ error: "rate_limited" }, "fb")).toBe(
+      "You've used Score with AI too often. Try again later.",
+    );
+  });
+
   it.each([undefined, null, ""])("falls back when the message is %p", (m) => {
     expect(reviewFailureMessage({ error: "failed", message: m }, "fb")).toBe(
       "fb",

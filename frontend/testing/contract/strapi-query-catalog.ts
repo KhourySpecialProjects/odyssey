@@ -241,6 +241,12 @@ const MY_REVIEW_ROUTES = routes([
   ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
 ]);
 
+const AI_RUN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/ai-scoring-runs$/, list(ent(40, { runState: "done" }))],
+]);
+
 const REVIEW_PANEL_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
   ["GET", /^\/review-criteria$/, list(ent(2, { name: "Tone", order: 0 }))],
@@ -260,6 +266,7 @@ const call = <T extends Mod>(
 /** Request modules (keys of CAPTURED / SKIPPED) and where they live. */
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
+  "ai-scoring": "@/lib/requests/ai-scoring",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
   "authorized-user": "@/lib/requests/authorized-user",
@@ -703,6 +710,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       }),
     ),
   ]),
+  "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
+    call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
+  ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
     call(
@@ -926,6 +936,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     fetchWeeklyNewUsers: "PostHog only, no Strapi",
     fetchLessonScrollDepth: "PostHog only, no Strapi",
     fetchAvgSessionDuration: "PostHog only, no Strapi",
+  },
+  "ai-scoring": {
+    startAiScoring: "custom ai-scoring-run start route (ODY-814)",
   },
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",

@@ -19,6 +19,9 @@ jest.mock("@/lib/requests/feed", () => ({
 jest.mock("@/components/draft/add-lesson", () => ({
   AddLesson: () => <div data-testid="add-lesson" />,
 }));
+jest.mock("@/components/draft/review/score-with-ai-button", () => ({
+  ScoreWithAiButton: () => <div data-testid="score-with-ai" />,
+}));
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: () => <div data-testid="content-action-button" />,
 }));
