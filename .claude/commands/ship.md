@@ -38,6 +38,28 @@ git diff --stat production..HEAD
 Count files changed, insertions, deletions. Identify which areas were touched
 (frontend components, request functions, Strapi schemas, tests, config).
 
+### 3b. Check PR size
+
+Measure the branch against the PR size budget in CLAUDE.md. Compare with the
+branch the PR will target (usually `develop`; use the previous PR's branch for a
+stacked PR):
+
+```bash
+git diff --numstat origin/develop...HEAD -- . \
+  ':(exclude,glob)**/package-lock.json' ':(exclude,glob)**/yarn.lock' \
+  ':(exclude,glob)**/documentation/**' ':(exclude,glob)**/types/generated/**' \
+  ':(exclude,glob)**/__snapshots__/**' ':(exclude,glob)**/*.svg' ':(exclude,glob)**/*.md' \
+  | awk '{ n = $1 + $2 }
+    $3 ~ /(test|spec)s?[\/.]|\/tests?\/|testing\/|e2e\// { t += n; next }
+    { c += n }
+    END { printf "code %d, tests %d\n", c, t }'
+```
+
+- **Code ≤ 400:** within budget.
+- **Code 401–1,000:** warn. If the plan has a PRs table, suggest the split it gives; otherwise propose one (backend, then frontend data, then UI).
+- **Code > 1,000:** "Ready to push: NO" unless the human confirms an exception: a promotion PR (`develop` → `production`, or an integration branch whose ticket PRs were already reviewed), a mechanical change such as a rename, or a generated-file update.
+- **Tests more than twice the code:** flag it. Point at "Keep tests lean" in `.claude/rules/testing.md` (copied cases, pasted data, the same rule tested at two layers).
+
 ### 4. Check for plan/spec
 
 Look in `docs/plans/` for the active plan and spec files. Extract:
@@ -79,6 +101,7 @@ Ship Check
 CI: ✓ All checks passed / ✗ [failures]
 Branch: [branch name] — [N] commits ahead of production
 Changes: [N] files changed (+[insertions] -[deletions])
+Size: [code] code lines, [tests] test lines — within budget / over 400 / over 1,000
 Plan: [plan file name] — [N/M] tasks complete
 Audit: [verdict if exists, or "not audited"]
 
