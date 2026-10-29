@@ -14,6 +14,10 @@ interface FeedbackStripProps {
   place?: string;
   /** The draft is back in review: the feedback can't change */
   inReview?: boolean;
+  /** Controls at the strip's end, such as the Overview's Feedback / Edit */
+  actions?: ReactNode;
+  /** How to read the comments: not while the editors are showing */
+  showHint?: boolean;
   /** Outdated comments, listed under it */
   children?: ReactNode;
 }
@@ -29,6 +33,8 @@ export function FeedbackStrip({
   addressed,
   place = "this lesson",
   inReview = false,
+  actions,
+  showHint = true,
   children,
 }: FeedbackStripProps) {
   return (
@@ -50,8 +56,9 @@ export function FeedbackStrip({
             {addressed} marked addressed
           </span>
         )}
+        {actions && <span className="ml-auto">{actions}</span>}
       </div>
-      {total > 0 && (
+      {total > 0 && showHint && (
         <p>
           {inReview
             ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
