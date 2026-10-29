@@ -41,7 +41,7 @@ api/
 ├── playlist/             Curated droplet collections
 ├── report/               Bug reports
 ├── review/               One reviewer's review of a droplet round
-├── review-comment/       Anchored review comments (replies via parent)
+├── review-comment/       Anchored review comments (replies via parent, carriedFrom, addressedAt)
 ├── review-criterion/     Rubric criteria (admin-edited, seeded)
 ├── review-score/         1-5 score per lesson (or overall) and criterion
 └── tag/                  Content categorization tags
@@ -328,7 +328,7 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 - **Trust boundary:** the routes trust `reviewerId`. The Next.js actions (`lib/requests/reviews.ts`) enforce `isReviewerFor` and refuse authors.
 - **Lock order:** every route runs in one `strapi.db.transaction()`, locks the draft row with `forUpdate`, then re-reads it. `publish-review` for `[EDIT]` locks the draft, then the original (same as publish-edit). Send and Publish on one draft are serialized: the loser gets 409 or 404.
 - **Idempotency (G18):** a repeat Submit or Withdraw is 200 with `changed: false`, so the actions don't pre-refuse on `inReview`. Submit or Withdraw on a published droplet is 409.
-- **Submit carry-over (G4):** `droplet.reviewRound` goes up (lifecycle hook), then each reviewer's latest review is carried to the new round. An open review keeps its row, with `round` and `key` re-set. A sent review stays as history, and gets a new open review with copies of its unresolved top-level comments and their replies (`parent` remapped, any depth). Orphaned `blocks` comments are skipped and no scores are copied.
+- **Submit carry-over (G4):** `droplet.reviewRound` goes up (lifecycle hook), then each reviewer's latest review is carried to the new round. An open review keeps its row, with `round` and `key` re-set. A sent review stays as history, and gets a new open review with copies of its unresolved top-level comments and their replies (`parent` remapped, any depth). Orphaned `blocks` comments are skipped and no scores are copied. Each copy's `carriedFrom` points at the comment as first written (a copy of a copy points at the original, not at the copy), and the creator's `addressedAt` mark is copied with it (ODY-807).
 - **Send:** marks the caller's open review `sent` (with `sentAt` and optional `summaryNote`), sets `inReview: false`, and creates one `review_feedback` announcement per author.
 - **Publish:** needs an open review with a confirmed Overall score for every active criterion. `[EDIT]` runs `applyPublishEdit`, `moveReviewsToLive` (the caller's review becomes `published`), one `review_published` announcement per author (attached to the live droplet, addressed to that author) and `deleteEditDraft`. A new droplet is set `published` with `inReview: false` in place. Announcement text never mentions AI.
 - **Known gap (G9):** ODY-802's comment REST writes are not serialized with Publish. A comment written while Publish runs can land on a draft lesson that is then deleted. Documented, not fixed.

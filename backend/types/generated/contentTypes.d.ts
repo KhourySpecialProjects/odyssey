@@ -1558,6 +1558,7 @@ export interface ApiReviewCommentReviewComment
     draftAndPublish: false;
   };
   attributes: {
+    addressedAt: Schema.Attribute.DateTime;
     anchor: Schema.Attribute.JSON & Schema.Attribute.Required;
     author: Schema.Attribute.Relation<
       'manyToOne',
@@ -1568,6 +1569,10 @@ export interface ApiReviewCommentReviewComment
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 5000;
       }>;
+    carriedFrom: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::review-comment.review-comment'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
