@@ -11,6 +11,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { mockReview } from "@/testing/mocks/reviewsMock";
+import type { useSharedSentFeedback } from "@/components/draft/review/review-comments-context";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -35,6 +37,14 @@ jest.mock("@/components/draft/add-lesson", () => ({
 jest.mock("@/components/draft/review/score-with-ai-button", () => ({
   ScoreWithAiButton: () => <div data-testid="score-with-ai" />,
 }));
+let mockSentFeedback: Partial<
+  NonNullable<ReturnType<typeof useSharedSentFeedback>>
+> | null = null;
+jest.mock("@/components/draft/review/review-comments-context", () => ({
+  ...jest.requireActual("@/components/draft/review/review-comments-context"),
+  useSharedSentFeedback: () => mockSentFeedback,
+}));
+
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: ({
     actionType,
@@ -128,7 +138,6 @@ describe("Sidebar", () => {
     presentationEnabled: false,
     learningObjectives: [],
     inReview: false,
-    afterReview: undefined,
     lessons: [{ ...mockLesson, orderIndex: 0 }],
   };
 
@@ -143,6 +152,7 @@ describe("Sidebar", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSentFeedback = null;
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
     (createDropletAnnouncement as jest.Mock).mockResolvedValue({
@@ -489,14 +499,18 @@ describe("Sidebar", () => {
       );
     });
 
-    it("offers Resubmit for review once changes were requested", () => {
-      expect(
-        renderActions(
-          [ContentCreator],
-          { ...mockDroplet, afterReview: "Please fix the quiz answers" },
-          true,
-        ),
-      ).toEqual([["requestReview", "Resubmit for review"]]);
+    it.each([
+      [
+        "a sent review exists",
+        { review: { ...mockReview, state: "sent" as const } },
+        "Resubmit for review",
+      ],
+      ["no sent review exists", null, "Submit for review"],
+    ])("labels Submit when %s", (_label, feedback, text) => {
+      mockSentFeedback = feedback;
+      expect(renderActions([ContentCreator], mockDroplet, true)).toEqual([
+        ["requestReview", text],
+      ]);
     });
 
     it("lets a Content Editor who is also a Content Creator submit their draft for review", () => {

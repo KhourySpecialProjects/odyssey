@@ -99,7 +99,6 @@ export function Sidebar({
     | "lessons"
     | "status"
     | "inReview"
-    | "afterReview"
     | "focusArea"
     | "learningObjectives"
     | "isHidden"
@@ -451,7 +450,7 @@ export function Sidebar({
   if (canRequestReview) {
     actionButtons.push({
       actionType: "requestReview",
-      buttonText: droplet.afterReview
+      buttonText: sentFeedback?.review
         ? "Resubmit for review"
         : "Submit for review",
     });
