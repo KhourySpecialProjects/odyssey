@@ -1,5 +1,36 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface AiScoringModelPrice extends Struct.ComponentSchema {
+  collectionName: 'components_ai_scoring_model_prices';
+  info: {
+    description: 'What one Claude model costs, in US dollars per million tokens (ODY-815)';
+    displayName: 'Model Price';
+  };
+  attributes: {
+    inputPerMillionUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    model: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    outputPerMillionUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+  };
+}
+
 export interface DropletsCallout extends Struct.ComponentSchema {
   collectionName: 'components_droplets_callouts';
   info: {
@@ -194,6 +225,7 @@ export interface QuizzesQuestion extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export namespace Public {
     export interface ComponentSchemas {
+      'ai-scoring.model-price': AiScoringModelPrice;
       'droplets.callout': DropletsCallout;
       'droplets.dataset': DropletsDataset;
       'droplets.expandable': DropletsExpandable;

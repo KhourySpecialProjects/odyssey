@@ -560,6 +560,52 @@ export interface ApiAiScoringRunAiScoringRun
   };
 }
 
+export interface ApiAiScoringSettingAiScoringSetting
+  extends Struct.SingleTypeSchema {
+  collectionName: 'ai_scoring_settings';
+  info: {
+    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)";
+    displayName: 'AI Scoring Settings';
+    pluralName: 'ai-scoring-settings';
+    singularName: 'ai-scoring-setting';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-scoring-setting.ai-scoring-setting'
+    > &
+      Schema.Attribute.Private;
+    monthlyCapUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    perRunCapUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    prices: Schema.Attribute.Component<'ai-scoring.model-price', true>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiAnnouncementAnnouncement
   extends Struct.CollectionTypeSchema {
   collectionName: 'announcements';
@@ -2512,6 +2558,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::ai-scoring-run.ai-scoring-run': ApiAiScoringRunAiScoringRun;
+      'api::ai-scoring-setting.ai-scoring-setting': ApiAiScoringSettingAiScoringSetting;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
