@@ -108,10 +108,20 @@ describeServerActionAuth("publishDraftToOriginal", {
 });
 
 describe("publishDraftToOriginal: who may publish", () => {
-  it("allows an admin who did not write the draft", async () => {
-    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+  it("allows an admin who wrote the draft", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(7));
 
     expect((await publish()).ok).toBe(true);
+  });
+
+  // ODY-860: a draft its creator withdrew isn't the reviewer's to publish
+  it("refuses an admin who did not write the draft, with no request", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+
+    const result = await publish();
+
+    expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("refuses an Editor on a draft that is in review, with no request", async () => {
@@ -174,7 +184,7 @@ describe("publishDraftToOriginal: who may publish", () => {
   });
 
   it("returns not found, with no request, when the read has no documentId", async () => {
-    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(7));
     mockedFetchAPI.mockResolvedValue([draftRow({ documentId: undefined })]);
 
     const result = await publish();
@@ -189,7 +199,7 @@ describe("publishDraftToOriginal: who may publish", () => {
   });
 
   it("refuses when the draft belongs to a different original, with no request", async () => {
-    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(7));
     mockedFetchAPI.mockResolvedValue([draftRow({ originalDropletId: 11 })]);
 
     const result = await publish();
@@ -199,7 +209,7 @@ describe("publishDraftToOriginal: who may publish", () => {
   });
 
   it("returns not found when the draft cannot be read, with no request", async () => {
-    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(7));
     mockedFetchAPI.mockResolvedValue([]);
 
     const result = await publish();
@@ -211,7 +221,7 @@ describe("publishDraftToOriginal: who may publish", () => {
 
 describe("publishDraftToOriginal: the request", () => {
   beforeEach(() => {
-    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(7));
   });
 
   it("makes one POST to the server-fetched documentId with the v4 header", async () => {

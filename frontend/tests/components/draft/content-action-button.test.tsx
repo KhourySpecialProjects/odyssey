@@ -38,8 +38,11 @@ const mockToast = {
   error: jest.fn(),
 };
 
+const mockRefresh = jest.fn();
+
 (useRouter as jest.Mock).mockReturnValue({
   push: mockPush,
+  refresh: mockRefresh,
 });
 
 (toast.success as jest.Mock) = mockToast.success;
@@ -606,6 +609,28 @@ describe("ContentActionButton", () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
+    // ODY-860: the creator withdrew while this page was open
+    it("refreshes the page when the draft has left review", async () => {
+      mockSendFeedback.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message: "This droplet is not in review.",
+      });
+      renderIt();
+
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "This droplet is not in review.",
+        );
+      });
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
     it("shows the generic error for a failed send", async () => {
       mockSendFeedback.mockResolvedValue({
         ok: false,
@@ -713,6 +738,27 @@ describe("ContentActionButton", () => {
           "Confirm an Overall score for every criterion (missing: Tone).",
         );
       });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    // ODY-860: the creator withdrew while this page was open, so the
+    // page refreshes and its review actions go away
+    it("refreshes the page when the draft has left review", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message: "This droplet is not in review.",
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "This droplet is not in review.",
+        );
+      });
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
       expect(mockPush).not.toHaveBeenCalled();
     });
 

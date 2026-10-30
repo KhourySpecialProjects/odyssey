@@ -433,20 +433,24 @@ describe("Sidebar", () => {
     it.each<
       [AuthorizedUserRoleTitle, keyof typeof draftStates, boolean, string[][]]
     >([
-      [SysAdmin, "new draft", false, [publish]],
+      // Someone else's draft out of review, such as one its creator withdrew,
+      // isn't the Admin's to publish (ODY-860)
+      [SysAdmin, "new draft", false, []],
       [
         SysAdmin,
         "new draft in review",
         false,
         [publishWithReview, sendFeedback],
       ],
-      [SysAdmin, "edit draft", false, [publishChanges]],
+      [SysAdmin, "edit draft", false, []],
       [
         SysAdmin,
         "edit draft in review",
         false,
         [publishChangesWithReview, sendFeedback],
       ],
+      [SysAdmin, "new draft", true, [publish]],
+      [SysAdmin, "edit draft", true, [publishChanges]],
       // Faculty never act on someone else's droplet (ODY-798, 2026-10-26).
       [Faculty, "new draft", false, []],
       [Faculty, "new draft in review", false, []],
@@ -509,10 +513,10 @@ describe("Sidebar", () => {
       ).toEqual([]);
     });
 
-    it("gives an Admin who is also a Content Creator Publish instead of Submit for review", () => {
-      expect(renderActions([SysAdmin, ContentCreator], mockDroplet)).toEqual([
-        publish,
-      ]);
+    it("gives an Admin author who is also a Content Creator Publish instead of Submit for review", () => {
+      expect(
+        renderActions([SysAdmin, ContentCreator], mockDroplet, true),
+      ).toEqual([publish]);
     });
 
     it("shows no action buttons on a published droplet", () => {

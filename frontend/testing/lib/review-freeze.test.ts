@@ -316,11 +316,14 @@ describe("checkDropletUpdate", () => {
     ).toEqual({ ok: false, error: "forbidden" });
   });
 
-  it("non-author Admin may publish", async () => {
-    expect(
-      await run(user(9, [Role.SysAdmin]), { status: "published" }),
-    ).toEqual({
-      ok: true,
+  // ODY-860: a creator's withdrawn draft isn't the Admin's to publish
+  describe("non-author Admin", () => {
+    const admin = user(9, [Role.SysAdmin]);
+    it("status is forbidden when not in review", async () => {
+      expect(await run(admin, { status: "published" })).toEqual(FORBIDDEN);
+    });
+    it("content is ok when not in review", async () => {
+      expect(await run(admin, { description: "x" })).toEqual({ ok: true });
     });
   });
 
@@ -478,11 +481,17 @@ describe("checkPublishDraft", () => {
       await checkPublishDraft(user(9, [Role.ContentEditor]) as never, 1, 50),
     ).toEqual({ ok: false, error: "in_review" });
   });
-  it("allows a non-author Admin outside review", async () => {
+  it("allows an Admin author outside review", async () => {
+    mockFetch.mockResolvedValue([droplet({ originalDropletId: 50 })]);
+    expect(
+      await checkPublishDraft(user(7, [Role.SysAdmin]) as never, 1, 50),
+    ).toEqual({ ok: true });
+  });
+  it("refuses a non-author Admin outside review (ODY-860)", async () => {
     mockFetch.mockResolvedValue([droplet({ originalDropletId: 50 })]);
     expect(
       await checkPublishDraft(user(9, [Role.SysAdmin]) as never, 1, 50),
-    ).toEqual({ ok: true });
+    ).toEqual({ ok: false, error: "forbidden" });
   });
   it("fails closed", async () => {
     mockFetch.mockRejectedValue(new Error("x"));

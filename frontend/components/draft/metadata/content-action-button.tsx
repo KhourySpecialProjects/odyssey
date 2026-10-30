@@ -133,6 +133,9 @@ export function ContentActionButton({
                   ? await sendFeedback(droplet.id, note.trim() || null)
                   : await publishWithReview(droplet.id);
           if (!result.ok) {
+            // A conflict can mean this page is out of date, e.g. the creator
+            // withdrew while it was open, so show the draft as it is now (ODY-860)
+            if (result.error === "conflict") router.refresh();
             throw new Error(
               reviewFailureMessage(result, REVIEW_FAILURES[actionType]),
             );
