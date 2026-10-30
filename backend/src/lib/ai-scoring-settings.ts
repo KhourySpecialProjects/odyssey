@@ -70,3 +70,24 @@ export async function loadAiScoringSettings(): Promise<AiScoringSettings> {
   } as any)) as Row | null;
   return toSettings(row ?? AI_SCORING_SETTINGS_SEED);
 }
+
+/**
+ * Locks the settings row until the transaction ends and returns the settings,
+ * so budget checks run one at a time. Seeds the row first if it's missing, so
+ * there's always one to lock. Must run inside a transaction.
+ */
+export async function lockAiScoringSettings(): Promise<AiScoringSettings> {
+  const lockRow = () =>
+    strapi.db
+      .queryBuilder(SETTINGS_UID)
+      .select(['id'])
+      .orderBy({ id: 'asc' })
+      .first()
+      .forUpdate()
+      .execute();
+  if (!(await lockRow())) {
+    await seedAiScoringSettings();
+    await lockRow();
+  }
+  return loadAiScoringSettings();
+}
