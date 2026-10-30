@@ -19,6 +19,10 @@ const isText = (s: unknown, max: number): s is string =>
 const MAX_SCORES = 5000;
 const MAX_RATIONALE = 4000;
 const MAX_ERROR = 2000;
+const MAX_FINDINGS = 5;
+const MAX_QUOTE = 2000;
+const MAX_REASON = 500;
+const MAX_ANCHOR_JSON = 3000;
 const END_STATES = ['done', 'partial', 'failed'];
 
 const ERROR_NAMES: Record<number, string> = {
@@ -86,11 +90,47 @@ function parseProgress(value: unknown): value is RunProgress {
   );
 }
 
+/** Bounds only: the frontend run owns the full finding shape. */
+function parseFindings(value: unknown, at: string): string | null {
+  if (!Array.isArray(value) || value.length > MAX_FINDINGS) {
+    return `${at} must be an array of at most ${MAX_FINDINGS}`;
+  }
+  const allowed = ['id', 'quote', 'reason', 'lessonId', 'anchor'];
+  for (const [j, f] of value.entries()) {
+    const here = `${at}[${j}]`;
+    if (f === null || typeof f !== 'object' || Array.isArray(f)) {
+      return `${here} must be an object`;
+    }
+    const extra = Object.keys(f).find((key) => !allowed.includes(key));
+    if (extra) return `Invalid key ${here}.${extra}`;
+    if (!isText(f.id, 100)) return `${here}.id must be text of at most 100 characters`;
+    if (!isText(f.quote, MAX_QUOTE)) {
+      return `${here}.quote must be text of at most ${MAX_QUOTE} characters`;
+    }
+    if (!isText(f.reason, MAX_REASON)) {
+      return `${here}.reason must be text of at most ${MAX_REASON} characters`;
+    }
+    if (f.lessonId !== null && !isRowId(f.lessonId)) {
+      return `${here}.lessonId must be a positive integer or null`;
+    }
+    const { anchor } = f;
+    if (
+      anchor === null ||
+      typeof anchor !== 'object' ||
+      Array.isArray(anchor) ||
+      JSON.stringify(anchor).length > MAX_ANCHOR_JSON
+    ) {
+      return `${here}.anchor must be an object of at most ${MAX_ANCHOR_JSON} characters`;
+    }
+  }
+  return null;
+}
+
 function parseScores(value: unknown): { scores: RunScore[] } | { invalid: string } {
   if (!Array.isArray(value) || value.length > MAX_SCORES) {
     return { invalid: `scores must be an array of at most ${MAX_SCORES}` };
   }
-  const allowed = ['lessonId', 'criterionId', 'aiValue', 'aiRationale'];
+  const allowed = ['lessonId', 'criterionId', 'aiValue', 'aiRationale', 'aiFindings'];
   for (const [i, s] of value.entries()) {
     if (s === null || typeof s !== 'object' || Array.isArray(s)) {
       return { invalid: `scores[${i}] must be an object` };
@@ -110,6 +150,10 @@ function parseScores(value: unknown): { scores: RunScore[] } | { invalid: string
       return {
         invalid: `scores[${i}].aiRationale must be text of at most ${MAX_RATIONALE} characters`,
       };
+    }
+    if (s.aiFindings !== undefined) {
+      const invalid = parseFindings(s.aiFindings, `scores[${i}].aiFindings`);
+      if (invalid) return { invalid };
     }
   }
   return { scores: value as RunScore[] };

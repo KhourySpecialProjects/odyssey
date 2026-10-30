@@ -330,6 +330,7 @@ export type RunScore = {
   criterionId: number;
   aiValue: number;
   aiRationale: string;
+  aiFindings?: Record<string, unknown>[];
 };
 
 export type FinishRunInput = RunRef &
@@ -398,7 +399,11 @@ async function saveSuggestions(
       kept++;
       continue;
     }
-    const ai = { aiValue: score.aiValue, aiRationale: score.aiRationale };
+    const ai = {
+      aiValue: score.aiValue,
+      aiRationale: score.aiRationale,
+      aiFindings: score.aiFindings ?? [],
+    };
     if (existing) {
       await strapi
         .documents(SCORE_UID)
@@ -422,7 +427,7 @@ async function saveSuggestions(
 
 /**
  * Saves a run's suggestions and ends it, in one transaction. Writes only
- * `aiValue` and `aiRationale`, and skips any score the reviewer has already
+ * `aiValue`, `aiRationale` and `aiFindings`, and skips any score the reviewer has already
  * set, so running again replaces unconfirmed suggestions only. A lesson that
  * left the droplet mid-run loses only its own suggestions. A review sent
  * meanwhile ends the run as failed and saves nothing.

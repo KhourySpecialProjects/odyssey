@@ -84,6 +84,15 @@ const finishBody = (runId, overrides = {}) => ({
   ...overrides,
 });
 
+const finding = (overrides = {}) => ({
+  id: 'r-1',
+  quote: 'Hello there',
+  reason: 'Too casual.',
+  lessonId: null,
+  anchor: { v: 1, field: 'description', start: 0, end: 11 },
+  ...overrides,
+});
+
 beforeAll(async () => {
   strapi = await setupStrapi();
   token = await createFullAccessToken(strapi);
@@ -474,6 +483,20 @@ describe('POST /ai-scoring-runs/heartbeat', () => {
       expect(await scoreRow(scoreKey(review.id, otherLesson.id, tone.id))).toBeNull();
     });
 
+    it('saves aiFindings beside the suggestion', async () => {
+      const { body } = await start();
+      const findings = [finding()];
+
+      const res = await beat(body.data.run.id, {
+        scores: lessonScores({ aiFindings: findings }),
+      });
+
+      expect(res.status).toBe(200);
+      const row = await scoreRow(scoreKey(review.id, lesson.id, tone.id));
+      expect(row.aiFindings).toEqual(findings);
+      expect((await scoreRow(scoreKey(review.id, lesson.id, clarity.id))).aiFindings).toEqual([]);
+    });
+
     it('is a 400 for a criterion outside the run, and the whole heartbeat rolls back', async () => {
       const { body } = await start();
       const runId = body.data.run.id;
@@ -746,5 +769,68 @@ describe('POST /ai-scoring-runs/finish', () => {
 
     for (const b of bad) expect((await post('finish', b)).status).toBe(400);
     expect((await runRow(runId)).runState).toBe('queued');
+  });
+});
+
+describe('POST /ai-scoring-runs/finish, aiFindings', () => {
+  const withFindings = (aiFindings) =>
+    finishBody(0).scores.map((s) => ({ ...s, ...(aiFindings ? { aiFindings } : {}) }));
+
+  it('writes them beside aiValue, and [] over old findings when none come', async () => {
+    const first = await start();
+    const findings = [finding()];
+    await post('finish', finishBody(first.body.data.run.id, { scores: withFindings(findings) }));
+    const key = scoreKey(review.id, lesson.id, tone.id);
+    expect((await scoreRow(key)).aiFindings).toEqual(findings);
+
+    const second = await start();
+    await post('finish', finishBody(second.body.data.run.id, { scores: withFindings() }));
+
+    expect((await scoreRow(key)).aiFindings).toEqual([]);
+  });
+
+  it('keeps a confirmed row aiValue, aiRationale and aiFindings', async () => {
+    const first = await start();
+    const old = [finding({ id: 'old-1' })];
+    await post('finish', finishBody(first.body.data.run.id, { scores: withFindings(old) }));
+    const key = scoreKey(review.id, lesson.id, tone.id);
+    const row = await scoreRow(key);
+    await strapi
+      .documents(REVIEW_SCORE_UID)
+      .update({ documentId: row.documentId, data: { value: 3 } });
+
+    const second = await start();
+    await post(
+      'finish',
+      finishBody(second.body.data.run.id, { scores: withFindings([finding({ id: 'new-1' })]) }),
+    );
+
+    expect(await scoreRow(key)).toMatchObject({
+      value: 3,
+      aiValue: 4,
+      aiRationale: 'Warm opening.',
+      aiFindings: old,
+    });
+  });
+
+  it('rejects out-of-bounds findings and writes nothing', async () => {
+    const { body } = await start();
+    const runId = body.data.run.id;
+    const bad = [
+      Array.from({ length: 6 }, (_, i) => finding({ id: `r-${i}` })),
+      'nope',
+      [{ ...finding(), extra: 1 }],
+      [finding({ quote: 'x'.repeat(2001) })],
+      [finding({ lessonId: 'one' })],
+      [finding({ anchor: { v: 1, field: 'blocks', quote: 'x'.repeat(3000) } })],
+    ];
+
+    for (const aiFindings of bad) {
+      const res = await post('finish', finishBody(runId, { scores: withFindings(aiFindings) }));
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toMatch(/aiFindings/);
+    }
+    expect((await runRow(runId)).runState).toBe('queued');
+    expect(await scoreRow(scoreKey(review.id, lesson.id, tone.id))).toBeNull();
   });
 });
