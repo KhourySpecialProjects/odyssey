@@ -14,7 +14,7 @@
     "@_sh/strapi-plugin-ckeditor": "8.0.0",
     "@aws-sdk/client-s3": "^3.1030.0",
     "@strapi/plugin-users-permissions": "5.56.0",
-    "@strapi/provider-upload-aws-s3": "5.56.0",
+    "@strapi/provider-upload-aws-s3": "5.59.0",
     "@strapi/strapi": "5.56.0",
     "ckeditor5": "48.4.0",
     "pg": "^8.11.5",
