@@ -466,7 +466,6 @@ describe("cached.ts — getCachedDraftDropletBySlug", () => {
         "isHidden",
         "status",
         "inReview",
-        "afterReview",
         "funFact",
         "originalDropletId",
         "presentationEnabled",

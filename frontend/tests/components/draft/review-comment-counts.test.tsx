@@ -64,7 +64,6 @@ const droplet = {
   presentationEnabled: false,
   learningObjectives: [],
   inReview: true,
-  afterReview: undefined,
   lessons: [lesson(1, "First lesson"), lesson(2, "Second lesson")],
 };
 

@@ -68,7 +68,7 @@ Droplet
 ├── originalDropletId: integer (links draft copies to published originals)
 ├── inReview: boolean
 ├── reviewRound: integer (server-owned submission count; +1 when inReview turns true)
-├── afterReview: text
+├── afterReview: text (read-only; retired by ODY-808, deleted in FU1)
 │
 ├── lessons → many-to-many Lesson (direct relation; order comes from Lesson.orderIndex)
 ├── tags → many-to-many Tag
@@ -78,7 +78,7 @@ Droplet
 ├── groups → many-to-many Group
 ├── authorized_users → many-to-many AuthorizedUser (authors)
 ├── usersFavorited → many-to-many AuthorizedUser (users who favorited)
-├── reviewDroplet → many-to-many AuthorizedUser (assigned reviewers)
+├── reviewDroplet → many-to-many AuthorizedUser (unused; deleted per ODY-808 D2)
 ├── announcements → one-to-many Announcement
 ├── droplet_lessons → one-to-many DropletLesson (join table records)
 └── learningObjectives → component[] (repeatable "droplets.learning-objective")

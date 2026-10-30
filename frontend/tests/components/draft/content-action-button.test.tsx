@@ -66,11 +66,6 @@ describe("ContentActionButton", () => {
     originalDropletId: 99,
   };
 
-  const mockDropletWithReview: Droplet = {
-    ...mockDroplet,
-    afterReview: "Previous review comments",
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     document.body.innerHTML = '<div id="root"></div>';
@@ -518,20 +513,6 @@ describe("ContentActionButton", () => {
       expect(screen.getByLabelText(/optional summary/i)).toBe(
         screen.getByRole("textbox"),
       );
-    });
-
-    it("never seeds the textarea from afterReview", () => {
-      render(
-        <ContentActionButton
-          droplet={{ ...inReview, afterReview: "Old feedback" }}
-          actionType="sendFeedback"
-          buttonText="Send feedback"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
-
-      expect(screen.getByRole("textbox")).toHaveValue("");
     });
 
     it("sends the typed note, toasts and goes to /review", async () => {
@@ -1200,7 +1181,6 @@ describe("ContentActionButton", () => {
     const inReviewDroplet: Droplet = {
       ...mockDroplet,
       inReview: true,
-      afterReview: "Earlier feedback",
     };
 
     it("renders an outline button", () => {
