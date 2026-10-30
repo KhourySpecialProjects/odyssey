@@ -11,7 +11,10 @@ export default async function Footer() {
   const linkStyles =
     "text-xs font-regular md:text-base text-white hover:scale-105";
   return (
-    <footer className="relative z-50 w-full scale-x-80 bg-[#83C1E1] md:scale-x-100 dark:bg-[#3A6B85]">
+    <footer
+      id="site-footer"
+      className="relative z-50 w-full scale-x-80 bg-[#83C1E1] md:scale-x-100 dark:bg-[#3A6B85]"
+    >
       <div className="flex w-full flex-col items-center">
         <FooterWave />
 

@@ -223,13 +223,16 @@ export function AiStatusBar({
       )}
       <ul
         aria-label="Key"
-        className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#475467]"
+        className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#475467]"
       >
         {LEGEND.map(({ band, label, glyph }) => (
-          <li key={band} className="inline-flex items-center gap-1">
+          <li
+            key={band}
+            className="inline-flex items-center gap-0.5 whitespace-nowrap"
+          >
             <span
               aria-hidden
-              className="inline-flex h-3.5 w-3.5 rounded-full bg-white"
+              className="inline-flex h-3 w-3 rounded-full bg-white"
               style={{
                 border: `2px ${band === "unscored" ? "dashed" : "solid"} ${BAND_COLORS[band].outline}`,
               }}
