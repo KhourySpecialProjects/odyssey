@@ -48,10 +48,14 @@ export type DropletSnapshot = {
   lessons: SnapshotLesson[];
 };
 
+/** A passage that cost a criterion points. `lesson` is set on Overall scores. */
+export type Transgression = { quote: string; reason: string; lesson?: number };
+
 export type ScoreItem = {
   criterionId: number;
   rationale: string;
   score: number;
+  transgressions: Transgression[];
 };
 
 /** One lesson's scores, for the Overall request; null when its request failed. */

@@ -31,11 +31,17 @@ function result(
       ? {
           ok: true,
           scores: [
-            { criterionId: 1, score: scores[0], rationale: "tone reason" },
+            {
+              criterionId: 1,
+              score: scores[0],
+              rationale: "tone reason",
+              transgressions: [],
+            },
             {
               criterionId: 2,
               score: scores[1],
               rationale: "scaffolding reason",
+              transgressions: [],
             },
           ],
         }
