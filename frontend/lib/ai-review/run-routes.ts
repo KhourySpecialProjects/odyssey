@@ -1,6 +1,7 @@
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import type {
+  AiFinding,
   AiRunProgress,
   AiRunSection,
   AiScoringRunState,
@@ -46,6 +47,7 @@ export type RunScoreInput = {
   criterionId: number;
   aiValue: number;
   aiRationale: string;
+  aiFindings: AiFinding[];
 };
 
 export type FinishRunInput = {

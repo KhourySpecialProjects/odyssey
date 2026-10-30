@@ -35,6 +35,8 @@ Writes `runs/<date>-spike-<model>-<effort>/report.md` with every score and
 reason. Reword the rubric in `rubric.json` from the client's reactions (and
 change its `version`), then bump `PROMPT_VERSION` if the prompt changes.
 
+The answer also carries transgressions (quotes per criterion, ODY-850). The eval ignores them; `PROMPT_VERSION` was bumped for them.
+
 ## 3. The client scores droplets
 
 They fill in each `fixtures/<slug>.scores.json`: a 1–5 for every criterion,
