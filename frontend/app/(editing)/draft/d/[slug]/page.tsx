@@ -248,14 +248,6 @@ export default async function Droplet({ params }: Props) {
             This is currently a draft droplet. Submit it for review, and a
             Content Editor will publish it or request changes.
           </div>
-          {!droplet.inReview &&
-            droplet.afterReview !== null &&
-            droplet.status === "draft" && (
-              <div className="rounded-md border border-slate-400 bg-white p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200">
-                <p className="font-bold">Feedback for Revision:</p>
-                <div>{droplet.afterReview}</div>
-              </div>
-            )}
         </div>
 
         <div className="w-full space-y-10 px-40 pt-6 group-data-[review-panel=open]:px-12">

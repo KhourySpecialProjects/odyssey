@@ -29,7 +29,6 @@ interface DraftLayoutShellProps {
     | "lessons"
     | "status"
     | "inReview"
-    | "afterReview"
     | "focusArea"
     | "learningObjectives"
     | "isHidden"

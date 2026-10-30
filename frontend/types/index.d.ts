@@ -281,7 +281,6 @@ export type Droplet = {
   isArchived?: boolean;
   inReview?: boolean;
   reviewRound?: number | null;
-  afterReview?: string;
   funFact?: string;
   averageRating?: number;
   usersFavorited?: AuthorizedUser[];
