@@ -10,8 +10,10 @@ import {
   type AiRunStatus,
 } from "@/lib/requests/ai-scoring";
 import {
+  CEILING_STOP,
   START_FAILED,
   startErrorMessage,
+  stoppedAtCeiling,
 } from "@/lib/review-panel/ai-messages";
 import type { AiScoringRunState } from "@/types";
 import { cn } from "@/lib/utils";
@@ -21,19 +23,26 @@ const POLL_MS = 5000;
 const isActive = (state?: AiScoringRunState) =>
   state === "queued" || state === "running";
 
+const lessonCount = (n: number) => `${n} lesson${n === 1 ? "" : "s"}`;
+
 function describeRun(run: AiRunStatus): string {
+  const n = run.failedLessons.length;
+  // The ceiling skips the lessons left and the Overall Score.
+  if (stoppedAtCeiling(run.error)) {
+    return run.runState === "failed"
+      ? `${CEILING_STOP} Nothing was scored.`
+      : `${CEILING_STOP} Suggestions are ready, except for ${n ? `${lessonCount(n)} and ` : ""}the Overall Score.`;
+  }
   switch (run.runState) {
     case "queued":
     case "running":
       return "Scoring every lesson. You can keep reviewing.";
     case "done":
       return "AI suggestions are ready to confirm.";
-    case "partial": {
-      const n = run.failedLessons.length;
+    case "partial":
       return n
-        ? `AI suggestions are ready, except for ${n} lesson${n === 1 ? "" : "s"} it couldn't score.`
+        ? `AI suggestions are ready, except for ${lessonCount(n)} it couldn't score.`
         : "AI suggestions are ready, except for the Overall Score.";
-    }
     case "failed":
       return "Score with AI couldn't finish. Try again.";
   }

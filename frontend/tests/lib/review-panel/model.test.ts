@@ -178,11 +178,29 @@ describe("aiBarState", () => {
   it("names failed sections for partial and failed", () => {
     const failedLessons = [2, "overall" as const, 99];
     expect(aiBarState({ runState: "partial", failedLessons }, lessons)).toEqual(
-      { kind: "partial", failedNames: ["Loops", "Overall Score"] },
+      {
+        kind: "partial",
+        failedNames: ["Loops", "Overall Score"],
+        atCeiling: false,
+      },
     );
     expect(aiBarState({ runState: "failed" }, lessons)).toEqual({
       kind: "failed",
       failedNames: [],
+      atCeiling: false,
+    });
+  });
+
+  it("adds the Overall Score, which the run skips, when it stopped at the per-run cost ceiling", () => {
+    const run = {
+      runState: "partial" as const,
+      failedLessons: [2],
+      error: "Stopped at the per-run cost ceiling; Lesson 1: refusal",
+    };
+    expect(aiBarState(run, lessons)).toEqual({
+      kind: "partial",
+      failedNames: ["Loops", "Overall Score"],
+      atCeiling: true,
     });
   });
 });

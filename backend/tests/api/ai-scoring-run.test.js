@@ -236,7 +236,15 @@ describe('POST /ai-scoring-runs/start', () => {
 
 describe('POST /ai-scoring-runs/start, monthly budget', () => {
   const SETTINGS_UID = 'api::ai-scoring-setting.ai-scoring-setting';
-  const USED_UP = "This month's Score with AI budget is used up";
+  // The month after this one in Boston, such as "November 1" in October.
+  const resetDay = () => {
+    const boston = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    boston.setDate(1);
+    boston.setMonth(boston.getMonth() + 1);
+    return `${boston.toLocaleString('en-US', { month: 'long' })} 1`;
+  };
+  const usedUp = () =>
+    `This month's Score with AI budget is used up. It resets on ${resetDay()}.`;
 
   const settingsRow = () => strapi.documents(SETTINGS_UID).findFirst();
   const setBudget = async (data) =>
@@ -272,7 +280,7 @@ describe('POST /ai-scoring-runs/start, monthly budget', () => {
     const res = await start();
 
     expect(res.status).toBe(409);
-    expect(res.body.error.message).toBe(USED_UP);
+    expect(res.body.error.message).toBe(usedUp());
     expect(await runsOf(review.id)).toHaveLength(0);
   });
 

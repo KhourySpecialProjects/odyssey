@@ -130,6 +130,23 @@ describe("AiStatusBar", () => {
     },
   );
 
+  it.each(["partial", "failed"] as const)(
+    "says a %s run stopped at the per-run cost limit",
+    (kind) => {
+      bar({
+        kind,
+        failedNames: ["Lesson 2", "Overall Score"],
+        atCeiling: true,
+      });
+
+      expect(
+        screen.getByText(
+          "Score with AI stopped at its cost limit for one run. Not scored: Lesson 2 and Overall Score.",
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
   it("never shows the run's error text", () => {
     bar({ kind: "failed", failedNames: [] }, { error: "secret stack trace" });
 

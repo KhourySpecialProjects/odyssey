@@ -1,4 +1,5 @@
 import type { AiFinding, AiRunProgress, AiRunSection } from "@/types";
+import { stoppedAtCeiling } from "./ai-messages";
 import type { AiScoringRunState } from "@/types";
 import { BAND_LABEL, type Band } from "./colors";
 import { sortByPosition, type Position } from "./positions";
@@ -23,6 +24,7 @@ export type PanelRun = {
   runState: AiScoringRunState;
   progress?: AiRunProgress | null;
   failedLessons?: AiRunSection[] | null;
+  error?: string | null;
 };
 
 export type AiBarState =
@@ -36,8 +38,7 @@ export type AiBarState =
       indeterminate: boolean;
     }
   | { kind: "scored" }
-  | { kind: "partial"; failedNames: string[] }
-  | { kind: "failed"; failedNames: string[] };
+  | { kind: "partial" | "failed"; failedNames: string[]; atCeiling?: boolean };
 
 const OVERALL_NAME = "Overall Score";
 
@@ -129,7 +130,12 @@ export function aiBarState(
         const name = nameOf(s);
         return name ? [name] : [];
       });
-      return { kind: run.runState, failedNames };
+      // The per-run cost ceiling skips the Overall Score too (ODY-815)
+      const atCeiling = stoppedAtCeiling(run.error);
+      if (atCeiling && !failedNames.includes(OVERALL_NAME)) {
+        failedNames.push(OVERALL_NAME);
+      }
+      return { kind: run.runState, failedNames, atCeiling };
     }
   }
 }

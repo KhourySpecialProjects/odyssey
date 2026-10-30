@@ -2,6 +2,7 @@
 
 import { IconLoader2, IconRefresh, IconSparkles } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { CEILING_STOP } from "@/lib/review-panel/ai-messages";
 import { BAND_COLORS } from "@/lib/review-panel/colors";
 import type { AiBarState } from "@/lib/review-panel/model";
 
@@ -188,7 +189,7 @@ export function AiStatusBar({
       )}
       {scored && (
         <div className="mt-3">
-          {state.kind === "partial" && <FailedText names={state.failedNames} />}
+          {state.kind === "partial" && <FailedText state={state} />}
           <div className="flex items-center justify-between text-xs text-[#344054]">
             <span>
               <b className="font-semibold text-slate-900">
@@ -216,7 +217,7 @@ export function AiStatusBar({
       )}
       {state.kind === "failed" && (
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
-          <FailedText names={state.failedNames} />
+          <FailedText state={state} />
           {primary("Run again")}
         </div>
       )}
@@ -250,12 +251,18 @@ export function AiStatusBar({
   );
 }
 
-function FailedText({ names }: { names: string[] }) {
+function FailedText({
+  state: { failedNames: names, atCeiling },
+}: {
+  state: Extract<AiBarState, { kind: "partial" | "failed" }>;
+}) {
   return (
     <p className="mb-2 text-sm font-semibold text-red-800">
-      {names.length
-        ? `Couldn't score ${joinNames(names)}.`
-        : "Some sections couldn't be scored."}
+      {atCeiling
+        ? `${CEILING_STOP} Not scored: ${joinNames(names)}.`
+        : names.length
+          ? `Couldn't score ${joinNames(names)}.`
+          : "Some sections couldn't be scored."}
     </p>
   );
 }
