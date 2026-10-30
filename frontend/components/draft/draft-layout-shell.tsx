@@ -137,50 +137,50 @@ export function DraftLayoutShell({
   return (
     <ReviewCommentsProvider dropletId={droplet.id} enabled={reviewing}>
       <SentFeedbackProvider dropletId={droplet.id} enabled={readingFeedback}>
-      <ReviewFocusProvider active={reviewing && panelMode === "open"}>
-        <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
-          <DraftTour run={tourRun} setRun={setTourRun} />
-          <Sidebar
-            droplet={droplet}
-            user={user}
-            isAuthor={isAuthor}
-            availableDroplets={availableDroplets}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            onRestartTour={restartTour}
-            hideReviewActions={reviewing}
-            lessonDots={dots}
-          />
-          <main
-            data-review-panel={reviewing ? panelMode : undefined}
-            ref={mainRef}
-            className={cn(
-              "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
-              expanded ? "xl:pl-64" : "xl:pl-0",
-              reviewing && [
-                "group",
-                panelMode === "open" ? "xl:pr-[384px]" : "xl:pr-12",
-              ],
-            )}
-          >
-            {children}
-          </main>
-          {reviewing && (
-            <ReviewPanelDock
-              mode={panelMode}
-              onOpen={openPanel}
-              onCollapse={() => setPanelMode("rail")}
+        <ReviewFocusProvider active={reviewing && panelMode === "open"}>
+          <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
+            <DraftTour run={tourRun} setRun={setTourRun} />
+            <Sidebar
+              droplet={droplet}
+              user={user}
+              isAuthor={isAuthor}
+              availableDroplets={availableDroplets}
+              expanded={expanded}
+              setExpanded={setExpanded}
+              onRestartTour={restartTour}
+              hideReviewActions={reviewing}
+              lessonDots={dots}
+            />
+            <main
+              data-review-panel={reviewing ? panelMode : undefined}
+              ref={mainRef}
+              className={cn(
+                "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
+                expanded ? "xl:pl-64" : "xl:pl-0",
+                reviewing && [
+                  "group",
+                  panelMode === "open" ? "xl:pr-[384px]" : "xl:pr-12",
+                ],
+              )}
             >
-              <ReviewTranscript
-                droplet={droplet}
-                panel={reviewPanel}
-                meta={reviewMeta}
-                onScoresChange={setLiveScores}
-              />
-            </ReviewPanelDock>
-          )}
-        </div>
-      </ReviewFocusProvider>
+              {children}
+            </main>
+            {reviewing && (
+              <ReviewPanelDock
+                mode={panelMode}
+                onOpen={openPanel}
+                onCollapse={() => setPanelMode("rail")}
+              >
+                <ReviewTranscript
+                  droplet={droplet}
+                  panel={reviewPanel}
+                  meta={reviewMeta}
+                  onScoresChange={setLiveScores}
+                />
+              </ReviewPanelDock>
+            )}
+          </div>
+        </ReviewFocusProvider>
       </SentFeedbackProvider>
     </ReviewCommentsProvider>
   );

@@ -15,7 +15,6 @@ import {
   carriedMeta,
   carriedNotes,
   carriedText,
-
   decorateMarks,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
