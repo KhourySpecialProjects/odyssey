@@ -119,6 +119,7 @@ export function Sidebar({
 }) {
   const [headerHeight, setHeaderHeight] = useState(69);
   const sidebarRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
   const {
@@ -190,9 +191,11 @@ export function Sidebar({
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     const updateBottom = () => {
       if (!sidebarRef.current) return;
-      const footer = document.querySelector<HTMLElement>("footer");
+      // The review panel has its own <footer>, so target the site footer by id.
+      const footer = document.getElementById("site-footer");
       if (!footer) return;
       const bottom = Math.max(
         0,
@@ -203,11 +206,15 @@ export function Sidebar({
     updateBottom();
     window.addEventListener("scroll", updateBottom, { passive: true });
     window.addEventListener("resize", updateBottom);
+    // Content can grow without a scroll, e.g. the editor loads client-side.
+    const observer = new ResizeObserver(updateBottom);
+    observer.observe(document.body);
     return () => {
       window.removeEventListener("scroll", updateBottom);
       window.removeEventListener("resize", updateBottom);
+      observer.disconnect();
     };
-  }, []);
+  }, [mounted]);
 
   const handleDropletPost = async () => {
     if (isSubmitting) return;
@@ -374,7 +381,6 @@ export function Sidebar({
     ]);
   };
 
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {

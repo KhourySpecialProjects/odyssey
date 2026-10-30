@@ -679,4 +679,91 @@ describe("Sidebar", () => {
       });
     });
   });
+
+  describe("height", () => {
+    const originalInnerHeight = window.innerHeight;
+    let panelFooter: HTMLElement;
+    let siteFooter: HTMLElement;
+    const setTop = (el: HTMLElement, top: number) =>
+      jest
+        .spyOn(el, "getBoundingClientRect")
+        .mockReturnValue({ top } as DOMRect);
+    const renderSidebar = () => {
+      const view = render(
+        <Sidebar
+          user={mockUser as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+        />,
+      );
+      return {
+        ...view,
+        aside: screen.getByRole("complementary", { name: "Sidebar" }),
+      };
+    };
+    // The ResizeObserver mock instance (and its callback) that watches <body>.
+    const bodyObserver = () => {
+      const observer = jest.mocked(ResizeObserver);
+      const i = observer.mock.results.findIndex((r) =>
+        (r.value.observe as jest.Mock).mock.calls.some(
+          ([el]) => el === document.body,
+        ),
+      );
+      return {
+        instance: observer.mock.results[i].value as ResizeObserver,
+        callback: observer.mock.calls[i][0],
+      };
+    };
+
+    beforeEach(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 800,
+      });
+      panelFooter = document.body.appendChild(document.createElement("footer"));
+      siteFooter = document.body.appendChild(document.createElement("footer"));
+      siteFooter.id = "site-footer";
+      setTop(panelFooter, 680);
+      setTop(siteFooter, 2000);
+    });
+
+    afterEach(() => {
+      panelFooter.remove();
+      siteFooter.remove();
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: originalInnerHeight,
+      });
+    });
+
+    it.each([
+      [2000, "0px"],
+      [600, "200px"],
+    ])("with the site footer at %i, bottom is %s", (top, expected) => {
+      const { aside } = renderSidebar();
+      setTop(siteFooter, top);
+      fireEvent.scroll(window);
+      expect(aside.style.bottom).toBe(expected);
+    });
+
+    it("places itself on mount without a scroll or observer callback", () => {
+      setTop(siteFooter, 600);
+      expect(renderSidebar().aside.style.bottom).toBe("200px");
+    });
+
+    it("recomputes when the body resizes", () => {
+      const { aside } = renderSidebar();
+      setTop(siteFooter, 500);
+      act(() => bodyObserver().callback([], {} as ResizeObserver));
+      expect(aside.style.bottom).toBe("300px");
+    });
+
+    it("disconnects the body observer on unmount", () => {
+      const { unmount } = renderSidebar();
+      const { instance } = bodyObserver();
+      unmount();
+      expect(instance.disconnect).toHaveBeenCalled();
+    });
+  });
 });
