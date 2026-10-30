@@ -16,8 +16,14 @@ import {
   type FinishRunInput,
   type RunScoreInput,
 } from "./run-routes";
+import { findingTexts, toFindings, type FindingTexts } from "./findings";
 import type { AiRunSection } from "@/types";
-import type { Criterion, LessonScores, ParsedScores } from "./types";
+import type {
+  Criterion,
+  LessonScores,
+  ParsedScores,
+  Transgression,
+} from "./types";
 
 /** One Score with AI run, as the start route created it. */
 export type ScoringRun = {
@@ -117,19 +123,6 @@ const describe = (parsed: Outcome["parsed"]) =>
     ? ""
     : `${parsed.reason}${parsed.detail ? ` (${clip(parsed.detail, 200)})` : ""}`;
 
-const toInputs = (
-  lessonId: number | null,
-  parsed: Outcome["parsed"],
-): RunScoreInput[] =>
-  parsed.ok
-    ? parsed.scores.map((s) => ({
-        lessonId,
-        criterionId: s.criterionId,
-        aiValue: s.score,
-        aiRationale: clip(s.rationale, MAX_RATIONALE),
-      }))
-    : [];
-
 /**
  * Scores each lesson (saved by the heartbeat after it), then the Overall with `finish`.
  * Runs in `after()` and never throws; it stops if the run ends elsewhere or hits the ceiling.
@@ -157,6 +150,9 @@ export async function runAiScoring(
   let savedAny = false;
   let lessonIds: number[] | null = null;
   const labels = new Map<number, string>();
+  let droppedQuotes = 0;
+  let findingCount = 0;
+  const nextId = () => `${run.runId}-${++findingCount}`;
 
   const finish = async (
     input: Pick<
@@ -259,6 +255,57 @@ export async function runAiScoring(
       return;
     }
 
+    // Findings are an add-on: a failure here costs the findings, never the scores.
+    let texts: FindingTexts | null = null;
+    try {
+      texts = findingTexts(snapshot);
+    } catch {
+      console.error("Score with AI could not read the text for findings", {
+        runId: run.runId,
+      });
+    }
+    const findingsFor = (
+      transgressions: Transgression[],
+      lessonId: number | null,
+    ) => {
+      const none = { findings: [], dropped: transgressions.length };
+      if (!texts) return none;
+      try {
+        return toFindings(
+          transgressions,
+          lessonId === null ? "overall" : { lessonId },
+          texts,
+          nextId,
+        );
+      } catch {
+        texts = null;
+        console.error("Score with AI could not build findings", {
+          runId: run.runId,
+        });
+        return none;
+      }
+    };
+    const toInputs = (
+      lessonId: number | null,
+      parsed: Outcome["parsed"],
+    ): RunScoreInput[] =>
+      parsed.ok
+        ? parsed.scores.map((s) => {
+            const { findings, dropped } = findingsFor(
+              s.transgressions,
+              lessonId,
+            );
+            droppedQuotes += dropped;
+            return {
+              lessonId,
+              criterionId: s.criterionId,
+              aiValue: s.score,
+              aiRationale: clip(s.rationale, MAX_RATIONALE),
+              aiFindings: findings,
+            };
+          })
+        : [];
+
     const options = { model: run.model, effort: run.effort };
     const lessonScores: LessonScores[] = [];
     const requests = buildLessonRequests(snapshot, run.criteria, options);
@@ -353,5 +400,9 @@ export async function runAiScoring(
     } catch (finishError) {
       console.error("Score with AI could not end its run", finishError);
     }
+  } finally {
+    console.info(`Score with AI dropped ${droppedQuotes} quotes`, {
+      runId: run.runId,
+    });
   }
 }
