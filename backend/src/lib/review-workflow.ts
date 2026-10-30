@@ -149,6 +149,7 @@ export async function submitForReview(ref: DraftRef): Promise<SubmitResult> {
     const latest = new Map<number, Row>();
     for (const review of reviews) {
       const reviewerId = reviewerIdOf(review.key);
+      if (reviewerId < 1) continue; // slot 0 = no reviewer (ODY-808 backfill): history only
       const seen = latest.get(reviewerId);
       if (!seen || review.round > seen.round) latest.set(reviewerId, review);
     }
