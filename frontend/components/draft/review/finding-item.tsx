@@ -14,6 +14,8 @@ type Props = {
   band: Band;
   /** The lesson tag on an Overall finding, e.g. "Lesson 3" */
   lessonLabel?: string | null;
+  /** The panel last pointed at this one in the lesson */
+  selected?: boolean;
   onShowInLesson?: (finding: AiFinding) => void;
   onDismiss: (findingId: string) => void;
 };
@@ -24,12 +26,19 @@ export function FindingItem({
   number,
   band,
   lessonLabel,
+  selected,
   onShowInLesson,
   onDismiss,
 }: Props) {
   const { text: colour, tint, line } = BAND_COLORS[band];
   return (
-    <li className="rounded-lg border border-transparent p-1">
+    <li
+      aria-current={selected || undefined}
+      className={cn(
+        "rounded-lg border border-transparent p-1",
+        selected && "border-[#2D7597]",
+      )}
+    >
       <div className="flex items-start gap-2 p-1.5">
         <span
           className="mt-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[11px] font-semibold text-white"

@@ -4,6 +4,10 @@ import { DraftLayoutShell } from "@/components/draft/draft-layout-shell";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import type { User } from "@/types";
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => "/draft/d/intro",
+}));
 jest.mock("@/components/draft/draft-tour", () => ({
   DraftTour: () => null,
   TOUR_KEY: "tour",

@@ -192,23 +192,53 @@ describe("wiring", () => {
     expect(await within(card).findByText("Scores confirmed")).toBeVisible();
   });
 
-  it("shows Overall findings with a lesson tag that opens the lesson", async () => {
-    render(
-      <ReviewTranscript
-        droplet={droplet}
-        panel={panel([score(null, { aiFindings: [finding] })])}
-      />,
-    );
-    const card = screen.getByRole("region", { name: "Overall Score" });
+  it.each([
+    ["a lesson", 12, "/draft/d/intro/loops", 1, "Lesson 2", 12],
+    ["the Overview", null, "/draft/d/intro", 0, "the Overview", null],
+    ["a lesson that is gone", 99, "/draft/d/intro", 0, "the Overview", null],
+  ])(
+    "shows an Overall finding on %s with a lesson tag",
+    async (_n, lessonId, url, pushes, place, sentTo) => {
+      const seen = jest.fn();
+      const Focus = () => {
+        seen(useReviewFocus()?.focused?.target);
+        return null;
+      };
+      render(
+        <ReviewFocusProvider active>
+          <Focus />
+          <ReviewTranscript
+            droplet={droplet}
+            panel={panel([
+              score(null, { aiFindings: [{ ...finding, lessonId }] }),
+            ])}
+          />
+        </ReviewFocusProvider>,
+      );
+      const card = screen.getByRole("region", { name: "Overall Score" });
 
-    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+      await userEvent.click(
+        within(card).getByRole("button", { name: /^Tone/ }),
+      );
+      await userEvent.click(
+        within(card).getByRole("button", { name: /show in lesson/i }),
+      );
 
-    expect(within(card).getByText("Lesson 2")).toBeInTheDocument();
-    await userEvent.click(
-      within(card).getByRole("button", { name: /show in lesson/i }),
-    );
-    expect(push).toHaveBeenCalledWith("/draft/d/intro/loops");
-  });
+      expect(push).toHaveBeenCalledTimes(pushes);
+      if (pushes) expect(push).toHaveBeenCalledWith(url);
+      expect(seen).toHaveBeenLastCalledWith({
+        kind: "finding",
+        markId: "finding-8-1",
+        lessonId: sentTo,
+        field: "blocks",
+        place,
+        quote: "beta",
+      });
+      expect(
+        within(card).getByRole("listitem", { current: true }),
+      ).toBeInTheDocument();
+    },
+  );
 
   it("drops a dismissed finding from the issue count", async () => {
     render(
@@ -265,6 +295,43 @@ describe("open detail for the lesson's finding marks", () => {
     </ReviewFocusProvider>
   );
   const mount = (active: boolean) => render(tree(active));
+
+  it("makes the clicked finding's detail the active one", async () => {
+    render(
+      <ReviewFocusProvider active>
+        <Probe />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel(
+            [11, 12].map((id, i) =>
+              score(id, {
+                id: i + 1,
+                key: `70:${id}:2`,
+                aiValue: 2,
+                aiFindings: [mockAiFinding({ id: `f${id}`, lessonId: id })],
+              }),
+            ),
+          )}
+        />
+      </ReviewFocusProvider>,
+    );
+    for (const name of ["Variables", "Loops"]) {
+      await userEvent.click(
+        within(screen.getByRole("region", { name })).getByRole("button", {
+          name: /^Tone/,
+        }),
+      );
+    }
+    expect(screen.getByTestId("probe")).toHaveTextContent("1=f12");
+
+    await userEvent.click(
+      within(screen.getByRole("region", { name: "Variables" })).getByRole(
+        "button",
+        { name: /show in lesson/i },
+      ),
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("1=f11");
+  });
 
   it("follows the open circle and its undismissed findings", async () => {
     mount(true);

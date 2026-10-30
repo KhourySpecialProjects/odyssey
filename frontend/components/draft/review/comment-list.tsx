@@ -2,7 +2,12 @@
 
 import type { ReviewComment } from "@/types";
 import { cn } from "@/lib/utils";
-import { commentSnippet, commentTime, isResolved } from "@/lib/review-comments";
+import {
+  commentSnippet,
+  commentTime,
+  isResolved,
+  markIdFor,
+} from "@/lib/review-comments";
 import { sortByPosition, type Position } from "@/lib/review-panel/positions";
 import { SpotQuote } from "./comment-about";
 
@@ -17,12 +22,15 @@ export function CommentList({
   comments,
   positions,
   outdatedIds,
+  focusedMarkId,
   onOpen,
 }: {
   comments: readonly ReviewComment[];
   positions: Record<string, Position>;
   /** Comments to show as outdated whatever their position */
   outdatedIds?: ReadonlySet<number>;
+  /** The mark the panel last pointed at, to mark its comment as picked */
+  focusedMarkId?: string | null;
   onOpen: (comment: ReviewComment) => void;
 }) {
   if (comments.length === 0) return null;
@@ -36,6 +44,7 @@ export function CommentList({
           outdatedIds?.has(comment.id) ||
           (position !== undefined && "outdated" in position);
         const resolved = isResolved(comment);
+        const selected = focusedMarkId === markIdFor(comment);
         const { anchor } = comment;
         const author = comment.author
           ? [comment.author.firstName, comment.author.lastName]
@@ -51,8 +60,10 @@ export function CommentList({
             <button
               type="button"
               onClick={() => onOpen(comment)}
+              aria-current={selected || undefined}
               className={cn(
-                "flex w-full items-start gap-2 rounded-lg border border-transparent p-1.5 text-left text-xs hover:border-[#D0D5DD]",
+                "flex w-full items-start gap-2 rounded-lg border border-transparent p-1.5 text-left text-xs",
+                selected ? "border-[#2D7597]" : "hover:border-[#D0D5DD]",
                 resolved && "opacity-60",
               )}
             >

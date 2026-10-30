@@ -20,10 +20,18 @@ jest.mock("@/components/draft/lesson/delete-lesson", () => ({
   DeleteLessonButton: () => <button type="button">Delete Lesson</button>,
 }));
 jest.mock("@/components/draft/lesson/blocknote-editor", () => ({
-  BlockNoteEditor: ({ anchors }: { anchors?: { id: string }[] }) => (
+  BlockNoteEditor: ({
+    anchors,
+  }: {
+    anchors?: { id: string; className?: string }[];
+  }) => (
     <div
       data-testid="blocknote-editor"
       data-anchors={(anchors ?? []).map((a) => a.id).join(",")}
+      data-focused={(anchors ?? [])
+        .filter((a) => a.className?.includes("review-mark--focus"))
+        .map((a) => a.id)
+        .join(",")}
     />
   ),
 }));
@@ -47,6 +55,7 @@ jest.mock("@/lib/requests/reviews", () => ({
 }));
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
+  usePathname: () => "/draft/d/d/loops",
 }));
 jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() },
@@ -414,6 +423,127 @@ describe("finding marks (ODY-849)", () => {
     await act(async () => {});
 
     expect(drawn()).toBe("");
+  });
+});
+
+describe("Show in lesson (ODY-849)", () => {
+  const target = (markId: string, kind: "comment" | "finding" = "comment") => ({
+    kind,
+    markId,
+    lessonId: 1,
+    field: "blocks",
+    place: "Lesson 1",
+    quote: "loop",
+  });
+  const Ask = ({ markId, kind }: { markId: string; kind?: "finding" }) => {
+    const focus = useReviewFocus();
+    return (
+      <button
+        onClick={() => focus?.show(target(markId, kind), "/draft/d/d/loops")}
+      >
+        ask
+      </button>
+    );
+  };
+  const mount = () =>
+    render(
+      <ReviewFocusProvider active>
+        <Ask markId="comment-1" />
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </ReviewFocusProvider>,
+    );
+  const focused = () =>
+    screen.getByTestId("blocknote-editor").getAttribute("data-focused");
+
+  it("rings the comment's mark", async () => {
+    mount();
+    await act(async () => {});
+    await userEvent.click(screen.getByRole("button", { name: "ask" }));
+
+    await waitFor(() => expect(focused()).toBe("comment-1"));
+  });
+
+  it("shows a Classic lesson's finding, not as outdated", async () => {
+    Element.prototype.scrollIntoView = jest.fn();
+    const classic = {
+      ...lesson,
+      blocksVersion: "v1" as const,
+      blocksV2: null,
+      blocks: [
+        {
+          id: 9,
+          __component: "droplets.generic" as const,
+          content: "<p>A loop repeats.</p>",
+        },
+      ],
+    };
+    const detail = {
+      band: "ok" as const,
+      findings: [
+        {
+          number: 1,
+          finding: mockAiFinding({
+            id: "f1",
+            lessonId: 1,
+            anchor: {
+              v: 1,
+              field: "blocks",
+              quote: "loop",
+              prefix: "A ",
+              suffix: " repeats.",
+            },
+          }),
+        },
+      ],
+    };
+    const Seed = () => {
+      const set = useReviewFocus()?.setOpenDetail;
+      useEffect(() => set?.(detail), [set]);
+      return null;
+    };
+    render(
+      <ReviewFocusProvider active>
+        <Seed />
+        <Ask markId="finding-f1" kind="finding" />
+        <LessonRenderer
+          lesson={classic as never}
+          dropletSlug="d"
+          dropletId={3}
+        />
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+    await userEvent.click(screen.getByRole("button", { name: "ask" }));
+
+    expect(await screen.findByText(/Showing issue in Lesson 1/)).toBeVisible();
+    expect(
+      screen
+        .getByTestId("classic-review-view")
+        .querySelector(".review-mark--focus"),
+    ).toHaveTextContent("loop");
+  });
+
+  it("goes from Read to Comment mode", async () => {
+    mount();
+    await act(async () => {});
+    await userEvent.click(screen.getByRole("button", { name: "Read" }));
+    await userEvent.click(screen.getByRole("button", { name: "ask" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Comment" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+  });
+
+  it("stops editing first when the reviewer is editing", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+    mount();
+    await act(async () => {});
+    await userEvent.click(screen.getByRole("button", { name: "ask" }));
+
+    await waitFor(() => expect(stopEditing).toHaveBeenCalledTimes(1));
   });
 });
 

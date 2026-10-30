@@ -4,7 +4,12 @@ import { useEffect, useMemo, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReviewComment } from "@/types";
 import type { ReviewPanelData } from "@/lib/requests/reviews";
-import { commentCounts } from "@/lib/review-comments";
+import {
+  commentCounts,
+  commentSnippet,
+  isWholeSection,
+  markIdFor,
+} from "@/lib/review-comments";
 import {
   aiBarState,
   confirmedCount,
@@ -14,6 +19,7 @@ import { AiStatusBar } from "./ai-status-bar";
 import { CommentList } from "./comment-list";
 import { SectionCard, type RenderDetail } from "./section-card";
 import { useSharedReviewComments } from "./review-comments-context";
+import { useReviewFocus } from "./review-focus-context";
 
 const POLL_MS = 4000;
 
@@ -60,6 +66,7 @@ export function ReviewPanel({
   const router = useRouter();
   const pathname = usePathname();
   const shared = useSharedReviewComments();
+  const focus = useReviewFocus();
   const comments = useMemo(() => shared?.comments ?? [], [shared?.comments]);
   const reviewState = shared?.review?.state;
 
@@ -107,9 +114,18 @@ export function ReviewPanel({
   }
 
   const open = (comment: ReviewComment) => {
-    const lesson = lessons.find((l) => l.id === comment.lesson?.id);
-    router.push(
-      lesson && comment.field === "blocks" ? `${base}/${lesson.slug}` : base,
+    const index = lessons.findIndex((l) => l.id === comment.lesson?.id);
+    const onLesson = index >= 0 && comment.field === "blocks";
+    focus?.show(
+      {
+        kind: isWholeSection(comment.anchor) ? "section" : "comment",
+        markId: markIdFor(comment),
+        lessonId: onLesson ? lessons[index].id : null,
+        field: comment.field,
+        place: onLesson ? `Lesson ${index + 1}` : "the Overview",
+        quote: commentSnippet(comment, undefined),
+      },
+      onLesson ? `${base}/${lessons[index].slug}` : base,
     );
   };
   const list = (items: ReviewComment[], outdatedIds?: ReadonlySet<number>) => (
@@ -118,6 +134,7 @@ export function ReviewPanel({
       positions={panel.positions}
       outdatedIds={outdatedIds}
       onOpen={open}
+      focusedMarkId={focus?.focused?.target.markId}
     />
   );
   const total = (items: ReviewComment[]) =>

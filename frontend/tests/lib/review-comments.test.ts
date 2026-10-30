@@ -15,6 +15,7 @@ import {
   carriedMeta,
   carriedNotes,
   carriedText,
+  decorateMarks,
 } from "@/lib/review-comments";
 import type { ReviewComment } from "@/types";
 
@@ -502,5 +503,28 @@ describe("carried comments in the reviewer's next round (ODY-807)", () => {
     expect(carriedNotes(fresh)).toEqual([]);
     expect(carriedMeta(one, true)).toBe("Pending · carried from round 1");
     expect(carriedMeta(fresh, true)).toBeUndefined();
+  });
+});
+
+describe("decorateMarks focus", () => {
+  const range = { blockId: "b1", start: 0, end: 1 } as never;
+  const drawn = [
+    { id: "comment-1", range, className: "review-mark" },
+    { id: "comment-2", range, className: "review-mark" },
+  ];
+
+  it.each([
+    [
+      "lit and focused",
+      "comment-1",
+      "comment-1",
+      "review-mark review-mark--lit review-mark--focus",
+    ],
+    ["focused only", null, "comment-1", "review-mark review-mark--focus"],
+    ["neither", null, null, "review-mark"],
+  ])("a mark that is %s", (_n, lit, focused, expected) => {
+    const [first, second] = decorateMarks(drawn, lit, null, focused);
+    expect(first.className).toBe(expected);
+    expect(second.className).toBe("review-mark");
   });
 });

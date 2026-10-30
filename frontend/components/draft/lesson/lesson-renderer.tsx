@@ -48,6 +48,7 @@ import {
   useDropletReviewComments,
   useSharedSentFeedback,
 } from "@/components/draft/review/review-comments-context";
+import { useShowInLesson } from "@/hooks/use-show-in-lesson";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
 import {
@@ -64,6 +65,7 @@ import {
   draftMarkIn,
   feedbackMeta,
   isResolved,
+  isOutdatedMark,
   numberComments,
 } from "@/lib/review-comments";
 import { blockNoteContent, htmlContent } from "@/lib/anchors/content";
@@ -255,7 +257,9 @@ export function LessonRenderer({
   const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
   const [litMarkId, setLitMarkId] = useState<string | null>(null);
   // The open criterion's findings on this lesson, marked in Comment mode
-  const openDetail = useReviewFocus()?.openDetail;
+  const focus = useReviewFocus();
+  const openDetail = focus?.openDetail;
+  const focusedId = focus?.focused?.target.markId;
   const lessonFindings = useMemo(() => {
     const here = openDetail?.findings.filter(
       ({ finding }) =>
@@ -263,21 +267,35 @@ export function LessonRenderer({
     );
     return here?.length ? here : NO_FINDINGS;
   }, [openDetail, lesson.id]);
-  const findingDrawn = useMemo(
+  const findingResult = useMemo(
     () =>
-      lessonFindings.length > 0
-        ? findingMarks(lessonFindings, anchorContent, openDetail!.band).drawn
-        : NO_MARKS,
-    [lessonFindings, anchorContent, openDetail],
+      editorVersion === "v2" && lessonFindings.length > 0
+        ? findingMarks(
+            lessonFindings,
+            anchorContent,
+            openDetail!.band,
+            focusedId,
+          )
+        : { drawn: NO_MARKS, outdated: [] as string[] },
+    [editorVersion, lessonFindings, anchorContent, openDetail, focusedId],
   );
+  const findingDrawn = findingResult.drawn;
   const drawnMarks = useMemo(() => {
     const comments = decorateMarks(
       marks.drawn,
       litMarkId,
       draftMarkIn(anchorContent, draftAnchor),
+      focusedId,
     );
     return findingDrawn.length > 0 ? [...comments, ...findingDrawn] : comments;
-  }, [marks.drawn, litMarkId, draftAnchor, anchorContent, findingDrawn]);
+  }, [
+    marks.drawn,
+    litMarkId,
+    draftAnchor,
+    anchorContent,
+    findingDrawn,
+    focusedId,
+  ]);
   const commentNumbers = useMemo(
     () => numberComments(lessonComments),
     [lessonComments],
@@ -662,6 +680,21 @@ export function LessonRenderer({
     ]);
     await stopEditing();
   };
+
+  // Show in lesson from the panel: leave Read or Edit for Comment, then scroll and ring
+  useShowInLesson({
+    lessonId: lesson.id,
+    enabled: lockLoading || isReviewing,
+    ready: showCommentLayer && !reviewComments.isLoading,
+    mode: reviewMode,
+    onComment: () => {
+      setViewMode("comment");
+      if (isOwnLock) void handleStopEditing();
+    },
+    isOutdated: (markId) =>
+      isOutdatedMark(markId, outdatedIds) ||
+      findingResult.outdated.includes(markId),
+  });
 
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
@@ -1060,6 +1093,7 @@ export function LessonRenderer({
               reviewState={reviewComments.review?.state}
               draftAnchor={draftAnchor}
               litMarkId={litMarkId}
+              focusedMarkId={focusedId}
               findings={lessonFindings}
               band={lessonFindings.length ? openDetail?.band : undefined}
               onOutdated={handleClassicOutdated}

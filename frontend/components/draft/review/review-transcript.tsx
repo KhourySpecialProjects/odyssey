@@ -25,6 +25,8 @@ import { ConfirmScores } from "./confirm-scores";
 import { CriterionDetail } from "./criterion-detail";
 import { ReviewPanel } from "./review-panel";
 import { useSharedReviewComments } from "./review-comments-context";
+import { useReviewFocus } from "./review-focus-context";
+import { findingMarkId } from "@/lib/review-panel/finding-marks";
 
 const NO_SCORES: PanelScore[] = [];
 const SUMMARY_NOTE_MAX = 5000;
@@ -52,6 +54,7 @@ export function ReviewTranscript({
   const router = useRouter();
   const noteId = useId();
   const shared = useSharedReviewComments();
+  const focus = useReviewFocus();
   const { scores, confirm, undo, change, pendingScope } = useReviewScores(
     panel?.scores ?? NO_SCORES,
   );
@@ -236,9 +239,23 @@ export function ReviewTranscript({
             onUndismiss={undismiss}
             onChange={(value) => change(criterion.id, lessonId, value)}
             onClose={close}
-            onShowInLesson={(f) =>
-              router.push(lessonUrl(f.lessonId ?? lessonId))
-            }
+            focusedMarkId={focus?.focused?.target.markId}
+            onShowInLesson={(f) => {
+              const wanted = f.lessonId ?? lessonId;
+              // A lesson that's gone is the Overview's to answer
+              const id = lessons.some((l) => l.id === wanted) ? wanted : null;
+              focus?.show(
+                {
+                  kind: "finding",
+                  markId: findingMarkId(f.id),
+                  lessonId: id,
+                  field: f.anchor.field,
+                  place: id === null ? "the Overview" : lessonTag(id),
+                  quote: f.quote,
+                },
+                lessonUrl(id),
+              );
+            }}
             lessonLabel={
               lessonId === null ? (f) => lessonTag(f.lessonId) : undefined
             }

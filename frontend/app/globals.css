@@ -276,6 +276,21 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 .review-mark--lit {
   background-color: var(--rc-tint-strong);
 }
+/* Picked in the panel (ODY-849): a ring that stays, and a one-off flash */
+.review-mark--focus:not(.anchor-badge) {
+  outline: 2px solid var(--rc-accent);
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .review-mark--flash {
+    animation: review-flash 600ms ease-out;
+  }
+  @keyframes review-flash {
+    from {
+      background-color: var(--rc-tint-strong);
+    }
+  }
+}
 /* A whole block has no mark of its own: the comment layer outlines it */
 .review-mark--block,
 .review-mark--block.review-mark--lit {

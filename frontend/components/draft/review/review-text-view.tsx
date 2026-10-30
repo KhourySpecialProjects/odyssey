@@ -20,13 +20,16 @@ import {
   draftMarkIn,
 } from "@/lib/review-comments";
 
-function lightMark(root: Element, markId: string | null) {
-  root.querySelectorAll<HTMLElement>("[data-anchor-id]").forEach((span) => {
-    span.classList.toggle(
-      "review-mark--lit",
-      span.getAttribute("data-anchor-id") === markId,
-    );
-  });
+/** Toggles a class on one mark's text spans (not its badge marker) */
+function toggleMark(root: Element, markId: string | null, cls: string) {
+  root
+    .querySelectorAll<HTMLElement>("[data-anchor-id]:not(.anchor-badge)")
+    .forEach((span) => {
+      span.classList.toggle(
+        cls,
+        span.getAttribute("data-anchor-id") === markId,
+      );
+    });
 }
 
 interface ReviewTextViewProps {
@@ -38,6 +41,8 @@ interface ReviewTextViewProps {
   reviewState: Review["state"] | undefined;
   draftAnchor: ReviewAnchor | null;
   litMarkId: string | null;
+  /** The mark the panel pointed at, ringed (ODY-849) */
+  focusedMarkId?: string | null;
   /** The open criterion's findings here (memoized: a new list redraws), and its band */
   findings?: readonly { finding: AiFinding; number: number }[];
   band?: Band;
@@ -62,6 +67,7 @@ export function ReviewTextView({
   reviewState,
   draftAnchor,
   litMarkId,
+  focusedMarkId,
   findings,
   band,
   onOutdated,
@@ -75,6 +81,8 @@ export function ReviewTextView({
 
   const litRef = useRef(litMarkId);
   litRef.current = litMarkId;
+  const focusRef = useRef(focusedMarkId);
+  focusRef.current = focusedMarkId;
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -96,15 +104,23 @@ export function ReviewTextView({
         badge: mark.badge,
       });
     }
-    lightMark(root, litRef.current);
+    toggleMark(root, litRef.current, "review-mark--lit");
+    toggleMark(root, focusRef.current ?? null, "review-mark--focus");
     onOutdatedRef.current(outdated);
   }, [html, field, comments, reviewState, draftAnchor, findings, band]);
 
   // Lighting only toggles a class: rewriting the HTML would drop a selection
   // the reviewer is still dragging out
   useLayoutEffect(() => {
-    if (rootRef.current) lightMark(rootRef.current, litMarkId);
+    if (rootRef.current) {
+      toggleMark(rootRef.current, litMarkId, "review-mark--lit");
+    }
   }, [litMarkId]);
+  useLayoutEffect(() => {
+    if (rootRef.current) {
+      toggleMark(rootRef.current, focusedMarkId ?? null, "review-mark--focus");
+    }
+  }, [focusedMarkId]);
 
   return (
     <div
