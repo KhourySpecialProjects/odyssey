@@ -98,7 +98,6 @@ export default async function CheckPermission({ params, children }: Props) {
     lessons: droplet.lessons?.map(toSidebarLesson),
     status: droplet.status,
     inReview: droplet.inReview,
-    afterReview: droplet.afterReview,
     focusArea: droplet.focusArea,
     learningObjectives: droplet.learningObjectives,
     isHidden: droplet.isHidden,

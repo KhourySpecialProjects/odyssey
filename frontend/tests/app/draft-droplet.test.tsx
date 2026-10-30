@@ -173,7 +173,6 @@ const DRAFT_DROPLET = {
   isHidden: false,
   status: "draft",
   inReview: false,
-  afterReview: null,
   funFact: "fact",
   originalDropletId: 3,
   presentationEnabled: true,
@@ -266,7 +265,6 @@ describe("draft droplet layout", () => {
 
     expect(Object.keys(droplet).sort()).toEqual(
       [
-        "afterReview",
         "difficulty",
         "focusArea",
         "id",
