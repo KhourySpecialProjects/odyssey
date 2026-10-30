@@ -151,7 +151,7 @@ export function CommentTag({
       onBlur={() => onLight(false)}
       onClick={(e) => onOpen(e.currentTarget.getBoundingClientRect())}
       className={cn(
-        "group/tag absolute z-10 inline-flex h-[26px] items-center gap-[7px] rounded-[7px] border bg-white py-0 pr-[9px] pl-[3px] text-xs font-medium whitespace-nowrap text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[transform,box-shadow,border-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rc-accent)] dark:bg-[#131c2e] dark:text-slate-300",
+        "rc-tag group/tag absolute z-10 inline-flex h-[26px] items-center gap-[7px] rounded-[7px] border bg-white py-0 pr-[9px] pl-[3px] text-xs font-medium whitespace-nowrap text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[transform,box-shadow,border-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rc-accent)] dark:bg-[#131c2e] dark:text-slate-300",
         pending
           ? "border-dashed border-[var(--rc-accent)]"
           : "border-slate-200 dark:border-[#223047]",

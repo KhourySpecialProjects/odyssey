@@ -620,6 +620,26 @@ describe("drawAnchor", () => {
     expect(spans.every((span) => span.className === "mark")).toBe(true);
   });
 
+  it("puts one empty badge before the first span, even across a link", () => {
+    const overview = document.createElement("div");
+    overview.innerHTML = '<p>Learn <a href="#">SQL</a> joins.</p>';
+    document.body.appendChild(overview);
+
+    drawAnchor(
+      overview,
+      { field: "overview", start: 2, end: 12, exact: true },
+      "finding-1",
+      { badge: 1 },
+    );
+
+    const badges = overview.querySelectorAll(".anchor-badge");
+    expect(badges).toHaveLength(1);
+    expect(badges[0]).toHaveAttribute("data-badge", "1");
+    expect(badges[0].childNodes).toHaveLength(0);
+    expect(badges[0].nextElementSibling).toHaveTextContent("arn");
+    expect(overview).toHaveTextContent("Learn SQL joins.");
+  });
+
   it("puts a caret at a spot comment's end, and takes it out again", () => {
     const overview = document.createElement("div");
     overview.innerHTML = "<p>Learn SQL joins.</p>";

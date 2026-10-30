@@ -1,5 +1,11 @@
 import { AnchorRange } from "./types";
-import { caretElement, textOf, textParts, wrapRange } from "./dom";
+import {
+  badgeElement,
+  caretElement,
+  textOf,
+  textParts,
+  wrapRange,
+} from "./dom";
 
 const byAttribute = (root: Element, name: string, value: string) =>
   Array.from(root.querySelectorAll(`[${name}]`)).find(
@@ -21,7 +27,16 @@ export function drawAnchor(
   root: Element,
   range: AnchorRange,
   anchorId: string,
-  { className, point }: { className?: string; point?: "before" | "after" } = {},
+  {
+    className,
+    point,
+    badge,
+  }: {
+    className?: string;
+    point?: "before" | "after";
+    /** An empty numbered marker (`anchor-badge`) before the first span */
+    badge?: number;
+  } = {},
 ): HTMLElement[] {
   const makeSpan = () => {
     const span = document.createElement("span");
@@ -54,6 +69,9 @@ export function drawAnchor(
       });
   }
 
+  if (badge !== undefined && spans.length > 0) {
+    spans[0].before(badgeElement(anchorId, badge, className));
+  }
   if (point && spans.length > 0) {
     const caret = caretElement(anchorId, className);
     if (point === "before") spans[0].before(caret);

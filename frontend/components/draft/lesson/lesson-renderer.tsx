@@ -1,6 +1,6 @@
 "use client";
 
-import { Lesson, OpenEndedQuizQuestion } from "@/types";
+import { Lesson, OpenEndedQuizQuestion, type AiFinding } from "@/types";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
 import { useRouter } from "next/navigation";
@@ -48,6 +48,8 @@ import {
   useDropletReviewComments,
   useSharedSentFeedback,
 } from "@/components/draft/review/review-comments-context";
+import { useReviewFocus } from "@/components/draft/review/review-focus-context";
+import { findingMarks } from "@/lib/review-panel/finding-marks";
 import {
   ReviewModeBar,
   type ReviewMode,
@@ -83,6 +85,7 @@ import type { ReviewAnchor, ReviewComment } from "@/types";
 const NO_MARKS: DrawnAnchor[] = [];
 const NO_COMMENTS: ReviewComment[] = [];
 const NO_FEEDBACK = { drawn: NO_MARKS, outdated: NO_COMMENTS };
+const NO_FINDINGS: { finding: AiFinding; number: number }[] = [];
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
@@ -251,15 +254,30 @@ export function LessonRenderer({
   // types, and hovering a tag or a mark lights the mark
   const [draftAnchor, setDraftAnchor] = useState<ReviewAnchor | null>(null);
   const [litMarkId, setLitMarkId] = useState<string | null>(null);
-  const drawnMarks = useMemo(
+  // The open criterion's findings on this lesson, marked in Comment mode
+  const openDetail = useReviewFocus()?.openDetail;
+  const lessonFindings = useMemo(() => {
+    const here = openDetail?.findings.filter(
+      ({ finding }) =>
+        finding.lessonId === lesson.id && finding.anchor.field === "blocks",
+    );
+    return here?.length ? here : NO_FINDINGS;
+  }, [openDetail, lesson.id]);
+  const findingDrawn = useMemo(
     () =>
-      decorateMarks(
-        marks.drawn,
-        litMarkId,
-        draftMarkIn(anchorContent, draftAnchor),
-      ),
-    [marks.drawn, litMarkId, draftAnchor, anchorContent],
+      lessonFindings.length > 0
+        ? findingMarks(lessonFindings, anchorContent, openDetail!.band).drawn
+        : NO_MARKS,
+    [lessonFindings, anchorContent, openDetail],
   );
+  const drawnMarks = useMemo(() => {
+    const comments = decorateMarks(
+      marks.drawn,
+      litMarkId,
+      draftMarkIn(anchorContent, draftAnchor),
+    );
+    return findingDrawn.length > 0 ? [...comments, ...findingDrawn] : comments;
+  }, [marks.drawn, litMarkId, draftAnchor, anchorContent, findingDrawn]);
   const commentNumbers = useMemo(
     () => numberComments(lessonComments),
     [lessonComments],
@@ -1042,6 +1060,8 @@ export function LessonRenderer({
               reviewState={reviewComments.review?.state}
               draftAnchor={draftAnchor}
               litMarkId={litMarkId}
+              findings={lessonFindings}
+              band={lessonFindings.length ? openDetail?.band : undefined}
               onOutdated={handleClassicOutdated}
             />
           </CommentLayer>

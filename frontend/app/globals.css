@@ -287,6 +287,62 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   background-color: var(--rc-draft);
   border-bottom: 2px solid var(--rc-accent);
 }
+/* AI findings (ODY-849): band colours mirror lib/review-panel/colors.ts */
+.review-finding--good {
+  --rf-tint: #dcfce7;
+  --rf-line: #22c55e;
+  --rf-badge: #15803d;
+}
+.review-finding--ok {
+  --rf-tint: #fef3c7;
+  --rf-line: #f59e0b;
+  --rf-badge: #b45309;
+}
+.review-finding--needs_work {
+  --rf-tint: #fee2e2;
+  --rf-line: #ef4444;
+  --rf-badge: #b91c1c;
+}
+/* Dark mode: translucent tints, like --rc-tint */
+.dark .review-finding--good {
+  --rf-tint: rgba(34, 197, 94, 0.22);
+}
+.dark .review-finding--ok {
+  --rf-tint: rgba(251, 191, 36, 0.2);
+}
+.dark .review-finding--needs_work {
+  --rf-tint: rgba(248, 113, 113, 0.24);
+}
+.review-finding {
+  background-color: var(--rf-tint);
+  border-bottom: 2px solid var(--rf-line);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* The number: an empty marker, its digit drawn from data-badge */
+.anchor-badge.review-finding {
+  display: inline-block;
+  min-width: 1.15em;
+  margin-right: 0.25em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rf-badge);
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1.15em;
+  text-align: center;
+  vertical-align: 0.15em;
+  user-select: none;
+}
+.anchor-badge::before {
+  content: attr(data-badge);
+}
+/* Comment tags step back while findings show */
+main:has(.review-finding) .rc-tag:not(:hover):not(:focus-visible) {
+  opacity: 0.45;
+}
 /* A comment at a spot: its letters have no line, only the caret beside them,
    and light up under the pointer */
 .review-mark--point {

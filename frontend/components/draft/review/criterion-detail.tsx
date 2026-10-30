@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { IconCheck, IconMinus, IconX, type Icon } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { BAND_COLORS, BAND_LABEL, type Band } from "@/lib/review-panel/colors";
@@ -8,6 +14,7 @@ import { bandOf, effective, type PanelScore } from "@/lib/review-panel/model";
 import type { PanelCriterion } from "@/lib/requests/reviews";
 import type { AiFinding } from "@/types";
 import { DismissedFinding, FindingItem } from "./finding-item";
+import { useReviewFocus, type OpenDetail } from "./review-focus-context";
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D7597] focus-visible:ring-offset-1";
@@ -85,6 +92,23 @@ export function CriterionDetail({
     setFocusValue(next);
     radios.current[next]?.focus();
   };
+
+  // Tell the lesson which findings to mark; clear only if still ours
+  const setOpenDetail = useReviewFocus()?.setOpenDetail;
+  const signature = JSON.stringify(
+    findings.map((f) => [f.finding.id, f.number, f.finding.anchor]),
+  );
+  const mine = useMemo<OpenDetail>(
+    () => ({ band, findings }),
+    // `signature` (ids, numbers, anchors) stands for `findings`
+    [band, signature],
+  );
+  useEffect(() => {
+    if (!setOpenDetail || unscored) return;
+    setOpenDetail(mine);
+    return () =>
+      setOpenDetail((current) => (current === mine ? null : current));
+  }, [setOpenDetail, unscored, mine]);
 
   const total = findings.length;
   const noFindings = total === 0 && dismissedFindings.length === 0;

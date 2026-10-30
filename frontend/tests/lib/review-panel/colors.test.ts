@@ -1,3 +1,4 @@
+import { readFileSync } from "fs";
 import { BAND_COLORS } from "@/lib/review-panel/colors";
 
 const channel = (v: number) => {
@@ -19,6 +20,18 @@ describe("BAND_COLORS contrast on white", () => {
     expect(contrastOnWhite(outline)).toBeGreaterThanOrEqual(3);
     expect(contrastOnWhite(text)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it.each(["good", "ok", "needs_work"] as const)(
+    "%s: the lesson badge colour is the text colour, and white on it passes",
+    (band) => {
+      const css = readFileSync("app/globals.css", "utf8");
+      const badge = new RegExp(
+        `\\.review-finding--${band} \\{[^}]*--rf-badge: (#[0-9a-f]{6})`,
+      ).exec(css)?.[1];
+      expect(badge).toBe(BAND_COLORS[band].text.toLowerCase());
+      expect(contrastOnWhite(badge!)).toBeGreaterThanOrEqual(4.5);
+    },
+  );
 
   it("uses the planned values", () => {
     expect(BAND_COLORS.good).toMatchObject({

@@ -1,5 +1,11 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
+import {
+  ReviewFocusProvider,
+  useReviewFocus,
+} from "@/components/draft/review/review-focus-context";
+import { mockAiFinding } from "@/testing/mocks/reviewsMock";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { getMyReview } from "@/lib/requests/reviews";
 
@@ -315,6 +321,99 @@ describe("the drawing layer", () => {
     });
     expect(outdated).toHaveTextContent("This paragraph is unclear");
     expect(drawnIds()).not.toContain("comment-4");
+  });
+});
+
+describe("finding marks (ODY-849)", () => {
+  const found = (id: string, lessonId: number) =>
+    mockAiFinding({
+      id,
+      lessonId,
+      anchor: {
+        v: 1,
+        field: "blocks",
+        blockId: "b1",
+        start: 2,
+        end: 6,
+        quote: "loop",
+        prefix: "A ",
+        suffix: " repeats.",
+      },
+    });
+  const items = [
+    { finding: found("f1", 1), number: 1 },
+    { finding: found("f2", 2), number: 2 },
+  ];
+  const Seed = () => {
+    const set = useReviewFocus()?.setOpenDetail;
+    useEffect(() => set?.({ band: "ok", findings: items }), [set]);
+    return null;
+  };
+  const drawn = () =>
+    screen.getByTestId("blocknote-editor").getAttribute("data-anchors");
+
+  it.each([
+    ["Comment mode draws this lesson's findings only", "", true],
+    ["Read mode draws none", "Read", false],
+  ])("%s", async (_name, click, shown) => {
+    render(
+      <ReviewFocusProvider active>
+        <Seed />
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+    if (click)
+      await userEvent.click(screen.getByRole("button", { name: click }));
+
+    await waitFor(() =>
+      expect(drawn()).toBe(shown ? "comment-1,comment-2,finding-f1" : ""),
+    );
+  });
+
+  it("draws a finding in a Classic lesson's review text", async () => {
+    const classic = {
+      ...lesson,
+      blocksVersion: "v1" as const,
+      blocksV2: null,
+      blocks: [
+        {
+          id: 9,
+          __component: "droplets.generic" as const,
+          content: "<p>A loop repeats.</p>",
+        },
+      ],
+    };
+    render(
+      <ReviewFocusProvider active>
+        <Seed />
+        <LessonRenderer
+          lesson={classic as never}
+          dropletSlug="d"
+          dropletId={3}
+        />
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+
+    const view = screen.getByTestId("classic-review-view");
+    expect(view.querySelectorAll(".anchor-badge")).toHaveLength(1);
+    expect(
+      view.querySelector(".review-finding:not(.anchor-badge)"),
+    ).toHaveTextContent("loop");
+  });
+
+  it("draws none while the reviewer edits", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+    render(
+      <ReviewFocusProvider active>
+        <Seed />
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </ReviewFocusProvider>,
+    );
+    await act(async () => {});
+
+    expect(drawn()).toBe("");
   });
 });
 
