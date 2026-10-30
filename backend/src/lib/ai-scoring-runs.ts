@@ -2,7 +2,13 @@ import {
   loadAiScoringSettings,
   lockAiScoringSettings,
 } from './ai-scoring-settings';
-import { runCostUsd, spendThisMonthUsd, type RunUsage } from './ai-scoring-spend';
+import {
+  monthBounds,
+  runCostUsd,
+  SPEND_TIME_ZONE,
+  spendThisMonthUsd,
+  type RunUsage,
+} from './ai-scoring-spend';
 import {
   findScore,
   lockOpenReview,
@@ -98,10 +104,16 @@ async function checkMonthlyBudget(): Promise<void> {
     (sum, run) => sum + Math.max(0, perRunCapUsd - runCostUsd(run, prices)),
     0,
   );
-  if ((await spendThisMonthUsd(prices)) + heldBack >= monthlyCapUsd) {
+  const now = new Date();
+  if ((await spendThisMonthUsd(prices, now)) + heldBack >= monthlyCapUsd) {
+    const resets = monthBounds(now).end.toLocaleDateString('en-US', {
+      timeZone: SPEND_TIME_ZONE,
+      month: 'long',
+      day: 'numeric',
+    });
     throw new ReviewScoreError(
       409,
-      "This month's Score with AI budget is used up",
+      `This month's Score with AI budget is used up. It resets on ${resets}.`,
     );
   }
 }

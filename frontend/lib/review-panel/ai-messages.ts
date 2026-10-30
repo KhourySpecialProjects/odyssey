@@ -20,3 +20,14 @@ export function startErrorMessage(result: {
 }
 
 export const START_FAILED = START_FALLBACK;
+
+/** The run's error when it stopped at the per-run cost ceiling (ODY-815) */
+export const CEILING_ERROR = "Stopped at the per-run cost ceiling";
+
+/** True for a run that stopped at the per-run cost ceiling */
+export const stoppedAtCeiling = (error: string | null | undefined) =>
+  !!error?.startsWith(CEILING_ERROR);
+
+/** Leads the message for a run that stopped at the ceiling */
+export const CEILING_STOP =
+  "Score with AI stopped at its cost limit for one run.";

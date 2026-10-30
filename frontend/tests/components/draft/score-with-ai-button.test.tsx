@@ -120,12 +120,18 @@ describe("ScoreWithAiButton", () => {
     expect(getAiScoringRun).toHaveBeenCalledTimes(2);
   });
 
-  it("shows why a start was refused", async () => {
+  it.each([
+    ["rate_limited", "Rate limit reached. Try again in 5 minutes."],
+    [
+      "conflict",
+      "This month's Score with AI budget is used up. It resets on November 1.",
+    ],
+  ])("shows why a start was refused (%s)", async (error, message) => {
     jest.mocked(startAiScoring).mockResolvedValue({
       ok: false,
-      error: "rate_limited",
+      error,
       data: null,
-      message: "Rate limit reached. Try again in 5 minutes.",
+      message,
     } as never);
     render(<ScoreWithAiButton dropletId={3} />);
 
@@ -133,11 +139,38 @@ describe("ScoreWithAiButton", () => {
       screen.getByRole("button", { name: "Score with AI" }),
     );
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "Rate limit reached. Try again in 5 minutes.",
-    );
+    expect(toast.error).toHaveBeenCalledWith(message);
     expect(screen.getByRole("button", { name: "Score with AI" })).toBeEnabled();
   });
+
+  it.each([
+    [
+      "partial",
+      [12],
+      "Suggestions are ready, except for 1 lesson and the Overall Score.",
+    ],
+    ["partial", [], "Suggestions are ready, except for the Overall Score."],
+    ["failed", [11, 12], "Nothing was scored."],
+  ])(
+    "says a %s run with failed lessons %j stopped at the per-run cost limit",
+    async (runState, failedLessons, rest) => {
+      jest.mocked(getAiScoringRun).mockResolvedValue(
+        ok(
+          run(runState, {
+            failedLessons,
+            error: "Stopped at the per-run cost ceiling",
+          }),
+        ) as never,
+      );
+      render(<ScoreWithAiButton dropletId={3} />);
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          `Score with AI stopped at its cost limit for one run. ${rest}`,
+        ),
+      );
+    },
+  );
 
   it("says when the last run failed", async () => {
     jest.mocked(getAiScoringRun).mockResolvedValue(ok(run("failed")) as never);

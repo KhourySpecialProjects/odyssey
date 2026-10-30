@@ -75,7 +75,7 @@ function bostonMonthStart(year: number, month: number): Date {
 }
 
 /** The Boston-time month `now` falls in: `start` inclusive, `end` exclusive. */
-function monthBounds(now: Date): { start: Date; end: Date } {
+export function monthBounds(now: Date): { start: Date; end: Date } {
   const wall = new Date(bostonWallMs(now.getTime()));
   const year = wall.getUTCFullYear();
   const month = wall.getUTCMonth();

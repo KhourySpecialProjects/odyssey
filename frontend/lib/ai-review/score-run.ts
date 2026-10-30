@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { CEILING_ERROR } from "@/lib/review-panel/ai-messages";
 import { fetchDropletSnapshot } from "./droplet-snapshot";
 import type { AiReviewModel, Effort } from "./models";
 import {
@@ -56,7 +57,6 @@ const REQUEST_TIMEOUT_MS = 8 * 60 * 1000;
 const FINISH_RETRY_DELAYS_MS = [5_000, 30_000];
 const MAX_ERROR = 2000;
 const MAX_RATIONALE = 4000;
-const CEILING_MESSAGE = "Stopped at the per-run cost ceiling";
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -260,7 +260,7 @@ export async function runAiScoring(
     }
 
     if (progress === "over") {
-      failures.unshift(CEILING_MESSAGE);
+      failures.unshift(CEILING_ERROR);
     } else {
       const overall = await scoreOne(
         client,
