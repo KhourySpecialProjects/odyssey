@@ -486,7 +486,19 @@ export const CAPTURED: Record<string, Call<never>[]> = {
           },
           { regenerateSlug: false },
         ),
-      routes([["GET", /^\/droplets$/, list(FREEZE_DROPLET)]]),
+      // The caller writes the droplet: only an author sets status outside review (ODY-860)
+      routes([
+        [
+          "GET",
+          /^\/droplets$/,
+          list(
+            ent(1, {
+              ...FREEZE_DROPLET.attributes,
+              authorized_users: rel(ent(1)),
+            }),
+          ),
+        ],
+      ]),
     ),
     call(
       "createDroplet",

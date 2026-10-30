@@ -17,12 +17,13 @@ const roleSets: [string, Role[]][] = [
 ];
 
 // ODY-798 (2026-10-26): reviewers are System Admin and Content Editor.
-// Faculty skip the manual review and publish only their own droplets.
+// Outside review, System Admin and Faculty publish only their own droplets
+// (ODY-860: someone else's goes through review, even after a Withdraw).
 const reviewerRoles = [Role.SysAdmin, Role.ContentEditor];
 const hasReviewerRole = (roles: Role[]) =>
   roles.some((r) => reviewerRoles.includes(r));
 const canPublishDirectly = (roles: Role[], isAuthor: boolean) =>
-  roles.includes(Role.SysAdmin) || (roles.includes(Role.Faculty) && isAuthor);
+  isAuthor && (roles.includes(Role.SysAdmin) || roles.includes(Role.Faculty));
 
 describe("review-roles", () => {
   it("exposes the error code and message", () => {
@@ -70,6 +71,12 @@ describe("review-roles", () => {
   it("Faculty and SysAdmin authors not in review are reviewers (direct publish)", () => {
     expect(isReviewerFor([Role.Faculty], false, true)).toBe(true);
     expect(isReviewerFor([Role.SysAdmin], false, true)).toBe(true);
+  });
+
+  it("SysAdmin never publishes someone else's droplet outside review (ODY-860)", () => {
+    expect(isReviewerFor([Role.SysAdmin], false, false)).toBe(false);
+    expect(isReviewerFor([Role.SysAdmin], null, false)).toBe(false);
+    expect(isReviewerFor([Role.SysAdmin], true, false)).toBe(true);
   });
 
   it("Faculty never review or publish someone else's droplet", () => {

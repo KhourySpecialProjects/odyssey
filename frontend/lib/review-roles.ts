@@ -21,8 +21,9 @@ const has = (roles: readonly string[] | undefined, role: Role) =>
  * Reviewer roles are System Admin and Content Editor (ODY-798, 2026-10-26).
  * In review: a non-author with one of those roles. No author reviews their
  * own droplet, whatever their role.
- * Not in review: System Admin, or Faculty on their own droplet. Faculty skip
- * the manual review and never publish other people's droplets.
+ * Not in review: System Admin or Faculty on their own droplet. Nobody
+ * publishes someone else's droplet without a review, so a draft its creator
+ * withdrew can't be published by the reviewer (ODY-860).
  */
 export function isReviewerFor(
   roles?: readonly string[],
@@ -34,7 +35,7 @@ export function isReviewerFor(
       !isAuthor && (has(roles, Role.SysAdmin) || has(roles, Role.ContentEditor))
     );
   }
-  return has(roles, Role.SysAdmin) || (has(roles, Role.Faculty) && !!isAuthor);
+  return !!isAuthor && (has(roles, Role.SysAdmin) || has(roles, Role.Faculty));
 }
 
 /** A droplet is frozen for the caller while in review unless they review it. */

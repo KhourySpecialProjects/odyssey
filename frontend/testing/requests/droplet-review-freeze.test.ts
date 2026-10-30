@@ -197,14 +197,25 @@ describe("updateDroplet: status changes", () => {
     expect(putBodies()).toEqual([]);
   });
 
-  it("lets a non-author Admin publish", async () => {
+  it("lets an Admin author publish", async () => {
     routeDroplet(false);
-    mockedRequireRole.mockResolvedValue(as(9, Role.SysAdmin));
+    mockedRequireRole.mockResolvedValue(as(7, Role.SysAdmin));
 
     const result = await updateDroplet(1, { status: "published" });
 
     expect(result).toMatchObject({ ok: true });
     expect(putBodies()).toHaveLength(1);
+  });
+
+  // ODY-860: a creator's withdrawn draft isn't the reviewer's to publish
+  it("refuses a non-author Admin, with no PUT", async () => {
+    routeDroplet(false);
+    mockedRequireRole.mockResolvedValue(as(9, Role.SysAdmin));
+
+    const result = await updateDroplet(1, { status: "published" });
+
+    expect(result).toMatchObject({ ok: false, error: "forbidden" });
+    expect(putBodies()).toHaveLength(0);
   });
 });
 
@@ -325,9 +336,19 @@ describe("publishDraftToOriginal auth", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("publishes for a non-author Admin outside review", async () => {
+  it("refuses a non-author Admin outside review, with no request (ODY-860)", async () => {
     draft({ inReview: false });
     mockedRequireRole.mockResolvedValue(as(9, Role.SysAdmin));
+
+    const result = await publishDraftToOriginal(1, 2);
+
+    expect(result).toEqual({ ok: false, error: "forbidden", slug: null });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("publishes for an Admin author outside review", async () => {
+    draft({ inReview: false });
+    mockedRequireRole.mockResolvedValue(as(7, Role.SysAdmin));
     fetchMock.mockResolvedValue(makeFetchResponse({ data: { slug: "live" } }));
 
     const result = await publishDraftToOriginal(1, 2);
