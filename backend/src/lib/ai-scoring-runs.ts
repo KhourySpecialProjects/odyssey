@@ -263,7 +263,17 @@ export type RunRef = { runId: number; userId: number };
 /** Tokens used so far, so a run cut short still records what it spent. */
 export type RunTokens = { inputTokens: number; outputTokens: number };
 
-export type HeartbeatInput = RunRef & RunTokens;
+/** A lesson id, or `overall` for the Overall Score. */
+export type RunSection = number | 'overall';
+
+export type RunProgress = { done: RunSection[]; current: RunSection | null };
+
+export type HeartbeatInput = RunRef &
+  RunTokens & {
+    progress?: RunProgress;
+    failedLessons?: RunSection[];
+    scores?: RunScore[];
+  };
 
 export type HeartbeatResult = {
   dropletId: number;
@@ -273,11 +283,8 @@ export type HeartbeatResult = {
 };
 
 /**
- * Marks the run `running` (setting `startedAt` the first time) and records
- * progress and tokens so far, so a start doesn't take it for dead. A review
- * sent meanwhile ends the run as failed instead. Past the per-run ceiling it
- * says so but leaves the run going: ending it here would make `finish` refuse
- * and lose the lessons already scored, so the run stops and saves them.
+ * Marks the run `running` and saves tokens, progress, failedLessons and one section's suggestions.
+ * Past the per-run ceiling it says so but keeps the run going, so `finish` can still end it.
  */
 export async function heartbeatRun(
   input: HeartbeatInput,
@@ -300,12 +307,17 @@ export async function heartbeatRun(
       });
       return { dropletId, run: pickRun(ended), overCeiling };
     }
+    if (input.scores?.length) {
+      await saveSuggestions(run, review, dropletId, input.scores);
+    }
     const updated = await strapi.documents(RUN_UID).update({
       documentId: run.documentId,
       data: {
         ...tokens,
         runState: 'running',
         startedAt: run.startedAt ?? new Date(),
+        ...(input.progress ? { progress: input.progress } : {}),
+        ...(input.failedLessons ? { failedLessons: input.failedLessons } : {}),
       },
       fields: RUN_FIELDS,
     } as any);
@@ -323,7 +335,7 @@ export type RunScore = {
 export type FinishRunInput = RunRef &
   RunTokens & {
     runState: 'done' | 'partial' | 'failed';
-    failedLessons: number[];
+    failedLessons: RunSection[];
     error: string | null;
     scores: RunScore[];
   };
@@ -338,6 +350,75 @@ export type FinishRunResult = {
   /** Suggestions dropped because their lesson left the droplet mid-run */
   dropped: number;
 };
+
+/**
+ * Writes suggestions on value-null rows only, as `finish` does.
+ * Call inside the transaction, under the review lock.
+ */
+async function saveSuggestions(
+  run: Row,
+  review: Row,
+  dropletId: number,
+  scores: RunScore[],
+): Promise<{ saved: number; kept: number; dropped: number }> {
+  const snapshot = new Map<number, CriterionSnapshot>(
+    ((run.criteria ?? []) as CriterionSnapshot[]).map((c) => [c.id, c]),
+  );
+  const criterionIds = [...new Set(scores.map((s) => s.criterionId))];
+  const unknown = criterionIds.find((id) => !snapshot.has(id));
+  if (unknown !== undefined) {
+    throw new ReviewScoreError(400, `Criterion ${unknown} is not in this run`);
+  }
+  const criteria = await byId(CRITERION_UID, criterionIds);
+
+  const lessonIds = [
+    ...new Set(
+      scores.map((s) => s.lessonId).filter((id): id is number => id !== null),
+    ),
+  ];
+  const lessons = await byId(LESSON_UID, lessonIds, {
+    droplets: { id: dropletId },
+  });
+
+  let saved = 0;
+  let kept = 0;
+  let dropped = 0;
+  for (const score of scores) {
+    const criterion = criteria.get(score.criterionId);
+    const lesson = score.lessonId === null ? null : lessons.get(score.lessonId);
+    // Deleted since the run started, or the lesson left the droplet:
+    // nothing to attach the suggestion to.
+    if (!criterion || lesson === undefined) {
+      dropped++;
+      continue;
+    }
+    const key = scoreKey(review.id, score.lessonId, score.criterionId);
+    const existing = await findScore(key);
+    if (existing && existing.value !== null && existing.value !== undefined) {
+      kept++;
+      continue;
+    }
+    const ai = { aiValue: score.aiValue, aiRationale: score.aiRationale };
+    if (existing) {
+      await strapi
+        .documents(SCORE_UID)
+        .update({ documentId: existing.documentId, data: ai } as any);
+    } else {
+      await strapi.documents(SCORE_UID).create({
+        data: {
+          key,
+          ...ai,
+          criterionName: snapshot.get(score.criterionId)!.name,
+          review: review.documentId,
+          criterion: criterion.documentId,
+          ...(lesson ? { lesson: lesson.documentId } : {}),
+        },
+      } as any);
+    }
+    saved++;
+  }
+  return { saved, kept, dropped };
+}
 
 /**
  * Saves a run's suggestions and ends it, in one transaction. Writes only
@@ -360,65 +441,12 @@ export async function finishRun(
       return { dropletId, run: pickRun(ended), saved: 0, kept: 0, dropped: 0 };
     }
 
-    const snapshot = new Map<number, CriterionSnapshot>(
-      ((run.criteria ?? []) as CriterionSnapshot[]).map((c) => [c.id, c]),
+    const { saved, kept, dropped } = await saveSuggestions(
+      run,
+      review,
+      dropletId,
+      input.scores,
     );
-    const criterionIds = [...new Set(input.scores.map((s) => s.criterionId))];
-    const unknown = criterionIds.find((id) => !snapshot.has(id));
-    if (unknown !== undefined) {
-      throw new ReviewScoreError(400, `Criterion ${unknown} is not in this run`);
-    }
-    const criteria = await byId(CRITERION_UID, criterionIds);
-
-    const lessonIds = [
-      ...new Set(
-        input.scores
-          .map((s) => s.lessonId)
-          .filter((id): id is number => id !== null),
-      ),
-    ];
-    const lessons = await byId(LESSON_UID, lessonIds, {
-      droplets: { id: dropletId },
-    });
-
-    let saved = 0;
-    let kept = 0;
-    let dropped = 0;
-    for (const score of input.scores) {
-      const criterion = criteria.get(score.criterionId);
-      const lesson =
-        score.lessonId === null ? null : lessons.get(score.lessonId);
-      // Deleted since the run started, or the lesson left the droplet:
-      // nothing to attach the suggestion to.
-      if (!criterion || lesson === undefined) {
-        dropped++;
-        continue;
-      }
-      const key = scoreKey(review.id, score.lessonId, score.criterionId);
-      const existing = await findScore(key);
-      if (existing && existing.value !== null && existing.value !== undefined) {
-        kept++;
-        continue;
-      }
-      const ai = { aiValue: score.aiValue, aiRationale: score.aiRationale };
-      if (existing) {
-        await strapi
-          .documents(SCORE_UID)
-          .update({ documentId: existing.documentId, data: ai } as any);
-      } else {
-        await strapi.documents(SCORE_UID).create({
-          data: {
-            key,
-            ...ai,
-            criterionName: snapshot.get(score.criterionId)!.name,
-            review: review.documentId,
-            criterion: criterion.documentId,
-            ...(lesson ? { lesson: lesson.documentId } : {}),
-          },
-        } as any);
-      }
-      saved++;
-    }
 
     const ended = await endRun(run, {
       runState: input.runState,

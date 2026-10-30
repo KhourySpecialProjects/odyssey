@@ -73,6 +73,10 @@ function fakeClient(answers: (Anthropic.Message | Error)[]) {
 const sleep = jest.fn(() => Promise.resolve());
 const finished = (): FinishRunInput =>
   jest.mocked(finishRunRoute).mock.calls.at(-1)![0];
+const beats = () => jest.mocked(heartbeatRunRoute).mock.calls.map(([b]) => b);
+/** Lesson ids whose scores each heartbeat carried. */
+const savedBy = () =>
+  beats().map((b) => [...new Set(b.scores?.map((s) => s.lessonId))]);
 
 const running = {
   ok: true as const,
@@ -126,6 +130,20 @@ describe("runAiScoring", () => {
     );
 
     expect(finishRunRoute).toHaveBeenCalledTimes(1);
+    expect(beats()[1].scores).toEqual([
+      {
+        lessonId: 11,
+        criterionId: 1,
+        aiValue: 4,
+        aiRationale: "lesson 1 Tone",
+      },
+      {
+        lessonId: 11,
+        criterionId: 2,
+        aiValue: 4,
+        aiRationale: "lesson 1 Scaffolding",
+      },
+    ]);
     expect(finished()).toEqual({
       runId: 40,
       userId: 3,
@@ -135,30 +153,6 @@ describe("runAiScoring", () => {
       inputTokens: 3 * 115,
       outputTokens: 3 * 20,
       scores: [
-        {
-          lessonId: 11,
-          criterionId: 1,
-          aiValue: 4,
-          aiRationale: "lesson 1 Tone",
-        },
-        {
-          lessonId: 11,
-          criterionId: 2,
-          aiValue: 4,
-          aiRationale: "lesson 1 Scaffolding",
-        },
-        {
-          lessonId: 12,
-          criterionId: 1,
-          aiValue: 3,
-          aiRationale: "lesson 2 Tone",
-        },
-        {
-          lessonId: 12,
-          criterionId: 2,
-          aiValue: 3,
-          aiRationale: "lesson 2 Scaffolding",
-        },
         {
           lessonId: null,
           criterionId: 1,
@@ -198,7 +192,9 @@ describe("runAiScoring", () => {
     expect(body.error).toMatch(
       /^Lesson 1 \("What is Git\?"\): api_error \(400: /,
     );
-    expect(body.scores.map((s) => s.lessonId)).toEqual([12, 12, null, null]);
+    expect(savedBy()).toEqual([[], [], [12]]);
+    expect(body.scores.map((s) => s.lessonId)).toEqual([null, null]);
+    expect(beats()[1].progress).toEqual({ done: [11], current: 12 });
     // A client error is not retried.
     expect(sleep).not.toHaveBeenCalled();
   });
@@ -215,7 +211,7 @@ describe("runAiScoring", () => {
     expect(body.runState).toBe("partial");
     expect(body.failedLessons).toEqual([12]);
     expect(body.error).toMatch(reason);
-    expect(body.scores.some((s) => s.lessonId === 12)).toBe(false);
+    expect(savedBy().flat()).not.toContain(12);
   });
 
   it("tells the Overall request which lesson failed", async () => {
@@ -310,11 +306,114 @@ describe("runAiScoring", () => {
 
     await runAiScoring(run, { client, sleep });
 
-    expect(jest.mocked(heartbeatRunRoute).mock.calls.map(([b]) => b)).toEqual([
-      { runId: 40, userId: 3, inputTokens: 0, outputTokens: 0 },
-      { runId: 40, userId: 3, inputTokens: 115, outputTokens: 20 },
-      { runId: 40, userId: 3, inputTokens: 230, outputTokens: 40 },
+    expect(beats().map((b) => [b.inputTokens, b.outputTokens])).toEqual([
+      [0, 0],
+      [115, 20],
+      [230, 40],
     ]);
+  });
+
+  it("reports progress lesson by lesson, with the lessons already scored", async () => {
+    const { client } = fakeClient([message({}), message({}), message({})]);
+
+    await runAiScoring(run, { client, sleep });
+
+    expect(beats().map((b) => b.progress)).toEqual([
+      { done: [], current: 11 },
+      { done: [11], current: 12 },
+      { done: [11, 12], current: "overall" },
+    ]);
+    expect(savedBy()).toEqual([[], [11], [12]]);
+    expect(finished().scores.map((s) => s.lessonId)).toEqual([null, null]);
+  });
+
+  it("starts on the Overall Score when the droplet has no lessons", async () => {
+    jest
+      .mocked(fetchDropletSnapshot)
+      .mockResolvedValue({ ...mockSnapshot, lessons: [] });
+    const { client } = fakeClient([message({})]);
+
+    await runAiScoring(run, { client, sleep });
+
+    expect(beats().map((b) => b.progress)).toEqual([
+      { done: [], current: "overall" },
+    ]);
+  });
+
+  it('lists a failed Overall Score as "overall" and ends partial', async () => {
+    const { client } = fakeClient([
+      message({}),
+      message({}),
+      message({ stop_reason: "refusal", text: "" }),
+    ]);
+
+    await runAiScoring(run, { client, sleep });
+
+    expect(finished()).toMatchObject({
+      runState: "partial",
+      failedLessons: ["overall"],
+      scores: [],
+    });
+  });
+
+  it("sends a heartbeat's unsaved scores again with the next one after a network blip", async () => {
+    jest
+      .mocked(heartbeatRunRoute)
+      .mockResolvedValueOnce(running)
+      .mockResolvedValueOnce({ ok: false, status: 0, message: null });
+    const { client } = fakeClient([message({}), message({}), message({})]);
+
+    await runAiScoring(run, { client, sleep });
+
+    expect(savedBy()).toEqual([[], [11], [11, 12]]);
+    expect(finished().scores.map((s) => s.lessonId)).toEqual([null, null]);
+    expect(finished().runState).toBe("done");
+  });
+
+  it("names the lessons a refused finish was carrying, and still ends partial", async () => {
+    jest
+      .mocked(heartbeatRunRoute)
+      .mockResolvedValueOnce(running)
+      .mockResolvedValueOnce(running)
+      .mockResolvedValueOnce({ ok: false, status: 0, message: null });
+    jest
+      .mocked(finishRunRoute)
+      .mockResolvedValueOnce({ ok: false, status: 400, message: "bad" });
+    const { client } = fakeClient([message({}), message({}), message({})]);
+
+    await runAiScoring(run, { client, sleep });
+
+    // Lesson 2's scores never reached a heartbeat, so they rode on finish.
+    expect(finished()).toMatchObject({
+      runState: "partial",
+      failedLessons: [12, "overall"],
+      scores: [],
+    });
+  });
+
+  it("drops a lesson's scores the heartbeat refuses, names it, and carries on", async () => {
+    jest
+      .mocked(heartbeatRunRoute)
+      .mockResolvedValueOnce(running)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        message: "Criterion 9 is not in this run",
+      });
+    const { client } = fakeClient([message({}), message({}), message({})]);
+
+    await runAiScoring(run, { client, sleep });
+
+    // The refused heartbeat is sent again without the scores.
+    expect(savedBy()).toEqual([[], [11], [], [12]]);
+    expect(beats()[2].failedLessons).toEqual([11]);
+    expect(finished()).toMatchObject({
+      runState: "partial",
+      failedLessons: [11],
+      error: expect.stringContaining(
+        'Saving Lesson 1 ("What is Git?") failed: Criterion 9',
+      ),
+    });
   });
 
   it("retries saving after a network failure or a Strapi restart", async () => {
@@ -366,7 +465,7 @@ describe("runAiScoring", () => {
 
     expect(finished()).toMatchObject({
       runState: "failed",
-      failedLessons: [11, 12],
+      failedLessons: [11, 12, "overall"],
       scores: [],
     });
     expect(finished().error).toContain("Overall Score: refusal");
@@ -396,10 +495,10 @@ describe("runAiScoring", () => {
   });
 
   it.each([
-    ["before the first lesson", 0, [11, 12], "failed"],
-    ["after the first lesson", 1, [12], "partial"],
+    ["before the first lesson", 0, [11, 12, "overall"], "failed"],
+    ["after the first lesson", 1, [12, "overall"], "partial"],
     // Only the Overall Score is skipped.
-    ["after the last lesson", 2, [], "partial"],
+    ["after the last lesson", 2, ["overall"], "partial"],
   ])(
     "stops at the per-run cost ceiling %s, skips the rest and saves what it has",
     async (_label, lessonsScored, failedLessons, runState) => {
@@ -425,13 +524,15 @@ describe("runAiScoring", () => {
         failedLessons,
         error: "Stopped at the per-run cost ceiling",
       });
-      expect(finished().scores).toHaveLength(
+      // Each lesson scored was saved by the heartbeat after it.
+      expect(beats().flatMap((b) => b.scores ?? [])).toHaveLength(
         lessonsScored * mockCriteria.length,
       );
+      expect(finished().scores).toEqual([]);
     },
   );
 
-  it("never starts when the run was already marked dead", async () => {
+  it("never scores when the run was already marked dead", async () => {
     jest.mocked(heartbeatRunRoute).mockResolvedValue({
       ok: false,
       status: 409,
@@ -443,18 +544,6 @@ describe("runAiScoring", () => {
 
     expect(stream).not.toHaveBeenCalled();
     expect(finishRunRoute).not.toHaveBeenCalled();
-  });
-
-  it("keeps going through a network blip on the heartbeat", async () => {
-    jest
-      .mocked(heartbeatRunRoute)
-      .mockResolvedValueOnce(running)
-      .mockResolvedValueOnce({ ok: false, status: 0, message: null });
-    const { client } = fakeClient([message({}), message({}), message({})]);
-
-    await runAiScoring(run, { client, sleep });
-
-    expect(finished().runState).toBe("done");
   });
 
   it("ends failed when the droplet can't be read", async () => {
@@ -482,8 +571,10 @@ describe("runAiScoring", () => {
     await runAiScoring(run, { client, sleep });
 
     expect(finishRunRoute).toHaveBeenCalledTimes(2);
+    // The lessons were saved by earlier heartbeats.
     expect(finished()).toMatchObject({
-      runState: "failed",
+      runState: "partial",
+      failedLessons: ["overall"],
       scores: [],
       error: "Saving failed: Lesson 12 is not part of the review's droplet",
     });
@@ -498,7 +589,26 @@ describe("runAiScoring", () => {
     await expect(runAiScoring(run, { client, sleep })).resolves.toBeUndefined();
     expect(finished()).toMatchObject({
       runState: "failed",
+      failedLessons: [],
       error: "Scoring stopped: Strapi is down",
     });
   });
+
+  it.each([
+    ["before anything was saved", 0, "failed", [11, 12, "overall"]],
+    ["after a lesson was saved", 2, "partial", [12, "overall"]],
+  ])(
+    "ends %s with the unfinished sections listed",
+    async (_label, okBeats, runState, failedLessons) => {
+      const heartbeat = jest.mocked(heartbeatRunRoute);
+      for (let i = 0; i < okBeats; i++)
+        heartbeat.mockResolvedValueOnce(running);
+      heartbeat.mockRejectedValueOnce(new Error("boom"));
+      const { client } = fakeClient([message({}), message({})]);
+
+      await runAiScoring(run, { client, sleep });
+
+      expect(finished()).toMatchObject({ runState, failedLessons });
+    },
+  );
 });

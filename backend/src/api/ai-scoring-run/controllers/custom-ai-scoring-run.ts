@@ -2,7 +2,9 @@ import {
   finishRun,
   heartbeatRun,
   startRun,
+  type RunProgress,
   type RunScore,
+  type RunSection,
 } from '../../../lib/ai-scoring-runs';
 import { ReviewScoreError } from '../../../lib/review-scores';
 
@@ -59,6 +61,29 @@ function parseBody(
     if (!isRowId(record[key])) return { invalid: `${key} must be a positive integer` };
   }
   return { body: record };
+}
+
+function parseSections(value: unknown): value is RunSection[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= MAX_SCORES &&
+    value.every((v) => v === 'overall' || isRowId(v))
+  );
+}
+
+function parseProgress(value: unknown): value is RunProgress {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const keys = Object.keys(value);
+  const { done, current } = value as Record<string, unknown>;
+  return (
+    keys.length === 2 &&
+    'done' in value &&
+    'current' in value &&
+    parseSections(done) &&
+    (current === null || current === 'overall' || isRowId(current))
+  );
 }
 
 function parseScores(value: unknown): { scores: RunScore[] } | { invalid: string } {
@@ -133,13 +158,25 @@ export default {
   async heartbeat(ctx) {
     const parsed = parseBody(
       ctx.request.body ?? {},
-      ['runId', 'userId', 'inputTokens', 'outputTokens'],
+      ['runId', 'userId', 'inputTokens', 'outputTokens', 'progress', 'failedLessons', 'scores'],
       ['runId', 'userId'],
     );
     if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
     const { body } = parsed;
     for (const key of ['inputTokens', 'outputTokens']) {
       if (!isCount(body[key])) return fail(ctx, 400, `${key} must be a whole number`);
+    }
+    if (body.progress !== undefined && !parseProgress(body.progress)) {
+      return fail(ctx, 400, 'progress must be { done, current } with lesson ids or "overall"');
+    }
+    if (body.failedLessons !== undefined && !parseSections(body.failedLessons)) {
+      return fail(ctx, 400, 'failedLessons must be an array of lesson ids or "overall"');
+    }
+    let scores: RunScore[] | undefined;
+    if (body.scores !== undefined) {
+      const parsedScores = parseScores(body.scores);
+      if ('invalid' in parsedScores) return fail(ctx, 400, parsedScores.invalid);
+      scores = parsedScores.scores;
     }
 
     return run(
@@ -150,6 +187,9 @@ export default {
           userId: body.userId as number,
           inputTokens: body.inputTokens as number,
           outputTokens: body.outputTokens as number,
+          progress: body.progress as RunProgress | undefined,
+          failedLessons: body.failedLessons as RunSection[] | undefined,
+          scores,
         }),
       'Failed to record progress.',
     );
@@ -176,12 +216,8 @@ export default {
       return fail(ctx, 400, `runState must be one of ${END_STATES.join(', ')}`);
     }
     const { failedLessons } = body;
-    if (
-      !Array.isArray(failedLessons) ||
-      failedLessons.length > MAX_SCORES ||
-      !failedLessons.every(isRowId)
-    ) {
-      return fail(ctx, 400, 'failedLessons must be an array of lesson ids');
+    if (!parseSections(failedLessons)) {
+      return fail(ctx, 400, 'failedLessons must be an array of lesson ids or "overall"');
     }
     for (const key of ['inputTokens', 'outputTokens']) {
       if (!isCount(body[key])) return fail(ctx, 400, `${key} must be a whole number`);
@@ -199,7 +235,7 @@ export default {
           runId: body.runId as number,
           userId: body.userId as number,
           runState: body.runState as 'done' | 'partial' | 'failed',
-          failedLessons: failedLessons as number[],
+          failedLessons,
           inputTokens: body.inputTokens as number,
           outputTokens: body.outputTokens as number,
           error: body.error as string | null,

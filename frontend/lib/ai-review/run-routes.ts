@@ -1,6 +1,11 @@
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { readJsonOrNull } from "@/lib/strapi-response";
-import type { AiScoringRunState, ReviewCriterionSnapshot } from "@/types";
+import type {
+  AiRunProgress,
+  AiRunSection,
+  AiScoringRunState,
+  ReviewCriterionSnapshot,
+} from "@/types";
 
 /**
  * A queued or running run with no progress for this long is dead; the start
@@ -47,7 +52,7 @@ export type FinishRunInput = {
   runId: number;
   userId: number;
   runState: "done" | "partial" | "failed";
-  failedLessons: number[];
+  failedLessons: AiRunSection[];
   inputTokens: number;
   outputTokens: number;
   error: string | null;
@@ -100,12 +105,18 @@ export const startRunRoute = (body: {
   promptVersion: string;
 }) => postRunRoute<StartedRun>("start", body);
 
-/** Tokens are the run's totals so far, so a run cut short keeps its cost. */
+/**
+ * Tokens are the run's totals so far, so a run cut short keeps its cost.
+ * `scores` are one section's suggestions, saved with the heartbeat.
+ */
 export const heartbeatRunRoute = (body: {
   runId: number;
   userId: number;
   inputTokens: number;
   outputTokens: number;
+  progress?: AiRunProgress;
+  failedLessons?: AiRunSection[];
+  scores?: RunScoreInput[];
 }) => postRunRoute<RunHeartbeat>("heartbeat", body);
 
 export const finishRunRoute = (body: FinishRunInput) =>

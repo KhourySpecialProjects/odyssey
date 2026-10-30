@@ -16,6 +16,7 @@ import {
   type FinishRunInput,
   type RunScoreInput,
 } from "./run-routes";
+import type { AiRunSection } from "@/types";
 import type { Criterion, LessonScores, ParsedScores } from "./types";
 
 /** One Score with AI run, as the start route created it. */
@@ -50,7 +51,7 @@ const RETRY_TYPES = new Set([
 ]);
 /**
  * A request with no answer by then fails, so a stalled stream can't hang the
- * run. Under STALE_RUN_MS, since progress is only reported between lessons.
+ * run. Under STALE_RUN_MS, since progress is reported between lessons.
  */
 const REQUEST_TIMEOUT_MS = 8 * 60 * 1000;
 /** Waits before each retry of a `finish` that didn't reach Strapi. */
@@ -130,11 +131,8 @@ const toInputs = (
     : [];
 
 /**
- * Scores every lesson in order, then the Overall Score with the lessons'
- * answers, and saves all of it in one request. Runs after the action has
- * answered (`after()`), so it never throws: a failure ends the run as failed.
- * It stops early if the run ends elsewhere (marked dead, or the review sent).
- * Past the per-run cost ceiling it skips the rest and saves what it has.
+ * Scores each lesson (saved by the heartbeat after it), then the Overall with `finish`.
+ * Runs in `after()` and never throws; it stops if the run ends elsewhere or hits the ceiling.
  */
 export async function runAiScoring(
   run: ScoringRun,
@@ -151,6 +149,14 @@ export async function runAiScoring(
       (usage.cache_read_input_tokens ?? 0);
     tokens.output += usage.output_tokens;
   };
+
+  const done: AiRunSection[] = [];
+  const failedSections: AiRunSection[] = [];
+  const failures: string[] = [];
+  let pending: { section: number; scores: RunScoreInput[] }[] = [];
+  let savedAny = false;
+  let lessonIds: number[] | null = null;
+  const labels = new Map<number, string>();
 
   const finish = async (
     input: Pick<
@@ -181,7 +187,13 @@ export async function runAiScoring(
     if (!saved.ok && saved.status === 400 && input.scores.length) {
       await send({
         ...body,
-        runState: "failed",
+        runState: savedAny ? "partial" : "failed",
+        failedLessons: [
+          ...new Set<AiRunSection>([
+            ...input.failedLessons,
+            ...input.scores.map((s) => s.lessonId ?? "overall"),
+          ]),
+        ],
         scores: [],
         error: clip(
           `Saving failed: ${saved.message ?? "invalid scores"}`,
@@ -193,25 +205,46 @@ export async function runAiScoring(
   };
 
   /**
-   * Reports progress and the tokens spent so far. "ended" once the run has
-   * ended elsewhere (a network blip keeps it going), "over" once it has spent
-   * its per-run ceiling.
+   * Sends progress, tokens and unsaved scores. A 400 marks those sections failed and resends
+   * without them; other failures keep them for the next beat.
    */
-  const report = async (): Promise<"go" | "ended" | "over"> => {
-    const beat = await heartbeatRunRoute({
-      ...ref,
-      inputTokens: tokens.input,
-      outputTokens: tokens.output,
-    });
+  const report = async (
+    current: AiRunSection,
+  ): Promise<"go" | "ended" | "over"> => {
+    const send = (withScores: boolean) =>
+      heartbeatRunRoute({
+        ...ref,
+        inputTokens: tokens.input,
+        outputTokens: tokens.output,
+        progress: { done: [...done], current },
+        failedLessons: [...failedSections],
+        ...(withScores && pending.length
+          ? { scores: pending.flatMap((p) => p.scores) }
+          : {}),
+      });
+    const hadScores = pending.length > 0;
+    let beat = await send(true);
+    if (beat.ok) {
+      if (hadScores) savedAny = true;
+      pending = [];
+    } else if (beat.status === 400 && hadScores) {
+      const sections = pending.map((p) => p.section);
+      failedSections.push(...sections);
+      failures.push(
+        clip(
+          `Saving ${sections.map((id) => labels.get(id) ?? `lesson ${id}`).join(", ")} failed: ${beat.message ?? "invalid scores"}`,
+          300,
+        ),
+      );
+      pending = [];
+      beat = await send(false);
+    }
     if (!beat.ok) return [403, 404, 409].includes(beat.status) ? "ended" : "go";
     if (beat.data.run.runState !== "running") return "ended";
     return beat.data.overCeiling ? "over" : "go";
   };
 
   try {
-    let progress = await report();
-    if (progress === "ended") return;
-
     const snapshot = await fetchDropletSnapshot(
       { id: run.dropletId },
       { previousReview: false },
@@ -227,19 +260,24 @@ export async function runAiScoring(
     }
 
     const options = { model: run.model, effort: run.effort };
-    const scores: RunScoreInput[] = [];
-    const failures: string[] = [];
-    const failedLessons: number[] = [];
     const lessonScores: LessonScores[] = [];
-
     const requests = buildLessonRequests(snapshot, run.criteria, options);
+    const ids = requests.map((r) => r.lessonId!);
+    lessonIds = ids;
+    for (const [i, r] of requests.entries()) {
+      labels.set(r.lessonId!, `Lesson ${i + 1} ("${r.lessonName}")`);
+    }
+
+    let progress = await report(ids[0] ?? "overall");
+    if (progress === "ended") return;
+
     for (const [i, request] of requests.entries()) {
       if (progress === "over") {
         // The rest go unscored, listed as failed so the panel names them.
-        failedLessons.push(...requests.slice(i).map((r) => r.lessonId!));
+        failedSections.push(...ids.slice(i));
         break;
       }
-      const lessonId = request.lessonId!;
+      const lessonId = ids[i];
       const { parsed, usage } = await scoreOne(
         client,
         request,
@@ -247,19 +285,21 @@ export async function runAiScoring(
         sleep,
       );
       count(usage);
-      scores.push(...toInputs(lessonId, parsed));
+      const inputs = toInputs(lessonId, parsed);
+      if (inputs.length) pending.push({ section: lessonId, scores: inputs });
       lessonScores.push({ lessonId, scores: parsed.ok ? parsed.scores : null });
       if (!parsed.ok) {
-        failedLessons.push(lessonId);
-        failures.push(
-          `Lesson ${i + 1} ("${request.lessonName}"): ${describe(parsed)}`,
-        );
+        failedSections.push(lessonId);
+        failures.push(`${labels.get(lessonId)}: ${describe(parsed)}`);
       }
-      progress = await report();
+      done.push(lessonId);
+      progress = await report(ids[i + 1] ?? "overall");
       if (progress === "ended") return;
     }
 
+    const overallInputs: RunScoreInput[] = [];
     if (progress === "over") {
+      failedSections.push("overall");
       failures.unshift(CEILING_ERROR);
     } else {
       const overall = await scoreOne(
@@ -269,28 +309,41 @@ export async function runAiScoring(
         sleep,
       );
       count(overall.usage);
-      scores.push(...toInputs(null, overall.parsed));
+      overallInputs.push(...toInputs(null, overall.parsed));
       if (!overall.parsed.ok) {
+        failedSections.push("overall");
         failures.push(`Overall Score: ${describe(overall.parsed)}`);
       }
     }
 
+    const scores = [...pending.flatMap((p) => p.scores), ...overallInputs];
     await finish({
       runState: !failures.length
         ? "done"
-        : scores.length
+        : savedAny || scores.length
           ? "partial"
           : "failed",
-      failedLessons,
+      failedLessons: failedSections,
       scores,
       error: failures.length ? clip(failures.join("; "), MAX_ERROR) : null,
     });
   } catch (error) {
     console.error("Score with AI run failed", error);
     try {
+      // Nothing was scored before the snapshot was read.
+      const failedLessons: AiRunSection[] = lessonIds
+        ? [
+            ...new Set<AiRunSection>([
+              ...failedSections,
+              ...pending.map((p) => p.section),
+              ...lessonIds.filter((id) => !done.includes(id)),
+              "overall",
+            ]),
+          ]
+        : [];
       await finish({
-        runState: "failed",
-        failedLessons: [],
+        runState: savedAny ? "partial" : "failed",
+        failedLessons,
         scores: [],
         error: clip(
           `Scoring stopped: ${error instanceof Error ? error.message : String(error)}`,
