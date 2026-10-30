@@ -16,7 +16,7 @@
     "@strapi/plugin-users-permissions": "5.56.0",
     "@strapi/provider-upload-aws-s3": "5.56.0",
     "@strapi/strapi": "5.56.0",
-    "ckeditor5": "48.4.0",
+    "ckeditor5": "49.0.1",
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
