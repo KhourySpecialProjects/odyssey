@@ -19,6 +19,8 @@ const {
 let strapi;
 let token;
 
+const scoreKey = (reviewId, lessonId, criterionId) =>
+  `${reviewId}:${lessonId ?? 'overall'}:${criterionId}`;
 const rest = () => request(strapi.server.httpServer);
 const auth = () => ({ Authorization: `Bearer ${token}` });
 const post = (path, body) =>
@@ -425,6 +427,109 @@ describe('POST /ai-scoring-runs/heartbeat', () => {
     expect(saved.body.data).toMatchObject({ saved: 4, run: { runState: 'partial' } });
   });
 
+  it('saves progress and failedLessons, "overall" included', async () => {
+    const { body } = await start();
+    const runId = body.data.run.id;
+    const progress = { done: [lesson.id], current: 'overall' };
+
+    const res = await beat(runId, { progress, failedLessons: [lesson.id, 'overall'] });
+
+    expect(res.status).toBe(200);
+    const row = await runRow(runId);
+    expect(row.progress).toEqual(progress);
+    expect(row.failedLessons).toEqual([lesson.id, 'overall']);
+  });
+
+  describe('with scores', () => {
+    const lessonScores = (overrides = {}) => [
+      { lessonId: lesson.id, criterionId: tone.id, aiValue: 4, aiRationale: 'Warm.', ...overrides },
+      { lessonId: lesson.id, criterionId: clarity.id, aiValue: 2, aiRationale: 'Unclear.' },
+    ];
+
+    it('saves them on value-null rows, skips one the reviewer set, and drops a lesson outside the droplet', async () => {
+      const { body } = await start();
+      const runId = body.data.run.id;
+      await strapi.documents(REVIEW_SCORE_UID).create({
+        data: {
+          key: scoreKey(review.id, lesson.id, clarity.id),
+          review: review.documentId,
+          lesson: lesson.documentId,
+          criterion: clarity.documentId,
+          criterionName: 'Clarity',
+          value: 5,
+        },
+      });
+
+      const res = await beat(runId, {
+        scores: [...lessonScores(), { ...lessonScores()[0], lessonId: otherLesson.id }],
+      });
+
+      expect(res.status).toBe(200);
+      const saved = await scoreRow(scoreKey(review.id, lesson.id, tone.id));
+      expect(saved).toMatchObject({ aiValue: 4, aiRationale: 'Warm.' });
+      expect(await scoreRow(scoreKey(review.id, lesson.id, clarity.id))).toMatchObject({
+        value: 5,
+        aiValue: null,
+      });
+      expect(await scoreRow(scoreKey(review.id, otherLesson.id, tone.id))).toBeNull();
+    });
+
+    it('is a 400 for a criterion outside the run, and the whole heartbeat rolls back', async () => {
+      const { body } = await start();
+      const runId = body.data.run.id;
+      const stranger = await createCriterion({ order: 9 });
+
+      const res = await beat(runId, {
+        inputTokens: 700,
+        progress: { done: [], current: lesson.id },
+        failedLessons: [lesson.id],
+        scores: lessonScores({ criterionId: stranger.id }),
+      });
+
+      expect(res.status).toBe(400);
+      expect(await scoreRow(scoreKey(review.id, lesson.id, clarity.id))).toBeNull();
+      expect(await runRow(runId)).toMatchObject({
+        runState: 'queued',
+        inputTokens: null,
+        progress: null,
+        failedLessons: null,
+      });
+    });
+
+    it('saves nothing and ends the run failed when the review was sent', async () => {
+      const { body } = await start();
+      await strapi
+        .documents(REVIEW_UID)
+        .update({ documentId: review.documentId, data: { state: 'sent' } });
+
+      const res = await beat(body.data.run.id, { scores: lessonScores() });
+
+      expect(res.body.data.run.runState).toBe('failed');
+      expect(await scoreRow(scoreKey(review.id, lesson.id, tone.id))).toBeNull();
+    });
+
+    it('still saves them past the per-run ceiling', async () => {
+      const { body } = await start();
+
+      const res = await beat(body.data.run.id, { inputTokens: 1_000_000, scores: lessonScores() });
+
+      expect(res.body.data.overCeiling).toBe(true);
+      expect(await scoreRow(scoreKey(review.id, lesson.id, tone.id))).toMatchObject({ aiValue: 4 });
+    });
+  });
+
+  it.each([
+    ['progress with an extra key', { progress: { done: [], current: null, x: 1 } }],
+    ['progress with a bad current', { progress: { done: [], current: 'x' } }],
+    ['progress with done not an array', { progress: { done: 'a', current: null } }],
+    ['a bad failedLessons', { failedLessons: ['x'] }],
+    ['a bad scores entry', { scores: [{ lessonId: 1 }] }],
+  ])('rejects %s', async (_name, extra) => {
+    const { body } = await start();
+
+    expect((await beat(body.data.run.id, extra)).status).toBe(400);
+  });
+
   it('rejects a heartbeat without token counts', async () => {
     const { body } = await start();
 
@@ -503,6 +608,18 @@ describe('POST /ai-scoring-runs/finish', () => {
       aiValue: 1,
       aiRationale: 'Run again.',
     });
+  });
+
+  it('accepts "overall" in failedLessons', async () => {
+    const { body } = await start();
+
+    const res = await post(
+      'finish',
+      finishBody(body.data.run.id, { runState: 'partial', failedLessons: [lesson.id, 'overall'] }),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await runRow(body.data.run.id)).failedLessons).toEqual([lesson.id, 'overall']);
   });
 
   it('records a partial run and the lessons that failed', async () => {
