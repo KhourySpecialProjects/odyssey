@@ -215,8 +215,18 @@ describe("buildLessonRequests and buildOverallRequest", () => {
     {
       lessonId: 11,
       scores: [
-        { criterionId: 1, rationale: "Opens with why Git matters.", score: 4 },
-        { criterionId: 2, rationale: 'Defines "history" first.', score: 5 },
+        {
+          criterionId: 1,
+          rationale: "Opens with why Git matters.",
+          score: 4,
+          transgressions: [],
+        },
+        {
+          criterionId: 2,
+          rationale: 'Defines "history" first.',
+          score: 5,
+          transgressions: [],
+        },
       ],
     },
     { lessonId: 12, scores: null },
@@ -314,17 +324,54 @@ describe("buildLessonRequests and buildOverallRequest", () => {
     expect(params.thinking).toEqual({ type: "adaptive" });
     expect(params.output_config).toEqual({
       effort: "medium",
-      format: { type: "json_schema", schema: scoresJsonSchema(mockCriteria) },
+      format: {
+        type: "json_schema",
+        schema: scoresJsonSchema(mockCriteria, "lesson", 2),
+      },
     });
     expect(params).not.toHaveProperty("temperature");
   });
 
+  const itemOf = (level: "lesson" | "overall") =>
+    (scoresJsonSchema(mockCriteria, level, 2) as any).properties.scores.items;
+
   it("limits criterionId to the rubric's ids and score to 1–5", () => {
-    const item = (scoresJsonSchema(mockCriteria) as any).properties.scores
-      .items;
+    const item = itemOf("lesson");
     expect(item.properties.criterionId.enum).toEqual([1, 2]);
     expect(item.properties.score.enum).toEqual([1, 2, 3, 4, 5]);
-    expect(item.required).toEqual(["criterionId", "rationale", "score"]);
+    expect(item.required).toEqual([
+      "criterionId",
+      "rationale",
+      "score",
+      "transgressions",
+    ]);
+  });
+
+  it("asks for transgressions after the score, with a lesson number only on Overall", () => {
+    const quoteOf = (level: "lesson" | "overall") =>
+      itemOf(level).properties.transgressions.items;
+    expect(Object.keys(quoteOf("lesson").properties)).toEqual([
+      "quote",
+      "reason",
+    ]);
+    expect(quoteOf("overall").properties.lesson.enum).toEqual([0, 1, 2]);
+    expect(quoteOf("overall").required).toEqual(["quote", "reason", "lesson"]);
+    expect(Object.keys(itemOf("lesson").properties)).toEqual([
+      "criterionId",
+      "rationale",
+      "score",
+      "transgressions",
+    ]);
+  });
+
+  it("sends the Overall request the schema with lesson numbers, and each scope its wording", () => {
+    const sent = requests[2].params.output_config!.format as any;
+    expect(
+      sent.schema.properties.scores.items.properties.transgressions.items
+        .properties.lesson.enum,
+    ).toEqual([0, 1, 2]);
+    expect(requests[0].params.system).toMatch(/quote only from that lesson/);
+    expect(requests[2].params.system).toMatch(/lesson number, or 0 for/);
   });
 
   it("gives the Overall request each lesson's scores and reasons, and says which failed", () => {
@@ -384,9 +431,47 @@ describe("parseScores", () => {
     expect(parsed).toEqual({
       ok: true,
       scores: [
-        { criterionId: 1, score: 5, rationale: "Because." },
-        { criterionId: 2, score: 3, rationale: "Because." },
+        { criterionId: 1, score: 5, rationale: "Because.", transgressions: [] },
+        { criterionId: 2, score: 3, rationale: "Because.", transgressions: [] },
       ],
+    });
+  });
+
+  it("keeps a score whose transgressions are missing or malformed, and the valid entries", () => {
+    const good = { quote: "A line.", reason: "Vague.", lesson: 2 };
+    const entry = (transgressions?: unknown) => ({
+      rationale: "Because.",
+      score: 3,
+      transgressions,
+    });
+    const parsed = parseScores(
+      message({
+        text: JSON.stringify({
+          scores: [
+            { criterionId: 1, ...entry([good, { quote: "", reason: "x" }, 7]) },
+            { criterionId: 2, ...entry("nope") },
+          ],
+        }),
+      }),
+      mockCriteria,
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      scores: [{ transgressions: [good] }, { transgressions: [] }],
+    });
+    expect(
+      parseScores(
+        message({
+          text: answer([
+            { criterionId: 1, score: 2 },
+            { criterionId: 2, score: 2 },
+          ]),
+        }),
+        mockCriteria,
+      ),
+    ).toMatchObject({
+      ok: true,
+      scores: [{ transgressions: [] }, { transgressions: [] }],
     });
   });
 

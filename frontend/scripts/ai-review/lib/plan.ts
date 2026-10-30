@@ -97,6 +97,7 @@ export function planForEstimate(
     criterionId: c.id,
     score: 3,
     rationale: "x".repeat(250),
+    transgressions: [],
   }));
   return [
     ...planLessonRequests(fixtures, criteria, options),
