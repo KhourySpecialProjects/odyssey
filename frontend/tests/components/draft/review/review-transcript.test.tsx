@@ -603,3 +603,142 @@ describe("Score with AI in the panel", () => {
     expect(startAiScoring).toHaveBeenCalledWith(3);
   });
 });
+
+describe("Add as comment", () => {
+  const add = jest.fn();
+  const share = (state: string | null = "open") =>
+    jest.mocked(useSharedReviewComments).mockReturnValue({
+      comments: [],
+      review: state ? { id: 70, state } : null,
+      ensureReview,
+      add,
+    } as never);
+  const open = async (lessonId = 12) => {
+    const seen = jest.fn();
+    const Focus = () => {
+      seen(useReviewFocus()?.focused);
+      return null;
+    };
+    render(
+      <ReviewFocusProvider active>
+        <Focus />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel([score(12, { aiFindings: [{ ...finding, lessonId }] })])}
+        />
+      </ReviewFocusProvider>,
+    );
+    const card = screen.getByRole("region", { name: "Loops" });
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    return { card, seen };
+  };
+  const addButton = (card: HTMLElement) =>
+    within(card).getByRole("button", { name: "Add as comment" });
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+    add.mockResolvedValue({ ok: true });
+    share();
+  });
+
+  it("opens a pre-filled composer and rings the passage without navigating", async () => {
+    const { card, seen } = await open();
+
+    await userEvent.click(addButton(card));
+
+    const box = within(card).getByRole("textbox", { name: "Comment" });
+    expect(box).toHaveValue("Too vague.");
+    expect(box).toHaveFocus();
+    expect(push).not.toHaveBeenCalled();
+    expect(seen).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        navigate: false,
+        target: expect.objectContaining({ markId: "finding-8-1" }),
+      }),
+    );
+  });
+
+  it("posts the edited text through the shared add and closes", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.type(
+      within(card).getByRole("textbox", { name: "Comment" }),
+      " Say more.",
+    );
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+
+    expect(add).toHaveBeenCalledWith({
+      field: "blocks",
+      lessonId: 12,
+      anchor: finding.anchor,
+      body: "Too vague. Say more.",
+    });
+    expect(within(card).queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("keeps the text and says why when posting fails", async () => {
+    add.mockResolvedValue({ ok: false, error: "review_closed" });
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+
+    expect(await within(card).findByRole("alert")).toHaveTextContent(
+      "This review has been sent, so it can't take new comments.",
+    );
+    expect(within(card).getByRole("textbox")).toHaveValue("Too vague.");
+  });
+
+  it.each([
+    ["sent", "sent", 12, false],
+    ["published", "published", 12, false],
+    ["still loading", null, 12, true],
+    ["on a lesson that is gone", "open", 99, false],
+  ])(
+    "offering it when the review is %s",
+    async (_n, state, lessonId, shown) => {
+      share(state);
+      const { card } = await open(lessonId);
+
+      expect(
+        !!within(card).queryByRole("button", { name: "Add as comment" }),
+      ).toBe(shown);
+    },
+  );
+
+  it("returns focus to the button on Escape and toasts after a post", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.keyboard("{Escape}");
+    expect(addButton(card)).toHaveFocus();
+
+    await userEvent.click(addButton(card));
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+    expect(
+      await within(card).findByRole("button", { name: "Add as comment" }),
+    ).toHaveFocus();
+    expect(toast.success).toHaveBeenCalledWith("Comment saved");
+  });
+
+  it("holds Not an issue while the composer is open", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: /not an issue/i }),
+    );
+
+    expect(
+      within(card).getByRole("button", { name: /not an issue/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(within(card).getByRole("textbox")).toBeInTheDocument();
+  });
+});

@@ -42,6 +42,11 @@ export type CriterionDetailProps = {
   onClose: () => void;
   /** Shown only when given */
   onShowInLesson?: (finding: AiFinding) => void;
+  /** Add as comment is shown only when given; see FindingItem */
+  onAddComment?: (finding: AiFinding, body: string) => Promise<string | null>;
+  onStartComment?: (finding: AiFinding) => void;
+  /** False hides Add as comment on a finding (its lesson is gone) */
+  canAddComment?: (finding: AiFinding) => boolean;
   /** The mark the panel last pointed at, to mark its finding as picked */
   focusedMarkId?: string | null;
   /** The lesson tag on an Overall finding */
@@ -61,6 +66,9 @@ export function CriterionDetail({
   onChange,
   onClose,
   onShowInLesson,
+  onAddComment,
+  onStartComment,
+  canAddComment,
   focusedMarkId,
   lessonLabel,
   pending,
@@ -201,6 +209,18 @@ export function CriterionDetail({
                     ((f) => {
                       setOpenDetail?.(mine);
                       onShowInLesson(f);
+                    })
+                  }
+                  onAddComment={
+                    canAddComment?.(finding) === false
+                      ? undefined
+                      : onAddComment
+                  }
+                  onStartComment={
+                    onStartComment &&
+                    ((f) => {
+                      setOpenDetail?.(mine);
+                      onStartComment(f);
                     })
                   }
                   selected={focusedMarkId === findingMarkId(finding.id)}

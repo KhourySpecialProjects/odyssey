@@ -25,7 +25,8 @@ import { ConfirmScores } from "./confirm-scores";
 import { CriterionDetail } from "./criterion-detail";
 import { ReviewPanel } from "./review-panel";
 import { useSharedReviewComments } from "./review-comments-context";
-import { useReviewFocus } from "./review-focus-context";
+import { postFailure } from "./comment-layer";
+import { useReviewFocus, type FocusTarget } from "./review-focus-context";
 import { findingMarkId } from "@/lib/review-panel/finding-marks";
 
 const NO_SCORES: PanelScore[] = [];
@@ -97,6 +98,37 @@ export function ReviewTranscript({
     const index = lessons.findIndex((l) => l.id === id);
     return index < 0 ? "Overview" : `Lesson ${index + 1}`;
   };
+
+  const targetFor = (f: AiFinding, lessonId: number | null): FocusTarget => {
+    const wanted = f.lessonId ?? lessonId;
+    // A lesson that's gone is the Overview's to answer
+    const id = lessons.some((l) => l.id === wanted) ? wanted : null;
+    return {
+      kind: "finding",
+      markId: findingMarkId(f.id),
+      lessonId: id,
+      field: f.anchor.field,
+      place: id === null ? "the Overview" : lessonTag(id),
+      quote: f.quote,
+    };
+  };
+  // Posts through the layout's comments, so the lesson and sidebar update at once
+  const addComment = async (f: AiFinding, body: string) => {
+    if (!shared) return postFailure("");
+    const result = await shared.add({
+      field: f.anchor.field,
+      lessonId: f.lessonId,
+      anchor: f.anchor,
+      body,
+    });
+    return result.ok ? null : postFailure(result.error);
+  };
+  // Open until sent; `add` opens the review itself, so a loading one still counts
+  const reviewState = (shared?.review ?? panel?.review)?.state;
+  const canComment =
+    !!shared && reviewState !== "sent" && reviewState !== "published";
+  const lessonGone = (f: AiFinding) =>
+    f.lessonId !== null && !lessons.some((l) => l.id === f.lessonId);
 
   const confirmed = !!panel && overallConfirmed(panel.criteria, scores);
   const anyScores = scores.some((s) => s.value !== null || s.aiValue !== null);
@@ -241,21 +273,12 @@ export function ReviewTranscript({
             onClose={close}
             focusedMarkId={focus?.focused?.target.markId}
             onShowInLesson={(f) => {
-              const wanted = f.lessonId ?? lessonId;
-              // A lesson that's gone is the Overview's to answer
-              const id = lessons.some((l) => l.id === wanted) ? wanted : null;
-              focus?.show(
-                {
-                  kind: "finding",
-                  markId: findingMarkId(f.id),
-                  lessonId: id,
-                  field: f.anchor.field,
-                  place: id === null ? "the Overview" : lessonTag(id),
-                  quote: f.quote,
-                },
-                lessonUrl(id),
-              );
+              const target = targetFor(f, lessonId);
+              focus?.show(target, lessonUrl(target.lessonId));
             }}
+            onAddComment={canComment ? addComment : undefined}
+            canAddComment={(f) => !lessonGone(f)}
+            onStartComment={(f) => focus?.select(targetFor(f, lessonId))}
             lessonLabel={
               lessonId === null ? (f) => lessonTag(f.lessonId) : undefined
             }
