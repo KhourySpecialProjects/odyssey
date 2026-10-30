@@ -1,4 +1,7 @@
-import { lockAiScoringSettings } from './ai-scoring-settings';
+import {
+  loadAiScoringSettings,
+  lockAiScoringSettings,
+} from './ai-scoring-settings';
 import { runCostUsd, spendThisMonthUsd, type RunUsage } from './ai-scoring-spend';
 import {
   findScore,
@@ -250,12 +253,19 @@ export type RunTokens = { inputTokens: number; outputTokens: number };
 
 export type HeartbeatInput = RunRef & RunTokens;
 
-export type HeartbeatResult = { dropletId: number; run: RunSummary };
+export type HeartbeatResult = {
+  dropletId: number;
+  run: RunSummary;
+  /** The run has spent its per-run ceiling and should stop (ODY-815) */
+  overCeiling: boolean;
+};
 
 /**
  * Marks the run `running` (setting `startedAt` the first time) and records
  * progress and tokens so far, so a start doesn't take it for dead. A review
- * sent meanwhile ends the run as failed instead.
+ * sent meanwhile ends the run as failed instead. Past the per-run ceiling it
+ * says so but leaves the run going: ending it here would make `finish` refuse
+ * and lose the lessons already scored, so the run stops and saves them.
  */
 export async function heartbeatRun(
   input: HeartbeatInput,
@@ -267,13 +277,16 @@ export async function heartbeatRun(
       inputTokens: input.inputTokens,
       outputTokens: input.outputTokens,
     };
+    const { perRunCapUsd, prices } = await loadAiScoringSettings();
+    const overCeiling =
+      runCostUsd({ model: run.model, ...tokens }, prices) >= perRunCapUsd;
     if (review.state !== 'open') {
       const ended = await endRun(run, {
         ...tokens,
         runState: 'failed',
         error: REVIEW_CLOSED_MESSAGE,
       });
-      return { dropletId, run: pickRun(ended) };
+      return { dropletId, run: pickRun(ended), overCeiling };
     }
     const updated = await strapi.documents(RUN_UID).update({
       documentId: run.documentId,
@@ -284,7 +297,7 @@ export async function heartbeatRun(
       },
       fields: RUN_FIELDS,
     } as any);
-    return { dropletId, run: pickRun(updated as Row) };
+    return { dropletId, run: pickRun(updated as Row), overCeiling };
   });
 }
 

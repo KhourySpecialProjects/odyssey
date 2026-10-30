@@ -85,6 +85,7 @@ const running = {
       startedAt: "2026-10-29T12:00:00.000Z",
       finishedAt: null,
     },
+    overCeiling: false,
   },
 };
 
@@ -393,6 +394,42 @@ describe("runAiScoring", () => {
     expect(stream).toHaveBeenCalledTimes(1);
     expect(finishRunRoute).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["before the first lesson", 0, [11, 12], "failed"],
+    ["after the first lesson", 1, [12], "partial"],
+    // Only the Overall Score is skipped.
+    ["after the last lesson", 2, [], "partial"],
+  ])(
+    "stops at the per-run cost ceiling %s, skips the rest and saves what it has",
+    async (_label, lessonsScored, failedLessons, runState) => {
+      const heartbeat = jest.mocked(heartbeatRunRoute);
+      for (let i = 0; i < lessonsScored; i++) {
+        heartbeat.mockResolvedValueOnce(running);
+      }
+      heartbeat.mockResolvedValueOnce({
+        ok: true,
+        data: { ...running.data, overCeiling: true },
+      });
+      const { client, stream } = fakeClient([
+        message({}),
+        message({}),
+        message({}),
+      ]);
+
+      await runAiScoring(run, { client, sleep });
+
+      expect(stream).toHaveBeenCalledTimes(lessonsScored);
+      expect(finished()).toMatchObject({
+        runState,
+        failedLessons,
+        error: "Stopped at the per-run cost ceiling",
+      });
+      expect(finished().scores).toHaveLength(
+        lessonsScored * mockCriteria.length,
+      );
+    },
+  );
 
   it("never starts when the run was already marked dead", async () => {
     jest.mocked(heartbeatRunRoute).mockResolvedValue({

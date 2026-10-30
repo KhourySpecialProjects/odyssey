@@ -56,6 +56,7 @@ const REQUEST_TIMEOUT_MS = 8 * 60 * 1000;
 const FINISH_RETRY_DELAYS_MS = [5_000, 30_000];
 const MAX_ERROR = 2000;
 const MAX_RATIONALE = 4000;
+const CEILING_MESSAGE = "Stopped at the per-run cost ceiling";
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -133,6 +134,7 @@ const toInputs = (
  * answers, and saves all of it in one request. Runs after the action has
  * answered (`after()`), so it never throws: a failure ends the run as failed.
  * It stops early if the run ends elsewhere (marked dead, or the review sent).
+ * Past the per-run cost ceiling it skips the rest and saves what it has.
  */
 export async function runAiScoring(
   run: ScoringRun,
@@ -191,21 +193,24 @@ export async function runAiScoring(
   };
 
   /**
-   * Reports progress and the tokens spent so far. False once the run has
-   * ended elsewhere; a network blip keeps it going.
+   * Reports progress and the tokens spent so far. "ended" once the run has
+   * ended elsewhere (a network blip keeps it going), "over" once it has spent
+   * its per-run ceiling.
    */
-  const stillRunning = async () => {
+  const report = async (): Promise<"go" | "ended" | "over"> => {
     const beat = await heartbeatRunRoute({
       ...ref,
       inputTokens: tokens.input,
       outputTokens: tokens.output,
     });
-    if (beat.ok) return beat.data.run.runState === "running";
-    return ![403, 404, 409].includes(beat.status);
+    if (!beat.ok) return [403, 404, 409].includes(beat.status) ? "ended" : "go";
+    if (beat.data.run.runState !== "running") return "ended";
+    return beat.data.overCeiling ? "over" : "go";
   };
 
   try {
-    if (!(await stillRunning())) return;
+    let progress = await report();
+    if (progress === "ended") return;
 
     const snapshot = await fetchDropletSnapshot(
       { id: run.dropletId },
@@ -227,11 +232,13 @@ export async function runAiScoring(
     const failedLessons: number[] = [];
     const lessonScores: LessonScores[] = [];
 
-    for (const [i, request] of buildLessonRequests(
-      snapshot,
-      run.criteria,
-      options,
-    ).entries()) {
+    const requests = buildLessonRequests(snapshot, run.criteria, options);
+    for (const [i, request] of requests.entries()) {
+      if (progress === "over") {
+        // The rest go unscored, listed as failed so the panel names them.
+        failedLessons.push(...requests.slice(i).map((r) => r.lessonId!));
+        break;
+      }
       const lessonId = request.lessonId!;
       const { parsed, usage } = await scoreOne(
         client,
@@ -248,19 +255,24 @@ export async function runAiScoring(
           `Lesson ${i + 1} ("${request.lessonName}"): ${describe(parsed)}`,
         );
       }
-      if (!(await stillRunning())) return;
+      progress = await report();
+      if (progress === "ended") return;
     }
 
-    const overall = await scoreOne(
-      client,
-      buildOverallRequest(snapshot, run.criteria, lessonScores, options),
-      run.criteria,
-      sleep,
-    );
-    count(overall.usage);
-    scores.push(...toInputs(null, overall.parsed));
-    if (!overall.parsed.ok) {
-      failures.push(`Overall Score: ${describe(overall.parsed)}`);
+    if (progress === "over") {
+      failures.unshift(CEILING_MESSAGE);
+    } else {
+      const overall = await scoreOne(
+        client,
+        buildOverallRequest(snapshot, run.criteria, lessonScores, options),
+        run.criteria,
+        sleep,
+      );
+      count(overall.usage);
+      scores.push(...toInputs(null, overall.parsed));
+      if (!overall.parsed.ok) {
+        failures.push(`Overall Score: ${describe(overall.parsed)}`);
+      }
     }
 
     await finish({

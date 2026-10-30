@@ -396,6 +396,27 @@ describe('POST /ai-scoring-runs/heartbeat', () => {
     expect(await runRow(runId)).toMatchObject({ inputTokens: 1100, outputTokens: 95 });
   });
 
+  it('says once the run has spent the per-run ceiling, but leaves it running to save its scores', async () => {
+    const { body } = await start();
+    const runId = body.data.run.id;
+
+    // A million Sonnet input tokens is $2, the placeholder ceiling.
+    const under = await beat(runId, { inputTokens: 999_999 });
+    const over = await beat(runId, { inputTokens: 1_000_000 });
+
+    expect(under.body.data.overCeiling).toBe(false);
+    expect(over.body.data).toMatchObject({ overCeiling: true, run: { runState: 'running' } });
+    const saved = await post(
+      'finish',
+      finishBody(runId, {
+        runState: 'partial',
+        inputTokens: 1_000_000,
+        error: 'Stopped at the per-run cost ceiling',
+      }),
+    );
+    expect(saved.body.data).toMatchObject({ saved: 4, run: { runState: 'partial' } });
+  });
+
   it('rejects a heartbeat without token counts', async () => {
     const { body } = await start();
 
