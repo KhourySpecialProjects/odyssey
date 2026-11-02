@@ -19,6 +19,7 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { getVoyages } from "@/lib/requests/voyage";
 import { SearchProvider } from "@/contexts/SearchContext";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 
 // Fields read by DropletTile / SortedDropletsGrid. Keep in sync with those
 // components; full lesson content is never needed for tiles.
@@ -36,7 +37,7 @@ const DROPLET_TILE_FIELDS = [
 const DROPLET_TILE_POPULATE = {
   lessons: { fields: ["id"] },
   tags: { fields: ["name", "slug"] },
-  authorized_users: { fields: ["id"] },
+  authorized_users: USER_POPULATES.authorName,
 };
 
 export const metadata: Metadata = {

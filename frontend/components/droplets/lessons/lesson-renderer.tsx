@@ -54,10 +54,14 @@ const SandpackViewer = dynamic(
   },
 );
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import { authorByline } from "@/lib/author-names";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "lessons" | "name" | "datasets">;
+  droplet: Pick<
+    Droplet,
+    "id" | "lessons" | "name" | "datasets" | "authorized_users"
+  >;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -259,6 +263,9 @@ export function LessonRenderer({
     !author &&
     !(user && isAuthorizedUserAdmin(user.roles));
 
+  // Who made the droplet, under the lesson title (ODY-863)
+  const byline = authorByline(droplet.authorized_users);
+
   if (isLocked) {
     return (
       <div className="mx-auto w-full max-w-prose xl:py-8">
@@ -285,6 +292,11 @@ export function LessonRenderer({
       <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
         {lesson.name}
       </h1>
+      {byline && (
+        <p className="mt-1 text-base text-slate-600 dark:text-slate-400">
+          By {byline}
+        </p>
+      )}
 
       {enrollmentId && !author && <HighlightHintBanner />}
 
