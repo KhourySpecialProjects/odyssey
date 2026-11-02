@@ -28,4 +28,7 @@ export const CONFIG = {
     /(^|\.)dev\d*\.[^.]+\.[^.]+/,
     /(^|\.)staging\.[^.]+\.[^.]+/,
   ],
+  // structure
+  maxBlockWords: 300,
+  lessonCount: [2, 8] as readonly [number, number],
 } as const;
