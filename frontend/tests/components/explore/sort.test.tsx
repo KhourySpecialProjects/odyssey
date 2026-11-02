@@ -115,4 +115,23 @@ describe("Sort", () => {
     );
     pushStateSpy.mockRestore();
   });
+
+  it("goes back to page 1 when the sort changes (ODY-865)", async () => {
+    (usePathname as jest.Mock).mockReturnValue("/explore");
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("q=py&page=3"),
+    );
+    const pushStateSpy = jest.spyOn(window.history, "pushState");
+
+    render(<Sort options={mockOptions} defaultValue={defaultValue} />);
+    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByText("Name Z-A"));
+
+    expect(pushStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/explore?q=py&sort=name%3Adesc",
+    );
+    pushStateSpy.mockRestore();
+  });
 });

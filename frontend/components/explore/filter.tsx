@@ -45,6 +45,8 @@ export function Filter({
     } else {
       params.delete(name);
     }
+    // New results start again at page 1 (ODY-865)
+    params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   };
 
