@@ -331,10 +331,9 @@ export const sampleScanDocument: ScanDocument = {
         type: "paragraph",
         text: "Parquet files keep column types and take less space, which helps when the next step is more Python code.",
       },
-      // A callout in the prototype; a paragraph until ODY-790 adds callouts
       {
         id: "l4-callout",
-        type: "paragraph",
+        type: "callout",
         text: "Ask your team which format their tools can read before you pick one.",
       },
       { id: "l4-h2", type: "heading", level: 2, text: "Save the clean table" },

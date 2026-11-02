@@ -22,6 +22,8 @@ export type ScanBlock = BlockBase &
     | { type: "paragraph"; text: string } // the droplet page's overview is { id: "overview" }
     | { type: "image"; url: string; caption: string } // legacy <img>: caption = alt
     | { type: "video"; url: string }
+    | { type: "list"; items: readonly string[] } // consecutive list items, one block
+    | { type: "callout"; text: string }
     | {
         type: "quiz-mc"; // one per question; legacy true/false stays quiz-mc
         question: string;
@@ -42,8 +44,7 @@ export type ScanBlock = BlockBase &
         files: Readonly<Record<string, string>>; // parsed from the JSON string; {} if unparsable
       }
   );
-// ODY-790 adds the members ODY-791/792 need (list, callout, …). Media rules
-// filter by `type`, so extra members never break them.
+// Media rules filter by `type`, so extra members never break them.
 
 export type ScanPart = {
   id: string; // "droplet" for the droplet page; the lesson's numeric Strapi id as a string otherwise
