@@ -237,6 +237,7 @@ Hooks live in `src/api/*/content-types/*/lifecycles.ts` (droplet, lesson, playli
   - **After hooks** have `result.documentId`, so use `strapi.documents(uid).findOne({ documentId: result.documentId, fields, populate })`.
   - Relations come back as arrays of populated entries, and `populate: { blocks: true }` loads the lesson dynamic zone.
 - **`plugin::content-manager.uid` `generateUIDField` keeps its signature**, so `lib/lifecycle-utils.ts` `generateSlug` works unchanged.
+- **The droplet hooks send no Slack.** The review message comes from `submitForReview` (see "Review workflow routes"); `status` and `inReview` writes elsewhere send nothing.
 - **Slack sends are a no-op unless `NODE_ENV=production`** (`lib/slack.ts`), so tests switch it on per test and count `fetch` calls to the webhook URL.
 
 ### Content-manager extension (ODY-699)
@@ -340,6 +341,7 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 - **Lock order:** every route runs in one `strapi.db.transaction()`, locks the draft row with `forUpdate`, then re-reads it. `publish-review` for `[EDIT]` locks the draft, then the original (same as publish-edit). Send and Publish on one draft are serialized: the loser gets 409 or 404.
 - **Idempotency (G18):** a repeat Submit or Withdraw is 200 with `changed: false`, so the actions don't pre-refuse on `inReview`. Submit or Withdraw on a published droplet is 409.
 - **Submit carry-over (G4):** `droplet.reviewRound` goes up (lifecycle hook), then each reviewer's latest review is carried to the new round. An open review keeps its row, with `round` and `key` re-set. A sent review stays as history, and gets a new open review with copies of its unresolved top-level comments and their replies (`parent` remapped, any depth). Orphaned `blocks` comments are skipped and no scores are copied. Each copy's `carriedFrom` points at the comment as first written (a copy of a copy points at the original, not at the copy), and the creator's `addressedAt` mark is copied with it (ODY-807).
+- **Slack (ODY-809):** a `changed` submit posts the review-channel message after the commit (`onCommit`, `lib/review-slack.ts`); round 2 and later read "Resubmitted" with the round. Nothing else sends it.
 - **Send:** marks the caller's open review `sent` (with `sentAt` and optional `summaryNote`), sets `inReview: false`, and creates one `review_feedback` announcement per author.
 - **Publish:** needs an open review with a confirmed Overall score for every active criterion. `[EDIT]` runs `applyPublishEdit`, `moveReviewsToLive` (the caller's review becomes `published`), one `review_published` announcement per author (attached to the live droplet, addressed to that author) and `deleteEditDraft`. A new droplet is set `published` with `inReview: false` in place. Announcement text never mentions AI.
 - **Known gap (G9):** ODY-802's comment REST writes are not serialized with Publish. A comment written while Publish runs can land on a draft lesson that is then deleted. Documented, not fixed.

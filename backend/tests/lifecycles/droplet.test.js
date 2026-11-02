@@ -4,11 +4,7 @@ const { createFullAccessToken } = require('../helpers/api-token');
 const { useSlackSpy } = require('../helpers/slack');
 const {
   DROPLET_UID,
-  LESSON_UID,
-  USER_UID,
   dropletData,
-  lessonData,
-  userData,
   unique,
 } = require('../helpers/fixtures');
 
@@ -101,108 +97,25 @@ describe('droplet beforeUpdate (regenerateSlug)', () => {
   });
 });
 
-describe('droplet afterUpdate (Slack on entering edit)', () => {
-  it('sends exactly one message on draft -> edit, naming the droplet', async () => {
-    const name = unique('Review Me');
-    const droplet = await create({ name });
+describe('droplet updates send no Slack message', () => {
+  it.each([
+    ['draft -> edit', {}, { status: 'edit' }],
+    ['edit -> edit', { status: 'edit' }, { status: 'edit' }],
+    ['edit -> published', { status: 'edit' }, { status: 'published' }],
+    ['draft -> published', {}, { status: 'published' }],
+    ['draft -> inReview (Document Service)', {}, { inReview: true }],
+    ['an edit to an in-review droplet', { inReview: true }, { description: 'x' }],
+  ])('%s', async (_label, start, change) => {
+    const droplet = await create(start);
     slack.reset();
 
-    await update(droplet.documentId, { status: 'edit' });
+    await update(droplet.documentId, change);
 
-    const sends = slack.sends();
-    expect(sends).toHaveLength(1);
-    expect(sends[0].text).toContain(name);
-    expect(JSON.stringify(sends[0].blocks)).toContain(name);
-  });
-
-  it('lists the populated lessons, authors and tags in the message', async () => {
-    const lesson = await strapi
-      .documents(LESSON_UID)
-      .create({ data: lessonData({ name: unique('Populated Lesson') }) });
-    const tag = await strapi
-      .documents('api::tag.tag')
-      .create({ data: { name: unique('populated-tag'), slug: 'placeholder' } });
-    const droplet = await create({
-      lessons: [lesson.documentId],
-      tags: [tag.documentId],
-    });
-    await strapi.documents(USER_UID).create({
-      data: userData({
-        firstName: 'Radia',
-        lastName: 'Perlman',
-        droplets: [droplet.documentId],
-      }),
-    });
-    slack.reset();
-
-    await update(droplet.documentId, { status: 'edit' });
-
-    const sends = slack.sends();
-    expect(sends).toHaveLength(1);
-    const blocks = JSON.stringify(sends[0].blocks);
-    expect(blocks).toContain(lesson.name);
-    expect(blocks).toContain(tag.name);
-    expect(blocks).toContain('Radia Perlman');
-  });
-
-  it('links the droplet to its draft review page when FRONTEND_URL is set', async () => {
-    process.env.FRONTEND_URL = 'https://odyssey.test';
-    try {
-      const droplet = await create();
-      slack.reset();
-      await update(droplet.documentId, { status: 'edit' });
-
-      expect(JSON.stringify(slack.sends()[0].blocks)).toContain(
-        `https://odyssey.test/draft/d/${droplet.slug}`
-      );
-    } finally {
-      delete process.env.FRONTEND_URL;
-    }
+    expect(slack.sends()).toHaveLength(0);
   });
 
   it('does not send on create, even when created directly in edit', async () => {
-    // Characterization: there is no afterCreate hook, so a droplet created
-    // straight into "edit" never notifies Slack.
     await create({ status: 'edit' });
-    expect(slack.sends()).toHaveLength(0);
-  });
-
-  it('does not send on edit -> edit', async () => {
-    const droplet = await create();
-    await update(droplet.documentId, { status: 'edit' });
-    slack.reset();
-
-    await update(droplet.documentId, { status: 'edit' });
-
-    expect(slack.sends()).toHaveLength(0);
-  });
-
-  it('does not send when an update leaves status alone', async () => {
-    const droplet = await create();
-    await update(droplet.documentId, { status: 'edit' });
-    slack.reset();
-
-    await update(droplet.documentId, { description: 'Just a description' });
-
-    expect(slack.sends()).toHaveLength(0);
-  });
-
-  it('does not send on edit -> published', async () => {
-    const droplet = await create();
-    await update(droplet.documentId, { status: 'edit' });
-    slack.reset();
-
-    await update(droplet.documentId, { status: 'published' });
-
-    expect(slack.sends()).toHaveLength(0);
-  });
-
-  it('does not send on draft -> published', async () => {
-    const droplet = await create();
-    slack.reset();
-
-    await update(droplet.documentId, { status: 'published' });
-
     expect(slack.sends()).toHaveLength(0);
   });
 });
@@ -235,9 +148,8 @@ describe('droplet over REST', () => {
     expect(slack.sends()).toHaveLength(0);
   });
 
-  it('PUT with status edit sends exactly one message', async () => {
-    const name = unique('REST Review');
-    const droplet = await create({ name });
+  it('PUT with status edit succeeds and sends nothing', async () => {
+    const droplet = await create();
     slack.reset();
 
     const res = await rest()
@@ -246,9 +158,7 @@ describe('droplet over REST', () => {
       .send({ data: { status: 'edit' } });
 
     expect(res.status).toBe(200);
-    const sends = slack.sends();
-    expect(sends).toHaveLength(1);
-    expect(sends[0].text).toContain(name);
+    expect(slack.sends()).toHaveLength(0);
   });
 
   // ODY-700: v5's strict REST validation must let regenerateSlug reach beforeUpdate.
@@ -365,17 +275,14 @@ describe('droplet reviewRound', () => {
     expect(res.body.data.name).toBe(name);
   });
 
-  it('bumps and still notifies Slack on { status: edit, inReview: true }', async () => {
-    const name = unique('Round Slack');
-    const { documentId } = await create({ name });
+  it('bumps the round and sends nothing on { status: edit, inReview: true }', async () => {
+    const { documentId } = await create();
     slack.reset();
 
     await update(documentId, { status: 'edit', inReview: true });
 
     expect(await round(documentId)).toBe(1);
-    const sends = slack.sends();
-    expect(sends).toHaveLength(1);
-    expect(sends[0].text).toContain(name);
+    expect(slack.sends()).toHaveLength(0);
   });
 
   it('records one bump for two submits (SQLite runs the transactions serially)', async () => {

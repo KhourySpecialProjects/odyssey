@@ -112,17 +112,29 @@ describe('admin content-manager write path (status outside draft|published)', ()
     expect(after.status).toBe('edit');
   });
 
-  it('moves a draft droplet to edit and fires the review alert once', async () => {
+  it('moves a draft droplet to edit; the lifecycle sees edit once and nothing is sent', async () => {
     const droplet = await createDroplet({ status: 'draft' });
     slack.reset();
-    const res = await http()
-      .put(cmUrl(DROPLET_UID, droplet.documentId))
-      .set(adminAuth())
-      .send({ name: droplet.name, status: 'edit' });
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('edit');
+    const seen = [];
+    const off = strapi.db.lifecycles.subscribe({
+      models: [DROPLET_UID],
+      beforeUpdate: (e) => {
+        if ('status' in e.params.data) seen.push(e.params.data.status);
+      },
+    });
+    try {
+      const res = await http()
+        .put(cmUrl(DROPLET_UID, droplet.documentId))
+        .set(adminAuth())
+        .send({ name: droplet.name, status: 'edit' });
+      expect(res.status).toBe(200);
+      expect(res.body.data.status).toBe('edit');
+    } finally {
+      off();
+    }
     expect((await stored(DROPLET_UID, droplet.documentId)).status).toBe('edit');
-    expect(slack.sends()).toHaveLength(1);
+    expect(seen).toEqual(['edit']);
+    expect(slack.sends()).toHaveLength(0);
   });
 
   it('creates a droplet with status edit', async () => {

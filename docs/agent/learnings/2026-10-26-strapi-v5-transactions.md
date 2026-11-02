@@ -7,6 +7,7 @@ Status: new
 ## What we learned
 
 - Document Service calls join an outer `strapi.db.transaction()`, and `entry.*` events are deferred to the outermost commit (never sent on rollback). Lifecycle hooks run inside the transaction.
+- `onCommit` (transaction callback param) runs after the outermost commit, synchronously and not awaited. A synchronous throw there makes a committed transaction look failed, so only start a promise there and do no DB work.
 - Postgres aborts the whole transaction after any failed statement (25P02), so never catch a DB error inside it and carry on. Annotate and rethrow.
 - Uid uniqueness is validated before `beforeCreate`, so a fixed slug placeholder collides once any row stores it. Use a unique one (`publish-<uuid>`).
 
