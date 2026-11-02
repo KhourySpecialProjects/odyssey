@@ -3,6 +3,7 @@ import type { FetchUrl } from "@/lib/overview-scan/network";
 import type {
   ScanBlock,
   ScanDocument,
+  ScanDroplet,
   ScanPart,
 } from "@/lib/overview-scan/types";
 import {
@@ -143,10 +144,324 @@ describe("structure: lesson checks", () => {
   ])("%s/%s passes", (checkId, ruleId, doc) => {
     expect(run(checkId, ruleId, doc)).toEqual([]);
   });
+});
 
-  it("passes the shared sample document", () => {
-    for (const check of STRUCTURE_CHECKS)
-      for (const rule of check.rules)
-        expect(rule.run(sampleScanDocument, noFetch)).toEqual([]);
+const withDroplet = (overrides: Partial<ScanDroplet>) =>
+  scanDoc({ droplet: overrides });
+const link = (id: number, name = "Linked", extra = {}) => ({
+  id,
+  name,
+  status: "published" as const,
+  isHidden: false,
+  ...extra,
+});
+const page = (section: string, message: string) =>
+  warn("droplet", section, message);
+const step = (label: string, url: string) => ({ label, url });
+const chars = (n: number) => "x".repeat(n);
+const SAME = nWords(40);
+const NOT_ON_LIST = (o: string, first: string) =>
+  `"${o}" starts with "${first}", which isn't on the action-verb list. Try a verb such as "Explain".`;
+
+describe("structure: droplet page checks", () => {
+  it("has 8 structure checks and 18 rules, in prototype order", () => {
+    expect(STRUCTURE_CHECKS.map((c) => c.id)).toEqual([
+      "organization",
+      "granularity",
+      "overview",
+      "objectives",
+      "prerequisites",
+      "next-steps",
+      "description",
+      "tags",
+    ]);
+    expect(STRUCTURE_CHECKS.every((c) => c.group === "structure")).toBe(true);
+    expect(STRUCTURE_CHECKS.flatMap((c) => c.rules)).toHaveLength(18);
   });
+
+  it("flags only the sample's last objective", async () => {
+    const flags = (
+      await Promise.all(
+        STRUCTURE_CHECKS.flatMap((c) => c.rules).map((r) =>
+          r.run(sampleScanDocument, noFetch),
+        ),
+      )
+    ).flat();
+    expect(flags).toEqual([
+      page(
+        "objectives",
+        NOT_ON_LIST(
+          "Understanding how pandas stores data types",
+          "Understanding",
+        ),
+      ),
+    ]);
+  });
+
+  it.each([
+    ["overview", "not-empty", { overview: "" }, "The Overview is empty."],
+    ["overview", "not-empty", { overview: "  " }, "The Overview is empty."],
+    [
+      "overview",
+      "length",
+      { overview: nWords(29) },
+      "The Overview is 29 words (aim for 30 to 150).",
+    ],
+    [
+      "overview",
+      "length",
+      { overview: nWords(151) },
+      "The Overview is 151 words (aim for 30 to 150).",
+    ],
+    [
+      "overview",
+      "not-description",
+      { overview: SAME, description: ` ${SAME.toUpperCase()} ` },
+      "The Overview repeats the description word for word.",
+    ],
+    [
+      "objectives",
+      "count",
+      { learningObjectives: ["Load a", "Find b"] },
+      "There are 2 learning objectives (at least 3).",
+    ],
+    [
+      "objectives",
+      "count",
+      { learningObjectives: ["Load a", "Find b", " "] },
+      "There are 2 learning objectives (at least 3).",
+    ],
+    [
+      "objectives",
+      "no-blanks",
+      { learningObjectives: ["Load x", "  ", "Find y"] },
+      "One learning objective is blank.",
+    ],
+    [
+      "objectives",
+      "no-blanks",
+      { learningObjectives: ["Load x", "load  X", "Find y"] },
+      "Two learning objectives are the same.",
+    ],
+    [
+      "objectives",
+      "action-verb",
+      { learningObjectives: ["Understanding x"] },
+      NOT_ON_LIST("Understanding x", "Understanding"),
+    ],
+    [
+      "objectives",
+      "action-verb",
+      { learningObjectives: ["—"] },
+      `"—" doesn't start with a word. Try a verb such as "Explain".`,
+    ],
+    [
+      "prerequisites",
+      "published",
+      { prerequisites: [link(2, "Draft", { status: "draft" })] },
+      `"Draft" is not published.`,
+    ],
+    [
+      "prerequisites",
+      "published",
+      { prerequisites: [link(2, "Edit", { status: "edit" })] },
+      `"Edit" is not published.`,
+    ],
+    [
+      "prerequisites",
+      "published",
+      {
+        prerequisites: [link(2, "Both", { status: "draft", isHidden: true })],
+      },
+      `"Both" is hidden.`,
+    ],
+    [
+      "prerequisites",
+      "published",
+      { postrequisites: [link(3, "Post", { isHidden: true })] },
+      `"Post" is hidden.`,
+    ],
+    [
+      "prerequisites",
+      "no-loops",
+      { prerequisites: [link(1)] },
+      "The droplet is listed as its own prerequisite.",
+    ],
+    [
+      "prerequisites",
+      "no-loops",
+      { id: 5, originalDropletId: 1, prerequisites: [link(1)] },
+      "The droplet is listed as its own prerequisite.",
+    ],
+    [
+      "prerequisites",
+      "no-loops",
+      { postrequisites: [link(1)] },
+      "The droplet is listed as its own postrequisite.",
+    ],
+    [
+      "prerequisites",
+      "no-loops",
+      { prerequisites: [link(9)], postrequisites: [link(9)] },
+      "A droplet is listed as both a prerequisite and a postrequisite.",
+    ],
+    [
+      "next-steps",
+      "at-least-one",
+      { nextSteps: [] },
+      "There are no next steps.",
+    ],
+    [
+      "next-steps",
+      "label-and-https",
+      { nextSteps: [step("Guide", "http://a.test")] },
+      `Next step "Guide" needs a label and an https:// URL.`,
+    ],
+    [
+      "next-steps",
+      "label-and-https",
+      { nextSteps: [step("Guide", "HTTPS://a.test")] },
+      `Next step "Guide" needs a label and an https:// URL.`,
+    ],
+    [
+      "next-steps",
+      "label-and-https",
+      { nextSteps: [step("", "https://a.test")] },
+      `Next step "https://a.test" needs a label and an https:// URL.`,
+    ],
+    [
+      "description",
+      "length",
+      { description: "" },
+      "The description is 0 characters (aim for 50 to 500).",
+    ],
+    [
+      "description",
+      "length",
+      { description: chars(49) },
+      "The description is 49 characters (aim for 50 to 500).",
+    ],
+    [
+      "description",
+      "length",
+      { description: chars(501) },
+      "The description is 501 characters (aim for 50 to 500).",
+    ],
+    [
+      "description",
+      "length",
+      { description: `  ${chars(10)}  ` },
+      "The description is 10 characters (aim for 50 to 500).",
+    ],
+    ["tags", "difficulty", { difficulty: null }, "Difficulty isn't set."],
+    ["tags", "has-tag", { tags: [] }, "The droplet has no tags."],
+  ] as [string, string, Partial<ScanDroplet>, string][])(
+    "%s/%s flags",
+    (checkId, ruleId, overrides, message) => {
+      // Each check's id is also its droplet-page section id
+      expect(run(checkId, ruleId, withDroplet(overrides))).toEqual([
+        page(checkId, message),
+      ]);
+    },
+  );
+
+  it.each([
+    [
+      "objectives",
+      "no-blanks",
+      { learningObjectives: ["Load x", " ", "load  X"] },
+      [
+        "One learning objective is blank.",
+        "Two learning objectives are the same.",
+      ],
+    ],
+    [
+      "objectives",
+      "count",
+      { learningObjectives: ["Load x", "  "] },
+      ["There are 1 learning objectives (at least 3)."],
+    ],
+    [
+      "objectives",
+      "no-blanks",
+      { learningObjectives: ["Load x", "  "] },
+      ["One learning objective is blank."],
+    ],
+    [
+      "prerequisites",
+      "no-loops",
+      { prerequisites: [link(1), link(9)], postrequisites: [link(1), link(9)] },
+      [
+        "The droplet is listed as its own prerequisite.",
+        "A droplet is listed as both a prerequisite and a postrequisite.",
+        "The droplet is listed as its own postrequisite.",
+      ],
+    ],
+    [
+      "objectives",
+      "action-verb",
+      { learningObjectives: ["Understanding x", "Knowing y"] },
+      [
+        NOT_ON_LIST("Understanding x", "Understanding"),
+        NOT_ON_LIST("Knowing y", "Knowing"),
+      ],
+    ],
+    [
+      "next-steps",
+      "label-and-https",
+      { nextSteps: [step("A", "http://a.test"), step("", "https://b.test")] },
+      [
+        `Next step "A" needs a label and an https:// URL.`,
+        `Next step "https://b.test" needs a label and an https:// URL.`,
+      ],
+    ],
+    [
+      "prerequisites",
+      "published",
+      {
+        prerequisites: [link(2, "Pre", { status: "draft" })],
+        postrequisites: [link(3, "Post", { isHidden: true })],
+      },
+      [`"Pre" is not published.`, `"Post" is hidden.`],
+    ],
+  ] as [string, string, Partial<ScanDroplet>, string[]][])(
+    "%s/%s raises every flag, in order",
+    (checkId, ruleId, overrides, messages) => {
+      expect(run(checkId, ruleId, withDroplet(overrides))).toEqual(
+        messages.map((m) => page(checkId, m)),
+      );
+    },
+  );
+
+  it.each([
+    ["overview", "not-empty", { overview: "word" }],
+    ["overview", "length", { overview: "" }],
+    ["overview", "length", { overview: nWords(30) }],
+    ["overview", "length", { overview: nWords(150) }],
+    ["overview", "not-description", { overview: "", description: "" }],
+    [
+      "objectives",
+      "no-blanks",
+      { learningObjectives: ["Load a", "Find b", "Fix c"] },
+    ],
+    [
+      "objectives",
+      "action-verb",
+      { learningObjectives: ["explain x", "Use y", " "] },
+    ],
+    ["prerequisites", "published", {}],
+    ["prerequisites", "no-loops", { originalDropletId: 7 }],
+    [
+      "next-steps",
+      "label-and-https",
+      { nextSteps: [step("Guide", "https://a.test")] },
+    ],
+    ["description", "length", { description: chars(50) }],
+    ["description", "length", { description: chars(500) }],
+  ] as [string, string, Partial<ScanDroplet>][])(
+    "%s/%s passes",
+    (checkId, ruleId, overrides) => {
+      expect(run(checkId, ruleId, withDroplet(overrides))).toEqual([]);
+    },
+  );
 });
