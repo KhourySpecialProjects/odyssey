@@ -1,5 +1,6 @@
 const request = require('supertest');
 const { setupStrapi, teardownStrapi } = require('../helpers/strapi');
+const { useSlackSpy } = require('../helpers/slack');
 const { createFullAccessToken } = require('../helpers/api-token');
 const {
   DROPLET_UID,
@@ -37,6 +38,19 @@ const post = (ref, action, body = {}) =>
     .set({ Authorization: `Bearer ${token}` })
     .send(body);
 
+/** Runs fn with FRONTEND_URL set (undefined deletes it), then restores it. */
+async function withFrontendUrl(value, fn) {
+  const previous = process.env.FRONTEND_URL;
+  if (value === undefined) delete process.env.FRONTEND_URL;
+  else process.env.FRONTEND_URL = value;
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) delete process.env.FRONTEND_URL;
+    else process.env.FRONTEND_URL = previous;
+  }
+}
+
 const json = (value) => JSON.parse(JSON.stringify(value));
 
 /** Replaces strapi.db.query(uid)[method]: runs the real one, then throws. */
@@ -58,11 +72,21 @@ async function setupReviewDraft({
   status = 'draft',
   reviews = [],
   authors = 0,
+  authorOverrides = {},
+  tagName = null,
+  description,
 } = {}) {
   const authorRows = [];
   for (let i = 0; i < authors; i++) {
-    authorRows.push(await strapi.documents(USER_UID).create({ data: userData() }));
+    authorRows.push(
+      await strapi.documents(USER_UID).create({ data: userData(authorOverrides) }),
+    );
   }
+  const tag = tagName
+    ? await strapi
+        .documents('api::tag.tag')
+        .create({ data: { name: tagName, slug: 'placeholder' } })
+    : null;
   const lesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
   const draft = await strapi.documents(DROPLET_UID).create({
     data: dropletData({
@@ -70,6 +94,8 @@ async function setupReviewDraft({
       inReview,
       lessons: [lesson.documentId],
       authorized_users: authorRows.map((a) => a.documentId),
+      ...(tag ? { tags: [tag.documentId] } : {}),
+      ...(description ? { description } : {}),
     }),
   });
   const round = draft.reviewRound;
@@ -116,6 +142,82 @@ const withdraw = (draft) =>
   });
 
 describe('POST /droplets/:id/submit-review', () => {
+  const slack = useSlackSpy();
+
+  it('sends one message with the droplet details and a review link', async () => {
+    const { draft, lesson } = await setupReviewDraft({
+      authors: 1,
+      authorOverrides: { firstName: 'Radia', lastName: 'Perlman' },
+      tagName: 'spanning-tree',
+      description: 'Why spanning trees matter',
+    });
+    await withFrontendUrl('https://odyssey.test', async () => {
+      slack.reset();
+      await post(draft.id, 'submit-review');
+    });
+
+    const sends = slack.sends();
+    expect(sends).toHaveLength(1);
+    expect(sends[0].text).toContain(draft.name);
+    const blocks = JSON.stringify(sends[0].blocks);
+    for (const part of [
+      'New Droplet Ready for Review',
+      lesson.name,
+      'spanning-tree',
+      'Radia Perlman',
+      `https://odyssey.test/draft/d/${draft.slug}`,
+      `|${draft.name}>*`,
+      '*Type:* Knowledge',
+      '*Focus:* Technical',
+      '> Why spanning trees matter',
+    ]) {
+      expect(blocks).toContain(part);
+    }
+  });
+
+  it('shows a plain bold name when FRONTEND_URL is not set', async () => {
+    const { draft } = await setupReviewDraft();
+    await withFrontendUrl(undefined, async () => {
+      slack.reset();
+      await post(draft.id, 'submit-review');
+    });
+
+    const sends = slack.sends();
+    expect(sends).toHaveLength(1);
+    const blocks = JSON.stringify(sends[0].blocks);
+    expect(blocks).toContain(`*${draft.name}*`);
+    expect(blocks).not.toContain('null');
+  });
+
+  it.each([
+    ['a repeat submit', { inReview: true }, 'id', 200],
+    ['an already published draft', { status: 'published' }, 'id', 409],
+    ['an unknown draft', {}, 'missing', 404],
+  ])('sends nothing for %s', async (_label, setup, target, expected) => {
+    const { draft } = await setupReviewDraft(setup);
+    slack.reset();
+
+    const res = await post(target === 'id' ? draft.id : 999999999, 'submit-review');
+
+    expect(res.status).toBe(expected);
+    expect(slack.sends()).toHaveLength(0);
+  });
+
+  it('sends one resubmitted message for round 2 after a withdraw', async () => {
+    const { draft } = await setupReviewDraft({ inReview: true });
+    await withdraw(draft);
+    slack.reset();
+
+    await post(draft.id, 'submit-review');
+
+    const sends = slack.sends();
+    expect(sends).toHaveLength(1);
+    const blocks = JSON.stringify(sends[0].blocks);
+    expect(blocks).toContain('Resubmitted');
+    expect(blocks).toContain('Round:* 2');
+    expect(sends[0].text).toContain('round 2');
+  });
+
   it('raises the round 0 to 1 and reports nothing carried', async () => {
     const { draft } = await setupReviewDraft();
 
@@ -333,10 +435,12 @@ describe('POST /droplets/:id/submit-review', () => {
     });
     const spy = failAfter(REVIEW_COMMENT_UID, 'create');
     const logSpy = jest.spyOn(strapi.log, 'error').mockImplementation(() => {});
+    slack.reset();
     try {
       const res = await post(draft.id, 'submit-review');
       expect(spy).toHaveBeenCalled();
       expect(res.status).toBe(500);
+      expect(slack.sends()).toHaveLength(0);
     } finally {
       spy.mockRestore();
       logSpy.mockRestore();

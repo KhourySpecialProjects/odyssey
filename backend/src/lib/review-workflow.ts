@@ -10,6 +10,8 @@ import {
   type PublishEditSummary,
 } from './publish-edit';
 import { moveReviewsToLive } from './review-move';
+import { readyForReviewMessage } from './review-slack';
+import { sendSlackNotification } from './slack';
 
 const REVIEW_UID = 'api::review.review';
 const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
@@ -117,7 +119,7 @@ async function carryComments(
 
 /** Puts a draft in review (next round), carrying each reviewer's work forward. */
 export async function submitForReview(ref: DraftRef): Promise<SubmitResult> {
-  return strapi.db.transaction(async () => {
+  return strapi.db.transaction(async ({ onCommit }: { onCommit: (cb: () => void) => void }) => {
     const droplet = await lockAndRead(ref);
     const dropletId = Number(droplet.id);
     if (droplet.inReview === true) {
@@ -141,6 +143,14 @@ export async function submitForReview(ref: DraftRef): Promise<SubmitResult> {
         })) as Row
       ).reviewRound ?? 0,
     );
+
+    const message = await readyForReviewMessage(dropletId, round);
+    // Slack only after the outermost commit (a rollback drops it); start the promise, no DB work.
+    if (message) {
+      onCommit(() => {
+        void sendSlackNotification(message);
+      });
+    }
 
     const reviews = (await strapi.documents(REVIEW_UID).findMany({
       filters: { droplet: { id: droplet.id } },
