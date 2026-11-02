@@ -11,6 +11,7 @@ import {
 import { useSearch } from "@/contexts/SearchContext";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { matchesDropletSearch } from "@/lib/author-names";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -122,7 +123,7 @@ export function SortedDropletsGrid({
 
   const filteredDroplets = useMemo(() => {
     return sortedDroplets.filter((droplet) =>
-      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      matchesDropletSearch(droplet, searchQuery),
     );
   }, [sortedDroplets, searchQuery]);
 

@@ -19,6 +19,7 @@ import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
 import { LESSON_BLOCKS_POPULATE } from "./lesson-populates";
+import { USER_POPULATES } from "./user-populates";
 import {
   type EntryRef,
   resolveDocumentId,
@@ -166,6 +167,11 @@ export async function getDraftDroplets(): Promise<Droplet[]> {
 export async function getInReviewDroplets(): Promise<Droplet[]> {
   return await getDroplets({
     filters: { inReview: true, status: "draft" },
+    populate: {
+      tags: true,
+      lessons: { fields: ["id", "name", "slug"] },
+      authorized_users: USER_POPULATES.authorName,
+    },
   });
 }
 
