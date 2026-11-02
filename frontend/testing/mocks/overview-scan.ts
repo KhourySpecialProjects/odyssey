@@ -397,6 +397,7 @@ const TO_CSV =
   "https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html";
 const USER_GUIDE = "https://pandas.pydata.org/docs/user_guide/index.html";
 const CHECKOUTS_CSV = `${TEST_CDN}/datasets/library_checkouts.csv`;
+const DASHBOARD = "http://10.0.3.17/uploads";
 
 /** What each sample URL returns (the prototype's MOCK_WEB); any other URL loads as HTML. */
 export const sampleWeb: Record<string, UrlCheck> = {
@@ -407,4 +408,10 @@ export const sampleWeb: Record<string, UrlCheck> = {
   [TO_CSV]: loaded(TO_CSV, "text/html"),
   [USER_GUIDE]: loaded(USER_GUIDE, "text/html"),
   [CHECKOUTS_CSV]: loaded(CHECKOUTS_CSV, "text/csv", 96000),
+  // The real fetcher refuses a private address before any request
+  [DASHBOARD]: {
+    kind: "refused",
+    finalUrl: DASHBOARD,
+    reason: "private-address",
+  },
 };

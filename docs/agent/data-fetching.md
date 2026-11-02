@@ -248,6 +248,7 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 - **Server only.** It starts with `import "server-only"`. Never export it from a `"use server"` file, or wrap it in an action without auth and a rate limit: it would be an open proxy.
 - **Rules and types import it with `import type`**, so they never load `node:http`.
 - **Results:** `loaded`, `broken` (4xx/5xx, or `status: null` when the host doesn't exist), `refused` (bad scheme, not a URL, or a private address) and `unchecked` (timeout, the scan's 20 s budget, 429, too many redirects, network errors). `fetchUrl` never rejects.
+- **Overview scan rules** (`lib/overview-scan/rules/`, ODY-793) take `fetchUrl` as an argument and never create a fetcher. A URL that couldn't be checked is an `"unknown"` flag (gray), never `"warn"`. Rules fetch all their URLs at once (`Promise.all`) and report in document order; the fetcher's queue and budget bound the network. Odyssey's own pages, `mailto:` and `tel:` links aren't fetched, and relative file URLs (local `/uploads/`) are reported as couldn't check.
 
 ## Common Mistakes
 
