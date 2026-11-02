@@ -6,6 +6,7 @@ import type {
   UncheckedReason,
   UrlCheck,
 } from "@/lib/overview-scan/network";
+import { dropletPart } from "@/lib/overview-scan/parts";
 import { norm, words } from "@/lib/overview-scan/text";
 import {
   flag,
@@ -37,7 +38,6 @@ function blocksOf<T extends ScanBlock["type"]>(
 }
 
 const blank = (text: string) => !String(text ?? "").trim();
-const dropletPart = (doc: ScanDocument): ScanPart => doc.parts[0];
 const BARE_URL = /^(https?:\/\/|www\.)/;
 
 function hostOf(url: string): string {
