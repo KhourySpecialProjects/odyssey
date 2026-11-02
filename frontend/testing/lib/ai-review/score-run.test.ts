@@ -6,12 +6,21 @@ import {
   heartbeatRunRoute,
   type FinishRunInput,
 } from "@/lib/ai-review/run-routes";
+import * as findings from "@/lib/ai-review/findings";
 import { runAiScoring, type ScoringRun } from "@/lib/ai-review/score-run";
 import { mockCriteria, mockSnapshot } from "@/testing/mocks/aiReviewMock";
 
 jest.mock("next/cache", () => ({ revalidateTag: jest.fn() }));
 jest.mock("@/lib/ai-review/droplet-snapshot");
 jest.mock("@/lib/ai-review/run-routes");
+jest.mock("@/lib/ai-review/findings", () => {
+  const actual = jest.requireActual("@/lib/ai-review/findings");
+  return {
+    ...actual,
+    findingTexts: jest.fn(actual.findingTexts),
+    toFindings: jest.fn(actual.toFindings),
+  };
+});
 
 const run: ScoringRun = {
   runId: 40,
@@ -96,6 +105,7 @@ const running = {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "info").mockImplementation(() => {});
   jest.mocked(fetchDropletSnapshot).mockResolvedValue(mockSnapshot);
   jest.mocked(heartbeatRunRoute).mockResolvedValue(running);
   jest.mocked(finishRunRoute).mockResolvedValue({
@@ -136,12 +146,14 @@ describe("runAiScoring", () => {
         criterionId: 1,
         aiValue: 4,
         aiRationale: "lesson 1 Tone",
+        aiFindings: [],
       },
       {
         lessonId: 11,
         criterionId: 2,
         aiValue: 4,
         aiRationale: "lesson 1 Scaffolding",
+        aiFindings: [],
       },
     ]);
     expect(finished()).toEqual({
@@ -158,12 +170,14 @@ describe("runAiScoring", () => {
           criterionId: 1,
           aiValue: 5,
           aiRationale: "overall Tone",
+          aiFindings: [],
         },
         {
           lessonId: null,
           criterionId: 2,
           aiValue: 5,
           aiRationale: "overall Scaffolding",
+          aiFindings: [],
         },
       ],
     });
@@ -171,6 +185,80 @@ describe("runAiScoring", () => {
     expect(heartbeatRunRoute).toHaveBeenCalledTimes(3);
     expect(revalidateTag).toHaveBeenCalledWith("review-7");
   });
+
+  describe("transgressions", () => {
+    const withQuotes = (transgressions: object[]) =>
+      message({
+        text: JSON.stringify({
+          scores: mockCriteria.map((c) => ({
+            criterionId: c.id,
+            rationale: "ok",
+            score: 3,
+            transgressions: c.id === 1 ? transgressions : [],
+          })),
+        }),
+      });
+
+    it("saves findings per criterion with run-unique ids, drops an unresolvable quote, and anchors an Overview quote to no lesson", async () => {
+      const { client } = fakeClient([
+        withQuotes([
+          { quote: "Git keeps history", reason: "Vague." },
+          { quote: "not in the lesson", reason: "Invented." },
+        ]),
+        withQuotes([]),
+        withQuotes([
+          { quote: "Version control from zero", reason: "Hype.", lesson: 0 },
+        ]),
+      ]);
+
+      await runAiScoring(run, { client, sleep });
+
+      const lessonFindings = beats()[1].scores![0].aiFindings;
+      expect(lessonFindings).toHaveLength(1);
+      expect(lessonFindings[0]).toMatchObject({
+        id: "40-1",
+        lessonId: 11,
+        quote: "Git keeps history",
+      });
+      const overview = finished().scores[0].aiFindings;
+      expect(overview[0]).toMatchObject({
+        id: "40-2",
+        lessonId: null,
+        anchor: { field: "description" },
+      });
+      expect(beats()[1].scores![1].aiFindings).toEqual([]);
+      expect(console.info).toHaveBeenCalledWith(
+        "Score with AI dropped 1 quotes",
+        {
+          runId: 40,
+        },
+      );
+    });
+  });
+
+  it.each(["findingTexts", "toFindings"] as const)(
+    "still saves the scores, with no findings, when %s throws",
+    async (name) => {
+      jest.mocked(findings[name]).mockImplementationOnce(() => {
+        throw new Error("bad content");
+      });
+      const { client } = fakeClient([
+        message({ text: scoresJson(4) }),
+        message({ text: scoresJson(3) }),
+        message({ text: scoresJson(5) }),
+      ]);
+
+      await runAiScoring(run, { client, sleep });
+
+      expect(finished().runState).toBe("done");
+      const saved = [
+        ...beats().flatMap((b) => b.scores ?? []),
+        ...finished().scores,
+      ];
+      expect(saved).toHaveLength(6);
+      for (const s of saved) expect(s.aiFindings).toEqual([]);
+    },
+  );
 
   it("keeps the other lessons when one lesson's request fails, and ends partial", async () => {
     const { client } = fakeClient([

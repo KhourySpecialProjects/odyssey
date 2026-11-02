@@ -8,13 +8,14 @@ import type {
   LessonScores,
   ParsedScores,
   ScoreItem,
+  Transgression,
 } from "./types";
 
 /**
  * Bump on any change to the wording, the rubric layout or the request shape,
  * so each saved score says which prompt produced it (ODY-814 stores it).
  */
-export const PROMPT_VERSION = "2026-10-29.2";
+export const PROMPT_VERSION = "2026-10-30.1";
 
 const MAX_TOKENS = 16000;
 
@@ -32,6 +33,8 @@ const INTRO = `You review learning content for Odyssey, Khoury College's platfor
 You score against a rubric. Each criterion asks a question and describes what a 1 and a 5 look like; 2, 3 and 4 sit between those descriptions. Use the whole scale: give a 5 when the content fully matches the 5 description, and a 1 when it matches the 1 description. Judge each criterion only on what it asks, so one problem lowers one criterion, not several.
 
 For every criterion, write the rationale before the score: at most two sentences that name what in the content earned the score. Where you can, quote a few of the lesson's own words in quotation marks so the reviewer can find the spot. The reviewer reads these to decide whether to accept each score, so make every one specific.
+
+After each score, list up to five passages that cost that criterion points, most important first, or none if there are none. Copy each quote word for word from one paragraph, list item or heading, under 300 characters, without Markdown marks, link URLs or the square-bracket labels. Give a one-sentence reason for each.
 
 How the content reaches you: lessons are converted to Markdown, and non-text blocks are labelled in square brackets, such as [Multiple-choice quiz], [Video: ...] or [Callout, info]. You can't see images or videos. Judge them by whether they are present, where they sit and their alt text, never by guessing what they show.
 
@@ -57,15 +60,30 @@ function systemPrompt(
 ): string {
   const scope =
     level === "lesson"
-      ? "You are scoring one lesson at a time. The lessons before it are included so you know what the learner has already been taught; score only the lesson you are asked about."
-      : "You are scoring the droplet as a whole, across all of its lessons.";
+      ? "You are scoring one lesson at a time. The lessons before it are included so you know what the learner has already been taught; score only the lesson you are asked about, and quote only from that lesson."
+      : "You are scoring the droplet as a whole, across all of its lessons. Give each passage's lesson number, or 0 for the droplet's name, description, overview or learning objectives.";
   return `${INTRO}\n\n${scope}\n\n<rubric>\n${rubricText(criteria, level)}\n</rubric>`;
 }
 
-/** JSON schema for the answer: one entry per criterion, rationale before score. */
+/**
+ * JSON schema for the answer: one entry per criterion, rationale before score.
+ * Overall passages also name their lesson (0 = the droplet's own text).
+ */
 export function scoresJsonSchema(
   criteria: Criterion[],
+  level: "lesson" | "overall",
+  lessonCount: number,
 ): Record<string, unknown> {
+  const transgression: Record<string, unknown> = {
+    quote: { type: "string" },
+    reason: { type: "string" },
+  };
+  if (level === "overall") {
+    transgression.lesson = {
+      type: "integer",
+      enum: Array.from({ length: lessonCount + 1 }, (_, i) => i),
+    };
+  }
   return {
     type: "object",
     properties: {
@@ -77,8 +95,17 @@ export function scoresJsonSchema(
             criterionId: { type: "integer", enum: criteria.map((c) => c.id) },
             rationale: { type: "string" },
             score: { type: "integer", enum: [1, 2, 3, 4, 5] },
+            transgressions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: transgression,
+                required: Object.keys(transgression),
+                additionalProperties: false,
+              },
+            },
           },
-          required: ["criterionId", "rationale", "score"],
+          required: ["criterionId", "rationale", "score", "transgressions"],
           additionalProperties: false,
         },
       },
@@ -119,6 +146,7 @@ function baseParams(
   content: Anthropic.TextBlockParam[],
   model: AiReviewModel,
   effort: Effort,
+  lessonCount: number,
 ): Anthropic.MessageCreateParamsNonStreaming {
   return {
     model,
@@ -126,7 +154,10 @@ function baseParams(
     thinking: { type: "adaptive" },
     output_config: {
       effort,
-      format: { type: "json_schema", schema: scoresJsonSchema(criteria) },
+      format: {
+        type: "json_schema",
+        schema: scoresJsonSchema(criteria, level, lessonCount),
+      },
     },
     system: systemPrompt(criteria, level),
     messages: [{ role: "user", content }],
@@ -193,6 +224,7 @@ export function buildLessonRequests(
         ],
         model,
         effort,
+        lessons.length,
       ),
     };
   });
@@ -254,9 +286,24 @@ export function buildOverallRequest(
       ],
       model,
       effort,
+      snapshot.lessons.length,
     ),
   };
 }
+
+const transgressionSchema = z.object({
+  quote: z.string().min(1),
+  reason: z.string().min(1),
+  lesson: z.number().int().min(0).optional(),
+});
+
+/** Keeps the entries that are well formed: a bad one never fails the score. */
+const transgressionList = z.unknown().transform((list): Transgression[] =>
+  (Array.isArray(list) ? list : []).flatMap((entry) => {
+    const parsed = transgressionSchema.safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  }),
+);
 
 const answerSchema = z.object({
   scores: z.array(
@@ -264,6 +311,7 @@ const answerSchema = z.object({
       criterionId: z.number().int(),
       rationale: z.string().min(1),
       score: z.number().int().min(1).max(5),
+      transgressions: transgressionList,
     }),
   ),
 });

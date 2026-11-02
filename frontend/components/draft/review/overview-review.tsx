@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { ReviewAnchor, ReviewComment } from "@/types";
-import { stripHtmlTags } from "@/lib/utils";
+import { OVERVIEW_TEXT_FIELDS, overviewFieldHtml } from "@/lib/review-overview";
 import {
   FrozenOverview,
   TITLE_CLASS,
@@ -31,16 +31,8 @@ import {
   CommentKeyboardProvider,
 } from "./comment-keyboard";
 
-const escape = (text: string) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 const NONE: ReviewComment[] = [];
-const FIELDS: OverviewField[] = [
-  "name",
-  "description",
-  "overview",
-  "objective",
-];
+const FIELDS: readonly OverviewField[] = OVERVIEW_TEXT_FIELDS;
 
 type OverviewReviewProps = Omit<
   React.ComponentProps<typeof FrozenOverview>,
@@ -120,16 +112,18 @@ export function OverviewReview({
   >({ name: [], description: [], overview: [], objective: [] });
 
   const html: Record<OverviewField, string> = useMemo(
-    () => ({
-      name: `<h1 class="${TITLE_CLASS}">${escape(droplet.name ?? "")}</h1>`,
-      description: `<p>${escape(stripHtmlTags(droplet.description ?? ""))}</p>`,
-      overview: droplet.overview ?? "",
-      objective: `<ul class="list-disc pl-5">${(
-        droplet.learningObjectives ?? []
-      )
-        .map((o) => `<li>${escape(o.objective)}</li>`)
-        .join("")}</ul>`,
-    }),
+    () =>
+      overviewFieldHtml(
+        {
+          name: droplet.name,
+          description: droplet.description,
+          overview: droplet.overview,
+          objectives: (droplet.learningObjectives ?? []).map(
+            (o) => o.objective,
+          ),
+        },
+        { titleClass: TITLE_CLASS },
+      ),
     [
       droplet.name,
       droplet.description,
