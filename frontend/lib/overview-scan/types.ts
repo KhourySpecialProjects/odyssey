@@ -59,14 +59,32 @@ export type ScanDataset = {
   rowCount: number | null; // null today for every dataset: uploads don't store it yet
 };
 
+/** A droplet linked as a prerequisite or postrequisite. */
+export type LinkedDroplet = {
+  id: number; // numeric Strapi id, used for comparisons
+  name: string;
+  status: "draft" | "edit" | "published";
+  isHidden: boolean;
+};
+
 export type ScanDroplet = {
+  id: number;
+  originalDropletId: number | null; // set on [EDIT] drafts
+  name: string;
+  overview: string; // plain text; "" when unset
+  description: string; // "" when unset
+  learningObjectives: readonly string[]; // "" for an unset objective
+  difficulty: "beginner" | "intermediate" | "advanced" | null;
+  tags: readonly string[]; // tag names
+  prerequisites: readonly LinkedDroplet[];
+  postrequisites: readonly LinkedDroplet[];
   funFact: string; // "" when unset
   nextSteps: readonly { label: string; url: string }[]; // label "" when unset
   datasets: readonly ScanDataset[];
 };
 
 export type ScanDocument = {
-  droplet: ScanDroplet; // ODY-790 adds the fields ODY-791/792 need
+  droplet: ScanDroplet; // ODY-791 adds its fields here
   parts: readonly ScanPart[]; // parts[0] is the droplet page, then lessons in order
 };
 

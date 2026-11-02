@@ -43,9 +43,17 @@ export function scanDoc({
   droplet?: Partial<ScanDroplet>;
   lessons?: ScanPart[];
 } = {}): ScanDocument {
+  const merged = {
+    ...sampleScanDocument.droplet,
+    overview: "An overview.",
+    funFact: "A fact.",
+    nextSteps: [],
+    datasets: [],
+    ...droplet,
+  };
   return {
-    droplet: { funFact: "A fact.", nextSteps: [], datasets: [], ...droplet },
-    parts: [dropletPage("An overview."), ...lessons],
+    droplet: merged,
+    parts: [dropletPage(merged.overview), ...lessons],
   };
 }
 
@@ -200,8 +208,35 @@ const sampleLesson = (
 
 const YOUTUBE_URL = "https://www.youtube.com/watch?v=pandas-read-csv-demo";
 
+const SAMPLE_OVERVIEW =
+  "In this droplet you will take a messy spreadsheet of library checkouts and turn it into clean, reliable data. You will load the file with pandas, find the cells that are missing, fix the columns stored with the wrong type and save a clean copy. By the end you will have a short script you can run again on any similar file.";
+
 export const sampleScanDocument: ScanDocument = {
   droplet: {
+    id: 1,
+    originalDropletId: null,
+    name: "Cleaning Data with Python",
+    overview: SAMPLE_OVERVIEW,
+    description:
+      "Clean a messy CSV of library checkouts with pandas: find missing values, fix wrong types and save a copy you can trust.",
+    learningObjectives: [
+      "Load a CSV file into a pandas DataFrame",
+      "Find and count the missing values in each column",
+      "Understanding how pandas stores data types",
+    ],
+    difficulty: "beginner",
+    tags: ["Python", "Data cleaning"],
+    prerequisites: [
+      { id: 2, name: "Python Basics", status: "published", isHidden: false },
+    ],
+    postrequisites: [
+      {
+        id: 3,
+        name: "Charts with pandas",
+        status: "published",
+        isHidden: false,
+      },
+    ],
     funFact:
       "The name pandas comes from panel data, a term economists use for data collected over time.",
     nextSteps: [
