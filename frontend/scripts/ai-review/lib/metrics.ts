@@ -1,5 +1,5 @@
 import type { Criterion } from "@/lib/ai-review/types";
-import type { ClientScores } from "./files";
+import { isScored, type ClientScore, type ClientScores } from "./files";
 import type { RequestResult } from "./run";
 
 /** One AI score next to the client's score for the same lesson (or Overall) and criterion. */
@@ -11,9 +11,16 @@ export type Pair = {
   lessonName: string;
   criterion: string;
   ai: number;
+  /** For a range, the end nearest the AI's score */
   client: number;
   rationale: string;
 };
+
+/** A range agrees with any score inside it, and is otherwise as far off as its nearer end. */
+const nearest = (ai: number, score: ClientScore) =>
+  typeof score === "number"
+    ? score
+    : Math.min(Math.max(ai, score[0]), score[1]);
 
 export type Agreement = {
   criterion: string;
@@ -44,7 +51,7 @@ export function pairScores(
     for (const item of r.parsed.scores) {
       const criterion = nameOf.get(item.criterionId)!;
       const clientScore = theirs[criterion];
-      if (typeof clientScore !== "number") continue;
+      if (!isScored(clientScore)) continue;
       pairs.push({
         run: r.run,
         dropletId: r.dropletId,
@@ -53,7 +60,7 @@ export function pairScores(
         lessonName: r.request.lessonName ?? "Overall",
         criterion,
         ai: item.score,
-        client: clientScore,
+        client: nearest(item.score, clientScore),
         rationale: item.rationale,
       });
     }

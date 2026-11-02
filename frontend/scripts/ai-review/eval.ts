@@ -63,8 +63,12 @@ function agreementSections(
   return [
     `## ${title}`,
     `### Lessons\n\n${agreementMarkdown(agreementTable(lesson, criteria))}`,
-    `### Overall Score\n\n${agreementMarkdown(agreementTable(overall, criteria))}`,
-  ].join("\n\n");
+    // Absent when no score sheet in the set has an Overall Score
+    overall.length &&
+      `### Overall Score\n\n${agreementMarkdown(agreementTable(overall, criteria))}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function gapsMarkdown(pairs: Pair[]): string {

@@ -14,6 +14,9 @@ export type Rubric = {
   criteria: Criterion[];
 };
 
+/** A 1–5 score, or a range such as [4, 5] when the scorer would accept either. */
+export type ClientScore = number | [number, number];
+
 /** The client's own scores for one droplet, filled in by hand (see README). */
 export type ClientScores = {
   scorer: string;
@@ -23,11 +26,21 @@ export type ClientScores = {
   lessons: {
     lessonId: number;
     lessonName: string;
-    scores: Record<string, number | null>;
+    scores: Record<string, ClientScore | null>;
+    /** The scorer's reasons, by criterion name; not used by the eval */
+    reasons?: Record<string, string>;
   }[];
-  overall: Record<string, number | null>;
+  /** Null when the scorer gave no Overall Score */
+  overall: Record<string, ClientScore | null> | null;
   notes?: string;
 };
+
+export const isScored = (score: unknown): score is ClientScore =>
+  typeof score === "number" ||
+  (Array.isArray(score) &&
+    score.length === 2 &&
+    score.every((s) => typeof s === "number") &&
+    score[0] <= score[1]);
 
 export type Fixture = {
   slug: string;
@@ -80,12 +93,12 @@ export function blankScores(
   const blanks: string[] = [];
   for (const lesson of scores.lessons) {
     for (const c of criteria) {
-      if (typeof lesson.scores[c.name] !== "number")
+      if (!isScored(lesson.scores[c.name]))
         blanks.push(`${lesson.lessonName} / ${c.name}`);
     }
   }
   for (const c of criteria) {
-    if (typeof scores.overall[c.name] !== "number")
+    if (scores.overall && !isScored(scores.overall[c.name]))
       blanks.push(`Overall / ${c.name}`);
   }
   return blanks;
