@@ -15,6 +15,7 @@ import {
 } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -84,7 +85,10 @@ export default async function DropletRecapRoute({ params }: Props) {
           page: 1,
           pageSize: 4,
         },
-        populate: { tags: { fields: ["name", "slug"] } },
+        populate: {
+          tags: { fields: ["name", "slug"] },
+          authorized_users: USER_POPULATES.authorName,
+        },
       }),
       getCachedUser(currentUser.email),
       getCachedEnrollmentsWithLessonIds(userId),

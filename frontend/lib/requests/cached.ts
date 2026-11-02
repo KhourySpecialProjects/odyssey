@@ -198,6 +198,7 @@ export const getCachedDropletBySlug = cache((slug: string) =>
           "isHidden",
           "status",
         ],
+        populate: { authorized_users: USER_POPULATES.authorName },
       },
       postrequisites: {
         fields: [

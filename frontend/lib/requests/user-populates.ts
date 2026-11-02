@@ -18,6 +18,10 @@ export const USER_POPULATES = {
     fields: ["id", "email"],
     populate: {},
   },
+  /** A droplet's authors for "By …" on its tile (ODY-863) */
+  authorName: {
+    fields: ["id", "firstName", "lastName"],
+  },
   profile: {
     fields: PROFILE_FIELDS,
     populate: {
