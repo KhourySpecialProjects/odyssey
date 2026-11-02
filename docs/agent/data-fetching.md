@@ -240,6 +240,16 @@ Test conventions:
 - `jest.setup.ts` mocks the helper globally with fake documentIds (`5` becomes `"doc5"`, an entity gives its `documentId`), so assert `/api/droplets/doc5` and `connect: ["doc5"]`. A test that sees a bare numeric id has found a missed conversion. The mapping lives in `lib/testing/document-id-mock.ts`; call `installDocumentIdMock()` after `jest.resetAllMocks()`. `strapi-document-id.test.ts` calls `jest.unmock` to test the real module.
 - A test file that calls `jest.resetAllMocks()` wipes that mock and must re-install the identity implementation in `beforeEach`. See `droplet-coverage.test.ts`, `groups.test.js` and `voyage-branches.test.ts`.
 
+## Fetching user-supplied URLs
+
+A URL a creator typed (a lesson link, an image, a video, a dataset file) is requested from inside Odyssey's AWS network, so a plain request is server-side request forgery: it can reach `169.254.169.254` (AWS metadata), Strapi or `localhost`.
+
+- **Only `lib/overview-scan/network.ts` may request such a URL** (ODY-789). Use `createSafeFetcher()` (once per scan) or `checkUrls()`. Never use `fetch` for it: the fetcher checks the address inside the socket's own DNS lookup, re-checks every redirect, and never reads a body.
+- **Server only.** It starts with `import "server-only"`. Never export it from a `"use server"` file, or wrap it in an action without auth and a rate limit: it would be an open proxy.
+- **Rules and types import it with `import type`**, so they never load `node:http`.
+- **Results:** `loaded`, `broken` (4xx/5xx, or `status: null` when the host doesn't exist), `refused` (bad scheme, not a URL, or a private address) and `unchecked` (timeout, the scan's 20 s budget, 429, too many redirects, network errors). `fetchUrl` never rejects.
+- **Overview scan rules** (`lib/overview-scan/rules/`, ODY-793) take `fetchUrl` as an argument and never create a fetcher. A URL that couldn't be checked is an `"unknown"` flag (gray), never `"warn"`. Rules fetch all their URLs at once (`Promise.all`) and report in document order; the fetcher's queue and budget bound the network. Odyssey's own pages, `mailto:` and `tel:` links aren't fetched, and relative file URLs (local `/uploads/`) are reported as couldn't check.
+
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.
