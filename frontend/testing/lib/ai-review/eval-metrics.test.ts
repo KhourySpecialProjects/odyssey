@@ -77,6 +77,19 @@ const client: ClientScores = {
 };
 const clientMap = new Map([[7, client]]);
 
+// A scorer who accepts a 4 or a 5 for Tone and gave no Overall Score
+const ranged: ClientScores = {
+  ...client,
+  lessons: [
+    {
+      lessonId: 11,
+      lessonName: "Lesson 11",
+      scores: { Tone: [4, 5], Scaffolding: 2 },
+    },
+  ],
+  overall: null,
+};
+
 describe("pairScores", () => {
   it("lines AI scores up with the client's, skipping failures and blanks", () => {
     const pairs = pairScores(
@@ -95,6 +108,24 @@ describe("pairScores", () => {
       ["Lesson 11", "Scaffolding", 4, 2],
       ["Lesson 12", "Tone", 5, 3],
       // Lesson 12 Scaffolding is blank for the client; Overall was refused.
+    ]);
+  });
+
+  it("matches a range at its nearest end, and skips a missing Overall Score", () => {
+    const pairs = pairScores(
+      [
+        result(1, "lesson", 11, [5, 2]),
+        result(2, "lesson", 11, [3, 2]),
+        result(1, "overall", null, [4, 4]),
+      ],
+      new Map([[7, ranged]]),
+      mockCriteria,
+    );
+    expect(pairs.map((p) => [p.run, p.criterion, p.ai, p.client])).toEqual([
+      [1, "Tone", 5, 5],
+      [1, "Scaffolding", 2, 2],
+      [2, "Tone", 3, 4],
+      [2, "Scaffolding", 2, 2],
     ]);
   });
 });
@@ -200,5 +231,9 @@ describe("blankScores", () => {
     expect(blankScores(client, mockCriteria)).toEqual([
       "Lesson 12 / Scaffolding",
     ]);
+  });
+
+  it("counts a range as filled in, and a missing Overall Score as nothing to fill", () => {
+    expect(blankScores(ranged, mockCriteria)).toEqual([]);
   });
 });

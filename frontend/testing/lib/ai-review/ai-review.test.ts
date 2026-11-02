@@ -141,6 +141,27 @@ describe("htmlToMarkdown", () => {
       "[Image, no alt text]",
     );
   });
+
+  // Each once made a lesson look broken to the AI when it reads fine on the page (ODY-862)
+  it.each([
+    [
+      "keeps the spaces an author put inside bold",
+      '<p>listed as currently<strong> "In Progress" </strong>because</p>',
+      'listed as currently **"In Progress"** because',
+    ],
+    [
+      "continues a numbered list that starts later",
+      '<ol><li>One</li></ol><img alt="Step 1"><ol start="2"><li>Two</li></ol>',
+      "1. One\n\n[Image: Step 1]\n\n2. Two",
+    ],
+    [
+      "reads the code in a pre, not its <code> tag",
+      '<pre><code class="language-plaintext">if (a &lt; b) {}</code></pre>',
+      "```\nif (a < b) {}\n```",
+    ],
+  ])("%s", (_name, html, expected) => {
+    expect(htmlToMarkdown(html)).toBe(expected);
+  });
 });
 
 describe("lessonToMarkdown", () => {
