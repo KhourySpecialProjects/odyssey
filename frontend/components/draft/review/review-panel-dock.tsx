@@ -3,8 +3,10 @@
 import {
   useEffect,
   useLayoutEffect,
+  useId,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
@@ -15,7 +17,9 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import type { PanelWidth } from "@/hooks/use-panel-width";
 import { useSharedReviewComments } from "./review-comments-context";
+import { PanelResizeHandle } from "./panel-resize-handle";
 
 const isDrawer = () => !window.matchMedia("(min-width: 1280px)").matches;
 
@@ -33,11 +37,14 @@ export function ReviewPanelDock({
   mode,
   onOpen,
   onCollapse,
+  resize,
   children,
 }: {
   mode: "open" | "rail";
   onOpen: () => void;
   onCollapse: () => void;
+  /** The width state; without it the open panel stays 384 px with no handle */
+  resize?: PanelWidth;
   children: ReactNode;
 }) {
   const total = useSharedReviewComments()?.comments.length ?? 0;
@@ -48,7 +55,9 @@ export function ReviewPanelDock({
   const focusAfter = useRef<"open" | "rail" | null>(null);
   const rail = mode === "rail";
   // Below 1280 the open panel is a modal drawer; above, a plain landmark
-  const modal = !useMediaQuery("(min-width: 1280px)") && !rail;
+  const isXl = useMediaQuery("(min-width: 1280px)");
+  const modal = !isXl && !rail;
+  const asideId = useId();
   const aside = useRef<HTMLElement>(null);
   const mounted = useRef(false);
 
@@ -118,6 +127,7 @@ export function ReviewPanelDock({
       )}
       <aside
         ref={aside}
+        id={asideId}
         aria-label={
           rail ? "Reviewer Transcript (collapsed)" : "Reviewer Transcript"
         }
@@ -127,9 +137,15 @@ export function ReviewPanelDock({
           "fixed right-0 border-l border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900",
           rail
             ? "z-30 flex w-12 flex-col items-center gap-3 py-3"
-            : "z-40 w-[384px] max-w-full shadow-xl xl:z-30 xl:shadow-none",
+            : "z-40 w-[384px] max-w-full shadow-xl xl:z-30 xl:w-[var(--panel-w,384px)] xl:shadow-none",
         )}
-        style={{ top, bottom: 0 }}
+        style={
+          {
+            top,
+            bottom: 0,
+            ...(resize && !rail ? { "--panel-w": `${resize.width}px` } : {}),
+          } as CSSProperties
+        }
       >
         {rail ? (
           <>
@@ -169,6 +185,19 @@ export function ReviewPanelDock({
           >
             <IconLayoutSidebarRightCollapse className="h-5 w-5" aria-hidden />
           </button>
+        )}
+        {resize && !rail && isXl && (
+          <PanelResizeHandle
+            width={resize.width}
+            min={resize.min}
+            max={resize.max}
+            controls={asideId}
+            label="Reviewer Transcript"
+            onResize={resize.setWidth}
+            onReset={resize.reset}
+            onDragChange={resize.setDragging}
+            dragging={resize.dragging}
+          />
         )}
         <div hidden={rail} className="h-full">
           {children}

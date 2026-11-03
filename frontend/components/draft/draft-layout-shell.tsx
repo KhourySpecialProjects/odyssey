@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
 import { DraftTour, TOUR_KEY } from "./draft-tour";
@@ -14,6 +22,7 @@ import { ReviewFocusProvider } from "./review/review-focus-context";
 import { ReviewPanelDock } from "./review/review-panel-dock";
 import { ReviewTranscript } from "./review/review-transcript";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { usePanelWidth } from "@/hooks/use-panel-width";
 import { lessonDots, type PanelScore } from "@/lib/review-panel/model";
 import type { ReviewPanelData } from "@/lib/requests/reviews";
 
@@ -44,6 +53,71 @@ interface DraftLayoutShellProps {
   /** Names for the panel header's "Reviewed by … · Created by …" line */
   reviewMeta?: { reviewerName?: string | null; authorNames?: string[] };
   children: React.ReactNode;
+}
+
+/**
+ * `<main>` and the dock, which own the panel width, so a drag re-renders only
+ * these and not the providers' consumers (ODY-867).
+ */
+function ReviewFrame({
+  expanded,
+  reviewing,
+  panelMode,
+  mainRef,
+  onOpen,
+  onCollapse,
+  transcript,
+  children,
+}: {
+  expanded: boolean;
+  reviewing: boolean;
+  panelMode: "open" | "rail";
+  mainRef: RefObject<HTMLElement>;
+  onOpen: () => void;
+  onCollapse: () => void;
+  transcript: ReactNode;
+  children: ReactNode;
+}) {
+  // 256 is the sidebar's width; the maximum only applies under xl:
+  const panelWidth = usePanelWidth(
+    "review-panel-width",
+    expanded ? 256 : 0,
+    reviewing,
+  );
+  return (
+    <>
+      <main
+        data-review-panel={reviewing ? panelMode : undefined}
+        ref={mainRef}
+        style={
+          reviewing
+            ? ({ "--panel-w": `${panelWidth.width}px` } as CSSProperties)
+            : undefined
+        }
+        className={cn(
+          "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
+          panelWidth.dragging && "transition-none",
+          expanded ? "xl:pl-64" : "xl:pl-0",
+          reviewing && [
+            "group",
+            panelMode === "open" ? "xl:pr-[var(--panel-w,384px)]" : "xl:pr-12",
+          ],
+        )}
+      >
+        {children}
+      </main>
+      {reviewing && (
+        <ReviewPanelDock
+          mode={panelMode}
+          onOpen={onOpen}
+          onCollapse={onCollapse}
+          resize={panelWidth}
+        >
+          {transcript}
+        </ReviewPanelDock>
+      )}
+    </>
+  );
 }
 
 export function DraftLayoutShell({
@@ -151,34 +225,24 @@ export function DraftLayoutShell({
               hideReviewActions={reviewing}
               lessonDots={dots}
             />
-            <main
-              data-review-panel={reviewing ? panelMode : undefined}
-              ref={mainRef}
-              className={cn(
-                "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300 motion-reduce:transition-none",
-                expanded ? "xl:pl-64" : "xl:pl-0",
-                reviewing && [
-                  "group",
-                  panelMode === "open" ? "xl:pr-[384px]" : "xl:pr-12",
-                ],
-              )}
-            >
-              {children}
-            </main>
-            {reviewing && (
-              <ReviewPanelDock
-                mode={panelMode}
-                onOpen={openPanel}
-                onCollapse={() => setPanelMode("rail")}
-              >
+            <ReviewFrame
+              expanded={expanded}
+              reviewing={reviewing}
+              panelMode={panelMode}
+              mainRef={mainRef}
+              onOpen={openPanel}
+              onCollapse={() => setPanelMode("rail")}
+              transcript={
                 <ReviewTranscript
                   droplet={droplet}
                   panel={reviewPanel}
                   meta={reviewMeta}
                   onScoresChange={setLiveScores}
                 />
-              </ReviewPanelDock>
-            )}
+              }
+            >
+              {children}
+            </ReviewFrame>
           </div>
         </ReviewFocusProvider>
       </SentFeedbackProvider>
