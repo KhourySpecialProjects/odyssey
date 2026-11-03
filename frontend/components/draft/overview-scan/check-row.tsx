@@ -100,10 +100,11 @@ export function CheckRow({
           />
         </button>
       </h3>
+      {/* `flex` only when open: a display utility would override [hidden] */}
       <div
         id={detailsId}
         hidden={!open}
-        className="flex flex-col gap-1.5 pr-3 pb-3 pl-[38px]"
+        className={cn(open && "flex", "flex-col gap-1.5 pr-3 pb-3 pl-[38px]")}
       >
         <p className="text-[13px] text-[#475569]">{check.description}</p>
         <p className="text-xs text-[#475569]">Looks at: {check.scope}</p>

@@ -97,6 +97,23 @@ describe("CheckRow", () => {
     );
   });
 
+  it("hides its details with no display class, so [hidden] isn't overridden", async () => {
+    renderRow();
+    const button = screen.getByRole("button");
+    const details = document.getElementById(
+      button.getAttribute("aria-controls")!,
+    )!;
+    expect(details).toHaveAttribute("hidden");
+    expect(details.className).not.toMatch(/(^|\s)(flex|grid|block)(\s|$)/);
+
+    await userEvent.click(button);
+    expect(details).not.toHaveAttribute("hidden");
+
+    await userEvent.click(button);
+    expect(details).toHaveAttribute("hidden");
+    expect(details.className).not.toMatch(/(^|\s)(flex|grid|block)(\s|$)/);
+  });
+
   it("shows the rules in order with flags, a link and the note", async () => {
     renderRow();
     await userEvent.click(screen.getByRole("button"));
