@@ -70,4 +70,67 @@ export const CONFIG = {
     "use",
     "write",
   ] as readonly string[],
+  // content
+  // Names a heading may capitalize. Acronyms and words with an inner capital
+  // (SQL, JavaScript, iOS) are always allowed.
+  headingAllowWords: [
+    "I",
+    "Python",
+    "Excel",
+    "React",
+    "Swift",
+    "Xcode",
+    "Java",
+    "Jupyter",
+    "Git",
+    "Linux",
+    "Windows",
+    "Mac",
+    "Node",
+    "Google",
+    "Apple",
+    "Microsoft",
+    "English",
+    "Odyssey",
+    "Khoury",
+    "Northeastern",
+  ] as readonly string[],
+  maxAvgSentenceWords: 25,
+  maxParagraphSentences: 5,
+  maxLessonNameChars: 60,
+  inclusiveTerms: {
+    whitelist: "allowlist",
+    blacklist: "blocklist",
+    "master/slave": "primary/replica",
+    guys: "everyone",
+    "sanity check": "quick check",
+  } as Readonly<Record<string, string>>,
+  // Odyssey's tech word list: words the en_US dictionary doesn't know.
+  // Lowercase; acronyms and camelCase names are skipped without it.
+  techWords: `
+    api apis app apps astype async auth backend bool boolean booleans br bytecode cli
+    codebase config configs csv dataframe dataframes dataset datasets datetime debugger
+    dev devs df dict dicts div dropdown dropdowns dtype dtypes enum enums frontend getter getters
+    github gitignore hashmap href html http https ide ides iloc img init instantiation ipynb isna
+    javascript jpeg jpg js json jsx jupyter kotlin localhost macos matplotlib
+    loc md middleware modularity monospaced namespace namespaces npm nullable nullish numpy
+    pandas param params png programmatically pseudocode py pytorch readme
+    refactor refactored refactoring regex repo repos resizable reusability
+    runtime scalable scikit seaborn setter setters sklearn src stdin stdout str
+    struct structs subclass subclasses subcomponent subcomponents subview
+    subviews svg swiftui textarea tooltip tooltips ts tsx tuple tuples txt
+    typescript uncompress url urls username usernames webpage xcassets xcode
+    yaml
+  `
+    .trim()
+    .split(/\s+/) as readonly string[],
+  // Words obscenity flags that aren't swears
+  swearAllowWords: [
+    "cockpit",
+    "cumin",
+    "dickey",
+    "dickinson",
+    "pussycat",
+    "shiitake",
+  ] as readonly string[],
 } as const;

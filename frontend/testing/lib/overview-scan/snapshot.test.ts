@@ -79,6 +79,7 @@ describe("buildScanDocument", () => {
       {
         id: "droplet",
         kind: "droplet",
+        name: "",
         title: "Droplet page",
         blocks: [
           {
@@ -117,7 +118,13 @@ describe("buildScanDocument", () => {
         datasets: [],
       },
       parts: [
-        { id: "droplet", kind: "droplet", title: "Droplet page", blocks: [] },
+        {
+          id: "droplet",
+          kind: "droplet",
+          name: "",
+          title: "Droplet page",
+          blocks: [],
+        },
       ],
     });
   });
@@ -132,10 +139,17 @@ describe("buildScanDocument", () => {
       {
         id: "12",
         kind: "lesson",
+        name: "Load the data",
         title: "Lesson 1 · Load the data",
         blocks: [],
       },
-      { id: "4", kind: "lesson", title: "Lesson 2 · Clean it", blocks: [] },
+      {
+        id: "4",
+        kind: "lesson",
+        name: "Clean it",
+        title: "Lesson 2 · Clean it",
+        blocks: [],
+      },
     ]);
   });
 
@@ -148,9 +162,12 @@ describe("buildScanDocument", () => {
         bn("p", "paragraph", {}, [
           text("Read the "),
           link(" https://pandas.pydata.org ", "docs"),
+          text(", then run "),
+          { type: "text", text: "df.isna()", styles: { code: true } },
           text("."),
         ]),
         bn("empty", "paragraph", {}, []),
+        bn("eh", "heading", { level: 3 }, []),
         bn(
           "l1",
           "bulletListItem",
@@ -160,6 +177,7 @@ describe("buildScanDocument", () => {
         ),
         bn("l3", "bulletListItem", {}, [text("Three")]),
         bn("c", "callout", { calloutType: "warning" }, [text("Careful.")]),
+        bn("ec", "callout", {}, []),
         bn("img", "image", { url: "/uploads/a.png", caption: " A chart " }),
         bn("v", "video", { url: "https://youtu.be/abc" }),
         bn("mc", "quiz-multiple-choice", {
@@ -217,11 +235,14 @@ describe("buildScanDocument", () => {
       {
         id: "p",
         type: "paragraph",
-        text: "Read the docs.",
+        text: "Read the docs, then run df.isna().",
         links: [{ text: "docs", url: "https://pandas.pydata.org" }],
+        inlineCode: ["df.isna()"],
       },
+      { id: "eh", type: "heading", level: 3, text: "" },
       { id: "l1", type: "list", items: ["One", "Two", "Three"] },
       { id: "c", type: "callout", text: "Careful." },
+      { id: "ec", type: "callout", text: "" },
       { id: "img", type: "image", url: "/uploads/a.png", caption: "A chart" },
       { id: "v", type: "video", url: "https://youtu.be/abc" },
       {
@@ -279,8 +300,9 @@ describe("buildScanDocument", () => {
 
   it("reads a legacy lesson's blocks", () => {
     const html = [
-      "<h2>Load the data</h2>",
+      "<h2>Load the data</h2><h3></h3>",
       '<p>Fish &amp; chips<br>with <a href="https://pandas.pydata.org">pandas</a>.</p>',
+      "<p>Call <code>df.isna()</code> now.</p>",
       '<p><img src="/uploads/b.png" alt="A table"></p>',
       "<ul><li>One<ol><li>Two</li></ol></li><li>Three</li></ul>",
       '<figure class="image"><img src="/uploads/a.png" alt="A chart"><figcaption>Seen</figcaption></figure>',
@@ -340,11 +362,18 @@ describe("buildScanDocument", () => {
 
     expect(blocksOf({ blocks })).toEqual([
       { id: "1", type: "heading", level: 2, text: "Load the data" },
+      { id: "1", type: "heading", level: 3, text: "" },
       {
         id: "1",
         type: "paragraph",
         text: "Fish & chips with pandas.",
         links: [{ text: "pandas", url: "https://pandas.pydata.org" }],
+      },
+      {
+        id: "1",
+        type: "paragraph",
+        text: "Call df.isna() now.",
+        inlineCode: ["df.isna()"],
       },
       { id: "1", type: "image", url: "/uploads/b.png", caption: "A table" },
       { id: "1", type: "list", items: ["One", "Two", "Three"] },

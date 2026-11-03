@@ -14,6 +14,7 @@ type BlockBase = {
   id: string; // BlockNote uuid, or the legacy component's id; may repeat when one
   // legacy block yields several (e.g. two <img> in one generic block)
   links?: readonly ScanLink[]; // every link in this block's text, in order
+  inlineCode?: readonly string[]; // code spans in this block's text ("df.isna()"), in order
 };
 
 export type ScanBlock = BlockBase &
@@ -50,6 +51,7 @@ export type ScanBlock = BlockBase &
 export type ScanPart = {
   id: string; // "droplet" for the droplet page; the lesson's numeric Strapi id as a string otherwise
   kind: "droplet" | "lesson";
+  name: string; // the lesson's own name; "" for the droplet page
   title: string; // "Droplet page", "Lesson 2 · Finding missing values"
   blocks: readonly ScanBlock[];
 };

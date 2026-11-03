@@ -18,6 +18,7 @@ export const TEST_CDN = "https://cdn.odyssey.test";
 const dropletPage = (overview: string): ScanPart => ({
   id: "droplet",
   kind: "droplet",
+  name: "",
   title: "Droplet page",
   blocks: [{ id: "overview", type: "paragraph", text: overview }],
 });
@@ -30,6 +31,7 @@ export function lesson(
   return {
     id: String(n),
     kind: "lesson",
+    name,
     title: `Lesson ${n} · ${name}`,
     blocks,
   };
@@ -202,6 +204,7 @@ const sampleLesson = (
 ): ScanPart => ({
   id: String(100 + n),
   kind: "lesson",
+  name,
   title: `Lesson ${n} · ${name}`,
   blocks,
 });
