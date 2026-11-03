@@ -114,7 +114,8 @@ export function Sidebar({
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onRestartTour: () => void;
-  /** The Reviewer Transcript panel has Publish and Send feedback, so only Preview stays here */
+  /** The Reviewer Transcript panel has Publish and Send feedback, so only Preview stays here.
+   *  It also has its own Final Overview Scan button, so the sidebar's link hides too. */
   hideReviewActions?: boolean;
   /** Lowest score per lesson, for the dot beside its title */
   lessonDots?: Record<number, "ok" | "needs_work">;
@@ -806,7 +807,8 @@ export function Sidebar({
                 />
               </button>
             </div>
-            {canScan(user.roles, isAuthor) && (
+            {/* The reviewer panel carries its own scan button */}
+            {canScan(user.roles, isAuthor) && !hideReviewActions && (
               <Link
                 href={scanHref}
                 aria-current={onScanPage ? "page" : undefined}

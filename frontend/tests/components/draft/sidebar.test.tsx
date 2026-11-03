@@ -406,6 +406,27 @@ describe("Sidebar", () => {
       }
     });
 
+    it("is hidden while the reviewer panel is showing", () => {
+      render(
+        <Sidebar
+          user={
+            {
+              ...mockUser,
+              roles: [AuthorizedUserRoleTitle.ContentEditor],
+            } as any
+          }
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={false}
+          hideReviewActions
+        />,
+      );
+      expect(
+        screen.queryByRole("link", { name: "Final Overview Scan" }),
+      ).toBeNull();
+    });
+
     it("is the current page on the scan page, where Preview opens the droplet", () => {
       (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet/scan");
       renderAs([AuthorizedUserRoleTitle.User], true);

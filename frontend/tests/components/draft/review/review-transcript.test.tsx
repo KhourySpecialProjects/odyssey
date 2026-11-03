@@ -122,6 +122,9 @@ describe("footer", () => {
     expect(
       screen.getByText("Couldn't load scores. Reload to try again."),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Final Overview Scan" }),
+    ).toHaveAttribute("href", "/draft/d/intro/scan");
     await userEvent.click(
       screen.getByRole("button", { name: "Send feedback" }),
     );

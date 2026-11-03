@@ -22,6 +22,7 @@ import {
   type PanelScore,
 } from "@/lib/review-panel/model";
 import { ConfirmScores } from "./confirm-scores";
+import { ScanLink } from "./scan-link";
 import { CriterionDetail } from "./criterion-detail";
 import { ReviewPanel } from "./review-panel";
 import { useSharedReviewComments } from "./review-comments-context";
@@ -192,6 +193,7 @@ export function ReviewTranscript({
           <p className="mt-2 text-sm text-slate-600">
             The scores couldn&apos;t be loaded. You can still send feedback.
           </p>
+          <ScanLink slug={droplet.slug} />
         </div>
         {footer}
       </section>
