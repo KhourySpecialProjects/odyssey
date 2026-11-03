@@ -92,9 +92,9 @@ describe("AiStatusBar", () => {
   it("shows confirmed count and Run again only with onStart", () => {
     const { rerender } = bar({ kind: "scored" });
 
-    expect(
-      screen.getByRole("progressbar", { name: "Confirmed scores" }),
-    ).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText(/scored by ai/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Key" })).toBeInTheDocument();
     expect(screen.getByText(/confirmed/)).toHaveTextContent("0 of 3 confirmed");
     expect(
       screen.queryByRole("button", { name: /run again/i }),
@@ -110,13 +110,6 @@ describe("AiStatusBar", () => {
     expect(
       screen.getByRole("button", { name: /run again/i }),
     ).toBeInTheDocument();
-  });
-
-  it("says when the AI scored it", () => {
-    const finishedAt = new Date(Date.now() - 3 * 3600_000).toISOString();
-    bar({ kind: "scored" }, { finishedAt });
-
-    expect(screen.getByText(/scored by ai 3 hours ago/i)).toBeInTheDocument();
   });
 
   it.each(["partial", "failed"] as const)(

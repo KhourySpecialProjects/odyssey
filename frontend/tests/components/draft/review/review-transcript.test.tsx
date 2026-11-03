@@ -123,9 +123,9 @@ describe("footer", () => {
     );
 
     expect(publish()).toHaveAttribute("aria-disabled", "true");
-    expect(
-      screen.getByText(/Confirm the Overall Score to publish/),
-    ).toBeInTheDocument();
+    const help = screen.getByText(/Confirm the Overall Score to publish/);
+    expect(help).toHaveClass("sr-only");
+    expect(publish()).toHaveAccessibleDescription(help.textContent ?? "");
 
     rerender(
       <ReviewTranscript
@@ -372,6 +372,15 @@ describe("open detail for the lesson's finding marks", () => {
     await userEvent.click(
       within(card).getByRole("button", { name: /close tone details/i }),
     );
+    expect(screen.getByTestId("probe")).toHaveTextContent("none");
+  });
+
+  it("clears the open circle's findings when the card's caret collapses it", async () => {
+    mount(true);
+    const card = screen.getByRole("region", { name: "Loops" });
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    await userEvent.click(within(card).getAllByRole("button")[0]);
+
     expect(screen.getByTestId("probe")).toHaveTextContent("none");
   });
 

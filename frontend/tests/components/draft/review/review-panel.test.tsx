@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReviewPanel } from "@/components/draft/review/review-panel";
 import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
@@ -159,6 +159,127 @@ describe("collapsing a card", () => {
     await expand("Loops");
 
     expect(screen.getByText(/No comments yet/)).toBeInTheDocument();
+  });
+
+  describe("the caret with a criterion detail", () => {
+    const renderDetail = ({ criterion }: { criterion: { name: string } }) => (
+      <div>
+        <p>Detail for {criterion.name}</p>
+        <input aria-label="composer" />
+      </div>
+    );
+    const tonePanel = (over = {}) =>
+      panel({
+        scores: [score(11, 2, { aiValue: 4, aiFindings: [{ id: "f1" }] })],
+        ...over,
+      });
+    const setup = () => {
+      setComments([comment(1)]);
+      const view = show(tonePanel(), { renderDetail });
+      const card = screen.getByRole("region", { name: "Variables" });
+      return {
+        view,
+        card,
+        header: within(card).getAllByRole("button")[0],
+        tone: within(card).getByRole("button", { name: /^Tone/ }),
+      };
+    };
+
+    it("shows expanded while only a detail is open, and controls both regions", async () => {
+      const { header, tone } = setup();
+      await userEvent.click(tone);
+
+      expect(header).toHaveAttribute("aria-expanded", "true");
+      expect(header).toHaveAttribute(
+        "aria-controls",
+        "review-comments-11 review-detail-11",
+      );
+      expect(document.getElementById("review-detail-11")).not.toBeNull();
+      expect(document.getElementById("review-comments-11")).not.toBeNull();
+      expect(screen.getByText("Detail for Tone")).toBeInTheDocument();
+      expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+    });
+
+    it("closes the detail on click, keeps focus, then opens only the comments", async () => {
+      const { header, tone } = setup();
+      await userEvent.click(tone);
+      await userEvent.click(header);
+
+      expect(screen.queryByText(/Detail for/)).toBeNull();
+      expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+      expect(header).toHaveAttribute("aria-expanded", "false");
+      expect(header).toHaveFocus();
+
+      await userEvent.click(header);
+      expect(screen.getByText("Body 1")).toBeInTheDocument();
+      expect(screen.queryByText(/Detail for/)).toBeNull();
+    });
+
+    it("closes both the comments and the detail in one click", async () => {
+      const { header, tone } = setup();
+      await userEvent.click(header);
+      await userEvent.click(tone);
+      expect(screen.getByText("Body 1")).toBeInTheDocument();
+      expect(screen.getByText(/Detail for/)).toBeInTheDocument();
+
+      await userEvent.click(header);
+      expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Detail for/)).toBeNull();
+    });
+
+    it("keeps focus on the caret when a click doesn't focus it (Safari)", async () => {
+      const { header, tone } = setup();
+      await userEvent.click(tone);
+      screen.getByLabelText("composer").focus();
+      fireEvent.click(header);
+
+      expect(screen.queryByText(/Detail for/)).toBeNull();
+      expect(header).toHaveFocus();
+    });
+
+    it("keeps each circle's band, badge and issue count after a collapse", async () => {
+      const { card, header, tone } = setup();
+      await userEvent.click(tone);
+      await userEvent.click(header);
+
+      const circle = within(card).getByRole("button", {
+        name: /^Tone, 4 out of 5, .+, 1 issue/,
+      });
+      expect(within(circle).getByText("1 issue")).toBeInTheDocument();
+      expect(within(circle).getByText("✓")).toBeInTheDocument();
+      expect(
+        within(card).getByRole("button", { name: /^Style/ }),
+      ).toBeVisible();
+      const row = within(card).getByRole("group", {
+        name: "Variables criteria",
+      });
+      expect(row).not.toHaveClass("hidden");
+      expect(row).not.toHaveClass("sr-only");
+    });
+
+    it("clears a stale open criterion so it doesn't return unasked", async () => {
+      const { view, header, tone } = setup();
+      await userEvent.click(tone);
+      view.rerender(
+        <ReviewPanel
+          droplet={droplet}
+          panel={tonePanel({ criteria: [criteria[1]] })}
+          scores={tonePanel().scores}
+          renderDetail={renderDetail}
+        />,
+      );
+      await userEvent.click(header);
+      view.rerender(
+        <ReviewPanel
+          droplet={droplet}
+          panel={tonePanel()}
+          scores={tonePanel().scores}
+          renderDetail={renderDetail}
+        />,
+      );
+
+      expect(screen.queryByText(/Detail for/)).toBeNull();
+    });
   });
 });
 
