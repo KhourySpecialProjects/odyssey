@@ -22,6 +22,7 @@ import {
   type PanelScore,
 } from "@/lib/review-panel/model";
 import { ConfirmScores } from "./confirm-scores";
+import { ScanLink } from "./scan-link";
 import { CriterionDetail } from "./criterion-detail";
 import { ReviewPanel } from "./review-panel";
 import { useSharedReviewComments } from "./review-comments-context";
@@ -173,6 +174,7 @@ export function ReviewTranscript({
           />
         </div>
       </div>
+      <ScanLink slug={droplet.slug} className="mt-2" />
     </footer>
   );
 

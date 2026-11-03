@@ -152,7 +152,12 @@ export type OverviewScan = {
   couldNotCheck: number;
   results: readonly CheckResult[]; // in check order
   droplet?: { id: number; documentId?: string } | null; // when populated
-  ranBy?: { id: number; documentId?: string } | null; // when populated
+  ranBy?: {
+    id: number;
+    documentId?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null; // when populated
 };
 
 /** What runChecks returns (ODY-790): a scan before it's saved. */
