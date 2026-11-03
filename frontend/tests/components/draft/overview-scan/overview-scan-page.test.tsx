@@ -28,6 +28,12 @@ const CHECKS: Check[] = [
   scope: "s",
   rules: [{ id: "a", text: "Rule a", run: () => [] }],
 }));
+// The first check has a second rule, so rule and check counts differ.
+CHECKS[0].rules = [
+  ...CHECKS[0].rules,
+  { id: "b", text: "Rule b", run: () => [] },
+];
+const RULE_COUNT = CHECKS.reduce((n, c) => n + c.rules.length, 0);
 
 const saved = (overrides: Partial<OverviewScan> = {}): OverviewScan => ({
   id: 1,
@@ -41,7 +47,10 @@ const saved = (overrides: Partial<OverviewScan> = {}): OverviewScan => ({
     {
       id: "c1",
       status: "pass",
-      rules: [{ id: "a", status: "pass", flags: [] }],
+      rules: [
+        { id: "a", status: "pass", flags: [] },
+        { id: "b", status: "pass", flags: [] },
+      ],
     },
     {
       id: "s1",
@@ -65,6 +74,7 @@ const renderPage = (view = viewOf(null), loadError = false) =>
     <OverviewScanPage
       dropletId={7}
       dropletName="Drop"
+      slug="drop"
       lessonCount={2}
       view={view}
       loadError={loadError}
@@ -86,6 +96,13 @@ describe("OverviewScanPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText("No checks in this column yet."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to draft" })).toHaveAttribute(
+      "href",
+      "/draft/d/drop",
+    );
+    expect(
+      screen.getByText(`Rules version ${RULES_VERSION} · ${RULE_COUNT} rules`),
     ).toBeInTheDocument();
   });
 
@@ -136,6 +153,9 @@ describe("OverviewScanPage", () => {
       `Running ${CHECKS.length} checks.`,
     );
     expect(screen.getAllByText("Checking")).toHaveLength(CHECKS.length);
+    expect(
+      screen.getByText(`Checking ${CHECKS.length} checks`),
+    ).toBeInTheDocument();
   });
 
   it.each([
@@ -177,6 +197,7 @@ describe("OverviewScanPage", () => {
       <OverviewScanPage
         dropletId={7}
         dropletName="Drop"
+        slug="drop"
         lessonCount={2}
         view={view}
       />

@@ -73,6 +73,8 @@ export type ScanView = {
   ranBy: string | null;
   checksChanged: boolean;
   editedSince: boolean;
+  rulesVersion: string;
+  ruleCount: number;
 };
 
 /** The droplet's lessons, in order. */
@@ -189,6 +191,8 @@ export function buildScanView({
     counts,
     ranAt: scan?.ranAt ?? null,
     ranBy: name || null,
+    rulesVersion: RULES_VERSION,
+    ruleCount: checks.reduce((n, c) => n + c.rules.length, 0),
     checksChanged: !!scan && (scan.rulesVersion !== RULES_VERSION || missing),
     // Lock heartbeats bump updatedAt, so this can show falsely; deleting an unflagged
     // lesson is missed (ODY-878).

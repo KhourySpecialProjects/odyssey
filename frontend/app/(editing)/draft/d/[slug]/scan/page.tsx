@@ -51,6 +51,7 @@ export default async function ScanPage({ params }: Props) {
     <OverviewScanPage
       dropletId={droplet.id}
       dropletName={droplet.name}
+      slug={slug}
       lessonCount={lessons.length}
       view={view}
       loadError={!scan.ok}

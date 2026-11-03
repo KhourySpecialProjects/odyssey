@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IconPlayerPlay, IconRefresh } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconPlayerPlay,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
 import {
@@ -11,6 +16,7 @@ import {
 } from "@/lib/requests/overview-scan";
 import { plural, type ScanView } from "@/lib/overview-scan/view";
 import { CheckRow } from "./check-row";
+import { FOCUS } from "./focus";
 
 const ERRORS: Record<Exclude<OverviewScanError, "rate_limited">, string> = {
   forbidden: "Only reviewers and this droplet's authors can run checks.",
@@ -26,7 +32,9 @@ function errorText(r: { error: OverviewScanError; message?: string }) {
     : ERRORS[r.error];
 }
 
-const PILL = "rounded-full border px-2.5 py-0.5 text-[13px]";
+const PILL = "rounded-full border px-2.5 py-1 text-[13px] font-medium";
+const NEUTRAL = "border-[#d0d5dd] bg-white text-[#475569]";
+const NOTE = "text-[13px] text-[#475569]";
 
 function finishedText({ counts }: ScanView) {
   return `Checks finished: ${counts.passed} passed, ${counts.needsAttention} need attention, ${counts.couldNotCheck} couldn't check.`;
@@ -35,12 +43,14 @@ function finishedText({ counts }: ScanView) {
 export function OverviewScanPage({
   dropletId,
   dropletName,
+  slug,
   lessonCount,
   view,
   loadError,
 }: {
   dropletId: number;
   dropletName: string;
+  slug: string;
   lessonCount: number;
   view: ScanView;
   loadError?: boolean;
@@ -98,86 +108,98 @@ export function OverviewScanPage({
       "need attention",
       "border-[#fde68a] bg-[#fffbeb] text-[#b45309]",
     ],
-    [
-      counts.couldNotCheck,
-      "couldn't check",
-      "border-slate-200 bg-slate-50 text-slate-600",
-    ],
+    [counts.couldNotCheck, "couldn't check", NEUTRAL],
   ];
 
   const time = commentTime(ranAt ?? undefined);
 
   return (
     <div className="min-h-full">
-      <header className="border-b border-[#eaecf0] px-9 pt-[18px] pb-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[26px] font-semibold text-[#0f172a]">
+      <header className="flex flex-col gap-2.5 border-b border-[#eaecf0] px-9 pt-[18px] pb-4">
+        <Link
+          href={`/draft/d/${slug}`}
+          className={cn(
+            "flex w-fit items-center gap-1 rounded text-[13px] font-medium text-[#2d7597] hover:underline",
+            FOCUS,
+          )}
+        >
+          <IconArrowLeft size={14} aria-hidden="true" />
+          Back to draft
+        </Link>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-[26px] leading-[31px] font-bold text-[#0f172a]">
               Final Overview Scan
             </h1>
-            <p className="text-sm text-slate-500">
-              {dropletName} · {plural(view.checkCount, "check")} across the
-              droplet page and {plural(lessonCount, "lesson")}
+            <p className="text-sm text-[#475569]">
+              {ranAt ? (
+                <>
+                  {dropletName} · Last scanned{" "}
+                  <time dateTime={ranAt} suppressHydrationWarning>
+                    {time}
+                  </time>
+                  {ranBy && ` by ${ranBy}`}
+                </>
+              ) : (
+                `${dropletName} · ${plural(view.checkCount, "check")} across the droplet page and ${plural(lessonCount, "lesson")}`
+              )}
             </p>
           </div>
-          <button
-            type="button"
-            aria-disabled={pending}
-            onClick={run}
-            className={cn(
-              "inline-flex h-10 items-center gap-2 rounded-lg bg-[#2d7597] px-4 font-medium text-white hover:bg-[#255e78] focus-visible:ring-[3px] focus-visible:ring-[#2d7597]/35 focus-visible:outline-none",
-              pending && "cursor-not-allowed opacity-70",
+          <div className="flex flex-wrap items-center gap-2">
+            {pending && (
+              <span className={cn(PILL, NEUTRAL)}>
+                Checking {plural(view.checkCount, "check")}
+              </span>
             )}
-          >
+            {!pending && !ranAt && (
+              <span className={cn(PILL, NEUTRAL)}>Not run yet</span>
+            )}
             {!pending &&
-              (ranAt ? (
-                <IconRefresh size={16} aria-hidden="true" />
-              ) : (
-                <IconPlayerPlay size={16} aria-hidden="true" />
-              ))}
-            {pending ? "Running…" : ranAt ? "Run again" : "Run checks"}
-          </button>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-slate-600">
-          <p>
-            {ranAt ? (
-              <>
-                Last scanned{" "}
-                <time dateTime={ranAt} suppressHydrationWarning>
-                  {time}
-                </time>
-                {ranBy && ` by ${ranBy}`}
-              </>
-            ) : (
-              "Not run yet"
-            )}
-          </p>
-          {ranAt &&
-            pills.map(([n, text, look, always]) =>
-              always || n > 0 ? (
-                <span key={text} className={cn(PILL, look)}>
-                  {n} {text}
-                </span>
-              ) : null,
-            )}
+              ranAt &&
+              pills.map(([n, text, look, always]) =>
+                always || n > 0 ? (
+                  <span key={text} className={cn(PILL, look)}>
+                    {n} {text}
+                  </span>
+                ) : null,
+              )}
+            <button
+              type="button"
+              aria-disabled={pending}
+              onClick={run}
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-lg border border-[#2d7597] bg-[#2d7597] px-4 text-sm font-medium text-white shadow-[0_1px_2px_rgba(16,24,40,.05)] hover:bg-[#255e78]",
+                FOCUS,
+                pending && "cursor-not-allowed opacity-70",
+              )}
+            >
+              {!pending &&
+                (ranAt ? (
+                  <IconRefresh size={16} aria-hidden="true" />
+                ) : (
+                  <IconPlayerPlay size={16} aria-hidden="true" />
+                ))}
+              {pending ? "Running…" : ranAt ? "Run again" : "Run checks"}
+            </button>
+          </div>
         </div>
         {view.editedSince && (
-          <p className="mt-2 text-[13px] text-slate-600">
+          <p className={NOTE}>
             Edited since the last scan. Run checks again to see current results.
           </p>
         )}
         {view.checksChanged && (
-          <p className="mt-2 text-[13px] text-slate-600">
+          <p className={NOTE}>
             The checks changed since this scan. Run checks again to see every
             result.
           </p>
         )}
         {loadError && (
-          <p className="mt-2 text-[13px] text-red-700">
+          <p className="text-[13px] text-red-700">
             Couldn&apos;t load the last scan.
           </p>
         )}
-        <p role="alert" className="mt-2 text-[13px] text-red-700 empty:mt-0">
+        <p role="alert" className="text-[13px] text-red-700 empty:hidden">
           {error}
         </p>
         <p role="status" className="sr-only">
@@ -187,32 +209,38 @@ export function OverviewScanPage({
 
       <div className="grid grid-cols-1 gap-7 px-9 pt-5 pb-8 xl:grid-cols-[1fr_1.3fr_1fr] group-data-[review-panel=open]:xl:grid-cols-1">
         {view.columns.map((col) => (
-          <section key={col.group} aria-labelledby={`scan-col-${col.group}`}>
-            <div className="mb-1 flex items-baseline justify-between border-b border-[#eaecf0] px-2 pb-2">
+          <section
+            key={col.group}
+            aria-labelledby={`scan-col-${col.group}`}
+            className="flex flex-col gap-1"
+          >
+            <div className="flex items-baseline justify-between border-b border-[#eaecf0] px-2 pb-2 text-xs text-[#475569]">
               <h2
                 id={`scan-col-${col.group}`}
-                className="text-xs font-semibold tracking-[.06em] text-[#475569] uppercase"
+                className="font-semibold tracking-[.06em] uppercase"
               >
                 {col.title}
               </h2>
-              <span className="text-xs text-slate-500">
-                {plural(col.checks.length, "check")}
-              </span>
+              <span>{plural(col.checks.length, "check")}</span>
             </div>
             {col.checks.length ? (
-              <ul className="space-y-0.5">
+              <ul className="flex flex-col gap-1">
                 {col.checks.map((check) => (
                   <CheckRow key={check.id} check={check} running={pending} />
                 ))}
               </ul>
             ) : (
-              <p className="text-[13px] text-slate-500">
+              <p className="px-2 text-[13px] text-[#475569]">
                 No checks in this column yet.
               </p>
             )}
           </section>
         ))}
       </div>
+
+      <footer className="flex items-center gap-4 border-t border-[#eaecf0] px-9 py-3 text-xs text-[#475569]">
+        Rules version {view.rulesVersion} · {plural(view.ruleCount, "rule")}
+      </footer>
     </div>
   );
 }

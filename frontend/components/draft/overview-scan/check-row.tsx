@@ -5,17 +5,23 @@ import Link from "next/link";
 import { IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { STATUS_WORDS, plural } from "@/lib/overview-scan/view";
-import type { CheckView, FlagView } from "@/lib/overview-scan/view";
+import type { CheckView, FlagView, ViewStatus } from "@/lib/overview-scan/view";
+import { FOCUS } from "./focus";
 import { StatusCircle } from "./status-circle";
 
-const FOCUS =
-  "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#2d7597]/35";
+const TINT: Record<ViewStatus | "running", string> = {
+  pass: "text-[#15803d]",
+  warn: "text-[#b45309]",
+  unknown: "text-[#475569]",
+  "not-run": "text-[#344054]",
+  running: "text-[#344054]",
+};
 
 function FlagCard({ flag }: { flag: FlagView }) {
   return (
     <li
       className={cn(
-        "rounded-md border-l-[3px] px-2.5 py-[7px] text-[12.5px] text-[#475569]",
+        "flex flex-col gap-0.5 rounded-md border-l-[3px] px-2.5 py-1.5 text-[12.5px] leading-[17.5px] text-[#475569]",
         flag.severity === "warn"
           ? "border-l-[#f59e0b] bg-[#fffbeb]"
           : "border-l-[#94a3b8] bg-[#f8fafc]",
@@ -27,7 +33,7 @@ function FlagCard({ flag }: { flag: FlagView }) {
         <Link
           href={flag.href}
           className={cn(
-            "mt-1 inline-block rounded font-medium text-[#2d7597] hover:underline",
+            "w-fit rounded text-[13px] font-medium text-[#2d7597] hover:underline",
             FOCUS,
           )}
         >
@@ -54,8 +60,8 @@ export function CheckRow({
   return (
     <li
       className={cn(
-        "rounded-lg",
-        open && "bg-[#f9fafb] outline outline-1 outline-[#eaecf0]",
+        "rounded-lg border border-transparent",
+        open && "border-[#eaecf0] bg-[#f9fafb]",
       )}
     >
       <h3>
@@ -65,12 +71,12 @@ export function CheckRow({
           aria-controls={detailsId}
           onClick={() => setOpen((o) => !o)}
           className={cn(
-            "flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left hover:bg-slate-100",
+            "flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left text-sm leading-[21px] hover:bg-slate-100",
             FOCUS,
           )}
         >
           <StatusCircle status={status} />
-          <span className="flex-1 font-medium text-[#344054]">
+          <span className={cn("flex-1 font-medium", TINT[status])}>
             {check.title}
           </span>
           <span className="sr-only">, </span>
@@ -94,14 +100,23 @@ export function CheckRow({
           />
         </button>
       </h3>
-      <div id={detailsId} hidden={!open} className="pr-3 pb-3 pl-[38px]">
+      <div
+        id={detailsId}
+        hidden={!open}
+        className="flex flex-col gap-1.5 pr-3 pb-3 pl-[38px]"
+      >
         <p className="text-[13px] text-[#475569]">{check.description}</p>
-        <p className="mt-1 text-xs text-[#475569]">Looks at: {check.scope}</p>
-        <ul className="mt-2 space-y-2">
+        <p className="text-xs text-[#475569]">Looks at: {check.scope}</p>
+        <ul className="flex flex-col gap-2 pt-1">
           {check.rules.map((rule) => (
             <li key={rule.id}>
-              <div className="flex items-start gap-2 text-[13px] text-[#344054]">
-                <span className="mt-0.5">
+              <div
+                className={cn(
+                  "flex items-start gap-2 text-[13px] leading-[18.2px]",
+                  TINT[running ? "running" : rule.status],
+                )}
+              >
+                <span className="pt-0.5">
                   <StatusCircle
                     status={running ? "running" : rule.status}
                     small
@@ -116,7 +131,7 @@ export function CheckRow({
                 </span>
               </div>
               {rule.flags.length > 0 && (
-                <ul className="mt-1.5 ml-[23px] space-y-1.5">
+                <ul className="flex flex-col gap-1.5 pt-1.5 pb-0.5 pl-[23px]">
                   {rule.flags.map((flag, i) => (
                     <FlagCard key={i} flag={flag} />
                   ))}
@@ -125,9 +140,7 @@ export function CheckRow({
             </li>
           ))}
         </ul>
-        {check.note && (
-          <p className="mt-2 text-xs text-[#475569]">{check.note}</p>
-        )}
+        {check.note && <p className="text-xs text-[#475569]">{check.note}</p>}
       </div>
     </li>
   );
