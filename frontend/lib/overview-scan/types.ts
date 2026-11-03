@@ -24,6 +24,7 @@ export type ScanBlock = BlockBase &
     | { type: "video"; url: string }
     | { type: "list"; items: readonly string[] } // consecutive list items, one block
     | { type: "callout"; text: string }
+    | { type: "table"; rows: readonly (readonly string[])[] } // cell text, row by row
     | {
         type: "quiz-mc"; // one per question; legacy true/false stays quiz-mc
         question: string;
@@ -151,6 +152,12 @@ export type OverviewScan = {
   droplet?: { id: number; documentId?: string } | null; // when populated
   ranBy?: { id: number; documentId?: string } | null; // when populated
 };
+
+/** What runChecks returns (ODY-790): a scan before it's saved. */
+export type ScanResult = Pick<
+  OverviewScan,
+  "rulesVersion" | "passed" | "needsAttention" | "couldNotCheck" | "results"
+>;
 
 export function flag(
   part: ScanPart,
