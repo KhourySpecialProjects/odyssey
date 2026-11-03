@@ -105,6 +105,16 @@ describe("OverviewScanPage", () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    [true, 1],
+    [false, 0],
+  ])("with editedSince %s shows the note %i times", (editedSince, count) => {
+    renderPage({ ...viewOf(saved()), editedSince });
+    expect(screen.queryAllByText(/Edited since the last scan/)).toHaveLength(
+      count,
+    );
+  });
+
   it("shows the checks-changed note and the load error", () => {
     renderPage(viewOf(saved({ rulesVersion: "old" })), true);
     expect(

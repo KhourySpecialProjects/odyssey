@@ -22,7 +22,7 @@ export default async function ScanPage({ params }: Props) {
 
   const [scan, fresh] = await Promise.all([
     getLatestOverviewScan(droplet.id),
-    getDropletById<Pick<Droplet, "lessons">>(
+    getDropletById<Pick<Droplet, "lessons" | "updatedAt">>(
       droplet.id,
       {
         fields: ["updatedAt"],
@@ -43,6 +43,7 @@ export default async function ScanPage({ params }: Props) {
     checks: CHECKS,
     scan: scan.data,
     lessons,
+    dropletUpdatedAt: fresh.updatedAt,
     slug,
   });
 

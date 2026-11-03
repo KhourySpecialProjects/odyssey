@@ -36,6 +36,9 @@ export const DROPLET_SECTIONS: Record<string, string> = {
   "fun-fact": "Fun fact",
 };
 
+/** The element id on the droplet page that a flag's link scrolls to. */
+export const scanSectionId = (blockId: string) => `scan-${blockId}`;
+
 export type FlagView = {
   label: string;
   message: string;
@@ -69,10 +72,16 @@ export type ScanView = {
   ranAt: string | null;
   ranBy: string | null;
   checksChanged: boolean;
+  editedSince: boolean;
 };
 
 /** The droplet's lessons, in order. */
-export type ViewLesson = { id: number; name: string; slug: string };
+export type ViewLesson = {
+  id: number;
+  name: string;
+  slug: string;
+  updatedAt?: string;
+};
 
 export const plural = (n: number, word: string) =>
   `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -87,7 +96,7 @@ function flagView(flag: Flag, lessons: ViewLesson[], slug: string): FlagView {
       label: section ? `Droplet page · ${section}` : "Droplet page",
       message,
       severity,
-      href: `/draft/d/${slug}`,
+      href: `/draft/d/${slug}${section ? `#${scanSectionId(flag.blockId!)}` : ""}`,
       linkText: "Go to droplet page",
     };
   }
@@ -116,11 +125,13 @@ export function buildScanView({
   checks,
   scan,
   lessons,
+  dropletUpdatedAt,
   slug,
 }: {
   checks: readonly Check[];
   scan: OverviewScan | null;
   lessons: ViewLesson[];
+  dropletUpdatedAt?: string;
   slug: string;
 }): ScanView {
   const saved = new Map((scan?.results ?? []).map((r) => [r.id, r]));
@@ -179,5 +190,21 @@ export function buildScanView({
     ranAt: scan?.ranAt ?? null,
     ranBy: name || null,
     checksChanged: !!scan && (scan.rulesVersion !== RULES_VERSION || missing),
+    // Lock heartbeats bump updatedAt, so this can show falsely; deleting an unflagged
+    // lesson is missed (ODY-878).
+    editedSince:
+      !!scan &&
+      ([dropletUpdatedAt, ...lessons.map((l) => l.updatedAt)].some(
+        (t) => !!t && Date.parse(t) > Date.parse(scan.ranAt),
+      ) ||
+        scan.results.some((c) =>
+          c.rules.some((r) =>
+            r.flags.some(
+              (f) =>
+                f.partId !== "droplet" &&
+                !lessons.some((l) => String(l.id) === f.partId),
+            ),
+          ),
+        )),
   };
 }

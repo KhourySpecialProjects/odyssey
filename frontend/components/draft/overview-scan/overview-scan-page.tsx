@@ -161,6 +161,11 @@ export function OverviewScanPage({
               ) : null,
             )}
         </div>
+        {view.editedSince && (
+          <p className="mt-2 text-[13px] text-slate-600">
+            Edited since the last scan. Run checks again to see current results.
+          </p>
+        )}
         {view.checksChanged && (
           <p className="mt-2 text-[13px] text-slate-600">
             The checks changed since this scan. Run checks again to see every

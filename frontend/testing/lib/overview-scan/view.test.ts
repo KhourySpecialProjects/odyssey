@@ -1,5 +1,5 @@
 import { RULES_VERSION } from "@/lib/overview-scan/config";
-import { buildScanView } from "@/lib/overview-scan/view";
+import { DROPLET_SECTIONS, buildScanView } from "@/lib/overview-scan/view";
 import type {
   Check,
   CheckResult,
@@ -206,7 +206,7 @@ describe("buildScanView", () => {
       "a mapped section",
       flag("droplet", "tags"),
       "Droplet page · Tags and difficulty",
-      "/draft/d/drop",
+      "/draft/d/drop#scan-tags",
     ],
     [
       "an unmapped section",
@@ -233,5 +233,66 @@ describe("buildScanView", () => {
           : "Go to lesson",
     );
     expect(v.columns[0].checks[0].flagCount).toBe(1);
+  });
+
+  // The scan ran at 15:04 UTC.
+  it.each([
+    ["the droplet is newer", "2026-11-03T16:00:00.000Z", [], true],
+    [
+      "one lesson is newer",
+      "2026-11-03T10:00:00.000Z",
+      ["2026-11-03T10:00:00.000Z", "2026-11-03T16:00:00.000Z"],
+      true,
+    ],
+    [
+      "all are older or equal",
+      "2026-11-03T15:04:00.000Z",
+      ["2026-11-03T09:00:00.000Z"],
+      false,
+    ],
+    ["nothing has a date", undefined, [undefined], false],
+  ])("editedSince when %s", (_n, dropletUpdatedAt, lessonDates, expected) => {
+    const lessons = lessonDates.map((updatedAt, i) => ({
+      id: i,
+      name: "L",
+      slug: "l",
+      updatedAt,
+    }));
+    const args = { checks: CHECKS, lessons, dropletUpdatedAt, slug: "drop" };
+    expect(buildScanView({ ...args, scan: scanOf([]) }).editedSince).toBe(
+      expected,
+    );
+  });
+
+  it("says edited since when a flagged lesson no longer exists", () => {
+    const v = build(
+      scanOf([result("c1", "warn", [ruleResult("a", "warn", [flag("99")])])]),
+    );
+    expect(v.editedSince).toBe(true);
+  });
+
+  // The droplet blockIds in rules/{structure,media,content}.ts.
+  it.each([
+    "overview",
+    "objectives",
+    "prerequisites",
+    "next-steps",
+    "description",
+    "tags",
+    "datasets",
+    "fun-fact",
+  ])("has a section for the %s flag target", (id) => {
+    expect(DROPLET_SECTIONS).toHaveProperty([id]);
+  });
+
+  it("never says edited since when there is no scan", () => {
+    const v = buildScanView({
+      checks: CHECKS,
+      scan: null,
+      lessons: [],
+      dropletUpdatedAt: "2030-01-01T00:00:00.000Z",
+      slug: "drop",
+    });
+    expect(v.editedSince).toBe(false);
   });
 });
