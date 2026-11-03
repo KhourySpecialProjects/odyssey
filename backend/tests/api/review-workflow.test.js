@@ -166,6 +166,32 @@ describe('POST /droplets/:id/submit-review', () => {
     expect(reviews[0].scores).toHaveLength(1);
   });
 
+  it.each([
+    ['only a reviewer-less review', []],
+    ['a real reviewer too', [{ state: 'sent' }]],
+  ])('does not carry a reviewer-less sent review (%s)', async (_label, reviews) => {
+    const { draft } = await setupReviewDraft({ inReview: true, reviews });
+    const backfill = await strapi.documents(REVIEW_UID).create({
+      data: reviewData({
+        key: `${draft.id}:0:1`,
+        round: 1,
+        state: 'sent',
+        droplet: draft.documentId,
+      }),
+    });
+    await withdraw(draft);
+
+    const res = await post(draft.id, 'submit-review');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ round: 2, changed: true });
+    expect(res.body.data.reviewsCarried).toBe(reviews.length);
+    const after = await reviewsOf(draft.id);
+    expect(after.map((r) => r.key)).not.toContain(`${draft.id}:0:2`);
+    const kept = after.find((r) => r.id === backfill.id);
+    expect(kept).toMatchObject({ key: `${draft.id}:0:1`, round: 1, state: 'sent' });
+  });
+
   it('copies unresolved comments into a new open review after Send', async () => {
     const { draft, lesson, made } = await setupReviewDraft({
       inReview: true,
