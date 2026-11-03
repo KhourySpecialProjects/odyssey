@@ -174,7 +174,6 @@ export function ReviewPanel({
         <AiStatusBar
           state={barState}
           counts={counts}
-          finishedAt={run?.finishedAt}
           onStart={onStart}
           starting={starting}
           criteriaCount={panel.criteria.length}

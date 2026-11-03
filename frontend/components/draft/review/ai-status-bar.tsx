@@ -13,24 +13,6 @@ const LEGEND = [
   { band: "unscored", label: "Not scored", glyph: "" },
 ] as const;
 
-/** "3 hours ago", from an ISO time */
-function ago(iso: string, now = Date.now()): string | null {
-  const seconds = (new Date(iso).getTime() - now) / 1000;
-  if (Number.isNaN(seconds)) return null;
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-  const steps: [Intl.RelativeTimeFormatUnit, number][] = [
-    ["day", 86400],
-    ["hour", 3600],
-    ["minute", 60],
-  ];
-  for (const [unit, size] of steps) {
-    if (Math.abs(seconds) >= size) {
-      return rtf.format(Math.round(seconds / size), unit);
-    }
-  }
-  return "just now";
-}
-
 const joinNames = (names: string[]) =>
   names.length < 2
     ? names[0] ?? ""
@@ -69,14 +51,12 @@ function Bar({
 export function AiStatusBar({
   state,
   counts,
-  finishedAt,
   onStart,
   starting = false,
   criteriaCount,
 }: {
   state: AiBarState;
   counts: { confirmed: number; total: number };
-  finishedAt?: string | null;
   onStart?: () => void;
   /** A start request is in flight */
   starting?: boolean;
@@ -128,7 +108,6 @@ export function AiStatusBar({
     );
   };
   const scored = state.kind === "scored" || state.kind === "partial";
-  const scoredAgo = finishedAt ? ago(finishedAt) : null;
 
   return (
     <div>
@@ -199,20 +178,6 @@ export function AiStatusBar({
             </span>
             {link("Run again")}
           </div>
-          <div className="mt-1.5">
-            <Bar
-              value={counts.confirmed}
-              max={counts.total}
-              label="Confirmed scores"
-            />
-          </div>
-          {scoredAgo && (
-            <p className="mt-1 text-[11px] text-[#667085]">
-              Scored by AI {scoredAgo}.
-              {onStart &&
-                " Run again replaces only scores you haven't confirmed or changed."}
-            </p>
-          )}
         </div>
       )}
       {state.kind === "failed" && (

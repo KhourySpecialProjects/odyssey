@@ -98,9 +98,9 @@ describe("footer", () => {
     );
 
     expect(publish()).toHaveAttribute("aria-disabled", "true");
-    expect(
-      screen.getByText(/Confirm the Overall Score to publish/),
-    ).toBeInTheDocument();
+    const help = screen.getByText(/Confirm the Overall Score to publish/);
+    expect(help).toHaveClass("sr-only");
+    expect(publish()).toHaveAccessibleDescription(help.textContent ?? "");
 
     rerender(
       <ReviewTranscript
