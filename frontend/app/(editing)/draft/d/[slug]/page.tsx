@@ -35,6 +35,7 @@ import { OverviewReview } from "@/components/draft/review/overview-review";
 import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
 import { getAuthorNames } from "@/lib/requests/droplet-authors";
 import { IconLock } from "@tabler/icons-react";
+import { scanSectionId } from "@/lib/overview-scan/view";
 
 const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
 
@@ -213,7 +214,10 @@ export default async function Droplet({ params }: Props) {
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
         <div className="px-40 group-data-[review-panel=open]:px-12">
-          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+          <div
+            id={scanSectionId("tags")}
+            className="flex flex-0 scroll-mt-28 flex-row flex-wrap gap-1.5"
+          >
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
@@ -266,40 +270,57 @@ export default async function Droplet({ params }: Props) {
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <Description
+            <div id={scanSectionId("description")} className="scroll-mt-28">
+              <Description
+                dropletId={droplet.id}
+                initialContent={droplet.description ?? ""}
+              />
+            </div>
+            <div id={scanSectionId("overview")} className="scroll-mt-28">
+              <Overview
+                dropletId={droplet.id}
+                initialContent={droplet.overview ?? ""}
+              />
+            </div>
+          </div>
+
+          <div id={scanSectionId("objectives")} className="scroll-mt-28">
+            <LearningObjectives
               dropletId={droplet.id}
-              initialContent={droplet.description ?? ""}
-            />
-            <Overview
-              dropletId={droplet.id}
-              initialContent={droplet.overview ?? ""}
+              learningObjectives={droplet.learningObjectives}
             />
           </div>
 
-          <LearningObjectives
-            dropletId={droplet.id}
-            learningObjectives={droplet.learningObjectives}
-          />
+          <div id={scanSectionId("next-steps")} className="scroll-mt-28">
+            <NextSteps
+              dropletId={droplet.id}
+              nextSteps={droplet.nextSteps ?? []}
+            />
+          </div>
 
-          <NextSteps
-            dropletId={droplet.id}
-            nextSteps={droplet.nextSteps ?? []}
-          />
+          <div id={scanSectionId("prerequisites")} className="scroll-mt-28">
+            <GeneralInfo
+              dropletId={droplet.id}
+              droplets={droplets}
+              prerequisites={droplet.prerequisites ?? []}
+              postrequisites={droplet.postrequisites ?? []}
+            />
+          </div>
 
-          <GeneralInfo
-            dropletId={droplet.id}
-            droplets={droplets}
-            prerequisites={droplet.prerequisites ?? []}
-            postrequisites={droplet.postrequisites ?? []}
-          />
+          <div id={scanSectionId("fun-fact")} className="scroll-mt-28">
+            <FunFactEditor
+              funFact={droplet.funFact ?? ""}
+              generateFact={generateFunFact}
+              deleteFact={deleteFunFact}
+            />
+          </div>
 
-          <FunFactEditor
-            funFact={droplet.funFact ?? ""}
-            generateFact={generateFunFact}
-            deleteFact={deleteFunFact}
-          />
-
-          <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
+          <div id={scanSectionId("datasets")} className="scroll-mt-28">
+            <Datasets
+              dropletId={droplet.id}
+              datasets={droplet.datasets ?? []}
+            />
+          </div>
         </div>
         <div className="pb-16" />
       </div>
