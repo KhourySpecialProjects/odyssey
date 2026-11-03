@@ -1,0 +1,237 @@
+import { RULES_VERSION } from "@/lib/overview-scan/config";
+import { buildScanView } from "@/lib/overview-scan/view";
+import type {
+  Check,
+  CheckResult,
+  Flag,
+  OverviewScan,
+  RuleResult,
+} from "@/lib/overview-scan/types";
+
+const rule = (id: string) => ({ id, text: `Rule ${id}`, run: () => [] });
+const check = (id: string, group: Check["group"], ruleIds = ["a"]): Check => ({
+  id,
+  group,
+  title: `Check ${id}`,
+  description: "d",
+  scope: "s",
+  rules: ruleIds.map(rule),
+});
+const flag = (partId: string, blockId: string | null = null): Flag => ({
+  partId,
+  blockId,
+  message: "msg",
+  severity: "warn",
+});
+const ruleResult = (
+  id: string,
+  status: RuleResult["status"],
+  flags: Flag[] = [],
+): RuleResult => ({ id, status, flags });
+const result = (
+  id: string,
+  status: CheckResult["status"],
+  rules: RuleResult[] = [ruleResult("a", status)],
+): CheckResult => ({ id, status, rules });
+const scanOf = (
+  results: CheckResult[],
+  overrides: Partial<OverviewScan> = {},
+): OverviewScan => ({
+  id: 1,
+  ranAt: "2026-11-03T15:04:00.000Z",
+  rulesVersion: RULES_VERSION,
+  passed: 0,
+  needsAttention: 0,
+  couldNotCheck: 0,
+  results,
+  ranBy: { id: 2, firstName: "Ada", lastName: "Lovelace" },
+  ...overrides,
+});
+
+const CHECKS = [
+  check("c1", "content"),
+  check("s1", "structure"),
+  check("s2", "structure"),
+  check("m1", "media"),
+];
+const LESSONS = [
+  { id: 11, name: "First", slug: "first" },
+  { id: 12, name: "Second", slug: "second" },
+];
+const build = (scan: OverviewScan | null, checks: readonly Check[] = CHECKS) =>
+  buildScanView({ checks, scan, lessons: LESSONS, slug: "drop" });
+const allChecks = (v: ReturnType<typeof build>) =>
+  v.columns.flatMap((c) => c.checks);
+
+describe("buildScanView", () => {
+  it("shows every check as not run when there is no scan", () => {
+    const v = build(null);
+    expect(allChecks(v).map((c) => c.status)).toEqual(Array(4).fill("not-run"));
+    expect(v.counts).toEqual({
+      passed: 0,
+      needsAttention: 0,
+      couldNotCheck: 0,
+    });
+    expect(v).toMatchObject({
+      checksChanged: false,
+      ranAt: null,
+      ranBy: null,
+      checkCount: 4,
+    });
+  });
+
+  it("counts statuses from the rows and names who ran it", () => {
+    const v = build(
+      scanOf([
+        result("c1", "pass"),
+        result("s1", "warn"),
+        result("s2", "unknown"),
+        result("m1", "pass"),
+      ]),
+    );
+    expect(v.counts).toEqual({
+      passed: 2,
+      needsAttention: 1,
+      couldNotCheck: 1,
+    });
+    expect(v.ranBy).toBe("Ada Lovelace");
+    expect(v.checksChanged).toBe(false);
+  });
+
+  it.each([
+    ["no relation", null, null],
+    ["empty names", { id: 2, firstName: null, lastName: "" }, null],
+    ["first name only", { id: 2, firstName: "Ada" }, "Ada"],
+  ])("ranBy with %s", (_n, ranBy, expected) => {
+    expect(build(scanOf([], { ranBy })).ranBy).toBe(expected);
+  });
+
+  it("lists the columns in order, keeping an empty one", () => {
+    const v = build(null, [check("s1", "structure"), check("m1", "media")]);
+    expect(v.columns.map((c) => [c.group, c.checks.length])).toEqual([
+      ["content", 0],
+      ["structure", 1],
+      ["media", 1],
+    ]);
+    expect(v.columns.map((c) => c.title)).toEqual([
+      "Content",
+      "Structure",
+      "Media and accessibility",
+    ]);
+  });
+
+  it("marks a check with no saved result not run and flags a change", () => {
+    const v = build(
+      scanOf([
+        result("c1", "pass"),
+        result("s1", "pass"),
+        result("s2", "pass"),
+      ]),
+    );
+    expect(allChecks(v).map((c) => c.status)).toEqual([
+      "pass",
+      "pass",
+      "pass",
+      "not-run",
+    ]);
+    expect(v.counts.passed).toBe(3);
+    expect(v.checksChanged).toBe(true);
+  });
+
+  it("flags a change when a saved check lacks a current rule", () => {
+    const two = [check("c1", "content", ["a", "b"])];
+    const v = build(scanOf([result("c1", "pass")]), two);
+    expect(v.checksChanged).toBe(true);
+    expect(v.columns[0].checks[0].rules.map((r) => r.status)).toEqual([
+      "pass",
+      "not-run",
+    ]);
+  });
+
+  it("flags a rulesVersion mismatch", () => {
+    const all = CHECKS.map((c) => result(c.id, "pass"));
+    expect(build(scanOf(all, { rulesVersion: "old" })).checksChanged).toBe(
+      true,
+    );
+  });
+
+  it("drops saved checks and rules the checks no longer have", () => {
+    const v = build(
+      scanOf([
+        ...CHECKS.map((c) =>
+          c.id === "c1"
+            ? result("c1", "warn", [
+                ruleResult("a", "warn"),
+                ruleResult("gone", "warn", [flag("11")]),
+              ])
+            : result(c.id, "pass"),
+        ),
+        result("removed", "warn"),
+      ]),
+    );
+    expect(allChecks(v).map((c) => c.id)).toEqual(["c1", "s1", "s2", "m1"]);
+    expect(allChecks(v)[0].rules.map((r) => r.id)).toEqual(["a"]);
+    expect(v.counts).toEqual({
+      passed: 3,
+      needsAttention: 1,
+      couldNotCheck: 0,
+    });
+  });
+
+  it("sorts rules warn, unknown, pass, not run, keeping order within a status", () => {
+    const c = check("c1", "content", ["p1", "w1", "n1", "u1", "w2"]);
+    const v = build(
+      scanOf([
+        result("c1", "warn", [
+          ruleResult("p1", "pass"),
+          ruleResult("w1", "warn"),
+          ruleResult("u1", "unknown"),
+          ruleResult("w2", "warn"),
+        ]),
+      ]),
+      [c],
+    );
+    expect(v.columns[0].checks[0].rules.map((r) => r.id)).toEqual([
+      "w1",
+      "w2",
+      "u1",
+      "p1",
+      "n1",
+    ]);
+  });
+
+  it.each([
+    ["a lesson", flag("12", "b1"), "Lesson 2 · Second", "/draft/d/drop/second"],
+    [
+      "a mapped section",
+      flag("droplet", "tags"),
+      "Droplet page · Tags and difficulty",
+      "/draft/d/drop",
+    ],
+    [
+      "an unmapped section",
+      flag("droplet", "zzz"),
+      "Droplet page",
+      "/draft/d/drop",
+    ],
+    ["no block", flag("droplet"), "Droplet page", "/draft/d/drop"],
+    ["a deleted lesson", flag("99"), "Deleted lesson", null],
+  ])("builds the card for %s", (_n, f, label, href) => {
+    const v = build(
+      scanOf([
+        result("c1", "warn", [ruleResult("a", "warn", [f])]),
+        ...CHECKS.slice(1).map((c) => result(c.id, "pass")),
+      ]),
+    );
+    const card = v.columns[0].checks[0].rules[0].flags[0];
+    expect(card).toMatchObject({ label, href, message: "msg" });
+    expect(card.linkText).toBe(
+      href === null
+        ? null
+        : f.partId === "droplet"
+          ? "Go to droplet page"
+          : "Go to lesson",
+    );
+    expect(v.columns[0].checks[0].flagCount).toBe(1);
+  });
+});

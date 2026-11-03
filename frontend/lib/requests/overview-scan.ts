@@ -162,6 +162,7 @@ export async function getLatestOverviewScan(
           filters: { droplet: { id: { $eq: dropletId } } },
           sort: ["ranAt:desc", "id:desc"],
           pagination: { pageSize: 1 },
+          populate: { ranBy: { fields: ["firstName", "lastName"] } },
         },
         next: { tags: [CACHE_TAGS.overviewScan(dropletId)], revalidate: 900 },
       });

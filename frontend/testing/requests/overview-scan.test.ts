@@ -275,6 +275,7 @@ describe("getLatestOverviewScan", () => {
         filters: { droplet: { id: { $eq: 7 } } },
         sort: ["ranAt:desc", "id:desc"],
         pagination: { pageSize: 1 },
+        populate: { ranBy: { fields: ["firstName", "lastName"] } },
       },
       next: { tags: ["overview-scan-7"] },
     });
