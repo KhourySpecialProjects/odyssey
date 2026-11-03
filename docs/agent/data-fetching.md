@@ -249,6 +249,7 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 - **Rules and types import it with `import type`**, so they never load `node:http`.
 - **Results:** `loaded`, `broken` (4xx/5xx, or `status: null` when the host doesn't exist), `refused` (bad scheme, not a URL, or a private address) and `unchecked` (timeout, the scan's 20 s budget, 429, too many redirects, network errors). `fetchUrl` never rejects.
 - **Overview scan rules** (`lib/overview-scan/rules/`, ODY-793) take `fetchUrl` as an argument and never create a fetcher. A URL that couldn't be checked is an `"unknown"` flag (gray), never `"warn"`. Rules fetch all their URLs at once (`Promise.all`) and report in document order; the fetcher's queue and budget bound the network. Odyssey's own pages, `mailto:` and `tel:` links aren't fetched, and relative file URLs (local `/uploads/`) are reported as couldn't check.
+- **Running a scan** (ODY-790): read the droplet and its lessons fresh, then call `buildScanDocument(droplet, lessons)` (`lib/overview-scan/snapshot.ts`) and `runChecks(doc, CHECKS, fetchUrl)` (`run.ts`, `checks.ts`). `ScanSourceDroplet` lists the droplet fields to populate, and lessons go in the order a learner takes them. The snapshot reads BlockNote `blocksV2` directly, never through `convertBlockNoteToV1Blocks`, which drops image captions. A rule that throws is reported as couldn't check. Change `RULES_VERSION` in `config.ts` whenever a rule or a limit changes.
 
 ## Common Mistakes
 

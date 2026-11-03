@@ -1,8 +1,12 @@
 import { RUNNABLE_LANGUAGES } from "@/lib/code-languages";
 
+// Saved with every scan (ODY-788). Change it whenever a rule or a limit below
+// changes, so a result from older rules can be told apart.
+export const RULES_VERSION = "2026-11-03";
+
 // Every limit and list the scan's rules use, with the prototype's key names.
-// ODY-793 added the media keys; ODY-790 adds the rest and RULES_VERSION.
-// Never import network.ts here: it's server only.
+// Each check's ticket adds its own keys. Never import network.ts here: it's
+// server only.
 export const CONFIG = {
   maxHeadingWords: 12,
   maxImageBytes: 2 * 1024 * 1024,
