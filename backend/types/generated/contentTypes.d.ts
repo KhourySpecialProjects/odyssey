@@ -1503,6 +1503,71 @@ export interface ApiNoteNote extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiOverviewScanOverviewScan
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'overview_scans';
+  info: {
+    description: '';
+    displayName: 'Overview Scan';
+    pluralName: 'overview-scans';
+    singularName: 'overview-scan';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    couldNotCheck: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::overview-scan.overview-scan'
+    > &
+      Schema.Attribute.Private;
+    needsAttention: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    passed: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    publishedAt: Schema.Attribute.DateTime;
+    ranAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    ranBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    results: Schema.Attribute.JSON & Schema.Attribute.Required;
+    rulesVersion: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiPlaylistPlaylist extends Struct.CollectionTypeSchema {
   collectionName: 'playlists';
   info: {
@@ -2574,6 +2639,7 @@ declare module '@strapi/strapi' {
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
       'api::note.note': ApiNoteNote;
+      'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
       'api::review-comment.review-comment': ApiReviewCommentReviewComment;

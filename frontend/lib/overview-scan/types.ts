@@ -100,6 +100,39 @@ export type Check = {
   rules: readonly Rule[];
 };
 
+/** A rule's or a check's outcome: passed, needs attention, couldn't check. */
+export type ScanStatus = "pass" | "warn" | "unknown";
+
+export type RuleResult = {
+  id: string; // unique only within its check, so a rule is always read under its check
+  status: ScanStatus;
+  flags: readonly Flag[];
+};
+
+/** A check takes its worst rule's status: warn, then unknown, then pass. */
+export type CheckResult = {
+  id: string;
+  status: ScanStatus;
+  rules: readonly RuleResult[]; // in the check's rule order
+};
+
+/**
+ * One saved run of the scan: a row of the `overview-scan` Strapi type
+ * (ODY-788). The three counts are of checks, so they add up to the number run.
+ */
+export type OverviewScan = {
+  id: number;
+  documentId?: string;
+  ranAt: string; // ISO datetime
+  rulesVersion: string;
+  passed: number;
+  needsAttention: number;
+  couldNotCheck: number;
+  results: readonly CheckResult[]; // in check order
+  droplet?: { id: number; documentId?: string } | null; // when populated
+  ranBy?: { id: number; documentId?: string } | null; // when populated
+};
+
 export function flag(
   part: ScanPart,
   blockId: string | null,
