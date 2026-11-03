@@ -702,7 +702,7 @@ describe("Droplet API Functions", () => {
           body: JSON.stringify({
             data: {
               name: "Test Tag",
-              slug: "TestTag",
+              slug: "pending~slug",
             },
           }),
         }),
@@ -752,7 +752,7 @@ describe("Droplet API Functions", () => {
           body: JSON.stringify({
             data: {
               name: "Test Droplet",
-              slug: "random",
+              slug: "pending~slug",
               focusArea: "Test Area",
               type: "test",
               tags: {

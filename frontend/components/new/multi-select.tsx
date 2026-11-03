@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -46,6 +47,14 @@ export function MultiSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [tagName, setTagName] = useState("");
+  const [search, setSearch] = useState("");
+  // Tags made here, listed until the page reloads `items` (ODY-869)
+  const [createdItems, setCreatedItems] = useState<MultiSelectItem[]>([]);
+  const options = [
+    ...items,
+    ...createdItems.filter((c) => !items.some((i) => i.id === c.id)),
+  ];
+  const canAddTag = label === "Tags";
   const onOpenChange = (open: boolean) => {
     if (!open) {
       setIsOpen(false);
@@ -56,14 +65,15 @@ export function MultiSelect({
 
   const handleNewTag = async () => {
     try {
-      if (tagName) {
+      if (tagName.trim()) {
         const result = await createNewTag(tagName);
         if (result.success && result.data) {
+          setCreatedItems([...createdItems, result.data]);
           setSelected([...selected, result.data]);
           toast.success("Tag created successfully");
         } else {
           console.error("Failed to create tag", result.error);
-          toast.error(`"${tagName} tag already exists"`);
+          toast.error(result.error ?? "Couldn't create the tag");
         }
         setIsOpen(false);
         setTagName("");
@@ -134,10 +144,15 @@ export function MultiSelect({
         </PopoverTrigger>
         <PopoverContent className="p-0" align={align}>
           <Command>
-            <CommandInput placeholder={label} />
+            <CommandInput
+              placeholder={label}
+              value={search}
+              onValueChange={setSearch}
+            />
             <CommandList>
+              <CommandEmpty>No matches</CommandEmpty>
               <CommandGroup>
-                {items.map((option) => {
+                {options.map((option) => {
                   const isSelected =
                     selected.filter((item) => item.id === option.id).length > 0;
 
@@ -168,34 +183,41 @@ export function MultiSelect({
                     </CommandItem>
                   );
                 })}
-                <div
-                  className={`flex pt-3 ${label === "Tags" ? "visibility: visible" : "visibility: hidden"}`}
-                  onClick={() => setIsOpen(true)}
-                >
-                  <Plus size={20} />
-                  Add Tag
-                </div>
-                <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                  <DialogContent className="sm:max-w-[250px]">
-                    <DialogHeader>
-                      <DialogTitle>Enter the name of your new tag</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="mt-4 flex flex-col gap-4">
-                      <Input
-                        id="name"
-                        value={tagName}
-                        onChange={(e) => setTagName(e.target.value)}
-                        placeholder="Enter new tag name"
-                        className="max-w-xl"
-                      />
-                      <Button onClick={handleNewTag}>Save</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </CommandGroup>
             </CommandList>
+            {/* Outside the list, so it stays when the search matches no tag */}
+            {canAddTag && (
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 border-t border-slate-200 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                onClick={() => {
+                  setTagName(search.trim());
+                  setIsOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add Tag
+              </button>
+            )}
           </Command>
+          <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[250px]">
+              <DialogHeader>
+                <DialogTitle>Enter the name of your new tag</DialogTitle>
+              </DialogHeader>
+
+              <div className="mt-4 flex flex-col gap-4">
+                <Input
+                  id="name"
+                  value={tagName}
+                  onChange={(e) => setTagName(e.target.value)}
+                  placeholder="Enter new tag name"
+                  className="max-w-xl"
+                />
+                <Button onClick={handleNewTag}>Save</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </PopoverContent>
       </Popover>
     </>
