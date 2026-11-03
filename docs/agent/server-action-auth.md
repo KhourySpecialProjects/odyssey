@@ -60,6 +60,10 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
 
 `"unauthenticated"` or `"forbidden"` from the gate, plus `"in_review"` (`REVIEW_FROZEN_ERROR` in `lib/review-roles.ts`) when the droplet is frozen for the caller. The lesson editor, `useDropletUpdate` and the fun fact generator read `"in_review"` to show the freeze message; nothing else reads the error text. The review checks can also return `"Not Found"` and `"Could not verify edit access."` (a failed lookup fails closed).
 
+## Overview scan
+
+`runOverviewScan` and `getLatestOverviewScan` (ODY-794) let in an author or a System Admin, Faculty or Content Editor, and ignore the review freeze, since a scan never writes the droplet. A refused caller costs one fresh ownership read and no rate-limit slot.
+
 ## Review freeze
 
 While a droplet is in review, every one of its authors (any role, System Admin included) can read the draft but not change, review or publish it. Only a reviewer who isn't an author reviews it. Editing reopens when the reviewer sends feedback, when it's published, or when an author withdraws it (`withdrawFromReview`).

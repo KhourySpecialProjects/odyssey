@@ -281,6 +281,11 @@ const REVIEW_PANEL_ROUTES = routes([
   ["GET", /^\/ai-scoring-runs$/, list(ent(4, { runState: "done" }))],
 ]);
 
+const OVERVIEW_SCAN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
+  ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
+]);
+
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -292,6 +297,7 @@ const call = <T extends Mod>(
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
   "ai-scoring": "@/lib/requests/ai-scoring",
+  "overview-scan": "@/lib/requests/overview-scan",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
   "authorized-user": "@/lib/requests/authorized-user",
@@ -750,6 +756,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
     call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
   ]),
+  "overview-scan": defineModule<typeof import("@/lib/requests/overview-scan")>([
+    call(
+      "getLatestOverviewScan",
+      (m) => m.getLatestOverviewScan(1),
+      OVERVIEW_SCAN_ROUTES,
+    ),
+  ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
     call(
@@ -978,6 +991,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring": {
     startAiScoring: "custom ai-scoring-run start route (ODY-814)",
   },
+  "overview-scan": { runOverviewScan: WRITE },
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",
     acceptAiScores: "custom review-score accept-ai route (ODY-803)",
