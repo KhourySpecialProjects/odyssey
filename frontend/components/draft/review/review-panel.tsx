@@ -16,7 +16,6 @@ import {
   type PanelScore,
 } from "@/lib/review-panel/model";
 import { AiStatusBar } from "./ai-status-bar";
-import { ScanLink } from "./scan-link";
 import { CommentList } from "./comment-list";
 import { SectionCard, type RenderDetail } from "./section-card";
 import { useSharedReviewComments } from "./review-comments-context";
@@ -180,7 +179,6 @@ export function ReviewPanel({
           starting={starting}
           criteriaCount={panel.criteria.length}
         />
-        <ScanLink slug={droplet.slug} />
       </div>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
         <SectionCard

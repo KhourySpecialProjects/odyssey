@@ -18,9 +18,10 @@ import type { ReviewPanelData } from "@/lib/requests/reviews";
 
 const push = jest.fn();
 const refresh = jest.fn();
+let pathname = "/draft/d/intro";
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh }),
-  usePathname: () => "/draft/d/intro",
+  usePathname: () => pathname,
 }));
 jest.mock("@/lib/requests/reviews");
 jest.mock("@/lib/requests/droplet");
@@ -78,6 +79,7 @@ const ensureReview = jest
 
 beforeEach(() => {
   jest.clearAllMocks();
+  pathname = "/draft/d/intro";
   localStorage.clear();
   jest.mocked(useSharedReviewComments).mockReturnValue({
     comments: [],
@@ -89,6 +91,29 @@ beforeEach(() => {
 const publish = () => screen.getByRole("button", { name: "Publish droplet" });
 
 describe("footer", () => {
+  it.each([
+    ["with scores", "/draft/d/intro", panel(), null],
+    ["on the scan page", "/draft/d/intro/scan", panel(), "page"],
+    ["without scores", "/draft/d/intro", null, null],
+  ])(
+    "puts the scan link under Send feedback and Publish: %s",
+    (_n, path, data, current) => {
+      pathname = path;
+      render(<ReviewTranscript droplet={droplet} panel={data} />);
+
+      const link = screen.getByRole("link", { name: "Final Overview Scan" });
+      expect(link).toHaveAttribute("href", "/draft/d/intro/scan");
+      expect(link.getAttribute("aria-current")).toBe(current);
+      const after = (el: HTMLElement) =>
+        el.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(after(publish())).toBeTruthy();
+      expect(
+        after(screen.getByRole("button", { name: "Send feedback" })),
+      ).toBeTruthy();
+      expect(link.closest("footer")).not.toBeNull();
+    },
+  );
+
   it("disables Publish until every Overall score has a value", async () => {
     const { rerender } = render(
       <ReviewTranscript
@@ -122,9 +147,6 @@ describe("footer", () => {
     expect(
       screen.getByText("Couldn't load scores. Reload to try again."),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Final Overview Scan" }),
-    ).toHaveAttribute("href", "/draft/d/intro/scan");
     await userEvent.click(
       screen.getByRole("button", { name: "Send feedback" }),
     );

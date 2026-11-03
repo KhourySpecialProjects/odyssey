@@ -125,18 +125,6 @@ describe("header", () => {
     ).toBeInTheDocument();
   });
 
-  it.each([
-    ["/draft/d/intro", null],
-    ["/draft/d/intro/scan", "page"],
-  ])("links to the scan page from %s", (path, current) => {
-    pathname = path;
-    show();
-
-    const link = screen.getByRole("link", { name: "Final Overview Scan" });
-    expect(link).toHaveAttribute("href", "/draft/d/intro/scan");
-    expect(link.getAttribute("aria-current")).toBe(current);
-  });
-
   it("leaves the line out without names", () => {
     show();
 

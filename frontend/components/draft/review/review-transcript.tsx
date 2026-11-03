@@ -174,6 +174,7 @@ export function ReviewTranscript({
           />
         </div>
       </div>
+      <ScanLink slug={droplet.slug} className="mt-2" />
     </footer>
   );
 
@@ -193,7 +194,6 @@ export function ReviewTranscript({
           <p className="mt-2 text-sm text-slate-600">
             The scores couldn&apos;t be loaded. You can still send feedback.
           </p>
-          <ScanLink slug={droplet.slug} />
         </div>
         {footer}
       </section>
