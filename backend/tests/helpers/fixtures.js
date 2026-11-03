@@ -26,6 +26,7 @@ const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
@@ -106,6 +107,36 @@ const reviewCriterionData = (overrides = {}) => ({
   ...overrides,
 });
 
+// One check needing attention: its rule's flag shows the results shape (ODY-788)
+const overviewScanData = (overrides = {}) => ({
+  ranAt: new Date().toISOString(),
+  rulesVersion: 'test',
+  passed: 22,
+  needsAttention: 1,
+  couldNotCheck: 0,
+  results: [
+    {
+      id: 'overview',
+      status: 'warn',
+      rules: [
+        {
+          id: 'length',
+          status: 'warn',
+          flags: [
+            {
+              partId: 'droplet',
+              blockId: 'overview',
+              message: 'The overview is under 50 words.',
+              severity: 'warn',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  ...overrides,
+});
+
 module.exports = {
   unique,
   REVIEW_CRITERION_UID,
@@ -114,6 +145,8 @@ module.exports = {
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
+  OVERVIEW_SCAN_UID,
+  overviewScanData,
   reviewData,
   reviewCommentData,
   reviewScoreData,
