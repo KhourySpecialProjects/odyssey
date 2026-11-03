@@ -12,8 +12,15 @@ const SearchContext = createContext<SearchContextType>({
   setSearchQuery: () => {},
 });
 
-export function SearchProvider({ children }: { children: React.ReactNode }) {
-  const [searchQuery, setSearchQuery] = useState("");
+export function SearchProvider({
+  children,
+  initialQuery = "",
+}: {
+  children: React.ReactNode;
+  // Explore starts from its ?q= so Back from a droplet keeps the search (ODY-865)
+  initialQuery?: string;
+}) {
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
 
   return (
     <SearchContext.Provider value={{ searchQuery, setSearchQuery }}>

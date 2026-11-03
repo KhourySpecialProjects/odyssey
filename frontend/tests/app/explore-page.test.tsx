@@ -26,8 +26,9 @@ jest.mock("@/components/explore/search", () => ({ Search: () => null }));
 jest.mock("@/components/explore/sort", () => ({ Sort: () => null }));
 jest.mock("@/components/explore/filter", () => ({ Filter: () => null }));
 jest.mock("@/components/explore/tag-filter", () => ({ TagFilter: () => null }));
-jest.mock("@/contexts/SearchContext", () => ({
-  SearchProvider: ({ children }: { children: React.ReactNode }) => children,
+jest.mock("@/components/explore/explore-search-provider", () => ({
+  ExploreSearchProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
 }));
 
 const renderPage = async (params: Record<string, string>) =>
