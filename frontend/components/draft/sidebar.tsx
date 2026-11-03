@@ -35,6 +35,7 @@ import {
   IconSearch,
   IconLayoutRows,
   IconHelp,
+  IconListCheck,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -76,6 +77,7 @@ import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
 import { isFrozenFor, isReviewerFor } from "@/lib/review-roles";
+import { canScan } from "@/lib/overview-scan/access";
 
 export function Sidebar({
   user,
@@ -121,6 +123,8 @@ export function Sidebar({
   const sidebarRef = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const scanHref = `/draft/d/${droplet.slug}/scan`;
+  const onScanPage = pathname === scanHref;
 
   const {
     dropletLessons,
@@ -802,13 +806,28 @@ export function Sidebar({
                 />
               </button>
             </div>
+            {canScan(user.roles, isAuthor) && (
+              <Link
+                href={scanHref}
+                aria-current={onScanPage ? "page" : undefined}
+                className={cn(
+                  "mb-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300",
+                  onScanPage &&
+                    "border-[#2d7597] bg-[#2d7597]/10 text-[#2d7597] dark:border-[#5ba3c4] dark:bg-[#2d7597]/25 dark:text-[#9fd0e6]",
+                )}
+              >
+                <IconListCheck className="h-4 w-4" aria-hidden="true" />
+                Final Overview Scan
+              </Link>
+            )}
             {/* Wraps so a long action label ("Submit for review", "Send
                 feedback") gets its own full-width row instead of overflowing
                 the sidebar */}
             <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={
-                  pathname.startsWith(`/draft/d/${droplet.slug}/`)
+                  pathname.startsWith(`/draft/d/${droplet.slug}/`) &&
+                  !onScanPage
                     ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`, "").split("/")[0]}`
                     : `/d/${droplet.slug}`
                 }

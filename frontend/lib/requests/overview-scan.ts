@@ -3,7 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { assertOwner, withAuth, type AuthUser } from "@/lib/auth/guards";
 import { isValidId } from "@/lib/auth/valid-id";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { SCAN_BYPASS_ROLES } from "@/lib/overview-scan/access";
 import {
   checkRateLimit,
   formatRateLimitError,
@@ -20,13 +20,6 @@ import type { OverviewScan } from "@/lib/overview-scan/types";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
-
-// Scanning never writes the droplet, so staff who can't edit it may still scan.
-const SCAN_BYPASS_ROLES = [
-  AuthorizedUserRoleTitle.SysAdmin,
-  AuthorizedUserRoleTitle.Faculty,
-  AuthorizedUserRoleTitle.ContentEditor,
-];
 
 export type OverviewScanError =
   | "unauthenticated"

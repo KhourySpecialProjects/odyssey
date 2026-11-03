@@ -370,6 +370,55 @@ describe("Sidebar", () => {
     expect(previewButton).toBeInTheDocument();
   });
 
+  describe("Final Overview Scan link", () => {
+    const renderAs = (roles: AuthorizedUserRoleTitle[], isAuthor: boolean) =>
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles } as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={isAuthor}
+        />,
+      );
+
+    it.each([
+      ["an author", [AuthorizedUserRoleTitle.User], true, true],
+      [
+        "a Content Editor",
+        [AuthorizedUserRoleTitle.ContentEditor],
+        false,
+        true,
+      ],
+      [
+        "a non-author Content Creator",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        false,
+        false,
+      ],
+    ])("for %s, shown is %s", (_n, roles, isAuthor, shown) => {
+      renderAs(roles, isAuthor);
+      const link = screen.queryByRole("link", { name: "Final Overview Scan" });
+      expect(!!link).toBe(shown);
+      if (link) {
+        expect(link).toHaveAttribute("href", "/draft/d/test-droplet/scan");
+        expect(link).not.toHaveAttribute("aria-current");
+      }
+    });
+
+    it("is the current page on the scan page, where Preview opens the droplet", () => {
+      (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet/scan");
+      renderAs([AuthorizedUserRoleTitle.User], true);
+      expect(
+        screen.getByRole("link", { name: "Final Overview Scan" }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("link", { name: "Preview" })).toHaveAttribute(
+        "href",
+        "/d/test-droplet",
+      );
+    });
+  });
+
   it("renders metadata section", () => {
     render(
       <Sidebar
