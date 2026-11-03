@@ -7,7 +7,8 @@ export type AIAction =
   | "auto-format"
   | "bug-report"
   | "fun-fact"
-  | "ai-scoring";
+  | "ai-scoring"
+  | "overview-scan";
 
 type RoleTier = "system-admin" | "faculty" | "creator-editor";
 
@@ -45,6 +46,12 @@ export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
   // A whole droplet per call, so far lower. ODY-815 adds a cost cap.
   "ai-scoring": {
     "system-admin": 30,
+    faculty: 10,
+    "creator-editor": 10,
+  },
+  // Not AI: each run fetches every URL in the droplet. Per ECS task.
+  "overview-scan": {
+    "system-admin": 10,
     faculty: 10,
     "creator-editor": 10,
   },
