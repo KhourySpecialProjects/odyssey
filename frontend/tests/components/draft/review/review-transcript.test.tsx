@@ -350,6 +350,15 @@ describe("open detail for the lesson's finding marks", () => {
     expect(screen.getByTestId("probe")).toHaveTextContent("none");
   });
 
+  it("clears the open circle's findings when the card's caret collapses it", async () => {
+    mount(true);
+    const card = screen.getByRole("region", { name: "Loops" });
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    await userEvent.click(within(card).getAllByRole("button")[0]);
+
+    expect(screen.getByTestId("probe")).toHaveTextContent("none");
+  });
+
   it("is hidden while the panel is a rail, and back when it opens", async () => {
     const { rerender } = mount(false);
     const card = screen.getByRole("region", { name: "Loops" });

@@ -64,6 +64,7 @@ export function SectionCard({
   const scored = kind !== "overview";
   const status = scored ? cardStatus(criteria, scores) : "not_scored";
   const open = criteria.find((c) => c.id === openId);
+  const expanded = commentsOpen || open !== undefined;
 
   const close = () => {
     const id = openId;
@@ -71,7 +72,7 @@ export function SectionCard({
     if (id !== null) circles.current.get(id)?.focus();
   };
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && openId !== null) {
+    if (event.key === "Escape" && open) {
       event.stopPropagation();
       close();
     }
@@ -153,9 +154,13 @@ export function SectionCard({
       <h3>
         <button
           type="button"
-          aria-expanded={commentsOpen}
-          aria-controls={commentsId}
-          onClick={() => setCommentsOpen((o) => !o)}
+          aria-expanded={expanded}
+          aria-controls={open ? `${commentsId} ${detailId}` : commentsId}
+          onClick={(event) => {
+            event.currentTarget.focus();
+            setCommentsOpen(!expanded);
+            setOpenId(null);
+          }}
           className={cn(
             "flex w-full items-start gap-3 rounded-t-xl p-3 pb-2 text-left hover:bg-slate-50",
             FOCUS,
@@ -203,7 +208,7 @@ export function SectionCard({
             <IconChevronDown
               className={cn(
                 "h-[18px] w-[18px] transition-transform motion-reduce:transition-none",
-                commentsOpen && "rotate-180",
+                expanded && "rotate-180",
               )}
               aria-hidden
             />
