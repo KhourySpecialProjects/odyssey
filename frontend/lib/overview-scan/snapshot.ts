@@ -85,6 +85,7 @@ export function buildScanDocument(
       {
         id: "droplet",
         kind: "droplet",
+        name: "",
         title: "Droplet page",
         blocks: htmlBlocks(droplet.overview, "overview"),
       },
@@ -92,6 +93,7 @@ export function buildScanDocument(
         (lesson, i): ScanPart => ({
           id: String(lesson.id),
           kind: "lesson",
+          name: plain(lesson.name),
           title: `Lesson ${i + 1} · ${plain(lesson.name)}`,
           blocks:
             lesson.blocksVersion === "v2"
@@ -116,8 +118,14 @@ const str = (value: unknown): string =>
 const plain = (value: unknown): string =>
   str(value).replace(/\s+/g, " ").trim();
 
-const withLinks = (block: ScanBlock, links: readonly ScanLink[]): ScanBlock =>
-  links.length ? { ...block, links } : block;
+/** A block's links and inline code, kept beside its plain text. */
+type Inline = { links: ScanLink[]; code: string[] };
+
+const withInline = (block: ScanBlock, { links, code }: Inline): ScanBlock => ({
+  ...block,
+  ...(links.length > 0 && { links }),
+  ...(code.length > 0 && { inlineCode: code }),
+});
 
 // ---- BlockNote (blocksV2) ----
 
@@ -128,12 +136,7 @@ const LIST_ITEMS = new Set([
   "toggleListItem",
 ]);
 
-type ListItem = {
-  type: "list-item";
-  id: string;
-  text: string;
-  links: ScanLink[];
-};
+type ListItem = { type: "list-item"; id: string; text: string } & Inline;
 
 /** Every block in document order, with indented children after their parent. */
 const flatten = (
@@ -148,9 +151,12 @@ function blockNoteBlocks(blocks: readonly CustomBlockNoteBlock[]): ScanBlock[] {
   const closeList = () => {
     if (list.length)
       out.push(
-        withLinks(
+        withInline(
           { id: list[0].id, type: "list", items: list.map((i) => i.text) },
-          list.flatMap((i) => i.links),
+          {
+            links: list.flatMap((i) => i.links),
+            code: list.flatMap((i) => i.code),
+          },
         ),
       );
     list = [];
@@ -178,15 +184,18 @@ function blockNoteBlock(
     case "quote":
     case "heading":
     case "callout": {
-      const { text, links } = richText(block.content);
-      if (!text && !links.length) return null;
+      const { text, ...inline } = richText(block.content);
+      // An empty paragraph is spacing (the editor always ends with one); an
+      // empty heading or callout is a mistake the Quality check reports
+      const spacing = block.type === "paragraph" || block.type === "quote";
+      if (!text && !inline.links.length && spacing) return null;
       if (block.type === "heading")
-        return withLinks(
+        return withInline(
           { id, type: "heading", level: Number(p.level) || 1, text },
-          links,
+          inline,
         );
       const type = block.type === "callout" ? "callout" : "paragraph";
-      return withLinks({ id, type, text }, links);
+      return withInline({ id, type, text }, inline);
     }
     case "image":
       return {
@@ -198,16 +207,19 @@ function blockNoteBlock(
     case "video":
       return { id, type: "video", url: str(p.url).trim() };
     case "table": {
-      const links: ScanLink[] = [];
+      const inline: Inline = { links: [], code: [] };
       const rows = tableRows(block.content).map((cells) =>
         cells.map((cell) => {
           // A cell is its inline content, or { type: "tableCell", content }
           const r = richText(Array.isArray(cell) ? cell : cell?.content);
-          links.push(...r.links);
+          inline.links.push(...r.links);
+          inline.code.push(...r.code);
           return r.text;
         }),
       );
-      return rows.length ? withLinks({ id, type: "table", rows }, links) : null;
+      return rows.length
+        ? withInline({ id, type: "table", rows }, inline)
+        : null;
     }
     case "quiz-multiple-choice":
       return {
@@ -251,8 +263,7 @@ function blockNoteBlock(
       };
     default:
       if (LIST_ITEMS.has(block.type)) {
-        const { text, links } = richText(block.content);
-        return { type: "list-item", id, text, links };
+        return { type: "list-item", id, ...richText(block.content) };
       }
       // LaTeX, slide and column breaks, dividers, files and audio: nothing
       // any rule reads
@@ -267,15 +278,19 @@ type RichNode = {
   url?: unknown;
   content?: unknown;
   children?: unknown;
+  styles?: { code?: unknown };
+  code?: unknown;
 };
 
 /**
- * Text and links from BlockNote inline content, or from the Strapi rich-text
- * blocks a legacy callout holds. BlockNote nests a link's text in `content`
- * and Strapi in `children`.
+ * Text, links and inline code from BlockNote inline content, or from the
+ * Strapi rich-text blocks a legacy callout holds. BlockNote nests a link's
+ * text in `content` and marks code with `styles.code`; Strapi uses `children`
+ * and `code`.
  */
-function richText(nodes: unknown): { text: string; links: ScanLink[] } {
+function richText(nodes: unknown): { text: string } & Inline {
   const links: ScanLink[] = [];
+  const code: string[] = [];
   const raw = (list: unknown): string =>
     (Array.isArray(list) ? (list as RichNode[]) : [])
       .map((n) => {
@@ -285,10 +300,14 @@ function richText(nodes: unknown): { text: string; links: ScanLink[] } {
           links.push({ text: plain(text), url: str(n.href ?? n.url).trim() });
           return text;
         }
-        return inner ? `${raw(inner)} ` : str(n?.text);
+        if (inner) return `${raw(inner)} `;
+        const text = str(n?.text);
+        if (n?.styles?.code === true || n?.code === true)
+          code.push(plain(text));
+        return text;
       })
       .join("");
-  return { text: plain(raw(nodes)), links };
+  return { text: plain(raw(nodes)), links, code };
 }
 
 function tableRows(content: unknown): { content?: unknown }[][] {
@@ -352,10 +371,8 @@ function legacyBlocks(blocks: readonly Block[]): ScanBlock[] {
         ];
       }
       case "droplets.callout": {
-        const { text, links } = richText(block.content);
-        return text || links.length
-          ? [withLinks({ id, type: "callout", text }, links)]
-          : [];
+        const { text, ...inline } = richText(block.content);
+        return [withInline({ id, type: "callout", text }, inline)];
       }
       case "droplets.video":
         return [{ id, type: "video", url: str(block.url).trim() }];
@@ -419,28 +436,29 @@ function htmlBlocks(html: string | null | undefined, id: string): ScanBlock[] {
   const out: ScanBlock[] = [];
   let loose: Node[] = []; // text and inline tags between block tags
 
-  const linksIn = (nodes: Node[]): ScanLink[] =>
+  // Tags among the nodes or inside them, e.g. <p><img></p> or <a><img></a>
+  const tagged = (nodes: Node[], tag: string): HTMLElement[] =>
     nodes
       .filter(isElement)
       .flatMap((el) => [
-        ...(el.tagName === "A" ? [el] : []),
-        ...el.querySelectorAll("a"),
-      ])
+        ...(el.tagName === tag ? [el] : []),
+        ...el.querySelectorAll(tag.toLowerCase()),
+      ]);
+
+  const inlineIn = (nodes: Node[]): Inline => ({
+    links: tagged(nodes, "A")
       .filter((a) => a.hasAttribute("href"))
       .map((a) => ({
         text: plain(a.structuredText),
         url: str(a.getAttribute("href")).trim(),
-      }));
+      })),
+    code: tagged(nodes, "CODE")
+      .map((c) => plain(c.text))
+      .filter(Boolean),
+  });
 
-  // Images among the nodes or inside them, e.g. <p><img></p> or <a><img></a>
   const imagesIn = (nodes: Node[]): ScanBlock[] =>
-    nodes
-      .filter(isElement)
-      .flatMap((el) => [
-        ...(el.tagName === "IMG" ? [el] : []),
-        ...el.querySelectorAll("img"),
-      ])
-      .map((img) => image(img));
+    tagged(nodes, "IMG").map((img) => image(img));
 
   const image = (img: HTMLElement): ScanBlock => ({
     id,
@@ -452,10 +470,12 @@ function htmlBlocks(html: string | null | undefined, id: string): ScanBlock[] {
   const textBlock = (
     nodes: Node[],
     make: (text: string) => ScanBlock,
+    keepEmpty = false,
   ): void => {
     const text = plain(nodes.map((n) => n.text).join(""));
-    const links = linksIn(nodes);
-    if (text || links.length) out.push(withLinks(make(text), links));
+    const inline = inlineIn(nodes);
+    if (text || inline.links.length || keepEmpty)
+      out.push(withInline(make(text), inline));
     out.push(...imagesIn(nodes));
   };
 
@@ -474,18 +494,17 @@ function htmlBlocks(html: string | null | undefined, id: string): ScanBlock[] {
       const tag = node.tagName;
       if (SKIPPED_TAGS.has(tag)) continue;
       if (/^H[1-6]$/.test(tag)) {
-        textBlock([node], (text) => ({
-          id,
-          type: "heading",
-          level: Number(tag[1]),
-          text,
-        }));
+        textBlock(
+          [node],
+          (text) => ({ id, type: "heading", level: Number(tag[1]), text }),
+          true, // an empty heading is a mistake the Quality check reports
+        );
       } else if (tag === "P" || tag === "BLOCKQUOTE") {
         textBlock(node.childNodes, (text) => ({ id, type: "paragraph", text }));
       } else if (tag === "UL" || tag === "OL") {
         const items = listItems(node).filter(Boolean);
         if (items.length)
-          out.push(withLinks({ id, type: "list", items }, linksIn([node])));
+          out.push(withInline({ id, type: "list", items }, inlineIn([node])));
         out.push(...imagesIn([node]));
       } else if (tag === "PRE") {
         const code = node.querySelector("code") ?? node;
@@ -506,7 +525,7 @@ function htmlBlocks(html: string | null | undefined, id: string): ScanBlock[] {
           .map((tr) =>
             tr.querySelectorAll("th, td").map((c) => plain(c.structuredText)),
           );
-        out.push(withLinks({ id, type: "table", rows }, linksIn([node])));
+        out.push(withInline({ id, type: "table", rows }, inlineIn([node])));
         out.push(...imagesIn([node]));
       } else if (tag === "IMG") {
         out.push(image(node));
