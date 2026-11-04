@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
 import { POPOVER_GAP, useDismiss, type PopoverAnchor } from "@/lib/selection";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
+import { CommentThread, initials } from "./comment-thread";
 
 interface CommentCardProps {
   comment: ReviewComment;
@@ -42,26 +43,20 @@ interface CommentCardProps {
   onAddress?: (addressed: boolean) => Promise<CommentOutcome>;
   /** Shown to a droplet's author, reading the feedback sent to them */
   forCreator?: boolean;
+  /** Replies to the comment (ODY-881): shown only when given */
+  onReply?: (body: string) => Promise<CommentOutcome>;
 }
 
 type Mode = "view" | "edit" | "confirm-delete";
 
 const FAILED = "That didn't save. Try again.";
+const HAS_REPLIES = "This comment has replies. Resolve it instead.";
 
 const BUTTON =
   "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none disabled:opacity-50";
 const GHOST = `${BUTTON} text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800`;
 const SECONDARY = `${BUTTON} border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-[#33425c] dark:bg-[#131c2e] dark:text-slate-100 dark:hover:bg-slate-800`;
 const PRIMARY = `${BUTTON} bg-[var(--rc-accent)] font-semibold text-white hover:bg-[#255e78]`;
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join("");
-}
 
 /**
  * An open comment (ODY-806), as the redesign prototype has it: what it's
@@ -83,6 +78,7 @@ export function CommentCard({
   meta,
   onAddress,
   forCreator = false,
+  onReply,
 }: CommentCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<Mode>("view");
@@ -105,6 +101,7 @@ export function CommentCard({
   // A carried comment's date is the original's (ODY-807)
   const time = commentTime(comment.carriedFrom?.createdAt ?? comment.createdAt);
   const addressed = !!comment.addressedAt;
+  const replies = comment.replies ?? [];
 
   useDismiss(ref, onClose);
 
@@ -129,13 +126,14 @@ export function CommentCard({
   const run = async (
     action: () => Promise<CommentOutcome>,
     then?: () => void,
+    conflict = FAILED,
   ) => {
     setBusy(true);
     setError(null);
     const outcome = await action();
     setBusy(false);
     if (!outcome.ok) {
-      setError(FAILED);
+      setError(outcome.error === "conflict" ? conflict : FAILED);
       return;
     }
     then?.();
@@ -221,6 +219,10 @@ export function CommentCard({
         </div>
       </div>
 
+      {(replies.length > 0 || onReply) && (
+        <CommentThread replies={replies} closed={resolved} onReply={onReply} />
+      )}
+
       {addressed && !resolved && (
         <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
           <IconCheck
@@ -289,7 +291,7 @@ export function CommentCard({
           <button
             type="button"
             disabled={busy}
-            onClick={() => run(onDelete, onClose)}
+            onClick={() => run(onDelete, onClose, HAS_REPLIES)}
             className={`${BUTTON} bg-red-600 font-semibold text-white hover:bg-red-700`}
           >
             Delete
@@ -324,14 +326,16 @@ export function CommentCard({
               <>
                 {!resolved && (
                   <>
-                    <button
-                      type="button"
-                      className={GHOST}
-                      onClick={() => setMode("confirm-delete")}
-                    >
-                      <IconTrash className="h-3.5 w-3.5" aria-hidden />
-                      Delete
-                    </button>
+                    {replies.length === 0 && (
+                      <button
+                        type="button"
+                        className={GHOST}
+                        onClick={() => setMode("confirm-delete")}
+                      >
+                        <IconTrash className="h-3.5 w-3.5" aria-hidden />
+                        Delete
+                      </button>
+                    )}
                     <button
                       type="button"
                       className={SECONDARY}
