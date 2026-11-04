@@ -218,6 +218,22 @@ describe("FeedbackLayer (ODY-807)", () => {
     expect(screen.queryByText("The creator marked this addressed.")).toBeNull();
   });
 
+  it("says a comment was marked addressed in the creator's words for a reviewer", async () => {
+    mount({
+      onAddress: undefined,
+      forCreator: false,
+      comments: [
+        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
+        wholeBlock,
+      ] as never,
+    });
+    await userEvent.click(screen.getByText("loop"));
+
+    expect(
+      screen.getByText("The creator marked this addressed."),
+    ).toBeInTheDocument();
+  });
+
   it("says when the feedback can't change any more", async () => {
     onAddress.mockResolvedValue({ ok: false, error: "review_closed" });
     mount();

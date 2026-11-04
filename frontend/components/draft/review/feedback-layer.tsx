@@ -71,6 +71,8 @@ interface FeedbackLayerProps {
   /** Replies stay open after the draft goes back in review (ODY-881) */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   replyEdits?: ReplyEdits;
+  /** False for a reviewer reading the shared feedback */
+  forCreator?: boolean;
   /** The mark lit by hovering it or its tag */
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
@@ -100,6 +102,7 @@ export function FeedbackLayer({
   onAddress,
   onReply,
   replyEdits,
+  forCreator = true,
   litMarkId,
   onLitChange,
   children,
@@ -328,7 +331,7 @@ export function FeedbackLayer({
           canChange={false}
           focusOnOpen={card.focus}
           meta={meta}
-          forCreator
+          forCreator={forCreator}
           onEdit={refused}
           onDelete={refused}
           onResolve={refused}
@@ -341,13 +344,7 @@ export function FeedbackLayer({
             onReply &&
             ((body) => withClosedNotice(onReply)(cardComment.id, body))
           }
-          replyEdits={
-            replyEdits && {
-              edit: (id, body) => withClosedNotice(replyEdits.edit)(id, body),
-              remove: (id) =>
-                withClosedNotice(replyEdits.remove)(id, undefined),
-            }
-          }
+          replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
           onClose={() => closeCard(cardComment.id)}
         />
       )}
@@ -366,8 +363,14 @@ export const withClosedNotice =
     return outcome;
   };
 
+/** A reply's edit and delete, saying so when the feedback can't change */
+export const closedNoticeEdits = (edits: ReplyEdits): ReplyEdits => ({
+  edit: (id, body) => withClosedNotice(edits.edit)(id, body),
+  remove: (id) => withClosedNotice(edits.remove)(id, undefined),
+});
+
 // A creator never edits, deletes or resolves a reviewer's comment
-const refused = async (): Promise<CommentOutcome> => ({
+export const refused = async (): Promise<CommentOutcome> => ({
   ok: false,
   error: "forbidden",
 });

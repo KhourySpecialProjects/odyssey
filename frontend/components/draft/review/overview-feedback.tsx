@@ -18,7 +18,12 @@ import {
   isWholeSection,
   numberComments,
 } from "@/lib/review-comments";
-import { FeedbackLayer, withClosedNotice } from "./feedback-layer";
+import {
+  FeedbackLayer,
+  closedNoticeEdits,
+  refused,
+  withClosedNotice,
+} from "./feedback-layer";
 import {
   FeedbackStrip,
   FeedbackViewToggle,
@@ -38,10 +43,6 @@ const FIELDS: OverviewField[] = [
   "overview",
   "objective",
 ];
-const refused = async () => ({
-  ok: false as const,
-  error: "forbidden" as const,
-});
 
 type OverviewFeedbackProps = Omit<
   React.ComponentProps<typeof FrozenOverview>,
@@ -173,6 +174,7 @@ export function OverviewFeedback({
         onAddress={onAddress}
         onReply={onReply}
         replyEdits={replyEdits}
+        forCreator={!!canAddress}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -249,7 +251,21 @@ export function OverviewFeedback({
         lessonComments={lessonComments}
       >
         {showFeedback && (
-          <OutdatedComments comments={FIELDS.flatMap((f) => outdated[f])} />
+          <OutdatedComments
+            comments={FIELDS.flatMap((f) => outdated[f])}
+            numbers={numbers}
+            card={{
+              canChange: false,
+              onEdit: refused,
+              onDelete: refused,
+              onResolve: refused,
+              onAddress,
+              onReply,
+              replyEdits: replyEdits && closedNoticeEdits(replyEdits),
+              meta: () => meta,
+              forCreator: !!canAddress,
+            }}
+          />
         )}
       </FeedbackStrip>
     </div>

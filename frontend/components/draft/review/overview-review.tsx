@@ -19,6 +19,7 @@ import {
 import { useReviewFocus } from "./review-focus-context";
 import {
   commentCounts,
+  carriedMeta,
   isOutdatedMark,
   isWholeSection,
   numberComments,
@@ -293,7 +294,20 @@ export function OverviewReview({
                   sections
                   keyboard={<CommentKeyboardButton />}
                 >
-                  <OutdatedComments comments={allOutdated} />
+                  <OutdatedComments
+                    comments={allOutdated}
+                    numbers={numbers}
+                    card={{
+                      canChange,
+                      onEdit: edit,
+                      onDelete: remove,
+                      onResolve: resolve,
+                      onReply: reply,
+                      replyEdits,
+                      replyOnCarried: true,
+                      meta: (c) => carriedMeta(c, canChange),
+                    }}
+                  />
                 </CommentStrip>
               </div>
             )}

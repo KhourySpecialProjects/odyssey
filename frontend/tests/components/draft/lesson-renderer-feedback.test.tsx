@@ -319,6 +319,49 @@ describe("a non-author reviewer reading the sent feedback (ODY-881)", () => {
 });
 
 // A Classic-editor lesson: its comments are quotes in the whole lesson's text
+describe("an outdated comment's card (ODY-881)", () => {
+  const outdate = () =>
+    act(() => {
+      editorProps.onContent?.(
+        [paragraph("b1", "Loops come later."), lesson.blocksV2[1]],
+        { version: 2 },
+      );
+    });
+  const openOutdated = async () => {
+    outdate();
+    await userEvent.click(
+      within(
+        screen.getByRole("region", { name: "Outdated comments" }),
+      ).getByRole("button", { name: /Comment 1, outdated/ }),
+    );
+    return screen.getByRole("dialog", { name: /Comment 1/ });
+  };
+
+  it("gives a reviewer Reply and no Mark addressed", async () => {
+    await renderLesson(lesson, false);
+    const card = await openOutdated();
+
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+    expect(card).not.toHaveTextContent("The reviewer resolves it");
+  });
+
+  it("gives a creator Reply and no Mark addressed while the draft is back in review", async () => {
+    mockUseEditingLock.mockReturnValue(
+      lockState({ inReview: true, isOwnLock: false, isLocked: false }),
+    );
+    await renderLesson();
+    const card = await openOutdated();
+
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 const classicBlocks: Block[] = [
   {
     __component: "droplets.generic",

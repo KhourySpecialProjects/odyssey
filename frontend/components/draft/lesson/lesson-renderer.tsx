@@ -63,6 +63,7 @@ import {
   commentsOnLesson,
   decorateMarks,
   draftMarkIn,
+  carriedMeta,
   feedbackMeta,
   isResolved,
   isOutdatedMark,
@@ -80,7 +81,12 @@ import {
 } from "@/components/draft/review/comment-keyboard";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
 import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
-import { FeedbackLayer } from "@/components/draft/review/feedback-layer";
+import {
+  FeedbackLayer,
+  closedNoticeEdits,
+  refused,
+  withClosedNotice,
+} from "@/components/draft/review/feedback-layer";
 import {
   FeedbackStrip,
   FeedbackViewToggle,
@@ -1026,7 +1032,20 @@ export function LessonRenderer({
             blockBars={editorVersion === "v2"}
             keyboard={<CommentKeyboardButton />}
           >
-            <OutdatedComments comments={outdatedComments} />
+            <OutdatedComments
+              comments={outdatedComments}
+              numbers={commentNumbers}
+              card={{
+                canChange: canChangeComments,
+                onEdit: reviewComments.edit,
+                onDelete: reviewComments.remove,
+                onResolve: reviewComments.resolve,
+                onReply: reviewComments.reply,
+                replyEdits: reviewComments.replyEdits,
+                replyOnCarried: true,
+                meta: (c) => carriedMeta(c, canChangeComments),
+              }}
+            />
           </CommentStrip>
         )}
         {showFeedback && feedbackReview && (
@@ -1050,7 +1069,24 @@ export function LessonRenderer({
             }
             showHint={!classicFeedback || showClassicFeedback}
           >
-            <OutdatedComments comments={feedbackMarks.outdated} />
+            <OutdatedComments
+              comments={feedbackMarks.outdated}
+              numbers={feedbackNumbers}
+              card={{
+                canChange: false,
+                onEdit: refused,
+                onDelete: refused,
+                onResolve: refused,
+                onAddress: onAddress && withClosedNotice(onAddress),
+                onReply:
+                  sentFeedback?.reply && withClosedNotice(sentFeedback.reply),
+                replyEdits:
+                  sentFeedback?.replyEdits &&
+                  closedNoticeEdits(sentFeedback.replyEdits),
+                meta: () => feedbackMeta(feedbackReview),
+                forCreator: !!sentFeedback?.canAddress,
+              }}
+            />
           </FeedbackStrip>
         )}
       </div>
@@ -1171,6 +1207,7 @@ export function LessonRenderer({
             onAddress={onAddress}
             onReply={sentFeedback?.reply}
             replyEdits={sentFeedback?.replyEdits}
+            forCreator={!!sentFeedback?.canAddress}
             litMarkId={litMarkId}
             onLitChange={setLitMarkId}
           >
@@ -1220,6 +1257,7 @@ export function LessonRenderer({
                   onAddress={onAddress}
                   onReply={sentFeedback?.reply}
                   replyEdits={sentFeedback?.replyEdits}
+                  forCreator={!!sentFeedback?.canAddress}
                   litMarkId={litMarkId}
                   onLitChange={setLitMarkId}
                 >
