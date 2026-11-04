@@ -206,7 +206,7 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
   - **Old offsets:** offsets found in older text are ignored (`anchorsFoundIn`).
   - **Tags and cards:** `FeedbackLayer` (`feedback-layer.tsx`) adds the tags and the card. A click on a mark opens its card without taking focus, and the click still places the caret.
   - **Lighting:** the lit mark is lit by a style rule, never by redrawing the decorations. A redraw is an editor transaction, and one landing between a press and the editor reading the click puts the caret back where it was.
-  - **Classic lessons:** the strip lists their comments and their Outdated group, but there are no marks.
+  - **Classic lessons (ODY-880):** the block editors can't draw marks, so the strip offers Feedback / Edit (`FeedbackViewToggle`, shared with the Overview). Feedback is `ClassicReviewView` inside `FeedbackLayer`, with the marks, tags and card; Edit is the block editors. Only Feedback shows while the lesson can't be edited (back in review, or locked by someone else). Outdated comments are found in the lesson's current `blocks`, so they stay listed in both views.
 - **The Overview.** `overview-feedback.tsx` offers Feedback and Edit:
   - **Feedback:** `FrozenOverview` with `ReviewTextView` marks, and `SectionComments` with `readOnly`.
   - **Edit:** the editors. Switching back runs `settleDropletUpdates()` and then `router.refresh()`.
