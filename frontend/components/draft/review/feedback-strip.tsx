@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { IconMessage } from "@tabler/icons-react";
+import { IconMessage, IconPencil } from "@tabler/icons-react";
 import type { Review } from "@/types";
+import { cn } from "@/lib/utils";
 import { feedbackMeta, reviewerName } from "@/lib/review-comments";
 
 interface FeedbackStripProps {
@@ -87,5 +88,62 @@ export function FeedbackStrip({
       )}
       {children}
     </div>
+  );
+}
+
+export type FeedbackView = "feedback" | "edit";
+
+/**
+ * Feedback / Edit, in the strip's actions, where the comments can't be marked
+ * in the editors (ODY-807's Overview, ODY-880's Classic lessons): Feedback
+ * shows the text as the reviewer saw it, and Edit the editors.
+ */
+export function FeedbackViewToggle({
+  label,
+  view,
+  onChange,
+}: {
+  /** "Overview view" or "Lesson view" */
+  label: string;
+  view: FeedbackView;
+  onChange: (view: FeedbackView) => void;
+}) {
+  return (
+    <span
+      role="group"
+      aria-label={label}
+      className="inline-flex rounded-lg bg-white/70 p-0.5 dark:bg-[#26324a]"
+    >
+      {(
+        [
+          { value: "feedback", label: "Feedback", Icon: IconMessage },
+          { value: "edit", label: "Edit", Icon: IconPencil },
+        ] as const
+      ).map(({ value, label, Icon }) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={view === value}
+          onClick={() => {
+            if (value !== view) onChange(value);
+          }}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none",
+            view === value
+              ? "bg-white text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.08)] dark:bg-[#131c2e] dark:text-slate-50"
+              : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white",
+          )}
+        >
+          <Icon
+            className={cn(
+              "h-3.5 w-3.5",
+              view === value && "text-[var(--rc-accent-text)]",
+            )}
+            aria-hidden
+          />
+          {label}
+        </button>
+      ))}
+    </span>
   );
 }
