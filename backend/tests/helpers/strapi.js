@@ -37,10 +37,11 @@ async function setupStrapi() {
   fs.mkdirSync(path.join(backendDir, '.tmp'), { recursive: true });
 
   // Required lazily so the env above is set before Strapi reads anything.
-  const { compileStrapi, createStrapi } = require('@strapi/strapi');
+  const { createStrapi } = require('@strapi/strapi');
 
-  const appContext = await compileStrapi({ appDir: backendDir });
-  instance = await createStrapi(appContext).load();
+  // dist/ is compiled once by tests/global-setup.js.
+  const distDir = process.env.STRAPI_TEST_DIST_DIR;
+  instance = await createStrapi({ appDir: backendDir, distDir }).load();
   instance.server.mount();
   return instance;
 }
