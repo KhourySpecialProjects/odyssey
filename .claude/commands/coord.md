@@ -39,7 +39,7 @@ With no ticket at all, still do the Slack and Linear steps.
 6. **Report**, in this shape and no longer:
 
    ```
-   ODY-123: READY | BLOCKED | IN PROGRESS ELSEWHERE | DONE
+   ODY-123: READY | BLOCKED | IN REVIEW | IN PROGRESS ELSEWHERE | DONE
    Blockers: ODY-120 on develop at ab12cd34; ODY-121 #1210 open → develop
    New since <time>: <each new post, reply or Linear change that matters to
      this developer, one line each with a link, or "nothing new">
@@ -48,6 +48,8 @@ With no ticket at all, still do the Slack and Linear steps.
    ```
 
    READY means every blocker is on develop and nobody else has the ticket.
+   IN REVIEW means it's this developer's ticket and its PR is open or merged
+   but not on develop yet. DONE means its own PRs are on develop.
    Suggest; don't act. Claiming, starting, replying in Slack and changing
    Linear wait for the developer's okay (the milestone posts in CLAUDE.md are
    already approved).
@@ -55,10 +57,12 @@ With no ticket at all, still do the Slack and Linear steps.
 ## watch
 
 Run `status` now. If the verdict is READY or DONE, report and stop. Otherwise
-watch on two tracks, and tell the developer both are running:
+watch on two tracks, and tell the developer both are running. For IN REVIEW,
+the thing waited on is the ticket's own PRs, so pass the ticket itself to the
+background check.
 
 1. **Merges, every 60 s, no tokens.** Start
-   `.claude/scripts/coord-status.sh --wait <every blocker that isn't on develop>`
+   `.claude/scripts/coord-status.sh --wait <every blocker that isn't on develop, or the ticket itself when IN REVIEW>`
    with Bash `run_in_background: true`. It prints nothing until every blocker
    is on develop, then exits, and that exit wakes this session at once.
    Skip it if no blocker has a PR yet; the loop below catches the first one.
