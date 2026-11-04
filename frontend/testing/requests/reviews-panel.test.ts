@@ -271,6 +271,12 @@ describe("getReviewPanel", () => {
           lesson: { id: 11 },
         },
         { id: 9, field: "description", anchor: quote("x", "", 0) },
+        {
+          id: 10,
+          field: "blocks",
+          anchor: quote("alpha", "b1", 0),
+          parent: { id: 7 },
+        },
       ],
     });
 
@@ -281,6 +287,10 @@ describe("getReviewPanel", () => {
       c7: { order: [0, 0] },
       "f8-1": { order: [1, 0] },
     });
+    const replyQueries = callsTo("/review-comments").filter(
+      ([, c]) => c.urlParams?.filters?.parent,
+    );
+    expect(replyQueries).toHaveLength(0);
   });
 
   it("returns the highest-id run with its progress", async () => {
