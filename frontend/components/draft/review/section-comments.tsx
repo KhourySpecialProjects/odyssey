@@ -28,6 +28,7 @@ import {
 } from "@/components/draft/metadata/frozen-overview";
 import { CommentComposer } from "./comment-composer";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { postFailure } from "./comment-layer";
 import { useKeyboardLayer } from "./comment-keyboard";
 import {
@@ -82,6 +83,7 @@ interface SectionCommentsProps {
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies: the creator's on any comment, a reviewer's on a carried one */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
   /** The section's content, which may have comment layers of its own */
   children: ReactNode;
 }
@@ -109,6 +111,7 @@ export function SectionComments({
   meta,
   onAddress,
   onReply,
+  replyEdits,
   children,
 }: SectionCommentsProps) {
   const rootRef = useRef<HTMLElement>(null);
@@ -407,6 +410,7 @@ export function SectionComments({
               ? (body) => onReply(cardComment.id, body)
               : undefined
           }
+          replyEdits={replyEdits}
         />
       )}
     </section>

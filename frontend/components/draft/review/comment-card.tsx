@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
 import { POPOVER_GAP, useDismiss, type PopoverAnchor } from "@/lib/selection";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
-import { CommentThread, initials } from "./comment-thread";
+import { CommentThread, initials, type ReplyEdits } from "./comment-thread";
 
 interface CommentCardProps {
   comment: ReviewComment;
@@ -45,6 +45,8 @@ interface CommentCardProps {
   forCreator?: boolean;
   /** Replies to the comment (ODY-881): shown only when given */
   onReply?: (body: string) => Promise<CommentOutcome>;
+  /** Edit and delete of own replies; used only with `onReply` */
+  replyEdits?: ReplyEdits;
 }
 
 type Mode = "view" | "edit" | "confirm-delete";
@@ -79,6 +81,7 @@ export function CommentCard({
   onAddress,
   forCreator = false,
   onReply,
+  replyEdits,
 }: CommentCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<Mode>("view");
@@ -220,7 +223,12 @@ export function CommentCard({
       </div>
 
       {(replies.length > 0 || onReply) && (
-        <CommentThread replies={replies} closed={resolved} onReply={onReply} />
+        <CommentThread
+          replies={replies}
+          closed={resolved}
+          onReply={onReply}
+          edits={replyEdits}
+        />
       )}
 
       {addressed && !resolved && (

@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Review, ReviewComment } from "@/types";
 import {
+  deleteReply,
+  editReply as editReplyAction,
   getReviewForDroplet,
   markAddressed as markAddressedAction,
   replyToComment,
   type ReviewActionError,
 } from "@/lib/requests/reviews";
 import {
+  changeReply,
   mapThread,
   mergePosted,
   rootId,
@@ -42,6 +45,9 @@ export function useSentFeedback(
   // A newer load, or leaving the page, makes an older one stale
   const loadToken = useRef(0);
   const nextTempId = useRef(-1);
+  const invalidateLoads = useCallback(() => {
+    loadToken.current++;
+  }, []);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
   // Replies posted from this tab, which a read that began earlier lacks
@@ -155,6 +161,36 @@ export function useSentFeedback(
     [],
   );
 
+  const editReply = useCallback(
+    (id: number, body: string) =>
+      changeReply({
+        comments: reviewRef.current?.comments ?? NONE,
+        id,
+        next: (r) => ({ ...r, body, updatedAt: new Date().toISOString() }),
+        run: () => editReplyAction(id, body),
+        posted: posted.current,
+        setThread,
+        reload: load,
+        invalidateLoads,
+      }),
+    [load, invalidateLoads],
+  );
+
+  const removeReply = useCallback(
+    (id: number) =>
+      changeReply({
+        comments: reviewRef.current?.comments ?? NONE,
+        id,
+        next: () => null,
+        run: () => deleteReply(id),
+        posted: posted.current,
+        setThread,
+        reload: load,
+        invalidateLoads,
+      }),
+    [load, invalidateLoads],
+  );
+
   return {
     review,
     comments: review?.comments ?? NONE,
@@ -163,6 +199,12 @@ export function useSentFeedback(
     canAddress: isAuthor,
     markAddressed,
     reply,
+    editReply,
+    removeReply,
+    replyEdits: useMemo(
+      () => ({ edit: editReply, remove: removeReply }),
+      [editReply, removeReply],
+    ),
     reload: load,
   };
 }

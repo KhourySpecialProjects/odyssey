@@ -76,7 +76,7 @@ export function OverviewFeedback({
 }: OverviewFeedbackProps) {
   const router = useRouter();
   const feedback = useDropletSentFeedback(dropletId, true, canAddress);
-  const { review, markAddressed, reply } = feedback;
+  const { review, markAddressed, reply, replyEdits } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
     [feedback.comments],
@@ -172,6 +172,7 @@ export function OverviewFeedback({
         meta={meta}
         onAddress={onAddress}
         onReply={onReply}
+        replyEdits={replyEdits}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -210,6 +211,7 @@ export function OverviewFeedback({
       meta={meta}
       onAddress={onAddress}
       onReply={onReply}
+      replyEdits={replyEdits}
     >
       {body}
     </SectionComments>

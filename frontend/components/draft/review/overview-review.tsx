@@ -77,7 +77,8 @@ export function OverviewReview({
     if (next === "read") void sentFeedback?.reload();
     else if (next === "comment") void reviewComments.reload();
   };
-  const { review, add, edit, remove, resolve, reply } = reviewComments;
+  const { review, add, edit, remove, resolve, reply, replyEdits } =
+    reviewComments;
 
   const comments = useMemo(
     () => reviewComments.comments.filter((c) => c.field !== "blocks"),
@@ -193,6 +194,7 @@ export function OverviewReview({
         onDelete={remove}
         onResolve={resolve}
         onReply={reply}
+        replyEdits={replyEdits}
         onDraftChange={(anchor) => setDraft(anchor ? { field, anchor } : null)}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
@@ -235,6 +237,7 @@ export function OverviewReview({
         onDelete={remove}
         onResolve={resolve}
         onReply={reply}
+        replyEdits={replyEdits}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >

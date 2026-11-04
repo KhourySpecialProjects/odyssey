@@ -1,15 +1,20 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useSentFeedback } from "@/hooks/use-sent-feedback";
+import { isEdited } from "@/lib/review-threads";
 import {
   getReviewForDroplet,
   markAddressed,
   replyToComment,
+  editReply,
+  deleteReply,
 } from "@/lib/requests/reviews";
 
 jest.mock("@/lib/requests/reviews", () => ({
   getReviewForDroplet: jest.fn(),
   markAddressed: jest.fn(),
   replyToComment: jest.fn(),
+  editReply: jest.fn(),
+  deleteReply: jest.fn(),
 }));
 
 const ok = <T>(data: T) => ({ ok: true as const, error: null, data });
@@ -321,6 +326,174 @@ describe("reload", () => {
 
     expect(getReviewForDroplet).toHaveBeenCalledTimes(2);
   });
+});
+
+describe("editReply and removeReply", () => {
+  const mine = {
+    ...comment,
+    id: 90,
+    body: "Mine",
+    mine: true,
+    parent: { id: 21 },
+    createdAt: "2026-11-01T00:00:00.000Z",
+  };
+
+  beforeEach(() => {
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue(
+        ok({ ...sent, comments: [{ ...comment, replies: [mine] }] }) as never,
+      );
+  });
+
+  const shown = (r: { current: ReturnType<typeof useSentFeedback> }) =>
+    r.current.comments[0].replies;
+
+  it("shows an edit at once and keeps the saved row", async () => {
+    let finish: (v: unknown) => void = () => {};
+    jest
+      .mocked(editReply)
+      .mockReturnValue(new Promise((r) => (finish = r)) as never);
+    const { result } = await mount();
+
+    let pending: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pending = result.current.editReply(90, "Better");
+    });
+    expect(shown(result)![0].body).toBe("Better");
+
+    await act(async () => {
+      finish(ok({ ...mine, body: "Better", updatedAt: "2026-11-02" }));
+      await pending;
+    });
+    expect(editReply).toHaveBeenCalledWith(90, "Better");
+    expect(shown(result)![0]).toMatchObject({ body: "Better", mine: true });
+  });
+
+  it("rolls an edit back when refused", async () => {
+    jest.mocked(editReply).mockResolvedValue(fail("review_closed") as never);
+    const { result } = await mount();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.editReply(90, "Better");
+    });
+
+    expect(outcome).toEqual({ ok: false, error: "review_closed" });
+    expect(shown(result)![0].body).toBe("Mine");
+  });
+
+  it("removes a reply, restoring it when refused", async () => {
+    jest.mocked(deleteReply).mockResolvedValue(fail("failed") as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.removeReply(90);
+    });
+    expect(shown(result)).toEqual([expect.objectContaining({ id: 90 })]);
+
+    jest.mocked(deleteReply).mockResolvedValue(ok({ id: 90 }) as never);
+    await act(async () => {
+      await result.current.removeReply(90);
+    });
+    expect(shown(result)).toEqual([]);
+  });
+
+  it("reloads on a conflict", async () => {
+    jest.mocked(editReply).mockResolvedValue(fail("conflict") as never);
+    const { result } = await mount();
+    jest.mocked(getReviewForDroplet).mockClear();
+
+    await act(async () => {
+      await result.current.editReply(90, "x");
+    });
+
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't bring a deleted own reply back on reload", async () => {
+    jest
+      .mocked(replyToComment)
+      .mockResolvedValue(ok({ ...mine, id: 91 }) as never);
+    jest.mocked(deleteReply).mockResolvedValue(ok({ id: 91 }) as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.reply(21, "Mine");
+    });
+    await act(async () => {
+      await result.current.removeReply(91);
+    });
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(shown(result)!.map((r) => r.id)).toEqual([90]);
+  });
+
+  it("returns not_found for an unknown reply", async () => {
+    const { result } = await mount();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.removeReply(5);
+    });
+
+    expect(outcome).toEqual({ ok: false, error: "not_found" });
+    expect(deleteReply).not.toHaveBeenCalled();
+  });
+
+  it("marks an edited reply as edited", async () => {
+    jest.mocked(editReply).mockResolvedValue(
+      ok({
+        ...mine,
+        body: "B",
+        updatedAt: "2026-11-01T00:00:05.000Z",
+      }) as never,
+    );
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.editReply(90, "B");
+    });
+
+    expect(isEdited(shown(result)![0])).toBe(true);
+  });
+
+  it.each(["delete", "edit"])(
+    "a reload already in flight can't undo a %s",
+    async (which) => {
+      const edited = {
+        ...mine,
+        body: "Better",
+        updatedAt: "2026-11-01T00:00:05.000Z",
+      };
+      jest.mocked(deleteReply).mockResolvedValue(ok({ id: 90 }) as never);
+      jest.mocked(editReply).mockResolvedValue(ok(edited) as never);
+      const { result } = await mount();
+      let land: (v: unknown) => void = () => {};
+      jest
+        .mocked(getReviewForDroplet)
+        .mockReturnValue(new Promise((r) => (land = r)) as never);
+      let reloading: Promise<unknown> = Promise.resolve();
+      act(() => {
+        reloading = result.current.reload();
+      });
+
+      await act(async () => {
+        if (which === "delete") await result.current.removeReply(90);
+        else await result.current.editReply(90, "Better");
+      });
+      await act(async () => {
+        land(ok({ ...sent, comments: [{ ...comment, replies: [mine] }] }));
+        await reloading;
+      });
+
+      expect(shown(result)!.map((r) => r.body)).toEqual(
+        which === "delete" ? [] : ["Better"],
+      );
+    },
+  );
 });
 
 describe("a load the page leaves before it answers", () => {

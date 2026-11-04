@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   Lesson,
   Review,
@@ -11,7 +11,9 @@ import type {
 import {
   addComment,
   deleteComment,
+  deleteReply,
   editComment,
+  editReply as editReplyAction,
   getMyReview,
   getOrOpenReview,
   replyToComment,
@@ -19,6 +21,7 @@ import {
   type ReviewActionError,
 } from "@/lib/requests/reviews";
 import {
+  changeReply,
   mapThread,
   mergePosted,
   rootId,
@@ -103,6 +106,9 @@ export function useReviewComments(
 
   // A newer load, or leaving the page, makes an older one stale
   const loadToken = useRef(0);
+  const invalidateLoads = useCallback(() => {
+    loadToken.current++;
+  }, []);
 
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -303,6 +309,48 @@ export function useReviewComments(
     [],
   );
 
+  const changeOwnReply = useCallback(
+    (
+      id: number,
+      next: (r: ReviewComment) => ReviewComment | null,
+      run: () => Promise<
+        { ok: true; data: unknown } | { ok: false; error: ReviewActionError }
+      >,
+    ) =>
+      changeReply({
+        comments: commentsRef.current,
+        id,
+        next,
+        run,
+        posted: posted.current,
+        setThread: (root, change) =>
+          setComments((cur) => mapThread(cur, root, change)),
+        reload: load,
+        invalidateLoads,
+      }),
+    [load, invalidateLoads],
+  );
+
+  const editReply = useCallback(
+    (id: number, body: string) =>
+      changeOwnReply(
+        id,
+        (r) => ({ ...r, body, updatedAt: new Date().toISOString() }),
+        () => editReplyAction(id, body),
+      ),
+    [changeOwnReply],
+  );
+
+  const removeReply = useCallback(
+    (id: number) =>
+      changeOwnReply(
+        id,
+        () => null,
+        () => deleteReply(id),
+      ),
+    [changeOwnReply],
+  );
+
   return {
     review,
     comments,
@@ -314,6 +362,12 @@ export function useReviewComments(
     remove,
     resolve,
     reply,
+    editReply,
+    removeReply,
+    replyEdits: useMemo(
+      () => ({ edit: editReply, remove: removeReply }),
+      [editReply, removeReply],
+    ),
     reload: load,
   };
 }

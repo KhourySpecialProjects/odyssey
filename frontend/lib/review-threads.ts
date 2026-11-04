@@ -1,4 +1,5 @@
 import type { ReviewComment } from "@/types";
+import type { ReviewActionError } from "@/lib/requests/reviews";
 
 /** The comment as first written: a carried copy's `carriedFrom`, else itself. */
 export const rootId = (c: Pick<ReviewComment, "id" | "carriedFrom">) =>
@@ -94,4 +95,83 @@ export function savingReply(
     createdAt: new Date().toISOString(),
     parent: { id: rootId(target) },
   };
+}
+
+type ChangeResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: ReviewActionError };
+
+/** Finds a reply by id among the loaded comments, with its thread's root. */
+export function findReply(comments: ReviewComment[], id: number) {
+  for (const c of comments) {
+    const reply = c.replies?.find((r) => r.id === id);
+    if (reply) return { root: rootId(c), reply };
+  }
+  return null;
+}
+
+/** Puts a reply back in its id place, replacing any copy of it. */
+const restoreReply = (replies: ReviewComment[], previous: ReviewComment) =>
+  [...replies.filter((r) => r.id !== previous.id), previous].sort(
+    (a, b) => (a.id < 0 ? 1 : 0) - (b.id < 0 ? 1 : 0) || a.id - b.id,
+  );
+
+/**
+ * Shows an edit (`next` returns the reply) or delete (returns null) of a reply
+ * at once, rolls it back if refused, and reloads on a conflict (ODY-881).
+ */
+export async function changeReply<T>({
+  comments,
+  id,
+  next,
+  run,
+  posted,
+  setThread,
+  reload,
+  invalidateLoads,
+}: {
+  comments: ReviewComment[];
+  id: number;
+  next: (previous: ReviewComment) => ReviewComment | null;
+  run: () => Promise<ChangeResult<T>>;
+  posted: PostedReplies;
+  setThread: (
+    root: number,
+    change: (replies: ReviewComment[]) => ReviewComment[],
+  ) => void;
+  reload: () => void;
+  /** Makes a read already in flight stale, so it can't undo this change */
+  invalidateLoads: () => void;
+}): Promise<{ ok: true } | { ok: false; error: ReviewActionError }> {
+  const found = findReply(comments, id);
+  if (!found) return { ok: false, error: "not_found" };
+  const { root, reply: previous } = found;
+  invalidateLoads();
+  const optimistic = next(previous);
+  const wasPosted = posted.get(id);
+  if (!optimistic) posted.delete(id);
+  else if (wasPosted) posted.set(id, { root, reply: optimistic });
+  setThread(root, (rs) =>
+    optimistic
+      ? rs.map((r) => (r.id === id ? optimistic : r))
+      : rs.filter((r) => r.id !== id),
+  );
+
+  const result = await run().catch((error) => {
+    console.error("Changing a reply failed", error);
+    return { ok: false as const, error: "failed" as const };
+  });
+  if (!result.ok) {
+    if (wasPosted) posted.set(id, wasPosted);
+    setThread(root, (rs) => restoreReply(rs, previous));
+    if (result.error === "conflict") reload();
+    return { ok: false, error: result.error };
+  }
+  invalidateLoads();
+  if (optimistic) {
+    const saved = { ...optimistic, ...(result.data as object), mine: true };
+    if (wasPosted) posted.set(id, { root, reply: saved });
+    setThread(root, (rs) => rs.map((r) => (r.id === id ? saved : r)));
+  }
+  return { ok: true };
 }

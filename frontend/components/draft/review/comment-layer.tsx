@@ -47,6 +47,7 @@ import { useCommentCaret } from "@/hooks/use-comment-caret";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { CommentComposer } from "./comment-composer";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
 import { useKeyboardLayer } from "./comment-keyboard";
 import {
@@ -286,6 +287,7 @@ interface CommentLayerProps {
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
   /** Replies, offered only on a comment that was sent once (ODY-881) */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
   /** The text being commented on, drawn while the composer is open */
   onDraftChange: (anchor: ReviewAnchor | null) => void;
   /** The mark lit by hovering it or its tag */
@@ -319,6 +321,7 @@ export function CommentLayer({
   onDelete,
   onResolve,
   onReply,
+  replyEdits,
   onDraftChange,
   litMarkId,
   onLitChange,
@@ -1207,6 +1210,7 @@ export function CommentLayer({
               ? (body) => onReply(cardComment.id, body)
               : undefined
           }
+          replyEdits={replyEdits}
           onClose={() => closeCard(cardComment.id)}
         />
       )}

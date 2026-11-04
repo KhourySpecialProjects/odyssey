@@ -21,6 +21,7 @@ import {
 } from "@/lib/review-comments";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
 import {
   commentMarkAt,
@@ -69,6 +70,7 @@ interface FeedbackLayerProps {
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies stay open after the draft goes back in review (ODY-881) */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
   /** The mark lit by hovering it or its tag */
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
@@ -97,6 +99,7 @@ export function FeedbackLayer({
   meta,
   onAddress,
   onReply,
+  replyEdits,
   litMarkId,
   onLitChange,
   children,
@@ -337,6 +340,13 @@ export function FeedbackLayer({
           onReply={
             onReply &&
             ((body) => withClosedNotice(onReply)(cardComment.id, body))
+          }
+          replyEdits={
+            replyEdits && {
+              edit: (id, body) => withClosedNotice(replyEdits.edit)(id, body),
+              remove: (id) =>
+                withClosedNotice(replyEdits.remove)(id, undefined),
+            }
           }
           onClose={() => closeCard(cardComment.id)}
         />

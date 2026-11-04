@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useReviewComments } from "@/hooks/use-review-comments";
+import { isEdited } from "@/lib/review-threads";
 import {
   addComment,
   deleteComment,
@@ -7,6 +8,8 @@ import {
   getMyReview,
   getOrOpenReview,
   replyToComment,
+  editReply,
+  deleteReply,
   resolveComment,
 } from "@/lib/requests/reviews";
 
@@ -18,6 +21,8 @@ jest.mock("@/lib/requests/reviews", () => ({
   deleteComment: jest.fn(),
   resolveComment: jest.fn(),
   replyToComment: jest.fn(),
+  editReply: jest.fn(),
+  deleteReply: jest.fn(),
 }));
 
 const ok = <T>(data: T) => ({ ok: true as const, error: null, data });
@@ -434,6 +439,175 @@ describe("reply", () => {
 
     expect(getMyReview).toHaveBeenCalledTimes(2);
   });
+});
+
+describe("editReply and removeReply", () => {
+  const copy = { ...saved, id: 31, carriedFrom: { id: 21 } };
+  const mine = {
+    ...saved,
+    id: 90,
+    body: "Mine",
+    mine: true,
+    parent: { id: 21 },
+    createdAt: "2026-11-01T00:00:00.000Z",
+  };
+
+  beforeEach(() => {
+    jest
+      .mocked(getMyReview)
+      .mockResolvedValue(
+        ok({ ...review, comments: [{ ...copy, replies: [mine] }] }) as never,
+      );
+  });
+
+  it("shows an edit and keeps the saved row", async () => {
+    jest
+      .mocked(editReply)
+      .mockResolvedValue(ok({ ...mine, body: "Better" }) as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.editReply(90, "Better");
+    });
+
+    expect(editReply).toHaveBeenCalledWith(90, "Better");
+    expect(result.current.comments[0].replies![0]).toMatchObject({
+      body: "Better",
+      mine: true,
+    });
+  });
+
+  it("rolls an edit back when refused", async () => {
+    jest.mocked(editReply).mockResolvedValue(fail("review_closed") as never);
+    const { result } = await mount();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.editReply(90, "Better");
+    });
+
+    expect(outcome).toEqual({ ok: false, error: "review_closed" });
+    expect(result.current.comments[0].replies![0].body).toBe("Mine");
+  });
+
+  it("removes a reply, restoring it when refused", async () => {
+    jest.mocked(deleteReply).mockResolvedValue(fail("failed") as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.removeReply(90);
+    });
+    expect(result.current.comments[0].replies).toHaveLength(1);
+
+    jest.mocked(deleteReply).mockResolvedValue(ok({ id: 90 }) as never);
+    await act(async () => {
+      await result.current.removeReply(90);
+    });
+    expect(result.current.comments[0].replies).toEqual([]);
+  });
+
+  it("reloads on a conflict", async () => {
+    jest.mocked(deleteReply).mockResolvedValue(fail("conflict") as never);
+    const { result } = await mount();
+    jest.mocked(getMyReview).mockClear();
+
+    await act(async () => {
+      await result.current.removeReply(90);
+    });
+
+    expect(getMyReview).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks an edited reply as edited", async () => {
+    jest.mocked(editReply).mockResolvedValue(
+      ok({
+        ...mine,
+        body: "B",
+        updatedAt: "2026-11-01T00:00:05.000Z",
+      }) as never,
+    );
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.editReply(90, "B");
+    });
+
+    expect(isEdited(result.current.comments[0].replies![0])).toBe(true);
+  });
+
+  it("a deleted own reply doesn't come back on reload", async () => {
+    const posted = { ...mine, id: 91, body: "Posted here" };
+    jest.mocked(replyToComment).mockResolvedValue(ok(posted) as never);
+    jest.mocked(deleteReply).mockResolvedValue(ok({ id: 91 }) as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.reply(31, "Posted here");
+    });
+    await act(async () => {
+      await result.current.removeReply(91);
+    });
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.comments[0].replies!.map((r) => r.id)).toEqual([90]);
+  });
+
+  it("an edited posted reply keeps its new body after a stale reload", async () => {
+    const posted = { ...mine, id: 91, body: "Old" };
+    jest.mocked(replyToComment).mockResolvedValue(ok(posted) as never);
+    jest
+      .mocked(editReply)
+      .mockResolvedValue(ok({ ...posted, body: "New" }) as never);
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.reply(31, "Old");
+    });
+    await act(async () => {
+      await result.current.editReply(91, "New");
+    });
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(
+      result.current.comments[0].replies!.find((r) => r.id === 91)?.body,
+    ).toBe("New");
+  });
+
+  it.each(["delete", "edit"])(
+    "a reload already in flight can't undo a %s",
+    async (which) => {
+      jest.mocked(deleteReply).mockResolvedValue(ok({ id: 90 }) as never);
+      jest
+        .mocked(editReply)
+        .mockResolvedValue(ok({ ...mine, body: "Better" }) as never);
+      const { result } = await mount();
+      let land: (v: unknown) => void = () => {};
+      jest
+        .mocked(getMyReview)
+        .mockReturnValue(new Promise((r) => (land = r)) as never);
+      let reloading: Promise<unknown> = Promise.resolve();
+      act(() => {
+        reloading = result.current.reload();
+      });
+
+      await act(async () => {
+        if (which === "delete") await result.current.removeReply(90);
+        else await result.current.editReply(90, "Better");
+      });
+      await act(async () => {
+        land(ok({ ...review, comments: [{ ...copy, replies: [mine] }] }));
+        await reloading;
+      });
+
+      expect(result.current.comments[0].replies!.map((r) => r.body)).toEqual(
+        which === "delete" ? [] : ["Better"],
+      );
+    },
+  );
 });
 
 describe("ensureReview", () => {
