@@ -547,7 +547,13 @@ export type ReviewComment = {
   /** The creator marked it addressed; only the reviewer resolves it (ODY-807) */
   addressedAt?: string | null;
   createdAt?: string;
-  parent?: ReviewComment | null;
+  updatedAt?: string;
+  /** Set on a reply: the root comment it belongs to */
+  parent?: Pick<ReviewComment, "id"> | null;
+  /** The root's thread, oldest first; attached by the read (ODY-881) */
+  replies?: ReviewComment[];
+  /** The viewer wrote this reply */
+  mine?: boolean;
   /**
    * A comment carried into a later round is a copy: this is the comment as
    * first written, with its date and its review's round (ODY-807)

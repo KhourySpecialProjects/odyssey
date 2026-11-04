@@ -75,13 +75,22 @@ type Opts = {
   commentDroplet?: number;
   /** Authors of the review's droplet */
   dropletAuthors?: number[];
+  /** The comment is a reply to this id */
+  parent?: number;
+  /** The comment is a carried copy of this id */
+  carriedFrom?: number;
+  /** The root of the comment has replies */
+  hasReplies?: boolean;
 };
 
 /** Routes fetchAPI by path and mocks a successful raw write. */
 function arrange(o: Opts = {}) {
   const state = o.state ?? "open";
   const authorized_users = (o.dropletAuthors ?? [5]).map((id) => ({ id }));
-  mockedFetchAPI.mockImplementation((async (path: string) => {
+  mockedFetchAPI.mockImplementation((async (path: string, cfg: any) => {
+    if (path === "/review-comments" && cfg?.urlParams?.filters?.parent) {
+      return o.hasReplies ? [{ id: 99 }] : [];
+    }
     if (path === "/reviews") {
       if (o.review === null) return [];
       return [
@@ -102,6 +111,8 @@ function arrange(o: Opts = {}) {
           documentId: "comment-21",
           resolvedAt: null,
           author: { id: o.authorId ?? 9 },
+          ...(o.parent && { parent: { id: o.parent } }),
+          ...(o.carriedFrom && { carriedFrom: { id: o.carriedFrom } }),
           review: {
             state,
             droplet: { id: o.commentDroplet ?? 3, authorized_users },
@@ -445,6 +456,17 @@ describe("another reviewer's comment", () => {
   });
 });
 
+describe("a reply", () => {
+  it("is refused by edit, delete and resolve", async () => {
+    arrange({ parent: 4 });
+
+    expectDenied(await editComment(21, "x"), "invalid_input");
+    expectDenied(await deleteComment(21), "invalid_input");
+    expectDenied(await resolveComment(21), "invalid_input");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("closed review", () => {
   it("refuses all four writes without a fetch", async () => {
     arrange({ state: "sent" });
@@ -470,6 +492,33 @@ describe("deleteComment", () => {
     expect(String(url)).toMatch(/\/api\/review-comments\/comment-21$/);
     expect(init?.method).toBe("DELETE");
     expect(mockedRevalidateTag).toHaveBeenCalledWith("review-3");
+  });
+
+  it("refuses a carried copy whose root has replies", async () => {
+    arrange({ carriedFrom: 4, hasReplies: true });
+
+    const result = await deleteComment(21);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "conflict",
+      data: null,
+      message: "This comment has replies. Resolve it instead.",
+    });
+    const replyCall = mockedFetchAPI.mock.calls.find(
+      ([, cfg]) => (cfg as any).urlParams?.filters?.parent,
+    );
+    expect((replyCall![1] as any).urlParams.filters.parent).toEqual({
+      id: { $eq: 4 },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes a carried copy whose root has no replies", async () => {
+    arrange({ carriedFrom: 4 });
+    fetchMock.mockResolvedValue(makeEmptyResponse(204));
+
+    expect((await deleteComment(21)).ok).toBe(true);
   });
 
   it("returns failed when the DELETE fails", async () => {

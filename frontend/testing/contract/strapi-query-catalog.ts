@@ -260,6 +260,37 @@ const ADDRESSED_ROUTES = routes([
   ],
 ]);
 
+// A comment of sent feedback on a droplet the sentinel user wrote (ODY-881)
+const REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        field: "description",
+        anchor: {},
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  [
+    "POST",
+    /^\/review-comments$/,
+    { data: ent(30, { body: "Sentinel reply" }) },
+  ],
+]);
+
 const MY_REVIEW_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
   ["GET", /^\/reviews$/, list(REVIEW_ROW)],
@@ -792,6 +823,11 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       REVIEW_WRITE_ROUTES,
     ),
     call("markAddressed", (m) => m.markAddressed(7, true), ADDRESSED_ROUTES),
+    call(
+      "replyToComment",
+      (m) => m.replyToComment(7, "Sentinel reply"),
+      REPLY_ROUTES,
+    ),
     call(
       "getReviewForDroplet",
       (m) => m.getReviewForDroplet(1),

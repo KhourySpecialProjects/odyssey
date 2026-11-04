@@ -31,7 +31,13 @@ type Cfg = {
 
 /** Routes fetchAPI by path; `review: null` means no review has that key. */
 function arrange(
-  opts: { review?: object | null; comments?: number; droplet?: object } = {},
+  opts: {
+    review?: object | null;
+    comments?: number;
+    droplet?: object;
+    replies?: object[];
+    topRows?: object[];
+  } = {},
 ) {
   const review = opts.review === undefined ? { id: 70, round: 2 } : opts.review;
   mockedFetchAPI.mockImplementation((async (path: string, cfg: Cfg) => {
@@ -50,6 +56,8 @@ function arrange(
     }
     if (path === "/reviews") return review ? [review] : [];
     if (path === "/review-comments") {
+      if (cfg.urlParams?.filters?.parent) return opts.replies ?? [];
+      if (opts.topRows) return opts.topRows;
       return Array.from({ length: opts.comments ?? 0 }, (_, i) => ({
         id: i + 1,
       })).slice((page - 1) * pageSize, page * pageSize);
@@ -60,6 +68,8 @@ function arrange(
 
 const callsTo = (p: string) =>
   mockedFetchAPI.mock.calls.filter(([path]) => path === p) as [string, Cfg][];
+const topCalls = () =>
+  callsTo("/review-comments").filter(([, c]) => !c.urlParams?.filters?.parent);
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -116,12 +126,19 @@ describe("getMyReview", () => {
     expect(result).toEqual({
       ok: true,
       error: null,
-      data: { id: 70, round: 2, comments: [{ id: 1 }, { id: 2 }] },
+      data: {
+        id: 70,
+        round: 2,
+        comments: [
+          { id: 1, replies: [] },
+          { id: 2, replies: [] },
+        ],
+      },
     });
     // By key, so another reviewer's review of the same droplet never matches
     const [[, reviewCfg]] = callsTo("/reviews");
     expect(reviewCfg.urlParams?.filters).toEqual({ key: { $eq: "3:9:2" } });
-    const [[, commentCfg]] = callsTo("/review-comments");
+    const [[, commentCfg]] = topCalls();
     expect(commentCfg.urlParams?.filters).toEqual({
       review: { id: { $eq: 70 } },
     });
@@ -144,7 +161,24 @@ describe("getMyReview", () => {
     const result = await getMyReview(3);
 
     expect(result.data?.comments).toHaveLength(130);
-    expect(callsTo("/review-comments").length).toBeGreaterThan(1);
+    expect(topCalls().length).toBeGreaterThan(1);
+  });
+
+  it("gives a carried copy its root's replies", async () => {
+    mockedRequireRole.mockResolvedValue(reviewer());
+    arrange({
+      topRows: [{ id: 5, carriedFrom: { id: 1 } }],
+      replies: [{ id: 20, parent: { id: 1 }, author: { id: 9 } }],
+    });
+    const result = await getMyReview(3);
+
+    expect(result.data?.comments?.[0].replies).toEqual([
+      expect.objectContaining({ id: 20, mine: true }),
+    ]);
+    const [[, cfg]] = callsTo("/review-comments").filter(
+      ([, c]) => c.urlParams?.filters?.parent,
+    );
+    expect(cfg.urlParams?.filters?.parent).toEqual({ id: { $in: [1] } });
   });
 
   it("returns null when the caller hasn't opened a review, and opens none", async () => {

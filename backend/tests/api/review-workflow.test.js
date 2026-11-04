@@ -229,7 +229,7 @@ describe('POST /droplets/:id/submit-review', () => {
     expect(res.body.data).toMatchObject({
       round: 2,
       reviewsCarried: 1,
-      commentsCarried: 2,
+      commentsCarried: 1,
     });
     const reviews = await reviewsOf(draft.id);
     expect(reviews).toHaveLength(2);
@@ -240,18 +240,17 @@ describe('POST /droplets/:id/submit-review', () => {
     expect(fresh.key).toBe(`${draft.id}:${reviewer.id}:2`);
     expect(fresh.reviewer.id).toBe(reviewer.id);
     expect(fresh.scores).toHaveLength(0);
-    expect(fresh.comments).toHaveLength(2);
-    const newTop = fresh.comments.find((c) => !c.parent);
-    const newReply = fresh.comments.find((c) => c.parent);
+    expect(fresh.comments).toHaveLength(1);
+    const [newTop] = fresh.comments;
     expect(newTop.body).toBe('Please fix this');
-    expect(newReply.parent.id).toBe(newTop.id);
+    expect(newTop.parent).toBeNull();
     expect(newTop.id).not.toBe(top.id);
     const bodies = fresh.comments.map((c) => c.body);
     expect(bodies).not.toContain('Resolved');
     expect(bodies).not.toContain('Reply to resolved');
   });
 
-  it('carries a reply to a reply, parented on the copied reply', async () => {
+  it('does not copy a reply, which stays on the root review', async () => {
     const { draft, lesson, made } = await setupReviewDraft({
       inReview: true,
       reviews: [{ state: 'sent' }],
@@ -265,12 +264,10 @@ describe('POST /droplets/:id/submit-review', () => {
 
     const res = await post(draft.id, 'submit-review');
 
-    expect(res.body.data.commentsCarried).toBe(3);
-    const fresh = (await reviewsOf(draft.id))[1];
-    const byBody = Object.fromEntries(fresh.comments.map((c) => [c.body, c]));
-    expect(fresh.comments).toHaveLength(3);
-    expect(byBody.R2.parent.id).toBe(byBody.R1.id);
-    expect(byBody.R1.parent.id).toBe(byBody['Please fix this'].id);
+    expect(res.body.data.commentsCarried).toBe(1);
+    const [sent, fresh] = await reviewsOf(draft.id);
+    expect(fresh.comments.map((c) => c.body)).toEqual(['Please fix this']);
+    expect(sent.comments.map((c) => c.body).sort()).toEqual(['Please fix this', 'R1', 'R2']);
   });
 
   it('points each copy at the comment as first written, and keeps its addressed mark', async () => {
@@ -282,7 +279,7 @@ describe('POST /droplets/:id/submit-review', () => {
     const lessonRef = { lesson: lesson.documentId };
     const addressedAt = '2026-10-28T12:00:00.000Z';
     const top = await comment(review, { ...lessonRef, addressedAt });
-    const reply = await comment(review, { ...lessonRef, body: 'R1', parent: top.documentId });
+    await comment(review, { ...lessonRef, body: 'R1', parent: top.documentId });
     await withdraw(draft);
 
     await post(draft.id, 'submit-review');
@@ -294,8 +291,7 @@ describe('POST /droplets/:id/submit-review', () => {
     const byBody = Object.fromEntries(copies.map((c) => [c.body, c]));
     expect(byBody['Please fix this'].carriedFrom.id).toBe(top.id);
     expect(byBody['Please fix this'].addressedAt).toBe(addressedAt);
-    expect(byBody.R1.carriedFrom.id).toBe(reply.id);
-    expect(byBody.R1.addressedAt).toBeNull();
+    expect(byBody.R1).toBeUndefined();
 
     // Round 2 is sent too, then submitted again: round 3's copy still points
     // at round 1's comment
