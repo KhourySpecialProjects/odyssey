@@ -2,9 +2,8 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { IconMessage, IconPencil } from "@tabler/icons-react";
 import type { ReviewComment } from "@/types";
-import { cn, stripHtmlTags } from "@/lib/utils";
+import { stripHtmlTags } from "@/lib/utils";
 import {
   FrozenOverview,
   TITLE_CLASS,
@@ -20,7 +19,11 @@ import {
   numberComments,
 } from "@/lib/review-comments";
 import { FeedbackLayer, withClosedNotice } from "./feedback-layer";
-import { FeedbackStrip } from "./feedback-strip";
+import {
+  FeedbackStrip,
+  FeedbackViewToggle,
+  type FeedbackView,
+} from "./feedback-strip";
 import { ReviewTextView } from "./review-text-view";
 import { OutdatedComments } from "./outdated-comments";
 import { SectionComments } from "./section-comments";
@@ -39,8 +42,6 @@ const refused = async () => ({
   ok: false as const,
   error: "forbidden" as const,
 });
-
-type Mode = "feedback" | "edit";
 
 type OverviewFeedbackProps = Omit<
   React.ComponentProps<typeof FrozenOverview>,
@@ -74,7 +75,7 @@ export function OverviewFeedback({
     () => feedback.comments.filter((c) => c.field !== "blocks"),
     [feedback.comments],
   );
-  const [mode, setMode] = useState<Mode>("feedback");
+  const [mode, setMode] = useState<FeedbackView>("feedback");
   const numbers = useMemo(() => numberComments(comments), [comments]);
   // One list per field, kept between renders: ReviewTextView rewrites its
   // text when its list changes
@@ -205,48 +206,18 @@ export function OverviewFeedback({
   );
 
   const toggle = canEdit && (
-    <span
-      role="group"
-      aria-label="Overview view"
-      className="inline-flex rounded-lg bg-white/70 p-0.5 dark:bg-[#26324a]"
-    >
-      {(
-        [
-          { value: "feedback", label: "Feedback", Icon: IconMessage },
-          { value: "edit", label: "Edit", Icon: IconPencil },
-        ] as const
-      ).map(({ value, label, Icon }) => (
-        <button
-          key={value}
-          type="button"
-          aria-pressed={mode === value}
-          onClick={() => {
-            if (value === mode) return;
-            if (value === "feedback") {
-              // Send the editors' last change, then reload so the comments
-              // are found in the edited Overview
-              void settleDropletUpdates().then(() => router.refresh());
-            }
-            setMode(value);
-          }}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none",
-            mode === value
-              ? "bg-white text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.08)] dark:bg-[#131c2e] dark:text-slate-50"
-              : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white",
-          )}
-        >
-          <Icon
-            className={cn(
-              "h-3.5 w-3.5",
-              mode === value && "text-[var(--rc-accent-text)]",
-            )}
-            aria-hidden
-          />
-          {label}
-        </button>
-      ))}
-    </span>
+    <FeedbackViewToggle
+      label="Overview view"
+      view={mode}
+      onChange={(value) => {
+        if (value === "feedback") {
+          // Send the editors' last change, then reload so the comments are
+          // found in the edited Overview
+          void settleDropletUpdates().then(() => router.refresh());
+        }
+        setMode(value);
+      }}
+    />
   );
 
   const strip = (

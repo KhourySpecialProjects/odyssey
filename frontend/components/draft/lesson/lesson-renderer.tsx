@@ -81,13 +81,20 @@ import {
 import { CommentLayer } from "@/components/draft/review/comment-layer";
 import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
 import { FeedbackLayer } from "@/components/draft/review/feedback-layer";
-import { FeedbackStrip } from "@/components/draft/review/feedback-strip";
+import {
+  FeedbackStrip,
+  FeedbackViewToggle,
+  type FeedbackView,
+} from "@/components/draft/review/feedback-strip";
 import type { ReviewAnchor, ReviewComment } from "@/types";
 
 const NO_MARKS: DrawnAnchor[] = [];
 const NO_COMMENTS: ReviewComment[] = [];
 const NO_FEEDBACK = { drawn: NO_MARKS, outdated: NO_COMMENTS };
 const NO_FINDINGS: { finding: AiFinding; number: number }[] = [];
+// Classic comments are quotes in the whole lesson, never on one block
+const noBlock = () => undefined;
+const ignoreOutdated = () => {};
 import { IconLock } from "@tabler/icons-react";
 import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 
@@ -178,6 +185,7 @@ export function LessonRenderer({
   );
   const feedbackReview = sentFeedback?.review ?? null;
   const showFeedback = !!feedbackReview && feedbackComments.length > 0;
+  const [classicView, setClassicView] = useState<FeedbackView>("feedback");
 
   // Kept in refs so handleSaveResult stays stable and can cancel debounces
   // that are created after it.
@@ -339,7 +347,12 @@ export function LessonRenderer({
   );
 
   // The creator's feedback: marked in the BlockNote editor, or for a Classic
-  // lesson found in its saved text and only listed when outdated
+  // lesson found in its text as last edited. Its block editors can't draw
+  // marks, so a Classic lesson shows Feedback (its text, read-only, with the
+  // marks) or Edit (the editors), and only Feedback while it can't be edited.
+  const classicFeedback = showFeedback && editorVersion === "v1";
+  const showClassicFeedback =
+    classicFeedback && (classicView === "feedback" || isReadOnly);
   const feedbackContent = useMemo(
     () =>
       !showFeedback
@@ -820,7 +833,13 @@ export function LessonRenderer({
   const classicBlocksRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     classicBlocksRef.current?.toggleAttribute("inert", isReadOnly);
-  }, [isReadOnly, editorVersion, contentVersion, showCommentLayer]);
+  }, [
+    isReadOnly,
+    editorVersion,
+    contentVersion,
+    showCommentLayer,
+    showClassicFeedback,
+  ]);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [newSlugInput, setNewSlugInput] = useState("");
@@ -990,6 +1009,16 @@ export function LessonRenderer({
                 .length
             }
             inReview={inReview}
+            actions={
+              classicFeedback && !isReadOnly ? (
+                <FeedbackViewToggle
+                  label="Lesson view"
+                  view={classicView}
+                  onChange={setClassicView}
+                />
+              ) : undefined
+            }
+            showHint={!classicFeedback || showClassicFeedback}
           >
             <OutdatedComments comments={feedbackMarks.outdated} />
           </FeedbackStrip>
@@ -1099,6 +1128,30 @@ export function LessonRenderer({
               onOutdated={handleClassicOutdated}
             />
           </CommentLayer>
+        </div>
+      ) : showClassicFeedback && feedbackReview ? (
+        <div className="w-full px-10 md:px-40 group-data-[review-panel=open]:md:px-12">
+          <FeedbackLayer
+            enabled
+            comments={feedbackComments}
+            numbers={feedbackNumbers}
+            outdatedIds={feedbackOutdatedIds}
+            blockFor={noBlock}
+            meta={feedbackMeta(feedbackReview)}
+            onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+            litMarkId={litMarkId}
+            onLitChange={setLitMarkId}
+          >
+            {/* The strip lists the outdated ones, found in the same text */}
+            <ClassicReviewView
+              blocks={blocks}
+              comments={feedbackComments}
+              reviewState="sent"
+              draftAnchor={null}
+              litMarkId={litMarkId}
+              onOutdated={ignoreOutdated}
+            />
+          </FeedbackLayer>
         </div>
       ) : editorVersion === "v1" ? (
         <>
