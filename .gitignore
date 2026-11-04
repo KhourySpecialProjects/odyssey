@@ -15,6 +15,9 @@ frontend/providers/PHProvider.tsx
 # Claude Code worktrees (temporary agent working dirs)
 .claude/worktrees/
 
+# When this worktree's agent last checked Slack and Linear (/coord)
+.claude/coord-last-check
+
 # Playwright MCP logs
 .playwright-mcp/
 
