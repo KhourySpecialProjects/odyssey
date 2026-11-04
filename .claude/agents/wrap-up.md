@@ -169,8 +169,15 @@ No action needed:
 If Phase 0.5 wrote a progress file, draft a `[STATUS]` handoff for the team's
 Slack group DM in the format from `docs/agent/multi-agent-coordination.md`:
 completed work, remaining work, blockers and next action, with the branch or
-PR. Mark work `COMPLETED` only if it is merged. You have no Slack tools — put
-the draft at the end of your report for the main session to post.
+PR, in five lines or fewer. Mark work `COMPLETED` only if it is on develop
+(`.claude/scripts/coord-status.sh ODY-<n>` reads `ON DEVELOP`). You have no
+Slack tools — put the drafts at the end of your report for the main session to
+post:
+
+- **Tracker row:** the new State, Branch or PR, On develop and Open items for
+  this ticket's row in the "Odyssey agent tracker" list.
+- **Owed items:** every follow-up this session promised or question it asked
+  that isn't settled, each as an `[OPEN]` draft, unless one is already posted.
 
 ## Bloat Prevention
 
@@ -207,5 +214,5 @@ Promoted: [N items promoted to CLAUDE.md or reference docs]
 Pruned: [N stale learnings removed]
 Total learnings on file: [N]
 Next session: [any flagged items for follow-up]
-Slack handoff: [draft from Phase 4, or "nothing to post"]
+Slack handoff: [drafts from Phase 4: [STATUS], tracker row, [OPEN] items — or "nothing to post"]
 ```
