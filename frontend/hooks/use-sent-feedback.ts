@@ -5,8 +5,17 @@ import type { Review, ReviewComment } from "@/types";
 import {
   getReviewForDroplet,
   markAddressed as markAddressedAction,
+  replyToComment,
   type ReviewActionError,
 } from "@/lib/requests/reviews";
+import {
+  mapThread,
+  mergePosted,
+  rootId,
+  savingReply,
+  settleReply,
+  type PostedReplies,
+} from "@/lib/review-threads";
 import type { CommentOutcome } from "./use-review-comments";
 
 const NONE: ReviewComment[] = [];
@@ -28,36 +37,54 @@ export function useSentFeedback(
   const reviewRef = useRef(review);
   reviewRef.current = review;
 
+  // A newer load, or leaving the page, makes an older one stale
+  const loadToken = useRef(0);
+  const nextTempId = useRef(-1);
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  // Replies posted from this tab, which a read that began earlier lacks
+  const posted = useRef<PostedReplies>(new Map());
+  useEffect(() => {
+    posted.current.clear();
+  }, [dropletId]);
+
+  const load = useCallback(async () => {
+    if (dropletId == null || !enabledRef.current) return;
+    const token = ++loadToken.current;
+    const result = await getReviewForDroplet(dropletId).catch((error) => {
+      // A page left mid-load drops its request; that's no failure
+      if (token === loadToken.current) {
+        console.error("Loading the review feedback failed", error);
+      }
+      return { ok: false as const, error: "failed" as const, data: null };
+    });
+    if (token !== loadToken.current) return;
+    if (result.ok) {
+      const data = result.data?.state === "sent" ? result.data : null;
+      setReview(
+        data?.comments
+          ? { ...data, comments: mergePosted(data.comments, posted.current) }
+          : data,
+      );
+      setLoadError(null);
+    } else {
+      // A failed reload keeps what is shown
+      setLoadError(result.error);
+    }
+    setIsLoading(false);
+  }, [dropletId]);
+
   useEffect(() => {
     if (!enabled || dropletId == null) {
       setReview(null);
       return;
     }
-    let cancelled = false;
     setIsLoading(true);
-    getReviewForDroplet(dropletId)
-      .catch((error) => {
-        // A page left mid-load drops its request; that's no failure
-        if (!cancelled) {
-          console.error("Loading the review feedback failed", error);
-        }
-        return { ok: false as const, error: "failed" as const, data: null };
-      })
-      .then((result) => {
-        if (cancelled) return;
-        if (result.ok) {
-          setReview(result.data?.state === "sent" ? result.data : null);
-          setLoadError(null);
-        } else {
-          setReview(null);
-          setLoadError(result.error);
-        }
-        setIsLoading(false);
-      });
+    load();
     return () => {
-      cancelled = true;
+      loadToken.current++;
     };
-  }, [dropletId, enabled]);
+  }, [dropletId, enabled, load]);
 
   const setAddressedAt = (id: number, addressedAt: string | null) =>
     setReview((current) =>
@@ -89,11 +116,49 @@ export function useSentFeedback(
     [],
   );
 
+  const setThread = (root: number, change: Parameters<typeof mapThread>[2]) =>
+    setReview((current) =>
+      current?.comments
+        ? { ...current, comments: mapThread(current.comments, root, change) }
+        : current,
+    );
+
+  const reply = useCallback(
+    async (id: number, body: string): Promise<CommentOutcome> => {
+      const target = reviewRef.current?.comments?.find((c) => c.id === id);
+      if (!target) return { ok: false, error: "not_found" };
+      const root = rootId(target);
+      const tempId = nextTempId.current--;
+      const saving = savingReply(target, tempId, body);
+      posted.current.set(tempId, { root, reply: saving });
+      setThread(root, (rs) => [...rs, saving]);
+
+      const result = await replyToComment(id, body).catch((error) => {
+        console.error("Replying to a comment failed", error);
+        return { ok: false as const, error: "failed" as const, data: null };
+      });
+      posted.current.delete(tempId);
+      if (!result.ok) {
+        setThread(root, (rs) => rs.filter((r) => r.id !== tempId));
+        return { ok: false, error: result.error };
+      }
+      posted.current.set(result.data.id, {
+        root,
+        reply: { ...result.data, mine: true },
+      });
+      setThread(root, (rs) => settleReply(rs, tempId, result.data));
+      return { ok: true };
+    },
+    [],
+  );
+
   return {
     review,
     comments: review?.comments ?? NONE,
     isLoading,
     loadError,
     markAddressed,
+    reply,
+    reload: load,
   };
 }

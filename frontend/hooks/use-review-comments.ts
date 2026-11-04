@@ -14,9 +14,18 @@ import {
   editComment,
   getMyReview,
   getOrOpenReview,
+  replyToComment,
   resolveComment,
   type ReviewActionError,
 } from "@/lib/requests/reviews";
+import {
+  mapThread,
+  mergePosted,
+  rootId,
+  savingReply,
+  settleReply,
+  type PostedReplies,
+} from "@/lib/review-threads";
 
 export type NewComment = {
   field: ReviewCommentField;
@@ -89,39 +98,55 @@ export function useReviewComments(
     setReview(null);
     setComments([]);
     addedHere.current.clear();
+    posted.current.clear();
   }, [dropletId]);
 
-  useEffect(() => {
-    if (!enabled || dropletId == null) return;
-    let cancelled = false;
-    setIsLoading(true);
-    attempt(() => getMyReview(dropletId)).then((result) => {
-      if (cancelled) return;
-      if (result.ok) {
-        // A comment may already have opened the review, and be saving or
-        // saved; the load doesn't know about it
-        setReview((current) => result.data ?? current);
-        setComments((current) => {
-          const loaded = result.data?.comments ?? [];
-          const ids = new Set(loaded.map((c) => c.id));
-          return [
+  // A newer load, or leaving the page, makes an older one stale
+  const loadToken = useRef(0);
+
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  // Replies posted from this tab, which a read that began earlier lacks
+  const posted = useRef<PostedReplies>(new Map());
+
+  const load = useCallback(async () => {
+    if (dropletId == null || !enabledRef.current) return;
+    const token = ++loadToken.current;
+    const result = await attempt(() => getMyReview(dropletId));
+    if (token !== loadToken.current) return;
+    if (result.ok) {
+      // A comment may already have opened the review, and be saving or
+      // saved; the load doesn't know about it
+      setReview((current) => result.data ?? current);
+      setComments((current) => {
+        const loaded = result.data?.comments ?? [];
+        const ids = new Set(loaded.map((c) => c.id));
+        return mergePosted(
+          [
             ...loaded,
             ...current.filter(
               (c) =>
                 !ids.has(c.id) && (c.id < 0 || addedHere.current.has(c.id)),
             ),
-          ];
-        });
-        setLoadError(null);
-      } else {
-        setLoadError(result.error);
-      }
-      setIsLoading(false);
-    });
+          ],
+          posted.current,
+        );
+      });
+      setLoadError(null);
+    } else {
+      setLoadError(result.error);
+    }
+    setIsLoading(false);
+  }, [dropletId]);
+
+  useEffect(() => {
+    if (!enabled || dropletId == null) return;
+    setIsLoading(true);
+    load();
     return () => {
-      cancelled = true;
+      loadToken.current++;
     };
-  }, [dropletId, enabled]);
+  }, [dropletId, enabled, load]);
 
   const replace = (id: number, next: ReviewComment | null) =>
     setComments((current) =>
@@ -248,6 +273,36 @@ export function useReviewComments(
     [change],
   );
 
+  const reply = useCallback(
+    async (id: number, body: string): Promise<CommentOutcome> => {
+      const target = commentsRef.current.find((c) => c.id === id);
+      if (!target) return failed("not_found");
+      const root = rootId(target);
+      const tempId = nextTempId.current--;
+      const saving = savingReply(target, tempId, body);
+      posted.current.set(tempId, { root, reply: saving });
+      setComments((cur) => mapThread(cur, root, (rs) => [...rs, saving]));
+
+      const result = await attempt(() => replyToComment(id, body));
+      posted.current.delete(tempId);
+      if (!result.ok) {
+        setComments((cur) =>
+          mapThread(cur, root, (rs) => rs.filter((r) => r.id !== tempId)),
+        );
+        return failed(result.error);
+      }
+      posted.current.set(result.data.id, {
+        root,
+        reply: { ...result.data, mine: true },
+      });
+      setComments((cur) =>
+        mapThread(cur, root, (rs) => settleReply(rs, tempId, result.data)),
+      );
+      return OK;
+    },
+    [],
+  );
+
   return {
     review,
     comments,
@@ -258,5 +313,7 @@ export function useReviewComments(
     edit,
     remove,
     resolve,
+    reply,
+    reload: load,
   };
 }
