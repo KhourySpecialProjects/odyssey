@@ -115,6 +115,7 @@ describe("refusing a URL before any request", () => {
     "http://[::1]/",
     "http://[::ffff:127.0.0.1]/",
     "http://[fc00::1]/",
+    "http://169.254.169.254/",
     "http://169.254.169.254/latest/meta-data/",
     "http://0.0.0.0:3000/",
   ])("refuses %p as a private address", async (url) => {
