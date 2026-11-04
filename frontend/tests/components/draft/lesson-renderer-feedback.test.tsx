@@ -164,9 +164,12 @@ const sent = {
   ],
 };
 
-async function renderLesson(shown: typeof lesson | typeof classic = lesson) {
+async function renderLesson(
+  shown: typeof lesson | typeof classic = lesson,
+  isAuthor = true,
+) {
   const view = render(
-    <SentFeedbackProvider dropletId={3} enabled>
+    <SentFeedbackProvider dropletId={3} enabled isAuthor={isAuthor}>
       <LessonRenderer lesson={shown} dropletSlug="d" dropletId={3} />
     </SentFeedbackProvider>,
   );
@@ -275,6 +278,43 @@ describe("the creator's view of sent feedback (ODY-807)", () => {
     expect(
       screen.getByRole("region", { name: "Reviewer feedback" }),
     ).toHaveTextContent("The reviewer is reading your changes.");
+  });
+});
+
+describe("an author while the lock loads (ODY-881)", () => {
+  it("still shows the feedback", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isLoading: true }));
+    await renderLesson();
+
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("a non-author reviewer reading the sent feedback (ODY-881)", () => {
+  it("marks the comments and words the strip for a reviewer", async () => {
+    await renderLesson(lesson, false);
+
+    expect(drawn()).toBe("comment-1,comment-2");
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toHaveTextContent("its replies");
+  });
+
+  it("opens a Classic comment with Reply and no Mark addressed", async () => {
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue({ ok: true, error: null, data: classicSent } as never);
+    await renderLesson(classic, false);
+
+    await userEvent.click(classicMarks("comment-1")[0] as HTMLElement);
+
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
   });
 });
 

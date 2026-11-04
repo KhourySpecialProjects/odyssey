@@ -15,6 +15,8 @@ interface FeedbackStripProps {
   place?: string;
   /** The draft is back in review: the feedback can't change */
   inReview?: boolean;
+  /** A reviewer reading the feedback, who can reply but not mark addressed */
+  forReviewer?: boolean;
   /** Controls at the strip's end, such as the Overview's Feedback / Edit */
   actions?: ReactNode;
   /** How to read the comments: not while the editors are showing */
@@ -37,6 +39,7 @@ export function FeedbackStrip({
   addressed,
   place = "this lesson",
   inReview = false,
+  forReviewer = false,
   actions,
   showHint = true,
   summary = false,
@@ -81,9 +84,11 @@ export function FeedbackStrip({
       )}
       {total > 0 && showHint && (
         <p>
-          {inReview
-            ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
-            : "Click a highlight or its number to read a comment, and mark it addressed once you've changed the text."}
+          {forReviewer
+            ? "Click a highlight or its number to read a comment and its replies."
+            : inReview
+              ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
+              : "Click a highlight or its number to read a comment, and mark it addressed once you've changed the text."}
         </p>
       )}
       {children}

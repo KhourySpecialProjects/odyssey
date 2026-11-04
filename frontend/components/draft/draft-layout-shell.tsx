@@ -204,12 +204,18 @@ export function DraftLayoutShell({
     [reviewing, liveScores, reviewPanel?.scores, reviewPanel?.criteria],
   );
 
-  // The feedback sent to the authors, while they edit or wait (ODY-807)
-  const readingFeedback = isAuthor && droplet.status !== "published";
+  // The feedback sent to the authors, read by them and by non-author reviewers
+  const readingFeedback =
+    (isAuthor || isReviewerFor(user.roles, true, isAuthor)) &&
+    droplet.status !== "published";
 
   return (
     <ReviewCommentsProvider dropletId={droplet.id} enabled={reviewing}>
-      <SentFeedbackProvider dropletId={droplet.id} enabled={readingFeedback}>
+      <SentFeedbackProvider
+        dropletId={droplet.id}
+        enabled={readingFeedback}
+        isAuthor={isAuthor}
+      >
         <ReviewFocusProvider active={reviewing && panelMode === "open"}>
           <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
             <DraftTour run={tourRun} setRun={setTourRun} />

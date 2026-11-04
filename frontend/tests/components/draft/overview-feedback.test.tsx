@@ -98,7 +98,7 @@ const sent = {
   ],
 };
 
-async function mount(canEdit = true, canReply = true) {
+async function mount(canEdit = true, canReply = true, canAddress = true) {
   render(
     <OverviewFeedback
       droplet={droplet}
@@ -106,6 +106,7 @@ async function mount(canEdit = true, canReply = true) {
       dropletId={3}
       canEdit={canEdit}
       canReply={canReply}
+      canAddress={canAddress}
     >
       <div data-testid="overview-editors">Editors</div>
     </OverviewFeedback>,
@@ -212,6 +213,20 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(screen.getAllByTestId("comment-tag")[0]).toHaveAccessibleName(
       /^Comment 1: /,
     );
+  });
+
+  it("gives a reviewer Reply but no Mark addressed, with their own strip hint (ODY-881)", async () => {
+    await mount(true, true, false);
+
+    await userEvent.click(screen.getByText("repeat"));
+
+    expect(screen.getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toHaveTextContent("its replies");
   });
 
   it("offers no Reply without canReply", async () => {

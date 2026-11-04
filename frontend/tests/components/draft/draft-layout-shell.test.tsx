@@ -38,8 +38,23 @@ jest.mock("@/components/draft/sidebar", () => ({
 jest.mock("@/components/draft/review/review-comments-context", () => ({
   ReviewCommentsProvider: ({ children }: { children: React.ReactNode }) =>
     children,
-  SentFeedbackProvider: ({ children }: { children: React.ReactNode }) =>
+  SentFeedbackProvider: ({
     children,
+    enabled,
+    isAuthor,
+  }: {
+    children: React.ReactNode;
+    enabled: boolean;
+    isAuthor: boolean;
+  }) => (
+    <div
+      data-testid="sent-feedback"
+      data-enabled={String(enabled)}
+      data-author={String(isAuthor)}
+    >
+      {children}
+    </div>
+  ),
   useSharedReviewComments: () => ({ comments: [{ id: 1 }, { id: 2 }] }),
 }));
 const unmounted = jest.fn();
@@ -440,6 +455,37 @@ describe("not reviewing", () => {
     expect(main()).not.toHaveAttribute("data-review-panel");
     expect(main()).not.toHaveClass("group");
     expect(screen.getByTestId("hide")).toHaveTextContent("false");
+  });
+});
+
+describe("the shared sent feedback (ODY-881)", () => {
+  const roleless = { id: 5, roles: [] } as unknown as User;
+
+  it.each([
+    ["a non-author reviewer", {}, "true", "false"],
+    ["an author", { isAuthor: true }, "true", "true"],
+    [
+      "an author with a reviewer role",
+      {
+        isAuthor: true,
+        user: { id: 9, roles: [AuthorizedUserRoleTitle.SysAdmin] },
+      },
+      "true",
+      "true",
+    ],
+    ["a role-less non-author", { user: roleless }, "false", "false"],
+    [
+      "a published draft",
+      { droplet: { ...(droplet as object), status: "published" } },
+      "false",
+      "false",
+    ],
+  ])("is read for %s", (_name, props, enabled, author) => {
+    show(props);
+
+    const provider = screen.getByTestId("sent-feedback");
+    expect(provider).toHaveAttribute("data-enabled", enabled);
+    expect(provider).toHaveAttribute("data-author", author);
   });
 });
 

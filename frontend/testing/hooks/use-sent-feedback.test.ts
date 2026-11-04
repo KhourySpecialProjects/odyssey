@@ -33,8 +33,8 @@ const sent = {
   comments: [comment],
 };
 
-async function mount(enabled = true) {
-  const hook = renderHook(({ on }) => useSentFeedback(3, on), {
+async function mount(enabled = true, isAuthor = true) {
+  const hook = renderHook(({ on }) => useSentFeedback(3, on, { isAuthor }), {
     initialProps: { on: enabled },
   });
   if (enabled)
@@ -102,6 +102,22 @@ describe("useSentFeedback (ODY-807)", () => {
     expect(outcome).toEqual({ ok: true });
     expect(markAddressed).toHaveBeenCalledWith(21, true);
     expect(typeof result.current.comments[0].addressedAt).toBe("string");
+  });
+
+  it("lets only an author mark addressed (ODY-881)", async () => {
+    const author = await mount();
+    const reviewer = await mount(true, false);
+    expect(author.result.current.canAddress).toBe(true);
+    expect(reviewer.result.current.canAddress).toBe(false);
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await reviewer.result.current.markAddressed(21);
+    });
+
+    expect(outcome).toEqual({ ok: false, error: "forbidden" });
+    expect(markAddressed).not.toHaveBeenCalled();
+    expect(reviewer.result.current.comments[0].addressedAt).toBeNull();
   });
 
   it("rolls the mark back when the server refuses it", async () => {
@@ -314,7 +330,9 @@ describe("a load the page leaves before it answers", () => {
       .mocked(getReviewForDroplet)
       .mockReturnValue(new Promise((_, no) => (reject = no)) as never);
     const errors = jest.spyOn(console, "error").mockImplementation(() => {});
-    const { unmount } = renderHook(() => useSentFeedback(3, true));
+    const { unmount } = renderHook(() =>
+      useSentFeedback(3, true, { isAuthor: true }),
+    );
 
     unmount();
     await act(async () => reject(new Error("network error")));

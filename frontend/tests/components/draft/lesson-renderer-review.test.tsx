@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import {
@@ -7,7 +7,8 @@ import {
 } from "@/components/draft/review/review-focus-context";
 import { mockAiFinding } from "@/testing/mocks/reviewsMock";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
-import { getMyReview } from "@/lib/requests/reviews";
+import { SentFeedbackProvider } from "@/components/draft/review/review-comments-context";
+import { getMyReview, getReviewForDroplet } from "@/lib/requests/reviews";
 
 jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   LessonNameInput: () => <div data-testid="lesson-name-input" />,
@@ -47,6 +48,9 @@ jest.mock("@/lib/requests/lesson", () => ({
 jest.mock("@/lib/requests/droplet", () => ({ getDropletBySlug: jest.fn() }));
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
+  getReviewForDroplet: jest.fn(),
+  markAddressed: jest.fn(),
+  replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),
@@ -527,6 +531,7 @@ describe("Show in lesson (ODY-849)", () => {
     mount();
     await act(async () => {});
     await userEvent.click(screen.getByRole("button", { name: "Read" }));
+    const loads = jest.mocked(getMyReview).mock.calls.length;
     await userEvent.click(screen.getByRole("button", { name: "ask" }));
 
     await waitFor(() =>
@@ -535,6 +540,9 @@ describe("Show in lesson (ODY-849)", () => {
         "true",
       ),
     );
+    // Reloaded once, and the target still rings
+    expect(getMyReview).toHaveBeenCalledTimes(loads + 1);
+    await waitFor(() => expect(focused()).toBe("comment-1"));
   });
 
   it("stops editing first when the reviewer is editing", async () => {
@@ -597,5 +605,172 @@ describe("a Classic lesson (Task 7)", () => {
     await user.click(screen.getByRole("button", { name: "Read" }));
 
     expect(screen.getByTestId("block-list").closest("[inert]")).not.toBeNull();
+  });
+});
+
+describe("Read mode shows the shared sent feedback (ODY-881)", () => {
+  const sentReview = {
+    id: 5,
+    round: 1,
+    key: "3:9:0",
+    state: "sent",
+    sentAt: "2026-10-28T15:04:00.000Z",
+    reviewer: { id: 9, firstName: "Nadia", lastName: "Reviewer" },
+    comments: [
+      {
+        id: 21,
+        field: "blocks",
+        anchor,
+        body: "Sent last round",
+        lesson: { id: 1 },
+        replies: [],
+      },
+    ],
+  };
+  const drawnIds = () =>
+    screen.getByTestId("blocknote-editor").getAttribute("data-anchors");
+
+  beforeEach(() => {
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue({ ok: true, error: null, data: sentReview } as never);
+  });
+
+  it("draws the latest sent review in Read mode and the reviewer's own in Comment mode", async () => {
+    const user = userEvent.setup();
+    render(
+      <SentFeedbackProvider dropletId={3} enabled isAuthor={false}>
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </SentFeedbackProvider>,
+    );
+    await act(async () => {});
+    await waitFor(() => expect(drawnIds()).toBe("comment-1,comment-2"));
+    expect(
+      screen.queryByRole("region", { name: "Reviewer feedback" }),
+    ).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+
+    expect(drawnIds()).toBe("comment-21");
+    const strip = screen.getByRole("region", { name: "Reviewer feedback" });
+    expect(strip).toHaveTextContent("its replies");
+    expect(screen.queryByTestId("review-comment-strip")).toBeNull();
+  });
+
+  const mount = async (shown: object = lesson) => {
+    render(
+      <SentFeedbackProvider dropletId={3} enabled isAuthor={false}>
+        <LessonRenderer lesson={shown as never} dropletSlug="d" dropletId={3} />
+      </SentFeedbackProvider>,
+    );
+    await act(async () => {});
+  };
+  const feedbackRegion = () =>
+    screen.queryByRole("region", { name: "Reviewer feedback" });
+  const classicLesson = {
+    ...lesson,
+    blocksVersion: "v1" as const,
+    blocksV2: null,
+    blocks: [
+      {
+        id: 9,
+        __component: "droplets.generic" as const,
+        content: "<p>A loop repeats code.</p>",
+      },
+    ],
+  };
+
+  it("opens a Read-mode comment with Reply and no Mark addressed (W4)", async () => {
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: {
+        ...sentReview,
+        comments: [
+          {
+            ...sentReview.comments[0],
+            anchor: {
+              v: 1,
+              field: "blocks",
+              start: 7,
+              end: 14,
+              quote: "repeats",
+              prefix: "A loop ",
+              suffix: " code.",
+            },
+          },
+        ],
+      },
+    } as never);
+    const user = userEvent.setup();
+    await mount(classicLesson);
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+    const view = await screen.findByTestId("classic-review-view");
+    await user.click(
+      view.querySelector('[data-anchor-id="comment-21"]') as HTMLElement,
+    );
+
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).toBeNull();
+  });
+
+  it("reloads the shared feedback on Read and the reviewer's own on Comment (W2)", async () => {
+    const user = userEvent.setup();
+    await mount();
+    const sentCalls = jest.mocked(getReviewForDroplet).mock.calls.length;
+    const mineCalls = jest.mocked(getMyReview).mock.calls.length;
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(sentCalls + 1);
+
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+    expect(getMyReview).toHaveBeenCalledTimes(mineCalls + 1);
+  });
+
+  it.each([
+    ["a BlockNote lesson", lesson, "blocknote-editor"],
+    ["a Classic lesson", classicLesson, "block-list"],
+  ])(
+    "shows no shared feedback while the reviewer edits %s",
+    async (_n, shown, editor) => {
+      mockUseEditingLock.mockReturnValue(lockState({ isOwnLock: true }));
+      await mount(shown);
+
+      expect(screen.getByTestId(editor)).toBeInTheDocument();
+      expect(feedbackRegion()).toBeNull();
+      if (editor === "blocknote-editor") expect(drawnIds()).toBe("");
+    },
+  );
+
+  it("shows no shared feedback while the lock loads for a reviewer in review", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isLoading: true }));
+    await mount();
+
+    expect(feedbackRegion()).toBeNull();
+    expect(drawnIds()).toBe("");
+  });
+
+  it("reloads the shared feedback once the review has ended", async () => {
+    const { rerender } = render(
+      <SentFeedbackProvider dropletId={3} enabled isAuthor={false}>
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </SentFeedbackProvider>,
+    );
+    await act(async () => {});
+    const before = jest.mocked(getReviewForDroplet).mock.calls.length;
+
+    mockUseEditingLock.mockReturnValue(lockState({ reviewEnded: true }));
+    rerender(
+      <SentFeedbackProvider dropletId={3} enabled isAuthor={false}>
+        <LessonRenderer lesson={lesson} dropletSlug="d" dropletId={3} />
+      </SentFeedbackProvider>,
+    );
+    await act(async () => {});
+
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(before + 1);
   });
 });

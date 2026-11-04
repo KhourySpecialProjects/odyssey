@@ -6,17 +6,22 @@ import {
   useReviewFocus,
 } from "@/components/draft/review/review-focus-context";
 import { mockAiFinding } from "@/testing/mocks/reviewsMock";
+import { SentFeedbackProvider } from "@/components/draft/review/review-comments-context";
 import { OverviewReview } from "@/components/draft/review/overview-review";
 import {
   addComment,
   getMyReview,
   getOrOpenReview,
+  getReviewForDroplet,
 } from "@/lib/requests/reviews";
 import { SELECTION_DELAY_MS } from "@/lib/selection";
 import type { ReviewComment } from "@/types";
 
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
+  getReviewForDroplet: jest.fn(),
+  markAddressed: jest.fn(),
+  replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),
@@ -134,6 +139,9 @@ beforeEach(() => {
   jest
     .mocked(getMyReview)
     .mockResolvedValue({ ok: true, error: null, data: review } as never);
+  jest
+    .mocked(getReviewForDroplet)
+    .mockResolvedValue({ ok: true, error: null, data: null } as never);
 });
 
 describe("finding marks (ODY-849)", () => {
@@ -350,6 +358,53 @@ describe("OverviewReview", () => {
     expect(screen.queryByTestId("review-comment-strip")).toBeNull();
   });
 
+  it("Read shows the latest sent review's comments with Reply, and no Mark addressed (ODY-881)", async () => {
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: {
+        id: 5,
+        round: 1,
+        key: "3:9:0",
+        state: "sent",
+        sentAt: "2026-10-28T15:04:00.000Z",
+        reviewer: { id: 9, firstName: "Nadia", lastName: "Reviewer" },
+        comments: [quote(31, "description", "repeat")],
+      },
+    } as never);
+    const user = userEvent.setup();
+    await mount();
+
+    await user.click(screen.getByRole("button", { name: "Read" }));
+    await user.click(await screen.findByText("repeat"));
+
+    const card = screen.getByRole("dialog");
+    expect(card).toHaveTextContent("About repeat");
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).toBeNull();
+  });
+
+  it("reloads the shared feedback on Read and the reviewer's own on Comment (ODY-881)", async () => {
+    render(
+      <SentFeedbackProvider dropletId={3} enabled isAuthor={false}>
+        <OverviewReview droplet={droplet} authors={[]} dropletId={3}>
+          <div />
+        </OverviewReview>
+      </SentFeedbackProvider>,
+    );
+    await act(async () => {});
+    const sent = jest.mocked(getReviewForDroplet).mock.calls.length;
+    const mine = jest.mocked(getMyReview).mock.calls.length;
+
+    await userEvent.click(screen.getByRole("button", { name: "Read" }));
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(sent + 1);
+
+    await userEvent.click(screen.getByRole("button", { name: "Comment" }));
+    expect(getMyReview).toHaveBeenCalledTimes(mine + 1);
+  });
+
   it("Edit shows the editors, and Stop editing comes back and reloads once the editors have saved", async () => {
     await mount();
     act(() => screen.getByRole("button", { name: "Edit" }).click());
@@ -358,8 +413,10 @@ describe("OverviewReview", () => {
       "You're editing the Overview during its review.",
     );
 
+    const loads = jest.mocked(getMyReview).mock.calls.length;
     act(() => screen.getByRole("button", { name: "Stop editing" }).click());
     expect(screen.queryByTestId("overview-editors")).toBeNull();
+    expect(getMyReview).toHaveBeenCalledTimes(loads + 1);
     // However long the last save takes
     await act(async () => {});
     expect(refresh).not.toHaveBeenCalled();

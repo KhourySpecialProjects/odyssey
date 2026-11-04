@@ -26,10 +26,12 @@ const NONE: ReviewComment[] = [];
  * may see (never an open review, never anything from AI), so nothing here
  * checks again. Only a sent review shows: once published, the draft is gone.
  * Marking a comment addressed shows at once and is rolled back if refused.
+ * Only an author may mark addressed; a reviewer reads and replies (ODY-881).
  */
 export function useSentFeedback(
   dropletId: number | undefined,
   enabled: boolean,
+  { isAuthor }: { isAuthor: boolean },
 ) {
   const [review, setReview] = useState<Review | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +102,7 @@ export function useSentFeedback(
 
   const markAddressed = useCallback(
     async (id: number, addressed = true): Promise<CommentOutcome> => {
+      if (!isAuthor) return { ok: false, error: "forbidden" };
       const comment = reviewRef.current?.comments?.find((c) => c.id === id);
       if (!comment) return { ok: false, error: "not_found" };
       const previous = comment.addressedAt ?? null;
@@ -113,7 +116,7 @@ export function useSentFeedback(
       setAddressedAt(id, previous);
       return { ok: false, error: result.error };
     },
-    [],
+    [isAuthor],
   );
 
   const setThread = (root: number, change: Parameters<typeof mapThread>[2]) =>
@@ -157,6 +160,7 @@ export function useSentFeedback(
     comments: review?.comments ?? NONE,
     isLoading,
     loadError,
+    canAddress: isAuthor,
     markAddressed,
     reply,
     reload: load,

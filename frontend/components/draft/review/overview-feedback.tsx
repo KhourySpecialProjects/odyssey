@@ -52,12 +52,14 @@ type OverviewFeedbackProps = Omit<
   canEdit: boolean;
   /** Replies stay open in both views, even back in review (ODY-881) */
   canReply?: boolean;
+  /** Mark addressed, for an author: a reviewer reading the feedback passes false */
+  canAddress: boolean;
   /** The Overview without feedback: the editors, or the frozen Overview */
   children: ReactNode;
 };
 
 /**
- * The Overview for a droplet's author once a reviewer has sent feedback on it
+ * The Overview for a droplet's author, or a reviewer reading it, once feedback is sent
  * (ODY-807): Feedback shows the Overview as the reviewer saw it, with their
  * comments marked and numbered and whole-section ones on the headings, and
  * Edit shows the editors. Back in Feedback, the Overview reloads, so a
@@ -69,10 +71,11 @@ export function OverviewFeedback({
   dropletId,
   canEdit,
   canReply = false,
+  canAddress,
   children,
 }: OverviewFeedbackProps) {
   const router = useRouter();
-  const feedback = useDropletSentFeedback(dropletId, true);
+  const feedback = useDropletSentFeedback(dropletId, true, canAddress);
   const { review, markAddressed, reply } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
@@ -152,7 +155,8 @@ export function OverviewFeedback({
   })();
 
   const meta = feedbackMeta(review);
-  const onAddress = canEdit ? withClosedNotice(markAddressed) : undefined;
+  const onAddress =
+    canEdit && canAddress ? withClosedNotice(markAddressed) : undefined;
   const onReply = canReply ? withClosedNotice(reply) : undefined;
   const showFeedback = mode === "feedback" || !canEdit;
 
@@ -227,7 +231,7 @@ export function OverviewFeedback({
   );
 
   const strip = (
-    <div className="mx-40 mb-4">
+    <div className="mx-40 mb-4 group-data-[review-panel=open]:mx-12">
       <FeedbackStrip
         review={review}
         total={comments.length}
@@ -236,6 +240,7 @@ export function OverviewFeedback({
         }
         place="the Overview"
         inReview={!canEdit}
+        forReviewer={!canAddress}
         actions={(comments.length > 0 && toggle) || undefined}
         showHint={showFeedback}
         summary

@@ -111,6 +111,7 @@ export default async function Droplet({ params }: Props) {
           dropletId={droplet.id}
           canEdit={false}
           canReply
+          canAddress
         >
           <FrozenOverview droplet={droplet} authors={authors} />
         </OverviewFeedback>
@@ -340,8 +341,11 @@ export default async function Droplet({ params }: Props) {
     );
   }
 
-  // An author reads the feedback sent to them beside the editors (ODY-807)
-  if (droplet.status !== "published" && isAuthor) {
+  // An author or a reviewer reads the sent feedback beside the editors (ODY-807, ODY-881)
+  if (
+    droplet.status !== "published" &&
+    (isAuthor || isReviewerFor(user.roles, true, isAuthor))
+  ) {
     const authors = await getAuthorNames(
       droplet.authorized_users?.map((u) => u.id) ?? [],
     );
@@ -352,6 +356,7 @@ export default async function Droplet({ params }: Props) {
         dropletId={droplet.id}
         canEdit
         canReply
+        canAddress={isAuthor}
       >
         {editors}
       </OverviewFeedback>

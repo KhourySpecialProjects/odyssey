@@ -57,19 +57,21 @@ type SentFeedback = ReturnType<typeof useSentFeedback> & { enabled: boolean };
 const SentFeedbackContext = createContext<SentFeedback | null>(null);
 
 /**
- * The feedback sent to the authors of a draft, loaded once by the draft
- * layout for an author (ODY-807), for the sidebar and the page beside it.
+ * The feedback sent to the authors, loaded once by the draft layout for an
+ * author or a non-author reviewer (ODY-807, ODY-881).
  */
 export function SentFeedbackProvider({
   dropletId,
   enabled,
+  isAuthor,
   children,
 }: {
   dropletId: number;
   enabled: boolean;
+  isAuthor: boolean;
   children: ReactNode;
 }) {
-  const value = useSentFeedback(dropletId, enabled);
+  const value = useSentFeedback(dropletId, enabled, { isAuthor });
   return (
     <SentFeedbackContext.Provider value={{ ...value, enabled }}>
       {children}
@@ -77,7 +79,7 @@ export function SentFeedbackProvider({
   );
 }
 
-/** The layout's sent feedback, or null outside an author's layout */
+/** The layout's sent feedback, or null outside a layout that reads it */
 export function useSharedSentFeedback(): SentFeedback | null {
   const shared = useContext(SentFeedbackContext);
   return shared?.enabled ? shared : null;
@@ -87,8 +89,9 @@ export function useSharedSentFeedback(): SentFeedback | null {
 export function useDropletSentFeedback(
   dropletId: number | undefined,
   enabled: boolean,
+  isAuthor: boolean,
 ) {
   const shared = useSharedSentFeedback();
-  const own = useSentFeedback(dropletId, enabled && !shared);
+  const own = useSentFeedback(dropletId, enabled && !shared, { isAuthor });
   return shared ?? own;
 }
