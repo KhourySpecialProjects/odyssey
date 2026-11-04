@@ -110,6 +110,7 @@ export default async function Droplet({ params }: Props) {
           authors={authors}
           dropletId={droplet.id}
           canEdit={false}
+          canReply
         >
           <FrozenOverview droplet={droplet} authors={authors} />
         </OverviewFeedback>
@@ -350,6 +351,7 @@ export default async function Droplet({ params }: Props) {
         authors={authors}
         dropletId={droplet.id}
         canEdit
+        canReply
       >
         {editors}
       </OverviewFeedback>

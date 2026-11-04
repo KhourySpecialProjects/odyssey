@@ -67,6 +67,8 @@ interface FeedbackLayerProps {
   meta: ReactNode;
   /** Absent once the feedback can't change (the draft is back in review) */
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
+  /** Replies stay open after the draft goes back in review (ODY-881) */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   /** The mark lit by hovering it or its tag */
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
@@ -94,6 +96,7 @@ export function FeedbackLayer({
   blocksFor,
   meta,
   onAddress,
+  onReply,
   litMarkId,
   onLitChange,
   children,
@@ -331,6 +334,10 @@ export function FeedbackLayer({
             ((addressed) =>
               withClosedNotice(onAddress)(cardComment.id, addressed))
           }
+          onReply={
+            onReply &&
+            ((body) => withClosedNotice(onReply)(cardComment.id, body))
+          }
           onClose={() => closeCard(cardComment.id)}
         />
       )}
@@ -340,9 +347,9 @@ export function FeedbackLayer({
 
 /** Mark addressed, saying so when the feedback can no longer change */
 export const withClosedNotice =
-  (onAddress: (id: number, addressed: boolean) => Promise<CommentOutcome>) =>
-  async (id: number, addressed: boolean): Promise<CommentOutcome> => {
-    const outcome = await onAddress(id, addressed);
+  <A,>(act: (id: number, arg: A) => Promise<CommentOutcome>) =>
+  async (id: number, arg: A): Promise<CommentOutcome> => {
+    const outcome = await act(id, arg);
     if (!outcome.ok && outcome.error === "review_closed") {
       toast.info("This feedback can't change now.", { id: "feedback-closed" });
     }

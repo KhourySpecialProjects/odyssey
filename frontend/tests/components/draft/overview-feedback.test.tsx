@@ -1,13 +1,18 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
-import { getReviewForDroplet, markAddressed } from "@/lib/requests/reviews";
+import {
+  getReviewForDroplet,
+  markAddressed,
+  replyToComment,
+} from "@/lib/requests/reviews";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import type { ReviewComment } from "@/types";
 
 jest.mock("@/lib/requests/reviews", () => ({
   getReviewForDroplet: jest.fn(),
   markAddressed: jest.fn(),
+  replyToComment: jest.fn(),
 }));
 const refresh = jest.fn();
 jest.mock("@/components/draft/metadata/hooks/useDropletUpdate", () => ({
@@ -93,13 +98,14 @@ const sent = {
   ],
 };
 
-async function mount(canEdit = true) {
+async function mount(canEdit = true, canReply = true) {
   render(
     <OverviewFeedback
       droplet={droplet}
       authors={[]}
       dropletId={3}
       canEdit={canEdit}
+      canReply={canReply}
     >
       <div data-testid="overview-editors">Editors</div>
     </OverviewFeedback>,
@@ -155,6 +161,65 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     );
 
     expect(markAddressed).toHaveBeenCalledWith(1, true);
+  });
+
+  it.each([
+    ["a text field", false, () => screen.getByText("repeat"), 1],
+    [
+      "a whole section, on the frozen mount",
+      true,
+      () =>
+        within(screen.getByTestId("overview-section-nextSteps")).getByTestId(
+          "comment-tag",
+        ),
+      3,
+    ],
+  ])("replies on %s", async (_n, frozen, open, id) => {
+    jest.mocked(replyToComment).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { id: 90, body: "Done", parent: { id } },
+    } as never);
+    await mount(!frozen);
+
+    await userEvent.click(open());
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "Done",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+
+    expect(replyToComment).toHaveBeenCalledWith(id, "Done");
+    expect(await screen.findByText("Done")).toBeInTheDocument();
+  });
+
+  it("leaves the strip's counts and the tag numbers as they are with replies", async () => {
+    const replies = [{ id: 8 }, { id: 9 }];
+    jest.mocked(getReviewForDroplet).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: {
+        ...sent,
+        comments: sent.comments.map((c) => ({ ...c, replies })),
+      },
+    } as never);
+    await mount();
+
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toHaveTextContent("3 comments from Nadia Reviewer on the Overview");
+    expect(screen.getAllByTestId("comment-tag")[0]).toHaveAccessibleName(
+      /^Comment 1: /,
+    );
+  });
+
+  it("offers no Reply without canReply", async () => {
+    await mount(true, false);
+
+    await userEvent.click(screen.getByText("repeat"));
+
+    expect(screen.queryByRole("button", { name: "Reply" })).toBeNull();
   });
 
   it("takes no new comment from a heading", async () => {

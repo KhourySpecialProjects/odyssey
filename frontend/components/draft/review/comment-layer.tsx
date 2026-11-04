@@ -284,6 +284,8 @@ interface CommentLayerProps {
   onEdit: (id: number, body: string) => Promise<CommentOutcome>;
   onDelete: (id: number) => Promise<CommentOutcome>;
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
+  /** Replies, offered only on a comment that was sent once (ODY-881) */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   /** The text being commented on, drawn while the composer is open */
   onDraftChange: (anchor: ReviewAnchor | null) => void;
   /** The mark lit by hovering it or its tag */
@@ -316,6 +318,7 @@ export function CommentLayer({
   onEdit,
   onDelete,
   onResolve,
+  onReply,
   onDraftChange,
   litMarkId,
   onLitChange,
@@ -1199,6 +1202,11 @@ export function CommentLayer({
           onEdit={(body) => onEdit(cardComment.id, body)}
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
+          onReply={
+            onReply && cardComment.carriedFrom
+              ? (body) => onReply(cardComment.id, body)
+              : undefined
+          }
           onClose={() => closeCard(cardComment.id)}
         />
       )}

@@ -503,6 +503,31 @@ describe("OverviewReview", () => {
       expect(card).toHaveTextContent("About the section");
     });
 
+    it("offers Reply on a carried section comment, not a fresh one", async () => {
+      const user = userEvent.setup();
+      withComments([
+        section(2, "nextSteps"),
+        {
+          ...section(3, "funFact"),
+          carriedFrom: { id: 90, review: { round: 1 } },
+        } as ReviewComment,
+      ]);
+      await mount();
+      const open = (field: string) =>
+        user.click(
+          within(screen.getByTestId(`overview-section-${field}`)).getByTestId(
+            "comment-tag",
+          ),
+        );
+
+      await open("nextSteps");
+      expect(screen.queryByRole("button", { name: "Reply" })).toBeNull();
+      await user.click(screen.getByRole("button", { name: "Close comment" }));
+
+      await open("funFact");
+      expect(screen.getByRole("button", { name: "Reply" })).toBeInTheDocument();
+    });
+
     it("keeps a half-written section comment when a tag is clicked", async () => {
       const user = userEvent.setup();
       withComments([section(2, "funFact")]);

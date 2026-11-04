@@ -80,6 +80,8 @@ interface SectionCommentsProps {
   readOnly?: boolean;
   meta?: ReactNode;
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
+  /** Replies: the creator's on any comment, a reviewer's on a carried one */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   /** The section's content, which may have comment layers of its own */
   children: ReactNode;
 }
@@ -106,6 +108,7 @@ export function SectionComments({
   readOnly = false,
   meta,
   onAddress,
+  onReply,
   children,
 }: SectionCommentsProps) {
   const rootRef = useRef<HTMLElement>(null);
@@ -398,6 +401,11 @@ export function SectionComments({
           forCreator={readOnly}
           onAddress={
             onAddress && ((addressed) => onAddress(cardComment.id, addressed))
+          }
+          onReply={
+            onReply && (readOnly || cardComment.carriedFrom)
+              ? (body) => onReply(cardComment.id, body)
+              : undefined
           }
         />
       )}

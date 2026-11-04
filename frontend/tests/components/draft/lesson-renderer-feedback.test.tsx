@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { SentFeedbackProvider } from "@/components/draft/review/review-comments-context";
 import { getMyReview, getReviewForDroplet } from "@/lib/requests/reviews";
-import { markAddressed as markAddressedRequest } from "@/lib/requests/reviews";
+import {
+  markAddressed as markAddressedRequest,
+  replyToComment,
+} from "@/lib/requests/reviews";
 import { updateLesson } from "@/lib/requests/lesson";
 import { htmlContent } from "@/lib/anchors/content";
 import { classicLessonHtml } from "@/lib/review-classic";
@@ -54,6 +57,7 @@ jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
   getReviewForDroplet: jest.fn(),
   markAddressed: jest.fn(),
+  replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),
@@ -369,6 +373,30 @@ describe("the creator's view of sent feedback on a Classic lesson (ODY-880)", ()
       within(card).getByRole("button", { name: "Mark addressed" }),
     );
     expect(markAddressedRequest).toHaveBeenCalledWith(1, true);
+  });
+
+  it("replies from a Classic comment's card, also while the draft is back in review", async () => {
+    mockUseEditingLock.mockReturnValue(
+      lockState({ inReview: true, isOwnLock: false, isLocked: false }),
+    );
+    jest.mocked(replyToComment).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { id: 90, body: "Added it", parent: { id: 1 } },
+    } as never);
+    await renderLesson(classic);
+
+    await userEvent.click(classicMarks("comment-1")[0] as HTMLElement);
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    await userEvent.click(within(card).getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      within(card).getByRole("textbox", { name: "Write a reply" }),
+      "Added it",
+    );
+    await userEvent.click(within(card).getByRole("button", { name: "Reply" }));
+
+    expect(replyToComment).toHaveBeenCalledWith(1, "Added it");
+    expect(await within(card).findByText("Added it")).toBeInTheDocument();
   });
 
   it("switches to Edit for the block editors, and back to Feedback", async () => {

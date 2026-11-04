@@ -66,7 +66,7 @@ export function OverviewReview({
   };
   const commenting = mode === "comment";
   const reviewComments = useDropletReviewComments(dropletId, true);
-  const { review, add, edit, remove, resolve } = reviewComments;
+  const { review, add, edit, remove, resolve, reply } = reviewComments;
 
   const comments = useMemo(
     () => reviewComments.comments.filter((c) => c.field !== "blocks"),
@@ -181,6 +181,7 @@ export function OverviewReview({
         onEdit={edit}
         onDelete={remove}
         onResolve={resolve}
+        onReply={reply}
         onDraftChange={(anchor) => setDraft(anchor ? { field, anchor } : null)}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
@@ -222,6 +223,7 @@ export function OverviewReview({
         onEdit={edit}
         onDelete={remove}
         onResolve={resolve}
+        onReply={reply}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >

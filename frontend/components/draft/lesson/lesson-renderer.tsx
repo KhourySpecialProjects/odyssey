@@ -401,6 +401,7 @@ export function LessonRenderer({
     onEdit: reviewComments.edit,
     onDelete: reviewComments.remove,
     onResolve: reviewComments.resolve,
+    onReply: reviewComments.reply,
     onDraftChange: setDraftAnchor,
     litMarkId,
     onLitChange: setLitMarkId,
@@ -1139,6 +1140,7 @@ export function LessonRenderer({
             blockFor={noBlock}
             meta={feedbackMeta(feedbackReview)}
             onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+            onReply={sentFeedback?.reply}
             litMarkId={litMarkId}
             onLitChange={setLitMarkId}
           >
@@ -1186,6 +1188,7 @@ export function LessonRenderer({
                   blocksFor={blocksFor}
                   meta={feedbackReview ? feedbackMeta(feedbackReview) : null}
                   onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+                  onReply={sentFeedback?.reply}
                   litMarkId={litMarkId}
                   onLitChange={setLitMarkId}
                 >

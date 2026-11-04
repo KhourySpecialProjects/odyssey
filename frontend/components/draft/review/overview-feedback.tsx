@@ -50,6 +50,8 @@ type OverviewFeedbackProps = Omit<
   dropletId: number;
   /** False while the draft is back in review: no Edit, no Mark addressed */
   canEdit: boolean;
+  /** Replies stay open in both views, even back in review (ODY-881) */
+  canReply?: boolean;
   /** The Overview without feedback: the editors, or the frozen Overview */
   children: ReactNode;
 };
@@ -66,11 +68,12 @@ export function OverviewFeedback({
   authors,
   dropletId,
   canEdit,
+  canReply = false,
   children,
 }: OverviewFeedbackProps) {
   const router = useRouter();
   const feedback = useDropletSentFeedback(dropletId, true);
-  const { review, markAddressed } = feedback;
+  const { review, markAddressed, reply } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
     [feedback.comments],
@@ -150,6 +153,7 @@ export function OverviewFeedback({
 
   const meta = feedbackMeta(review);
   const onAddress = canEdit ? withClosedNotice(markAddressed) : undefined;
+  const onReply = canReply ? withClosedNotice(reply) : undefined;
   const showFeedback = mode === "feedback" || !canEdit;
 
   const renderField = (field: OverviewField) => {
@@ -163,6 +167,7 @@ export function OverviewFeedback({
         blockFor={() => undefined}
         meta={meta}
         onAddress={onAddress}
+        onReply={onReply}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -200,6 +205,7 @@ export function OverviewFeedback({
       readOnly
       meta={meta}
       onAddress={onAddress}
+      onReply={onReply}
     >
       {body}
     </SectionComments>
