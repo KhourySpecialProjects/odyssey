@@ -8,7 +8,7 @@
     "start": "strapi start",
     "build": "strapi build",
     "strapi": "strapi",
-    "test": "jest --runInBand"
+    "test": "jest --maxWorkers=2"
   },
   "dependencies": {
     "@_sh/strapi-plugin-ckeditor": "8.0.0",
