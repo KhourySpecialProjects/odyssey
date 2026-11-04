@@ -41,6 +41,7 @@ type Opts = {
   inReview?: boolean;
   authors?: number[];
   missing?: boolean;
+  parent?: number;
 };
 
 /** A comment on a review of droplet 3, looked up by fetchAPI. */
@@ -52,6 +53,7 @@ function arrange(o: Opts = {}) {
         id: 21,
         documentId: "comment-21",
         author: { id: 9 },
+        ...(o.parent && { parent: { id: o.parent } }),
         review: {
           state: o.state ?? "sent",
           round: o.round ?? 1,
@@ -105,6 +107,13 @@ describeServerActionAuth("markAddressed", {
 });
 
 describe("markAddressed (ODY-807)", () => {
+  it("refuses a reply", async () => {
+    arrange({ parent: 4 });
+
+    expectDenied(await markAddressed(21), "invalid_input");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("sets addressedAt to now, on the fetched comment, and revalidates its droplet", async () => {
     arrange();
 
