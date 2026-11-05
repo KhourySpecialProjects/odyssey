@@ -32,8 +32,11 @@ interface CommentThreadProps {
   edits?: ReplyEdits;
   /** Replies to mark "New": those unseen when the card opened */
   fresh?: ReadonlySet<number>;
-  /** The comment itself: a first reply by its author continues its run */
-  lead?: ReviewComment;
+  /**
+   * The comment itself, first in the list and scrolling with it; a first
+   * reply by its author continues its run
+   */
+  lead?: { comment: ReviewComment; body: ReactNode };
 }
 
 const FAILED = "That didn't save. Try again.";
@@ -390,11 +393,11 @@ export function CommentThread({
   };
 
   return (
-    <div className="grid gap-2">
-      {replies.length > 0 && (
+    <div className="grid gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]">
+      {(lead || replies.length > 0) && (
         <ul
           ref={listRef}
-          aria-label="Replies"
+          aria-label={lead ? "Comment and replies" : "Replies"}
           className="relative max-h-60 overflow-x-hidden overflow-y-auto"
           onScroll={(e) => {
             const l = e.currentTarget;
@@ -402,6 +405,18 @@ export function CommentThread({
               l.scrollHeight - l.scrollTop - l.clientHeight < 24;
           }}
         >
+          {lead && (
+            <li
+              className={cn("flex gap-2", lead.comment.mine && "justify-end")}
+            >
+              <ChatSpeaker
+                mine={lead.comment.mine}
+                name={replyAuthor(lead.comment)}
+              >
+                {lead.body}
+              </ChatSpeaker>
+            </li>
+          )}
           {replies.map((reply, index) => {
             const name = replyAuthor(reply);
             // Own reply, open thread, and nobody else has replied after it
@@ -415,7 +430,7 @@ export function CommentThread({
               !replies.slice(index + 1).some((r) => !r.mine);
             const time = commentTime(replyTime(reply));
             // A run of replies by one person shows the name and avatar once
-            const before = index === 0 ? lead : replies[index - 1];
+            const before = index === 0 ? lead?.comment : replies[index - 1];
             const starts = !before || !sameAuthor(before, reply);
             // ...and a time the next one repeats only under the last
             const after = replies[index + 1];
@@ -479,7 +494,7 @@ export function CommentThread({
         </p>
       )}
 
-      {closed || closedNow ? (
+      {!(replies.length > 0 || onReply) ? null : closed || closedNow ? (
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {closed ? "Resolved · replies are closed" : CLOSED}
         </p>

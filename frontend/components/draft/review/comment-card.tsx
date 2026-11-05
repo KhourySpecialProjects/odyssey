@@ -22,12 +22,7 @@ import { POPOVER_GAP, useDismiss, type PopoverAnchor } from "@/lib/selection";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { unseenReplies } from "@/lib/review-threads";
 import { useThreadSeen } from "./review-comments-context";
-import {
-  bubble,
-  ChatSpeaker,
-  CommentThread,
-  type ReplyEdits,
-} from "./comment-thread";
+import { bubble, CommentThread, type ReplyEdits } from "./comment-thread";
 
 interface CommentCardProps {
   comment: ReviewComment;
@@ -108,11 +103,6 @@ export function CommentCard({
   const pending = canChange && !resolved;
   // Sent and Resolved show already (badge, closed note): only Pending is said
   const status = meta ?? (pending ? "Pending" : null);
-  const author = comment.author
-    ? [comment.author.firstName, comment.author.lastName]
-        .filter(Boolean)
-        .join(" ") || "You"
-    : "You";
   // Not read back yet (no author): the viewer just wrote it
   const mine = comment.mine ?? !comment.author;
   // A carried comment's date is the original's (ODY-807)
@@ -215,46 +205,40 @@ export function CommentCard({
       </div>
 
       {/* The comment is the first bubble of its thread (ODY-893) */}
-      <div
-        className={cn(
-          "flex gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]",
-          mine && "justify-end",
-        )}
-      >
-        <ChatSpeaker mine={mine} name={author}>
-          {mode === "edit" ? (
-            <textarea
-              aria-label="Edit your comment"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              rows={3}
-              maxLength={5000}
-              autoFocus
-              className="min-h-[76px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
-            />
-          ) : (
-            <p className={cn(bubble(mine), resolved && RESOLVED)}>
-              {comment.body}
-            </p>
-          )}
-          {time && mode !== "edit" && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {time}
-            </span>
-          )}
-        </ChatSpeaker>
-      </div>
-
-      {(replies.length > 0 || onReply) && (
-        <CommentThread
-          lead={{ ...comment, mine }}
-          replies={replies}
-          closed={resolved}
-          onReply={onReply}
-          edits={replyEdits}
-          fresh={fresh}
-        />
-      )}
+      <CommentThread
+        lead={{
+          comment: { ...comment, mine },
+          body: (
+            <>
+              {mode === "edit" ? (
+                <textarea
+                  aria-label="Edit your comment"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  rows={3}
+                  maxLength={5000}
+                  autoFocus
+                  className="min-h-[76px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
+                />
+              ) : (
+                <p className={cn(bubble(mine), resolved && RESOLVED)}>
+                  {comment.body}
+                </p>
+              )}
+              {time && mode !== "edit" && (
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {time}
+                </span>
+              )}
+            </>
+          ),
+        }}
+        replies={replies}
+        closed={resolved}
+        onReply={onReply}
+        edits={replyEdits}
+        fresh={fresh}
+      />
 
       {addressed && !resolved && (
         <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
@@ -268,7 +252,8 @@ export function CommentCard({
         </p>
       )}
 
-      {mode === "view" && pending && (
+      {/* Once replied to, the creator has seen it: nothing is hidden */}
+      {mode === "view" && pending && replies.length === 0 && (
         <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
           <IconEye className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           Only you can see this until you request changes.
@@ -357,18 +342,17 @@ export function CommentCard({
           ) : (
             canChange && (
               <>
-                {!resolved && (
+                {/* Once replied to, the comment stays as the thread read it */}
+                {!resolved && replies.length === 0 && (
                   <>
-                    {replies.length === 0 && (
-                      <button
-                        type="button"
-                        className={GHOST}
-                        onClick={() => setMode("confirm-delete")}
-                      >
-                        <IconTrash className="h-3.5 w-3.5" aria-hidden />
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className={GHOST}
+                      onClick={() => setMode("confirm-delete")}
+                    >
+                      <IconTrash className="h-3.5 w-3.5" aria-hidden />
+                      Delete
+                    </button>
                     <button
                       type="button"
                       className={SECONDARY}

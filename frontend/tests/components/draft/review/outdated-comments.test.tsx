@@ -150,7 +150,7 @@ describe("OutdatedComments", () => {
     await waitFor(() => expect(item(3)).toHaveFocus());
   });
 
-  it("canChange: hides Delete when the comment has replies (G16)", async () => {
+  it("canChange: hides Delete and Edit when the comment has replies (G16)", async () => {
     render(
       <OutdatedComments
         comments={[make({ replies: [{ id: 9, body: "r" }] as never })]}
@@ -161,7 +161,8 @@ describe("OutdatedComments", () => {
 
     await userEvent.click(item(3));
 
-    expect(screen.getByRole("button", { name: /edit/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /resolve/i })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
   });
 

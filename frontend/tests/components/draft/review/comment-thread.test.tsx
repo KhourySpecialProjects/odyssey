@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommentThread } from "@/components/draft/review/comment-thread";
 import { CommentCard } from "@/components/draft/review/comment-card";
@@ -331,6 +331,27 @@ describe("CommentCard threads", () => {
     );
   });
 
+  it("lists the comment first, scrolling with its replies", () => {
+    card({}, { replies: [reply({ id: 6, body: "Done" })] });
+
+    const items = within(
+      screen.getByRole("list", { name: "Comment and replies" }),
+    ).getAllByRole("listitem");
+    expect(items.map((i) => i.textContent)).toEqual([
+      expect.stringContaining("Fix this"),
+      expect.stringContaining("Done"),
+    ]);
+  });
+
+  it.each([
+    ["shows", [], true],
+    ["hides, once replied to,", [reply({ id: 6 })], false],
+  ])("%s the pending note", (_n, replies, shown) => {
+    card({}, { replies });
+
+    expect(!!screen.queryByText(/Only you can see this/)).toBe(shown);
+  });
+
   it("counts a comment not read back yet (no author) as yours", () => {
     card();
 
@@ -360,10 +381,12 @@ describe("CommentCard threads", () => {
     expect(onClose).toHaveBeenCalledTimes(closes ? 1 : 0);
   });
 
-  it("hides Delete once the comment has replies", () => {
+  it("hides Delete and Edit once the comment has replies", () => {
     card({}, { replies: [reply({ id: 9 })] });
 
     expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Resolve" })).toBeVisible();
     expect(screen.getByText("A reply")).toBeVisible();
   });
 
