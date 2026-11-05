@@ -45,7 +45,9 @@ describe("CommentComposer", () => {
       .map((t) => t.getAttribute("aria-describedby")!);
     expect(a).not.toBe(b);
     for (const id of [a, b]) {
-      expect(document.getElementById(id)).toHaveTextContent(/to post/);
+      expect(document.getElementById(id)).toHaveTextContent(
+        "Only you see it until you request changes",
+      );
     }
   });
 });

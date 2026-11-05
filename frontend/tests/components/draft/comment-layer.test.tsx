@@ -474,7 +474,7 @@ describe("the comment box", () => {
     );
     expect(screen.getByRole("button", { name: "Comment" })).toBeDisabled();
     expect(
-      screen.getByText(/only you see it until you request changes/),
+      screen.getByText("Only you see it until you request changes"),
     ).toBeInTheDocument();
   });
 
@@ -492,13 +492,26 @@ describe("the comment box", () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it("posts with Ctrl+Enter", async () => {
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Ctrl+Enter", "{Control>}{Enter}{/Control}"],
+  ])("posts with %s", async (_n, keys) => {
     const { user } = await openOnBlock();
 
     await user.type(screen.getByRole("textbox"), "Fine.");
-    await user.keyboard("{Control>}{Enter}{/Control}");
+    await user.keyboard(keys);
 
     await waitFor(() => expect(onPost).toHaveBeenCalled());
+  });
+
+  it("adds a line with Shift+Enter, without posting", async () => {
+    const { user } = await openOnBlock();
+
+    await user.type(screen.getByRole("textbox"), "One");
+    await user.keyboard("{Shift>}{Enter}{/Shift}Two");
+
+    expect(screen.getByRole("textbox")).toHaveValue("One\nTwo");
+    expect(onPost).not.toHaveBeenCalled();
   });
 
   it("cancels with Esc and gives focus back to the bar", async () => {
