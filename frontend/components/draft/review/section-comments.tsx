@@ -27,7 +27,10 @@ import {
   SECTION_HEADING_CLASS,
 } from "@/components/draft/metadata/frozen-overview";
 import { CommentComposer } from "./comment-composer";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { postFailure } from "./comment-layer";
 import { useKeyboardLayer } from "./comment-keyboard";
 import {
@@ -78,8 +81,13 @@ interface SectionCommentsProps {
    * comment, and cards show `meta` and offer `onAddress` when given
    */
   readOnly?: boolean;
+  /** Cards use the creator's wording; reviewers get the reviewer's. */
+  forCreator?: boolean;
   meta?: ReactNode;
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
+  /** Replies: the creator's on any comment, a reviewer's on a carried one */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
   /** The section's content, which may have comment layers of its own */
   children: ReactNode;
 }
@@ -104,10 +112,14 @@ export function SectionComments({
   litMarkId,
   onLitChange,
   readOnly = false,
+  forCreator = false,
   meta,
   onAddress,
+  onReply,
+  replyEdits,
   children,
 }: SectionCommentsProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -332,6 +344,7 @@ export function SectionComments({
         const markId = markIdFor(comment);
         const resolved = isResolved(comment);
         const pending = canChange && !resolved;
+        const unseen = unseenReplies(comment, seen).length > 0;
         return (
           <CommentTag
             key={comment.id}
@@ -339,6 +352,7 @@ export function SectionComments({
             pending={pending}
             resolved={resolved}
             addressed={!!comment.addressedAt}
+            unseen={unseen}
             lit={litMarkId === markId || card?.commentId === comment.id}
             expanded={card?.commentId === comment.id}
             mode={layout.tagMode}
@@ -349,7 +363,7 @@ export function SectionComments({
               number,
               pending,
               commentSnippet(comment, block, { long: true }),
-              carriedNotes(comment),
+              carriedNotes(comment, unseen),
             )}
             onLight={(on) => onLitChange(on ? markId : null)}
             onOpen={(rect) => {
@@ -395,10 +409,16 @@ export function SectionComments({
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
           meta={meta ?? carriedMeta(cardComment, canChange)}
-          forCreator={readOnly}
+          forCreator={forCreator}
           onAddress={
             onAddress && ((addressed) => onAddress(cardComment.id, addressed))
           }
+          onReply={
+            onReply && (readOnly || cardComment.carriedFrom)
+              ? (body) => onReply(cardComment.id, body)
+              : undefined
+          }
+          replyEdits={replyEdits}
         />
       )}
     </section>

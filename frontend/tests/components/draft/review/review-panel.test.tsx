@@ -508,6 +508,15 @@ describe("comments", () => {
     );
   });
 
+  it("shows how many replies a comment has", async () => {
+    setComments([comment(1, { replies: [{ id: 8 }, { id: 9 }] as never })]);
+    show();
+
+    await expand("Variables");
+
+    expect(screen.getByText(/· 2 replies/)).toBeInTheDocument();
+  });
+
   it("mutes a resolved comment", async () => {
     setComments([comment(1, { resolvedAt: "2026-10-29T13:00:00.000Z" })]);
     show();

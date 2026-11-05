@@ -291,6 +291,54 @@ const REPLY_ROUTES = routes([
   ],
 ]);
 
+// The sentinel user's own reply on sent feedback for a droplet they wrote
+const OWN_REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or|\$gt/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        parent: { data: ent(4) },
+        author: { data: ent(1) },
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  ["PUT", /^\/review-comments\//, { data: ent(7, { body: "Edited reply" }) }],
+  ["DELETE", /^\/review-comments\//, null],
+]);
+
+// The newest reply on a droplet the sentinel user wrote (ODY-881)
+const THREAD_STAMP_ROUTES = routes([
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        updatedAt: "2026-11-04T00:00:00.000Z",
+        review: {
+          data: ent(5, {
+            droplet: {
+              data: ent(1, { authorized_users: { data: [ent(1)] } }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+]);
+
 const MY_REVIEW_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
   ["GET", /^\/reviews$/, list(REVIEW_ROW)],
@@ -828,6 +876,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       (m) => m.replyToComment(7, "Sentinel reply"),
       REPLY_ROUTES,
     ),
+    call("editReply", (m) => m.editReply(7, "Edited reply"), OWN_REPLY_ROUTES),
+    call("deleteReply", (m) => m.deleteReply(7), OWN_REPLY_ROUTES),
+    call("getThreadStamp", (m) => m.getThreadStamp(1), THREAD_STAMP_ROUTES),
     call(
       "getReviewForDroplet",
       (m) => m.getReviewForDroplet(1),

@@ -187,6 +187,7 @@ export async function completeLesson(
 - Most content: 900 seconds (15 minutes)
 - Tags: 3600 seconds (1 hour) — tags change rarely
 - Uncached fetches (`cache: "no-store"`): used for data that must be fresh on every load (e.g., real-time enrollment status during lesson completion)
+- **Review replies and `getThreadStamp` (ODY-881):** always `cache: "no-store"`. Replies change from other users' sessions, and `revalidateTag` only clears the Next instance that served the write, so a cache would show stale threads. Top-level comments and reviews keep their `CACHE_TAGS.review(id)` cache.
 
 ## Strapi Query Patterns with qs
 

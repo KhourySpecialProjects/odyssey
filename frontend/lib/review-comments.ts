@@ -6,6 +6,7 @@ import {
   type AnchorRange,
 } from "@/lib/anchors/types";
 import type { DrawnAnchor } from "@/lib/anchors/editor";
+import { newRepliesText } from "@/lib/review-threads";
 
 /**
  * Client-side rules for a reviewer's own comments (ODY-806). Pure, so the
@@ -58,8 +59,8 @@ export function commentCounts(
 export const carriedRound = (comment: ReviewComment): number | null =>
   comment.carriedFrom ? comment.carriedFrom.review?.round ?? 0 : null;
 
-/** What a reviewer's tag adds about a carried comment, for a screen reader */
-export function carriedNotes(comment: ReviewComment): string[] {
+/** What a tag adds for a screen reader: carried from a round, marked addressed, new replies */
+export function carriedNotes(comment: ReviewComment, unseen = false): string[] {
   const round = carriedRound(comment);
   return [
     ...(round !== null
@@ -68,6 +69,7 @@ export function carriedNotes(comment: ReviewComment): string[] {
     ...(comment.addressedAt && !isResolved(comment)
       ? ["marked addressed"]
       : []),
+    ...(unseen ? ["new replies"] : []),
   ];
 }
 
@@ -97,12 +99,14 @@ export function commentStripText(
     carried = 0,
     carriedRound = null,
     addressed = 0,
+    newReplies = 0,
   }: {
     total: number;
     pending: number;
     carried?: number;
     carriedRound?: number | null;
     addressed?: number;
+    newReplies?: number;
   },
   place = "this lesson",
 ): string {
@@ -111,6 +115,7 @@ export function commentStripText(
     pendingText(pending),
     carriedText(carried, carriedRound),
     addressedText(addressed),
+    newReplies > 0 ? newRepliesText(newReplies) : null,
   ]
     .filter(Boolean)
     .join(" · ");

@@ -20,7 +20,10 @@ import {
   type TagBlock,
 } from "@/lib/review-comments";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
 import {
   commentMarkAt,
@@ -67,6 +70,11 @@ interface FeedbackLayerProps {
   meta: ReactNode;
   /** Absent once the feedback can't change (the draft is back in review) */
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
+  /** Replies stay open after the draft goes back in review (ODY-881) */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
+  /** False for a reviewer reading the shared feedback */
+  forCreator?: boolean;
   /** The mark lit by hovering it or its tag */
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
@@ -94,10 +102,14 @@ export function FeedbackLayer({
   blocksFor,
   meta,
   onAddress,
+  onReply,
+  replyEdits,
+  forCreator = true,
   litMarkId,
   onLitChange,
   children,
 }: FeedbackLayerProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -270,6 +282,7 @@ export function FeedbackLayer({
           if (!comment) return null;
           const number = numbers.get(comment.id) ?? null;
           const markId = markIdFor(comment);
+          const unseen = unseenReplies(comment, seen).length > 0;
           return (
             <CommentTag
               key={comment.id}
@@ -277,6 +290,7 @@ export function FeedbackLayer({
               pending={false}
               resolved={isResolved(comment)}
               addressed={!!comment.addressedAt}
+              unseen={unseen}
               lit={litMarkId === markId || card?.commentId === comment.id}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -293,7 +307,7 @@ export function FeedbackLayer({
                     : undefined,
                   { long: true, blocks: blocksFor?.(comment.anchor) },
                 ),
-                carriedNotes(comment),
+                carriedNotes(comment, unseen),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {
@@ -322,7 +336,7 @@ export function FeedbackLayer({
           canChange={false}
           focusOnOpen={card.focus}
           meta={meta}
-          forCreator
+          forCreator={forCreator}
           onEdit={refused}
           onDelete={refused}
           onResolve={refused}
@@ -331,6 +345,11 @@ export function FeedbackLayer({
             ((addressed) =>
               withClosedNotice(onAddress)(cardComment.id, addressed))
           }
+          onReply={
+            onReply &&
+            ((body) => withClosedNotice(onReply)(cardComment.id, body))
+          }
+          replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
           onClose={() => closeCard(cardComment.id)}
         />
       )}
@@ -340,17 +359,23 @@ export function FeedbackLayer({
 
 /** Mark addressed, saying so when the feedback can no longer change */
 export const withClosedNotice =
-  (onAddress: (id: number, addressed: boolean) => Promise<CommentOutcome>) =>
-  async (id: number, addressed: boolean): Promise<CommentOutcome> => {
-    const outcome = await onAddress(id, addressed);
+  <A,>(act: (id: number, arg: A) => Promise<CommentOutcome>) =>
+  async (id: number, arg: A): Promise<CommentOutcome> => {
+    const outcome = await act(id, arg);
     if (!outcome.ok && outcome.error === "review_closed") {
       toast.info("This feedback can't change now.", { id: "feedback-closed" });
     }
     return outcome;
   };
 
+/** A reply's edit and delete, saying so when the feedback can't change */
+export const closedNoticeEdits = (edits: ReplyEdits): ReplyEdits => ({
+  edit: (id, body) => withClosedNotice(edits.edit)(id, body),
+  remove: (id) => withClosedNotice(edits.remove)(id, undefined),
+});
+
 // A creator never edits, deletes or resolves a reviewer's comment
-const refused = async (): Promise<CommentOutcome> => ({
+export const refused = async (): Promise<CommentOutcome> => ({
   ok: false,
   error: "forbidden",
 });

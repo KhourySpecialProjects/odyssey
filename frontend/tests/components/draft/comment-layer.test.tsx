@@ -946,6 +946,36 @@ describe("a comment carried into the reviewer's next round (ODY-807)", () => {
     expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
   });
 
+  it("replies on a carried copy, and offers no Reply on a fresh comment", async () => {
+    const onReply = jest.fn().mockResolvedValue({ ok: true });
+    mount(true, {
+      comments: [carried, { ...wordsComment, id: 5 }],
+      numbers: new Map([
+        [1, 1],
+        [5, 2],
+      ]),
+      onReply,
+    });
+    await act(async () => {});
+    const [carriedTag, freshTag] = screen.getAllByTestId("comment-tag");
+
+    await userEvent.click(freshTag);
+    expect(screen.queryByRole("button", { name: "Reply" })).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close comment" }),
+    );
+
+    await userEvent.click(carriedTag);
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "Fixed",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+
+    expect(onReply).toHaveBeenCalledWith(1, "Fixed");
+  });
+
   it("keeps a comment written this round as it was", async () => {
     mount(true, { comments: [wordsComment], numbers: new Map([[1, 1]]) });
     await act(async () => {});

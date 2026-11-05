@@ -1,4 +1,4 @@
-import { replyToComment } from "@/lib/requests/reviews";
+import { replyToComment, editReply, deleteReply } from "@/lib/requests/reviews";
 import { requireRole } from "@/lib/auth/require-role";
 import { fetchAPI } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
@@ -261,4 +261,122 @@ describe("replyToComment", () => {
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
     spy.mockRestore();
   });
+});
+
+type OwnOpts = {
+  authorId?: number;
+  parent?: boolean;
+  closed?: boolean;
+  later?: boolean;
+  status?: string;
+};
+
+/** Reply 21 (parent root 4, by user 5) with optional closure / later reply. */
+function arrangeOwn(o: OwnOpts = {}) {
+  mockedFetchAPI.mockImplementation((async (path: string, cfg: any) => {
+    if (path !== "/review-comments") return [];
+    const filters = cfg.urlParams.filters;
+    if (filters.$or) return o.closed ? [{ id: ROOT }] : [];
+    if (filters.id.$gt !== undefined) return o.later ? [{ id: 25 }] : [];
+    return [
+      {
+        id: TARGET,
+        documentId: "comment-21",
+        parent: o.parent === false ? null : { id: ROOT },
+        author: { id: o.authorId ?? 5 },
+        review: {
+          documentId: "review-70",
+          state: "sent",
+          droplet: droplet(o.status ?? "draft"),
+        },
+      },
+    ];
+  }) as any);
+  fetchMock.mockResolvedValue(
+    makeFetchResponse({ data: { id: 21, attributes: { id: 21, body: "e" } } }),
+  );
+}
+
+describe.each([
+  ["editReply", () => editReply(TARGET, " New ")],
+  ["deleteReply", () => deleteReply(TARGET)],
+])("%s", (name, invoke) => {
+  const isEdit = name === "editReply";
+
+  it.each([
+    ["the author with no later other reply", author, {}],
+    ["a reviewer who wrote it", reviewer, { authorId: 9 }],
+  ])("allows %s", async (_n, who, opts: OwnOpts) => {
+    mockedRequireRole.mockResolvedValue(who());
+    arrangeOwn(opts);
+
+    const result = await invoke();
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock.mock.calls.at(-1)?.[1]?.method).toBe(
+      isEdit ? "PUT" : "DELETE",
+    );
+    expect(mockedRevalidateTag).toHaveBeenCalledWith("review-3");
+  });
+
+  it("only counts later replies by someone else", async () => {
+    arrangeOwn();
+
+    await invoke();
+
+    const call = mockedFetchAPI.mock.calls.find(
+      ([, cfg]) => (cfg as any).urlParams.filters.id?.$gt !== undefined,
+    );
+    expect((call![1] as any).urlParams.filters).toEqual({
+      parent: { id: { $eq: ROOT } },
+      id: { $gt: TARGET },
+      author: { id: { $ne: 5 } },
+    });
+  });
+
+  it.each([
+    ["someone else's reply", author, { authorId: 6 }, "forbidden"],
+    ["a later reply by another person", author, { later: true }, "conflict"],
+    ["a closed thread", author, { closed: true }, "review_closed"],
+    ["a published droplet", author, { status: "published" }, "review_closed"],
+    ["a top-level comment", author, { parent: false }, "invalid_input"],
+    ["a role-less non-author", stranger, { authorId: 6 }, "forbidden"],
+    [
+      "someone else's reply on a published droplet",
+      author,
+      { authorId: 6, status: "published" },
+      "forbidden",
+    ],
+    [
+      "someone else's reply in a closed thread",
+      author,
+      { authorId: 6, closed: true },
+      "forbidden",
+    ],
+    [
+      "someone else's top-level comment",
+      author,
+      { authorId: 6, parent: false },
+      "invalid_input",
+    ],
+  ])("refuses %s", async (_n, who, opts: OwnOpts, code) => {
+    mockedRequireRole.mockResolvedValue(who());
+    arrangeOwn(opts);
+
+    const result = await invoke();
+
+    expect(result).toMatchObject({ ok: false, error: code, data: null });
+    if (code === "conflict") {
+      expect((result as any).message).toBe("Someone has replied since.");
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+it("editReply rejects a blank body", async () => {
+  expect(await editReply(TARGET, "  ")).toMatchObject({
+    error: "invalid_input",
+  });
+  expect(mockedFetchAPI).not.toHaveBeenCalled();
 });

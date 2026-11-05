@@ -189,7 +189,7 @@ describe("an author's counts of the feedback sent to them (ODY-807)", () => {
   async function renderAuthorSidebar() {
     render(
       <ReviewCommentsProvider dropletId={3} enabled={false}>
-        <SentFeedbackProvider dropletId={3} enabled>
+        <SentFeedbackProvider dropletId={3} enabled isAuthor>
           <Sidebar
             user={faculty as never}
             droplet={{ ...droplet, inReview: false } as never}

@@ -12,10 +12,16 @@ import {
 } from "@/components/draft/metadata/frozen-overview";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { useShowInLesson } from "@/hooks/use-show-in-lesson";
-import { useDropletReviewComments } from "./review-comments-context";
+import {
+  useDropletReviewComments,
+  useSharedSentFeedback,
+  useThreadSeen,
+} from "./review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import { useReviewFocus } from "./review-focus-context";
 import {
   commentCounts,
+  carriedMeta,
   isOutdatedMark,
   isWholeSection,
   numberComments,
@@ -24,6 +30,7 @@ import { ReviewModeBar, type ReviewMode } from "./review-mode-bar";
 import { CommentLayer } from "./comment-layer";
 import { ReviewTextView } from "./review-text-view";
 import { OutdatedComments } from "./outdated-comments";
+import { OverviewFeedback } from "./overview-feedback";
 import { CommentStrip } from "./comment-strip";
 import { SectionComments } from "./section-comments";
 import {
@@ -62,11 +69,20 @@ export function OverviewReview({
     // Send the editors' last change now, and once every save has finished,
     // reload the page data so Comment mode shows the edits
     void settleDropletUpdates().then(() => router.refresh());
-    setMode("comment");
+    changeMode("comment");
   };
   const commenting = mode === "comment";
   const reviewComments = useDropletReviewComments(dropletId, true);
-  const { review, add, edit, remove, resolve } = reviewComments;
+  const sentFeedback = useSharedSentFeedback();
+  const { seen } = useThreadSeen();
+  // The two hooks don't share replies: refresh the one a mode change shows
+  const changeMode = (next: ReviewMode) => {
+    setMode(next);
+    if (next === "read") void sentFeedback?.reload();
+    else if (next === "comment") void reviewComments.reload();
+  };
+  const { review, add, edit, remove, resolve, reply, replyEdits } =
+    reviewComments;
 
   const comments = useMemo(
     () => reviewComments.comments.filter((c) => c.field !== "blocks"),
@@ -161,7 +177,7 @@ export function OverviewReview({
     enabled: true,
     ready: commenting && !reviewComments.isLoading,
     mode,
-    onComment: () => (mode === "edit" ? stopEditing() : setMode("comment")),
+    onComment: () => (mode === "edit" ? stopEditing() : changeMode("comment")),
     isOutdated: (markId) => isOutdatedMark(markId, outdatedIds),
   });
 
@@ -181,6 +197,8 @@ export function OverviewReview({
         onEdit={edit}
         onDelete={remove}
         onResolve={resolve}
+        onReply={reply}
+        replyEdits={replyEdits}
         onDraftChange={(anchor) => setDraft(anchor ? { field, anchor } : null)}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
@@ -222,6 +240,8 @@ export function OverviewReview({
         onEdit={edit}
         onDelete={remove}
         onResolve={resolve}
+        onReply={reply}
+        replyEdits={replyEdits}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -239,26 +259,59 @@ export function OverviewReview({
           <ReviewModeBar
             mode={mode}
             subject="overview"
-            onModeChange={setMode}
+            onModeChange={changeMode}
             onEdit={() => setMode("edit")}
             onStopEditing={stopEditing}
           />
         </div>
         {mode === "edit" ? (
           children
+        ) : mode === "read" ? (
+          <>
+            <OverviewFeedback
+              droplet={droplet}
+              authors={authors}
+              dropletId={dropletId}
+              canEdit={false}
+              canReply
+              canAddress={false}
+            >
+              <FrozenOverview
+                droplet={droplet}
+                authors={authors}
+                renderField={renderField}
+                renderSection={renderSection}
+              />
+            </OverviewFeedback>
+            <div className="pb-16" />
+          </>
         ) : (
           <>
             {commenting && (
               <div className="mx-40 mb-4 group-data-[review-panel=open]:mx-12">
                 <CommentStrip
                   {...commentCounts(comments, review?.state)}
+                  newReplies={unseenCount(comments, seen)}
                   place="the Overview"
                   isLoading={reviewComments.isLoading}
                   loadError={!!reviewComments.loadError}
                   sections
                   keyboard={<CommentKeyboardButton />}
                 >
-                  <OutdatedComments comments={allOutdated} />
+                  <OutdatedComments
+                    comments={allOutdated}
+                    numbers={numbers}
+                    card={{
+                      canChange,
+                      onEdit: edit,
+                      onDelete: remove,
+                      onResolve: resolve,
+                      onReply: reply,
+                      replyEdits,
+                      replyOnCarried: true,
+                      meta: (c) => carriedMeta(c, canChange),
+                    }}
+                  />
                 </CommentStrip>
               </div>
             )}

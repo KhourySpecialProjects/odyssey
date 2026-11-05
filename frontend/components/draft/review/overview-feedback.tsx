@@ -11,14 +11,23 @@ import {
   type OverviewSection,
 } from "@/components/draft/metadata/frozen-overview";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
-import { useDropletSentFeedback } from "./review-comments-context";
+import {
+  useDropletSentFeedback,
+  useThreadSeen,
+} from "./review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import {
   feedbackMeta,
   isResolved,
   isWholeSection,
   numberComments,
 } from "@/lib/review-comments";
-import { FeedbackLayer, withClosedNotice } from "./feedback-layer";
+import {
+  FeedbackLayer,
+  closedNoticeEdits,
+  refused,
+  withClosedNotice,
+} from "./feedback-layer";
 import {
   FeedbackStrip,
   FeedbackViewToggle,
@@ -38,10 +47,6 @@ const FIELDS: OverviewField[] = [
   "overview",
   "objective",
 ];
-const refused = async () => ({
-  ok: false as const,
-  error: "forbidden" as const,
-});
 
 type OverviewFeedbackProps = Omit<
   React.ComponentProps<typeof FrozenOverview>,
@@ -50,12 +55,16 @@ type OverviewFeedbackProps = Omit<
   dropletId: number;
   /** False while the draft is back in review: no Edit, no Mark addressed */
   canEdit: boolean;
+  /** Replies stay open in both views, even back in review (ODY-881) */
+  canReply?: boolean;
+  /** Mark addressed, for an author: a reviewer reading the feedback passes false */
+  canAddress: boolean;
   /** The Overview without feedback: the editors, or the frozen Overview */
   children: ReactNode;
 };
 
 /**
- * The Overview for a droplet's author once a reviewer has sent feedback on it
+ * The Overview for a droplet's author, or a reviewer reading it, once feedback is sent
  * (ODY-807): Feedback shows the Overview as the reviewer saw it, with their
  * comments marked and numbered and whole-section ones on the headings, and
  * Edit shows the editors. Back in Feedback, the Overview reloads, so a
@@ -66,11 +75,14 @@ export function OverviewFeedback({
   authors,
   dropletId,
   canEdit,
+  canReply = false,
+  canAddress,
   children,
 }: OverviewFeedbackProps) {
   const router = useRouter();
-  const feedback = useDropletSentFeedback(dropletId, true);
-  const { review, markAddressed } = feedback;
+  const feedback = useDropletSentFeedback(dropletId, true, canAddress);
+  const { seen } = useThreadSeen();
+  const { review, markAddressed, reply, replyEdits } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
     [feedback.comments],
@@ -149,7 +161,9 @@ export function OverviewFeedback({
   })();
 
   const meta = feedbackMeta(review);
-  const onAddress = canEdit ? withClosedNotice(markAddressed) : undefined;
+  const onAddress =
+    canEdit && canAddress ? withClosedNotice(markAddressed) : undefined;
+  const onReply = canReply ? withClosedNotice(reply) : undefined;
   const showFeedback = mode === "feedback" || !canEdit;
 
   const renderField = (field: OverviewField) => {
@@ -163,6 +177,9 @@ export function OverviewFeedback({
         blockFor={() => undefined}
         meta={meta}
         onAddress={onAddress}
+        onReply={onReply}
+        replyEdits={replyEdits}
+        forCreator={!!canAddress}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -198,8 +215,11 @@ export function OverviewFeedback({
       litMarkId={litMarkId}
       onLitChange={setLitMarkId}
       readOnly
+      forCreator={!!canAddress}
       meta={meta}
       onAddress={onAddress}
+      onReply={onReply}
+      replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
     >
       {body}
     </SectionComments>
@@ -221,22 +241,38 @@ export function OverviewFeedback({
   );
 
   const strip = (
-    <div className="mx-40 mb-4">
+    <div className="mx-40 mb-4 group-data-[review-panel=open]:mx-12">
       <FeedbackStrip
         review={review}
         total={comments.length}
+        newReplies={unseenCount(comments, seen)}
         addressed={
           comments.filter((c) => c.addressedAt && !isResolved(c)).length
         }
         place="the Overview"
         inReview={!canEdit}
+        forReviewer={!canAddress}
         actions={(comments.length > 0 && toggle) || undefined}
         showHint={showFeedback}
         summary
         lessonComments={lessonComments}
       >
         {showFeedback && (
-          <OutdatedComments comments={FIELDS.flatMap((f) => outdated[f])} />
+          <OutdatedComments
+            comments={FIELDS.flatMap((f) => outdated[f])}
+            numbers={numbers}
+            card={{
+              canChange: false,
+              onEdit: refused,
+              onDelete: refused,
+              onResolve: refused,
+              onAddress,
+              onReply,
+              replyEdits: replyEdits && closedNoticeEdits(replyEdits),
+              meta: () => meta,
+              forCreator: !!canAddress,
+            }}
+          />
         )}
       </FeedbackStrip>
     </div>

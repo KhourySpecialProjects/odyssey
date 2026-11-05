@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { SentFeedbackProvider } from "@/components/draft/review/review-comments-context";
 import { getMyReview, getReviewForDroplet } from "@/lib/requests/reviews";
-import { markAddressed as markAddressedRequest } from "@/lib/requests/reviews";
+import {
+  markAddressed as markAddressedRequest,
+  replyToComment,
+} from "@/lib/requests/reviews";
 import { updateLesson } from "@/lib/requests/lesson";
 import { htmlContent } from "@/lib/anchors/content";
 import { classicLessonHtml } from "@/lib/review-classic";
@@ -54,6 +57,7 @@ jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
   getReviewForDroplet: jest.fn(),
   markAddressed: jest.fn(),
+  replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),
@@ -160,9 +164,12 @@ const sent = {
   ],
 };
 
-async function renderLesson(shown: typeof lesson | typeof classic = lesson) {
+async function renderLesson(
+  shown: typeof lesson | typeof classic = lesson,
+  isAuthor = true,
+) {
   const view = render(
-    <SentFeedbackProvider dropletId={3} enabled>
+    <SentFeedbackProvider dropletId={3} enabled isAuthor={isAuthor}>
       <LessonRenderer lesson={shown} dropletSlug="d" dropletId={3} />
     </SentFeedbackProvider>,
   );
@@ -274,7 +281,87 @@ describe("the creator's view of sent feedback (ODY-807)", () => {
   });
 });
 
+describe("an author while the lock loads (ODY-881)", () => {
+  it("still shows the feedback", async () => {
+    mockUseEditingLock.mockReturnValue(lockState({ isLoading: true }));
+    await renderLesson();
+
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("a non-author reviewer reading the sent feedback (ODY-881)", () => {
+  it("marks the comments and words the strip for a reviewer", async () => {
+    await renderLesson(lesson, false);
+
+    expect(drawn()).toBe("comment-1,comment-2");
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toHaveTextContent("its replies");
+  });
+
+  it("opens a Classic comment with Reply and no Mark addressed", async () => {
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue({ ok: true, error: null, data: classicSent } as never);
+    await renderLesson(classic, false);
+
+    await userEvent.click(classicMarks("comment-1")[0] as HTMLElement);
+
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 // A Classic-editor lesson: its comments are quotes in the whole lesson's text
+describe("an outdated comment's card (ODY-881)", () => {
+  const outdate = () =>
+    act(() => {
+      editorProps.onContent?.(
+        [paragraph("b1", "Loops come later."), lesson.blocksV2[1]],
+        { version: 2 },
+      );
+    });
+  const openOutdated = async () => {
+    outdate();
+    await userEvent.click(
+      within(
+        screen.getByRole("region", { name: "Outdated comments" }),
+      ).getByRole("button", { name: /Comment 1, outdated/ }),
+    );
+    return screen.getByRole("dialog", { name: /Comment 1/ });
+  };
+
+  it("gives a reviewer Reply and no Mark addressed", async () => {
+    await renderLesson(lesson, false);
+    const card = await openOutdated();
+
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+    expect(card).not.toHaveTextContent("The reviewer resolves it");
+  });
+
+  it("gives a creator Reply and no Mark addressed while the draft is back in review", async () => {
+    mockUseEditingLock.mockReturnValue(
+      lockState({ inReview: true, isOwnLock: false, isLocked: false }),
+    );
+    await renderLesson();
+    const card = await openOutdated();
+
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: "Mark addressed" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 const classicBlocks: Block[] = [
   {
     __component: "droplets.generic",
@@ -369,6 +456,30 @@ describe("the creator's view of sent feedback on a Classic lesson (ODY-880)", ()
       within(card).getByRole("button", { name: "Mark addressed" }),
     );
     expect(markAddressedRequest).toHaveBeenCalledWith(1, true);
+  });
+
+  it("replies from a Classic comment's card, also while the draft is back in review", async () => {
+    mockUseEditingLock.mockReturnValue(
+      lockState({ inReview: true, isOwnLock: false, isLocked: false }),
+    );
+    jest.mocked(replyToComment).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { id: 90, body: "Added it", parent: { id: 1 } },
+    } as never);
+    await renderLesson(classic);
+
+    await userEvent.click(classicMarks("comment-1")[0] as HTMLElement);
+    const card = screen.getByRole("dialog", { name: "Comment 1" });
+    await userEvent.click(within(card).getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      within(card).getByRole("textbox", { name: "Write a reply" }),
+      "Added it",
+    );
+    await userEvent.click(within(card).getByRole("button", { name: "Reply" }));
+
+    expect(replyToComment).toHaveBeenCalledWith(1, "Added it");
+    expect(await within(card).findByText("Added it")).toBeInTheDocument();
   });
 
   it("switches to Edit for the block editors, and back to Feedback", async () => {
