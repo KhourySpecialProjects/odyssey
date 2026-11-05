@@ -1114,7 +1114,9 @@ async function fetchComments(
     dropletId,
     fresh,
   );
-  const tops = rows.filter((c) => !c.parent);
+  const tops = rows
+    .filter((c) => !c.parent)
+    .map((c) => ({ ...c, mine: c.author?.id === viewerId }));
   if (!withReplies) return tops;
   const roots = [...new Set(tops.map(rootId))];
 

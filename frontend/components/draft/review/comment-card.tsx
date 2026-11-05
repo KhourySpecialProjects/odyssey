@@ -22,7 +22,12 @@ import { POPOVER_GAP, useDismiss, type PopoverAnchor } from "@/lib/selection";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { unseenReplies } from "@/lib/review-threads";
 import { useThreadSeen } from "./review-comments-context";
-import { CommentThread, initials, type ReplyEdits } from "./comment-thread";
+import {
+  bubble,
+  ChatSpeaker,
+  CommentThread,
+  type ReplyEdits,
+} from "./comment-thread";
 
 interface CommentCardProps {
   comment: ReviewComment;
@@ -55,6 +60,9 @@ type Mode = "view" | "edit" | "confirm-delete";
 
 const FAILED = "That didn't save. Try again.";
 const HAS_REPLIES = "This comment has replies. Resolve it instead.";
+// Either side's bubble, greyed and struck through (slate-600 on slate-100 is 7:1)
+const RESOLVED =
+  "bg-slate-100 text-slate-600 line-through dark:bg-[#1a2436] dark:text-slate-400";
 
 const BUTTON =
   "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none disabled:opacity-50";
@@ -103,6 +111,8 @@ export function CommentCard({
         .filter(Boolean)
         .join(" ") || "You"
     : "You";
+  // Not read back yet (no author): the viewer just wrote it
+  const mine = comment.mine ?? !comment.author;
   // A carried comment's date is the original's (ODY-807)
   const time = commentTime(comment.carriedFrom?.createdAt ?? comment.createdAt);
   const addressed = !!comment.addressedAt;
@@ -200,20 +210,14 @@ export function CommentCard({
         </button>
       </div>
 
-      <div className="flex gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]">
-        <span
-          aria-hidden
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--rc-accent-soft)] text-[11px] font-semibold text-[var(--rc-accent-text)]"
-        >
-          {initials(author)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap gap-x-2 text-xs text-slate-500 dark:text-slate-400">
-            <strong className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-              {author}
-            </strong>
-            {time && <span>{time}</span>}
-          </p>
+      {/* The comment is the first bubble of its thread (ODY-893) */}
+      <div
+        className={cn(
+          "flex gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]",
+          mine && "justify-end",
+        )}
+      >
+        <ChatSpeaker mine={mine} name={author}>
           {mode === "edit" ? (
             <textarea
               aria-label="Edit your comment"
@@ -222,25 +226,24 @@ export function CommentCard({
               rows={3}
               maxLength={5000}
               autoFocus
-              className="mt-1 min-h-[76px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
+              className="min-h-[76px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
             />
           ) : (
-            <p
-              className={cn(
-                "mt-0.5 [overflow-wrap:anywhere] whitespace-pre-wrap",
-                resolved
-                  ? "text-slate-500 line-through dark:text-slate-400"
-                  : "text-slate-800 dark:text-slate-100",
-              )}
-            >
+            <p className={cn(bubble(mine), resolved && RESOLVED)}>
               {comment.body}
             </p>
           )}
-        </div>
+          {time && mode !== "edit" && (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {time}
+            </span>
+          )}
+        </ChatSpeaker>
       </div>
 
       {(replies.length > 0 || onReply) && (
         <CommentThread
+          lead={{ ...comment, mine }}
           replies={replies}
           closed={resolved}
           onReply={onReply}

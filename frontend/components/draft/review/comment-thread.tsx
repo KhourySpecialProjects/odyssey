@@ -31,6 +31,8 @@ interface CommentThreadProps {
   edits?: ReplyEdits;
   /** Replies to mark "New": those unseen when the card opened */
   fresh?: ReadonlySet<number>;
+  /** The comment itself: a first reply by its author continues its run */
+  lead?: ReviewComment;
 }
 
 const FAILED = "That didn't save. Try again.";
@@ -69,6 +71,57 @@ const BUBBLE =
 const BUBBLE_MINE = "rounded-br-md bg-[var(--rc-accent)] text-white";
 const BUBBLE_OTHER =
   "rounded-bl-md bg-slate-100 text-slate-900 dark:bg-[#1a2436] dark:text-slate-100";
+
+export const bubble = (mine?: boolean) =>
+  cn(BUBBLE, mine ? BUBBLE_MINE : BUBBLE_OTHER);
+
+/**
+ * A message's avatar and name, then `children` in a column on the speaker's
+ * side. Yours, and repeats in a run, keep the name for screen readers only.
+ */
+export function ChatSpeaker({
+  mine,
+  name,
+  starts = true,
+  children,
+}: {
+  mine?: boolean;
+  name: string;
+  /** Starts a run of messages by one person */
+  starts?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      {!mine && (
+        <span
+          aria-hidden
+          className={cn(
+            "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+            starts && "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]",
+          )}
+        >
+          {starts && initials(name)}
+        </span>
+      )}
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col gap-1",
+          mine ? "items-end" : "items-start",
+        )}
+      >
+        {mine || !starts ? (
+          <span className="sr-only">{mine ? "You" : name}</span>
+        ) : (
+          <strong className="text-[13px] leading-6 font-semibold text-slate-900 dark:text-slate-100">
+            {name}
+          </strong>
+        )}
+        {children}
+      </div>
+    </>
+  );
+}
 
 const LINK =
   "rounded text-xs font-medium text-slate-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none disabled:opacity-50 dark:text-slate-300";
@@ -184,13 +237,7 @@ function ReplyBody({
 
   return (
     <>
-      <p
-        className={cn(
-          BUBBLE,
-          reply.mine ? BUBBLE_MINE : BUBBLE_OTHER,
-          reply.id < 0 && "opacity-60",
-        )}
-      >
+      <p className={cn(bubble(reply.mine), reply.id < 0 && "opacity-60")}>
         {reply.body}
       </p>
       {(meta || (edits && mode === "view")) && (
@@ -257,6 +304,7 @@ export function CommentThread({
   onReply,
   edits,
   fresh,
+  lead,
 }: CommentThreadProps) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -343,7 +391,7 @@ export function CommentThread({
   };
 
   return (
-    <div className="grid gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]">
+    <div className="grid gap-2">
       {replies.length > 0 && (
         <ul
           ref={listRef}
@@ -368,8 +416,8 @@ export function CommentThread({
               !replies.slice(index + 1).some((r) => !r.mine);
             const time = commentTime(replyTime(reply));
             // A run of replies by one person shows the name and avatar once
-            const starts =
-              index === 0 || !sameAuthor(replies[index - 1]!, reply);
+            const before = index === 0 ? lead : replies[index - 1];
+            const starts = !before || !sameAuthor(before, reply);
             // ...and a time the next one repeats only under the last
             const after = replies[index + 1];
             const showTime =
@@ -393,31 +441,7 @@ export function CommentThread({
                   starts ? "mt-3 first:mt-0" : "mt-1",
                 )}
               >
-                {!reply.mine && (
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
-                      starts &&
-                        "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]",
-                    )}
-                  >
-                    {starts && initials(name)}
-                  </span>
-                )}
-                <div
-                  className={cn(
-                    "flex min-w-0 flex-1 flex-col gap-1",
-                    reply.mine ? "items-end" : "items-start",
-                  )}
-                >
-                  {reply.mine || !starts ? (
-                    <span className="sr-only">{reply.mine ? "You" : name}</span>
-                  ) : (
-                    <strong className="text-[13px] leading-6 font-semibold text-slate-900 dark:text-slate-100">
-                      {name}
-                    </strong>
-                  )}
+                <ChatSpeaker mine={reply.mine} name={name} starts={starts}>
                   <ReplyBody
                     reply={reply}
                     meta={
@@ -443,7 +467,7 @@ export function CommentThread({
                     onRemoved={focusToggle}
                     report={report}
                   />
-                </div>
+                </ChatSpeaker>
               </li>
             );
           })}

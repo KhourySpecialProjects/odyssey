@@ -117,6 +117,20 @@ describe("getMyReview", () => {
     expect(mockedFetchAPI).not.toHaveBeenCalled();
   });
 
+  it("marks the comments the caller wrote as mine", async () => {
+    mockedRequireRole.mockResolvedValue(reviewer());
+    arrange({
+      topRows: [
+        { id: 1, author: { id: 9 } },
+        { id: 2, author: { id: 4 } },
+      ],
+    });
+
+    const { data } = await getMyReview(3);
+
+    expect(data?.comments?.map((c) => c.mine)).toEqual([true, false]);
+  });
+
   it("returns the caller's own review for the current round, with its comments", async () => {
     mockedRequireRole.mockResolvedValue(reviewer());
     arrange({ comments: 2 });
@@ -130,8 +144,8 @@ describe("getMyReview", () => {
         id: 70,
         round: 2,
         comments: [
-          { id: 1, replies: [] },
-          { id: 2, replies: [] },
+          { id: 1, mine: false, replies: [] },
+          { id: 2, mine: false, replies: [] },
         ],
       },
     });

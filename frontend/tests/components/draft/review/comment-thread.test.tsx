@@ -325,6 +325,39 @@ describe("CommentCard threads", () => {
     return onClose;
   };
 
+  const ada = { id: 2, firstName: "Ada", lastName: "Lovelace" } as never;
+
+  it.each([
+    ["yours, on the right", true, "You", true],
+    ["the reviewer's, on the left", false, "Ada Lovelace", false],
+  ])("draws the comment as the first bubble: %s", (_n, mine, name, accent) => {
+    card({}, { author: ada, mine });
+
+    expect(screen.getByText(name)).toHaveClass(
+      mine ? "sr-only" : "font-semibold",
+    );
+    expect(screen.getByText("Fix this").className.includes("rc-accent")).toBe(
+      accent,
+    );
+  });
+
+  it("counts a comment not read back yet (no author) as yours", () => {
+    card();
+
+    expect(screen.getByText("You")).toHaveClass("sr-only");
+  });
+
+  it("continues the comment's run when its author replies first", () => {
+    card(
+      {},
+      { author: ada, mine: false, replies: [reply({ id: 6, author: ada })] },
+    );
+
+    expect(screen.getAllByText("Ada Lovelace").map((n) => n.className)).toEqual(
+      [expect.stringContaining("font-semibold"), "sr-only"],
+    );
+  });
+
   it("Esc in the reply box closes the box, not the card", async () => {
     const onClose = card({ onReply: jest.fn() });
 
