@@ -73,7 +73,7 @@ const SandpackViewer = dynamic(
 );
 import {
   blockNoteIdToNumber,
-  convertBlockNoteToV1Blocks,
+  displayBlocksOf,
 } from "@/lib/blocknote/convert-blocks";
 import { blocksToHtml } from "@/lib/strapi-blocks-html";
 import { authorByline } from "@/lib/author-names";
@@ -127,9 +127,11 @@ export function LessonRenderer({
 
   const displayBlocks = useMemo(
     () =>
-      lesson.blocksVersion === "v2" && lesson.blocksV2
-        ? convertBlockNoteToV1Blocks(lesson.blocksV2)
-        : lesson.blocks,
+      displayBlocksOf({
+        blocksVersion: lesson.blocksVersion,
+        blocksV2: lesson.blocksV2,
+        blocks: lesson.blocks,
+      }),
     [lesson.blocksVersion, lesson.blocksV2, lesson.blocks],
   );
 
