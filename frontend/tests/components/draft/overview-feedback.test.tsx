@@ -6,7 +6,9 @@ import {
   getThreadStamp,
   markAddressed,
   replyToComment,
+  deleteReply,
 } from "@/lib/requests/reviews";
+import { toast } from "sonner";
 import {
   ReviewCommentsProvider,
   SentFeedbackProvider,
@@ -20,6 +22,7 @@ jest.mock("@/lib/requests/reviews", () => ({
   getThreadStamp: jest.fn(),
   markAddressed: jest.fn(),
   replyToComment: jest.fn(),
+  deleteReply: jest.fn(),
 }));
 const refresh = jest.fn();
 jest.mock("@/components/draft/metadata/hooks/useDropletUpdate", () => ({
@@ -310,6 +313,60 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(
       screen.getByRole("region", { name: "Reviewer feedback" }),
     ).toHaveTextContent("its replies");
+  });
+
+  describe("a whole-section comment's card", () => {
+    const withSection = (comment: Partial<ReviewComment>) =>
+      jest.mocked(getReviewForDroplet).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: {
+          ...sent,
+          comments: sent.comments.map((c) =>
+            c.id === 3 ? { ...c, ...comment } : c,
+          ),
+        },
+      } as never);
+    const tag = () =>
+      within(screen.getByTestId("overview-section-nextSteps")).getByTestId(
+        "comment-tag",
+      );
+
+    it.each([
+      [true, "Marked addressed. The reviewer resolves it."],
+      [false, "The creator marked this addressed."],
+    ])("words addressed for canAddress %s", async (canAddress, text) => {
+      withSection({ addressedAt: "2026-10-29T09:00:00.000Z" });
+      await mount(true, true, canAddress);
+
+      await userEvent.click(tag());
+
+      expect(screen.getByText(text)).toBeInTheDocument();
+    });
+
+    it("says so when deleting a reply finds the feedback closed", async () => {
+      withSection({
+        replies: [
+          { id: 91, body: "Mine", mine: true, parent: { id: 3 } },
+        ] as never,
+      });
+      jest
+        .mocked(deleteReply)
+        .mockResolvedValue({ ok: false, error: "review_closed" } as never);
+      await mount();
+
+      await userEvent.click(tag());
+      await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+      await userEvent.click(
+        screen.getAllByRole("button", { name: "Delete" })[0],
+      );
+
+      expect(toast.info).toHaveBeenCalledTimes(1);
+      expect(toast.info).toHaveBeenCalledWith(
+        "This feedback can't change now.",
+        expect.anything(),
+      );
+    });
   });
 
   it("offers no Reply without canReply", async () => {

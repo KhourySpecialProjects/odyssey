@@ -215,10 +215,11 @@ export function OverviewFeedback({
       litMarkId={litMarkId}
       onLitChange={setLitMarkId}
       readOnly
+      forCreator={!!canAddress}
       meta={meta}
       onAddress={onAddress}
       onReply={onReply}
-      replyEdits={replyEdits}
+      replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
     >
       {body}
     </SectionComments>
