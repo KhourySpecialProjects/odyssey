@@ -1467,6 +1467,109 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
+  collectionName: 'mentor_settings';
+  info: {
+    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884)";
+    displayName: 'Mentor Settings';
+    pluralName: 'mentor-settings';
+    singularName: 'mentor-setting';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    enabled: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-setting.mentor-setting'
+    > &
+      Schema.Attribute.Private;
+    monthlyCapUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    perUserDailyLimit: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    pilotGroups: Schema.Attribute.Relation<'manyToMany', 'api::group.group'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMentorUsageMentorUsage extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_usages';
+  info: {
+    description: 'One row per Mentor answer: tokens only, never question or answer text (ODY-884)';
+    displayName: 'Mentor Usage';
+    pluralName: 'mentor-usages';
+    singularName: 'mentor-usage';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    inputTokens: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain', 'quiz-hint']> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-usage.mentor-usage'
+    > &
+      Schema.Attribute.Private;
+    model: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    outputTokens: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiNoteNote extends Struct.CollectionTypeSchema {
   collectionName: 'notes';
   info: {
@@ -2638,6 +2741,8 @@ declare module '@strapi/strapi' {
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
+      'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;
       'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
