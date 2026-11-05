@@ -19,6 +19,31 @@ const ok = { ok: true as const };
 const writeBox = () => screen.getByRole("textbox", { name: "Write a reply" });
 
 describe("CommentThread", () => {
+  it("shows own replies right-aligned as 'You', others left with name and initials", () => {
+    render(
+      <CommentThread
+        closed={false}
+        replies={[
+          reply({
+            id: 1,
+            body: "Theirs",
+            author: { id: 2, firstName: "Ada", lastName: "Lovelace" } as never,
+          }),
+          reply({ id: 2, body: "Ours", mine: true }),
+        ]}
+      />,
+    );
+    const [theirs, ours] = screen.getAllByRole("listitem");
+    expect(theirs).not.toHaveClass("justify-end");
+    expect(theirs).toHaveTextContent("AL");
+    expect(theirs).toHaveTextContent("Ada Lovelace");
+    expect(ours).toHaveClass("justify-end");
+    expect(ours).not.toHaveTextContent("AL");
+    expect(screen.getByText("You")).toHaveClass("sr-only");
+    expect(screen.getByText("Ours")).toHaveClass("bg-[var(--rc-accent)]");
+    expect(screen.getByText("Theirs")).not.toHaveClass("bg-[var(--rc-accent)]");
+  });
+
   it("lists replies in order with names, 'You', edited and saving", () => {
     render(
       <CommentThread

@@ -10,6 +10,7 @@ import {
 import type { ReviewComment } from "@/types";
 import type { ReviewActionError } from "@/lib/requests/reviews";
 import { commentTime } from "@/lib/review-comments";
+import { cn } from "@/lib/utils";
 import { isEdited, replyTime } from "@/lib/review-threads";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 
@@ -55,6 +56,13 @@ function replyAuthor(reply: ReviewComment) {
     .join(" ");
   return name || (reply.mine ? "You" : "Someone");
 }
+
+// Chat look (experiment): accent #2d7597 with white text is 5.1:1 in light and dark
+const BUBBLE =
+  "max-w-[85%] rounded-2xl px-3 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap";
+const BUBBLE_MINE = "rounded-br-md bg-[var(--rc-accent)] text-white";
+const BUBBLE_OTHER =
+  "rounded-bl-md bg-slate-100 text-slate-900 dark:bg-[#1a2436] dark:text-slate-100";
 
 const LINK =
   "rounded text-xs font-medium text-slate-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none disabled:opacity-50 dark:text-slate-300";
@@ -120,7 +128,7 @@ function ReplyBody({
 
   if (mode === "edit" && edits) {
     return (
-      <div className="grid gap-1.5">
+      <div className="grid w-full gap-1.5">
         <textarea
           aria-label="Edit your reply"
           value={draft}
@@ -167,11 +175,17 @@ function ReplyBody({
 
   return (
     <>
-      <p className="[overflow-wrap:anywhere] whitespace-pre-wrap text-slate-800 dark:text-slate-100">
+      <p
+        className={cn(
+          BUBBLE,
+          reply.mine ? BUBBLE_MINE : BUBBLE_OTHER,
+          reply.id < 0 && "opacity-60",
+        )}
+      >
         {reply.body}
       </p>
       {edits && mode === "view" && (
-        <div className="flex gap-3">
+        <div className="flex justify-end gap-3">
           <button
             ref={editRef}
             type="button"
@@ -193,7 +207,7 @@ function ReplyBody({
         </div>
       )}
       {edits && mode === "delete" && (
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2">
           <span className="mr-auto text-slate-600 dark:text-slate-300">
             Delete this reply?
           </span>
@@ -317,18 +331,32 @@ export function CommentThread({
               !replies.slice(index + 1).some((r) => !r.mine);
             const time = commentTime(replyTime(reply));
             return (
-              <li key={reply.id} className="flex gap-2">
-                <span
-                  aria-hidden
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--rc-accent-soft)] text-[10px] font-semibold text-[var(--rc-accent-text)]"
+              <li
+                key={reply.id}
+                className={cn("flex gap-2", reply.mine && "justify-end")}
+              >
+                {!reply.mine && (
+                  <span
+                    aria-hidden
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--rc-accent-soft)] text-[10px] font-semibold text-[var(--rc-accent-text)]"
+                  >
+                    {initials(name)}
+                  </span>
+                )}
+                <div
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col gap-1",
+                    reply.mine ? "items-end" : "items-start",
+                  )}
                 >
-                  {initials(name)}
-                </span>
-                <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap gap-x-2 text-xs text-slate-500 dark:text-slate-400">
-                    <strong className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-                      {name}
-                    </strong>
+                    {reply.mine ? (
+                      <span className="sr-only">You</span>
+                    ) : (
+                      <strong className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+                        {name}
+                      </strong>
+                    )}
                     {reply.id < 0 ? (
                       <span>Saving…</span>
                     ) : (
