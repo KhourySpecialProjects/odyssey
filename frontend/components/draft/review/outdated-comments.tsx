@@ -22,7 +22,7 @@ export interface OutdatedCard {
   replyEdits?: ReplyEdits;
   /** A reviewer replies only on a comment that was sent before (G18) */
   replyOnCarried?: boolean;
-  meta: (comment: ReviewComment) => ReactNode;
+  meta?: (comment: ReviewComment) => ReactNode;
   forCreator?: boolean;
 }
 
@@ -195,7 +195,7 @@ export function OutdatedComments({
           }
           anchor={open.position}
           canChange={card.canChange}
-          meta={card.meta(openComment)}
+          meta={card.meta?.(openComment)}
           forCreator={card.forCreator}
           onEdit={(body) => card.onEdit(openComment.id, body)}
           onDelete={() => card.onDelete(openComment.id)}

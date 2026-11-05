@@ -66,8 +66,6 @@ interface FeedbackLayerProps {
   blockFor: (blockId: string) => TagBlock | undefined;
   /** How many blocks a comment across blocks spans, for its tag */
   blocksFor?: (anchor: ReviewAnchor) => number;
-  /** "Round 1 · sent 28 Oct", for each card */
-  meta: ReactNode;
   /** Absent once the feedback can't change (the draft is back in review) */
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies stay open after the draft goes back in review (ODY-881) */
@@ -100,7 +98,6 @@ export function FeedbackLayer({
   outdatedIds,
   blockFor,
   blocksFor,
-  meta,
   onAddress,
   onReply,
   replyEdits,
@@ -335,7 +332,6 @@ export function FeedbackLayer({
           anchor={card.position}
           canChange={false}
           focusOnOpen={card.focus}
-          meta={meta}
           forCreator={forCreator}
           onEdit={refused}
           onDelete={refused}
