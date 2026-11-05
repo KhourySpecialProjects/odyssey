@@ -55,6 +55,7 @@ jest.mock("@/components/draft/review/review-comments-context", () => ({
       {children}
     </div>
   ),
+  ThreadRefresh: ({ children }: { children: React.ReactNode }) => children,
   useSharedReviewComments: () => ({ comments: [{ id: 1 }, { id: 2 }] }),
 }));
 const unmounted = jest.fn();

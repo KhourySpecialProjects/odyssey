@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useReviewComments } from "@/hooks/use-review-comments";
 import { useSentFeedback } from "@/hooks/use-sent-feedback";
+import { useSeenReplies } from "@/hooks/use-seen-replies";
+import { useThreadRefresh } from "@/hooks/use-thread-refresh";
 
 type ReviewComments = ReturnType<typeof useReviewComments> & {
   enabled: boolean;
@@ -84,6 +86,51 @@ export function useSharedSentFeedback(): SentFeedback | null {
   const shared = useContext(SentFeedbackContext);
   return shared?.enabled ? shared : null;
 }
+
+type ThreadSeen = {
+  /** Checks for new replies now */
+  check: () => void;
+  /** Null outside a `ThreadRefresh`: nothing is tracked, so nothing is unseen */
+  seen: ReadonlySet<number> | null;
+  markSeen: (ids: readonly number[]) => void;
+};
+
+const NO_SEEN: ThreadSeen = {
+  check: () => {},
+  seen: null,
+  markSeen: () => {},
+};
+
+const ThreadSeenContext = createContext<ThreadSeen>(NO_SEEN);
+
+/** Polls the reply stamp for the layout, reloads on a change, and shares seen replies (ODY-881). */
+export function ThreadRefresh({
+  dropletId,
+  children,
+}: {
+  dropletId: number;
+  children: ReactNode;
+}) {
+  const comments = useSharedReviewComments();
+  const sent = useSharedSentFeedback();
+  const { check } = useThreadRefresh(dropletId, !!sent?.review, () => {
+    comments?.reload();
+    sent?.reload();
+  });
+  const { seen, markSeen } = useSeenReplies(dropletId);
+  const value = useMemo(
+    () => ({ check, seen, markSeen }),
+    [check, seen, markSeen],
+  );
+  return (
+    <ThreadSeenContext.Provider value={value}>
+      {children}
+    </ThreadSeenContext.Provider>
+  );
+}
+
+/** The layout's check and seen replies; inert outside a layout */
+export const useThreadSeen = () => useContext(ThreadSeenContext);
 
 /** The sent feedback for a page: the layout's when it loads it, else its own */
 export function useDropletSentFeedback(

@@ -4,6 +4,9 @@ import {
   mapThread,
   replyTime,
   settleReply,
+  newRepliesText,
+  unseenCount,
+  unseenReplies,
 } from "@/lib/review-threads";
 import type { ReviewComment } from "@/types";
 
@@ -63,6 +66,45 @@ describe("settleReply", () => {
   it("adds the saved reply when a reload dropped the saving one", () => {
     expect(settleReply([], -1, saved).map((r) => r.id)).toEqual([50]);
   });
+});
+
+describe("unseen replies", () => {
+  const top = (over: Partial<ReviewComment> = {}) =>
+    c({
+      id: 1,
+      replies: [
+        c({ id: 5 }),
+        c({ id: 6, mine: true }),
+        c({ id: -1 }),
+        c({ id: 7 }),
+      ],
+      ...over,
+    });
+
+  it("counts replies by others that are saved and not seen", () => {
+    expect(unseenReplies(top(), new Set([5])).map((r) => r.id)).toEqual([7]);
+    expect(unseenReplies(top(), new Set()).map((r) => r.id)).toEqual([5, 7]);
+  });
+
+  it("counts none on a resolved comment", () => {
+    const resolved = top({ resolvedAt: "2026-11-04" });
+    expect(unseenReplies(resolved, new Set())).toEqual([]);
+  });
+
+  it("totals the unseen replies of the comments", () => {
+    const list = [top(), top({ id: 2, replies: [c({ id: 6, mine: true })] })];
+    expect(unseenCount(list, new Set())).toBe(2);
+  });
+
+  it("counts none with no seen state to compare against", () => {
+    expect(unseenReplies(top(), null)).toEqual([]);
+    expect(unseenCount([top()], null)).toBe(0);
+  });
+
+  it.each([
+    [1, "1 new reply"],
+    [3, "3 new replies"],
+  ])("words %i as %s", (n, text) => expect(newRepliesText(n)).toBe(text));
 });
 
 describe("mapThread", () => {

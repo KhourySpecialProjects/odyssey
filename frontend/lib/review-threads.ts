@@ -33,6 +33,27 @@ export function isEdited(r: Pick<ReviewComment, "createdAt" | "updatedAt">) {
   return Date.parse(r.updatedAt) - Date.parse(r.createdAt) > 1000;
 }
 
+/** Replies by others the viewer hasn't opened; none when resolved or with no seen state. */
+export function unseenReplies(
+  top: Pick<ReviewComment, "replies" | "resolvedAt">,
+  seen: ReadonlySet<number> | null,
+): ReviewComment[] {
+  if (!seen || top.resolvedAt) return [];
+  return (top.replies ?? []).filter(
+    (r) => !r.mine && r.id > 0 && !seen.has(r.id),
+  );
+}
+
+/** How many unseen replies the comments hold in all. */
+export const unseenCount = (
+  comments: ReviewComment[],
+  seen: ReadonlySet<number> | null,
+) => comments.reduce((n, c) => n + unseenReplies(c, seen).length, 0);
+
+/** "1 new reply" / "3 new replies" */
+export const newRepliesText = (n: number) =>
+  `${n} new ${n === 1 ? "reply" : "replies"}`;
+
 /** Applies `change` to the replies of every comment in the root's thread. */
 export function mapThread(
   comments: ReviewComment[],
