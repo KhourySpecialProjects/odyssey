@@ -1,4 +1,9 @@
-import { checkRateLimit, RATE_LIMITS, type AIAction } from "../rate-limiter";
+import {
+  checkRateLimit,
+  getRoleTier,
+  RATE_LIMITS,
+  type AIAction,
+} from "../rate-limiter";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const realDateNow = Date.now;
@@ -234,5 +239,45 @@ describe("checkRateLimit", () => {
         "expand",
       ).allowed,
     ).toBe(true);
+  });
+});
+
+describe("student tier (ODY-884)", () => {
+  it("maps User and no role to student", () => {
+    expect(getRoleTier([AuthorizedUserRoleTitle.User])).toBe("student");
+    expect(getRoleTier([])).toBe("student");
+  });
+
+  it("still maps Creator and Editor to creator-editor", () => {
+    expect(getRoleTier([AuthorizedUserRoleTitle.ContentCreator])).toBe(
+      "creator-editor",
+    );
+    expect(getRoleTier([AuthorizedUserRoleTitle.ContentEditor])).toBe(
+      "creator-editor",
+    );
+  });
+
+  it("gives every action except mentor the creator-editor limit", () => {
+    for (const action of Object.keys(RATE_LIMITS) as AIAction[]) {
+      if (action === "mentor") continue;
+      expect(RATE_LIMITS[action].student).toBe(
+        RATE_LIMITS[action]["creator-editor"],
+      );
+    }
+  });
+
+  it("blocks a student after the mentor burst limit", async () => {
+    jest.resetModules();
+    const { checkRateLimit: check, RATE_LIMITS: limits } = await import(
+      "../rate-limiter"
+    );
+    setNow(1000);
+    const roles = [AuthorizedUserRoleTitle.User];
+    for (let i = 0; i < limits.mentor.student; i++) {
+      expect(check("student@test.com", roles, "mentor").allowed).toBe(true);
+    }
+    const blocked = check("student@test.com", roles, "mentor");
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.retryAfterMs).toBeGreaterThan(0);
   });
 });
