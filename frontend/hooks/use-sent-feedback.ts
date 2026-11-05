@@ -14,6 +14,7 @@ import {
   changeReply,
   mapThread,
   mergePosted,
+  prunePosted,
   rootId,
   savingReply,
   settleReply,
@@ -45,8 +46,12 @@ export function useSentFeedback(
   // A newer load, or leaving the page, makes an older one stale
   const loadToken = useRef(0);
   const nextTempId = useRef(-1);
+  const activeLoad = useRef<number | null>(null);
+  // Returns whether a load in flight was dropped
   const invalidateLoads = useCallback(() => {
+    const dropped = activeLoad.current === loadToken.current;
     loadToken.current++;
+    return dropped;
   }, []);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -59,6 +64,7 @@ export function useSentFeedback(
   const load = useCallback(async () => {
     if (dropletId == null || !enabledRef.current) return;
     const token = ++loadToken.current;
+    activeLoad.current = token;
     const result = await getReviewForDroplet(dropletId).catch((error) => {
       // A page left mid-load drops its request; that's no failure
       if (token === loadToken.current) {
@@ -66,9 +72,11 @@ export function useSentFeedback(
       }
       return { ok: false as const, error: "failed" as const, data: null };
     });
+    if (activeLoad.current === token) activeLoad.current = null;
     if (token !== loadToken.current) return;
     if (result.ok) {
       const data = result.data?.state === "sent" ? result.data : null;
+      prunePosted(data?.comments ?? [], posted.current, token);
       setReview(
         data?.comments
           ? { ...data, comments: mergePosted(data.comments, posted.current) }
@@ -112,17 +120,20 @@ export function useSentFeedback(
       const comment = reviewRef.current?.comments?.find((c) => c.id === id);
       if (!comment) return { ok: false, error: "not_found" };
       const previous = comment.addressedAt ?? null;
+      const dropped = invalidateLoads();
+      const mark = loadToken.current;
       setAddressedAt(id, addressed ? new Date().toISOString() : null);
 
       const result = await markAddressedAction(id, addressed).catch((error) => {
         console.error("Marking a comment addressed failed", error);
         return { ok: false as const, error: "failed" as const };
       });
-      if (result.ok) return { ok: true };
-      setAddressedAt(id, previous);
-      return { ok: false, error: result.error };
+      if (!result.ok) setAddressedAt(id, previous);
+      // A load that began during the write may have read the old state
+      if (dropped || loadToken.current !== mark) void load();
+      return result.ok ? { ok: true } : { ok: false, error: result.error };
     },
-    [isAuthor],
+    [isAuthor, invalidateLoads, load],
   );
 
   const setThread = (root: number, change: Parameters<typeof mapThread>[2]) =>
@@ -154,6 +165,7 @@ export function useSentFeedback(
       posted.current.set(result.data.id, {
         root,
         reply: { ...result.data, mine: true },
+        after: loadToken.current,
       });
       setThread(root, (rs) => settleReply(rs, tempId, result.data));
       return { ok: true };

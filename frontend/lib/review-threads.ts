@@ -79,8 +79,28 @@ export function settleReply(
   return [...rest.slice(0, at), next, ...rest.slice(at)];
 }
 
-/** Replies posted from this tab, by id, with the root each belongs to. */
-export type PostedReplies = Map<number, { root: number; reply: ReviewComment }>;
+/** Replies posted from this tab; `after` is the load token when it settled. */
+export type PostedReplies = Map<
+  number,
+  { root: number; reply: ReviewComment; after?: number }
+>;
+
+/** Forgets posted replies a load returned, or that it started after settling. */
+export function prunePosted(
+  comments: ReviewComment[],
+  posted: PostedReplies,
+  token: number,
+) {
+  if (posted.size === 0) return;
+  const seen = new Set(
+    comments.flatMap((c) => (c.replies ?? []).map((r) => r.id)),
+  );
+  for (const [id, p] of [...posted]) {
+    if (seen.has(id) || (p.after !== undefined && token > p.after)) {
+      posted.delete(id);
+    }
+  }
+}
 
 /** Puts back posted replies a stale read lacks; saving ones (negative ids) last. */
 export function mergePosted(
@@ -171,7 +191,7 @@ export async function changeReply<T>({
   const optimistic = next(previous);
   const wasPosted = posted.get(id);
   if (!optimistic) posted.delete(id);
-  else if (wasPosted) posted.set(id, { root, reply: optimistic });
+  else if (wasPosted) posted.set(id, { ...wasPosted, reply: optimistic });
   setThread(root, (rs) =>
     optimistic
       ? rs.map((r) => (r.id === id ? optimistic : r))
@@ -191,7 +211,7 @@ export async function changeReply<T>({
   invalidateLoads();
   if (optimistic) {
     const saved = { ...optimistic, ...(result.data as object), mine: true };
-    if (wasPosted) posted.set(id, { root, reply: saved });
+    if (wasPosted) posted.set(id, { ...wasPosted, reply: saved });
     setThread(root, (rs) => rs.map((r) => (r.id === id ? saved : r)));
   }
   return { ok: true };

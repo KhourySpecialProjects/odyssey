@@ -24,6 +24,7 @@ import {
   changeReply,
   mapThread,
   mergePosted,
+  prunePosted,
   rootId,
   savingReply,
   settleReply,
@@ -106,8 +107,12 @@ export function useReviewComments(
 
   // A newer load, or leaving the page, makes an older one stale
   const loadToken = useRef(0);
+  const activeLoad = useRef<number | null>(null);
+  // Returns whether a load in flight was dropped
   const invalidateLoads = useCallback(() => {
+    const dropped = activeLoad.current === loadToken.current;
     loadToken.current++;
+    return dropped;
   }, []);
 
   const enabledRef = useRef(enabled);
@@ -118,9 +123,12 @@ export function useReviewComments(
   const load = useCallback(async () => {
     if (dropletId == null || !enabledRef.current) return;
     const token = ++loadToken.current;
+    activeLoad.current = token;
     const result = await attempt(() => getMyReview(dropletId));
+    if (activeLoad.current === token) activeLoad.current = null;
     if (token !== loadToken.current) return;
     if (result.ok) {
+      prunePosted(result.data?.comments ?? [], posted.current, token);
       // A comment may already have opened the review, and be saving or
       // saved; the load doesn't know about it
       setReview((current) => result.data ?? current);
@@ -238,19 +246,24 @@ export function useReviewComments(
       const index = before.findIndex((c) => c.id === id);
       if (index < 0) return failed("not_found");
       const previous = before[index];
+      const dropped = invalidateLoads();
+      const mark = loadToken.current;
       replace(id, next);
 
       const result = await attempt(run);
-      if (result.ok) return OK;
-      setComments((current) => {
-        if (next) return current.map((c) => (c.id === id ? previous : c));
-        const restored = [...current];
-        restored.splice(Math.min(index, restored.length), 0, previous);
-        return restored;
-      });
-      return failed(result.error);
+      if (!result.ok) {
+        setComments((current) => {
+          if (next) return current.map((c) => (c.id === id ? previous : c));
+          const restored = [...current];
+          restored.splice(Math.min(index, restored.length), 0, previous);
+          return restored;
+        });
+      }
+      // A load that began during the write may have read the old state
+      if (dropped || loadToken.current !== mark) void load();
+      return result.ok ? OK : failed(result.error);
     },
-    [],
+    [invalidateLoads, load],
   );
 
   const edit = useCallback(
@@ -300,6 +313,7 @@ export function useReviewComments(
       posted.current.set(result.data.id, {
         root,
         reply: { ...result.data, mine: true },
+        after: loadToken.current,
       });
       setComments((cur) =>
         mapThread(cur, root, (rs) => settleReply(rs, tempId, result.data)),

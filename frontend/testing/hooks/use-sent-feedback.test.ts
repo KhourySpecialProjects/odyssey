@@ -109,6 +109,75 @@ describe("useSentFeedback (ODY-807)", () => {
     expect(typeof result.current.comments[0].addressedAt).toBe("string");
   });
 
+  it("re-reads when a read began during the mark and landed before it settled", async () => {
+    const { result } = await mount();
+    let save: (v: unknown) => void = () => {};
+    jest
+      .mocked(markAddressed)
+      .mockReturnValue(new Promise((r) => (save = r)) as never);
+    let write: Promise<unknown> = Promise.resolve();
+    act(() => {
+      write = result.current.markAddressed(21);
+    });
+    // This read began after the mark did, and has the old state
+    await act(async () => {
+      await result.current.reload();
+    });
+    expect(result.current.comments[0].addressedAt).toBeNull();
+    const addressedAt = "2026-10-29T09:00:00.000Z";
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue(
+        ok({ ...sent, comments: [{ ...comment, addressedAt }] }) as never,
+      );
+
+    await act(async () => {
+      save(ok(comment));
+      await write;
+    });
+
+    expect(result.current.comments[0].addressedAt).toBe(addressedAt);
+  });
+
+  it("a read already in flight can't undo the mark, and one reload follows", async () => {
+    const { result } = await mount();
+    let land: (v: unknown) => void = () => {};
+    jest
+      .mocked(getReviewForDroplet)
+      .mockReturnValueOnce(new Promise((r) => (land = r)) as never);
+    let reloading: Promise<unknown> = Promise.resolve();
+    act(() => {
+      reloading = result.current.reload();
+    });
+    const addressedAt = "2026-10-29T09:00:00.000Z";
+    jest
+      .mocked(getReviewForDroplet)
+      .mockResolvedValue(
+        ok({ ...sent, comments: [{ ...comment, addressedAt }] }) as never,
+      );
+
+    await act(async () => {
+      await result.current.markAddressed(21);
+    });
+    await act(async () => {
+      land(ok(sent));
+      await reloading;
+    });
+
+    expect(result.current.comments[0].addressedAt).toBe(addressedAt);
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(3);
+  });
+
+  it("doesn't reload after marking addressed when no read was in flight", async () => {
+    const { result } = await mount();
+
+    await act(async () => {
+      await result.current.markAddressed(21);
+    });
+
+    expect(getReviewForDroplet).toHaveBeenCalledTimes(1);
+  });
+
   it("lets only an author mark addressed (ODY-881)", async () => {
     const author = await mount();
     const reviewer = await mount(true, false);
@@ -293,6 +362,28 @@ describe("reload", () => {
     });
 
     expect(result.current.comments[0].replies!.map((r) => r.id)).toEqual([90]);
+  });
+
+  it("a reply deleted elsewhere stays gone after a reload that began later", async () => {
+    const savedReply = {
+      ...comment,
+      id: 90,
+      body: "On it",
+      parent: { id: 21 },
+    };
+    jest.mocked(replyToComment).mockResolvedValue(ok(savedReply) as never);
+    const { result } = await mount();
+    await act(async () => {
+      await result.current.reply(21, "On it");
+    });
+    expect(result.current.comments[0].replies!.map((r) => r.id)).toEqual([90]);
+
+    // The server no longer returns it
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.comments[0].replies ?? []).toEqual([]);
   });
 
   it("keeps the feedback shown when a reload fails", async () => {
