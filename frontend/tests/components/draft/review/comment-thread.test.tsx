@@ -203,35 +203,56 @@ describe("CommentThread", () => {
     expect(screen.getByText("Resolved · replies are closed")).toBeVisible();
   });
 
-  it("sends the trimmed text and clears the box", async () => {
+  it("shows the box at once, with Reply disabled until there's text", async () => {
+    render(<CommentThread replies={[]} closed={false} onReply={jest.fn()} />);
+
+    expect(writeBox()).toHaveAttribute("placeholder", "Reply…");
+    expect(writeBox()).not.toHaveFocus();
+    expect(screen.getByRole("button", { name: "Reply" })).toBeDisabled();
+    await userEvent.type(writeBox(), " ");
+    expect(screen.getByRole("button", { name: "Reply" })).toBeDisabled();
+  });
+
+  it("sends the trimmed text, clears the box and keeps focus in it", async () => {
     const onReply = jest.fn().mockResolvedValue(ok);
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     await userEvent.type(writeBox(), "  Done  ");
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));
 
     expect(onReply).toHaveBeenCalledWith("Done");
-    await waitFor(() => expect(screen.queryByRole("textbox")).toBeNull());
+    await waitFor(() => expect(writeBox()).toHaveValue(""));
+    expect(writeBox()).toHaveFocus();
   });
 
-  it("sends on Ctrl+Enter", async () => {
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Ctrl+Enter", "{Control>}{Enter}{/Control}"],
+  ])("sends on %s", async (_n, keys) => {
     const onReply = jest.fn().mockResolvedValue(ok);
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
-    await userEvent.type(writeBox(), "Hi{Control>}{Enter}{/Control}");
+    await userEvent.type(writeBox(), `Hi${keys}`);
 
     expect(onReply).toHaveBeenCalledWith("Hi");
   });
 
-  it("closes the box with no retry when the server says replies are closed", async () => {
+  it("adds a line on Shift+Enter, without sending", async () => {
+    const onReply = jest.fn().mockResolvedValue(ok);
+    render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
+
+    await userEvent.type(writeBox(), "One{Shift>}{Enter}{/Shift}Two");
+
+    expect(writeBox()).toHaveValue("One\nTwo");
+    expect(onReply).not.toHaveBeenCalled();
+  });
+
+  it("hides the box with no retry when the server says replies are closed", async () => {
     const onReply = jest
       .fn()
       .mockResolvedValue({ ok: false, error: "review_closed" });
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     await userEvent.type(writeBox(), "Late");
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));
 
@@ -240,46 +261,16 @@ describe("CommentThread", () => {
     expect(screen.queryByRole("button", { name: "Reply" })).toBeNull();
   });
 
-  it.each([
-    ["Esc", async () => userEvent.type(writeBox(), "{Escape}")],
-    [
-      "Cancel",
-      async () =>
-        userEvent.click(screen.getByRole("button", { name: "Cancel" })),
-    ],
-    [
-      "a send",
-      async () => {
-        await userEvent.type(writeBox(), "Hi");
-        await userEvent.click(screen.getByRole("button", { name: "Reply" }));
-      },
-    ],
-  ])("gives focus back to Reply after %s", async (_n, close) => {
-    const onReply = jest.fn().mockResolvedValue(ok);
-    render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
-
-    await close();
-
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Reply" })).toHaveFocus(),
-    );
-  });
-
-  it("clears the text on Cancel and the error on Esc", async () => {
+  it("clears the text and the error on Esc", async () => {
     const onReply = jest.fn().mockResolvedValue({ ok: false, error: "failed" });
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     await userEvent.type(writeBox(), "Hi");
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     await screen.findByRole("alert");
 
     await userEvent.type(writeBox(), "{Escape}");
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
 
     expect(screen.queryByRole("alert")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     expect(writeBox()).toHaveValue("");
   });
 
@@ -287,7 +278,6 @@ describe("CommentThread", () => {
     const onReply = jest.fn().mockResolvedValue({ ok: false, error: "failed" });
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
     await userEvent.type(writeBox(), "Hi");
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));
 
@@ -358,14 +348,16 @@ describe("CommentCard threads", () => {
     );
   });
 
-  it("Esc in the reply box closes the box, not the card", async () => {
+  it.each([
+    ["clears typed text, not the card", "Hi", false],
+    ["closes the card when the box is empty", "", true],
+  ])("Esc in the reply box %s", async (_n, typed, closes) => {
     const onClose = card({ onReply: jest.fn() });
 
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
-    await userEvent.type(writeBox(), "{Escape}");
+    await userEvent.type(writeBox(), `${typed}{Escape}`);
 
-    expect(screen.queryByRole("textbox")).toBeNull();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(writeBox()).toHaveValue("");
+    expect(onClose).toHaveBeenCalledTimes(closes ? 1 : 0);
   });
 
   it("hides Delete once the comment has replies", () => {
@@ -601,7 +593,7 @@ describe("CommentThread edit and delete of own replies", () => {
       ["failed", "That didn't save. Try again."],
       ["conflict", "Someone has replied since."],
     ])(
-      "says why a refused delete (%s) failed and focuses Reply",
+      "says why a refused delete (%s) failed and focuses the reply box",
       async (error, text) => {
         render(<Harness result={{ ok: false, error }} />);
 
@@ -609,21 +601,17 @@ describe("CommentThread edit and delete of own replies", () => {
 
         expect(await screen.findByRole("alert")).toHaveTextContent(text);
         expect(screen.getByText("Mine")).toBeVisible();
-        await waitFor(() =>
-          expect(screen.getByRole("button", { name: "Reply" })).toHaveFocus(),
-        );
+        await waitFor(() => expect(writeBox()).toHaveFocus());
       },
     );
 
-    it("removes the reply and focuses Reply when the delete succeeds", async () => {
+    it("removes the reply and focuses the reply box when the delete succeeds", async () => {
       render(<Harness result={ok} />);
 
       await deleteIt();
 
       await waitFor(() => expect(screen.queryByText("Mine")).toBeNull());
-      await waitFor(() =>
-        expect(screen.getByRole("button", { name: "Reply" })).toHaveFocus(),
-      );
+      await waitFor(() => expect(writeBox()).toHaveFocus());
     });
 
     it.each(["edit", "delete"])(
@@ -645,7 +633,7 @@ describe("CommentThread edit and delete of own replies", () => {
       },
     );
 
-    it("leaves edit mode on a conflict and focuses Reply", async () => {
+    it("leaves edit mode on a conflict and focuses the reply box", async () => {
       render(<Harness result={{ ok: false, error: "conflict" }} />);
 
       await userEvent.click(screen.getByRole("button", { name: "Edit" }));
@@ -657,9 +645,7 @@ describe("CommentThread edit and delete of own replies", () => {
       expect(
         screen.queryByRole("textbox", { name: "Edit your reply" }),
       ).toBeNull();
-      await waitFor(() =>
-        expect(screen.getByRole("button", { name: "Reply" })).toHaveFocus(),
-      );
+      await waitFor(() => expect(writeBox()).toHaveFocus());
     });
 
     it("shows 'edited' once an edit is saved", async () => {

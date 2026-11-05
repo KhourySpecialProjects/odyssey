@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { IconSend } from "@tabler/icons-react";
 import type { ReviewComment } from "@/types";
 import type { ReviewActionError } from "@/lib/requests/reviews";
 import { commentTime } from "@/lib/review-comments";
@@ -296,7 +297,7 @@ function ReplyBody({
 
 /**
  * A comment's replies, oldest first, with a Reply box while the thread is
- * open (ODY-881). Esc closes the box, not the card around it.
+ * open (ODY-881). Esc clears the box; on an empty box it closes the card.
  */
 export function CommentThread({
   replies,
@@ -306,7 +307,6 @@ export function CommentThread({
   fresh,
   lead,
 }: CommentThreadProps) {
-  const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   // The server said a sent resolve closed the thread
@@ -314,7 +314,7 @@ export function CommentThread({
   const [error, setError] = useState<string | null>(null);
   // A reply change that failed after its row had gone from the list
   const [notice, setNotice] = useState<string | null>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
 
   // Open at the first New reply, else the newest; then follow new ones while
   // the list is at its bottom, and always after your own
@@ -333,30 +333,24 @@ export function CommentThread({
     list.scrollTop = first ? first.offsetTop : list.scrollHeight;
   }, [last?.id, last?.mine]);
 
-  // The Reply button is back after the box closes; focus follows it
-  const refocus = useRef(false);
-  const closeBox = () => {
-    refocus.current = true;
-    setOpen(false);
-  };
+  // The box grows with its text, up to its max height
   useEffect(() => {
-    if (open || !refocus.current) return;
-    refocus.current = false;
-    toggleRef.current?.focus();
-  }, [open]);
+    const box = boxRef.current;
+    if (!box) return;
+    box.style.height = "auto";
+    box.style.height = `${box.scrollHeight + 2}px`;
+  }, [text]);
 
-  const focusToggle = () =>
-    requestAnimationFrame(() => toggleRef.current?.focus());
+  const focusBox = () => requestAnimationFrame(() => boxRef.current?.focus());
 
   // A failed edit or delete: closed hides every control, else a notice here
   const report = useCallback((failure: ReviewActionError | null) => {
     if (failure === "review_closed") {
       setClosedNow(true);
-      setOpen(false);
       return setNotice(null);
     }
     setNotice(!failure ? null : failure === "conflict" ? SINCE : FAILED);
-    if (failure) requestAnimationFrame(() => toggleRef.current?.focus());
+    if (failure) requestAnimationFrame(() => boxRef.current?.focus());
   }, []);
 
   const send = async () => {
@@ -367,24 +361,29 @@ export function CommentThread({
     const outcome = await onReply(body);
     setBusy(false);
     if (!outcome.ok) {
-      if (outcome.error === "review_closed") {
-        setClosedNow(true);
-        setOpen(false);
-      } else {
-        setError(FAILED);
-      }
+      if (outcome.error === "review_closed") setClosedNow(true);
+      else setError(FAILED);
       return;
     }
     setText("");
-    closeBox();
+    // Sending from the button disables it, which would drop focus
+    boxRef.current?.focus();
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
+      // An empty box lets Esc close the card
+      if (!text && !error) return;
       e.stopPropagation();
+      setText("");
       setError(null);
-      closeBox();
-    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    } else if (
+      e.key === "Enter" &&
+      !e.shiftKey &&
+      // Enter that ends an IME composition picks the text; it doesn't send
+      !e.nativeEvent.isComposing
+    ) {
+      // Shift+Enter is a new line
       e.preventDefault();
       void send();
     }
@@ -464,7 +463,7 @@ export function CommentThread({
                       )
                     }
                     edits={editable ? edits : undefined}
-                    onRemoved={focusToggle}
+                    onRemoved={focusBox}
                     report={report}
                   />
                 </ChatSpeaker>
@@ -485,58 +484,38 @@ export function CommentThread({
           {closed ? "Resolved · replies are closed" : CLOSED}
         </p>
       ) : (
-        onReply &&
-        (open ? (
-          <div className="grid gap-2">
-            <textarea
-              aria-label="Write a reply"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={2}
-              maxLength={5000}
-              autoFocus
-              className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
-            />
+        onReply && (
+          <div className="grid gap-1">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={boxRef}
+                aria-label="Write a reply"
+                placeholder="Reply…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
+                rows={1}
+                maxLength={5000}
+                className="max-h-32 min-h-9 flex-1 resize-none rounded-2xl border border-slate-300 bg-white px-3 py-[7px] text-sm leading-5 text-slate-900 placeholder:text-slate-500 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100 dark:placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                aria-label="Reply"
+                title="Reply (Enter)"
+                disabled={busy || text.trim().length === 0}
+                onClick={send}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--rc-accent)] text-white hover:bg-[#255e78] focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 dark:focus-visible:ring-offset-[#131c2e]"
+              >
+                <IconSend className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
             {error && (
               <p role="alert" className="text-red-600 dark:text-red-400">
                 {error}
               </p>
             )}
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className={GHOST}
-                onClick={() => {
-                  setText("");
-                  setError(null);
-                  closeBox();
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={PRIMARY}
-                disabled={busy || text.trim().length === 0}
-                onClick={send}
-              >
-                Reply
-              </button>
-            </div>
           </div>
-        ) : (
-          <div className="flex justify-end">
-            <button
-              ref={toggleRef}
-              type="button"
-              className={GHOST}
-              onClick={() => setOpen(true)}
-            >
-              Reply
-            </button>
-          </div>
-        ))
+        )
       )}
     </div>
   );
