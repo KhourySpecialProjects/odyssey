@@ -576,6 +576,81 @@ export async function deleteReply(
   });
 }
 
+/** A cheap change-check for a droplet's replies: count, newest id and `updatedAt` (ODY-881). */
+export async function getThreadStamp(
+  dropletId: number,
+): Promise<ReviewActionResult<{ stamp: string }>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(dropletId);
+      if (!id.success) return { ok: false, error: "invalid_input", data: null };
+
+      const res = await fetchAPI<{
+        data?: unknown[];
+        meta?: { pagination?: { total?: number } };
+      } | null>("/review-comments", {
+        urlParams: {
+          filters: {
+            parent: { id: { $notNull: true } },
+            review: {
+              droplet: { id: { $eq: id.data } },
+              state: { $in: ["sent", "published"] },
+            },
+          },
+          fields: ["updatedAt"],
+          populate: {
+            review: {
+              fields: ["id"],
+              populate: {
+                droplet: { fields: ["id"], populate: AUTHORS_POPULATE },
+              },
+            },
+          },
+          sort: ["updatedAt:desc", "id:desc"],
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+        flattenResponse: false,
+      });
+      const row = flattenAttributes(res?.data?.[0]) as {
+        id: number;
+        updatedAt?: string;
+        review?: { droplet?: DropletAuthors | null } | null;
+      } | null;
+
+      if (row) {
+        const authors = row.review?.droplet;
+        if (!authors) return { ok: false, error: "not_found", data: null };
+        if (!access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      } else if (!isReviewerFor(user.roles, true, false)) {
+        // No reply to read the authors from: one lookup, only for a non-reviewer
+        const droplets = await fetchAPI<DropletAuthors[] | null>("/droplets", {
+          urlParams: {
+            filters: { id: { $eq: id.data } },
+            fields: ["id"],
+            populate: AUTHORS_POPULATE,
+            pagination: { pageSize: 1 },
+          },
+          cache: "no-store",
+        });
+        const authors = droplets?.[0];
+        if (!authors || !access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      }
+
+      const total = res?.meta?.pagination?.total ?? 0;
+      const stamp = row ? `${total}:${row.id}:${row.updatedAt ?? ""}` : "0::";
+      return { ok: true, error: null, data: { stamp } };
+    } catch (error) {
+      console.error("getThreadStamp failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
 /** Adds an anchored comment to the caller's own open review. */
 export async function addComment(
   input: ReviewCommentInput,
