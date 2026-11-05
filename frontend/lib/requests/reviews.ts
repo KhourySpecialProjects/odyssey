@@ -456,6 +456,201 @@ export async function replyToComment(
   });
 }
 
+type OwnReply =
+  | { ok: true; reply: ThreadRow; dropletId: number }
+  | { ok: false; error: ReviewActionError; message?: string };
+
+/** Loads the caller's own reply and checks it can still change (G14, N2, N5). */
+async function loadOwnReply(id: number, user: AuthUser): Promise<OwnReply> {
+  const reply = await findThreadRow(id);
+  const droplet = reply?.review?.droplet;
+  if (!reply || !reply.review || !droplet) {
+    return { ok: false, error: "not_found" };
+  }
+  if (!access(droplet, user)) return { ok: false, error: "forbidden" };
+  if (!reply.parent) return { ok: false, error: "invalid_input" };
+  if (!assertOwner(reply.author?.id, user, { bypassRoles: [] }).ok) {
+    return { ok: false, error: "forbidden" };
+  }
+  if (droplet.status === "published") {
+    return { ok: false, error: "review_closed" };
+  }
+  if (await threadClosed(reply.parent.id)) {
+    return { ok: false, error: "review_closed" };
+  }
+  const later = await fetchAPI<{ id: number }[] | null>("/review-comments", {
+    urlParams: {
+      filters: {
+        parent: { id: { $eq: reply.parent.id } },
+        id: { $gt: id },
+        author: { id: { $ne: user.id } },
+      },
+      fields: ["id"],
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  if (later?.length) {
+    return {
+      ok: false,
+      error: "conflict",
+      message: "Someone has replied since.",
+    };
+  }
+  return { ok: true, reply, dropletId: droplet.id };
+}
+
+/** Edits the caller's own reply until someone else replies after it (ODY-881). */
+export async function editReply(
+  replyId: number,
+  body: string,
+): Promise<ReviewActionResult<ReviewComment>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(replyId);
+      const text = reviewCommentBodySchema.safeParse(body);
+      if (!id.success || !text.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+      const loaded = await loadOwnReply(id.data, user);
+      if (!loaded.ok) {
+        return {
+          ok: false,
+          error: loaded.error,
+          data: null,
+          message: loaded.message,
+        };
+      }
+
+      const updated = await writeStrapi(
+        "PUT",
+        await strapiEntryUrl("review-comments", loaded.reply),
+        { body: text.data },
+      );
+      if (!updated.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(loaded.dropletId));
+      const reply = {
+        ...updated.data,
+        parent: loaded.reply.parent,
+        mine: true,
+      };
+      return { ok: true, error: null, data: reply };
+    } catch (error) {
+      console.error("editReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** Deletes the caller's own reply until someone else replies after it (ODY-881). */
+export async function deleteReply(
+  replyId: number,
+): Promise<ReviewActionResult<{ id: number }>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(replyId);
+      if (!id.success) return { ok: false, error: "invalid_input", data: null };
+      const loaded = await loadOwnReply(id.data, user);
+      if (!loaded.ok) {
+        return {
+          ok: false,
+          error: loaded.error,
+          data: null,
+          message: loaded.message,
+        };
+      }
+
+      const deleted = await writeStrapi(
+        "DELETE",
+        await strapiEntryUrl("review-comments", loaded.reply),
+      );
+      if (!deleted.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(loaded.dropletId));
+      return { ok: true, error: null, data: { id: loaded.reply.id } };
+    } catch (error) {
+      console.error("deleteReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** A cheap change-check for a droplet's replies: count, newest id and `updatedAt` (ODY-881). */
+export async function getThreadStamp(
+  dropletId: number,
+): Promise<ReviewActionResult<{ stamp: string }>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(dropletId);
+      if (!id.success) return { ok: false, error: "invalid_input", data: null };
+
+      const res = await fetchAPI<{
+        data?: unknown[];
+        meta?: { pagination?: { total?: number } };
+      } | null>("/review-comments", {
+        urlParams: {
+          filters: {
+            parent: { id: { $notNull: true } },
+            review: {
+              droplet: { id: { $eq: id.data } },
+              state: { $in: ["sent", "published"] },
+            },
+          },
+          fields: ["updatedAt"],
+          populate: {
+            review: {
+              fields: ["id"],
+              populate: {
+                droplet: { fields: ["id"], populate: AUTHORS_POPULATE },
+              },
+            },
+          },
+          sort: ["updatedAt:desc", "id:desc"],
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+        flattenResponse: false,
+      });
+      const row = flattenAttributes(res?.data?.[0]) as {
+        id: number;
+        updatedAt?: string;
+        review?: { droplet?: DropletAuthors | null } | null;
+      } | null;
+
+      if (row) {
+        const authors = row.review?.droplet;
+        if (!authors) return { ok: false, error: "not_found", data: null };
+        if (!access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      } else if (!isReviewerFor(user.roles, true, false)) {
+        // No reply to read the authors from: one lookup, only for a non-reviewer
+        const droplets = await fetchAPI<DropletAuthors[] | null>("/droplets", {
+          urlParams: {
+            filters: { id: { $eq: id.data } },
+            fields: ["id"],
+            populate: AUTHORS_POPULATE,
+            pagination: { pageSize: 1 },
+          },
+          cache: "no-store",
+        });
+        const authors = droplets?.[0];
+        if (!authors || !access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      }
+
+      const total = res?.meta?.pagination?.total ?? 0;
+      const stamp = row ? `${total}:${row.id}:${row.updatedAt ?? ""}` : "0::";
+      return { ok: true, error: null, data: { stamp } };
+    } catch (error) {
+      console.error("getThreadStamp failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
 /** Adds an anchored comment to the caller's own open review. */
 export async function addComment(
   input: ReviewCommentInput,

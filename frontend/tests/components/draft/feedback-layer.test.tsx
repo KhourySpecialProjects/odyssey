@@ -218,6 +218,22 @@ describe("FeedbackLayer (ODY-807)", () => {
     expect(screen.queryByText("The creator marked this addressed.")).toBeNull();
   });
 
+  it("says a comment was marked addressed in the creator's words for a reviewer", async () => {
+    mount({
+      onAddress: undefined,
+      forCreator: false,
+      comments: [
+        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
+        wholeBlock,
+      ] as never,
+    });
+    await userEvent.click(screen.getByText("loop"));
+
+    expect(
+      screen.getByText("The creator marked this addressed."),
+    ).toBeInTheDocument();
+  });
+
   it("says when the feedback can't change any more", async () => {
     onAddress.mockResolvedValue({ ok: false, error: "review_closed" });
     mount();
@@ -231,6 +247,40 @@ describe("FeedbackLayer (ODY-807)", () => {
       "This feedback can't change now.",
       expect.anything(),
     );
+  });
+
+  it("replies from the card, also while the draft is back in review", async () => {
+    const onReply = jest.fn().mockResolvedValue({ ok: true });
+    mount({ onAddress: undefined, onReply });
+    await userEvent.click(screen.getByText("loop"));
+
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "On it",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+
+    expect(onReply).toHaveBeenCalledWith(1, "On it");
+  });
+
+  it("shows the thread, and says when a reply finds the feedback closed", async () => {
+    const onReply = jest
+      .fn()
+      .mockResolvedValue({ ok: false, error: "review_closed" });
+    const reply = { id: 8, body: "Earlier reply", mine: true };
+    mount({ onReply, comments: [{ ...words, replies: [reply] }] as never });
+    await userEvent.click(screen.getByText("loop"));
+    expect(screen.getByText("Earlier reply")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "Late",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+
+    expect(toast.info).toHaveBeenCalled();
   });
 
   it("lights a mark when it's hovered", async () => {

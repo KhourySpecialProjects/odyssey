@@ -5,16 +5,21 @@ import { IconMessage, IconPencil } from "@tabler/icons-react";
 import type { Review } from "@/types";
 import { cn } from "@/lib/utils";
 import { feedbackMeta, reviewerName } from "@/lib/review-comments";
+import { newRepliesText } from "@/lib/review-threads";
 
 interface FeedbackStripProps {
   review: Pick<Review, "round" | "sentAt" | "reviewer" | "summaryNote">;
   /** Comments here, and how many the creator has marked addressed */
   total: number;
   addressed: number;
+  /** Replies by others not opened yet (ODY-881) */
+  newReplies?: number;
   /** "this lesson" or "the Overview" */
   place?: string;
   /** The draft is back in review: the feedback can't change */
   inReview?: boolean;
+  /** A reviewer reading the feedback, who can reply but not mark addressed */
+  forReviewer?: boolean;
   /** Controls at the strip's end, such as the Overview's Feedback / Edit */
   actions?: ReactNode;
   /** How to read the comments: not while the editors are showing */
@@ -35,8 +40,10 @@ export function FeedbackStrip({
   review,
   total,
   addressed,
+  newReplies = 0,
   place = "this lesson",
   inReview = false,
+  forReviewer = false,
   actions,
   showHint = true,
   summary = false,
@@ -64,6 +71,11 @@ export function FeedbackStrip({
             {addressed} marked addressed
           </span>
         )}
+        {newReplies > 0 && (
+          <span className="font-semibold text-amber-700 dark:text-amber-400">
+            {newRepliesText(newReplies)}
+          </span>
+        )}
         {lessonComments && lessonComments.total > 0 && (
           <span>
             {lessonComments.total}{" "}
@@ -81,9 +93,11 @@ export function FeedbackStrip({
       )}
       {total > 0 && showHint && (
         <p>
-          {inReview
-            ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
-            : "Click a highlight or its number to read a comment, and mark it addressed once you've changed the text."}
+          {forReviewer
+            ? "Click a highlight or its number to read a comment and its replies."
+            : inReview
+              ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
+              : "Click a highlight or its number to read a comment, and mark it addressed once you've changed the text."}
         </p>
       )}
       {children}

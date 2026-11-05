@@ -17,6 +17,7 @@ import { isReviewerFor } from "@/lib/review-roles";
 import {
   ReviewCommentsProvider,
   SentFeedbackProvider,
+  ThreadRefresh,
 } from "./review/review-comments-context";
 import { ReviewFocusProvider } from "./review/review-focus-context";
 import { ReviewPanelDock } from "./review/review-panel-dock";
@@ -204,46 +205,54 @@ export function DraftLayoutShell({
     [reviewing, liveScores, reviewPanel?.scores, reviewPanel?.criteria],
   );
 
-  // The feedback sent to the authors, while they edit or wait (ODY-807)
-  const readingFeedback = isAuthor && droplet.status !== "published";
+  // The feedback sent to the authors, read by them and by non-author reviewers
+  const readingFeedback =
+    (isAuthor || isReviewerFor(user.roles, true, isAuthor)) &&
+    droplet.status !== "published";
 
   return (
     <ReviewCommentsProvider dropletId={droplet.id} enabled={reviewing}>
-      <SentFeedbackProvider dropletId={droplet.id} enabled={readingFeedback}>
-        <ReviewFocusProvider active={reviewing && panelMode === "open"}>
-          <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
-            <DraftTour run={tourRun} setRun={setTourRun} />
-            <Sidebar
-              droplet={droplet}
-              user={user}
-              isAuthor={isAuthor}
-              availableDroplets={availableDroplets}
-              expanded={expanded}
-              setExpanded={setExpanded}
-              onRestartTour={restartTour}
-              hideReviewActions={reviewing}
-              lessonDots={dots}
-            />
-            <ReviewFrame
-              expanded={expanded}
-              reviewing={reviewing}
-              panelMode={panelMode}
-              mainRef={mainRef}
-              onOpen={openPanel}
-              onCollapse={() => setPanelMode("rail")}
-              transcript={
-                <ReviewTranscript
-                  droplet={droplet}
-                  panel={reviewPanel}
-                  meta={reviewMeta}
-                  onScoresChange={setLiveScores}
-                />
-              }
-            >
-              {children}
-            </ReviewFrame>
-          </div>
-        </ReviewFocusProvider>
+      <SentFeedbackProvider
+        dropletId={droplet.id}
+        enabled={readingFeedback}
+        isAuthor={isAuthor}
+      >
+        <ThreadRefresh dropletId={droplet.id}>
+          <ReviewFocusProvider active={reviewing && panelMode === "open"}>
+            <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
+              <DraftTour run={tourRun} setRun={setTourRun} />
+              <Sidebar
+                droplet={droplet}
+                user={user}
+                isAuthor={isAuthor}
+                availableDroplets={availableDroplets}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                onRestartTour={restartTour}
+                hideReviewActions={reviewing}
+                lessonDots={dots}
+              />
+              <ReviewFrame
+                expanded={expanded}
+                reviewing={reviewing}
+                panelMode={panelMode}
+                mainRef={mainRef}
+                onOpen={openPanel}
+                onCollapse={() => setPanelMode("rail")}
+                transcript={
+                  <ReviewTranscript
+                    droplet={droplet}
+                    panel={reviewPanel}
+                    meta={reviewMeta}
+                    onScoresChange={setLiveScores}
+                  />
+                }
+              >
+                {children}
+              </ReviewFrame>
+            </div>
+          </ReviewFocusProvider>
+        </ThreadRefresh>
       </SentFeedbackProvider>
     </ReviewCommentsProvider>
   );

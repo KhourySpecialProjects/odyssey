@@ -47,7 +47,9 @@ import { useEditingLock } from "@/hooks/useEditingLock";
 import {
   useDropletReviewComments,
   useSharedSentFeedback,
+  useThreadSeen,
 } from "@/components/draft/review/review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import { useShowInLesson } from "@/hooks/use-show-in-lesson";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
@@ -63,6 +65,7 @@ import {
   commentsOnLesson,
   decorateMarks,
   draftMarkIn,
+  carriedMeta,
   feedbackMeta,
   isResolved,
   isOutdatedMark,
@@ -80,7 +83,12 @@ import {
 } from "@/components/draft/review/comment-keyboard";
 import { CommentLayer } from "@/components/draft/review/comment-layer";
 import { ClassicReviewView } from "@/components/draft/review/classic-review-view";
-import { FeedbackLayer } from "@/components/draft/review/feedback-layer";
+import {
+  FeedbackLayer,
+  closedNoticeEdits,
+  refused,
+  withClosedNotice,
+} from "@/components/draft/review/feedback-layer";
 import {
   FeedbackStrip,
   FeedbackViewToggle,
@@ -165,24 +173,52 @@ export function LessonRenderer({
   const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
   const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
   const reviewComments = useDropletReviewComments(dropletId, isReviewing);
+  const { seen } = useThreadSeen();
   const lessonComments = useMemo(
     () => commentsOnLesson(reviewComments.comments, lesson.id),
     [reviewComments.comments, lesson.id],
   );
   const showCommentLayer = isReviewing && reviewMode === "comment";
 
-  // The feedback sent to the droplet's authors, beside their editor (ODY-807).
-  // The layout loads it only for an author; the server shows them nothing of
-  // an open review.
+  // The feedback sent to the authors (ODY-807), shared with non-author
+  // reviewers (ODY-881); the server shows nothing of an open review.
   const sentFeedback = useSharedSentFeedback();
   const sentComments = sentFeedback?.comments;
+  // An author always; a reviewer in Read mode during review, or out of review (N1)
+  const showShared =
+    !!sentFeedback?.canAddress ||
+    (!lockLoading && (!isReviewing || reviewMode === "read"));
   const feedbackComments = useMemo(
     () =>
-      sentComments && !isReviewing
+      sentComments && showShared
         ? commentsOnLesson(sentComments, lesson.id)
         : NO_COMMENTS,
-    [sentComments, isReviewing, lesson.id],
+    [sentComments, showShared, lesson.id],
   );
+  // The two hooks don't share replies: refresh the one a mode change shows
+  const reloadSent = sentFeedback?.reload;
+  const reloadMine = reviewComments.reload;
+  const changeViewMode = useCallback(
+    (mode: "read" | "comment") => {
+      setViewMode(mode);
+      if (mode === "read") void reloadSent?.();
+      else void reloadMine?.();
+    },
+    [reloadSent, reloadMine],
+  );
+  // Feedback just sent: the layout's copy predates it
+  const sentReloaded = useRef(false);
+  useEffect(() => {
+    if (reviewEnded && !sentReloaded.current) {
+      sentReloaded.current = true;
+      void reloadSent?.();
+    }
+  }, [reviewEnded, reloadSent]);
+  // Only an author marks addressed, and not while it is back in review
+  const onAddress =
+    sentFeedback?.canAddress && !inReview
+      ? sentFeedback.markAddressed
+      : undefined;
   const feedbackReview = sentFeedback?.review ?? null;
   const showFeedback = !!feedbackReview && feedbackComments.length > 0;
   const [classicView, setClassicView] = useState<FeedbackView>("feedback");
@@ -401,6 +437,8 @@ export function LessonRenderer({
     onEdit: reviewComments.edit,
     onDelete: reviewComments.remove,
     onResolve: reviewComments.resolve,
+    onReply: reviewComments.reply,
+    replyEdits: reviewComments.replyEdits,
     onDraftChange: setDraftAnchor,
     litMarkId,
     onLitChange: setLitMarkId,
@@ -701,7 +739,7 @@ export function LessonRenderer({
     ready: showCommentLayer && !reviewComments.isLoading,
     mode: reviewMode,
     onComment: () => {
-      setViewMode("comment");
+      changeViewMode("comment");
       if (isOwnLock) void handleStopEditing();
     },
     isOutdated: (markId) =>
@@ -876,7 +914,7 @@ export function LessonRenderer({
       {isReviewing && (
         <ReviewModeBar
           mode={reviewMode}
-          onModeChange={setViewMode}
+          onModeChange={changeViewMode}
           onEdit={() => startEditing()}
           onStopEditing={handleStopEditing}
           editDisabled={isRefreshing}
@@ -992,23 +1030,39 @@ export function LessonRenderer({
         {showCommentLayer && (
           <CommentStrip
             {...commentCounts(lessonComments, reviewComments.review?.state)}
+            newReplies={unseenCount(lessonComments, seen)}
             isLoading={reviewComments.isLoading}
             loadError={!!reviewComments.loadError}
             blockBars={editorVersion === "v2"}
             keyboard={<CommentKeyboardButton />}
           >
-            <OutdatedComments comments={outdatedComments} />
+            <OutdatedComments
+              comments={outdatedComments}
+              numbers={commentNumbers}
+              card={{
+                canChange: canChangeComments,
+                onEdit: reviewComments.edit,
+                onDelete: reviewComments.remove,
+                onResolve: reviewComments.resolve,
+                onReply: reviewComments.reply,
+                replyEdits: reviewComments.replyEdits,
+                replyOnCarried: true,
+                meta: (c) => carriedMeta(c, canChangeComments),
+              }}
+            />
           </CommentStrip>
         )}
         {showFeedback && feedbackReview && (
           <FeedbackStrip
             review={feedbackReview}
             total={feedbackComments.length}
+            newReplies={unseenCount(feedbackComments, seen)}
             addressed={
               feedbackComments.filter((c) => c.addressedAt && !isResolved(c))
                 .length
             }
             inReview={inReview}
+            forReviewer={!sentFeedback?.canAddress}
             actions={
               classicFeedback && !isReadOnly ? (
                 <FeedbackViewToggle
@@ -1020,7 +1074,24 @@ export function LessonRenderer({
             }
             showHint={!classicFeedback || showClassicFeedback}
           >
-            <OutdatedComments comments={feedbackMarks.outdated} />
+            <OutdatedComments
+              comments={feedbackMarks.outdated}
+              numbers={feedbackNumbers}
+              card={{
+                canChange: false,
+                onEdit: refused,
+                onDelete: refused,
+                onResolve: refused,
+                onAddress: onAddress && withClosedNotice(onAddress),
+                onReply:
+                  sentFeedback?.reply && withClosedNotice(sentFeedback.reply),
+                replyEdits:
+                  sentFeedback?.replyEdits &&
+                  closedNoticeEdits(sentFeedback.replyEdits),
+                meta: () => feedbackMeta(feedbackReview),
+                forCreator: !!sentFeedback?.canAddress,
+              }}
+            />
           </FeedbackStrip>
         )}
       </div>
@@ -1138,7 +1209,10 @@ export function LessonRenderer({
             outdatedIds={feedbackOutdatedIds}
             blockFor={noBlock}
             meta={feedbackMeta(feedbackReview)}
-            onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+            onAddress={onAddress}
+            onReply={sentFeedback?.reply}
+            replyEdits={sentFeedback?.replyEdits}
+            forCreator={!!sentFeedback?.canAddress}
             litMarkId={litMarkId}
             onLitChange={setLitMarkId}
           >
@@ -1185,7 +1259,10 @@ export function LessonRenderer({
                   blockFor={blockFor}
                   blocksFor={blocksFor}
                   meta={feedbackReview ? feedbackMeta(feedbackReview) : null}
-                  onAddress={inReview ? undefined : sentFeedback?.markAddressed}
+                  onAddress={onAddress}
+                  onReply={sentFeedback?.reply}
+                  replyEdits={sentFeedback?.replyEdits}
+                  forCreator={!!sentFeedback?.canAddress}
                   litMarkId={litMarkId}
                   onLitChange={setLitMarkId}
                 >
