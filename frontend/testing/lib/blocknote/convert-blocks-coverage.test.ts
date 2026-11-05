@@ -5,9 +5,13 @@
  * branch/edge-case tests. No `as any`, no `as jest.Mock`, no @ts-ignore.
  */
 
-import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import {
+  convertBlockNoteToV1Blocks,
+  displayBlocksOf,
+} from "@/lib/blocknote/convert-blocks";
 import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 import { COLUMN_BREAK_MARKER } from "@/lib/blocknote/column-break";
+import type { Block } from "@/types";
 import type { TextNode } from "@/types/strapi";
 
 // ---------------------------------------------------------------------------
@@ -1551,5 +1555,40 @@ describe("convertInlineContentToStrapiBlocks (callout nodes)", () => {
       // LaTeX is kept as plain text in Strapi blocks — no bold/italic/code set
       expect(node.text).toBe("x^2");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// displayBlocksOf: which blocks the learner page draws
+// ---------------------------------------------------------------------------
+describe("displayBlocksOf", () => {
+  const blocks: Block[] = [
+    { __component: "droplets.generic", content: "<p>Classic</p>" },
+  ];
+  const blocksV2 = [
+    makeBlock({ id: "p-1", type: "paragraph", content: [makeText("Note")] }),
+  ];
+
+  it.each([
+    [
+      "converts a BlockNote lesson",
+      "v2",
+      blocksV2,
+      blocks,
+      convertBlockNoteToV1Blocks(blocksV2),
+    ],
+    [
+      "falls back to Classic blocks without blocksV2",
+      "v2",
+      null,
+      blocks,
+      blocks,
+    ],
+    ["keeps a Classic lesson's blocks", "v1", blocksV2, blocks, blocks],
+    ["gives no blocks when there are none", "v1", null, null, []],
+  ])("%s", (_, blocksVersion, v2, v1, expected) => {
+    expect(
+      displayBlocksOf({ blocksVersion, blocksV2: v2, blocks: v1 }),
+    ).toEqual(expected);
   });
 });
