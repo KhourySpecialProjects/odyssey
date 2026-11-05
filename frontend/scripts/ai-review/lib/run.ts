@@ -28,22 +28,37 @@ export type PlannedRequest = ScoreRequest & {
 export const dollars = (x: number) =>
   `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 
-const promptChars = (r: ScoreRequest) =>
+/** A request to price, with a guess at its output tokens */
+type Priced = Pick<ScoreRequest, "params"> & { outputTokens?: number };
+
+const promptChars = (r: Priced) =>
   String(r.params.system ?? "").length +
   JSON.stringify(r.params.messages).length;
 
 /**
- * Prints what a run will send and roughly what it costs, then asks before
- * spending anything. `--yes` skips the question.
+ * Prints what a run will send and roughly what it costs, each request at its
+ * own model and output guess, then asks before spending anything. `--yes`
+ * skips the question.
  */
 export async function confirmSpend(
-  requests: PlannedRequest[],
-  model: AiReviewModel,
+  requests: Priced[],
   { batch, yes }: { batch: boolean; yes: boolean },
 ): Promise<boolean> {
-  const estimate = estimateCost(requests.map(promptChars), model, { batch });
+  const model = (r: Priced) => r.params.model as AiReviewModel;
+  const estimate = requests.reduce(
+    (sum, r) =>
+      sum +
+      estimateCost([promptChars(r)], model(r), {
+        batch,
+        outputTokensEach: r.outputTokens,
+      }),
+    0,
+  );
+  const models = [...new Set(requests.map(model))].map(
+    (m) => `${requests.filter((r) => model(r) === m).length} to ${m}`,
+  );
   console.log(
-    `${requests.length} requests to ${model}${batch ? " (batch, half price)" : ""}. ` +
+    `${requests.length} requests (${models.join(", ")})${batch ? ", batch at half price" : ""}. ` +
       `Rough cost before caching: ${dollars(estimate)}.`,
   );
   if (yes) return true;
