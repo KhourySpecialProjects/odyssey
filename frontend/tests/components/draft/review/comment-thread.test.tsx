@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommentThread } from "@/components/draft/review/comment-thread";
 import { CommentCard } from "@/components/draft/review/comment-card";
@@ -136,6 +142,22 @@ describe("CommentThread", () => {
       expect(list().scrollTop).toBe(top);
     });
 
+    it("follows someone else's new reply from the bottom", () => {
+      const { rerender } = render(
+        <CommentThread closed={false} replies={replies} />,
+      );
+      list().scrollTop = 500;
+      list().dispatchEvent(new Event("scroll"));
+      rerender(
+        <CommentThread
+          closed={false}
+          replies={[...replies, reply({ id: 4, mine: false })]}
+        />,
+      );
+
+      expect(list().scrollTop).toBe(500);
+    });
+
     it.each([
       ["follows your own new reply", true, 500],
       ["stays put for someone else's", false, 0],
@@ -237,6 +259,31 @@ describe("CommentThread", () => {
     expect(onReply).toHaveBeenCalledWith("Hi");
   });
 
+  it.each([
+    ["composing", { isComposing: true }],
+    ["Safari's keyCode 229", { keyCode: 229 }],
+  ])("doesn't send on Enter while %s", async (_n, init) => {
+    const onReply = jest.fn().mockResolvedValue(ok);
+    render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
+    await userEvent.type(writeBox(), "Hi");
+
+    fireEvent.keyDown(writeBox(), { key: "Enter", ...init });
+
+    expect(onReply).not.toHaveBeenCalled();
+  });
+
+  it("keeps what's typed while a send is in flight", async () => {
+    let done!: (r: typeof ok) => void;
+    const onReply = jest.fn(() => new Promise<typeof ok>((r) => (done = r)));
+    render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
+
+    await userEvent.type(writeBox(), "ok{Enter}");
+    fireEvent.change(writeBox(), { target: { value: "ok more" } });
+    done(ok);
+
+    await waitFor(() => expect(writeBox()).toHaveValue("more"));
+  });
+
   it("adds a line on Shift+Enter, without sending", async () => {
     const onReply = jest.fn().mockResolvedValue(ok);
     render(<CommentThread replies={[]} closed={false} onReply={onReply} />);
@@ -330,6 +377,17 @@ describe("CommentCard threads", () => {
       accent,
     );
   });
+
+  it.each([true, false])(
+    "greys and strikes the resolved lead bubble (mine: %s)",
+    (mine) => {
+      card({}, { mine, resolvedAt: "2026-10-28T13:00:00.000Z" });
+
+      const bubble = screen.getByText("Fix this");
+      expect(bubble).toHaveClass("line-through", "bg-slate-100");
+      expect(bubble.className).not.toContain("rc-accent");
+    },
+  );
 
   it("lists the comment first, scrolling with its replies", () => {
     card({}, { replies: [reply({ id: 6, body: "Done" })] });

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import { isSendEnter } from "@/lib/send-key";
 import { POPOVER_GAP, type PopoverAnchor } from "@/lib/selection";
 
 interface CommentComposerProps {
@@ -122,12 +123,7 @@ export function CommentComposer({
       e.preventDefault();
       e.stopPropagation();
       onCancel();
-    } else if (
-      e.key === "Enter" &&
-      !e.shiftKey &&
-      // Enter that ends an IME composition picks the text; it doesn't post
-      !e.nativeEvent.isComposing
-    ) {
+    } else if (e.target === textareaRef.current && isSendEnter(e)) {
       e.preventDefault();
       void post();
     }

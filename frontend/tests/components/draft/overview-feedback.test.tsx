@@ -344,6 +344,15 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
       expect(screen.getByText(text)).toBeInTheDocument();
     });
 
+    it("shows no carried note on a read-only card", async () => {
+      withSection({ carriedFrom: { id: 90, review: { round: 1 } } } as never);
+      await mount();
+
+      await userEvent.click(tag());
+
+      expect(screen.queryByText(/carried/i)).toBeNull();
+    });
+
     it("says so when deleting a reply finds the feedback closed", async () => {
       withSection({
         replies: [

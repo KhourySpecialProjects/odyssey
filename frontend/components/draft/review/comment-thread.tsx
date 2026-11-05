@@ -12,6 +12,7 @@ import { IconSend } from "@tabler/icons-react";
 import type { ReviewComment } from "@/types";
 import type { ReviewActionError } from "@/lib/requests/reviews";
 import { commentTime } from "@/lib/review-comments";
+import { isSendEnter } from "@/lib/send-key";
 import { cn } from "@/lib/utils";
 import { isEdited, replyTime } from "@/lib/review-threads";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
@@ -357,7 +358,8 @@ export function CommentThread({
   }, []);
 
   const send = async () => {
-    const body = text.trim();
+    const raw = text;
+    const body = raw.trim();
     if (!onReply || !body || busy) return;
     setBusy(true);
     setError(null);
@@ -368,7 +370,8 @@ export function CommentThread({
       else setError(FAILED);
       return;
     }
-    setText("");
+    // Keep what was typed while the send was in flight
+    setText((t) => (t.startsWith(raw) ? t.slice(raw.length).trimStart() : t));
     // Sending from the button disables it, which would drop focus
     boxRef.current?.focus();
   };
@@ -380,12 +383,7 @@ export function CommentThread({
       e.stopPropagation();
       setText("");
       setError(null);
-    } else if (
-      e.key === "Enter" &&
-      !e.shiftKey &&
-      // Enter that ends an IME composition picks the text; it doesn't send
-      !e.nativeEvent.isComposing
-    ) {
+    } else if (isSendEnter(e)) {
       // Shift+Enter is a new line
       e.preventDefault();
       void send();

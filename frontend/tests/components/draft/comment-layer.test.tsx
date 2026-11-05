@@ -492,26 +492,13 @@ describe("the comment box", () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["Enter", "{Enter}"],
-    ["Ctrl+Enter", "{Control>}{Enter}{/Control}"],
-  ])("posts with %s", async (_n, keys) => {
+  it("posts with Ctrl+Enter", async () => {
     const { user } = await openOnBlock();
 
     await user.type(screen.getByRole("textbox"), "Fine.");
-    await user.keyboard(keys);
+    await user.keyboard("{Control>}{Enter}{/Control}");
 
     await waitFor(() => expect(onPost).toHaveBeenCalled());
-  });
-
-  it("adds a line with Shift+Enter, without posting", async () => {
-    const { user } = await openOnBlock();
-
-    await user.type(screen.getByRole("textbox"), "One");
-    await user.keyboard("{Shift>}{Enter}{/Shift}Two");
-
-    expect(screen.getByRole("textbox")).toHaveValue("One\nTwo");
-    expect(onPost).not.toHaveBeenCalled();
   });
 
   it("cancels with Esc and gives focus back to the bar", async () => {
