@@ -27,6 +27,8 @@ interface CommentThreadProps {
   onReply?: (body: string) => Promise<CommentOutcome>;
   /** Own replies get Edit and Delete only when given, with `onReply` */
   edits?: ReplyEdits;
+  /** Replies to mark "New": those unseen when the card opened */
+  fresh?: ReadonlySet<number>;
 }
 
 const FAILED = "That didn't save. Try again.";
@@ -226,6 +228,7 @@ export function CommentThread({
   closed,
   onReply,
   edits,
+  fresh,
 }: CommentThreadProps) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -332,6 +335,11 @@ export function CommentThread({
                       time && <span>{time}</span>
                     )}
                     {isEdited(reply) && <span>· edited</span>}
+                    {fresh?.has(reply.id) && (
+                      <span className="rounded bg-amber-100 px-1.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                        New
+                      </span>
+                    )}
                   </p>
                   <ReplyBody
                     reply={reply}

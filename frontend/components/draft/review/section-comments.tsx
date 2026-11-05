@@ -27,6 +27,8 @@ import {
   SECTION_HEADING_CLASS,
 } from "@/components/draft/metadata/frozen-overview";
 import { CommentComposer } from "./comment-composer";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
 import type { ReplyEdits } from "./comment-thread";
 import { postFailure } from "./comment-layer";
@@ -114,6 +116,7 @@ export function SectionComments({
   replyEdits,
   children,
 }: SectionCommentsProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -338,6 +341,7 @@ export function SectionComments({
         const markId = markIdFor(comment);
         const resolved = isResolved(comment);
         const pending = canChange && !resolved;
+        const unseen = unseenReplies(comment, seen).length > 0;
         return (
           <CommentTag
             key={comment.id}
@@ -345,6 +349,7 @@ export function SectionComments({
             pending={pending}
             resolved={resolved}
             addressed={!!comment.addressedAt}
+            unseen={unseen}
             lit={litMarkId === markId || card?.commentId === comment.id}
             expanded={card?.commentId === comment.id}
             mode={layout.tagMode}
@@ -355,7 +360,7 @@ export function SectionComments({
               number,
               pending,
               commentSnippet(comment, block, { long: true }),
-              carriedNotes(comment),
+              carriedNotes(comment, unseen),
             )}
             onLight={(on) => onLitChange(on ? markId : null)}
             onOpen={(rect) => {

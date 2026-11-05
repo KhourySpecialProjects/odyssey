@@ -47,7 +47,9 @@ import { useEditingLock } from "@/hooks/useEditingLock";
 import {
   useDropletReviewComments,
   useSharedSentFeedback,
+  useThreadSeen,
 } from "@/components/draft/review/review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import { useShowInLesson } from "@/hooks/use-show-in-lesson";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
@@ -171,6 +173,7 @@ export function LessonRenderer({
   const [viewMode, setViewMode] = useState<"read" | "comment">("comment");
   const reviewMode: ReviewMode = isOwnLock ? "edit" : viewMode;
   const reviewComments = useDropletReviewComments(dropletId, isReviewing);
+  const { seen } = useThreadSeen();
   const lessonComments = useMemo(
     () => commentsOnLesson(reviewComments.comments, lesson.id),
     [reviewComments.comments, lesson.id],
@@ -1027,6 +1030,7 @@ export function LessonRenderer({
         {showCommentLayer && (
           <CommentStrip
             {...commentCounts(lessonComments, reviewComments.review?.state)}
+            newReplies={unseenCount(lessonComments, seen)}
             isLoading={reviewComments.isLoading}
             loadError={!!reviewComments.loadError}
             blockBars={editorVersion === "v2"}
@@ -1052,6 +1056,7 @@ export function LessonRenderer({
           <FeedbackStrip
             review={feedbackReview}
             total={feedbackComments.length}
+            newReplies={unseenCount(feedbackComments, seen)}
             addressed={
               feedbackComments.filter((c) => c.addressedAt && !isResolved(c))
                 .length

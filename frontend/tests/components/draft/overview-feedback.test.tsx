@@ -3,14 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
 import {
   getReviewForDroplet,
+  getThreadStamp,
   markAddressed,
   replyToComment,
 } from "@/lib/requests/reviews";
+import {
+  ReviewCommentsProvider,
+  SentFeedbackProvider,
+  ThreadRefresh,
+} from "@/components/draft/review/review-comments-context";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import type { ReviewComment } from "@/types";
 
 jest.mock("@/lib/requests/reviews", () => ({
   getReviewForDroplet: jest.fn(),
+  getThreadStamp: jest.fn(),
   markAddressed: jest.fn(),
   replyToComment: jest.fn(),
 }));
@@ -98,8 +105,13 @@ const sent = {
   ],
 };
 
-async function mount(canEdit = true, canReply = true, canAddress = true) {
-  render(
+async function mount(
+  canEdit = true,
+  canReply = true,
+  canAddress = true,
+  inLayout = false,
+) {
+  const overview = (
     <OverviewFeedback
       droplet={droplet}
       authors={[]}
@@ -109,13 +121,28 @@ async function mount(canEdit = true, canReply = true, canAddress = true) {
       canAddress={canAddress}
     >
       <div data-testid="overview-editors">Editors</div>
-    </OverviewFeedback>,
+    </OverviewFeedback>
+  );
+  render(
+    inLayout ? (
+      <ReviewCommentsProvider dropletId={3} enabled={false}>
+        <SentFeedbackProvider dropletId={3} enabled isAuthor={canAddress}>
+          <ThreadRefresh dropletId={3}>{overview}</ThreadRefresh>
+        </SentFeedbackProvider>
+      </ReviewCommentsProvider>
+    ) : (
+      overview
+    ),
   );
   await act(async () => {});
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
+  localStorage.clear();
+  jest
+    .mocked(getThreadStamp)
+    .mockResolvedValue({ ok: true, error: null, data: { stamp: "1" } });
   jest
     .mocked(getReviewForDroplet)
     .mockResolvedValue({ ok: true, error: null, data: sent } as never);
@@ -210,9 +237,65 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(
       screen.getByRole("region", { name: "Reviewer feedback" }),
     ).toHaveTextContent("3 comments from Nadia Reviewer on the Overview");
+    // With no layout there is no seen state, so nothing is new
     expect(screen.getAllByTestId("comment-tag")[0]).toHaveAccessibleName(
       /^Comment 1: /,
     );
+  });
+
+  describe.each([
+    [
+      "a text field's tag",
+      "Comment 1",
+      () => screen.getAllByTestId("comment-tag")[0],
+    ],
+    [
+      "a section's tag",
+      "Comment 3",
+      () =>
+        within(screen.getByTestId("overview-section-nextSteps")).getByTestId(
+          "comment-tag",
+        ),
+    ],
+  ])("%s in the layout", (_n, label, tag) => {
+    const withReplies = () =>
+      jest.mocked(getReviewForDroplet).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: {
+          ...sent,
+          comments: sent.comments.map((c) => ({
+            ...c,
+            replies: [{ id: 80 + c.id, body: "Reply", mine: false }],
+          })),
+        },
+      } as never);
+    const strip = () =>
+      screen.getByRole("region", { name: "Reviewer feedback" });
+
+    it("shows the dot and says so when replies are unseen", async () => {
+      withReplies();
+      await mount(true, true, true, true);
+
+      expect(tag()).toHaveAccessibleName(
+        new RegExp(`^${label}, new replies: `),
+      );
+      expect(within(tag()).getByTestId("new-replies-dot")).toBeInTheDocument();
+      expect(strip()).toHaveTextContent(/\d+ new repl/);
+    });
+
+    it("shows neither once they have been seen", async () => {
+      withReplies();
+      localStorage.setItem(
+        "review-seen-replies-3",
+        JSON.stringify([81, 82, 83, 84]),
+      );
+      await mount(true, true, true, true);
+
+      expect(tag()).toHaveAccessibleName(new RegExp(`^${label}: `));
+      expect(within(tag()).queryByTestId("new-replies-dot")).toBeNull();
+      expect(strip()).not.toHaveTextContent(/new repl/);
+    });
   });
 
   it("gives a reviewer Reply but no Mark addressed, with their own strip hint (ODY-881)", async () => {

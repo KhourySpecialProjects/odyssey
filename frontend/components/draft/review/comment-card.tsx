@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
 import { POPOVER_GAP, useDismiss, type PopoverAnchor } from "@/lib/selection";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentThread, initials, type ReplyEdits } from "./comment-thread";
 
 interface CommentCardProps {
@@ -105,6 +107,21 @@ export function CommentCard({
   const time = commentTime(comment.carriedFrom?.createdAt ?? comment.createdAt);
   const addressed = !!comment.addressedAt;
   const replies = comment.replies ?? [];
+
+  // Opening the card checks for newer replies; replies unseen now get a New pill
+  const { check, seen, markSeen } = useThreadSeen();
+  const [fresh, setFresh] = useState<ReadonlySet<number>>(
+    () => new Set(unseenReplies(comment, seen).map((r) => r.id)),
+  );
+  useEffect(() => {
+    check();
+  }, [check]);
+  useEffect(() => {
+    const ids = unseenReplies(comment, seen).map((r) => r.id);
+    if (ids.length === 0) return;
+    setFresh((current) => new Set([...current, ...ids]));
+    markSeen(ids);
+  }, [comment, seen, markSeen]);
 
   useDismiss(ref, onClose);
 
@@ -228,6 +245,7 @@ export function CommentCard({
           closed={resolved}
           onReply={onReply}
           edits={replyEdits}
+          fresh={fresh}
         />
       )}
 

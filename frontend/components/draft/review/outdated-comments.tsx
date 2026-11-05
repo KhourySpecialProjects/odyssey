@@ -5,7 +5,9 @@ import type { ReviewComment } from "@/types";
 import { anchorIn, type PopoverAnchor } from "@/lib/selection";
 import { commentSnippet } from "@/lib/review-comments";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
+import { unseenReplies } from "@/lib/review-threads";
 import { CommentCard } from "./comment-card";
+import { useThreadSeen } from "./review-comments-context";
 import { SpotQuote } from "./comment-about";
 import type { ReplyEdits } from "./comment-thread";
 
@@ -35,6 +37,7 @@ export function OutdatedComments({
   | { numbers: ReadonlyMap<number, number>; card: OutdatedCard }
   | { numbers?: ReadonlyMap<number, number>; card?: undefined }
 )) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLElement>(null);
   const itemRefs = useRef(new Map<number, HTMLButtonElement>());
   const [open, setOpen] = useState<{
@@ -99,6 +102,7 @@ export function OutdatedComments({
         {comments.map((comment) => {
           const number = numbers?.get(comment.id);
           const replies = comment.replies?.length ?? 0;
+          const unseen = unseenReplies(comment, seen).length > 0;
           const content = (
             <>
               <span className="sr-only">
@@ -122,6 +126,16 @@ export function OutdatedComments({
                   {" "}
                   · {replies} {replies === 1 ? "reply" : "replies"}
                 </span>
+              )}
+              {unseen && (
+                <>
+                  <span className="sr-only">, new replies</span>
+                  <span
+                    aria-hidden
+                    data-testid="new-replies-dot"
+                    className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-500 align-middle"
+                  />
+                </>
               )}
             </>
           );

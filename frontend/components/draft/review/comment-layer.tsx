@@ -46,6 +46,8 @@ import {
 import { useCommentCaret } from "@/hooks/use-comment-caret";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { CommentComposer } from "./comment-composer";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
 import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
@@ -327,6 +329,7 @@ export function CommentLayer({
   onLitChange,
   children,
 }: CommentLayerProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
@@ -1104,6 +1107,7 @@ export function CommentLayer({
           const pending = canChange && !resolved;
           const lit = litMarkId === markId || card?.commentId === comment.id;
           const { anchor } = comment;
+          const unseen = unseenReplies(comment, seen).length > 0;
           return (
             <CommentTag
               key={comment.id}
@@ -1111,6 +1115,7 @@ export function CommentLayer({
               pending={pending}
               resolved={resolved}
               addressed={!!comment.addressedAt}
+              unseen={unseen}
               lit={lit}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -1121,7 +1126,7 @@ export function CommentLayer({
                 number,
                 pending,
                 commentSnippet(comment, block, { long: true, blocks }),
-                carriedNotes(comment),
+                carriedNotes(comment, unseen),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {

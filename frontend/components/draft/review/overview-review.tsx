@@ -15,7 +15,9 @@ import { useShowInLesson } from "@/hooks/use-show-in-lesson";
 import {
   useDropletReviewComments,
   useSharedSentFeedback,
+  useThreadSeen,
 } from "./review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import { useReviewFocus } from "./review-focus-context";
 import {
   commentCounts,
@@ -72,6 +74,7 @@ export function OverviewReview({
   const commenting = mode === "comment";
   const reviewComments = useDropletReviewComments(dropletId, true);
   const sentFeedback = useSharedSentFeedback();
+  const { seen } = useThreadSeen();
   // The two hooks don't share replies: refresh the one a mode change shows
   const changeMode = (next: ReviewMode) => {
     setMode(next);
@@ -288,6 +291,7 @@ export function OverviewReview({
               <div className="mx-40 mb-4 group-data-[review-panel=open]:mx-12">
                 <CommentStrip
                   {...commentCounts(comments, review?.state)}
+                  newReplies={unseenCount(comments, seen)}
                   place="the Overview"
                   isLoading={reviewComments.isLoading}
                   loadError={!!reviewComments.loadError}

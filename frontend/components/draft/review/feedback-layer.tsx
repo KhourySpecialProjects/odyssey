@@ -20,6 +20,8 @@ import {
   type TagBlock,
 } from "@/lib/review-comments";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
 import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
@@ -107,6 +109,7 @@ export function FeedbackLayer({
   onLitChange,
   children,
 }: FeedbackLayerProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -279,6 +282,7 @@ export function FeedbackLayer({
           if (!comment) return null;
           const number = numbers.get(comment.id) ?? null;
           const markId = markIdFor(comment);
+          const unseen = unseenReplies(comment, seen).length > 0;
           return (
             <CommentTag
               key={comment.id}
@@ -286,6 +290,7 @@ export function FeedbackLayer({
               pending={false}
               resolved={isResolved(comment)}
               addressed={!!comment.addressedAt}
+              unseen={unseen}
               lit={litMarkId === markId || card?.commentId === comment.id}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -302,7 +307,7 @@ export function FeedbackLayer({
                     : undefined,
                   { long: true, blocks: blocksFor?.(comment.anchor) },
                 ),
-                carriedNotes(comment),
+                carriedNotes(comment, unseen),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {

@@ -11,7 +11,11 @@ import {
   type OverviewSection,
 } from "@/components/draft/metadata/frozen-overview";
 import { settleDropletUpdates } from "@/components/draft/metadata/hooks/useDropletUpdate";
-import { useDropletSentFeedback } from "./review-comments-context";
+import {
+  useDropletSentFeedback,
+  useThreadSeen,
+} from "./review-comments-context";
+import { unseenCount } from "@/lib/review-threads";
 import {
   feedbackMeta,
   isResolved,
@@ -77,6 +81,7 @@ export function OverviewFeedback({
 }: OverviewFeedbackProps) {
   const router = useRouter();
   const feedback = useDropletSentFeedback(dropletId, true, canAddress);
+  const { seen } = useThreadSeen();
   const { review, markAddressed, reply, replyEdits } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
@@ -239,6 +244,7 @@ export function OverviewFeedback({
       <FeedbackStrip
         review={review}
         total={comments.length}
+        newReplies={unseenCount(comments, seen)}
         addressed={
           comments.filter((c) => c.addressedAt && !isResolved(c)).length
         }

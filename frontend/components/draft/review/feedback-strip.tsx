@@ -5,12 +5,15 @@ import { IconMessage, IconPencil } from "@tabler/icons-react";
 import type { Review } from "@/types";
 import { cn } from "@/lib/utils";
 import { feedbackMeta, reviewerName } from "@/lib/review-comments";
+import { newRepliesText } from "@/lib/review-threads";
 
 interface FeedbackStripProps {
   review: Pick<Review, "round" | "sentAt" | "reviewer" | "summaryNote">;
   /** Comments here, and how many the creator has marked addressed */
   total: number;
   addressed: number;
+  /** Replies by others not opened yet (ODY-881) */
+  newReplies?: number;
   /** "this lesson" or "the Overview" */
   place?: string;
   /** The draft is back in review: the feedback can't change */
@@ -37,6 +40,7 @@ export function FeedbackStrip({
   review,
   total,
   addressed,
+  newReplies = 0,
   place = "this lesson",
   inReview = false,
   forReviewer = false,
@@ -65,6 +69,11 @@ export function FeedbackStrip({
         {addressed > 0 && (
           <span className="text-slate-800 dark:text-slate-100">
             {addressed} marked addressed
+          </span>
+        )}
+        {newReplies > 0 && (
+          <span className="font-semibold text-amber-700 dark:text-amber-400">
+            {newRepliesText(newReplies)}
           </span>
         )}
         {lessonComments && lessonComments.total > 0 && (

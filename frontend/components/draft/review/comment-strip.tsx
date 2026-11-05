@@ -8,6 +8,7 @@ import {
   commentCountText,
   pendingText,
 } from "@/lib/review-comments";
+import { newRepliesText } from "@/lib/review-threads";
 
 interface CommentStripProps {
   total: number;
@@ -16,6 +17,8 @@ interface CommentStripProps {
   carried?: number;
   carriedRound?: number | null;
   addressed?: number;
+  /** Replies by others not opened yet (ODY-881) */
+  newReplies?: number;
   /** "this lesson" or "the Overview" */
   place?: string;
   isLoading?: boolean;
@@ -40,6 +43,7 @@ export function CommentStrip({
   carried = 0,
   carriedRound = null,
   addressed = 0,
+  newReplies = 0,
   place = "this lesson",
   isLoading = false,
   loadError = false,
@@ -77,6 +81,11 @@ export function CommentStrip({
               .map((text) => (
                 <span key={text}>{text}</span>
               ))}
+            {newReplies > 0 && (
+              <span className="font-semibold text-amber-700 dark:text-amber-400">
+                {newRepliesText(newReplies)}
+              </span>
+            )}
           </>
         ) : (
           <>
