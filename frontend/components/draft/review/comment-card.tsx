@@ -44,7 +44,7 @@ interface CommentCardProps {
   onClose: () => void;
   /** Takes focus when it opens; not when a click in the editor opened it */
   focusOnOpen?: boolean;
-  /** Said under what it's about, in place of Pending, Sent or Resolved */
+  /** Said under what it's about, in place of Pending */
   meta?: ReactNode;
   /** The creator's Mark addressed (ODY-807): shown only when given */
   onAddress?: (addressed: boolean) => Promise<CommentOutcome>;
@@ -106,6 +106,8 @@ export function CommentCard({
   // Not saved yet: nothing to change on the server
   const saving = comment.id < 0;
   const pending = canChange && !resolved;
+  // Sent and Resolved show already (badge, closed note): only Pending is said
+  const status = meta ?? (pending ? "Pending" : null);
   const author = comment.author
     ? [comment.author.firstName, comment.author.lastName]
         .filter(Boolean)
@@ -196,9 +198,11 @@ export function CommentCard({
           <p className="font-semibold break-words text-slate-900 dark:text-slate-50">
             {about}
           </p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {meta ?? (resolved ? "Resolved" : pending ? "Pending" : "Sent")}
-          </p>
+          {status && (
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {status}
+            </p>
+          )}
         </div>
         <button
           type="button"
