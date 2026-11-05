@@ -44,6 +44,118 @@ describe("CommentThread", () => {
     expect(screen.getByText("Theirs")).not.toHaveClass("bg-[var(--rc-accent)]");
   });
 
+  it("shows the name and initials once for a run of replies by one person", () => {
+    const ada = { id: 2, firstName: "Ada", lastName: "Lovelace" } as never;
+    render(
+      <CommentThread
+        closed={false}
+        replies={[
+          reply({ id: 1, body: "One", author: ada }),
+          reply({ id: 2, body: "Two", author: ada }),
+          reply({ id: 3, body: "Mine", mine: true }),
+          reply({ id: 4, body: "Three", author: ada }),
+        ]}
+      />,
+    );
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((i) => i.textContent?.includes("AL"))).toEqual([
+      true,
+      false,
+      false,
+      true,
+    ]);
+    // A repeat keeps its author name for screen readers
+    expect(screen.getAllByText("Ada Lovelace").map((n) => n.className)).toEqual(
+      [
+        expect.not.stringContaining("sr-only"),
+        "sr-only",
+        expect.not.stringContaining("sr-only"),
+      ],
+    );
+  });
+
+  it("shows New once per run of new replies, on the last", () => {
+    const ada = { id: 2, firstName: "Ada", lastName: "Lovelace" } as never;
+    const bob = { id: 3, firstName: "Bob", lastName: "Lee" } as never;
+    render(
+      <CommentThread
+        closed={false}
+        fresh={new Set([2, 3, 4])}
+        replies={[
+          reply({ id: 1, author: ada }),
+          reply({ id: 2, author: ada }),
+          reply({ id: 3, author: ada }),
+          reply({ id: 4, author: bob }),
+        ]}
+      />,
+    );
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((i) => i.textContent?.includes("New"))).toEqual([
+      false,
+      false,
+      true,
+      true,
+    ]);
+  });
+
+  describe("where the list opens", () => {
+    // jsdom has no layout: every list is 500 px tall, the first New row at 40
+    const layout = ["scrollHeight", "offsetTop"].map(
+      (key) =>
+        [
+          key,
+          Object.getOwnPropertyDescriptor(HTMLElement.prototype, key),
+        ] as const,
+    );
+    beforeAll(() => {
+      Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+        configurable: true,
+        get: () => 500,
+      });
+      Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+        configurable: true,
+        get() {
+          return (this as HTMLElement).dataset.fresh ? 40 : 0;
+        },
+      });
+    });
+    afterAll(() => {
+      for (const [key, d] of layout)
+        if (d) Object.defineProperty(HTMLElement.prototype, key, d);
+        else Reflect.deleteProperty(HTMLElement.prototype, key);
+    });
+    const replies = [1, 2, 3].map((id) => reply({ id, body: `R${id}` }));
+    const list = () => screen.getByRole("list", { name: "Replies" });
+
+    it.each([
+      ["the newest reply", undefined, 500],
+      ["the first New reply", new Set([2, 3]), 40],
+    ])("opens at %s", (_n, fresh, top) => {
+      render(<CommentThread closed={false} replies={replies} fresh={fresh} />);
+
+      expect(list().scrollTop).toBe(top);
+    });
+
+    it.each([
+      ["follows your own new reply", true, 500],
+      ["stays put for someone else's", false, 0],
+    ])("scrolled up, %s", (_n, mine, top) => {
+      const { rerender } = render(
+        <CommentThread closed={false} replies={replies} />,
+      );
+      list().scrollTop = 0;
+      list().dispatchEvent(new Event("scroll"));
+      rerender(
+        <CommentThread
+          closed={false}
+          replies={[...replies, reply({ id: 4, mine })]}
+        />,
+      );
+
+      expect(list().scrollTop).toBe(top);
+    });
+  });
+
   it("lists replies in order with names, 'You', edited and saving", () => {
     render(
       <CommentThread

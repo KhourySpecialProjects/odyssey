@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 import type { ReviewComment } from "@/types";
 import type { ReviewActionError } from "@/lib/requests/reviews";
@@ -57,6 +58,11 @@ function replyAuthor(reply: ReviewComment) {
   return name || (reply.mine ? "You" : "Someone");
 }
 
+function sameAuthor(a: ReviewComment, b: ReviewComment) {
+  if (a.mine || b.mine) return !!a.mine && !!b.mine;
+  return a.author?.id === b.author?.id && replyAuthor(a) === replyAuthor(b);
+}
+
 // Chat look (experiment): accent #2d7597 with white text is 5.1:1 in light and dark
 const BUBBLE =
   "max-w-[85%] rounded-2xl px-3 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap";
@@ -70,11 +76,14 @@ const LINK =
 /** The text and, for an open thread's own reply, Edit and Delete (G14). */
 function ReplyBody({
   reply,
+  meta,
   edits,
   onRemoved,
   report,
 }: {
   reply: ReviewComment;
+  /** Time, edited and New, on the line under the bubble */
+  meta: ReactNode;
   edits?: ReplyEdits;
   onRemoved: () => void;
   /** Tells the thread (which outlives this row) a change failed; null clears */
@@ -184,26 +193,31 @@ function ReplyBody({
       >
         {reply.body}
       </p>
-      {edits && mode === "view" && (
-        <div className="flex justify-end gap-3">
-          <button
-            ref={editRef}
-            type="button"
-            className={LINK}
-            onClick={() => {
-              setDraft(reply.body);
-              setMode("edit");
-            }}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            className={LINK}
-            onClick={() => setMode("delete")}
-          >
-            Delete
-          </button>
+      {(meta || (edits && mode === "view")) && (
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
+          {meta}
+          {edits && mode === "view" && (
+            <>
+              <button
+                ref={editRef}
+                type="button"
+                className={cn(LINK, "ml-1")}
+                onClick={() => {
+                  setDraft(reply.body);
+                  setMode("edit");
+                }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className={LINK}
+                onClick={() => setMode("delete")}
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
       )}
       {edits && mode === "delete" && (
@@ -253,6 +267,23 @@ export function CommentThread({
   // A reply change that failed after its row had gone from the list
   const [notice, setNotice] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+
+  // Open at the first New reply, else the newest; then follow new ones while
+  // the list is at its bottom, and always after your own
+  const listRef = useRef<HTMLUListElement>(null);
+  const atBottom = useRef(true);
+  const opened = useRef(false);
+  const last = replies.at(-1);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    if (opened.current && !atBottom.current && !last?.mine) return;
+    const first = opened.current
+      ? null
+      : list.querySelector<HTMLElement>("[data-fresh]");
+    opened.current = true;
+    list.scrollTop = first ? first.offsetTop : list.scrollHeight;
+  }, [last?.id, last?.mine]);
 
   // The Reply button is back after the box closes; focus follows it
   const refocus = useRef(false);
@@ -315,8 +346,14 @@ export function CommentThread({
     <div className="grid gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]">
       {replies.length > 0 && (
         <ul
+          ref={listRef}
           aria-label="Replies"
-          className="grid max-h-60 gap-2 overflow-y-auto"
+          className="relative max-h-60 overflow-x-hidden overflow-y-auto"
+          onScroll={(e) => {
+            const l = e.currentTarget;
+            atBottom.current =
+              l.scrollHeight - l.scrollTop - l.clientHeight < 24;
+          }}
         >
           {replies.map((reply, index) => {
             const name = replyAuthor(reply);
@@ -330,17 +367,42 @@ export function CommentThread({
               reply.id > 0 &&
               !replies.slice(index + 1).some((r) => !r.mine);
             const time = commentTime(replyTime(reply));
+            // A run of replies by one person shows the name and avatar once
+            const starts =
+              index === 0 || !sameAuthor(replies[index - 1]!, reply);
+            // ...and a time the next one repeats only under the last
+            const after = replies[index + 1];
+            const showTime =
+              !!time &&
+              (!after ||
+                !sameAuthor(reply, after) ||
+                commentTime(replyTime(after)) !== time);
+            const edited = isEdited(reply);
+            // One New per run of new replies, beside the last one's time
+            const isNew =
+              !!fresh?.has(reply.id) &&
+              !(after && sameAuthor(reply, after) && fresh.has(after.id));
+            const hasMeta = reply.id < 0 || showTime || edited || isNew;
             return (
               <li
                 key={reply.id}
-                className={cn("flex gap-2", reply.mine && "justify-end")}
+                data-fresh={fresh?.has(reply.id) || undefined}
+                className={cn(
+                  "flex gap-2",
+                  reply.mine && "justify-end",
+                  starts ? "mt-3 first:mt-0" : "mt-1",
+                )}
               >
                 {!reply.mine && (
                   <span
                     aria-hidden
-                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--rc-accent-soft)] text-[10px] font-semibold text-[var(--rc-accent-text)]"
+                    className={cn(
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+                      starts &&
+                        "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]",
+                    )}
                   >
-                    {initials(name)}
+                    {starts && initials(name)}
                   </span>
                 )}
                 <div
@@ -349,28 +411,34 @@ export function CommentThread({
                     reply.mine ? "items-end" : "items-start",
                   )}
                 >
-                  <p className="flex flex-wrap gap-x-2 text-xs text-slate-500 dark:text-slate-400">
-                    {reply.mine ? (
-                      <span className="sr-only">You</span>
-                    ) : (
-                      <strong className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-                        {name}
-                      </strong>
-                    )}
-                    {reply.id < 0 ? (
-                      <span>Saving…</span>
-                    ) : (
-                      time && <span>{time}</span>
-                    )}
-                    {isEdited(reply) && <span>· edited</span>}
-                    {fresh?.has(reply.id) && (
-                      <span className="rounded bg-amber-100 px-1.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                        New
-                      </span>
-                    )}
-                  </p>
+                  {reply.mine || !starts ? (
+                    <span className="sr-only">{reply.mine ? "You" : name}</span>
+                  ) : (
+                    <strong className="text-[13px] leading-6 font-semibold text-slate-900 dark:text-slate-100">
+                      {name}
+                    </strong>
+                  )}
                   <ReplyBody
                     reply={reply}
+                    meta={
+                      hasMeta && (
+                        <>
+                          {reply.id < 0 ? (
+                            <span>Saving…</span>
+                          ) : (
+                            showTime && <span>{time}</span>
+                          )}
+                          {edited && (
+                            <span>{showTime ? "· edited" : "edited"}</span>
+                          )}
+                          {isNew && (
+                            <span className="rounded bg-amber-100 px-1.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                              New
+                            </span>
+                          )}
+                        </>
+                      )
+                    }
                     edits={editable ? edits : undefined}
                     onRemoved={focusToggle}
                     report={report}
