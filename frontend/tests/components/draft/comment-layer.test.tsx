@@ -474,7 +474,7 @@ describe("the comment box", () => {
     );
     expect(screen.getByRole("button", { name: "Comment" })).toBeDisabled();
     expect(
-      screen.getByText(/only you see it until you request changes/),
+      screen.getByText("Only you see it until you request changes"),
     ).toBeInTheDocument();
   });
 

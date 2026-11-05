@@ -552,7 +552,7 @@ export type ReviewComment = {
   parent?: Pick<ReviewComment, "id"> | null;
   /** The root's thread, oldest first; attached by the read (ODY-881) */
   replies?: ReviewComment[];
-  /** The viewer wrote this reply */
+  /** The viewer wrote this comment or reply */
   mine?: boolean;
   /**
    * A comment carried into a later round is a copy: this is the comment as

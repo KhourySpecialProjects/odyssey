@@ -6,10 +6,14 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
+import { IconSend } from "@tabler/icons-react";
 import type { ReviewComment } from "@/types";
 import type { ReviewActionError } from "@/lib/requests/reviews";
 import { commentTime } from "@/lib/review-comments";
+import { isSendEnter } from "@/lib/send-key";
+import { cn } from "@/lib/utils";
 import { isEdited, replyTime } from "@/lib/review-threads";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 
@@ -29,6 +33,11 @@ interface CommentThreadProps {
   edits?: ReplyEdits;
   /** Replies to mark "New": those unseen when the card opened */
   fresh?: ReadonlySet<number>;
+  /**
+   * The comment itself, first in the list and scrolling with it; a first
+   * reply by its author continues its run
+   */
+  lead?: { comment: ReviewComment; body: ReactNode };
 }
 
 const FAILED = "That didn't save. Try again.";
@@ -56,17 +65,83 @@ function replyAuthor(reply: ReviewComment) {
   return name || (reply.mine ? "You" : "Someone");
 }
 
+function sameAuthor(a: ReviewComment, b: ReviewComment) {
+  if (a.mine || b.mine) return !!a.mine && !!b.mine;
+  return a.author?.id === b.author?.id && replyAuthor(a) === replyAuthor(b);
+}
+
+// Chat look (experiment): accent #2d7597 with white text is 5.1:1 in light and dark
+const BUBBLE =
+  "max-w-[85%] rounded-2xl px-3 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap";
+const BUBBLE_MINE = "rounded-br-md bg-[var(--rc-accent)] text-white";
+const BUBBLE_OTHER =
+  "rounded-bl-md bg-slate-100 text-slate-900 dark:bg-[#1a2436] dark:text-slate-100";
+
+export const bubble = (mine?: boolean) =>
+  cn(BUBBLE, mine ? BUBBLE_MINE : BUBBLE_OTHER);
+
+/**
+ * A message's avatar and name, then `children` in a column on the speaker's
+ * side. Yours, and repeats in a run, keep the name for screen readers only.
+ */
+export function ChatSpeaker({
+  mine,
+  name,
+  starts = true,
+  children,
+}: {
+  mine?: boolean;
+  name: string;
+  /** Starts a run of messages by one person */
+  starts?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      {!mine && (
+        <span
+          aria-hidden
+          className={cn(
+            "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+            starts && "bg-[var(--rc-accent-soft)] text-[var(--rc-accent-text)]",
+          )}
+        >
+          {starts && initials(name)}
+        </span>
+      )}
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col gap-1",
+          mine ? "items-end" : "items-start",
+        )}
+      >
+        {mine || !starts ? (
+          <span className="sr-only">{mine ? "You" : name}</span>
+        ) : (
+          <strong className="text-[13px] leading-6 font-semibold text-slate-900 dark:text-slate-100">
+            {name}
+          </strong>
+        )}
+        {children}
+      </div>
+    </>
+  );
+}
+
 const LINK =
   "rounded text-xs font-medium text-slate-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:outline-none disabled:opacity-50 dark:text-slate-300";
 
 /** The text and, for an open thread's own reply, Edit and Delete (G14). */
 function ReplyBody({
   reply,
+  meta,
   edits,
   onRemoved,
   report,
 }: {
   reply: ReviewComment;
+  /** Time, edited and New, on the line under the bubble */
+  meta: ReactNode;
   edits?: ReplyEdits;
   onRemoved: () => void;
   /** Tells the thread (which outlives this row) a change failed; null clears */
@@ -120,7 +195,7 @@ function ReplyBody({
 
   if (mode === "edit" && edits) {
     return (
-      <div className="grid gap-1.5">
+      <div className="grid w-full gap-1.5">
         <textarea
           aria-label="Edit your reply"
           value={draft}
@@ -167,33 +242,38 @@ function ReplyBody({
 
   return (
     <>
-      <p className="[overflow-wrap:anywhere] whitespace-pre-wrap text-slate-800 dark:text-slate-100">
+      <p className={cn(bubble(reply.mine), reply.id < 0 && "opacity-60")}>
         {reply.body}
       </p>
-      {edits && mode === "view" && (
-        <div className="flex gap-3">
-          <button
-            ref={editRef}
-            type="button"
-            className={LINK}
-            onClick={() => {
-              setDraft(reply.body);
-              setMode("edit");
-            }}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            className={LINK}
-            onClick={() => setMode("delete")}
-          >
-            Delete
-          </button>
+      {(meta || (edits && mode === "view")) && (
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
+          {meta}
+          {edits && mode === "view" && (
+            <>
+              <button
+                ref={editRef}
+                type="button"
+                className={cn(LINK, "ml-1")}
+                onClick={() => {
+                  setDraft(reply.body);
+                  setMode("edit");
+                }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className={LINK}
+                onClick={() => setMode("delete")}
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
       )}
       {edits && mode === "delete" && (
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2">
           <span className="mr-auto text-slate-600 dark:text-slate-300">
             Delete this reply?
           </span>
@@ -221,7 +301,7 @@ function ReplyBody({
 
 /**
  * A comment's replies, oldest first, with a Reply box while the thread is
- * open (ODY-881). Esc closes the box, not the card around it.
+ * open (ODY-881). Esc clears the box; on an empty box it closes the card.
  */
 export function CommentThread({
   replies,
@@ -229,8 +309,8 @@ export function CommentThread({
   onReply,
   edits,
   fresh,
+  lead,
 }: CommentThreadProps) {
-  const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   // The server said a sent resolve closed the thread
@@ -238,60 +318,73 @@ export function CommentThread({
   const [error, setError] = useState<string | null>(null);
   // A reply change that failed after its row had gone from the list
   const [notice, setNotice] = useState<string | null>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
 
-  // The Reply button is back after the box closes; focus follows it
-  const refocus = useRef(false);
-  const closeBox = () => {
-    refocus.current = true;
-    setOpen(false);
-  };
+  // Open at the first New reply, else the newest; then follow new ones while
+  // the list is at its bottom, and always after your own
+  const listRef = useRef<HTMLUListElement>(null);
+  const atBottom = useRef(true);
+  const opened = useRef(false);
+  const last = replies.at(-1);
   useEffect(() => {
-    if (open || !refocus.current) return;
-    refocus.current = false;
-    toggleRef.current?.focus();
-  }, [open]);
+    const list = listRef.current;
+    if (!list) return;
+    if (opened.current && !atBottom.current && !last?.mine) return;
+    const first = opened.current
+      ? null
+      : list.querySelector<HTMLElement>("[data-fresh]");
+    opened.current = true;
+    list.scrollTop = first ? first.offsetTop : list.scrollHeight;
+  }, [last?.id, last?.mine]);
 
-  const focusToggle = () =>
-    requestAnimationFrame(() => toggleRef.current?.focus());
+  // The box grows with its text, up to its max height
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    box.style.height = "auto";
+    box.style.height = `${box.scrollHeight + 2}px`;
+  }, [text]);
+
+  const focusBox = () => requestAnimationFrame(() => boxRef.current?.focus());
 
   // A failed edit or delete: closed hides every control, else a notice here
   const report = useCallback((failure: ReviewActionError | null) => {
     if (failure === "review_closed") {
       setClosedNow(true);
-      setOpen(false);
       return setNotice(null);
     }
     setNotice(!failure ? null : failure === "conflict" ? SINCE : FAILED);
-    if (failure) requestAnimationFrame(() => toggleRef.current?.focus());
+    if (failure) requestAnimationFrame(() => boxRef.current?.focus());
   }, []);
 
   const send = async () => {
-    const body = text.trim();
+    const raw = text;
+    const body = raw.trim();
     if (!onReply || !body || busy) return;
     setBusy(true);
     setError(null);
     const outcome = await onReply(body);
     setBusy(false);
     if (!outcome.ok) {
-      if (outcome.error === "review_closed") {
-        setClosedNow(true);
-        setOpen(false);
-      } else {
-        setError(FAILED);
-      }
+      if (outcome.error === "review_closed") setClosedNow(true);
+      else setError(FAILED);
       return;
     }
-    setText("");
-    closeBox();
+    // Keep what was typed while the send was in flight
+    setText((t) => (t.startsWith(raw) ? t.slice(raw.length).trimStart() : t));
+    // Sending from the button disables it, which would drop focus
+    boxRef.current?.focus();
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
+      // An empty box lets Esc close the card
+      if (!text && !error) return;
       e.stopPropagation();
+      setText("");
       setError(null);
-      closeBox();
-    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    } else if (isSendEnter(e)) {
+      // Shift+Enter is a new line
       e.preventDefault();
       void send();
     }
@@ -299,11 +392,29 @@ export function CommentThread({
 
   return (
     <div className="grid gap-2 border-t border-slate-200 pt-2 dark:border-[#223047]">
-      {replies.length > 0 && (
+      {(lead || replies.length > 0) && (
         <ul
-          aria-label="Replies"
-          className="grid max-h-60 gap-2 overflow-y-auto"
+          ref={listRef}
+          aria-label={lead ? "Comment and replies" : "Replies"}
+          className="relative max-h-60 overflow-x-hidden overflow-y-auto"
+          onScroll={(e) => {
+            const l = e.currentTarget;
+            atBottom.current =
+              l.scrollHeight - l.scrollTop - l.clientHeight < 24;
+          }}
         >
+          {lead && (
+            <li
+              className={cn("flex gap-2", lead.comment.mine && "justify-end")}
+            >
+              <ChatSpeaker
+                mine={lead.comment.mine}
+                name={replyAuthor(lead.comment)}
+              >
+                {lead.body}
+              </ChatSpeaker>
+            </li>
+          )}
           {replies.map((reply, index) => {
             const name = replyAuthor(reply);
             // Own reply, open thread, and nobody else has replied after it
@@ -316,38 +427,59 @@ export function CommentThread({
               reply.id > 0 &&
               !replies.slice(index + 1).some((r) => !r.mine);
             const time = commentTime(replyTime(reply));
+            // A run of replies by one person shows the name and avatar once
+            const before = index === 0 ? lead?.comment : replies[index - 1];
+            const starts = !before || !sameAuthor(before, reply);
+            // ...and a time the next one repeats only under the last
+            const after = replies[index + 1];
+            const showTime =
+              !!time &&
+              (!after ||
+                !sameAuthor(reply, after) ||
+                commentTime(replyTime(after)) !== time);
+            const edited = isEdited(reply);
+            // One New per run of new replies, beside the last one's time
+            const isNew =
+              !!fresh?.has(reply.id) &&
+              !(after && sameAuthor(reply, after) && fresh.has(after.id));
+            const hasMeta = reply.id < 0 || showTime || edited || isNew;
             return (
-              <li key={reply.id} className="flex gap-2">
-                <span
-                  aria-hidden
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--rc-accent-soft)] text-[10px] font-semibold text-[var(--rc-accent-text)]"
-                >
-                  {initials(name)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap gap-x-2 text-xs text-slate-500 dark:text-slate-400">
-                    <strong className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-                      {name}
-                    </strong>
-                    {reply.id < 0 ? (
-                      <span>Saving…</span>
-                    ) : (
-                      time && <span>{time}</span>
-                    )}
-                    {isEdited(reply) && <span>· edited</span>}
-                    {fresh?.has(reply.id) && (
-                      <span className="rounded bg-amber-100 px-1.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                        New
-                      </span>
-                    )}
-                  </p>
+              <li
+                key={reply.id}
+                data-fresh={fresh?.has(reply.id) || undefined}
+                className={cn(
+                  "flex gap-2",
+                  reply.mine && "justify-end",
+                  starts ? "mt-3 first:mt-0" : "mt-1",
+                )}
+              >
+                <ChatSpeaker mine={reply.mine} name={name} starts={starts}>
                   <ReplyBody
                     reply={reply}
+                    meta={
+                      hasMeta && (
+                        <>
+                          {reply.id < 0 ? (
+                            <span>Saving…</span>
+                          ) : (
+                            showTime && <span>{time}</span>
+                          )}
+                          {edited && (
+                            <span>{showTime ? "· edited" : "edited"}</span>
+                          )}
+                          {isNew && (
+                            <span className="rounded bg-amber-100 px-1.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                              New
+                            </span>
+                          )}
+                        </>
+                      )
+                    }
                     edits={editable ? edits : undefined}
-                    onRemoved={focusToggle}
+                    onRemoved={focusBox}
                     report={report}
                   />
-                </div>
+                </ChatSpeaker>
               </li>
             );
           })}
@@ -360,63 +492,43 @@ export function CommentThread({
         </p>
       )}
 
-      {closed || closedNow ? (
+      {!(replies.length > 0 || onReply) ? null : closed || closedNow ? (
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {closed ? "Resolved · replies are closed" : CLOSED}
         </p>
       ) : (
-        onReply &&
-        (open ? (
-          <div className="grid gap-2">
-            <textarea
-              aria-label="Write a reply"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={2}
-              maxLength={5000}
-              autoFocus
-              className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100"
-            />
+        onReply && (
+          <div className="grid gap-1">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={boxRef}
+                aria-label="Write a reply"
+                placeholder="Reply…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
+                rows={1}
+                maxLength={5000}
+                className="max-h-32 min-h-9 flex-1 resize-none rounded-2xl border border-slate-300 bg-white px-3 py-[7px] text-sm leading-5 text-slate-900 placeholder:text-slate-500 focus:border-[var(--rc-accent)] focus:ring-2 focus:ring-[var(--rc-accent)]/30 focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100 dark:placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                aria-label="Reply"
+                title="Reply (Enter)"
+                disabled={busy || text.trim().length === 0}
+                onClick={send}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--rc-accent)] text-white hover:bg-[#255e78] focus-visible:ring-2 focus-visible:ring-[var(--rc-accent)] focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 dark:focus-visible:ring-offset-[#131c2e]"
+              >
+                <IconSend className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
             {error && (
               <p role="alert" className="text-red-600 dark:text-red-400">
                 {error}
               </p>
             )}
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className={GHOST}
-                onClick={() => {
-                  setText("");
-                  setError(null);
-                  closeBox();
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={PRIMARY}
-                disabled={busy || text.trim().length === 0}
-                onClick={send}
-              >
-                Reply
-              </button>
-            </div>
           </div>
-        ) : (
-          <div className="flex justify-end">
-            <button
-              ref={toggleRef}
-              type="button"
-              className={GHOST}
-              onClick={() => setOpen(true)}
-            >
-              Reply
-            </button>
-          </div>
-        ))
+        )
       )}
     </div>
   );

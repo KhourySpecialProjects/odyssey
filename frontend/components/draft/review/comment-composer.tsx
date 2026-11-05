@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import { isSendEnter } from "@/lib/send-key";
 import { POPOVER_GAP, type PopoverAnchor } from "@/lib/selection";
 
 interface CommentComposerProps {
@@ -37,15 +38,11 @@ const BODY_MAX = 5000;
 const WIDTH = 360;
 const NOTCH = 12;
 
-const isMac = () =>
-  typeof navigator !== "undefined" &&
-  /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-
 /**
  * The comment box (ODY-806), as the redesign prototype has it: under the
  * commented text with a notch pointing at it, the number it will get, and a
  * hint that it stays private until changes are requested. Focus moves into
- * it; Esc cancels, Ctrl/Cmd+Enter posts. A failed save keeps the text and
+ * it; Esc cancels, Enter posts (Shift+Enter is a new line). A failed save keeps the text and
  * says why.
  */
 export function CommentComposer({
@@ -126,7 +123,7 @@ export function CommentComposer({
       e.preventDefault();
       e.stopPropagation();
       onCancel();
-    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    } else if (e.target === textareaRef.current && isSendEnter(e)) {
       e.preventDefault();
       void post();
     }
@@ -196,8 +193,7 @@ export function CommentComposer({
           id={hintId}
           className="text-xs text-slate-500 dark:text-slate-400"
         >
-          {isMac() ? "⌘" : "Ctrl"}+Enter to post · only you see it until you
-          request changes
+          Only you see it until you request changes
         </span>
         <div className="ml-auto flex gap-2">
           <button

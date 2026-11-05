@@ -502,6 +502,9 @@ describe("carried comments in the reviewer's next round (ODY-807)", () => {
     ]);
     expect(carriedNotes(fresh)).toEqual([]);
     expect(carriedMeta(one, true)).toBe("Pending · carried from round 1");
+    expect(carriedMeta(one, false)).toBe("Carried from round 1");
+    expect(carriedMeta(carried(3, 0), true)).toBe("Pending · carried over");
+    expect(carriedMeta(carried(3, 0), false)).toBe("Carried over");
     expect(carriedMeta(fresh, true)).toBeUndefined();
   });
 });

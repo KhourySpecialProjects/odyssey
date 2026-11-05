@@ -66,7 +66,6 @@ import {
   decorateMarks,
   draftMarkIn,
   carriedMeta,
-  feedbackMeta,
   isResolved,
   isOutdatedMark,
   numberComments,
@@ -1088,7 +1087,6 @@ export function LessonRenderer({
                 replyEdits:
                   sentFeedback?.replyEdits &&
                   closedNoticeEdits(sentFeedback.replyEdits),
-                meta: () => feedbackMeta(feedbackReview),
                 forCreator: !!sentFeedback?.canAddress,
               }}
             />
@@ -1208,7 +1206,6 @@ export function LessonRenderer({
             numbers={feedbackNumbers}
             outdatedIds={feedbackOutdatedIds}
             blockFor={noBlock}
-            meta={feedbackMeta(feedbackReview)}
             onAddress={onAddress}
             onReply={sentFeedback?.reply}
             replyEdits={sentFeedback?.replyEdits}
@@ -1258,7 +1255,6 @@ export function LessonRenderer({
                   outdatedIds={feedbackOutdatedIds}
                   blockFor={blockFor}
                   blocksFor={blocksFor}
-                  meta={feedbackReview ? feedbackMeta(feedbackReview) : null}
                   onAddress={onAddress}
                   onReply={sentFeedback?.reply}
                   replyEdits={sentFeedback?.replyEdits}
