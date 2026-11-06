@@ -345,7 +345,10 @@ export function reportMarkdown(
       ratio(rs.filter(ofKind(["wrong-pick"])), (r) => r.grade.asksBack),
     "Invalid refs": (rs) => rs.reduce((n, r) => n + r.grade.invalid.length, 0),
     'False "not covered"': (rs) =>
-      ratio(rs.filter(ofKind(["covered"])), (r) => r.grade.notCovered),
+      ratio(
+        rs.filter(ofKind(["covered"])),
+        (r) => r.grade.notCovered && !r.grade.goldHit,
+      ),
     "Refused / truncated / empty": (rs) =>
       (["refused", "truncated", "empty"] as const)
         .map((s) => rs.filter((r) => r.status === s).length)

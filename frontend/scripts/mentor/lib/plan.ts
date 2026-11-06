@@ -40,12 +40,14 @@ export type Planned = {
   saved?: Answered;
 };
 
-/** --pilot: the first 2 cases of each kind, in file order */
+/** --pilot: the first case of each kind in each format, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
-  const seen = new Map<string, number>();
+  const seen = new Set<string>();
   return cases.filter((c) => {
-    seen.set(c.kind, (seen.get(c.kind) ?? 0) + 1);
-    return seen.get(c.kind)! <= 2;
+    const key = `${c.kind} ${c.format}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 

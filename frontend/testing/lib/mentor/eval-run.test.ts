@@ -11,6 +11,7 @@ import type {
 } from "@/scripts/mentor/lib/metrics";
 import {
   cannedGroups,
+  pilotCases,
   planGroups,
   SETUPS,
   type SetupName,
@@ -144,6 +145,21 @@ describe("planGroups", () => {
         output_config: { effort: SETUPS[setup as SetupName].effort },
       });
     }
+  });
+});
+
+describe("pilotCases", () => {
+  it("takes the first case of each kind in each format", () => {
+    const again = { ...caseById("covered-01"), id: "covered-01-again" };
+    const cases = [
+      caseById("covered-01"),
+      again,
+      caseById("covered-explain-01"),
+    ];
+    expect(pilotCases(cases).map((c) => c.id)).toEqual([
+      "covered-01",
+      "covered-explain-01",
+    ]);
   });
 });
 

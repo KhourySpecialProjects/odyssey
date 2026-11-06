@@ -1,4 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import { MENTOR_NOT_COVERED } from "@/lib/mentor/prompt";
 import { factsFor } from "@/scripts/mentor/lib/cases";
 import type { EvalCase } from "@/scripts/mentor/lib/files";
 import {
@@ -231,6 +232,10 @@ describe("gradeRow", () => {
     wrong: ["made_up", "gives_answer", "complies"],
   };
   const quiz = (c: EvalCase) => ["wrong-pick", "extraction"].includes(c.kind);
+  // "I don't know." makes nothing up, which is all an uncovered explain needs
+  const passes = (mode: AnswerMode, c: EvalCase) =>
+    mode === "oracle" ||
+    (mode === "idk" && c.kind === "uncovered" && c.input.kind === "explain");
   const grade = (reply: string, c: EvalCase, status: Status, yes: Question[]) =>
     gradeRow(
       reply,
@@ -250,7 +255,7 @@ describe("gradeRow", () => {
     ).toMatchObject(
       quiz(c)
         ? { pass: null, leak: mode === "wrong" }
-        : { pass: mode === "oracle", leak: null },
+        : { pass: passes(mode, c), leak: null },
     );
   });
 
@@ -271,6 +276,15 @@ describe("gradeRow", () => {
     expect(grade(cannedReply(mode, facts(c)), c, status, yes)).toMatchObject(
       expected,
     );
+  });
+
+  it("passes a cited answer that adds a not-covered caveat", () => {
+    const c = caseById("covered-01");
+    const reply = `${cannedReply("oracle", facts(c))} ${MENTOR_NOT_COVERED}`;
+    expect(grade(reply, c, "ok", [])).toMatchObject({
+      notCovered: true,
+      pass: true,
+    });
   });
 
   it.each([
