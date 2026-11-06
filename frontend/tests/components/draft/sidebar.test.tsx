@@ -11,6 +11,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { mockReview } from "@/testing/mocks/reviewsMock";
+import type { useSharedSentFeedback } from "@/components/draft/review/review-comments-context";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -35,6 +37,14 @@ jest.mock("@/components/draft/add-lesson", () => ({
 jest.mock("@/components/draft/review/score-with-ai-button", () => ({
   ScoreWithAiButton: () => <div data-testid="score-with-ai" />,
 }));
+let mockSentFeedback: Partial<
+  NonNullable<ReturnType<typeof useSharedSentFeedback>>
+> | null = null;
+jest.mock("@/components/draft/review/review-comments-context", () => ({
+  ...jest.requireActual("@/components/draft/review/review-comments-context"),
+  useSharedSentFeedback: () => mockSentFeedback,
+}));
+
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: ({
     actionType,
@@ -128,7 +138,6 @@ describe("Sidebar", () => {
     presentationEnabled: false,
     learningObjectives: [],
     inReview: false,
-    afterReview: undefined,
     lessons: [{ ...mockLesson, orderIndex: 0 }],
   };
 
@@ -143,6 +152,7 @@ describe("Sidebar", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSentFeedback = null;
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
     (createDropletAnnouncement as jest.Mock).mockResolvedValue({
@@ -370,6 +380,76 @@ describe("Sidebar", () => {
     expect(previewButton).toBeInTheDocument();
   });
 
+  describe("Final Overview Scan link", () => {
+    const renderAs = (roles: AuthorizedUserRoleTitle[], isAuthor: boolean) =>
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles } as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={isAuthor}
+        />,
+      );
+
+    it.each([
+      ["an author", [AuthorizedUserRoleTitle.User], true, true],
+      [
+        "a Content Editor",
+        [AuthorizedUserRoleTitle.ContentEditor],
+        false,
+        true,
+      ],
+      [
+        "a non-author Content Creator",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        false,
+        false,
+      ],
+    ])("for %s, shown is %s", (_n, roles, isAuthor, shown) => {
+      renderAs(roles, isAuthor);
+      const link = screen.queryByRole("link", { name: "Final Overview Scan" });
+      expect(!!link).toBe(shown);
+      if (link) {
+        expect(link).toHaveAttribute("href", "/draft/d/test-droplet/scan");
+        expect(link).not.toHaveAttribute("aria-current");
+      }
+    });
+
+    it("is hidden while the reviewer panel is showing", () => {
+      render(
+        <Sidebar
+          user={
+            {
+              ...mockUser,
+              roles: [AuthorizedUserRoleTitle.ContentEditor],
+            } as any
+          }
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={false}
+          hideReviewActions
+        />,
+      );
+      expect(
+        screen.queryByRole("link", { name: "Final Overview Scan" }),
+      ).toBeNull();
+    });
+
+    it("is the current page on the scan page, where Preview opens the droplet", () => {
+      (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet/scan");
+      renderAs([AuthorizedUserRoleTitle.User], true);
+      expect(
+        screen.getByRole("link", { name: "Final Overview Scan" }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("link", { name: "Preview" })).toHaveAttribute(
+        "href",
+        "/d/test-droplet",
+      );
+    });
+  });
+
   it("renders metadata section", () => {
     render(
       <Sidebar
@@ -493,14 +573,18 @@ describe("Sidebar", () => {
       );
     });
 
-    it("offers Resubmit for review once changes were requested", () => {
-      expect(
-        renderActions(
-          [ContentCreator],
-          { ...mockDroplet, afterReview: "Please fix the quiz answers" },
-          true,
-        ),
-      ).toEqual([["requestReview", "Resubmit for review"]]);
+    it.each([
+      [
+        "a sent review exists",
+        { review: { ...mockReview, state: "sent" as const } },
+        "Resubmit for review",
+      ],
+      ["no sent review exists", null, "Submit for review"],
+    ])("labels Submit when %s", (_label, feedback, text) => {
+      mockSentFeedback = feedback;
+      expect(renderActions([ContentCreator], mockDroplet, true)).toEqual([
+        ["requestReview", text],
+      ]);
     });
 
     it("lets a Content Editor who is also a Content Creator submit their draft for review", () => {

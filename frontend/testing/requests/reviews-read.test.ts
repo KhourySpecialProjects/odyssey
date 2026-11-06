@@ -47,6 +47,8 @@ function arrange(opts: {
   scores?: number;
   scoreRows?: object[];
   droplets?: object[];
+  replies?: object[];
+  topRows?: object[];
 }) {
   const review =
     opts.review === undefined
@@ -60,7 +62,10 @@ function arrange(opts: {
       return opts.droplets ?? [{ id: 3, authorized_users: [{ id: 5 }] }];
     }
     if (path === "/reviews") return review ? [review] : [];
-    if (path === "/review-comments") return slice(opts.comments ?? 0);
+    if (path === "/review-comments") {
+      if (cfg.urlParams?.filters?.parent) return opts.replies ?? [];
+      return opts.topRows ?? slice(opts.comments ?? 0);
+    }
     if (path === "/review-scores") {
       return opts.scoreRows ?? slice(opts.scores ?? 0);
     }
@@ -70,6 +75,10 @@ function arrange(opts: {
 
 const callsTo = (p: string) =>
   mockedFetchAPI.mock.calls.filter(([path]) => path === p) as [string, Cfg][];
+const topCalls = () =>
+  callsTo("/review-comments").filter(([, c]) => !c.urlParams?.filters?.parent);
+const replyCalls = () =>
+  callsTo("/review-comments").filter(([, c]) => c.urlParams?.filters?.parent);
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -133,7 +142,7 @@ describe("getReviewForDroplet", () => {
     arrange({ comments: 130 });
     const result = await getReviewForDroplet(3);
     expect(result.ok && result.data?.comments).toHaveLength(130);
-    const calls = callsTo("/review-comments");
+    const calls = topCalls();
     expect(calls.map(([, c]) => c.urlParams?.pagination?.page)).toEqual([1, 2]);
     expect(calls[0][1].urlParams?.sort).toEqual(["id:asc"]);
   });
@@ -143,25 +152,29 @@ describe("getReviewForDroplet", () => {
     arrange({ comments: 40 });
     const result = await getReviewForDroplet(3);
     expect(result.ok && result.data?.comments).toHaveLength(40);
-    const calls = callsTo("/review-comments");
+    const calls = topCalls();
     expect(calls).toHaveLength(1);
     expect(calls[0][1].urlParams?.pagination?.pageSize).toBe(100);
   });
 
-  it("gives a reviewer the latest review with no state filter", async () => {
+  it("gives a non-author reviewer only the latest sent or published review", async () => {
     mockedRequireRole.mockResolvedValue(reviewer());
-    arrange({ review: { id: 70, round: 2, state: "open" }, scores: 101 });
+    arrange({ scores: 101 });
     const result = await getReviewForDroplet(3);
-    expect(result.ok && result.data?.state).toBe("open");
     expect(result.ok && result.data?.scores).toHaveLength(101);
     const cfg = callsTo("/reviews")[0][1];
-    expect(cfg.urlParams?.filters?.state).toBeUndefined();
+    expect(cfg.urlParams?.filters?.state).toEqual({
+      $in: ["sent", "published"],
+    });
     expect(cfg.urlParams?.sort).toEqual(["round:desc", "id:desc"]);
     expect(cfg.urlParams?.pagination?.pageSize).toBe(1);
   });
 
-  it("hides AI fields and unconfirmed scores from an author", async () => {
-    mockedRequireRole.mockResolvedValue(author());
+  it.each([
+    ["an author", author],
+    ["a reviewer", reviewer],
+  ])("hides AI fields and unconfirmed scores from %s", async (_n, who) => {
+    mockedRequireRole.mockResolvedValue(who());
     arrange({
       scoreRows: [
         {
@@ -188,17 +201,6 @@ describe("getReviewForDroplet", () => {
     });
   });
 
-  it("still gives a reviewer AI fields and unconfirmed scores", async () => {
-    mockedRequireRole.mockResolvedValue(reviewer());
-    arrange({ scores: 1 });
-    await getReviewForDroplet(3);
-    const cfg = callsTo("/review-scores")[0][1];
-    expect(cfg.urlParams?.filters?.value).toBeUndefined();
-    expect(cfg.urlParams?.fields).toEqual(
-      expect.arrayContaining(["aiValue", "aiRationale", "aiFindings", "value"]),
-    );
-  });
-
   it.each([
     ["Content Editor", AuthorizedUserRoleTitle.ContentEditor],
     ["System Admin", AuthorizedUserRoleTitle.SysAdmin],
@@ -223,23 +225,47 @@ describe("getReviewForDroplet", () => {
     });
   });
 
-  it("still gives a non-author Content Editor open reviews and AI fields", async () => {
+  it("threads replies by root id, uncached, and drops reply rows from tops", async () => {
     mockedRequireRole.mockResolvedValue(reviewer());
-    arrange({ scoreRows: [{ id: 1, aiValue: 3, aiRationale: "r" }] });
+    arrange({
+      topRows: [
+        { id: 1 },
+        { id: 2, carriedFrom: { id: 1 } },
+        { id: 8, parent: { id: 1 } },
+      ],
+      replies: [
+        { id: 9, parent: { id: 1 }, author: { id: 9 } },
+        { id: 8, parent: { id: 1 }, author: { id: 5 } },
+      ],
+    });
     const result = await getReviewForDroplet(3);
-    expect(callsTo("/reviews")[0][1].urlParams?.filters?.state).toBeUndefined();
-    expect(callsTo("/review-scores")[0][1].urlParams?.fields).toContain(
-      "aiValue",
-    );
-    expect(result.ok && result.data?.scores?.[0]).toMatchObject({ aiValue: 3 });
+    const comments = result.ok ? result.data?.comments ?? [] : [];
+    expect(comments.map((c) => c.id)).toEqual([1, 2]);
+    for (const c of comments) {
+      expect(c.replies?.map((r) => [r.id, r.mine])).toEqual([
+        [8, false],
+        [9, true],
+      ]);
+    }
+    const calls = replyCalls();
+    expect(calls).toHaveLength(1);
+    expect(calls[0][1].urlParams?.filters).toEqual({
+      parent: { id: { $in: [1] } },
+      review: { state: { $in: ["sent", "published"] } },
+    });
+    expect(calls[0][1].cache).toBe("no-store");
+    expect(calls[0][1].next).toBeUndefined();
   });
 
   it("tags reads with the droplet tag and never sets cache", async () => {
     mockedRequireRole.mockResolvedValue(reviewer());
     arrange({ comments: 1, scores: 1 });
     await getReviewForDroplet(3);
-    for (const p of ["/reviews", "/review-comments", "/review-scores"]) {
-      const cfg = callsTo(p)[0][1];
+    for (const cfg of [
+      callsTo("/reviews")[0][1],
+      topCalls()[0][1],
+      callsTo("/review-scores")[0][1],
+    ]) {
       expect(cfg.next?.tags).toEqual(["review-3"]);
       expect(cfg.cache).toBeUndefined();
     }
@@ -249,7 +275,7 @@ describe("getReviewForDroplet", () => {
     mockedRequireRole.mockResolvedValue(reviewer());
     arrange({ comments: 100 * 60 });
     const result = await getReviewForDroplet(3);
-    expect(callsTo("/review-comments")).toHaveLength(50);
+    expect(topCalls()).toHaveLength(50);
     expect(result.ok && result.data?.comments).toHaveLength(5000);
   });
 

@@ -6,11 +6,14 @@ const {
 
 let strapi;
 let seedReviewCriteria;
+let upgradeReviewCriteria;
 let REVIEW_CRITERIA_SEED;
+let STARTER_REVIEW_CRITERIA;
 
 beforeAll(async () => {
   strapi = await setupStrapi();
-  ({ seedReviewCriteria, REVIEW_CRITERIA_SEED } = require('../../dist/src/lib/review-criteria-seed'));
+  ({ seedReviewCriteria, upgradeReviewCriteria, REVIEW_CRITERIA_SEED, STARTER_REVIEW_CRITERIA } =
+    require('../../dist/src/lib/review-criteria-seed'));
 });
 
 afterAll(async () => {
@@ -85,5 +88,28 @@ describe('seedReviewCriteria', () => {
     expect(await criteria().count({})).toBe(0);
     expect(await seedReviewCriteria()).toBe(5);
     expect(await criteria().count({})).toBe(5);
+  });
+});
+
+describe('upgradeReviewCriteria', () => {
+  const byName = async (name) => (await criteria().findMany({ filters: { name } }))[0];
+  const reword = async (name, data) =>
+    criteria().update({ documentId: (await byName(name)).documentId, data });
+
+  it('rewords criteria still on the starter wording and leaves edited ones alone', async () => {
+    await reword('Tone', STARTER_REVIEW_CRITERIA.Tone);
+    await reword('Quality', STARTER_REVIEW_CRITERIA.Quality);
+    await reword('Style', { lessonDescription: 'Edited by an admin' });
+
+    expect(await upgradeReviewCriteria()).toBe(2);
+    const seed = Object.fromEntries(REVIEW_CRITERIA_SEED.map((c) => [c.name, c]));
+    for (const name of ['Tone', 'Quality']) {
+      expect(await byName(name)).toMatchObject({
+        lessonDescription: seed[name].lessonDescription,
+        overallDescription: seed[name].overallDescription,
+      });
+    }
+    expect((await byName('Style')).lessonDescription).toBe('Edited by an admin');
+    expect(await upgradeReviewCriteria()).toBe(0);
   });
 });

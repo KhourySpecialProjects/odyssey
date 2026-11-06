@@ -36,11 +36,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.project == 'backend' && '20.14.0' || '20' }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
       - name: Install dependencies
         run: |
           cd ./${{ matrix.project }}
-          npm ci
+          npm ci --no-audit --no-fund
 
       - name: Run tests
         run: |

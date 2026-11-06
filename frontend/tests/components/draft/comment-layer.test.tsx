@@ -474,7 +474,7 @@ describe("the comment box", () => {
     );
     expect(screen.getByRole("button", { name: "Comment" })).toBeDisabled();
     expect(
-      screen.getByText(/only you see it until you request changes/),
+      screen.getByText("Only you see it until you request changes"),
     ).toBeInTheDocument();
   });
 
@@ -944,6 +944,36 @@ describe("a comment carried into the reviewer's next round (ODY-807)", () => {
     // The reviewer still decides: Resolve, not Mark addressed
     expect(screen.getByRole("button", { name: "Resolve" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
+  });
+
+  it("replies on a carried copy, and offers no Reply on a fresh comment", async () => {
+    const onReply = jest.fn().mockResolvedValue({ ok: true });
+    mount(true, {
+      comments: [carried, { ...wordsComment, id: 5 }],
+      numbers: new Map([
+        [1, 1],
+        [5, 2],
+      ]),
+      onReply,
+    });
+    await act(async () => {});
+    const [carriedTag, freshTag] = screen.getAllByTestId("comment-tag");
+
+    await userEvent.click(freshTag);
+    expect(screen.queryByRole("button", { name: "Reply" })).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close comment" }),
+    );
+
+    await userEvent.click(carriedTag);
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "Fixed",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+
+    expect(onReply).toHaveBeenCalledWith(1, "Fixed");
   });
 
   it("keeps a comment written this round as it was", async () => {

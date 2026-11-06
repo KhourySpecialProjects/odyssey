@@ -26,6 +26,25 @@ const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
+
+const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
+const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
+const GROUP_UID = 'api::group.group';
+
+const mentorUsageData = (overrides = {}) => ({
+  kind: 'lesson',
+  model: 'claude-sonnet-5-5',
+  inputTokens: 0,
+  outputTokens: 0,
+  ...overrides,
+});
+
+// `slug` is a required uid, so a unique one is sent.
+const groupData = (overrides = {}) => {
+  const groupName = unique('Group');
+  return { groupName, slug: groupName.toLowerCase().replace(/\s+/g, '-'), ...overrides };
+};
 
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
@@ -106,6 +125,36 @@ const reviewCriterionData = (overrides = {}) => ({
   ...overrides,
 });
 
+// One check needing attention: its rule's flag shows the results shape (ODY-788)
+const overviewScanData = (overrides = {}) => ({
+  ranAt: new Date().toISOString(),
+  rulesVersion: 'test',
+  passed: 22,
+  needsAttention: 1,
+  couldNotCheck: 0,
+  results: [
+    {
+      id: 'overview',
+      status: 'warn',
+      rules: [
+        {
+          id: 'length',
+          status: 'warn',
+          flags: [
+            {
+              partId: 'droplet',
+              blockId: 'overview',
+              message: 'The overview is under 50 words.',
+              severity: 'warn',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  ...overrides,
+});
+
 module.exports = {
   unique,
   REVIEW_CRITERION_UID,
@@ -114,6 +163,13 @@ module.exports = {
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
+  OVERVIEW_SCAN_UID,
+  MENTOR_USAGE_UID,
+  MENTOR_SETTING_UID,
+  GROUP_UID,
+  mentorUsageData,
+  groupData,
+  overviewScanData,
   reviewData,
   reviewCommentData,
   reviewScoreData,

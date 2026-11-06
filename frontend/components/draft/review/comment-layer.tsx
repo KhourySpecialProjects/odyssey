@@ -46,7 +46,10 @@ import {
 import { useCommentCaret } from "@/hooks/use-comment-caret";
 import type { CommentOutcome } from "@/hooks/use-review-comments";
 import { CommentComposer } from "./comment-composer";
+import { unseenReplies } from "@/lib/review-threads";
+import { useThreadSeen } from "./review-comments-context";
 import { CommentCard } from "./comment-card";
+import type { ReplyEdits } from "./comment-thread";
 import { SpotQuote } from "./comment-about";
 import { useKeyboardLayer } from "./comment-keyboard";
 import {
@@ -284,6 +287,9 @@ interface CommentLayerProps {
   onEdit: (id: number, body: string) => Promise<CommentOutcome>;
   onDelete: (id: number) => Promise<CommentOutcome>;
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
+  /** Replies, offered only on a comment that was sent once (ODY-881) */
+  onReply?: (id: number, body: string) => Promise<CommentOutcome>;
+  replyEdits?: ReplyEdits;
   /** The text being commented on, drawn while the composer is open */
   onDraftChange: (anchor: ReviewAnchor | null) => void;
   /** The mark lit by hovering it or its tag */
@@ -316,11 +322,14 @@ export function CommentLayer({
   onEdit,
   onDelete,
   onResolve,
+  onReply,
+  replyEdits,
   onDraftChange,
   litMarkId,
   onLitChange,
   children,
 }: CommentLayerProps) {
+  const { seen } = useThreadSeen();
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
@@ -1098,6 +1107,7 @@ export function CommentLayer({
           const pending = canChange && !resolved;
           const lit = litMarkId === markId || card?.commentId === comment.id;
           const { anchor } = comment;
+          const unseen = unseenReplies(comment, seen).length > 0;
           return (
             <CommentTag
               key={comment.id}
@@ -1105,6 +1115,7 @@ export function CommentLayer({
               pending={pending}
               resolved={resolved}
               addressed={!!comment.addressedAt}
+              unseen={unseen}
               lit={lit}
               expanded={card?.commentId === comment.id}
               mode={layout.tagMode}
@@ -1115,7 +1126,7 @@ export function CommentLayer({
                 number,
                 pending,
                 commentSnippet(comment, block, { long: true, blocks }),
-                carriedNotes(comment),
+                carriedNotes(comment, unseen),
               )}
               onLight={(on) => onLitChange(on ? markId : null)}
               onOpen={(rect) => {
@@ -1199,6 +1210,12 @@ export function CommentLayer({
           onEdit={(body) => onEdit(cardComment.id, body)}
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
+          onReply={
+            onReply && cardComment.carriedFrom
+              ? (body) => onReply(cardComment.id, body)
+              : undefined
+          }
+          replyEdits={replyEdits}
           onClose={() => closeCard(cardComment.id)}
         />
       )}

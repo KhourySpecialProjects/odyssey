@@ -904,3 +904,28 @@ export function convertBlockNoteToV1Blocks(
 
   return processedBlocks.filter((block): block is Block => block !== null);
 }
+
+type LessonBlocks = {
+  blocksVersion?: string | null;
+  blocks?: Block[] | null;
+  blocksV2?: CustomBlockNoteBlock[] | null;
+};
+
+/** The BlockNote blocks the learner page draws a lesson from, or null for its Classic ones */
+export function blockNoteBlocksOf(
+  lesson: LessonBlocks,
+): CustomBlockNoteBlock[] | null {
+  return lesson.blocksVersion === "v2" && lesson.blocksV2
+    ? lesson.blocksV2
+    : null;
+}
+
+/**
+ * The blocks the learner page draws: a BlockNote lesson's, converted, else
+ * its Classic blocks. Mentor reads lessons through it too (ODY-882), so the
+ * quiz ids it finds are the ones the page renders.
+ */
+export function displayBlocksOf(lesson: LessonBlocks): Block[] {
+  const blocksV2 = blockNoteBlocksOf(lesson);
+  return blocksV2 ? convertBlockNoteToV1Blocks(blocksV2) : lesson.blocks ?? [];
+}

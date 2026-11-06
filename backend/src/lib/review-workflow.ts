@@ -59,9 +59,8 @@ async function lockAndRead(ref: DraftRef): Promise<Row> {
 const reviewerIdOf = (key: string) => Number(key.split(':')[1]);
 
 /**
- * Copies a sent review's unresolved comments (and replies) into a new open
- * review. Each copy points at the comment as first written, however many
- * rounds ago, and keeps the creator's addressed mark (ODY-807).
+ * Copies a sent review's unresolved top-level comments into a new open review.
+ * Each copy points at the comment as first written and keeps its addressed mark (ODY-807).
  */
 async function carryComments(
   sent: Row,
@@ -84,37 +83,21 @@ async function carryComments(
       !c.resolvedAt &&
       !(c.field === 'blocks' && !c.lesson),
   );
-  const copyOf = new Map<number, string>();
-  const copyData = (c: Row, parent?: string) => ({
-    review: target.documentId,
-    field: c.field,
-    anchor: c.anchor,
-    body: c.body,
-    addressedAt: c.addressedAt ?? null,
-    carriedFrom: c.carriedFrom?.documentId ?? c.documentId,
-    ...(c.lesson ? { lesson: c.lesson.documentId } : {}),
-    ...(c.author ? { author: c.author.documentId } : {}),
-    ...(parent ? { parent } : {}),
-  });
-
-  for (const top of tops) {
-    const created = await strapi
-      .documents(REVIEW_COMMENT_UID)
-      .create({ data: copyData(top) as any });
-    copyOf.set(top.id, created.documentId);
+  for (const c of tops) {
+    await strapi.documents(REVIEW_COMMENT_UID).create({
+      data: {
+        review: target.documentId,
+        field: c.field,
+        anchor: c.anchor,
+        body: c.body,
+        addressedAt: c.addressedAt ?? null,
+        carriedFrom: c.carriedFrom?.documentId ?? c.documentId,
+        ...(c.lesson ? { lesson: c.lesson.documentId } : {}),
+        ...(c.author ? { author: c.author.documentId } : {}),
+      } as any,
+    });
   }
-  let carried = tops.length;
-  // id order puts a parent before its replies, so any depth carries.
-  for (const reply of comments) {
-    const parentCopy = reply.parent && copyOf.get(reply.parent.id);
-    if (!parentCopy) continue;
-    const created = await strapi
-      .documents(REVIEW_COMMENT_UID)
-      .create({ data: copyData(reply, parentCopy) as any });
-    copyOf.set(reply.id, created.documentId);
-    carried++;
-  }
-  return carried;
+  return tops.length;
 }
 
 /** Puts a draft in review (next round), carrying each reviewer's work forward. */
@@ -159,6 +142,7 @@ export async function submitForReview(ref: DraftRef): Promise<SubmitResult> {
     const latest = new Map<number, Row>();
     for (const review of reviews) {
       const reviewerId = reviewerIdOf(review.key);
+      if (reviewerId < 1) continue; // slot 0 = no reviewer (ODY-808 backfill): history only
       const seen = latest.get(reviewerId);
       if (!seen || review.round > seen.round) latest.set(reviewerId, review);
     }

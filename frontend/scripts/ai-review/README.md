@@ -44,6 +44,12 @@ for every lesson and for `overall`. Leave `rubricVersion` as written; it
 records which wording they scored against. Set `"split": "holdout"` on 2–3
 droplets and never tune the prompt against those.
 
+- **A range:** `[4, 5]` when the scorer would accept either. The AI agrees if it
+  gives either score; otherwise it's measured against the nearer end.
+- **No Overall Score:** set `"overall": null` to compare the lessons only.
+- **Reasons:** a lesson's optional `reasons` (by criterion name) keeps why
+  the scorer gave each score. The eval doesn't read them; rubric rewrites do.
+
 ## 4. Eval
 
 ```bash

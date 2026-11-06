@@ -7,46 +7,74 @@ export type AIAction =
   | "auto-format"
   | "bug-report"
   | "fun-fact"
-  | "ai-scoring";
+  | "ai-scoring"
+  | "overview-scan"
+  | "mentor";
 
-type RoleTier = "system-admin" | "faculty" | "creator-editor";
+export type RoleTier =
+  | "system-admin"
+  | "faculty"
+  | "creator-editor"
+  | "student";
 
 export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
   split: {
     "system-admin": 1000,
     faculty: 20,
     "creator-editor": 15,
+    student: 15,
   },
   expand: {
     "system-admin": 1000,
     faculty: 50,
     "creator-editor": 30,
+    student: 30,
   },
   "custom-prompt": {
     "system-admin": 1000,
     faculty: 50,
     "creator-editor": 30,
+    student: 30,
   },
   "auto-format": {
     "system-admin": 1000,
     faculty: 20,
     "creator-editor": 15,
+    student: 15,
   },
   "bug-report": {
     "system-admin": 1000,
     faculty: 10,
     "creator-editor": 5,
+    student: 5,
   },
   "fun-fact": {
     "system-admin": 1000,
     faculty: 20,
     "creator-editor": 10,
+    student: 10,
   },
   // A whole droplet per call, so far lower. ODY-815 adds a cost cap.
   "ai-scoring": {
     "system-admin": 30,
     faculty: 10,
     "creator-editor": 10,
+    student: 10,
+  },
+  // Not AI: each run fetches every URL in the droplet. Per ECS task.
+  "overview-scan": {
+    "system-admin": 10,
+    faculty: 10,
+    "creator-editor": 10,
+    student: 10,
+  },
+  // Burst guard per ECS task. The daily limit and monthly cap are in Strapi
+  // (ODY-884).
+  mentor: {
+    "system-admin": 1000,
+    faculty: 20,
+    "creator-editor": 20,
+    student: 20,
   },
 };
 
@@ -55,7 +83,7 @@ const WINDOW_MS = 60 * 60 * 1000; // 1 hour in ms
 /** Keyed by `${email}:${action}` → timestamps of calls within the window */
 const usageStore = new Map<string, number[]>();
 
-function getRoleTier(roles: AuthorizedUserRoleTitle[]): RoleTier {
+export function getRoleTier(roles: AuthorizedUserRoleTitle[]): RoleTier {
   if (roles.includes(AuthorizedUserRoleTitle.SysAdmin)) return "system-admin";
   if (roles.includes(AuthorizedUserRoleTitle.Faculty)) return "faculty";
   if (
@@ -64,7 +92,8 @@ function getRoleTier(roles: AuthorizedUserRoleTitle[]): RoleTier {
   ) {
     return "creator-editor";
   }
-  return "creator-editor";
+  // `User` and no role at all land here.
+  return "student";
 }
 
 /**

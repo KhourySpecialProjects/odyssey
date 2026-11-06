@@ -294,6 +294,8 @@ Use this structure:
 - Group tightly coupled changes (e.g., type + function that uses it) into one task
 - Keep independent changes (e.g., two unrelated components) as separate tasks for parallel execution
 - In **Verify**, list each behaviour once, at the layer that owns it (see `.claude/rules/testing.md`). A rule the Strapi route enforces is tested there, not again in the server action.
+- **Quote UI text only from the code.** Any heading, label, message or toast a test or acceptance criterion asserts must be copied from the file that renders it, with that file named beside it (for example "Page Not Found", `app/no-access.tsx`). Grep for the exact string; never write it from the ticket or from memory.
+- **Blocked tasks name their blocker's state.** If a task needs another ticket's work, say whether it is on develop (`.claude/scripts/coord-status.sh ODY-<n>`). If it isn't, the task waits for it or builds against an agreed contract, and the plan says which.
 
 **PR split rules (see the PR size budget in CLAUDE.md):**
 

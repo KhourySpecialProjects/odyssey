@@ -84,11 +84,17 @@ jest.mock("@/components/draft/review/overview-feedback", () => ({
   OverviewFeedback: ({
     children,
     canEdit,
+    canAddress,
   }: {
     children: React.ReactNode;
     canEdit: boolean;
+    canAddress?: boolean;
   }) => (
-    <div data-testid="overview-feedback" data-can-edit={String(canEdit)}>
+    <div
+      data-testid="overview-feedback"
+      data-can-edit={String(canEdit)}
+      data-can-address={String(canAddress)}
+    >
       {children}
     </div>
   ),
@@ -173,7 +179,6 @@ const DRAFT_DROPLET = {
   isHidden: false,
   status: "draft",
   inReview: false,
-  afterReview: null,
   funFact: "fact",
   originalDropletId: 3,
   presentationEnabled: true,
@@ -266,7 +271,6 @@ describe("draft droplet layout", () => {
 
     expect(Object.keys(droplet).sort()).toEqual(
       [
-        "afterReview",
         "difficulty",
         "focusArea",
         "id",
@@ -508,6 +512,7 @@ describe("draft droplet overview page: review freeze", () => {
 
     const feedback = screen.getByTestId("overview-feedback");
     expect(feedback).toHaveAttribute("data-can-edit", "true");
+    expect(feedback).toHaveAttribute("data-can-address", "true");
     expect(mockedGeneralInfo).toHaveBeenCalled();
   });
 
@@ -518,13 +523,28 @@ describe("draft droplet overview page: review freeze", () => {
 
     const feedback = screen.getByTestId("overview-feedback");
     expect(feedback).toHaveAttribute("data-can-edit", "false");
+    expect(feedback).toHaveAttribute("data-can-address", "true");
     expect(feedback).toContainElement(screen.getByTestId("frozen-overview"));
   });
 
-  it("gives a reviewer who isn't an author no creator's feedback (ODY-807)", async () => {
+  it("gives a non-author reviewer the feedback with no Mark addressed (ODY-881)", async () => {
     mockedGetCurrentUser.mockResolvedValue({
       ...SESSION_USER,
       roles: [ContentEditor],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "true");
+    expect(feedback).toHaveAttribute("data-can-address", "false");
+  });
+
+  it("gives a non-author with no reviewer role no feedback", async () => {
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [AuthorizedUserRoleTitle.ContentCreator],
     } as User);
     mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
 

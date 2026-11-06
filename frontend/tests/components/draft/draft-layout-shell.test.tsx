@@ -1,9 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DraftLayoutShell } from "@/components/draft/draft-layout-shell";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import type { User } from "@/types";
 
+const sidebarRenders = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
   usePathname: () => "/draft/d/intro",
@@ -23,19 +24,38 @@ jest.mock("@/components/draft/sidebar", () => ({
     setExpanded: (v: boolean) => void;
     hideReviewActions: boolean;
     lessonDots: Record<number, string>;
-  }) => (
-    <div data-testid="sidebar" data-expanded={expanded}>
-      <span data-testid="hide">{String(hideReviewActions)}</span>
-      <span data-testid="dots">{JSON.stringify(lessonDots)}</span>
-      <button onClick={() => setExpanded(true)}>open sidebar</button>
-    </div>
-  ),
+  }) => {
+    sidebarRenders();
+    return (
+      <div data-testid="sidebar" data-expanded={expanded}>
+        <span data-testid="hide">{String(hideReviewActions)}</span>
+        <span data-testid="dots">{JSON.stringify(lessonDots)}</span>
+        <button onClick={() => setExpanded(true)}>open sidebar</button>
+      </div>
+    );
+  },
 }));
 jest.mock("@/components/draft/review/review-comments-context", () => ({
   ReviewCommentsProvider: ({ children }: { children: React.ReactNode }) =>
     children,
-  SentFeedbackProvider: ({ children }: { children: React.ReactNode }) =>
+  SentFeedbackProvider: ({
     children,
+    enabled,
+    isAuthor,
+  }: {
+    children: React.ReactNode;
+    enabled: boolean;
+    isAuthor: boolean;
+  }) => (
+    <div
+      data-testid="sent-feedback"
+      data-enabled={String(enabled)}
+      data-author={String(isAuthor)}
+    >
+      {children}
+    </div>
+  ),
+  ThreadRefresh: ({ children }: { children: React.ReactNode }) => children,
   useSharedReviewComments: () => ({ comments: [{ id: 1 }, { id: 2 }] }),
 }));
 const unmounted = jest.fn();
@@ -68,6 +88,11 @@ const minOf = (query: string) =>
 const wide = (width: number) => {
   const before = viewport;
   viewport = width;
+  Object.defineProperty(document.documentElement, "clientWidth", {
+    value: width,
+    configurable: true,
+  });
+  window.dispatchEvent(new Event("resize"));
   if (!installed) {
     installed = true;
     window.matchMedia = jest.fn().mockImplementation((query: string) => ({
@@ -128,8 +153,20 @@ const main = () => screen.getByText("page").closest("main")!;
 const sidebarOpen = () =>
   screen.getByTestId("sidebar").getAttribute("data-expanded");
 
+beforeAll(() => {
+  window.PointerEvent = class extends MouseEvent {
+    pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+    }
+  } as never;
+  Element.prototype.setPointerCapture = jest.fn();
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
+  localStorage.clear();
   localStorage.setItem("tour", "done");
 });
 
@@ -246,6 +283,17 @@ describe("below 1280", () => {
     expect(last).toHaveFocus();
   });
 
+  it("has no handle in the open drawer", async () => {
+    wide(1100);
+    show();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+    );
+
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveClass("w-[384px]", "max-w-full");
+  });
+
   it("closes the drawer from its backdrop", async () => {
     wide(1100);
     show();
@@ -305,7 +353,8 @@ describe("at 1440 and up", () => {
 
   it("pads main for the open panel and for the rail", async () => {
     show();
-    expect(main()).toHaveClass("group", "xl:pr-[384px]");
+    expect(main()).toHaveClass("group", "xl:pr-[var(--panel-w,384px)]");
+    expect(main().style.getPropertyValue("--panel-w")).toBe("384px");
     expect(main()).toHaveAttribute("data-review-panel", "open");
 
     await userEvent.click(
@@ -313,6 +362,69 @@ describe("at 1440 and up", () => {
     );
     expect(main()).toHaveClass("xl:pr-12");
     expect(main()).toHaveAttribute("data-review-panel", "rail");
+  });
+
+  it("resizes main and the panel together from the handle", async () => {
+    show();
+    const aside = screen.getByRole("complementary", {
+      name: "Reviewer Transcript",
+    });
+    expect(aside).toHaveClass("xl:w-[var(--panel-w,384px)]");
+    const handle = screen.getByRole("separator", {
+      name: "Resize Reviewer Transcript",
+    });
+    expect(handle).toHaveAttribute("aria-controls", aside.id);
+
+    handle.focus();
+    await userEvent.keyboard("{ArrowLeft}");
+
+    expect(main().style.getPropertyValue("--panel-w")).toBe("400px");
+    expect(aside.style.getPropertyValue("--panel-w")).toBe("400px");
+    expect(localStorage.getItem("review-panel-width")).toBe("400");
+  });
+
+  it("applies a stored width after mount", async () => {
+    localStorage.setItem("review-panel-width", "520");
+    show();
+    await act(async () => {});
+
+    expect(main().style.getPropertyValue("--panel-w")).toBe("520px");
+  });
+
+  it("re-renders only main and the dock while dragging, with no transition", () => {
+    show();
+    const handle = screen.getByRole("separator");
+    const before = sidebarRenders.mock.calls.length;
+
+    fireEvent.pointerDown(handle, { button: 0, clientX: 1000, pointerId: 1 });
+    expect(main()).toHaveClass("transition-none");
+    fireEvent.pointerUp(handle, { clientX: 900, pointerId: 1 });
+    expect(main()).not.toHaveClass("transition-none");
+
+    expect(main().style.getPropertyValue("--panel-w")).toBe("484px");
+    expect(sidebarRenders).toHaveBeenCalledTimes(before);
+  });
+
+  it.each([
+    [1500, 604],
+    [1300, 660],
+  ])("the maximum at %i is %i", async (width, max) => {
+    wide(width);
+    show();
+    await act(async () => {});
+    screen.getByRole("separator").focus();
+    await userEvent.keyboard("{End}");
+
+    expect(main().style.getPropertyValue("--panel-w")).toBe(`${max}px`);
+  });
+
+  it("has no handle in the rail", async () => {
+    show();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+    );
+
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
   });
 
   it("tells the sidebar to hide the review actions and shows dots", () => {
@@ -344,6 +456,37 @@ describe("not reviewing", () => {
     expect(main()).not.toHaveAttribute("data-review-panel");
     expect(main()).not.toHaveClass("group");
     expect(screen.getByTestId("hide")).toHaveTextContent("false");
+  });
+});
+
+describe("the shared sent feedback (ODY-881)", () => {
+  const roleless = { id: 5, roles: [] } as unknown as User;
+
+  it.each([
+    ["a non-author reviewer", {}, "true", "false"],
+    ["an author", { isAuthor: true }, "true", "true"],
+    [
+      "an author with a reviewer role",
+      {
+        isAuthor: true,
+        user: { id: 9, roles: [AuthorizedUserRoleTitle.SysAdmin] },
+      },
+      "true",
+      "true",
+    ],
+    ["a role-less non-author", { user: roleless }, "false", "false"],
+    [
+      "a published draft",
+      { droplet: { ...(droplet as object), status: "published" } },
+      "false",
+      "false",
+    ],
+  ])("is read for %s", (_name, props, enabled, author) => {
+    show(props);
+
+    const provider = screen.getByTestId("sent-feedback");
+    expect(provider).toHaveAttribute("data-enabled", enabled);
+    expect(provider).toHaveAttribute("data-author", author);
   });
 });
 

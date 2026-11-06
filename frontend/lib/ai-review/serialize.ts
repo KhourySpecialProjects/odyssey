@@ -9,7 +9,11 @@ import type { DropletSnapshot, SnapshotLesson } from "./types";
  */
 export function htmlToMarkdown(html: string | null | undefined): string {
   if (!html) return "";
-  const root = parse(html, { comment: false });
+  // The parser keeps a <pre>'s inside as raw text by default, <code> tags and all
+  const root = parse(html, {
+    comment: false,
+    blockTextElements: { script: true, noscript: true, style: true },
+  });
   return tidy(renderNodes(root.childNodes, { listDepth: 0 }));
 }
 
@@ -96,13 +100,19 @@ function renderNode(node: Node, ctx: Ctx): string {
   }
 }
 
+/** Marks text, keeping any space at its edges outside the marks, as the page shows it. */
 function wrap(text: string, mark: string): string {
   const trimmed = text.trim();
-  return trimmed ? `${mark}${trimmed}${mark}` : "";
+  if (!trimmed) return text.replace(/\S/g, "");
+  const lead = /^\s/.test(text) ? " " : "";
+  const trail = /\s$/.test(text) ? " " : "";
+  return `${lead}${mark}${trimmed}${mark}${trail}`;
 }
 
 function renderList(list: HTMLElement, ordered: boolean, ctx: Ctx): string {
   const indent = "  ".repeat(ctx.listDepth);
+  // <ol start="3"> continues a list that an image or paragraph interrupted
+  const first = (ordered && Number(list.getAttribute("start"))) || 1;
   const items = list.childNodes.filter(
     (n): n is HTMLElement =>
       n instanceof HTMLElement && n.rawTagName?.toLowerCase() === "li",
@@ -114,7 +124,7 @@ function renderList(list: HTMLElement, ordered: boolean, ctx: Ctx): string {
       const text = tidy(renderNodes(li.childNodes, nested))
         .replace(/\n{2,}/g, "\n")
         .replace(/\n(?!\s*(-|\d+\.) )/g, `\n${indent}  `);
-      return `${indent}${ordered ? `${i + 1}.` : "-"} ${text}`;
+      return `${indent}${ordered ? `${first + i}.` : "-"} ${text}`;
     })
     .join("\n");
 }

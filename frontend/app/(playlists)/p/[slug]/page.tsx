@@ -4,6 +4,7 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import type { Enrollment } from "@/types";
 import { hasDroplet } from "@/lib/enrollment-completion";
 import { Progress } from "@/components/ui/progress";
@@ -44,6 +45,7 @@ export default async function PlaylistPage({ params }: Props) {
             lessons: {
               fields: ["id", "name", "slug"],
             },
+            authorized_users: USER_POPULATES.authorName,
             fields: [
               "id",
               "name",

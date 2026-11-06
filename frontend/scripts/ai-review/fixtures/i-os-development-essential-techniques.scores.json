@@ -1,0 +1,77 @@
+{
+  "scorer": "Brady Cai",
+  "split": "tune",
+  "rubricVersion": "2026-10-26-seed",
+  "lessons": [
+    {
+      "lessonId": 114,
+      "lessonName": "Overview and the Goal",
+      "scores": {
+        "Tone": 5,
+        "Style": 4,
+        "Flow": [4, 5],
+        "Scaffolding": [4, 5],
+        "Quality": 3
+      },
+      "reasons": {
+        "Tone": "Although it's short, there aren't any mistakes.",
+        "Style": "It is a bit short, but there's nothing wrong with the writing style and it's engaging.",
+        "Flow": "Gives a good and brief overview of what's going to happen and what's going on.",
+        "Scaffolding": "Doesn't assume anything; it indirectly asks the learner if they've done the prerequisites (\"In the previous droplet, we began\")."
+      }
+    },
+    {
+      "lessonId": 115,
+      "lessonName": "Data in Swift",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 5,
+        "Scaffolding": 5,
+        "Quality": 5
+      },
+      "reasons": {
+        "Tone": "Nothing wrong with it; there might be some generic sections, but they shouldn't harm the lesson at all.",
+        "Style": "Very good: it gives the learner explanations and walks them through a series of steps, then offers images for better visualization and code blocks to aid them.",
+        "Flow": "It feels like a story, step by step; nothing wrong with it.",
+        "Scaffolding": "It talks about \"in the previous droplet\", which assumes the learner has seen the previous droplet, or tells them to check it out if they haven't.",
+        "Quality": "Very high quality work: lots of images, lots of text and code blocks, and it explains everything step by step."
+      }
+    },
+    {
+      "lessonId": 116,
+      "lessonName": "Thinking about Layout",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 5,
+        "Scaffolding": 5,
+        "Quality": 5
+      }
+    },
+    {
+      "lessonId": 117,
+      "lessonName": "Navigating to DetailView",
+      "scores": {
+        "Tone": 5,
+        "Style": 4,
+        "Flow": 5,
+        "Scaffolding": 4,
+        "Quality": 5
+      }
+    },
+    {
+      "lessonId": 118,
+      "lessonName": "Adding Items to the Cart",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 5,
+        "Scaffolding": 5,
+        "Quality": 5
+      }
+    }
+  ],
+  "overall": null,
+  "notes": "Scored 2026-11-02 against the local copy of the droplet. Broken code (\\\\.isEnabled, \\\\.dismiss, \"\\\\(cart.count)\") is deliberately not counted in the scores; report it as a finding instead."
+}

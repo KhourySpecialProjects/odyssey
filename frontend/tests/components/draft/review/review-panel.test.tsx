@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReviewPanel } from "@/components/draft/review/review-panel";
 import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
@@ -132,39 +132,296 @@ describe("header", () => {
   });
 });
 
-describe("collapsing a card", () => {
-  it("hides the comments until the header is opened, and toggles aria-expanded", async () => {
-    setComments([comment(1)]);
-    show();
-    const header = within(
-      screen.getByRole("region", { name: "Variables" }),
-    ).getAllByRole("button")[0];
+describe("a card's two states", () => {
+  const renderDetail = ({ criterion }: { criterion: { name: string } }) => (
+    <div>
+      <p>Detail for {criterion.name}</p>
+      <input aria-label="composer" />
+    </div>
+  );
+  const tonePanel = (over = {}) =>
+    panel({
+      scores: [score(11, 2, { aiValue: 4, aiFindings: [{ id: "f1" }] })],
+      ...over,
+    });
+  const setup = (comments = [comment(1)], extra: object = {}) => {
+    setComments(comments);
+    const view = show(tonePanel(), { renderDetail, ...extra });
+    const card = screen.getByRole("region", { name: "Variables" });
+    const header = within(card).getAllByRole("button")[0];
+    return { view, card, header };
+  };
+  const toneCircle = (card: HTMLElement) =>
+    within(card).getByRole("button", { name: /^Tone/ });
+  const minis = (card: HTMLElement) =>
+    Array.from(card.querySelectorAll<HTMLElement>("[data-mini-circle]"));
+
+  it("starts collapsed: mini circles, a score summary and the count, nothing below", () => {
+    const { card, header } = setup();
 
     expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(header).toHaveAttribute("aria-controls", "review-card-11");
+    expect(header).toHaveAccessibleName(
+      /^Lesson 1 To confirm Variables ?, scores: Tone Good, 1 issue; Style Not scored, 1 comment$/,
+    );
+    expect(within(card).queryByRole("group")).toBeNull();
     expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+    expect(minis(card)).toHaveLength(2);
+    minis(card).forEach((m) => expect(m).toHaveAttribute("aria-hidden"));
+  });
+
+  it("shows no status text when collapsed but keeps it in the name, and shows it expanded", async () => {
+    const { card, header } = setup();
+
+    expect(within(card).getByText("To confirm")).toHaveClass("sr-only");
+    expect(header).toHaveAccessibleName(/To confirm/);
 
     await userEvent.click(header);
+    expect(within(card).getByText("To confirm")).not.toHaveClass("sr-only");
+  });
+
+  it("keeps the minis on the first row without wrapping", () => {
+    const { card } = setup();
+    const wrapper = minis(card)[0].parentElement!;
+
+    expect(wrapper.parentElement).toHaveClass("flex-nowrap");
+    expect(wrapper.parentElement).not.toHaveClass("flex-wrap");
+    expect(wrapper).not.toHaveClass("flex-wrap");
+    expect(wrapper).toHaveClass("shrink-0", "pr-1");
+  });
+
+  it("keeps each mini's band, badge and dashed unscored state", () => {
+    const { card } = setup();
+    const [tone, style] = minis(card);
+
+    expect(tone).toHaveAttribute("data-band", "good");
+    expect(within(tone).getByText("✓")).toBeInTheDocument();
+    expect(tone.style.borderStyle).toBe("solid");
+    expect(style).toHaveAttribute("data-band", "unscored");
+    expect(within(style).queryByText(/[✓–✕]/)).toBeNull();
+    expect(style.style.borderStyle).toBe("dashed");
+  });
+
+  it("expands to the full circles, the actions and the comments", async () => {
+    const renderActions = () => <span>actions</span>;
+    const { card, header } = setup([comment(1)], { renderActions });
+    await userEvent.click(header);
+
     expect(header).toHaveAttribute("aria-expanded", "true");
-    expect(header).toHaveAttribute("aria-controls", "review-comments-11");
-    expect(document.getElementById("review-comments-11")).toHaveTextContent(
-      "Body 1",
-    );
+    expect(
+      within(card).getByRole("button", {
+        name: /^Tone, 4 out of 5, .+, 1 issue/,
+      }),
+    ).toBeInTheDocument();
+    expect(within(card).getByText("1 issue")).toBeInTheDocument();
+    expect(within(card).getByText("actions")).toBeInTheDocument();
+    expect(screen.getByText("Body 1")).toBeInTheDocument();
+    expect(minis(card)).toHaveLength(0);
 
     await userEvent.click(header);
     expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
   });
 
-  it("says when a card has no comments", async () => {
-    show();
-    await expand("Loops");
+  it("drops the card's bottom strip and rounds the whole header only when collapsed", async () => {
+    const { card, header } = setup();
+    expect(card).not.toHaveClass("pb-2");
+    expect(header).toHaveClass("rounded-xl");
+    expect(header).not.toHaveClass("rounded-t-xl");
 
+    await userEvent.click(header);
+    expect(card).toHaveClass("pb-2");
+    expect(header).toHaveClass("rounded-t-xl");
+    expect(header).not.toHaveClass("rounded-xl");
+  });
+
+  it("has no scores summary in the name when the card has no criteria", () => {
+    const { header } = setup([comment(1)], {});
+    expect(header).toHaveAccessibleName(/, scores:/);
+
+    show(panel({ criteria: [] }));
+    const card = screen.getAllByRole("region", { name: "Variables" })[1];
+    expect(within(card).getAllByRole("button")[0]).not.toHaveAccessibleName(
+      /scores:/,
+    );
+  });
+
+  it("collapsing closes an open detail for good, even a stale one, and keeps focus on the header", async () => {
+    const { view, card, header } = setup();
+    await userEvent.click(header);
+    await userEvent.click(toneCircle(card));
+    expect(screen.getByText("Detail for Tone")).toBeInTheDocument();
+
+    await userEvent.click(header);
+    expect(screen.queryByText(/Detail for/)).toBeNull();
+    expect(header).toHaveFocus();
+
+    await userEvent.click(header);
+    expect(screen.queryByText(/Detail for/)).toBeNull();
+
+    await userEvent.click(toneCircle(card));
+    const again = (data: ReviewPanelData) => (
+      <ReviewPanel
+        droplet={droplet}
+        panel={data}
+        scores={tonePanel().scores}
+        renderDetail={renderDetail}
+      />
+    );
+    view.rerender(again(tonePanel({ criteria: [criteria[1]] })));
+    await userEvent.click(header);
+    view.rerender(again(tonePanel()));
+    await userEvent.click(header);
+    expect(screen.queryByText(/Detail for/)).toBeNull();
+  });
+
+  it("keeps focus on the header when a click doesn't focus it (Safari)", async () => {
+    const { card, header } = setup();
+    await userEvent.click(header);
+    await userEvent.click(toneCircle(card));
+    screen.getByLabelText("composer").focus();
+    fireEvent.click(header);
+
+    expect(screen.queryByText(/Detail for/)).toBeNull();
+    expect(header).toHaveFocus();
+  });
+
+  it("keeps focus on Hide/Show when a click doesn't focus it (Safari)", async () => {
+    const { card, header } = setup();
+    await userEvent.click(header);
+    const hide = within(card).getByRole("button", { name: "Hide comments" });
+    within(card).getByText("Body 1").closest("button")!.focus();
+    expect(hide).not.toHaveFocus();
+    fireEvent.click(hide);
+
+    expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+    expect(hide).toHaveFocus();
+  });
+
+  it("hides and shows the comments, remembers it, and leaves an open detail alone", async () => {
+    const { card, header } = setup();
+    await userEvent.click(header);
+    await userEvent.click(toneCircle(card));
+    const toggle = within(card).getByRole("button", { name: "Hide comments" });
+    expect(toggle).toHaveAttribute("aria-controls", "review-comments-11");
+
+    await userEvent.click(toggle);
+    expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+    expect(toggle).toHaveAccessibleName("Show comments");
+    expect(toggle).not.toHaveAttribute("aria-expanded");
+    expect(screen.getByText("Detail for Tone")).toBeInTheDocument();
+
+    await userEvent.click(header);
+    await userEvent.click(header);
+    expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Show comments" }),
+    );
+    expect(screen.getByText("Body 1")).toBeInTheDocument();
+  });
+
+  it("has no toggle with 0 comments, just the hint", async () => {
+    const { card, header } = setup([]);
+    await userEvent.click(header);
+
+    expect(
+      within(card).queryByRole("button", { name: /^(Hide|Show) comments$/ }),
+    ).toBeNull();
     expect(screen.getByText(/No comments yet/)).toBeInTheDocument();
+  });
+
+  describe("when the comment count changes", () => {
+    const hidden = async (items = [comment(1)]) => {
+      const ctx = setup(items);
+      await userEvent.click(ctx.header);
+      await userEvent.click(
+        within(ctx.card).getByRole("button", { name: "Hide comments" }),
+      );
+      const rerun = (items: ReviewComment[]) => {
+        setComments(items);
+        ctx.view.rerender(
+          <ReviewPanel
+            droplet={droplet}
+            panel={tonePanel()}
+            scores={tonePanel().scores}
+            renderDetail={renderDetail}
+          />,
+        );
+      };
+      return { ...ctx, rerun };
+    };
+
+    it("shows the comments again when one arrives", async () => {
+      const { card, rerun } = await hidden();
+      rerun([comment(1), comment(2)]);
+
+      expect(screen.getByText("Body 2")).toBeInTheDocument();
+      expect(
+        within(card).getByRole("button", { name: "Hide comments" }),
+      ).toBeInTheDocument();
+    });
+
+    it("shows the first comment after the count reached 0", async () => {
+      const { rerun } = await hidden();
+      rerun([]);
+      rerun([comment(3)]);
+
+      expect(screen.getByText("Body 3")).toBeInTheDocument();
+    });
+
+    it("leaves them hidden when the count goes down", async () => {
+      const { card, rerun } = await hidden([comment(1), comment(2)]);
+      rerun([comment(1)]);
+
+      expect(screen.queryByText("Body 1")).not.toBeInTheDocument();
+      expect(
+        within(card).getByRole("button", { name: "Show comments" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("collapses the Overview with no minis, and leaves Overall Score open", async () => {
+    setComments([comment(1, { lesson: undefined })]);
+    show();
+    const overview = screen.getByRole("region", { name: "Overview" });
+    const header = within(overview).getAllByRole("button")[0];
+
+    expect(minis(overview)).toHaveLength(0);
+    expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(within(overview).queryByText(/isn.t scored/)).toBeNull();
+    await userEvent.click(header);
+    expect(within(overview).getByText(/isn.t scored/)).toBeInTheDocument();
+
+    const overall = screen.getByRole("region", { name: "Overall Score" });
+    expect(within(overall).getAllByRole("group")).toHaveLength(1);
+    expect(minis(overall)).toHaveLength(0);
+  });
+
+  it("keeps its state when the page on screen changes, never auto-expanding", async () => {
+    const { view, card, header } = setup();
+    pathname = "/draft/d/intro/variables";
+    const navigated = () => (
+      <ReviewPanel
+        droplet={droplet}
+        panel={tonePanel()}
+        scores={tonePanel().scores}
+        renderDetail={renderDetail}
+      />
+    );
+    view.rerender(navigated());
+    expect(within(card).getByText("Viewing")).toBeInTheDocument();
+    expect(header).toHaveAttribute("aria-expanded", "false");
+
+    await userEvent.click(header);
+    pathname = "/draft/d/intro/loops";
+    view.rerender(navigated());
+    expect(header).toHaveAttribute("aria-expanded", "true");
   });
 });
 
 describe("cards", () => {
-  it("lists Overview, lessons by orderIndex, then Overall Score", () => {
+  it("lists Overview, lessons by orderIndex, then Overall Score", async () => {
     show();
+    await expand("Overview");
 
     expect(cardNames()).toEqual([
       "Overview",
@@ -199,7 +456,7 @@ describe("cards", () => {
     expect(within(overview).getByText("Viewing")).toBeInTheDocument();
   });
 
-  it("draws a circle per active criterion by order, with Effective scores", () => {
+  it("draws a circle per active criterion by order, with Effective scores", async () => {
     show(
       panel({
         scores: [
@@ -208,6 +465,7 @@ describe("cards", () => {
         ],
       }),
     );
+    await expand("Variables");
 
     const card = screen.getByRole("region", { name: "Variables" });
     const circles = within(card).getAllByRole("button", {
@@ -221,7 +479,7 @@ describe("cards", () => {
     expect(labels[1]).not.toMatch(/suggested/);
   });
 
-  it("shows To confirm until every criterion has a value, then Confirmed", () => {
+  it("shows To confirm until every criterion has a value, then Confirmed", async () => {
     show(
       panel({
         scores: [
@@ -236,12 +494,14 @@ describe("cards", () => {
     const vars = screen.getByRole("region", { name: "Variables" });
     const loops = screen.getByRole("region", { name: "Loops" });
     expect(within(vars).getByText("To confirm")).toBeInTheDocument();
-    expect(within(loops).getByText("Confirmed")).toBeInTheDocument();
+    expect(within(loops).getByText("Confirmed")).toHaveClass("sr-only");
+    await expand("Loops");
+    expect(within(loops).getByText("Confirmed")).not.toHaveClass("sr-only");
     const overall = screen.getByRole("region", { name: "Overall Score" });
     expect(within(overall).queryByText(/confirm/i)).toBeNull();
   });
 
-  it("uses the scores prop, not panel.scores", () => {
+  it("uses the scores prop, not panel.scores", async () => {
     const data = panel({ scores: [score(11, 2, { aiValue: 1 })] });
     render(
       <ReviewPanel
@@ -250,6 +510,7 @@ describe("cards", () => {
         scores={[score(11, 2, { value: 5 })]}
       />,
     );
+    await expand("Variables");
 
     expect(
       screen.getByRole("button", { name: /Tone, 5 out of 5/ }),
@@ -274,6 +535,7 @@ describe("detail and action slots", () => {
       </div>
     ));
     show(panel({ scores: [score(11, 2, { aiValue: 4 })] }), { renderDetail });
+    await expand("Variables");
     const card = screen.getByRole("region", { name: "Variables" });
     const tone = within(card).getByRole("button", { name: /^Tone/ });
     const style = within(card).getByRole("button", { name: /^Style/ });
@@ -312,11 +574,12 @@ describe("detail and action slots", () => {
     expect(tone).toHaveFocus();
   });
 
-  it("renders the card actions slot for each scored card", () => {
+  it("renders the card actions slot for each scored card", async () => {
     const renderActions = jest.fn((id: number | null) => (
       <span>actions {String(id)}</span>
     ));
     show(panel(), { renderActions });
+    await expand("Variables");
 
     expect(screen.getByText("actions 11")).toBeInTheDocument();
     expect(screen.getByText("actions null")).toBeInTheDocument();
@@ -385,6 +648,15 @@ describe("comments", () => {
     expect(overview).toHaveTextContent(
       "Outdated: the text it pointed at has changed",
     );
+  });
+
+  it("shows how many replies a comment has", async () => {
+    setComments([comment(1, { replies: [{ id: 8 }, { id: 9 }] as never })]);
+    show();
+
+    await expand("Variables");
+
+    expect(screen.getByText(/· 2 replies/)).toBeInTheDocument();
   });
 
   it("mutes a resolved comment", async () => {

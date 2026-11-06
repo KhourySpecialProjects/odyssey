@@ -154,6 +154,8 @@
  *                 sendFeedback, publishWithReview and publishDraftToOriginal
  *                 (both also flush the live droplet's tag; ODY-803 adds
  *                 its own)
+ * overview-scan   Per-droplet tag "overview-scan-{dropletId}": read by      900s
+ *                 getLatestOverviewScan; invalidated by runOverviewScan
  */
 
 export const CACHE_TAGS = {
@@ -196,4 +198,5 @@ export const CACHE_TAGS = {
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores
+  overviewScan: (dropletId: number) => `overview-scan-${dropletId}`, // one droplet's saved overview scans
 };

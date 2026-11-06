@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useReviewComments } from "@/hooks/use-review-comments";
 import { useSentFeedback } from "@/hooks/use-sent-feedback";
+import { useSeenReplies } from "@/hooks/use-seen-replies";
+import { useThreadRefresh } from "@/hooks/use-thread-refresh";
 
 type ReviewComments = ReturnType<typeof useReviewComments> & {
   enabled: boolean;
@@ -57,19 +59,21 @@ type SentFeedback = ReturnType<typeof useSentFeedback> & { enabled: boolean };
 const SentFeedbackContext = createContext<SentFeedback | null>(null);
 
 /**
- * The feedback sent to the authors of a draft, loaded once by the draft
- * layout for an author (ODY-807), for the sidebar and the page beside it.
+ * The feedback sent to the authors, loaded once by the draft layout for an
+ * author or a non-author reviewer (ODY-807, ODY-881).
  */
 export function SentFeedbackProvider({
   dropletId,
   enabled,
+  isAuthor,
   children,
 }: {
   dropletId: number;
   enabled: boolean;
+  isAuthor: boolean;
   children: ReactNode;
 }) {
-  const value = useSentFeedback(dropletId, enabled);
+  const value = useSentFeedback(dropletId, enabled, { isAuthor });
   return (
     <SentFeedbackContext.Provider value={{ ...value, enabled }}>
       {children}
@@ -77,18 +81,64 @@ export function SentFeedbackProvider({
   );
 }
 
-/** The layout's sent feedback, or null outside an author's layout */
+/** The layout's sent feedback, or null outside a layout that reads it */
 export function useSharedSentFeedback(): SentFeedback | null {
   const shared = useContext(SentFeedbackContext);
   return shared?.enabled ? shared : null;
 }
 
+type ThreadSeen = {
+  /** Checks for new replies now */
+  check: () => void;
+  /** Null outside a `ThreadRefresh`: nothing is tracked, so nothing is unseen */
+  seen: ReadonlySet<number> | null;
+  markSeen: (ids: readonly number[]) => void;
+};
+
+const NO_SEEN: ThreadSeen = {
+  check: () => {},
+  seen: null,
+  markSeen: () => {},
+};
+
+const ThreadSeenContext = createContext<ThreadSeen>(NO_SEEN);
+
+/** Polls the reply stamp for the layout, reloads on a change, and shares seen replies (ODY-881). */
+export function ThreadRefresh({
+  dropletId,
+  children,
+}: {
+  dropletId: number;
+  children: ReactNode;
+}) {
+  const comments = useSharedReviewComments();
+  const sent = useSharedSentFeedback();
+  const { check } = useThreadRefresh(dropletId, !!sent?.review, () => {
+    comments?.reload();
+    sent?.reload();
+  });
+  const { seen, markSeen } = useSeenReplies(dropletId);
+  const value = useMemo(
+    () => ({ check, seen, markSeen }),
+    [check, seen, markSeen],
+  );
+  return (
+    <ThreadSeenContext.Provider value={value}>
+      {children}
+    </ThreadSeenContext.Provider>
+  );
+}
+
+/** The layout's check and seen replies; inert outside a layout */
+export const useThreadSeen = () => useContext(ThreadSeenContext);
+
 /** The sent feedback for a page: the layout's when it loads it, else its own */
 export function useDropletSentFeedback(
   dropletId: number | undefined,
   enabled: boolean,
+  isAuthor: boolean,
 ) {
   const shared = useSharedSentFeedback();
-  const own = useSentFeedback(dropletId, enabled && !shared);
+  const own = useSentFeedback(dropletId, enabled && !shared, { isAuthor });
   return shared ?? own;
 }

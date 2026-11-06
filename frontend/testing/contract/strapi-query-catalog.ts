@@ -260,6 +260,117 @@ const ADDRESSED_ROUTES = routes([
   ],
 ]);
 
+// A comment of sent feedback on a droplet the sentinel user wrote (ODY-881)
+const REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        field: "description",
+        anchor: {},
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  [
+    "POST",
+    /^\/review-comments$/,
+    { data: ent(30, { body: "Sentinel reply" }) },
+  ],
+]);
+
+// The sentinel user's own reply on sent feedback for a droplet they wrote
+const OWN_REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or|\$gt/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        parent: { data: ent(4) },
+        author: { data: ent(1) },
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  ["PUT", /^\/review-comments\//, { data: ent(7, { body: "Edited reply" }) }],
+  ["DELETE", /^\/review-comments\//, null],
+]);
+
+// The newest reply on a droplet the sentinel user wrote (ODY-881)
+const THREAD_STAMP_ROUTES = routes([
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        updatedAt: "2026-11-04T00:00:00.000Z",
+        review: {
+          data: ent(5, {
+            droplet: {
+              data: ent(1, { authorized_users: { data: [ent(1)] } }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+]);
+
+// A sent review on a draft the sentinel user didn't write, with a creator reply (ODY-894)
+const AWAITING_REVIEW = ent(5, {
+  round: 1,
+  droplet: {
+    data: ent(1, {
+      name: "Sentinel droplet",
+      slug: "sentinel-droplet",
+      authorized_users: { data: [ent(2)] },
+    }),
+  },
+});
+const AWAITING_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(AWAITING_REVIEW)],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(ent(7, { review: { data: ent(5) } })),
+    /\$null/,
+  ],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(8, {
+        createdAt: "2026-11-04T00:00:00.000Z",
+        parent: { data: ent(7) },
+        author: { data: ent(2) },
+      }),
+    ),
+  ],
+]);
+
 const MY_REVIEW_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
   ["GET", /^\/reviews$/, list(REVIEW_ROW)],
@@ -281,6 +392,11 @@ const REVIEW_PANEL_ROUTES = routes([
   ["GET", /^\/ai-scoring-runs$/, list(ent(4, { runState: "done" }))],
 ]);
 
+const OVERVIEW_SCAN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
+  ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
+]);
+
 type Mod = Record<string, unknown>;
 const call = <T extends Mod>(
   fn: keyof T & string,
@@ -292,6 +408,7 @@ const call = <T extends Mod>(
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
   "ai-scoring": "@/lib/requests/ai-scoring",
+  "overview-scan": "@/lib/requests/overview-scan",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
   "authorized-user": "@/lib/requests/authorized-user",
@@ -750,6 +867,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
     call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
   ]),
+  "overview-scan": defineModule<typeof import("@/lib/requests/overview-scan")>([
+    call(
+      "getLatestOverviewScan",
+      (m) => m.getLatestOverviewScan(1),
+      OVERVIEW_SCAN_ROUTES,
+    ),
+  ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
     call(
@@ -780,9 +904,22 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
     call("markAddressed", (m) => m.markAddressed(7, true), ADDRESSED_ROUTES),
     call(
+      "replyToComment",
+      (m) => m.replyToComment(7, "Sentinel reply"),
+      REPLY_ROUTES,
+    ),
+    call("editReply", (m) => m.editReply(7, "Edited reply"), OWN_REPLY_ROUTES),
+    call("deleteReply", (m) => m.deleteReply(7), OWN_REPLY_ROUTES),
+    call("getThreadStamp", (m) => m.getThreadStamp(1), THREAD_STAMP_ROUTES),
+    call(
       "getReviewForDroplet",
       (m) => m.getReviewForDroplet(1),
       REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewsAwaitingReply",
+      (m) => m.getReviewsAwaitingReply(),
+      AWAITING_ROUTES,
     ),
     call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
     call("getReviewPanel", (m) => m.getReviewPanel(1), REVIEW_PANEL_ROUTES),
@@ -978,6 +1115,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring": {
     startAiScoring: "custom ai-scoring-run start route (ODY-814)",
   },
+  "overview-scan": { runOverviewScan: WRITE },
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",
     acceptAiScores: "custom review-score accept-ai route (ODY-803)",

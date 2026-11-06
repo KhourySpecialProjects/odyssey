@@ -66,12 +66,27 @@ function bostonWallMs(at: number): number {
   return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
 }
 
-/** Midnight Boston time on the 1st of `month` (0-based; 12 is next January). */
-function bostonMonthStart(year: number, month: number): Date {
-  const utcMidnight = Date.UTC(year, month, 1);
-  // Boston's clocks change at 2am, never across midnight on the 1st, so the
+/**
+ * Midnight Boston time on `day` of `month` (0-based; 12 is next January). A
+ * `day` past the end of the month rolls into the next one.
+ */
+function bostonMidnight(year: number, month: number, day = 1): Date {
+  const utcMidnight = Date.UTC(year, month, day);
+  // Boston's clocks change at 2am, never across midnight, on any day, so the
   // offset at UTC midnight is the offset at Boston's.
   return new Date(utcMidnight - (bostonWallMs(utcMidnight) - utcMidnight));
+}
+
+/** The Boston-time day `now` falls in: `start` inclusive, `end` exclusive. */
+export function dayBounds(now: Date): { start: Date; end: Date } {
+  const wall = new Date(bostonWallMs(now.getTime()));
+  const year = wall.getUTCFullYear();
+  const month = wall.getUTCMonth();
+  const day = wall.getUTCDate();
+  return {
+    start: bostonMidnight(year, month, day),
+    end: bostonMidnight(year, month, day + 1),
+  };
 }
 
 /** The Boston-time month `now` falls in: `start` inclusive, `end` exclusive. */
@@ -80,8 +95,8 @@ export function monthBounds(now: Date): { start: Date; end: Date } {
   const year = wall.getUTCFullYear();
   const month = wall.getUTCMonth();
   return {
-    start: bostonMonthStart(year, month),
-    end: bostonMonthStart(year, month + 1),
+    start: bostonMidnight(year, month),
+    end: bostonMidnight(year, month + 1),
   };
 }
 

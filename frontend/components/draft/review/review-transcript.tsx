@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { IconInfoCircle } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { AiFinding, Droplet } from "@/types";
@@ -22,6 +21,7 @@ import {
   type PanelScore,
 } from "@/lib/review-panel/model";
 import { ConfirmScores } from "./confirm-scores";
+import { ScanLink } from "./scan-link";
 import { CriterionDetail } from "./criterion-detail";
 import { ReviewPanel } from "./review-panel";
 import { useSharedReviewComments } from "./review-comments-context";
@@ -146,12 +146,8 @@ export function ReviewTranscript({
 
   const footer = (
     <footer className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-700">
-      <p
-        id={helpId}
-        className="mb-2 flex items-start gap-1.5 text-xs text-[#667085]"
-      >
-        <IconInfoCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span>{help}</span>
+      <p id={helpId} className="sr-only">
+        {help}
       </p>
       <div className="flex gap-2">
         <div className="flex-1">
@@ -173,6 +169,7 @@ export function ReviewTranscript({
           />
         </div>
       </div>
+      <ScanLink slug={droplet.slug} className="mt-2" />
     </footer>
   );
 

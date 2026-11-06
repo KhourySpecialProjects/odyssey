@@ -89,10 +89,17 @@ export function CommentList({
                     {OUTDATED_TEXT}
                   </span>
                 )}
-                {(meta || resolved) && (
+                {(meta || resolved || !!comment.replies?.length) && (
                   <span className="mt-1 flex gap-1.5 text-[#667085]">
                     {meta && <span>{meta}</span>}
                     {resolved && <span className="font-medium">Resolved</span>}
+                    {!!comment.replies?.length && (
+                      <span>
+                        {meta || resolved ? "· " : ""}
+                        {comment.replies.length}{" "}
+                        {comment.replies.length === 1 ? "reply" : "replies"}
+                      </span>
+                    )}
                   </span>
                 )}
               </span>

@@ -96,6 +96,8 @@ interface CommentTagProps {
   resolved: boolean;
   /** The creator marked it addressed (ODY-807) */
   addressed?: boolean;
+  /** Replies by others not opened yet (ODY-881): a dot; `label` should say so too */
+  unseen?: boolean;
   /** Its mark is hovered, or its card is open */
   lit: boolean;
   expanded: boolean;
@@ -121,6 +123,7 @@ export function CommentTag({
   pending,
   resolved,
   addressed = false,
+  unseen = false,
   lit,
   expanded,
   mode,
@@ -193,6 +196,13 @@ export function CommentTag({
       >
         {children}
       </span>
+      {unseen && (
+        <span
+          aria-hidden
+          data-testid="new-replies-dot"
+          className="absolute -top-[3px] -right-[3px] h-1.5 w-1.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#131c2e]"
+        />
+      )}
     </button>
   );
 }

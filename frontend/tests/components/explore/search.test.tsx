@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import userEvent from "@testing-library/user-event";
 import { SearchProvider } from "@/contexts/SearchContext";
 
+let mockSearchParams = new URLSearchParams();
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
   usePathname: () => "/explore",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams,
 }));
 
 describe("Search", () => {
@@ -17,6 +18,8 @@ describe("Search", () => {
   let replaceStateSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     replaceStateSpy = jest.spyOn(window.history, "replaceState");
   });
@@ -56,5 +59,37 @@ describe("Search", () => {
 
     expect(replaceStateSpy).not.toHaveBeenCalled();
     expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it("goes back to page 1 as soon as the search changes (ODY-865)", async () => {
+    mockSearchParams = new URLSearchParams("sort=name%3Aasc&page=3");
+    render(
+      <SearchProvider>
+        <Search />
+      </SearchProvider>,
+    );
+
+    await userEvent.type(screen.getByPlaceholderText("Search..."), "p");
+
+    // Straight away, not after the 300 ms debounce
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/explore?sort=name%3Aasc",
+    );
+  });
+
+  it("keeps a search and page from the URL when Explore opens again (ODY-865)", async () => {
+    mockSearchParams = new URLSearchParams("q=py&page=2");
+    render(
+      <SearchProvider initialQuery="py">
+        <Search />
+      </SearchProvider>,
+    );
+
+    expect(screen.getByPlaceholderText("Search...")).toHaveValue("py");
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    // Before ODY-865 the mount effect deleted q from the URL
+    expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,150 @@
+{
+  "snapshotVersion": 1,
+  "takenAt": "2026-11-02T16:25:29.043Z",
+  "source": {
+    "strapiUrl": "http://localhost:1337",
+    "dropletId": 23
+  },
+  "droplet": {
+    "id": 23,
+    "name": "Building a Profile Generator ",
+    "slug": "building-a-profile-generator-1",
+    "description": "The droplet addresses the need to automate profile creation for Oasis club members at Northeastern University. Users will learn to design and construct the application's components and enhance its visual appeal through styling.",
+    "type": "skill",
+    "focusArea": "technical",
+    "difficulty": null,
+    "learningObjectives": [
+      "Understand how to apply their knowledge of React and web development to turn an idea into a functional web project",
+      "Gain the ability to conceptualize and design a frontend application starting from an idea",
+      "Develop the skill to break down application designs into a series of manageable components",
+      "Learn to design data structures that suit the specific requirements of the application",
+      "Acquire proficiency in building diverse components to construct a fully functional web page"
+    ],
+    "overview": "<p>This droplet guides users through the process of building a web application from scratch, assuming familiarity with code editors like VSCode, HTML, React, and JavaScript. The aim is to address a specific problem: creating profiles for new participants in a club at Northeastern University called Oasis. The manual creation of these profiles is deemed tedious, prompting the development of a web app to automate the process. Participants will learn how to design and construct the application, including necessary components, and explore styling to enhance the website's aesthetic appeal.</p>",
+    "prerequisites": [],
+    "previousReview": null
+  },
+  "lessons": [
+    {
+      "id": 162,
+      "name": "Building a Profile Generator",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 13378,
+          "content": "<p>We’ll be building a Profile Generator to solve the problem discussed above. Below is a screenshot of what we’re hoping to produce. Users enter information in the blue section and then click <span style=\"background-color:rgba(135,131,120,.15);color:#EB5757;font-family:&quot;SFMono-Regular&quot;, Menlo, Consolas, &quot;PT Mono&quot;, &quot;Liberation Mono&quot;, Courier, monospace;\">Generate!</span>. Upon clicking, the green section appears. Here, we have a profile created for Frank.</p><p><img src=\"https://content.khouryodyssey.org/uploads/profile_81971d114e.png\" alt=\"profile.png\"></p><h2>Design</h2><p>Before we begin coding, we want to figure out what components we need to build. Looking at our sample page, we can identify three essential components.</p><ul><li>The form for users to input their information</li><li>The profile card that will appear after the “Generate!” button will be pressed.</li><li>The header at the top of the page providing information about the website</li></ul><h2>Setup</h2><p>First, launch VS Code, setup your repo, and run <code>create-react-app</code>. If you need a refresher on <a href=\"https://www.notion.so/Web-Dev-Tools-79c2cca1fd924b9184a5d34a13dc5842?pvs=21\">VSCode</a> or React setup, head back to the linked droplets.</p><p>We’ll start by creating components for each of our major sections. Create new files <code>Header.js</code> , <code>Form.js</code>, and <code>Output.js</code> in the “src” directory. Create an empty component in each file, leaving you with the following:</p><pre><code class=\"language-plaintext\">// Header.js\n\nexport default function Header() {\n\treturn (\n  \t&lt;&gt;\n  \t&lt;/&gt;\n\t)\n}\n</code></pre><pre><code class=\"language-plaintext\">// Form.js\n\nexport default function Form() {\n\treturn (\n  \t&lt;&gt;\n\t&lt;/&gt;\n\t)\n}\n</code></pre><pre><code class=\"language-plaintext\">// Output.js\n\nexport default function Output() {\n\treturn (\n\t&lt;&gt;\n\t&lt;/&gt;\n\t)\n}\n</code></pre><p>With these components, we’ll then head to the top level component in <code>App.js</code>. Here, we can use combine these components into one page.</p><pre><code class=\"language-plaintext\">// App.js\nimport Header from \"./Header\"; // import each of your 3 components\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n\treturn (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form /&gt;\n      &lt;Output /&gt;\n    &lt;/div&gt;\n  );\n}\n</code></pre><p>While we’re at it, let’s think about which components need access to which properties. We need four state variables to track values for each input in our form, and one to decide if the output should be shown. These can be added using the <code>useState</code> hook.</p><pre><code class=\"language-plaintext\">// App.js\nimport { useState } from \"react\"; // required to use state\nimport Header from \"./Header\"; // import each component\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n  // input field values\n  const [photo, setPhoto] = useState(null);\n  const [name, setName] = useState(\"\");\n  const [title, setTitle] = useState(\"\");\n  const [fact, setFact] = useState(\"\");\n\n  // whether to show the output\n  const [showOutput, setShowOutput] = useState(false);\n\n  return (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form /&gt;\n      &lt;Output /&gt;\n    &lt;/div&gt;\n  );\n}\n</code></pre><p>Not every variable needs to be passed to every component. The <code>Form</code> needs everything, but the <code>Output</code> only needs <code>photo</code>, <code>name</code>, <code>title</code>, and <code>fact</code>, and the <code>Header</code> doesn’t need anything. It is important to only provide each component the data it actually needs.</p><pre><code class=\"language-plaintext\">// App.js\nimport { useState } from \"react\"; // required to use state\nimport Header from \"./Header\"; // import each component\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n  // input field values\n  const [photo, setPhoto] = useState(null);\n  const [name, setName] = useState(\"\");\n  const [title, setTitle] = useState(\"\");\n  const [fact, setFact] = useState(\"\");\n  \n  // whether to show the output\n  const [showOutput, setShowOutput] = useState(false);\n\n  return (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form\n\t\tphoto={photo} setPhoto={setPhoto}\n\t\tname={name} setName={setName}\n\t\ttitle={title} setTitle={setTitle}\n\t\tfact={fact} setFact={setFact}\n\t\tshowOutput={showOutput} setShowOutput={setShowOutput}\n\t  /&gt;\n      &lt;Output photo={photo} name={name} title={title} fact={fact} /&gt;\n    &lt;/div&gt;\n  );\n}\n</code></pre><p>For the form, we’ve provided all of our data, and all of the setters for our data. This will allow us to modify the data for the whole application from within the Form component. The output only needs the data, as it will not need to modify anything.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 163,
+      "name": "Profile Components",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 260,
+          "content": "<h2>Header</h2><p>The header is a quick component to set up. It contains only <code>h1</code> and <code>p</code> elements:</p><pre><code class=\"language-plaintext\">export default function Header() {\n  return (\n    &lt;&gt;\n      &lt;h1&gt;Profile Generator&lt;/h1&gt;\n      &lt;p&gt;Generate profile cards for Oasis members.&lt;/p&gt;\n    &lt;/&gt;\n  );\n}\n</code></pre><h2>Form</h2><p>To begin on the form, we need to give the component all of it’s arguments as they are passed in in the main component. This leaves us with a new empty component like this:</p><pre><code class=\"language-plaintext\">import React from \"react\";\n\nexport default function Form({\n  photo,\n  setPhoto,\n  name,\n  setName,\n  title,\n  setTitle,\n  fact,\n  setFact,\n  showOutput,\n  setShowOutput\n}) {\n  return (\n\t&lt;&gt;\n\t&lt;/&gt;\n  )\n}\n</code></pre><p>To create the form, we need to tell React what to do when the form is submitted. This can be accomplished by accessing the <code>onSubmit</code> event. Whenever an input with the type “submit” is selected, the code within the <code>onSubmit</code> will run.</p><pre><code class=\"language-plaintext\">// in Form.js\n\nimport React from \"react\";\n\nexport default function Form({\n  photo,\n  setPhoto,\n  name,\n  setName,\n  title,\n  setTitle,\n  fact,\n  setFact,\n  showOutput,\n  setShowOutput\n}) {\n  return (\n\t&lt;div className=\"input\"&gt;\n      &lt;form\n        onSubmit={(e) =&gt; {\n          e.preventDefault(); // stop submit from reloading the page\n          setShowOutput(true); \n        }}\n      &gt;\n\t    {/* Inputs will go here! */}\n\t    &lt;input type=\"submit\" value=\"Generate!\" /&gt;\n      &lt;/form&gt;\n\t&lt;/div&gt;\n  )\n}\n</code></pre><p>Now we can build out our inputs inside the form. For each input, we need to use <code>onChange</code> to tell React what to do when those input fields are modified. For each, we will use the appropriate setter passed in. We will also assign the input field’s value to the state value passed in.</p><p>Here’s the name element:</p><pre><code class=\"language-plaintext\">&lt;label htmlFor=\"form-name\"&gt;Name: &lt;/label&gt;\n&lt;input\n  id=\"form-name\"\n  type=\"text\"\n  value={name}\n  onChange={(e) =&gt; {\n\tsetName(e.target.value);\n\tsetShowOutput(false);\n  }}\n  required\n/&gt;\n</code></pre><p>Notice that we also use our <code>showOutput</code> setter, setting the value to false to that we hide a profile once it’s been modified.</p><p>Next is the title element, which looks very similar:</p><pre><code class=\"language-plaintext\">&lt;label htmlFor=\"form-title\"&gt;Title: &lt;/label&gt;\n&lt;input\n  id=\"form-title\"\n  type=\"text\"\n  value={title}\n  onChange={(e) =&gt; {\n\tsetTitle(e.target.value);\n\tsetShowOutput(false);\n  }}\n  required\n/&gt;\n</code></pre><p>The fun fact will need a larger text field, so we’ll use a <code>textarea</code> tag instead.</p><pre><code class=\"language-plaintext\">&lt;label htmlFor=\"form-fun-fact\" style={{ verticalAlign: \"top\" }}&gt;\n\tFun Fact:\n&lt;/label&gt;\n&lt;textarea\n  id=\"form-fun-fact\"\n  name=\"w3review\"\n  value={fact}\n  onChange={(e) =&gt; {\n\tsetFact(e.target.value);\n\tsetShowOutput(false);\n  }}\n&gt;&lt;/textarea&gt;\n</code></pre><p>The photo field will prove challenging, because we need to turn the URL into a photo we can display. We do this by accessing the file’s path from the event, creating a URL from it, and then by getting an object at that URL inside of your <code>onChange</code>:</p><pre><code class=\"language-plaintext\">&lt;input\n  id=\"member-photo\"\n  type=\"file\"\n  {/* no `value` because value is a path, but we want to store a photo */}\n  onChange={(event) =&gt; {\n    setPhoto(URL.createObjectURL(event.target.files[0]));\n  }}\n  required\n/&gt;\n</code></pre><p>Once this is all complete, add these into the form component, separating each by a <code>&lt;br/&gt;</code> tag to create a separation. Then we can move to the output component.</p><h2>Output</h2><p>For the output, we need to display an image and text using the passed in properties:</p><pre><code class=\"language-plaintext\">export default function Output({ photo, name, title, fact }) {\n  return (\n    &lt;div&gt;\n      &lt;img src={photo ?? \"\"} alt=\"profile photo\" /&gt;\n      &lt;h1&gt;{name}&lt;/h1&gt;\n      &lt;p&gt;{title}&lt;/p&gt;\n      &lt;p&gt;Fun Fact:{fact}&lt;/p&gt;\n    &lt;/div&gt;\n  );\n}\n</code></pre><p>&nbsp;</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 83,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Above, photo ?? \"\" evaluates to \"\" if photo is a nullish value (null or undefined). This is called the ",
+                  "type": "text"
+                },
+                {
+                  "bold": true,
+                  "text": "Nullish Coalescing",
+                  "type": "text"
+                },
+                {
+                  "text": " operator.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": null,
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 261,
+          "content": "<p>Now we have all of the pieces in place!</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 164,
+      "name": "Profile Touch-ups and Styling",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 262,
+          "content": "<h2>Touch-ups</h2><p>It’s time to add some functionality details before we overhaul styling. First, we want to only display the output when <code>showOutput</code> is true. Add conditionality to the display of <code>Output</code> using a <strong>ternary operator</strong>:</p><pre><code class=\"language-plaintext\">{showOutput ? (&lt;Output ... /&gt;) : (&lt;&gt;&lt;/&gt;)}\n</code></pre><p>We can add this to the app component here:</p><pre><code class=\"language-plaintext\">// App.js\nimport { useState } from \"react\"; // required to use state\nimport Header from \"./Header\"; // import each component\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n  // input field values\n  const [photo, setPhoto] = useState(null);\n  const [name, setName] = useState(\"\");\n  const [title, setTitle] = useState(\"\");\n  const [fact, setFact] = useState(\"\");\n\n  return (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form\n\t\tphoto={photo} setPhoto={setPhoto}\n\t\tname={name} setName={setName}\n\t\ttitle={title} setTitle={setTitle}\n\t\tfact={fact} setFact={setFact}\n\t\tshowOutput={showOutput} setShowOutput={setShowOutput}\n\t  /&gt;\n      {showOutput ? (\n\t    &lt;Output photo={photo} name={name} title={title} fact={fact}/&gt;\n      ) : (\n        &lt;&gt;&lt;/&gt;\n      )}\n    &lt;/div&gt;\n  );\n}\n</code></pre>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 84,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "If you only want to render a component/element when a given condition evaluates to true, you can alternatively use the logical AND operator (&&):",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "code": true,
+                  "text": "{showOutput && (<Output />)}",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 263,
+          "content": "<h2>Styling</h2><p>To complete this site, we need to make it look nice. To style the website, we need to add in some CSS. We won’t be covering the CSS principles here (you can read about that in <a href=\"https://www.notion.so/f35e1251d5ea4adeb86fab11900334be?pvs=21\">CSS Basics</a>), so below is the complete CSS file to add to your project. You can either download the file, or copy it from the block below.</p><pre><code class=\"language-css\">div {\n  padding: 10px;\n  margin: 10px 0px;\n  border-radius: 10px;\n  background-color: #1e201a;\n  color: #edf0f1;\n  flex-flow: column;\n}\n\ndiv.input,\ndiv.output {\n  background-color: #2f4268;\n  box-shadow: 0 0 10px #455c89;\n  display: flex;\n  justify-content: center;\n  align-content: center;\n  width: 400px;\n  height: 200px;\n}\n\ndiv.output {\n  background-color: #487268;\n  box-shadow: 0 0 10px #689f92;\n  flex-flow: row;\n  margin-top: 20px;\n}\n\ndiv.column {\n  background-color: inherit;\n  margin: 0px;\n  flex-flow: column;\n  justify-content: center;\n  align-content: center;\n  justify-items: center;\n  align-items: center;\n}\n\nlabel {\n  font-weight: 700;\n}\n\nul {\n  margin-left: -30px;\n  margin-bottom: -5px;\n  margin-top: 10px;\n  line-height: 0.8rem;\n  list-style: none;\n}\n\ninput,\ntextarea {\n  border: 2px solid #dadada;\n  border-radius: 4px;\n  background: transparent;\n  color: #edf0f1;\n  margin: 5px 10px;\n  font-family: \"Roboto\", sans-serif;\n}\n\ntextarea {\n  height: 40px;\n  width: 175px;\n}\n\ninput:focus,\ntextarea:focus {\n  outline: none;\n  border-color: #9ecaed;\n  box-shadow: 0 0 10px #9ecaed;\n}\n\ninput[type=\"submit\"] {\n  background-color: #edf0f1;\n  color: #2f4268;\n  font-weight: 700;\n  font-size: larger;\n}\n\ninput[type=\"file\"] {\n  background: transparent;\n  border: transparent;\n}\n\n/* Import Roboto from Google Fonts */\n@import url(\"&lt;https://fonts.googleapis.com/css2?family=Roboto&amp;display=swap&gt;\");\nbody {\n  font-family: \"Roboto\", sans-serif;\n  font-size: 1rem;\n  background-color: #1e201a;\n}\n\nh1 {\n  margin-top: 0px;\n  margin-bottom: 0px;\n}\n\nimg {\n  border-radius: 10px;\n  box-shadow: 0 0 10px #689f92;\n  object-fit: cover;\n  width: 180px;\n  height: 180px;\n}\n</code></pre><p>Drop this into the <code>src</code> directory, and we’re good to go! Open up your terminal and run the command <code>npm start</code>.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 165,
+      "name": "Extending the Profile Generator",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 264,
+          "content": "<p>One option we have for extending this is to add a backend to this frontend-only project. If we wanted to automatically build these profiles based on a roster of Oasis members, we can connect to an API to get this information.</p><p>To go down this route, check out <a href=\"https://www.notion.so/Building-A-RESTful-API-with-Node-js-and-Express-js-15ef089d0e8746148c095d31794664f3?pvs=21\">Building a Restful API</a> and <a href=\"https://www.notion.so/d1806d348b9c403993ec6f429e67841d?pvs=21\">Going Full Stack</a>.</p><h2>New Functionality</h2><p>An alternative is to add new functionality. One option here is to add the ability to generate and show multiple profiles at a time. Let’s consider what this would require.</p><p>First, we need to rethink how we store our data. While we still need our current state variables to store the information for the profile we’re working on, we need to store all past profiles in a list. Instead of the output taking all of our inputs, it will now only take our list of completed profiles. The form will also need the profiles and the profiles setter so that it can update the list.</p><pre><code class=\"language-plaintext\">// App.js\nimport { useState } from \"react\"; // required to use state\nimport Header from \"./Header\"; // import each component\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n  // input field values\n  const [photo, setPhoto] = useState(null);\n  const [name, setName] = useState(\"\");\n  const [title, setTitle] = useState(\"\");\n  const [fact, setFact] = useState(\"\");\n  \n  // add a list of profiles\n  const [profiles, setProfiles] = useState([]);\n\n  const [showOutput, setShowOutput] = useState(false);\n\n\treturn (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form\n\t\tphoto={photo} setPhoto={setPhoto}\n\t\tname={name} setName={setName}\n\t\ttitle={title} setTitle={setTitle}\n\t\tfact={fact} setFact={setFact}\n\t\tshowOutput={showOutput} setShowOutput={setShowOutput}\n\t\tprofiles={profiles} setProfiles={setProfiles}\n\t  /&gt;\n      {showOutput ? (\n\t    &lt;Output photo={photo} name={name} title={title} fact={fact}/&gt;\n      ) : (\n        &lt;&gt;&lt;/&gt;\n      )}\n    &lt;/div&gt;\n\t);\n}\n</code></pre><p>Next, we want the output to be shown when we have at least 1 completed profile. To do this, we’ll start by removing the <code>showOutput</code> state value. We’ll then only render the output if the length of our list of profiles is at least 1.</p><pre><code class=\"language-plaintext\">// App.js\nimport { useState } from \"react\"; // required to use state\nimport Header from \"./Header\"; // import each component\nimport Form from \"./Form\";\nimport Output from \"./Output\";\n\nexport default function App() {\n  // input field values\n  const [photo, setPhoto] = useState(null);\n  const [name, setName] = useState(\"\");\n  const [title, setTitle] = useState(\"\");\n  const [fact, setFact] = useState(\"\");\n  \n  // add a list of profiles\n  const [profiles, setProfiles] = useState([]);\n\n\treturn (\n    &lt;div&gt;\n      &lt;Header /&gt;\n      &lt;Form\n\t\tphoto={photo} setPhoto={setPhoto}\n\t\tname={name} setName={setName}\n\t\ttitle={title} setTitle={setTitle}\n\t\tfact={fact} setFact={setFact}\n\t\tprofiles={profiles} setProfiles={setProfiles}\n\t  /&gt;\n      {profiles.length &gt; 0 &amp;&amp; \n\t    &lt;Output photo={photo} name={name} title={title} fact={fact} /&gt;\n      }\n    &lt;/div&gt;\n\t);\n}\n</code></pre><p>Next, we’ll modify our form. We start by removing any remnants of <code>showOutput</code> and <code>setShowOutput</code>, and adding in the <code>profiles</code> and <code>setProfiles</code> arguments. Then, we want to modify out <code>form</code> tag, changing the onSubmit to append the current profile to the list of created profiles. This new tag will look like the following:</p><pre><code class=\"language-plaintext\">&lt;form\n  onSubmit={(e) =&gt; {\n\te.preventDefault(); \n\tvar newProfile = {\n\t  photo: photo, // remember that these refer to our state values\n\t  name: name, \n\t  title: title, \n\t  fact: fact \n  }\n    // concatonate the new profile to our current list\n    var newProfilesList = profiles.concat(newProfile)\n    setProfiles(newProfilesList) \n  }}\n&gt;\n</code></pre><p>Finally, we can modify our output to produce several profiles, instead of just the one. Using our new profiles argument, we can use Javascript’s <code>map</code> function, which can produce HTML for each item in a list. We can put our old output code into this map to make a card for each profile.</p><pre><code class=\"language-plaintext\">export default function Output({ profiles }) {\n  return (\n    &lt;div&gt;\n      {profiles.map((profile) =&gt; (\n        &lt;div className=\"output\"&gt;\n          &lt;div className=\"column\"&gt;\n            &lt;img src={profile.photo ?? \"\"} alt=\"profile photo\" /&gt;\n          &lt;/div&gt;\n\n          &lt;div className=\"column\"&gt;\n            &lt;h1 style={{ marginBottom: \"-15px\", marginTop: \"2px\" }}&gt;\n              {profile.name ?? \"error\"}\n            &lt;/h1&gt;\n            &lt;p&gt;\n              &lt;b&gt;\n                &lt;i&gt;{profile.title ?? \"error\"}&lt;/i&gt;\n              &lt;/b&gt;\n            &lt;/p&gt;\n            &lt;p&gt;\n              &lt;b&gt;Fun Fact:&lt;/b&gt;\n              &lt;br /&gt; {profile.fact ?? \"error\"}\n            &lt;/p&gt;\n          &lt;/div&gt;\n        &lt;/div&gt;\n      ))}\n    &lt;/div&gt;\n  );\n}\n</code></pre><p>With that completed, we can run our application and try to make multiple profiles. Now I can compare two profiles to see which one I like best!</p><p><img src=\"https://content.khouryodyssey.org/uploads/profile_one_06a620e34d.png\" alt=\"profile one.png\"></p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    }
+  ]
+}

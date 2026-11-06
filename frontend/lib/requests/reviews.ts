@@ -31,6 +31,11 @@ import {
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { loadDropletForWrite } from "@/lib/auth/review-freeze";
 import { isReviewerFor } from "@/lib/review-roles";
+import {
+  attachThreads,
+  rootId,
+  threadsAwaitingReviewer,
+} from "@/lib/review-threads";
 import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { AnchorBlock } from "@/lib/anchors/types";
@@ -224,6 +229,8 @@ type CommentForWrite = {
   id: number;
   documentId: string;
   author: { id: number } | null;
+  parent?: { id: number } | null;
+  carriedFrom?: { id: number } | null;
   review: {
     state: string;
     droplet: (DropletAuthors & { id: number }) | null;
@@ -255,6 +262,8 @@ async function findCommentById(id: number): Promise<CommentForWrite | null> {
       fields: ["resolvedAt"],
       populate: {
         author: { fields: ["id"] },
+        parent: { fields: ["id"] },
+        carriedFrom: { fields: ["id"] },
         review: {
           fields: ["state"],
           populate: {
@@ -287,6 +296,7 @@ async function loadWritableComment(
   if (!comment || !comment.review || !droplet) {
     return { ok: false, error: "not_found" };
   }
+  if (comment.parent) return { ok: false, error: "invalid_input" };
   if (comment.review.state !== "open") {
     return { ok: false, error: "review_closed" };
   }
@@ -298,6 +308,351 @@ async function loadWritableComment(
     return { ok: false, error: "forbidden" };
   }
   return { ok: true, comment, dropletId: droplet.id };
+}
+
+type ThreadRow = {
+  id: number;
+  documentId: string;
+  field: ReviewComment["field"];
+  anchor: ReviewComment["anchor"];
+  author: { id: number } | null;
+  parent: { id: number } | null;
+  carriedFrom: { id: number } | null;
+  lesson: { id: number; documentId: string } | null;
+  review: {
+    documentId: string;
+    state: string;
+    droplet: (DropletAuthors & { id: number; status?: string | null }) | null;
+  } | null;
+};
+
+/** Looks a comment up with its review and droplet authors, never from cache. */
+async function findThreadRow(id: number): Promise<ThreadRow | null> {
+  const rows = await fetchAPI<ThreadRow[] | null>("/review-comments", {
+    urlParams: {
+      filters: { id: { $eq: id } },
+      fields: ["field", "anchor", "resolvedAt", "createdAt", "updatedAt"],
+      populate: {
+        parent: { fields: ["id"] },
+        author: { fields: ["id"] },
+        lesson: { fields: ["id"] },
+        carriedFrom: { fields: ["id"] },
+        review: {
+          fields: ["state"],
+          populate: {
+            droplet: { fields: ["status"], populate: AUTHORS_POPULATE },
+          },
+        },
+      },
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  return rows?.[0] ?? null;
+}
+
+/** The comment as first written: the row itself, or its carried copy's root. */
+const rootOf = (row: ThreadRow) =>
+  row.carriedFrom ? findThreadRow(row.carriedFrom.id) : row;
+
+/** An author (whatever their role), else a non-author reviewer, else null. */
+function access(
+  droplet: DropletAuthors,
+  user: AuthUser,
+): "author" | "reviewer" | null {
+  const ids = droplet.authorized_users?.map((u) => u.id);
+  if (assertOwner(ids, user, { bypassRoles: [] }).ok) return "author";
+  return isReviewerFor(user.roles, true, false) ? "reviewer" : null;
+}
+
+/** True when a sent resolve anywhere in the root's chain closes its thread. */
+async function threadClosed(rootId: number): Promise<boolean> {
+  const rows = await fetchAPI<{ id: number }[] | null>("/review-comments", {
+    urlParams: {
+      filters: {
+        $or: [
+          { id: { $eq: rootId } },
+          { carriedFrom: { id: { $eq: rootId } } },
+        ],
+        resolvedAt: { $notNull: true },
+        review: { state: { $in: ["sent", "published"] } },
+      },
+      fields: ["id"],
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  return (rows?.length ?? 0) > 0;
+}
+
+async function hasReplies(rootId: number): Promise<boolean> {
+  const rows = await fetchAPI<{ id: number }[] | null>("/review-comments", {
+    urlParams: {
+      filters: { parent: { id: { $eq: rootId } } },
+      fields: ["id"],
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  return (rows?.length ?? 0) > 0;
+}
+
+/** Replies to a sent comment, as an author or non-author reviewer, until a sent resolve closes it (ODY-881). */
+export async function replyToComment(
+  commentId: number,
+  body: string,
+): Promise<ReviewActionResult<ReviewComment>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(commentId);
+      const text = reviewCommentBodySchema.safeParse(body);
+      if (!id.success || !text.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+
+      const target = await findThreadRow(id.data);
+      const droplet = target?.review?.droplet;
+      if (!target?.review || !droplet) {
+        return { ok: false, error: "not_found", data: null };
+      }
+      const side = access(droplet, user);
+      if (!side) return { ok: false, error: "forbidden", data: null };
+      if (target.parent) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+      if (droplet.status === "published") {
+        return { ok: false, error: "review_closed", data: null };
+      }
+      const state = target.review.state;
+      const visible =
+        state === "sent" ||
+        (side === "reviewer" && state === "open" && !!target.carriedFrom);
+      if (!visible) return { ok: false, error: "review_closed", data: null };
+
+      const root = await rootOf(target);
+      if (!root?.review) return { ok: false, error: "not_found", data: null };
+      if (await threadClosed(root.id)) {
+        return { ok: false, error: "review_closed", data: null };
+      }
+
+      const created = await writeStrapi(
+        "POST",
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/review-comments`,
+        {
+          review: root.review.documentId,
+          parent: root.documentId,
+          field: root.field,
+          anchor: root.anchor,
+          body: text.data,
+          author: await callerDocumentId(user),
+          ...(root.lesson && { lesson: root.lesson.documentId }),
+        },
+      );
+      if (!created.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(droplet.id));
+      const reply = { ...created.data, parent: { id: root.id }, mine: true };
+      return { ok: true, error: null, data: reply };
+    } catch (error) {
+      console.error("replyToComment failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+type OwnReply =
+  | { ok: true; reply: ThreadRow; dropletId: number }
+  | { ok: false; error: ReviewActionError; message?: string };
+
+/** Loads the caller's own reply and checks it can still change (G14, N2, N5). */
+async function loadOwnReply(id: number, user: AuthUser): Promise<OwnReply> {
+  const reply = await findThreadRow(id);
+  const droplet = reply?.review?.droplet;
+  if (!reply || !reply.review || !droplet) {
+    return { ok: false, error: "not_found" };
+  }
+  if (!access(droplet, user)) return { ok: false, error: "forbidden" };
+  if (!reply.parent) return { ok: false, error: "invalid_input" };
+  if (!assertOwner(reply.author?.id, user, { bypassRoles: [] }).ok) {
+    return { ok: false, error: "forbidden" };
+  }
+  if (droplet.status === "published") {
+    return { ok: false, error: "review_closed" };
+  }
+  if (await threadClosed(reply.parent.id)) {
+    return { ok: false, error: "review_closed" };
+  }
+  const later = await fetchAPI<{ id: number }[] | null>("/review-comments", {
+    urlParams: {
+      filters: {
+        parent: { id: { $eq: reply.parent.id } },
+        id: { $gt: id },
+        author: { id: { $ne: user.id } },
+      },
+      fields: ["id"],
+      pagination: { pageSize: 1 },
+    },
+    cache: "no-store",
+  });
+  if (later?.length) {
+    return {
+      ok: false,
+      error: "conflict",
+      message: "Someone has replied since.",
+    };
+  }
+  return { ok: true, reply, dropletId: droplet.id };
+}
+
+/** Edits the caller's own reply until someone else replies after it (ODY-881). */
+export async function editReply(
+  replyId: number,
+  body: string,
+): Promise<ReviewActionResult<ReviewComment>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(replyId);
+      const text = reviewCommentBodySchema.safeParse(body);
+      if (!id.success || !text.success) {
+        return { ok: false, error: "invalid_input", data: null };
+      }
+      const loaded = await loadOwnReply(id.data, user);
+      if (!loaded.ok) {
+        return {
+          ok: false,
+          error: loaded.error,
+          data: null,
+          message: loaded.message,
+        };
+      }
+
+      const updated = await writeStrapi(
+        "PUT",
+        await strapiEntryUrl("review-comments", loaded.reply),
+        { body: text.data },
+      );
+      if (!updated.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(loaded.dropletId));
+      const reply = {
+        ...updated.data,
+        parent: loaded.reply.parent,
+        mine: true,
+      };
+      return { ok: true, error: null, data: reply };
+    } catch (error) {
+      console.error("editReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** Deletes the caller's own reply until someone else replies after it (ODY-881). */
+export async function deleteReply(
+  replyId: number,
+): Promise<ReviewActionResult<{ id: number }>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(replyId);
+      if (!id.success) return { ok: false, error: "invalid_input", data: null };
+      const loaded = await loadOwnReply(id.data, user);
+      if (!loaded.ok) {
+        return {
+          ok: false,
+          error: loaded.error,
+          data: null,
+          message: loaded.message,
+        };
+      }
+
+      const deleted = await writeStrapi(
+        "DELETE",
+        await strapiEntryUrl("review-comments", loaded.reply),
+      );
+      if (!deleted.ok) return { ok: false, error: "failed", data: null };
+
+      revalidateTag(CACHE_TAGS.review(loaded.dropletId));
+      return { ok: true, error: null, data: { id: loaded.reply.id } };
+    } catch (error) {
+      console.error("deleteReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
+}
+
+/** A cheap change-check for a droplet's replies: count, newest id and `updatedAt` (ODY-881). */
+export async function getThreadStamp(
+  dropletId: number,
+): Promise<ReviewActionResult<{ stamp: string }>> {
+  return withAuth([], async (user) => {
+    try {
+      const id = idSchema.safeParse(dropletId);
+      if (!id.success) return { ok: false, error: "invalid_input", data: null };
+
+      const res = await fetchAPI<{
+        data?: unknown[];
+        meta?: { pagination?: { total?: number } };
+      } | null>("/review-comments", {
+        urlParams: {
+          filters: {
+            parent: { id: { $notNull: true } },
+            review: {
+              droplet: { id: { $eq: id.data } },
+              state: { $in: ["sent", "published"] },
+            },
+          },
+          fields: ["updatedAt"],
+          populate: {
+            review: {
+              fields: ["id"],
+              populate: {
+                droplet: { fields: ["id"], populate: AUTHORS_POPULATE },
+              },
+            },
+          },
+          sort: ["updatedAt:desc", "id:desc"],
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+        flattenResponse: false,
+      });
+      const row = flattenAttributes(res?.data?.[0]) as {
+        id: number;
+        updatedAt?: string;
+        review?: { droplet?: DropletAuthors | null } | null;
+      } | null;
+
+      if (row) {
+        const authors = row.review?.droplet;
+        if (!authors) return { ok: false, error: "not_found", data: null };
+        if (!access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      } else if (!isReviewerFor(user.roles, true, false)) {
+        // No reply to read the authors from: one lookup, only for a non-reviewer
+        const droplets = await fetchAPI<DropletAuthors[] | null>("/droplets", {
+          urlParams: {
+            filters: { id: { $eq: id.data } },
+            fields: ["id"],
+            populate: AUTHORS_POPULATE,
+            pagination: { pageSize: 1 },
+          },
+          cache: "no-store",
+        });
+        const authors = droplets?.[0];
+        if (!authors || !access(authors, user)) {
+          return { ok: false, error: "forbidden", data: null };
+        }
+      }
+
+      const total = res?.meta?.pagination?.total ?? 0;
+      const stamp = row ? `${total}:${row.id}:${row.updatedAt ?? ""}` : "0::";
+      return { ok: true, error: null, data: { stamp } };
+    } catch (error) {
+      console.error("getThreadStamp failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
 }
 
 /** Adds an anchored comment to the caller's own open review. */
@@ -414,6 +769,15 @@ export async function deleteComment(
         ownOnly: true,
       });
       if (!loaded.ok) return { ok: false, error: loaded.error, data: null };
+      const { comment } = loaded;
+      if (await hasReplies(comment.carriedFrom?.id ?? comment.id)) {
+        return {
+          ok: false,
+          error: "conflict",
+          data: null,
+          message: "This comment has replies. Resolve it instead.",
+        };
+      }
 
       const deleted = await writeStrapi(
         "DELETE",
@@ -467,6 +831,7 @@ export async function resolveComment(
 type CommentForAuthor = {
   id: number;
   documentId: string;
+  parent?: { id: number } | null;
   review: {
     state: string;
     round: number;
@@ -506,6 +871,7 @@ export async function markAddressed(
             filters: { id: { $eq: id.data } },
             fields: ["id"],
             populate: {
+              parent: { fields: ["id"] },
               review: {
                 fields: ["state", "round"],
                 populate: {
@@ -525,6 +891,9 @@ export async function markAddressed(
       const droplet = comment?.review?.droplet;
       if (!comment?.review || !droplet) {
         return { ok: false, error: "not_found", data: null };
+      }
+      if (comment.parent) {
+        return { ok: false, error: "invalid_input", data: null };
       }
       const owner = assertOwner(
         droplet.authorized_users?.map((u) => u.id),
@@ -693,18 +1062,18 @@ export async function unconfirmScores(
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
 
-/** Reads every page of a list, tagged for the droplet's review data. */
+/** Reads every page of a list; a null `dropletId` means uncached, untagged. */
 async function fetchAllPages<T>(
   path: string,
   urlParams: Record<string, unknown>,
-  dropletId: number,
+  dropletId: number | null,
   fresh = false,
 ): Promise<T[]> {
   const all: T[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const rows = await fetchAPI<T[] | null>(path, {
       urlParams: { ...urlParams, pagination: { page, pageSize: PAGE_SIZE } },
-      ...(fresh
+      ...(fresh || dropletId === null
         ? { cache: "no-store" as const }
         : { next: { tags: [CACHE_TAGS.review(dropletId)], revalidate: 900 } }),
     });
@@ -715,13 +1084,15 @@ async function fetchAllPages<T>(
   return all;
 }
 
-/** Every comment on a review, oldest first. */
-function fetchComments(
+/** A review's top-level comments, oldest first, each with its root's replies. */
+async function fetchComments(
   reviewId: number,
   dropletId: number,
-  fresh = false,
+  fresh: boolean,
+  viewerId: number,
+  withReplies = true,
 ): Promise<ReviewComment[]> {
-  return fetchAllPages<ReviewComment>(
+  const rows = await fetchAllPages<ReviewComment>(
     "/review-comments",
     {
       filters: { review: { id: { $eq: reviewId } } },
@@ -736,6 +1107,7 @@ function fetchComments(
       populate: {
         lesson: { fields: ["name"] },
         author: { fields: ["firstName", "lastName"] },
+        parent: { fields: ["id"] },
         carriedFrom: {
           fields: ["createdAt"],
           populate: { review: { fields: ["round", "sentAt"] } },
@@ -746,6 +1118,192 @@ function fetchComments(
     dropletId,
     fresh,
   );
+  const tops = rows
+    .filter((c) => !c.parent)
+    .map((c) => ({ ...c, mine: c.author?.id === viewerId }));
+  if (!withReplies) return tops;
+  const roots = [...new Set(tops.map(rootId))];
+
+  // Replies change from other sessions, so they are never cached.
+  const replies: ReviewComment[] = [];
+  for (let i = 0; i < roots.length; i += PAGE_SIZE) {
+    replies.push(
+      ...(await fetchAllPages<ReviewComment>(
+        "/review-comments",
+        {
+          filters: {
+            parent: { id: { $in: roots.slice(i, i + PAGE_SIZE) } },
+            review: { state: { $in: ["sent", "published"] } },
+          },
+          fields: ["body", "createdAt", "updatedAt"],
+          populate: {
+            author: { fields: ["firstName", "lastName"] },
+            parent: { fields: ["id"] },
+          },
+          sort: ["id:asc"],
+        },
+        dropletId,
+        true,
+      )),
+    );
+  }
+  return attachThreads(tops, replies, viewerId);
+}
+
+/** Pages `path` once per 100 ids, with `params` building each query. */
+async function fetchChunked<T>(
+  path: string,
+  ids: number[],
+  params: (chunk: number[]) => Record<string, unknown>,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let i = 0; i < ids.length; i += PAGE_SIZE) {
+    const chunk = ids.slice(i, i + PAGE_SIZE);
+    all.push(...(await fetchAllPages<T>(path, params(chunk), null)));
+  }
+  return all;
+}
+
+export type AwaitingReply = {
+  dropletId: number;
+  name: string;
+  slug: string;
+  threads: number;
+  lastReplyAt: string | null;
+};
+
+type AwaitingDroplet = DropletAuthors & {
+  id: number;
+  name: string;
+  slug: string;
+};
+type AwaitingReviewRow = { id: number; droplet?: AwaitingDroplet | null };
+type WithDroplet = { id: number; droplet: AwaitingDroplet };
+const hasDroplet = (r: AwaitingReviewRow): r is WithDroplet => !!r.droplet;
+
+/** Drafts out of review where a creator replied last in a thread of the caller's feedback (ODY-894). */
+export async function getReviewsAwaitingReply(): Promise<
+  ReviewActionResult<AwaitingReply[]>
+> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const mine = (
+        await fetchAllPages<AwaitingReviewRow>(
+          "/reviews",
+          {
+            filters: {
+              reviewer: { id: { $eq: user.id } },
+              state: { $eq: "sent" },
+              droplet: { status: { $eq: "draft" }, inReview: { $eq: false } },
+            },
+            fields: ["round"],
+            populate: {
+              droplet: {
+                fields: ["name", "slug"],
+                populate: AUTHORS_POPULATE,
+              },
+            },
+            sort: ["id:asc"],
+          },
+          null,
+        )
+      )
+        .filter(hasDroplet)
+        .filter((r) => !isOwnDroplet(r.droplet, user));
+      if (mine.length === 0) return { ok: true, error: null, data: [] };
+
+      const sent = await fetchChunked<AwaitingReviewRow>(
+        "/reviews",
+        [...new Set(mine.map((r) => r.droplet.id))],
+        (ids) => ({
+          filters: {
+            droplet: { id: { $in: ids } },
+            state: { $in: ["sent", "published"] },
+          },
+          fields: ["round"],
+          populate: { droplet: { fields: ["id"] } },
+          sort: ["round:desc", "id:desc"],
+        }),
+      );
+      const latest = new Map<number, number>();
+      for (const r of sent.filter(hasDroplet)) {
+        if (!latest.has(r.droplet.id)) latest.set(r.droplet.id, r.id);
+      }
+      const kept = mine.filter((r) => latest.get(r.droplet.id) === r.id);
+      if (kept.length === 0) return { ok: true, error: null, data: [] };
+
+      const tops = await fetchChunked<ReviewComment>(
+        "/review-comments",
+        kept.map((r) => r.id),
+        (ids) => ({
+          filters: {
+            review: { id: { $in: ids } },
+            parent: { id: { $null: true } },
+            resolvedAt: { $null: true },
+          },
+          fields: ["id"],
+          populate: {
+            carriedFrom: { fields: ["id"] },
+            review: { fields: ["id"] },
+          },
+          sort: ["id:asc"],
+        }),
+      );
+      const rootsByReview = new Map<number, number[]>();
+      for (const c of tops) {
+        const reviewId = c.review?.id;
+        if (reviewId === undefined) continue;
+        rootsByReview.set(reviewId, [
+          ...(rootsByReview.get(reviewId) ?? []),
+          rootId(c),
+        ]);
+      }
+
+      const replies = await fetchChunked<ReviewComment>(
+        "/review-comments",
+        [...new Set(tops.map(rootId))],
+        (ids) => ({
+          filters: {
+            parent: { id: { $in: ids } },
+            review: { state: { $in: ["sent", "published"] } },
+          },
+          fields: ["createdAt"],
+          populate: {
+            author: { fields: ["id"] },
+            parent: { fields: ["id"] },
+          },
+          sort: ["id:asc"],
+        }),
+      );
+
+      const rows: AwaitingReply[] = [];
+      for (const r of kept) {
+        const droplet = r.droplet;
+        const { threads, lastReplyAt } = threadsAwaitingReviewer(
+          rootsByReview.get(r.id) ?? [],
+          replies,
+          new Set((droplet.authorized_users ?? []).map((u) => u.id)),
+          user.id,
+        );
+        if (threads > 0) {
+          rows.push({
+            dropletId: droplet.id,
+            name: droplet.name,
+            slug: droplet.slug,
+            threads,
+            lastReplyAt,
+          });
+        }
+      }
+      rows.sort((a, b) =>
+        (a.lastReplyAt ?? "").localeCompare(b.lastReplyAt ?? ""),
+      );
+      return { ok: true, error: null, data: rows };
+    } catch (error) {
+      console.error("getReviewsAwaitingReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
 }
 
 /**
@@ -774,7 +1332,12 @@ export async function getMyReview(
       const review = await findReviewByKey(`${droplet.id}:${user.id}:${round}`);
       if (!review) return { ok: true, error: null, data: null };
 
-      const comments = await fetchComments(review.id, droplet.id);
+      const comments = await fetchComments(
+        review.id,
+        droplet.id,
+        false,
+        user.id,
+      );
       return { ok: true, error: null, data: { ...review, comments } };
     } catch (error) {
       console.error("getMyReview failed", error);
@@ -924,7 +1487,7 @@ export async function getReviewPanel(
           droplet.id,
           true,
         ),
-        fetchComments(review.id, droplet.id, true),
+        fetchComments(review.id, droplet.id, true, user.id, false),
         fetchAPI<PanelRunData[] | null>("/ai-scoring-runs", {
           urlParams: {
             filters: { review: { id: { $eq: review.id } } },
@@ -995,7 +1558,7 @@ export async function getReviewPanel(
   });
 }
 
-/** Latest review with comments and scores: any state for reviewers, sent/published for authors. */
+/** The latest sent or published review with threaded comments and confirmed scores, for authors and non-author reviewers (ODY-881). */
 export async function getReviewForDroplet(
   dropletId: number,
 ): Promise<ReviewActionResult<Review | null>> {
@@ -1032,7 +1595,7 @@ export async function getReviewForDroplet(
         urlParams: {
           filters: {
             droplet: { id: { $eq: id } },
-            ...(!isReviewer && { state: { $in: ["sent", "published"] } }),
+            state: { $in: ["sent", "published"] },
           },
           fields: REVIEW_FIELDS,
           populate: { reviewer: { fields: ["firstName", "lastName"] } },
@@ -1045,25 +1608,15 @@ export async function getReviewForDroplet(
       if (!review) return { ok: true, error: null, data: null };
 
       const [comments, scores] = await Promise.all([
-        fetchComments(review.id, id),
+        fetchComments(review.id, id, false, user.id),
         fetchAllPages<ReviewScore>(
           "/review-scores",
           {
             filters: {
               review: { id: { $eq: review.id } },
-              ...(!isReviewer && { value: { $notNull: true } }),
+              value: { $notNull: true },
             },
-            // Authors never request AI fields; they are nulled below.
-            fields: isReviewer
-              ? [
-                  "criterionName",
-                  "value",
-                  "aiValue",
-                  "aiRationale",
-                  "aiFindings",
-                  "key",
-                ]
-              : ["criterionName", "value", "key"],
+            fields: ["criterionName", "value", "key"],
             populate: {
               lesson: { fields: ["name"] },
               criterion: { fields: ["name", "order"] },
@@ -1074,14 +1627,12 @@ export async function getReviewForDroplet(
         ),
       ]);
 
-      const safeScores = isReviewer
-        ? scores
-        : scores.map((s) => ({
-            ...s,
-            aiValue: null,
-            aiRationale: null,
-            aiFindings: null,
-          }));
+      const safeScores = scores.map((s) => ({
+        ...s,
+        aiValue: null,
+        aiRationale: null,
+        aiFindings: null,
+      }));
       return {
         ok: true,
         error: null,

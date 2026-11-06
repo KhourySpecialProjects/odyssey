@@ -30,6 +30,8 @@ export function Sort({
     // Always set the param (even for the default) so client grids can tell a
     // user choice from the server-rendered sort; see useSortKey.
     params.set("sort", value);
+    // A new order starts again at page 1 (ODY-865)
+    params.delete("page");
     // Grids sort client-side, so update the URL without a server render.
     window.history.pushState(null, "", `${pathname}?${params.toString()}`);
   };

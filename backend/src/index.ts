@@ -1,7 +1,8 @@
 import type { Core } from "@strapi/strapi";
 import { markClaimedVoyageNodesAuthored } from './lib/lifecycle-utils';
-import { seedReviewCriteria } from './lib/review-criteria-seed';
+import { seedReviewCriteria, upgradeReviewCriteria } from './lib/review-criteria-seed';
 import { seedAiScoringSettings } from './lib/ai-scoring-settings';
+import { seedMentorSettings } from './lib/mentor-settings';
 import { backfillReviewRounds } from './lib/review-round-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
@@ -55,11 +56,26 @@ export default {
       strapi.log.error('Could not seed review criteria', error);
     }
 
+    // Criteria still on the starter wording get the ODY-862 wording; never blocks startup.
+    try {
+      const reworded = await upgradeReviewCriteria();
+      if (reworded > 0) strapi.log.info(`Reworded ${reworded} review criteria`);
+    } catch (error) {
+      strapi.log.error('Could not reword review criteria', error);
+    }
+
     // Score with AI's cost limits start as placeholders; never blocks startup.
     try {
       if (await seedAiScoringSettings()) strapi.log.info('Seeded the AI scoring settings');
     } catch (error) {
       strapi.log.error('Could not seed the AI scoring settings', error);
+    }
+
+    // Mentor starts switched off; never blocks startup.
+    try {
+      if (await seedMentorSettings()) strapi.log.info('Seeded the Mentor settings');
+    } catch (error) {
+      strapi.log.error('Could not seed the Mentor settings', error);
     }
 
     // Droplets already in review start at round 1; never blocks startup.
