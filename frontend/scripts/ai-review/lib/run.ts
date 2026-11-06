@@ -61,7 +61,8 @@ export async function confirmSpend(
     `${requests.length} requests (${models.join(", ")})${batch ? ", batch at half price" : ""}. ` +
       `Rough cost before caching: ${dollars(estimate)}.`,
   );
-  if (yes) return true;
+  // Nothing is sent, so there's nothing to ask about
+  if (yes || !requests.length) return true;
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
