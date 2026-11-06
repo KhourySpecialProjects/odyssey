@@ -5,6 +5,7 @@ import {
   replyTime,
   settleReply,
   newRepliesText,
+  threadsAwaitingReviewer,
   unseenCount,
   unseenReplies,
 } from "@/lib/review-threads";
@@ -115,5 +116,61 @@ describe("mapThread", () => {
       (rs) => [...rs, c({ id: 9 })],
     );
     expect(out.map((x) => x.replies?.length)).toEqual([1, 1, undefined]);
+  });
+});
+
+describe("threadsAwaitingReviewer", () => {
+  const AUTHOR = 5;
+  const REVIEWER = 9;
+  const OTHER = 6;
+  const reply = (
+    id: number,
+    parent: number,
+    author: number,
+    at = "2026-01-01",
+  ) =>
+    c({
+      id,
+      parent: { id: parent },
+      author: { id: author } as never,
+      createdAt: at,
+    });
+
+  it.each([
+    ["last reply by an author", [reply(10, 1, AUTHOR)], [1], 1],
+    [
+      "reviewer replied last",
+      [reply(10, 1, AUTHOR), reply(11, 1, REVIEWER)],
+      [1],
+      0,
+    ],
+    ["last reply by a non-author", [reply(10, 1, OTHER)], [1], 0],
+    ["no replies", [], [1], 0],
+    ["parent not in roots", [reply(10, 2, AUTHOR)], [1], 0],
+    [
+      "out of order, highest id wins",
+      [reply(11, 1, REVIEWER), reply(10, 1, AUTHOR)],
+      [1],
+      0,
+    ],
+  ])("%s", (_name, replies, roots, threads) => {
+    const out = threadsAwaitingReviewer(
+      roots,
+      replies,
+      new Set([AUTHOR]),
+      REVIEWER,
+    );
+    expect(out.threads).toBe(threads);
+    if (!threads) expect(out.lastReplyAt).toBeNull();
+  });
+
+  it("counts two threads and returns the newer reply time", () => {
+    const out = threadsAwaitingReviewer(
+      [1, 2],
+      [reply(10, 1, AUTHOR, "2026-01-01"), reply(11, 2, AUTHOR, "2026-02-01")],
+      new Set([AUTHOR]),
+      REVIEWER,
+    );
+    expect(out).toEqual({ threads: 2, lastReplyAt: "2026-02-01" });
   });
 });

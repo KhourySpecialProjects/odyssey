@@ -25,6 +25,35 @@ export function attachThreads(
   }));
 }
 
+/** Threads whose last reply is by a droplet author other than the reviewer. */
+export function threadsAwaitingReviewer(
+  roots: number[],
+  replies: Pick<ReviewComment, "id" | "parent" | "author" | "createdAt">[],
+  authorIds: ReadonlySet<number>,
+  reviewerId: number,
+): { threads: number; lastReplyAt: string | null } {
+  const wanted = new Set(roots);
+  const last = new Map<number, (typeof replies)[number]>();
+  for (const r of replies) {
+    const parentId = r.parent?.id;
+    if (parentId === undefined || !wanted.has(parentId)) continue;
+    const have = last.get(parentId);
+    if (!have || r.id > have.id) last.set(parentId, r);
+  }
+  let threads = 0;
+  let lastReplyAt: string | null = null;
+  for (const r of last.values()) {
+    const authorId = r.author?.id;
+    if (authorId === undefined || authorId === reviewerId) continue;
+    if (!authorIds.has(authorId)) continue;
+    threads++;
+    if (r.createdAt && (!lastReplyAt || r.createdAt > lastReplyAt)) {
+      lastReplyAt = r.createdAt;
+    }
+  }
+  return { threads, lastReplyAt };
+}
+
 export const replyTime = (r: Pick<ReviewComment, "createdAt">) => r.createdAt;
 
 /** A reply is edited when it was updated more than 1 s after it was created. */

@@ -339,6 +339,38 @@ const THREAD_STAMP_ROUTES = routes([
   ],
 ]);
 
+// A sent review on a draft the sentinel user didn't write, with a creator reply (ODY-894)
+const AWAITING_REVIEW = ent(5, {
+  round: 1,
+  droplet: {
+    data: ent(1, {
+      name: "Sentinel droplet",
+      slug: "sentinel-droplet",
+      authorized_users: { data: [ent(2)] },
+    }),
+  },
+});
+const AWAITING_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(AWAITING_REVIEW)],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(ent(7, { review: { data: ent(5) } })),
+    /\$null/,
+  ],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(8, {
+        createdAt: "2026-11-04T00:00:00.000Z",
+        parent: { data: ent(7) },
+        author: { data: ent(2) },
+      }),
+    ),
+  ],
+]);
+
 const MY_REVIEW_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
   ["GET", /^\/reviews$/, list(REVIEW_ROW)],
@@ -883,6 +915,11 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       "getReviewForDroplet",
       (m) => m.getReviewForDroplet(1),
       REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewsAwaitingReply",
+      (m) => m.getReviewsAwaitingReply(),
+      AWAITING_ROUTES,
     ),
     call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
     call("getReviewPanel", (m) => m.getReviewPanel(1), REVIEW_PANEL_ROUTES),
