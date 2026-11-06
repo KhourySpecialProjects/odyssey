@@ -31,7 +31,11 @@ import {
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { loadDropletForWrite } from "@/lib/auth/review-freeze";
 import { isReviewerFor } from "@/lib/review-roles";
-import { attachThreads, rootId } from "@/lib/review-threads";
+import {
+  attachThreads,
+  rootId,
+  threadsAwaitingReviewer,
+} from "@/lib/review-threads";
 import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 import { blockNoteContent } from "@/lib/anchors/content";
 import type { AnchorBlock } from "@/lib/anchors/types";
@@ -1058,18 +1062,18 @@ export async function unconfirmScores(
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
 
-/** Reads every page of a list, tagged for the droplet's review data. */
+/** Reads every page of a list; a null `dropletId` means uncached, untagged. */
 async function fetchAllPages<T>(
   path: string,
   urlParams: Record<string, unknown>,
-  dropletId: number,
+  dropletId: number | null,
   fresh = false,
 ): Promise<T[]> {
   const all: T[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const rows = await fetchAPI<T[] | null>(path, {
       urlParams: { ...urlParams, pagination: { page, pageSize: PAGE_SIZE } },
-      ...(fresh
+      ...(fresh || dropletId === null
         ? { cache: "no-store" as const }
         : { next: { tags: [CACHE_TAGS.review(dropletId)], revalidate: 900 } }),
     });
@@ -1144,6 +1148,162 @@ async function fetchComments(
     );
   }
   return attachThreads(tops, replies, viewerId);
+}
+
+/** Pages `path` once per 100 ids, with `params` building each query. */
+async function fetchChunked<T>(
+  path: string,
+  ids: number[],
+  params: (chunk: number[]) => Record<string, unknown>,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let i = 0; i < ids.length; i += PAGE_SIZE) {
+    const chunk = ids.slice(i, i + PAGE_SIZE);
+    all.push(...(await fetchAllPages<T>(path, params(chunk), null)));
+  }
+  return all;
+}
+
+export type AwaitingReply = {
+  dropletId: number;
+  name: string;
+  slug: string;
+  threads: number;
+  lastReplyAt: string | null;
+};
+
+type AwaitingDroplet = DropletAuthors & {
+  id: number;
+  name: string;
+  slug: string;
+};
+type AwaitingReviewRow = { id: number; droplet?: AwaitingDroplet | null };
+type WithDroplet = { id: number; droplet: AwaitingDroplet };
+const hasDroplet = (r: AwaitingReviewRow): r is WithDroplet => !!r.droplet;
+
+/** Drafts out of review where a creator replied last in a thread of the caller's feedback (ODY-894). */
+export async function getReviewsAwaitingReply(): Promise<
+  ReviewActionResult<AwaitingReply[]>
+> {
+  return withAuth(REVIEWER_ROLES, async (user) => {
+    try {
+      const mine = (
+        await fetchAllPages<AwaitingReviewRow>(
+          "/reviews",
+          {
+            filters: {
+              reviewer: { id: { $eq: user.id } },
+              state: { $eq: "sent" },
+              droplet: { status: { $eq: "draft" }, inReview: { $eq: false } },
+            },
+            fields: ["round"],
+            populate: {
+              droplet: {
+                fields: ["name", "slug"],
+                populate: AUTHORS_POPULATE,
+              },
+            },
+            sort: ["id:asc"],
+          },
+          null,
+        )
+      )
+        .filter(hasDroplet)
+        .filter((r) => !isOwnDroplet(r.droplet, user));
+      if (mine.length === 0) return { ok: true, error: null, data: [] };
+
+      const sent = await fetchChunked<AwaitingReviewRow>(
+        "/reviews",
+        [...new Set(mine.map((r) => r.droplet.id))],
+        (ids) => ({
+          filters: {
+            droplet: { id: { $in: ids } },
+            state: { $in: ["sent", "published"] },
+          },
+          fields: ["round"],
+          populate: { droplet: { fields: ["id"] } },
+          sort: ["round:desc", "id:desc"],
+        }),
+      );
+      const latest = new Map<number, number>();
+      for (const r of sent.filter(hasDroplet)) {
+        if (!latest.has(r.droplet.id)) latest.set(r.droplet.id, r.id);
+      }
+      const kept = mine.filter((r) => latest.get(r.droplet.id) === r.id);
+      if (kept.length === 0) return { ok: true, error: null, data: [] };
+
+      const tops = await fetchChunked<ReviewComment>(
+        "/review-comments",
+        kept.map((r) => r.id),
+        (ids) => ({
+          filters: {
+            review: { id: { $in: ids } },
+            parent: { id: { $null: true } },
+            resolvedAt: { $null: true },
+          },
+          fields: ["id"],
+          populate: {
+            carriedFrom: { fields: ["id"] },
+            review: { fields: ["id"] },
+          },
+          sort: ["id:asc"],
+        }),
+      );
+      const rootsByReview = new Map<number, number[]>();
+      for (const c of tops) {
+        const reviewId = c.review?.id;
+        if (reviewId === undefined) continue;
+        rootsByReview.set(reviewId, [
+          ...(rootsByReview.get(reviewId) ?? []),
+          rootId(c),
+        ]);
+      }
+
+      const replies = await fetchChunked<ReviewComment>(
+        "/review-comments",
+        [...new Set(tops.map(rootId))],
+        (ids) => ({
+          filters: {
+            parent: { id: { $in: ids } },
+            review: { state: { $in: ["sent", "published"] } },
+          },
+          fields: ["createdAt"],
+          populate: {
+            author: { fields: ["id"] },
+            parent: { fields: ["id"] },
+          },
+          sort: ["id:asc"],
+        }),
+      );
+
+      const rows: AwaitingReply[] = [];
+      for (const r of kept) {
+        const droplet = r.droplet;
+        const { threads, lastReplyAt } = threadsAwaitingReviewer(
+          rootsByReview.get(r.id) ?? [],
+          replies,
+          new Set((droplet.authorized_users ?? []).map((u) => u.id)),
+          user.id,
+        );
+        if (threads > 0) {
+          rows.push({
+            dropletId: droplet.id,
+            name: droplet.name,
+            slug: droplet.slug,
+            threads,
+            lastReplyAt,
+          });
+        }
+      }
+      rows.sort((a, b) =>
+        (a.lastReplyAt ?? "").localeCompare(b.lastReplyAt ?? ""),
+      );
+      return { ok: true, error: null, data: rows };
+    } catch (error) {
+      console.error("getReviewsAwaitingReply failed", error);
+      return { ok: false, error: "failed", data: null };
+    }
+  });
 }
 
 /**
