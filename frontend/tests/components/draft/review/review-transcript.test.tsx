@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { ReviewTranscript } from "@/components/draft/review/review-transcript";
@@ -207,7 +207,7 @@ describe("wiring", () => {
         panel={panel([score(11, { aiValue: 2 })])}
       />,
     );
-    const card = screen.getByRole("region", { name: "Variables" });
+    const card = openCard("Variables");
 
     await userEvent.click(
       within(card).getByRole("button", { name: "Confirm scores" }),
@@ -272,9 +272,9 @@ describe("wiring", () => {
         panel={panel([score(12, { aiFindings: [finding] })])}
       />,
     );
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     expect(
-      within(card).getByRole("button", { name: /1 issue/ }),
+      within(card).getByRole("button", { name: /^Tone.*1 issue/ }),
     ).toBeInTheDocument();
 
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
@@ -342,7 +342,7 @@ describe("open detail for the lesson's finding marks", () => {
     );
     for (const name of ["Variables", "Loops"]) {
       await userEvent.click(
-        within(screen.getByRole("region", { name })).getByRole("button", {
+        within(openCard(name)).getByRole("button", {
           name: /^Tone/,
         }),
       );
@@ -360,7 +360,7 @@ describe("open detail for the lesson's finding marks", () => {
 
   it("follows the open circle and its undismissed findings", async () => {
     mount(true);
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     expect(screen.getByTestId("probe")).toHaveTextContent("needs_work:1=a,2=b");
 
@@ -377,7 +377,7 @@ describe("open detail for the lesson's finding marks", () => {
 
   it("clears the open circle's findings when the card's caret collapses it", async () => {
     mount(true);
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     await userEvent.click(within(card).getAllByRole("button")[0]);
 
@@ -386,7 +386,7 @@ describe("open detail for the lesson's finding marks", () => {
 
   it("is hidden while the panel is a rail, and back when it opens", async () => {
     const { rerender } = mount(false);
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     expect(screen.getByTestId("probe")).toHaveTextContent("none");
 
@@ -416,7 +416,7 @@ describe("open detail for the lesson's finding marks", () => {
       </ReviewFocusProvider>
     );
     const { rerender } = render(run("old"));
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     const quoteNow = () => screen.getByTestId("probe").dataset.quote;
     expect(quoteNow()).toBe("old");
@@ -448,7 +448,7 @@ describe("per-criterion state and the shell link", () => {
 
   it("does not carry the Change control between criteria", async () => {
     render(<ReviewTranscript droplet={droplet} panel={two()} />);
-    const card = screen.getByRole("region", { name: "Variables" });
+    const card = openCard("Variables");
 
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     await userEvent.click(
@@ -520,7 +520,7 @@ describe("confirm and undo end to end", () => {
         panel={panel([score(11, { value: 2, aiValue: 2 })])}
       />,
     );
-    const card = screen.getByRole("region", { name: "Variables" });
+    const card = openCard("Variables");
     expect(within(card).getByText("Confirmed")).toBeInTheDocument();
 
     await userEvent.click(within(card).getByRole("button", { name: "Undo" }));
@@ -662,7 +662,7 @@ describe("Add as comment", () => {
         />
       </ReviewFocusProvider>,
     );
-    const card = screen.getByRole("region", { name: "Loops" });
+    const card = openCard("Loops");
     await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
     return { card, seen };
   };
@@ -776,3 +776,10 @@ describe("Add as comment", () => {
     expect(within(card).getByRole("textbox")).toBeInTheDocument();
   });
 });
+
+/** Expands a card (they start collapsed) and returns it */
+function openCard(name: string) {
+  const card = screen.getByRole("region", { name });
+  fireEvent.click(within(card).getAllByRole("button")[0]);
+  return card;
+}

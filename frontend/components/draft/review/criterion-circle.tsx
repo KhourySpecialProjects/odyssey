@@ -6,7 +6,7 @@ import { BAND_COLORS } from "@/lib/review-panel/colors";
 import { criterionIcon } from "@/lib/review-panel/criteria-icons";
 import { bandOf, circleLabel, issuesText } from "@/lib/review-panel/model";
 
-const BADGE = { good: "✓", ok: "–", needs_work: "✕" } as const;
+export const BADGE = { good: "✓", ok: "–", needs_work: "✕" } as const;
 
 /**
  * One criterion's score circle (ODY-805): its effective score in the band's
