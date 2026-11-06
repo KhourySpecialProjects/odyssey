@@ -88,7 +88,7 @@
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
     "@types/luxon": "^3.4.2",
-    "@uiw/codemirror-theme-github": "^4.25.9",
+    "@uiw/codemirror-theme-github": "^4.25.12",
     "@uiw/react-codemirror": "^4.25.9",
     "autoprefixer": "^10.4.17",
     "browser-image-compression": "^2.0.2",
