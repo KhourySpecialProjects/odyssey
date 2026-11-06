@@ -245,6 +245,13 @@ describe("LessonRenderer", () => {
   });
 
   describe("Lesson Name Updates", () => {
+    // The title save is debounced: fire it here, or it lands in a later test.
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => {
+      act(() => jest.runOnlyPendingTimers());
+      jest.useRealTimers();
+    });
+
     it("updates lesson name on input change", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
