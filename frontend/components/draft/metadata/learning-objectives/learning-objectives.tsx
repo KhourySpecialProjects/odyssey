@@ -7,6 +7,7 @@ import { LearningObjectiveDisplay } from "@/components/draft/metadata/learning-o
 import { LearningObjective } from "@/types";
 import { AddButton } from "../form-buttons";
 import { updateDroplet } from "@/lib/requests/droplet";
+import { splitPastedObjectives } from "@/lib/learning-objectives";
 
 export function LearningObjectives({
   dropletId,
@@ -41,6 +42,19 @@ export function LearningObjectives({
       setNewObjective("");
       localStorage.removeItem(storageKey); // Clear draft after adding
     }
+  };
+
+  // A multi-line paste adds one objective per line, saved in a single update.
+  // Text already typed in the input stays there.
+  const pasteLearningObjectives = async (text: string) => {
+    const existing = learningObjectives.map((obj) => obj.objective);
+    const added = splitPastedObjectives(text).filter(
+      (obj) => !existing.includes(obj),
+    );
+    if (added.length === 0) return;
+    await updateDroplet(dropletId, {
+      learningObjectives: [...existing, ...added],
+    });
   };
 
   const updateLearningObjective = (id: number) => {
@@ -102,6 +116,12 @@ export function LearningObjectives({
                 value={newObjective}
                 onChange={(e) => {
                   handleDraftChange(e.target.value);
+                }}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  if (!/[\r\n]/.test(text)) return; // single line: normal paste
+                  e.preventDefault();
+                  void pasteLearningObjectives(text);
                 }}
                 placeholder="New Learning Objective..."
                 className="placeholder:text-[#121216] dark:placeholder:text-slate-400"
