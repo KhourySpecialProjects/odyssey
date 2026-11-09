@@ -38,7 +38,13 @@ const INITIAL = {
 
 export const useLessonPanelStore = create<LessonPanelState>()((set) => ({
   ...INITIAL,
-  setPanel: (panel) => set({ panel, openedByExplain: false }),
+  // Leaving Mentor drops an Explain still waiting for it
+  setPanel: (panel) =>
+    set((s) => ({
+      panel,
+      openedByExplain: false,
+      explainSelection: panel === "mentor" ? s.explainSelection : null,
+    })),
   claim: (ownerLessonId) => set({ ownerLessonId }),
   openMentor: () =>
     set({ panel: "mentor", mentorKept: true, openedByExplain: false }),

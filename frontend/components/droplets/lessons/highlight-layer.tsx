@@ -105,6 +105,29 @@ interface ToolbarState {
   anchor: PopoverAnchor;
   /** Where a note made from here goes, in px from the top of the block */
   notePos: number;
+  /** The highlight piece clicked to open it: with no selection, it follows this */
+  piece?: HTMLElement;
+}
+
+/** The toolbar for a saved highlight, shown at `piece`, one of its drawn pieces */
+function highlightToolbar(
+  piece: HTMLElement,
+  region: HTMLElement,
+  home: HTMLElement,
+  highlightId: number,
+): ToolbarState {
+  const firstPiece = region.querySelector(
+    `.${HIGHLIGHT_CLASS}[data-highlight-id="${highlightId}"]`,
+  );
+  return {
+    target: { kind: "highlight", highlightIds: [highlightId] },
+    home,
+    anchor: anchorIn(home, piece.getBoundingClientRect()),
+    notePos:
+      (firstPiece ?? piece).getBoundingClientRect().top -
+      region.getBoundingClientRect().top,
+    piece,
+  };
 }
 
 const HighlightsContext = createContext<PlacedHighlight[]>([]);
@@ -288,20 +311,39 @@ export function HighlightLayer({
   };
   useSelectionChange(readSelection, canHighlight);
 
-  // A panel opening beside the lesson narrows it, and the toolbar can stay
-  // open (see handleExplain): it follows the selected text
-  const readSelectionRef = useRef(readSelection);
+  // A panel opening beside the lesson narrows it, and the toolbar stays open
+  // after Explain (see handleExplain): it follows the selected text, or the
+  // highlight clicked to open it
+  const followText = () => {
+    const selection = window.getSelection();
+    const piece = toolbar?.piece;
+    if (!piece || (selection && !selection.isCollapsed)) {
+      readSelection();
+      return;
+    }
+    const region = piece.closest<HTMLElement>(`[${REGION_ATTR}]`);
+    if (!toolbar || !region || !piece.isConnected) return;
+    setToolbar(
+      highlightToolbar(
+        piece,
+        region,
+        toolbar.home,
+        Number(piece.dataset.highlightId),
+      ),
+    );
+  };
+  const followTextRef = useRef(followText);
   useEffect(() => {
-    readSelectionRef.current = readSelection;
+    followTextRef.current = followText;
   });
-  const onSelection = toolbar?.target.kind === "selection";
+  const toolbarOpen = toolbar !== null;
   useEffect(() => {
     const root = rootRef.current;
-    if (!onSelection || !root || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => readSelectionRef.current());
+    if (!toolbarOpen || !root || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => followTextRef.current());
     observer.observe(root);
     return () => observer.disconnect();
-  }, [onSelection]);
+  }, [toolbarOpen]);
 
   const closeToolbar = useCallback(() => setToolbar(null), []);
 
@@ -452,12 +494,11 @@ export function HighlightLayer({
       .join("\n");
   };
 
-  // Explain doesn't highlight. A new selection and its toolbar stay, so the
-  // reader can still pick a colour; a saved highlight's toolbar closes.
+  // Explain doesn't highlight. The selection and the toolbar stay (with focus
+  // on Explain), so the reader can still pick a colour.
   const handleExplain = () => {
     if (!toolbar) return;
     const text = toolbarText(toolbar.target);
-    if (toolbar.target.kind === "highlight") closeToolbar();
     if (text.trim()) onExplain?.(text);
   };
 
@@ -477,17 +518,7 @@ export function HighlightLayer({
     const home = region && rootRef.current && homeOf(rootRef.current, region);
     if (!piece || !region || !highlight || !home) return;
 
-    const firstPiece = region.querySelector(
-      `.${HIGHLIGHT_CLASS}[data-highlight-id="${highlightId}"]`,
-    );
-    setToolbar({
-      target: { kind: "highlight", highlightIds: [highlightId] },
-      home,
-      anchor: anchorIn(home, piece.getBoundingClientRect()),
-      notePos:
-        (firstPiece ?? piece).getBoundingClientRect().top -
-        region.getBoundingClientRect().top,
-    });
+    setToolbar(highlightToolbar(piece, region, home, highlightId));
   };
 
   const toolbarTarget = toolbar?.target;

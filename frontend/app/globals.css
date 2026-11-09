@@ -32,6 +32,13 @@
     --primary-600: 255 80% 52%;
     --secondary: 240 12% 8%;
     --destructive: 345 90% 60%;
+  }
+
+  /* .mentor-on-white keeps the light theme's Mentor colours on a surface
+     that stays white in dark mode, such as the lesson's selection toolbar.
+     Before .dark, which overrides them on the page. */
+  :root,
+  .mentor-on-white {
     --mentor: 259 63% 59%;
     --mentor-text: 258 54% 52%;
     --mentor-soft: 264 100% 98%;

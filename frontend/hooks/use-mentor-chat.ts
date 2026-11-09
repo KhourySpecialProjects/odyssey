@@ -50,7 +50,10 @@ function clipSelection(text: string) {
   const flat = text.replace(/\s+/g, " ").trim();
   if (flat.length <= MENTOR_SELECTION_MAX)
     return { selection: flat, cut: false };
-  const head = flat.slice(0, MENTOR_SELECTION_MAX);
+  // Not half of an emoji
+  const head = flat
+    .slice(0, MENTOR_SELECTION_MAX)
+    .replace(/[\uD800-\uDBFF]$/, "");
   const space = head.lastIndexOf(" ");
   const atWord = flat[MENTOR_SELECTION_MAX] === " " || space <= 0;
   return { selection: atWord ? head : head.slice(0, space), cut: true };

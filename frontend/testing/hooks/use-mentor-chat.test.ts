@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { useMentorChat } from "@/hooks/use-mentor-chat";
+import { useMentorChat, type MentorAsk } from "@/hooks/use-mentor-chat";
 import {
   mentorCitation,
   mentorDone,
@@ -28,11 +28,16 @@ const bodyOf = (call: number) =>
   JSON.parse(fetchMock.mock.calls[call][1].body as string);
 const ask = async (
   result: ReturnType<typeof setup>["result"],
-  message: string,
+  input: string | MentorAsk,
 ) => {
-  act(() => result.current.ask({ kind: "lesson", message }));
+  act(() =>
+    result.current.ask(
+      typeof input === "string" ? { kind: "lesson", message: input } : input,
+    ),
+  );
   await waitFor(() => expect(result.current.streaming).toBe(false));
 };
+const words = (n: number) => Array(n).fill("word").join(" ");
 
 describe("useMentorChat", () => {
   it("accumulates text and finishes with citations", async () => {
@@ -280,12 +285,15 @@ describe("useMentorChat", () => {
     expect(result.current.messages).toHaveLength(2);
   });
 
-  it("retry re-asks the same question in place", async () => {
+  it.each<MentorAsk>([
+    { kind: "lesson", message: "Why?" },
+    { kind: "explain", selection: "LEFT JOIN" },
+  ])("retry re-asks the same $kind question in place", async (input) => {
     fetchMock.mockResolvedValueOnce(
       mentorHttpErrorResponse(500, { error: "internal", message: "Oops" }),
     );
     const { result } = setup();
-    await ask(result, "Why?");
+    await ask(result, input);
     answers([mentorText("Because"), mentorDone()]);
     const id = lastAnswer(result.current.messages).id;
     act(() => result.current.retry(id));
@@ -297,7 +305,55 @@ describe("useMentorChat", () => {
       status: "done",
       text: "Because",
     });
-    expect(bodyOf(1).message).toBe("Why?");
+    expect(bodyOf(0)).toMatchObject(input);
+    expect(bodyOf(1)).toEqual(bodyOf(0));
+  });
+
+  // ODY-889: the route ignores whitespace and takes at most 300 characters
+  it.each([
+    ["collapses whitespace", " LEFT\n\n  JOIN ", "LEFT JOIN", "LEFT JOIN"],
+    ["keeps 300 characters", "x".repeat(300), "x".repeat(300), "x".repeat(300)],
+    ["cuts a longer one at a word", words(70), words(60), `${words(60)}…`],
+    [
+      "cuts a word it can't break",
+      "x".repeat(301),
+      "x".repeat(300),
+      `${"x".repeat(300)}…`,
+    ],
+    [
+      "doesn't split an emoji",
+      `${"x".repeat(299)}😀x`,
+      "x".repeat(299),
+      `${"x".repeat(299)}…`,
+    ],
+  ])("explain %s", async (_name, selection, sent, shown) => {
+    answers();
+    const { result } = setup();
+    await ask(result, { kind: "explain", selection });
+
+    expect(result.current.messages[0]).toMatchObject({
+      role: "student",
+      text: `Explain “${shown}”`,
+      selection: sent,
+    });
+    expect(bodyOf(0)).toEqual({
+      kind: "explain",
+      dropletId: 3,
+      lessonId: 9,
+      selection: sent,
+      history: [],
+    });
+  });
+
+  it.each<MentorAsk>([
+    { kind: "lesson", message: "  " },
+    { kind: "explain", selection: " \n " },
+  ])("asks nothing for a blank $kind question", (input) => {
+    const { result } = setup();
+    act(() => result.current.ask(input));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.current.messages).toHaveLength(0);
   });
 
   it("aborts the request when unmounted", async () => {

@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -447,5 +448,122 @@ describe("MentorPanel", () => {
 
     await screen.findByText("Done");
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  describe("Explain from the lesson (ODY-889)", () => {
+    const realMatchMedia = window.matchMedia;
+    afterEach(() => {
+      window.matchMedia = realMatchMedia;
+    });
+
+    /** The real useMediaQuery, which reads the screen on its first render */
+    const screenIs = (wide: boolean) => {
+      window.matchMedia = jest.fn(() => ({
+        matches: wide,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      })) as never;
+      jest
+        .mocked(useMediaQuery)
+        .mockImplementation(
+          jest.requireActual("@/hooks/use-media-query").useMediaQuery,
+        );
+    };
+    // As the lesson does: Explain opens Mentor, which mounts the panel
+    const explain = (selection: string) =>
+      act(() => {
+        useLessonPanelStore.setState({ ownerLessonId: 9 });
+        useLessonPanelStore.getState().explain(selection);
+      });
+    const sent = () =>
+      fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+
+    it.each([
+      ["a wide screen leaves focus, and the selection, in the lesson", true],
+      ["a phone moves focus into the sheet", false],
+    ])("asks once; %s", async (_name, wide) => {
+      screenIs(wide);
+      const inLesson = document.body.appendChild(
+        document.createElement("button"),
+      );
+      inLesson.focus();
+      explain("LEFT JOIN");
+      renderPanel();
+
+      await waitFor(() => expect(composer()).toBeEnabled());
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      await screen.findByRole("button", { name: "Send" });
+      expect(sent()).toEqual([
+        expect.objectContaining({ kind: "explain", selection: "LEFT JOIN" }),
+      ]);
+      expect(screen.getByText("Explain “LEFT JOIN”")).toBeInTheDocument();
+      expect(wide ? inLesson : composer()).toHaveFocus();
+      inLesson.remove();
+    });
+
+    it("isn't stopped by StrictMode's remount", async () => {
+      // Answered after a moment, as a server does, so an abort lands
+      fetchMock.mockImplementation(async (_u, init) =>
+        mentorSseResponse([mentorText("A join [p2]."), mentorDone()], {
+          delayMs: 5,
+          signal: init.signal,
+        }),
+      );
+      explain("LEFT JOIN");
+      render(
+        <StrictMode>
+          <MentorPanel
+            dropletId={3}
+            lesson={lesson}
+            userId={7}
+            onNoteSaved={onNoteSaved}
+          />
+        </StrictMode>,
+      );
+
+      await waitFor(() =>
+        expect(document.querySelector("[aria-live=polite]")).toHaveTextContent(
+          "Mentor answered: A join.",
+        ),
+      );
+      expect(screen.queryByText("Stopped")).toBeNull();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["is asked once the notice is accepted", false, ["explain"]],
+      ["is dropped by a swap to Notes", true, []],
+    ])("waiting for the notice, it %s", async (_name, swap, kinds) => {
+      localStorage.clear();
+      explain("LEFT JOIN");
+      renderPanel();
+      await screen.findByRole("button", { name: "Got it" });
+      if (swap) {
+        act(() => useLessonPanelStore.getState().setPanel("notes"));
+        act(() => useLessonPanelStore.getState().openMentor());
+      }
+      await userEvent.click(screen.getByRole("button", { name: "Got it" }));
+      await act(() => new Promise((r) => setTimeout(r, 20)));
+
+      expect(sent().map((body) => body.kind)).toEqual(kinds);
+    });
+
+    it("waits for the answer that's streaming", async () => {
+      fetchMock.mockImplementation(async (_u, init) =>
+        mentorSseResponse([mentorText("One "), mentorDone()], {
+          delayMs: 50,
+          signal: init.signal,
+        }),
+      );
+      renderPanel();
+      act(open);
+      await userEvent.type(composer(), "Why?{Enter}");
+      await screen.findByRole("button", { name: "Stop" });
+      act(() => useLessonPanelStore.getState().explain("LEFT JOIN"));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(sent().map((body) => body.kind)).toEqual(["lesson", "explain"]);
+      expect(screen.queryByText("Stopped")).toBeNull();
+    });
   });
 });

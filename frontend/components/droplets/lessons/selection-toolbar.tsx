@@ -105,7 +105,8 @@ export function SelectionToolbar({
       role="toolbar"
       aria-label={onMoveHere ? "Move highlight" : "Highlight text"}
       onKeyDown={handleKeyDown}
-      className="absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
+      // White in both themes, so Explain keeps Mentor's light-theme colours
+      className="mentor-on-white absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
       // No margin from a block that spaces out its children (a callout's do)
       style={{ ...placement, margin: 0 }}
     >
@@ -153,7 +154,7 @@ export function SelectionToolbar({
               onClick={onExplain}
               className="text-mentor-text hover:bg-mentor-soft inline-flex items-center gap-1 rounded px-1 py-0.5 text-sm font-semibold"
             >
-              <Sparkles className="text-mentor h-4 w-4" aria-hidden="true" />
+              <Sparkles className="text-mentor h-4 w-4" aria-hidden />
               Explain
             </button>
           )}

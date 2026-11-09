@@ -59,12 +59,16 @@ export function MentorPanel({
   }, []);
 
   // Explain from the lesson waits for the notice to be accepted and for an
-  // answer that's still streaming. Once locked, the ask is dropped.
+  // answer that's still streaming. Once locked, the ask is dropped. It's sent
+  // a tick later, so StrictMode's remount (which aborts requests) can't stop it.
   const { ask, streaming } = chat;
   useEffect(() => {
     if (explainSelection === null || !accepted || streaming) return;
-    clearExplain();
-    ask({ kind: "explain", selection: explainSelection });
+    const timer = setTimeout(() => {
+      clearExplain();
+      ask({ kind: "explain", selection: explainSelection });
+    });
+    return () => clearTimeout(timer);
   }, [explainSelection, accepted, streaming, ask, clearExplain]);
 
   // Errors aren't announced here: the message card's role="alert" does it.
