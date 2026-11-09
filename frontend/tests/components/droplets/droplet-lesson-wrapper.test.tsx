@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import {
   render,
   screen,
@@ -85,6 +86,7 @@ describe("DropletLessonWrapper", () => {
     author: false,
     authUser: { id: 1 } as AuthorizedUser,
     userId: 1,
+    mentor: false,
     initialNotes: serverNotes,
     initialHighlights: serverHighlights,
   };
@@ -266,6 +268,88 @@ describe("DropletLessonWrapper", () => {
         />,
       );
       expect(screen.queryByTestId("mentor-panel")).toBeNull();
+    });
+
+    describe("Ask Mentor availability", () => {
+      const lessons = [
+        { id: 1, orderIndex: 1 },
+        { id: 2, orderIndex: 2 },
+      ] as Lesson[];
+      const droplet = { id: 1, lessons } as Droplet;
+      const available = () => useLessonPanelStore.getState().mentorAvailable;
+
+      it.each([
+        ["mentor on and the lesson open", true, 1, true],
+        ["mentor off", false, 1, false],
+        ["the lesson locked behind the previous one", true, 2, false],
+      ])("is %s -> %s", (_label, mentor, lessonId, expected) => {
+        render(
+          <DropletLessonWrapper
+            {...props}
+            droplet={droplet}
+            lesson={{ id: lessonId, slug: "l" } as Lesson}
+            mentor={mentor}
+          />,
+        );
+        expect(available()).toBe(expected);
+      });
+
+      it("is off without an enrollment, and off again after unmount", () => {
+        const { unmount } = render(
+          <DropletLessonWrapper
+            {...props}
+            droplet={droplet}
+            enrollmentId={undefined}
+            mentor
+          />,
+        );
+        expect(available()).toBe(false);
+        unmount();
+
+        const second = render(
+          <DropletLessonWrapper {...props} droplet={droplet} mentor />,
+        );
+        expect(available()).toBe(true);
+        second.unmount();
+        expect(available()).toBe(false);
+      });
+
+      it("is set again when the next lesson's wrapper replaces this one", () => {
+        const { rerender } = render(
+          <DropletLessonWrapper key={1} {...props} mentor />,
+        );
+        rerender(
+          <DropletLessonWrapper
+            key={2}
+            {...props}
+            lesson={{ id: 2, slug: "b" } as Lesson}
+            mentor
+          />,
+        );
+        expect(available()).toBe(true);
+      });
+
+      it("survives Strict Mode's extra effect cleanup", () => {
+        render(
+          <StrictMode>
+            <DropletLessonWrapper {...props} mentor />
+          </StrictMode>,
+        );
+        expect(available()).toBe(true);
+      });
+
+      it("closes an open sheet when Mentor stops being available", () => {
+        const { rerender } = render(<DropletLessonWrapper {...props} mentor />);
+        act(() => useLessonPanelStore.getState().openMentor());
+
+        rerender(<DropletLessonWrapper {...props} mentor={false} />);
+
+        expect(useLessonPanelStore.getState()).toMatchObject({
+          panel: null,
+          mentorKept: false,
+          mentorAvailable: false,
+        });
+      });
     });
 
     it("resets the store on unmount", () => {

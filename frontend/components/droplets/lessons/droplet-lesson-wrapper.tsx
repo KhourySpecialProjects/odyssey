@@ -1,7 +1,7 @@
 "use client";
 
 import { LessonRenderer } from "./lesson-renderer";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   Droplet,
@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 import DropletFooter from "../footer";
 import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
 import { LESSON_PANEL } from "@/lib/lesson-panel";
+import { lessonGate } from "@/lib/lesson-gate";
 import {
   useLessonPanelStore,
   useOwnedMentorKept,
@@ -72,6 +73,8 @@ interface DropletLessonWrapperProps {
   author: boolean;
   authUser: AuthorizedUser;
   userId: number;
+  /** The page's verdict: Mentor is on for this droplet and this user */
+  mentor: boolean;
   /** Fetched by the lesson page; refetched here only after a note is created */
   initialNotes: Note[];
   initialHighlights: Highlight[];
@@ -86,6 +89,7 @@ export function DropletLessonWrapper({
   author,
   authUser,
   userId,
+  mentor,
   initialNotes,
   initialHighlights,
 }: DropletLessonWrapperProps) {
@@ -140,6 +144,33 @@ export function DropletLessonWrapper({
     claim(lesson.id);
     return reset;
   }, [lesson.id]);
+
+  const { gate } = lessonGate({
+    lessonId: lesson.id,
+    lessons: droplet.lessons,
+    enrollmentId,
+    completedLessonIds: viewedLessonIds,
+    author,
+    roles: user?.roles,
+  });
+  const available = mentor && gate === "open";
+  const wasAvailable = useRef(false);
+  // Passive effect with no run-once guard: the previous lesson's reset()
+  // runs first and would otherwise wipe this lesson's availability.
+  useEffect(() => {
+    const { setMentorAvailable, closeMentor, mentorKept, panel } =
+      useLessonPanelStore.getState();
+    setMentorAvailable(available);
+    // Losing availability mid-lesson would strand an open sheet without its button
+    if (
+      wasAvailable.current &&
+      !available &&
+      (mentorKept || panel === "mentor")
+    )
+      closeMentor();
+    wasAvailable.current = available;
+    return () => setMentorAvailable(false);
+  }, [available]);
 
   return (
     <>
