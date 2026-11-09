@@ -137,13 +137,13 @@ export async function scoreFixtures(
 }
 
 /** Fails early, before anything is sent, if there is no API key to send with. */
-export function makeClient(): Anthropic {
+export function makeClient(options: { maxRetries?: number } = {}): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error(
       "ANTHROPIC_API_KEY is not set (add it to .env.local, or export it)",
     );
   }
-  return new Anthropic();
+  return new Anthropic(options);
 }
 
 export type RunMeta = {

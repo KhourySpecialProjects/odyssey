@@ -62,3 +62,7 @@ node_modules/
 
 # AI review spike and eval outputs (ODY-813): cost and baseline go in the PR and ticket
 /scripts/ai-review/runs/
+
+# Mentor eval outputs and blank score sheets (ODY-885): results go in the README and on Linear
+/scripts/mentor/runs/
+/scripts/mentor/fixtures/*.scores.json
