@@ -14,6 +14,7 @@ import { Highlight, Note } from "@/types";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 import { CompletionBackfill } from "@/components/droplets/completion-backfill";
 import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
+import { lessonAccess } from "@/lib/lesson-access";
 
 type Props = {
   params: Promise<Params>;
@@ -63,6 +64,8 @@ export default async function Page({ params }: Props) {
   let enrollmentId: string | undefined;
 
   if (!droplet || !lesson || !authUser) return notFound();
+  // Lesson slugs are unique across droplets, so check the lesson is in this one
+  if (!lessonAccess(droplet, lesson.id).ok) return notFound();
 
   const enrollment = enrollments.find((e) => e.droplet?.id === droplet.id);
 

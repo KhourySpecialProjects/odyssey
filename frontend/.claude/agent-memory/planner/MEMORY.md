@@ -1,0 +1,1 @@
+- [Brady runs env commands](brady-runs-env-commands.md) — agents can't read .env/.env.local; snapshots and paid runs are Brady's, with exact commands in the plan

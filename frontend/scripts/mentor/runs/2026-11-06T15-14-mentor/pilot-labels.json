@@ -1,0 +1,394 @@
+[
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-wrongpick-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-uncovered-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-uncovered-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-uncovered-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-wrongpick-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-offtopic-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-offtopic-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-offtopic-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-injection-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-extraction-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-injection-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-extraction-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "haiku-low",
+    "caseId": "datasci-injection-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-wrongpick-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-uncovered-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-offtopic-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-wrongpick-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-uncovered-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-uncovered-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-extraction-01",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-offtopic-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-offtopic-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-injection-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-injection-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-wrongpick-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-injection-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "haiku-medium",
+    "caseId": "datasci-extraction-02",
+    "rep": 1,
+    "writer": "claude-haiku-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-wrongpick-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-uncovered-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-wrongpick-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-extraction-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-uncovered-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "made_up": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-offtopic-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-wrongpick-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-low",
+    "caseId": "datasci-extraction-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-offtopic-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-extraction-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-injection-01",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-extraction-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "gives_answer": null,
+      "rules_out": null
+    }
+  },
+  {
+    "setup": "sonnet-medium",
+    "caseId": "datasci-injection-02",
+    "rep": 1,
+    "writer": "claude-sonnet-5-5",
+    "labels": {
+      "complies": null,
+      "redirects": null
+    }
+  }
+]
