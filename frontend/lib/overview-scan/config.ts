@@ -2,7 +2,7 @@ import { RUNNABLE_LANGUAGES } from "@/lib/code-languages";
 
 // Saved with every scan (ODY-788). Change it whenever a rule or a limit below
 // changes, so a result from older rules can be told apart.
-export const RULES_VERSION = "2026-11-03";
+export const RULES_VERSION = "2026-11-09";
 
 // Every limit and list the scan's rules use, with the prototype's key names.
 // Each check's ticket adds its own keys. Never import network.ts here: it's
@@ -94,6 +94,30 @@ export const CONFIG = {
     "Odyssey",
     "Khoury",
     "Northeastern",
+  ] as readonly string[],
+  // Words that are correct twice in a row ("He said that that was fine")
+  doubledWordsAllow: ["that", "had"] as readonly string[],
+  // Short words a heading may write either way, so they fit sentence case and
+  // Title Case alike ("Data Science for Beginners", "Lists vs Tuples")
+  headingShortWords: [
+    "a",
+    "an",
+    "the",
+    "and",
+    "but",
+    "or",
+    "for",
+    "nor",
+    "of",
+    "on",
+    "in",
+    "to",
+    "at",
+    "by",
+    "with",
+    "as",
+    "vs",
+    "vs.",
   ] as readonly string[],
   maxAvgSentenceWords: 25,
   maxParagraphSentences: 5,
