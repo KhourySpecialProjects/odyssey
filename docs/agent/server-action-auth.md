@@ -120,7 +120,7 @@ Only exported function declarations are supported. `export const`, `export { …
 - It only checks that a guard call exists — not that the result is honored, that the roles are right, or that ownership is actually checked.
 - Calling a guarded helper doesn't count as guarded; the call must be in the export's own body (a nested closure counts, even if never called).
 - Inline `"use server"` closures inside Server Components aren't scanned (e.g. `app/(editing)/draft/d/[slug]/page.tsx`) — ODY-504 audits those by hand.
-- Route Handlers aren't covered (e.g. `app/api/user-activity/[userId]/route.ts`, which checks `getServerSession` directly) — ODY-509 should audit it.
+- Route Handlers aren't covered (e.g. `app/api/user-activity/[userId]/route.ts`, which checks `getServerSession` directly) — ODY-509 should audit it. `app/api/mentor/route.ts` (ODY-886) calls `requireRole([])` by hand, and its test covers the 401.
 
 ## Known gaps
 

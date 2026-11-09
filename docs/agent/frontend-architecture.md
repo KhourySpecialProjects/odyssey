@@ -232,6 +232,28 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
 - **Tests.** `testing/lib/overview-scan/seeded-droplets.test.ts` runs the real snapshot, all 23 checks and the safe fetcher (faked network) on the seeded droplets in `testing/mocks/overview-scan-droplets.ts`: one that passes everything, one with a problem per check, and one whose relative image can't be checked. ODY-796 ran the same droplets end to end in a browser against a local stack.
 - **Known limits.** `editedSince` also shows after someone only opens a lesson (lock heartbeats bump `updatedAt`) and misses an unflagged lesson being deleted (ODY-878). Lesson flags open the lesson but don't scroll to the block (ODY-879).
 
+## Mentor route (ODY-886)
+
+`POST /api/mentor` (`app/api/mentor/route.ts`) is the one route behind every Mentor answer: the lesson sidebar (ODY-887) and quiz hints (ODY-888). It streams server-sent events. The request, the events and the error codes are in `lib/mentor/events.ts`, which is client-safe and holds `readMentorEvents`, the browser's reader. `testing/mocks/mentorEventsMock.ts` fakes responses for UI tests.
+
+- **The checks, in order:**
+
+  1. sign-in (`requireRole([])`, 401);
+  2. the body (64 KB cap, then `mentorRequestSchema`; 413 or 400);
+  3. the droplet and lesson by numeric ids (`getMentorSource`, `lib/mentor/source.ts`), then `lessonAccess` (`lib/lesson-access.ts`, the rule the lesson page uses too; 404 or 403);
+  4. the ask (`resolveMentorAsk`, 400);
+  5. ODY-884's allowance (`checkMentorAllowance`; 429 or 503 with its message and `Retry-After`).
+
+  None of them calls Claude. Mentor answers only on published droplets that aren't hidden.
+
+- **Ids only.** The browser sends ids and the student's words. The lesson is read from Strapi, cached with the lesson page's tags, and `buildMentorRequest` (ODY-885) never holds a quiz answer.
+- **Streaming** (`lib/mentor/answer.ts`, `lib/mentor/sse.ts`). The response is returned once Claude connects; before that every failure is a JSON status (502 if Claude can't be reached). After it, every stream ends with one `done` (with citations) or `error` event, except one the student stopped, which aborts the Claude call. Answers time out at 90 seconds.
+  - `Cache-Control: no-transform` is required: without it `next start` gzips the stream and holds it back until the end.
+  - A `: ping` every 15 seconds keeps the load balancer from closing a long think.
+- **Usage.** `after()` records one row with ODY-884's `recordMentorUsage` once the answer ends. An answer cut short counts at least the characters that streamed (about 4 to a token).
+- **Tests.** `testing/app/api/mentor.test.ts` and `testing/lib/mentor/answer.test.ts` run the real Anthropic SDK against a scripted stream (`testing/mocks/claudeStreamMock.ts`).
+- `GET /api/mentor/stream-check` (System Admins only) is a canned stream for checking streaming on dev with `?gap=70`. It is deleted once that check is done.
+
 ## Static Assets and Media
 
 - Static assets (logos, icons, default images) live in `frontend/public/`

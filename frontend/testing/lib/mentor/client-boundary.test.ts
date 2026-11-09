@@ -24,7 +24,7 @@ const EXCLUDED_DIRS = new Set([
 ]);
 const CLIENT = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*["']use client["']/;
 const LESSON_MODULE =
-  /["']@\/lib\/mentor\/(context|quiz|ask|answer-key|prompt)["']/;
+  /["']@\/lib\/mentor\/(context|quiz|ask|answer-key|prompt|source|answer|client)["']/;
 
 /** Whether source imports a module that reads lessons; type-only imports are fine */
 const importsLessonModule = (source: string) =>

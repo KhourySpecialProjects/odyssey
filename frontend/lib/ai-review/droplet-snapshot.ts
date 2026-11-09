@@ -25,7 +25,8 @@ type RawDroplet = {
   lessons?: RawLesson[] | null;
 };
 
-const objectives = (list?: Objective[] | null) =>
+/** A droplet's learning objectives as strings, blanks dropped (also Mentor's) */
+export const objectives = (list?: Objective[] | null) =>
   (list ?? []).map((o) => o.objective?.trim()).filter((o): o is string => !!o);
 
 /**
