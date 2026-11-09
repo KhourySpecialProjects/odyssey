@@ -6,8 +6,8 @@ import { openSse, type SseStream } from "@/lib/mentor/sse";
 // A canned Mentor answer that proves streaming works on dev, behind the load
 // balancer, before the real route lands (ODY-886). `?gap=70` pauses 70
 // seconds mid-answer with only pings flowing, past the load balancer's idle
-// timeout. System Admins only, and it never calls a model. ODY-886's last PR
-// deletes it.
+// timeout. System Admins only, and it never calls a model. Deleted once that
+// check is done.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

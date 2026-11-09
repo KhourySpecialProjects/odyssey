@@ -30,11 +30,11 @@ export type MentorHttpErrorCode =
   | "not_found" // 404
   | "forbidden" // 403: the droplet isn't published, or is hidden
   | "cannot_answer" // 400
-  | "busy" // 429: answers already in flight
   | "daily_limit" // 429
   | "monthly_cap" // 503
   | "disabled" // 503
   | "not_in_pilot" // 503
+  | "rate_limited" // 429: too many answers in a short time
   | "unavailable" // 503: the usage check failed
   | "model_unavailable" // 502
   | "internal"; // 500
