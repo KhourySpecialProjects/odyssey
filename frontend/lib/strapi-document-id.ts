@@ -28,6 +28,7 @@ export type StrapiCollection =
   | "highlights"
   | "lessons"
   | "notes"
+  | "overview-scan-dismissals"
   | "playlists"
   | "reports"
   | "review-comments"

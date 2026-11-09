@@ -1,11 +1,19 @@
 import { RULES_VERSION } from "@/lib/overview-scan/config";
-import { DROPLET_SECTIONS, buildScanView } from "@/lib/overview-scan/view";
+import {
+  DROPLET_SECTIONS,
+  applyDismissals,
+  buildScanView,
+  flagKeyId,
+  scanFlagDomId,
+} from "@/lib/overview-scan/view";
 import type {
   Check,
   CheckResult,
   Flag,
   OverviewScan,
   RuleResult,
+  ScanDismissal,
+  ScanFlagKey,
 } from "@/lib/overview-scan/types";
 
 const rule = (id: string) => ({ id, text: `Rule ${id}`, run: () => [] });
@@ -294,5 +302,185 @@ describe("buildScanView", () => {
       slug: "drop",
     });
     expect(v.editedSince).toBe(false);
+  });
+});
+
+describe("applyDismissals (ODY-905)", () => {
+  const msg = (
+    partId: string,
+    message: string,
+    severity: Flag["severity"] = "warn",
+  ): Flag => ({
+    partId,
+    blockId: "b",
+    message,
+    severity,
+  });
+  const dismissal = (
+    key: Partial<ScanFlagKey>,
+    dismissedAt = "2026-11-09T10:00:00.000Z",
+    dismissedBy: string | null = "Ada Lovelace",
+  ): ScanDismissal => ({
+    checkId: "c1",
+    ruleId: "a",
+    partId: "11",
+    blockId: "b",
+    message: "one",
+    ...key,
+    dismissedAt,
+    dismissedBy,
+  });
+  // c1 needs attention from two flags; s1 passes; m1 couldn't check; s2 not run
+  const view = () =>
+    build(
+      scanOf([
+        result("c1", "warn", [
+          ruleResult("a", "warn", [msg("11", "one"), msg("12", "two")]),
+        ]),
+        result("s1", "pass"),
+        result("m1", "unknown", [
+          ruleResult("a", "unknown", [
+            {
+              partId: "droplet",
+              blockId: null,
+              message: "failed",
+              severity: "unknown",
+            },
+          ]),
+        ]),
+      ]),
+    );
+  const checkOf = (v: ReturnType<typeof build>, id: string) =>
+    allChecks(v).find((c) => c.id === id)!;
+
+  it("changes nothing with no dismissals", () => {
+    expect(applyDismissals(view(), [])).toEqual(view());
+  });
+
+  it("matches only when all five fields are equal", () => {
+    const v = applyDismissals(view(), [
+      dismissal({ message: "One" }),
+      dismissal({ blockId: null }),
+      dismissal({ ruleId: "b" }),
+      dismissal({ checkId: "s1" }),
+      dismissal({ partId: "12" }),
+    ]);
+    expect(v).toEqual(view());
+  });
+
+  it("passes a check once all its flags are dismissed, and moves the count", () => {
+    const v = applyDismissals(view(), [
+      dismissal({}),
+      dismissal(
+        { partId: "12", message: "two" },
+        "2026-11-09T11:00:00.000Z",
+        null,
+      ),
+    ]);
+    const c1 = checkOf(v, "c1");
+    expect(c1).toMatchObject({
+      status: "pass",
+      savedStatus: "warn",
+      flagCount: 0,
+      dismissedCount: 2,
+    });
+    expect(c1.rules[0]).toMatchObject({ status: "pass", flags: [] });
+    expect(c1.rules[0].dismissed).toEqual([
+      expect.objectContaining({ message: "one", dismissedBy: "Ada Lovelace" }),
+      expect.objectContaining({ message: "two", dismissedBy: null }),
+    ]);
+    expect(v.counts).toEqual({
+      passed: 2,
+      needsAttention: 0,
+      couldNotCheck: 1,
+    });
+  });
+
+  it("keeps a check that still has a flag needing attention", () => {
+    const c1 = checkOf(applyDismissals(view(), [dismissal({})]), "c1");
+    expect(c1).toMatchObject({
+      status: "warn",
+      flagCount: 1,
+      dismissedCount: 1,
+    });
+  });
+
+  it("keeps warn when only a couldn't-check flag beside a warn flag is dismissed", () => {
+    const v = build(
+      scanOf([
+        result("c1", "warn", [
+          ruleResult("a", "warn", [
+            msg("11", "one"),
+            msg("11", "hmm", "unknown"),
+          ]),
+        ]),
+      ]),
+    );
+    const c1 = checkOf(
+      applyDismissals(v, [dismissal({ message: "hmm" })]),
+      "c1",
+    );
+    expect(c1.status).toBe("warn");
+  });
+
+  it("passes a rule that failed once its error flag is dismissed", () => {
+    const v = applyDismissals(view(), [
+      dismissal({
+        checkId: "m1",
+        partId: "droplet",
+        blockId: null,
+        message: "failed",
+      }),
+    ]);
+    expect(checkOf(v, "m1").status).toBe("pass");
+    expect(v.counts.couldNotCheck).toBe(0);
+  });
+
+  it("shows the earliest of two dismissals for one flag", () => {
+    const v = applyDismissals(view(), [
+      dismissal({}, "2026-11-09T12:00:00.000Z", "Grace Hopper"),
+      dismissal({}, "2026-11-09T09:00:00.000Z", "Ada Lovelace"),
+    ]);
+    expect(checkOf(v, "c1").rules[0].dismissed).toEqual([
+      expect.objectContaining({
+        dismissedBy: "Ada Lovelace",
+        dismissedAt: "2026-11-09T09:00:00.000Z",
+      }),
+    ]);
+  });
+
+  it("leaves a check that hasn't run alone", () => {
+    const v = applyDismissals(view(), [dismissal({ checkId: "s2" })]);
+    expect(checkOf(v, "s2")).toEqual(checkOf(view(), "s2"));
+  });
+});
+
+describe("flag keys", () => {
+  const key: ScanFlagKey = {
+    checkId: "c1",
+    ruleId: "a",
+    partId: "11",
+    blockId: "b",
+    message: "one",
+  };
+
+  it("puts each flag's key on its view", () => {
+    const v = build(
+      scanOf([
+        result("c1", "warn", [
+          ruleResult("a", "warn", [{ ...key, severity: "warn" }]),
+        ]),
+      ]),
+    );
+    expect(allChecks(v)[0].rules[0].flags[0].key).toEqual(key);
+  });
+
+  it("gives each flag a stable element id that differs when the key does", () => {
+    expect(scanFlagDomId(key)).toBe(scanFlagDomId({ ...key }));
+    expect(scanFlagDomId(key)).toMatch(/^scan-flag-[a-z0-9]+$/);
+    expect(scanFlagDomId(key)).not.toBe(
+      scanFlagDomId({ ...key, message: "two" }),
+    );
+    expect(flagKeyId(key)).not.toBe(flagKeyId({ ...key, blockId: null }));
   });
 });

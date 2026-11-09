@@ -89,6 +89,7 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   highlights: true,
   lessons: true,
   notes: true,
+  "overview-scan-dismissals": true,
   playlists: true,
   reports: true,
   "review-comments": true,
@@ -395,6 +396,20 @@ const REVIEW_PANEL_ROUTES = routes([
 const OVERVIEW_SCAN_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
   ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
+  [
+    "GET",
+    /^\/overview-scan-dismissals$/,
+    list(
+      ent(5, {
+        checkId: "style",
+        ruleId: "sentence-case",
+        partId: "1",
+        blockId: null,
+        message: "m",
+        createdAt: "2026-11-09T10:00:00.000Z",
+      }),
+    ),
+  ],
 ]);
 
 type Mod = Record<string, unknown>;
@@ -873,6 +888,11 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       (m) => m.getLatestOverviewScan(1),
       OVERVIEW_SCAN_ROUTES,
     ),
+    call(
+      "getScanDismissals",
+      (m) => m.getScanDismissals(1),
+      OVERVIEW_SCAN_ROUTES,
+    ),
   ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
@@ -1115,7 +1135,11 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring": {
     startAiScoring: "custom ai-scoring-run start route (ODY-814)",
   },
-  "overview-scan": { runOverviewScan: WRITE },
+  "overview-scan": {
+    runOverviewScan: WRITE,
+    dismissScanFlag: WRITE,
+    undoScanFlagDismissal: WRITE,
+  },
   reviews: {
     saveReviewScore: "custom review-score upsert route (ODY-803)",
     acceptAiScores: "custom review-score accept-ai route (ODY-803)",

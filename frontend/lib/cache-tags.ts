@@ -198,5 +198,5 @@ export const CACHE_TAGS = {
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores
-  overviewScan: (dropletId: number) => `overview-scan-${dropletId}`, // one droplet's saved overview scans
+  overviewScan: (dropletId: number) => `overview-scan-${dropletId}`, // one droplet's saved overview scans and their dismissals (ODY-905)
 };
