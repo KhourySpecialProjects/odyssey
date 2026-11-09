@@ -101,6 +101,25 @@ export type Flag = {
 };
 
 /**
+ * Which flag a dismissal is for (ODY-905): its check and rule, where it is and
+ * what it says. A flag whose message changes no longer matches, so it shows
+ * again.
+ */
+export type ScanFlagKey = {
+  checkId: string;
+  ruleId: string;
+  partId: string;
+  blockId: string | null;
+  message: string;
+};
+
+/** A flag someone marked as fine, saved on the droplet for everyone. */
+export type ScanDismissal = ScanFlagKey & {
+  dismissedBy: string | null; // their name, or null when unknown
+  dismissedAt: string; // ISO datetime
+};
+
+/**
  * A rule only reports flags. The runner turns them into a status: needs
  * attention if any flag is "warn", couldn't check if all are "unknown",
  * passed if there are none.

@@ -64,6 +64,8 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
 
 `runOverviewScan` and `getLatestOverviewScan` (ODY-794) let in an author or a System Admin, Faculty or Content Editor, and ignore the review freeze, since a scan never writes the droplet. A refused caller costs one fresh ownership read and no rate-limit slot.
 
+Dismissals (ODY-905): `getScanDismissals`, `dismissScanFlag` and `undoScanFlagDismissal` let in the same callers (`withAuth([])`, then the shared fresh ownership read, which also reads `inReview`). Reading ignores the freeze. Writing then applies `isFrozenFor`: while the droplet is in review its authors get `in_review`, so they can't clear the scan before the reviewer reads it. A non-author System Admin or Content Editor (the reviewer) can dismiss and undo. A non-author Faculty member can only outside review. `getScanDismissals` returns `canDismiss` from the same rule. `dismissScanFlag` saves a flag only if it is in the droplet's latest scan (`stale` otherwise), so the table holds real flags. Dismissing twice is a no-op, and Undo deletes every matching row. The key is checked by `scanFlagKeySchema` (`lib/validations/overview-scan.ts`), and the documentIds come from the server, never the client. There's no rate limit: these are cheap writes open only to people who can scan.
+
 ## Review freeze
 
 While a droplet is in review, every one of its authors (any role, System Admin included) can read the draft but not change, review or publish it. Only a reviewer who isn't an author reviews it. Editing reopens when the reviewer sends feedback, when it's published, or when an author withdraws it (`withdrawFromReview`).

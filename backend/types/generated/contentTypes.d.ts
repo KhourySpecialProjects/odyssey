@@ -1606,6 +1606,64 @@ export interface ApiNoteNote extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiOverviewScanDismissalOverviewScanDismissal
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'overview_scan_dismissals';
+  info: {
+    description: 'A scan flag someone marked as fine on a droplet (ODY-905)';
+    displayName: 'Overview Scan Dismissal';
+    pluralName: 'overview-scan-dismissals';
+    singularName: 'overview-scan-dismissal';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    blockId: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    checkId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dismissedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::overview-scan-dismissal.overview-scan-dismissal'
+    > &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 5000;
+      }>;
+    partId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    ruleId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiOverviewScanOverviewScan
   extends Struct.CollectionTypeSchema {
   collectionName: 'overview_scans';
@@ -2744,6 +2802,7 @@ declare module '@strapi/strapi' {
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
       'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;
+      'api::overview-scan-dismissal.overview-scan-dismissal': ApiOverviewScanDismissalOverviewScanDismissal;
       'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;

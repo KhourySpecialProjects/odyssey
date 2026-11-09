@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
+import { REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 import {
   runOverviewScan,
   type OverviewScanError,
@@ -24,6 +25,9 @@ const ERRORS: Record<Exclude<OverviewScanError, "rate_limited">, string> = {
   unauthenticated: "Your session ended. Sign in again to run checks.",
   invalid_input: "The checks couldn't run. Try again.",
   failed: "The checks couldn't run. Try again.",
+  in_review: REVIEW_FROZEN_MESSAGE,
+  stale:
+    "This flag changed since the page loaded. Run checks again or reload the page.",
 };
 
 function errorText(r: { error: OverviewScanError; message?: string }) {

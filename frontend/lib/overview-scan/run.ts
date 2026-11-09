@@ -65,7 +65,9 @@ const RULE_FAILED: Flag = {
 };
 
 /** Needs attention if any flag is "warn", couldn't check if all are "unknown". */
-const statusOf = (flags: readonly Flag[]): ScanStatus =>
+export const statusOf = (
+  flags: readonly Pick<Flag, "severity">[],
+): ScanStatus =>
   flags.some((f) => f.severity === "warn")
     ? "warn"
     : flags.length
@@ -73,7 +75,7 @@ const statusOf = (flags: readonly Flag[]): ScanStatus =>
       : "pass";
 
 /** A check takes its worst rule's status: warn, then unknown, then pass. */
-const worst = (statuses: readonly ScanStatus[]): ScanStatus =>
+export const worst = (statuses: readonly ScanStatus[]): ScanStatus =>
   statuses.includes("warn")
     ? "warn"
     : statuses.includes("unknown")

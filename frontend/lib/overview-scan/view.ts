@@ -1,9 +1,12 @@
 import { RULES_VERSION } from "./config";
+import { statusOf, worst } from "./run";
 import type {
   Check,
   Flag,
   FlagSeverity,
   OverviewScan,
+  ScanDismissal,
+  ScanFlagKey,
   ScanStatus,
 } from "./types";
 
@@ -40,6 +43,7 @@ export const DROPLET_SECTIONS: Record<string, string> = {
 export const scanSectionId = (blockId: string) => `scan-${blockId}`;
 
 export type FlagView = {
+  key: ScanFlagKey;
   label: string;
   message: string;
   severity: FlagSeverity;
@@ -47,11 +51,19 @@ export type FlagView = {
   linkText: "Go to lesson" | "Go to droplet page" | null;
 };
 
+export type DismissedFlagView = FlagView & {
+  dismissedBy: string | null;
+  dismissedAt: string;
+};
+
 export type RuleView = {
   id: string;
   text: string;
   status: ViewStatus;
+  /** As the scan saved it, before any dismissal */
+  savedStatus: ViewStatus;
   flags: FlagView[];
+  dismissed: DismissedFlagView[];
 };
 
 export type CheckView = {
@@ -61,7 +73,9 @@ export type CheckView = {
   scope: string;
   note?: string;
   status: ViewStatus;
+  savedStatus: ViewStatus;
   flagCount: number;
+  dismissedCount: number;
   rules: RuleView[];
 };
 
@@ -89,12 +103,40 @@ export const plural = (n: number, word: string) =>
   `${n} ${word}${n === 1 ? "" : "s"}`;
 
 const RULE_ORDER: ViewStatus[] = ["warn", "unknown", "pass", "not-run"];
+const byStatus = (a: { status: ViewStatus }, b: { status: ViewStatus }) =>
+  RULE_ORDER.indexOf(a.status) - RULE_ORDER.indexOf(b.status);
 
-function flagView(flag: Flag, lessons: ViewLesson[], slug: string): FlagView {
+/** One string per flag, for matching a dismissal to it (ODY-905). */
+export const flagKeyId = (k: ScanFlagKey) =>
+  JSON.stringify([k.checkId, k.ruleId, k.partId, k.blockId, k.message]);
+
+/** A short, stable element id for a flag's card, so focus can follow it. */
+export function scanFlagDomId(key: ScanFlagKey): string {
+  let hash = 0x811c9dc5; // FNV-1a
+  for (const ch of flagKeyId(key)) {
+    hash ^= ch.codePointAt(0)!;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `scan-flag-${hash.toString(36)}`;
+}
+
+function flagView(
+  flag: Flag,
+  lessons: ViewLesson[],
+  slug: string,
+  at: { checkId: string; ruleId: string },
+): FlagView {
   const { message, severity } = flag;
+  const key: ScanFlagKey = {
+    ...at,
+    partId: flag.partId,
+    blockId: flag.blockId,
+    message,
+  };
   if (flag.partId === "droplet") {
     const section = flag.blockId ? DROPLET_SECTIONS[flag.blockId] : undefined;
     return {
+      key,
       label: section ? `Droplet page · ${section}` : "Droplet page",
       message,
       severity,
@@ -102,9 +144,10 @@ function flagView(flag: Flag, lessons: ViewLesson[], slug: string): FlagView {
       linkText: "Go to droplet page",
     };
   }
-  const at = lessons.findIndex((l) => String(l.id) === flag.partId);
-  if (at === -1) {
+  const index = lessons.findIndex((l) => String(l.id) === flag.partId);
+  if (index === -1) {
     return {
+      key,
       label: "Deleted lesson",
       message,
       severity,
@@ -112,9 +155,10 @@ function flagView(flag: Flag, lessons: ViewLesson[], slug: string): FlagView {
       linkText: null,
     };
   }
-  const lesson = lessons[at];
+  const lesson = lessons[index];
   return {
-    label: `Lesson ${at + 1} · ${lesson.name}`,
+    key,
+    label: `Lesson ${index + 1} · ${lesson.name}`,
     message,
     severity,
     href: `/draft/d/${slug}/${lesson.slug}`,
@@ -152,16 +196,19 @@ export function buildScanView({
       .map((rule): RuleView => {
         const r = result?.rules.find((x) => x.id === rule.id);
         if (result && !r) missing = true;
+        const ruleStatus: ViewStatus = r?.status ?? "not-run";
         return {
           id: rule.id,
           text: rule.text,
-          status: r?.status ?? "not-run",
-          flags: (r?.flags ?? []).map((f) => flagView(f, lessons, slug)),
+          status: ruleStatus,
+          savedStatus: ruleStatus,
+          flags: (r?.flags ?? []).map((f) =>
+            flagView(f, lessons, slug, { checkId: check.id, ruleId: rule.id }),
+          ),
+          dismissed: [],
         };
       })
-      .sort(
-        (a, b) => RULE_ORDER.indexOf(a.status) - RULE_ORDER.indexOf(b.status),
-      );
+      .sort(byStatus);
 
     return {
       id: check.id,
@@ -170,7 +217,9 @@ export function buildScanView({
       scope: check.scope,
       note: check.note,
       status,
+      savedStatus: status,
       flagCount: rules.reduce((n, r) => n + r.flags.length, 0),
+      dismissedCount: 0,
       rules,
     };
   };
@@ -210,5 +259,76 @@ export function buildScanView({
             ),
           ),
         )),
+  };
+}
+
+/**
+ * The view with dismissed flags moved out of the count (ODY-905): a check whose
+ * flags are all dismissed passes, and the header counts follow. A check with
+ * no dismissed flag keeps its saved statuses. A dismissal that matches no flag
+ * is ignored until that flag comes back; of two for one flag, the earlier shows.
+ */
+export function applyDismissals(
+  view: ScanView,
+  dismissals: readonly ScanDismissal[],
+): ScanView {
+  const byKey = new Map<string, ScanDismissal>();
+  for (const d of [...dismissals].sort((a, b) =>
+    a.dismissedAt.localeCompare(b.dismissedAt),
+  )) {
+    const id = flagKeyId(d);
+    if (!byKey.has(id)) byKey.set(id, d);
+  }
+  const counts = { passed: 0, needsAttention: 0, couldNotCheck: 0 };
+
+  const applyCheck = (check: CheckView): CheckView => {
+    let dismissedCount = 0;
+    const rules = check.rules.map((rule): RuleView => {
+      const flags: FlagView[] = [];
+      const dismissed: DismissedFlagView[] = [];
+      for (const f of rule.flags) {
+        const d = byKey.get(flagKeyId(f.key));
+        if (d) {
+          dismissed.push({
+            ...f,
+            dismissedBy: d.dismissedBy,
+            dismissedAt: d.dismissedAt,
+          });
+        } else flags.push(f);
+      }
+      dismissedCount += dismissed.length;
+      return { ...rule, flags, dismissed };
+    });
+    let next: CheckView = { ...check, rules, dismissedCount };
+    if (dismissedCount > 0 && check.savedStatus !== "not-run") {
+      const recomputed = rules
+        .map((r) =>
+          r.savedStatus === "not-run" ? r : { ...r, status: statusOf(r.flags) },
+        )
+        .sort(byStatus);
+      next = {
+        ...next,
+        rules: recomputed,
+        status: worst(
+          recomputed
+            .filter((r) => r.status !== "not-run")
+            .map((r) => r.status as ScanStatus),
+        ),
+        flagCount: recomputed.reduce((n, r) => n + r.flags.length, 0),
+      };
+    }
+    if (next.status === "pass") counts.passed++;
+    if (next.status === "warn") counts.needsAttention++;
+    if (next.status === "unknown") counts.couldNotCheck++;
+    return next;
+  };
+
+  return {
+    ...view,
+    columns: view.columns.map((c) => ({
+      ...c,
+      checks: c.checks.map(applyCheck),
+    })),
+    counts,
   };
 }

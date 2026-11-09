@@ -27,6 +27,7 @@ const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
 const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
+const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-dismissal';
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
@@ -126,6 +127,15 @@ const reviewCriterionData = (overrides = {}) => ({
 });
 
 // One check needing attention: its rule's flag shows the results shape (ODY-788)
+const dismissalData = (overrides = {}) => ({
+  checkId: 'style',
+  ruleId: 'sentence-case',
+  partId: '1',
+  blockId: 'b1',
+  message: 'A flag the author marked as fine.',
+  ...overrides,
+});
+
 const overviewScanData = (overrides = {}) => ({
   ranAt: new Date().toISOString(),
   rulesVersion: 'test',
@@ -164,12 +174,14 @@ module.exports = {
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
   OVERVIEW_SCAN_UID,
+  OVERVIEW_SCAN_DISMISSAL_UID,
   MENTOR_USAGE_UID,
   MENTOR_SETTING_UID,
   GROUP_UID,
   mentorUsageData,
   groupData,
   overviewScanData,
+  dismissalData,
   reviewData,
   reviewCommentData,
   reviewScoreData,

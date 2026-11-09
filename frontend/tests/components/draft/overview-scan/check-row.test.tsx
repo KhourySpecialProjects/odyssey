@@ -3,7 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { CheckRow } from "@/components/draft/overview-scan/check-row";
 import type { CheckView, FlagView } from "@/lib/overview-scan/view";
 
+const KEY = {
+  checkId: "org",
+  ruleId: "w",
+  partId: "12",
+  blockId: "b1",
+  message: "Too long",
+};
+
 const lessonFlag: FlagView = {
+  key: KEY,
   label: "Lesson 2 · Second",
   message: "Too long",
   severity: "warn",
@@ -17,18 +26,35 @@ const checkView = (overrides: Partial<CheckView> = {}): CheckView => ({
   description: "Is it organized?",
   scope: "Every lesson",
   status: "warn",
+  savedStatus: "warn",
   flagCount: 2,
+  dismissedCount: 0,
   note: "A note.",
   rules: [
-    { id: "p", text: "Passing rule", status: "pass", flags: [] },
+    {
+      id: "p",
+      text: "Passing rule",
+      status: "pass",
+      savedStatus: "pass",
+      flags: [],
+      dismissed: [],
+    },
     {
       id: "w",
       text: "Warning rule",
       status: "warn",
+      savedStatus: "warn",
       flags: [
         lessonFlag,
-        { ...lessonFlag, label: "Deleted lesson", href: null, linkText: null },
+        {
+          ...lessonFlag,
+          key: { ...KEY, partId: "99" },
+          label: "Deleted lesson",
+          href: null,
+          linkText: null,
+        },
       ],
+      dismissed: [],
     },
   ],
   ...overrides,
