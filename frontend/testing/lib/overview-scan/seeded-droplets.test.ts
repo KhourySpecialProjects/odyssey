@@ -23,6 +23,16 @@ import {
 
 const requested: URL[] = [];
 
+// No API key, so the spelling rule's AI double-check never calls out
+// (ODY-904): the dictionary's flags stand, with a note.
+const apiKey = process.env.ANTHROPIC_API_KEY;
+beforeAll(() => {
+  delete process.env.ANTHROPIC_API_KEY;
+});
+afterAll(() => {
+  if (apiKey !== undefined) process.env.ANTHROPIC_API_KEY = apiKey;
+});
+
 const send: Send = async ({ url }) => {
   requested.push(url);
   const res = WEB[url.href];

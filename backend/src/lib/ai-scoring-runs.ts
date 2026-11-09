@@ -92,7 +92,34 @@ export type StartRunResult = {
  * two can't both pass at the edge. A cap of $0 turns Score with AI off.
  */
 async function checkMonthlyBudget(): Promise<void> {
-  const { monthlyCapUsd, perRunCapUsd, prices } = await lockAiScoringSettings();
+  const now = new Date();
+  if (await budgetUsedUp(await lockAiScoringSettings(), now)) {
+    const resets = monthBounds(now).end.toLocaleDateString('en-US', {
+      timeZone: SPEND_TIME_ZONE,
+      month: 'long',
+      day: 'numeric',
+    });
+    throw new ReviewScoreError(
+      409,
+      `This month's Score with AI budget is used up. It resets on ${resets}.`,
+    );
+  }
+}
+
+type BudgetSettings = Pick<
+  Awaited<ReturnType<typeof loadAiScoringSettings>>,
+  'monthlyCapUsd' | 'perRunCapUsd' | 'prices'
+>;
+
+/**
+ * Whether this month's spend, plus what runs still going may yet spend, has
+ * reached the monthly cap. Shared by `start` and the scan's read-only budget
+ * check (ODY-904), so the two can't drift.
+ */
+async function budgetUsedUp(
+  { monthlyCapUsd, perRunCapUsd, prices }: BudgetSettings,
+  now: Date,
+): Promise<boolean> {
   const active = (await strapi.documents(RUN_UID).findMany({
     filters: {
       runState: { $in: ACTIVE_STATES },
@@ -104,18 +131,39 @@ async function checkMonthlyBudget(): Promise<void> {
     (sum, run) => sum + Math.max(0, perRunCapUsd - runCostUsd(run, prices)),
     0,
   );
-  const now = new Date();
-  if ((await spendThisMonthUsd(prices, now)) + heldBack >= monthlyCapUsd) {
-    const resets = monthBounds(now).end.toLocaleDateString('en-US', {
-      timeZone: SPEND_TIME_ZONE,
-      month: 'long',
-      day: 'numeric',
-    });
-    throw new ReviewScoreError(
-      409,
-      `This month's Score with AI budget is used up. It resets on ${resets}.`,
-    );
-  }
+  return (await spendThisMonthUsd(prices, now)) + heldBack >= monthlyCapUsd;
+}
+
+/**
+ * The Overview scan's spelling double-check asks before it calls the model
+ * (ODY-904). Read-only and unlocked, like Mentor's check: it reserves
+ * nothing, so a call in flight can carry spend past the cap by a fraction of
+ * a cent. A $0 cap refuses.
+ */
+export async function scoringBudgetAvailable(): Promise<boolean> {
+  return !(await budgetUsedUp(await loadAiScoringSettings(), new Date()));
+}
+
+export type ScoringUsageInput = {
+  model: string;
+  promptVersion: string;
+  inputTokens: number;
+  outputTokens: number;
+};
+
+/**
+ * Records one finished model call outside Score with AI as a run with no
+ * review (ODY-904), so it counts toward this month's spend. Every review
+ * reader filters runs by review, so the review panel never sees these.
+ */
+export async function recordScoringUsage(
+  input: ScoringUsageInput,
+): Promise<{ id: number }> {
+  const now = new Date().toISOString();
+  const run = await strapi.documents(RUN_UID).create({
+    data: { ...input, runState: 'done', startedAt: now, finishedAt: now },
+  } as any);
+  return { id: run.id as number };
 }
 
 /**

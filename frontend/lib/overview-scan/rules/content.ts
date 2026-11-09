@@ -5,8 +5,17 @@ import {
 } from "obscenity";
 import { CONFIG } from "@/lib/overview-scan/config";
 import { blockText, dropletPart, lessonParts } from "@/lib/overview-scan/parts";
-import { unknownWords } from "@/lib/overview-scan/spelling";
-import { norm, sentences, words } from "@/lib/overview-scan/text";
+import {
+  confirmMisspellings,
+  unknownWords,
+  type SpellingItem,
+} from "@/lib/overview-scan/spelling";
+import {
+  norm,
+  sentenceAround,
+  sentences,
+  words,
+} from "@/lib/overview-scan/text";
 import {
   flag,
   type Check,
@@ -181,6 +190,60 @@ function capitalizedWord(heading: string): string | null {
   return null;
 }
 
+const AI_NOTE = {
+  failed:
+    "The AI double-check didn't run, so these are the dictionary's flags.",
+  budget:
+    "The AI double-check didn't run because this month's AI budget is used up, so these are the dictionary's flags.",
+} as const;
+
+const notKnown = (unknown: readonly string[]) =>
+  `${quoteList(unknown)} ${unknown.length > 1 ? "aren't" : "isn't"} in the dictionary or the tech word list.`;
+
+/**
+ * The dictionary's unknown words, double-checked by AI in their sentence
+ * (ODY-904): one call for the whole droplet, made only when the dictionary
+ * flagged something. Words past the call's limit stay flagged. If the call
+ * doesn't run, the dictionary's flags stand, with a note saying so.
+ */
+async function spellingFlags(doc: ScanDocument): Promise<Flag[]> {
+  const found = readableText(doc)
+    .map((s) => ({ s, unknown: unknownWords(s.text, s.code) }))
+    .filter((f) => f.unknown.length > 0);
+  if (found.length === 0) return [];
+
+  const items: SpellingItem[] = [];
+  const itemOf = new Map<string, number>();
+  const keyOf = (word: string, sentence: string) => `${word}\u0000${sentence}`;
+  for (const { s, unknown } of found) {
+    for (const word of unknown) {
+      const sentence = sentenceAround(s.text, word);
+      const key = keyOf(word, sentence);
+      if (itemOf.has(key) || items.length >= CONFIG.aiSpellingMaxWords)
+        continue;
+      itemOf.set(key, items.length);
+      items.push({ word, sentence });
+    }
+  }
+
+  const check = await confirmMisspellings(items);
+  if (!check.ok) {
+    return [
+      ...found.map(({ s, unknown }) =>
+        flag(s.part, s.blockId, notKnown(unknown)),
+      ),
+      flag(dropletPart(doc), null, AI_NOTE[check.reason], "unknown"),
+    ];
+  }
+  return found.flatMap(({ s, unknown }) => {
+    const kept = unknown.filter((word) => {
+      const id = itemOf.get(keyOf(word, sentenceAround(s.text, word)));
+      return id === undefined || check.misspelled.has(id);
+    });
+    return kept.length ? [flag(s.part, s.blockId, notKnown(kept))] : [];
+  });
+}
+
 export const CONTENT_CHECKS: readonly Check[] = [
   {
     id: "style",
@@ -258,20 +321,8 @@ export const CONTENT_CHECKS: readonly Check[] = [
     rules: [
       {
         id: "dictionary",
-        text: "Every word is in the English dictionary or Odyssey's tech word list (a spell-checker, not AI)",
-        run: (doc) =>
-          readableText(doc).flatMap((s) => {
-            const unknown = unknownWords(s.text, s.code);
-            if (!unknown.length) return [];
-            const verb = unknown.length > 1 ? "aren't" : "isn't";
-            return [
-              flag(
-                s.part,
-                s.blockId,
-                `${quoteList(unknown)} ${verb} in the dictionary or the tech word list.`,
-              ),
-            ];
-          }),
+        text: "Every word is in the English dictionary or Odyssey's tech word list. Words that aren't are double-checked by AI in their sentence, and only real misspellings are flagged",
+        run: spellingFlags,
       },
       {
         id: "doubled-words",

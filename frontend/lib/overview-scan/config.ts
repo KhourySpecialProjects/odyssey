@@ -2,7 +2,7 @@ import { RUNNABLE_LANGUAGES } from "@/lib/code-languages";
 
 // Saved with every scan (ODY-788). Change it whenever a rule or a limit below
 // changes, so a result from older rules can be told apart.
-export const RULES_VERSION = "2026-11-03";
+export const RULES_VERSION = "2026-11-10";
 
 // Every limit and list the scan's rules use, with the prototype's key names.
 // Each check's ticket adds its own keys. Never import network.ts here: it's
@@ -124,6 +124,10 @@ export const CONFIG = {
   `
     .trim()
     .split(/\s+/) as readonly string[],
+  // The AI double-check of the dictionary's spelling flags (ODY-904): at most
+  // this many words go in its one call, and it gives up after this long
+  aiSpellingMaxWords: 200,
+  aiSpellingTimeoutMs: 20_000,
   // Words obscenity flags that aren't swears
   swearAllowWords: [
     "cockpit",
