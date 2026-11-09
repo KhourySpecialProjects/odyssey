@@ -156,6 +156,9 @@
  *                 its own)
  * overview-scan   Per-droplet tag "overview-scan-{dropletId}": read by      900s
  *                 getLatestOverviewScan; invalidated by runOverviewScan
+ * mentor-setting  Global tag: read by getMentorSetting (Ask Mentor gate);     60s
+ *                 no action invalidates it, it just expires (admins edit
+ *                 the setting in Strapi)
  */
 
 export const CACHE_TAGS = {
@@ -169,6 +172,7 @@ export const CACHE_TAGS = {
   authors: "authors",
   lesson: "lesson",
   announcements: "announcements",
+  mentorSetting: "mentor-setting", // Ask Mentor gate; expires after 60s
   tags: "tags",
   reports: "reports",
   accessRequests: "access-requests",
