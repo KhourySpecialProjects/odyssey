@@ -1,5 +1,6 @@
 import type { Core } from "@strapi/strapi";
 import { markClaimedVoyageNodesAuthored } from './lib/lifecycle-utils';
+import { backfillAnnouncementReads } from './lib/announcement-read-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
   "api::droplet.droplet.update",
@@ -42,6 +43,14 @@ export default {
       if (count > 0) strapi.log.info(`Marked ${count} claimed voyage node(s) as authored`);
     } catch (error) {
       strapi.log.error('Could not mark published voyage claims as authored', error);
+    }
+
+    // Targeted rows already marked read keep that state per user; never blocks startup.
+    try {
+      const count = await backfillAnnouncementReads();
+      if (count > 0) strapi.log.info(`Backfilled ${count} announcement read mark(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill announcement reads', error);
     }
   },
 };

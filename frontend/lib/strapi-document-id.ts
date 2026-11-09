@@ -12,6 +12,7 @@ import { fetchAPI } from "@/lib/utils";
 
 export type StrapiCollection =
   | "access-requests"
+  | "announcement-reads"
   | "announcements"
   | "authorized-users"
   | "authorized-user-roles"

@@ -143,13 +143,19 @@ export function FeedClient({
 
   const updateReadState = async (
     id: number,
-    update: (id: number) => Promise<{ success: boolean }>,
+    update: (id: number) => Promise<{ success: boolean; error?: unknown }>,
     errorMessage: string,
   ) => {
     mutations.current += 1;
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await update(id);
-    if (!result.success) toast.error(errorMessage);
+    if (!result.success) {
+      toast.error(
+        typeof result.error === "string" && result.error
+          ? result.error
+          : errorMessage,
+      );
+    }
     // Re-sync with the server: on success this quietly backfills the page;
     // on failure it restores the item behind the spinner.
     setRefresh((r) => ({ key: r.key + 1, silent: result.success }));

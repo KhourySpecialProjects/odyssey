@@ -103,7 +103,8 @@ describe("Feed tests", () => {
       fetchAPI
         .mockResolvedValueOnce([{ id: 1 }]) // groups
         .mockResolvedValueOnce([{ id: 2 }]) // playlists
-        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]); // enrollments
+        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]) // enrollments
+        .mockResolvedValue([]); // the user's read announcement ids (Unread tab)
     }
 
     function mockAnnouncementsResponse(data = []) {
@@ -152,8 +153,8 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements();
 
-      // fetchAPI called 3 times for pre-compute
-      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      // 3 pre-compute lookups plus the user's read ids
+      expect(fetchAPI).toHaveBeenCalledTimes(4);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
@@ -202,7 +203,8 @@ describe("Feed tests", () => {
       expect(url).toContain("[authorized_user][id][$eq]=5");
       expect(url).toContain("[type][$in][0]=friend");
       expect(url).toContain("[type][$in][1]=system");
-      expect(url).toContain("[readAt][$notNull]=true");
+      expect(url).toContain("[reads][authorized_user][id][$eq]=5");
+      expect(url).not.toContain("readAt");
       expect(url).toContain("pagination[page]=2");
     });
 
@@ -241,7 +243,7 @@ describe("Feed tests", () => {
       await fetchAnnouncements(1);
 
       expect(getCachedUser).toHaveBeenCalledWith("test.user@northeastern.edu");
-      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(fetchAPI).toHaveBeenCalledTimes(4);
       expect(global.fetch.mock.calls[0][1].next.tags).toContain(
         CACHE_TAGS.userFeed(5),
       );
@@ -288,7 +290,35 @@ describe("Feed tests", () => {
 
       await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
       const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-      expect(url).toContain("[readAt][$null]=true");
+      expect(url).not.toContain("readAt");
+    });
+
+    it("excludes only this user's read announcements, so the badge matches the Unread tab", async () => {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
+      fetchAPI.mockImplementation(async (path) =>
+        path === "/announcement-reads"
+          ? [{ announcement: { id: 41 } }, { announcement: { id: 42 } }]
+          : [],
+      );
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { total: 3 } } }),
+      });
+
+      await expect(getUnreadAnnouncementCount()).resolves.toBe(3);
+      const readCall = fetchAPI.mock.calls.find(
+        ([path]) => path === "/announcement-reads",
+      );
+      expect(readCall[1].urlParams.filters).toEqual({
+        authorized_user: { id: { $eq: 5 } },
+      });
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[id][$notIn][0]=41");
+      expect(url).toContain("[id][$notIn][1]=42");
     });
   });
 

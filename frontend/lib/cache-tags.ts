@@ -63,11 +63,9 @@
  *                   createFriendAnnouncement, createKudosAnnouncement,
  *                   createPlaylistAnnouncement, createGroupAnnouncement,
  *                   createDropletAnnouncement, createSystemAnnouncement,
- *                   createSystemBroadcast, markAnnouncementRead/Unread
- *                   (friend/kudos only — those rows show in friends' feeds)
+ *                   createSystemBroadcast
  *                 ↳ Per-user tag "user-feed-{userId}" (fetchAnnouncements):
- *                   markAnnouncementRead/Unread on a targeted system
- *                   announcement (only its owner's feed can contain it)
+ *                   markAnnouncementRead/Unread (read state is per user)
  * tags           createNewTag                                              3600s
  * due-dates       assignDropletDueDate, assignPlaylistDueDate,              900s
  *                 updateGroup, updateGroupMembers, deleteGroup,
