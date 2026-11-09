@@ -67,18 +67,6 @@ describe("content checks", () => {
   it.each([
     [
       "style",
-      "sentence-case",
-      withLessons(lesson([h("a", "Load The data")])),
-      [
-        warn(
-          "1",
-          "a",
-          '"Load The data" capitalizes "The". Only the first word should start with a capital.',
-        ),
-      ],
-    ],
-    [
-      "style",
       "swears",
       withLessons(
         lesson([
@@ -211,17 +199,6 @@ describe("content checks", () => {
   it.each([
     [
       "style",
-      "sentence-case",
-      withLessons(
-        lesson([
-          h("a", "Load data with Python and SQL"),
-          h("b", "Part 2: Clean the JavaScript output"),
-          h("c", "Python's types"),
-        ]),
-      ),
-    ],
-    [
-      "style",
       "swears",
       withLessons(
         lesson([p("a", "Fly from the cockpit, then add cumin and shiitake.")]),
@@ -324,5 +301,103 @@ describe("content checks", () => {
     expect(flags).toEqual([
       warn("102", "l2-p1", "A paragraph has 7 sentences (limit 5)."),
     ]);
+  });
+});
+
+describe("style/sentence-case (ODY-903)", () => {
+  const mixed = (heading: string, lower: string, upper: string) =>
+    `"${heading}" mixes sentence case and Title Case: "${lower}" is lowercase but "${upper}" is capitalized. Use one style for the whole heading.`;
+
+  it.each([
+    // Sentence case and Title Case, short words either way
+    "Data science for noobs",
+    "Data Science for Noobs",
+    "Data Science For Noobs",
+    "Load The data",
+    "Lists vs Tuples",
+    "Python as a Calculator",
+    // Acronyms and allowed names fit both styles
+    "Intro to SQL",
+    "Intro To SQL",
+    "Getting Started With Python",
+    "Getting started with Python",
+    "Load data with Python and SQL",
+    "Part 2: Clean the JavaScript output",
+    "Python's types",
+  ])("passes %p", async (heading) => {
+    expect(
+      await run(
+        "style",
+        "sentence-case",
+        withLessons(lesson([h("a", heading)])),
+      ),
+    ).toEqual([]);
+  });
+
+  it("passes a word in the heading's inline code", async () => {
+    const heading = {
+      ...h("a", "Cleaning Data With pandas"),
+      inlineCode: ["pandas"],
+    };
+    expect(
+      await run("style", "sentence-case", withLessons(lesson([heading]))),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["Data science For Noobs", "science", "Noobs"],
+    ["Intro to Data structures", "structures", "Data"],
+    ["Using the Data frame", "frame", "Data"],
+  ])("flags %p, naming %p and %p", async (heading, lower, upper) => {
+    expect(
+      await run(
+        "style",
+        "sentence-case",
+        withLessons(lesson([h("a", heading)])),
+      ),
+    ).toEqual([warn("1", "a", mixed(heading, lower, upper))]);
+  });
+});
+
+describe("rules made more lenient (ODY-903)", () => {
+  const one = (text: string) => withLessons(lesson([p("a", text)]));
+
+  it('allows "that that" and "had had", but still flags other repeats', async () => {
+    expect(
+      await run(
+        "spelling",
+        "doubled-words",
+        one("He said that that was fine. She had had enough."),
+      ),
+    ).toEqual([]);
+    expect(
+      await run(
+        "spelling",
+        "doubled-words",
+        one("He said that that was in the the file."),
+      ),
+    ).toEqual([warn("1", "a", 'Repeats "the the".')]);
+  });
+
+  it('reads a " after a digit as an inch mark, and names an unclosed one clearly', async () => {
+    expect(await run("spelling", "unclosed", one('Use a 15" laptop.'))).toEqual(
+      [],
+    );
+    expect(await run("spelling", "unclosed", one('Say "hi.'))).toEqual([
+      warn("1", "a", 'An opening double quote (") is never closed.'),
+    ]);
+  });
+
+  it("doesn't end a sentence at an abbreviation such as e.g. or i.e.", async () => {
+    // 5 sentences, the limit; splitting at "e.g." and "i.e." would make 7
+    expect(
+      await run(
+        "readability",
+        "paragraph-length",
+        one(
+          "Use a tool, e.g. pandas. Save it, i.e. export it. Three. Four. Five.",
+        ),
+      ),
+    ).toEqual([]);
   });
 });

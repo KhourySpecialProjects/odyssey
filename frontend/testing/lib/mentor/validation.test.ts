@@ -1,5 +1,8 @@
 import type { z } from "zod";
-import { mentorInputSchema } from "@/lib/validations/mentor";
+import {
+  mentorInputSchema,
+  mentorRequestSchema,
+} from "@/lib/validations/mentor";
 import type { MentorInput, MentorTurn } from "@/lib/mentor/types";
 
 const turns = (...roles: MentorTurn["role"][]) =>
@@ -126,5 +129,49 @@ describe("mentorInputSchema", () => {
     ["an unknown kind", { kind: "chat", message: "Hi" }],
   ])("rejects %s", (_, input) => {
     expect(mentorInputSchema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe("mentorRequestSchema", () => {
+  const ids = { dropletId: 5, lessonId: 9 };
+
+  it.each([
+    ["a question", { kind: "lesson", message: "Hi" }],
+    ["a selection", { kind: "explain", selection: "LEFT JOIN" }],
+    ["a hint", { kind: "quiz-hint", questionId: 41, answerIds: [413] }],
+  ])("keeps the ids on %s", (_, input) => {
+    expect(mentorRequestSchema.parse({ ...input, ...ids })).toEqual({
+      ...input,
+      ...ids,
+    });
+  });
+
+  it("drops lesson text and answers the browser sends", () => {
+    const body = {
+      kind: "lesson",
+      message: "Hi",
+      ...ids,
+      lesson: { name: "x" },
+      blocks: [],
+      isCorrect: true,
+      correctAnswer: "x",
+    };
+    expect(mentorRequestSchema.parse(body)).toEqual({
+      kind: "lesson",
+      message: "Hi",
+      ...ids,
+    });
+  });
+
+  it.each([
+    ["no lessonId", { dropletId: 5 }],
+    ["an id as a string", { dropletId: "5", lessonId: 9 }],
+    ["an id of 0", { dropletId: 0, lessonId: 9 }],
+    ["a documentId", { dropletId: "abc123", lessonId: 9 }],
+  ])("rejects %s", (_, over) => {
+    expect(
+      mentorRequestSchema.safeParse({ kind: "lesson", message: "Hi", ...over })
+        .success,
+    ).toBe(false);
   });
 });

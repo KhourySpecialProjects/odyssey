@@ -136,7 +136,8 @@ function unclosedMark(text: string): string | null {
   if (count(/\(/g) > count(/\)/g)) return '"("';
   if (count(/\[/g) > count(/\]/g)) return '"["';
   if (count(/“/g) > count(/”/g)) return '"“"';
-  if (count(/"/g) % 2 === 1) return "a double quote";
+  // A " after a digit is an inch mark ("a 15\" laptop"), not a quote
+  if (count(/(?<!\d)"/g) % 2 === 1) return 'double quote (")';
   return null;
 }
 
@@ -175,19 +176,38 @@ const INCLUSIVE_TERMS = Object.entries(CONFIG.inclusiveTerms).map(
 );
 
 const HEADING_ALLOW = new Set(CONFIG.headingAllowWords);
+const HEADING_SHORT = new Set(CONFIG.headingShortWords);
+const DOUBLED_ALLOW = new Set(CONFIG.doubledWordsAllow);
+const trimmed = (word: string) =>
+  word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "");
 
-/** The first word after the first that shouldn't start with a capital, or null. */
-function capitalizedWord(heading: string): string | null {
+/**
+ * Whether a heading mixes sentence case and Title Case (ODY-903): the first
+ * lowercase and the first capitalized word, or null when it keeps to one.
+ * Words that fit either style don't count: the first word, one after a ":",
+ * short words ("for", "with"), acronyms, code names, allowed names and words
+ * in the heading's inline code.
+ */
+function mixedCase(
+  heading: string,
+  code: readonly string[] = [],
+): { lower: string; upper: string } | null {
+  const inCode = new Set(code.flatMap(words));
   const tokens = heading.split(/\s+/);
+  let lower: string | null = null;
+  let upper: string | null = null;
   for (let i = 1; i < tokens.length; i++) {
     const word = tokens[i];
-    if (!/^[A-Z]/.test(word) || tokens[i - 1].endsWith(":")) continue;
+    if (!/^[A-Za-z]/.test(word) || tokens[i - 1].endsWith(":")) continue;
+    if (HEADING_SHORT.has(word.toLowerCase())) continue;
     const letters = word.replace(/['’]s$/, "").replace(/[^A-Za-z]/g, "");
     // Acronyms and code names ("SQL", "JavaScript") keep their capitals
     if (/[A-Z].*[A-Z]|[a-z][A-Z]/.test(letters)) continue;
-    if (!HEADING_ALLOW.has(letters)) return word;
+    if (HEADING_ALLOW.has(letters) || inCode.has(trimmed(word))) continue;
+    if (/^[A-Z]/.test(word)) upper ??= trimmed(word);
+    else lower ??= trimmed(word);
   }
-  return null;
+  return lower && upper ? { lower, upper } : null;
 }
 
 const AI_NOTE = {
@@ -255,18 +275,18 @@ export const CONTENT_CHECKS: readonly Check[] = [
     rules: [
       {
         id: "sentence-case",
-        text: "Every heading is in sentence case: only its first word starts with a capital, apart from words on an allowed list (acronyms and names such as SQL and Python)",
+        text: 'Every heading uses one style: sentence case ("Data science for beginners") or Title Case ("Data Science for Beginners"). Short words such as "for" and "with", acronyms, and names such as SQL and Python fit either',
         run: (doc) =>
           doc.parts.flatMap((part) =>
             part.blocks.flatMap((b): Flag[] => {
               if (b.type !== "heading") return [];
-              const bad = capitalizedWord(b.text);
-              return bad
+              const mixed = mixedCase(b.text, b.inlineCode);
+              return mixed
                 ? [
                     flag(
                       part,
                       b.id,
-                      `"${b.text}" capitalizes "${bad}". Only the first word should start with a capital.`,
+                      `"${b.text}" mixes sentence case and Title Case: "${mixed.lower}" is lowercase but "${mixed.upper}" is capitalized. Use one style for the whole heading.`,
                     ),
                   ]
                 : [];
@@ -329,7 +349,10 @@ export const CONTENT_CHECKS: readonly Check[] = [
         text: 'The same word never appears twice in a row ("the the")',
         run: (doc) =>
           readableText(doc).flatMap((s) => {
-            const m = s.text.match(/\b([A-Za-z]+)\s+\1\b/i);
+            // "that that" and "had had" are correct English (ODY-903)
+            const m = [...s.text.matchAll(/\b([A-Za-z]+)\s+\1\b/gi)].find(
+              (hit) => !DOUBLED_ALLOW.has(hit[1].toLowerCase()),
+            );
             return m ? [flag(s.part, s.blockId, `Repeats "${m[0]}".`)] : [];
           }),
       },
