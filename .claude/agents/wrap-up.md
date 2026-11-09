@@ -167,7 +167,7 @@ No action needed:
 ## Phase 4: Draft Slack Handoff
 
 If Phase 0.5 wrote a progress file, draft a `[STATUS]` handoff for the team's
-Slack group DM in the format from `docs/agent/multi-agent-coordination.md`:
+Slack channel (`#prj-odyssey-agents`) in the format from `docs/agent/multi-agent-coordination.md`:
 completed work, remaining work, blockers and next action, with the branch or
 PR, in five lines or fewer. Mark work `COMPLETED` only if it is on develop
 (`.claude/scripts/coord-status.sh ODY-<n>` reads `ON DEVELOP`). You have no
