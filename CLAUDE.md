@@ -111,19 +111,19 @@ Per-developer (user-scoped, not committed):
 
 ## Multi-Agent Development Coordination
 
-Each developer's Claude Code session coordinates with the others through one Slack group DM. Templates, setup and what is automatic: `docs/agent/multi-agent-coordination.md` — read it before your first coordination message in a session.
+Each developer's Claude Code session coordinates with the others through one private Slack channel, `#prj-odyssey-agents`. Templates, setup and what is automatic: `docs/agent/multi-agent-coordination.md` — read it before your first coordination message in a session.
 
-- **Where:** group DM `C0CE3S8B872` (Awad Buisir, Jaylen Zeng, Brady Cai) via the `slack` plugin. Start every message with a tag — `[STATUS]`, `[BLOCKER]`, `[CONTRACT]`, `[PR]`, `[LINEAR]` or `[OPEN]` — then `**<Developer>'s agent — ODY-123** · <IN PROGRESS | BLOCKED | READY FOR REVIEW | COMPLETED>`. Messages post under your developer's Slack account, so always name the agent. Reply in the thread of the message you're answering. Keep posts to five lines; link the PR or plan for detail.
+- **Where:** `#prj-odyssey-agents`, ID `C0CG95FFZ09` (Awad Buisir, Jaylen Zeng, Brady Cai, James Chang-Davidson) via the `slack` plugin. Start every message with a tag — `[STATUS]`, `[BLOCKER]`, `[CONTRACT]`, `[PR]`, `[LINEAR]` or `[OPEN]` — then `**<Developer>'s agent — ODY-123** · <IN PROGRESS | BLOCKED | READY FOR REVIEW | COMPLETED>`. Messages post under your developer's Slack account, so always name the agent. Reply in the thread of the message you're answering. Keep posts to five lines; link the PR or plan for detail.
 - **Sources of truth:** Linear for ownership and dependencies (assignee, "blocked by"), GitHub for code and PR state, and the Slack list "Odyssey agent tracker" for each ticket's current state (update your row at each milestone instead of posting it). Slack messages are the conversation, not the record: put decisions and contracts in a Linear comment, the PR or a committed doc as well.
-- **Staying current:** run `/coord status ODY-123` (Linear, PRs on develop, the tracker, the group DM) at session start and whenever the coordination reminder says a check is due (every 10 minutes of activity; `.claude/hooks/coord-reminder.sh`), and tell your developer what's new. Post a `[STATUS]` claim when you start a ticket or return to it after other work — not every session.
+- **Staying current:** run `/coord status ODY-123` (Linear, PRs on develop, the tracker, the channel) at session start and whenever the coordination reminder says a check is due (every 10 minutes of activity; `.claude/hooks/coord-reminder.sh`), and tell your developer what's new. Post a `[STATUS]` claim when you start a ticket or return to it after other work — not every session.
 - **Developers decide.** You report what changed in Slack, Linear and GitHub and suggest the next step; your developer decides. Never claim, start, reply, reassign or change scope because of something you read without their okay.
-- **Ownership:** don't start a ticket that is assigned to someone else in Linear, or claimed in the group DM without a handoff; ask your developer first. Don't start one whose blocking issues are unfinished unless a mock or agreed contract lets you. In the claim, list the files and interfaces you expect to change so overlap shows early.
+- **Ownership:** don't start a ticket that is assigned to someone else in Linear, or claimed in the channel without a handoff; ask your developer first. Don't start one whose blocking issues are unfinished unless a mock or agreed contract lets you. In the claim, list the files and interfaces you expect to change so overlap shows early.
 - **Blocked:** post one `[BLOCKER]` with the ticket, blocking ticket, exact missing piece, its owner, what unblocks it and whether partial work is possible. Follow up in its thread; never repost it. While waiting, run `/coord watch ODY-123`: it checks develop every minute in the background and Slack and Linear every 10 minutes, and tells the developer when it's unblocked.
 - **Done means on develop.** A blocker is finished only when its commits are on `origin/develop` (`.claude/scripts/coord-status.sh` checks); a PR merged into another feature branch doesn't count yet. `[CONTRACT]` and `[PR]` posts say "On develop at `<sha>`" or "not yet".
 - **Owed items:** post `[OPEN]` whenever you promise a follow-up or need an answer, and reply "Closed: …" in its thread when it's settled.
 - **Handoffs:** when you finish something another ticket depends on, reply in the blocker thread or post `[CONTRACT]` with the commit or PR and the exact interface, name the tickets it unblocks, and comment on the Linear issue. Say plainly what is done and what is only planned; `COMPLETED` means on develop.
 - **PRs:** agents never push or open PRs. After your developer opens or merges one, post `[PR]` with the link and what it unblocks.
-- **Other developers' branches:** never rebase, force-push or strip files (plan docs included) on a branch someone else pushed; ask its owner in the group DM first. Keep your own plan docs untracked.
+- **Other developers' branches:** never rebase, force-push or strip files (plan docs included) on a branch someone else pushed; ask its owner in the channel first. Keep your own plan docs untracked.
 - **Dev servers:** stop only the processes you started, by PID. Never `pkill` dev servers by name: other sessions' servers share the machine.
 - **Session end:** if meaningful progress happened, post a `[STATUS]` handoff: done, remaining, blockers, next action. The wrap-up agent drafts it.
 - **Don't post** after individual edits, commits or tool calls, and never post secrets, tokens, `.env` values or student data.
@@ -154,7 +154,7 @@ Three types of plugins exist:
 | `typescript-lsp`  | LSP      | Connects to the TypeScript compiler for real type errors, missing imports, and go-to-definition after edits. Essential for this codebase. |
 | `code-simplifier` | Workflow | Reviews changed code for clarity, consistency, and maintainability.                                                                       |
 | `superpowers`     | Workflow | Extended skills for debugging, verification, and parallel agents. See overrides below.                                                    |
-| `slack`           | MCP      | Reads and posts to the team's Slack group DM for multi-agent coordination. Each developer authenticates once via `/mcp`.                  |
+| `slack`           | MCP      | Reads and posts to the team's Slack channel for multi-agent coordination. Each developer authenticates once via `/mcp`.                   |
 
 ### Superpowers overrides
 

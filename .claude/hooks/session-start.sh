@@ -65,9 +65,9 @@ fi
 
 # ─── Multi-agent coordination reminder ───────────────────────────────
 # Names the ticket from the branch (e.g. bug/ody-785-… → ODY-785) so the
-# agent checks the team's Slack group DM before starting work on it.
+# agent checks the team's Slack channel before starting work on it.
 TICKET=$(echo "$BRANCH" | grep -oiE 'ody-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
-COORDINATION="Coordination: before starting work${TICKET:+ on $TICKET}, run /coord status${TICKET:+ $TICKET} (Linear blockers, PRs on develop, the tracker), list any [OPEN] items owed by or to you in the group DM (C0CE3S8B872), and follow \"Multi-Agent Development Coordination\" in CLAUDE.md"
+COORDINATION="Coordination: before starting work${TICKET:+ on $TICKET}, run /coord status${TICKET:+ $TICKET} (Linear blockers, PRs on develop, the tracker), list any [OPEN] items owed by or to you in #prj-odyssey-agents (C0CG95FFZ09), and follow \"Multi-Agent Development Coordination\" in CLAUDE.md"
 
 DEPS_NOTE=""
 [ -n "$STALE_DEPS" ] && DEPS_NOTE="Packages may be stale in:${STALE_DEPS}; run npm ci there before testing."
