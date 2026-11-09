@@ -630,7 +630,10 @@ function blockContent({
     case "droplets.expandable":
       return (
         <Collapsible className="relative w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
-          <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
+          <CollapsibleTrigger
+            data-mentor-expand
+            className="inline-flex flex-row items-center gap-2 font-bold text-sky-600"
+          >
             {block.title}
             <ArrowDownFromLineIcon className="h-4 w-4 text-sky-400" />
           </CollapsibleTrigger>

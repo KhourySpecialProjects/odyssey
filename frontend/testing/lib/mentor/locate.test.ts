@@ -60,7 +60,7 @@ describe("findCitation", () => {
 
 describe("showCitation", () => {
   it("opens a closed expandable, then finds the quote inside it", async () => {
-    root.innerHTML = `<div data-lesson-block="0"><button data-state="closed">More</button><div id="body"></div></div>`;
+    root.innerHTML = `<div data-lesson-block="0"><button data-mentor-expand data-state="closed">More</button><div id="body"></div></div>`;
     root.querySelector("button")!.addEventListener("click", () => {
       root.querySelector("#body")!.innerHTML = "<p>Hidden answer text</p>";
     });
@@ -75,6 +75,38 @@ describe("showCitation", () => {
     expect(scrollIntoView).toHaveBeenCalledWith(
       expect.objectContaining({ block: "center" }),
     );
+  });
+
+  it("doesn't click a closed button that isn't an expandable trigger", async () => {
+    root.innerHTML = `<div data-lesson-block="0"><button data-state="closed">Menu</button><p>Unrelated words here</p></div>`;
+    const click = jest.fn();
+    root.querySelector("button")!.addEventListener("click", click);
+
+    const shown = showCitation(
+      root,
+      cite(0, { quote: "gone", prefix: "aaaaaaaaaa", suffix: "bbbbbbbbbb" }),
+    );
+    await jest.advanceTimersByTimeAsync(600);
+
+    expect(click).not.toHaveBeenCalled();
+    await shown;
+  });
+
+  it("stops polling an expandable once aborted", async () => {
+    root.innerHTML = `<div data-lesson-block="0"><button data-mentor-expand data-state="closed">More</button><p>Unrelated words here</p></div>`;
+    const ctl = new AbortController();
+
+    const shown = showCitation(
+      root,
+      // Prefix and suffix that don't match keep the quote from resolving
+      cite(0, { quote: "gone", prefix: "aaaaaaaaaa", suffix: "bbbbbbbbbb" }),
+      ctl.signal,
+    );
+    ctl.abort();
+    await jest.advanceTimersByTimeAsync(600);
+
+    expect(await shown).toBe(false);
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("flashes the whole block when there is no quote, then clears it", async () => {
@@ -125,5 +157,19 @@ describe("noteYFor", () => {
 
     expect(noteYFor(root, [cite(2)])).toBe(350);
     expect(noteYFor(root, [])).toBe(100);
+  });
+
+  it("adds the root's own scroll when the lesson wrapper scrolls", () => {
+    root.innerHTML = `<div data-lesson-block="0"></div>`;
+    root.scrollTop = 400;
+    jest
+      .spyOn(root, "getBoundingClientRect")
+      .mockReturnValue({ top: 107 } as DOMRect);
+    jest
+      .spyOn(root.firstElementChild!, "getBoundingClientRect")
+      .mockReturnValue({ top: 207 } as DOMRect);
+
+    expect(noteYFor(root, [cite(0)])).toBe(500);
+    expect(noteYFor(root, [])).toBe(400);
   });
 });

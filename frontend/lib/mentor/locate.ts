@@ -43,15 +43,22 @@ export function findCitation(root: Element, citation: Citation): Found | null {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Opens a closed expandable in the block, then waits for its text to draw. */
-async function findAfterOpening(root: Element, citation: Citation) {
+async function findAfterOpening(
+  root: Element,
+  citation: Citation,
+  signal?: AbortSignal,
+) {
   const trigger = blockOf(
     root,
     citation.blockIndex,
-  )?.querySelector<HTMLElement>('button[data-state="closed"]');
+  )?.querySelector<HTMLElement>(
+    'button[data-mentor-expand][data-state="closed"]',
+  );
   if (!trigger || !citation.anchor.quote) return null;
   trigger.click();
   for (let t = 0; t < OPEN_GIVE_UP_MS; t += OPEN_POLL_MS) {
     await wait(OPEN_POLL_MS);
+    if (signal?.aborted) return null;
     const found = findCitation(root, citation);
     if (found?.range) return found;
   }
@@ -91,13 +98,14 @@ function flash({ element, range }: Found) {
 export async function showCitation(
   root: Element,
   citation: Citation,
+  signal?: AbortSignal,
 ): Promise<boolean> {
   let found = findCitation(root, citation);
   // A quote that isn't drawn may be inside a closed expandable
   if (!found?.range && citation.anchor.quote) {
-    found = (await findAfterOpening(root, citation)) ?? found;
+    found = (await findAfterOpening(root, citation, signal)) ?? found;
   }
-  if (!found) return false;
+  if (!found || signal?.aborted) return false;
 
   const reduced = window.matchMedia?.(
     "(prefers-reduced-motion: reduce)",
@@ -111,10 +119,12 @@ export async function showCitation(
   return true;
 }
 
-/** Where a note about these citations goes, in px from the top of the lesson. */
+/** Where a note goes, in px from the lesson's top; scrollTop covers a scrolling root. */
 export function noteYFor(root: Element, citations: Citation[]): number {
   const top = root.getBoundingClientRect().top;
   const block = citations[0] && blockOf(root, citations[0].blockIndex);
-  if (block) return Math.max(block.getBoundingClientRect().top - top, 0);
-  return Math.max(-top, 0);
+  const inView = block
+    ? block.getBoundingClientRect().top - top
+    : Math.max(-top, 0);
+  return Math.max(inView + root.scrollTop, 0);
 }
