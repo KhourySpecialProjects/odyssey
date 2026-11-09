@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { MentorInput, MentorTurn } from "@/lib/mentor/types";
 
-// A request to Mentor (ODY-885). ODY-886's route adds dropletId and lessonId
-// with `.and()`: a discriminated union has no `.extend()`. Unknown keys are
-// dropped, not rejected: lesson text or answers the browser sends are
-// ignored.
+// A request to Mentor (ODY-885), and the body of POST /api/mentor (ODY-886),
+// which adds dropletId and lessonId with `.and()`: a discriminated union has
+// no `.extend()`. Unknown keys are dropped, not rejected: lesson text or
+// answers the browser sends are ignored.
 
 export const MENTOR_MESSAGE_MAX = 1000;
 export const MENTOR_SELECTION_MAX = 300;
@@ -60,3 +60,19 @@ export const mentorInputSchema = z.discriminatedUnion("kind", [
     answerIds: z.array(id).min(1).max(10),
   }),
 ]) satisfies z.ZodType<MentorInput, z.ZodTypeDef, unknown>;
+
+/** Numeric ids, as `id` filters take: not documentIds */
+const ids = z.object({
+  dropletId: z.number().int().positive(),
+  lessonId: z.number().int().positive(),
+});
+
+export type MentorRequest = MentorInput & {
+  dropletId: number;
+  lessonId: number;
+};
+
+/** POST /api/mentor's body. Each side drops its own unknown keys. */
+export const mentorRequestSchema = mentorInputSchema.and(
+  ids,
+) satisfies z.ZodType<MentorRequest, z.ZodTypeDef, unknown>;
