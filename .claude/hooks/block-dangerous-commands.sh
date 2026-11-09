@@ -19,6 +19,15 @@ if [ -z "$COMMAND" ]; then
     exit 0
 fi
 
+# Cloud sessions (Claude Code on the web) may push their own claude/ branch,
+# the only way their work gets back. Only this exact command shape is allowed.
+CLAUDE_BRANCH_PUSH='^[[:space:]]*git[[:space:]]+push[[:space:]]+((-u|--set-upstream)[[:space:]]+)?origin[[:space:]]+(HEAD:)?claude/[A-Za-z0-9._/-]+[[:space:]]*$'
+if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] &&
+    [[ "$COMMAND" != *$'\n'* ]] &&
+    echo "$COMMAND" | grep -qE "$CLAUDE_BRANCH_PUSH"; then
+    exit 0
+fi
+
 # Dangerous patterns to block
 PATTERNS=(
     'rm\s+-rf\s+/'
