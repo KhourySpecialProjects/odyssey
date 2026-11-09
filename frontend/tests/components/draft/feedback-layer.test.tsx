@@ -76,7 +76,6 @@ function mount(over: Partial<React.ComponentProps<typeof FeedbackLayer>> = {}) {
           ? { type: "paragraph", text: "Loops end when a condition fails." }
           : undefined
       }
-      meta="Round 1 · sent Oct 28, 3:04 PM"
       onAddress={onAddress}
       litMarkId={null}
       onLitChange={onLitChange}
@@ -119,7 +118,7 @@ describe("FeedbackLayer (ODY-807)", () => {
 
     const card = screen.getByRole("dialog", { name: "Comment 1" });
     expect(card).toHaveTextContent("Which loop?");
-    expect(card).toHaveTextContent("Round 1 · sent Oct 28, 3:04 PM");
+    expect(card).not.toHaveTextContent("Round 1");
     expect(card).toHaveTextContent("Nadia Reviewer");
     expect(document.activeElement).toBe(editor);
   });
@@ -134,7 +133,6 @@ describe("FeedbackLayer (ODY-807)", () => {
           numbers={new Map([[1, 1]])}
           outdatedIds={new Set()}
           blockFor={() => undefined}
-          meta="Round 1"
           litMarkId={null}
           onLitChange={onLitChange}
         >

@@ -73,14 +73,18 @@ export function carriedNotes(comment: ReviewComment, unseen = false): string[] {
   ];
 }
 
-/** "Pending · carried from round 1", for a carried comment's card */
+/** "Pending · carried from round 1" or "Carried from round 1", for a carried comment's card */
 export function carriedMeta(
   comment: ReviewComment,
   pending: boolean,
 ): string | undefined {
   const round = carriedRound(comment);
   if (round === null || isResolved(comment)) return undefined;
-  return `${pending ? "Pending" : "Sent"} · ${round > 0 ? `carried from round ${round}` : "carried over"}`;
+  return pending
+    ? `Pending · ${round > 0 ? `carried from round ${round}` : "carried over"}`
+    : round > 0
+      ? `Carried from round ${round}`
+      : "Carried over";
 }
 
 /** "3 comments on this lesson" */

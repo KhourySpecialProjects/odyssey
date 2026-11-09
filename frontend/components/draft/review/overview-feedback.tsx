@@ -17,7 +17,6 @@ import {
 } from "./review-comments-context";
 import { unseenCount } from "@/lib/review-threads";
 import {
-  feedbackMeta,
   isResolved,
   isWholeSection,
   numberComments,
@@ -160,7 +159,6 @@ export function OverviewFeedback({
     return { total, lessons: lessons.size };
   })();
 
-  const meta = feedbackMeta(review);
   const onAddress =
     canEdit && canAddress ? withClosedNotice(markAddressed) : undefined;
   const onReply = canReply ? withClosedNotice(reply) : undefined;
@@ -175,7 +173,6 @@ export function OverviewFeedback({
         numbers={numbers}
         outdatedIds={outdatedIds}
         blockFor={() => undefined}
-        meta={meta}
         onAddress={onAddress}
         onReply={onReply}
         replyEdits={replyEdits}
@@ -216,7 +213,6 @@ export function OverviewFeedback({
       onLitChange={setLitMarkId}
       readOnly
       forCreator={!!canAddress}
-      meta={meta}
       onAddress={onAddress}
       onReply={onReply}
       replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
@@ -269,7 +265,6 @@ export function OverviewFeedback({
               onAddress,
               onReply,
               replyEdits: replyEdits && closedNoticeEdits(replyEdits),
-              meta: () => meta,
               forCreator: !!canAddress,
             }}
           />

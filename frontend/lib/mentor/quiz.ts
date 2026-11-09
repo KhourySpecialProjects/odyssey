@@ -3,8 +3,9 @@ import { displayBlocksOf } from "@/lib/blocknote/convert-blocks";
 import type { Block } from "@/types";
 import type { MentorLesson, MentorQuizQuestion } from "./types";
 
-// Quiz questions for Mentor (ODY-882), never with their answers. For the
-// server and scripts only: the browser sends ids, not lesson text.
+// Quiz questions for Mentor (ODY-882). findQuizQuestion never gives their
+// answers; choiceQuestionById does, for answer-key.ts alone. For the server
+// and scripts only: the browser sends ids, not lesson text.
 
 /** A choice question as the learner page draws it, answers included */
 export type ChoiceQuestion = Extract<
@@ -38,19 +39,28 @@ export function quizQuestionMarkdown(question: MentorQuizQuestion): string {
 }
 
 /**
- * A multiple-choice or true/false question, found by the id the learner page
- * renders, with no answer. Null if there's none, or if two questions share
+ * The multiple-choice or true/false question with the id the learner page
+ * renders, answers included. Null if there's none, or if two questions share
  * the id. Open-ended questions aren't looked up: in Classic lessons their
  * ids can equal a choice question's.
  */
-export function findQuizQuestion(
+export function choiceQuestionById(
   lesson: MentorLesson,
   questionId: number,
-): MentorQuizQuestion | null {
+): ChoiceQuestion | null {
   const found = displayBlocksOf(lesson).flatMap((block) =>
     block.__component === "droplets.quiz"
       ? (block.questions ?? []).filter((q) => q.id === questionId)
       : [],
   );
-  return found.length === 1 ? quizQuestionOf(found[0]) : null;
+  return found.length === 1 ? found[0] : null;
+}
+
+/** The choice question with this page id, as choiceQuestionById finds it, with no answer */
+export function findQuizQuestion(
+  lesson: MentorLesson,
+  questionId: number,
+): MentorQuizQuestion | null {
+  const question = choiceQuestionById(lesson, questionId);
+  return question && quizQuestionOf(question);
 }

@@ -71,9 +71,7 @@ async function main() {
     model,
     effort,
   });
-  if (
-    !(await confirmSpend(estimate, model, { batch: false, yes: values.yes }))
-  ) {
+  if (!(await confirmSpend(estimate, { batch: false, yes: values.yes }))) {
     console.log("Nothing sent.");
     return;
   }

@@ -253,6 +253,10 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 - **Running a scan** (ODY-790): read the droplet and its lessons fresh, then call `buildScanDocument(droplet, lessons)` (`lib/overview-scan/snapshot.ts`) and `runChecks(doc, CHECKS, fetchUrl)` (`run.ts`, `checks.ts`). `ScanSourceDroplet` lists the droplet fields to populate, and lessons go in the order a learner takes them. The snapshot reads BlockNote `blocksV2` directly, never through `convertBlockNoteToV1Blocks`, which drops image captions. A rule that throws is reported as couldn't check. Change `RULES_VERSION` in `config.ts` whenever a rule or a limit changes.
 - **`CHECKS` is server only** (ODY-791): the content checks' spell-check (`spelling.ts`, typo-js's en_US dictionary plus `CONFIG.techWords`) reads its dictionary from `node_modules` relative to `process.cwd()`. A page that lists the checks imports `CHECKS` in a Server Component and passes the titles and rule texts to its client components. Swear words and slurs come from obscenity's English list; `CONFIG.swearAllowWords` lets through words it wrongly matches ("cockpit"). Words in a block's `inlineCode` aren't spell-checked.
 
+## Mentor usage
+
+The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
+
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.

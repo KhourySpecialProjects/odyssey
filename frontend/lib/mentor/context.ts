@@ -829,27 +829,25 @@ export function citationsFor(
 }
 
 /**
- * The refs of every passage a selection appears in, in page order, ignoring
- * whitespace (a browser's selection breaks lines where the saved text
- * doesn't). [] when it's only in passages that can't be cited; null when it
- * isn't in the lesson. Passages the budget left out count. Answers aren't
- * lesson text.
+ * Every passage a selection appears in, in page order, ignoring whitespace
+ * (a browser's selection breaks lines where the saved text doesn't); null
+ * when it isn't in the lesson. Passages the budget left out count. Answers
+ * aren't lesson text.
  */
-export function locateSelection(
+export function selectionPassages(
   context: LessonContext,
   selection: string,
-): string[] | null {
+): Passage[] | null {
   const wanted = noSpace(selection);
   if (!wanted) return null;
   let joined = "";
-  const spans: { ref: string | null; start: number; end: number }[] = [];
-  for (const { ref, plain } of context.passages) {
-    const text = noSpace(plain);
-    spans.push({ ref, start: joined.length, end: joined.length + text.length });
-    joined += text;
-  }
+  const spans = context.passages.map((passage) => {
+    const start = joined.length;
+    joined += noSpace(passage.plain);
+    return { passage, start, end: joined.length };
+  });
   let found = false;
-  const refs: string[] = [];
+  const passages: Passage[] = [];
   for (
     let at = joined.indexOf(wanted);
     at !== -1;
@@ -857,11 +855,24 @@ export function locateSelection(
   ) {
     found = true;
     const end = at + wanted.length;
-    for (const { ref, start, end: spanEnd } of spans) {
-      if (ref && start < end && spanEnd > at && !refs.includes(ref)) {
-        refs.push(ref);
+    for (const { passage, start, end: spanEnd } of spans) {
+      if (start < end && spanEnd > at && !passages.includes(passage)) {
+        passages.push(passage);
       }
     }
   }
-  return found ? refs : null;
+  return found ? passages : null;
+}
+
+/**
+ * The refs of every passage a selection appears in, as selectionPassages
+ * finds them. [] when it's only in passages that can't be cited; null when
+ * it isn't in the lesson.
+ */
+export function locateSelection(
+  context: LessonContext,
+  selection: string,
+): string[] | null {
+  const passages = selectionPassages(context, selection);
+  return passages && passages.flatMap(({ ref }) => (ref ? [ref] : []));
 }

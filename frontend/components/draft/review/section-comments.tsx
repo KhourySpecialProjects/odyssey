@@ -78,12 +78,11 @@ interface SectionCommentsProps {
   onLitChange: (markId: string | null) => void;
   /**
    * The creator reading sent feedback (ODY-807): the heading takes no new
-   * comment, and cards show `meta` and offer `onAddress` when given
+   * comment, and cards offer `onAddress` when given
    */
   readOnly?: boolean;
   /** Cards use the creator's wording; reviewers get the reviewer's. */
   forCreator?: boolean;
-  meta?: ReactNode;
   onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies: the creator's on any comment, a reviewer's on a carried one */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
@@ -113,7 +112,6 @@ export function SectionComments({
   onLitChange,
   readOnly = false,
   forCreator = false,
-  meta,
   onAddress,
   onReply,
   replyEdits,
@@ -408,7 +406,7 @@ export function SectionComments({
           onDelete={() => onDelete(cardComment.id)}
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
-          meta={meta ?? carriedMeta(cardComment, canChange)}
+          meta={readOnly ? undefined : carriedMeta(cardComment, canChange)}
           forCreator={forCreator}
           onAddress={
             onAddress && ((addressed) => onAddress(cardComment.id, addressed))

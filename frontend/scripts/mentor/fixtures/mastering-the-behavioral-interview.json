@@ -1,0 +1,691 @@
+{
+  "snapshotVersion": 1,
+  "takenAt": "2026-11-06T14:33:11.965Z",
+  "source": {
+    "strapiUrl": "http://localhost:1337",
+    "dropletId": 24
+  },
+  "droplet": {
+    "id": 24,
+    "name": "Mastering the Behavioral Interview",
+    "slug": "mastering-the-behavioral-interview",
+    "description": "Learn about behavioral interviews as well as sample questions for your personal practice. You will take away further experience and practice, as well as useful tips and tricks to rid yourself of interview anxiety and master the behavioral interview. ",
+    "type": "skill",
+    "focusArea": "professional",
+    "difficulty": null,
+    "learningObjectives": [
+      "Understand the purpose and significance of behavioral interviews in the tech industry and what types of question are usually asked.",
+      "Learn the STAR method for structuring responses to behavioral interview questions.",
+      "Practice formulating responses to common behavioral interview questions related to technical and personal skills, personal and academic projects, leadership, teamwork, and problem-solving abilities.",
+      "Develop effective storytelling techniques to showcase relevant experiences and accomplishments.",
+      "Reflect on personal interview performance and identify areas for improvement in interview preparation strategies."
+    ],
+    "overview": "<p>It doesn’t matter if it is your first time or 100th time embarking on the journey that is job-hunting. If you make it past the resume review, you will most likely have to go through several rounds of interviews. One of these is going to be a behavioral interview. But what is a behavioral interview? And how can you make sure you nail it?</p><p>A <a href=\"https://www.thebalancemoney.com/behavioral-job-interviews-2058575\">behavioral interview</a> is a type of job interview where the interviewer asks candidates to provide specific examples of past behaviors and experiences to demonstrate their skills and abilities. Interviewers usually have a set of questions which they use to assess your soft, hard, and personal skills as an individual. The premise behind this approach is that past behavior is a good predictor of future behavior. Questions typically begin with phrases like \"Tell me about a time when...\" or \"Give me an example of a situation where...\"</p><p>In the context of the tech industry and interviewing for tech jobs, a behavioral interview may focus on experiences and behaviors relevant to the specific technical skills and competencies required for the job. This could include problem-solving abilities, projects that you have worked on, communication skills, and technical expertise.</p><p>Overall, behavioral interviews in the tech industry play a critical role in identifying candidates who not only possess the necessary technical skills but also demonstrate the soft skills and behaviors essential for success in dynamic and collaborative tech environments.</p>",
+    "prerequisites": [],
+    "previousReview": null
+  },
+  "lessons": [
+    {
+      "id": 167,
+      "name": "Understanding the STAR Method",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 269,
+          "content": "<h3><strong>What is the STAR Method?</strong></h3><p>**<i>To continue through this module, we strongly encourage you to complete the “What is the Star Method” droplet, but we will provide a comprehensive overview of it as well</i></p><p>The STAR method is a common approach used to answer behavioral interview questions. It provides a structured format you can use to tell a story by laying out the situation, task, action, and result.</p><ol><li><strong>Situation</strong>: Describe the context or situation you were in. Provide enough detail for the interviewer to understand the scenario.</li><li><strong>Task</strong>: Explain the specific task or challenge you faced in that situation. What were <strong>YOU</strong> responsible for accomplishing?</li><li><strong>Action</strong>: Detail the actions you took to address the task/challenge. Focus on your contributions and the process you followed.</li><li><strong>Result</strong>: Finish by discussing the outcomes or results of your actions. What happened as a result of your efforts? Ideally, highlight positive outcomes and quantify achievements when possible.</li></ol><p>The STAR method helps candidates structure their responses in a clear and concise manner, ensuring they provide relevant examples and showcase their skills effectively during the interview.</p><p><i>General Breakdown for the STAR method and approximate percentage of time you should spend in each section.</i></p><p><img src=\"https://content.khouryodyssey.org/uploads/star_model_ba2b9672e1.png\" alt=\"star model.png\"></p><p>From MIT Career Advising &amp; Professional Development <a href=\"https://capd.mit.edu/resources/the-star-method-for-behavioral-interviews/\">https://capd.mit.edu/resources/the-star-method-for-behavioral-interviews/</a></p><h3><strong>How To: STAR Method</strong></h3>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 27,
+          "url": "https://www.youtube.com/embed/dWK26jZgsM8?si=IelflMRxWNH3f-uk",
+          "__component": "droplets.video"
+        },
+        {
+          "id": 271,
+          "content": "<h3>Check-in: Understanding the STAR Method</h3><p>Below, we will provide a sample interview question and response which makes use of the STAR method in an effective way to convey all necessary information.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 88,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Sample Behavioral Question:",
+                  "type": "text"
+                },
+                {
+                  "text": " \"Tell me about a time when you had to resolve a conflict with a team member during a project.\"",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Situation:",
+                  "type": "text"
+                },
+                {
+                  "text": " During my sophomore year in college, I was assigned to a group project for my marketing class. Our task was to develop a comprehensive marketing plan for a local startup.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Task:",
+                  "type": "text"
+                },
+                {
+                  "text": " One of the challenges our team encountered was a disagreement between myself and a team member regarding the direction of our marketing strategy. She strongly advocated for a traditional marketing approach, while I believed that incorporating digital marketing tactics would better reach our target audience.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Action:",
+                  "type": "text"
+                },
+                {
+                  "text": " To address the conflict, I first wanted to have a one-on-one chat with her to understand her perspective better and express my own. I actively listened to the reasoning behind her approach, acknowledging the validity of her points. Then, I explained my rationale in favor of digital marketing, providing examples of successful campaigns and insights that supported this strategy.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Together, we decided to meet with our professor to seek guidance and input, our other teammates who didn’t have as strong opinions we also present because we wanted it ot be a team decision. During the meeting, we presented both approaches and discussed the pros and cons of each. Through open dialogue and compromise, we  developed a hybrid marketing strategy that integrated elements of both traditional and digital marketing. We were able to address both of our concerns and showcase the different abilities of all group members.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Result:",
+                  "type": "text"
+                },
+                {
+                  "text": " As a result of our collaborative effort, our team received positive feedback from our professor for our innovative campaign. Not only did we successfully resolve the conflict, but we also strengthened our teamwork skills and achieved a higher grade on the project than we initially anticipated.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 18,
+          "questions": [
+            {
+              "id": 38,
+              "content": "<p>Which step of the STAR method involves discussing the specific task or challenge faced during the situation described?</p>",
+              "answerOptions": [
+                {
+                  "id": 125,
+                  "isCorrect": false,
+                  "content": "Situation: Having a collaborative team project in class."
+                },
+                {
+                  "id": 126,
+                  "isCorrect": true,
+                  "content": "Task: Going through a disagreement with a team member."
+                },
+                {
+                  "id": 128,
+                  "isCorrect": false,
+                  "content": "Action: Having a one-on-one chat with the team-mate and later speaking with the professor. "
+                },
+                {
+                  "id": 127,
+                  "isCorrect": false,
+                  "content": "Result: Coming up with a collaborative strategy for the project."
+                }
+              ]
+            },
+            {
+              "id": 39,
+              "content": "<p>True or False: The STAR method stands for Situation, Trouble, Action, Reflection.</p>",
+              "answerOptions": [
+                {
+                  "id": 130,
+                  "isCorrect": false,
+                  "content": "True"
+                },
+                {
+                  "id": 129,
+                  "isCorrect": true,
+                  "content": "False"
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 169,
+      "name": "Tips and Tricks to Ace the Interview",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 272,
+          "content": "<p>We know there is probably a lot going on in your mind before interviewing for a potential employer. To make life a little easier, we are providing some good-to-knows to help you prepare.</p><p>By implementing these tips and pointers, students can alleviate interview anxiety and present themselves more professionally prepared during the interview process.</p><p>🏢&nbsp;<strong>Research the Company</strong>: Take the time to research the company, its mission, values, and culture. Understanding the organization's background can help you feel more confident and prepared to discuss how your skills and experiences align with their needs.</p><p>☕&nbsp;<strong>Avoid Overcaffeination</strong>:</p><p>Limit your caffeine intake to moderate levels, especially on the day of your interview. If you normally drink coffee, consider having a small amount in the morning to help you feel alert but to avoid excessive consumption of coffee anxiety.</p><p>👔&nbsp;<strong>Dress Appropriately</strong>: Choose professional attire that is appropriate for the industry and company culture. Dressing well can boost your confidence and make a positive impression on the interviewer.</p><p>📄&nbsp;<strong>Know Your Resume</strong>: Be prepared to discuss your projects, experiences, and skills listed on your resume in detail. Reflect on your accomplishments, challenges overcome, and lessons learned from each experience. Make sure you have quantifiable points.</p><p>⌚&nbsp;<strong>Arrive Early</strong>: Make sure to connect early to the meeting to avoid/fix any technical difficulties. If the interview is in person, arrive at the location early to allow for any unexpected delays. Being on time allows you to compose yourself, review your notes, and mentally prepare for the interview.</p><p>🍊&nbsp;<strong>Eat Something Beforehand</strong>: Fueling your body with the right nutrients can contribute to a clear mind and increased confidence during the interview. Avoid heavy or greasy foods that could make you feel sluggish or uncomfortable during the interview.</p><p>❓&nbsp;<strong>Prepare Questions</strong>: Prepare thoughtful questions to ask the interviewer about the company, role, team dynamics, or future projects. Asking questions demonstrates your interest in the position and company.</p><p>💪&nbsp;<strong>Stay Calm and Confident</strong>: Remember to breathe and stay calm during the interview. Maintain good posture, try to avoid excessive fidgeting/moving around, make eye contact, and speak clearly and confidently. Try to smile!</p><p>📩&nbsp;<strong>Follow-Up</strong>: Send a thank-you email or handwritten note to the interviewer within 24 hours of the interview. Express your gratitude for the opportunity to interview and reiterate your interest in the position.</p><p>&nbsp;</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 170,
+      "name": "Acing the ‘Communication Skills’ Question",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 570,
+          "content": "<p>Communication skills are extremely important in the professional world, influencing every aspect of daily interactions, from conveying ideas effectively to resolving conflicts diplomatically. In this section, we'll delve into mastering communication skills questions.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 349,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "These questions are designed to probe your ability to articulate ideas clearly, listen actively, empathize, persuade, and navigate challenging situations with finesse.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 571,
+          "content": "<h3>Question Examples and Best Practices</h3><p>Let's start by exploring the types of questions you might encounter. Employers often pose different questions to assess your communication skills. Here are a few examples:</p><ul><li>\"Can you describe a situation where you had to communicate complex information to a non-technical audience?\"</li><li>\"Tell me about a time when you had to resolve a conflict through effective communication.\"</li><li>\"Describe a situation where you persuaded others through verbal and/or written communication.\"</li></ul>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 350,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Best Practices",
+                  "type": "text",
+                  "underline": true
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Highlight relevant experiences by emphasizing situations where you successfully demonstrated communication skills and achieved positive outcomes.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Stress the importance of effective communication by connecting each example to the broader impact of clear communication on project success and team dynamics.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 572,
+          "content": "<p><i>These questions are adapted from the </i><a href=\"https://myusf.usfca.edu/career-services/career-resources/interviews-offers/interviews/sample-behavioral-questions\"><i>University of San Francisco’s Career Services</i></a><i>.</i></p><h3>Formulating Responses Using the STAR Method:</h3><p>Now, let's delve into how to craft your responses using the STAR method:</p><ul><li><strong>Situation</strong>: Set the stage by describing the context or scenario you encountered.</li><li><strong>Task</strong>: Explain the specific task or challenge you faced, emphasizing the communication aspect.</li><li><strong>Action</strong>: Detail the actions you took to address the situation, focusing on your communication strategies and techniques.</li><li><strong>Result</strong>: Conclude by discussing the outcomes or results of your actions, highlighting the positive impact of effective communication.</li></ul><h3>Sample Responses and Analysis</h3><p>Let's explore sample responses to the behavioral interview question:</p><blockquote><p>\"Can you describe a situation where you had to communicate complex information to a non-technical audience?”</p></blockquote><p><strong>Good Example Response</strong>:</p><p><i>Candidate</i>: \"In my previous role as a data analyst, I was tasked with presenting the findings of a comprehensive market research study to our company's creative team, most of whom had limited technical knowledge. To ensure clear understanding, I prepared a visually engaging presentation with simplified charts and graphs, accompanied by concise explanations of key data points. I avoided technical jargon and focused on communicating the key findings in a relatable manner. I stopped a couple of times throughout my presentation to see if the team had any questions, and I answered them promptly. As a result, the creative team not only grasped the complex data but also felt informed and empowered to make data-driven decisions for their part of the project.\"</p><p><strong>Bad Example Response:</strong></p><p><i>Candidate</i>: \"Well, I once had to present some data to a group of non-tech people in a school project. It was kinda hard because they kept asking me questions and I had to keep repeating the information, but I think they got it in the end. I thought everyone knew what SaaS meant, lol.\"</p><h3>Check-In: Acing the ‘Communication Skills’ Question</h3>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 48,
+          "questions": [
+            {
+              "id": 71,
+              "content": "<p><strong>Which of the following statements best describes the strengths of the \"Good Example\" response?</strong></p>",
+              "answerOptions": [
+                {
+                  "id": 204,
+                  "isCorrect": false,
+                  "content": "The response is short and lacks specificity and detail, making it easy for the interviewer to assess the candidate's communication skills effectively."
+                },
+                {
+                  "id": 205,
+                  "isCorrect": false,
+                  "content": "The response focuses on the creative team and their difficulties, which showcases the candidate’s empathy towards them. "
+                },
+                {
+                  "id": 203,
+                  "isCorrect": true,
+                  "content": "The candidate effectively demonstrates their ability to communicate complex information by breaking it down into digestible bits, using visual aids, and fostering an open dialogue."
+                },
+                {
+                  "id": 206,
+                  "isCorrect": false,
+                  "content": "The candidate does a good job of showcasing his technical knowledge, therefore impressing the interviewer. "
+                }
+              ]
+            },
+            {
+              "id": 72,
+              "content": "<p>What is a key benefit of effective communication skills in the workplace?</p>",
+              "answerOptions": [
+                {
+                  "id": 207,
+                  "isCorrect": false,
+                  "content": "Increased productivity"
+                },
+                {
+                  "id": 210,
+                  "isCorrect": false,
+                  "content": "Enhanced team collaboration"
+                },
+                {
+                  "id": 209,
+                  "isCorrect": false,
+                  "content": "Improved problem-solving"
+                },
+                {
+                  "id": 208,
+                  "isCorrect": true,
+                  "content": "All of the above"
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 171,
+      "name": "Acing the ‘Leadership and Teamwork’ Question",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 276,
+          "content": "<p>Leadership and teamwork skills are fundamental in the professional landscape, contributing to project success, team cohesion, and organizational growth. Next, we’ll explore how to excel in answering questions related to leadership and teamwork during your behavioral interview.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 91,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "These questions aim to assess your interpersonal and leadership skills. This may include your ability to lead, collaborate effectively, delegate tasks, resolve conflicts, and inspire others professionally and personally. ",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 277,
+          "content": "<h3>Question Examples and Best Practices</h3><p>Let's start by exploring the types of questions you might encounter. Employers often pose different questions to assess your leadership and teamwork skills. Here are a few examples:</p><ul><li>\"Tell me about a time when you took charge of a project and achieved successful results.\"</li><li>“When working on a team, describe a time when one person was not doing their share of the work. What did you do?”</li><li>\"Describe a project where you had to collaborate with cross-functional teams. What was your role, and how did you ensure effective collaboration?\"</li><li>“How would you describe your collaboration styles? Do you prefer to work with a team or independently?”</li></ul>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 92,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Best Practices",
+                  "type": "text",
+                  "underline": true
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Emphasize your ability to inspire and motivate others, resolve conflicts diplomatically, and foster a collaborative team environment.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Highlight relevant experiences by emphasizing situations where you demonstrated effective leadership and teamwork skills and achieved positive outcomes.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "No matter your role, you will inevitably have to work in a team–interviewers want you to demonstrate your ability to work well with others. Make it clear that you work effectively with a team, but can still work as an individual when required.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 278,
+          "content": "<p><i>These questions are adapted from </i><a href=\"https://myusf.usfca.edu/career-services/career-resources/interviews-offers/interviews/sample-behavioral-questions\"><i>PATHRISE</i></a><i>.</i></p><h3>Formulating Responses Using the STAR Method:</h3><p>Let's review how to structure your responses using the STAR method:</p><ul><li><strong>Situation</strong>: Provide context by describing the scenario or project you were involved in.</li><li><strong>Task</strong>: Explain the specific task or challenge you faced, emphasizing your leadership or teamwork role.</li><li><strong>Action</strong>: Detail the actions you took to address the situation, focusing on your leadership style or collaboration strategies.</li><li><strong>Result</strong>: Conclude by discussing the outcomes or results of your actions, highlighting the successful achievement of goals or positive impact on the team.</li></ul><h3>Sample Responses and Analysis</h3><p>Let's explore sample responses to some of the leadership and teamwork interview question:</p><p><strong>Student Success Stories</strong></p><p>Insert Student sample responses (quick 2min videos max)</p><p>Student A</p><p><img src=\"https://content.khouryodyssey.org/uploads/a_36bd122324.jpeg\" alt=\"a.jpeg\"></p><p>Student B</p><p><img src=\"https://content.khouryodyssey.org/uploads/b_b6cf75b0d8.jpeg\" alt=\"b.jpeg\"></p><p>Student C</p><p><img src=\"https://content.khouryodyssey.org/uploads/c_66b5215ce1.jpeg\" alt=\"c.jpeg\"></p><p>Student D</p><p><img src=\"https://content.khouryodyssey.org/uploads/d_0fba9cdff4.jpeg\" alt=\"d.jpeg\"></p><h3>Check-In: Acing the ‘Leadership and Teamwork’ Question</h3>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 20,
+          "questions": [
+            {
+              "id": 42,
+              "content": "<p><strong>How do you think student X could have improved his response to the question?</strong></p>",
+              "answerOptions": [
+                {
+                  "id": 139,
+                  "isCorrect": false,
+                  "content": "They should have talked about what their teammates’ contribution to the project was. "
+                },
+                {
+                  "id": 141,
+                  "isCorrect": false,
+                  "content": "They should have talked more about the conflict, recruiters LOVE drama!"
+                },
+                {
+                  "id": 140,
+                  "isCorrect": true,
+                  "content": "They could’ve highlighted their skills in a more straightforward way by using the Action part of the STAR Method. "
+                },
+                {
+                  "id": 142,
+                  "isCorrect": false,
+                  "content": "Nothing could be done since they used the STAR method effectively."
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 172,
+      "name": "Acing the ‘Problem Solving Abilities’ Question",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 279,
+          "content": "<p>Problem-solving abilities help you navigate the complexities of the professional world, enabling you to identify challenges, devise effective solutions, and adapt to changing circumstances. Let's explore how to excel in answering questions related to problem-solving abilities.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 93,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "These questions aim to assess your analytical skills, critical thinking, creativity, adaptability, and resilience in tackling various challenges.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 280,
+          "content": "<h3>Question Examples and Best Practices</h3><p>Let's start by exploring the types of questions you might encounter. Employers often pose different questions to assess your communication skills. Here are a few examples:</p><ul><li>\"Can you describe a time when you encountered a difficult problem at work or school? How did you approach it?\"</li><li>\"Tell me about a project where you had to overcome unexpected obstacles. What were these and how did you adapt to the changes?\"</li><li>\"Describe a situation where you had to make a difficult decision under pressure. How did you analyze the situation and come to a resolution?\"</li><li>“Tell me about a situation where you had to seek out relevant information, define key issues, and determine steps to get a desired result.”</li></ul>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 94,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Best Practices",
+                  "type": "text",
+                  "underline": true
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Highlight relevant experiences by emphasizing situations where you effectively identified and resolved problems, demonstrated creativity and resourcefulness, and adapted to changing circumstances.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Showcase your analytical thinking, decision-making process, and ability to remain calm and composed under pressure.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "You want to demonstrate confidence in your ability to handle stress, be quick and adaptable on your feet, and come through for the organization.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 281,
+          "content": "<h3>Formulating Responses Using the STAR Method:</h3><p>Let's review how to structure your responses using the STAR method:</p><ul><li><strong>Situation</strong>: Provide context by describing the scenario or project where you encountered a problem or obstacle.</li><li><strong>Task</strong>: Explain the specific task or challenge you faced, emphasizing the problem-solving aspect.</li><li><strong>Action</strong>: Detail the actions you took to address the situation, focusing on your problem-solving strategies and decision-making process.</li><li><strong>Result</strong>: Conclude by discussing the outcomes or results of your actions, highlighting the successful resolution of the problem or the lessons learned from the experience.</li></ul><h3>Sample Responses and Analysis</h3><p>In this section, you will an ideal sample response by filling in the blanks below.</p><blockquote><p>\"Can you describe a time when you encountered a difficult problem at work or school? How did you approach it?”</p></blockquote><h3>Check-In: Acing the ‘Problem Solving Abilities’ Question</h3>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 21,
+          "questions": [
+            {
+              "id": 43,
+              "content": "<p>True or False: Employers use behavioral interviews to assess a candidate's past behaviors as predictors of future performance.</p>",
+              "answerOptions": [
+                {
+                  "id": 143,
+                  "isCorrect": true,
+                  "content": "True"
+                },
+                {
+                  "id": 144,
+                  "isCorrect": false,
+                  "content": "False"
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 173,
+      "name": "Acing the ‘Initiative and Personal Projects’ Question",
+      "type": "general",
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 282,
+          "content": "<p>Initiative and personal projects demonstrate your drive, ambition, and proactive nature, showcasing your ability to take initiative and drive positive change. Especially during interviews for tech roles, you might be asked about your personal and professional projects and how your initiative was a driving factor in accomplishing them. Let's dive into how to excel in answering questions related to initiative and personal projects.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 96,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "These questions aim to assess your motivation, self-direction, creativity, and ability to take ownership of projects or initiatives. They also serve to showcase your past projects and your experience putting your technical skills to good use. ",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 284,
+          "content": "<h3>Question Examples and Best Practices</h3><p>Let's start by exploring the types of questions you might encounter. Employers often pose different questions to assess your communication skills. Here are a few examples:</p><ul><li>\"Tell me about a project you have initiated. What influenced you to begin the project? \"</li><li>\"Tell me about a personal project you pursued outside of your regular responsibilities. What motivated you to pursue it?\"</li><li>\"Describe a situation where you identified an opportunity for improvement and took proactive steps to address it.\"</li><li>“What is the most creative thing you have ever done?”</li></ul>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 95,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Best Practices",
+                  "type": "text",
+                  "underline": true
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "This is your time to shine! Showcase your motivation, creativity, drive, and ability to take ownership and drive positive change.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "Emphasize situations where you took the initiative to start a project, implement a new idea, or pursue personal interests.",
+                      "type": "text"
+                    }
+                  ]
+                },
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "text": "These questions are great to show your passion towards certain personal and professional interests and are a great way to let the interviewer know how you’ve gone above and beyond.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 283,
+          "content": "<h3>Formulating Responses Using the STAR Method:</h3><p>Now, let's delve into how to craft your responses using the STAR method:</p><ul><li><strong>Situation</strong>: Provide context by describing the scenario or opportunity where you took the initiative to start a project or pursue a personal endeavor.</li><li><strong>Task</strong>: Explain the specific task or challenge you identified, emphasizing the need for initiative and proactive action.</li><li><strong>Action</strong>: Detail the actions you took to address the situation, focusing on your initiative, creativity, and problem-solving abilities.</li><li><strong>Result</strong>: Conclude by discussing the outcomes or results of your actions, highlighting the impact of your initiative and personal projects.</li></ul><h3>Sample Responses and Analysis</h3><p>Let's explore sample responses to the behavioral interview question:</p><blockquote><p>\"Can you describe a time when you took the initiative to start a project or implement a new idea?”</p></blockquote><p><strong>Student Success Stories</strong></p><p>Listen to these three students answer this question and talk about their personal projects.</p><p>Student A</p><p><img src=\"https://content.khouryodyssey.org/uploads/aa_8db64eddce.jpeg\" alt=\"aa.jpeg\"></p><p>Student B</p><p><img src=\"https://content.khouryodyssey.org/uploads/bb_4743acccf8.jpeg\" alt=\"bb.jpeg\"></p><p>Student C</p><p><img src=\"https://content.khouryodyssey.org/uploads/cc_430102cdf3.jpeg\" alt=\"cc.jpeg\"></p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 285,
+          "content": "<h2>Conclusion and Next Steps</h2><p>Congratulations on completing this module on mastering behavioral interviews! Let's recap the key takeaways and outline your next steps:</p><ul><li><strong>Preparation is Key</strong>: Remember the importance of thorough preparation for behavioral interviews. Research the company, practice using the STAR method, and familiarize yourself with common interview questions.</li><li><strong>Effective Storytelling</strong>: Mastering the art of storytelling is crucial. Use the STAR method to structure your responses, providing clear and concise examples of your skills and experiences.</li><li><strong>Practice, Practice, Practice</strong>: Practice makes perfect! Take the time to practice answering behavioral interview questions, either by yourself or with a friend or mentor. The more you practice, the more confident and polished you'll become.</li></ul>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    }
+  ]
+}
