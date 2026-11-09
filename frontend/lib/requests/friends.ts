@@ -517,60 +517,8 @@ export async function fetchFriendshipsById(
   userId: number,
 ): Promise<Friendship[]> {
   try {
-    const query = qs.stringify({
-      sort: [],
-      fields: [],
-      filters: {
-        authorized_users: {
-          id: {
-            $eq: userId,
-          },
-        },
-      },
-      populate: {
-        authorized_users: {
-          fields: [
-            "id",
-            "email",
-            "firstName",
-            "lastName",
-            "bio",
-            "github",
-            "linkedin",
-            "profilePhoto",
-            "website",
-          ],
-          populate: {
-            blocked: {
-              fields: ["id"],
-            },
-            was_blocked: {
-              fields: ["id"],
-            },
-            received_requests: {
-              fields: ["id"],
-            },
-          },
-        },
-      },
-      pagination: {
-        pageSize: 250,
-        page: 1,
-      },
-    });
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
-      {
-        headers: {
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        next: { tags: [CACHE_TAGS.friendships(userId)], revalidate: 900 },
-      },
-    );
-    const data = await response.json();
-    const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers;
+    // Same query and cache tag as before, but every page, not the first 250 (ODY-720).
+    return await fetchFriendshipsByUserIds([userId]);
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch friendships");
