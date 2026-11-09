@@ -17,6 +17,7 @@ updates:
       tiptap:
         patterns:
           - "@tiptap/*"
+          - "@aarkue/tiptap-math-extension"
 
   - package-ecosystem: "npm"
     directory: "/backend"
