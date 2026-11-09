@@ -53,6 +53,8 @@ export function BlockListClient({
         {blocks.map((block, index) => (
           <div
             key={block._clientId || block.id || `fallback-${index}`}
+            // A scan flag's link scrolls here (ODY-913): the scan's id for a Classic block
+            data-block-id={block.id ?? undefined}
             className="flex w-full flex-col items-center justify-center"
           >
             <BlockTile

@@ -28,11 +28,18 @@ const p = (id: string, text: string): ScanBlock => ({
   text,
 });
 const NOT_KNOWN = "in the dictionary or the tech word list.";
-const warn = (partId: string, blockId: string | null, message: string) => ({
+/** A spelling flag keeps the words it reports (ODY-913) */
+const warn = (
+  partId: string,
+  blockId: string | null,
+  message: string,
+  words: string[],
+) => ({
   partId,
   blockId,
   message,
   severity: "warn",
+  words,
 });
 const note = (message: string) => ({
   partId: "droplet",
@@ -63,8 +70,9 @@ describe("spelling/dictionary with the AI double-check (ODY-904)", () => {
     misspelledAre("recieve", "Wich");
 
     expect(await dictionary(TYPOS)).toEqual([
-      warn("1", "a", `"recieve" isn't ${NOT_KNOWN}`),
-      warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`),
+      // Only the kept words, so "untill" isn't highlighted either
+      warn("1", "a", `"recieve" isn't ${NOT_KNOWN}`, ["recieve"]),
+      warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`, ["Wich"]),
     ]);
   });
 
@@ -110,9 +118,12 @@ describe("spelling/dictionary with the AI double-check (ODY-904)", () => {
       confirm.mockResolvedValue({ ok: false, reason });
 
       expect(await dictionary(TYPOS)).toEqual([
-        warn("1", null, `"Teh" isn't ${NOT_KNOWN}`),
-        warn("1", "a", `"recieve" and "untill" aren't ${NOT_KNOWN}`),
-        warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`),
+        warn("1", null, `"Teh" isn't ${NOT_KNOWN}`, ["Teh"]),
+        warn("1", "a", `"recieve" and "untill" aren't ${NOT_KNOWN}`, [
+          "recieve",
+          "untill",
+        ]),
+        warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`, ["Wich"]),
         note(message),
       ]);
     },
