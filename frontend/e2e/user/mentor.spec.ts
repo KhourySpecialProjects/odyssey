@@ -3,13 +3,11 @@ import { test, expect, type Locator, type Page } from "@playwright/test";
 import { encodeMentorEvent, type MentorEvent } from "../../lib/mentor/events";
 import { BASE_URL } from "../fixtures";
 
-// TODO(ODY-887): confirm on dev. A published BlockNote lesson the `user` account is
-// enrolled in (and has completed the lessons before), with Mentor on for that user.
-const DROPLET_SLUG = "building-your-first-app-wolly-s-mobile";
-const LESSON_SLUG = "TODO-lesson-slug";
+const DROPLET_SLUG = "fundamentals-of-data-science";
+const LESSON_SLUG = "exploratory-data-analysis-concepts-and-techniques-1";
 // TODO(ODY-887): confirm on dev. A `data-block-id` of a paragraph in that lesson.
-const CITED_BLOCK_ID = "TODO-block-id";
-const CITED_BLOCK_INDEX = 1;
+const CITED_BLOCK_ID = "faa7cf3b-3776-4130-8de5-520be95ee675";
+const CITED_BLOCK_INDEX = 2;
 
 const LESSON_PATH = `/d/${DROPLET_SLUG}/${LESSON_SLUG}`;
 const ANSWER = "A droplet is a bite-sized lesson";
