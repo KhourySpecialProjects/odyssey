@@ -100,6 +100,32 @@ export function offsetOf(parts: TextPart[], node: Node, offset: number) {
   return total;
 }
 
+/** A Range over the text between two offsets, without changing the DOM */
+export function rangeOf(
+  parts: TextPart[],
+  start: number,
+  end: number,
+): Range | null {
+  const range = document.createRange();
+  let started = false;
+  let offset = 0;
+  for (const part of parts) {
+    const length = partText(part).length;
+    if (isText(part)) {
+      if (!started && start < offset + length) {
+        range.setStart(part, Math.max(start - offset, 0));
+        started = true;
+      }
+      if (started && end <= offset + length) {
+        range.setEnd(part, Math.max(end - offset, 0));
+        return range;
+      }
+    }
+    offset += length;
+  }
+  return null;
+}
+
 /**
  * Wraps the text between two offsets in spans, one per text node, and
  * returns them
