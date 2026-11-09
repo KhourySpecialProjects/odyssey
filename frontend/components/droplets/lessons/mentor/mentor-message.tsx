@@ -10,10 +10,7 @@ import type { Citation } from "@/lib/mentor/types";
 const Markdown = lazy(() => import("react-markdown"));
 
 const ALLOWED = ["p", "strong", "em", "code", "pre", "ul", "ol", "li"];
-// Links show as plain text: Mentor never sends the student off the page
-const MARKDOWN_COMPONENTS = {
-  a: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-};
+// Links aren't allowed, so they unwrap to plain text
 
 const toolClass =
   "inline-flex items-center gap-1 rounded text-xs text-slate-600 hover:text-slate-900 aria-disabled:opacity-60 dark:text-slate-300 dark:hover:text-white";
@@ -86,13 +83,9 @@ export function MentorMessage({
       </p>
 
       {shown && (
-        <div className="prose prose-sm prose-p:my-2 dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
+        <div className="prose prose-sm prose-p:my-2 prose-code:before:content-none prose-code:after:content-none dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
           <Suspense fallback={<p>{shown}</p>}>
-            <Markdown
-              allowedElements={ALLOWED}
-              unwrapDisallowed
-              components={MARKDOWN_COMPONENTS}
-            >
+            <Markdown allowedElements={ALLOWED} unwrapDisallowed>
               {shown}
             </Markdown>
           </Suspense>
@@ -154,10 +147,12 @@ export function MentorMessage({
 
       {showTools && (
         <div className="mt-2 flex items-center gap-3">
-          <button type="button" onClick={copy} className={toolClass}>
-            <Copy className="h-3 w-3" aria-hidden="true" />
-            Copy
-          </button>
+          {shown.trim() && (
+            <button type="button" onClick={copy} className={toolClass}>
+              <Copy className="h-3 w-3" aria-hidden="true" />
+              Copy
+            </button>
+          )}
           {/* ODY-890: pass onRate to show 👍/👎 */}
           {status === "done" && onRate && (
             <>

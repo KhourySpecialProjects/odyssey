@@ -139,6 +139,13 @@ describe("MentorMessage", () => {
     );
   });
 
+  it("has no Copy when stopped before any text arrived", () => {
+    renderMessage(mentorMsg({ status: "stopped", text: "" }));
+
+    expect(screen.getByText("Stopped")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Copy/ })).toBeNull();
+  });
+
   it("saves once, keeps focus, and then reads Saved", async () => {
     const onSave = jest.fn().mockResolvedValue(true);
     renderMessage(mentorMsg(), { onSave });
