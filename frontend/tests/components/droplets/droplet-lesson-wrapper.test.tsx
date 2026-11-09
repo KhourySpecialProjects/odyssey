@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import {
   render,
   screen,
@@ -6,6 +7,7 @@ import {
   act,
 } from "@testing-library/react";
 import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { AuthorizedUser, Droplet, Highlight, Lesson, Note } from "@/types";
@@ -41,6 +43,10 @@ jest.mock("@/components/droplets/lessons/lesson-renderer", () => ({
       </ul>
     </div>
   ),
+}));
+
+jest.mock("@/components/droplets/lessons/mentor/mentor-panel", () => ({
+  MentorPanel: () => <div data-testid="mentor-panel" />,
 }));
 
 jest.mock("@/components/droplets/lessons/note-taking/notes-bar", () => ({
@@ -80,6 +86,7 @@ describe("DropletLessonWrapper", () => {
     author: false,
     authUser: { id: 1 } as AuthorizedUser,
     userId: 1,
+    mentor: false,
     initialNotes: serverNotes,
     initialHighlights: serverHighlights,
   };
@@ -87,6 +94,7 @@ describe("DropletLessonWrapper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useViewedLessonsStore.setState({ pendingViewed: {} });
+    useLessonPanelStore.getState().reset();
     jest.mocked(getNotesByAuthorizedUserAndLesson).mockResolvedValue([]);
   });
 
@@ -201,5 +209,163 @@ describe("DropletLessonWrapper", () => {
 
     expect(screen.queryByTestId("notes-bar")).not.toBeInTheDocument();
     expect(getNotesByAuthorizedUserAndLesson).not.toHaveBeenCalled();
+  });
+
+  describe("lesson panels", () => {
+    it("swaps Mentor for Notes and keeps the conversation", () => {
+      useLessonPanelStore.getState().openMentor();
+      render(<DropletLessonWrapper {...props} />);
+
+      fireEvent.click(screen.getByText("Toggle notes"));
+
+      const state = useLessonPanelStore.getState();
+      expect(state.panel).toBe("notes");
+      expect(state.mentorKept).toBe(true);
+    });
+
+    it("closes Notes on Escape but leaves Mentor alone", () => {
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(useLessonPanelStore.getState().panel).toBeNull();
+
+      act(() => useLessonPanelStore.getState().openMentor());
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(useLessonPanelStore.getState().panel).toBe("mentor");
+    });
+
+    it("doesn't carry an open panel over to the next lesson", async () => {
+      const lessonB = { id: 2, slug: "lesson-b" } as Lesson;
+      const { rerender, container } = render(
+        <DropletLessonWrapper key={1} {...props} />,
+      );
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();
+
+      rerender(<DropletLessonWrapper key={2} {...props} lesson={lessonB} />);
+
+      expect(screen.queryByTestId("notes-bar")).not.toBeInTheDocument();
+      expect(container.querySelector(".pr-\\[420px\\]")).toBeNull();
+    });
+
+    it("mounts MentorPanel only while this lesson keeps a conversation", async () => {
+      const { rerender } = render(<DropletLessonWrapper key={1} {...props} />);
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
+
+      act(() => useLessonPanelStore.getState().openMentor());
+      expect(await screen.findByTestId("mentor-panel")).toBeInTheDocument();
+
+      act(() => useLessonPanelStore.getState().closeMentor());
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
+
+      // Another lesson never sees a stale mentorKept
+      act(() => useLessonPanelStore.getState().openMentor());
+      rerender(
+        <DropletLessonWrapper
+          key={2}
+          {...props}
+          lesson={{ id: 2, slug: "b" } as Lesson}
+        />,
+      );
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
+    });
+
+    describe("Ask Mentor availability", () => {
+      const lessons = [
+        { id: 1, orderIndex: 1 },
+        { id: 2, orderIndex: 2 },
+      ] as Lesson[];
+      const droplet = { id: 1, lessons } as Droplet;
+      const available = () => useLessonPanelStore.getState().mentorAvailable;
+
+      it.each([
+        ["mentor on and the lesson open", true, 1, true],
+        ["mentor off", false, 1, false],
+        ["the lesson locked behind the previous one", true, 2, false],
+      ])("is %s -> %s", (_label, mentor, lessonId, expected) => {
+        render(
+          <DropletLessonWrapper
+            {...props}
+            droplet={droplet}
+            lesson={{ id: lessonId, slug: "l" } as Lesson}
+            mentor={mentor}
+          />,
+        );
+        expect(available()).toBe(expected);
+      });
+
+      it("is off without an enrollment, and off again after unmount", () => {
+        const { unmount } = render(
+          <DropletLessonWrapper
+            {...props}
+            droplet={droplet}
+            enrollmentId={undefined}
+            mentor
+          />,
+        );
+        expect(available()).toBe(false);
+        unmount();
+
+        const second = render(
+          <DropletLessonWrapper {...props} droplet={droplet} mentor />,
+        );
+        expect(available()).toBe(true);
+        second.unmount();
+        expect(available()).toBe(false);
+      });
+
+      it("is set again when the next lesson's wrapper replaces this one", () => {
+        const { rerender } = render(
+          <DropletLessonWrapper key={1} {...props} mentor />,
+        );
+        rerender(
+          <DropletLessonWrapper
+            key={2}
+            {...props}
+            lesson={{ id: 2, slug: "b" } as Lesson}
+            mentor
+          />,
+        );
+        expect(available()).toBe(true);
+      });
+
+      it("survives Strict Mode's extra effect cleanup", () => {
+        render(
+          <StrictMode>
+            <DropletLessonWrapper {...props} mentor />
+          </StrictMode>,
+        );
+        expect(available()).toBe(true);
+      });
+
+      it("closes an open sheet when Mentor stops being available", () => {
+        const { rerender } = render(<DropletLessonWrapper {...props} mentor />);
+        act(() => useLessonPanelStore.getState().openMentor());
+
+        rerender(<DropletLessonWrapper {...props} mentor={false} />);
+
+        expect(useLessonPanelStore.getState()).toMatchObject({
+          panel: null,
+          mentorKept: false,
+          mentorAvailable: false,
+        });
+      });
+    });
+
+    it("resets the store on unmount", () => {
+      const { unmount } = render(<DropletLessonWrapper {...props} />);
+      act(() => {
+        useLessonPanelStore.getState().openMentor();
+        useLessonPanelStore.getState().setMentorAvailable(true);
+      });
+
+      unmount();
+
+      expect(useLessonPanelStore.getState()).toMatchObject({
+        panel: null,
+        mentorKept: false,
+        mentorAvailable: false,
+      });
+    });
   });
 });

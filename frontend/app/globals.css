@@ -32,6 +32,10 @@
     --primary-600: 255 80% 52%;
     --secondary: 240 12% 8%;
     --destructive: 345 90% 60%;
+    --mentor: 259 63% 59%;
+    --mentor-text: 258 54% 52%;
+    --mentor-soft: 264 100% 98%;
+    --mentor-line: 268 95% 92%;
   }
 
   .dark {
@@ -40,6 +44,10 @@
     --primary: 255 80% 68%;
     --primary-600: 255 80% 60%;
     --secondary: 0 0% 100%;
+    --mentor: 260 77% 70%;
+    --mentor-text: 265 89% 86%;
+    --mentor-soft: 256 48% 20%;
+    --mentor-line: 256 48% 42%;
   }
 
   html {
@@ -227,6 +235,17 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   text-underline-offset: 0.2em;
 }
 
+/* Mentor: a cited passage flashes when its Source is pressed */
+::highlight(mentor-source) {
+  background-color: #fef08a;
+  /* Highlighted text is always black, so this reads in both themes */
+  color: #000;
+}
+.mentor-source--flash {
+  outline: 2px solid hsl(var(--mentor));
+  outline-offset: 2px;
+}
+
 /* Review comments (ODY-806), as the redesign prototype draws them
    (ui-redesign/comments.css): teal is what the reviewer is doing, amber only
    marks a comment. Marks are drawn by lib/anchors. */
@@ -288,6 +307,14 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   @keyframes review-flash {
     from {
       background-color: var(--rc-tint-strong);
+    }
+  }
+  .mentor-source--flash {
+    animation: mentor-source-flash 1.5s ease-out forwards;
+  }
+  @keyframes mentor-source-flash {
+    to {
+      outline-color: transparent;
     }
   }
 }

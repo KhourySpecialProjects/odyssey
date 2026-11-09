@@ -1,7 +1,7 @@
 "use client";
 
 import { LessonRenderer } from "./lesson-renderer";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   Droplet,
@@ -17,6 +17,13 @@ import { IconPlus, IconX } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
 import DropletFooter from "../footer";
 import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
+import { LESSON_PANEL } from "@/lib/lesson-panel";
+import { lessonGate } from "@/lib/lesson-gate";
+import {
+  useLessonPanelStore,
+  useOwnedMentorKept,
+  useOwnedPanel,
+} from "@/stores/lesson-panel-store";
 
 // NotesBar pulls in TipTap/ProseMirror for every note, so it's loaded on demand.
 // The fallback matches its header row (title + "+" button, inactive until the
@@ -51,6 +58,12 @@ const NotesBar = dynamic(
   },
 );
 
+// The sheet pulls in Radix Dialog and Markdown, so it loads when first opened
+const MentorPanel = dynamic(
+  () => import("./mentor/mentor-panel").then((mod) => mod.MentorPanel),
+  { ssr: false },
+);
+
 interface DropletLessonWrapperProps {
   lesson: Lesson;
   droplet: Droplet;
@@ -60,6 +73,8 @@ interface DropletLessonWrapperProps {
   author: boolean;
   authUser: AuthorizedUser;
   userId: number;
+  /** The page's verdict: Mentor is on for this droplet and this user */
+  mentor: boolean;
   /** Fetched by the lesson page; refetched here only after a note is created */
   initialNotes: Note[];
   initialHighlights: Highlight[];
@@ -74,6 +89,7 @@ export function DropletLessonWrapper({
   author,
   authUser,
   userId,
+  mentor,
   initialNotes,
   initialHighlights,
 }: DropletLessonWrapperProps) {
@@ -81,7 +97,14 @@ export function DropletLessonWrapper({
   // shown as locked (and its quiz gate skipped) while "Next" saves.
   const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
-  const [expanded, setExpanded] = useState(false);
+  const panel = useOwnedPanel(lesson.id);
+  const mentorKept = useOwnedMentorKept(lesson.id);
+  const setPanel = useLessonPanelStore((s) => s.setPanel);
+  const expanded = panel === "notes";
+  const setExpanded = useCallback(
+    (open: boolean) => setPanel(open ? "notes" : null),
+    [setPanel],
+  );
   // NotesBar isn't mounted until the panel is first opened, then stays mounted
   // so its state (drag position, open editors) survives collapsing
   const [notesBarOpened, setNotesBarOpened] = useState(false);
@@ -99,7 +122,11 @@ export function DropletLessonWrapper({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      // Mentor's dialog handles its own Escape
+      if (
+        e.key === "Escape" &&
+        useLessonPanelStore.getState().panel === "notes"
+      ) {
         setExpanded(false);
       }
     };
@@ -111,13 +138,48 @@ export function DropletLessonWrapper({
     };
   }, [setExpanded]);
 
+  // Claim the store for this lesson; leaving or changing lesson clears it
+  useEffect(() => {
+    const { claim, reset } = useLessonPanelStore.getState();
+    claim(lesson.id);
+    return reset;
+  }, [lesson.id]);
+
+  const { gate } = lessonGate({
+    lessonId: lesson.id,
+    lessons: droplet.lessons,
+    enrollmentId,
+    completedLessonIds: viewedLessonIds,
+    author,
+    roles: user?.roles,
+  });
+  const available = mentor && gate === "open";
+  const wasAvailable = useRef(false);
+  // Passive effect with no run-once guard: the previous lesson's reset()
+  // runs first and would otherwise wipe this lesson's availability.
+  useEffect(() => {
+    const { setMentorAvailable, closeMentor, mentorKept, panel } =
+      useLessonPanelStore.getState();
+    setMentorAvailable(available);
+    // Losing availability mid-lesson would strand an open sheet without its button
+    if (
+      wasAvailable.current &&
+      !available &&
+      (mentorKept || panel === "mentor")
+    )
+      closeMentor();
+    wasAvailable.current = available;
+    return () => setMentorAvailable(false);
+  }, [available]);
+
   return (
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
           className={cn(
             "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
-            expanded && "pr-[415px]",
+            expanded && LESSON_PANEL.notesContentPad,
+            panel === "mentor" && LESSON_PANEL.mentorContentPad,
           )}
         >
           <LessonRenderer
@@ -140,11 +202,21 @@ export function DropletLessonWrapper({
             completedLessonIds={viewedLessonIds}
           />
         </div>
+        {mentorKept && (
+          <MentorPanel
+            dropletId={droplet.id}
+            lesson={lesson}
+            enrollmentId={enrollmentId}
+            userId={userId}
+            onNoteSaved={fetchNotes}
+          />
+        )}
         {enrollmentId && (
           <>
             <div
               className={cn(
-                "fixed top-[107px] right-0 min-w-[375px] border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
+                "fixed top-[107px] right-0 border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
+                LESSON_PANEL.width,
                 "sliding-notes-bar z-40 overflow-y-auto",
                 "h-[calc(100vh-107px)]",
                 expanded ? "visible" : "invisible",

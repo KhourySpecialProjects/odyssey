@@ -222,7 +222,7 @@ export async function createNote(
       },
       body: JSON.stringify({
         data: {
-          content: "",
+          content: content ?? "",
           lesson: relations.lesson,
           enrollment: relations.enrollment,
           positionY: Math.round(position),

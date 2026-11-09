@@ -393,6 +393,15 @@ const REVIEW_PANEL_ROUTES = routes([
   ["GET", /^\/ai-scoring-runs$/, list(ent(4, { runState: "done" }))],
 ]);
 
+const MENTOR_SETTING_ROUTES = routes([
+  [
+    "GET",
+    /^\/mentor-setting$/,
+    { data: ent(1, { enabled: true, pilotGroups: rel(ent(7)) }) },
+  ],
+  ["GET", /^\/groups$/, list(ent(7))],
+]);
+
 const OVERVIEW_SCAN_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
   ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
@@ -442,6 +451,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
+  "mentor-setting": "@/lib/requests/mentor-setting",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
@@ -881,6 +891,20 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   ]),
   "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
     call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
+  ]),
+  "mentor-setting": defineModule<
+    typeof import("@/lib/requests/mentor-setting")
+  >([
+    call(
+      "getMentorSetting",
+      (m) => m.getMentorSetting(),
+      MENTOR_SETTING_ROUTES,
+    ),
+    call(
+      "mentorVisibleFor",
+      (m) => m.mentorVisibleFor({ enabled: true, pilotGroupIds: [7] }, 1),
+      MENTOR_SETTING_ROUTES,
+    ),
   ]),
   "overview-scan": defineModule<typeof import("@/lib/requests/overview-scan")>([
     call(

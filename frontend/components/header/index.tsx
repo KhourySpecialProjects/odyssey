@@ -15,6 +15,7 @@ import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
+import { AskMentorButton } from "./ask-mentor-button";
 import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
@@ -134,6 +135,7 @@ export function Header({
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2 xl:pr-6">
+            <AskMentorButton />
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />

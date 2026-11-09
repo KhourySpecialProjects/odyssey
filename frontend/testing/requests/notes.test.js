@@ -450,7 +450,7 @@ describe("Notes Tests", () => {
           }),
           body: JSON.stringify({
             data: {
-              content: "",
+              content: mockContent,
               lesson: "doc101",
               enrollment: "doc201",
               positionY: Math.round(mockPosition),
@@ -463,6 +463,21 @@ describe("Notes Tests", () => {
       expect(revalidateTag).toHaveBeenCalledWith("notes-4");
 
       expect(result).toEqual({ success: true });
+    });
+
+    it("sends an empty content when none is passed", async () => {
+      resolveDocumentId.mockImplementation(
+        async (_c, ref) => `doc${typeof ref === "object" ? ref.id : ref}`,
+      );
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 1 } }),
+      });
+
+      await createNote({ id: 1 }, { id: 2 }, 10, 4);
+
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data.content).toBe("");
     });
 
     it("resolves relations from numeric ids only and ignores client documentIds", async () => {
