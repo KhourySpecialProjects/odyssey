@@ -502,6 +502,7 @@ export function LessonRenderer({
             {displayBlocks.map((b: Block, i: number) => (
               <LessonBlockRenderer
                 key={i}
+                index={i}
                 block={b}
                 lessonId={lesson.id}
                 dropletId={droplet.id}
@@ -527,17 +528,22 @@ const highlightIdsOf = (block: { __component: string; id: number }) => [
 ];
 
 /**
- * One block of the lesson. Each block's outermost element is positioned: the
- * highlight toolbar is shown at the end of it.
+ * One block in a positioned wrapper (the highlight toolbar's home). `index` is
+ * Mentor's Citation.blockIndex; empty blocks get no wrapper.
  */
 export function LessonBlockRenderer({
-  block,
-  lessonId,
-  dropletId,
-  dropletName,
-  lessonName,
-  userId,
-}: {
+  index,
+  ...props
+}: BlockProps & { index: number }) {
+  const content = blockContent(props);
+  return content ? (
+    <div className="relative" data-lesson-block={index}>
+      {content}
+    </div>
+  ) : null;
+}
+
+type BlockProps = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   block: any;
   lessonId: number;
@@ -545,7 +551,16 @@ export function LessonBlockRenderer({
   dropletName?: string;
   lessonName: string;
   userId?: number;
-}) {
+};
+
+function blockContent({
+  block,
+  lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
+}: BlockProps) {
   switch (block.__component) {
     case "droplets.generic":
       return <GenericBlockRenderer block={block} />;
@@ -640,17 +655,14 @@ export function LessonBlockRenderer({
           />
         );
       }
-      // Its frame clips what overflows it, so the toolbar goes around it
       return (
-        <div className="relative">
-          <CodeBlockViewer
-            language={block.language}
-            code={block.code}
-            editable={block.editable}
-            runnable={block.runnable}
-            highlightIds={highlightIdsOf(block)}
-          />
-        </div>
+        <CodeBlockViewer
+          language={block.language}
+          code={block.code}
+          editable={block.editable}
+          runnable={block.runnable}
+          highlightIds={highlightIdsOf(block)}
+        />
       );
 
     case "droplets.sandpack-block":

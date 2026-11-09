@@ -569,6 +569,35 @@ describe("LessonRenderer (viewer)", () => {
     });
   });
 
+  it("wraps each drawn block with its index, and an unknown block with none", () => {
+    const generic = (id: number) => ({
+      id,
+      __component: "droplets.generic",
+      content: `<p>Block ${id}</p>`,
+    });
+    const withUnknown = {
+      ...lesson,
+      blocks: [
+        generic(1),
+        { id: 2, __component: "droplets.unknown" },
+        generic(3),
+      ],
+    } as unknown as Lesson;
+
+    const { container } = render(
+      <LessonRenderer {...props} lesson={withUnknown} initialHighlights={[]} />,
+    );
+
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-lesson-block]"),
+    );
+    expect(wrappers.map((w) => w.getAttribute("data-lesson-block"))).toEqual([
+      "0",
+      "2",
+    ]);
+    expect(wrappers[1]).toHaveTextContent("Block 3");
+  });
+
   describe("across blocks", () => {
     // From "joins" in block 1 to the end of "inner" in block 2
     const selectAcrossBlocks = (container: HTMLElement) => {
@@ -660,7 +689,7 @@ describe("LessonRenderer (viewer)", () => {
       selectAcrossBlocks(container);
 
       const toolbar = await screen.findByRole("toolbar");
-      expect(second.parentElement!.parentElement).toContainElement(toolbar);
+      expect(second.closest("[data-lesson-block]")).toContainElement(toolbar);
     });
 
     it("removes them together when the same text is selected again", async () => {
