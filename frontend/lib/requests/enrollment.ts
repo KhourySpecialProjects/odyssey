@@ -74,6 +74,21 @@ async function putEnrollment(
 }
 
 /**
+ * Records the voyage steps this complete droplet finishes for the user: its
+ * droplet nodes, and playlist nodes whose droplets are now all complete
+ * (ODY-675). Safe to repeat, since steps already recorded are skipped. Errors
+ * are logged, never thrown, so the caller's own write still succeeds.
+ */
+async function recordVoyageSteps(dropletId: number, userId: number) {
+  try {
+    const { checkAndCompleteVoyageNode } = await import("./voyage-enrollment");
+    await checkAndCompleteVoyageNode(dropletId, userId);
+  } catch (err) {
+    console.error("Voyage node completion failed:", err);
+  }
+}
+
+/**
  * Gets the first 25 enrollments matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.
  * @returns The matching Droplets.
@@ -223,7 +238,10 @@ export async function changeEnrollmentRating(
     const [authorizedUser, enrollment] = await Promise.all([
       getAuthorizedUserByEmail(user.email),
       getEnrollByID(enrollmentID, {
-        populate: { authorizedUser: { fields: ["id"] } },
+        populate: {
+          authorizedUser: { fields: ["id"] },
+          droplet: { fields: ["id"] },
+        },
         fields: ["id", "completionDate"],
       }),
     ]);
@@ -241,6 +259,11 @@ export async function changeEnrollmentRating(
     });
 
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+
+    // The droplet is complete now, so its voyage steps are too.
+    if (enrollment.droplet?.id) {
+      await recordVoyageSteps(enrollment.droplet.id, authorizedUser.id);
+    }
 
     return { success: true };
   } catch (error) {
@@ -770,6 +793,9 @@ export async function recordMissingCompletion(enrollmentId: string) {
       completionDate: enrollment.completionDate ?? new Date(),
     });
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    if (enrollment.droplet?.id) {
+      await recordVoyageSteps(enrollment.droplet.id, authorizedUser.id);
+    }
     return { success: true, updated: true };
   } catch (error) {
     console.error("Error recording missing completion:", error);
