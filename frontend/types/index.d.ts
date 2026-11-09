@@ -610,7 +610,7 @@ export type TimeZone =
   | "America/Phoenix"
   | "America/Los_Angeles"
   | "America/Anchorage"
-  | "America/Honolulu"
+  | "Pacific/Honolulu"
   | "America/Bogota"
   | "America/Lima"
   | "America/Caracas"

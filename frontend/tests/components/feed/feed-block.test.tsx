@@ -901,6 +901,65 @@ describe("FeedBlock", () => {
     });
   });
 
+  describe("Timestamp time zone (ODY-138)", () => {
+    // 16:30 UTC is 12:30 PM in New York during daylight saving time (EDT).
+    const summer = {
+      ...mockDropletAnnouncement,
+      firstCreated: "2024-07-15T16:30:00.000Z",
+    };
+    const withZone = (timeZone: TimeZone) => ({ ...mockUser, timeZone });
+
+    it("shows New York daylight time, not fixed EST", () => {
+      render(
+        <FeedBlock
+          announcement={summer}
+          authUser={withZone("America/New_York")}
+        />,
+      );
+      expect(screen.getByText("7/15/2024, 12:30 PM")).toBeInTheDocument();
+    });
+
+    it("shows New York standard time in winter", () => {
+      render(
+        <FeedBlock
+          announcement={{
+            ...mockDropletAnnouncement,
+            firstCreated: "2024-01-15T15:30:00.000Z",
+          }}
+          authUser={withZone("America/New_York")}
+        />,
+      );
+      expect(screen.getByText("1/15/2024, 10:30 AM")).toBeInTheDocument();
+    });
+
+    it("follows the user's saved time zone when it changes", () => {
+      const { rerender } = render(
+        <FeedBlock
+          announcement={summer}
+          authUser={withZone("America/New_York")}
+        />,
+      );
+      rerender(
+        <FeedBlock
+          announcement={summer}
+          authUser={withZone("America/Los_Angeles")}
+        />,
+      );
+      expect(screen.getByText("7/15/2024, 9:30 AM")).toBeInTheDocument();
+      expect(screen.queryByText("7/15/2024, 12:30 PM")).not.toBeInTheDocument();
+    });
+
+    it("falls back to New York when the saved zone is not a listed zone", () => {
+      render(
+        <FeedBlock
+          announcement={summer}
+          authUser={{ ...mockUser, timeZone: "Nowhere/Land" as TimeZone }}
+        />,
+      );
+      expect(screen.getByText("7/15/2024, 12:30 PM")).toBeInTheDocument();
+    });
+  });
+
   describe("Responsive Layout", () => {
     it("applies responsive classes for friend announcements", () => {
       const friendAnnouncement = {
