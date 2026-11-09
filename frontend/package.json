@@ -133,7 +133,7 @@
     "typo-js": "^1.4.0",
     "uuid": "^11.0.3",
     "xlsx-js-style": "^1.2.0",
-    "zod": "^3.22.4",
+    "zod": "^4.6.7",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
