@@ -62,6 +62,21 @@ export type Citation = {
   label: string;
 };
 
+/** What a request to Mentor is for (ODY-885) */
+export type MentorKind = "lesson" | "explain" | "quiz-hint";
+
+/** An earlier turn of the sidebar's conversation, as the browser keeps it */
+export type MentorTurn = { role: "student" | "mentor"; text: string };
+
+/**
+ * A request to Mentor as the browser sends it, without its droplet and
+ * lesson ids: ids and the student's own words, never lesson text
+ */
+export type MentorInput =
+  | { kind: "lesson"; message: string; history?: MentorTurn[] }
+  | { kind: "explain"; selection: string; history?: MentorTurn[] }
+  | { kind: "quiz-hint"; questionId: number; answerIds: number[] };
+
 /** A choice question as the learner page shows it, with no answer */
 export type MentorQuizQuestion = {
   questionId: number;
