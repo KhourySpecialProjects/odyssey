@@ -48,7 +48,7 @@ function historyOf(messages: ChatMsg[], upTo: number): MentorTurn[] {
     const answer = displayAnswer(m.text, { streaming: false }).trim();
     if (q?.role !== "student" || !answer) continue;
     turns.push(
-      { role: "student", text: q.text.slice(0, MENTOR_MESSAGE_MAX) },
+      { role: "student", text: q.text },
       { role: "mentor", text: answer.slice(0, MENTOR_REPLY_MAX) },
     );
   }
@@ -71,7 +71,7 @@ async function failureOf(res: Response) {
   const retry =
     !lock &&
     !NO_RETRY_CODES.has(code) &&
-    (res.status >= 500 || res.status === 429 || !code);
+    (res.status >= 500 || res.status === 429 || body === null);
   return { message, lock, retry };
 }
 

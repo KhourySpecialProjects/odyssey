@@ -10,7 +10,10 @@ import { answerNoteHtml, displayAnswer } from "@/lib/mentor/answer-text";
 import { noteYFor, showCitation } from "@/lib/mentor/locate";
 import type { MentorMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
-import { useLessonPanelStore } from "@/stores/lesson-panel-store";
+import {
+  useLessonPanelStore,
+  useOwnedPanel,
+} from "@/stores/lesson-panel-store";
 import type { Lesson } from "@/types";
 import { MentorSheet } from "./mentor-sheet";
 import { acceptNotice, noticeAccepted } from "./mentor-notice";
@@ -31,7 +34,7 @@ export function MentorPanel({
   userId: number;
   onNoteSaved: () => Promise<void> | void;
 }) {
-  const open = useLessonPanelStore((s) => s.panel === "mentor");
+  const open = useOwnedPanel(lesson.id) === "mentor";
   const setPanel = useLessonPanelStore((s) => s.setPanel);
   const closeMentor = useLessonPanelStore((s) => s.closeMentor);
   const wide = useMediaQuery("(min-width: 640px)");
@@ -41,6 +44,11 @@ export function MentorPanel({
   // A new n remounts the live-region text, so an identical message is heard again
   const [announcement, setAnnouncement] = useState({ n: 0, text: "" });
   const abort = useRef<AbortController | null>(null);
+
+  // A reopened sheet shouldn't replay the last announcement
+  useEffect(() => {
+    if (open) setAnnouncement((a) => ({ n: a.n + 1, text: "" }));
+  }, [open]);
 
   useEffect(() => {
     abort.current = new AbortController();
@@ -101,16 +109,25 @@ export function MentorPanel({
         );
         if (!result.success) throw new Error("not saved");
         await onNoteSaved();
-        toast.success("Saved to your notes", {
-          action: { label: "View notes", onClick: () => setPanel("notes") },
-        });
+        // The toast sits outside the phone's modal sheet, where it can't be reached
+        toast.success(
+          "Saved to your notes",
+          wide
+            ? {
+                action: {
+                  label: "View notes",
+                  onClick: () => setPanel("notes"),
+                },
+              }
+            : undefined,
+        );
         return true;
       } catch {
         toast.error("Couldn't save to your notes");
         return false;
       }
     },
-    [chat.messages, enrollmentId, lesson, userId, onNoteSaved, setPanel],
+    [chat.messages, enrollmentId, lesson, userId, onNoteSaved, setPanel, wide],
   );
 
   return (

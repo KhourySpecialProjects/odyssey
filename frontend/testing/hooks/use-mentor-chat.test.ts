@@ -186,6 +186,44 @@ describe("useMentorChat", () => {
     });
   });
 
+  it.each([
+    [400, false],
+    [503, true],
+  ])("a JSON %i with no error code retries: %s", async (status, retry) => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status,
+      json: async () => ({ message: "Nope" }),
+    });
+    const { result } = setup();
+    await ask(result, "Q");
+
+    expect(lastAnswer(result.current.messages).error).toEqual({
+      message: "Nope",
+      retry,
+    });
+  });
+
+  it("stop before the response arrives ends as stopped", async () => {
+    fetchMock.mockImplementation(
+      (_url, init: RequestInit) =>
+        new Promise((_resolve, reject) =>
+          init.signal?.addEventListener("abort", () =>
+            reject(new DOMException("Aborted", "AbortError")),
+          ),
+        ),
+    );
+    const { result } = setup();
+    act(() => result.current.ask({ kind: "lesson", message: "Q" }));
+    act(() => result.current.stop());
+    await waitFor(() => expect(result.current.streaming).toBe(false));
+
+    expect(lastAnswer(result.current.messages)).toMatchObject({
+      status: "stopped",
+      text: "",
+    });
+  });
+
   it("sends only finished exchanges as history, at most three, clipped", async () => {
     const long = "x".repeat(2500);
     fetchMock

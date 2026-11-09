@@ -210,6 +210,103 @@ describe("MentorPanel", () => {
     );
   });
 
+  it("offers no View notes action on a phone, where the toast is behind the modal", async () => {
+    jest.mocked(useMediaQuery).mockReturnValue(false);
+    jest.mocked(createNote).mockResolvedValue({ success: true });
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /save to notes/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        "Saved to your notes",
+        undefined,
+      ),
+    );
+  });
+
+  it("toasts when the note can't be saved", async () => {
+    jest.mocked(createNote).mockResolvedValue({ success: false });
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /save to notes/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't save to your notes"),
+    );
+    expect(onNoteSaved).not.toHaveBeenCalled();
+  });
+
+  it("the View notes action swaps to Notes and keeps the conversation", async () => {
+    jest.mocked(createNote).mockResolvedValue({ success: true });
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /save to notes/i }),
+    );
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+
+    const options = jest.mocked(toast.success).mock.calls[0][1] as unknown as {
+      action: { onClick: () => void };
+    };
+    act(() => options.action.onClick());
+
+    expect(useLessonPanelStore.getState()).toMatchObject({
+      panel: "notes",
+      mentorKept: true,
+    });
+    expect(screen.queryByText("What?")).toBeNull();
+    act(() => useLessonPanelStore.getState().setPanel("mentor"));
+    expect(await screen.findByText("What?")).toBeInTheDocument();
+  });
+
+  it("a swap to Notes doesn't pull focus to Ask Mentor, and reopening clears the announcement", async () => {
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await waitFor(() =>
+      expect(document.querySelector("[aria-live=polite]")).toHaveTextContent(
+        "Mentor answered",
+      ),
+    );
+
+    act(() => useLessonPanelStore.getState().setPanel("notes"));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(screen.getByText("Ask Mentor")).not.toHaveFocus();
+
+    act(() => useLessonPanelStore.getState().setPanel("mentor"));
+    await waitFor(() => expect(composer()).toHaveFocus());
+    expect(document.querySelector("[aria-live=polite]")).toHaveTextContent(
+      /^$/,
+    );
+  });
+
+  it("opens on the close button when the composer is locked", async () => {
+    fetchMock.mockResolvedValue(
+      mentorHttpErrorResponse(429, { error: "daily_limit", message: "Done" }),
+    );
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "Hi{Enter}");
+    await screen.findByRole("alert");
+
+    act(() => useLessonPanelStore.getState().setPanel("notes"));
+    act(() => useLessonPanelStore.getState().setPanel("mentor"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Close Mentor" }),
+      ).toHaveFocus(),
+    );
+  });
+
   it("hides Save to notes without an enrollment", async () => {
     renderPanel("");
     act(open);

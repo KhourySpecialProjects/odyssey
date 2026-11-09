@@ -43,6 +43,9 @@ export function MentorSheet(p: SheetProps) {
   const gotIt = useRef<HTMLButtonElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  // Only a student close (Esc, X) returns focus to Ask Mentor, not a swap to Notes
+  const studentClosed = useRef(false);
   // On wide screens the sheet stacks inside the lesson like the Notes panel,
   // so the notes toggle (also inside it) stays above the sheet's edge
   const [wrapper] = useState(() =>
@@ -80,7 +83,11 @@ export function MentorSheet(p: SheetProps) {
     <Dialog.Root
       open={p.open}
       modal={p.modal}
-      onOpenChange={(open) => !open && p.onClose()}
+      onOpenChange={(open) => {
+        if (open) return;
+        studentClosed.current = true;
+        p.onClose();
+      }}
     >
       <Dialog.Portal container={p.modal ? undefined : wrapper}>
         <Dialog.Content
@@ -88,10 +95,17 @@ export function MentorSheet(p: SheetProps) {
           className={`${LESSON_PANEL.sheet} flex flex-col border-l border-slate-200 bg-white shadow-[-8px_0_16px_-8px_rgba(16,24,40,0.12)] dark:border-slate-500 dark:bg-slate-900`}
           onOpenAutoFocus={(e) => {
             e.preventDefault();
-            (p.accepted ? composer.current : gotIt.current)?.focus();
+            const target = !p.accepted
+              ? gotIt.current
+              : p.lock
+                ? closeButton.current
+                : composer.current;
+            target?.focus();
           }}
           onCloseAutoFocus={(e) => {
             e.preventDefault();
+            if (!studentClosed.current) return;
+            studentClosed.current = false;
             document.getElementById("ask-mentor-button")?.focus();
           }}
           onInteractOutside={(e) => {
@@ -128,6 +142,7 @@ export function MentorSheet(p: SheetProps) {
               </Dialog.Description>
             </div>
             <Dialog.Close
+              ref={closeButton}
               aria-label="Close Mentor"
               className="rounded p-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
             >
