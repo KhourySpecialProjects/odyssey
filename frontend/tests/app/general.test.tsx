@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
-import { getProviders, type ClientSafeProvider } from "next-auth/react";
+import { getProviders, signIn, type ClientSafeProvider } from "next-auth/react";
 import NotFoundRoute from "@/app/(general)/not-found";
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import HomeRoute from "@/app/(general)/page";
@@ -101,10 +101,36 @@ describe("General Pages", () => {
   });
 
   describe("SignIn", () => {
-    it("renders a button per configured provider without self-fetching", () => {
-      jest.mocked(getLoginProviders).mockReturnValue(loginProviders);
+    const originalUrl = process.env.NEXTAUTH_URL;
 
-      render(<SignIn />);
+    beforeEach(() => {
+      jest.mocked(getLoginProviders).mockReturnValue(loginProviders);
+      process.env.NEXTAUTH_URL = "http://localhost:3000";
+    });
+
+    afterAll(() => {
+      if (originalUrl === undefined) delete process.env.NEXTAUTH_URL;
+      else process.env.NEXTAUTH_URL = originalUrl;
+    });
+
+    async function renderSignIn(callbackUrl?: string | string[]) {
+      render(
+        await SignIn({
+          searchParams: Promise.resolve(
+            callbackUrl === undefined ? {} : { callbackUrl },
+          ),
+        }),
+      );
+    }
+
+    function clickMyNortheastern() {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Log in with My Northeastern" }),
+      );
+    }
+
+    it("renders a button per configured provider without self-fetching", async () => {
+      await renderSignIn();
 
       expect(
         screen.getByRole("button", { name: "Log in with My Northeastern" }),
@@ -114,6 +140,60 @@ describe("General Pages", () => {
       ).toBeInTheDocument();
       expect(getLoginProviders).toHaveBeenCalledTimes(1);
       expect(getProviders).not.toHaveBeenCalled();
+    });
+
+    it("signs in with the provider's default destination when there is no callbackUrl", async () => {
+      await renderSignIn();
+      clickMyNortheastern();
+
+      expect(signIn).toHaveBeenCalledWith("azure-ad", undefined);
+    });
+
+    it.each([
+      ["a relative path", "/d/some-droplet", "/d/some-droplet"],
+      [
+        "next-auth's absolute same-origin URL",
+        "http://localhost:3000/d/some-droplet/lesson/2?tab=quiz",
+        "/d/some-droplet/lesson/2?tab=quiz",
+      ],
+      ["a group link", "/g/fall-cs2500", "/g/fall-cs2500"],
+    ])(
+      "passes on a callbackUrl that is %s",
+      async (_label, callbackUrl, expected) => {
+        await renderSignIn(callbackUrl);
+        fireEvent.click(
+          screen.getByRole("button", { name: /Log in with\s+GitHub/ }),
+        );
+
+        expect(signIn).toHaveBeenCalledWith("github", {
+          callbackUrl: expected,
+        });
+      },
+    );
+
+    it.each([
+      "https://evil.com/d/x",
+      "//evil.com/d/x",
+      "/\\evil.com",
+      "/.//evil.com",
+      "javascript:alert(1)",
+      "d/some-droplet",
+      "/auth/login",
+    ])(
+      "drops the unsafe callbackUrl %s and uses the default",
+      async (callbackUrl) => {
+        await renderSignIn(callbackUrl);
+        clickMyNortheastern();
+
+        expect(signIn).toHaveBeenCalledWith("azure-ad", undefined);
+      },
+    );
+
+    it("ignores a repeated callbackUrl", async () => {
+      await renderSignIn(["/d/a", "https://evil.com"]);
+      clickMyNortheastern();
+
+      expect(signIn).toHaveBeenCalledWith("azure-ad", undefined);
     });
   });
 
