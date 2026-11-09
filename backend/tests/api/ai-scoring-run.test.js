@@ -834,3 +834,94 @@ describe('POST /ai-scoring-runs/finish, aiFindings', () => {
     expect(await scoreRow(scoreKey(review.id, lesson.id, tone.id))).toBeNull();
   });
 });
+
+// The Overview scan's spelling double-check shares Score with AI's monthly
+// budget (ODY-904): a read-only check before the call, a run with no review after.
+describe('POST /ai-scoring-runs/budget-check and /usage', () => {
+  const SETTINGS_UID = 'api::ai-scoring-setting.ai-scoring-setting';
+  const setBudget = async (data) => {
+    const row = await strapi.documents(SETTINGS_UID).findFirst();
+    return strapi.documents(SETTINGS_UID).update({ documentId: row.documentId, data });
+  };
+  // Sonnet input is $2 a million tokens
+  const runCosting = (usd, data = {}) =>
+    strapi.documents(AI_SCORING_RUN_UID).create({
+      data: { runState: 'done', model: 'claude-sonnet-5-5', inputTokens: usd * 500_000, ...data },
+    });
+  const usage = (overrides = {}) => ({
+    model: 'claude-haiku-5-5',
+    promptVersion: 'scan-spelling-1',
+    inputTokens: 1200,
+    outputTokens: 40,
+    ...overrides,
+  });
+
+  beforeEach(() => setBudget({ monthlyCapUsd: 10, perRunCapUsd: 2 }));
+  afterAll(() => setBudget({ monthlyCapUsd: 25, perRunCapUsd: 2 }));
+
+  it('allows a call under the cap', async () => {
+    await runCosting(9.5);
+    const res = await post('budget-check', {});
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ allowed: true });
+  });
+
+  it.each([
+    ['this month has spent the cap', () => runCosting(10)],
+    [
+      'a run going on a review holds back its ceiling',
+      async () => {
+        await runCosting(8);
+        await runCosting(0, { runState: 'running' });
+      },
+    ],
+    ['the cap is $0', () => setBudget({ monthlyCapUsd: 0 })],
+  ])('refuses when %s, and creates nothing', async (_, arrange) => {
+    await arrange();
+    const before = await strapi.db.query(AI_SCORING_RUN_UID).count();
+
+    const res = await post('budget-check', {});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ allowed: false });
+    expect(await strapi.db.query(AI_SCORING_RUN_UID).count()).toBe(before);
+  });
+
+  it('records a done run with no review, which counts toward the cap', async () => {
+    await runCosting(9.99);
+    // Haiku 5.5 output is $0.50 a million tokens: 40,000 tokens is $0.02
+    const res = await post('usage', usage({ inputTokens: 0, outputTokens: 40_000 }));
+
+    expect(res.status).toBe(200);
+    const run = await strapi.db.query(AI_SCORING_RUN_UID).findOne({
+      where: { id: res.body.data.id },
+      populate: ['review'],
+    });
+    expect(run).toMatchObject({
+      runState: 'done',
+      model: 'claude-haiku-5-5',
+      promptVersion: 'scan-spelling-1',
+      inputTokens: 0,
+      outputTokens: 40_000,
+      review: null,
+    });
+    expect(run.startedAt).toBeTruthy();
+    expect(run.finishedAt).toBeTruthy();
+    expect((await post('budget-check', {})).body.data).toEqual({ allowed: false });
+    expect((await start()).status).toBe(409);
+  });
+
+  it.each([
+    ['budget-check', { extra: 1 }],
+    ['usage', usage({ extra: 1 })],
+    ['usage', usage({ inputTokens: -1 })],
+    ['usage', usage({ outputTokens: 1.5 })],
+    ['usage', usage({ model: '' })],
+    ['usage', usage({ promptVersion: 'x'.repeat(51) })],
+    ['usage', { model: 'claude-haiku-5-5', promptVersion: 'scan-spelling-1' }],
+  ])('rejects a bad %s body and records nothing', async (path, body) => {
+    const res = await post(path, body);
+    expect(res.status).toBe(400);
+    expect(await strapi.db.query(AI_SCORING_RUN_UID).count()).toBe(0);
+  });
+});

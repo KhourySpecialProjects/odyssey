@@ -17,5 +17,16 @@ export default {
       path: '/ai-scoring-runs/finish',
       handler: 'custom-ai-scoring-run.finish',
     },
+    // The Overview scan's spelling double-check (ODY-904) shares the budget
+    {
+      method: 'POST',
+      path: '/ai-scoring-runs/budget-check',
+      handler: 'custom-ai-scoring-run.budgetCheck',
+    },
+    {
+      method: 'POST',
+      path: '/ai-scoring-runs/usage',
+      handler: 'custom-ai-scoring-run.usage',
+    },
   ],
 };

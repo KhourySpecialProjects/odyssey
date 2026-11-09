@@ -66,13 +66,14 @@ export type RouteResult<T> =
   | { ok: false; status: number; message: string | null };
 
 /**
- * Calls a Score with AI route (`backend/src/api/ai-scoring-run`). Each one
- * checks that `userId` is the review's reviewer, under the review's row lock.
- * Bodies are `{ data }`, not v4 entries, so nothing is flattened. A network
- * failure is status 0.
+ * Calls a Score with AI route (`backend/src/api/ai-scoring-run`). The run
+ * routes check that `userId` is the review's reviewer, under the review's row
+ * lock; `budget-check` and `usage` (the Overview scan's spelling
+ * double-check, ODY-904) take no user. Bodies are `{ data }`, not v4 entries,
+ * so nothing is flattened. A network failure is status 0.
  */
 async function postRunRoute<T>(
-  path: "start" | "heartbeat" | "finish",
+  path: "start" | "heartbeat" | "finish" | "budget-check" | "usage",
   body: object,
 ): Promise<RouteResult<T>> {
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/ai-scoring-runs/${path}`;
@@ -123,3 +124,15 @@ export const heartbeatRunRoute = (body: {
 
 export const finishRunRoute = (body: FinishRunInput) =>
   postRunRoute<FinishedRun>("finish", body);
+
+/** Read-only: whether this month's Score with AI budget has room (ODY-904). */
+export const checkScoringBudgetRoute = () =>
+  postRunRoute<{ allowed: boolean }>("budget-check", {});
+
+/** Records one model call outside Score with AI against the monthly spend. */
+export const recordScoringUsageRoute = (body: {
+  model: string;
+  promptVersion: string;
+  inputTokens: number;
+  outputTokens: number;
+}) => postRunRoute<{ id: number }>("usage", body);

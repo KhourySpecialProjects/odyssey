@@ -148,6 +148,10 @@ export const CONFIG = {
   `
     .trim()
     .split(/\s+/) as readonly string[],
+  // The AI double-check of the dictionary's spelling flags (ODY-904): at most
+  // this many words go in its one call, and it gives up after this long
+  aiSpellingMaxWords: 200,
+  aiSpellingTimeoutMs: 20_000,
   // Words obscenity flags that aren't swears
   swearAllowWords: [
     "cockpit",

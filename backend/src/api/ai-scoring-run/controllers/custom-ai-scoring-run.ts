@@ -1,6 +1,8 @@
 import {
   finishRun,
   heartbeatRun,
+  recordScoringUsage,
+  scoringBudgetAvailable,
   startRun,
   type RunProgress,
   type RunScore,
@@ -171,6 +173,48 @@ async function run(ctx: any, fn: () => Promise<unknown>, failMessage: string) {
 }
 
 export default {
+  // The Overview scan's spelling double-check (ODY-904): read-only
+  async budgetCheck(ctx) {
+    const parsed = parseBody(ctx.request.body ?? {}, [], []);
+    if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
+    return run(
+      ctx,
+      async () => ({ allowed: await scoringBudgetAvailable() }),
+      'Failed to check the AI budget.',
+    );
+  },
+
+  // One model call outside Score with AI, counted toward the monthly spend
+  async usage(ctx) {
+    const parsed = parseBody(
+      ctx.request.body ?? {},
+      ['model', 'promptVersion', 'inputTokens', 'outputTokens'],
+      [],
+    );
+    if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
+    const { body } = parsed;
+    if (!isText(body.model, 100)) {
+      return fail(ctx, 400, 'model must be text of at most 100 characters');
+    }
+    if (!isText(body.promptVersion, 50)) {
+      return fail(ctx, 400, 'promptVersion must be text of at most 50 characters');
+    }
+    for (const key of ['inputTokens', 'outputTokens']) {
+      if (!isCount(body[key])) return fail(ctx, 400, `${key} must be a whole number`);
+    }
+    return run(
+      ctx,
+      () =>
+        recordScoringUsage({
+          model: body.model as string,
+          promptVersion: body.promptVersion as string,
+          inputTokens: body.inputTokens as number,
+          outputTokens: body.outputTokens as number,
+        }),
+      'Failed to record AI usage.',
+    );
+  },
+
   async start(ctx) {
     const parsed = parseBody(
       ctx.request.body ?? {},
