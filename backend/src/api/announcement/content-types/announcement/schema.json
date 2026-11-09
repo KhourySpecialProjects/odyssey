@@ -65,6 +65,12 @@
       "target": "api::authorized-user.authorized-user",
       "mappedBy": "gaveKudos"
     },
+    "reads": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::announcement-read.announcement-read",
+      "mappedBy": "announcement"
+    },
     "readAt": {
       "type": "datetime"
     }
