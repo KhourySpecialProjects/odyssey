@@ -1,7 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OverviewScanPage } from "@/components/draft/overview-scan/overview-scan-page";
-import { runOverviewScan } from "@/lib/requests/overview-scan";
+import {
+  dismissScanFlag,
+  runOverviewScan,
+  undoScanFlagDismissal,
+} from "@/lib/requests/overview-scan";
 import { RULES_VERSION } from "@/lib/overview-scan/config";
 import { buildScanView, type ScanView } from "@/lib/overview-scan/view";
 import type { Check, OverviewScan } from "@/lib/overview-scan/types";
@@ -251,5 +255,158 @@ describe("OverviewScanPage", () => {
         /Checks finished/,
       );
     });
+  });
+});
+
+describe("OverviewScanPage, dismissing flags (ODY-905)", () => {
+  const mockedDismiss = dismissScanFlag as jest.MockedFunction<
+    typeof dismissScanFlag
+  >;
+  const mockedUndo = undoScanFlagDismissal as jest.MockedFunction<
+    typeof undoScanFlagDismissal
+  >;
+  const FLAG = {
+    partId: "droplet",
+    blockId: "overview",
+    message: "Too short.",
+  };
+  const KEY = { checkId: "s1", ruleId: "a", ...FLAG };
+  // s1 needs attention from one flag on the droplet page
+  const flagged = () =>
+    viewOf(
+      saved({
+        results: saved().results.map((c) =>
+          c.id === "s1"
+            ? {
+                ...c,
+                rules: [
+                  {
+                    id: "a",
+                    status: "warn",
+                    flags: [{ ...FLAG, severity: "warn" }],
+                  },
+                ],
+              }
+            : c,
+        ),
+      }),
+    );
+  const renderWith = (
+    props: Partial<Parameters<typeof OverviewScanPage>[0]> = {},
+  ) =>
+    render(
+      <OverviewScanPage
+        dropletId={7}
+        dropletName="Drop"
+        slug="drop"
+        lessonCount={2}
+        view={flagged()}
+        canDismiss
+        {...props}
+      />,
+    );
+  const openS1 = () =>
+    userEvent.click(screen.getByRole("button", { name: /^Check s1/ }));
+  const dismissButton = () =>
+    screen.getByRole("button", {
+      name: /^Dismiss\s*: Droplet page · Overview$/,
+    });
+  const undoButton = () =>
+    screen.getByRole("button", {
+      name: /^Undo\s*: dismissing Droplet page · Overview$/,
+    });
+
+  it("moves the check to passed at once, then saves and refreshes", async () => {
+    let resolve!: (r: Awaited<ReturnType<typeof dismissScanFlag>>) => void;
+    mockedDismiss.mockReturnValue(new Promise((r) => (resolve = r)));
+    renderWith();
+    await openS1();
+
+    await userEvent.click(dismissButton());
+
+    expect(screen.queryByText("1 need attention")).toBeNull();
+    expect(screen.getByText("2 passed")).toBeInTheDocument();
+    expect(screen.getByText(/^Dismissed by You/)).toBeInTheDocument();
+    expect(undoButton()).toHaveFocus();
+    expect(mockedDismiss).toHaveBeenCalledWith(7, KEY);
+    expect(refresh).not.toHaveBeenCalled();
+
+    await act(async () => resolve({ ok: true, error: null, data: null }));
+    expect(refresh).toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("Flag dismissed.");
+  });
+
+  it.each([
+    [
+      "it fails",
+      { ok: false, error: "failed", data: null },
+      "That didn't save. Try again.",
+    ],
+    [
+      "the droplet went into review",
+      { ok: false, error: "in_review", data: null },
+      "In review. Editing is paused until the reviewer sends it back.",
+    ],
+    [
+      "the flag changed",
+      { ok: false, error: "stale", data: null },
+      "This flag changed since the page loaded. Run checks again or reload the page.",
+    ],
+  ] as const)(
+    "puts the flag back and says why when %s",
+    async (_, result, message) => {
+      mockedDismiss.mockResolvedValue(result);
+      renderWith();
+      await openS1();
+
+      await userEvent.click(dismissButton());
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(message);
+      expect(screen.getByText("1 need attention")).toBeInTheDocument();
+      expect(dismissButton()).toHaveFocus();
+      expect(refresh).not.toHaveBeenCalled();
+    },
+  );
+
+  it("brings a dismissed flag back with Undo", async () => {
+    mockedUndo.mockResolvedValue({ ok: true, error: null, data: null });
+    renderWith({
+      dismissals: [
+        {
+          ...KEY,
+          dismissedBy: "Grace Hopper",
+          dismissedAt: new Date().toISOString(),
+        },
+      ],
+    });
+    expect(screen.getByText("2 passed")).toBeInTheDocument();
+    await openS1();
+    expect(screen.getByText(/^Dismissed by Grace Hopper/)).toBeInTheDocument();
+
+    await userEvent.click(undoButton());
+
+    expect(screen.getByText("1 need attention")).toBeInTheDocument();
+    expect(dismissButton()).toHaveFocus();
+    expect(mockedUndo).toHaveBeenCalledWith(7, KEY);
+    expect(await screen.findByText("Flag restored.")).toBeInTheDocument();
+  });
+
+  it("says dismissing is paused for someone who can't dismiss", async () => {
+    renderWith({ canDismiss: false });
+    expect(
+      screen.getByText(
+        "Dismissing flags is paused while this droplet is in review.",
+      ),
+    ).toBeInTheDocument();
+    await openS1();
+    expect(screen.queryByRole("button", { name: /^Dismiss/ })).toBeNull();
+  });
+
+  it("says when the dismissed flags couldn't load", () => {
+    renderWith({ canDismiss: false, dismissalsError: true });
+    expect(
+      screen.getByText("Couldn't load the dismissed flags."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/is paused/)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -12,10 +12,19 @@ import { cn } from "@/lib/utils";
 import { commentTime } from "@/lib/review-comments";
 import { REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 import {
+  dismissScanFlag,
   runOverviewScan,
+  undoScanFlagDismissal,
   type OverviewScanError,
 } from "@/lib/requests/overview-scan";
-import { plural, type ScanView } from "@/lib/overview-scan/view";
+import {
+  applyDismissals,
+  flagKeyId,
+  plural,
+  scanFlagDomId,
+  type ScanView,
+} from "@/lib/overview-scan/view";
+import type { ScanDismissal, ScanFlagKey } from "@/lib/overview-scan/types";
 import { CheckRow } from "./check-row";
 import { FOCUS } from "./focus";
 
@@ -29,6 +38,11 @@ const ERRORS: Record<Exclude<OverviewScanError, "rate_limited">, string> = {
   stale:
     "This flag changed since the page loaded. Run checks again or reload the page.",
 };
+
+// Dismiss and Undo (ODY-905) say what they couldn't do
+const DISMISS_FAILED = "That didn't save. Try again.";
+// One array, so the reset effect below doesn't fire on every render
+const NO_DISMISSALS: ScanDismissal[] = [];
 
 function errorText(r: { error: OverviewScanError; message?: string }) {
   return r.error === "rate_limited"
@@ -49,8 +63,11 @@ export function OverviewScanPage({
   dropletName,
   slug,
   lessonCount,
-  view,
+  view: savedView,
   loadError,
+  dismissals: savedDismissals = NO_DISMISSALS,
+  canDismiss = false,
+  dismissalsError = false,
 }: {
   dropletId: number;
   dropletName: string;
@@ -58,6 +75,10 @@ export function OverviewScanPage({
   lessonCount: number;
   view: ScanView;
   loadError?: boolean;
+  /** Flags marked as fine on this droplet (ODY-905) */
+  dismissals?: ScanDismissal[];
+  canDismiss?: boolean;
+  dismissalsError?: boolean;
 }) {
   const router = useRouter();
   // React 18: an async transition keeps no isPending, so `busy` covers the action.
@@ -68,7 +89,85 @@ export function OverviewScanPage({
   const [error, setError] = useState("");
   // The ranAt when a run started; undefined when none is running.
   const startRanAt = useRef<string | null | undefined>(undefined);
+
+  // Dismissals show at once and are saved after; a refresh brings the saved
+  // ones (ODY-905). Not the run's transition, so the header doesn't say
+  // "Checking" while one saves.
+  const [dismissals, setDismissals] = useState(savedDismissals);
+  const [pendingKeys, setPendingKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [, startDismissRefresh] = useTransition();
+  const focusAfter = useRef<string | null>(null);
+  useEffect(() => setDismissals(savedDismissals), [savedDismissals]);
+  useEffect(() => {
+    if (!focusAfter.current) return;
+    document.getElementById(focusAfter.current)?.focus();
+    focusAfter.current = null;
+  }, [dismissals]);
+  const view = useMemo(
+    () => applyDismissals(savedView, dismissals),
+    [savedView, dismissals],
+  );
   const { counts, ranAt, ranBy } = view;
+
+  const setPending = (id: string, on: boolean) =>
+    setPendingKeys((keys) => {
+      const next = new Set(keys);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  const changeDismissal = async (key: ScanFlagKey, dismiss: boolean) => {
+    const id = flagKeyId(key);
+    if (pending || pendingKeys.has(id)) return;
+    const domId = scanFlagDomId(key);
+    const removed = dismissals.filter((d) => flagKeyId(d) === id);
+    const apply = (on: boolean) =>
+      setDismissals((list) =>
+        on
+          ? [
+              ...list,
+              ...(removed.length
+                ? removed
+                : [
+                    {
+                      ...key,
+                      dismissedBy: "You",
+                      dismissedAt: new Date().toISOString(),
+                    },
+                  ]),
+            ]
+          : list.filter((d) => flagKeyId(d) !== id),
+      );
+    setError("");
+    setPending(id, true);
+    focusAfter.current = `${domId}-${dismiss ? "undo" : "dismiss"}`;
+    apply(dismiss);
+    let r: Awaited<ReturnType<typeof dismissScanFlag>>;
+    try {
+      r = await (dismiss ? dismissScanFlag : undoScanFlagDismissal)(
+        dropletId,
+        key,
+      );
+    } catch {
+      r = { ok: false, error: "failed", data: null };
+    }
+    setPending(id, false);
+    if (r.ok) {
+      setLive(dismiss ? "Flag dismissed." : "Flag restored.");
+      startDismissRefresh(() => router.refresh());
+    } else {
+      focusAfter.current = `${domId}-${dismiss ? "dismiss" : "undo"}`;
+      apply(!dismiss);
+      setError(
+        r.error === "in_review" || r.error === "stale"
+          ? ERRORS[r.error]
+          : DISMISS_FAILED,
+      );
+    }
+  };
 
   useEffect(() => {
     if (startRanAt.current === undefined || view.ranAt === startRanAt.current)
@@ -203,6 +302,18 @@ export function OverviewScanPage({
             Couldn&apos;t load the last scan.
           </p>
         )}
+        {dismissalsError ? (
+          <p className="text-[13px] text-red-700">
+            Couldn&apos;t load the dismissed flags.
+          </p>
+        ) : (
+          !canDismiss &&
+          ranAt && (
+            <p className={NOTE}>
+              Dismissing flags is paused while this droplet is in review.
+            </p>
+          )
+        )}
         <p role="alert" className="text-[13px] text-red-700 empty:hidden">
           {error}
         </p>
@@ -230,7 +341,15 @@ export function OverviewScanPage({
             {col.checks.length ? (
               <ul className="flex flex-col gap-1">
                 {col.checks.map((check) => (
-                  <CheckRow key={check.id} check={check} running={pending} />
+                  <CheckRow
+                    key={check.id}
+                    check={check}
+                    running={pending}
+                    canDismiss={canDismiss}
+                    pendingKeys={pendingKeys}
+                    onDismiss={(key) => changeDismissal(key, true)}
+                    onUndo={(key) => changeDismissal(key, false)}
+                  />
                 ))}
               </ul>
             ) : (

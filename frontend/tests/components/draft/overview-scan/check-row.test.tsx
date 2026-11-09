@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CheckRow } from "@/components/draft/overview-scan/check-row";
+import { flagKeyId } from "@/lib/overview-scan/view";
 import type { CheckView, FlagView } from "@/lib/overview-scan/view";
 
 const KEY = {
@@ -156,5 +157,115 @@ describe("CheckRow", () => {
     expect(link).toHaveAttribute("href", "/draft/d/drop/second");
     const deleted = screen.getByText("Deleted lesson").closest("li")!;
     expect(within(deleted).queryByRole("link")).toBeNull();
+  });
+});
+
+describe("CheckRow, dismissing flags (ODY-905)", () => {
+  const onDismiss = jest.fn();
+  const onUndo = jest.fn();
+  // Every flag of the warning rule dismissed, as applyDismissals leaves it
+  const allDismissed = (): CheckView => {
+    const base = checkView();
+    const rule = base.rules[1];
+    return {
+      ...base,
+      status: "pass",
+      flagCount: 0,
+      dismissedCount: 1,
+      rules: [
+        base.rules[0],
+        {
+          ...rule,
+          status: "pass",
+          flags: [],
+          dismissed: [
+            {
+              ...lessonFlag,
+              dismissedBy: "Ada Lovelace",
+              dismissedAt: "2026-11-09T10:00:00.000Z",
+            },
+          ],
+        },
+      ],
+    };
+  };
+  const renderWith = (
+    check: CheckView,
+    { canDismiss = true, running = false, pending = [] as string[] } = {},
+  ) =>
+    render(
+      <ul>
+        <CheckRow
+          check={check}
+          running={running}
+          canDismiss={canDismiss}
+          pendingKeys={new Set(pending)}
+          onDismiss={onDismiss}
+          onUndo={onUndo}
+        />
+      </ul>,
+    );
+  const open = () =>
+    userEvent.click(screen.getByRole("button", { expanded: false }));
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it("gives every flag a Dismiss button that sends its key", async () => {
+    renderWith(checkView());
+    await open();
+
+    expect(screen.getAllByRole("button", { name: /^Dismiss/ })).toHaveLength(2);
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Dismiss\s*: Lesson 2 · Second$/ }),
+    );
+    expect(onDismiss).toHaveBeenCalledWith(KEY);
+  });
+
+  it("lists a dismissed flag greyed, with who dismissed it and Undo", async () => {
+    renderWith(allDismissed());
+    await open();
+
+    expect(
+      screen.getByText(/^Dismissed by Ada Lovelace · /),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: /^Undo\s*: dismissing Lesson 2 · Second$/,
+      }),
+    );
+    expect(onUndo).toHaveBeenCalledWith(KEY);
+    expect(screen.queryByRole("button", { name: /^Dismiss/ })).toBeNull();
+  });
+
+  it("says Passed and how many are dismissed in the row's name", () => {
+    renderWith(allDismissed());
+    expect(
+      screen.getByRole("button", {
+        name: /^Organization\s*, Passed\s*, 1 dismissed$/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no Dismiss or Undo when the caller can't dismiss", async () => {
+    renderWith(allDismissed(), { canDismiss: false });
+    await open();
+    expect(
+      screen.queryByRole("button", { name: /^(Dismiss|Undo)/ }),
+    ).toBeNull();
+    expect(screen.getByText(/^Dismissed by Ada Lovelace/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ["a scan is running", { running: true }],
+    ["that flag is saving", { pending: [flagKeyId(KEY)] }],
+  ])("disables the button while %s", async (_, options) => {
+    renderWith(checkView(), options);
+    await open();
+    const button = screen.getByRole("button", {
+      name: /^Dismiss\s*: Lesson 2 · Second$/,
+    });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(button);
+    expect(onDismiss).not.toHaveBeenCalled();
   });
 });

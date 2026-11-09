@@ -4,8 +4,20 @@ import { useId, useState } from "react";
 import Link from "next/link";
 import { IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { STATUS_WORDS, plural } from "@/lib/overview-scan/view";
-import type { CheckView, FlagView, ViewStatus } from "@/lib/overview-scan/view";
+import {
+  STATUS_WORDS,
+  flagKeyId,
+  plural,
+  scanFlagDomId,
+} from "@/lib/overview-scan/view";
+import type {
+  CheckView,
+  DismissedFlagView,
+  FlagView,
+  ViewStatus,
+} from "@/lib/overview-scan/view";
+import type { ScanFlagKey } from "@/lib/overview-scan/types";
+import { commentTime } from "@/lib/review-comments";
 import { FOCUS } from "./focus";
 import { StatusCircle } from "./status-circle";
 
@@ -17,7 +29,37 @@ const TINT: Record<ViewStatus | "running", string> = {
   running: "text-[#344054]",
 };
 
-function FlagCard({ flag }: { flag: FlagView }) {
+/** Dismiss and Undo (ODY-905); off while a scan runs or this flag is saving */
+type FlagActions = {
+  canDismiss: boolean;
+  busy: (key: ScanFlagKey) => boolean;
+  onDismiss: (key: ScanFlagKey) => void;
+  onUndo: (key: ScanFlagKey) => void;
+};
+
+const ACTION = cn(
+  "w-fit rounded text-[13px] font-medium text-[#2d7597] hover:underline aria-disabled:cursor-not-allowed aria-disabled:text-slate-400 aria-disabled:no-underline",
+  FOCUS,
+);
+
+function FlagLink({ flag }: { flag: FlagView }) {
+  if (!flag.href) return null;
+  return (
+    <Link
+      href={flag.href}
+      className={cn(
+        "w-fit rounded text-[13px] font-medium text-[#2d7597] hover:underline",
+        FOCUS,
+      )}
+    >
+      {flag.linkText} <span aria-hidden="true">→</span>
+      <span className="sr-only">: {flag.label}</span>
+    </Link>
+  );
+}
+
+function FlagCard({ flag, actions }: { flag: FlagView; actions: FlagActions }) {
+  const busy = actions.busy(flag.key);
   return (
     <li
       className={cn(
@@ -29,31 +71,90 @@ function FlagCard({ flag }: { flag: FlagView }) {
     >
       <p className="font-semibold text-[#344054]">{flag.label}</p>
       <p>{flag.message}</p>
-      {flag.href && (
-        <Link
-          href={flag.href}
-          className={cn(
-            "w-fit rounded text-[13px] font-medium text-[#2d7597] hover:underline",
-            FOCUS,
-          )}
-        >
-          {flag.linkText} <span aria-hidden="true">→</span>
-          <span className="sr-only">: {flag.label}</span>
-        </Link>
-      )}
+      <div className="flex flex-wrap gap-x-4">
+        <FlagLink flag={flag} />
+        {actions.canDismiss && (
+          <button
+            type="button"
+            id={`${scanFlagDomId(flag.key)}-dismiss`}
+            aria-disabled={busy || undefined}
+            onClick={() => !busy && actions.onDismiss(flag.key)}
+            className={ACTION}
+          >
+            Dismiss<span className="sr-only">: {flag.label}</span>
+          </button>
+        )}
+      </div>
     </li>
   );
 }
+
+/** A flag someone marked as fine: greyed, with who and when, and Undo */
+function DismissedCard({
+  flag,
+  actions,
+}: {
+  flag: DismissedFlagView;
+  actions: FlagActions;
+}) {
+  const busy = actions.busy(flag.key);
+  const when = commentTime(flag.dismissedAt);
+  return (
+    <li className="flex flex-col gap-0.5 rounded-md border-l-[3px] border-l-[#94a3b8] bg-[#f8fafc] px-2.5 py-1.5 text-[12.5px] leading-[17.5px] text-[#475569]">
+      <div className="flex flex-col gap-0.5 opacity-70">
+        <p className="font-semibold text-[#344054]">{flag.label}</p>
+        <p>{flag.message}</p>
+        <p className="text-xs">
+          {flag.dismissedBy ? `Dismissed by ${flag.dismissedBy}` : "Dismissed"}
+          {when && ` · ${when}`}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-x-4">
+        <FlagLink flag={flag} />
+        {actions.canDismiss && (
+          <button
+            type="button"
+            id={`${scanFlagDomId(flag.key)}-undo`}
+            aria-disabled={busy || undefined}
+            onClick={() => !busy && actions.onUndo(flag.key)}
+            className={ACTION}
+          >
+            Undo<span className="sr-only">: dismissing {flag.label}</span>
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+const NO_KEYS: ReadonlySet<string> = new Set();
+const noop = () => {};
 
 /** One check as an accordion row; its rules and flags open inline. */
 export function CheckRow({
   check,
   running,
+  canDismiss = false,
+  pendingKeys = NO_KEYS,
+  onDismiss = noop,
+  onUndo = noop,
 }: {
   check: CheckView;
   running: boolean;
+  /** Whether Dismiss and Undo show (ODY-905) */
+  canDismiss?: boolean;
+  /** flagKeyId of each flag whose dismiss or undo is saving */
+  pendingKeys?: ReadonlySet<string>;
+  onDismiss?: (key: ScanFlagKey) => void;
+  onUndo?: (key: ScanFlagKey) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const actions: FlagActions = {
+    canDismiss,
+    busy: (key) => running || pendingKeys.has(flagKeyId(key)),
+    onDismiss,
+    onUndo,
+  };
   const detailsId = useId();
   const status = running ? "running" : check.status;
 
@@ -87,6 +188,13 @@ export function CheckRow({
                 <span aria-hidden="true"> · </span>
                 <span className="sr-only">, </span>
                 {plural(check.flagCount, "flag")}
+              </>
+            )}
+            {!running && check.dismissedCount > 0 && (
+              <>
+                <span aria-hidden="true"> · </span>
+                <span className="sr-only">, </span>
+                {check.dismissedCount} dismissed
               </>
             )}
           </span>
@@ -131,10 +239,17 @@ export function CheckRow({
                   </span>
                 </span>
               </div>
-              {rule.flags.length > 0 && (
+              {rule.flags.length + rule.dismissed.length > 0 && (
                 <ul className="flex flex-col gap-1.5 pt-1.5 pb-0.5 pl-[23px]">
                   {rule.flags.map((flag, i) => (
-                    <FlagCard key={i} flag={flag} />
+                    <FlagCard key={i} flag={flag} actions={actions} />
+                  ))}
+                  {rule.dismissed.map((flag, i) => (
+                    <DismissedCard
+                      key={`d${i}`}
+                      flag={flag}
+                      actions={actions}
+                    />
                   ))}
                 </ul>
               )}
