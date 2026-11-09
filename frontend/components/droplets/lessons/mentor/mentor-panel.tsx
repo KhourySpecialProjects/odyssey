@@ -37,6 +37,9 @@ export function MentorPanel({
   const open = useOwnedPanel(lesson.id) === "mentor";
   const setPanel = useLessonPanelStore((s) => s.setPanel);
   const closeMentor = useLessonPanelStore((s) => s.closeMentor);
+  const explainSelection = useLessonPanelStore((s) => s.explainSelection);
+  const clearExplain = useLessonPanelStore((s) => s.clearExplain);
+  const openedByExplain = useLessonPanelStore((s) => s.openedByExplain);
   const wide = useMediaQuery("(min-width: 640px)");
   const chat = useMentorChat({ dropletId, lessonId: lesson.id });
   const [accepted, setAccepted] = useState(noticeAccepted);
@@ -54,6 +57,15 @@ export function MentorPanel({
     abort.current = new AbortController();
     return () => abort.current?.abort();
   }, []);
+
+  // Explain from the lesson waits for the notice to be accepted and for an
+  // answer that's still streaming. Once locked, the ask is dropped.
+  const { ask, streaming } = chat;
+  useEffect(() => {
+    if (explainSelection === null || !accepted || streaming) return;
+    clearExplain();
+    ask({ kind: "explain", selection: explainSelection });
+  }, [explainSelection, accepted, streaming, ask, clearExplain]);
 
   // Errors aren't announced here: the message card's role="alert" does it.
   // Each finished answer announces once, whichever message it is.
@@ -139,6 +151,7 @@ export function MentorPanel({
       streaming={chat.streaming}
       lock={chat.lock}
       accepted={accepted}
+      openedByExplain={openedByExplain}
       announcement={announcement}
       draft={draft}
       setDraft={setDraft}

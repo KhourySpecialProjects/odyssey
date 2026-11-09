@@ -9,11 +9,14 @@ import {
   MENTOR_HISTORY_MAX,
   MENTOR_MESSAGE_MAX,
   MENTOR_REPLY_MAX,
+  MENTOR_SELECTION_MAX,
 } from "@/lib/validations/mentor";
 
 export type ChatMsg = StudentMsg | MentorMsg;
-/** ODY-889 adds { kind: "explain", selection } here */
-export type MentorAsk = { kind: "lesson"; message: string };
+/** A question typed in the sidebar, or text selected in the lesson to explain */
+export type MentorAsk =
+  | { kind: "lesson"; message: string }
+  | { kind: "explain"; selection: string };
 
 // Codes the student can't fix by waiting: the composer locks
 const LOCK_CODES = new Set([
@@ -37,6 +40,39 @@ const BROKE_OFF = "The answer broke off. Try again.";
 let counter = 0;
 const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `mentor-msg-${(counter += 1)}`;
+
+/**
+ * A selection as the route takes it: whitespace collapsed (the route ignores
+ * it) and at most MENTOR_SELECTION_MAX characters, cut at a word. Any part of
+ * the selection is still lesson text, so a cut one is still found.
+ */
+function clipSelection(text: string) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= MENTOR_SELECTION_MAX)
+    return { selection: flat, cut: false };
+  const head = flat.slice(0, MENTOR_SELECTION_MAX);
+  const space = head.lastIndexOf(" ");
+  const atWord = flat[MENTOR_SELECTION_MAX] === " " || space <= 0;
+  return { selection: atWord ? head : head.slice(0, space), cut: true };
+}
+
+/** What the student's message shows, or null when there's nothing to ask */
+function studentOf(input: MentorAsk): Omit<StudentMsg, "id" | "role"> | null {
+  if (input.kind === "lesson") {
+    const text = input.message.trim().slice(0, MENTOR_MESSAGE_MAX);
+    return text ? { text } : null;
+  }
+  const { selection, cut } = clipSelection(input.selection);
+  if (!selection) return null;
+  // The ellipsis shows the student what was left out
+  return { text: `Explain “${selection}${cut ? "…" : ""}”`, selection };
+}
+
+/** What the route is asked for a student message, so a retry asks it again */
+const askOf = (question: StudentMsg): MentorAsk =>
+  question.selection === undefined
+    ? { kind: "lesson", message: question.text }
+    : { kind: "explain", selection: question.selection };
 
 /** The last three finished exchanges before `upTo`, as the route takes them. */
 function historyOf(messages: ChatMsg[], upTo: number): MentorTurn[] {
@@ -117,7 +153,7 @@ export function useMentorChat({
   }, []);
 
   const run = useCallback(
-    async (answerId: string, message: string, history: MentorTurn[]) => {
+    async (answerId: string, question: StudentMsg, history: MentorTurn[]) => {
       const ctl = new AbortController();
       controller.current = ctl;
       stopped.current = false;
@@ -130,10 +166,9 @@ export function useMentorChat({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            kind: "lesson",
+            ...askOf(question),
             dropletId,
             lessonId,
-            message,
             history,
           }),
           signal: ctl.signal,
@@ -178,13 +213,9 @@ export function useMentorChat({
 
   const ask = useCallback(
     (input: MentorAsk) => {
-      const message = input.message.trim().slice(0, MENTOR_MESSAGE_MAX);
-      if (busy.current || locked.current || !message) return;
-      const student: StudentMsg = {
-        id: newId(),
-        role: "student",
-        text: message,
-      };
+      const shown = studentOf(input);
+      if (busy.current || locked.current || !shown) return;
+      const student: StudentMsg = { id: newId(), role: "student", ...shown };
       const answer: MentorMsg = {
         id: newId(),
         role: "mentor",
@@ -199,7 +230,7 @@ export function useMentorChat({
         messagesRef.current.length,
       );
       commit([...messagesRef.current, student, answer]);
-      void run(answer.id, message, history);
+      void run(answer.id, student, history);
     },
     [commit, run],
   );
@@ -220,7 +251,7 @@ export function useMentorChat({
         truncated: false,
         error: undefined,
       });
-      void run(id, question.text, historyOf(list, at));
+      void run(id, question, historyOf(list, at));
     },
     [patch, run],
   );
