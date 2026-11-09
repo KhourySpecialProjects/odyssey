@@ -17,6 +17,11 @@ import { IconPlus, IconX } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
 import DropletFooter from "../footer";
 import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
+import { LESSON_PANEL } from "@/lib/lesson-panel";
+import {
+  useLessonPanelStore,
+  useOwnedPanel,
+} from "@/stores/lesson-panel-store";
 
 // NotesBar pulls in TipTap/ProseMirror for every note, so it's loaded on demand.
 // The fallback matches its header row (title + "+" button, inactive until the
@@ -81,7 +86,13 @@ export function DropletLessonWrapper({
   // shown as locked (and its quiz gate skipped) while "Next" saves.
   const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
-  const [expanded, setExpanded] = useState(false);
+  const panel = useOwnedPanel(lesson.id);
+  const setPanel = useLessonPanelStore((s) => s.setPanel);
+  const expanded = panel === "notes";
+  const setExpanded = useCallback(
+    (open: boolean) => setPanel(open ? "notes" : null),
+    [setPanel],
+  );
   // NotesBar isn't mounted until the panel is first opened, then stays mounted
   // so its state (drag position, open editors) survives collapsing
   const [notesBarOpened, setNotesBarOpened] = useState(false);
@@ -99,7 +110,11 @@ export function DropletLessonWrapper({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      // Mentor's dialog handles its own Escape
+      if (
+        e.key === "Escape" &&
+        useLessonPanelStore.getState().panel === "notes"
+      ) {
         setExpanded(false);
       }
     };
@@ -111,13 +126,21 @@ export function DropletLessonWrapper({
     };
   }, [setExpanded]);
 
+  // Claim the store for this lesson; leaving or changing lesson clears it
+  useEffect(() => {
+    const { claim, reset } = useLessonPanelStore.getState();
+    claim(lesson.id);
+    return reset;
+  }, [lesson.id]);
+
   return (
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
           className={cn(
             "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
-            expanded && "pr-[415px]",
+            expanded && LESSON_PANEL.notesContentPad,
+            panel === "mentor" && LESSON_PANEL.mentorContentPad,
           )}
         >
           <LessonRenderer
@@ -144,7 +167,8 @@ export function DropletLessonWrapper({
           <>
             <div
               className={cn(
-                "fixed top-[107px] right-0 min-w-[375px] border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
+                "fixed top-[107px] right-0 border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
+                LESSON_PANEL.width,
                 "sliding-notes-bar z-40 overflow-y-auto",
                 "h-[calc(100vh-107px)]",
                 expanded ? "visible" : "invisible",

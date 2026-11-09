@@ -5,11 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  extractHeadings,
-  isAuthorizedUserAdmin,
-  parseSandpackFiles,
-} from "@/lib/utils";
+import { extractHeadings, parseSandpackFiles } from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
@@ -52,6 +48,8 @@ import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 import { HighlightDropdown } from "./highlight-dropdown";
+import { lessonGate } from "@/lib/lesson-gate";
+import { useOwnedPanel } from "@/stores/lesson-panel-store";
 import { HighlightHintBanner } from "./highlight-hint-banner";
 import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
@@ -118,6 +116,7 @@ export function LessonRenderer({
   // Highlights come from the lesson page, then are kept in sync locally on
   // create/delete (the wrapper is keyed by lesson, so this resets per lesson).
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  const panel = useOwnedPanel(lesson.id);
   // A new highlight is shown under a temporary (negative) id until it's saved
   const nextTempId = useRef(-1);
   const lessonContentRef = useRef<HTMLDivElement>(null);
@@ -177,8 +176,14 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
-  const isAdmin = user && isAuthorizedUserAdmin(user.roles);
-  const isNotEnrolled = !enrollmentId && !author && !isAdmin;
+  const { gate, previous: previousLesson } = lessonGate({
+    lessonId: lesson.id,
+    lessons: droplet.lessons,
+    enrollmentId,
+    completedLessonIds,
+    author,
+    roles: user?.roles,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined" && !window.posthog) {
@@ -230,7 +235,7 @@ export function LessonRenderer({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lesson.id, droplet.id, enrollmentId, authUser?.id]);
 
-  if (isNotEnrolled) {
+  if (gate === "enroll") {
     return (
       <div className="mx-auto w-full max-w-prose xl:py-8">
         <div className="rounded-md border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
@@ -432,24 +437,10 @@ export function LessonRenderer({
     onUpdate();
   };
 
-  const currentLessonOrder = (droplet.lessons ?? []).find(
-    (dl) => dl.id === lesson.id,
-  )?.orderIndex;
-
-  const previousLesson = (droplet.lessons ?? []).find(
-    (dl) => dl.orderIndex === (currentLessonOrder as number) - 1,
-  );
-
-  const isLocked =
-    previousLesson &&
-    !completedLessonIds.includes(previousLesson.id) &&
-    !author &&
-    !(user && isAuthorizedUserAdmin(user.roles));
-
   // Who made the droplet, under the lesson title (ODY-863)
   const byline = authorByline(droplet.authorized_users);
 
-  if (isLocked) {
+  if (gate === "locked" && previousLesson) {
     return (
       <div className="mx-auto w-full max-w-prose xl:py-8">
         <div className="rounded-md border border-slate-200 bg-slate-50 p-6 text-center">
@@ -470,6 +461,7 @@ export function LessonRenderer({
           setExpanded={setExpanded}
           expanded={expanded}
           isActive={true}
+          panel={panel}
         />
       )}
       <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">

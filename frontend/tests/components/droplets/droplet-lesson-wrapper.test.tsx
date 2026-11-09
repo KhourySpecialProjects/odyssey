@@ -6,6 +6,7 @@ import {
   act,
 } from "@testing-library/react";
 import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
+import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { AuthorizedUser, Droplet, Highlight, Lesson, Note } from "@/types";
@@ -87,6 +88,7 @@ describe("DropletLessonWrapper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useViewedLessonsStore.setState({ pendingViewed: {} });
+    useLessonPanelStore.getState().reset();
     jest.mocked(getNotesByAuthorizedUserAndLesson).mockResolvedValue([]);
   });
 
@@ -201,5 +203,59 @@ describe("DropletLessonWrapper", () => {
 
     expect(screen.queryByTestId("notes-bar")).not.toBeInTheDocument();
     expect(getNotesByAuthorizedUserAndLesson).not.toHaveBeenCalled();
+  });
+
+  describe("lesson panels", () => {
+    it("swaps Mentor for Notes and keeps the conversation", () => {
+      useLessonPanelStore.getState().openMentor();
+      render(<DropletLessonWrapper {...props} />);
+
+      fireEvent.click(screen.getByText("Toggle notes"));
+
+      const state = useLessonPanelStore.getState();
+      expect(state.panel).toBe("notes");
+      expect(state.mentorKept).toBe(true);
+    });
+
+    it("closes Notes on Escape but leaves Mentor alone", () => {
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(useLessonPanelStore.getState().panel).toBeNull();
+
+      act(() => useLessonPanelStore.getState().openMentor());
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(useLessonPanelStore.getState().panel).toBe("mentor");
+    });
+
+    it("doesn't carry an open panel over to the next lesson", async () => {
+      const lessonB = { id: 2, slug: "lesson-b" } as Lesson;
+      const { rerender, container } = render(
+        <DropletLessonWrapper key={1} {...props} />,
+      );
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(await screen.findByTestId("notes-bar")).toBeInTheDocument();
+
+      rerender(<DropletLessonWrapper key={2} {...props} lesson={lessonB} />);
+
+      expect(screen.queryByTestId("notes-bar")).not.toBeInTheDocument();
+      expect(container.querySelector(".pr-\\[420px\\]")).toBeNull();
+    });
+
+    it("resets the store on unmount", () => {
+      const { unmount } = render(<DropletLessonWrapper {...props} />);
+      act(() => {
+        useLessonPanelStore.getState().openMentor();
+        useLessonPanelStore.getState().setMentorAvailable(true);
+      });
+
+      unmount();
+
+      expect(useLessonPanelStore.getState()).toMatchObject({
+        panel: null,
+        mentorKept: false,
+        mentorAvailable: false,
+      });
+    });
   });
 });
