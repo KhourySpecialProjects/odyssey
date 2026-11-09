@@ -227,7 +227,7 @@ export const PROBLEMS: SeedDroplet = {
   },
   lessons: [
     lesson(21, 1, "Content problems", [
-      h("problems-1-heading", 2, "Finding Missing Values"),
+      h("problems-1-heading", 2, "Finding missing Values"),
       callout("problems-1-callout", ""),
       p("problems-1-spelling", "You will recieve a copy of the data."),
       p(
@@ -277,7 +277,7 @@ export const PROBLEMS: SeedDroplet = {
 /** The flag each check raises on PROBLEMS, by check id. */
 export const EXPECTED: Record<string, string> = {
   style:
-    '"Finding Missing Values" capitalizes "Missing". Only the first word should start with a capital.',
+    '"Finding missing Values" mixes sentence case and Title Case: "missing" is lowercase but "Values" is capitalized. Use one style for the whole heading.',
   quality: "This callout is empty.",
   spelling: '"recieve" isn\'t in the dictionary or the tech word list.',
   readability: "A paragraph has 6 sentences (limit 5).",
