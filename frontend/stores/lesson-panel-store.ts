@@ -45,3 +45,10 @@ export function useOwnedPanel(lessonId: number): LessonPanel {
     s.ownerLessonId === lessonId ? s.panel : null,
   );
 }
+
+/** Whether this lesson has a conversation; another lesson's stale flag reads false. */
+export function useOwnedMentorKept(lessonId: number): boolean {
+  return useLessonPanelStore(
+    (s) => s.ownerLessonId === lessonId && s.mentorKept,
+  );
+}

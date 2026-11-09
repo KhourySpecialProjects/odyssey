@@ -20,6 +20,7 @@ import { useViewedLessonIds } from "@/stores/viewed-lessons-store";
 import { LESSON_PANEL } from "@/lib/lesson-panel";
 import {
   useLessonPanelStore,
+  useOwnedMentorKept,
   useOwnedPanel,
 } from "@/stores/lesson-panel-store";
 
@@ -56,6 +57,12 @@ const NotesBar = dynamic(
   },
 );
 
+// The sheet pulls in Radix Dialog and Markdown, so it loads when first opened
+const MentorPanel = dynamic(
+  () => import("./mentor/mentor-panel").then((mod) => mod.MentorPanel),
+  { ssr: false },
+);
+
 interface DropletLessonWrapperProps {
   lesson: Lesson;
   droplet: Droplet;
@@ -87,6 +94,7 @@ export function DropletLessonWrapper({
   const viewedLessonIds = useViewedLessonIds(enrollmentId, completedLessonIds);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const panel = useOwnedPanel(lesson.id);
+  const mentorKept = useOwnedMentorKept(lesson.id);
   const setPanel = useLessonPanelStore((s) => s.setPanel);
   const expanded = panel === "notes";
   const setExpanded = useCallback(
@@ -163,6 +171,15 @@ export function DropletLessonWrapper({
             completedLessonIds={viewedLessonIds}
           />
         </div>
+        {mentorKept && (
+          <MentorPanel
+            dropletId={droplet.id}
+            lesson={lesson}
+            enrollmentId={enrollmentId}
+            userId={userId}
+            onNoteSaved={fetchNotes}
+          />
+        )}
         {enrollmentId && (
           <>
             <div

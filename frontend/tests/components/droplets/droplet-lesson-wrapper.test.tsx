@@ -44,6 +44,10 @@ jest.mock("@/components/droplets/lessons/lesson-renderer", () => ({
   ),
 }));
 
+jest.mock("@/components/droplets/lessons/mentor/mentor-panel", () => ({
+  MentorPanel: () => <div data-testid="mentor-panel" />,
+}));
+
 jest.mock("@/components/droplets/lessons/note-taking/notes-bar", () => ({
   NotesBar: ({ initNotes }: { initNotes: Note[] }) => (
     <ul data-testid="notes-bar">
@@ -240,6 +244,28 @@ describe("DropletLessonWrapper", () => {
 
       expect(screen.queryByTestId("notes-bar")).not.toBeInTheDocument();
       expect(container.querySelector(".pr-\\[420px\\]")).toBeNull();
+    });
+
+    it("mounts MentorPanel only while this lesson keeps a conversation", async () => {
+      const { rerender } = render(<DropletLessonWrapper key={1} {...props} />);
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
+
+      act(() => useLessonPanelStore.getState().openMentor());
+      expect(await screen.findByTestId("mentor-panel")).toBeInTheDocument();
+
+      act(() => useLessonPanelStore.getState().closeMentor());
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
+
+      // Another lesson never sees a stale mentorKept
+      act(() => useLessonPanelStore.getState().openMentor());
+      rerender(
+        <DropletLessonWrapper
+          key={2}
+          {...props}
+          lesson={{ id: 2, slug: "b" } as Lesson}
+        />,
+      );
+      expect(screen.queryByTestId("mentor-panel")).toBeNull();
     });
 
     it("resets the store on unmount", () => {
