@@ -1,3 +1,4 @@
+import "server-only";
 import { fetchAPI } from "@/lib/utils";
 import type { PanelCriterion } from "@/lib/requests/reviews";
 

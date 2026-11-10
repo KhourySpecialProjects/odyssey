@@ -37,6 +37,21 @@ describe("PromptEditor", () => {
     expect(saveButton()).toBeDisabled();
   });
 
+  it("disables Reset to default when the text already is the default", () => {
+    renderEditor();
+    const [instructions, lesson] = screen.getAllByText("Reset to default");
+    expect(instructions.closest("button")).toBeEnabled();
+    expect(lesson.closest("button")).toBeDisabled();
+  });
+
+  it("puts the error in the textarea's description", () => {
+    renderEditor();
+    fireEvent.change(box(/^Lesson scope/), { target: { value: "" } });
+    expect(box(/^Lesson scope/)).toHaveAccessibleDescription(
+      expect.stringContaining("Can't be empty."),
+    );
+  });
+
   it.each([
     ["clearing a part", "", "Can't be empty."],
     ["going over the limit", "x".repeat(1501), "Too long."],
@@ -80,6 +95,19 @@ describe("PromptEditor", () => {
       lessonScope: "New scope",
     });
     expect(saveButton()).toBeDisabled();
+  });
+
+  it("labels each part from the saved result after a save", async () => {
+    save.mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { custom: { ...custom, instructions: false } },
+    });
+    renderEditor();
+    fireEvent.change(box(/^Instructions/), { target: { value: "Edited" } });
+    await userEvent.click(saveButton());
+    await waitFor(() => expect(screen.getAllByText("Default")).toHaveLength(3));
+    expect(screen.queryByText("Custom")).not.toBeInTheDocument();
   });
 
   it("shows an error toast when saving fails", async () => {

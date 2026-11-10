@@ -99,19 +99,26 @@ export function PromptEditor({
                 className={cn(
                   "rounded-full px-2 py-0.5 text-xs font-medium",
                   isCustom
-                    ? "bg-[#287697]/10 text-[#287697] dark:bg-[#287697]/20 dark:text-[#4AABCF]"
+                    ? "bg-[#287697]/10 text-[#1F5F7A] dark:bg-[#287697]/20 dark:text-[#4AABCF]"
                     : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
                 )}
               >
                 {isCustom ? "Custom" : "Default"}
               </span>
             </div>
-            <p className="text-sm text-[#475569] dark:text-slate-400">{hint}</p>
+            <p
+              id={`${id}-hint`}
+              className="text-sm text-[#475569] dark:text-slate-400"
+            >
+              {hint}
+            </p>
             <Textarea
               id={id}
               value={text}
               rows={key === "instructions" ? 14 : 5}
               aria-invalid={over || empty}
+              aria-describedby={`${id}-hint ${id}-count ${id}-error`}
+              className="focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500"
               onChange={(event) =>
                 setParts((prev) => ({ ...prev, [key]: event.target.value }))
               }
@@ -124,21 +131,23 @@ export function PromptEditor({
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap gap-x-3 text-sm">
                 <span
-                  aria-live={over ? "polite" : undefined}
+                  id={`${id}-count`}
                   className={
                     over
                       ? "text-red-600 dark:text-red-400"
                       : "text-[#475569] dark:text-slate-400"
                   }
                 >
-                  {text.length.toLocaleString()} / {limit.toLocaleString()}{" "}
-                  characters
+                  {text.length.toLocaleString("en-US")} /{" "}
+                  {limit.toLocaleString("en-US")} characters
                 </span>
-                {(over || empty) && (
-                  <span className="text-red-600 dark:text-red-400">
-                    {over ? "Too long." : "Can't be empty."}
-                  </span>
-                )}
+                <span
+                  id={`${id}-error`}
+                  aria-live="polite"
+                  className="text-red-600 dark:text-red-400"
+                >
+                  {over ? "Too long." : empty ? "Can't be empty." : ""}
+                </span>
               </div>
               <Button
                 type="button"
