@@ -19,6 +19,7 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { SetGroupArchivedForMeSchema } from "@/lib/validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -537,10 +538,69 @@ export async function getGroupBySlugV2(
 
   const groups = await fetchAPI<Group[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+    next: {
+      tags: [CACHE_TAGS.allGroups, CACHE_TAGS.group(slug)],
+      revalidate: 900,
+    },
   });
 
   return groups[0] || null;
+}
+
+/**
+ * Clears one group's cached detail read (getGroupBySlugV2) so /g/[slug] reads
+ * Strapi now instead of waiting out the 900s TTL. The caller must be a member,
+ * admin, manager or creator of the group, or a SysAdmin. Membership is read
+ * fresh (no-store) from Strapi, never from the cache being cleared, and any
+ * failure fails closed. Invalidates only the per-group tag.
+ */
+export async function refreshGroup(
+  slug: string,
+): Promise<
+  { ok: true } | { ok: false; error: "unauthenticated" | "forbidden" }
+> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  if (typeof slug !== "string" || slug.trim() === "") {
+    return { ok: false, error: "forbidden" };
+  }
+
+  const isSysAdmin = gate.user.roles.includes(AuthorizedUserRoleTitle.SysAdmin);
+  if (!isSysAdmin) {
+    const idFields = { fields: ["id"] };
+    let groups: Group[] | null = null;
+    try {
+      groups = await fetchAPI<Group[]>("/groups", {
+        urlParams: {
+          filters: { slug: { $eq: slug } },
+          fields: ["id"],
+          populate: {
+            members: idFields,
+            admins: idFields,
+            managers: idFields,
+            creator: idFields,
+          },
+          pagination: { pageSize: 1 },
+        },
+        cache: "no-store",
+      });
+    } catch {
+      return { ok: false, error: "forbidden" };
+    }
+    const found = groups?.[0];
+    const callerId = gate.user.id;
+    const isInGroup =
+      !!found &&
+      (found.creator?.id === callerId ||
+        [found.members, found.admins, found.managers].some((list) =>
+          list?.some((u) => u.id === callerId),
+        ));
+    if (!isInGroup) return { ok: false, error: "forbidden" };
+  }
+
+  revalidateTag(CACHE_TAGS.group(slug));
+  return { ok: true };
 }
 
 export async function updateGroup(

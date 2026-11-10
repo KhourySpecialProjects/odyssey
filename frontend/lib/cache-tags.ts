@@ -144,6 +144,9 @@
  * user-groups     Per-user tag "user-groups-{userId}": refreshUserGroups        900s
  *                 (manual refresh on /g/dashboard). Also swept by the global
  *                 "groups" tag, since getUserGroups carries both.
+ * group          Per-group tag "group-{slug}": refreshGroup (manual           900s
+ *                 refresh on /g/[slug]). Also swept by the global "groups"
+ *                 tag, since getGroupBySlugV2 carries both.
  * favorites      Per-user tag "favorites-{userId}"                          900s
  *                 (getFavoritedDropletIds, explore hearts): favoriteDroplet
  * review          Per-droplet tag "review-{dropletId}": read by              900s
@@ -198,6 +201,7 @@ export const CACHE_TAGS = {
   notes: (userId: number) => `notes-${userId}`,
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
+  group: (slug: string) => `group-${slug}`, // one group's detail read (getGroupBySlugV2); invalidated by refreshGroup
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
 
   // Per-droplet (scoped to one droplet)

@@ -1130,7 +1130,7 @@ describe("Groups Tests", () => {
           }),
           fields: ["*", "dropletDueDates"],
         },
-        next: { tags: ["groups"], revalidate: 900 },
+        next: { tags: ["groups", "group-test-group"], revalidate: 900 },
       });
     });
 
@@ -1164,7 +1164,7 @@ describe("Groups Tests", () => {
           populate: customParams.populate,
           fields: customParams.fields,
         }),
-        next: { tags: ["groups"], revalidate: 900 },
+        next: { tags: ["groups", "group-test-group"], revalidate: 900 },
       });
     });
 

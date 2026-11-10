@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { MemberList } from "@/components/group/member-list";
 import { ContentSection } from "@/components/group/content-section";
 import { GroupHeader } from "@/components/group/group-header";
+import { RefreshGroupButton } from "@/components/group/refresh-group-button";
 import { Separator } from "@/components/ui/separator";
 import createDOMPurifier from "isomorphic-dompurify";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
@@ -158,6 +159,9 @@ export default async function GroupDetailPage({ params }: Props) {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">
       {canEdit && <GroupHeader group={group} canEdit={canEdit} />}
+      <div className="flex justify-end">
+        <RefreshGroupButton slug={group.slug} />
+      </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-8">
