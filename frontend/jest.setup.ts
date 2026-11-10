@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 
+// jsdom may not expose crypto.randomUUID; fall back to Node's implementation.
+if (typeof globalThis.crypto === "undefined") {
+  (globalThis as any).crypto = {};
+}
+if (typeof globalThis.crypto.randomUUID !== "function") {
+  (globalThis.crypto as any).randomUUID = require("crypto").randomUUID;
+}
+
 global.fetch = jest.fn();
 // Browser-only setup is skipped in tests that opt into `@jest-environment node`
 const hasDom = typeof window !== "undefined";

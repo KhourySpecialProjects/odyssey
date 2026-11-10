@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { MAX_FILE_SIZE } from "./constants";
 import type { ImportImage } from "./types";
 
@@ -186,7 +185,7 @@ async function extractSlideImages(
             ? "image/svg+xml"
             : "image/jpeg";
 
-      const id = uuidv4();
+      const id = crypto.randomUUID();
       images.set(id, {
         id,
         blob,
