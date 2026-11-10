@@ -1,3 +1,4 @@
+import Module from "node:module";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   parseEffort,
@@ -10,6 +11,7 @@ import {
   buildOverallRequest,
   PROMPT_VERSION,
 } from "@/lib/ai-review/prompt";
+import type { PromptParts } from "@/lib/ai-review/system-prompt";
 import type { Criterion, LessonScores } from "@/lib/ai-review/types";
 import type { Fixture, Rubric } from "./files";
 import { totals, type RunTotals } from "./metrics";
@@ -32,7 +34,32 @@ export function settings(values: { model?: string; effort?: string }): {
   };
 }
 
-type PlanOptions = { model: AiReviewModel; effort: Effort; runs?: number };
+type PlanOptions = {
+  model: AiReviewModel;
+  effort: Effort;
+  runs?: number;
+  /** Prompt wording to send; the code default when left out */
+  prompt?: PromptParts;
+};
+
+/**
+ * The prompt an admin saved at /admin/scorecard-prompts (ODY-898), resolved
+ * against the code defaults. Needs STRAPI_ACCESS_TOKEN. Imported on demand,
+ * with Next's `server-only` marker (not installed outside Next) stubbed out.
+ */
+export async function loadSavedPrompt() {
+  const m = Module as unknown as {
+    _load: (id: string, ...a: unknown[]) => unknown;
+  };
+  const load = m._load;
+  m._load = (id, ...a) => (id === "server-only" ? {} : load.call(m, id, ...a));
+  const { loadStoredPrompt, resolvePrompt } = await import(
+    "@/lib/ai-review/prompt-settings"
+  ).finally(() => {
+    m._load = load;
+  });
+  return resolvePrompt(await loadStoredPrompt());
+}
 
 const tag = (f: Fixture, run: number) => ({
   run,
@@ -44,7 +71,7 @@ const tag = (f: Fixture, run: number) => ({
 export function planLessonRequests(
   fixtures: Fixture[],
   criteria: Criterion[],
-  { model, effort, runs = 1 }: PlanOptions,
+  { model, effort, runs = 1, prompt }: PlanOptions,
 ): PlannedRequest[] {
   const planned: PlannedRequest[] = [];
   for (let run = 1; run <= runs; run++) {
@@ -53,6 +80,7 @@ export function planLessonRequests(
         model,
         effort,
         idPrefix: `r${run}-`,
+        prompt,
       })) {
         planned.push({ ...r, ...tag(f, run) });
       }
@@ -65,7 +93,7 @@ export function planLessonRequests(
 function planOverall(
   fixtures: Fixture[],
   criteria: Criterion[],
-  { model, effort, runs = 1 }: PlanOptions,
+  { model, effort, runs = 1, prompt }: PlanOptions,
   lessonScores: (f: Fixture, run: number) => LessonScores[],
 ): PlannedRequest[] {
   const planned: PlannedRequest[] = [];
@@ -76,6 +104,7 @@ function planOverall(
           model,
           effort,
           idPrefix: `r${run}-`,
+          prompt,
         }),
         ...tag(f, run),
       });
@@ -166,18 +195,20 @@ export function runMeta(
     batch: boolean;
     runs: number;
     startedAt: string;
+    /** Version of the wording that ran; the code's when left out */
+    promptVersion?: string;
   },
   rubric: Rubric,
   fixtures: Fixture[],
   results: RequestResult[],
 ): RunMeta {
   return {
-    promptVersion: PROMPT_VERSION,
     rubricVersion: rubric.version,
     fixtures: fixtures.map((f) => f.slug),
     finishedAt: new Date().toISOString(),
     totals: totals(results),
     ...base,
+    promptVersion: base.promptVersion ?? PROMPT_VERSION,
   };
 }
 

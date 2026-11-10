@@ -1,10 +1,12 @@
 /*
-ODY-813 step 3: runs the current prompt over the eval set and reports, for
+ODY-813 step 3: runs the code's prompt (or, with --saved-prompt, the one saved at
+/admin/scorecard-prompts, ODY-916) over the eval set and reports, for
 each criterion, how often the AI agrees with the client.
 
 To run, from frontend/:
   npx tsx --env-file=.env.local scripts/ai-review/eval.ts
   npx tsx --env-file=.env.local scripts/ai-review/eval.ts --model claude-haiku-5-5 --effort medium --runs 2
+  npx tsx --env-file=.env.local scripts/ai-review/eval.ts --saved-prompt
 
 Uses every fixture whose score sheet is complete. Sends two Message Batches
 at half price, the lessons and then the Overall Scores built from their
@@ -37,6 +39,7 @@ import {
 } from "./lib/metrics";
 import {
   COMMON_OPTIONS,
+  loadSavedPrompt,
   makeClient,
   metaMarkdown,
   planForEstimate,
@@ -115,6 +118,7 @@ async function main() {
       ...COMMON_OPTIONS,
       runs: { type: "string", default: "1" },
       sync: { type: "boolean", default: false },
+      "saved-prompt": { type: "boolean", default: false },
     },
   });
   const { model, effort } = settings(values);
@@ -122,6 +126,10 @@ async function main() {
   if (!Number.isInteger(runs) || runs < 1 || runs > 3)
     throw new Error("--runs must be 1, 2 or 3");
   const batch = !values.sync;
+  // Only with --saved-prompt: the wording saved in Strapi instead of the code's
+  const saved = values["saved-prompt"] ? await loadSavedPrompt() : undefined;
+  const prompt = saved?.parts;
+  if (saved) console.log(`Using the saved prompt, version ${saved.version}`);
 
   const rubric = loadRubric();
   const fixtures = usable(loadFixtures(), rubric.criteria, rubric.version);
@@ -133,6 +141,7 @@ async function main() {
     model,
     effort,
     runs,
+    prompt,
   });
   if (!(await confirmSpend(estimate, { batch, yes: values.yes }))) {
     console.log("Nothing sent.");
@@ -143,14 +152,14 @@ async function main() {
   const results: RequestResult[] = await scoreFixtures(
     fixtures,
     rubric.criteria,
-    { model, effort, runs },
+    { model, effort, runs, prompt },
     (requests) =>
       batch
         ? runAsBatch(client, requests, rubric.criteria, model)
         : runInOrder(client, requests, rubric.criteria, model),
   );
   const meta = runMeta(
-    { model, effort, batch, runs, startedAt },
+    { model, effort, batch, runs, startedAt, promptVersion: saved?.version },
     rubric,
     fixtures,
     results,
@@ -202,7 +211,10 @@ async function main() {
     .filter(Boolean)
     .join("\n\n");
 
-  const dir = path.join(RUNS_DIR, runDirName(`eval-${model}-${effort}`));
+  const dir = path.join(
+    RUNS_DIR,
+    runDirName(`eval-${model}-${effort}${saved ? "-saved" : ""}`),
+  );
   writeJson(path.join(dir, "results.json"), { meta, results });
   fs.writeFileSync(path.join(dir, "report.md"), `${report}\n`);
   console.log(
