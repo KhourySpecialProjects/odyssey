@@ -11,7 +11,6 @@ import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -27,7 +26,6 @@ import {
   IconUser,
   IconActivity,
   IconLoader2,
-  IconX,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
@@ -311,9 +309,6 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
-          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-            <IconX className="h-4 w-4" />
-          </DialogClose>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update user information</DialogDescription>
@@ -382,9 +377,6 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
       {/* Activity Dialog */}
       <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
         <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&:hover::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&:hover::-webkit-scrollbar-thumb]:bg-slate-600">
-          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-            <IconX className="h-4 w-4" />
-          </DialogClose>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <IconActivity className="h-5 w-5" />
@@ -596,9 +588,6 @@ function UserMobileCard({ user: initialUser }: { user: AuthorizedUser }) {
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
-          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-            <IconX className="h-4 w-4" />
-          </DialogClose>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update user information</DialogDescription>
