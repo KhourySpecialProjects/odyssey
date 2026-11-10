@@ -277,6 +277,7 @@ describe('POST /droplets/:id/submit-review', () => {
     });
     const { review, reviewer } = made[0];
     const lessonRef = { lesson: lesson.documentId };
+    // An old mark is not carried (ODY-897)
     const addressedAt = '2026-10-28T12:00:00.000Z';
     const top = await comment(review, { ...lessonRef, addressedAt });
     await comment(review, { ...lessonRef, body: 'R1', parent: top.documentId });
@@ -290,7 +291,7 @@ describe('POST /droplets/:id/submit-review', () => {
     });
     const byBody = Object.fromEntries(copies.map((c) => [c.body, c]));
     expect(byBody['Please fix this'].carriedFrom.id).toBe(top.id);
-    expect(byBody['Please fix this'].addressedAt).toBe(addressedAt);
+    expect(byBody['Please fix this'].addressedAt).toBeNull();
     expect(byBody.R1).toBeUndefined();
 
     // Round 2 is sent too, then submitted again: round 3's copy still points

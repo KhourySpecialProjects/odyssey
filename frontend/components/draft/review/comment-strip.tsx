@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { IconMessage } from "@tabler/icons-react";
 import {
-  addressedText,
   carriedText,
   commentCountText,
   pendingText,
@@ -13,10 +12,9 @@ import { newRepliesText } from "@/lib/review-threads";
 interface CommentStripProps {
   total: number;
   pending: number;
-  /** Carried over from an earlier round, and marked addressed (ODY-807) */
+  /** Carried over from an earlier round (ODY-807) */
   carried?: number;
   carriedRound?: number | null;
-  addressed?: number;
   /** Replies by others not opened yet (ODY-881) */
   newReplies?: number;
   /** "this lesson" or "the Overview" */
@@ -42,7 +40,6 @@ export function CommentStrip({
   pending,
   carried = 0,
   carriedRound = null,
-  addressed = 0,
   newReplies = 0,
   place = "this lesson",
   isLoading = false,
@@ -76,11 +73,9 @@ export function CommentStrip({
                 {waiting}
               </span>
             )}
-            {[carriedText(carried, carriedRound), addressedText(addressed)]
-              .filter(Boolean)
-              .map((text) => (
-                <span key={text}>{text}</span>
-              ))}
+            {carriedText(carried, carriedRound) && (
+              <span>{carriedText(carried, carriedRound)}</span>
+            )}
             {newReplies > 0 && (
               <span className="font-semibold text-amber-700 dark:text-amber-400">
                 {newRepliesText(newReplies)}

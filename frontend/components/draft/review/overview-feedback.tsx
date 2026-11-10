@@ -52,11 +52,11 @@ type OverviewFeedbackProps = Omit<
   "renderField" | "renderSection"
 > & {
   dropletId: number;
-  /** False while the draft is back in review: no Edit, no Mark addressed */
+  /** False while the draft is back in review: no Edit */
   canEdit: boolean;
   /** Replies stay open in both views, even back in review (ODY-881) */
   canReply?: boolean;
-  /** Mark addressed, for an author: a reviewer reading the feedback passes false */
+  /** True for an author; a reviewer reading the feedback passes false */
   canAddress: boolean;
   /** The Overview without feedback: the editors, or the frozen Overview */
   children: ReactNode;
@@ -81,7 +81,7 @@ export function OverviewFeedback({
   const router = useRouter();
   const feedback = useDropletSentFeedback(dropletId, true, canAddress);
   const { seen } = useThreadSeen();
-  const { review, markAddressed, reply, replyEdits } = feedback;
+  const { review, reply, replyEdits } = feedback;
   const comments = useMemo(
     () => feedback.comments.filter((c) => c.field !== "blocks"),
     [feedback.comments],
@@ -159,8 +159,6 @@ export function OverviewFeedback({
     return { total, lessons: lessons.size };
   })();
 
-  const onAddress =
-    canEdit && canAddress ? withClosedNotice(markAddressed) : undefined;
   const onReply = canReply ? withClosedNotice(reply) : undefined;
   const showFeedback = mode === "feedback" || !canEdit;
 
@@ -173,10 +171,8 @@ export function OverviewFeedback({
         numbers={numbers}
         outdatedIds={outdatedIds}
         blockFor={() => undefined}
-        onAddress={onAddress}
         onReply={onReply}
         replyEdits={replyEdits}
-        forCreator={!!canAddress}
         litMarkId={litMarkId}
         onLitChange={setLitMarkId}
       >
@@ -212,8 +208,6 @@ export function OverviewFeedback({
       litMarkId={litMarkId}
       onLitChange={setLitMarkId}
       readOnly
-      forCreator={!!canAddress}
-      onAddress={onAddress}
       onReply={onReply}
       replyEdits={replyEdits && closedNoticeEdits(replyEdits)}
     >
@@ -242,9 +236,6 @@ export function OverviewFeedback({
         review={review}
         total={comments.length}
         newReplies={unseenCount(comments, seen)}
-        addressed={
-          comments.filter((c) => c.addressedAt && !isResolved(c)).length
-        }
         place="the Overview"
         inReview={!canEdit}
         forReviewer={!canAddress}
@@ -262,10 +253,8 @@ export function OverviewFeedback({
               onEdit: refused,
               onDelete: refused,
               onResolve: refused,
-              onAddress,
               onReply,
               replyEdits: replyEdits && closedNoticeEdits(replyEdits),
-              forCreator: !!canAddress,
             }}
           />
         )}

@@ -67,7 +67,6 @@ import {
   decorateMarks,
   draftMarkIn,
   carriedMeta,
-  isResolved,
   isOutdatedMark,
   numberComments,
 } from "@/lib/review-comments";
@@ -214,11 +213,6 @@ export function LessonRenderer({
       void reloadSent?.();
     }
   }, [reviewEnded, reloadSent]);
-  // Only an author marks addressed, and not while it is back in review
-  const onAddress =
-    sentFeedback?.canAddress && !inReview
-      ? sentFeedback.markAddressed
-      : undefined;
   const feedbackReview = sentFeedback?.review ?? null;
   const showFeedback = !!feedbackReview && feedbackComments.length > 0;
   const [classicView, setClassicView] = useState<FeedbackView>("feedback");
@@ -1062,10 +1056,6 @@ export function LessonRenderer({
             review={feedbackReview}
             total={feedbackComments.length}
             newReplies={unseenCount(feedbackComments, seen)}
-            addressed={
-              feedbackComments.filter((c) => c.addressedAt && !isResolved(c))
-                .length
-            }
             inReview={inReview}
             forReviewer={!sentFeedback?.canAddress}
             actions={
@@ -1087,13 +1077,11 @@ export function LessonRenderer({
                 onEdit: refused,
                 onDelete: refused,
                 onResolve: refused,
-                onAddress: onAddress && withClosedNotice(onAddress),
                 onReply:
                   sentFeedback?.reply && withClosedNotice(sentFeedback.reply),
                 replyEdits:
                   sentFeedback?.replyEdits &&
                   closedNoticeEdits(sentFeedback.replyEdits),
-                forCreator: !!sentFeedback?.canAddress,
               }}
             />
           </FeedbackStrip>
@@ -1212,10 +1200,8 @@ export function LessonRenderer({
             numbers={feedbackNumbers}
             outdatedIds={feedbackOutdatedIds}
             blockFor={noBlock}
-            onAddress={onAddress}
             onReply={sentFeedback?.reply}
             replyEdits={sentFeedback?.replyEdits}
-            forCreator={!!sentFeedback?.canAddress}
             litMarkId={litMarkId}
             onLitChange={setLitMarkId}
           >
@@ -1261,10 +1247,8 @@ export function LessonRenderer({
                   outdatedIds={feedbackOutdatedIds}
                   blockFor={blockFor}
                   blocksFor={blocksFor}
-                  onAddress={onAddress}
                   onReply={sentFeedback?.reply}
                   replyEdits={sentFeedback?.replyEdits}
-                  forCreator={!!sentFeedback?.canAddress}
                   litMarkId={litMarkId}
                   onLitChange={setLitMarkId}
                 >

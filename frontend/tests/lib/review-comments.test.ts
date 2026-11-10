@@ -443,22 +443,14 @@ describe("carried comments in the reviewer's next round (ODY-807)", () => {
     body: "y",
   } as ReviewComment;
 
-  it("counts the carried and addressed ones, and their round when it's one", () => {
+  it("counts the carried ones, and their round when it's one", () => {
     expect(
-      commentCounts(
-        [
-          carried(1, 1),
-          carried(2, 1, { addressedAt: "2026-10-29T09:00:00Z" }),
-          fresh,
-        ],
-        "open",
-      ),
+      commentCounts([carried(1, 1), carried(2, 1), fresh], "open"),
     ).toEqual({
       total: 3,
       pending: 3,
       carried: 2,
       carriedRound: 1,
-      addressed: 1,
     });
     expect(
       commentCounts([carried(1, 1), carried(2, 2)], "open").carriedRound,
@@ -468,15 +460,10 @@ describe("carried comments in the reviewer's next round (ODY-807)", () => {
   it("leaves resolved ones out", () => {
     expect(
       commentCounts(
-        [
-          carried(1, 1, {
-            resolvedAt: "2026-10-29T10:00:00Z",
-            addressedAt: "2026-10-29T09:00:00Z",
-          }),
-        ],
+        [carried(1, 1, { resolvedAt: "2026-10-29T10:00:00Z" })],
         "open",
       ),
-    ).toMatchObject({ carried: 0, addressed: 0 });
+    ).toMatchObject({ carried: 0 });
   });
 
   it("says so on the strip", () => {
@@ -486,20 +473,17 @@ describe("carried comments in the reviewer's next round (ODY-807)", () => {
         pending: 3,
         carried: 2,
         carriedRound: 1,
-        addressed: 1,
       }),
     ).toBe(
-      "3 comments on this lesson · 3 pending · sent when you request changes · 2 carried over from round 1 · 1 marked addressed by the creator",
+      "3 comments on this lesson · 3 pending · sent when you request changes · 2 carried over from round 1",
     );
     expect(carriedText(2, null)).toBe("2 carried over from earlier rounds");
   });
 
   it("tells a screen reader, and the card", () => {
-    const one = carried(1, 1, { addressedAt: "2026-10-29T09:00:00Z" });
-    expect(carriedNotes(one)).toEqual([
-      "carried from round 1",
-      "marked addressed",
-    ]);
+    // An old addressed mark adds nothing
+    const one = carried(1, 1, { addressedAt: "2026-10-29T09:00:00Z" } as never);
+    expect(carriedNotes(one)).toEqual(["carried from round 1"]);
     expect(carriedNotes(fresh)).toEqual([]);
     expect(carriedMeta(one, true)).toBe("Pending · carried from round 1");
     expect(carriedMeta(one, false)).toBe("Carried from round 1");

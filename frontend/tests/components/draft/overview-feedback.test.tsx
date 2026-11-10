@@ -4,7 +4,6 @@ import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
 import {
   getReviewForDroplet,
   getThreadStamp,
-  markAddressed,
   replyToComment,
   deleteReply,
 } from "@/lib/requests/reviews";
@@ -20,7 +19,6 @@ import type { ReviewComment } from "@/types";
 jest.mock("@/lib/requests/reviews", () => ({
   getReviewForDroplet: jest.fn(),
   getThreadStamp: jest.fn(),
-  markAddressed: jest.fn(),
   replyToComment: jest.fn(),
   deleteReply: jest.fn(),
 }));
@@ -74,7 +72,6 @@ const quote = (
   anchor: { v: 1, field, quote: text, prefix: "", suffix: "" },
   body: `About ${text}`,
   resolvedAt: null,
-  addressedAt: null,
 });
 
 const sent = {
@@ -149,9 +146,6 @@ beforeEach(() => {
   jest
     .mocked(getReviewForDroplet)
     .mockResolvedValue({ ok: true, error: null, data: sent } as never);
-  jest
-    .mocked(markAddressed)
-    .mockResolvedValue({ ok: true, error: null, data: {} } as never);
 });
 
 describe("the Overview for an author with sent feedback (ODY-807)", () => {
@@ -183,15 +177,16 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(outdated).toHaveTextContent("no longer here");
   });
 
-  it("opens a card from a mark, with Mark addressed", async () => {
+  it("opens a card from a mark, with Reply and no Mark addressed", async () => {
     await mount();
 
     await userEvent.click(screen.getByText("repeat"));
-    await userEvent.click(
-      screen.getByRole("button", { name: "Mark addressed" }),
-    );
 
-    expect(markAddressed).toHaveBeenCalledWith(1, true);
+    expect(screen.getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /addressed/i })).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Reviewer feedback" }),
+    ).toHaveTextContent("reply to it once you've changed the text");
   });
 
   it.each([
@@ -301,15 +296,12 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     });
   });
 
-  it("gives a reviewer Reply but no Mark addressed, with their own strip hint (ODY-881)", async () => {
+  it("gives a reviewer Reply, with their own strip hint (ODY-881)", async () => {
     await mount(true, true, false);
 
     await userEvent.click(screen.getByText("repeat"));
 
     expect(screen.getByRole("button", { name: "Reply" })).toBeVisible();
-    expect(
-      screen.queryByRole("button", { name: "Mark addressed" }),
-    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Reviewer feedback" }),
     ).toHaveTextContent("its replies");
@@ -331,18 +323,6 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
       within(screen.getByTestId("overview-section-nextSteps")).getByTestId(
         "comment-tag",
       );
-
-    it.each([
-      [true, "Marked addressed. The reviewer resolves it."],
-      [false, "The creator marked this addressed."],
-    ])("words addressed for canAddress %s", async (canAddress, text) => {
-      withSection({ addressedAt: "2026-10-29T09:00:00.000Z" });
-      await mount(true, true, canAddress);
-
-      await userEvent.click(tag());
-
-      expect(screen.getByText(text)).toBeInTheDocument();
-    });
 
     it("shows no carried note on a read-only card", async () => {
       withSection({ carriedFrom: { id: 90, review: { round: 1 } } } as never);
@@ -414,7 +394,6 @@ describe("the Overview for an author with sent feedback (ODY-807)", () => {
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
     await userEvent.click(screen.getByText("repeat"));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
   });
 
   it("shows the reviewer's summary note and how many comments are on lessons", async () => {

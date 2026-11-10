@@ -3,10 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { SentFeedbackProvider } from "@/components/draft/review/review-comments-context";
 import { getMyReview, getReviewForDroplet } from "@/lib/requests/reviews";
-import {
-  markAddressed as markAddressedRequest,
-  replyToComment,
-} from "@/lib/requests/reviews";
+import { replyToComment } from "@/lib/requests/reviews";
 import { updateLesson } from "@/lib/requests/lesson";
 import { htmlContent } from "@/lib/anchors/content";
 import { classicLessonHtml } from "@/lib/review-classic";
@@ -56,7 +53,6 @@ jest.mock("@/lib/requests/droplet", () => ({ getDropletBySlug: jest.fn() }));
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
   getReviewForDroplet: jest.fn(),
-  markAddressed: jest.fn(),
   replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
@@ -413,9 +409,6 @@ describe("the creator's view of sent feedback on a Classic lesson (ODY-880)", ()
     jest
       .mocked(getReviewForDroplet)
       .mockResolvedValue({ ok: true, error: null, data: classicSent } as never);
-    jest
-      .mocked(markAddressedRequest)
-      .mockResolvedValue({ ok: true, error: null } as never);
   });
 
   it("opens on Feedback: the lesson's text with each current comment marked", async () => {
@@ -445,17 +438,17 @@ describe("the creator's view of sent feedback on a Classic lesson (ODY-880)", ()
     expect(outdated).not.toHaveTextContent("Say how many times.");
   });
 
-  it("opens a comment's card from its mark, where the creator marks it addressed", async () => {
+  it("opens a comment's card from its mark, with Reply and no Mark addressed", async () => {
     await renderLesson(classic);
 
     await userEvent.click(classicMarks("comment-1")[0] as HTMLElement);
 
     const card = screen.getByRole("dialog", { name: "Comment 1" });
     expect(card).toHaveTextContent("Say how many times.");
-    await userEvent.click(
-      within(card).getByRole("button", { name: "Mark addressed" }),
-    );
-    expect(markAddressedRequest).toHaveBeenCalledWith(1, true);
+    expect(within(card).getByRole("button", { name: "Reply" })).toBeVisible();
+    expect(
+      within(card).queryByRole("button", { name: /addressed/i }),
+    ).toBeNull();
   });
 
   it("replies from a Classic comment's card, also while the draft is back in review", async () => {

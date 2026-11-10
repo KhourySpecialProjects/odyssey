@@ -9,16 +9,15 @@ import { newRepliesText } from "@/lib/review-threads";
 
 interface FeedbackStripProps {
   review: Pick<Review, "round" | "sentAt" | "reviewer" | "summaryNote">;
-  /** Comments here, and how many the creator has marked addressed */
+  /** Comments here */
   total: number;
-  addressed: number;
   /** Replies by others not opened yet (ODY-881) */
   newReplies?: number;
   /** "this lesson" or "the Overview" */
   place?: string;
   /** The draft is back in review: the feedback can't change */
   inReview?: boolean;
-  /** A reviewer reading the feedback, who can reply but not mark addressed */
+  /** A reviewer reading the feedback, who can reply */
   forReviewer?: boolean;
   /** Controls at the strip's end, such as the Overview's Feedback / Edit */
   actions?: ReactNode;
@@ -39,7 +38,6 @@ interface FeedbackStripProps {
 export function FeedbackStrip({
   review,
   total,
-  addressed,
   newReplies = 0,
   place = "this lesson",
   inReview = false,
@@ -66,11 +64,6 @@ export function FeedbackStrip({
             : `Feedback from ${reviewerName(review)}`}
         </span>
         <span>{feedbackMeta(review)}</span>
-        {addressed > 0 && (
-          <span className="text-slate-800 dark:text-slate-100">
-            {addressed} marked addressed
-          </span>
-        )}
         {newReplies > 0 && (
           <span className="font-semibold text-amber-700 dark:text-amber-400">
             {newRepliesText(newReplies)}
@@ -97,7 +90,7 @@ export function FeedbackStrip({
             ? "Click a highlight or its number to read a comment and its replies."
             : inReview
               ? "The reviewer is reading your changes. Click a highlight or its number to read a comment."
-              : "Click a highlight or its number to read a comment, and mark it addressed once you've changed the text."}
+              : "Click a highlight or its number to read a comment, and reply to it once you've changed the text."}
         </p>
       )}
       {children}

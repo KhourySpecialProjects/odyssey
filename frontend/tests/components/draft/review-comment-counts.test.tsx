@@ -29,7 +29,6 @@ jest.mock("@/components/draft/metadata/content-action-button", () => ({
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
   getReviewForDroplet: jest.fn(),
-  markAddressed: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
   editComment: jest.fn(),

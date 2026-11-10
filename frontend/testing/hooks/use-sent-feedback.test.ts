@@ -3,7 +3,6 @@ import { useSentFeedback } from "@/hooks/use-sent-feedback";
 import { isEdited } from "@/lib/review-threads";
 import {
   getReviewForDroplet,
-  markAddressed,
   replyToComment,
   editReply,
   deleteReply,
@@ -11,7 +10,6 @@ import {
 
 jest.mock("@/lib/requests/reviews", () => ({
   getReviewForDroplet: jest.fn(),
-  markAddressed: jest.fn(),
   replyToComment: jest.fn(),
   editReply: jest.fn(),
   deleteReply: jest.fn(),
@@ -26,7 +24,6 @@ const comment = {
   anchor: { v: 1 as const, field: "blocks" as const, blockId: "b1" },
   body: "Fix this",
   resolvedAt: null,
-  addressedAt: null,
 };
 const sent = {
   id: 7,
@@ -50,7 +47,6 @@ async function mount(enabled = true, isAuthor = true) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(getReviewForDroplet).mockResolvedValue(ok(sent) as never);
-  jest.mocked(markAddressed).mockResolvedValue(ok(comment) as never);
 });
 
 describe("useSentFeedback (ODY-807)", () => {
@@ -96,136 +92,11 @@ describe("useSentFeedback (ODY-807)", () => {
     expect(result.current.loadError).toBe("failed");
   });
 
-  it("marks a comment addressed at once", async () => {
-    const { result } = await mount();
-
-    let outcome: unknown;
-    await act(async () => {
-      outcome = await result.current.markAddressed(21);
-    });
-
-    expect(outcome).toEqual({ ok: true });
-    expect(markAddressed).toHaveBeenCalledWith(21, true);
-    expect(typeof result.current.comments[0].addressedAt).toBe("string");
-  });
-
-  it("re-reads when a read began during the mark and landed before it settled", async () => {
-    const { result } = await mount();
-    let save: (v: unknown) => void = () => {};
-    jest
-      .mocked(markAddressed)
-      .mockReturnValue(new Promise((r) => (save = r)) as never);
-    let write: Promise<unknown> = Promise.resolve();
-    act(() => {
-      write = result.current.markAddressed(21);
-    });
-    // This read began after the mark did, and has the old state
-    await act(async () => {
-      await result.current.reload();
-    });
-    expect(result.current.comments[0].addressedAt).toBeNull();
-    const addressedAt = "2026-10-29T09:00:00.000Z";
-    jest
-      .mocked(getReviewForDroplet)
-      .mockResolvedValue(
-        ok({ ...sent, comments: [{ ...comment, addressedAt }] }) as never,
-      );
-
-    await act(async () => {
-      save(ok(comment));
-      await write;
-    });
-
-    expect(result.current.comments[0].addressedAt).toBe(addressedAt);
-  });
-
-  it("a read already in flight can't undo the mark, and one reload follows", async () => {
-    const { result } = await mount();
-    let land: (v: unknown) => void = () => {};
-    jest
-      .mocked(getReviewForDroplet)
-      .mockReturnValueOnce(new Promise((r) => (land = r)) as never);
-    let reloading: Promise<unknown> = Promise.resolve();
-    act(() => {
-      reloading = result.current.reload();
-    });
-    const addressedAt = "2026-10-29T09:00:00.000Z";
-    jest
-      .mocked(getReviewForDroplet)
-      .mockResolvedValue(
-        ok({ ...sent, comments: [{ ...comment, addressedAt }] }) as never,
-      );
-
-    await act(async () => {
-      await result.current.markAddressed(21);
-    });
-    await act(async () => {
-      land(ok(sent));
-      await reloading;
-    });
-
-    expect(result.current.comments[0].addressedAt).toBe(addressedAt);
-    expect(getReviewForDroplet).toHaveBeenCalledTimes(3);
-  });
-
-  it("doesn't reload after marking addressed when no read was in flight", async () => {
-    const { result } = await mount();
-
-    await act(async () => {
-      await result.current.markAddressed(21);
-    });
-
-    expect(getReviewForDroplet).toHaveBeenCalledTimes(1);
-  });
-
-  it("lets only an author mark addressed (ODY-881)", async () => {
+  it("tells an author from a reviewer", async () => {
     const author = await mount();
     const reviewer = await mount(true, false);
     expect(author.result.current.canAddress).toBe(true);
     expect(reviewer.result.current.canAddress).toBe(false);
-
-    let outcome: unknown;
-    await act(async () => {
-      outcome = await reviewer.result.current.markAddressed(21);
-    });
-
-    expect(outcome).toEqual({ ok: false, error: "forbidden" });
-    expect(markAddressed).not.toHaveBeenCalled();
-    expect(reviewer.result.current.comments[0].addressedAt).toBeNull();
-  });
-
-  it("rolls the mark back when the server refuses it", async () => {
-    jest
-      .mocked(markAddressed)
-      .mockResolvedValue(fail("review_closed") as never);
-    const { result } = await mount();
-
-    let outcome: unknown;
-    await act(async () => {
-      outcome = await result.current.markAddressed(21);
-    });
-
-    expect(outcome).toEqual({ ok: false, error: "review_closed" });
-    expect(result.current.comments[0].addressedAt).toBeNull();
-  });
-
-  it("clears the mark, and restores it if that's refused", async () => {
-    const addressedAt = "2026-10-29T09:00:00.000Z";
-    jest
-      .mocked(getReviewForDroplet)
-      .mockResolvedValue(
-        ok({ ...sent, comments: [{ ...comment, addressedAt }] }) as never,
-      );
-    jest.mocked(markAddressed).mockRejectedValue(new Error("offline"));
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    const { result } = await mount();
-
-    await act(async () => {
-      await result.current.markAddressed(21, false);
-    });
-
-    expect(markAddressed).toHaveBeenCalledWith(21, false);
-    expect(result.current.comments[0].addressedAt).toBe(addressedAt);
   });
 });
 

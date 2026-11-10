@@ -919,15 +919,16 @@ describe("a comment carried into the reviewer's next round (ODY-807)", () => {
       createdAt: "2026-10-20T09:30:00.000Z",
       review: { round: 1 } as never,
     },
+    // An old mark: no longer shown anywhere
     addressedAt: "2026-10-28T12:00:00.000Z",
-  };
+  } as typeof wordsComment;
 
-  it("says on its tag that it was carried and marked addressed", async () => {
+  it("says on its tag that it was carried, and nothing of an old addressed mark", async () => {
     mount(true, { comments: [carried], numbers: new Map([[1, 1]]) });
     await act(async () => {});
 
     expect(screen.getByTestId("comment-tag")).toHaveAccessibleName(
-      /^Comment 1, pending, carried from round 1, marked addressed: /,
+      /^Comment 1, pending, carried from round 1: /,
     );
   });
 
@@ -939,11 +940,10 @@ describe("a comment carried into the reviewer's next round (ODY-807)", () => {
 
     const card = screen.getByRole("dialog", { name: "Comment 1" });
     expect(card).toHaveTextContent("Pending · carried from round 1");
-    expect(card).toHaveTextContent("The creator marked this addressed.");
+    expect(card).not.toHaveTextContent(/addressed/i);
     expect(card).toHaveTextContent(/Oct 20/);
-    // The reviewer still decides: Resolve, not Mark addressed
+    // The reviewer still decides
     expect(screen.getByRole("button", { name: "Resolve" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
   });
 
   it("replies on a carried copy, and offers no Reply on a fresh comment", async () => {

@@ -544,8 +544,6 @@ export type ReviewComment = {
   body: string;
   author?: AuthorizedUser | null;
   resolvedAt?: string | null;
-  /** The creator marked it addressed; only the reviewer resolves it (ODY-807) */
-  addressedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
   /** Set on a reply: the root comment it belongs to */

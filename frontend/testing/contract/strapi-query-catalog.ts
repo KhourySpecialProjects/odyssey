@@ -236,31 +236,6 @@ const REVIEW_WRITE_ROUTES = routes([
   ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
 ]);
 
-// A comment of feedback sent to the sentinel user, who wrote the droplet (ODY-807)
-const ADDRESSED_ROUTES = routes([
-  [
-    "GET",
-    /^\/review-comments$/,
-    list(
-      ent(7, {
-        review: {
-          data: ent(5, {
-            state: "sent",
-            round: 1,
-            droplet: {
-              data: ent(1, {
-                inReview: false,
-                reviewRound: 1,
-                authorized_users: { data: [ent(1)] },
-              }),
-            },
-          }),
-        },
-      }),
-    ),
-  ],
-]);
-
 // A comment of sent feedback on a droplet the sentinel user wrote (ODY-881)
 const REPLY_ROUTES = routes([
   ["GET", /^\/review-comments$/, list(), /\$or/],
@@ -945,7 +920,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       (m) => m.resolveComment(7, true),
       REVIEW_WRITE_ROUTES,
     ),
-    call("markAddressed", (m) => m.markAddressed(7, true), ADDRESSED_ROUTES),
     call(
       "replyToComment",
       (m) => m.replyToComment(7, "Sentinel reply"),

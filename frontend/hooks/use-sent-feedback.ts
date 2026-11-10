@@ -6,7 +6,6 @@ import {
   deleteReply,
   editReply as editReplyAction,
   getReviewForDroplet,
-  markAddressed as markAddressedAction,
   replyToComment,
   type ReviewActionError,
 } from "@/lib/requests/reviews";
@@ -29,8 +28,7 @@ const NONE: ReviewComment[] = [];
  * with getReviewForDroplet while `enabled`. The server decides what an author
  * may see (never an open review, never anything from AI), so nothing here
  * checks again. Only a sent review shows: once published, the draft is gone.
- * Marking a comment addressed shows at once and is rolled back if refused.
- * Only an author may mark addressed; a reviewer reads and replies (ODY-881).
+ * Authors and reviewers answer by replying (ODY-881).
  */
 export function useSentFeedback(
   dropletId: number | undefined,
@@ -101,40 +99,6 @@ export function useSentFeedback(
       loadToken.current++;
     };
   }, [dropletId, enabled, load]);
-
-  const setAddressedAt = (id: number, addressedAt: string | null) =>
-    setReview((current) =>
-      current
-        ? {
-            ...current,
-            comments: current.comments?.map((c) =>
-              c.id === id ? { ...c, addressedAt } : c,
-            ),
-          }
-        : current,
-    );
-
-  const markAddressed = useCallback(
-    async (id: number, addressed = true): Promise<CommentOutcome> => {
-      if (!isAuthor) return { ok: false, error: "forbidden" };
-      const comment = reviewRef.current?.comments?.find((c) => c.id === id);
-      if (!comment) return { ok: false, error: "not_found" };
-      const previous = comment.addressedAt ?? null;
-      const dropped = invalidateLoads();
-      const mark = loadToken.current;
-      setAddressedAt(id, addressed ? new Date().toISOString() : null);
-
-      const result = await markAddressedAction(id, addressed).catch((error) => {
-        console.error("Marking a comment addressed failed", error);
-        return { ok: false as const, error: "failed" as const };
-      });
-      if (!result.ok) setAddressedAt(id, previous);
-      // A load that began during the write may have read the old state
-      if (dropped || loadToken.current !== mark) void load();
-      return result.ok ? { ok: true } : { ok: false, error: result.error };
-    },
-    [isAuthor, invalidateLoads, load],
-  );
 
   const setThread = (root: number, change: Parameters<typeof mapThread>[2]) =>
     setReview((current) =>
@@ -209,7 +173,6 @@ export function useSentFeedback(
     isLoading,
     loadError,
     canAddress: isAuthor,
-    markAddressed,
     reply,
     editReply,
     removeReply,

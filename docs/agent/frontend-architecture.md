@@ -199,7 +199,7 @@ The same reviewer sees the panel on every page of the draft (`review/review-pane
 After Send feedback, a droplet's authors see the sent comments beside the text they edit. Plan and decisions: `docs/plans/ODY-807.md`.
 
 - **Data.** `useSentFeedback` (`hooks/use-sent-feedback.ts`) reads `getReviewForDroplet`, which already shows an author nothing of an open review and nothing from AI, so the UI doesn't check again. Only a `sent` review shows. The draft layout loads it once for an author (`SentFeedbackProvider` in `review-comments-context.tsx`), for the sidebar's counts and the page.
-- **Mark addressed.** `markAddressed` is the one comment write an author makes. It sets `addressedAt` on the latest round's sent feedback until the draft is back in review. The comment stays open, and only the reviewer resolves it. Submitting again copies the mark with the comment.
+- **Answering feedback.** Creators answer a reviewer's comment by replying; there is no Mark addressed (removed in ODY-897). The comment stays open, and only the reviewer resolves it. `addressedAt` stays in the backend schema, unused.
 - **Lessons.** The marks are drawn in the BlockNote editor the creator is typing in:
   - **Following the text:** `anchorsPlugin` maps its decorations through each edit, so typing before a mark keeps it on its words.
   - **Finding comments again:** the editor reports its live content once a frame (`onContent`), and the lesson finds the comments again in that, never in the last saved copy. A sentence edited away goes to Outdated before the save.
@@ -207,7 +207,7 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
   - **Tags and cards:** `FeedbackLayer` (`feedback-layer.tsx`) adds the tags and the card. A click on a mark opens its card without taking focus, and the click still places the caret.
   - **Lighting:** the lit mark is lit by a style rule, never by redrawing the decorations. A redraw is an editor transaction, and one landing between a press and the editor reading the click puts the caret back where it was.
   - **Classic lessons (ODY-880):** the block editors can't draw marks, so the strip offers Feedback / Edit (`FeedbackViewToggle`, shared with the Overview). Feedback is `ClassicReviewView` inside `FeedbackLayer`, with the marks, tags and card; Edit is the block editors. Only Feedback shows while the lesson can't be edited (back in review, or locked by someone else). Outdated comments are found in the lesson's current `blocks`, so they stay listed in both views.
-- **Outdated cards (ODY-881):** each item in `OutdatedComments` is a button that opens the normal `CommentCard`, anchored to the item, with the side's handlers in one `card` prop. Reviewers get Reply only on carried copies; creators and the shared Read view get Reply and (creators) Mark addressed.
+- **Outdated cards (ODY-881):** each item in `OutdatedComments` is a button that opens the normal `CommentCard`, anchored to the item, with the side's handlers in one `card` prop. Reviewers get Reply only on carried copies; creators and the shared Read view get Reply.
 - **Refresh and unread (ODY-881):**
   - **Refresh:** `ThreadRefresh` in the draft layout runs `useThreadRefresh`. It runs only once the layout's sent feedback has a review (replies sit on sent roots). It calls `getThreadStamp` on mount, every 30 s while the tab is visible, and on focus, and reloads both feedback hooks only when the stamp changes. No check starts within 5 s of a successful one, and three failures in a row pause it until the next focus. A card also runs one check when it opens (`useThreadSeen().check`).
   - **Own-fallback hooks:** a page that falls back to its own `useDropletReviewComments` / `useDropletSentFeedback` instance (the droplet went into review after the page loaded) isn't refreshed by the poll or the card-open check, and has no seen state, so nothing shows as new there.
@@ -217,7 +217,7 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
   - **Feedback:** `FrozenOverview` with `ReviewTextView` marks, and `SectionComments` with `readOnly`.
   - **Edit:** the editors. Switching back runs `settleDropletUpdates()` and then `router.refresh()`.
   - **The strip:** shows the summary note, and how many comments are on lessons.
-- **Carried comments.** Submit copies each unresolved comment into the next round with `carriedFrom` pointing at the comment as first written. The reviewer's card reads "Pending · carried from round 1" with the original's date, and the strip and tags count the carried and addressed comments (`carriedRound`, `carriedNotes` and `carriedMeta` in `lib/review-comments.ts`).
+- **Carried comments.** Submit copies each unresolved comment into the next round with `carriedFrom` pointing at the comment as first written. The reviewer's card reads "Pending · carried from round 1" with the original's date, and the strip and tags count the carried comments (`carriedRound`, `carriedNotes` and `carriedMeta` in `lib/review-comments.ts`).
 - **Not here:** a read-only Transcript panel for authors (confirmed scores, the summary note and a comment list that jumps to each comment's text). ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
 
 ## Final Overview Scan (ODY-787)

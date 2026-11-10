@@ -54,24 +54,18 @@ describe("OutdatedComments", () => {
     expect(item(3)).toHaveTextContent("· 2 replies");
   });
 
-  it("creator: opens the card, marks addressed and replies", async () => {
-    const onAddress = jest.fn().mockResolvedValue(ok);
+  it("creator: opens the card and replies", async () => {
     const onReply = jest.fn().mockResolvedValue(ok);
     render(
       <OutdatedComments
         comments={[make({})]}
         numbers={numbers}
-        card={cardFor({ onAddress, onReply, forCreator: true })}
+        card={cardFor({ onReply })}
       />,
     );
 
     await userEvent.click(item(3));
-    await userEvent.click(
-      await screen.findByRole("button", { name: /mark addressed/i }),
-    );
-    await waitFor(() => expect(onAddress).toHaveBeenCalledWith(1, true));
-
-    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Reply" }));
     await userEvent.type(
       screen.getByRole("textbox", { name: "Write a reply" }),
       "Done",

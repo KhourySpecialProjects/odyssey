@@ -45,7 +45,6 @@ const words = {
   body: "Which loop?",
   author: { id: 9, firstName: "Nadia", lastName: "Reviewer" },
   createdAt: "2026-10-28T15:00:00.000Z",
-  addressedAt: null,
 };
 const wholeBlock = {
   id: 2,
@@ -53,10 +52,8 @@ const wholeBlock = {
   anchor: { v: 1 as const, field: "blocks" as const, blockId: "b2" },
   body: "Explain the condition.",
   author: { id: 9, firstName: "Nadia", lastName: "Reviewer" },
-  addressedAt: null,
 };
 
-const onAddress = jest.fn();
 const onLitChange = jest.fn();
 
 function mount(over: Partial<React.ComponentProps<typeof FeedbackLayer>> = {}) {
@@ -76,7 +73,6 @@ function mount(over: Partial<React.ComponentProps<typeof FeedbackLayer>> = {}) {
           ? { type: "paragraph", text: "Loops end when a condition fails." }
           : undefined
       }
-      onAddress={onAddress}
       litMarkId={null}
       onLitChange={onLitChange}
       {...over}
@@ -88,7 +84,6 @@ function mount(over: Partial<React.ComponentProps<typeof FeedbackLayer>> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  onAddress.mockResolvedValue({ ok: true });
 });
 
 describe("FeedbackLayer (ODY-807)", () => {
@@ -157,7 +152,7 @@ describe("FeedbackLayer (ODY-807)", () => {
     expect(card).toHaveTextContent("Explain the condition.");
   });
 
-  it("offers Mark addressed, and no Edit, Delete or Resolve", async () => {
+  it("offers no Edit, Delete or Resolve", async () => {
     mount();
     await userEvent.click(screen.getByText("loop"));
 
@@ -165,81 +160,22 @@ describe("FeedbackLayer (ODY-807)", () => {
       screen.queryByRole("button", { name: /Edit|Delete|Resolve/ }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Only you can see this/)).not.toBeInTheDocument();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Mark addressed" }),
-    );
-
-    expect(onAddress).toHaveBeenCalledWith(1, true);
-  });
-
-  it("shows an addressed comment as addressed, and takes the mark back", async () => {
-    mount({
-      comments: [
-        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
-        wholeBlock,
-      ] as never,
-    });
-    await userEvent.click(screen.getByText("loop"));
-
-    expect(
-      screen.getByText("Marked addressed. The reviewer resolves it."),
-    ).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Not addressed yet" }),
-    );
-
-    expect(onAddress).toHaveBeenCalledWith(1, false);
-  });
-
-  it("offers nothing to change while the draft is back in review", async () => {
-    mount({ onAddress: undefined });
-    await userEvent.click(screen.getByText("loop"));
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mark addressed" })).toBeNull();
-  });
-
-  it("says a comment was marked addressed in the creator's words while frozen", async () => {
-    mount({
-      onAddress: undefined,
-      comments: [
-        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
-        wholeBlock,
-      ] as never,
-    });
-    await userEvent.click(screen.getByText("loop"));
-
-    expect(
-      screen.getByText("Marked addressed. The reviewer resolves it."),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("The creator marked this addressed.")).toBeNull();
-  });
-
-  it("says a comment was marked addressed in the creator's words for a reviewer", async () => {
-    mount({
-      onAddress: undefined,
-      forCreator: false,
-      comments: [
-        { ...words, addressedAt: "2026-10-29T09:00:00.000Z" },
-        wholeBlock,
-      ] as never,
-    });
-    await userEvent.click(screen.getByText("loop"));
-
-    expect(
-      screen.getByText("The creator marked this addressed."),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /addressed/i })).toBeNull();
   });
 
   it("says when the feedback can't change any more", async () => {
-    onAddress.mockResolvedValue({ ok: false, error: "review_closed" });
-    mount();
+    const onReply = jest
+      .fn()
+      .mockResolvedValue({ ok: false, error: "review_closed" });
+    mount({ onReply });
     await userEvent.click(screen.getByText("loop"));
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Mark addressed" }),
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Write a reply" }),
+      "On it",
     );
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
 
     expect(toast.info).toHaveBeenCalledWith(
       "This feedback can't change now.",
@@ -249,7 +185,7 @@ describe("FeedbackLayer (ODY-807)", () => {
 
   it("replies from the card, also while the draft is back in review", async () => {
     const onReply = jest.fn().mockResolvedValue({ ok: true });
-    mount({ onAddress: undefined, onReply });
+    mount({ onReply });
     await userEvent.click(screen.getByText("loop"));
 
     await userEvent.click(screen.getByRole("button", { name: "Reply" }));

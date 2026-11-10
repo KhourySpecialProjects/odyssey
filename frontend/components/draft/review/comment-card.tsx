@@ -41,10 +41,6 @@ interface CommentCardProps {
   focusOnOpen?: boolean;
   /** Said under what it's about, in place of Pending */
   meta?: ReactNode;
-  /** The creator's Mark addressed (ODY-807): shown only when given */
-  onAddress?: (addressed: boolean) => Promise<CommentOutcome>;
-  /** Shown to a droplet's author, reading the feedback sent to them */
-  forCreator?: boolean;
   /** Replies to the comment (ODY-881): shown only when given */
   onReply?: (body: string) => Promise<CommentOutcome>;
   /** Edit and delete of own replies; used only with `onReply` */
@@ -83,8 +79,6 @@ export function CommentCard({
   onClose,
   focusOnOpen = true,
   meta,
-  onAddress,
-  forCreator = false,
   onReply,
   replyEdits,
 }: CommentCardProps) {
@@ -107,7 +101,6 @@ export function CommentCard({
   const mine = comment.mine ?? !comment.author;
   // A carried comment's date is the original's (ODY-807)
   const time = commentTime(comment.carriedFrom?.createdAt ?? comment.createdAt);
-  const addressed = !!comment.addressedAt;
   const replies = comment.replies ?? [];
 
   // Opening the card checks for newer replies; replies unseen now get a New pill
@@ -240,18 +233,6 @@ export function CommentCard({
         fresh={fresh}
       />
 
-      {addressed && !resolved && (
-        <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
-          <IconCheck
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--rc-accent-text)]"
-            aria-hidden
-          />
-          {forCreator
-            ? "Marked addressed. The reviewer resolves it."
-            : "The creator marked this addressed."}
-        </p>
-      )}
-
       {/* Once replied to, the creator has seen it: nothing is hidden */}
       {mode === "view" && pending && replies.length === 0 && (
         <p className="flex items-start gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
@@ -317,25 +298,7 @@ export function CommentCard({
         </div>
       )}
 
-      {mode === "view" && onAddress && !resolved && (
-        <div className="flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            className={addressed ? GHOST : SECONDARY}
-            disabled={busy}
-            onClick={() => run(() => onAddress(!addressed))}
-          >
-            {addressed ? (
-              <IconRotate className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <IconCheck className="h-3.5 w-3.5" aria-hidden />
-            )}
-            {addressed ? "Not addressed yet" : "Mark addressed"}
-          </button>
-        </div>
-      )}
-
-      {mode === "view" && !onAddress && (
+      {mode === "view" && (saving || canChange) && (
         <div className="flex flex-wrap justify-end gap-2">
           {saving ? (
             <span className="text-slate-500">Saving...</span>

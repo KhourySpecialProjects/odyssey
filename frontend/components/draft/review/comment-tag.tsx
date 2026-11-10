@@ -94,8 +94,6 @@ interface CommentTagProps {
   number: number | null;
   pending: boolean;
   resolved: boolean;
-  /** The creator marked it addressed (ODY-807) */
-  addressed?: boolean;
   /** Replies by others not opened yet (ODY-881): a dot; `label` should say so too */
   unseen?: boolean;
   /** Its mark is hovered, or its card is open */
@@ -122,7 +120,6 @@ export function CommentTag({
   number,
   pending,
   resolved,
-  addressed = false,
   unseen = false,
   lit,
   expanded,
@@ -180,12 +177,6 @@ export function CommentTag({
       >
         {number ?? <IconCheck className="h-3 w-3" aria-hidden />}
       </span>
-      {addressed && !resolved && (
-        <IconCheck
-          className="-ml-1 h-3 w-3 shrink-0 text-[var(--rc-accent-text)]"
-          aria-hidden
-        />
-      )}
       <span
         className={cn(
           "min-w-0 truncate leading-none",

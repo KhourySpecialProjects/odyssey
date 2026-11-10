@@ -49,7 +49,6 @@ jest.mock("@/lib/requests/droplet", () => ({ getDropletBySlug: jest.fn() }));
 jest.mock("@/lib/requests/reviews", () => ({
   getMyReview: jest.fn(),
   getReviewForDroplet: jest.fn(),
-  markAddressed: jest.fn(),
   replyToComment: jest.fn(),
   getOrOpenReview: jest.fn(),
   addComment: jest.fn(),
@@ -260,7 +259,7 @@ describe("the comment strip", () => {
     );
   });
 
-  it("says how many were carried over and marked addressed (ODY-807)", async () => {
+  it("says how many were carried over, and nothing of an old addressed mark (ODY-807)", async () => {
     const from = { id: 100, review: { round: 1 } };
     jest.mocked(getMyReview).mockResolvedValue({
       ok: true,
@@ -282,7 +281,7 @@ describe("the comment strip", () => {
 
     const strip = await screen.findByTestId("review-comment-strip");
     expect(strip).toHaveTextContent("2 carried over from round 1");
-    expect(strip).toHaveTextContent("1 marked addressed by the creator");
+    expect(strip).not.toHaveTextContent(/addressed/i);
   });
 
   it("says when the comments couldn't load", async () => {

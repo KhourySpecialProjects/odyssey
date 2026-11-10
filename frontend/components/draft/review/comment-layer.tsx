@@ -1114,7 +1114,6 @@ export function CommentLayer({
               number={number}
               pending={pending}
               resolved={resolved}
-              addressed={!!comment.addressedAt}
               unseen={unseen}
               lit={lit}
               expanded={card?.commentId === comment.id}
