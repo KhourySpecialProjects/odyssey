@@ -127,7 +127,7 @@ describe("StreakPill revives", () => {
     ).toBeInTheDocument();
     expect(
       within(offer).getByText(
-        "Revive it to keep it going: it'll be 25 days. 2 revives left.",
+        "Revive it to keep it going: it'll be 25 days. You have 2 revives left.",
       ),
     ).toBeInTheDocument();
   });

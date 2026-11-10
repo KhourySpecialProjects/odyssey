@@ -128,12 +128,15 @@ it.each([
   expect(revivesLeftText(left)).toBe(text);
 });
 
-it("offers the revive with what it restores", () => {
+it.each([
+  [2, "You have 2 revives left."],
+  [1, "You have 1 revive left."],
+])("offers the revive with what it restores and %i left", (left, count) => {
   expect(
-    reviveOfferMessage({ date: "2026-11-09", ended: 24, restored: 25 }, 2),
+    reviveOfferMessage({ date: "2026-11-09", ended: 24, restored: 25 }, left),
   ).toEqual({
     title: "Your 24-day streak ended yesterday.",
-    detail: "Revive it to keep it going: it'll be 25 days. 2 revives left.",
+    detail: `Revive it to keep it going: it'll be 25 days. ${count}`,
   });
 });
 

@@ -107,7 +107,7 @@ export function reviveOfferMessage(
 ): Message {
   return {
     title: `Your ${revive.ended}-day streak ended yesterday.`,
-    detail: `Revive it to keep it going: it'll be ${days(revive.restored)}. ${revivesLeftText(revivesLeft)}.`,
+    detail: `Revive it to keep it going: it'll be ${days(revive.restored)}. You have ${revivesLeft} ${revivesLeft === 1 ? "revive" : "revives"} left.`,
   };
 }
 
