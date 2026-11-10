@@ -246,12 +246,15 @@ async function spellingFlags(doc: ScanDocument): Promise<Flag[]> {
     }
   }
 
+  // The words go with the flag, so its link can highlight them (ODY-913)
+  const spellingFlag = (s: Text, words: string[]): Flag => ({
+    ...flag(s.part, s.blockId, notKnown(words)),
+    words,
+  });
   const check = await confirmMisspellings(items);
   if (!check.ok) {
     return [
-      ...found.map(({ s, unknown }) =>
-        flag(s.part, s.blockId, notKnown(unknown)),
-      ),
+      ...found.map(({ s, unknown }) => spellingFlag(s, unknown)),
       flag(dropletPart(doc), null, AI_NOTE[check.reason], "unknown"),
     ];
   }
@@ -260,7 +263,7 @@ async function spellingFlags(doc: ScanDocument): Promise<Flag[]> {
       const id = itemOf.get(keyOf(word, sentenceAround(s.text, word)));
       return id === undefined || check.misspelled.has(id);
     });
-    return kept.length ? [flag(s.part, s.blockId, notKnown(kept))] : [];
+    return kept.length ? [spellingFlag(s, kept)] : [];
   });
 }
 

@@ -98,6 +98,8 @@ export type Flag = {
   blockId: string | null; // a block id, or a droplet field id ("next-steps", "datasets", "fun-fact", …)
   message: string;
   severity: FlagSeverity;
+  /** The words a spelling flag is about, highlighted when its link opens (ODY-913) */
+  words?: string[];
 };
 
 /**

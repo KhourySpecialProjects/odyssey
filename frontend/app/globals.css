@@ -336,6 +336,12 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   background-color: var(--rc-draft);
   border-bottom: 2px solid var(--rc-accent);
 }
+/* A scan's spelling flag, opened from the scan page (ODY-913, hooks/use-scan-target.ts) */
+::highlight(scan-spelling) {
+  background-color: #fef3c7;
+  text-decoration: underline wavy #d97706;
+  text-decoration-thickness: 1.5px;
+}
 /* AI findings (ODY-849): band colours mirror lib/review-panel/colors.ts */
 .review-finding--good {
   --rf-tint: #dcfce7;

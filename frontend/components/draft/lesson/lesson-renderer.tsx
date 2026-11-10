@@ -51,6 +51,7 @@ import {
 } from "@/components/draft/review/review-comments-context";
 import { unseenCount } from "@/lib/review-threads";
 import { useShowInLesson } from "@/hooks/use-show-in-lesson";
+import { useScanTarget } from "@/hooks/use-scan-target";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
 import {
@@ -745,6 +746,8 @@ export function LessonRenderer({
       isOutdatedMark(markId, outdatedIds) ||
       findingResult.outdated.includes(markId),
   });
+  // Go to lesson from a scan flag: scroll to its block, highlight its words
+  useScanTarget();
 
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
@@ -982,7 +985,10 @@ export function LessonRenderer({
         ) : (
           <div className="mb-3 flex w-full items-center justify-between">
             <div className="inline-flex items-center gap-3">
-              <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
+              <h1
+                data-lesson-title
+                className="text-[2.5rem] font-bold text-slate-900 dark:text-white"
+              >
                 {name}
               </h1>
               {!isReadOnly && (
