@@ -1,7 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
+import {
+  updateDroplet,
+  publishDraftToOriginal,
+  deepDeleteDroplet,
+} from "@/lib/requests/droplet";
 import {
   submitForReview,
   withdrawFromReview,
@@ -21,7 +25,8 @@ type ActionType =
   | "withdrawReview"
   | "sendFeedback"
   | "publishWithReview"
-  | "publishDraft";
+  | "publishDraft"
+  | "deleteDraft";
 
 const SUMMARY_NOTE_MAX = 5000;
 /** The publish action returns codes for denials; anything else is a message for the author. */
@@ -109,6 +114,20 @@ export function ContentActionButton({
           return;
         }
 
+        case "deleteDraft": {
+          // Deletes the draft and its lessons; a published droplet is never
+          // offered this action
+          const result = await deepDeleteDroplet(droplet.id);
+          if (!result.ok || result.error) {
+            throw new Error(result.error || "Failed to delete draft");
+          }
+          setIsPopupOpen(false);
+          setUserTxt("");
+          toast.success("Draft deleted");
+          router.replace("/my-content");
+          return;
+        }
+
         case "publish":
           response = await updateDroplet(
             droplet.id,
@@ -177,7 +196,9 @@ export function ContentActionButton({
   };
 
   const needsName =
-    actionType === "publish" || actionType === "publishWithReview";
+    actionType === "publish" ||
+    actionType === "publishWithReview" ||
+    actionType === "deleteDraft";
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -224,6 +245,27 @@ export function ContentActionButton({
                 Warning: The current published version will be permanently
                 overwritten. This action cannot be undone.
               </p>
+            </>
+          ),
+        };
+
+      case "deleteDraft":
+        return {
+          title: "Delete this draft?",
+          content: (
+            <>
+              <p className="mb-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                This permanently deletes the draft and all of its lessons. This
+                action cannot be undone.
+              </p>
+              <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+                Type{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  "{droplet.name}"
+                </span>{" "}
+                to confirm
+              </p>
+              {nameInput}
             </>
           ),
         };
@@ -353,13 +395,15 @@ export function ContentActionButton({
   ) : null;
 
   const buttonColorClasses =
-    actionType === "publish" ||
-    actionType === "publishDraft" ||
-    actionType === "publishWithReview"
-      ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
-      : actionType === "requestReview"
+    actionType === "deleteDraft"
+      ? "border-red-300 bg-white text-red-700 hover:bg-red-50 dark:border-red-800 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-950"
+      : actionType === "publish" ||
+          actionType === "publishDraft" ||
+          actionType === "publishWithReview"
         ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
-        : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800";
+        : actionType === "requestReview"
+          ? "border-[#2D7597] bg-[#2D7597] text-white hover:bg-[#255e78]"
+          : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-slate-50 dark:border-slate-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800";
 
   return (
     <>
