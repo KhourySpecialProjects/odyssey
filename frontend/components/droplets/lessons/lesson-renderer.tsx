@@ -176,6 +176,17 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
+  const dropletLessons = droplet.lessons ?? [];
+  const lessonIndex = dropletLessons.findIndex((l) => l.id === lesson.id);
+  const lessonPosition =
+    lessonIndex === -1
+      ? null
+      : {
+          current: lessonIndex + 1,
+          total: dropletLessons.length,
+          label: `Lesson ${lessonIndex + 1} of ${dropletLessons.length}`,
+        };
+
   const { gate, previous: previousLesson } = lessonGate({
     lessonId: lesson.id,
     lessons: droplet.lessons,
@@ -463,6 +474,28 @@ export function LessonRenderer({
           isActive={true}
           panel={panel}
         />
+      )}
+      {lessonPosition && (
+        <div className="mb-3">
+          <p className="mb-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {lessonPosition.label}
+          </p>
+          <div
+            role="progressbar"
+            aria-label={lessonPosition.label}
+            aria-valuemin={0}
+            aria-valuemax={lessonPosition.total}
+            aria-valuenow={lessonPosition.current}
+            className="h-1 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+          >
+            <div
+              className="h-full rounded-full bg-[#2D7597] transition-[width] motion-reduce:transition-none"
+              style={{
+                width: `${(lessonPosition.current / lessonPosition.total) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
       )}
       <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
         {lesson.name}

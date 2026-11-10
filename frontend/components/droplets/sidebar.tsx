@@ -4,6 +4,7 @@ import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn, getPath, isAuthorizedUserAdmin } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
+  IconCircleCheck,
   IconLock,
   IconArrowLeft,
   IconLayoutSidebarLeftExpand,
@@ -253,9 +254,11 @@ export default function Sidebar({
             <div className="flex flex-row items-center justify-between pb-2">
               <Link
                 href="/explore"
-                className="flex flex-1 items-center p-2 text-[#344054] transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                aria-label="Back to Explore"
+                className="flex flex-1 items-center gap-2 p-2 text-[#344054] transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
               >
                 <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
+                <span className="text-sm font-medium">Explore</span>
               </Link>
               <div className="flex items-center">
                 {(author || isAdmin) && (
@@ -374,6 +377,16 @@ export default function Sidebar({
                           <span className="text-sm leading-snug">
                             {lesson.name}
                           </span>
+                          {!isLocked &&
+                            completedLessonIds.includes(lesson.id) && (
+                              <>
+                                <IconCircleCheck
+                                  className="ml-auto h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                                  aria-hidden="true"
+                                />
+                                <span className="sr-only">Completed</span>
+                              </>
+                            )}
                           {isLocked && (
                             <IconLock
                               className="ml-auto h-4 w-4 shrink-0 text-slate-400"

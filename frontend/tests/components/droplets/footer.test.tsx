@@ -126,13 +126,66 @@ describe("DropletFooter", () => {
     });
   });
 
-  describe("Last Lesson Navigation", () => {
-    it("shows Next button from last lesson", () => {
+  describe("Next button label", () => {
+    const longName = "A very long lesson name that would overflow the button";
+
+    it.each([
+      ["lesson-1", "Next: Lesson 2"],
+      ["lesson-2", "Next: Lesson 3"],
+    ])("names the next lesson from %s", (slug, label) => {
+      (usePathname as jest.Mock).mockReturnValue(`/d/test-droplet/${slug}`);
+
+      render(<DropletFooter droplet={mockDroplet as any} />);
+
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    });
+
+    it("names the first lesson from the overview", () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet");
+
+      render(<DropletFooter droplet={mockDroplet as any} />);
+
+      expect(
+        screen.getByRole("button", { name: "Next: Lesson 1" }),
+      ).toBeInTheDocument();
+    });
+
+    it("says it finishes into the recap on the last lesson", () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
 
       render(<DropletFooter droplet={mockDroplet as any} />);
 
-      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Finish → Recap" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Next")).not.toBeInTheDocument();
+    });
+
+    it("truncates a long name visually and keeps it in the title", () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-1");
+      const droplet = {
+        ...mockDroplet,
+        lessons: [
+          mockDroplet.lessons[0],
+          { id: 2, slug: "l2", name: longName },
+        ],
+      };
+
+      render(<DropletFooter droplet={droplet as any} />);
+
+      const button = screen.getByRole("button", { name: `Next: ${longName}` });
+      expect(button).toHaveAttribute("title", `Next: ${longName}`);
+      expect(screen.getByText(`: ${longName}`)).toHaveClass("truncate");
+    });
+  });
+
+  describe("Last Lesson Navigation", () => {
+    it("goes to the recap from the last lesson", () => {
+      (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
+
+      render(<DropletFooter droplet={mockDroplet as any} />);
+
+      expect(screen.getByText("Finish → Recap")).toBeInTheDocument();
     });
 
     it("shows Previous button from last lesson", () => {
@@ -277,7 +330,7 @@ describe("DropletFooter", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Next").closest("button")!);
+      fireEvent.click(screen.getByText("Finish → Recap").closest("button")!);
       await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
       expect(mockPush).not.toHaveBeenCalled();
       // Same pending feedback as "Mark as complete"
@@ -289,7 +342,7 @@ describe("DropletFooter", () => {
       );
     });
 
-    it("re-enables Next and stays put when the recap save throws", async () => {
+    it("re-enables the Finish button and stays put when the recap save throws", async () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
       jest.spyOn(console, "error").mockImplementation(() => {});
       // Anything unexpected in the save (it handles a failed request itself)
@@ -306,7 +359,7 @@ describe("DropletFooter", () => {
           currentLessonId={3}
         />,
       );
-      fireEvent.click(screen.getByText("Next").closest("button")!);
+      fireEvent.click(screen.getByText("Finish → Recap").closest("button")!);
 
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith(
@@ -315,7 +368,7 @@ describe("DropletFooter", () => {
       );
       expect(mockPush).not.toHaveBeenCalled();
       // The user can try again
-      expect(screen.getByRole("button", { name: /next/i })).toBeEnabled();
+      expect(screen.getByRole("button", { name: /finish/i })).toBeEnabled();
     });
 
     it("stays on the last lesson when the recap save fails", async () => {
@@ -330,7 +383,7 @@ describe("DropletFooter", () => {
           currentLessonId={3}
         />,
       );
-      fireEvent.click(screen.getByText("Next").closest("button")!);
+      fireEvent.click(screen.getByText("Finish → Recap").closest("button")!);
 
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith(
@@ -340,7 +393,7 @@ describe("DropletFooter", () => {
       // One toast, and no recap showing the droplet as incomplete
       expect(toast.error).toHaveBeenCalledTimes(1);
       expect(mockPush).not.toHaveBeenCalled();
-      expect(screen.getByRole("button", { name: /next/i })).toBeEnabled();
+      expect(screen.getByRole("button", { name: /finish/i })).toBeEnabled();
     });
 
     const clickNextFromLesson1 = (props: Record<string, unknown> = {}) => {
@@ -582,7 +635,7 @@ describe("DropletFooter", () => {
       render(<DropletFooter droplet={singleLessonDroplet as any} />);
 
       expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(screen.getByText("Finish → Recap")).toBeInTheDocument();
     });
   });
 
