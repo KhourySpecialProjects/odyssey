@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
@@ -20,7 +15,7 @@ import {
   Tooltip,
   type LabelProps,
 } from "recharts";
-import { IconTrendingUp, IconTrendingDown, IconX } from "@tabler/icons-react";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import {
   getDropletAnalytics,
   type DropletAnalyticsData,
@@ -283,7 +278,7 @@ export function DropletAnalyticsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0 dark:border-slate-700 dark:bg-slate-900">
+      <DialogContent className="max-h-[90vh] max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0 dark:border-slate-700 dark:bg-slate-900 [&>button:last-child]:z-20">
         <DialogTitle className="sr-only">
           Droplet Analytics - {droplet.name}
         </DialogTitle>
@@ -291,9 +286,6 @@ export function DropletAnalyticsModal({
         <div className="flex max-h-[90vh] flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden">
           {/* ---- Header ---- */}
           <div className="sticky top-0 z-10 rounded-t-[20px] bg-white pt-10 pr-10 pb-0 pl-14 dark:bg-slate-900">
-            <DialogClose className="absolute top-7 right-7 rounded-full p-1.5 text-[#475569] transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-              <IconX className="h-5 w-5" />
-            </DialogClose>
             <div className="flex items-baseline justify-between pr-8">
               <div>
                 <h2 className="text-[40px] font-semibold text-black dark:text-white">

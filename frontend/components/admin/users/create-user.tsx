@@ -4,13 +4,12 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createAuthorizedUserWithState } from "@/lib/actions";
-import { IconPlus, IconUpload, IconX } from "@tabler/icons-react";
+import { IconPlus, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -115,11 +114,8 @@ export function CreateUser() {
           Create User
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0">
+      <DialogContent className="max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0 [&>button:last-child]:z-20">
         <DialogTitle className="sr-only">Create User</DialogTitle>
-        <DialogClose className="absolute top-7 right-7 z-10 rounded-full p-1.5 text-[#c1c7d0] transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-          <IconX className="h-5 w-5" />
-        </DialogClose>
         <div className="px-14 py-10">
           {/* Title */}
           <h2 className="text-[40px] font-semibold text-black">Create User</h2>

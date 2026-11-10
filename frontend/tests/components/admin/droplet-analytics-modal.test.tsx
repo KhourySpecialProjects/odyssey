@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { DropletAnalyticsModal } from "@/components/admin/droplets/droplet-analytics-modal";
 import { getDropletAnalytics } from "@/lib/requests/droplet-analytics";
 
@@ -92,5 +92,31 @@ describe("DropletAnalyticsModal — Average Rating stat card", () => {
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.getByText("Completion Rate")).toBeInTheDocument();
     expect(screen.getByText("Average Rating")).toBeInTheDocument();
+  });
+});
+
+describe("DropletAnalyticsModal — close button", () => {
+  it("renders exactly one close button (ODY-917)", async () => {
+    mockGetDropletAnalytics.mockResolvedValue(baseAnalytics);
+    render(
+      <DropletAnalyticsModal
+        droplet={mockDroplet}
+        open={true}
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() =>
+      expect(screen.getByText("Average Rating")).toBeInTheDocument(),
+    );
+    expect(
+      within(dialog).getAllByRole("button", { name: /close/i }),
+    ).toHaveLength(1);
+    expect(
+      within(dialog)
+        .getAllByRole("button")
+        .filter((b) => !b.textContent?.trim()),
+    ).toHaveLength(0);
   });
 });
