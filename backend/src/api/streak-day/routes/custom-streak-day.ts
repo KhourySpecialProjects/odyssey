@@ -13,5 +13,16 @@ export default {
       path: '/streak-days/revive',
       handler: 'custom-streak-day.revive',
     },
+    // The streak testing panel (ODY-921, temporary): 404 unless testing is on
+    {
+      method: 'POST',
+      path: '/streak-days/test/set',
+      handler: 'custom-streak-day.setTest',
+    },
+    {
+      method: 'POST',
+      path: '/streak-days/test/clear',
+      handler: 'custom-streak-day.clearTest',
+    },
   ],
 };

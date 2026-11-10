@@ -475,6 +475,7 @@ export const MODULE_PATHS: Record<string, string> = {
   reviews: "@/lib/requests/reviews",
   reminders: "@/lib/requests/reminders",
   streaks: "@/lib/requests/streaks",
+  "streak-testing": "@/lib/requests/streak-testing",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -1087,6 +1088,12 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "mentor-feedback": {
     saveMentorFeedback:
       "custom route POST /mentor-feedbacks/record, not a v4 entry (ODY-890)",
+  },
+  // The temporary streak testing panel (ODY-921): writes test rows only
+  "streak-testing": {
+    setTestStreak: WRITE,
+    moveTestDay: WRITE,
+    resetTestStreak: WRITE,
   },
   "authorized-user": {
     createAuthorizedUser: WRITE,

@@ -109,7 +109,11 @@ describe("getStreakFor", () => {
     });
     expect(fetchMock.mock.calls[0][0]).toContain("/api/streak-days?");
     expect(queryOf(0)).toEqual({
-      filters: { user: { id: { $eq: "7" } } },
+      // Real rows: test false, or null on rows from before the flag
+      filters: {
+        user: { id: { $eq: "7" } },
+        $or: [{ test: { $eq: "false" } }, { test: { $null: "true" } }],
+      },
       fields: ["date", "lessonIds", "revived"],
       sort: ["date:asc"],
       pagination: { page: "1", pageSize: "1000" },
@@ -210,5 +214,48 @@ describe("reviveStreakDay", () => {
       ok: false,
       message: "Couldn't revive your streak. Try again.",
     });
+  });
+});
+
+describe("the testing panel's mode (ODY-921)", () => {
+  const mode = { test: true, offsetDays: 2 };
+
+  it("reads the test rows, on the moved today", async () => {
+    reply(
+      200,
+      page([
+        ["2026-11-10", [1]],
+        ["2026-11-11", [2]],
+      ]),
+    );
+
+    const streak = await getStreakFor(learner, { now: NOW, mode });
+
+    expect(queryOf(0).filters).toEqual({
+      user: { id: { $eq: "7" } },
+      test: { $eq: "true" },
+    });
+    // Boston's 9 Nov, two days on
+    expect(streak.today).toBe("2026-11-11");
+    expect(streak).toMatchObject({ current: 2, litToday: true });
+  });
+
+  it.each([
+    [
+      "records",
+      () => recordStreakDay(learner, 42, NOW, mode),
+      { userId: 7, date: "2026-11-11", lessonId: 42, test: true },
+    ],
+    [
+      "revives",
+      () => reviveStreakDay(learner, NOW, mode),
+      { userId: 7, date: "2026-11-10", test: true },
+    ],
+  ])("%s a test day on the moved today", async (_, write, data) => {
+    reply(200, { data: { added: true } });
+
+    await write();
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ data });
   });
 });

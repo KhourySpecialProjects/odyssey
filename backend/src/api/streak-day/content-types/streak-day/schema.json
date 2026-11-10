@@ -40,6 +40,10 @@
     "revived": {
       "type": "boolean",
       "default": false
+    },
+    "test": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

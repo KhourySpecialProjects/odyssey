@@ -1,8 +1,12 @@
 import {
+  clearTestStreakDays,
   isCalendarDate,
   recordStreakDay,
   reviveStreakDay,
+  setTestStreakDays,
   StreakDayError,
+  streakTestingOn,
+  type TestStreakDay,
 } from '../../../lib/streak-days';
 
 const MAX_INT = 2147483647; // Postgres integer column limit
@@ -49,10 +53,31 @@ function parseData(
     if (!isRowId(data[key]))
       return { invalid: `${key} must be a positive integer` };
   }
-  if (!isCalendarDate(data.date)) {
+  if (allowed.includes('date') && !isCalendarDate(data.date)) {
     return { invalid: 'date must be a calendar date written YYYY-MM-DD' };
   }
+  if ('test' in data && typeof data.test !== 'boolean') {
+    return { invalid: 'test must be true or false' };
+  }
   return { data };
+}
+
+/** The testing panel's days (ODY-921): at most 400, each a distinct real date */
+function parseTestDays(days: unknown): TestStreakDay[] | null {
+  if (!Array.isArray(days) || days.length > 400) return null;
+  const seen = new Set<string>();
+  for (const day of days) {
+    if (!isObject(day)) return null;
+    const keys = Object.keys(day);
+    if (keys.some((k) => !['date', 'lessons', 'revived'].includes(k)))
+      return null;
+    if (!isCalendarDate(day.date) || seen.has(day.date)) return null;
+    if (!Number.isInteger(day.lessons) || day.lessons < 0 || day.lessons > 50)
+      return null;
+    if ('revived' in day && typeof day.revived !== 'boolean') return null;
+    seen.add(day.date);
+  }
+  return days as TestStreakDay[];
 }
 
 /** Runs a streak write and maps its errors to HTTP statuses. */
@@ -75,14 +100,15 @@ export default {
   async record(ctx) {
     const parsed = parseData(
       ctx.request.body ?? {},
-      ['userId', 'date', 'lessonId'],
+      ['userId', 'date', 'lessonId', 'test'],
       ['userId', 'lessonId']
     );
     if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
-    const { userId, date, lessonId } = parsed.data;
+    const { userId, date, lessonId, test = false } = parsed.data;
+    if (test && !streakTestingOn()) return fail(ctx, 404, 'Not Found');
     return run(
       ctx,
-      () => recordStreakDay({ userId, date, lessonId }),
+      () => recordStreakDay({ userId, date, lessonId, test }),
       'Failed to record a streak day.'
     );
   },
@@ -91,15 +117,54 @@ export default {
   async revive(ctx) {
     const parsed = parseData(
       ctx.request.body ?? {},
-      ['userId', 'date'],
+      ['userId', 'date', 'test'],
       ['userId']
     );
     if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
-    const { userId, date } = parsed.data;
+    const { userId, date, test = false } = parsed.data;
+    if (test && !streakTestingOn()) return fail(ctx, 404, 'Not Found');
     return run(
       ctx,
-      () => reviveStreakDay({ userId, date }),
+      () => reviveStreakDay({ userId, date, test }),
       'Failed to revive the streak.'
+    );
+  },
+
+  // The streak testing panel (ODY-921, temporary): 404 unless testing is on
+
+  /** POST /streak-days/test/set { data: { userId, days: [{ date, lessons, revived? }] } } */
+  async setTest(ctx) {
+    if (!streakTestingOn()) return fail(ctx, 404, 'Not Found');
+    const parsed = parseData(
+      ctx.request.body ?? {},
+      ['userId', 'days'],
+      ['userId']
+    );
+    if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
+    const days = parseTestDays(parsed.data.days);
+    if (!days) {
+      return fail(
+        ctx,
+        400,
+        'days must be at most 400 distinct { date, lessons (0-50), revived? }'
+      );
+    }
+    return run(
+      ctx,
+      () => setTestStreakDays({ userId: parsed.data.userId, days }),
+      'Failed to set the test streak.'
+    );
+  },
+
+  /** POST /streak-days/test/clear { data: { userId } } */
+  async clearTest(ctx) {
+    if (!streakTestingOn()) return fail(ctx, 404, 'Not Found');
+    const parsed = parseData(ctx.request.body ?? {}, ['userId'], ['userId']);
+    if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
+    return run(
+      ctx,
+      () => clearTestStreakDays({ userId: parsed.data.userId }),
+      'Failed to clear the test streak.'
     );
   },
 };

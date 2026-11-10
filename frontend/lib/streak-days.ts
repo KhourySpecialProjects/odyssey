@@ -2,6 +2,7 @@ import "server-only";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { streakTestMode, type StreakTestMode } from "@/lib/streak-testing";
 import {
   addDays,
   localDate,
@@ -31,6 +32,13 @@ export type StreakLearner = { id: number; timeZone?: string | null };
 const PAGE_SIZE = 1000;
 
 /**
+ * The learner's date today. While the testing panel (ODY-921) is on, its
+ * "today" is moved by the panel's offset, and its rows are the test ones.
+ */
+const todayFor = (learner: StreakLearner, mode: StreakTestMode, now: Date) =>
+  addDays(localDate(now, streakTimeZone(learner.timeZone)), mode.offsetDays);
+
+/**
  * Records that the learner finished `lessonId` for the first time, on
  * today's date in their time zone. Repeating it is harmless. Never throws:
  * a streak that fails to save mustn't fail the lesson. Returns whether the
@@ -40,9 +48,11 @@ export async function recordStreakDay(
   learner: StreakLearner,
   lessonId: number,
   now = new Date(),
+  mode?: StreakTestMode,
 ): Promise<boolean> {
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/streak-days/record`;
   try {
+    const m = mode ?? (await streakTestMode());
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -53,8 +63,9 @@ export async function recordStreakDay(
       body: JSON.stringify({
         data: {
           userId: learner.id,
-          date: localDate(now, streakTimeZone(learner.timeZone)),
+          date: todayFor(learner, m, now),
           lessonId,
+          ...(m.test && { test: true }),
         },
       }),
       cache: "no-store",
@@ -87,13 +98,17 @@ type DaysPage = {
 /** Every day that counts toward the learner's streak, oldest first. `fresh` skips the cache, for a read right after a write. */
 async function getStreakDays(
   userId: number,
-  { fresh = false } = {},
+  { fresh = false, test = false } = {},
 ): Promise<StreakDay[]> {
   const days: StreakDay[] = [];
+  // Real rows predate the test flag, so theirs can be null
+  const which = test
+    ? { test: { $eq: true } }
+    : { $or: [{ test: { $eq: false } }, { test: { $null: true } }] };
   for (let page = 1; ; page++) {
     const response = await fetchAPI<DaysPage>("/streak-days", {
       urlParams: {
-        filters: { user: { id: { $eq: userId } } },
+        filters: { user: { id: { $eq: userId } }, ...which },
         fields: ["date", "lessonIds", "revived"],
         sort: ["date:asc"],
         pagination: { page, pageSize: PAGE_SIZE },
@@ -122,10 +137,15 @@ async function getStreakDays(
  */
 export async function getStreakFor(
   learner: StreakLearner,
-  { now = new Date(), fresh = false } = {},
+  {
+    now = new Date(),
+    fresh = false,
+    mode,
+  }: { now?: Date; fresh?: boolean; mode?: StreakTestMode } = {},
 ): Promise<Streak> {
-  const today = localDate(now, streakTimeZone(learner.timeZone));
-  const days = await getStreakDays(learner.id, { fresh });
+  const m = mode ?? (await streakTestMode());
+  const today = todayFor(learner, m, now);
+  const days = await getStreakDays(learner.id, { fresh, test: m.test });
   const dates = days.map((day) => day.date);
   const revived = days.filter((day) => day.revived).length;
   const revivesLeft = Math.max(0, STREAK_REVIVES - revived);
@@ -148,10 +168,12 @@ export type ReviveResult = { ok: true } | { ok: false; message: string };
 export async function reviveStreakDay(
   learner: StreakLearner,
   now = new Date(),
+  mode?: StreakTestMode,
 ): Promise<ReviveResult> {
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/streak-days/revive`;
-  const today = localDate(now, streakTimeZone(learner.timeZone));
   try {
+    const m = mode ?? (await streakTestMode());
+    const today = todayFor(learner, m, now);
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -160,7 +182,11 @@ export async function reviveStreakDay(
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
-        data: { userId: learner.id, date: addDays(today, -1) },
+        data: {
+          userId: learner.id,
+          date: addDays(today, -1),
+          ...(m.test && { test: true }),
+        },
       }),
       cache: "no-store",
     });
