@@ -99,6 +99,19 @@ describe("PromptPreview", () => {
       );
     });
 
+    it.each([
+      ["an outside click", (u: User) => u.click(document.body)],
+      ["blur out of the chip", (u: User) => u.tab()],
+    ])("closes on %s", async (_n, act) => {
+      const user = await open();
+      await user.click(chip());
+      await screen.findByRole("dialog");
+      await act(user);
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
+    });
+
     it("closes shortly after the pointer leaves", async () => {
       const user = await open();
       await user.hover(chip());
