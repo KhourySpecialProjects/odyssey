@@ -18,6 +18,7 @@ import { ChangeEvent, FormEvent, useId, useState } from "react";
 import { toast } from "sonner";
 import { IconSend } from "@tabler/icons-react";
 import { reviewFailureMessage } from "@/lib/review-panel/failure-message";
+import { REVIEW_FROZEN_ERROR, REVIEW_FROZEN_MESSAGE } from "@/lib/review-roles";
 import { createPortal } from "react-dom";
 type ActionType =
   | "publish"
@@ -119,7 +120,14 @@ export function ContentActionButton({
           // offered this action
           const result = await deepDeleteDroplet(droplet.id);
           if (!result.ok || result.error) {
-            throw new Error(result.error || "Failed to delete draft");
+            throw new Error(
+              result.error === REVIEW_FROZEN_ERROR
+                ? REVIEW_FROZEN_MESSAGE
+                : reviewFailureMessage(
+                    { error: result.error ?? "" },
+                    result.error || "Failed to delete draft",
+                  ),
+            );
           }
           setIsPopupOpen(false);
           setUserTxt("");
