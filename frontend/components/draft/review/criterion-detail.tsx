@@ -113,6 +113,7 @@ export function CriterionDetail({
   const mine = useMemo<OpenDetail>(
     () => ({ band, findings }),
     // `signature` (ids, numbers, anchors) stands for `findings`
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `signature` (ids, numbers, anchors) stands for `findings`
     [band, signature],
   );
   useEffect(() => {

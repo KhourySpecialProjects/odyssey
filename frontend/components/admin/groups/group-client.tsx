@@ -44,6 +44,7 @@ export function GroupClient({ groups }: { groups: Group[] }) {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the debounced search must keep one identity across renders; handleInputChange only reads the groups list loaded with the page
   const debouncedSearch = useCallback(
     debounce((value: string) => handleInputChange(value), 500),
     [],

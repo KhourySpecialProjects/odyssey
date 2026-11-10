@@ -236,7 +236,7 @@ export function ContentActionButton({
               <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
                 Type{" "}
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  "{droplet.name}"
+                  &quot;{droplet.name}&quot;
                 </span>{" "}
                 to confirm
               </p>
@@ -308,7 +308,7 @@ export function ContentActionButton({
               <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
                 Type{" "}
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  "{droplet.name}"
+                  &quot;{droplet.name}&quot;
                 </span>{" "}
                 to confirm
               </p>

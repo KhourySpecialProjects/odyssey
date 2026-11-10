@@ -42,8 +42,10 @@ export function CalloutEditor({
       content: temp,
       type: "info",
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the debounced updater keeps one identity; adding updateBlock would recreate it and drop pending debounced calls
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the debounced updater keeps one identity; adding updateBlock would recreate it and drop pending debounced calls
   useCallback(debounce(handleUpdate, 1000), []);
 
   const handleToggleIcon = () => {

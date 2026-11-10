@@ -45,6 +45,7 @@ export function DropletsCreatorGrid({ droplets }: DropletsCreatorGridProps) {
     return sorted
       .filter((d) => matchesSearch(d, q))
       .filter((d) => dropletMatchesFilters(d, filterParams));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filterParams is derived from searchParams, which is already a dependency
   }, [droplets, sortKey, q, searchParams]);
 
   const clearFilters = () => {

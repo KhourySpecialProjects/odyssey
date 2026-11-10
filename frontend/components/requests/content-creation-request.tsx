@@ -150,7 +150,7 @@ export function ContentCreatorRequestForm({
                     What are some ideas you have for a droplet?
                   </Label>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Describe the topics or concepts you'd like to teach
+                    Describe the topics or concepts you&apos;d like to teach
                   </p>
                 </div>
               </div>

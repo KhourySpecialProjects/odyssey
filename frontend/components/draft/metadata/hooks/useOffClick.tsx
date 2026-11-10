@@ -22,6 +22,7 @@ export function useOffClick(
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- listener is bound once on mount; func and setOpen are read through the first render's closure
   }, []);
 
   return { open, setOpen };

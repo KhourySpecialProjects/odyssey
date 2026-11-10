@@ -64,6 +64,7 @@ export function FriendSearch({
       cancelled = true;
       clearTimeout(delayDebounceFn);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-search only when the blocked lists change; curUser.id does not change while the component is mounted
   }, [searchTerm, curUser.blocked, curUser.was_blocked]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {

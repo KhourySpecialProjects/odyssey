@@ -637,6 +637,7 @@ export function BlockNoteEditorClient({
         unsubscribe();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- editable is read only to skip work; re-subscribing the editor on every editable toggle is not wanted
   }, [editor, onChange, isReady]);
 
   // Listen for auto-format operations from the sidebar

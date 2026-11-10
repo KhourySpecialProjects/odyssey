@@ -82,6 +82,7 @@ export function NotesBar({
         ),
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pageHeight and userId do not change during a drag; recreating the handlers would rebind document listeners
     [draggedNote, dragOffset],
   );
 
@@ -104,6 +105,7 @@ export function NotesBar({
 
     setDraggedNote(null);
     setNoteDisabled(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pageHeight and userId do not change during a drag; recreating the handlers would rebind document listeners
   }, [draggedNote, notes, fetchNotes, handleDragMove]);
 
   const handleDragStart = (note: Note, e: React.MouseEvent) => {

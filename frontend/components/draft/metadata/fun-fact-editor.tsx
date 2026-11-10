@@ -52,8 +52,8 @@ export function FunFactEditor({
         Fun Fact
       </h2>
       <p className="mt-1 text-slate-600 dark:text-slate-300">
-        Generated from your overview by Anthropic's Claude AI, this fact will be
-        displayed to users on Odyssey's homepage
+        Generated from your overview by Anthropic&apos;s Claude AI, this fact
+        will be displayed to users on Odyssey&apos;s homepage
       </p>
 
       <div className="mt-4 w-full rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-8 dark:border-slate-600 dark:bg-slate-800">

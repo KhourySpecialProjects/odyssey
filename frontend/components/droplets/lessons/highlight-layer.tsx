@@ -530,6 +530,7 @@ export function useCodeHighlights(ids: number[], code: string) {
   const { highlights, key } = useRegionHighlights(ids);
   // New marks reconfigure the editor, so they're rebuilt only when `key`
   // says a highlight changed, not for each new highlights array
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuilt only when `key` says a highlight changed, not for each new highlights array
   const marks = useMemo(() => codeMarks(highlights, code), [key, code]);
   const onCreateEditor = useCallback((view: EditorView) => {
     if (regionRef.current) {

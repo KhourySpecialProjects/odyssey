@@ -150,7 +150,7 @@ export function CreateDropletForm({
                       href={`/d/${slug}`}
                       className="mt-2 inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100"
                     >
-                      View existing droplet "{dropletName.trim()}"
+                      View existing droplet &quot;{dropletName.trim()}&quot;
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                   </div>

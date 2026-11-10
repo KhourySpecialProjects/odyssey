@@ -3,19 +3,25 @@
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react-hooks/rules-of-hooks": "warn",
-    "react-hooks/exhaustive-deps": "warn",
-    "react/no-unescaped-entities": "warn",
+    "react-hooks/exhaustive-deps": "error",
+    "react/no-unescaped-entities": "error",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
     ],
     "@next/next/no-img-element": "warn",
-    "react/jsx-key": "warn",
+    "react/jsx-key": "error",
     "prefer-const": "warn",
     "@typescript-eslint/no-wrapper-object-types": "warn",
     "@typescript-eslint/no-unused-expressions": "warn"
   },
+  "overrides": [
+    {
+      "files": ["components/ui/blocknote/blocks/**"],
+      "rules": { "react-hooks/exhaustive-deps": "warn" }
+    }
+  ],
   "settings": {
     "react": {
       "version": "detect"

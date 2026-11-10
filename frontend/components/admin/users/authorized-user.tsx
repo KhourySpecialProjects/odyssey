@@ -283,6 +283,7 @@ export function AuthorizedUserBlock({
                     <input {...getInputProps()} name="profilePhoto" />
                     {profilePhoto ? (
                       <div className="flex flex-row items-center gap-4 pr-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded profile photo URL with unknown dimensions */}
                         <img
                           src={profilePhoto}
                           alt="Profile"
