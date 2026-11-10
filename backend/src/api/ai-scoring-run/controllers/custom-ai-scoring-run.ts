@@ -9,6 +9,7 @@ import {
   type RunSection,
 } from '../../../lib/ai-scoring-runs';
 import { ReviewScoreError } from '../../../lib/review-scores';
+import { AI_SCORING_PROMPT_LIMITS, type PromptParts } from '../../../lib/ai-scoring-settings';
 
 const MAX_INT = 2147483647; // Postgres integer column limit
 const isRowId = (n: unknown): n is number =>
@@ -218,7 +219,7 @@ export default {
   async start(ctx) {
     const parsed = parseBody(
       ctx.request.body ?? {},
-      ['reviewId', 'userId', 'model', 'promptVersion'],
+      ['reviewId', 'userId', 'model', 'promptVersion', 'prompt'],
       ['reviewId', 'userId'],
     );
     if ('invalid' in parsed) return fail(ctx, 400, parsed.invalid);
@@ -229,6 +230,23 @@ export default {
     if (!isText(body.promptVersion, 50)) {
       return fail(ctx, 400, 'promptVersion must be text of at most 50 characters');
     }
+    if (body.prompt !== undefined) {
+      const p = body.prompt as Record<string, unknown> | null;
+      const keys = Object.keys(AI_SCORING_PROMPT_LIMITS) as (keyof PromptParts)[];
+      const ok =
+        p !== null &&
+        typeof p === 'object' &&
+        !Array.isArray(p) &&
+        Object.keys(p).length === keys.length &&
+        keys.every((k) => isText(p[k], AI_SCORING_PROMPT_LIMITS[k]));
+      if (!ok) {
+        return fail(
+          ctx,
+          400,
+          'prompt must have instructions, lessonScope and overallScope as text within their limits',
+        );
+      }
+    }
 
     return run(
       ctx,
@@ -238,6 +256,7 @@ export default {
           userId: body.userId as number,
           model: body.model as string,
           promptVersion: body.promptVersion as string,
+          prompt: body.prompt as Record<string, string> | undefined,
         }),
       'Failed to start Score with AI.',
     );

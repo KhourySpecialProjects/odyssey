@@ -75,6 +75,8 @@ export type StartRunInput = {
   userId: number;
   model: string;
   promptVersion: string;
+  /** The prompt text the run uses, kept for the record */
+  prompt?: Record<string, string>;
 };
 
 export type StartRunResult = {
@@ -240,6 +242,7 @@ export async function startRun(input: StartRunInput): Promise<StartRunResult> {
         runState: 'queued',
         model: input.model,
         promptVersion: input.promptVersion,
+        prompt: input.prompt ?? null,
         criteria,
       },
       fields: RUN_FIELDS,
@@ -449,6 +452,7 @@ async function saveSuggestions(
     }
     const ai = {
       aiValue: score.aiValue,
+      aiPromptVersion: run.promptVersion ?? null,
       aiRationale: score.aiRationale,
       aiFindings: score.aiFindings ?? [],
     };

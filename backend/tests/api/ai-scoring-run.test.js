@@ -243,6 +243,30 @@ describe('POST /ai-scoring-runs/start', () => {
     expect((await post('start', startBody({ model: '' }))).status).toBe(400);
     expect(await runsOf(review.id)).toHaveLength(0);
   });
+
+  it.each([
+    ['stores the prompt parts the run uses', { prompt: { instructions: 'I', lessonScope: 'L', overallScope: 'O' } }],
+    ['starts without a prompt, storing null', {}],
+  ])('%s', async (_name, extra) => {
+    const res = await start(extra);
+
+    expect(res.status).toBe(200);
+    expect((await runRow(res.body.data.run.id)).prompt).toEqual(extra.prompt ?? null);
+  });
+
+  it.each([
+    ['an extra key', { instructions: 'I', lessonScope: 'L', overallScope: 'O', x: 'y' }],
+    ['a missing key', { instructions: 'I', lessonScope: 'L' }],
+    ['a blank part', { instructions: 'I', lessonScope: '', overallScope: 'O' }],
+    ['an over-limit part', { instructions: 'x'.repeat(6001), lessonScope: 'L', overallScope: 'O' }],
+    ['null', null],
+    ['text', 'prompt'],
+  ])('rejects a prompt with %s', async (_name, prompt) => {
+    const res = await start({ prompt });
+
+    expect(res.status).toBe(400);
+    expect(await runsOf(review.id)).toHaveLength(0);
+  });
 });
 
 describe('POST /ai-scoring-runs/start, monthly budget', () => {
@@ -475,7 +499,11 @@ describe('POST /ai-scoring-runs/heartbeat', () => {
 
       expect(res.status).toBe(200);
       const saved = await scoreRow(scoreKey(review.id, lesson.id, tone.id));
-      expect(saved).toMatchObject({ aiValue: 4, aiRationale: 'Warm.' });
+      expect(saved).toMatchObject({
+        aiValue: 4,
+        aiRationale: 'Warm.',
+        aiPromptVersion: '2026-10-29.1',
+      });
       expect(await scoreRow(scoreKey(review.id, lesson.id, clarity.id))).toMatchObject({
         value: 5,
         aiValue: null,
@@ -581,6 +609,7 @@ describe('POST /ai-scoring-runs/finish', () => {
     expect(lessonTone).toMatchObject({
       aiValue: 4,
       aiRationale: 'Warm opening.',
+      aiPromptVersion: '2026-10-29.1',
       value: null,
       criterionName: tone.name,
     });
@@ -612,7 +641,7 @@ describe('POST /ai-scoring-runs/finish', () => {
       .documents(REVIEW_SCORE_UID)
       .update({ documentId: confirmed.documentId, data: { value: 5 } });
 
-    const second = await start();
+    const second = await start({ promptVersion: '2026-10-29.1+abcd1234' });
     const res = await post(
       'finish',
       finishBody(second.body.data.run.id, {
@@ -625,11 +654,13 @@ describe('POST /ai-scoring-runs/finish', () => {
       value: 5,
       aiValue: 4,
       aiRationale: 'Warm opening.',
+      aiPromptVersion: '2026-10-29.1',
     });
     expect(await scoreRow(`${review.id}:${lesson.id}:${clarity.id}`)).toMatchObject({
       value: null,
       aiValue: 1,
       aiRationale: 'Run again.',
+      aiPromptVersion: '2026-10-29.1+abcd1234',
     });
   });
 

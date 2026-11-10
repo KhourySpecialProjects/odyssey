@@ -41,6 +41,9 @@
     "criteria": {
       "type": "json"
     },
+    "prompt": {
+      "type": "json"
+    },
     "failedLessons": {
       "type": "json"
     },
