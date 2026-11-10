@@ -95,9 +95,29 @@
   }
 }
 
-/* Apply the animation to the box */
-.sliding-notes-bar {
-  animation: slideInFromRight 300ms ease-out; /* ease-out for smooth animation */
+@keyframes slideOutToRight {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* The panel stays mounted, so the animation follows its data-state, not mount.
+   Open and close share duration and easing; close is the same slide reversed. */
+.sliding-notes-bar[data-state="open"] {
+  animation: slideInFromRight 300ms ease-out;
+}
+
+.sliding-notes-bar[data-state="closing"] {
+  animation: slideOutToRight 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sliding-notes-bar {
+    animation: none !important;
+  }
 }
 
 /* Ensure dark mode compatibility for prose and bg-sky-50 elements */
