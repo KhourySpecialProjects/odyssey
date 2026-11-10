@@ -156,13 +156,13 @@ function ReportRow({ report }: { report: Report }) {
       {/* Actions */}
       <td className="h-[56px] px-6 py-3">
         <TooltipProvider delayDuration={300}>
-          <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-[30px] w-[30px] p-0"
+                  className="h-8 w-8 p-0"
                   asChild
                 >
                   <Link href={report.path} target="_blank">
@@ -179,7 +179,7 @@ function ReportRow({ report }: { report: Report }) {
                   variant="outline"
                   onClick={handleDelete}
                   disabled={isPending}
-                  className="h-[30px] w-[30px] p-0 text-red-500 hover:bg-slate-100 hover:text-red-500 dark:text-red-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+                  className="h-8 w-8 p-0 text-red-500 hover:bg-slate-100 hover:text-red-500 dark:text-red-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
                 >
                   <IconTrash className="h-4 w-4" />
                 </Button>
