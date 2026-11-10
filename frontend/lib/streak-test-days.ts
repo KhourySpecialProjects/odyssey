@@ -1,4 +1,9 @@
-import { addDays, STREAK_REVIVES, type StreakDay } from "@/lib/streaks";
+import {
+  addDays,
+  STREAK_REVIVES,
+  type Streak,
+  type StreakDay,
+} from "@/lib/streaks";
 
 // The days the streak testing panel (ODY-921, TEMPORARY) writes for its
 // settings, relative to the panel's "today".
@@ -63,4 +68,38 @@ export function testStreakDays(
   }
 
   return [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+type DayState = Pick<Streak, "current" | "litToday" | "revivesLeft" | "revive">;
+
+const streakOf = (days: number) => `${days}-day streak`;
+
+/** What midnight will do to the streak, for the panel to say before moving on */
+export function nextDayOutlook(streak: DayState): string {
+  const { current, litToday, revivesLeft, revive } = streak;
+  if (revive) {
+    return `Yesterday was missed, so your ${streakOf(revive.ended)} ended. Revive it before you move on, or it's lost for good.`;
+  }
+  if (current === 0) return "No streak yet. Finish a lesson to start one.";
+  if (litToday) {
+    return `Today is lit, so your ${streakOf(current)} carries on tomorrow.`;
+  }
+  return revivesLeft > 0
+    ? `Today isn't lit. Move on now and your ${streakOf(current)} ends at midnight. You can spend a revive tomorrow to save it.`
+    : `Today isn't lit. Move on now and your ${streakOf(current)} ends at midnight, with no revives left to save it.`;
+}
+
+/** What midnight did, from the streak before and after moving on a day */
+export function newDayNews(before: DayState, after: DayState): string {
+  if (before.revive) {
+    return `The ${streakOf(before.revive.ended)} wasn't revived, so it's lost for good.`;
+  }
+  if (before.current > 0 && after.current === 0) {
+    return after.revive
+      ? `A day passed without a lesson, so your ${streakOf(before.current)} ended. Revive it today, or it's gone tomorrow.`
+      : `A day passed without a lesson, so your ${streakOf(before.current)} ended.`;
+  }
+  return after.current > 0
+    ? `A new day. Your ${streakOf(after.current)} needs today's lesson.`
+    : "A new day. No streak yet.";
 }

@@ -1,5 +1,9 @@
-import { testStreakDays } from "@/lib/streak-test-days";
-import { reviveOffer, summarizeStreak } from "@/lib/streaks";
+import {
+  newDayNews,
+  nextDayOutlook,
+  testStreakDays,
+} from "@/lib/streak-test-days";
+import { addDays, reviveOffer, summarizeStreak } from "@/lib/streaks";
 
 const TODAY = "2026-11-10";
 const settings = {
@@ -69,5 +73,43 @@ describe("testStreakDays", () => {
     expect(first.length).toBeLessThan(24 + 151);
     expect(streakOf({ history: true }).days).toEqual(first);
     expect(streakOf({ history: true }).current).toBe(24);
+  });
+});
+
+describe("day by day", () => {
+  // A 5-day streak through TODAY, read on a later day with nothing added
+  const dates = [0, 1, 2, 3, 4].map((ago) => addDays(TODAY, -ago));
+  const onDay = (after: number, revivesLeft = 2) => {
+    const today = addDays(TODAY, after);
+    return {
+      ...summarizeStreak(dates, today),
+      revivesLeft,
+      revive: reviveOffer(dates, today, revivesLeft),
+    };
+  };
+
+  it("passes days as midnight does: unlit, then ended, then lost", () => {
+    const days = [0, 1, 2, 3].map((after) => onDay(after));
+
+    expect(days.map(nextDayOutlook)).toEqual([
+      "Today is lit, so your 5-day streak carries on tomorrow.",
+      "Today isn't lit. Move on now and your 5-day streak ends at midnight. You can spend a revive tomorrow to save it.",
+      "Yesterday was missed, so your 5-day streak ended. Revive it before you move on, or it's lost for good.",
+      "No streak yet. Finish a lesson to start one.",
+    ]);
+    expect(days.slice(1).map((day, i) => newDayNews(days[i], day))).toEqual([
+      "A new day. Your 5-day streak needs today's lesson.",
+      "A day passed without a lesson, so your 5-day streak ended. Revive it today, or it's gone tomorrow.",
+      "The 5-day streak wasn't revived, so it's lost for good.",
+    ]);
+  });
+
+  it("says when no revive is left to save it", () => {
+    expect(nextDayOutlook(onDay(1, 0))).toBe(
+      "Today isn't lit. Move on now and your 5-day streak ends at midnight, with no revives left to save it.",
+    );
+    expect(newDayNews(onDay(1, 0), onDay(2, 0))).toBe(
+      "A day passed without a lesson, so your 5-day streak ended.",
+    );
   });
 });
