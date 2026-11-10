@@ -18,10 +18,13 @@ fails=0
 
 while true; do
   read -r LAST THREADS < <(python3 -I -c '
-import json, sys
+import json, sys, time
 s = json.load(open(sys.argv[1]))
+# Watch every request thread from the last 24 h, done ones included:
+# the owner often replies after the summary ("do 878", follow-up questions).
+cutoff = time.time() - 86400
 live = [ts for ts, r in s.get("requests", {}).items()
-        if r.get("phase") in ("asking", "awaiting-approval", "building")]
+        if r.get("phase") != "dropped" and float(ts) > cutoff]
 print(s.get("lastCheck", "0"), ",".join(live))
 ' "$STATE" 2>/dev/null)
 

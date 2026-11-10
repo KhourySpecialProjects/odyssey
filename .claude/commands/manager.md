@@ -63,9 +63,14 @@ the manager's model. Instead:
 
 ## check
 
-1. **Read.** `slack_read_channel` on `C0CG95FFZ09` with `oldest` set to
-   `lastCheck`. Also read the threads of every request whose phase is
-   `asking`, `awaiting-approval` or `building`.
+1. **Read everything new, not just the message that woke you.** Several
+   messages often arrive together, and the owner often replies in a thread
+   after its summary was posted.
+   - `slack_read_channel` on `C0CG95FFZ09` with `oldest` set to `lastCheck`.
+   - Then read the thread of every request from the last 24 hours, `done`
+     ones included. Also read every top-level message whose latest reply is
+     newer than `lastCheck`.
+   - Act on each new message from the owner before saving state.
 2. **New request from the owner:** add it to state as `asking`, then triage
    (below).
 3. **Owner's reply in a tracked thread:**
