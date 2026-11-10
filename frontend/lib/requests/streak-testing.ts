@@ -16,6 +16,7 @@ import {
 import { TEST_STREAK_MAX, testStreakDays } from "@/lib/streak-test-days";
 import {
   clearTestStreakDays,
+  MAX_TEST_OFFSET,
   REAL_STREAK,
   setStreakTestMode,
   setTestStreakDays,
@@ -140,18 +141,22 @@ export async function reviveTestDay() {
   );
 }
 
-/** Moves the test "today" on a day, with or without a lesson on the new day */
-export async function moveTestDay(withLesson: boolean) {
+/**
+ * Moves the test "today" on a day, as midnight would: nothing is added to
+ * the day left behind, so a day without a lesson ends the streak.
+ */
+export async function moveTestDay() {
   return withAuth(SYS_ADMIN, (user) =>
-    runPanel(user, async (learner) => {
-      const current = await streakTestMode();
-      if (!current.test) throw new PanelError("Set a test streak first");
-      const mode = { test: true, offsetDays: current.offsetDays + 1 };
-      await setStreakTestMode(mode);
-      if (withLesson) {
-        await recordStreakDay(learner, TEST_LESSON_ID, new Date(), mode);
+    runPanel(user, async () => {
+      const mode = await testModeOrRefuse();
+      if (mode.offsetDays >= MAX_TEST_OFFSET) {
+        throw new PanelError(
+          "That's as far ahead as the panel goes. Reset to start again.",
+        );
       }
-      return mode;
+      const next = { test: true, offsetDays: mode.offsetDays + 1 };
+      await setStreakTestMode(next);
+      return next;
     }),
   );
 }

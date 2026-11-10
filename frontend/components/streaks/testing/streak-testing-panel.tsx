@@ -13,8 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  finishTestLesson,
   moveTestDay,
   resetTestStreak,
+  reviveTestDay,
   setTestStreak,
 } from "@/lib/requests/streak-testing";
 import {
@@ -25,10 +27,13 @@ import {
   shortDate,
 } from "@/lib/streak-messages";
 import {
+  newDayNews,
+  nextDayOutlook,
   TEST_STREAK_MAX,
   type TestStreakSettings,
 } from "@/lib/streak-test-days";
 import type { Streak } from "@/lib/streaks";
+import { cn } from "@/lib/utils";
 import { useStreakStore } from "@/stores/streak-store";
 import { StreakLessonBanner } from "../streak-lesson-banner";
 import { useStreakFeedCard } from "../streak-feed-card";
@@ -65,6 +70,8 @@ export function StreakTestingPanel({
   });
   const ids = useId();
   const feedCard = useStreakFeedCard(userId, "unread");
+  /** What happened on each test day, newest first */
+  const [log, setLog] = useState<{ date: string; text: string }[]>([]);
 
   // The header pill, banner and feed card all read the shared store
   useEffect(() => setStreak(state.streak), [state.streak, setStreak]);
@@ -73,7 +80,8 @@ export function StreakTestingPanel({
     action: () => Promise<
       { ok: true; data: PanelState } | { ok: false; error: string }
     >,
-    done: string,
+    done: string | ((next: PanelState) => string),
+    { logged = false, clearsLog = false } = {},
   ) =>
     startTransition(async () => {
       const result = await action().catch(() => null);
@@ -81,8 +89,14 @@ export function StreakTestingPanel({
         toast.error(result?.error ?? "That didn't work.");
         return;
       }
+      const text = typeof done === "function" ? done(result.data) : done;
       setState(result.data);
-      toast.success(done);
+      if (clearsLog) setLog([]);
+      if (logged) {
+        const entry = { date: result.data.streak.today, text };
+        setLog((entries) => [entry, ...entries].slice(0, 14));
+      }
+      toast.success(text);
       // The header is server-rendered: show it the test streak too
       router.refresh();
     });
@@ -94,6 +108,7 @@ export function StreakTestingPanel({
 
   const { streak, mode } = state;
   const { icon } = iconsFor(streak.current);
+  const atRisk = !!streak.revive || (!streak.litToday && streak.current > 0);
 
   return (
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -146,7 +161,9 @@ export function StreakTestingPanel({
           className="mt-4"
           disabled={pending || !mode.test}
           onClick={() =>
-            run(resetTestStreak, "Back to your real streak and today")
+            run(resetTestStreak, "Back to your real streak and today", {
+              clearsLog: true,
+            })
           }
         >
           Reset to my real streak
@@ -245,6 +262,7 @@ export function StreakTestingPanel({
               run(
                 () => setTestStreak(settings),
                 `Test streak set: ${settings.current} days`,
+                { clearsLog: true },
               )
             }
           >
@@ -255,30 +273,92 @@ export function StreakTestingPanel({
 
       <section aria-labelledby={`${ids}-time`} className={card}>
         <h2 id={`${ids}-time`} className="text-lg font-semibold">
-          Move to the next day
+          Day by day
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Moves the test &quot;today&quot; on a day. Without a lesson, the
-          streak breaks at the new midnight, and the day after offers a revive.
+          Each day works like a real one: it counts only if you finish a lesson
+          on it. Move on without one and the streak ends at midnight. Miss a day
+          and don&apos;t revive it the next, and it&apos;s lost for good.
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <p className="mt-4 text-sm font-medium">
+          {mode.test
+            ? `Day ${mode.offsetDays + 1} · ${shortDate(streak.today)} · ${
+                streak.litToday ? "lit" : "not lit yet"
+              }`
+            : "Set a test streak to start."}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
           <Button
             variant="outline"
-            disabled={pending || !mode.test}
+            disabled={pending || !mode.test || streak.litToday}
             onClick={() =>
-              run(() => moveTestDay(true), "Next day, with a lesson")
+              run(
+                finishTestLesson,
+                (next) =>
+                  `Lesson finished. Today is lit: ${next.streak.current}-day streak.`,
+                { logged: true },
+              )
             }
           >
-            Next day, with a lesson
+            Finish a lesson today
           </Button>
+          {mode.test && streak.revive && (
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                run(
+                  reviveTestDay,
+                  (next) => {
+                    const { title, detail } = revivedMessage(next.streak);
+                    return `${title}. ${detail}`;
+                  },
+                  { logged: true },
+                )
+              }
+            >
+              Revive yesterday
+            </Button>
+          )}
           <Button
-            variant="outline"
             disabled={pending || !mode.test}
-            onClick={() => run(() => moveTestDay(false), "Next day, missed")}
+            onClick={() =>
+              run(moveTestDay, (next) => newDayNews(streak, next.streak), {
+                logged: true,
+              })
+            }
           >
-            Next day, missed
+            Go to the next day
           </Button>
         </div>
+        {mode.test && (
+          <p
+            aria-live="polite"
+            className={cn(
+              "mt-3 rounded-md px-3 py-2 text-sm",
+              atRisk
+                ? "bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+                : "bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+            )}
+          >
+            {nextDayOutlook(streak)}
+          </p>
+        )}
+        {log.length > 0 && (
+          <>
+            <h3 className="mt-5 text-sm font-semibold">What happened</h3>
+            <ol className="mt-2 space-y-1 text-sm">
+              {log.map((entry, i) => (
+                <li key={log.length - i}>
+                  <span className="font-medium tabular-nums">
+                    {shortDate(entry.date)}
+                  </span>
+                  : {entry.text}
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </section>
 
       <section aria-labelledby={`${ids}-moments`} className={card}>
