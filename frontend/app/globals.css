@@ -69,6 +69,16 @@
   }
 }
 
+/* Links and images are natively draggable, and dropping one into an input or
+   the editor pastes its URL (ODY-472). Backstop for every link and image not
+   covered by draggable={false}. The BlockNote editor (drag handles, image
+   blocks) and the dnd-kit handles are not links or images, so they are
+   untouched; text selection is unaffected. */
+a:not(.ProseMirror a):not(.bn-container a),
+img:not(.ProseMirror img):not(.bn-container img) {
+  -webkit-user-drag: none;
+}
+
 *:not(.ProseMirror):not(.ProseMirror *)::selection {
   background: rgb(0, 120, 215); /* Blue highlight */
   color: white;
