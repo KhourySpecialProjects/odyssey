@@ -6,12 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  iconsFor,
-  panelMessage,
-  revivesLeftText,
-  shortDate,
-} from "@/lib/streak-messages";
+import { iconsFor, panelMessage, shortDate } from "@/lib/streak-messages";
 import { STREAK_ICONS, type Streak, type StreakRevive } from "@/lib/streaks";
 import { cn } from "@/lib/utils";
 import { useStreakStore } from "@/stores/streak-store";
@@ -102,9 +97,6 @@ function StreakPanel({
           <p className="text-xs text-slate-600 dark:text-slate-400">
             {startedOn ? `Since ${shortDate(startedOn)} · ` : ""}
             Longest {longest} {longest === 1 ? "day" : "days"}
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            {revivesLeftText(revivesLeft)}
           </p>
         </div>
       </div>

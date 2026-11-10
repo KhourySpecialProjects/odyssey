@@ -191,11 +191,11 @@ describe("StreakPill revives", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows revives left and outlines revived days", async () => {
+  it("keeps the revives left out until one is on offer, and outlines revived days", async () => {
     render(<StreakPill streak={restored} />);
 
     const panel = await open(/25-day streak/);
-    expect(within(panel).getByText("1 revive left")).toBeInTheDocument();
+    expect(within(panel).queryByText(/revives? left/)).not.toBeInTheDocument();
     expect(within(panel).getByText(", Revived")).toBeInTheDocument();
     expect(within(panel).getByText("Revived")).toBeInTheDocument();
   });
