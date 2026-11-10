@@ -238,7 +238,9 @@ export default {
         typeof p === 'object' &&
         !Array.isArray(p) &&
         Object.keys(p).length === keys.length &&
-        keys.every((k) => isText(p[k], AI_SCORING_PROMPT_LIMITS[k]));
+        keys.every(
+          (k) => isText(p[k], AI_SCORING_PROMPT_LIMITS[k]) && (p[k] as string).trim().length > 0,
+        );
       if (!ok) {
         return fail(
           ctx,

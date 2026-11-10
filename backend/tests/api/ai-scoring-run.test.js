@@ -258,6 +258,7 @@ describe('POST /ai-scoring-runs/start', () => {
     ['an extra key', { instructions: 'I', lessonScope: 'L', overallScope: 'O', x: 'y' }],
     ['a missing key', { instructions: 'I', lessonScope: 'L' }],
     ['a blank part', { instructions: 'I', lessonScope: '', overallScope: 'O' }],
+    ['a whitespace-only part', { instructions: 'I', lessonScope: '  \n ', overallScope: 'O' }],
     ['an over-limit part', { instructions: 'x'.repeat(6001), lessonScope: 'L', overallScope: 'O' }],
     ['null', null],
     ['text', 'prompt'],
