@@ -2,28 +2,13 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { Menu } from "@mantine/core";
 import type { CalloutType } from "@/lib/blocknote/types";
 import {
-  TriangleAlert,
-  CircleHelp,
-  CircleAlert,
-  BookOpenText,
-  BadgeInfo,
-  Bell,
-  Pin,
-} from "lucide-react";
-
-const calloutConfigs = {
-  warning: { bg: "#FFCCCB", icon: TriangleAlert, title: "Warning" },
-  question: { bg: "#BBE5FF", icon: CircleHelp, title: "Question" },
-  important: { bg: "#FFD4A3", icon: CircleAlert, title: "Important" },
-  definition: { bg: "#C8E6C9", icon: BookOpenText, title: "Definition" },
-  "more-information": {
-    bg: "#E1BEE7",
-    icon: BadgeInfo,
-    title: "More Information",
-  },
-  caution: { bg: "#FFF59D", icon: Bell, title: "Caution" },
-  default: { bg: "#EEEEEE", icon: Pin, title: "Default" },
-};
+  CALLOUT_CONTAINER_CLASS,
+  CALLOUT_ICON_CLASS,
+  CALLOUT_STYLES,
+  CALLOUT_TEXT_CLASS,
+  CALLOUT_TYPES,
+} from "@/lib/blocknote/callout-styles";
+import { cn } from "@/lib/utils";
 
 export const Callout = createReactBlockSpec(
   {
@@ -31,15 +16,7 @@ export const Callout = createReactBlockSpec(
     propSchema: {
       calloutType: {
         default: "warning" as CalloutType,
-        values: [
-          "warning",
-          "question",
-          "important",
-          "definition",
-          "more-information",
-          "caution",
-          "default",
-        ] as const,
+        values: CALLOUT_TYPES as readonly CalloutType[],
       },
     },
     content: "inline",
@@ -47,21 +24,13 @@ export const Callout = createReactBlockSpec(
   {
     render: (props) => {
       const calloutType = props.block.props.calloutType as CalloutType;
-      const config = calloutConfigs[calloutType];
+      const config = CALLOUT_STYLES[calloutType];
       const Icon = config.icon;
 
       return (
         <div
-          style={{
-            backgroundColor: config.bg,
-            padding: "16px",
-            borderRadius: "4px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            minWidth: "200px",
-            width: "100%",
-          }}
+          className={CALLOUT_CONTAINER_CLASS}
+          style={{ backgroundColor: config.bg }}
         >
           {/* Clickable icon with dropdown menu */}
           <Menu withinPortal={false}>
@@ -80,7 +49,7 @@ export const Callout = createReactBlockSpec(
                   <Icon
                     size={24}
                     strokeWidth={2}
-                    className="text-slate-800 dark:text-slate-900"
+                    className={CALLOUT_ICON_CLASS}
                   />
                 ) : (
                   <div style={{ width: 24, height: 24 }} />
@@ -90,88 +59,28 @@ export const Callout = createReactBlockSpec(
             <Menu.Dropdown>
               <Menu.Label>Callout Type</Menu.Label>
               <Menu.Divider />
-              <Menu.Item
-                leftSection={<TriangleAlert size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "warning" },
-                  })
-                }
-              >
-                Warning
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<CircleHelp size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "question" },
-                  })
-                }
-              >
-                Question
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<CircleAlert size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "important" },
-                  })
-                }
-              >
-                Important
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<BookOpenText size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "definition" },
-                  })
-                }
-              >
-                Definition
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<BadgeInfo size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "more-information" },
-                  })
-                }
-              >
-                More Information
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<Bell size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "caution" },
-                  })
-                }
-              >
-                Caution
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<Pin size={18} />}
-                onClick={() =>
-                  props.editor.updateBlock(props.block, {
-                    type: "callout",
-                    props: { calloutType: "default" },
-                  })
-                }
-              >
-                Default
-              </Menu.Item>
+              {CALLOUT_TYPES.map((type) => {
+                const { icon: ItemIcon, title } = CALLOUT_STYLES[type];
+                return (
+                  <Menu.Item
+                    key={type}
+                    leftSection={<ItemIcon size={18} />}
+                    onClick={() =>
+                      props.editor.updateBlock(props.block, {
+                        type: "callout",
+                        props: { calloutType: type },
+                      })
+                    }
+                  >
+                    {title}
+                  </Menu.Item>
+                );
+              })}
             </Menu.Dropdown>
           </Menu>
           {/* Editable content with placeholder */}
           <div
-            className="inline-content text-slate-900 dark:text-slate-900"
+            className={cn("inline-content", CALLOUT_TEXT_CLASS)}
             ref={props.contentRef}
             style={{
               flex: 1,
