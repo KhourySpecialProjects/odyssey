@@ -131,7 +131,7 @@ export function PromptEditor({
               rows={key === "instructions" ? 14 : 5}
               aria-invalid={over || empty}
               aria-describedby={`${id}-hint ${id}-count ${id}-error`}
-              className="rounded-[20px] border-[#efeff0] bg-[#fcfcfd] px-5 py-4 text-[16px] text-slate-900 focus:border-[#2D7597] focus-visible:ring-2 focus-visible:ring-[#2D7597]/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="rounded-[20px] border-[#efeff0] bg-white px-5 py-4 text-[16px] text-slate-900 focus:border-[#2D7597] focus-visible:ring-2 focus-visible:ring-[#2D7597]/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               onChange={(event) =>
                 setParts((prev) => ({ ...prev, [key]: event.target.value }))
               }
