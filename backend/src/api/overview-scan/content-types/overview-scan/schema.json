@@ -31,6 +31,10 @@
       "required": true,
       "maxLength": 50
     },
+    "contentHash": {
+      "type": "string",
+      "maxLength": 64
+    },
     "passed": {
       "type": "integer",
       "required": true,

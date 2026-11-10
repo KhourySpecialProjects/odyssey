@@ -127,6 +127,7 @@ export async function runOverviewScan(
             }),
             ranAt,
             rulesVersion: run.rulesVersion,
+            contentHash: run.contentHash,
             passed: run.passed,
             needsAttention: run.needsAttention,
             couldNotCheck: run.couldNotCheck,

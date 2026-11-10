@@ -3,6 +3,7 @@ import { getDropletById } from "@/lib/requests/droplet";
 import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { CHECKS } from "@/lib/overview-scan/checks";
 import { createSafeFetcher } from "@/lib/overview-scan/network";
+import { hashScanDocument } from "@/lib/overview-scan/hash";
 import { runChecks } from "@/lib/overview-scan/run";
 import {
   buildScanDocument,
@@ -36,7 +37,8 @@ export const SCAN_DROPLET_QUERY: StrapiRequestParams = {
       sort: ["createdAt:asc"],
     },
     lessons: {
-      fields: ["name", "blocksV2", "blocksVersion", "orderIndex"],
+      // slug is for the page's lesson links, not the scan document
+      fields: ["name", "slug", "blocksV2", "blocksVersion", "orderIndex"],
       sort: ["orderIndex:asc"],
       populate: LESSON_BLOCKS_POPULATE,
     },
@@ -44,11 +46,16 @@ export const SCAN_DROPLET_QUERY: StrapiRequestParams = {
 };
 
 type ScanSource = ScanSourceDroplet & {
-  lessons?: (ScanSourceLesson & { orderIndex?: number | null })[] | null;
+  lessons?:
+    | (ScanSourceLesson & {
+        orderIndex?: number | null;
+        slug?: string;
+      })[]
+    | null;
 };
 
-/** Runs every registered check on the droplet as saved right now. Call only after auth and the rate limit. */
-export async function scanDroplet(dropletId: number): Promise<ScanResult> {
+/** The droplet as saved right now, as the scan document and its hash (ODY-878). Call only after auth. */
+export async function loadScanDocument(dropletId: number) {
   const droplet: ScanSource = await getDropletById<Droplet>(
     dropletId,
     SCAN_DROPLET_QUERY,
@@ -58,6 +65,18 @@ export async function scanDroplet(dropletId: number): Promise<ScanResult> {
     (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0),
   );
   const doc = buildScanDocument(droplet, lessons);
+  return {
+    doc,
+    lessons: lessons as (ScanSourceLesson & { slug?: string })[],
+    contentHash: hashScanDocument(doc),
+  };
+}
+
+/** Runs every registered check on the droplet as saved right now. Call only after auth and the rate limit. */
+export async function scanDroplet(
+  dropletId: number,
+): Promise<ScanResult & { contentHash: string }> {
+  const { doc, contentHash } = await loadScanDocument(dropletId);
   const fetchUrl = createSafeFetcher();
   const run = await runChecks(doc, CHECKS, fetchUrl);
   return {
@@ -66,5 +85,6 @@ export async function scanDroplet(dropletId: number): Promise<ScanResult> {
     needsAttention: run.needsAttention,
     couldNotCheck: run.couldNotCheck,
     results: run.results,
+    contentHash,
   };
 }

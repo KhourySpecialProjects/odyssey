@@ -1677,6 +1677,10 @@ export interface ApiOverviewScanOverviewScan
     draftAndPublish: false;
   };
   attributes: {
+    contentHash: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
     couldNotCheck: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

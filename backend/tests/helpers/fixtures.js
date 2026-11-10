@@ -139,6 +139,7 @@ const dismissalData = (overrides = {}) => ({
 const overviewScanData = (overrides = {}) => ({
   ranAt: new Date().toISOString(),
   rulesVersion: 'test',
+  contentHash: 'a'.repeat(64),
   passed: 22,
   needsAttention: 1,
   couldNotCheck: 0,

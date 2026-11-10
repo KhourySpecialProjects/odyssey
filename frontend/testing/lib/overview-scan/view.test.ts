@@ -66,8 +66,12 @@ const LESSONS = [
   { id: 11, name: "First", slug: "first" },
   { id: 12, name: "Second", slug: "second" },
 ];
-const build = (scan: OverviewScan | null, checks: readonly Check[] = CHECKS) =>
-  buildScanView({ checks, scan, lessons: LESSONS, slug: "drop" });
+const build = (
+  scan: OverviewScan | null,
+  checks: readonly Check[] = CHECKS,
+  contentHash?: string,
+) =>
+  buildScanView({ checks, scan, lessons: LESSONS, contentHash, slug: "drop" });
 const allChecks = (v: ReturnType<typeof build>) =>
   v.columns.flatMap((c) => c.checks);
 
@@ -243,33 +247,15 @@ describe("buildScanView", () => {
     expect(v.columns[0].checks[0].flagCount).toBe(1);
   });
 
-  // The scan ran at 15:04 UTC.
+  // ODY-878: compares the saved content hash with the current one
   it.each([
-    ["the droplet is newer", "2026-11-03T16:00:00.000Z", [], true],
-    [
-      "one lesson is newer",
-      "2026-11-03T10:00:00.000Z",
-      ["2026-11-03T10:00:00.000Z", "2026-11-03T16:00:00.000Z"],
-      true,
-    ],
-    [
-      "all are older or equal",
-      "2026-11-03T15:04:00.000Z",
-      ["2026-11-03T09:00:00.000Z"],
-      false,
-    ],
-    ["nothing has a date", undefined, [undefined], false],
-  ])("editedSince when %s", (_n, dropletUpdatedAt, lessonDates, expected) => {
-    const lessons = lessonDates.map((updatedAt, i) => ({
-      id: i,
-      name: "L",
-      slug: "l",
-      updatedAt,
-    }));
-    const args = { checks: CHECKS, lessons, dropletUpdatedAt, slug: "drop" };
-    expect(buildScanView({ ...args, scan: scanOf([]) }).editedSince).toBe(
-      expected,
-    );
+    ["the hashes match", "aaa", "aaa", false],
+    ["the hashes differ", "aaa", "bbb", true],
+    // Scans saved before the hash existed show nothing rather than guess
+    ["the scan has no hash", undefined, "bbb", false],
+  ])("editedSince when %s", (_n, saved, contentHash, expected) => {
+    const scan = scanOf([], { contentHash: saved });
+    expect(build(scan, CHECKS, contentHash).editedSince).toBe(expected);
   });
 
   it("says edited since when a flagged lesson no longer exists", () => {
@@ -298,7 +284,7 @@ describe("buildScanView", () => {
       checks: CHECKS,
       scan: null,
       lessons: [],
-      dropletUpdatedAt: "2030-01-01T00:00:00.000Z",
+      contentHash: "bbb",
       slug: "drop",
     });
     expect(v.editedSince).toBe(false);

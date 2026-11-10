@@ -42,6 +42,7 @@ const RUN = {
   needsAttention: 2,
   couldNotCheck: 3,
   results: [],
+  contentHash: "h".repeat(64),
 };
 const droplet = { id: 7, documentId: "d7", authorized_users: [{ id: 7 }] };
 const SAVED = {
@@ -171,13 +172,18 @@ describe("runOverviewScan", () => {
         "ranBy",
         "ranAt",
         "rulesVersion",
+        "contentHash",
         "passed",
         "needsAttention",
         "couldNotCheck",
         "results",
       ].sort(),
     );
-    expect(body.data).toMatchObject({ droplet: "d7", ranBy: "doc7" });
+    expect(body.data).toMatchObject({
+      droplet: "d7",
+      ranBy: "doc7",
+      contentHash: RUN.contentHash,
+    });
     expect(mockedRevalidate).toHaveBeenCalledWith("overview-scan-7");
     expect(result).toEqual({ ok: true, error: null, data: SAVED });
   });

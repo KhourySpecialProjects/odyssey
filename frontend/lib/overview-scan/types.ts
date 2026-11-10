@@ -166,6 +166,8 @@ export type OverviewScan = {
   documentId?: string;
   ranAt: string; // ISO datetime
   rulesVersion: string;
+  /** sha256 of the ScanDocument that was scanned (ODY-878); null on older scans */
+  contentHash?: string | null;
   passed: number;
   needsAttention: number;
   couldNotCheck: number;
