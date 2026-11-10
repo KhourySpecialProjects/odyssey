@@ -14,7 +14,11 @@ jest.mock("sonner", () => ({
 }));
 
 jest.mock("next/link", () => {
-  return ({ children, href }: any) => <a href={href}>{children}</a>;
+  return ({ children, href, className }: any) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
 });
 
 jest.mock("@/components/ui/rating-stars", () => ({
@@ -125,6 +129,34 @@ describe("DropletTile", () => {
       expect(screen.getByText("Tutorial")).toBeInTheDocument();
       expect(screen.getByText("Tag 1")).toBeInTheDocument();
       expect(screen.getByText("Tag 2")).toBeInTheDocument();
+    });
+
+    it("keeps cards the same height: card fills the cell, text clamped, footer pinned", () => {
+      const { container, rerender } = render(
+        <DropletTile
+          droplet={{ ...mockDroplet, averageRating: 0 }}
+          isArchived={false}
+        />,
+      );
+      const link = container.querySelector("a")!;
+      const card = container.querySelector("li")!;
+      expect(link).toHaveClass("block", "h-full");
+      expect(card).toHaveClass("flex", "h-full", "flex-col");
+      expect(screen.getByText("Test Droplet")).toHaveClass("line-clamp-2");
+      expect(screen.getByText("Test description")).toHaveClass("line-clamp-2");
+      const footer = screen.getByRole("button", { name: "Favorite" })
+        .parentElement!.parentElement!;
+      expect(footer).toHaveClass("mt-auto");
+
+      // with a rating, the stars take the auto margin instead
+      rerender(<DropletTile droplet={mockDroplet} isArchived={false} />);
+      expect(screen.getByTestId("star-rating").parentElement).toHaveClass(
+        "mt-auto",
+      );
+      expect(
+        screen.getByRole("button", { name: "Favorite" }).parentElement!
+          .parentElement!,
+      ).not.toHaveClass("mt-auto");
     });
 
     it("renders description", () => {
