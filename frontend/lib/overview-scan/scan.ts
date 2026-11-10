@@ -33,13 +33,13 @@ export const SCAN_DROPLET_QUERY: StrapiRequestParams = {
     prerequisites: { fields: LINKED_FIELDS },
     postrequisites: { fields: LINKED_FIELDS },
     datasets: {
-      fields: ["name", "fileUrl", "rowCount"],
-      sort: ["createdAt:asc"],
+      fields: ["name", "fileUrl", "rowCount", "createdAt"],
+      sort: ["createdAt:asc", "id:asc"],
     },
     lessons: {
       // slug is for the page's lesson links, not the scan document
       fields: ["name", "slug", "blocksV2", "blocksVersion", "orderIndex"],
-      sort: ["orderIndex:asc"],
+      sort: ["orderIndex:asc", "id:asc"],
       populate: LESSON_BLOCKS_POPULATE,
     },
   },
@@ -61,8 +61,11 @@ export async function loadScanDocument(dropletId: number) {
     SCAN_DROPLET_QUERY,
     { fresh: true },
   );
+  // orderIndex is nullable and can tie, so id breaks ties: the same saved
+  // droplet always gives the same lesson order, ids and titles
   const lessons = [...(droplet.lessons ?? [])].sort(
-    (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0),
+    (a, b) =>
+      (a.orderIndex ?? Infinity) - (b.orderIndex ?? Infinity) || a.id - b.id,
   );
   const doc = buildScanDocument(droplet, lessons);
   return {
