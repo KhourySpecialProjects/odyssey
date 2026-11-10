@@ -42,6 +42,12 @@ export default function RootLayout({
             <PHProvider>
               <TooltipProvider delayDuration={250}>
                 <NuqsAdapter>
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-slate-900 focus:shadow-lg focus:ring-2 focus:ring-sky-700 focus:outline-none dark:focus:bg-slate-900 dark:focus:text-white"
+                  >
+                    Skip to main content
+                  </a>
                   <div className="flex min-h-screen flex-col">
                     <div className="sticky top-0 z-50">
                       <EnvironmentBanner />
@@ -54,7 +60,13 @@ export default function RootLayout({
                       </Suspense>
                     </div>
 
-                    <main className="flex-grow">{children}</main>
+                    <main
+                      id="main-content"
+                      tabIndex={-1}
+                      className="flex-grow focus:outline-none"
+                    >
+                      {children}
+                    </main>
                     <Footer />
                   </div>
                   <Suspense fallback={null}>

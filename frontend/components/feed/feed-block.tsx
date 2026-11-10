@@ -206,12 +206,13 @@ export function FeedBlock({
             {announcement.authorized_user &&
               parsedContent.action === "created" && (
                 <>
-                  <span
+                  <button
+                    type="button"
                     onClick={() => setProfileOpen(true)}
-                    className={`inline ${linkClasses}`}
+                    className={`inline text-left ${linkClasses}`}
                   >
                     {parsedContent.userName}
-                  </span>
+                  </button>
                   <span>
                     {"\u00A0"}has created a new playlist:{"\u00A0"}
                   </span>
@@ -237,12 +238,13 @@ export function FeedBlock({
             {announcement.authorized_user &&
               parsedContent.action === "created" && (
                 <>
-                  <span
+                  <button
+                    type="button"
                     onClick={() => setProfileOpen(true)}
-                    className={`inline ${linkClasses}`}
+                    className={`inline text-left ${linkClasses}`}
                   >
                     {parsedContent.userName}
-                  </span>
+                  </button>
                   <span>
                     {"\u00A0"}has created a new droplet:{"\u00A0"}
                   </span>
@@ -273,12 +275,13 @@ export function FeedBlock({
             {announcement.authorized_user &&
               parsedContent.action === "created" && (
                 <>
-                  <span
+                  <button
+                    type="button"
                     onClick={() => setProfileOpen(true)}
-                    className={`inline ${linkClasses}`}
+                    className={`inline text-left ${linkClasses}`}
                   >
                     {parsedContent.userName}
-                  </span>
+                  </button>
                   <span>
                     {"\u00A0"}has created a new group:{"\u00A0"}
                   </span>
@@ -306,12 +309,13 @@ export function FeedBlock({
             <div
               className={`flex flex-wrap items-center font-medium ${textClasses}`}
             >
-              <span
+              <button
+                type="button"
                 onClick={() => setProfileOpen(true)}
-                className={`inline ${linkClasses}`}
+                className={`inline text-left ${linkClasses}`}
               >
                 {parsedContent.userName}
-              </span>
+              </button>
               <span>
                 {"\u00A0"}has just finished{"\u00A0"}
               </span>
@@ -337,12 +341,13 @@ export function FeedBlock({
         if (!announcement.authorized_user) return null;
         return (
           <div className={`-mt-1 text-left font-medium ${textClasses}`}>
-            <span
+            <button
+              type="button"
               onClick={() => setProfileOpen(true)}
-              className={`inline ${linkClasses}`}
+              className={`inline text-left ${linkClasses}`}
             >
               {parsedContent.userName}
-            </span>
+            </button>
             <span>
               {"\u00A0"}has given you kudos for completing{"\u00A0"}
             </span>
@@ -456,6 +461,7 @@ export function FeedBlock({
               </h2>
               <button
                 onClick={() => setPlaylistPopupOpen(false)}
+                aria-label="Close"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg
@@ -505,6 +511,7 @@ export function FeedBlock({
               </h2>
               <button
                 onClick={() => setDropletPopupOpen(false)}
+                aria-label="Close"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg
@@ -554,6 +561,7 @@ export function FeedBlock({
               </h2>
               <button
                 onClick={() => setGroupPopupOpen(false)}
+                aria-label="Close"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg

@@ -66,6 +66,7 @@ export function DraggableTileListClient({
             type="button"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
+            aria-label="Previous page"
             className="h-8 w-8 p-0 dark:bg-slate-300 dark:text-black"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -78,6 +79,7 @@ export function DraggableTileListClient({
             type="button"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage >= totalPages}
+            aria-label="Next page"
             className="h-8 w-8 p-0 dark:bg-slate-300 dark:text-black"
           >
             <ChevronRight className="h-4 w-4" />

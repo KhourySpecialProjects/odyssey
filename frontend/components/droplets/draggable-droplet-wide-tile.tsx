@@ -124,6 +124,7 @@ export default function DraggableDropletWideTile({
             <button
               type="button"
               onClick={onAction}
+              aria-label={`Add ${droplet.name}`}
               className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition-colors hover:bg-slate-200 dark:border-slate-500 dark:text-slate-400 dark:hover:bg-slate-600"
             >
               <Plus className="h-4 w-4" />
@@ -135,6 +136,7 @@ export default function DraggableDropletWideTile({
               size="sm"
               type="button"
               onClick={onAction}
+              aria-label={`Remove ${droplet.name}`}
               className="text-slate-400 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:text-red-500 focus:opacity-100 focus-visible:opacity-100"
             >
               <XCircleIcon className="h-5 w-5" />

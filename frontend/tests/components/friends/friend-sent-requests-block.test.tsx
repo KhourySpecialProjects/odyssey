@@ -70,7 +70,9 @@ describe("FriendSentRequestsBlock", () => {
     (cancelFriendRequest as jest.Mock).mockResolvedValue({ success: true });
 
     render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
-    await fireEvent.click(screen.getByRole("x"));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Cancel request" }),
+    );
 
     expect(cancelFriendRequest).toHaveBeenCalledWith(
       mockUser.id,
@@ -83,7 +85,9 @@ describe("FriendSentRequestsBlock", () => {
     (cancelFriendRequest as jest.Mock).mockResolvedValue({ success: false });
 
     render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
-    await fireEvent.click(screen.getByRole("x"));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Cancel request" }),
+    );
 
     expect(cancelFriendRequest).toHaveBeenCalledWith(
       mockUser.id,

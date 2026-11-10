@@ -20,37 +20,37 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
     {
       value: AnnouncementTypeTitle.Droplet,
-      label: <span role="droplet">Droplet</span>,
+      label: "Droplet",
       icon: <Droplet size={20} />,
       color: "bg-blue-200 dark:bg-[#266697] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
-      label: <span role="playlist">Playlist</span>,
+      label: "Playlist",
       icon: <ListVideo size={20} />,
       color: "bg-green-200 dark:bg-[#29703B] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Group,
-      label: <span role="group">Group</span>,
+      label: "Group",
       icon: <UsersRound size={20} />,
       color: "bg-purple-200 dark:bg-[#754ABA] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.System,
-      label: <span role="system">System</span>,
+      label: "System",
       icon: <Info size={20} />,
       color: "bg-red-200 dark:bg-[#B83028] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Friend,
-      label: <span role="friend">Friend</span>,
+      label: "Friend",
       icon: <Handshake size={20} />,
       color: "bg-yellow-200 dark:bg-[#C38508] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
-      label: <span role="kudos">Kudos</span>,
+      label: "Kudos",
       icon: <PartyPopper size={20} />,
       color: "bg-orange-200 dark:bg-[#B55E0C] dark:text-slate-200",
     },
@@ -82,12 +82,14 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
             onCheckedChange={() => toggleRole(role.value)}
             className="border-sky-500 bg-sky-200 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500 dark:data-[state=checked]:bg-sky-500"
           />
-          <span
-            className={`text-sm font-medium ${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"}`}
+          <label
+            htmlFor={role.value}
+            className={`cursor-pointer text-sm font-medium ${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"}`}
           >
             {role.label}
-          </span>
+          </label>
           <div
+            aria-hidden="true"
             className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"}`}
           >
             {role.icon}

@@ -42,49 +42,53 @@ export function FriendBlock({
 
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
-      <div
-        className="flex cursor-pointer items-center md:space-x-4"
-        onClick={handleProfileClick}
-      >
-        <Avatar
-          variant="round"
-          className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
+      <div className="flex items-center md:space-x-4">
+        <button
+          type="button"
+          onClick={handleProfileClick}
+          className="flex min-w-0 flex-1 cursor-pointer items-center text-left md:space-x-4"
         >
-          <AvatarImage src={friend?.profilePhoto || undefined} />
-          <AvatarFallback>
-            {friend.firstName && friend.lastName ? (
-              getInitials(friend.firstName + " " + friend.lastName)
-            ) : (
-              <User2Icon />
-            )}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1">
-          <p
-            title={
-              friend.firstName && friend.lastName
-                ? `${friend.firstName} ${friend.lastName}`
-                : `${friend.email}`
-            }
-            className="inline-block max-w-[200px] truncate overflow-hidden font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
+          <Avatar
+            variant="round"
+            className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
           >
-            {friend.firstName && friend.lastName
-              ? friend.firstName + " " + friend.lastName
-              : friend.email}
-          </p>
-        </div>
+            <AvatarImage src={friend?.profilePhoto || undefined} alt="" />
+            <AvatarFallback>
+              {friend.firstName && friend.lastName ? (
+                getInitials(friend.firstName + " " + friend.lastName)
+              ) : (
+                <User2Icon />
+              )}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1">
+            <p
+              title={
+                friend.firstName && friend.lastName
+                  ? `${friend.firstName} ${friend.lastName}`
+                  : `${friend.email}`
+              }
+              className="inline-block max-w-[200px] truncate overflow-hidden font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
+            >
+              {friend.firstName && friend.lastName
+                ? friend.firstName + " " + friend.lastName
+                : friend.email}
+            </p>
+          </div>
+        </button>
         <ProfileBlock
           otherUser={friend}
           user={user}
           isOpen={open}
           setIsOpen={setOpen}
         />
-        <div className="inline-flex items-center" onClick={handleRemove}>
+        <div className="inline-flex items-center">
           <Button
             size="sm"
             variant="destructive"
             className="hidden w-32 md:block"
+            onClick={handleRemove}
           >
             Remove Friend
           </Button>
@@ -92,8 +96,10 @@ export function FriendBlock({
             size="sm"
             variant="destructive"
             className="block scale-75 md:hidden"
+            onClick={handleRemove}
+            aria-label="Remove friend"
           >
-            <X></X>
+            <X aria-hidden="true" />
           </Button>
         </div>
       </div>

@@ -95,7 +95,7 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = screen.getByRole("save");
+      const saveButton = screen.getByRole("button", { name: "Save due date" });
       expect(saveButton).toBeInTheDocument();
       expect(saveButton).toHaveAttribute("name", "Save Due Date");
     });
@@ -108,7 +108,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = screen.getByRole("delete");
+      const deleteButton = screen.getByRole("button", {
+        name: "Delete due date",
+      });
       expect(deleteButton).toBeInTheDocument();
       expect(deleteButton).toHaveAttribute("name", "Delete Due Date");
     });
@@ -267,7 +269,7 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = screen.getByRole("save");
+      const saveButton = screen.getByRole("button", { name: "Save due date" });
       expect(saveButton).toBeDisabled();
     });
 
@@ -284,7 +286,9 @@ describe("DropletDueDateBlock", () => {
       );
 
       await waitFor(() => {
-        const saveButton = screen.getByRole("save");
+        const saveButton = screen.getByRole("button", {
+          name: "Save due date",
+        });
         expect(saveButton).not.toBeDisabled();
       });
     });
@@ -301,7 +305,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -323,7 +329,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -344,7 +352,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -368,7 +378,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = screen.getByRole("delete");
+      const deleteButton = screen.getByRole("button", {
+        name: "Delete due date",
+      });
       expect(deleteButton).toBeDisabled();
     });
 
@@ -385,7 +397,9 @@ describe("DropletDueDateBlock", () => {
       );
 
       await waitFor(() => {
-        const deleteButton = screen.getByRole("delete");
+        const deleteButton = screen.getByRole("button", {
+          name: "Delete due date",
+        });
         expect(deleteButton).not.toBeDisabled();
       });
     });
@@ -402,7 +416,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -426,7 +442,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -449,7 +467,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -476,7 +496,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -505,7 +527,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -528,7 +552,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -555,7 +581,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -564,8 +592,12 @@ describe("DropletDueDateBlock", () => {
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        const saveButton = screen.getByRole("save");
-        const deleteButton = screen.getByRole("delete");
+        const saveButton = screen.getByRole("button", {
+          name: "Save due date",
+        });
+        const deleteButton = screen.getByRole("button", {
+          name: "Delete due date",
+        });
         expect(saveButton).toBeDisabled();
         expect(deleteButton).toBeDisabled();
       });
@@ -620,7 +652,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -643,7 +677,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -667,7 +703,7 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = screen.getByRole("save");
+      const saveButton = screen.getByRole("button", { name: "Save due date" });
       expect(saveButton).toHaveAttribute("name", "Save Due Date");
     });
 
@@ -679,7 +715,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = screen.getByRole("delete");
+      const deleteButton = screen.getByRole("button", {
+        name: "Delete due date",
+      });
       expect(deleteButton).toHaveAttribute("name", "Delete Due Date");
     });
 
@@ -695,7 +733,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -734,7 +774,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -757,7 +799,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const deleteButton = await screen.findByRole("delete");
+      const deleteButton = await screen.findByRole("button", {
+        name: "Delete due date",
+      });
       await waitFor(() => expect(deleteButton).not.toBeDisabled());
 
       fireEvent.click(deleteButton);
@@ -781,7 +825,9 @@ describe("DropletDueDateBlock", () => {
         />,
       );
 
-      const saveButton = await screen.findByRole("save");
+      const saveButton = await screen.findByRole("button", {
+        name: "Save due date",
+      });
       await waitFor(() => expect(saveButton).not.toBeDisabled());
 
       fireEvent.click(saveButton);
@@ -828,8 +874,10 @@ describe("DropletDueDateBlock", () => {
       });
 
       // Buttons should remain disabled with no date
-      const saveButton = screen.getByRole("save");
-      const deleteButton = screen.getByRole("delete");
+      const saveButton = screen.getByRole("button", { name: "Save due date" });
+      const deleteButton = screen.getByRole("button", {
+        name: "Delete due date",
+      });
       expect(saveButton).toBeDisabled();
       expect(deleteButton).toBeDisabled();
     });

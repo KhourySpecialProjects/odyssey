@@ -33,9 +33,9 @@ export default async function SettingsLayout({
   return (
     <div className="flex min-h-screen">
       <SettingsNavigation items={navItems} />
-      <main className="min-w-0 flex-1 overflow-auto bg-white px-4 pt-4 pb-8 md:px-12 md:pt-8 md:pb-16 md:pl-80 dark:bg-zinc-950">
+      <div className="min-w-0 flex-1 overflow-auto bg-white px-4 pt-4 pb-8 md:px-12 md:pt-8 md:pb-16 md:pl-80 dark:bg-zinc-950">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

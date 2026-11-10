@@ -45,6 +45,7 @@ export function CompletedDropletBlock({
             <button
               className="absolute top-0 right-0 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               onClick={handleClose}
+              aria-label="Close"
             >
               <IconX className="h-5 w-5" stroke={1.8} />
             </button>
