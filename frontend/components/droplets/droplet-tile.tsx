@@ -372,7 +372,7 @@ ${
           }
         >
           <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-            <span className="block text-center text-lg font-black text-slate-950 dark:text-slate-300">
+            <span className="block text-center font-black text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>
