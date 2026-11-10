@@ -374,7 +374,7 @@ ${
           }
         >
           <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-            <span className="text-3lg block text-center font-black text-slate-950 dark:text-slate-300">
+            <span className="block text-center text-lg font-black text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>
@@ -392,7 +392,7 @@ ${
       <li className="flex h-full flex-col overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="space-y-3">
-            <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+            <div className="flex flex-none flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <span className="inline-flex items-center rounded-[16px] bg-slate-200 px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-slate-600 opacity-90 dark:bg-slate-600 dark:text-slate-300">
                   Draft
@@ -495,7 +495,7 @@ ${
                       ref={textRef}
                       className={`${
                         descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                      } text-md text-slate-700 dark:text-slate-300`}
+                      } text-base text-slate-700 dark:text-slate-300`}
                     >
                       {strippedDescription}
                     </p>

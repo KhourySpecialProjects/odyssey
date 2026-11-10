@@ -655,7 +655,7 @@ function blockContent({
           <HighlightableHtml
             ids={highlightIdsOf(block)}
             html={DOMPurify.sanitize(blocksToHtml(block.content))}
-            className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 max-w-none text-slate-900"
+            className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit prose-li:marker:text-slate-700 max-w-none justify-start text-slate-900"
           />
         </CalloutSurface>
       );

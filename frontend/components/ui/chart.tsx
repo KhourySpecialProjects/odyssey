@@ -44,7 +44,7 @@ const ChartContainer = React.forwardRef<
         data-chart={chartId}
         ref={ref}
         className={cn(
-          "[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-none",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-slate-500 dark:[&_.recharts-cartesian-axis-tick_text]:fill-slate-400 [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-slate-200/50 dark:[&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-slate-700/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-slate-200 dark:[&_.recharts-curve.recharts-tooltip-cursor]:stroke-slate-700 [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-slate-200 dark:[&_.recharts-polar-grid_[stroke='#ccc']]:stroke-slate-700 [&_.recharts-radial-bar-background-sector]:fill-slate-100 dark:[&_.recharts-radial-bar-background-sector]:fill-slate-800 [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-slate-100 dark:[&_.recharts-rectangle.recharts-tooltip-cursor]:fill-slate-800 [&_.recharts-reference-line_[stroke='#ccc']]:stroke-slate-200 dark:[&_.recharts-reference-line_[stroke='#ccc']]:stroke-slate-700 [&_.recharts-sector]:outline-none [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-none",
           className,
         )}
         {...props}
@@ -159,7 +159,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+          "bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-slate-200/50 px-2.5 py-1.5 text-xs shadow-xl dark:border-slate-700/50",
           className,
         )}
       >
@@ -173,7 +173,7 @@ const ChartTooltipContent = React.forwardRef<
               <div
                 key={item.dataKey}
                 className={cn(
-                  "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-slate-500 dark:[&>svg]:text-slate-400",
                   indicator === "dot" && "items-center",
                 )}
               >
@@ -212,7 +212,7 @@ const ChartTooltipContent = React.forwardRef<
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">
+                        <span className="text-slate-500 dark:text-slate-400">
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
@@ -267,7 +267,7 @@ const ChartLegendContent = React.forwardRef<
             <div
               key={item.value}
               className={cn(
-                "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
+                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-slate-500 dark:[&>svg]:text-slate-400",
               )}
             >
               {itemConfig?.icon && !hideIcon ? (

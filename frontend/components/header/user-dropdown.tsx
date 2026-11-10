@@ -51,13 +51,13 @@ export function UserDropdown({
             <p className="text-sm leading-none font-semibold">
               {user.name} {user.nuid ? ` (${user.nuid})` : ""}
             </p>
-            <p className="text-muted-foreground text-xs leading-none">
+            <p className="text-xs leading-none text-slate-500 dark:text-slate-400">
               {user.email}
             </p>
-            <p className="text-muted-foreground max-w-40 text-xs leading-none">
+            <p className="max-w-40 text-xs leading-none text-slate-500 dark:text-slate-400">
               Role(s): {condenseRoleTitles(user.roles)}
             </p>
-            <p className="text-muted-foreground mt-1 text-xs leading-none">
+            <p className="mt-1 text-xs leading-none text-slate-500 dark:text-slate-400">
               v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
             </p>
           </div>

@@ -58,7 +58,7 @@ const PlaylistItem = ({
       <div className="group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex items-center p-4">
           <div className="flex-grow">
-            <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
+            <div className="mb-2 flex flex-none flex-row flex-wrap gap-1.5">
               <Badge variant="default" className="dark:bg-slate-700">
                 {playlist.isPublic ? "Public" : "Private"}
               </Badge>
@@ -72,7 +72,7 @@ const PlaylistItem = ({
             </span>
 
             {playlist.droplets && (
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {playlist.droplets.length} droplets
               </p>
             )}

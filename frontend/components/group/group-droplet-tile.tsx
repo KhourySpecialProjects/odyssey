@@ -115,7 +115,7 @@ export function GroupDropletTile({
             )}
           </div>
           <CardTitle className="dark:text-slate-300">{droplet.name}</CardTitle>
-          <p className="text-muted-foreground pt-1 text-sm dark:text-slate-400">
+          <p className="pt-1 text-sm text-slate-500 dark:text-slate-400">
             {droplet.lessons?.length || 0} lessons
           </p>
         </CardHeader>
@@ -128,7 +128,7 @@ export function GroupDropletTile({
                   ref={textRef}
                   className={`${
                     descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                  } text-md text-slate-700 dark:text-slate-300`}
+                  } text-base text-slate-700 dark:text-slate-300`}
                 >
                   {strippedDescription}
                 </p>

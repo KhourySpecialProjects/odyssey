@@ -218,7 +218,7 @@ export default async function Droplet({ params }: Props) {
         <div className="px-40 group-data-[review-panel=open]:px-12">
           <div
             id={scanSectionId("tags")}
-            className="flex flex-0 scroll-mt-28 flex-row flex-wrap gap-1.5"
+            className="flex flex-none scroll-mt-28 flex-row flex-wrap gap-1.5"
           >
             <ClickableBadges
               focusArea={droplet.focusArea}
