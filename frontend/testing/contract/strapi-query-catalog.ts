@@ -432,6 +432,7 @@ const call = <T extends Mod>(
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
   "ai-scoring": "@/lib/requests/ai-scoring",
+  "ai-scoring-prompt": "@/lib/requests/ai-scoring-prompt",
   "overview-scan": "@/lib/requests/overview-scan",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
@@ -1158,6 +1159,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   },
   "ai-scoring": {
     startAiScoring: "custom ai-scoring-run start route (ODY-814)",
+  },
+  "ai-scoring-prompt": {
+    saveAiScoringPrompt: "custom ai-scoring-setting prompt route (ODY-898)",
   },
   "overview-scan": {
     runOverviewScan: WRITE,

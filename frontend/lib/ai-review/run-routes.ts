@@ -1,4 +1,5 @@
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import type { PromptParts } from "./system-prompt";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import type {
   AiFinding,
@@ -106,6 +107,7 @@ export const startRunRoute = (body: {
   userId: number;
   model: string;
   promptVersion: string;
+  prompt: PromptParts;
 }) => postRunRoute<StartedRun>("start", body);
 
 /**

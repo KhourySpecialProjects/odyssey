@@ -542,6 +542,7 @@ export interface ApiAiScoringRunAiScoringRun
         number
       >;
     progress: Schema.Attribute.JSON;
+    prompt: Schema.Attribute.JSON;
     promptVersion: Schema.Attribute.String &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 50;
@@ -564,7 +565,7 @@ export interface ApiAiScoringSettingAiScoringSetting
   extends Struct.SingleTypeSchema {
   collectionName: 'ai_scoring_settings';
   info: {
-    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)";
+    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default)";
     displayName: 'AI Scoring Settings';
     pluralName: 'ai-scoring-settings';
     singularName: 'ai-scoring-setting';
@@ -576,6 +577,14 @@ export interface ApiAiScoringSettingAiScoringSetting
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    instructions: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 6000;
+      }>;
+    lessonScope: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 1500;
+      }>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -590,6 +599,10 @@ export interface ApiAiScoringSettingAiScoringSetting
         },
         number
       >;
+    overallScope: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 1500;
+      }>;
     perRunCapUsd: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -1945,6 +1958,10 @@ export interface ApiReviewScoreReviewScore extends Struct.CollectionTypeSchema {
   };
   attributes: {
     aiFindings: Schema.Attribute.JSON;
+    aiPromptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
     aiRationale: Schema.Attribute.Text;
     aiValue: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
