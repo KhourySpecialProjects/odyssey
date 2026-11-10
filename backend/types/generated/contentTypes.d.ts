@@ -2083,6 +2083,7 @@ export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     revived: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    test: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

@@ -270,6 +270,112 @@ describe('POST /streak-days/revive', () => {
   });
 });
 
+describe('the streak testing panel (ODY-921)', () => {
+  const post = (path, data) =>
+    rest().post(`/api/streak-days/${path}`).set(auth()).send({ data });
+
+  afterEach(() => {
+    delete process.env.STREAK_TESTING;
+  });
+
+  it('is a 404 while testing is off', async () => {
+    const results = await Promise.all([
+      post('test/set', { userId: user.id, days: [] }),
+      post('test/clear', { userId: user.id }),
+      record(valid({ test: true })),
+    ]);
+
+    expect(results.map((r) => r.status)).toEqual([404, 404, 404]);
+    expect(await rows()).toHaveLength(0);
+  });
+
+  describe('while testing is on', () => {
+    beforeEach(() => {
+      process.env.STREAK_TESTING = 'true';
+    });
+
+    it("replaces the learner's test rows and leaves the real ones", async () => {
+      await record(valid());
+      const days = [
+        { date: '2026-11-08', lessons: 2 },
+        { date: '2026-11-09', lessons: 0, revived: true },
+      ];
+
+      await post('test/set', { userId: user.id, days });
+      const res = await post('test/set', { userId: user.id, days });
+
+      expect(res.body.data).toEqual({ days: 2 });
+      const all = await rows();
+      expect(
+        all.filter((r) => r.test).map((r) => [r.key, r.lessonIds, r.revived])
+      ).toEqual([
+        [`${user.id}:2026-11-08:test`, [1, 2], false],
+        [`${user.id}:2026-11-09:test`, [], true],
+      ]);
+      expect(all.filter((r) => !r.test).map((r) => r.key)).toEqual([
+        `${user.id}:2026-11-10`,
+      ]);
+    });
+
+    it('records and revives test days apart from real ones', async () => {
+      await record(valid({ date: '2026-11-08' }));
+      await record(valid({ date: '2026-11-08', test: true }));
+
+      // A real revive doesn't count against the test revives, or back
+      await revive({ userId: user.id, date: '2026-11-09' });
+      const res = await revive({
+        userId: user.id,
+        date: '2026-11-09',
+        test: true,
+      });
+
+      expect(res.body.data).toEqual({
+        date: '2026-11-09',
+        revivesLeft: 1,
+        added: true,
+      });
+      expect(
+        (await rows())
+          .filter((r) => r.revived)
+          .map((r) => r.key)
+          .sort()
+      ).toEqual([`${user.id}:2026-11-09`, `${user.id}:2026-11-09:test`]);
+    });
+
+    it('clears only test rows', async () => {
+      await record(valid());
+      await post('test/set', {
+        userId: user.id,
+        days: [{ date: '2026-11-01', lessons: 1 }],
+      });
+
+      const res = await post('test/clear', { userId: user.id });
+
+      expect(res.body.data).toEqual({ deleted: 1 });
+      expect((await rows()).map((r) => r.key)).toEqual([
+        `${user.id}:2026-11-10`,
+      ]);
+    });
+
+    it.each([
+      [
+        'a repeated date',
+        [
+          { date: '2026-11-01', lessons: 1 },
+          { date: '2026-11-01', lessons: 2 },
+        ],
+      ],
+      ['too many lessons', [{ date: '2026-11-01', lessons: 51 }]],
+      ['an unknown key', [{ date: '2026-11-01', lessons: 1, extra: true }]],
+      ['not a list', 'soon'],
+    ])('refuses %s', async (_, days) => {
+      const res = await post('test/set', { userId: user.id, days });
+
+      expect(res.status).toBe(400);
+    });
+  });
+});
+
 describe('streak_days', () => {
   it('rejects a duplicate key at the database level (unique index)', async () => {
     const key = '9001:2026-11-10';

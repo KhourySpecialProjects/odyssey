@@ -10,6 +10,19 @@ const USER_UID = 'api::authorized-user.authorized-user';
 /** Revives each learner gets, for good (ODY-920) */
 export const STREAK_REVIVES = 2;
 
+/**
+ * The streak testing panel (ODY-921, temporary) works under `strapi develop`
+ * and where STREAK_TESTING=true. Its rows have `test: true` and their own
+ * keys, so a learner's real streak never sees them.
+ */
+export const streakTestingOn = () =>
+  process.env.STREAK_TESTING === 'true' ||
+  process.env.NODE_ENV === 'development';
+
+/** Filters for a learner's real rows, or their test rows */
+const testFilter = (test: boolean) =>
+  test ? { test: true } : { $or: [{ test: false }, { test: { $null: true } }] };
+
 /** Thrown with the HTTP status the controller should answer with. */
 export class StreakDayError extends Error {
   status: number;
@@ -26,6 +39,8 @@ export type RecordStreakDayInput = {
   /** The learner's local date, YYYY-MM-DD */
   date: string;
   lessonId: number;
+  /** A testing panel row (ODY-921) */
+  test?: boolean;
 };
 
 export type RecordStreakDayResult = {
@@ -36,8 +51,8 @@ export type RecordStreakDayResult = {
   added: boolean;
 };
 
-export const streakDayKey = (userId: number, date: string) =>
-  `${userId}:${date}`;
+export const streakDayKey = (userId: number, date: string, test = false) =>
+  `${userId}:${date}${test ? ':test' : ''}`;
 
 /** A real calendar date written YYYY-MM-DD, such as 2026-11-10 (not 2026-02-30). */
 export function isCalendarDate(value: unknown): value is string {
@@ -91,7 +106,8 @@ const lessonsOf = (row: Row | null): number[] =>
 export async function recordStreakDay(
   input: RecordStreakDayInput
 ): Promise<RecordStreakDayResult> {
-  const key = streakDayKey(input.userId, input.date);
+  const test = !!input.test;
+  const key = streakDayKey(input.userId, input.date, test);
 
   const once = () =>
     strapi.db.transaction(async () => {
@@ -121,7 +137,13 @@ export async function recordStreakDay(
         } as any)) as Row | null;
         if (!user) throw new StreakDayError(404, 'User not found');
         await strapi.documents(STREAK_DAY_UID).create({
-          data: { key, date: input.date, lessonIds, user: user.documentId },
+          data: {
+            key,
+            date: input.date,
+            lessonIds,
+            test,
+            user: user.documentId,
+          },
         } as any);
       }
       return { date: input.date, lessons: lessonIds.length, added: true };
@@ -137,6 +159,8 @@ export type ReviveStreakDayInput = {
   userId: number;
   /** The missed day, the learner's yesterday: YYYY-MM-DD */
   date: string;
+  /** A testing panel revive (ODY-921): counts only test rows */
+  test?: boolean;
 };
 
 export type ReviveStreakDayResult = {
@@ -155,10 +179,15 @@ export type ReviveStreakDayResult = {
 export async function reviveStreakDay(
   input: ReviveStreakDayInput
 ): Promise<ReviveStreakDayResult> {
-  const key = streakDayKey(input.userId, input.date);
+  const test = !!input.test;
+  const key = streakDayKey(input.userId, input.date, test);
   const revivedSoFar = () =>
     strapi.documents(STREAK_DAY_UID).count({
-      filters: { user: { id: input.userId }, revived: true },
+      filters: {
+        user: { id: input.userId },
+        revived: true,
+        ...testFilter(test),
+      },
     } as any);
 
   const once = () =>
@@ -187,7 +216,7 @@ export async function reviveStreakDay(
       }
       if (day) throw new StreakDayError(409, 'That day already counts');
 
-      const before = streakDayKey(input.userId, addDays(input.date, -1));
+      const before = streakDayKey(input.userId, addDays(input.date, -1), test);
       if (!(await findDay(before))) {
         throw new StreakDayError(409, "There's no streak to revive");
       }
@@ -202,6 +231,7 @@ export async function reviveStreakDay(
           date: input.date,
           lessonIds: [],
           revived: true,
+          test,
           user: user.documentId,
         },
       } as any);
@@ -213,4 +243,70 @@ export async function reviveStreakDay(
     });
 
   return retryIfDayTaken(key, once);
+}
+
+// The streak testing panel (ODY-921, temporary): replaces or clears a
+// learner's test rows. Remove with the panel.
+
+export type TestStreakDay = {
+  date: string;
+  lessons: number;
+  revived?: boolean;
+};
+
+/** Deletes the learner's test rows through the Document Service, so their relation rows go too */
+async function deleteTestRows(userId: number): Promise<number> {
+  let deleted = 0;
+  for (;;) {
+    const rows = (await strapi.documents(STREAK_DAY_UID).findMany({
+      filters: { user: { id: userId }, test: true },
+      fields: ['id'],
+      limit: 500,
+    } as any)) as Row[];
+    for (const row of rows) {
+      await strapi.documents(STREAK_DAY_UID).delete({
+        documentId: row.documentId,
+      } as any);
+    }
+    deleted += rows.length;
+    if (rows.length < 500) return deleted;
+  }
+}
+
+/** Replaces the learner's test rows with `days` */
+export async function setTestStreakDays(input: {
+  userId: number;
+  days: TestStreakDay[];
+}): Promise<{ days: number }> {
+  return strapi.db.transaction(async () => {
+    const user = (await strapi.documents(USER_UID).findFirst({
+      filters: { id: input.userId },
+      fields: ['id'],
+    } as any)) as Row | null;
+    if (!user) throw new StreakDayError(404, 'User not found');
+    await deleteTestRows(input.userId);
+    for (const day of input.days) {
+      await strapi.documents(STREAK_DAY_UID).create({
+        data: {
+          key: streakDayKey(input.userId, day.date, true),
+          date: day.date,
+          // Stand-in ids: only the count shows
+          lessonIds: Array.from({ length: day.lessons }, (_, i) => i + 1),
+          revived: !!day.revived,
+          test: true,
+          user: user.documentId,
+        },
+      } as any);
+    }
+    return { days: input.days.length };
+  });
+}
+
+/** Deletes the learner's test rows; their real ones stay */
+export async function clearTestStreakDays(input: {
+  userId: number;
+}): Promise<{ deleted: number }> {
+  return strapi.db.transaction(async () => ({
+    deleted: await deleteTestRows(input.userId),
+  }));
 }

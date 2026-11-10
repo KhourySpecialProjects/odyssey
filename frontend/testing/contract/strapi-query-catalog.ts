@@ -472,6 +472,7 @@ export const MODULE_PATHS: Record<string, string> = {
   posthog: "@/lib/requests/posthog",
   reviews: "@/lib/requests/reviews",
   streaks: "@/lib/requests/streaks",
+  "streak-testing": "@/lib/requests/streak-testing",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -1081,6 +1082,12 @@ const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
+  // The temporary streak testing panel (ODY-921): writes test rows only
+  "streak-testing": {
+    setTestStreak: WRITE,
+    moveTestDay: WRITE,
+    resetTestStreak: WRITE,
+  },
   "authorized-user": {
     createAuthorizedUser: WRITE,
     createBatchAuthorizedUsers: WRITE,
