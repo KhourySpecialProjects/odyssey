@@ -161,7 +161,7 @@ function flagView(
     label: `Lesson ${index + 1} · ${lesson.name}`,
     message,
     severity,
-    href: `/draft/d/${slug}/${lesson.slug}`,
+    href: `/draft/d/${slug}/${lesson.slug}${flag.blockId ? `?block=${encodeURIComponent(flag.blockId)}` : ""}`,
     linkText: "Go to lesson",
   };
 }

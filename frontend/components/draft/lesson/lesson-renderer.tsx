@@ -51,6 +51,7 @@ import {
 } from "@/components/draft/review/review-comments-context";
 import { unseenCount } from "@/lib/review-threads";
 import { useShowInLesson } from "@/hooks/use-show-in-lesson";
+import { useScrollToBlock } from "@/hooks/use-scroll-to-block";
 import { useReviewFocus } from "@/components/draft/review/review-focus-context";
 import { findingMarks } from "@/lib/review-panel/finding-marks";
 import {
@@ -730,6 +731,9 @@ export function LessonRenderer({
     ]);
     await stopEditing();
   };
+
+  // A scan flag's ?block= link (ODY-879)
+  useScrollToBlock();
 
   // Show in lesson from the panel: leave Read or Edit for Comment, then scroll and ring
   useShowInLesson({

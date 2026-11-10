@@ -209,7 +209,24 @@ describe("buildScanView", () => {
   });
 
   it.each([
-    ["a lesson", flag("12", "b1"), "Lesson 2 · Second", "/draft/d/drop/second"],
+    [
+      "a lesson",
+      flag("12", "b1"),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second?block=b1",
+    ],
+    [
+      "a lesson block id needing encoding",
+      flag("12", "a b&c"),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second?block=a%20b%26c",
+    ],
+    [
+      "a lesson with no block",
+      flag("12"),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second",
+    ],
     [
       "a mapped section",
       flag("droplet", "tags"),
