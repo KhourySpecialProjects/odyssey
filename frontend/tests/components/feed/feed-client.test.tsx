@@ -9,6 +9,8 @@ import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { fetchAnnouncements, markAnnouncementRead } from "@/lib/requests/feed";
 import { toast } from "sonner";
+import { useStreakStore } from "@/stores/streak-store";
+import { makeStreak } from "@/testing/mocks/streakMock";
 
 jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
@@ -344,6 +346,20 @@ describe("FeedClient", () => {
       expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
       await act(async () => {});
       expect(fetchAnnouncements).not.toHaveBeenCalled();
+    });
+
+    it("shows the learner's streak card even with no announcements", async () => {
+      useStreakStore.setState({
+        streak: makeStreak({ current: 24, litToday: true }),
+      });
+      render(<FeedClient selectedRoles={[]} authUser={mockAuthUser} />);
+
+      expect(screen.getByText(/unlocked Spilling Sack!/)).toBeInTheDocument();
+      expect(
+        screen.queryByText("No unread announcements"),
+      ).not.toBeInTheDocument();
+      useStreakStore.setState({ streak: null });
+      localStorage.clear();
     });
 
     it("mark read removes the item right away and quietly re-syncs the page", async () => {

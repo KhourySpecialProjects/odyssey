@@ -3,14 +3,45 @@
 // time zone, written YYYY-MM-DD, so daylight saving never moves a day.
 // Design: the Streak Hoard spec, https://claude.ai/artifact/QhwUbwvrLSJ4wbxD7VNKHp
 
-/** The day each of the 24 streak icons unlocks, in order (the Streak Hoard spec) */
-export const UNLOCK_DAYS = [
-  1, 2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38,
-  40, 50, 100,
+/**
+ * The 24 streak icons in order, with the day each unlocks (the Streak Hoard
+ * spec). Their art is public/streaks/day-<day>.svg, exported by
+ * scripts/streaks/export-icons.mjs.
+ */
+export const STREAK_ICONS = [
+  { day: 1, name: "One Coin" },
+  { day: 2, name: "Two Coins" },
+  { day: 3, name: "Three Coins" },
+  { day: 4, name: "Four Coins" },
+  { day: 5, name: "Coin Pile" },
+  { day: 8, name: "Big Pile" },
+  { day: 10, name: "Gold Heap" },
+  { day: 12, name: "One Gem" },
+  { day: 14, name: "Two Gems" },
+  { day: 16, name: "Four Gems" },
+  { day: 18, name: "Five Gems" },
+  { day: 20, name: "Gem Hoard" },
+  { day: 22, name: "Tied Sack" },
+  { day: 24, name: "Spilling Sack" },
+  { day: 26, name: "Two Sacks" },
+  { day: 28, name: "Three Sacks" },
+  { day: 30, name: "Sack Hoard" },
+  { day: 32, name: "Treasure Chest" },
+  { day: 34, name: "Opening Chest" },
+  { day: 36, name: "Open Chest" },
+  { day: 38, name: "Gem Chest" },
+  { day: 40, name: "Overflowing Chest" },
+  { day: 50, name: "Crowned Chest" },
+  { day: 100, name: "Super Duper Mega Golden Crowned Diamond Chest" },
 ] as const;
 
+export type StreakIconInfo = (typeof STREAK_ICONS)[number];
+
+/** The day each icon unlocks, in order */
+export const UNLOCK_DAYS = STREAK_ICONS.map((icon) => icon.day);
+
 /**
- * The icon for a streak of `days`: its index in UNLOCK_DAYS (0 to 23), or
+ * The icon for a streak of `days`: its index in STREAK_ICONS (0 to 23), or
  * null with no streak. Each icon shows until the next unlocks, and the last
  * one stays from day 100 on.
  */
@@ -18,6 +49,10 @@ export function streakIconIndex(days: number): number | null {
   if (!(days >= 1)) return null;
   return UNLOCK_DAYS.filter((day) => day <= days).length - 1;
 }
+
+/** The art for an icon, served from public/ */
+export const streakIconSrc = (icon: StreakIconInfo) =>
+  `/streaks/day-${icon.day}.svg`;
 
 /** For learners who haven't picked a time zone in Settings */
 export const DEFAULT_STREAK_TIME_ZONE = "America/New_York";
