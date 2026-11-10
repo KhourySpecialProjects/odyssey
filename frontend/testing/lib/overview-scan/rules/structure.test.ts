@@ -1,4 +1,5 @@
 import { STRUCTURE_CHECKS } from "@/lib/overview-scan/rules/structure";
+import type { Flag } from "@/lib/overview-scan/types";
 import type { FetchUrl } from "@/lib/overview-scan/network";
 import type {
   ScanBlock,
@@ -46,6 +47,55 @@ const warn = (partId: string, blockId: string | null, message: string) => ({
 const lessons = (n: number) =>
   Array.from({ length: n }, (_, i) => lesson([h("h", 2)], i + 1));
 
+describe("structure: no-repeats quotes", () => {
+  const long = "Now that we have successfully opened the folder, run it";
+  const messages = (...texts: string[]) =>
+    (
+      run(
+        "organization",
+        "no-repeats",
+        withLessons(
+          lesson(
+            texts.map((t, i) => p(`o${i}`, t)),
+            1,
+            "One",
+          ),
+          lesson(
+            texts.map((t, i) => p("same", `${t}${" ".repeat(i)}`)),
+            2,
+            "Two",
+          ),
+        ),
+      ) as Flag[]
+    ).map((f) => f.message);
+
+  it.each([
+    [
+      "short whole",
+      "Short one.",
+      `"Short one." also appears in Lesson 1 · One.`,
+    ],
+    [
+      "cut at 8 words",
+      long,
+      `"Now that we have successfully opened the folder,…" also appears in Lesson 1 · One.`,
+    ],
+    [
+      "markup and spaces",
+      "<b>Hello</b>\n\n  there   <i>you</i>",
+      `"Hello there you" also appears in Lesson 1 · One.`,
+    ],
+  ])("%s", (_n, text, expected) => {
+    expect(messages(text)).toEqual([expected]);
+  });
+
+  it("caps a huge word and gives two paragraphs of one block distinct messages", () => {
+    expect(messages("x".repeat(500))[0].length).toBeLessThan(120);
+    const two = messages("First paragraph here.", "Second paragraph here.");
+    expect(new Set(two).size).toBe(2);
+  });
+});
+
 describe("structure: lesson checks", () => {
   it.each([
     [
@@ -74,7 +124,7 @@ describe("structure: lesson checks", () => {
         lesson([h("h", 2, "H")], 2, "Two"),
         lesson([p("b", " same  WORDS. ")], 3, "Three"),
       ),
-      [warn("3", "b", "This paragraph also appears in Lesson 1 · One.")],
+      [warn("3", "b", `"same WORDS." also appears in Lesson 1 · One.`)],
     ],
     [
       "granularity",
