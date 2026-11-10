@@ -40,6 +40,7 @@ jest.mock("@/lib/streak-days", () => ({
 }));
 jest.mock("@/lib/streak-testing", () => ({
   REAL_STREAK: { test: false, offsetDays: 0 },
+  MAX_TEST_OFFSET: 400,
   streakTestingEnabled: jest.fn(),
   streakTestMode: jest.fn(),
   setStreakTestMode: jest.fn(),
@@ -148,44 +149,25 @@ describe("setTestStreak", () => {
   });
 });
 
-describe("moveTestDay", () => {
-  it.each([
-    [true, 1],
-    [false, 0],
-  ])(
-    "moves today on a day (with a lesson: %s)",
-    async (withLesson, records) => {
-      const result = await moveTestDay(withLesson);
+describe("day by day", () => {
+  it("moveTestDay moves today on a day and adds nothing to the day left", async () => {
+    const result = await moveTestDay();
 
-      expect(setStreakTestMode).toHaveBeenCalledWith(testMode(3));
-      expect(recordStreakDay).toHaveBeenCalledTimes(records);
-      if (records) {
-        expect(recordStreakDay).toHaveBeenCalledWith(
-          learner,
-          1,
-          expect.any(Date),
-          testMode(3),
-        );
-      }
-      expect(result).toMatchObject({ ok: true, data: { mode: testMode(3) } });
-    },
-  );
+    expect(setStreakTestMode).toHaveBeenCalledWith(testMode(3));
+    expect(recordStreakDay).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true, data: { mode: testMode(3) } });
+  });
 
-  it("needs a test streak first", async () => {
-    jest
-      .mocked(streakTestMode)
-      .mockResolvedValue({ test: false, offsetDays: 0 });
+  it("moveTestDay stops at the furthest day the cookie keeps", async () => {
+    jest.mocked(streakTestMode).mockResolvedValue(testMode(400));
 
-    expect(await moveTestDay(true)).toEqual({
+    expect(await moveTestDay()).toMatchObject({
       ok: false,
-      error: "Set a test streak first",
-      data: null,
+      error: "That's as far ahead as the panel goes. Reset to start again.",
     });
     expect(setStreakTestMode).not.toHaveBeenCalled();
   });
-});
 
-describe("test lessons and revives", () => {
   it("finishTestLesson lights the moved today", async () => {
     jest.mocked(recordStreakDay).mockResolvedValue(true);
 
@@ -227,6 +209,7 @@ describe("test lessons and revives", () => {
   );
 
   it.each([
+    ["moveTestDay", moveTestDay],
     ["finishTestLesson", finishTestLesson],
     ["reviveTestDay", reviveTestDay],
   ])("%s needs a test streak first", async (_, action) => {
@@ -239,6 +222,7 @@ describe("test lessons and revives", () => {
       error: "Set a test streak first",
       data: null,
     });
+    expect(setStreakTestMode).not.toHaveBeenCalled();
     expect(recordStreakDay).not.toHaveBeenCalled();
     expect(reviveStreakDay).not.toHaveBeenCalled();
   });
