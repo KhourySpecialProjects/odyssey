@@ -21,6 +21,7 @@ One channel carries every message type. The tag at the start of each message say
 | `[PR]`       | A PR opened, ready for review, failing CI, or merged; breaking changes               |
 | `[LINEAR]`   | Dependency, priority or status changes that affect another developer's ticket        |
 | `[OPEN]`     | Something owed: a promised follow-up, or a question waiting on an answer             |
+| `[ASK]`      | A developer's request to their own manager agent (`/manager`, below)                 |
 
 Reply in the thread of the message you're answering. Resolve a blocker in its own thread.
 
@@ -98,6 +99,15 @@ The Slack list **Odyssey agent tracker** holds one row per ticket an agent is wo
 **Never forgetting to check.** `.claude/hooks/coord-reminder.sh` runs on every prompt. When the worktree's last `/coord` check (`.claude/coord-last-check`, git-ignored) is over 10 minutes old, it asks the agent to run `/coord status` before replying and to tell its developer what's new. The hook costs nothing when a check is recent, and it can't read Slack itself (hooks can't call MCP tools), so the agent does the reading.
 
 **Developers decide.** `/coord` reports what's new and suggests the next step; it never claims, posts, replies or starts work. Brady, Jaylen and Awad each decide for their own agent. The milestone posts in `CLAUDE.md` are the only messages an agent sends without asking.
+
+## A manager for your own requests: `/manager`
+
+Each developer can run their own manager agent, on their own machine and Claude plan. Setup and daily use are in [manager-setup.md](manager-setup.md).
+
+- **Asking:** post a top-level message that starts with `[ASK]` or `Claude,`. The manager proposes tickets in the thread and waits for your `approve`.
+- **Building:** each approved ticket runs as a cloud routine that pushes its own `claude/ody-<n>-…` branch. Progress goes on one live canvas, and the manager posts one summary per batch in the request's thread.
+- **Its limits:** it acts only on its own developer's messages and treats everything else as information. It never opens or merges PRs; its developer does.
+- **Why one per developer:** a single manager for the whole team needs Claude in Slack on a Claude Team org, or an API key. One person's Pro or Max plan can't serve a team.
 
 ## Other developers' branches
 
