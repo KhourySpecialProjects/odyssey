@@ -635,7 +635,15 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
   }
 }
 
+// Strapi v5 checks a uid (format and uniqueness) before beforeCreate replaces
+// it with one made from the name, so creates send this placeholder. slugify
+// never makes a "~", so no saved slug can equal it (ODY-869). A fixed word
+// like "random" broke every create once something was named "Random".
+const SLUG_PLACEHOLDER = "pending~slug";
+
 export async function createNewTag(tag: string) {
+  const name = tag.trim();
+  if (!name) return { success: false, error: "Enter a tag name" };
   try {
     const response = await fetch(`${STRAPI_API_URL}/api/tags`, {
       method: "POST",
@@ -645,16 +653,24 @@ export async function createNewTag(tag: string) {
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
-        data: {
-          name: tag,
-          slug: tag.replace(/\s/g, ""),
-        },
+        data: { name, slug: SLUG_PLACEHOLDER },
       }),
     });
 
     if (!response.ok) {
-      console.error("adding tag failed:", await response.text());
-      return { success: false, error: "Failed to add new tag" };
+      const body = await response.json().catch(() => null);
+      console.error("adding tag failed:", JSON.stringify(body));
+      const errors: { path?: string[]; message?: string }[] =
+        body?.error?.details?.errors ?? [];
+      const nameTaken = errors.some(
+        (e) => e.path?.[0] === "name" && e.message?.includes("unique"),
+      );
+      return {
+        success: false,
+        error: nameTaken
+          ? `A tag named "${name}" already exists`
+          : `Couldn't create the tag "${name}". Please try again.`,
+      };
     }
 
     const result = await response.json();
@@ -696,7 +712,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
 
     const dataToSend = {
       name: data.name,
-      slug: "random", // this gets overwritten when created, but just has to be defined as something
+      slug: SLUG_PLACEHOLDER,
       focusArea: data.focusArea,
       type: data.type,
       difficulty: data.difficulty,
@@ -738,11 +754,15 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       },
     });
 
-    const responseData = await response.json();
+    const responseData = await response.json().catch(() => null);
 
-    if (!response.ok || (response.ok && responseData.error)) {
-      const errorPath = responseData.error.details.errors[0].path[0];
-      const errorMessage = `${responseData.error.message} (${errorPath})`;
+    if (!response.ok || responseData?.error) {
+      // Not every rejection names a field (a 403 or 500 doesn't), so read the
+      // path only when it's there (ODY-868).
+      console.error("Creating droplet failed:", JSON.stringify(responseData));
+      const message = responseData?.error?.message ?? `HTTP ${response.status}`;
+      const errorPath = responseData?.error?.details?.errors?.[0]?.path?.[0];
+      const errorMessage = errorPath ? `${message} (${errorPath})` : message;
       return { ok: false, error: errorMessage, data: null };
     }
     revalidateTag(CACHE_TAGS.authors);
