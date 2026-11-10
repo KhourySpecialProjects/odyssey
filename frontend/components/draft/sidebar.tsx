@@ -1,5 +1,6 @@
 "use client";
 
+import { hasLessonEditor } from "@/lib/lesson-editor-registry";
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn, getPath } from "@/lib/utils";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
@@ -409,17 +410,20 @@ export function Sidebar({
       return;
     }
     event.preventDefault();
-    await new Promise<void>((resolve) => {
-      const done = () => {
-        window.removeEventListener("flush-save-complete", done);
-        clearTimeout(timer);
-        resolve();
-      };
-      // No editor mounted (e.g. overview page) means nobody answers.
-      const timer = setTimeout(done, 5000);
-      window.addEventListener("flush-save-complete", done);
-      window.dispatchEvent(new CustomEvent("flush-save-request"));
-    });
+    // With no lesson editor mounted (Overview, scan) nobody answers the
+    // flush, so skip the wait; the timeout is only a safety net.
+    if (hasLessonEditor()) {
+      await new Promise<void>((resolve) => {
+        const done = () => {
+          window.removeEventListener("flush-save-complete", done);
+          clearTimeout(timer);
+          resolve();
+        };
+        const timer = setTimeout(done, 5000);
+        window.addEventListener("flush-save-complete", done);
+        window.dispatchEvent(new CustomEvent("flush-save-request"));
+      });
+    }
     await revalidateLesson().catch(() => {});
     router.push(href);
   };

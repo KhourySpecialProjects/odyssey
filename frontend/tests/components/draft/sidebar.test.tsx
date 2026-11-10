@@ -10,6 +10,7 @@ import { Sidebar } from "@/components/draft/sidebar";
 import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { revalidateLesson } from "@/lib/requests/lesson";
+import { registerLessonEditor } from "@/lib/lesson-editor-registry";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
 import { mockReview } from "@/testing/mocks/reviewsMock";
@@ -413,24 +414,64 @@ describe("Sidebar", () => {
         );
       };
       window.addEventListener("flush-save-request", onFlush);
+      const unregister = registerLessonEditor();
       renderSidebar();
 
       fireEvent.click(screen.getByRole("link", { name: "Preview" }));
       await waitFor(() => expect(mockRouter.push).toHaveBeenCalled());
 
       window.removeEventListener("flush-save-request", onFlush);
+      unregister();
       expect(order).toEqual(["flush", "revalidate", "push"]);
       expect(mockRouter.push).toHaveBeenCalledWith("/d/test-droplet/lesson-1");
     });
 
+    it("navigates without waiting when no lesson editor is mounted", async () => {
+      jest.useFakeTimers();
+      try {
+        renderSidebar();
+        fireEvent.click(screen.getByRole("link", { name: "Preview" }));
+        // Far less than the 5 s safety net
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(100);
+        });
+        expect(revalidateLesson).toHaveBeenCalled();
+        expect(mockRouter.push).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it("still navigates when a registered editor never answers the flush", async () => {
+      jest.useFakeTimers();
+      const unregister = registerLessonEditor();
+      try {
+        renderSidebar();
+        fireEvent.click(screen.getByRole("link", { name: "Preview" }));
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(100);
+        });
+        expect(mockRouter.push).not.toHaveBeenCalled();
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(6000);
+        });
+        expect(mockRouter.push).toHaveBeenCalledTimes(1);
+      } finally {
+        unregister();
+        jest.useRealTimers();
+      }
+    });
+
     it("still navigates when no editor answers the flush request", async () => {
       jest.useFakeTimers();
+      const unregister = registerLessonEditor();
       renderSidebar();
       fireEvent.click(screen.getByRole("link", { name: "Preview" }));
       await act(async () => {
         await jest.advanceTimersByTimeAsync(6000);
       });
       jest.useRealTimers();
+      unregister();
       expect(mockRouter.push).toHaveBeenCalledTimes(1);
     });
   });

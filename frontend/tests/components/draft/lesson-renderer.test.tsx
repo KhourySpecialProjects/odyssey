@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
+import { hasLessonEditor } from "@/lib/lesson-editor-registry";
 import { useRouter } from "next/navigation";
 import {
   updateLesson,
@@ -241,6 +242,50 @@ describe("LessonRenderer", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
       expect(screen.getByText("Test Lesson")).toBeInTheDocument();
+    });
+  });
+
+  describe("Preview sync (ODY-471)", () => {
+    it("registers as a lesson editor only while mounted", () => {
+      expect(hasLessonEditor()).toBe(false);
+      const { unmount } = render(
+        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+      );
+      expect(hasLessonEditor()).toBe(true);
+      unmount();
+      expect(hasLessonEditor()).toBe(false);
+    });
+
+    it("flushes a pending title edit before reporting the flush complete", async () => {
+      jest.useFakeTimers();
+      try {
+        render(
+          <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+        );
+        fireEvent.click(screen.getByLabelText("Edit lesson title"));
+        fireEvent.change(screen.getByTestId("lesson-name-field"), {
+          target: { value: "Brand New Title" },
+        });
+        expect(updateLesson).not.toHaveBeenCalledWith(
+          mockLesson.id,
+          expect.objectContaining({ name: "Brand New Title" }),
+        );
+
+        const complete = jest.fn();
+        window.addEventListener("flush-save-complete", complete);
+        await act(async () => {
+          window.dispatchEvent(new CustomEvent("flush-save-request"));
+        });
+        window.removeEventListener("flush-save-complete", complete);
+
+        expect(updateLesson).toHaveBeenCalledWith(
+          mockLesson.id,
+          expect.objectContaining({ name: "Brand New Title" }),
+        );
+        expect(complete).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
