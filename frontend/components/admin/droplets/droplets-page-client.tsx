@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Droplet } from "@/types";
+import { Droplet, DropletStatus } from "@/types";
 import { updateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
@@ -98,7 +98,27 @@ const SORT_GROUPS = [
       { value: "title-desc", label: "Z\u2013A" },
     ],
   },
+  {
+    header: "Date created",
+    options: [
+      { value: "created-desc", label: "Created: newest" },
+      { value: "created-asc", label: "Created: oldest" },
+    ],
+  },
+  {
+    header: "Last updated",
+    options: [
+      { value: "updated-desc", label: "Updated: newest" },
+      { value: "updated-asc", label: "Updated: oldest" },
+    ],
+  },
 ] as const;
+
+const FILTER_STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "edit", label: "Edit" },
+  { value: "published", label: "Published" },
+] as const satisfies readonly { value: DropletStatus; label: string }[];
 
 const FILTER_TYPE_OPTIONS = [
   { value: "knowledge", label: "Knowledge" },
@@ -113,6 +133,11 @@ const FILTER_FOCUS_AREA_OPTIONS = [
 
 const TYPE_VALUES = new Set(["knowledge", "skill"]);
 const FOCUS_AREA_VALUES = new Set(["personal", "technical", "professional"]);
+const STATUS_VALUES = new Set<string>(
+  FILTER_STATUS_OPTIONS.map((o) => o.value),
+);
+
+const timeOf = (iso?: string) => (iso ? new Date(iso).getTime() : 0);
 
 // ——— TagsCell ———
 function TagsCell({ tags }: { tags: { id: number; name: string }[] }) {
@@ -379,17 +404,28 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
         sorted.sort((a, b) => a.name.localeCompare(b.name));
       } else if (sort === "title-desc") {
         sorted.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sort === "created-desc") {
+        sorted.sort((a, b) => timeOf(b.createdAt) - timeOf(a.createdAt));
+      } else if (sort === "created-asc") {
+        sorted.sort((a, b) => timeOf(a.createdAt) - timeOf(b.createdAt));
+      } else if (sort === "updated-desc") {
+        sorted.sort((a, b) => timeOf(b.updatedAt) - timeOf(a.updatedAt));
+      } else if (sort === "updated-asc") {
+        sorted.sort((a, b) => timeOf(a.updatedAt) - timeOf(b.updatedAt));
       }
       return sorted;
     },
     filterFn: (d, filters) => {
       const activeTypes = filters.filter((f) => TYPE_VALUES.has(f));
       const activeFocus = filters.filter((f) => FOCUS_AREA_VALUES.has(f));
+      const activeStatuses = filters.filter((f) => STATUS_VALUES.has(f));
+      const statusMatch =
+        activeStatuses.length === 0 || activeStatuses.includes(d.status);
       const typeMatch =
         activeTypes.length === 0 || activeTypes.includes(d.type);
       const focusMatch =
         activeFocus.length === 0 || activeFocus.includes(d.focusArea);
-      return typeMatch && focusMatch;
+      return typeMatch && focusMatch && statusMatch;
     },
   });
 
@@ -430,6 +466,14 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
             </p>
             <FilterCheckboxGroup
               options={FILTER_FOCUS_AREA_OPTIONS}
+              selected={draftFilterTypes}
+              onToggle={toggleDraftFilterType}
+            />
+            <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+              Status
+            </p>
+            <FilterCheckboxGroup
+              options={FILTER_STATUS_OPTIONS}
               selected={draftFilterTypes}
               onToggle={toggleDraftFilterType}
             />
