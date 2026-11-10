@@ -23,6 +23,9 @@ export type StreakTestMode = { test: boolean; offsetDays: number };
 
 export const REAL_STREAK: StreakTestMode = { test: false, offsetDays: 0 };
 
+/** How far the panel's "today" can move from the real one, either way */
+export const MAX_TEST_OFFSET = 400;
+
 /** The panel's mode for this request; the real streak outside one, or off */
 export async function streakTestMode(): Promise<StreakTestMode> {
   if (!streakTestingEnabled()) return REAL_STREAK;
@@ -33,7 +36,7 @@ export async function streakTestMode(): Promise<StreakTestMode> {
     return {
       test: true,
       offsetDays:
-        Number.isInteger(offsetDays) && Math.abs(offsetDays) <= 400
+        Number.isInteger(offsetDays) && Math.abs(offsetDays) <= MAX_TEST_OFFSET
           ? offsetDays
           : 0,
     };
