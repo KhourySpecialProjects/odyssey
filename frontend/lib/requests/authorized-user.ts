@@ -779,56 +779,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
   return { ok: true, error: null, data: null };
 }
 
-// fetching content editors
-export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
-  const pageSize = 100;
-  let page = 1;
-  let allEditors: AuthorizedUser[] = [];
-
-  while (true) {
-    const query = qs.stringify({
-      filters: {
-        roles: {
-          title: {
-            $eq: "Content Editor",
-          },
-        },
-      },
-      fields: ["id", "firstName", "lastName", "email"],
-      populate: {},
-      sort: ["lastName"],
-      pagination: {
-        pageSize,
-        page,
-      },
-    });
-
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
-      {
-        headers: {
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Could not get content editors");
-    }
-
-    const data = await response.json();
-    const editors = flattenAttributes(data.data);
-    allEditors = allEditors.concat(editors);
-
-    if (editors.length < pageSize) break;
-    page++;
-  }
-
-  return allEditors;
-}
-
 /**
  * Resolves a list of emails to authorized user IDs.
  * Creates authorized users for any emails that don't exist yet.

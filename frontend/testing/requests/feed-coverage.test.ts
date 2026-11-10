@@ -2,13 +2,11 @@
  * Coverage gap tests for lib/requests/feed.ts
  *
  * Targets uncovered lines 463-580:
- *   463-531  fetchAnnouncementById — happy path + error path
  *   533-582  fetchUserAnnouncements — happy path + error path + pagination
  *   markAnnouncementRead / markAnnouncementUnread — cache invalidation scope
  */
 
 import {
-  fetchAnnouncementById,
   fetchUserAnnouncements,
   markAnnouncementRead,
   markAnnouncementUnread,
@@ -41,111 +39,6 @@ jest.mock("@/lib/auth/session", () => ({
 jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
-
-// ---------------------------------------------------------------------------
-// fetchAnnouncementById (lines 463-531)
-// ---------------------------------------------------------------------------
-
-describe("fetchAnnouncementById", () => {
-  let fetchMock: jest.MockedFunction<typeof fetch>;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock = mockGlobalFetch();
-    jest.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("fetches and returns announcement data for a given id", async () => {
-    const mockAnnouncement = {
-      id: 7,
-      type: "system",
-      content: "Welcome message",
-      authorized_user: [],
-    };
-
-    jest.mocked(flattenAttributes).mockReturnValueOnce(mockAnnouncement);
-
-    fetchMock.mockResolvedValueOnce(
-      makeFetchResponse({ data: [mockAnnouncement] }),
-    );
-
-    const result = await fetchAnnouncementById(7);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/announcements"),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: expect.stringContaining("Bearer"),
-        }),
-        next: {
-          tags: [CACHE_TAGS.announcements],
-          revalidate: 900,
-        },
-      }),
-    );
-
-    // URL should have id filter embedded in query string
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
-    expect(calledUrl).toContain("announcements?");
-    // qs encodes filters: the id value 7 should appear in the query
-    expect(calledUrl).toContain("7");
-    // ODY-635 R2: the schema relation is `authorized_user` (singular).
-    expect(decodeURIComponent(calledUrl)).toContain(
-      "populate[authorized_user][fields][0]=id",
-    );
-    expect(calledUrl).not.toContain("authorized_users");
-
-    expect(result).toEqual(mockAnnouncement);
-  });
-
-  it("fetches announcement with all populated relations (users, playlist, droplet, group)", async () => {
-    const mockAnnouncementWithRelations = {
-      id: 42,
-      type: "droplet",
-      content: "New droplet announcement",
-      authorized_user: [{ id: 1, email: "user@example.com" }],
-      playlist: { id: 5, name: "Playlist A", slug: "playlist-a" },
-      droplet: { id: 10, name: "Droplet X", slug: "droplet-x" },
-      group: { id: 3, name: "Group Z", slug: "group-z" },
-    };
-
-    jest
-      .mocked(flattenAttributes)
-      .mockReturnValueOnce(mockAnnouncementWithRelations);
-
-    fetchMock.mockResolvedValueOnce(
-      makeFetchResponse({ data: [mockAnnouncementWithRelations] }),
-    );
-
-    const result = await fetchAnnouncementById(42);
-
-    expect(result).toEqual(mockAnnouncementWithRelations);
-  });
-
-  it("throws when fetch fails (error path)", async () => {
-    fetchMock.mockRejectedValueOnce(new Error("Network failure"));
-
-    await expect(fetchAnnouncementById(1)).rejects.toThrow(
-      "Failed to fetch announcement data.",
-    );
-  });
-
-  it("throws when response.json throws (malformed response)", async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: () => Promise.reject(new Error("Invalid JSON")),
-    } as unknown as Response);
-
-    await expect(fetchAnnouncementById(1)).rejects.toThrow(
-      "Failed to fetch announcement data.",
-    );
-  });
-});
 
 // ---------------------------------------------------------------------------
 // fetchUserAnnouncements (lines 533-582)

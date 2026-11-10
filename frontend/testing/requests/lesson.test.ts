@@ -1,6 +1,5 @@
 import {
   addLesson,
-  completeLesson,
   deleteLesson,
   markLessonAsComplete,
   getLessonBySlug,
@@ -531,37 +530,6 @@ describe("Lesson API Functions", () => {
 
       const result = await markLessonAsComplete("enrollment-1", [1, 2], 3);
       expect(result).toBe(false);
-      expect(revalidateTag).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("completeLesson", () => {
-    it("successfully completes a lesson", async () => {
-      const { getCurrentUser } = require("@/lib/auth/session");
-      const {
-        getAuthorizedUserByEmail,
-      } = require("@/lib/requests/authorized-user");
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      } as Response);
-
-      const result = await completeLesson(1, [1, 2, 3]);
-      expect(result).toEqual({ success: true });
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
-    });
-
-    it("handles errors", async () => {
-      fetchMock.mockRejectedValueOnce(new Error("Network error"));
-
-      const result = await completeLesson(1, [1, 2, 3]);
-      expect(result).toEqual({
-        success: false,
-        error: expect.any(Error),
-      });
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });

@@ -519,7 +519,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call("fetchContentCreators", (m) => m.fetchContentCreators()),
     call("fetchWebsiteCreators", (m) => m.fetchWebsiteCreators()),
     call("fetchIsAuthorizedUser", (m) => m.fetchIsAuthorizedUser(EMAIL)),
-    call("fetchContentEditors", (m) => m.fetchContentEditors()),
     call("resolveEmailsToUserIds", (m) => m.resolveEmailsToUserIds([EMAIL])),
     call(
       "updateUserInfo",
@@ -713,7 +712,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   feed: defineModule<typeof import("@/lib/requests/feed")>([
     call("fetchAnnouncements", (m) => m.fetchAnnouncements(1, ["Student"])),
     call("getUnreadAnnouncementCount", (m) => m.getUnreadAnnouncementCount()),
-    call("fetchAnnouncementById", (m) => m.fetchAnnouncementById(1)),
     call("fetchUserAnnouncements", (m) => m.fetchUserAnnouncements(1, 1)),
     call("createFriendAnnouncement", (m) =>
       m.createFriendAnnouncement(DROPLET, USER),
@@ -1132,7 +1130,6 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   },
   lesson: {
     markLessonAsComplete: WRITE,
-    completeLesson: "dead endpoint (plan R5); no such content type",
     deleteLesson: WRITE,
     revalidateLesson: "cache revalidation only, no Strapi call",
   },

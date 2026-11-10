@@ -28,7 +28,7 @@
  *                   enrollInPlaylist, changeEnrollmentRating,
  *                   updateEnrollmentFirstTime, updateViewedLessons,
  *                   recordMissingCompletion, favoriteDroplet
- *                   (markLessonAsComplete, completeLesson and
+ *                   (markLessonAsComplete and
  *                   updateCompletionDate also do, but have no callers)
  *                 ↳ Global tag "enrollments" (sweeps all users):
  *                   updateDroplet (incl. draft saves), deepDeleteDroplet,
