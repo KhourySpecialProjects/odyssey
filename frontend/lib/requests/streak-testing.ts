@@ -10,6 +10,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
   getStreakFor,
   recordStreakDay,
+  reviveStreakDay,
   type StreakLearner,
 } from "@/lib/streak-days";
 import { TEST_STREAK_MAX, testStreakDays } from "@/lib/streak-test-days";
@@ -37,7 +38,7 @@ const settingsSchema = z.object({
   history: z.boolean(),
 });
 
-/** A lesson id for days moved on with a lesson: only the count shows */
+/** A lesson id for the panel's test lessons: only the count shows */
 const TEST_LESSON_ID = 1;
 
 async function learnerOf(user: AuthUser): Promise<StreakLearner> {
@@ -98,6 +99,42 @@ export async function setTestStreak(settings: z.infer<typeof settingsSchema>) {
       );
       await setTestStreakDays(user.id, testStreakDays(parsed.data, today));
       await setStreakTestMode(mode);
+      return mode;
+    }),
+  );
+}
+
+/** The caller's test mode, or a refusal when they haven't set a test streak */
+async function testModeOrRefuse(): Promise<StreakTestMode> {
+  const mode = await streakTestMode();
+  if (!mode.test) throw new PanelError("Set a test streak first");
+  return mode;
+}
+
+/** Finishes a lesson on the test "today", which lights it */
+export async function finishTestLesson() {
+  return withAuth(SYS_ADMIN, (user) =>
+    runPanel(user, async (learner) => {
+      const mode = await testModeOrRefuse();
+      const saved = await recordStreakDay(
+        learner,
+        TEST_LESSON_ID,
+        new Date(),
+        mode,
+      );
+      if (!saved) throw new Error("The test lesson didn't save");
+      return mode;
+    }),
+  );
+}
+
+/** Spends a revive on the test yesterday, as the pill's popover does */
+export async function reviveTestDay() {
+  return withAuth(SYS_ADMIN, (user) =>
+    runPanel(user, async (learner) => {
+      const mode = await testModeOrRefuse();
+      const revived = await reviveStreakDay(learner, new Date(), mode);
+      if (!revived.ok) throw new PanelError(revived.message);
       return mode;
     }),
   );
