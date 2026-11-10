@@ -721,6 +721,8 @@ export interface StreakDayEntry {
   date: string;
   /** The lessons finished for the first time that day */
   lessonIds: number[];
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
   user?: AuthorizedUser;
 }
 

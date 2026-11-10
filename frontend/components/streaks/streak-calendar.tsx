@@ -27,6 +27,7 @@ const monthButton =
 /**
  * The learner's activity a month at a time, back to their first active
  * month. Only the current streak is gold; streaks that ended are grey.
+ * Revived days (ODY-920) count like the rest, with a dashed outline.
  */
 export function StreakCalendar({
   streak,
@@ -36,8 +37,8 @@ export function StreakCalendar({
   const { today, startedOn } = streak;
   const thisMonth = monthOf(today);
   const [month, setMonth] = useState(thisMonth);
-  const lessonsOn = useMemo(
-    () => new Map(streak.days.map((d) => [d.date, d.lessons])),
+  const dayOn = useMemo(
+    () => new Map(streak.days.map((d) => [d.date, d])),
     [streak.days],
   );
   const firstMonth = streak.days.length
@@ -47,8 +48,9 @@ export function StreakCalendar({
   const label = monthLabel(month);
   const weeks = weeksOf(month);
   const isActive = (date: string | null | undefined) =>
-    !!date && date <= today && lessonsOn.has(date);
+    !!date && date <= today && dayOn.has(date);
   const activeDays = weeks.flat().filter(isActive).length;
+  const hasRevived = weeks.flat().some((d) => !!d && dayOn.get(d)?.revived);
 
   return (
     <div>
@@ -99,7 +101,9 @@ export function StreakCalendar({
             <tr key={w}>
               {week.map((date, i) => {
                 if (!date) return <td key={i} className="h-9" />;
-                const lessons = lessonsOn.get(date) ?? 0;
+                const day = dayOn.get(date);
+                const lessons = day?.lessons ?? 0;
+                const revived = !!day?.revived;
                 const active = isActive(date);
                 const live = active && !!startedOn && date >= startedOn;
                 const isToday = date === today;
@@ -107,11 +111,13 @@ export function StreakCalendar({
                 // Back-to-back active days in a row join into one capsule
                 const joinsPrev = active && isActive(week[i - 1]);
                 const joinsNext = active && isActive(week[i + 1]);
-                const detail = active
-                  ? `${lessons} ${lessons === 1 ? "lesson" : "lessons"} completed`
-                  : future
+                const detail = !active
+                  ? future
                     ? ""
-                    : "No activity";
+                    : "No activity"
+                  : revived
+                    ? "Revived"
+                    : `${lessons} ${lessons === 1 ? "lesson" : "lessons"} completed`;
                 return (
                   <td key={i} className="relative h-9 p-0">
                     {active && (
@@ -144,6 +150,8 @@ export function StreakCalendar({
                           (active
                             ? "bg-[#ECAC30] text-[#3A1005] dark:text-[#3A1005]"
                             : "ring-2 ring-sky-700 ring-inset dark:ring-sky-500"),
+                        revived &&
+                          "outline-2 -outline-offset-2 outline-[#B8792A] outline-dashed dark:outline-amber-300",
                       )}
                     >
                       {Number(date.slice(8))}
@@ -160,14 +168,17 @@ export function StreakCalendar({
         </tbody>
       </table>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span>
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <span className="shrink-0">
           <b className="font-semibold text-slate-900 dark:text-slate-100">
             {activeDays}
           </b>{" "}
           active {activeDays === 1 ? "day" : "days"}
         </span>
-        <span className="flex items-center gap-3" aria-hidden="true">
+        <span
+          className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1"
+          aria-hidden="true"
+        >
           <span className="flex items-center gap-1">
             <i className="h-2.5 w-4 rounded-full bg-[#FBEDC4] dark:bg-amber-400/20" />
             Streak
@@ -180,6 +191,12 @@ export function StreakCalendar({
             <i className="h-2.5 w-2.5 rounded-full bg-[#ECAC30]" />
             Today
           </span>
+          {hasRevived && (
+            <span className="flex items-center gap-1">
+              <i className="h-2.5 w-2.5 rounded-full border border-dashed border-[#B8792A] dark:border-amber-300" />
+              Revived
+            </span>
+          )}
         </span>
       </div>
     </div>

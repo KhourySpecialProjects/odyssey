@@ -3,6 +3,9 @@ import {
   litMessage,
   panelMessage,
   pendingMessage,
+  reviveOfferMessage,
+  revivedMessage,
+  revivesLeftText,
   shortDate,
   streakLabel,
   unlockedMessage,
@@ -115,4 +118,28 @@ it.each([
   [100, "This is the final icon. It stays for as long as your streak does."],
 ])("the feed card for day %i", (current, text) => {
   expect(unlockedMessage(current)).toBe(text);
+});
+
+it.each([
+  [2, "2 revives left"],
+  [1, "1 revive left"],
+  [0, "No revives left"],
+])("%i revives reads %p", (left, text) => {
+  expect(revivesLeftText(left)).toBe(text);
+});
+
+it("offers the revive with what it restores", () => {
+  expect(
+    reviveOfferMessage({ date: "2026-11-09", ended: 24, restored: 25 }, 2),
+  ).toEqual({
+    title: "Your 24-day streak ended yesterday.",
+    detail: "Revive it to keep it going: it'll be 25 days. 2 revives left.",
+  });
+});
+
+it("says the streak is back once revived", () => {
+  expect(revivedMessage({ current: 25, revivesLeft: 1 })).toEqual({
+    title: "Streak revived",
+    detail: "It's a 25-day streak again. 1 revive left.",
+  });
 });

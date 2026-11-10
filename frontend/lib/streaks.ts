@@ -92,7 +92,25 @@ export function addDays(date: string, days: number): string {
 }
 
 /** A day the learner finished at least one new lesson */
-export type StreakDay = { date: string; lessons: number };
+export type StreakDay = {
+  date: string;
+  lessons: number;
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
+};
+
+/** Revives each learner gets, for good (ODY-920; backend STREAK_REVIVES) */
+export const STREAK_REVIVES = 2;
+
+/** A revive the learner can spend now: yesterday, missed right after a day that counts */
+export type StreakRevive = {
+  /** The missed day */
+  date: string;
+  /** The streak that ended, through the day before */
+  ended: number;
+  /** The streak once revived, today included if it's lit */
+  restored: number;
+};
 
 export type StreakSummary = {
   /** Days in the current streak: 0 once it has broken */
@@ -108,8 +126,11 @@ export type StreakSummary = {
 export type Streak = StreakSummary & {
   /** The learner's date today, in their time zone */
   today: string;
-  /** Every day with a finished lesson, oldest first */
+  /** Every day that counts (a finished lesson, or revived), oldest first */
   days: StreakDay[];
+  revivesLeft: number;
+  /** Null when there's nothing to revive, or no revives left */
+  revive: StreakRevive | null;
 };
 
 /**
@@ -144,4 +165,31 @@ export function summarizeStreak(dates: string[], today: string): StreakSummary {
   if (!end) return { current: 0, longest, litToday, startedOn: null };
   const startedOn = runFrom(end);
   return { current: length(startedOn, end), longest, litToday, startedOn };
+}
+
+/**
+ * The revive on offer on `today`: only yesterday, only when it was missed
+ * right after a day that counts, and only with a revive left. One revive
+ * covers one day, so a longer gap can't be revived.
+ */
+export function reviveOffer(
+  dates: string[],
+  today: string,
+  revivesLeft: number,
+): StreakRevive | null {
+  const active = new Set(dates);
+  const yesterday = addDays(today, -1);
+  if (revivesLeft < 1 || active.has(yesterday)) return null;
+  // The streak as it stood at the end of the day before yesterday. Today's
+  // date is left out, or it would count as yesterday's (see summarizeStreak).
+  const ended = summarizeStreak(
+    dates.filter((date) => date < yesterday),
+    yesterday,
+  ).current;
+  if (ended === 0) return null;
+  return {
+    date: yesterday,
+    ended,
+    restored: summarizeStreak([...dates, yesterday], today).current,
+  };
 }
