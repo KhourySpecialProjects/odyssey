@@ -1108,6 +1108,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   },
   groups: {
     refreshUserGroups: WRITE,
+    refreshGroup: WRITE,
     updateGroupMembers: WRITE,
     addGroupMembers: WRITE,
     removeGroupMembers: WRITE,
