@@ -203,7 +203,10 @@ export function DropletLessonWrapper({
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
           className={cn(
-            "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
+            "flex w-full flex-col pt-6 transition-[padding] duration-300",
+            expanded || panel === "mentor"
+              ? LESSON_PANEL.contentPanelOpen
+              : LESSON_PANEL.contentClosed,
             expanded && LESSON_PANEL.notesContentPad,
             panel === "mentor" && LESSON_PANEL.mentorContentPad,
           )}

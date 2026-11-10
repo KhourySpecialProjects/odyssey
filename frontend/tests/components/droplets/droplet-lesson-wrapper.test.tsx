@@ -288,6 +288,35 @@ describe("DropletLessonWrapper", () => {
     expect(getNotesByAuthorizedUserAndLesson).not.toHaveBeenCalled();
   });
 
+  describe("content width", () => {
+    const content = (container: HTMLElement) =>
+      container.querySelector(".lesson-wrapper > div") as HTMLElement;
+
+    it("widens the content, capped at max-w-screen-2xl, while both panels are closed", () => {
+      const { container } = render(<DropletLessonWrapper {...props} />);
+      expect(content(container)).toHaveClass(
+        "mx-auto",
+        "max-w-screen-2xl",
+        "px-12",
+      );
+      expect(content(container)).not.toHaveClass("px-40");
+    });
+
+    it("keeps today's layout while Notes is open", () => {
+      const { container } = render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(content(container)).toHaveClass("px-40", "pr-[420px]");
+      expect(content(container)).not.toHaveClass("max-w-screen-2xl");
+    });
+
+    it("keeps today's layout while Mentor is open, so content stays clear of it", () => {
+      useLessonPanelStore.getState().openMentor();
+      const { container } = render(<DropletLessonWrapper {...props} />);
+      expect(content(container)).toHaveClass("px-40", "sm:pr-[420px]");
+      expect(content(container)).not.toHaveClass("max-w-screen-2xl");
+    });
+  });
+
   describe("lesson panels", () => {
     it("swaps Mentor for Notes and keeps the conversation", () => {
       useLessonPanelStore.getState().openMentor();
