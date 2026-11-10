@@ -15,6 +15,8 @@ export type MentorMsg = {
   role: "mentor";
   /** The student message this answers */
   askId: string;
+  /** Set to "explain" for selection asks; absent means "lesson" */
+  kind?: "lesson" | "explain";
   status: "streaming" | "done" | "stopped" | "error";
   /** Raw, with refs: show it through displayAnswer */
   text: string;

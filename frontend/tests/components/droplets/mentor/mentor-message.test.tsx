@@ -10,6 +10,9 @@ import type { MentorMsg } from "@/lib/mentor/chat-types";
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
+jest.mock("@/lib/requests/mentor-feedback", () => ({
+  saveMentorFeedback: jest.fn(),
+}));
 // react-markdown is ESM-only; a stand-in is enough to see what text reaches it
 jest.mock("react-markdown", () => ({
   __esModule: true,
@@ -180,15 +183,22 @@ describe("MentorMessage", () => {
     expect(onSave).toHaveBeenCalledTimes(2);
   });
 
-  it("shows thumbs only when onRate is passed", async () => {
+  it("shows thumbs only with feedback, and only on a finished answer", () => {
     const { unmount } = renderMessage(mentorMsg());
     expect(screen.queryByRole("button", { name: "Good answer" })).toBeNull();
     unmount();
 
-    const onRate = jest.fn();
-    renderMessage(mentorMsg(), { onRate });
-    await userEvent.click(screen.getByRole("button", { name: "Good answer" }));
-    expect(onRate).toHaveBeenCalledWith("up");
+    const feedback = { dropletId: 3, lessonId: 4 };
+    const second = renderMessage(mentorMsg({ status: "stopped" }), {
+      feedback,
+    });
+    expect(screen.queryByRole("button", { name: "Good answer" })).toBeNull();
+    second.unmount();
+
+    renderMessage(mentorMsg(), { feedback });
+    expect(
+      screen.getByRole("button", { name: "Good answer" }),
+    ).toBeInTheDocument();
   });
 });
 

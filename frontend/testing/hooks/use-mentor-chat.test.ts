@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import posthog from "posthog-js";
 import { useMentorChat, type MentorAsk } from "@/hooks/use-mentor-chat";
 import {
   mentorCitation,
@@ -372,4 +373,44 @@ describe("useMentorChat", () => {
 
     expect(signal?.aborted).toBe(true);
   });
+
+  it("fires mentor_asked once per accepted ask, not on retry or a refused ask", async () => {
+    jest.mocked(posthog.capture).mockClear();
+    fetchMock.mockResolvedValueOnce(
+      mentorHttpErrorResponse(500, { error: "internal", message: "Oops" }),
+    );
+    const { result } = setup();
+    await ask(result, "Why?");
+    answers([mentorText("Because"), mentorDone()]);
+    act(() => result.current.ask({ kind: "lesson", message: "   " }));
+    act(() => result.current.retry(lastAnswer(result.current.messages).id));
+    await waitFor(() => expect(result.current.streaming).toBe(false));
+
+    expect(posthog.capture).toHaveBeenCalledTimes(1);
+    expect(posthog.capture).toHaveBeenCalledWith("mentor_asked", {
+      kind: "lesson",
+      droplet_id: 3,
+      lesson_id: 9,
+    });
+  });
+
+  it.each<[MentorAsk]>([
+    [{ kind: "lesson", message: "Why?" }],
+    [{ kind: "explain", selection: "LEFT JOIN" }],
+  ])(
+    "tags the answer and mentor_asked with the ask's kind: %j",
+    async (input) => {
+      jest.mocked(posthog.capture).mockClear();
+      answers();
+      const { result } = setup();
+      await ask(result, input);
+
+      expect(lastAnswer(result.current.messages).kind).toBe(input.kind);
+      expect(posthog.capture).toHaveBeenCalledWith("mentor_asked", {
+        kind: input.kind,
+        droplet_id: 3,
+        lesson_id: 9,
+      });
+    },
+  );
 });
