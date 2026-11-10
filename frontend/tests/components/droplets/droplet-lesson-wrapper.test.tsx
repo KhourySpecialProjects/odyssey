@@ -202,6 +202,83 @@ describe("DropletLessonWrapper", () => {
     );
   });
 
+  describe("notes panel close animation", () => {
+    const state = () => screen.getByTestId("notes-panel").dataset.state;
+    const mockReducedMotion = (matches: boolean) =>
+      jest.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches,
+            media: query,
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+          }) as unknown as MediaQueryList,
+      );
+
+    afterEach(() => {
+      jest.useRealTimers();
+      mockReducedMotion(false);
+    });
+
+    it("is closed until opened, then open", () => {
+      render(<DropletLessonWrapper {...props} />);
+      expect(state()).toBe("closed");
+
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(state()).toBe("open");
+    });
+
+    it("plays the closing state, then closes when the animation ends", () => {
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(state()).toBe("closing");
+
+      fireEvent.animationEnd(screen.getByTestId("notes-panel"));
+      expect(state()).toBe("closed");
+    });
+
+    it("closes after the animation time even if animationend never fires", () => {
+      jest.useFakeTimers();
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(state()).toBe("closing");
+
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(state()).toBe("closed");
+    });
+
+    it("shows the panel open when reopened during the closing animation", () => {
+      jest.useFakeTimers();
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(state()).toBe("closing");
+
+      fireEvent.click(screen.getByText("Toggle notes"));
+      expect(state()).toBe("open");
+
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(state()).toBe("open");
+    });
+
+    it("closes at once for reduced motion", () => {
+      mockReducedMotion(true);
+      render(<DropletLessonWrapper {...props} />);
+      fireEvent.click(screen.getByText("Toggle notes"));
+
+      fireEvent.click(screen.getByText("Toggle notes"));
+
+      expect(state()).toBe("closed");
+    });
+  });
+
   it("never renders the notes panel without an enrollment", () => {
     render(<DropletLessonWrapper {...props} enrollmentId={undefined} />);
 

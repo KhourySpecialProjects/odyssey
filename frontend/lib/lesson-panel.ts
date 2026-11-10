@@ -7,5 +7,7 @@ export const LESSON_PANEL = {
     "fixed inset-0 z-[60] w-full sm:inset-auto sm:top-[107px] sm:right-0 sm:z-40 sm:h-[calc(100vh-107px)] sm:w-[380px] sm:min-w-[380px]",
   notesContentPad: "pr-[420px]",
   mentorContentPad: "sm:pr-[420px]",
+  // Slightly over the 300ms slide in globals.css (.sliding-notes-bar)
+  closeFallbackMs: 350,
   toggleRight: "right-[360px]",
 } as const;

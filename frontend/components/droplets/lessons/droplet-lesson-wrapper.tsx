@@ -112,6 +112,32 @@ export function DropletLessonWrapper({
     setNotesBarOpened(true);
   }
 
+  // The panel stays mounted (so NotesBar keeps its state), so closing it needs
+  // its own phase: "closing" plays the slide-out, then it goes "closed".
+  const [closing, setClosing] = useState(false);
+  const wasExpanded = useRef(false);
+  useEffect(() => {
+    if (expanded) {
+      setClosing(false);
+    } else if (wasExpanded.current) {
+      const reduced = window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      setClosing(!reduced);
+    }
+    wasExpanded.current = expanded;
+  }, [expanded]);
+  // animationend is the normal exit; the timer covers it never firing
+  useEffect(() => {
+    if (!closing) return;
+    const timer = setTimeout(
+      () => setClosing(false),
+      LESSON_PANEL.closeFallbackMs,
+    );
+    return () => clearTimeout(timer);
+  }, [closing]);
+  const panelState = expanded ? "open" : closing ? "closing" : "closed";
+
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
       userId,
@@ -214,12 +240,19 @@ export function DropletLessonWrapper({
         {enrollmentId && (
           <>
             <div
+              data-testid="notes-panel"
+              data-state={panelState}
+              onAnimationEnd={(e) => {
+                if (e.target === e.currentTarget && panelState === "closing")
+                  setClosing(false);
+              }}
               className={cn(
                 "fixed top-[107px] right-0 border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
                 LESSON_PANEL.width,
                 "sliding-notes-bar z-40 overflow-y-auto",
                 "h-[calc(100vh-107px)]",
-                expanded ? "visible" : "invisible",
+                panelState === "closed" ? "invisible" : "visible",
+                panelState === "closing" && "pointer-events-none",
               )}
             >
               <div className="flex items-center justify-end border-b border-slate-200 p-4 dark:border-slate-500">
