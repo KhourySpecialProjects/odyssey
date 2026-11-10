@@ -44,7 +44,7 @@ export function PromptPreview({
   );
 
   return (
-    <Collapsible className="space-y-3">
+    <Collapsible className="space-y-3 rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] p-5 md:p-6 dark:border-slate-600 dark:bg-slate-800">
       <CollapsibleTrigger className="text-sm font-medium underline-offset-4 hover:underline">
         Preview prompt
       </CollapsibleTrigger>
@@ -54,9 +54,17 @@ export function PromptPreview({
           value={level}
           onValueChange={(v) => v && setLevel(v as PromptLevel)}
           aria-label="Prompt level"
+          className="inline-flex h-[45px] items-center space-x-0 rounded-[97px] border-[#D0D5DD] bg-[#fcfcfd] p-0 dark:border-slate-600 dark:bg-slate-800"
         >
-          <ToggleGroupItem value="lesson">Lesson</ToggleGroupItem>
-          <ToggleGroupItem value="overall">Overall</ToggleGroupItem>
+          {(["lesson", "overall"] as const).map((v) => (
+            <ToggleGroupItem
+              key={v}
+              value={v}
+              className="mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-normal text-[#202630] hover:bg-transparent hover:text-[#2D7597] data-[state=on]:bg-[#2D7597] data-[state=on]:text-white data-[state=on]:hover:bg-[#2D7597] data-[state=on]:hover:text-white dark:text-slate-300 dark:hover:bg-transparent dark:data-[state=on]:bg-[#2D7597] dark:data-[state=on]:text-white"
+            >
+              {v === "lesson" ? "Lesson" : "Overall"}
+            </ToggleGroupItem>
+          ))}
         </ToggleGroup>
         {sections.map((s, i) => (
           <div
