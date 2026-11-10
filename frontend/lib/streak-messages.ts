@@ -3,6 +3,7 @@ import {
   streakIconIndex,
   type Streak,
   type StreakIconInfo,
+  type StreakRevive,
 } from "@/lib/streaks";
 
 // What the streak UI says (ODY-919), shared by the header pill, the lesson
@@ -91,4 +92,31 @@ export function unlockedMessage(current: number): string {
   return next
     ? `Next up: ${next.name} on day ${next.day}. Finish a lesson each day to keep it going.`
     : "This is the final icon. It stays for as long as your streak does.";
+}
+
+/** "2 revives left", "1 revive left" or "No revives left" (ODY-920) */
+export function revivesLeftText(left: number): string {
+  if (left < 1) return "No revives left";
+  return `${left} ${left === 1 ? "revive" : "revives"} left`;
+}
+
+/** The popover's offer to revive yesterday */
+export function reviveOfferMessage(
+  revive: StreakRevive,
+  revivesLeft: number,
+): Message {
+  return {
+    title: `Your ${revive.ended}-day streak ended yesterday.`,
+    detail: `Revive it to keep it going: it'll be ${days(revive.restored)}. ${revivesLeftText(revivesLeft)}.`,
+  };
+}
+
+/** The toast once revived */
+export function revivedMessage(
+  streak: Pick<Streak, "current" | "revivesLeft">,
+): Message {
+  return {
+    title: "Streak revived",
+    detail: `It's a ${streak.current}-day streak again. ${revivesLeftText(streak.revivesLeft)}.`,
+  };
 }

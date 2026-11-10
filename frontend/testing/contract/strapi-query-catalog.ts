@@ -402,6 +402,20 @@ const MENTOR_SETTING_ROUTES = routes([
   ["GET", /^\/groups$/, list(ent(7))],
 ]);
 
+const STREAK_ROUTES = routes([
+  ME_ROUTE,
+  [
+    "GET",
+    /^\/streak-days$/,
+    list(ent(1, { date: "2026-11-10", lessonIds: [1, 2], revived: false })),
+  ],
+  [
+    "POST",
+    /^\/streak-days\/revive$/,
+    { data: { date: "2026-11-09", revivesLeft: 1, added: true } },
+  ],
+]);
+
 const OVERVIEW_SCAN_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
   ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
@@ -920,18 +934,8 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
   ]),
   streaks: defineModule<typeof import("@/lib/requests/streaks")>([
-    call(
-      "getMyStreak",
-      (m) => m.getMyStreak(),
-      routes([
-        ME_ROUTE,
-        [
-          "GET",
-          /^\/streak-days$/,
-          list(ent(1, { date: "2026-11-10", lessonIds: [1, 2] })),
-        ],
-      ]),
-    ),
+    call("getMyStreak", (m) => m.getMyStreak(), STREAK_ROUTES),
+    call("reviveStreak", (m) => m.reviveStreak(), STREAK_ROUTES),
   ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),

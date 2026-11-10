@@ -2056,7 +2056,7 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
 export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
   collectionName: 'streak_days';
   info: {
-    description: 'A day a learner finished at least one new lesson, in their own time zone (ODY-918)';
+    description: 'A day a learner finished at least one new lesson, or revived (ODY-920), in their own time zone (ODY-918)';
     displayName: 'Streak Day';
     pluralName: 'streak-days';
     singularName: 'streak-day';
@@ -2082,6 +2082,7 @@ export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    revived: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

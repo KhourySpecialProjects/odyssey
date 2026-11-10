@@ -4,6 +4,7 @@ import {
   addDays,
   DEFAULT_STREAK_TIME_ZONE,
   localDate,
+  reviveOffer,
   STREAK_ICONS,
   streakIconIndex,
   streakIconSrc,
@@ -174,5 +175,51 @@ describe("summarizeStreak", () => {
     },
   ])("$name", ({ dates, expected, ...rest }) => {
     expect(summarizeStreak(dates, rest.today ?? today)).toEqual(expected);
+  });
+});
+
+describe("reviveOffer", () => {
+  const today = "2026-11-10";
+  // A 5-day streak through 8 Nov, so 9 Nov (yesterday) was missed
+  const ended = [
+    "2026-11-04",
+    "2026-11-05",
+    "2026-11-06",
+    "2026-11-07",
+    "2026-11-08",
+  ];
+
+  it.each([
+    {
+      name: "yesterday, missed after a streak",
+      dates: ended,
+      expected: { date: "2026-11-09", ended: 5, restored: 6 },
+    },
+    {
+      name: "yesterday, with today already lit",
+      dates: [...ended, today],
+      expected: { date: "2026-11-09", ended: 5, restored: 7 },
+    },
+    {
+      name: "nothing when yesterday counts",
+      dates: [...ended, "2026-11-09"],
+      expected: null,
+    },
+    {
+      name: "nothing after a two-day gap",
+      dates: ended.slice(0, 4),
+      expected: null,
+    },
+    {
+      name: "nothing without a streak to save",
+      dates: [today],
+      expected: null,
+    },
+  ])("$name", ({ dates, expected }) => {
+    expect(reviveOffer(dates, today, 2)).toEqual(expected);
+  });
+
+  it("offers nothing with no revives left", () => {
+    expect(reviveOffer(ended, today, 0)).toBeNull();
   });
 });
