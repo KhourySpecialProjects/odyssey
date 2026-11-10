@@ -58,7 +58,7 @@ const reviewerIdOf = (key: string) => Number(key.split(':')[1]);
 
 /**
  * Copies a sent review's unresolved top-level comments into a new open review.
- * Each copy points at the comment as first written and keeps its addressed mark (ODY-807).
+ * Each copy points at the comment as first written (ODY-807).
  */
 async function carryComments(
   sent: Row,
@@ -88,7 +88,6 @@ async function carryComments(
         field: c.field,
         anchor: c.anchor,
         body: c.body,
-        addressedAt: c.addressedAt ?? null,
         carriedFrom: c.carriedFrom?.documentId ?? c.documentId,
         ...(c.lesson ? { lesson: c.lesson.documentId } : {}),
         ...(c.author ? { author: c.author.documentId } : {}),

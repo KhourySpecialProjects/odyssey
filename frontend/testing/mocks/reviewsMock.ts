@@ -49,7 +49,6 @@ export const mockReviewComment: ReviewComment = {
   anchor: mockReviewAnchor,
   body: "Consider a clearer example here.",
   resolvedAt: null,
-  addressedAt: null,
   parent: null,
 };
 

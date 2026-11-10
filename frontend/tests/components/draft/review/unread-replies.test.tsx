@@ -114,7 +114,6 @@ describe("the strips", () => {
       <FeedbackStrip
         review={{ round: 1, sentAt: null, reviewer: null, summaryNote: null }}
         total={3}
-        addressed={0}
         newReplies={1}
       />,
     );

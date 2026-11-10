@@ -37,7 +37,6 @@ export function commentCounts(
   pending: number;
   carried: number;
   carriedRound: number | null;
-  addressed: number;
 } {
   const unsent = reviewState === undefined || reviewState === "open";
   const open = comments.filter((c) => !isResolved(c));
@@ -48,7 +47,6 @@ export function commentCounts(
     pending: unsent ? open.length : 0,
     carried: open.filter((c) => carriedRound(c) !== null).length,
     carriedRound: rounds.size === 1 ? [...rounds][0] : null,
-    addressed: open.filter((c) => !!c.addressedAt).length,
   };
 }
 
@@ -59,15 +57,12 @@ export function commentCounts(
 export const carriedRound = (comment: ReviewComment): number | null =>
   comment.carriedFrom ? comment.carriedFrom.review?.round ?? 0 : null;
 
-/** What a tag adds for a screen reader: carried from a round, marked addressed, new replies */
+/** What a tag adds for a screen reader: carried from a round, new replies */
 export function carriedNotes(comment: ReviewComment, unseen = false): string[] {
   const round = carriedRound(comment);
   return [
     ...(round !== null
       ? [round > 0 ? `carried from round ${round}` : "carried over"]
-      : []),
-    ...(comment.addressedAt && !isResolved(comment)
-      ? ["marked addressed"]
       : []),
     ...(unseen ? ["new replies"] : []),
   ];
@@ -102,14 +97,12 @@ export function commentStripText(
     pending,
     carried = 0,
     carriedRound = null,
-    addressed = 0,
     newReplies = 0,
   }: {
     total: number;
     pending: number;
     carried?: number;
     carriedRound?: number | null;
-    addressed?: number;
     newReplies?: number;
   },
   place = "this lesson",
@@ -118,7 +111,6 @@ export function commentStripText(
     commentCountText(total, place),
     pendingText(pending),
     carriedText(carried, carriedRound),
-    addressedText(addressed),
     newReplies > 0 ? newRepliesText(newReplies) : null,
   ]
     .filter(Boolean)
@@ -130,10 +122,6 @@ export const carriedText = (carried: number, round: number | null) =>
   carried > 0
     ? `${carried} carried over from ${round ? `round ${round}` : "earlier rounds"}`
     : null;
-
-/** "2 marked addressed by the creator", or null with none (ODY-807) */
-export const addressedText = (addressed: number) =>
-  addressed > 0 ? `${addressed} marked addressed by the creator` : null;
 
 /** The id a comment's mark is drawn with (data-anchor-id) */
 export const markIdFor = (comment: ReviewComment) => `comment-${comment.id}`;

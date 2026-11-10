@@ -76,14 +76,8 @@ interface SectionCommentsProps {
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
-  /**
-   * The creator reading sent feedback (ODY-807): the heading takes no new
-   * comment, and cards offer `onAddress` when given
-   */
+  /** The creator reading sent feedback (ODY-807): the heading takes no new comment */
   readOnly?: boolean;
-  /** Cards use the creator's wording; reviewers get the reviewer's. */
-  forCreator?: boolean;
-  onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies: the creator's on any comment, a reviewer's on a carried one */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   replyEdits?: ReplyEdits;
@@ -111,8 +105,6 @@ export function SectionComments({
   litMarkId,
   onLitChange,
   readOnly = false,
-  forCreator = false,
-  onAddress,
   onReply,
   replyEdits,
   children,
@@ -349,7 +341,6 @@ export function SectionComments({
             number={number}
             pending={pending}
             resolved={resolved}
-            addressed={!!comment.addressedAt}
             unseen={unseen}
             lit={litMarkId === markId || card?.commentId === comment.id}
             expanded={card?.commentId === comment.id}
@@ -407,10 +398,6 @@ export function SectionComments({
           onResolve={(resolved) => onResolve(cardComment.id, resolved)}
           onClose={() => closeCard(cardComment.id)}
           meta={readOnly ? undefined : carriedMeta(cardComment, canChange)}
-          forCreator={forCreator}
-          onAddress={
-            onAddress && ((addressed) => onAddress(cardComment.id, addressed))
-          }
           onReply={
             onReply && (readOnly || cardComment.carriedFrom)
               ? (body) => onReply(cardComment.id, body)

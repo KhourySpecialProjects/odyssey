@@ -23,7 +23,6 @@ const comment = {
   anchor,
   body: "Fix",
   resolvedAt: null,
-  addressedAt: null,
   replies: [],
 };
 const sent = { id: 7, round: 1, state: "sent" as const, comments: [comment] };

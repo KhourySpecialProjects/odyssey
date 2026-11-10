@@ -66,13 +66,9 @@ interface FeedbackLayerProps {
   blockFor: (blockId: string) => TagBlock | undefined;
   /** How many blocks a comment across blocks spans, for its tag */
   blocksFor?: (anchor: ReviewAnchor) => number;
-  /** Absent once the feedback can't change (the draft is back in review) */
-  onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   /** Replies stay open after the draft goes back in review (ODY-881) */
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   replyEdits?: ReplyEdits;
-  /** False for a reviewer reading the shared feedback */
-  forCreator?: boolean;
   /** The mark lit by hovering it or its tag */
   litMarkId: string | null;
   onLitChange: (markId: string | null) => void;
@@ -98,10 +94,8 @@ export function FeedbackLayer({
   outdatedIds,
   blockFor,
   blocksFor,
-  onAddress,
   onReply,
   replyEdits,
-  forCreator = true,
   litMarkId,
   onLitChange,
   children,
@@ -286,7 +280,6 @@ export function FeedbackLayer({
               number={number}
               pending={false}
               resolved={isResolved(comment)}
-              addressed={!!comment.addressedAt}
               unseen={unseen}
               lit={litMarkId === markId || card?.commentId === comment.id}
               expanded={card?.commentId === comment.id}
@@ -332,15 +325,9 @@ export function FeedbackLayer({
           anchor={card.position}
           canChange={false}
           focusOnOpen={card.focus}
-          forCreator={forCreator}
           onEdit={refused}
           onDelete={refused}
           onResolve={refused}
-          onAddress={
-            onAddress &&
-            ((addressed) =>
-              withClosedNotice(onAddress)(cardComment.id, addressed))
-          }
           onReply={
             onReply &&
             ((body) => withClosedNotice(onReply)(cardComment.id, body))
@@ -353,7 +340,7 @@ export function FeedbackLayer({
   );
 }
 
-/** Mark addressed, saying so when the feedback can no longer change */
+/** A reply, saying so when the feedback can no longer change */
 export const withClosedNotice =
   <A,>(act: (id: number, arg: A) => Promise<CommentOutcome>) =>
   async (id: number, arg: A): Promise<CommentOutcome> => {

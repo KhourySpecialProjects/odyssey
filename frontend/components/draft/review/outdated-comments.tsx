@@ -17,13 +17,11 @@ export interface OutdatedCard {
   onEdit: (id: number, body: string) => Promise<CommentOutcome>;
   onDelete: (id: number) => Promise<CommentOutcome>;
   onResolve: (id: number, resolved: boolean) => Promise<CommentOutcome>;
-  onAddress?: (id: number, addressed: boolean) => Promise<CommentOutcome>;
   onReply?: (id: number, body: string) => Promise<CommentOutcome>;
   replyEdits?: ReplyEdits;
   /** A reviewer replies only on a comment that was sent before (G18) */
   replyOnCarried?: boolean;
   meta?: (comment: ReviewComment) => ReactNode;
-  forCreator?: boolean;
 }
 
 /** Comments whose text was edited away (ODY-806, D11), listed under the strip; each opens its card. */
@@ -68,7 +66,6 @@ export function OutdatedComments({
 
   if (comments.length === 0) return null;
   const openComment = open && comments.find((c) => c.id === open.id);
-  const onAddressCard = card?.onAddress;
   const onReplyCard = card?.onReply;
 
   // Esc returns focus to the item; a click elsewhere only if focus was lost
@@ -196,14 +193,9 @@ export function OutdatedComments({
           anchor={open.position}
           canChange={card.canChange}
           meta={card.meta?.(openComment)}
-          forCreator={card.forCreator}
           onEdit={(body) => card.onEdit(openComment.id, body)}
           onDelete={() => card.onDelete(openComment.id)}
           onResolve={(resolved) => card.onResolve(openComment.id, resolved)}
-          onAddress={
-            onAddressCard &&
-            ((addressed) => onAddressCard(openComment.id, addressed))
-          }
           onReply={
             onReplyCard && (!card.replyOnCarried || openComment.carriedFrom)
               ? (body) => onReplyCard(openComment.id, body)
