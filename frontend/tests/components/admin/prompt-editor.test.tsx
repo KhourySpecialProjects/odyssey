@@ -174,7 +174,9 @@ describe("PromptEditor", () => {
 
   it("renders the preview from unsaved text only when criteria is passed", async () => {
     const { unmount } = render(
-      <PromptEditor initial={initial} custom={custom} criteria={[]} />,
+      <TooltipProvider>
+        <PromptEditor initial={initial} custom={custom} criteria={[]} />
+      </TooltipProvider>,
     );
     fireEvent.change(box(/^Lesson scope/), {
       target: { value: "UNSAVED-SCOPE" },
