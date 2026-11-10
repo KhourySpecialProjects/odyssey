@@ -9,6 +9,7 @@ import {
 export const DROPLET_UID = 'api::droplet.droplet';
 export const LESSON_UID = 'api::lesson.lesson';
 export const ENROLLMENT_UID = 'api::enrollment.enrollment';
+export const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 
 /** Document Service populate for a lesson's blocks: one `on` fragment per dynamic-zone component. */
 export const LESSON_BLOCKS_POPULATE = {
@@ -306,6 +307,23 @@ export async function applyPublishEdit(ctx: PublishEditContext): Promise<{
   };
 }
 
+/** Re-points the draft's overview scans at the original, so its scan history carries over. */
+export async function moveOverviewScansToLive(
+  ctx: PublishEditContext,
+): Promise<void> {
+  assertInTransaction('moveOverviewScansToLive');
+  const scans = await strapi.documents(OVERVIEW_SCAN_UID).findMany({
+    filters: { droplet: { id: ctx.draft.id } },
+    fields: ['id'],
+  });
+  for (const scan of scans) {
+    await strapi.documents(OVERVIEW_SCAN_UID).update({
+      documentId: scan.documentId,
+      data: { droplet: ctx.original.documentId } as any,
+    });
+  }
+}
+
 /** Deletes the draft's own lessons (never one shared with another droplet), then the draft. */
 export async function deleteEditDraft(ctx: PublishEditContext): Promise<void> {
   assertInTransaction('deleteEditDraft');
@@ -338,6 +356,7 @@ export async function publishEdit(input: {
     }
     const { lessonMap, counts } = await applyPublishEdit(ctx);
     await moveReviewsToLive(ctx, lessonMap);
+    await moveOverviewScansToLive(ctx);
     await deleteEditDraft(ctx);
     const { enrollmentsMoved, ...lessons } = counts;
     return {

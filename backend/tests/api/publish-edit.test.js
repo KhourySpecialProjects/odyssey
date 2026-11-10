@@ -8,10 +8,12 @@ const {
   USER_UID,
   unique,
   REVIEW_UID,
+  OVERVIEW_SCAN_UID,
   REVIEW_COMMENT_UID,
   REVIEW_SCORE_UID,
   REVIEW_CRITERION_UID,
   reviewData,
+  overviewScanData,
   reviewCommentData,
   reviewScoreData,
   dropletData,
@@ -978,5 +980,68 @@ describe('reviews on publish-edit', () => {
     }
 
     expect(await snapshot(s)).toEqual(before);
+  });
+});
+
+const addScans = (dropletDocumentId, count) =>
+  Promise.all(
+    Array.from({ length: count }, (_, i) =>
+      strapi.documents(OVERVIEW_SCAN_UID).create({
+        data: overviewScanData({
+          droplet: dropletDocumentId,
+          ranAt: new Date(Date.UTC(2026, 0, 1 + i)).toISOString(),
+        }),
+      }),
+    ),
+  );
+const scanDropletIds = async (scans) =>
+  (
+    await strapi.documents(OVERVIEW_SCAN_UID).findMany({
+      filters: { id: { $in: scans.map((x) => x.id) } },
+      populate: { droplet: { fields: ['id'] } },
+    })
+  ).map((x) => x.droplet?.id ?? null);
+
+describe('publish-edit overview scans (ODY-875)', () => {
+  it('re-points the draft scans at the original, so its latest scan is the newest', async () => {
+    const s = await setup();
+    const [liveScan] = await addScans(s.original.documentId, 1);
+    const draftScans = await addScans(s.draft.documentId, 3);
+
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+
+    expect(res.status).toBe(200);
+    expect(await scanDropletIds(draftScans)).toEqual(
+      Array(3).fill(s.original.id),
+    );
+    const latest = await strapi.documents(OVERVIEW_SCAN_UID).findFirst({
+      filters: { droplet: { id: s.original.id } },
+      sort: ['ranAt:desc', 'id:desc'],
+    });
+    expect(latest.id).toBe(draftScans[2].id);
+    expect(await scanDropletIds([liveScan])).toEqual([s.original.id]);
+  });
+
+  it('publishes a draft with no scans as before', async () => {
+    const s = await setup();
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+    expect(res.status).toBe(200);
+  });
+
+  it('leaves the scans on the draft when the publish fails', async () => {
+    const s = await setup();
+    const draftScans = await addScans(s.draft.documentId, 2);
+    const spy = failAfter(DROPLET_UID, 'delete');
+    const logSpy = jest.spyOn(strapi.log, 'error').mockImplementation(() => {});
+    try {
+      const res = await publish(s.draft.id, {
+        originalDropletId: s.original.id,
+      });
+      expect(res.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+      logSpy.mockRestore();
+    }
+    expect(await scanDropletIds(draftScans)).toEqual([s.draft.id, s.draft.id]);
   });
 });
