@@ -171,6 +171,26 @@ describe("PromptEditor", () => {
     );
   });
 
+  it("renders the preview from unsaved text only when criteria is passed", async () => {
+    const { unmount } = render(
+      <PromptEditor initial={initial} custom={custom} criteria={[]} />,
+    );
+    fireEvent.change(box(/^Lesson scope/), {
+      target: { value: "UNSAVED-SCOPE" },
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Preview prompt" }),
+    );
+    expect(
+      screen.getByText("UNSAVED-SCOPE", { selector: "pre, div, p" }),
+    ).toBeInTheDocument();
+    unmount();
+    renderEditor();
+    expect(
+      screen.queryByRole("button", { name: "Preview prompt" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("warns on beforeunload only while dirty", () => {
     renderEditor();
     const fire = () => {
