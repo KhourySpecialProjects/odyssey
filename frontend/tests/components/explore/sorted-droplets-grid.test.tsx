@@ -5,6 +5,7 @@ import type { Droplet } from "@/types";
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/explore",
+  useRouter: () => ({ push: jest.fn() }),
   useSearchParams: jest.fn(),
 }));
 
@@ -14,7 +15,10 @@ jest.mock("@/components/droplets/droplet-tile", () => ({
 
 let mockSearchQuery = "";
 jest.mock("@/contexts/SearchContext", () => ({
-  useSearch: () => ({ searchQuery: mockSearchQuery }),
+  useSearch: () => ({
+    searchQuery: mockSearchQuery,
+    setSearchQuery: jest.fn(),
+  }),
 }));
 
 // 20 droplets, 9 per page: pages of 1–9, 10–18 and 19–20
@@ -92,5 +96,59 @@ describe("SortedDropletsGrid paging (ODY-865)", () => {
     mockSearchQuery = query;
     renderGrid("page=2");
     expect(shownNames()).toEqual(expected);
+  });
+});
+
+describe("SortedDropletsGrid empty state reset (ODY-256)", () => {
+  beforeEach(() => {
+    mockSearchQuery = "";
+  });
+
+  it("offers Reset filters when a filter leaves no droplets", () => {
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("focusArea=personal"),
+    );
+    render(
+      <SortedDropletsGrid
+        droplets={[]}
+        completedLessonIds={[]}
+        enrolledDropletIds={[]}
+        ratingsMap={new Map()}
+        dueDates={[]}
+      />,
+    );
+    expect(screen.getByText("No Droplets Found")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Reset filters" }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers Reset filters when the search matches nothing", () => {
+    mockSearchQuery = "no-such-droplet";
+    renderGrid("q=no-such-droplet");
+    expect(
+      screen.getByRole("button", { name: "Reset filters" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Reset filters when nothing is filtered", () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams(""));
+    render(
+      <SortedDropletsGrid
+        droplets={[]}
+        completedLessonIds={[]}
+        enrolledDropletIds={[]}
+        ratingsMap={new Map()}
+        dueDates={[]}
+      />,
+    );
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("does not show it when there are results", () => {
+    renderGrid("focusArea=personal");
+    expect(
+      screen.queryByRole("button", { name: "Reset filters" }),
+    ).not.toBeInTheDocument();
   });
 });

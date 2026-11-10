@@ -5,11 +5,13 @@ export function EmptyState({
   icon,
   title,
   message,
+  action,
   className,
 }: {
   icon: ReactNode;
   title: string;
   message: string;
+  action?: ReactNode;
   className?: string;
 }) {
   return (
@@ -28,6 +30,7 @@ export function EmptyState({
       <p className="mt-1 text-sm text-[#475569] dark:text-slate-400">
         {message}
       </p>
+      {action}
     </div>
   );
 }
