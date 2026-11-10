@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -181,9 +182,9 @@ describe("PromptEditor", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Preview prompt" }),
     );
-    expect(
-      screen.getByText("UNSAVED-SCOPE", { selector: "pre, div, p" }),
-    ).toBeInTheDocument();
+    const preview = screen.getByRole("button", { name: "Preview prompt" })
+      .parentElement as HTMLElement;
+    expect(within(preview).getByText("UNSAVED-SCOPE")).toBeInTheDocument();
     unmount();
     renderEditor();
     expect(

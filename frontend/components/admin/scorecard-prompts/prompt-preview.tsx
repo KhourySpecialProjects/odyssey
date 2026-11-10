@@ -34,7 +34,11 @@ export function PromptPreview({
 }) {
   const [level, setLevel] = useState<PromptLevel>("lesson");
   const sections = systemPromptSections(
-    parts,
+    {
+      instructions: parts.instructions.trim(),
+      lessonScope: parts.lessonScope.trim(),
+      overallScope: parts.overallScope.trim(),
+    },
     level,
     (criteria ?? []).map(toCriterion),
   );
@@ -63,7 +67,7 @@ export function PromptPreview({
             )}
           >
             {s.kind === "fixed" && (
-              <span className="mb-1 block text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+              <span className="mb-1 block text-xs font-semibold text-slate-600 uppercase dark:text-slate-400">
                 Fixed
               </span>
             )}

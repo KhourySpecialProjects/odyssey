@@ -50,7 +50,10 @@ export function RubricChip({
   useEffect(() => cancelClose, []);
 
   const count = criteria?.length ?? 0;
-  const label = `Rubric · ${count} ${count === 1 ? "criterion" : "criteria"}`;
+  const label =
+    criteria === null
+      ? "Rubric · couldn't load"
+      : `Rubric · ${count} ${count === 1 ? "criterion" : "criteria"}`;
 
   return (
     <Popover
@@ -72,8 +75,12 @@ export function RubricChip({
           onFocus={show}
           onBlur={hideIfFocusLeft}
           onClick={(e) => {
-            // Always open: Radix's toggle would close it right after focus opened it.
+            // Mouse and touch clicks always open (focus just did); a key press toggles.
             e.preventDefault();
+            if (open && e.detail === 0) {
+              setOpen(false);
+              return;
+            }
             show();
           }}
         >
@@ -82,7 +89,8 @@ export function RubricChip({
       </PopoverTrigger>
       <PopoverContent
         ref={contentRef}
-        className="w-96 max-w-[90vw] text-sm"
+        aria-label="Rubric"
+        className="max-h-[var(--radix-popover-content-available-height)] w-96 max-w-[90vw] overflow-y-auto text-sm"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
         onPointerEnter={cancelClose}

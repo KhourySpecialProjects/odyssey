@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { PromptPreview } from "@/components/admin/scorecard-prompts/prompt-preview";
@@ -70,6 +70,20 @@ describe("PromptPreview", () => {
     expect(await screen.findByText("OVERALL-CLARITY")).toBeInTheDocument();
   });
 
+  it("trims leading blank lines from the parts", async () => {
+    const user = userEvent.setup();
+    render(
+      <PromptPreview
+        parts={{ ...parts, instructions: "\n\n  TRIMMED-INSTRUCTIONS" }}
+        criteria={criteria}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Preview prompt" }));
+    expect(screen.getByText("TRIMMED-INSTRUCTIONS").textContent).toBe(
+      "TRIMMED-INSTRUCTIONS",
+    );
+  });
+
   it("says 1 criterion for a single one", async () => {
     await open(criteria.slice(0, 1));
     expect(chip()).toHaveTextContent("Rubric · 1 criterion");
@@ -78,7 +92,7 @@ describe("PromptPreview", () => {
   describe("rubric chip", () => {
     it.each([
       ["hover", (u: User) => u.hover(chip())],
-      ["focus", async () => chip().focus()],
+      ["focus", async () => act(() => chip().focus())],
       ["click", (u: User) => u.click(chip())],
     ])("opens on %s with the lesson descriptions", async (_n, act) => {
       const user = await open();
@@ -87,6 +101,16 @@ describe("PromptPreview", () => {
       const dialog = await screen.findByRole("dialog");
       expect(within(dialog).getByText("Clarity")).toBeInTheDocument();
       expect(within(dialog).getByText("LESSON-DEPTH")).toBeInTheDocument();
+    });
+
+    it("closes when Enter is pressed on the open chip", async () => {
+      const user = await open();
+      act(() => chip().focus());
+      await screen.findByRole("dialog", { name: "Rubric" });
+      await user.keyboard("{Enter}");
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
     });
 
     it("stays open after a click, and closes on Escape", async () => {
@@ -125,6 +149,7 @@ describe("PromptPreview", () => {
     it("says so when the rubric didn't load", async () => {
       const user = await open(null);
       await user.click(chip());
+      expect(chip()).toHaveTextContent("Rubric · couldn't load");
       expect(
         await screen.findByText("Couldn't load the rubric."),
       ).toBeInTheDocument();
