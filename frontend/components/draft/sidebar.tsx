@@ -76,6 +76,7 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
+import { revalidateLesson } from "@/lib/requests/lesson";
 import { isFrozenFor, isReviewerFor } from "@/lib/review-roles";
 import { canScan } from "@/lib/overview-scan/access";
 
@@ -386,6 +387,42 @@ export function Sidebar({
   };
 
   const router = useRouter();
+  const previewHref =
+    pathname.startsWith(`/draft/d/${droplet.slug}/`) && !onScanPage
+      ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`, "").split("/")[0]}`
+      : `/d/${droplet.slug}`;
+
+  // Preview must show what was just typed: wait for the editor's pending
+  // autosave (it skips cache revalidation), revalidate, then navigate (ODY-471).
+  const handlePreviewClick = async (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        window.removeEventListener("flush-save-complete", done);
+        clearTimeout(timer);
+        resolve();
+      };
+      // No editor mounted (e.g. overview page) means nobody answers.
+      const timer = setTimeout(done, 5000);
+      window.addEventListener("flush-save-complete", done);
+      window.dispatchEvent(new CustomEvent("flush-save-request"));
+    });
+    await revalidateLesson().catch(() => {});
+    router.push(href);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -830,12 +867,8 @@ export function Sidebar({
                 the sidebar */}
             <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
-                href={
-                  pathname.startsWith(`/draft/d/${droplet.slug}/`) &&
-                  !onScanPage
-                    ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`, "").split("/")[0]}`
-                    : `/d/${droplet.slug}`
-                }
+                href={previewHref}
+                onClick={(e) => handlePreviewClick(e, previewHref)}
                 className="flex h-10 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
                 Preview

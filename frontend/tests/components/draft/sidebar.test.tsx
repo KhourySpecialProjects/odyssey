@@ -9,6 +9,7 @@ import {
 import { Sidebar } from "@/components/draft/sidebar";
 import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { revalidateLesson } from "@/lib/requests/lesson";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
 import { mockReview } from "@/testing/mocks/reviewsMock";
@@ -17,6 +18,10 @@ import type { useSharedSentFeedback } from "@/components/draft/review/review-com
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/lesson", () => ({
+  revalidateLesson: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("next-auth/react", () => ({
@@ -378,6 +383,56 @@ describe("Sidebar", () => {
 
     const previewButton = screen.getByText("Preview");
     expect(previewButton).toBeInTheDocument();
+  });
+
+  describe("Preview waits for the pending autosave (ODY-471)", () => {
+    const renderSidebar = () =>
+      render(
+        <Sidebar
+          user={mockUser as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+        />,
+      );
+
+    it("flushes the autosave, revalidates, then navigates to the preview", async () => {
+      (usePathname as jest.Mock).mockReturnValue(
+        "/draft/d/test-droplet/lesson-1",
+      );
+      const order: string[] = [];
+      mockRouter.push.mockImplementation(() => order.push("push"));
+      (revalidateLesson as jest.Mock).mockImplementation(async () => {
+        order.push("revalidate");
+      });
+      const onFlush = () => {
+        order.push("flush");
+        setTimeout(
+          () => window.dispatchEvent(new CustomEvent("flush-save-complete")),
+          0,
+        );
+      };
+      window.addEventListener("flush-save-request", onFlush);
+      renderSidebar();
+
+      fireEvent.click(screen.getByRole("link", { name: "Preview" }));
+      await waitFor(() => expect(mockRouter.push).toHaveBeenCalled());
+
+      window.removeEventListener("flush-save-request", onFlush);
+      expect(order).toEqual(["flush", "revalidate", "push"]);
+      expect(mockRouter.push).toHaveBeenCalledWith("/d/test-droplet/lesson-1");
+    });
+
+    it("still navigates when no editor answers the flush request", async () => {
+      jest.useFakeTimers();
+      renderSidebar();
+      fireEvent.click(screen.getByRole("link", { name: "Preview" }));
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(6000);
+      });
+      jest.useRealTimers();
+      expect(mockRouter.push).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("Final Overview Scan link", () => {
