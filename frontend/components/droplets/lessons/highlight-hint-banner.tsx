@@ -26,9 +26,10 @@ export function HighlightHintBanner() {
       <span>Select any text to highlight it, take notes, or save quotes.</span>
       <button
         onClick={dismiss}
+        aria-label="Dismiss highlight hint"
         className="ml-auto shrink-0 opacity-60 hover:opacity-100"
       >
-        <IconX className="h-4 w-4" />
+        <IconX className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );

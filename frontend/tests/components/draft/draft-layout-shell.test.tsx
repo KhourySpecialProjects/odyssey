@@ -149,7 +149,8 @@ const show = (props: object = {}) =>
     </DraftLayoutShell>,
   );
 
-const main = () => screen.getByText("page").closest("main")!;
+const main = () =>
+  screen.getByText("page").closest<HTMLElement>("div.mx-auto.w-full.flex-1")!;
 const sidebarOpen = () =>
   screen.getByTestId("sidebar").getAttribute("data-expanded");
 

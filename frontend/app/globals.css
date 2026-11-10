@@ -425,7 +425,8 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   content: attr(data-badge);
 }
 /* Comment tags step back while findings show */
-main:has(.review-finding) .rc-tag:not(:hover):not(:focus-visible) {
+[data-review-panel]:has(.review-finding)
+  .rc-tag:not(:hover):not(:focus-visible) {
   opacity: 0.45;
 }
 /* A comment at a spot: its letters have no line, only the caret beside them,

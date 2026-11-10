@@ -85,7 +85,7 @@ export function FriendSentRequestsBlock({
           size="sm"
           onClick={handleReject}
           className="scale-75 md:scale-100"
-          role="x"
+          aria-label="Cancel request"
         >
           <div className="group relative">
             <X />

@@ -14,12 +14,12 @@ describe("FeedFilter", () => {
     it("renders all announcement type filters", () => {
       render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-      expect(screen.getByRole("droplet")).toBeInTheDocument();
-      expect(screen.getByRole("playlist")).toBeInTheDocument();
-      expect(screen.getByRole("group")).toBeInTheDocument();
-      expect(screen.getByRole("system")).toBeInTheDocument();
-      expect(screen.getByRole("friend")).toBeInTheDocument();
-      expect(screen.getByRole("kudos")).toBeInTheDocument();
+      expect(screen.getByText("Droplet")).toBeInTheDocument();
+      expect(screen.getByText("Playlist")).toBeInTheDocument();
+      expect(screen.getByText("Group")).toBeInTheDocument();
+      expect(screen.getByText("System")).toBeInTheDocument();
+      expect(screen.getByText("Friend")).toBeInTheDocument();
+      expect(screen.getByText("Kudos")).toBeInTheDocument();
     });
 
     it("renders all checkboxes", () => {
@@ -87,7 +87,7 @@ describe("FeedFilter", () => {
       );
 
       const dropletContainer = screen
-        .getByRole("droplet")
+        .getByText("Droplet")
         .closest("div.flex.items-center");
       expect(dropletContainer).toHaveClass("dark:bg-[#266697]");
     });
@@ -98,7 +98,7 @@ describe("FeedFilter", () => {
       );
 
       const playlistContainer = screen
-        .getByRole("playlist")
+        .getByText("Playlist")
         .closest("div.flex.items-center");
       expect(playlistContainer).toHaveClass("dark:bg-[#29703B]");
     });
@@ -109,7 +109,7 @@ describe("FeedFilter", () => {
       );
 
       const groupContainer = screen
-        .getByRole("group")
+        .getByText("Group")
         .closest("div.flex.items-center");
       expect(groupContainer).toHaveClass("dark:bg-[#754ABA]");
     });
@@ -120,7 +120,7 @@ describe("FeedFilter", () => {
       );
 
       const systemContainer = screen
-        .getByRole("system")
+        .getByText("System")
         .closest("div.flex.items-center");
       expect(systemContainer).toHaveClass("dark:bg-[#B83028]");
     });
@@ -131,7 +131,7 @@ describe("FeedFilter", () => {
       );
 
       const friendContainer = screen
-        .getByRole("friend")
+        .getByText("Friend")
         .closest("div.flex.items-center");
       expect(friendContainer).toHaveClass("dark:bg-[#C38508]");
     });
@@ -142,7 +142,7 @@ describe("FeedFilter", () => {
       );
 
       const kudosContainer = screen
-        .getByRole("kudos")
+        .getByText("Kudos")
         .closest("div.flex.items-center");
       expect(kudosContainer).toHaveClass("dark:bg-[#B55E0C]");
     });
@@ -306,7 +306,7 @@ describe("FeedFilter", () => {
     it("applies full opacity to checked filters", () => {
       render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-      const dropletLabel = screen.getByRole("droplet").parentElement;
+      const dropletLabel = screen.getByText("Droplet");
       expect(dropletLabel).toHaveClass("opacity-100");
     });
 
@@ -316,7 +316,7 @@ describe("FeedFilter", () => {
       const checkboxes = screen.getAllByRole("checkbox");
       await userEvent.click(checkboxes[0]);
 
-      const dropletLabel = screen.getByRole("droplet").parentElement;
+      const dropletLabel = screen.getByText("Droplet");
       expect(dropletLabel).toHaveClass("opacity-50");
     });
 
@@ -572,18 +572,18 @@ describe("FeedFilter", () => {
     it("renders correct label text for each filter", () => {
       render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-      expect(screen.getByRole("droplet")).toHaveTextContent("Droplet");
-      expect(screen.getByRole("playlist")).toHaveTextContent("Playlist");
-      expect(screen.getByRole("group")).toHaveTextContent("Group");
-      expect(screen.getByRole("system")).toHaveTextContent("System");
-      expect(screen.getByRole("friend")).toHaveTextContent("Friend");
-      expect(screen.getByRole("kudos")).toHaveTextContent("Kudos");
+      expect(screen.getByText("Droplet")).toHaveTextContent("Droplet");
+      expect(screen.getByText("Playlist")).toHaveTextContent("Playlist");
+      expect(screen.getByText("Group")).toHaveTextContent("Group");
+      expect(screen.getByText("System")).toHaveTextContent("System");
+      expect(screen.getByText("Friend")).toHaveTextContent("Friend");
+      expect(screen.getByText("Kudos")).toHaveTextContent("Kudos");
     });
 
     it("applies correct font styling to labels", () => {
       render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-      const dropletLabel = screen.getByRole("droplet").parentElement;
+      const dropletLabel = screen.getByText("Droplet");
       expect(dropletLabel).toHaveClass("text-sm", "font-medium");
     });
   });

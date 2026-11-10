@@ -77,22 +77,34 @@ export function ProfileBlock({
           </DialogTitle>
           <div className="flex justify-center space-x-2">
             {otherUser.linkedin && (
-              <Link href={otherUser.linkedin} legacyBehavior role="link">
-                <a target="_blank" rel="noopener noreferrer">
+              <Link href={otherUser.linkedin} legacyBehavior>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn profile (opens in new tab)"
+                >
                   <Linkedin />
                 </a>
               </Link>
             )}
             {otherUser.github && (
-              <Link href={otherUser.github} legacyBehavior role="link">
-                <a target="_blank" rel="noopener noreferrer">
+              <Link href={otherUser.github} legacyBehavior>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub profile (opens in new tab)"
+                >
                   <Github />
                 </a>
               </Link>
             )}
             {otherUser.website && (
-              <Link href={otherUser.website} legacyBehavior role="link">
-                <a target="_blank" rel="noopener noreferrer">
+              <Link href={otherUser.website} legacyBehavior>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Website profile (opens in new tab)"
+                >
                   <LinkIcon />
                 </a>
               </Link>

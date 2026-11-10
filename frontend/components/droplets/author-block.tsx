@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User2Icon, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 import { AuthorizedUser } from "@/types";
@@ -16,7 +16,6 @@ interface AuthorCardProps {
 }
 
 export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
-  const router = useRouter();
   const { data: session } = useSession();
 
   // Fallback for users who haven't re-logged since the Strapi photo sync was deployed
@@ -25,26 +24,18 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
       ? session?.user?.image ?? undefined
       : undefined;
 
-  const handleClick = () => {
-    router.push(
-      `/prof/${author.email?.slice(0, author.email.indexOf("@")) || ""}`,
-    );
-  };
-
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     onRemove?.();
   };
 
-  return (
-    <div
-      onClick={inDraft ? undefined : handleClick}
-      className={`flex items-center gap-4 p-4 transition-colors ${
-        inDraft
-          ? "cursor-default"
-          : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
-      }`}
-    >
+  const className = `flex items-center gap-4 p-4 transition-colors ${
+    inDraft
+      ? "cursor-default"
+      : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+  }`;
+  const content = (
+    <>
       {inDraft &&
         (onRemove ? (
           <Button
@@ -80,6 +71,17 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
           </p>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return inDraft ? (
+    <div className={className}>{content}</div>
+  ) : (
+    <Link
+      href={`/prof/${author.email?.slice(0, author.email.indexOf("@")) || ""}`}
+      className={className}
+    >
+      {content}
+    </Link>
   );
 }

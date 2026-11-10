@@ -83,7 +83,7 @@ describe("FriendRequestBlock", () => {
       />,
     );
 
-    const approveButton = screen.getByRole("accept");
+    const approveButton = screen.getByRole("button", { name: "Accept" });
     fireEvent.click(approveButton);
 
     await waitFor(() => {
@@ -99,7 +99,7 @@ describe("FriendRequestBlock", () => {
 
     render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
 
-    const rejectButton = screen.getByRole("reject");
+    const rejectButton = screen.getByRole("button", { name: "Reject" });
     fireEvent.click(rejectButton);
 
     await waitFor(() => {
@@ -115,7 +115,7 @@ describe("FriendRequestBlock", () => {
 
     render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
 
-    const rejectButton = screen.getByRole("reject");
+    const rejectButton = screen.getByRole("button", { name: "Reject" });
     fireEvent.click(rejectButton);
 
     await waitFor(() => {
@@ -158,7 +158,7 @@ describe("FriendRequestBlock", () => {
         />,
       );
 
-      const approveButton = screen.getByRole("accept");
+      const approveButton = screen.getByRole("button", { name: "Accept" });
       fireEvent.click(approveButton);
 
       expect(rejectFriendRequest).toHaveBeenCalledWith("1", "2");
@@ -169,7 +169,7 @@ describe("FriendRequestBlock", () => {
 
       render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
 
-      const approveButton = screen.getByRole("accept");
+      const approveButton = screen.getByRole("button", { name: "Accept" });
       fireEvent.click(approveButton);
 
       expect(acceptFriendRequest).toHaveBeenCalledWith("1", "2");
@@ -180,7 +180,7 @@ describe("FriendRequestBlock", () => {
 
       render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
 
-      const approveButton = screen.getByRole("accept");
+      const approveButton = screen.getByRole("button", { name: "Accept" });
       fireEvent.click(approveButton);
 
       expect(acceptFriendRequest).toHaveBeenCalledWith("1", "2");

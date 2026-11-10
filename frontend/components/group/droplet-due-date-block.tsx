@@ -84,7 +84,7 @@ export function DropletDueDateBlock({
             name="Save Due Date"
             className="h-8 w-12 bg-sky-500 hover:bg-sky-600 dark:border dark:border-white dark:bg-sky-500 dark:text-white dark:hover:bg-sky-600"
             disabled={!dueDate}
-            role="save"
+            aria-label="Save due date"
           >
             <Check />
           </Button>
@@ -94,7 +94,7 @@ export function DropletDueDateBlock({
               name="Delete Due Date"
               className="h-8 w-12 bg-red-500 hover:bg-red-700 dark:border dark:border-white dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
               disabled={!dueDate}
-              role="delete"
+              aria-label="Delete due date"
             >
               <Trash2Icon />
             </Button>

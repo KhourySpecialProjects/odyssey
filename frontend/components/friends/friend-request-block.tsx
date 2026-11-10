@@ -110,7 +110,7 @@ export function FriendRequestBlock({
           className="scale-75 bg-green-600 text-white hover:bg-green-700 md:scale-100 dark:bg-green-600 dark:hover:bg-green-700"
           size="sm"
           onClick={handleApprove}
-          role="accept"
+          aria-label="Accept"
         >
           <div className="group relative">
             <Check />
@@ -123,7 +123,7 @@ export function FriendRequestBlock({
           className="scale-75 bg-red-600 text-white hover:bg-red-700 md:scale-100 dark:bg-red-600 dark:hover:bg-red-700"
           size="sm"
           onClick={handleReject}
-          role="reject"
+          aria-label="Reject"
         >
           <div className="group relative">
             <X />

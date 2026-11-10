@@ -49,14 +49,14 @@ export function Header({
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4 xl:w-56 xl:shrink-0 xl:justify-center">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild role="banner">
+              <SheetTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
                   className="shrink-0 xl:hidden"
+                  aria-label="Toggle navigation menu"
                 >
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
+                  <Menu className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </SheetTrigger>
               <SheetContent

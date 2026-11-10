@@ -108,6 +108,7 @@ export function FriendSuggestionsBlock({
               size="sm"
               disabled={requested}
               onClick={handleRequest}
+              aria-label="Send request"
               className="block scale-75 bg-sky-600 text-white hover:bg-sky-700 md:hidden dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700"
             >
               <UserRoundPlus />

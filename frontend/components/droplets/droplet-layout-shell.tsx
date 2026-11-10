@@ -38,14 +38,14 @@ export function DropletLayoutShell({
         expanded={expanded}
         setExpanded={setExpanded}
       />
-      <main
+      <div
         className={cn(
           "mx-auto w-full flex-1 items-center justify-center rounded-lg transition-all duration-300",
           expanded ? "xl:pl-64" : "xl:pl-0",
         )}
       >
         {children}
-      </main>
+      </div>
     </div>
   );
 }

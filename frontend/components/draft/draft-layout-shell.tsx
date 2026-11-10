@@ -72,7 +72,7 @@ function ReviewFrame({
   expanded: boolean;
   reviewing: boolean;
   panelMode: "open" | "rail";
-  mainRef: RefObject<HTMLElement>;
+  mainRef: RefObject<HTMLDivElement>;
   onOpen: () => void;
   onCollapse: () => void;
   transcript: ReactNode;
@@ -86,7 +86,7 @@ function ReviewFrame({
   );
   return (
     <>
-      <main
+      <div
         data-review-panel={reviewing ? panelMode : undefined}
         ref={mainRef}
         style={
@@ -105,7 +105,7 @@ function ReviewFrame({
         )}
       >
         {children}
-      </main>
+      </div>
       {reviewing && (
         <ReviewPanelDock
           mode={panelMode}
@@ -182,7 +182,7 @@ export function DraftLayoutShell({
   const drawerOpen = ready && reviewing && panelMode === "open" && !isXl;
 
   // Set on the DOM node: the React 19 runtime Next bundles treats `inert=""` as false
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     mainRef.current?.toggleAttribute("inert", drawerOpen);
   }, [drawerOpen]);

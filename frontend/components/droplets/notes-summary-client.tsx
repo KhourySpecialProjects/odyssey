@@ -92,6 +92,8 @@ export function NotesSummaryClient({
         <button
           className="ml-auto flex justify-end border py-2 font-bold dark:border-slate-500"
           onClick={() => toggleDroplets(enrollment.droplet.id)}
+          aria-expanded={!!openDroplets[enrollment.droplet.id]}
+          aria-label={`${openDroplets[enrollment.droplet.id] ? "Collapse" : "Expand"} notes for ${enrollment.droplet.name}`}
         >
           {openDroplets[enrollment.droplet.id] ? (
             <ChevronDown className="h-5 w-5" />

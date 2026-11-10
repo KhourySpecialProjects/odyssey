@@ -106,7 +106,6 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    role="export"
                     onClick={(e) => {
                       e.preventDefault();
                       exportProgress(playlist.name, playlist.authorized_users);
