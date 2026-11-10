@@ -38,7 +38,7 @@ const NOT_RESPONDING =
 const BROKE_OFF = "The answer broke off. Try again.";
 
 let counter = 0;
-const newId = () =>
+export const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `mentor-msg-${(counter += 1)}`;
 
 /**
@@ -94,7 +94,7 @@ function historyOf(messages: ChatMsg[], upTo: number): MentorTurn[] {
   return turns.slice(-MENTOR_HISTORY_MAX);
 }
 
-async function failureOf(res: Response) {
+export async function failureOf(res: Response) {
   let body: { error?: unknown; message?: unknown } | null = null;
   try {
     body = await res.json();

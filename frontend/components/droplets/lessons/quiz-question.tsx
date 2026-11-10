@@ -14,12 +14,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { RenderedContent } from "@/components/ui/rendered-content";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, Sparkles } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
 import posthog from "posthog-js";
+import { useMentorHint } from "@/hooks/use-mentor-hint";
+import { useLessonPanelStore } from "@/stores/lesson-panel-store";
+import { MentorHint } from "@/components/droplets/lessons/mentor/mentor-hint";
 
 declare global {
   interface Window {
@@ -47,6 +50,10 @@ export function QuizQuestionBlock({
   userId?: number;
 }) {
   const [showResult, setShowResult] = useState(false);
+  const mentorOn = useLessonPanelStore(
+    (s) => s.mentorAvailable && s.ownerLessonId === lessonId,
+  );
+  const mentorHint = useMentorHint({ dropletId: dropletId ?? 0, lessonId });
   const correctAnswers = useMemo(
     () => question.answerOptions.filter((option) => option.isCorrect),
     [question],
@@ -169,6 +176,27 @@ export function QuizQuestionBlock({
     );
   }
 
+  const picked = form.getValues("answerIds");
+  const answeredWrong = showResult && !areAnswersCorrect(picked);
+  const hint = mentorHint.hint;
+  // The route decides for real; this only hides a button it would refuse
+  const canExplain =
+    answeredWrong &&
+    mentorOn &&
+    dropletId !== undefined &&
+    question.answerOptions.length >= 3 &&
+    correctAnswers.length === 1 &&
+    picked.length === 1 &&
+    hint?.status !== "done";
+  // A finished hint or a refused request (retry === false) can't be re-asked
+  const hintBusy =
+    hint !== null && (hint.status !== "error" || !hint.error?.retry);
+
+  function explain() {
+    if (hintBusy) return;
+    void mentorHint.explain(question.id, picked.map(Number));
+  }
+
   return (
     <>
       <RenderedContent
@@ -228,13 +256,29 @@ export function QuizQuestionBlock({
                 </ul>
               </div>
 
-              <Button
-                before={<ArrowLeftIcon />}
-                variant="outline"
-                onClick={() => setShowResult(false)}
-              >
-                Try Again
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  before={<ArrowLeftIcon />}
+                  variant="outline"
+                  onClick={() => {
+                    mentorHint.clear();
+                    setShowResult(false);
+                  }}
+                >
+                  Try Again
+                </Button>
+                {canExplain && (
+                  <Button
+                    before={<Sparkles className="text-mentor" />}
+                    variant="outline"
+                    className="border-mentor-line text-mentor-text"
+                    aria-disabled={hintBusy}
+                    onClick={explain}
+                  >
+                    Explain my answer
+                  </Button>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -326,6 +370,7 @@ export function QuizQuestionBlock({
           </form>
         </Form>
       )}
+      {answeredWrong && hint && <MentorHint hint={hint} onRetry={explain} />}
     </>
   );
 }

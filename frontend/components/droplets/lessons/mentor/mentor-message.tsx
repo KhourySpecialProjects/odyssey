@@ -1,16 +1,12 @@
 "use client";
 
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { Check, Copy, NotebookPen } from "lucide-react";
 import { toast } from "sonner";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
-
-const Markdown = lazy(() => import("react-markdown"));
-
-const ALLOWED = ["p", "strong", "em", "code", "pre", "ul", "ol", "li"];
-// Links aren't allowed, so they unwrap to plain text
+import { MentorMarkdown } from "./mentor-markdown";
 
 const toolClass =
   "inline-flex items-center gap-1 rounded text-xs text-slate-600 hover:text-slate-900 aria-disabled:opacity-60 dark:text-slate-300 dark:hover:text-white";
@@ -84,11 +80,7 @@ export function MentorMessage({
 
       {shown && (
         <div className="prose prose-sm prose-p:my-2 prose-code:before:content-none prose-code:after:content-none dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
-          <Suspense fallback={<p>{shown}</p>}>
-            <Markdown allowedElements={ALLOWED} unwrapDisallowed>
-              {shown}
-            </Markdown>
-          </Suspense>
+          <MentorMarkdown>{shown}</MentorMarkdown>
         </div>
       )}
       {streaming && (
