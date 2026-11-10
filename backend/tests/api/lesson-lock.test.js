@@ -90,6 +90,20 @@ describe('POST /lessons/:id/lock (acquire)', () => {
     expect((await readLock(lesson)).lockedBy).toBe(alice.id);
   });
 
+  it("returns only id, firstName and lastName of the holder in the 409 body", async () => {
+    await setLock(lesson, alice.id, ago(5_000));
+
+    const res = await acquire(lesson.id, bob.id);
+
+    expect(res.status).toBe(409);
+    expect(Object.keys(res.body.lockedBy).sort()).toEqual(['firstName', 'id', 'lastName']);
+    expect(res.body.lockedBy).toEqual({
+      id: alice.id,
+      firstName: 'Alice',
+      lastName: 'Liddell',
+    });
+  });
+
   it("takes over another user's stale lock", async () => {
     await setLock(lesson, alice.id, ago(STALE_MS));
 
@@ -232,6 +246,7 @@ describe('GET /lessons/:id/lock-status', () => {
       firstName: 'Alice',
       lastName: 'Liddell',
     });
+    expect(Object.keys(res.body.lockedBy).sort()).toEqual(['firstName', 'id', 'lastName']);
     expect(new Date(res.body.lockedAt).getTime()).toBe(new Date(lockedAt).getTime());
   });
 
