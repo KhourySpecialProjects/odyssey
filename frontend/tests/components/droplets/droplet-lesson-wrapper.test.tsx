@@ -317,6 +317,16 @@ describe("DropletLessonWrapper", () => {
     });
   });
 
+  it("doesn't trap the panels' z-index in a stacking context under the footer", () => {
+    const { container } = render(<DropletLessonWrapper {...props} />);
+
+    const wrapper = container.querySelector(".lesson-wrapper")!;
+    expect(wrapper.className).not.toMatch(/(^|\s)z-/);
+    expect(wrapper.querySelector(".sliding-notes-bar")!.className).toContain(
+      "z-[55]",
+    );
+  });
+
   describe("lesson panels", () => {
     it("swaps Mentor for Notes and keeps the conversation", () => {
       useLessonPanelStore.getState().openMentor();
