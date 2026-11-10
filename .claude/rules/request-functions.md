@@ -12,3 +12,7 @@ paths:
 - `cache` and `next` fetch options are mutually exclusive in Next.js 15 — passing both silently breaks caching.
 - Use populate presets from `enrollment-populates.ts` / `user-populates.ts` when available.
 - Read the Strapi schema before writing a new request function: `backend/src/api/{type}/content-types/{type}/schema.json`.
+- Reads by id use `filters[id][$eq]`. Single-entry URLs need a documentId (numeric ids 404).
+- Never call `strapiEntryUrl` while rendering or in `cached.ts`/`unstable_cache`: its lookup uses `no-store`.
+- Raw list fetches need pagination: REST `defaultLimit` is 25.
+- Dynamic zones populate with `on: { "<component>": {...} }` (`lib/requests/lesson-populates.ts`).

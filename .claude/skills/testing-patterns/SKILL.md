@@ -214,6 +214,39 @@ const { flattenAttributes, fetchAPI } = require("../../lib/utils");
 
 **Note:** Test files may be `.js` or `.ts`. Follow the existing convention in the directory you're working in.
 
+## Keeping Tests Lean
+
+Tests count toward what reviewers read, so keep the line count low without dropping behaviours. The full rules are in `.claude/rules/testing.md`.
+
+**One table instead of copied blocks:**
+
+```typescript
+// Instead of four near-identical it() blocks:
+it.each([
+  { name: "value 0", body: { value: 0 } },
+  { name: "value 6", body: { value: 6 } },
+  { name: "inactive criterion", body: { criterionId: inactiveId } },
+  { name: "sent review", body: { reviewId: sentReviewId } },
+])("refuses $name", async ({ body }) => {
+  const res = await upsertScore({ ...validBody, ...body });
+  expect(res.ok).toBe(false);
+});
+```
+
+**Factories with overrides, not pasted objects:**
+
+```typescript
+// Frontend: spread the shared mock
+const sent = { ...mockReview, state: "sent" };
+
+// Backend: fixtures.js builders take overrides
+const review = await strapi
+  .documents(REVIEW_UID)
+  .create({ data: reviewData({ state: "sent" }) });
+```
+
+**One layer per behaviour:** the backend route test covers the rules the route enforces. The server action test covers auth, the call it makes and revalidation, and mocks the route's answer instead of re-testing its rules.
+
 ## Running Tests
 
 ```bash
@@ -241,3 +274,4 @@ cd frontend && npm test
 4. **Missing `await` on userEvent calls** — `userEvent.click()` is async in v14+.
 5. **Using `getByTestId` first** — Prefer `getByRole` for accessibility-driven tests.
 6. **Testing Server Components with `render()`** — Server Components with async data fetching can't be tested with RTL directly. Test the request function separately, then test the component with mocked data passed as props.
+7. **Copying a test per case** — Use `it.each`, and test each rule once at the layer that enforces it (see Keeping Tests Lean).

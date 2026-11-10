@@ -2,7 +2,10 @@
 
 import React, { useEffect, useRef } from "react";
 import DOMPurify from "isomorphic-dompurify";
-import hljs from "highlight.js";
+import {
+  getLoadedHighlighter,
+  loadHighlighter,
+} from "@/components/droplets/lessons/load-highlighter";
 
 interface RenderedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   html: string;
@@ -13,6 +16,10 @@ interface RenderedContentProps extends React.HTMLAttributes<HTMLDivElement> {
  * editor's CodeBlockComponent exactly: syntax highlighting via highlight.js
  * and a line-number gutter with 1.25rem line height on both sides.
  *
+ * Code shows as plain text immediately; highlight.js (and any grammar the
+ * blocks need) is loaded on demand and applied afterwards, so it stays out of
+ * the initial bundle.
+ *
  * Critical layout values (padding, top, lineHeight) are set as inline styles
  * so Tailwind Typography cannot override them regardless of prose context.
  */
@@ -20,12 +27,15 @@ export function RenderedContent({ html, ...divProps }: RenderedContentProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = DOMPurify.sanitize(html);
+    const container = ref.current;
+    if (!container) return;
+    container.innerHTML = DOMPurify.sanitize(html);
 
-    ref.current.querySelectorAll("pre").forEach((pre) => {
+    let hasCodeBlocks = false;
+    container.querySelectorAll("pre").forEach((pre) => {
       const code = pre.querySelector("code");
       if (!code) return;
+      hasCodeBlocks = true;
 
       const rawText = code.textContent ?? "";
       const lines = rawText.split("\n");
@@ -35,18 +45,6 @@ export function RenderedContent({ html, ...divProps }: RenderedContentProps) {
         c.startsWith("language-"),
       );
       const lang = langClass?.replace("language-", "");
-
-      let highlightedHtml: string;
-      try {
-        highlightedHtml = lang
-          ? hljs.highlight(rawText, { language: lang }).value
-          : hljs.highlightAuto(rawText).value;
-      } catch {
-        highlightedHtml = rawText
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-      }
 
       // --- new <pre> ---
       // Inline styles own all layout so Typography can never shift them.
@@ -90,7 +88,7 @@ export function RenderedContent({ html, ...divProps }: RenderedContentProps) {
       newCode.style.margin = "0";
       newCode.style.padding = "0";
       newCode.style.lineHeight = "1.25rem";
-      newCode.innerHTML = highlightedHtml;
+      newCode.textContent = rawText;
 
       newPre.appendChild(gutter);
       newPre.appendChild(newCode);
@@ -101,6 +99,25 @@ export function RenderedContent({ html, ...divProps }: RenderedContentProps) {
 
       pre.parentNode?.replaceChild(wrapper, pre);
     });
+
+    if (!hasCodeBlocks) return;
+
+    // Highlight once highlight.js and the needed grammars are loaded. Blocks
+    // with an unknown language (or whose grammar fails to load) stay plain.
+    let cancelled = false;
+    const highlight = async () => {
+      const highlighter = getLoadedHighlighter() ?? (await loadHighlighter());
+      await highlighter.loadLanguages(container);
+      if (!cancelled && ref.current === container) {
+        highlighter.highlightCodeBlocks(container);
+      }
+    };
+    highlight().catch((e) =>
+      console.error("Failed to load syntax highlighting:", e),
+    );
+    return () => {
+      cancelled = true;
+    };
   }, [html]);
 
   return <div ref={ref} {...divProps} />;

@@ -24,6 +24,20 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { Datasets } from "@/components/draft/metadata/datasets/datasets";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import {
+  REVIEW_FROZEN_ERROR,
+  REVIEW_FROZEN_MESSAGE,
+  isFrozenFor,
+  isReviewerFor,
+} from "@/lib/review-roles";
+import { FrozenOverview } from "@/components/draft/metadata/frozen-overview";
+import { OverviewReview } from "@/components/draft/review/overview-review";
+import { OverviewFeedback } from "@/components/draft/review/overview-feedback";
+import { getAuthorNames } from "@/lib/requests/droplet-authors";
+import { IconLock } from "@tabler/icons-react";
+import { scanSectionId } from "@/lib/overview-scan/view";
+
+const FUN_FACT_SAVE_ERROR = "Failed to save the fun fact.";
 
 type Props = {
   params: Promise<Params>;
@@ -68,6 +82,44 @@ export default async function Droplet({ params }: Props) {
     .filter((option) => option.isHidden === false)
     .map(({ id, name, slug }) => ({ id, name, slug }));
 
+  // While the droplet is in review, an author (any role) can read the draft
+  // but not change it, so show it as plain content instead of the editors.
+  const isAuthor =
+    !!authUser && !!droplet.authorized_users?.some((u) => u.id === authUser.id);
+  const frozen =
+    droplet.status !== "published" &&
+    isFrozenFor(user.roles, droplet.inReview, isAuthor);
+  if (frozen) {
+    // Names only, and never fatal: the page still renders without them.
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+
+    return (
+      <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
+        <div
+          role="status"
+          className="mx-40 mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 group-data-[review-panel=open]:mx-12 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>{REVIEW_FROZEN_MESSAGE}</span>
+        </div>
+        {/* The feedback sent before this round, read-only (ODY-807) */}
+        <OverviewFeedback
+          droplet={droplet}
+          authors={authors}
+          dropletId={droplet.id}
+          canEdit={false}
+          canReply
+          canAddress
+        >
+          <FrozenOverview droplet={droplet} authors={authors} />
+        </OverviewFeedback>
+        <div className="pb-16" />
+      </div>
+    );
+  }
+
   // Inline Server Actions serialize (encrypted) every value they capture into
   // the page payload, so capture primitives rather than `droplet` / `user`.
   const dropletId = droplet.id;
@@ -107,13 +159,32 @@ export default async function Droplet({ params }: Props) {
       });
 
       if (msg.content[0].type === "text") {
-        await updateDropletFunFact(msg.content[0].text, dropletId);
+        const saved = await updateDropletFunFact(
+          msg.content[0].text,
+          dropletId,
+        );
+        if (!saved.success) {
+          throw new Error(
+            saved.error === REVIEW_FROZEN_ERROR
+              ? REVIEW_FROZEN_MESSAGE
+              : FUN_FACT_SAVE_ERROR,
+          );
+        }
         return msg.content[0].text;
       } else {
         return "";
       }
     } catch (error: unknown) {
       console.error("Error generating fun fact:", error);
+
+      // A refused save already has its own message for the editor.
+      if (
+        error instanceof Error &&
+        (error.message === REVIEW_FROZEN_MESSAGE ||
+          error.message === FUN_FACT_SAVE_ERROR)
+      ) {
+        throw error;
+      }
 
       // Handle specific error cases
       const status =
@@ -141,15 +212,18 @@ export default async function Droplet({ params }: Props) {
     await updateDropletFunFact("", dropletId);
   };
 
-  return (
+  const editors = (
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
-        <div className="px-40">
-          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+        <div className="px-40 group-data-[review-panel=open]:px-12">
+          <div
+            id={scanSectionId("tags")}
+            className="flex flex-0 scroll-mt-28 flex-row flex-wrap gap-1.5"
+          >
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
-              difficulty={droplet.difficulty}
+              difficulty={droplet.difficulty ?? undefined}
               dropletId={droplet.id}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
@@ -177,20 +251,12 @@ export default async function Droplet({ params }: Props) {
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
-            This is currently a draft droplet. To publish this droplet, contact
-            a Content Editor or Admin.
+            This is currently a draft droplet. Submit it for review, and a
+            Content Editor will publish it or request changes.
           </div>
-          {!droplet.inReview &&
-            droplet.afterReview !== null &&
-            droplet.status === "draft" && (
-              <div className="rounded-md border border-slate-400 bg-white p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200">
-                <p className="font-bold">Feedback for Revision:</p>
-                <div>{droplet.afterReview}</div>
-              </div>
-            )}
         </div>
 
-        <div className="w-full space-y-10 px-40 pt-6">
+        <div className="w-full space-y-10 px-40 pt-6 group-data-[review-panel=open]:px-12">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
@@ -198,43 +264,104 @@ export default async function Droplet({ params }: Props) {
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <Description
+            <div id={scanSectionId("description")} className="scroll-mt-28">
+              <Description
+                dropletId={droplet.id}
+                initialContent={droplet.description ?? ""}
+              />
+            </div>
+            <div id={scanSectionId("overview")} className="scroll-mt-28">
+              <Overview
+                dropletId={droplet.id}
+                initialContent={droplet.overview ?? ""}
+              />
+            </div>
+          </div>
+
+          <div id={scanSectionId("objectives")} className="scroll-mt-28">
+            <LearningObjectives
               dropletId={droplet.id}
-              initialContent={droplet.description ?? ""}
-            />
-            <Overview
-              dropletId={droplet.id}
-              initialContent={droplet.overview ?? ""}
+              learningObjectives={droplet.learningObjectives}
             />
           </div>
 
-          <LearningObjectives
-            dropletId={droplet.id}
-            learningObjectives={droplet.learningObjectives}
-          />
+          <div id={scanSectionId("next-steps")} className="scroll-mt-28">
+            <NextSteps
+              dropletId={droplet.id}
+              nextSteps={droplet.nextSteps ?? []}
+            />
+          </div>
 
-          <NextSteps
-            dropletId={droplet.id}
-            nextSteps={droplet.nextSteps ?? []}
-          />
+          <div id={scanSectionId("prerequisites")} className="scroll-mt-28">
+            <GeneralInfo
+              dropletId={droplet.id}
+              droplets={droplets}
+              prerequisites={droplet.prerequisites ?? []}
+              postrequisites={droplet.postrequisites ?? []}
+            />
+          </div>
 
-          <GeneralInfo
-            dropletId={droplet.id}
-            droplets={droplets}
-            prerequisites={droplet.prerequisites ?? []}
-            postrequisites={droplet.postrequisites ?? []}
-          />
+          <div id={scanSectionId("fun-fact")} className="scroll-mt-28">
+            <FunFactEditor
+              funFact={droplet.funFact ?? ""}
+              generateFact={generateFunFact}
+              deleteFact={deleteFunFact}
+            />
+          </div>
 
-          <FunFactEditor
-            funFact={droplet.funFact ?? ""}
-            generateFact={generateFunFact}
-            deleteFact={deleteFunFact}
-          />
-
-          <Datasets dropletId={droplet.id} datasets={droplet.datasets ?? []} />
+          <div id={scanSectionId("datasets")} className="scroll-mt-28">
+            <Datasets
+              dropletId={droplet.id}
+              datasets={droplet.datasets ?? []}
+            />
+          </div>
         </div>
         <div className="pb-16" />
       </div>
     </>
   );
+
+  // A reviewer comments on the Overview, or reads it, or edits it (ODY-806)
+  if (
+    droplet.status !== "published" &&
+    droplet.inReview &&
+    isReviewerFor(user.roles, true, isAuthor)
+  ) {
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+    return (
+      <OverviewReview
+        droplet={droplet}
+        authors={authors}
+        dropletId={droplet.id}
+      >
+        {editors}
+      </OverviewReview>
+    );
+  }
+
+  // An author or a reviewer reads the sent feedback beside the editors (ODY-807, ODY-881)
+  if (
+    droplet.status !== "published" &&
+    (isAuthor || isReviewerFor(user.roles, true, isAuthor))
+  ) {
+    const authors = await getAuthorNames(
+      droplet.authorized_users?.map((u) => u.id) ?? [],
+    );
+    return (
+      <OverviewFeedback
+        droplet={droplet}
+        authors={authors}
+        dropletId={droplet.id}
+        canEdit
+        canReply
+        canAddress={isAuthor}
+      >
+        {editors}
+      </OverviewFeedback>
+    );
+  }
+
+  return editors;
 }

@@ -3,7 +3,7 @@
  * request-deduplicated droplet query and only hand Client Components the data
  * they read.
  */
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import DraftLayout from "@/app/(editing)/draft/d/[slug]/layout";
 import DraftOverviewPage from "@/app/(editing)/draft/d/[slug]/page";
 import DraftLessonPage from "@/app/(editing)/draft/d/[slug]/[lessonSlug]/page";
@@ -14,6 +14,7 @@ import {
   getCachedUser,
 } from "@/lib/requests/cached";
 import { getLessonBySlug } from "@/lib/requests/lesson";
+import { getReviewPanel } from "@/lib/requests/reviews";
 import { getTags } from "@/lib/requests/tag";
 import { DraftLayoutShell } from "@/components/draft/draft-layout-shell";
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
@@ -39,8 +40,16 @@ jest.mock("@/lib/requests/droplet", () => ({
   updateDropletFunFact: jest.fn(),
 }));
 
+jest.mock("@/lib/requests/reviews", () => ({
+  getReviewPanel: jest.fn(),
+}));
+
 jest.mock("@/lib/requests/lesson", () => ({
   getLessonBySlug: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/droplet-authors", () => ({
+  getAuthorNames: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/tag", () => ({
@@ -60,6 +69,35 @@ jest.mock("@anthropic-ai/sdk", () => jest.fn());
 
 jest.mock("next/navigation", () => ({
   notFound: jest.fn(() => "NOT_FOUND"),
+}));
+
+// The reviewer's Overview (ODY-806); its editors arrive as children
+jest.mock("@/components/draft/review/overview-review", () => ({
+  OverviewReview: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="overview-review">{children}</div>
+  ),
+}));
+
+// The author's Overview with sent feedback (ODY-807); what it shows without
+// feedback arrives as children
+jest.mock("@/components/draft/review/overview-feedback", () => ({
+  OverviewFeedback: ({
+    children,
+    canEdit,
+    canAddress,
+  }: {
+    children: React.ReactNode;
+    canEdit: boolean;
+    canAddress?: boolean;
+  }) => (
+    <div
+      data-testid="overview-feedback"
+      data-can-edit={String(canEdit)}
+      data-can-address={String(canAddress)}
+    >
+      {children}
+    </div>
+  ),
 }));
 
 jest.mock("@/components/draft/draft-layout-shell", () => ({
@@ -110,6 +148,8 @@ const mockedShell = jest.mocked(DraftLayoutShell);
 const mockedGeneralInfo = jest.mocked(GeneralInfo);
 const mockedLessonRenderer = jest.mocked(LessonRenderer);
 
+const { ContentEditor, Faculty, SysAdmin } = AuthorizedUserRoleTitle;
+
 const SESSION_USER = {
   id: 7,
   email: "author@example.com",
@@ -139,7 +179,6 @@ const DRAFT_DROPLET = {
   isHidden: false,
   status: "draft",
   inReview: false,
-  afterReview: null,
   funFact: "fact",
   originalDropletId: 3,
   presentationEnabled: true,
@@ -232,7 +271,6 @@ describe("draft droplet layout", () => {
 
     expect(Object.keys(droplet).sort()).toEqual(
       [
-        "afterReview",
         "difficulty",
         "focusArea",
         "id",
@@ -268,6 +306,110 @@ describe("draft droplet layout", () => {
     ]);
   });
 
+  it("tells the shell whether the caller is an author", async () => {
+    expect((await renderLayout()).isAuthor).toBe(true);
+
+    mockedShell.mockClear();
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [AuthorizedUserRoleTitle.ContentEditor],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+
+    expect((await renderLayout()).isAuthor).toBe(false);
+  });
+
+  describe("reviewer panel data (ODY-805)", () => {
+    const IN_REVIEW = {
+      ...DRAFT_DROPLET,
+      inReview: true,
+    } as unknown as Droplet;
+    const PANEL = { review: null, criteria: [], scores: [], positions: {} };
+    const asEditor = () => {
+      mockedGetCurrentUser.mockResolvedValue({
+        ...SESSION_USER,
+        roles: [AuthorizedUserRoleTitle.ContentEditor],
+      } as User);
+      mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+    };
+
+    beforeEach(() => {
+      mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+      jest.mocked(getReviewPanel).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: PANEL,
+      } as never);
+      jest
+        .requireMock("@/lib/requests/droplet-authors")
+        .getAuthorNames.mockResolvedValue([{ id: 7, name: "Ada Lovelace" }]);
+    });
+
+    it("loads it for a non-author reviewer of an in-review draft", async () => {
+      asEditor();
+
+      const props = await renderLayout();
+
+      expect(getReviewPanel).toHaveBeenCalledWith(5);
+      expect(props.reviewPanel).toBe(PANEL);
+    });
+
+    it("passes the reviewer and author names for the panel header", async () => {
+      asEditor();
+      mockedGetCachedUser.mockResolvedValue({
+        id: 99,
+        firstName: "Grace",
+        lastName: "Hopper",
+      } as AuthorizedUser);
+
+      const props = await renderLayout();
+
+      expect(props.reviewMeta).toEqual({
+        reviewerName: "Grace Hopper",
+        authorNames: ["Ada Lovelace"],
+      });
+    });
+
+    it("passes no reviewMeta when the draft is not in review", async () => {
+      asEditor();
+      mockedGetDraftDroplet.mockResolvedValue(DRAFT_DROPLET);
+
+      expect((await renderLayout()).reviewMeta).toBeUndefined();
+    });
+
+    it("passes null when the load fails", async () => {
+      asEditor();
+      jest.mocked(getReviewPanel).mockResolvedValue({
+        ok: false,
+        error: "failed",
+        data: null,
+      } as never);
+
+      expect((await renderLayout()).reviewPanel).toBeNull();
+    });
+
+    it("never calls it for an author, even a Content Editor", async () => {
+      mockedGetCurrentUser.mockResolvedValue({
+        ...SESSION_USER,
+        roles: [AuthorizedUserRoleTitle.ContentEditor],
+      } as User);
+
+      const props = await renderLayout();
+
+      expect(getReviewPanel).not.toHaveBeenCalled();
+      expect(props.reviewPanel).toBeNull();
+    });
+
+    it("never calls it when the draft is not in review", async () => {
+      asEditor();
+      mockedGetDraftDroplet.mockResolvedValue(DRAFT_DROPLET);
+
+      await renderLayout();
+
+      expect(getReviewPanel).not.toHaveBeenCalled();
+    });
+  });
+
   it("returns notFound for users who are not authors, editors or admins", async () => {
     mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
 
@@ -292,6 +434,134 @@ describe("draft droplet overview page", () => {
     expect(mockedGeneralInfo.mock.calls[0][0].droplets).toEqual([
       { id: 20, name: "Visible", slug: "visible" },
     ]);
+  });
+});
+
+describe("draft droplet overview page: review freeze", () => {
+  const IN_REVIEW = { ...DRAFT_DROPLET, inReview: true } as unknown as Droplet;
+
+  beforeEach(() => {
+    jest
+      .requireMock("@/lib/requests/droplet-authors")
+      .getAuthorNames.mockResolvedValue([{ id: 7, name: "Ada Lovelace" }]);
+  });
+
+  async function renderOverview() {
+    const element = await DraftOverviewPage({
+      params: params({ slug: "python-basics" }),
+    });
+    return render(element as React.ReactElement);
+  }
+
+  it("shows the banner and the read-only view to an author in review", async () => {
+    mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+
+    await renderOverview();
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "In review. Editing is paused until the reviewer sends it back.",
+    );
+    expect(screen.getByTestId("frozen-overview")).toBeInTheDocument();
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+    expect(
+      jest.requireMock("@/lib/requests/droplet-authors").getAuthorNames,
+    ).toHaveBeenCalledWith([7]);
+    expect(mockedGeneralInfo).not.toHaveBeenCalled();
+  });
+
+  it.each([ContentEditor, Faculty, SysAdmin])(
+    "freezes an author with the %s role too",
+    async (role) => {
+      mockedGetCurrentUser.mockResolvedValue({
+        ...SESSION_USER,
+        roles: [role],
+      } as User);
+      mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+
+      await renderOverview();
+
+      expect(screen.getByTestId("frozen-overview")).toBeInTheDocument();
+    },
+  );
+
+  it("gives a non-author reviewer in review the review Overview, with the editors for Edit", async () => {
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [ContentEditor],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+    mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+
+    await renderOverview();
+
+    expect(screen.getByTestId("overview-review")).toBeInTheDocument();
+    expect(screen.queryByTestId("frozen-overview")).toBeNull();
+    expect(mockedGeneralInfo).toHaveBeenCalled();
+  });
+
+  it("keeps the editors for an author when the droplet is not in review", async () => {
+    await renderOverview();
+
+    expect(screen.queryByTestId("overview-review")).toBeNull();
+    expect(screen.queryByTestId("frozen-overview")).toBeNull();
+    expect(mockedGeneralInfo).toHaveBeenCalled();
+  });
+
+  it("gives an author the sent feedback beside the editors (ODY-807)", async () => {
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "true");
+    expect(feedback).toHaveAttribute("data-can-address", "true");
+    expect(mockedGeneralInfo).toHaveBeenCalled();
+  });
+
+  it("gives a frozen author the earlier feedback read-only (ODY-807)", async () => {
+    mockedGetDraftDroplet.mockResolvedValue(IN_REVIEW);
+
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "false");
+    expect(feedback).toHaveAttribute("data-can-address", "true");
+    expect(feedback).toContainElement(screen.getByTestId("frozen-overview"));
+  });
+
+  it("gives a non-author reviewer the feedback with no Mark addressed (ODY-881)", async () => {
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [ContentEditor],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+
+    await renderOverview();
+
+    const feedback = screen.getByTestId("overview-feedback");
+    expect(feedback).toHaveAttribute("data-can-edit", "true");
+    expect(feedback).toHaveAttribute("data-can-address", "false");
+  });
+
+  it("gives a non-author with no reviewer role no feedback", async () => {
+    mockedGetCurrentUser.mockResolvedValue({
+      ...SESSION_USER,
+      roles: [AuthorizedUserRoleTitle.ContentCreator],
+    } as User);
+    mockedGetCachedUser.mockResolvedValue({ id: 99 } as AuthorizedUser);
+
+    await renderOverview();
+
+    expect(screen.queryByTestId("overview-feedback")).toBeNull();
+  });
+
+  it("is never frozen once published", async () => {
+    mockedGetDraftDroplet.mockResolvedValue({
+      ...IN_REVIEW,
+      status: "published",
+    } as Droplet);
+
+    await renderOverview();
+
+    expect(screen.queryByTestId("frozen-overview")).toBeNull();
   });
 });
 

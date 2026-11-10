@@ -1,14 +1,21 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Droplet } from "@/types";
 import { createPortal } from "react-dom";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
+import {
+  submitForReview,
+  withdrawFromReview,
+  sendFeedback,
+  publishWithReview,
+} from "@/lib/requests/reviews";
 
 // Mock dependencies
 jest.mock("@/lib/requests/droplet");
+jest.mock("@/lib/requests/reviews");
 jest.mock("sonner");
 jest.mock("next/navigation");
 jest.mock("react-dom", () => ({
@@ -20,13 +27,22 @@ const mockPush = jest.fn();
 const mockUpdateDroplet = updateDroplet as jest.MockedFunction<
   typeof updateDroplet
 >;
+const mockPublishDraftToOriginal =
+  publishDraftToOriginal as jest.MockedFunction<typeof publishDraftToOriginal>;
+const mockSubmitForReview = jest.mocked(submitForReview);
+const mockWithdrawFromReview = jest.mocked(withdrawFromReview);
+const mockSendFeedback = jest.mocked(sendFeedback);
+const mockPublishWithReview = jest.mocked(publishWithReview);
 const mockToast = {
   success: jest.fn(),
   error: jest.fn(),
 };
 
+const mockRefresh = jest.fn();
+
 (useRouter as jest.Mock).mockReturnValue({
   push: mockPush,
+  refresh: mockRefresh,
 });
 
 (toast.success as jest.Mock) = mockToast.success;
@@ -46,9 +62,11 @@ describe("ContentActionButton", () => {
     inReview: false,
   };
 
-  const mockDropletWithReview: Droplet = {
+  // An [EDIT] draft: a copy of a live droplet
+  const mockEditDraft: Droplet = {
     ...mockDroplet,
-    afterReview: "Previous review comments",
+    id: 2,
+    originalDropletId: 99,
   };
 
   beforeEach(() => {
@@ -146,10 +164,35 @@ describe("ContentActionButton", () => {
       await waitFor(() => {
         expect(mockUpdateDroplet).toHaveBeenCalledWith(
           mockDroplet.id,
-          { name: mockDroplet.name, status: "published", inReview: false },
+          { name: mockDroplet.name, status: "published" },
           { regenerateSlug: false },
         );
       });
+    });
+
+    it("publishes a new droplet without calling publishDraftToOriginal", async () => {
+      const user = userEvent.setup();
+      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
+
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="publish"
+          buttonText="Publish Droplet"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
+      await user.type(
+        screen.getByPlaceholderText("Enter droplet name"),
+        mockDroplet.name,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateDroplet).toHaveBeenCalled();
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
     });
 
     it("shows success toast and redirects to /explore on successful publish", async () => {
@@ -271,6 +314,11 @@ describe("ContentActionButton", () => {
   });
 
   describe("Request Review Action", () => {
+    const openAndConfirm = (name: RegExp) => {
+      fireEvent.click(screen.getByRole("button", { name }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+    };
+
     it("renders request review button with correct text and styling", () => {
       render(
         <ContentActionButton
@@ -281,12 +329,11 @@ describe("ContentActionButton", () => {
       );
 
       const button = screen.getByRole("button", { name: /request review/i });
-      expect(button).toBeInTheDocument();
       expect(button).toHaveClass("bg-[#2D7597]");
       expect(button).toHaveClass("hover:bg-[#255e78]");
     });
 
-    it("opens modal with informational text when request review button is clicked", () => {
+    it("opens modal with informational text, and confirm is enabled", () => {
       render(
         <ContentActionButton
           droplet={mockDroplet}
@@ -303,299 +350,546 @@ describe("ContentActionButton", () => {
         ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/once this droplet is reviewed by a content editor/i),
-      ).toBeInTheDocument();
+        screen.getByRole("button", { name: /confirm/i }),
+      ).not.toBeDisabled();
     });
 
-    it("confirm button is enabled immediately for request review", () => {
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestReview"
-          buttonText="Request Review"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request review/i }));
-
-      const confirmButton = screen.getByRole("button", { name: /confirm/i });
-      expect(confirmButton).not.toBeDisabled();
-    });
-
-    it("calls updateDroplet with correct parameters on request review", async () => {
-      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
-
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestReview"
-          buttonText="Request Review"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request review/i }));
-      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
-
-      await waitFor(() => {
-        expect(mockUpdateDroplet).toHaveBeenCalledWith(
-          mockDroplet.id,
-          { name: mockDroplet.name, inReview: true },
-          { regenerateSlug: false },
-        );
+    it("calls submitForReview with the droplet id, toasts and reloads", async () => {
+      mockSubmitForReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { changed: true, round: 1 },
       });
-    });
-
-    it("shows success toast and reloads page on successful request review", async () => {
-      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
 
       render(
         <ContentActionButton
-          droplet={mockDroplet}
+          droplet={mockEditDraft}
           actionType="requestReview"
-          buttonText="Request Review"
+          buttonText="Submit for review"
         />,
       );
-
-      fireEvent.click(screen.getByRole("button", { name: /request review/i }));
-      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+      openAndConfirm(/submit for review/i);
 
       await waitFor(() => {
+        expect(mockSubmitForReview).toHaveBeenCalledWith(mockEditDraft.id);
         expect(mockToast.success).toHaveBeenCalledWith(
           "Droplet submitted for review",
         );
         expect(window.location.reload).toHaveBeenCalled();
       });
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
     });
 
-    it("shows error toast on failed request review", async () => {
-      mockUpdateDroplet.mockResolvedValue({
-        ok: false,
-        error: "Network error",
-      } as any);
+    it("treats changed: false as one success toast and no error", async () => {
+      mockSubmitForReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { changed: false, round: 1 },
+      });
 
       render(
         <ContentActionButton
           droplet={mockDroplet}
           actionType="requestReview"
-          buttonText="Request Review"
+          buttonText="Submit for review"
         />,
       );
+      openAndConfirm(/submit for review/i);
 
-      fireEvent.click(screen.getByRole("button", { name: /request review/i }));
-      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledTimes(1);
+      });
+      expect(mockToast.error).not.toHaveBeenCalled();
+    });
+
+    it("shows the generic error for a failed submit, without reloading", async () => {
+      mockSubmitForReview.mockResolvedValue({
+        ok: false,
+        error: "failed",
+        data: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="requestReview"
+          buttonText="Submit for review"
+        />,
+      );
+      openAndConfirm(/submit for review/i);
 
       await waitFor(() => {
         expect(mockToast.error).toHaveBeenCalledWith(
           "Error submitting droplet for review",
         );
-        expect(window.location.reload).not.toHaveBeenCalled();
       });
+      expect(window.location.reload).not.toHaveBeenCalled();
     });
 
-    it("supports re-request review button text", () => {
+    it("shows Strapi's message for a conflict", async () => {
+      mockSubmitForReview.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message: "This droplet is already published.",
+      });
+
       render(
         <ContentActionButton
           droplet={mockDroplet}
           actionType="requestReview"
-          buttonText="Re-Request Review"
+          buttonText="Submit for review"
         />,
       );
+      openAndConfirm(/submit for review/i);
 
-      const button = screen.getByRole("button", { name: /re-request review/i });
-      expect(button).toBeInTheDocument();
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "This droplet is already published.",
+        );
+      });
+    });
+
+    it("shows the could-not-be-confirmed text for an unconfirmed result", async () => {
+      mockSubmitForReview.mockResolvedValue({
+        ok: false,
+        error: "unconfirmed",
+        data: null,
+        message: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="requestReview"
+          buttonText="Submit for review"
+        />,
+      );
+      openAndConfirm(/submit for review/i);
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          expect.stringMatching(/could not be confirmed/i),
+        );
+      });
     });
   });
 
-  describe("Request Changes Action", () => {
-    it("renders request changes button with correct text and styling", () => {
+  describe("Send Feedback Action", () => {
+    const inReview: Droplet = { ...mockDroplet, inReview: true };
+    const renderIt = () =>
       render(
         <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
+          droplet={inReview}
+          actionType="sendFeedback"
+          buttonText="Send feedback"
         />,
       );
 
-      const button = screen.getByRole("button", { name: /request changes/i });
-      expect(button).toBeInTheDocument();
-      expect(button).toHaveClass("bg-red-400");
-      expect(button).toHaveClass("hover:bg-red-500");
-      expect(button).toHaveClass("dark:bg-red-600");
-      expect(button).toHaveClass("dark:hover:bg-red-800");
-    });
+    it("renders an outlined button and opens a modal with an empty textarea", () => {
+      renderIt();
 
-    it("opens modal with textarea when request changes button is clicked", () => {
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
+      const button = screen.getByRole("button", { name: "Send feedback" });
+      expect(button).toHaveClass(
+        "border-[#D0D5DD]",
+        "bg-white",
+        "text-[#344054]",
       );
+      expect(button).not.toHaveClass("bg-red-400");
+      fireEvent.click(button);
 
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-
-      // Use heading role to specifically target the modal title, not the button
       expect(
-        screen.getByRole("heading", { name: /request changes/i }),
+        screen.getByRole("heading", { name: "Send feedback" }),
       ).toBeInTheDocument();
+      const textarea = screen.getByRole("textbox");
+      expect(textarea).toHaveValue("");
+      expect(textarea).toHaveAttribute("maxlength", "5000");
       expect(
-        screen.getByText(/enter what changes you want for this droplet/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByPlaceholderText("Enter changes here..."),
-      ).toBeInTheDocument();
+        screen.getByRole("button", { name: /confirm/i }),
+      ).not.toBeDisabled();
     });
 
-    it("confirm button is enabled immediately for request changes", () => {
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
+    it("names the summary note by its visible label", () => {
+      renderIt();
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      expect(screen.getByLabelText(/optional summary/i)).toBe(
+        screen.getByRole("textbox"),
       );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-
-      const confirmButton = screen.getByRole("button", { name: /confirm/i });
-      expect(confirmButton).not.toBeDisabled();
     });
 
-    it("allows typing in textarea", async () => {
+    it("sends the typed note, toasts and goes to /review", async () => {
       const user = userEvent.setup();
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-
-      const textarea = screen.getByPlaceholderText("Enter changes here...");
-      await user.type(textarea, "Please update the introduction");
-
-      expect(textarea).toHaveValue("Please update the introduction");
-    });
-
-    it("calls updateDroplet with correct parameters including changes text", async () => {
-      const user = userEvent.setup();
-      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
-
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-
-      const textarea = screen.getByPlaceholderText("Enter changes here...");
-      await user.type(textarea, "Please fix grammar");
-
-      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
-
-      await waitFor(() => {
-        expect(mockUpdateDroplet).toHaveBeenCalledWith(
-          mockDroplet.id,
-          {
-            name: mockDroplet.name,
-            inReview: false,
-            afterReview: "Please fix grammar",
-          },
-          { regenerateSlug: false },
-        );
+      mockSendFeedback.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { reviewId: 4 },
       });
-    });
+      renderIt();
 
-    it("shows success toast and redirects to /review on successful request changes", async () => {
-      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
-
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      await user.type(screen.getByRole("textbox"), "Fix the quiz");
       fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
       await waitFor(() => {
-        expect(mockToast.success).toHaveBeenCalledWith(
-          "Request for review submitted successfully",
+        expect(mockSendFeedback).toHaveBeenCalledWith(
+          inReview.id,
+          "Fix the quiz",
         );
+        expect(mockToast.success).toHaveBeenCalledWith("Feedback sent");
         expect(mockPush).toHaveBeenCalledWith("/review");
       });
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
     });
 
-    it("shows error toast on failed request changes", async () => {
-      mockUpdateDroplet.mockResolvedValue({
+    it("sends null for an empty note", async () => {
+      mockSendFeedback.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { reviewId: 4 },
+      });
+      renderIt();
+
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockSendFeedback).toHaveBeenCalledWith(inReview.id, null);
+      });
+    });
+
+    it("keeps the typed note when canceling and reopening", async () => {
+      const user = userEvent.setup();
+      renderIt();
+
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      await user.type(screen.getByRole("textbox"), "Draft note");
+      fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+
+      expect(screen.getByRole("textbox")).toHaveValue("Draft note");
+    });
+
+    it("shows Strapi's message for a conflict and does not navigate", async () => {
+      mockSendFeedback.mockResolvedValue({
         ok: false,
-        error: "Network error",
-      } as any);
+        error: "conflict",
+        data: null,
+        message: "This review has already been sent.",
+      });
+      renderIt();
 
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
       fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
       await waitFor(() => {
         expect(mockToast.error).toHaveBeenCalledWith(
-          "Error requesting changes",
+          "This review has already been sent.",
         );
-        expect(mockPush).not.toHaveBeenCalled();
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    // ODY-860: the creator withdrew while this page was open
+    it("refreshes the page when the draft has left review", async () => {
+      mockSendFeedback.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message: "This droplet is not in review.",
+      });
+      renderIt();
+
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "This droplet is not in review.",
+        );
+      });
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("shows the generic error for a failed send", async () => {
+      mockSendFeedback.mockResolvedValue({
+        ok: false,
+        error: "failed",
+        data: null,
+      });
+      renderIt();
+
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith("Error sending feedback");
+      });
+    });
+  });
+
+  describe("Publish With Review Action", () => {
+    const inReview: Droplet = { ...mockDroplet, inReview: true };
+    const renderIt = () =>
+      render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="publishWithReview"
+          buttonText="Publish"
+        />,
+      );
+    const confirm = () => {
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.change(screen.getByPlaceholderText("Enter droplet name"), {
+        target: { value: inReview.name },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+    };
+
+    it("needs the exact droplet name: Confirm stays disabled and submit does nothing", () => {
+      renderIt();
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      const confirmButton = screen.getByRole("button", { name: /confirm/i });
+      const input = screen.getByPlaceholderText("Enter droplet name");
+
+      expect(confirmButton).toBeDisabled();
+      fireEvent.change(input, { target: { value: "test droplet" } });
+      expect(confirmButton).toBeDisabled();
+      fireEvent.submit(input.closest("form")!);
+      expect(mockPublishWithReview).not.toHaveBeenCalled();
+
+      fireEvent.change(input, { target: { value: inReview.name } });
+      expect(confirmButton).toBeEnabled();
+    });
+
+    it("renders the primary button", () => {
+      renderIt();
+
+      expect(screen.getByRole("button", { name: /^publish$/i })).toHaveClass(
+        "bg-[#2D7597]",
+      );
+    });
+
+    it("calls publishWithReview and opens the live droplet by slug", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { slug: "live-slug", reviewId: 3, dropletId: 99 },
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockPublishWithReview).toHaveBeenCalledWith(inReview.id);
+        expect(mockPush).toHaveBeenCalledWith("/d/live-slug");
+        expect(mockToast.success).toHaveBeenCalledTimes(1);
+      });
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
+    });
+
+    it("goes to /my-content when there is no slug", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { slug: null, reviewId: 3, dropletId: 99 },
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/my-content");
       });
     });
 
-    it("pre-populates textarea with existing afterReview text", () => {
+    it("shows the Overall-score conflict message and stays put", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message:
+          "Confirm an Overall score for every criterion (missing: Tone).",
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Confirm an Overall score for every criterion (missing: Tone).",
+        );
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    // ODY-860: the creator withdrew while this page was open, so the
+    // page refreshes and its review actions go away
+    it("refreshes the page when the draft has left review", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: false,
+        error: "conflict",
+        data: null,
+        message: "This droplet is not in review.",
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "This droplet is not in review.",
+        );
+      });
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("shows the could-not-be-confirmed text for an unconfirmed result", async () => {
+      mockPublishWithReview.mockResolvedValue({
+        ok: false,
+        error: "unconfirmed",
+        data: null,
+        message: null,
+      });
+      renderIt();
+      confirm();
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          expect.stringMatching(/could not be confirmed/i),
+        );
+      });
+    });
+  });
+
+  describe("Publish Draft Action", () => {
+    it("publishes the edit draft over its original and opens the live droplet", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: true,
+        error: null,
+        slug: "live-droplet",
+      });
+
       render(
         <ContentActionButton
-          droplet={mockDropletWithReview}
-          actionType="requestChanges"
-          buttonText="Request Changes"
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      expect(screen.getByText(/publish draft changes/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
-      const textarea = screen.getByPlaceholderText("Enter changes here...");
-      expect(textarea).toHaveValue("Previous review comments");
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/d/live-droplet");
+      });
+      expect(mockPublishDraftToOriginal).toHaveBeenCalledTimes(1);
+      expect(mockPublishDraftToOriginal).toHaveBeenCalledWith(
+        mockEditDraft.id,
+        mockEditDraft.originalDropletId,
+      );
+      expect(mockToast.success).toHaveBeenCalledWith(
+        "Changes published successfully!",
+      );
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
     });
 
-    it("maintains textarea content when canceling and reopening", async () => {
-      const user = userEvent.setup();
+    it("shows the publish error and stays on the draft when publishing fails", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: false,
+        error: "Original droplet not found",
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Original droplet not found",
+        );
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["forbidden", "You can't publish this draft."],
+      ["unauthenticated", "Please sign in again."],
+      ["in_review", "This draft is in review. Publish it from the review."],
+    ])("turns the %s code into a readable toast", async (code, message) => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: false,
+        error: code,
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(message);
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("goes to /my-content when the publish returns no slug", async () => {
+      mockPublishDraftToOriginal.mockResolvedValue({
+        ok: true,
+        error: null,
+        slug: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={mockEditDraft}
+          actionType="publishDraft"
+          buttonText="Publish"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/my-content");
+      });
+    });
+
+    it("does not call publishDraftToOriginal when no original droplet is linked", async () => {
       render(
         <ContentActionButton
           droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
+          actionType="publishDraft"
+          buttonText="Publish"
         />,
       );
 
-      // Open and type
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-      const textarea = screen.getByPlaceholderText("Enter changes here...");
-      await user.type(textarea, "Some feedback");
+      fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
-      // Cancel
-      fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
-
-      // Reopen and verify content is maintained
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-      const newTextarea = screen.getByPlaceholderText("Enter changes here...");
-      expect(newTextarea).toHaveValue("Some feedback");
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "No original droplet linked",
+        );
+      });
+      expect(mockPublishDraftToOriginal).not.toHaveBeenCalled();
     });
   });
 
@@ -744,12 +1038,12 @@ describe("ContentActionButton", () => {
       rerender(
         <ContentActionButton
           droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
+          actionType="sendFeedback"
+          buttonText="Send feedback"
         />,
       );
 
-      button = screen.getByRole("button", { name: /request changes/i });
+      button = screen.getByRole("button", { name: /send feedback/i });
       expect(button).toHaveClass("w-full");
       expect(button).toHaveClass("rounded-lg");
     });
@@ -826,34 +1120,6 @@ describe("ContentActionButton", () => {
           {
             name: dropletInReview.name,
             status: "published",
-            inReview: false,
-          },
-          { regenerateSlug: false },
-        );
-      });
-    });
-
-    it("handles empty changes textarea submission", async () => {
-      mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
-
-      render(
-        <ContentActionButton
-          droplet={mockDroplet}
-          actionType="requestChanges"
-          buttonText="Request Changes"
-        />,
-      );
-
-      fireEvent.click(screen.getByRole("button", { name: /request changes/i }));
-      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
-
-      await waitFor(() => {
-        expect(mockUpdateDroplet).toHaveBeenCalledWith(
-          mockDroplet.id,
-          {
-            name: mockDroplet.name,
-            inReview: false,
-            afterReview: "",
           },
           { regenerateSlug: false },
         );
@@ -954,6 +1220,194 @@ describe("ContentActionButton", () => {
 
       // Should not call updateDroplet
       expect(mockUpdateDroplet).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Withdraw Action", () => {
+    const inReviewDroplet: Droplet = {
+      ...mockDroplet,
+      inReview: true,
+    };
+
+    it("renders an outline button", () => {
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      const button = screen.getByRole("button", {
+        name: "Withdraw from review",
+      });
+      expect(button).toHaveClass("bg-white");
+      expect(button).toHaveClass("text-[#344054]");
+      expect(button).not.toHaveClass("text-white");
+    });
+
+    it("asks for confirmation before withdrawing", () => {
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+
+      expect(screen.getByText("Withdraw from review?")).toBeInTheDocument();
+      expect(screen.getByText(/you can edit it again/i)).toBeInTheDocument();
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+    });
+
+    it("calls withdrawFromReview, then toasts and reloads", async () => {
+      mockWithdrawFromReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { changed: true },
+      });
+
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockWithdrawFromReview).toHaveBeenCalledWith(inReviewDroplet.id);
+        expect(mockToast.success).toHaveBeenCalledWith("Withdrawn from review");
+        expect(window.location.reload).toHaveBeenCalled();
+      });
+      expect(mockUpdateDroplet).not.toHaveBeenCalled();
+    });
+
+    it("treats changed: false as one success toast and no error", async () => {
+      mockWithdrawFromReview.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { changed: false },
+      });
+
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledTimes(1);
+      });
+      expect(mockToast.error).not.toHaveBeenCalled();
+    });
+
+    it("shows an error toast and does not reload when withdrawing fails", async () => {
+      mockWithdrawFromReview.mockResolvedValue({
+        ok: false,
+        error: "failed",
+        data: null,
+      });
+
+      render(
+        <ContentActionButton
+          droplet={inReviewDroplet}
+          actionType="withdrawReview"
+          buttonText="Withdraw from review"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Withdraw from review" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Error withdrawing from review",
+        );
+      });
+      expect(window.location.reload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("disabledReason and initialNote", () => {
+    const inReview: Droplet = { ...mockDroplet, inReview: true };
+
+    it("blocks the click, is aria-disabled and links its helper text", () => {
+      render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="publishWithReview"
+          buttonText="Publish droplet"
+          disabledReason="Confirm the Overall Score to publish."
+        />,
+      );
+      const button = screen.getByRole("button", { name: "Publish droplet" });
+
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      const helper = screen.getByText("Confirm the Overall Score to publish.");
+      expect(button).toHaveAttribute("aria-describedby", helper.id);
+      fireEvent.click(button);
+      expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    });
+
+    it("has no aria-disabled without a reason", () => {
+      render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="publishWithReview"
+          buttonText="Publish droplet"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Publish droplet" }),
+      ).not.toHaveAttribute("aria-disabled");
+    });
+
+    it("pre-fills the Send feedback note, and the reviewer's edit wins", () => {
+      const { rerender } = render(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="sendFeedback"
+          buttonText="Send feedback"
+          initialNote="Draft summary"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      expect(screen.getByRole("textbox")).toHaveValue("Draft summary");
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Edited here" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+      rerender(
+        <ContentActionButton
+          droplet={inReview}
+          actionType="sendFeedback"
+          buttonText="Send feedback"
+          initialNote="Newer summary"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+      expect(screen.getByRole("textbox")).toHaveValue("Edited here");
     });
   });
 });

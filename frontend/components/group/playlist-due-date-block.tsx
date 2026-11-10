@@ -65,9 +65,9 @@ export function PlaylistDueDateBlock({
   };
 
   return (
-    <div className="flex w-full flex-row items-center justify-between space-x-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xl dark:border dark:border-slate-500 dark:bg-slate-800">
+    <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xl dark:border dark:border-slate-500 dark:bg-slate-800">
       <Link href={`/p/${currentPlaylist.slug}`}>{currentPlaylist.name}</Link>
-      <div className="flex flex-row items-center space-x-2">
+      <div className="flex flex-row items-center gap-2">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 

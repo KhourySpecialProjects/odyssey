@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Group } from "@/types";
 import { GroupCard } from "@/components/group/group-card";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { GroupArchiveState } from "@/lib/group-archive";
 
 /** 3 columns x 4 rows at the lg breakpoint. */
 const GROUPS_PER_PAGE = 12;
@@ -11,6 +12,7 @@ const GROUPS_PER_PAGE = 12;
 type GroupWithRole = {
   group: Group;
   role: "creator" | "admin" | "manager" | "member";
+  archiveState: GroupArchiveState;
 };
 
 type Props = {
@@ -36,14 +38,13 @@ export function PaginatedGroupsGrid({ groups, roleColors }: Props) {
   return (
     <>
       <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {visibleGroups.map(({ group, role }) => (
+        {visibleGroups.map(({ group, role, archiveState }) => (
           <div key={`group-${group.id}`} className="h-full">
             <GroupCard
               group={group}
               role={role}
               roleColors={roleColors}
-              isArchived={false}
-              dashboardPage={false}
+              archiveState={archiveState}
             />
           </div>
         ))}

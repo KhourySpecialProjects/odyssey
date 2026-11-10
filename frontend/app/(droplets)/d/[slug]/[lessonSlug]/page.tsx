@@ -14,6 +14,11 @@ import { Highlight, Note } from "@/types";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 import { CompletionBackfill } from "@/components/droplets/completion-backfill";
 import { enrollmentNeedsCompletionBackfill } from "@/lib/enrollment-completion";
+import { lessonAccess } from "@/lib/lesson-access";
+import {
+  getMentorSetting,
+  mentorVisibleFor,
+} from "@/lib/requests/mentor-setting";
 
 type Props = {
   params: Promise<Params>;
@@ -45,7 +50,7 @@ export default async function Page({ params }: Props) {
 
   // Notes and highlights are keyed by lesson slug so they load alongside the
   // lesson. A failed read shows none instead of failing the whole lesson.
-  const [droplet, lesson, authUser, enrollments, notes, highlights] =
+  const [droplet, lesson, authUser, enrollments, notes, highlights, setting] =
     await Promise.all([
       getCachedDropletBySlug(slug),
       getCachedLessonBySlug(lessonSlug),
@@ -57,12 +62,20 @@ export default async function Page({ params }: Props) {
       getHighlightsByAuthorizedUserAndLesson(userId, lessonSlug).catch(
         (): Highlight[] => [],
       ),
+      // Cached and fail-closed: it never rejects
+      getMentorSetting(),
     ]);
 
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
 
   if (!droplet || !lesson || !authUser) return notFound();
+  // Lesson slugs are unique across droplets, so check the lesson is in this one
+  const access = lessonAccess(droplet, lesson.id);
+  if (!access.ok) return notFound();
+  // The membership query runs only for a pilot; fails closed
+  const mentorVisible =
+    access.mentor && (await mentorVisibleFor(setting, authUser.id));
 
   const enrollment = enrollments.find((e) => e.droplet?.id === droplet.id);
 
@@ -93,6 +106,7 @@ export default async function Page({ params }: Props) {
           author={isAuthor || false}
           authUser={authUser}
           userId={authUser.id}
+          mentor={mentorVisible}
           initialNotes={notes ?? []}
           initialHighlights={highlights ?? []}
         />

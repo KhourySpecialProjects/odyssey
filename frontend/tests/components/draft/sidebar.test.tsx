@@ -3,6 +3,7 @@ import {
   screen,
   fireEvent,
   act,
+  cleanup,
   waitFor,
 } from "@testing-library/react";
 import { Sidebar } from "@/components/draft/sidebar";
@@ -10,6 +11,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { mockReview } from "@/testing/mocks/reviewsMock";
+import type { useSharedSentFeedback } from "@/components/draft/review/review-comments-context";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -30,7 +33,18 @@ jest.mock("@/components/draft/add-lesson", () => ({
 
 // Mock the ContentActionButton component to avoid complex setup.
 // Surface the actionType and buttonText so permission tests can assert on
-// which button (Publish vs Review) the sidebar hands to a given user role.
+// which buttons the sidebar hands to a given user role.
+jest.mock("@/components/draft/review/score-with-ai-button", () => ({
+  ScoreWithAiButton: () => <div data-testid="score-with-ai" />,
+}));
+let mockSentFeedback: Partial<
+  NonNullable<ReturnType<typeof useSharedSentFeedback>>
+> | null = null;
+jest.mock("@/components/draft/review/review-comments-context", () => ({
+  ...jest.requireActual("@/components/draft/review/review-comments-context"),
+  useSharedSentFeedback: () => mockSentFeedback,
+}));
+
 jest.mock("@/components/draft/metadata/content-action-button", () => ({
   ContentActionButton: ({
     actionType,
@@ -124,7 +138,6 @@ describe("Sidebar", () => {
     presentationEnabled: false,
     learningObjectives: [],
     inReview: false,
-    afterReview: undefined,
     lessons: [{ ...mockLesson, orderIndex: 0 }],
   };
 
@@ -139,6 +152,7 @@ describe("Sidebar", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSentFeedback = null;
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
     (createDropletAnnouncement as jest.Mock).mockResolvedValue({
@@ -147,6 +161,7 @@ describe("Sidebar", () => {
   });
 
   const defaultProps = {
+    isAuthor: false,
     expanded: true,
     setExpanded: jest.fn(),
     onRestartTour: jest.fn(),
@@ -162,6 +177,35 @@ describe("Sidebar", () => {
       />,
     );
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
+  });
+
+  it("shows a lesson's score dot with its screen-reader text", () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+        {...defaultProps}
+        lessonDots={{ 1: "needs_work" }}
+      />,
+    );
+
+    const link = screen.getByText("Test Lesson").closest("a")!;
+    expect(link).toHaveTextContent("Lowest score: Needs work");
+  });
+
+  it("shows no dot for a lesson without one", () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+        {...defaultProps}
+        lessonDots={{ 99: "ok" }}
+      />,
+    );
+
+    expect(screen.queryByText(/Lowest score/)).not.toBeInTheDocument();
   });
 
   it("toggles mobile menu", () => {
@@ -336,6 +380,76 @@ describe("Sidebar", () => {
     expect(previewButton).toBeInTheDocument();
   });
 
+  describe("Final Overview Scan link", () => {
+    const renderAs = (roles: AuthorizedUserRoleTitle[], isAuthor: boolean) =>
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles } as any}
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={isAuthor}
+        />,
+      );
+
+    it.each([
+      ["an author", [AuthorizedUserRoleTitle.User], true, true],
+      [
+        "a Content Editor",
+        [AuthorizedUserRoleTitle.ContentEditor],
+        false,
+        true,
+      ],
+      [
+        "a non-author Content Creator",
+        [AuthorizedUserRoleTitle.ContentCreator],
+        false,
+        false,
+      ],
+    ])("for %s, shown is %s", (_n, roles, isAuthor, shown) => {
+      renderAs(roles, isAuthor);
+      const link = screen.queryByRole("link", { name: "Final Overview Scan" });
+      expect(!!link).toBe(shown);
+      if (link) {
+        expect(link).toHaveAttribute("href", "/draft/d/test-droplet/scan");
+        expect(link).not.toHaveAttribute("aria-current");
+      }
+    });
+
+    it("is hidden while the reviewer panel is showing", () => {
+      render(
+        <Sidebar
+          user={
+            {
+              ...mockUser,
+              roles: [AuthorizedUserRoleTitle.ContentEditor],
+            } as any
+          }
+          droplet={mockDroplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={false}
+          hideReviewActions
+        />,
+      );
+      expect(
+        screen.queryByRole("link", { name: "Final Overview Scan" }),
+      ).toBeNull();
+    });
+
+    it("is the current page on the scan page, where Preview opens the droplet", () => {
+      (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet/scan");
+      renderAs([AuthorizedUserRoleTitle.User], true);
+      expect(
+        screen.getByRole("link", { name: "Final Overview Scan" }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("link", { name: "Preview" })).toHaveAttribute(
+        "href",
+        "/d/test-droplet",
+      );
+    });
+  });
+
   it("renders metadata section", () => {
     render(
       <Sidebar
@@ -349,69 +463,395 @@ describe("Sidebar", () => {
     expect(screen.getByText("Overview")).toBeInTheDocument();
   });
 
-  describe("publish button permissions", () => {
-    const renderWithRoles = (roles: AuthorizedUserRoleTitle[]) =>
+  describe("action button permissions", () => {
+    const { SysAdmin, Faculty, ContentEditor, ContentCreator, User } =
+      AuthorizedUserRoleTitle;
+
+    const draftStates = {
+      "new draft": mockDroplet,
+      "new draft in review": { ...mockDroplet, inReview: true },
+      "edit draft": { ...mockDroplet, originalDropletId: 42 },
+      "edit draft in review": {
+        ...mockDroplet,
+        originalDropletId: 42,
+        inReview: true,
+      },
+    };
+
+    // [actionType, buttonText] for each action button, in render order
+    const renderActions = (
+      roles: AuthorizedUserRoleTitle[],
+      droplet: object,
+      isAuthor = false,
+    ) => {
       render(
         <Sidebar
           user={{ ...mockUser, roles } as any}
+          droplet={droplet as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={isAuthor}
+        />,
+      );
+      return screen
+        .queryAllByTestId("content-action-button")
+        .map((btn) => [
+          btn.getAttribute("data-action-type"),
+          btn.getAttribute("data-button-text"),
+        ]);
+    };
+
+    const publish = ["publish", "Publish"];
+    const publishChanges = ["publishDraft", "Publish changes"];
+    const publishWithReview = ["publishWithReview", "Publish"];
+    const publishChangesWithReview = ["publishWithReview", "Publish changes"];
+    const sendFeedback = ["sendFeedback", "Send feedback"];
+    const submitForReview = ["requestReview", "Submit for review"];
+    const withdraw = ["withdrawReview", "Withdraw from review"];
+
+    // [role, state, isAuthor, expected]; isAuthor false means a non-author.
+    it.each<
+      [AuthorizedUserRoleTitle, keyof typeof draftStates, boolean, string[][]]
+    >([
+      // Someone else's draft out of review, such as one its creator withdrew,
+      // isn't the Admin's to publish (ODY-860)
+      [SysAdmin, "new draft", false, []],
+      [
+        SysAdmin,
+        "new draft in review",
+        false,
+        [publishWithReview, sendFeedback],
+      ],
+      [SysAdmin, "edit draft", false, []],
+      [
+        SysAdmin,
+        "edit draft in review",
+        false,
+        [publishChangesWithReview, sendFeedback],
+      ],
+      [SysAdmin, "new draft", true, [publish]],
+      [SysAdmin, "edit draft", true, [publishChanges]],
+      // Faculty never act on someone else's droplet (ODY-798, 2026-10-26).
+      [Faculty, "new draft", false, []],
+      [Faculty, "new draft in review", false, []],
+      [Faculty, "edit draft", false, []],
+      [Faculty, "edit draft in review", false, []],
+      // Faculty publish their own droplet directly, and withdraw it in review.
+      [Faculty, "new draft", true, [publish]],
+      [Faculty, "edit draft", true, [publishChanges]],
+      [Faculty, "new draft in review", true, [withdraw]],
+      [Faculty, "edit draft in review", true, [withdraw]],
+      // Content Editors act only on a droplet that is in review
+      [ContentEditor, "new draft", false, []],
+      [
+        ContentEditor,
+        "new draft in review",
+        false,
+        [publishWithReview, sendFeedback],
+      ],
+      [ContentEditor, "edit draft", false, []],
+      [
+        ContentEditor,
+        "edit draft in review",
+        false,
+        [publishChangesWithReview, sendFeedback],
+      ],
+      [ContentEditor, "new draft in review", true, [withdraw]],
+      [ContentCreator, "new draft", true, [submitForReview]],
+      [ContentCreator, "new draft in review", true, [withdraw]],
+      [ContentCreator, "edit draft", true, [submitForReview]],
+      [ContentCreator, "edit draft in review", true, [withdraw]],
+      // A non-author with no reviewer role sees nothing
+      [ContentCreator, "new draft", false, []],
+      [ContentCreator, "new draft in review", false, []],
+      [User, "new draft", false, []],
+      [User, "new draft in review", false, []],
+      [User, "edit draft", true, [submitForReview]],
+    ])("%s, %s, author %s: %j", (role, state, isAuthor, expectedActions) => {
+      expect(renderActions([role], draftStates[state], isAuthor)).toEqual(
+        expectedActions,
+      );
+    });
+
+    it.each([
+      [
+        "a sent review exists",
+        { review: { ...mockReview, state: "sent" as const } },
+        "Resubmit for review",
+      ],
+      ["no sent review exists", null, "Submit for review"],
+    ])("labels Submit when %s", (_label, feedback, text) => {
+      mockSentFeedback = feedback;
+      expect(renderActions([ContentCreator], mockDroplet, true)).toEqual([
+        ["requestReview", text],
+      ]);
+    });
+
+    it("lets a Content Editor who is also a Content Creator submit their draft for review", () => {
+      expect(
+        renderActions([ContentEditor, ContentCreator], mockDroplet, true),
+      ).toEqual([submitForReview]);
+      cleanup();
+      expect(
+        renderActions([ContentEditor, ContentCreator], mockDroplet, false),
+      ).toEqual([]);
+    });
+
+    it("gives an Admin author who is also a Content Creator Publish instead of Submit for review", () => {
+      expect(
+        renderActions([SysAdmin, ContentCreator], mockDroplet, true),
+      ).toEqual([publish]);
+    });
+
+    it("shows no action buttons on a published droplet", () => {
+      expect(renderActions([SysAdmin], mockPublishedDroplet)).toEqual([]);
+    });
+
+    it.each<[string, AuthorizedUserRoleTitle[]]>([
+      ["Content Creator", [ContentCreator]],
+      ["Content Editor", [ContentEditor]],
+      ["Faculty", [Faculty]],
+      ["System Admin", [SysAdmin]],
+    ])(
+      "a %s author of an in-review droplet sees only Withdraw",
+      (_name, roles) => {
+        expect(
+          renderActions(roles, draftStates["new draft in review"], true),
+        ).toEqual([withdraw]);
+        cleanup();
+        expect(
+          renderActions(roles, draftStates["edit draft in review"], true),
+        ).toEqual([withdraw]);
+      },
+    );
+
+    it("a non-author Content Editor sees Publish and Send feedback, not Withdraw or Request changes", () => {
+      expect(
+        renderActions(
+          [ContentEditor],
+          draftStates["new draft in review"],
+          false,
+        ),
+      ).toEqual([publishWithReview, sendFeedback]);
+    });
+
+    it.each<
+      [AuthorizedUserRoleTitle, keyof typeof draftStates, boolean, boolean]
+    >([
+      [ContentEditor, "new draft in review", false, true],
+      [SysAdmin, "edit draft in review", false, true],
+      [ContentEditor, "new draft in review", true, false],
+      [SysAdmin, "new draft", false, false],
+      [ContentCreator, "new draft in review", false, false],
+    ])(
+      "Score with AI for %s, %s, author %s: %s",
+      (role, state, isAuthor, shown) => {
+        renderActions([role], draftStates[state], isAuthor);
+        expect(!!screen.queryByTestId("score-with-ai")).toBe(shown);
+      },
+    );
+
+    it("shows only Preview in review while the reviewer panel is shown", () => {
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles: [ContentEditor] } as any}
+          droplet={draftStates["new draft in review"] as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor={false}
+          hideReviewActions
+        />,
+      );
+
+      expect(screen.queryAllByTestId("content-action-button")).toHaveLength(0);
+      expect(screen.getByText("Preview")).toBeInTheDocument();
+    });
+
+    it("hides Score with AI while the reviewer panel is shown, and shows it otherwise", () => {
+      const props = {
+        user: { ...mockUser, roles: [ContentEditor] } as any,
+        droplet: draftStates["new draft in review"] as any,
+        availableDroplets: [],
+        ...defaultProps,
+        isAuthor: false,
+      };
+      const { rerender } = render(<Sidebar {...props} hideReviewActions />);
+      expect(screen.queryByTestId("score-with-ai")).not.toBeInTheDocument();
+
+      rerender(<Sidebar {...props} />);
+      expect(screen.getByTestId("score-with-ai")).toBeInTheDocument();
+    });
+
+    it("keeps Withdraw for an author even with the panel flag set", () => {
+      render(
+        <Sidebar
+          user={{ ...mockUser, roles: [ContentEditor] } as any}
+          droplet={draftStates["new draft in review"] as any}
+          availableDroplets={[]}
+          {...defaultProps}
+          isAuthor
+          hideReviewActions
+        />,
+      );
+
+      expect(
+        screen
+          .getAllByTestId("content-action-button")
+          .map((b) => b.getAttribute("data-action-type")),
+      ).toEqual(["withdrawReview"]);
+    });
+
+    it("a Faculty author still sees Publish when the droplet is not in review", () => {
+      expect(renderActions([Faculty], draftStates["new draft"], true)).toEqual([
+        publish,
+      ]);
+    });
+
+    it("a Faculty author publishes their own edit draft directly", () => {
+      expect(renderActions([Faculty], draftStates["edit draft"], true)).toEqual(
+        [publishChanges],
+      );
+    });
+
+    it("a Content Creator author not in review still sees Submit and no Withdraw", () => {
+      expect(
+        renderActions([ContentCreator], draftStates["new draft"], true),
+      ).toEqual([submitForReview]);
+    });
+
+    describe("frozen sidebar", () => {
+      const inReview = draftStates["new draft in review"];
+      const renderSidebar = (
+        roles: AuthorizedUserRoleTitle[],
+        isAuthor: boolean,
+      ) =>
+        render(
+          <Sidebar
+            user={{ ...mockUser, roles } as any}
+            droplet={inReview as any}
+            availableDroplets={[]}
+            {...defaultProps}
+            isAuthor={isAuthor}
+          />,
+        );
+
+      it("hides Add lesson and Auto-format and labels the droplet for an author", () => {
+        const { container } = renderSidebar([ContentCreator], true);
+
+        expect(screen.queryByTestId("add-lesson")).toBeNull();
+        expect(container.querySelector("#tour-auto-format")).toBeNull();
+        expect(screen.getByText("In review")).toBeInTheDocument();
+      });
+
+      it("keeps Add lesson and Auto-format for a reviewer, who still sees the label", () => {
+        const { container } = renderSidebar([ContentEditor], false);
+
+        expect(screen.getByTestId("add-lesson")).toBeInTheDocument();
+        expect(container.querySelector("#tour-auto-format")).not.toBeNull();
+        expect(screen.getByText("In review")).toBeInTheDocument();
+      });
+
+      it("shows no In review label outside review", () => {
+        render(
+          <Sidebar
+            user={{ ...mockUser, roles: [ContentCreator] } as any}
+            droplet={mockDroplet as any}
+            availableDroplets={[]}
+            {...defaultProps}
+            isAuthor
+          />,
+        );
+
+        expect(screen.queryByText("In review")).toBeNull();
+        expect(screen.getByTestId("add-lesson")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("height", () => {
+    const originalInnerHeight = window.innerHeight;
+    let panelFooter: HTMLElement;
+    let siteFooter: HTMLElement;
+    const setTop = (el: HTMLElement, top: number) =>
+      jest
+        .spyOn(el, "getBoundingClientRect")
+        .mockReturnValue({ top } as DOMRect);
+    const renderSidebar = () => {
+      const view = render(
+        <Sidebar
+          user={mockUser as any}
           droplet={mockDroplet as any}
           availableDroplets={[]}
           {...defaultProps}
         />,
       );
-
-    it("shows Publish button for SysAdmin", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.SysAdmin]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
-    });
-
-    it("shows Publish button for ContentEditor", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.ContentEditor]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
-    });
-
-    it("shows Publish button for Faculty", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.Faculty]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publish");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
-    });
-
-    it("shows Review button for ContentCreator (no direct publish)", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.ContentCreator]);
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "requestReview");
-      expect(btn).toHaveAttribute("data-button-text", "Review");
-    });
-
-    it("shows no action button for User role", () => {
-      renderWithRoles([AuthorizedUserRoleTitle.User]);
-      expect(
-        screen.queryByTestId("content-action-button"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("uses publishDraft actionType when the droplet is a draft revision", () => {
-      render(
-        <Sidebar
-          user={
-            {
-              ...mockUser,
-              roles: [AuthorizedUserRoleTitle.SysAdmin],
-            } as any
-          }
-          droplet={{ ...mockDroplet, originalDropletId: 42 } as any}
-          availableDroplets={[]}
-          {...defaultProps}
-        />,
+      return {
+        ...view,
+        aside: screen.getByRole("complementary", { name: "Sidebar" }),
+      };
+    };
+    // The ResizeObserver mock instance (and its callback) that watches <body>.
+    const bodyObserver = () => {
+      const observer = jest.mocked(ResizeObserver);
+      const i = observer.mock.results.findIndex((r) =>
+        (r.value.observe as jest.Mock).mock.calls.some(
+          ([el]) => el === document.body,
+        ),
       );
-      const btn = screen.getByTestId("content-action-button");
-      expect(btn).toHaveAttribute("data-action-type", "publishDraft");
-      expect(btn).toHaveAttribute("data-button-text", "Publish");
+      return {
+        instance: observer.mock.results[i].value as ResizeObserver,
+        callback: observer.mock.calls[i][0],
+      };
+    };
+
+    beforeEach(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 800,
+      });
+      panelFooter = document.body.appendChild(document.createElement("footer"));
+      siteFooter = document.body.appendChild(document.createElement("footer"));
+      siteFooter.id = "site-footer";
+      setTop(panelFooter, 680);
+      setTop(siteFooter, 2000);
+    });
+
+    afterEach(() => {
+      panelFooter.remove();
+      siteFooter.remove();
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: originalInnerHeight,
+      });
+    });
+
+    it.each([
+      [2000, "0px"],
+      [600, "200px"],
+    ])("with the site footer at %i, bottom is %s", (top, expected) => {
+      const { aside } = renderSidebar();
+      setTop(siteFooter, top);
+      fireEvent.scroll(window);
+      expect(aside.style.bottom).toBe(expected);
+    });
+
+    it("places itself on mount without a scroll or observer callback", () => {
+      setTop(siteFooter, 600);
+      expect(renderSidebar().aside.style.bottom).toBe("200px");
+    });
+
+    it("recomputes when the body resizes", () => {
+      const { aside } = renderSidebar();
+      setTop(siteFooter, 500);
+      act(() => bodyObserver().callback([], {} as ResizeObserver));
+      expect(aside.style.bottom).toBe("300px");
+    });
+
+    it("disconnects the body observer on unmount", () => {
+      const { unmount } = renderSidebar();
+      const { instance } = bodyObserver();
+      unmount();
+      expect(instance.disconnect).toHaveBeenCalled();
     });
   });
 });

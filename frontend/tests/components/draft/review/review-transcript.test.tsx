@@ -1,0 +1,785 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
+import { ReviewTranscript } from "@/components/draft/review/review-transcript";
+import { useSharedReviewComments } from "@/components/draft/review/review-comments-context";
+import {
+  acceptAiScores,
+  sendFeedback,
+  unconfirmScores,
+} from "@/lib/requests/reviews";
+import {
+  ReviewFocusProvider,
+  useReviewFocus,
+} from "@/components/draft/review/review-focus-context";
+import { mockAiFinding } from "@/testing/mocks/reviewsMock";
+import { startAiScoring } from "@/lib/requests/ai-scoring";
+import type { ReviewPanelData } from "@/lib/requests/reviews";
+
+const push = jest.fn();
+const refresh = jest.fn();
+let pathname = "/draft/d/intro";
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push, refresh }),
+  usePathname: () => pathname,
+}));
+jest.mock("@/lib/requests/reviews");
+jest.mock("@/lib/requests/droplet");
+jest.mock("@/lib/requests/ai-scoring", () => ({ startAiScoring: jest.fn() }));
+jest.mock("sonner");
+jest.mock("@/components/draft/review/review-comments-context", () => ({
+  useSharedReviewComments: jest.fn(),
+}));
+
+const droplet = {
+  id: 3,
+  name: "Intro",
+  slug: "intro",
+  status: "draft",
+  inReview: true,
+  lessons: [
+    { id: 11, name: "Variables", slug: "variables", orderIndex: 0 },
+    { id: 12, name: "Loops", slug: "loops", orderIndex: 1 },
+  ],
+} as never;
+
+const criteria = [{ id: 2, name: "Tone", order: 0, active: true }];
+
+const finding = {
+  id: "8-1",
+  quote: "beta",
+  reason: "Too vague.",
+  lessonId: 12,
+  anchor: { v: 1, field: "blocks", quote: "beta", prefix: "", suffix: "" },
+};
+
+const score = (lessonId: number | null, over = {}) => ({
+  id: 1,
+  key: `70:${lessonId ?? "overall"}:2`,
+  criterionName: "Tone",
+  lessonId,
+  criterionId: 2,
+  value: null,
+  aiValue: 2,
+  ...over,
+});
+
+const panel = (scores: object[] = []): ReviewPanelData =>
+  ({
+    review: { id: 70, round: 1, state: "open" },
+    criteria,
+    scores,
+    latestRun: null,
+    positions: {},
+  }) as never;
+
+const ensureReview = jest
+  .fn()
+  .mockResolvedValue({ ok: true, data: { id: 70 } });
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  pathname = "/draft/d/intro";
+  localStorage.clear();
+  jest.mocked(useSharedReviewComments).mockReturnValue({
+    comments: [],
+    review: { id: 70, state: "open" },
+    ensureReview,
+  } as never);
+});
+
+const publish = () => screen.getByRole("button", { name: "Publish droplet" });
+
+describe("footer", () => {
+  it.each([
+    ["with scores", "/draft/d/intro", panel(), null],
+    ["on the scan page", "/draft/d/intro/scan", panel(), "page"],
+    ["without scores", "/draft/d/intro", null, null],
+  ])(
+    "puts the scan link under Send feedback and Publish: %s",
+    (_n, path, data, current) => {
+      pathname = path;
+      render(<ReviewTranscript droplet={droplet} panel={data} />);
+
+      const link = screen.getByRole("link", { name: "Final Overview Scan" });
+      expect(link).toHaveAttribute("href", "/draft/d/intro/scan");
+      expect(link.getAttribute("aria-current")).toBe(current);
+      const after = (el: HTMLElement) =>
+        el.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(after(publish())).toBeTruthy();
+      expect(
+        after(screen.getByRole("button", { name: "Send feedback" })),
+      ).toBeTruthy();
+      expect(link.closest("footer")).not.toBeNull();
+    },
+  );
+
+  it("disables Publish until every Overall score has a value", async () => {
+    const { rerender } = render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(null, { value: null })])}
+      />,
+    );
+
+    expect(publish()).toHaveAttribute("aria-disabled", "true");
+    const help = screen.getByText(/Confirm the Overall Score to publish/);
+    expect(help).toHaveClass("sr-only");
+    expect(publish()).toHaveAccessibleDescription(help.textContent ?? "");
+
+    rerender(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(null, { value: 2 })])}
+      />,
+    );
+    expect(publish()).not.toHaveAttribute("aria-disabled");
+    await userEvent.click(publish());
+    expect(
+      screen.getByPlaceholderText("Enter droplet name"),
+    ).toBeInTheDocument();
+  });
+
+  it("still renders the footer when the scores did not load", async () => {
+    render(<ReviewTranscript droplet={droplet} panel={null} />);
+
+    expect(publish()).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByText("Couldn't load scores. Reload to try again."),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Send feedback" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Send feedback" }),
+    ).toBeVisible();
+  });
+});
+
+describe("summary note", () => {
+  it("is labelled optional and has a placeholder", () => {
+    render(<ReviewTranscript droplet={droplet} panel={panel()} />);
+
+    expect(screen.getByLabelText("Summary note (optional)")).toHaveAttribute(
+      "placeholder",
+      "Anything the creator should know about the droplet as a whole",
+    );
+  });
+
+  it("is saved in localStorage and pre-fills Send feedback", async () => {
+    render(<ReviewTranscript droplet={droplet} panel={panel()} />);
+
+    await userEvent.type(
+      screen.getByLabelText(/summary note/i),
+      "Needs a clearer intro",
+    );
+    expect(localStorage.getItem("review-note:70")).toBe(
+      "Needs a clearer intro",
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Send feedback" }),
+    );
+    expect(screen.getByLabelText(/optional summary/i)).toHaveValue(
+      "Needs a clearer intro",
+    );
+    expect(sendFeedback).not.toHaveBeenCalled();
+  });
+
+  it("restores a saved note", () => {
+    localStorage.setItem("review-note:70", "Saved");
+    render(<ReviewTranscript droplet={droplet} panel={panel()} />);
+
+    expect(screen.getByLabelText(/summary note/i)).toHaveValue("Saved");
+  });
+});
+
+describe("wiring", () => {
+  it("confirms a card through the shared scores hook", async () => {
+    jest.mocked(acceptAiScores).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: [{ key: "70:11:2", value: 2 }],
+    } as never);
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(11, { aiValue: 2 })])}
+      />,
+    );
+    const card = openCard("Variables");
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Confirm scores" }),
+    );
+
+    expect(acceptAiScores).toHaveBeenCalledWith(70, 11);
+    expect(await within(card).findByText("Scores confirmed")).toBeVisible();
+  });
+
+  it.each([
+    ["a lesson", 12, "/draft/d/intro/loops", 1, "Lesson 2", 12],
+    ["the Overview", null, "/draft/d/intro", 0, "the Overview", null],
+    ["a lesson that is gone", 99, "/draft/d/intro", 0, "the Overview", null],
+  ])(
+    "shows an Overall finding on %s with a lesson tag",
+    async (_n, lessonId, url, pushes, place, sentTo) => {
+      const seen = jest.fn();
+      const Focus = () => {
+        seen(useReviewFocus()?.focused?.target);
+        return null;
+      };
+      render(
+        <ReviewFocusProvider active>
+          <Focus />
+          <ReviewTranscript
+            droplet={droplet}
+            panel={panel([
+              score(null, { aiFindings: [{ ...finding, lessonId }] }),
+            ])}
+          />
+        </ReviewFocusProvider>,
+      );
+      const card = screen.getByRole("region", { name: "Overall Score" });
+
+      await userEvent.click(
+        within(card).getByRole("button", { name: /^Tone/ }),
+      );
+      await userEvent.click(
+        within(card).getByRole("button", { name: /show in lesson/i }),
+      );
+
+      expect(push).toHaveBeenCalledTimes(pushes);
+      if (pushes) expect(push).toHaveBeenCalledWith(url);
+      expect(seen).toHaveBeenLastCalledWith({
+        kind: "finding",
+        markId: "finding-8-1",
+        lessonId: sentTo,
+        field: "blocks",
+        place,
+        quote: "beta",
+      });
+      expect(
+        within(card).getByRole("listitem", { current: true }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it("drops a dismissed finding from the issue count", async () => {
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(12, { aiFindings: [finding] })])}
+      />,
+    );
+    const card = openCard("Loops");
+    expect(
+      within(card).getByRole("button", { name: /^Tone.*1 issue/ }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    await userEvent.click(
+      within(card).getByRole("button", { name: /not an issue/i }),
+    );
+
+    expect(
+      within(card).getByRole("button", { name: /^Tone.*no issues/ }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("open detail for the lesson's finding marks", () => {
+  const Probe = () => {
+    const open = useReviewFocus()?.openDetail;
+    return (
+      <output
+        data-testid="probe"
+        data-quote={open?.findings[0]?.finding.anchor.quote}
+      >
+        {open
+          ? `${open.band}:${open.findings.map((f) => `${f.number}=${f.finding.id}`).join(",")}`
+          : "none"}
+      </output>
+    );
+  };
+  const tree = (active: boolean) => (
+    <ReviewFocusProvider active={active}>
+      <Probe />
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([
+          score(12, {
+            aiValue: 2,
+            aiFindings: [
+              mockAiFinding({ id: "a", lessonId: 12 }),
+              mockAiFinding({ id: "b", lessonId: 12 }),
+            ],
+          }),
+        ])}
+      />
+    </ReviewFocusProvider>
+  );
+  const mount = (active: boolean) => render(tree(active));
+
+  it("makes the clicked finding's detail the active one", async () => {
+    render(
+      <ReviewFocusProvider active>
+        <Probe />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel(
+            [11, 12].map((id, i) =>
+              score(id, {
+                id: i + 1,
+                key: `70:${id}:2`,
+                aiValue: 2,
+                aiFindings: [mockAiFinding({ id: `f${id}`, lessonId: id })],
+              }),
+            ),
+          )}
+        />
+      </ReviewFocusProvider>,
+    );
+    for (const name of ["Variables", "Loops"]) {
+      await userEvent.click(
+        within(openCard(name)).getByRole("button", {
+          name: /^Tone/,
+        }),
+      );
+    }
+    expect(screen.getByTestId("probe")).toHaveTextContent("1=f12");
+
+    await userEvent.click(
+      within(screen.getByRole("region", { name: "Variables" })).getByRole(
+        "button",
+        { name: /show in lesson/i },
+      ),
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("1=f11");
+  });
+
+  it("follows the open circle and its undismissed findings", async () => {
+    mount(true);
+    const card = openCard("Loops");
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    expect(screen.getByTestId("probe")).toHaveTextContent("needs_work:1=a,2=b");
+
+    await userEvent.click(
+      within(card).getAllByRole("button", { name: /not an issue/i })[0],
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("needs_work:1=b");
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: /close tone details/i }),
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("none");
+  });
+
+  it("clears the open circle's findings when the card's caret collapses it", async () => {
+    mount(true);
+    const card = openCard("Loops");
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    await userEvent.click(within(card).getAllByRole("button")[0]);
+
+    expect(screen.getByTestId("probe")).toHaveTextContent("none");
+  });
+
+  it("is hidden while the panel is a rail, and back when it opens", async () => {
+    const { rerender } = mount(false);
+    const card = openCard("Loops");
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    expect(screen.getByTestId("probe")).toHaveTextContent("none");
+
+    rerender(tree(true));
+    expect(screen.getByTestId("probe")).toHaveTextContent("needs_work:1=a,2=b");
+  });
+
+  it("follows a re-run that keeps the ids but moves the passage", async () => {
+    const run = (quote: string) => (
+      <ReviewFocusProvider active>
+        <Probe />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel([
+            score(12, {
+              aiValue: 2,
+              aiFindings: [
+                mockAiFinding({
+                  id: "a",
+                  lessonId: 12,
+                  anchor: { ...mockAiFinding().anchor, quote },
+                }),
+              ],
+            }),
+          ])}
+        />
+      </ReviewFocusProvider>
+    );
+    const { rerender } = render(run("old"));
+    const card = openCard("Loops");
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    const quoteNow = () => screen.getByTestId("probe").dataset.quote;
+    expect(quoteNow()).toBe("old");
+
+    rerender(run("new"));
+    expect(quoteNow()).toBe("new");
+  });
+});
+
+describe("per-criterion state and the shell link", () => {
+  const two = (): ReviewPanelData =>
+    ({
+      ...panel([
+        score(11, { value: 3, aiValue: 3 }),
+        score(11, {
+          id: 2,
+          key: "70:11:3",
+          criterionId: 3,
+          criterionName: "Style",
+          value: 4,
+          aiValue: 4,
+        }),
+      ]),
+      criteria: [
+        { id: 2, name: "Tone", order: 0, active: true },
+        { id: 3, name: "Style", order: 1, active: true },
+      ],
+    }) as never;
+
+  it("does not carry the Change control between criteria", async () => {
+    render(<ReviewTranscript droplet={droplet} panel={two()} />);
+    const card = openCard("Variables");
+
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    await userEvent.click(
+      within(card).getByRole("button", { name: /disagree/i }),
+    );
+    expect(within(card).getByRole("radiogroup")).toBeInTheDocument();
+
+    await userEvent.click(within(card).getByRole("button", { name: /^Style/ }));
+
+    expect(within(card).queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(
+      within(card).getByRole("region", { name: "Style details" }),
+    ).toBeInTheDocument();
+  });
+
+  it("tells the shell its scores, and clears them on unmount", () => {
+    const onScoresChange = jest.fn();
+    const { unmount } = render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(11)])}
+        onScoresChange={onScoresChange}
+      />,
+    );
+    expect(onScoresChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ lessonId: 11 }),
+    ]);
+
+    unmount();
+
+    expect(onScoresChange).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe("confirm and undo end to end", () => {
+  it("confirming the Overall card enables Publish", async () => {
+    jest.mocked(acceptAiScores).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: [{ key: "70:overall:2", value: 2 }],
+    } as never);
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(null, { value: null, aiValue: 2 })])}
+      />,
+    );
+    expect(publish()).toHaveAttribute("aria-disabled", "true");
+    const overall = screen.getByRole("region", { name: "Overall Score" });
+
+    await userEvent.click(
+      within(overall).getByRole("button", { name: "Confirm scores" }),
+    );
+
+    expect(acceptAiScores).toHaveBeenCalledWith(70, null);
+    await within(overall).findByText("Scores confirmed");
+    expect(publish()).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("Undo calls unconfirmScores and the card goes back to To confirm", async () => {
+    jest.mocked(unconfirmScores).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: [{ key: "70:11:2", value: null }],
+    } as never);
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={panel([score(11, { value: 2, aiValue: 2 })])}
+      />,
+    );
+    const card = openCard("Variables");
+    expect(within(card).getByText("Confirmed")).toBeInTheDocument();
+
+    await userEvent.click(within(card).getByRole("button", { name: "Undo" }));
+
+    expect(unconfirmScores).toHaveBeenCalledWith(70, 11);
+    expect(await within(card).findByText("To confirm")).toBeInTheDocument();
+    expect(
+      within(card).getByRole("button", { name: "Confirm scores" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Score with AI in the panel", () => {
+  const withRun = (latestRun: object | null): ReviewPanelData =>
+    ({ ...panel(), latestRun }) as never;
+  const scoreButton = () =>
+    screen.getByRole("button", { name: /score with ai|scoring with ai/i });
+
+  it("starts a run, toasts and refreshes so the queued run loads", async () => {
+    jest.mocked(startAiScoring).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { runId: 9 },
+    } as never);
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+
+    expect(startAiScoring).toHaveBeenCalledWith(3);
+    expect(toast.success).toHaveBeenCalled();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["conflict", undefined, "Score with AI is already running on your review."],
+    [
+      "rate_limited",
+      undefined,
+      "You've used Score with AI too often. Try again later.",
+    ],
+    ["rate_limited", "Try again in 2 minutes.", "Try again in 2 minutes."],
+  ])(
+    "toasts a %s refusal and does not refresh",
+    async (error, message, text) => {
+      jest
+        .mocked(startAiScoring)
+        .mockResolvedValue({ ok: false, error, data: null, message } as never);
+      render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+      await userEvent.click(scoreButton());
+
+      expect(toast.error).toHaveBeenCalledWith(text);
+      expect(refresh).not.toHaveBeenCalled();
+    },
+  );
+
+  it("toasts a fixed message when the start throws", async () => {
+    jest.mocked(startAiScoring).mockRejectedValue(new Error("offline"));
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't start Score with AI. Try again.",
+    );
+  });
+
+  it("is disabled while a start is in flight", async () => {
+    let finish!: (v: unknown) => void;
+    jest
+      .mocked(startAiScoring)
+      .mockReturnValue(new Promise((r) => (finish = r)) as never);
+    render(<ReviewTranscript droplet={droplet} panel={withRun(null)} />);
+
+    await userEvent.click(scoreButton());
+    const button = screen.getByRole("button", { name: "Starting…" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).toHaveAttribute("aria-busy", "true");
+    await userEvent.click(button);
+    expect(startAiScoring).toHaveBeenCalledTimes(1);
+
+    finish({ ok: false, error: "conflict", data: null });
+  });
+
+  it("is disabled while a run is running", async () => {
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={withRun({ id: 4, runState: "running", progress: null })}
+      />,
+    );
+
+    const button = scoreButton();
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(button);
+    expect(startAiScoring).not.toHaveBeenCalled();
+  });
+
+  it("offers Run again once a run is done", async () => {
+    jest.mocked(startAiScoring).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { runId: 10 },
+    } as never);
+    render(
+      <ReviewTranscript
+        droplet={droplet}
+        panel={withRun({ id: 4, runState: "done" })}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Run again" }));
+
+    expect(startAiScoring).toHaveBeenCalledWith(3);
+  });
+});
+
+describe("Add as comment", () => {
+  const add = jest.fn();
+  const share = (state: string | null = "open") =>
+    jest.mocked(useSharedReviewComments).mockReturnValue({
+      comments: [],
+      review: state ? { id: 70, state } : null,
+      ensureReview,
+      add,
+    } as never);
+  const open = async (lessonId = 12) => {
+    const seen = jest.fn();
+    const Focus = () => {
+      seen(useReviewFocus()?.focused);
+      return null;
+    };
+    render(
+      <ReviewFocusProvider active>
+        <Focus />
+        <ReviewTranscript
+          droplet={droplet}
+          panel={panel([score(12, { aiFindings: [{ ...finding, lessonId }] })])}
+        />
+      </ReviewFocusProvider>,
+    );
+    const card = openCard("Loops");
+    await userEvent.click(within(card).getByRole("button", { name: /^Tone/ }));
+    return { card, seen };
+  };
+  const addButton = (card: HTMLElement) =>
+    within(card).getByRole("button", { name: "Add as comment" });
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+    add.mockResolvedValue({ ok: true });
+    share();
+  });
+
+  it("opens a pre-filled composer and rings the passage without navigating", async () => {
+    const { card, seen } = await open();
+
+    await userEvent.click(addButton(card));
+
+    const box = within(card).getByRole("textbox", { name: "Comment" });
+    expect(box).toHaveValue("Too vague.");
+    expect(box).toHaveFocus();
+    expect(push).not.toHaveBeenCalled();
+    expect(seen).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        navigate: false,
+        target: expect.objectContaining({ markId: "finding-8-1" }),
+      }),
+    );
+  });
+
+  it("posts the edited text through the shared add and closes", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.type(
+      within(card).getByRole("textbox", { name: "Comment" }),
+      " Say more.",
+    );
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+
+    expect(add).toHaveBeenCalledWith({
+      field: "blocks",
+      lessonId: 12,
+      anchor: finding.anchor,
+      body: "Too vague. Say more.",
+    });
+    expect(within(card).queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("keeps the text and says why when posting fails", async () => {
+    add.mockResolvedValue({ ok: false, error: "review_closed" });
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+
+    expect(await within(card).findByRole("alert")).toHaveTextContent(
+      "This review has been sent, so it can't take new comments.",
+    );
+    expect(within(card).getByRole("textbox")).toHaveValue("Too vague.");
+  });
+
+  it.each([
+    ["sent", "sent", 12, false],
+    ["published", "published", 12, false],
+    ["still loading", null, 12, true],
+    ["on a lesson that is gone", "open", 99, false],
+  ])(
+    "offering it when the review is %s",
+    async (_n, state, lessonId, shown) => {
+      share(state);
+      const { card } = await open(lessonId);
+
+      expect(
+        !!within(card).queryByRole("button", { name: "Add as comment" }),
+      ).toBe(shown);
+    },
+  );
+
+  it("returns focus to the button on Escape and toasts after a post", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.keyboard("{Escape}");
+    expect(addButton(card)).toHaveFocus();
+
+    await userEvent.click(addButton(card));
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Comment" }),
+    );
+    expect(
+      await within(card).findByRole("button", { name: "Add as comment" }),
+    ).toHaveFocus();
+    expect(toast.success).toHaveBeenCalledWith("Comment saved");
+  });
+
+  it("holds Not an issue while the composer is open", async () => {
+    const { card } = await open();
+    await userEvent.click(addButton(card));
+
+    await userEvent.click(
+      within(card).getByRole("button", { name: /not an issue/i }),
+    );
+
+    expect(
+      within(card).getByRole("button", { name: /not an issue/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(within(card).getByRole("textbox")).toBeInTheDocument();
+  });
+});
+
+/** Expands a card (they start collapsed) and returns it */
+function openCard(name: string) {
+  const card = screen.getByRole("region", { name });
+  fireEvent.click(within(card).getAllByRole("button")[0]);
+  return card;
+}

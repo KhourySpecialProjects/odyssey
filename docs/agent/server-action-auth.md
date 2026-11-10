@@ -52,11 +52,38 @@ Every exported function in a `"use server"` file is a public POST endpoint. Anyo
   if (!self.ok) return { ok: false, error: self.error, data: null };
   ```
 
+- Never use a client-supplied `documentId` (including on nested objects and arrays). Pass `x.id` to `strapiEntryUrl` / `resolveDocumentId(s)`, or write to the entity the action itself fetched for its check. See `data-fetching.md`, "Single entries and relations on Strapi v5".
+- `gate.user.documentId` comes from Strapi (not the client or session), so pass `{ id, documentId }` from the gate user (not just `gate.user.id`) to `strapiEntryUrl` to skip the lookup. It is optional; the numeric `id` still resolves.
 - `getAuthorizedUserId` (`lib/auth/current-user-id.ts`) is for Server _Components_, not Server Actions (ODY-555).
 
 ## Error codes
 
-Always `"unauthenticated"` or `"forbidden"`. No caller reads the error text.
+`"unauthenticated"` or `"forbidden"` from the gate, plus `"in_review"` (`REVIEW_FROZEN_ERROR` in `lib/review-roles.ts`) when the droplet is frozen for the caller. The lesson editor, `useDropletUpdate` and the fun fact generator read `"in_review"` to show the freeze message; nothing else reads the error text. The review checks can also return `"Not Found"` and `"Could not verify edit access."` (a failed lookup fails closed).
+
+## Overview scan
+
+`runOverviewScan` and `getLatestOverviewScan` (ODY-794) let in an author or a System Admin, Faculty or Content Editor, and ignore the review freeze, since a scan never writes the droplet. A refused caller costs one fresh ownership read and no rate-limit slot.
+
+Dismissals (ODY-905): `getScanDismissals`, `dismissScanFlag` and `undoScanFlagDismissal` let in the same callers (`withAuth([])`, then the shared fresh ownership read, which also reads `inReview`). Reading ignores the freeze. Writing then applies `isFrozenFor`: while the droplet is in review its authors get `in_review`, so they can't clear the scan before the reviewer reads it. A non-author System Admin or Content Editor (the reviewer) can dismiss and undo. A non-author Faculty member can only outside review. `getScanDismissals` returns `canDismiss` from the same rule. `dismissScanFlag` saves a flag only if it is in the droplet's latest scan (`stale` otherwise), so the table holds real flags. Dismissing twice is a no-op, and Undo deletes every matching row. The key is checked by `scanFlagKeySchema` (`lib/validations/overview-scan.ts`), and the documentIds come from the server, never the client. There's no rate limit: these are cheap writes open only to people who can scan.
+
+## Review freeze
+
+While a droplet is in review, every one of its authors (any role, System Admin included) can read the draft but not change, review or publish it. Only a reviewer who isn't an author reviews it. Editing reopens when the reviewer sends feedback, when it's published, or when an author withdraws it (`withdrawFromReview`).
+
+- `lib/review-roles.ts` is client-safe (imports only `@/lib/globals`). `isReviewerFor(roles, inReview, isAuthor)` and `isFrozenFor(...)` are used by the sidebar and the server. Reviewer roles are System Admin and Content Editor (ODY-798, 2026-10-26). Not in review, a System Admin or Faculty author publishes their own droplet directly; nobody publishes someone else's without a review, so a reviewer can't publish a draft its creator withdrew (ODY-860). Known gap: an author can Withdraw and then publish; see the ODY-810 PR notes.
+- `lib/auth/review-freeze.ts` is server only and not a `"use server"` file. It reads the droplet fresh (`cache: "no-store"`, by numeric id through the list endpoint, through the lesson's or dataset's droplet where needed) and returns results; it never throws, so it is safe inside `withAuth` handlers. Entry points: `checkDropletContentWrite`, `checkLessonWrite`, `checkDatasetWrite`, `checkDropletUpdate`, `checkPublishDraft` and `getLessonReviewState`.
+- Write rights are an author of the droplet, or System Admin or Content Editor (the same people the draft layout lets in). Faculty write only their own droplets. Something with no droplet is writable by System Admin only. A lesson in several droplets needs rights on all of them and is frozen if any is.
+- `updateDroplet` refuses `inReview` and `afterReview` outright (ODY-804), and refuses `status` while in review. Outside review, `status` needs a reviewer; in review, only an unchanged `name` passes for an author.
+- The four workflow actions in `lib/requests/reviews.ts` (`submitForReview`, `withdrawFromReview`, `sendFeedback`, `publishWithReview`) are the only way `inReview` changes from the app (Strapi's core `create` route and the admin still can; see the PR notes), and an in-review draft publishes only through `publishWithReview` (`checkPublishDraft` refuses it with `in_review`). They reuse `loadDropletForWrite` and `isReviewerFor`: Submit and Withdraw need an author (`assertOwner`, no bypass roles); Send and Publish need a System Admin or Content Editor and refuse authors. The route decides state (409 for a repeat or a published droplet). No `PENDING_AUTH` entries were added.
+- `markAddressed` (ODY-807) is the one comment write an author makes: `withAuth([])`, then `assertOwner` on the comment's droplet with no bypass roles, so a reviewer who isn't an author is refused whatever their role. It sets only `addressedAt`, and only on a `sent` review of the droplet's current round while the draft isn't back in review (`review_closed` otherwise).
+- `getReviewForDroplet` is the shared feedback read for authors and non-author reviewers alike: only the latest sent/published review, confirmed scores, no AI fields (ODY-881). Write actions still gate on role alone (follow-up ODY-846).
+- `replyToComment` (ODY-881): `withAuth([])`, then an author of the droplet (any role, no bypass) or a non-author reviewer. It refuses a reply target, a published droplet, a comment not yet sent (reviewers may target a carried copy on their open review) and a thread closed by a sent resolve. The reply attaches to the root comment and its review. `deleteComment` refuses a comment whose root has replies; `editComment`, `resolveComment` and `markAddressed` refuse replies. `resolveComment` letting any non-author reviewer resolve is intended.
+- `editReply` and `deleteReply` (ODY-881): `withAuth([])`, then the caller must still have author or non-author reviewer access and be the reply's own author (`assertOwner`, no bypass). They refuse a top-level comment, a published droplet, a thread closed by a sent resolve, and (`conflict`) a later reply by someone else. The caller's own later replies don't block.
+- `getThreadStamp` (ODY-881): `withAuth([])`, a read-only change-check for the thread refresh. One no-store query for the droplet's newest reply (raw, for the count), whose droplet authors give the `access` check (author or non-author reviewer, else `forbidden`). With no reply, a caller without a reviewer role costs one extra authors lookup.
+- `deleteLessonRecord` (`lib/requests/lesson-delete.ts`, no `"use server"`) is the raw delete for server callers (`deepDeleteDroplet`, publish). The guarded `deleteLesson` action wraps it.
+- `applyDropletUpdate` in `droplet.ts` is not exported and does no auth. Only call it from code that has already checked (`togglePresentationEnabled`, `setDropletHidden`, `updateDroplet`).
+- `getLessonLockStatus` returns `review: { inReview, isReviewer } | null`, and `acquireLessonLock` refuses a frozen caller, so `useEditingLock` never takes the lock for an author during review.
+- Tests mock `@/lib/auth/review-freeze` to `{ ok: true }` in files that don't care about auth (and set it again after any `jest.resetAllMocks()`).
 
 ## Roles come from Strapi, and the dev persona override
 
@@ -95,7 +122,7 @@ Only exported function declarations are supported. `export const`, `export { …
 - It only checks that a guard call exists — not that the result is honored, that the roles are right, or that ownership is actually checked.
 - Calling a guarded helper doesn't count as guarded; the call must be in the export's own body (a nested closure counts, even if never called).
 - Inline `"use server"` closures inside Server Components aren't scanned (e.g. `app/(editing)/draft/d/[slug]/page.tsx`) — ODY-504 audits those by hand.
-- Route Handlers aren't covered (e.g. `app/api/user-activity/[userId]/route.ts`, which checks `getServerSession` directly) — ODY-509 should audit it.
+- Route Handlers aren't covered (e.g. `app/api/user-activity/[userId]/route.ts`, which checks `getServerSession` directly) — ODY-509 should audit it. `app/api/mentor/route.ts` (ODY-886) calls `requireRole([])` by hand, and its test covers the 401.
 
 ## Client components never call query-accepting read actions (ODY-640)
 

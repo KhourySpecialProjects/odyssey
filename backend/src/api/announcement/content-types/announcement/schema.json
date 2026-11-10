@@ -20,7 +20,9 @@
         "friend",
         "system",
         "group",
-        "kudos"
+        "kudos",
+        "review_feedback",
+        "review_published"
       ],
       "required": true
     },

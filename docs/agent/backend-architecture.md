@@ -1,15 +1,8 @@
-# Backend Architecture (Strapi 4.22)
+# Backend Architecture (Strapi 5)
 
-## Critical Constraint
-
-This is **Strapi v4.22**, not v5. The differences are breaking:
-
-- **Entity Service API** (v4) — not Document Service API (v5)
-- **Numeric `id`** fields — not `documentId` strings (v5)
-- **Nested `{ data: { attributes: {} } }` responses** — not flat responses (v5)
-- Custom routes use `createCoreRouter` / `createCoreController` patterns
-
-Never use Strapi v5 patterns. If you find v5 docs online, they will not work.
+- Strapi 5.56. Data access is the Document Service; the Entity Service is gone (guard: `backend/tests/no-entity-service.test.js`).
+- Responses are flat natively. The frontend sends `Strapi-Response-Format: v4` to keep the nested shape (see `data-fetching.md`).
+- Custom routes use `createCoreRouter` / `createCoreController` patterns.
 
 ## Content Type Directory Structure
 
@@ -30,7 +23,9 @@ The `schema.json` is the authoritative definition of every field, relation, enum
 ```
 api/
 ├── access-request/       User requests for platform access
-├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist)
+├── ai-scoring-run/       One AI scoring attempt for a review (tokens, runState)
+├── ai-scoring-setting/   Single type: Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)
+├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist, review_feedback, review_published)
 ├── authorized-user/      User profiles (email-based, linked to roles)
 ├── authorized-user-role/ Role definitions (System Admin, Content Creator, etc.)
 ├── creation-request/     Requests to become a Content Creator
@@ -44,8 +39,16 @@ api/
 ├── highlight/            Text selections within lessons (colored annotations)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
+├── mentor-setting/       Single type: Mentor's on/off switch, pilot groups, monthly cap and daily limit (ODY-884)
+├── mentor-usage/         One row per Mentor answer: user, kind, model and tokens, never text (ODY-884)
+├── overview-scan/        One saved run of the Final Overview Scan's checks on a droplet (ODY-787)
+├── overview-scan-dismissal/ A scan flag someone marked as fine on a droplet, for everyone (ODY-905)
 ├── playlist/             Curated droplet collections
 ├── report/               Bug reports
+├── review/               One reviewer's review of a droplet round
+├── review-comment/       Anchored review comments (replies via parent, carriedFrom, addressedAt)
+├── review-criterion/     Rubric criteria (admin-edited, seeded)
+├── review-score/         1-5 score per lesson (or overall) and criterion
 └── tag/                  Content categorization tags
 ```
 
@@ -63,15 +66,16 @@ Droplet
 ├── focusArea: enum [personal, professional, technical]
 ├── status: enum [draft, edit, published] (default: draft)
 ├── description: text (max 500 chars)
-├── overview: HTML (CKEditor rich text)
+├── overview: HTML (CKEditor, @_sh/strapi-plugin-ckeditor)
 ├── isHidden: boolean (default: false)
 ├── averageRating: decimal (0-5, default: 0)
 ├── funFact: text
 ├── originalDropletId: integer (links draft copies to published originals)
 ├── inReview: boolean
-├── afterReview: text
+├── reviewRound: integer (server-owned submission count; +1 when inReview turns true)
+├── afterReview: text (read-only; retired by ODY-808, deleted in FU1)
 │
-├── lessons → many-to-many Lesson (via droplet-lesson join table with orderIndex)
+├── lessons → many-to-many Lesson (direct relation; order comes from Lesson.orderIndex)
 ├── tags → many-to-many Tag
 ├── prerequisites → many-to-many Droplet (self-referential)
 ├── postrequisites → many-to-many Droplet (inverse of prerequisites)
@@ -79,11 +83,13 @@ Droplet
 ├── groups → many-to-many Group
 ├── authorized_users → many-to-many AuthorizedUser (authors)
 ├── usersFavorited → many-to-many AuthorizedUser (users who favorited)
-├── reviewDroplet → many-to-many AuthorizedUser (assigned reviewers)
+├── reviewDroplet → many-to-many AuthorizedUser (unused; deleted per ODY-808 D2)
 ├── announcements → one-to-many Announcement
 ├── droplet_lessons → one-to-many DropletLesson (join table records)
 └── learningObjectives → component[] (repeatable "droplets.learning-objective")
 ```
+
+The 5 CKEditor fields (droplet `overview`; `content` on `droplets.generic`, `droplets.expandable`, `quizzes.question`, `quizzes.open-ended-question`) are HTML in `text` columns, custom field `plugin::ckeditor5.CKEditor`, presets `light`/`rich` in `backend/src/admin/app.tsx`.
 
 ### Lesson
 
@@ -92,12 +98,13 @@ A single page of content within a Droplet.
 ```
 Lesson
 ├── name: string (required, max 100)
-├── slug: uid (auto-generated from name)
+├── slug: uid (auto-generated from name; scan, recap and present are reserved routes, so "Scan" gets scan-lesson, #1209)
 ├── type: enum [general, setup, activity, caseStudy] (default: general)
 ├── blocksVersion: enum [v1, v2] (default: v1)
 ├── blocks: dynamiczone (v1 TipTap — components: generic, video, quiz, callout, expandable, open-ended-quiz)
 ├── blocksV2: json (v2 BlockNote JSON — newer format)
 ├── orderIndex: integer (ordering within a droplet)
+├── originalLessonId: integer (set on [EDIT]-draft lessons: id of the live lesson it was cloned from)
 │
 ├── droplets → many-to-many Droplet
 ├── enrollments → many-to-many Enrollment (via viewedLessons)
@@ -145,48 +152,235 @@ Group
 
 ### Other Key Types
 
-- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos. Relations to droplet, playlist, group, sender/receiver users.
+- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published. Relations to droplet, playlist, group, sender/receiver users.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
-- **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `selectedText`, `startOffset`/`endOffset` for position.
+- **Highlight** — A learner's highlight of one block's text: `color` (pink #f9a8d4, orange #fbd38d, yellow #fff300, green #86efac, blue #93c5fd), `text`, `position` (`{ start, end }` character offsets in the block's text) and `blockId`. A generic block's highlights use its id; other blocks' (callouts, expandables, code) use `blockNoteIdToNumber("<__component>:<id>")`, since Classic lessons' block ids are only unique within a type. A selection across blocks is saved as one highlight per block. `context` (`{ quote, prefix, suffix }`, ODY-198) lets the lesson viewer find a highlight again after the author edits the lesson (`frontend/lib/highlight-placement.ts`); one whose text was deleted is listed for the reader to move or remove, never dropped. Drawn by `HighlightLayer` (`components/droplets/lessons/highlight-layer.tsx`) and `lib/highlight-regions.ts`.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
 - **Tag** — Simple `name` field, many-to-many with Droplet.
 
+### Review (ODY-798)
+
+Five types, all `draftAndPublish: false`. Relations to droplet, lesson, authorized-user and criterion are one-way manyToOne; `review` has two-way `comments`, `scores` and `aiScoringRuns`.
+
+- **Review** — `round` is the droplet's submission number, shared by all reviewers. `key` = `<dropletId>:<reviewerId>:<round>` (unique index `reviews_key_uq`). `state`: open, sent, published; withdrawing keeps the open review. `round` is `droplet.reviewRound` when the review opens. Keys keep the draft's id after an `[EDIT]` publish moves the review to the live droplet (G15). Reviewer slot `0` in `key` means no reviewer: the ODY-808 backfill of `afterReview` (`sent`, round 1, no reviewer or `sentAt`). Submit never carries it.
+- **ReviewComment** — `field` (blocks, description, overview, objective), JSON `anchor`, `body` (max 5000), optional `parent` for replies. A reply's `parent` is the root comment (the first-round row), its `review` is the root's review, and it is never copied or set resolved (ODY-881). No lesson means the droplet-level fields. The anchor is either text (quote, prefix and suffix, with offsets when known) or a whole block (`blockId` only); `reviewAnchorSchema` in `frontend/lib/validations/review.ts` checks both. No author of a droplet can open, read or write a review of it, whatever their role (ODY-810's `isReviewerFor`).
+- **ReviewScore** — `value` and `aiValue` are 1-5 (nullable), `criterionName` is a snapshot. `aiFindings` (JSON, nullable, ODY-805) holds the AI's passages as `AiFinding[]` (`id`, `quote`, `reason`, `lessonId`, text-quote `anchor`; ids unique within a run, across all scores; `lessonId` non-null exactly when `anchor.field` is `blocks`; `aiFindingSchema` in `frontend/lib/validations/review.ts`). Only Score with AI (ODY-814) writes it, and authors never read it. After an `[EDIT]` publish its `lessonId` on Overall scores still names draft lessons, because `moveReviewsToLive` rewrites keys, not JSON; harmless, since the review is closed and AI fields are reviewer-only. `key` = `<reviewId>:<lessonId|overall>:<criterionId>` (unique index `review_scores_key_uq`). No lesson means Overall. When publish moves a review, score keys are rewritten to the live lesson id (`<reviewId>:<liveLessonId>:<criterionId>`); Overall keys are unchanged.
+- **AiScoringRun** — `runState` (queued, running, done, partial, failed), not `status`: the content-manager extension wraps any model with a `status` attribute. Stores `inputTokens`/`outputTokens` only, no `costUsd`. `progress` (JSON, nullable, ODY-805) is `{ done: (lessonId | "overall")[], current: lessonId | "overall" | null }`; `failedLessons` may hold `"overall"` too. The panel reads the run with the highest `id`.
+- **ReviewCriterion** — Router has no `delete` route; retire with `active: false`. `name` is unique (`review_criteria_name_uq`). `backend/src/lib/review-criteria-seed.ts` seeds five criteria on boot only when the table is empty. Only Score with AI reads the descriptions; the review panel doesn't show them. The wording was calibrated against reviewers' scores in ODY-862, and `frontend/scripts/ai-review/rubric.json` holds the same text for the eval, so change both. On boot, `upgradeReviewCriteria` rewords any criterion still holding the ODY-799 starter wording and leaves edited ones alone.
+- **OverviewScan** (ODY-788) — One row per run of the Final Overview Scan, never edited: the router serves only `find`, `findOne` and `create`, so `PUT` and `DELETE` answer 405. `droplet` and `ranBy` are one-way, so the droplet and user schemas don't change. `passed`, `needsAttention` and `couldNotCheck` count checks, not rules. `results` is `CheckResult[]` in check order, each holding its `RuleResult[]` and their `Flag[]` (types in `frontend/lib/overview-scan/types.ts`). Rule ids repeat across checks, so always read a rule under its check. Scans of an `[EDIT]` draft point at the draft, so publishing the edit (which deletes the draft) leaves them with no droplet, and the live droplet's latest scan ignores everything scanned while it was being edited (ODY-875).
+- **OverviewScanDismissal** (ODY-905) — One row per flag someone marked as fine on a droplet's scan: `checkId`, `ruleId`, `partId`, `blockId` (null for a part-level flag) and `message` match the flag exactly, so a flag whose message changes shows again. `createdAt` is when, and `dismissedBy` is who. The router serves only `find`, `create` and `delete` (`PUT` is 405), and Undo deletes the row. `droplet` and `dismissedBy` are one-way, so neither schema changes. It's kept off the droplet so a dismissal doesn't bump the droplet's `updatedAt` (which would show "Edited since the last scan") or fall under `updateDroplet`'s review freeze. Two rows for one flag are harmless: the page shows the earliest. The page recomputes statuses and counts at view time (`applyDismissals` in `frontend/lib/overview-scan/view.ts`), so saved scans never change. Dismissals on an `[EDIT]` draft are left with no droplet when the edit is published, as scans are (ODY-875).
+- **`droplet.reviewRound`** — The droplet lifecycle owns the counter: `beforeCreate` sets 1 if `inReview` else 0, and `beforeUpdate` adds 1 when `inReview` goes from not-true to true. Client and admin edits to it are ignored (the admin field shows as editable but a save has no effect).
+- **`droplet.inReview`** — Only the review routes change it (see "Review workflow routes"). The core droplet `update` route has a middleware (`routes/droplet.ts`, `rejectInReview`) that returns 400 `inReview can only change through the review routes.` when `body.data` has an own `inReview` key (D10). Core `create` and the Strapi admin are not guarded (accepted gaps).
+- Boot backfill (`backend/src/lib/review-round-backfill.ts`) sets in-review droplets with `reviewRound` null or below 1 to 1; it's idempotent. Adding the column leaves existing rows NULL (no column default), so code must treat NULL as 0.
+- Deleting a lesson nulls the relation on its comments and scores, so they look like Overview/Overall. Read a score's lesson from `key`, and treat `field: "blocks"` with no lesson as orphaned.
+
 ## Strapi API Patterns
 
-### Entity Service API (v4)
+### Document Service API
 
 ```javascript
-// Find with populate
-strapi.entityService.findMany("api::droplet.droplet", {
+const uid = "api::droplet.droplet";
+await strapi.documents(uid).findMany({
   filters: { status: "published" },
   populate: { lessons: true, tags: true },
   sort: { createdAt: "desc" },
   pagination: { page: 1, pageSize: 25 },
 });
-
-// Create
-strapi.entityService.create("api::enrollment.enrollment", {
-  data: { authorizedUser: userId, droplet: dropletId, isComplete: false },
-});
-
-// Update
-strapi.entityService.update("api::enrollment.enrollment", enrollmentId, {
-  data: { isComplete: true, completionDate: new Date() },
-});
+await strapi
+  .documents(uid)
+  .findOne({ documentId, populate: { lessons: true } });
+await strapi.documents(uid).findFirst({ filters: { id } }); // by numeric id
+await strapi
+  .documents("api::enrollment.enrollment")
+  .create({ data: { isComplete: false } });
+await strapi
+  .documents("api::enrollment.enrollment")
+  .update({ documentId, data: { isComplete: true } });
+await strapi.documents(uid).delete({ documentId });
 ```
 
-### Response Shape (v4)
+- Single entries are addressed by `documentId`; the numeric `id` still works in `filters`.
+- The Query Engine (`strapi.db.query`) is used only inside `strapi.db.transaction`.
 
-Strapi v4 wraps responses in `{ data: { id, attributes: { ... } } }` for single items and `{ data: [{ id, attributes: { ... } }] }` for collections. Relations are nested inside `{ data: { ... } }` wrappers.
+### Response shape
 
-`fetchAPI()` auto-flattens this on the frontend. When using raw `fetch()` in Server Actions, call `flattenAttributes()` manually.
+- v5 returns flat `{ data: { id, documentId, ...fields } }` natively. The frontend sends `Strapi-Response-Format: v4`, so it receives `{ data: { id, documentId, attributes } }`.
+- `fetchAPI()` flattens that. Raw `fetch()` calls `flattenAttributes()` manually (it keeps `documentId`).
+
+### Strict REST input
+
+- An unknown query or body key returns 400 "Invalid key"; `error.details.source` is `query` or `body`.
+- Non-schema input keys need `strapi.contentAPI.addInputParams` (`backend/src/index.ts`).
+- Guard: `frontend/testing/contract/strapi-query-catalog.test.ts`; smoke: `scripts/strapi-v5-cutover/api-smoke/smoke-queries.sh`.
 
 ### Draft & Publish
 
-Droplets and Lessons use Strapi's draft/publish system (`draftAndPublish: true` in schema) for version control. Enrollments do not (`draftAndPublish: false`). Additionally, Droplet has its own application-level `status` field (draft → edit → published) to track editorial workflow, independent of Strapi's publish state. Both systems work in parallel.
+Strapi Draft & Publish is **off on every content type** (`draftAndPublish: false`), turned off in ODY-633 ahead of Strapi v5, where `status` is reserved on D&P types. Visibility is controlled only by Odyssey fields:
+
+- Droplet: `status` (draft → edit → published) and `isHidden`
+- Voyage: `status` and `isArchived`
+- Playlist: `isPublic` and `isArchived`
+
+Droplet `isHidden`/`status` and voyage `isArchived` only filter listings: `/d/[slug]` and its lesson pages stay reachable by URL (ODY-660). Voyage `status` (non-staff) and playlist `isPublic` (non-enrolled) do gate their slug pages. Lessons have no visibility field. Don't send `publicationState` or `publishedAt`. New content types must set `draftAndPublish: false`, since the admin's Content-Type Builder turns it on by default and turning it off later triggers the hard delete below.
+
+- **`status` reservation:** v5 reserves `status` only on D&P types. With D&P off, boot only warns (only `id`/`document_id` collisions throw), but the Content-Type Builder refuses to create a _new_ `status` attribute. The admin handling is in the content-manager extension below.
+- **Cutover-only:** turning D&P off on a type deletes every row with `published_at IS NULL` (v4 hard-deletes on boot before migrations; v5 does the same and keeps the column). Back-fill `published_at` first. See `scripts/strapi-v5-cutover/unpublished-rows/` and `docs/playbooks/strapi-prod-migration-day.md`.
+
+Publishing an `[EDIT]` draft (`publishDraftToOriginal`) is one Strapi transaction behind `POST /api/droplets/:id/publish-edit` (see "Publish-edit route" below), so a failure changes nothing: the live droplet, lessons, enrollments and the draft are exactly as before. It syncs lessons in place instead of recreating them. Each draft lesson is matched to a live lesson by `originalLessonId` (recorded when `duplicateDroplet` clones the draft), then by exact name; position is never used. A matched lesson is updated with only the fields that changed, so it keeps its id and slug (even if renamed) and everything keyed to it: students' `viewedLessons`, notes and highlights. Draft lessons with no match are created, and live lessons missing from the draft are deleted. Writes run in this order: the droplet's metadata, lesson updates, creates, deletes, then all of the draft's enrollments move (no 25-row cap), then the draft's own lessons and the draft are deleted. The pure planner is `backend/src/lib/lesson-sync.ts`.
+
+### Lifecycle hooks on Strapi v5
+
+Hooks live in `src/api/*/content-types/*/lifecycles.ts` (droplet, lesson, playlist, creation-request, access-request). They are tested against a real v5 instance (ODY-599); facts checked in the Strapi 5.56.0 source and confirmed by those tests:
+
+- **One call per operation.** With Draft & Publish off, the document service's `create`, `update` and `delete` each make one `db.query` call, so `beforeCreate`/`afterCreate`/`beforeUpdate`/`afterUpdate` fire once per operation. Nothing runs twice for a "draft" and a "published" version, so Slack sends happen once. `event.params.where.id` is still the numeric row id.
+- **Required fields are validated before `beforeCreate`.** A create without `slug` fails with `slug must be defined`, even though the hook would generate one. Required checks used to be skipped because new rows were drafts, and D&P is now off. **Contract:** REST and document-service creates of droplets, lessons and playlists must send a slug (any value); `beforeCreate` replaces it with one generated from `name`. Every frontend create already does (`"random"` in `createDroplet`/`addLesson`, `tempSlug` in `createPlaylist`, `publish-<uuid>` in publish-edit, real slugs when duplicating). Tests assert the rejection.
+- **A missing dynamic zone arrives as `[]`.** v5 fills `blocks: []` before `beforeCreate`, and the lesson create guard (`!data.blocks`) treats `[]` as present, so a lesson with no content can be created. That is relied on: the draft editor's "Add lesson" calls `addLesson` with `blocks: []` and no `blocksV2` to create a blank lesson, filled in later. Don't tighten the create guard without changing that caller. The update-path guard does check array length.
+- **Unknown data keys survive** the document service and the admin, so `regenerateSlug` reaches `beforeUpdate` and the hook deletes it. REST rejects unknown keys earlier with `400 Invalid key`; `regenerateSlug` is allow-listed for **PUT only** via `addInputParams`, and a POST with it still gets a 400 (ODY-700).
+- **Bulk `*Many` hooks** (`beforeCreateMany`, etc.) never fire from the Document Service. The v5 upgrade codemod comments lifecycle files out, so check the diff.
+- **Document middlewares** (`strapi.documents.use`) are not used here; adding one needs a ticket.
+- **The Entity Service is gone from `backend/src`** (ODY-606); `tests/no-entity-service.test.js` fails on any `entityService` usage. Inside hooks:
+  - **Before hooks** only know the numeric row id, so use `strapi.documents(uid).findFirst({ filters: { id: event.params.where.id }, fields, populate })`. It is one query and needs no documentId.
+  - **After hooks** have `result.documentId`, so use `strapi.documents(uid).findOne({ documentId: result.documentId, fields, populate })`.
+  - Relations come back as arrays of populated entries, and `populate: { blocks: true }` loads the lesson dynamic zone.
+- **`plugin::content-manager.uid` `generateUIDField` keeps its signature**, so `lib/lifecycle-utils.ts` `generateSlug` works unchanged.
+- **Slack sends are a no-op unless `NODE_ENV=production`** (`lib/slack.ts`), so tests switch it on per test and count `fetch` calls to the webhook URL.
+
+### Content-manager extension (ODY-699)
+
+With D&P off, the v5 admin (content-manager) still treats `status` as its own computed D&P field, which breaks the real `status` enum on droplet and voyage. `src/extensions/content-manager/` wraps three things for any model with D&P off and a `status` attribute:
+
+- **Edit view:** `document-metadata.formatDocumentWithMetadata` stops overwriting `status` with `undefined`; the stored value is kept (still permission-sanitized).
+- **List view:** `document-metadata.getStatus` returns the stored `status` when the request's model (`strapi.requestContext`) is such a model.
+- **Saves:** the `collection-types` controller (`create`/`update`/`clone`, patched in place so `autoClone` still works) swaps a value like `edit`, which the admin rejects with 400 "Invalid status", for `draft` before validation. The `document-manager` service puts the real value back after sanitization, so field permissions apply and the droplet lifecycle sees `edit` once.
+
+It depends on content-manager internals. Services are lazy, so a bootstrap hook in `strapi-server.ts` resolves the wrapped services at startup; boot fails if a wrapped member disappears. If a saved status is not restored, the controller wrapper logs an `ODY-699` error instead of throwing. CI runs backend Jest (`test.yml` backend matrix, Node 20.14.0), so `tests/admin` catches drift on every PR. **After any `@strapi/*` bump,** also do one admin save of a droplet. Delete the extension if upstream fixes this. Ticket: [ODY-699](https://linear.app/aiil/issue/ODY-699).
+
+### Lesson lock routes (`custom-lesson` controller)
+
+`POST/DELETE /api/lessons/:id/lock`, `PUT /api/lessons/:id/lock/heartbeat` and `GET /api/lessons/:id/lock-status` (tested in `tests/api/lesson-lock.test.js`):
+
+- **`:id` is a numeric id or a documentId** (`/^\d+$/` or `/^[A-Za-z0-9]+$/`; anything else is a 404), so the frontend can move to documentIds later. It still sends numeric ids. Request and response shapes, statuses and messages are unchanged.
+- **Lookup, release and heartbeat** use the Document Service (`findFirst`, then `update({ documentId })`). `documents.update` runs the lesson `beforeUpdate` hook, which does nothing here because the data has no `blocks`/`blocksV2` or `regenerateSlug`.
+- **`acquireLock` stays on the Query Engine** (`strapi.db.query`) inside `strapi.db.transaction`. A throw after its write rolls the write back (tested). The Query Engine is not deprecated.
+- **Known race, not fixed (pre-existing):** on Postgres (READ COMMITTED) two concurrent acquires can both read "unlocked" and both write, because the transaction does not serialize them. A real fix needs a conditional update (compare-and-swap in one `UPDATE ... WHERE`) or a row lock (`SELECT ... FOR UPDATE`). Worth its own ticket.
+
+### Review score routes (`custom-review-score` controller, ODY-803)
+
+`POST /api/review-scores/upsert` (`{ reviewId, lessonId | null, criterionId, value, userId }`), `POST /api/review-scores/accept-ai` (`{ reviewId, lessonId | null, userId }`) and `POST /api/review-scores/unconfirm` (same body, ODY-805). Logic in `src/lib/review-scores.ts`, tested in `tests/api/review-score-upsert.test.js`. Called by `saveReviewScore` / `acceptAiScores` / `unconfirmScores` in `frontend/lib/requests/reviews.ts`.
+
+- **POST, not PUT:** `PUT /review-scores/upsert` would match the core `PUT /review-scores/:id`.
+- **One transaction each.** It locks the review row (`FOR UPDATE`), then refuses: not the reviewer (403), review not `open` (409), inactive criterion, a lesson outside the review's droplet, or a value outside 1–5 (400). Unknown body keys are a 400 (custom routes get no strict input check).
+- **Upsert by `key`** (`<reviewId>:<lessonId|overall>:<criterionId>`). If a concurrent create wins the `review_scores_key_uq` index, the whole transaction runs once more and updates. It is rerun, not retried in place, because on Postgres a failed insert aborts its transaction. It checks whether the key now exists instead of matching error codes: SQLite reports the violation as `NotNullError` (errno 19), Postgres as `23505`.
+- **Tests run on SQLite**, which has one connection and ignores `FOR UPDATE`, so the row lock itself is not tested. The race is simulated by making the first key lookup miss.
+- **Reviewer saves never reach the rerun on Postgres:** the review lock serializes them. Only a writer that skips the lock can race them; Score with AI's `finish` (below) takes the same lock.
+- **Separate writers:** these routes write only `value`. Score with AI (ODY-814) writes only `aiValue`/`aiRationale`/`aiFindings`. `accept-ai` copies `aiValue` into `value` where `value` is null and the criterion is active. Both it and `unconfirm` refuse a lesson outside the review's droplet (400), through one shared check.
+- **`unconfirm`** is Undo for Confirm: in the scope it sets `value` to null where `value = aiValue`, so the reviewer's own changes stay. It takes the same lock and guards, and only clears rows on active criteria, like `accept-ai`.
+- Responses are `{ data: { dropletId, score } }` / `{ data: { dropletId, scores } }`, not v4 entries. The action revalidates `CACHE_TAGS.review(dropletId)` from that answer.
+
+Run the backend tests with `npm --prefix backend test` (see `testing-and-deployment.md`).
+
+### Score with AI routes (`custom-ai-scoring-run` controller, ODY-814)
+
+`POST /api/ai-scoring-runs/start`, `/heartbeat` and `/finish`. Logic in `src/lib/ai-scoring-runs.ts` (it reuses `lockReview`, `lockOpenReview`, `findScore` and `scoreKey` from `review-scores.ts`), tested in `tests/api/ai-scoring-run.test.js`. Called by `startAiScoring` (`frontend/lib/requests/ai-scoring.ts`) and the background run (`frontend/lib/ai-review/score-run.ts`). Strict bodies and `userId` from the Server Action, as for the score routes.
+
+| Route       | Body                                                                                                                                                           | 200 `data`                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `start`     | `{ reviewId, userId, model, promptVersion }`                                                                                                                   | `{ dropletId, run, criteria }`             |
+| `heartbeat` | `{ runId, userId, inputTokens, outputTokens, progress?, failedLessons?, scores? }`                                                                             | `{ dropletId, run, overCeiling }`          |
+| `finish`    | `{ runId, userId, runState, failedLessons, inputTokens, outputTokens, error, scores: [{ lessonId \| null, criterionId, aiValue, aiRationale, aiFindings? }] }` | `{ dropletId, run, saved, kept, dropped }` |
+
+- **One run at a time.** `start` locks the review row (`lockOpenReview`: reviewer, `open`) and refuses with 409 unless the droplet is `inReview` (withdrawing leaves the review open). It marks every `queued`/`running` run whose `updatedAt` is more than 10 minutes old `failed` ("Stopped: no progress for 10 minutes."), then refuses with 409 if one is left. It snapshots the active criteria (in `order`) into the run's `criteria` and returns them, and creates the run `queued`. 409 too when no criterion is active, or when the monthly budget is used up (see "Monthly cap" below).
+- **Heartbeat** sets `running` (and `startedAt` once), saves the token totals so far, so a run cut short still records what it spent, and the optional `progress` (`{ done, current }`) and `failedLessons`. Its optional `scores` (one section's suggestions) are saved under the same rules as `finish`; a criterion outside the run is a 400 and nothing changes, tokens included. The run calls it after every lesson, so `updatedAt` measures progress, not age: a long droplet isn't taken for dead. It is 409 on a run that has ended, so a run marked dead stops. `overCeiling` says the run has spent its per-run ceiling (see "Per-run ceiling" below).
+- **`finish` writes only `aiValue`/`aiRationale`/`aiFindings`** (the Overall Score plus any leftovers; `failedLessons` takes lesson ids or `"overall"`), by score key, in one transaction under the review lock. A score whose `value` the reviewer set is skipped (`kept`), so running again replaces unconfirmed suggestions only. A suggestion for a lesson that left the droplet mid-run, or a criterion deleted since the start, is skipped (`dropped`) and the rest are saved. A criterion outside the run's snapshot is a 400 and nothing is written.
+- **A review sent mid-run** (`heartbeat` or `finish` finds it not `open`) ends the run `failed` ("The review was sent before scoring finished."), keeps its token counts and saves nothing; both answer 200 with that run.
+- **Tests run on SQLite**, so two starts at once run one after the other; the test checks the outcome (one run), not the Postgres lock. They age a run with raw SQL on `ai_scoring_runs.updated_at`, because the Query Engine sets `updatedAt` itself.
+- **Frontend:** `startAiScoring(dropletId)` (System Admin or Content Editor, not an author) needs `ANTHROPIC_API_KEY`, opens the review with `getOrOpenReview`, checks the `ai-scoring` rate limit, calls `start`, then answers at once and runs `runAiScoring` in `after()` (Sonnet 5.5, effort `high`, `PROMPT_VERSION`). `next/server` is imported inside `startAiScoring`, because jsdom tests that import the sidebar have no Fetch API globals.
+- **Findings:** each score's `aiFindings` is written beside its value, `[]` when none come, so a rescored row loses stale ones; a kept row keeps its own. The backend only bounds-checks them (at most 5, allowed keys, lengths, anchor size). The run checks each quote against the lesson text and the full `aiFindingSchema` before sending (`frontend/lib/ai-review/findings.ts`).
+- **The run** streams one request per lesson, then the Overall Score (given the lessons' scores). The heartbeat after each lesson saves it, and `finish` saves the Overall. A refusal, `max_tokens`, an 8-minute timeout or any other error is that request's failure, and the run ends `partial`.
+  - **Retries:** the SDK retries 429, 5xx and failed connections twice (`maxRetries`, honouring `retry-after`). The run itself retries only a stream that broke on an `overloaded_error`, `api_error` or `rate_limit_error` event, twice. `finish` is retried twice on a network error or a 5xx; a retry after a save that did commit gets 409 and stops.
+  - **Tokens:** a request that failed mid-stream and was retried isn't counted.
+  - **Caching:** each lesson request puts its cache marker on its last lesson block, not after the closing instruction (which differs every time), so the next lesson's request reads the shared prefix back. On a real run, check `cache_read_input_tokens` is above 0 from the second lesson on.
+- **Known gaps:** the rate limit is taken before `start`, so a refused start (already running) still uses one. ODY-630's limiter bug applies.
+- **Polling:** `getAiScoringRun` reads the latest run uncached, and shows a stale active run as failed. The sidebar's `ScoreWithAiButton` checks it every 5 seconds, one check at a time, stops when refused, and refreshes when the run ends.
+- **Cost limits (ODY-815):** an admin sets a monthly cap across every review and a ceiling per run. Code in `src/lib/ai-scoring-settings.ts`, `src/lib/ai-scoring-spend.ts` and `src/lib/ai-scoring-runs.ts`.
+  - **Settings:** `ai-scoring-setting` is one of Odyssey's two single types (the other is `mentor-setting`): `monthlyCapUsd`, `perRunCapUsd` and `prices`, a repeatable `ai-scoring.model-price` component (`model`, `inputPerMillionUsd`, `outputPerMillionUsd`). Bootstrap seeds placeholders ($25 a month, $2 a run, the Sonnet 5.5 and Haiku 5.5 list prices) only when the row is missing, so an admin edit is never overwritten. `loadAiScoringSettings()` returns numbers (Postgres returns decimals as strings), prices keyed by model, and the placeholders if the row is gone. REST is read-only (`find`); change the amounts in the admin. A monthly cap of $0 turns Score with AI off.
+  - **Spend:** `spendThisMonthUsd(prices)` adds up `runCostUsd(run, prices)` over the runs created this month. The month starts at midnight on the 1st, Boston time, and is read from `createdAt` (`startedAt` waits for the first heartbeat). A run with no tokens yet costs $0. A model with no price pays the highest input and the highest output price, so a missing price never lets spend through.
+  - **How close the dollars are:** a run's `inputTokens` adds uncached, cache-write and cache-read tokens, and all of them are priced at the input price. Anthropic bills cache reads at 0.1× and 5-minute cache writes at 1.25×. From the second lesson on, each lesson request reads back the prefix the one before it wrote, so a droplet with several lessons comes out high. A one-lesson droplet, or a run stopped after its first lesson, writes its cache and never reads it, so it comes out low by a quarter of its cache-write tokens. The Overall request has its own system prompt, so it reads nothing from the lessons' cache. Exact dollars would need the three counts stored apart.
+  - **Monthly cap:** after its criteria check, `start` takes the settings row lock (`lockAiScoringSettings()`, which seeds the row if it's missing so there's always one to lock). It refuses with 409 "This month's Score with AI budget is used up. It resets on December 1." once this month's spend plus what's held back reaches `monthlyCapUsd`. Each `queued`/`running` run on any review with progress in the last 10 minutes holds back the rest of its ceiling, `max(0, perRunCapUsd − its cost so far)`, because its tokens count only as it reports them. A dead run holds back nothing. The run that starts holds nothing back itself, so a month can end up to one ceiling over the cap.
+  - **Locks:** review, then settings. `heartbeat` and `finish` take only the review lock, so they can't deadlock with a start. Without the settings lock, two starts on different reviews could both pass at the edge.
+  - **Per-run ceiling:** `heartbeat` prices the token totals it receives with the run's `model` and answers `overCeiling: true` once they reach `perRunCapUsd`. It leaves the run `running`: ending it there would make `finish` refuse, and the lessons already scored would be lost. The run (`frontend/lib/ai-review/score-run.ts`) skips the remaining lessons and the Overall Score, lists those lessons in `failedLessons`, and saves what it has as `partial` (`failed` with no scores) with the error "Stopped at the per-run cost ceiling" (`CEILING_ERROR`). Progress is reported only between lessons, so a run can go over by the one request that crossed the ceiling.
+  - **What the reviewer sees:** a refused start shows Strapi's message in a toast, from the sidebar button and the Transcript panel alike. `stoppedAtCeiling(run.error)` (`frontend/lib/review-panel/ai-messages.ts`) picks out a run that stopped at the ceiling. The button then says "Score with AI stopped at its cost limit for one run." and what wasn't scored, and the panel's status bar names the Overall Score among the sections not scored (`aiBarState`'s `atCeiling`).
+  - **The Overview scan's spelling double-check (ODY-904) shares this budget.** `POST /api/ai-scoring-runs/budget-check` (`{}` → `{ allowed }`) runs the same spend-plus-held-back sum as `start` (`budgetUsedUp`), read-only and unlocked, so it reserves nothing. A $0 cap refuses. `POST /api/ai-scoring-runs/usage` (`{ model, promptVersion, inputTokens, outputTokens }`) saves one call as a `done` run with no review (`promptVersion: "scan-spelling-1"`), so it counts toward the cap. Every review reader filters runs by review, so the review panel never shows these, but they do appear in the admin's run list. Called by `confirmMisspellings` (`frontend/lib/overview-scan/spelling.ts`) through `checkScoringBudgetRoute` and `recordScoringUsageRoute`.
+  - **Tests:** `tests/lib/ai-scoring-settings.test.js`, `tests/lib/ai-scoring-spend.test.js` (it sets `created_at` with raw SQL), and the "monthly budget" and heartbeat cases in `tests/api/ai-scoring-run.test.js`. That file's `beforeEach` deletes every run, so earlier tests don't count against the cap.
+- **Mentor usage and limits (ODY-884):** Mentor's on/off switch, pilot groups, monthly cap and per-user daily limit. Code in `src/lib/mentor-settings.ts` and `src/lib/mentor-spend.ts`; the check and record logic is in `src/lib/mentor-usage.ts`.
+
+  - **Types:** `mentor-setting` (single type): `enabled`, `pilotGroups` (one-way manyToMany to `group`, so the group schema doesn't change), `monthlyCapUsd` and `perUserDailyLimit`. `mentor-usage` (collection): `user` (one-way manyToOne to `authorized-user`), `kind` (`lesson`, `explain`, `quiz-hint`), `model`, `inputTokens` and `outputTokens`. "The date" is `createdAt`. It has no text attribute by design, and a test pins its attribute list. Both have `draftAndPublish` off and a read-only router (`find`); rows and settings change only through the admin and the record route.
+  - **Seed:** bootstrap creates the settings only when the row is missing: **`enabled: false`**, $10 a month and 30 answers a day (placeholders until ODY-891 sets the real cap). `loadMentorSettings()` returns numbers and `pilotGroupIds`, and falls back to the seed if the row is gone, so a missing row means Mentor is off, never on. Empty `pilotGroups` means everyone, once enabled.
+  - **Boston time:** `dayBounds(now)` in `ai-scoring-spend.ts` sits beside `monthBounds`; both use `bostonMidnight(year, month, day)`. A day is 23 or 25 hours long on the two daylight-saving days. `mentorAnswersToday(userId)` counts rows created since midnight Eastern, so the limit holds across ECS tasks.
+  - **Prices reused:** `mentorSpendThisMonthUsd(prices)` prices rows with `runCostUsd` and `loadAiScoringSettings().prices`; a model with no price is charged at the highest. Mentor has its own `monthlyCapUsd`, separate from Score with AI's.
+  - **Tests:** `tests/lib/mentor-settings.test.js` and `tests/lib/mentor-spend.test.js` (raw SQL `created_at`, DST days, the schema guard).
+  - **Routes** (`custom-mentor-usage` controller; service token only, strict bodies, `userId` trusted from the Next.js server; tests in `tests/api/mentor-usage.test.js`):
+
+    | Route                            | Body                                                 | 200 `data`                                                            | Errors                              |
+    | -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------- |
+    | `POST /api/mentor-usages/check`  | `{ userId }`                                         | `{ allowed: true }` or `{ allowed: false, reason, message, retryAt }` | 400 bad body, 500                   |
+    | `POST /api/mentor-usages/record` | `{ userId, kind, model, inputTokens, outputTokens }` | `{ id }`                                                              | 400 bad body, 404 unknown user, 500 |
+
+  - **Reasons**, first refusal wins: `disabled` (switch off), `not_in_pilot` (pilot groups set, user in none of their `members`), `monthly_cap` (this month's Mentor spend `>=` the cap; `retryAt` is the next 1st, 00:00 Eastern; a $0 cap refuses everyone), `daily_limit` (the user's rows since midnight Eastern `>=` the limit, across all kinds; `retryAt` is the next midnight Eastern). A refusal is a normal 200, not an HTTP error; the caller maps reasons to 429 or 503. The messages are constants in `mentor-usage.ts`.
+  - **Read-only check:** it takes no lock and reserves nothing, so answers still streaming can carry a user past the daily limit, or Mentor past the monthly cap, by what is in flight. Answers cost cents, so the overshoot is accepted and bounded by the frontend's per-task burst guard. In return, the check has no side effects and a crashed stream leaves no orphan row.
+  - **Record:** one row per answer, tokens only (a key such as `question` is a 400). A model with no price is still saved, with a `strapi.log.warn`, and is charged at the highest price. No transaction is opened, so a DB error is never swallowed.
+
+### Publish-edit route (`custom-droplet` controller)
+
+`POST /api/droplets/:id/publish-edit` (ODY-800; tests in `tests/api/publish-edit.test.js`). Logic lives in plain modules, not `services/` (Strapi auto-loads those): `src/lib/publish-edit.ts` and `src/lib/lesson-sync.ts`.
+
+- **Request:** `:id` is the draft's numeric id or documentId (anything else is a 404). The body is `{ originalDropletId }` and nothing else: any other key is 400 `Invalid key <k>`, and the id must be a safe integer, > 0 and <= 2147483647. Custom routes skip strict REST, so the controller checks this itself.
+- **Responses:**
+  - `200 { data: { slug, originalDropletId, lessons: { updated, unchanged, created, deleted }, enrollmentsMoved } }`.
+  - `404`: the draft is gone (`DRAFT_GONE_MESSAGE`, "This draft no longer exists. It may already have been published."), or the original is.
+  - `409`: no `originalDropletId`, it differs from the body's, the draft is already `published`, `:id` is the original, or the draft is `inReview` (checked under the row lock; publish it through `publish-review`, or withdraw first).
+  - `400`: guards (missing difficulty, an empty draft over a live droplet with lessons, a lesson that would be left empty) and a Strapi `ValidationError` during the writes, as `Publishing failed (<reason>, field: <path>). Nothing was changed.` (lesson errors read `lesson "X": <reason>`).
+  - `500`: `Publishing failed. Nothing was changed. Try again.`
+- **ODY-804 seam:** `preparePublishEdit` (locks, reads, guards, plans) then `applyPublishEdit` (writes; returns `lessonMap`, draft lesson id to live lesson id) then `deleteEditDraft`. `publishEdit` composes them in one `strapi.db.transaction()`, and each step throws unless `strapi.db.inTransaction()`. Never catch a DB error inside the transaction and carry on (see the learning `2026-10-26-strapi-v5-transactions.md`).
+- **Row locks:** the first statements lock the draft row, then the original, with `queryBuilder(...).forUpdate()` (the only Query Engine use here). A second publish of the same draft waits, then finds the draft gone and gets 404. Only Postgres enforces this; SQLite ignores `forUpdate`.
+- **Reviews move:** after `applyPublishEdit`, `moveReviewsToLive` (`src/lib/review-move.ts`) re-points every review of the draft at the live droplet, with its comments and scores moved to the matching live lessons. Review state is unchanged. Comments or scores on a lesson with no live match are left as they are. It runs in the same transaction, so a failure rolls the publish back.
+- **Lesson create slug:** each create sends `publish-<uuid>`. Uid uniqueness is validated before `beforeCreate` swaps in the real slug, so a fixed placeholder would collide once any lesson stored it.
+- **Strapi 5.56 source facts:** every Document Service call joins an outer `strapi.db.transaction()`; `entry.*` events and webhooks are deferred to the outermost commit and never sent on rollback; lifecycle hooks run inside the transaction (voyage-claim marking rolls back too); deleting the draft does not cascade to related entries (enrollments keep a null link); the Document Service `findMany` has no 25-row cap (that is REST only).
+- **Frontend (`publishDraftToOriginal`):** `checkPublishDraft` (`lib/auth/review-freeze.ts`, ODY-810) reads the draft fresh and applies `isReviewerFor`: in review, a System Admin or Content Editor who isn't an author; otherwise a System Admin or Faculty author (ODY-860: nobody publishes someone else's draft outside review). It also refuses when the draft's `originalDropletId` differs from the argument. A second fresh read gets the draft's `documentId`, and the action refuses when it has none (no numeric fallback). Then one POST. It revalidates on 2xx, 5xx and network errors but not 4xx, and shows "could not be confirmed" for a network error or a gateway 5xx without a Strapi message, since the publish may have committed.
+
+### Review workflow routes (`custom-droplet` controller)
+
+ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `publish-edit.ts`); the controller only parses and maps errors. All are `POST /api/droplets/:id/<action>`, with `:id` as above and strict bodies (a non-object body → 400 `Body must be an object`, an unknown key → 400 `Invalid key <k>`).
+
+| Route             | Body                                                 | 200 `data`                                                                                            |
+| ----------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `submit-review`   | `{}`                                                 | `{ dropletId, inReview: true, round, changed, reviewsCarried?, commentsCarried? }`                    |
+| `withdraw-review` | `{}`                                                 | `{ dropletId, inReview: false, changed }`                                                             |
+| `send-feedback`   | `{ reviewerId, summaryNote? }` (note ≤ 5000 or null) | `{ dropletId, reviewId, inReview: false, announced }`                                                 |
+| `publish-review`  | `{ reviewerId, originalDropletId: int \| null }`     | `{ slug, dropletId, reviewId }`, plus `{ originalDropletId, lessons, enrollmentsMoved }` for `[EDIT]` |
+
+- **Statuses:** 400 (body, a Strapi `ValidationError` as `<Action> failed (<reason>, field: <path>). Nothing was changed.`, and for `[EDIT]` publish the `preparePublishEdit` guards: missing difficulty, an empty draft over a live droplet with lessons, a lesson that would be left empty), 404 (draft gone, no review of the caller's for this round, or for `[EDIT]` publish the original droplet no longer exists), 409, 500 (`<Action> failed. Nothing was changed. Try again.`). 409 means: already published; Send/Publish when not in review; the review was already sent; `publish-review` with a null `originalDropletId` on an `[EDIT]` draft; or the Overall guard, which names the missing criteria. Zero active criteria pass the guard.
+- **Trust boundary:** the routes trust `reviewerId`. The Next.js actions (`lib/requests/reviews.ts`) enforce `isReviewerFor` and refuse authors.
+- **Lock order:** every route runs in one `strapi.db.transaction()`, locks the draft row with `forUpdate`, then re-reads it. `publish-review` for `[EDIT]` locks the draft, then the original (same as publish-edit). Send and Publish on one draft are serialized: the loser gets 409 or 404.
+- **Idempotency (G18):** a repeat Submit or Withdraw is 200 with `changed: false`, so the actions don't pre-refuse on `inReview`. Submit or Withdraw on a published droplet is 409.
+- **Submit carry-over (G4):** `droplet.reviewRound` goes up (lifecycle hook), then each reviewer's latest review is carried to the new round (reviews with reviewer slot 0 are skipped). An open review keeps its row, with `round` and `key` re-set. A sent review stays as history, and gets a new open review with copies of its unresolved top-level comments. Replies are not copied: they stay on the root's review and every copy shows the root's thread. Orphaned `blocks` comments are skipped and no scores are copied. Each copy's `carriedFrom` points at the comment as first written (a copy of a copy points at the original, not at the copy), and the creator's `addressedAt` mark is copied with it (ODY-807).
+- **Send:** marks the caller's open review `sent` (with `sentAt` and optional `summaryNote`), sets `inReview: false`, and creates one `review_feedback` announcement per author.
+- **Publish:** needs an open review with a confirmed Overall score for every active criterion. `[EDIT]` runs `applyPublishEdit`, `moveReviewsToLive` (the caller's review becomes `published`), one `review_published` announcement per author (attached to the live droplet, addressed to that author) and `deleteEditDraft`. A new droplet is set `published` with `inReview: false` in place. Announcement text never mentions AI.
+- **Known gap (G9):** ODY-802's comment REST writes are not serialized with Publish. A comment written while Publish runs can land on a draft lesson that is then deleted. Documented, not fixed.
 
 ## Database
 
 PostgreSQL via `DATABASE_*` env variables. Local dev uses Docker Compose (`docker-compose.yml`) with a `strapiDB` service. Production uses AWS RDS.
 
 Seed data: `initdb/data.sql` runs on first Docker Compose startup to populate the database from a `pg_dump` of the dev server.
+
+- **Join tables renamed in v5:** `*_links` to `*_lnk`, `*_components` to `*_cmps`, `files_related_morphs` to `files_related_mph`. Index names keep the old names, and the migration is one-way. Raw SQL must use the new names; `scripts/strapi-v5-cutover/unpublished-rows/01`/`02` use the v4 names on purpose and `03` still does until playbook 2.2.
+- **No DB unique index on uid/slug fields in v5**, so two concurrent creates can race.
+- `unique: true` is app-level only (a SELECT before INSERT). For a real guard, declare a top-level `indexes` entry in schema.json (see `review-score`). Edit such schemas by hand, not in the Content-Type Builder.
+
+## Config on v5
+
+- **S3:** credentials go only in `s3Options.credentials`, and only when both keys are set (`backend/config/plugins.ts`).
+- **CSP:** write every directive out in full, including `'self'` (`backend/config/middlewares.ts`).
+- **Webhooks:** `webhooks.populateRelations` is gone.
+- **REST `defaultLimit` is 25** (`backend/config/api.ts`), so unpaginated list requests silently cap at 25 rows.

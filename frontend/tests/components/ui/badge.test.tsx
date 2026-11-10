@@ -10,6 +10,9 @@ describe("Badge", () => {
   it("renders with secondary variant", () => {
     const { container } = render(<Badge variant="secondary">Test</Badge>);
     expect(container.firstChild).toHaveClass("bg-secondary");
+    // --secondary is white in dark mode, so the chip needs its own dark fill
+    // to keep the white text readable
+    expect(container.firstChild).toHaveClass("dark:bg-slate-700");
   });
 
   it("renders with destructive variant", () => {

@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "review_criteria",
+  "info": {
+    "singularName": "review-criterion",
+    "pluralName": "review-criteria",
+    "displayName": "Review Criterion",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "review_criteria_name_uq",
+      "columns": ["name"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "maxLength": 100
+    },
+    "lessonDescription": {
+      "type": "text",
+      "required": true
+    },
+    "overallDescription": {
+      "type": "text",
+      "required": true
+    },
+    "order": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "active": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    }
+  }
+}

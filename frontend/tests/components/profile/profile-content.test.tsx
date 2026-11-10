@@ -6,7 +6,7 @@ import { makeDroplet } from "@/lib/testing/mock-helpers";
 
 // Mock Next.js navigation hooks
 const mockPush = jest.fn();
-const mockGetSearchParam = jest.fn(() => null);
+const mockGetSearchParam = jest.fn<string | null, [string]>(() => null);
 const mockToString = jest.fn(() => "");
 
 jest.mock("next/navigation", () => ({

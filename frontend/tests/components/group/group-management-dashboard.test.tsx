@@ -659,6 +659,7 @@ describe("GroupDashboard", () => {
           authUser={mockAuthUser}
           dueDates={[]}
           statuses={mockStatuses}
+          voyageStatuses={{}}
         />,
       );
 

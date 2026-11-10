@@ -1,11 +1,20 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { GroupCard } from "@/components/group/group-card";
 import { GroupSemester } from "@/types";
-import { archiveGroup } from "@/lib/requests/groups";
+import { GroupArchiveState } from "@/lib/group-archive";
+import { archiveGroup, setGroupArchivedForMe } from "@/lib/requests/groups";
 import { toast } from "sonner";
 
 jest.mock("@/lib/requests/groups", () => ({
   archiveGroup: jest.fn(),
+  setGroupArchivedForMe: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -15,10 +24,52 @@ jest.mock("sonner", () => ({
   },
 }));
 
+// Forwards onClick (unlike a plain stub) and records whether each click that
+// reaches the anchor arrived with its default (navigation) already
+// prevented, so tests can assert real clicks never trigger navigation.
+const mockLinkClick = jest.fn();
+
 jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
+  return ({
+    children,
+    href,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  }) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        mockLinkClick(e.defaultPrevented);
+        onClick?.(e);
+      }}
+    >
+      {children}
+    </a>
+  );
+});
+
+/**
+ * A click that never reaches the Link's onClick at all (because it was
+ * stopped from propagating up the React tree) is the expected outcome for
+ * every archive control. If a click ever did reach it for some other
+ * reason, its default must have been prevented so navigation doesn't fire.
+ */
+function expectLinkNavigationBlocked() {
+  for (const [defaultPrevented] of mockLinkClick.mock.calls) {
+    expect(defaultPrevented).toBe(true);
+  }
+}
+
+// jsdom doesn't implement these, and Radix's DropdownMenu/AlertDialog call
+// them during pointer interactions.
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = jest.fn().mockReturnValue(false);
+  Element.prototype.releasePointerCapture = jest.fn();
+  Element.prototype.setPointerCapture = jest.fn();
+  Element.prototype.scrollIntoView = jest.fn();
 });
 
 describe("GroupCard", () => {
@@ -48,6 +99,18 @@ describe("GroupCard", () => {
     member: "bg-gray-100",
   };
 
+  function makeArchiveState(
+    overrides: Partial<GroupArchiveState> = {},
+  ): GroupArchiveState {
+    return {
+      archivedForMe: false,
+      archivedForEveryone: false,
+      isEffectivelyArchived: false,
+      canManage: false,
+      ...overrides,
+    };
+  }
+
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -66,8 +129,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -80,8 +141,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -95,24 +154,10 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
       expect(screen.getByText("admin")).toBeInTheDocument();
-    });
-
-    it("applies correct styling classes", () => {
-      const { container } = render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
-        />,
-      );
     });
   });
 
@@ -123,8 +168,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -137,8 +180,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="manager"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -151,8 +192,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -165,8 +204,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="creator"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -174,14 +211,7 @@ describe("GroupCard", () => {
     });
 
     it("uses default color when roleColors is not provided", () => {
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          isArchived={false}
-          dashboardPage={false}
-        />,
-      );
+      render(<GroupCard group={mockGroup} role="admin" />);
 
       const badge = screen.getByText("admin");
       expect(badge).toHaveClass("bg-green-100", "text-green-800");
@@ -195,8 +225,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="creator"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -211,8 +239,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -227,8 +253,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="manager"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -243,8 +267,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -265,8 +287,6 @@ describe("GroupCard", () => {
           group={groupWithMembers}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -283,8 +303,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -298,8 +316,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -312,8 +328,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -334,8 +348,6 @@ describe("GroupCard", () => {
           group={groupWithoutCreatorName}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -355,8 +367,6 @@ describe("GroupCard", () => {
           group={groupWithMembers}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -364,225 +374,384 @@ describe("GroupCard", () => {
     });
   });
 
-  describe("Archive/Unarchive Functionality", () => {
-    it("does not show archive button when not on dashboard page", () => {
+  describe("Archive Controls - no archiveState", () => {
+    it("does not show any archive control when archiveState is not passed", () => {
       render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
+  });
 
-    it("shows archive button on dashboard page", () => {
+  describe("Archive Controls - Active tabs, plain member", () => {
+    it("shows a single Archive button for a plain member", () => {
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({ canManage: false })}
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: /archive group/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+    });
+
+    it("calls setGroupArchivedForMe(id, true) and shows a toast on click", async () => {
+      (setGroupArchivedForMe as jest.Mock).mockResolvedValue({
+        success: true,
+      });
+      const user = userEvent.setup();
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({ canManage: false })}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: /archive group/i }));
+
+      await waitFor(() => {
+        expect(setGroupArchivedForMe).toHaveBeenCalledWith(1, true);
+        expect(toast.success).toHaveBeenCalledWith(
+          "Test Group archived. Find it in the Archived tab.",
+        );
+      });
+    });
+
+    it("prevents navigation when the archive button is clicked", async () => {
+      (setGroupArchivedForMe as jest.Mock).mockResolvedValue({
+        success: true,
+      });
+      const user = userEvent.setup();
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({ canManage: false })}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: /archive group/i }));
+
+      expectLinkNavigationBlocked();
+    });
+
+    it("shows an error toast when the action fails", async () => {
+      (setGroupArchivedForMe as jest.Mock).mockResolvedValue({
+        success: false,
+      });
+      const user = userEvent.setup();
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({ canManage: false })}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: /archive group/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Couldn't update Test Group. Please try again.",
+        );
+      });
+    });
+
+    it("ignores a second click while pending, and shows aria-busy", async () => {
+      let resolvePromise: (value: { success: true }) => void;
+      const pending = new Promise<{ success: true }>((resolve) => {
+        resolvePromise = resolve;
+      });
+      (setGroupArchivedForMe as jest.Mock).mockReturnValue(pending);
+      const user = userEvent.setup();
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({ canManage: false })}
+        />,
+      );
+
+      const button = screen.getByRole("button", { name: /archive group/i });
+      await user.click(button);
+      await user.click(button);
+
+      expect(button).toHaveAttribute("aria-busy", "true");
+      expect(setGroupArchivedForMe).toHaveBeenCalledTimes(1);
+
+      resolvePromise!({ success: true });
+      await waitFor(() => expect(button).toHaveAttribute("aria-busy", "false"));
+    });
+  });
+
+  describe("Archive Controls - Active tabs, manager/admin/creator", () => {
+    it("shows a dropdown with Archive for me and Archive for all members", async () => {
+      const user = userEvent.setup();
       render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
+          archiveState={makeArchiveState({ canManage: true })}
         />,
       );
 
-      expect(screen.getByRole("button")).toBeInTheDocument();
+      await user.click(
+        screen.getByRole("button", { name: /archive options/i }),
+      );
+
+      expect(
+        screen.getByRole("menuitem", { name: "Archive for me" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: "Archive for all members" }),
+      ).toBeInTheDocument();
+      expectLinkNavigationBlocked();
     });
 
-    it("shows Archive icon when group is not archived", () => {
-      const { container } = render(
+    it("calls setGroupArchivedForMe when choosing Archive for me, and closes the menu", async () => {
+      (setGroupArchivedForMe as jest.Mock).mockResolvedValue({
+        success: true,
+      });
+      const user = userEvent.setup();
+
+      render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
+          archiveState={makeArchiveState({ canManage: true })}
         />,
       );
 
-      const button = screen.getByRole("button");
-      expect(button).toBeInTheDocument();
-      // Archive icon should be present
-      expect(container.querySelector("svg")).toBeInTheDocument();
-    });
-
-    it("shows ArchiveRestore icon when group is archived", () => {
-      const { container } = render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={true}
-          dashboardPage={true}
-        />,
+      await user.click(
+        screen.getByRole("button", { name: /archive options/i }),
+      );
+      await user.click(
+        screen.getByRole("menuitem", { name: "Archive for me" }),
       );
 
-      const button = screen.getByRole("button");
-      expect(button).toBeInTheDocument();
-      // ArchiveRestore icon should be present
-      expect(container.querySelector("svg")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(setGroupArchivedForMe).toHaveBeenCalledWith(1, true);
+      });
+      expect(archiveGroup).not.toHaveBeenCalled();
+      // Selecting an item must close the dropdown (Radix's default
+      // behavior, which relies on onSelect not calling preventDefault).
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expectLinkNavigationBlocked();
     });
 
-    it("calls archiveGroup when archive button is clicked", async () => {
+    it("opens a confirm dialog for Archive for all members, and confirming calls archiveGroup(group, true), closes the dialog, and returns focus to the trigger", async () => {
       (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
+      const user = userEvent.setup();
 
       render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
+          archiveState={makeArchiveState({ canManage: true })}
         />,
       );
 
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
+      const trigger = screen.getByRole("button", { name: /archive options/i });
+      await user.click(trigger);
+      await user.click(
+        screen.getByRole("menuitem", { name: "Archive for all members" }),
+      );
+
+      // Choosing the item both closes the menu and opens the dialog.
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("alertdialog", { name: /archive for all members/i }),
+      ).toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole("button", { name: "Archive for all members" }),
+      );
 
       await waitFor(() => {
         expect(archiveGroup).toHaveBeenCalledWith(mockGroup, true);
+        expect(toast.success).toHaveBeenCalledWith(
+          "Test Group archived for all members.",
+        );
       });
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expectLinkNavigationBlocked();
     });
 
-    it("calls archiveGroup with false when unarchiving", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
+    it("calls nothing when the Archive for all members dialog is cancelled, closes the dialog, and returns focus to the trigger", async () => {
+      const user = userEvent.setup();
 
       render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={true}
-          dashboardPage={true}
+          archiveState={makeArchiveState({ canManage: true })}
         />,
       );
 
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
+      const trigger = screen.getByRole("button", { name: /archive options/i });
+      await user.click(trigger);
+      await user.click(
+        screen.getByRole("menuitem", { name: "Archive for all members" }),
+      );
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(archiveGroup).not.toHaveBeenCalled();
+      expect(setGroupArchivedForMe).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expectLinkNavigationBlocked();
+    });
+  });
+
+  describe("Archive Controls - Archived tab, personal archive only", () => {
+    it("shows an Unarchive button that calls setGroupArchivedForMe(id, false)", async () => {
+      (setGroupArchivedForMe as jest.Mock).mockResolvedValue({
+        success: true,
+      });
+      const user = userEvent.setup();
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({
+            archivedForMe: true,
+            isEffectivelyArchived: true,
+            canManage: false,
+          })}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Unarchive" }));
+
+      await waitFor(() => {
+        expect(setGroupArchivedForMe).toHaveBeenCalledWith(1, false);
+        expect(toast.success).toHaveBeenCalledWith("Test Group unarchived.");
+      });
+      expectLinkNavigationBlocked();
+    });
+  });
+
+  describe("Archive Controls - Archived tab, archived for everyone", () => {
+    it("shows 'Archived by a group admin' text and no button for a plain member", () => {
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="member"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({
+            archivedForEveryone: true,
+            isEffectivelyArchived: true,
+            canManage: false,
+          })}
+        />,
+      );
+
+      expect(screen.getByText("Archived by a group admin")).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    it("shows Unarchive for all members for a manager, and confirming calls archiveGroup(group, false), closes the dialog, and returns focus to the trigger", async () => {
+      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
+      // jsdom doesn't compute the CSS Radix relies on to re-enable pointer
+      // events on the dialog content once it opens (the body itself is
+      // marked pointer-events: none while a modal is open, and the trigger
+      // button behind it shares the same accessible name), so pointer-events
+      // assertions are disabled for this test.
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+      render(
+        <GroupCard
+          group={mockGroup}
+          role="admin"
+          roleColors={mockRoleColors}
+          archiveState={makeArchiveState({
+            archivedForEveryone: true,
+            isEffectivelyArchived: true,
+            canManage: true,
+          })}
+        />,
+      );
+
+      const trigger = screen.getByRole("button", {
+        name: "Unarchive for all members",
+      });
+      await user.click(trigger);
+
+      const dialog = screen.getByRole("alertdialog", {
+        name: /unarchive for all members/i,
+      });
+      expect(dialog).toBeInTheDocument();
+
+      const confirmButton = within(dialog).getByRole("button", {
+        name: "Unarchive for all members",
+      });
+      await user.click(confirmButton);
 
       await waitFor(() => {
         expect(archiveGroup).toHaveBeenCalledWith(mockGroup, false);
-      });
-    });
-
-    it("shows success toast when archiving succeeds", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
-
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
-
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
-
-      await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(
-          "Test Group is now archived!",
+          "Test Group restored for all members.",
         );
       });
+      expect(setGroupArchivedForMe).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expectLinkNavigationBlocked();
     });
 
-    it("shows success toast when unarchiving succeeds", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
+    it("calls nothing when the Unarchive for all members dialog is cancelled, closes the dialog, and returns focus to the trigger", async () => {
+      const user = userEvent.setup();
 
       render(
         <GroupCard
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={true}
-          dashboardPage={true}
+          archiveState={makeArchiveState({
+            archivedForEveryone: true,
+            isEffectivelyArchived: true,
+            canManage: true,
+          })}
         />,
       );
 
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
-
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Test Group is now unarchived!",
-        );
+      const trigger = screen.getByRole("button", {
+        name: "Unarchive for all members",
       });
-    });
+      await user.click(trigger);
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
 
-    it("shows error toast when archiving fails", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: false });
-
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
-
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to update group visibility",
-        );
-      });
-    });
-
-    it("shows error toast when archiveGroup throws an error", async () => {
-      (archiveGroup as jest.Mock).mockRejectedValue(new Error("Network error"));
-
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
-
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "An error occurred while updating the group",
-        );
-      });
-    });
-
-    it("prevents navigation when archive button is clicked", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
-
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
-
-      const button = screen.getByRole("button");
-      const clickEvent = new MouseEvent("click", { bubbles: true });
-      const preventDefaultSpy = jest.spyOn(clickEvent, "preventDefault");
-      const stopPropagationSpy = jest.spyOn(clickEvent, "stopPropagation");
-
-      fireEvent(button, clickEvent);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
+      expect(archiveGroup).not.toHaveBeenCalled();
+      expect(setGroupArchivedForMe).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expectLinkNavigationBlocked();
     });
   });
 
@@ -593,8 +762,6 @@ describe("GroupCard", () => {
           group={mockGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -602,33 +769,54 @@ describe("GroupCard", () => {
       expect(link).toBeInTheDocument();
     });
 
-    it("archive button has tooltip on hover", () => {
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
+    // Buttons nested inside the card's <a> must cancel the click's default
+    // action, or the anchor's native activation does a full-page navigation
+    // (jsdom never navigates, so the Link mock alone can't catch this).
+    // fireEvent returns false when the event's default was prevented.
+    it.each([
+      {
+        label: "plain-member Archive button",
+        archiveState: makeArchiveState(),
+        name: "Archive group",
+      },
+      {
+        label: "manager archive menu trigger",
+        archiveState: makeArchiveState({ canManage: true }),
+        name: "Archive options",
+      },
+      {
+        label: "Unarchive for all members button",
+        archiveState: makeArchiveState({
+          archivedForEveryone: true,
+          isEffectivelyArchived: true,
+          canManage: true,
+        }),
+        name: "Unarchive for all members",
+      },
+      {
+        label: "personal Unarchive button",
+        archiveState: makeArchiveState({
+          archivedForMe: true,
+          isEffectivelyArchived: true,
+        }),
+        name: "Unarchive",
+      },
+    ])(
+      "$label cancels the anchor's native navigation",
+      ({ archiveState, name }) => {
+        render(
+          <GroupCard
+            group={mockGroup}
+            role="member"
+            roleColors={mockRoleColors}
+            archiveState={archiveState}
+          />,
+        );
 
-      expect(screen.getByText("Archive")).toBeInTheDocument();
-    });
-
-    it("unarchive button has tooltip on hover", () => {
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={true}
-          dashboardPage={true}
-        />,
-      );
-
-      expect(screen.getByText("Unarchive")).toBeInTheDocument();
-    });
+        const button = screen.getByRole("button", { name });
+        expect(fireEvent.click(button)).toBe(false);
+      },
+    );
   });
 
   describe("Edge Cases", () => {
@@ -643,8 +831,6 @@ describe("GroupCard", () => {
           group={specialGroup}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -664,8 +850,6 @@ describe("GroupCard", () => {
           group={groupWithoutMembers}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -689,12 +873,9 @@ describe("GroupCard", () => {
           group={groupWithPartialName}
           role="member"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
-      // Should fall back to email when name is incomplete
       expect(
         screen.getByText("Creator: test@northeastern.edu"),
       ).toBeInTheDocument();
@@ -712,8 +893,6 @@ describe("GroupCard", () => {
           group={groupWithLongName}
           role="admin"
           roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={false}
         />,
       );
 
@@ -722,29 +901,6 @@ describe("GroupCard", () => {
           "This is a very long group name that might cause layout issues",
         ),
       ).toBeInTheDocument();
-    });
-
-    it("handles rapid archive button clicks", async () => {
-      (archiveGroup as jest.Mock).mockResolvedValue({ success: true });
-
-      render(
-        <GroupCard
-          group={mockGroup}
-          role="admin"
-          roleColors={mockRoleColors}
-          isArchived={false}
-          dashboardPage={true}
-        />,
-      );
-
-      const button = screen.getByRole("button");
-      fireEvent.click(button);
-      fireEvent.click(button);
-      fireEvent.click(button);
-
-      await waitFor(() => {
-        expect(archiveGroup).toHaveBeenCalled();
-      });
     });
   });
 });

@@ -5,18 +5,59 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
-import { IconGripVertical } from "@tabler/icons-react";
+import { IconGripVertical, IconMessage } from "@tabler/icons-react";
+
+const DOT = {
+  ok: { color: "#D97706", label: "OK" },
+  needs_work: { color: "#DC2626", label: "Needs work" },
+} as const;
+
+/** The lowest score in a lesson: a decorative dot, with its meaning for screen readers */
+function ScoreDot({ band }: { band: keyof typeof DOT }) {
+  return (
+    <>
+      <span
+        aria-hidden
+        className="mr-1.5 h-2 w-2 shrink-0 self-center rounded-full"
+        style={{ backgroundColor: DOT[band].color }}
+      />
+      <span className="sr-only">Lowest score: {DOT[band].label}</span>
+    </>
+  );
+}
+
+/** How many open review comments a sidebar item has */
+export function OpenCommentsBadge({ count }: { count: number }) {
+  return (
+    <span
+      className="ml-auto inline-flex h-5 shrink-0 items-center gap-[3px] self-center rounded-full bg-[var(--rc-accent-soft)] px-[7px] text-xs font-semibold text-[#1f5a76] dark:text-[#8fd0ea]"
+      aria-label={`${count} open ${count === 1 ? "comment" : "comments"}`}
+    >
+      <IconMessage className="h-3 w-3" aria-hidden />
+      {count}
+    </span>
+  );
+}
 
 interface SortableLessonProps {
   lesson: Lesson;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
   pathname: string;
+  /** Hides the drag handle and turns reordering off. */
+  dragDisabled?: boolean;
+  /** The reviewer's open comments on this lesson (ODY-806), if reviewing */
+  openComments?: number;
+  /** The lowest score band in the lesson, when it needs attention (ODY-805) */
+  dot?: "ok" | "needs_work";
 }
 
 export function SortableLesson({
   lesson,
   droplet,
   pathname,
+  dragDisabled = false,
+  openComments,
+  dot,
 }: SortableLessonProps) {
   const router = useRouter();
 
@@ -29,6 +70,7 @@ export function SortableLesson({
     isDragging,
   } = useSortable({
     id: lesson.id,
+    disabled: dragDisabled,
   });
 
   const style = {
@@ -58,21 +100,25 @@ export function SortableLesson({
             : "text-[#344054] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
         )}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab px-1 active:cursor-grabbing"
-        >
-          <IconGripVertical
-            className={cn(
-              "h-4 w-4 shrink-0",
-              pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
-                ? "text-[#287697] dark:text-[#4AABCF]"
-                : "text-slate-400",
-            )}
-            stroke={1.8}
-          />
-        </div>
+        {dragDisabled ? (
+          <div className="w-2 shrink-0" />
+        ) : (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab px-1 active:cursor-grabbing"
+          >
+            <IconGripVertical
+              className={cn(
+                "h-4 w-4 shrink-0",
+                pathname === `/draft/d/${droplet.slug}/${lesson.slug}`
+                  ? "text-[#287697] dark:text-[#4AABCF]"
+                  : "text-slate-400",
+              )}
+              stroke={1.8}
+            />
+          </div>
+        )}
 
         <Link
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}
@@ -80,9 +126,11 @@ export function SortableLesson({
           className="flex flex-grow py-2.5"
           passHref
         >
+          {dot && <ScoreDot band={dot} />}
           <span className="pl-1 text-sm leading-snug font-medium">
             {lesson.name}
           </span>
+          {!!openComments && <OpenCommentsBadge count={openComments} />}
         </Link>
       </div>
     </li>

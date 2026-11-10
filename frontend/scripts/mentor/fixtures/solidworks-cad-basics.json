@@ -1,0 +1,588 @@
+{
+  "snapshotVersion": 1,
+  "takenAt": "2026-11-06T14:33:11.729Z",
+  "source": {
+    "strapiUrl": "http://localhost:1337",
+    "dropletId": 112
+  },
+  "droplet": {
+    "id": 112,
+    "name": "Solidworks/CAD Basics",
+    "slug": "solidworks-cad-basics",
+    "description": "<p>SolidWorks is a 3D CAD tool used across every engineering discipline. You saw it in Cornerstone — this droplet reinforces the core skills you'll rely on in co-ops, projects, and upper-level courses.</p>",
+    "type": "skill",
+    "focusArea": "technical",
+    "difficulty": null,
+    "learningObjectives": [
+      "Navigate the SolidWorks interface and create fully defined 2D sketches"
+    ],
+    "overview": null,
+    "prerequisites": [],
+    "previousReview": null
+  },
+  "lessons": [
+    {
+      "id": 377,
+      "name": "Interface & Sketching",
+      "type": "general",
+      "blocksVersion": "v2",
+      "blocks": [],
+      "blocksV2": [
+        {
+          "id": "dc59e193-c6ad-4630-bea1-5fb845149744",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Key Interface Elements:",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ed921fbe-2ec1-43ac-ab6b-889ba885bdb0",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "CommandManager (top toolbar):",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " Your main toolbox — changes based on what you're doing",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "8aa8bd40-7a75-48a9-aa2e-20f3bfd96c06",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "FeatureManager Design Tree (left panel):",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " The history of every operation on your part. Click any item to edit it",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "44ddc36a-414c-4b41-a247-a34bb7c08fe9",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Graphics Area (center):",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " Your 3D viewport",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "c51b0053-59dc-4ab0-a03b-b11bed4c63d7",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Mouse navigation:",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " Middle-click + drag to rotate, scroll to zoom, Ctrl + middle-click + drag to pan",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "de4df180-2b5b-4a81-bfbc-ab3cd0d043d2",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Sketching Basics:",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " Everything in SolidWorks starts with a 2D sketch. To begin: click Sketch → select a plane (Front, Top, or Right).",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ee22637b-07f6-4b2f-a61f-e5f32510d68f",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Essential tools: Line, Rectangle, Circle, Smart Dimension, Trim Entities",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "85be6e46-d7d7-4d82-98b1-1a423db2c131",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Sketch Relations (Constraints):",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            },
+            {
+              "text": " Lock your geometry so it behaves predictably.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "4204172c-c6c5-404f-87fe-8c21cdb13c49",
+          "type": "table",
+          "props": {
+            "textColor": "default"
+          },
+          "content": {
+            "rows": [
+              {
+                "cells": [
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Relation",
+                        "type": "text",
+                        "styles": {
+                          "bold": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "What It Does",
+                        "type": "text",
+                        "styles": {
+                          "bold": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "cells": [
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Coincident",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Two points share the same location",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "cells": [
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Horizontal / Vertical",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "A line is perfectly H or V",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "cells": [
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Equal",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Two lines/arcs share the same size",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "cells": [
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "Midpoint",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableCell",
+                    "props": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "textColor": "default",
+                      "textAlignment": "left",
+                      "backgroundColor": "default"
+                    },
+                    "content": [
+                      {
+                        "text": "A point sits at the center of a line",
+                        "type": "text",
+                        "styles": {}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "type": "tableContent",
+            "columnWidths": [
+              null,
+              null
+            ]
+          },
+          "children": []
+        },
+        {
+          "id": "3c2ea93b-740e-407c-93bd-87a67a111db0",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Fully Defined Sketches — Critical:",
+              "type": "text",
+              "styles": {
+                "bold": true
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "cf5c6a76-7e3d-43cb-9b09-689236cea5fd",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "🔵 Blue = under-defined (still moves)",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "cef87ff7-b027-4bfa-aea1-d60d59586d29",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "⚫ Black = fully defined ✓",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "e62bcc77-301d-4974-9763-c2b1e5206dcb",
+          "type": "bulletListItem",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "🔴 Red = over-defined (fix this)",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9977bd2a-23df-44ce-8e33-b0f9494eb690",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Always anchor your sketch to the origin and make all geometry black before exiting.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ea649841-df2e-454a-acf7-3ce94e8d57e8",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "ccca277b-ac6a-422d-80ee-af40b5ae2113",
+          "type": "image",
+          "props": {
+            "url": "https://cdn.goengineer.com/solidworks-basics-crossing-the-bridge-from-2d-to-3D.png?format=webp",
+            "caption": ""
+          },
+          "children": []
+        },
+        {
+          "id": "58b0ed2b-cba1-4115-8316-9449934c39dc",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "a258f644-3d1c-4932-b2e9-f798877b26e3",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "9b297008-e72e-4248-8d03-828f7aa03db8",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "01f37b14-50c4-426f-a140-65a541be08e3",
+          "type": "quiz-multiple-choice",
+          "props": {
+            "options": "[{\"id\":\"1\",\"text\":\"Black\",\"isCorrect\":true},{\"id\":\"2\",\"text\":\"Blue\",\"isCorrect\":false},{\"id\":\"1772084924108\",\"text\":\"Red\",\"isCorrect\":false},{\"id\":\"1772084926542\",\"text\":\"Yellow\",\"isCorrect\":false}]",
+            "question": "What color is fully defined sketch geometry?",
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "children": []
+        },
+        {
+          "id": "ce80b6a4-84d1-4c11-81b0-4407a2cc5c96",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

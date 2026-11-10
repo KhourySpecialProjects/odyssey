@@ -1,0 +1,31 @@
+{
+  "kind": "singleType",
+  "collectionName": "ai_scoring_settings",
+  "info": {
+    "singularName": "ai-scoring-setting",
+    "pluralName": "ai-scoring-settings",
+    "displayName": "AI Scoring Settings",
+    "description": "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "monthlyCapUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "perRunCapUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "prices": {
+      "type": "component",
+      "repeatable": true,
+      "component": "ai-scoring.model-price"
+    }
+  }
+}

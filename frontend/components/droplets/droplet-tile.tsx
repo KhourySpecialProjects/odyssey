@@ -8,6 +8,7 @@ import {
   cn,
 } from "@/lib/utils";
 import { getTagColors } from "@/lib/tag-colors";
+import { authorByline, authorNames, formatName } from "@/lib/author-names";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -70,6 +71,17 @@ export function DropletTile({
     .replace(/<\/?p>/gi, "")
     .replace(/<[^>]+>/g, "")
     .trim();
+  // Null where the page's query doesn't load author names (ODY-863)
+  const byline = authorByline(droplet.authorized_users);
+  const bylineText = byline && (
+    <span
+      title={authorNames(droplet.authorized_users).join(", ")}
+      className="min-w-0 truncate text-sm text-slate-600 dark:text-slate-400"
+    >
+      By {byline}
+    </span>
+  );
+  const hasRating = !!droplet.averageRating && droplet.averageRating != 0;
 
   useEffect(() => {
     if (textRef.current && strippedDescription) {
@@ -187,10 +199,12 @@ export function DropletTile({
           populate: {
             blocks: {
               on: {
-                "droplets.generic": { populate: "*" },
-                "droplets.expandable": { populate: "*" },
-                "droplets.callout": { populate: "*" },
-                "droplets.video": { populate: "*" },
+                "droplets.generic": { fields: ["content"] },
+                "droplets.expandable": { fields: ["title", "content"] },
+                "droplets.callout": {
+                  fields: ["content", "type", "color", "iconEnabled"],
+                },
+                "droplets.video": { fields: ["url"] },
                 "droplets.quiz": {
                   populate: {
                     questions: { populate: { answerOptions: true } },
@@ -218,7 +232,13 @@ Difficulty: ${fullDroplet.difficulty || "Not set"}
 ${fullDroplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
 
 ### Authors
-${fullDroplet.authorized_users?.map((user) => `* ${user.firstName} ${user.lastName}`).join("\n") || "No authors"}
+${
+  fullDroplet.authorized_users
+    ?.map(formatName)
+    .filter(Boolean)
+    .map((name) => `* ${name}`)
+    .join("\n") || "No authors"
+}
 
 ### Description
 ${fullDroplet.description ? fullDroplet.description.concat("\n") : "No description"}
@@ -504,18 +524,23 @@ ${
             </div>
           </div>
 
+          {/* The stars sit just above the author row (mt-auto), so the author
+              keeps the whole row. zoom, not scale, so they only take the room
+              they show (ODY-863). */}
+          {hasRating && (
+            <div className="mt-auto -mb-4 w-fit [zoom:0.55]">
+              <StarRating
+                value={droplet.averageRating || 0}
+                enrollmentID={""}
+                average={true}
+                uniqueId={droplet.id.toString()}
+              />
+            </div>
+          )}
+
           <div className="flex w-full flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              {droplet.averageRating && droplet.averageRating != 0.0 ? (
-                <div className="max-w-full origin-left scale-[0.55]">
-                  <StarRating
-                    value={droplet.averageRating || 0}
-                    enrollmentID={""}
-                    average={true}
-                    uniqueId={droplet.id.toString()}
-                  />
-                </div>
-              ) : null}
+              {bylineText}
               {showCreatedDate && droplet.createdAt && (
                 <span className="flex flex-col text-xs text-slate-400 dark:text-slate-400">
                   <span>Created on</span>
@@ -536,7 +561,7 @@ ${
                   e.stopPropagation();
                   exportDropletMarkdown();
                 }}
-                className={`${isAdmin ? "visible" : "invisible"} bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent`}
+                className={`${isAdmin ? "visible" : "hidden"} bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent`}
               >
                 <div className="group relative">
                   <IconDownload

@@ -21,9 +21,18 @@ const droplets = await fetchAPI<Droplet[]>("/droplets", {
 1. Serializes `urlParams` with `qs.stringify()` (handles nested Strapi filter/populate syntax)
 2. Adds `Authorization: Bearer ${STRAPI_ACCESS_TOKEN}` header
 3. Adds `Content-Type: application/json`
-4. Passes `next` or `cache` option to the underlying `fetch()` call
-5. Calls `flattenAttributes()` on `data.data` by default (set `flattenResponse: false` to skip)
-6. Throws on non-2xx responses with status code in the error message
+4. Spreads `STRAPI_RESPONSE_FORMAT_HEADER` (`Strapi-Response-Format: v4`)
+5. Passes `next` or `cache` option to the underlying `fetch()` call
+6. Adds `pagination[withCount]=false` to flattened requests (flattening drops `meta`); set `withCount` yourself or `flattenResponse: false` to keep it
+7. Calls `flattenAttributes()` on `data.data` by default (set `flattenResponse: false` to skip)
+8. Throws on non-2xx responses with status code in the error message
+
+### Strapi v5 response format
+
+- Every request to Strapi sends `Strapi-Response-Format: v4`, so v5 answers `{ data: { id, documentId, attributes } }` and `flattenAttributes` works unchanged. It keeps the top-level `documentId`.
+- `fetchAPI` adds the header. Raw `fetch()` calls and `frontend/scripts/migrate-*.ts` must spread `STRAPI_RESPONSE_FORMAT_HEADER` (`lib/utils.ts`). Guard: `testing/lib/strapi-response-format-guard.test.ts`.
+- The header changes the shape only. Numeric single-entry URLs still 404 and unknown keys still 400.
+- Core DELETE returns an empty 204, even for a missing documentId. Read it with `readJsonOrNull` (`lib/strapi-response.ts`); tests use `makeEmptyResponse(204)`.
 
 ### The cache/next Mutual Exclusion Rule
 
@@ -147,6 +156,8 @@ All cache tags are defined in `frontend/lib/cache-tags.ts`. Two scoping levels:
 - `CACHE_TAGS.notes(userId)` → `"notes-{userId}"`
 - `CACHE_TAGS.highlights(userId)` → `"highlights-{userId}"`
 
+Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (read by `getReviewForDroplet` and `getMyReview`, invalidated by the `lib/requests/reviews.ts` writes).
+
 ### Invalidation Pattern
 
 Every Server Action that mutates data must call `revalidateTag()`:
@@ -176,6 +187,7 @@ export async function completeLesson(
 - Most content: 900 seconds (15 minutes)
 - Tags: 3600 seconds (1 hour) — tags change rarely
 - Uncached fetches (`cache: "no-store"`): used for data that must be fresh on every load (e.g., real-time enrollment status during lesson completion)
+- **Review replies and `getThreadStamp` (ODY-881):** always `cache: "no-store"`. Replies change from other users' sessions, and `revalidateTag` only clears the Next instance that served the write, so a cache would show stale threads. Top-level comments and reviews keep their `CACHE_TAGS.review(id)` cache.
 
 ## Strapi Query Patterns with qs
 
@@ -203,15 +215,54 @@ import qs from "qs";
 { pagination: { page: 1, pageSize: 25 } }
 // or
 { pagination: { start: 0, limit: 25 } }
+
+// Dynamic zone: nested populate needs `on` per component (lib/requests/lesson-populates.ts)
+{ populate: { blocks: { on: { "droplets.quiz": { populate: ["questions"] }, "droplets.generic": true } } } }
 ```
 
 `fetchAPI()` passes `urlParams` directly to `qs.stringify()` with `encodeValuesOnly: true`. The `qs` library handles the Strapi bracket notation (`filters[status][$eq]=published`) automatically.
 
+## Single entries and relations on Strapi v5
+
+Single-entry REST routes (`/api/droplets/:id`) and relation writes only accept a `documentId`. A numeric id returns 404. Callers still hold numeric ids (fetched data, the session, FormData), so `lib/strapi-document-id.ts` converts them. It is a plain server module, not `"use server"`; never import it from a client component.
+
+- **Single-entry URLs:** build them with `await strapiEntryUrl("droplets", ref, query?)`. For `fetchAPI` paths use `` `/droplets/${await resolveDocumentId("droplets", id)}` ``. `ref` can be a number, a documentId, or the entity itself. Passing an entity that has `documentId` skips the lookup, but only for entities your own server code fetched (see the next bullet). A documentId must match `/^[A-Za-z0-9]+$/`; anything else throws `InvalidEntryRefError`.
+- **Relation writes:** every relation value in a POST/PUT body (`connect`, `disconnect`, `set`, or shorthand like `droplet: id`) must be a documentId. Use `entity.documentId` when you have the entity, otherwise `resolveDocumentIds("<target collection>", ids)`. Components and their `id`s are not relations.
+- **Exported Server Actions must not trust a client `documentId`:** in every exported function of a `"use server"` file, all arguments are untrusted, and documentIds are not secret (every entity sent to a client carries one). A `documentId` may only be used if it came from a server-side fetch in the same call. For anything that arrived as an argument (including nested objects and arrays such as `data.droplets` or `group.members`), pass only the numeric id: `x.id` or `{ id: x.id }`. When the action already fetched the entity for an auth, ownership or duplicate check, write to that fetched entity so the check and the write always hit the same row. Otherwise a user can pass `{ id: <their own>, documentId: <someone else's> }`, pass the check on their own row, and write to the other. Non-exported helpers and server-to-server calls may pass fetched entities.
+- **Ids are stable across the v5 boot.** The session `documentId` is optional, because old JWTs don't have it. After a re-run migration the documentIds are regenerated, so restart the frontend to clear its in-process lookup cache.
+- **Filters on `id` are fine:** `filters[id][$eq]=5` still works. Plain reads by id should use the filter, since it needs no lookup.
+- **Rendering paths:** don't call the helper while a page renders or inside `unstable_cache` or `cached.ts`. Its lookup uses `cache: "no-store"`, which makes static routes dynamic. Use an `id` filter there.
+- **Not found:** the helper throws `StrapiEntryNotFoundError`. Invalid refs (null, NaN, `""`) throw `InvalidEntryRefError`, a subclass. Handle both as you would a Strapi 404.
+- **Lock routes:** `/lessons/:id/lock*` accept a numeric id or a documentId since ODY-606. `lesson-lock.ts` still sends numeric ids.
+- **Guard:** `testing/lib/strapi-entry-url-guard.test.ts` fails on raw-id single-entry URLs and lists each `file:line`.
+
+Test conventions:
+
+- `jest.setup.ts` mocks the helper globally with fake documentIds (`5` becomes `"doc5"`, an entity gives its `documentId`), so assert `/api/droplets/doc5` and `connect: ["doc5"]`. A test that sees a bare numeric id has found a missed conversion. The mapping lives in `lib/testing/document-id-mock.ts`; call `installDocumentIdMock()` after `jest.resetAllMocks()`. `strapi-document-id.test.ts` calls `jest.unmock` to test the real module.
+- A test file that calls `jest.resetAllMocks()` wipes that mock and must re-install the identity implementation in `beforeEach`. See `droplet-coverage.test.ts`, `groups.test.js` and `voyage-branches.test.ts`.
+
+## Fetching user-supplied URLs
+
+A URL a creator typed (a lesson link, an image, a video, a dataset file) is requested from inside Odyssey's AWS network, so a plain request is server-side request forgery: it can reach `169.254.169.254` (AWS metadata), Strapi or `localhost`.
+
+- **Only `lib/overview-scan/network.ts` may request such a URL** (ODY-789). Use `createSafeFetcher()` (once per scan) or `checkUrls()`. Never use `fetch` for it: the fetcher checks the address inside the socket's own DNS lookup, re-checks every redirect, and never reads a body.
+- **Server only.** It starts with `import "server-only"`. Never export it from a `"use server"` file, or wrap it in an action without auth and a rate limit: it would be an open proxy.
+- **Rules and types import it with `import type`**, so they never load `node:http`.
+- **Results:** `loaded`, `broken` (4xx/5xx, or `status: null` when the host doesn't exist), `refused` (bad scheme, not a URL, or a private address) and `unchecked` (timeout, the scan's 20 s budget, 429, too many redirects, network errors). `fetchUrl` never rejects.
+- **Overview scan rules** (`lib/overview-scan/rules/`, ODY-793) take `fetchUrl` as an argument and never create a fetcher. A URL that couldn't be checked is an `"unknown"` flag (gray), never `"warn"`. Rules fetch all their URLs at once (`Promise.all`) and report in document order; the fetcher's queue and budget bound the network. Odyssey's own pages, `mailto:` and `tel:` links aren't fetched, and relative file URLs (local `/uploads/`) are reported as couldn't check.
+- **Running a scan** (ODY-790): read the droplet and its lessons fresh, then call `buildScanDocument(droplet, lessons)` (`lib/overview-scan/snapshot.ts`) and `runChecks(doc, CHECKS, fetchUrl)` (`run.ts`, `checks.ts`). `ScanSourceDroplet` lists the droplet fields to populate, and lessons go in the order a learner takes them. The snapshot reads BlockNote `blocksV2` directly, never through `convertBlockNoteToV1Blocks`, which drops image captions. A rule that throws is reported as couldn't check. Change `RULES_VERSION` in `config.ts` whenever a rule or a limit changes.
+- **`CHECKS` is server only** (ODY-791): the content checks' spell-check (`spelling.ts`, typo-js's en_US dictionary plus `CONFIG.techWords`) reads its dictionary from `node_modules` relative to `process.cwd()`. A page that lists the checks imports `CHECKS` in a Server Component and passes the titles and rule texts to its client components. Swear words and slurs come from obscenity's English list; `CONFIG.swearAllowWords` lets through words it wrongly matches ("cockpit"). Words in a block's `inlineCode` aren't spell-checked.
+
+## Mentor usage
+
+The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
+
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.
-2. **Forgetting `flattenAttributes()` on raw fetch responses** — Server Actions use raw `fetch()` for PUT/POST/DELETE. The response is wrapped in Strapi's `{ data: { attributes: {} } }` format. Call `flattenAttributes()` manually.
+2. **Forgetting `flattenAttributes()` on raw fetch responses** — Server Actions use raw `fetch()` for PUT/POST/DELETE. The response is wrapped in Strapi's `{ data: { attributes: {} } }` format. Call `flattenAttributes()` manually, and spread `STRAPI_RESPONSE_FORMAT_HEADER` into the headers (without it v5 answers flat and `flattenAttributes` breaks).
 3. **Hardcoding cache tag strings** — Use `CACHE_TAGS` constants. Hardcoded strings won't be found by grep when debugging invalidation issues.
 4. **Forgetting `revalidateTag()` after mutations** — The cache serves stale data until explicitly invalidated. Every mutation needs corresponding tag invalidation.
 5. **Over-populating queries** — Only populate relations you actually render. Deep populates with `{ populate: "*" }` pull the entire relation graph and are expensive.
 6. **Using `getCachedX()` in Server Actions** — React `cache()` only deduplicates within a single render. In Server Actions, call the underlying request function directly.
+7. **Raw list fetch without pagination** — REST `defaultLimit` is 25, so the result silently caps at 25 rows (ODY-720). Send `pagination` explicitly.

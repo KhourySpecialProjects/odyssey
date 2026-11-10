@@ -14,6 +14,8 @@ const baseTabs = [
   { name: "Admin", value: "admin" },
 ];
 
+const archivedTab = { name: "Archived", value: "archived" };
+
 export function GroupsSelector() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -36,8 +38,8 @@ export function GroupsSelector() {
   const tabs = useMemo(
     () =>
       canCreateGroup
-        ? [...baseTabs, { name: "Creator", value: "creator" }]
-        : baseTabs,
+        ? [...baseTabs, { name: "Creator", value: "creator" }, archivedTab]
+        : [...baseTabs, archivedTab],
     [canCreateGroup],
   );
 

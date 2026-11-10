@@ -73,6 +73,15 @@ else
     fi
 fi
 
+# ─── 5a. Single ckeditor5 version (cheap, runs in quick mode too) ────
+echo -e "${YELLOW}▶ ckeditor5 single version${NC}"
+cd "$PROJECT_ROOT/backend"
+if node -e "const p=require('./package-lock.json').packages;const v=Object.keys(p).filter(k=>k.endsWith('node_modules/ckeditor5')).map(k=>p[k].version);if(v.length!==1){console.error('Expected one ckeditor5, found: '+v.join(', '));process.exit(1)}console.log('ckeditor5 '+v[0])"; then
+    pass "Single ckeditor5 version"
+else
+    fail "Multiple ckeditor5 versions in backend/package-lock.json"
+fi
+
 # ─── 5. Backend Build ────────────────────────────────────────────────
 if [ "$MODE" = "quick" ]; then
     skip "Backend build (quick mode)"

@@ -23,6 +23,7 @@ interface DropletLesson {
     lesson: {
       data: {
         id: number;
+        documentId?: string;
         attributes: {
           name: string;
           orderIndex?: number;
@@ -49,6 +50,8 @@ async function fetchAPI(path: string, options: any = {}) {
     headers: {
       Authorization: `Bearer ${STRAPI_TOKEN}`,
       "Content-Type": "application/json",
+      // This script reads v4-shaped responses (attributes, relation .data).
+      "Strapi-Response-Format": "v4",
     },
   };
 
@@ -80,6 +83,19 @@ async function fetchAPI(path: string, options: any = {}) {
   return await response.json();
 }
 
+async function lookupLessonDocumentId(lessonId: number): Promise<string> {
+  const result = (await fetchAPI("/lessons", {
+    method: "GET",
+    params: {
+      "filters[id][$eq]": lessonId,
+      "fields[0]": "documentId",
+    },
+  })) as StrapiResponse<Array<{ documentId?: string }>>;
+  const documentId = result.data?.[0]?.documentId;
+  if (!documentId) throw new Error(`No lesson found with id ${lessonId}`);
+  return documentId;
+}
+
 async function migrateOrderIndex() {
   try {
     let page = 1;
@@ -107,8 +123,13 @@ async function migrateOrderIndex() {
         const lessonName = lesson.data.attributes.name;
 
         try {
+          // Strapi v5 single-entry routes take a documentId. The populated
+          // lesson carries it; fall back to an id-filtered lookup.
+          const lessonDocumentId =
+            lesson.data.documentId ?? (await lookupLessonDocumentId(lessonId));
+
           // Update the lesson's orderIndex to match the droplet-lesson's orderIndex
-          await fetchAPI(`/lessons/${lessonId}`, {
+          await fetchAPI(`/lessons/${lessonDocumentId}`, {
             method: "PUT",
             body: JSON.stringify({
               data: {

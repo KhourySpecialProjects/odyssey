@@ -166,4 +166,97 @@ describe("KudosButton", () => {
     const button = screen.getByRole("button", { name: "Kudos already given" });
     expect(button).toBeDisabled();
   });
+
+  describe("kudos count", () => {
+    const otherKudos = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        ...mockAuthUser,
+        id: 100 + i,
+        email: `other${i}@test.com`,
+      }));
+
+    it("increments the count and disables the button after giving kudos", async () => {
+      jest.mocked(giveKudos).mockResolvedValue({ success: true });
+
+      render(
+        <KudosButton
+          announcement={{ ...mockAnnouncement, kudosGiven: otherKudos(2) }}
+          droplet={mockDroplet}
+          authUser={mockAuthUser}
+        />,
+      );
+      expect(screen.getByText("2")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
+
+      expect(await screen.findByText("3")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Kudos already given" }),
+      ).toBeDisabled();
+    });
+
+    it("shows 1 after giving the first kudos", async () => {
+      jest.mocked(giveKudos).mockResolvedValue({ success: true });
+
+      render(
+        <KudosButton
+          announcement={{ ...mockAnnouncement, kudosGiven: [] }}
+          droplet={mockDroplet}
+          authUser={mockAuthUser}
+        />,
+      );
+      expect(screen.queryByText("0")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
+
+      expect(await screen.findByText("1")).toBeInTheDocument();
+    });
+
+    it("leaves the count unchanged when giving kudos fails", async () => {
+      jest.mocked(giveKudos).mockResolvedValue({ success: false });
+
+      render(
+        <KudosButton
+          announcement={{ ...mockAnnouncement, kudosGiven: otherKudos(2) }}
+          droplet={mockDroplet}
+          authUser={mockAuthUser}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Failed to give kudos");
+      });
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.queryByText("3")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Give kudos" }),
+      ).not.toBeDisabled();
+    });
+
+    it("shows the new announcement's count when the announcement changes", () => {
+      const { rerender } = render(
+        <KudosButton
+          announcement={{ ...mockAnnouncement, kudosGiven: otherKudos(2) }}
+          droplet={mockDroplet}
+          authUser={mockAuthUser}
+        />,
+      );
+      expect(screen.getByText("2")).toBeInTheDocument();
+
+      rerender(
+        <KudosButton
+          announcement={{
+            ...mockAnnouncement,
+            id: 2,
+            kudosGiven: otherKudos(5),
+          }}
+          droplet={mockDroplet}
+          authUser={mockAuthUser}
+        />,
+      );
+      expect(screen.getByText("5")).toBeInTheDocument();
+    });
+  });
 });

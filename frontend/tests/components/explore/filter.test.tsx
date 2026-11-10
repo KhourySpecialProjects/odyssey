@@ -60,5 +60,17 @@ describe("Filter", () => {
       await userEvent.click(screen.getByText("Option 2"));
       expect(mockRouter.push).toHaveBeenCalledWith("/test?test=opt1");
     });
+
+    it("goes back to page 1 when the filter changes (ODY-865)", async () => {
+      (useSearchParams as jest.Mock).mockReturnValue(
+        new URLSearchParams("q=py&page=3"),
+      );
+      render(<Filter name="test" label="Test Filter" options={mockOptions} />);
+
+      await userEvent.click(screen.getByRole("button"));
+      await userEvent.click(screen.getByText("Option 1"));
+
+      expect(mockRouter.push).toHaveBeenCalledWith("/test?q=py&test=opt1");
+    });
   });
 });

@@ -32,6 +32,10 @@
     --primary-600: 255 80% 52%;
     --secondary: 240 12% 8%;
     --destructive: 345 90% 60%;
+    --mentor: 259 63% 59%;
+    --mentor-text: 258 54% 52%;
+    --mentor-soft: 264 100% 98%;
+    --mentor-line: 268 95% 92%;
   }
 
   .dark {
@@ -40,6 +44,10 @@
     --primary: 255 80% 68%;
     --primary-600: 255 80% 60%;
     --secondary: 0 0% 100%;
+    --mentor: 260 77% 70%;
+    --mentor-text: 265 89% 86%;
+    --mentor-soft: 256 48% 20%;
+    --mentor-line: 256 48% 42%;
   }
 
   html {
@@ -194,6 +202,338 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
   border-color: #4a4a4a;
   background-color: #2d2d2d;
   color: #e06b85;
+}
+
+/* Lesson highlights (generic-block-renderer.tsx). A highlight is one piece
+   per text node; giving every piece the height of inline code, and painting
+   inline code without its border, makes the pieces read as one bar. */
+.lesson-highlight {
+  padding-block: 0.15em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.prose code.lesson-highlight {
+  border-color: transparent;
+  /* Its smaller monospace text sits lower; these line its top and bottom up
+     with the text beside it */
+  padding-top: 0.26em;
+  padding-bottom: 0.13em;
+}
+/* In a code editor, a highlight's marks wrap the syntax colouring's, so its
+   black text has to reach them */
+.cm-content .lesson-highlight * {
+  color: inherit !important;
+}
+/* Line numbers aren't part of the code a reader selects or copies */
+.cm-gutters {
+  user-select: none;
+}
+/* A highlight whose words the author edited since it was made (ODY-198).
+   Highlighted text is always black, so this reads in both themes. */
+.lesson-highlight[data-highlight-edited] {
+  text-decoration: underline dashed rgb(0 0 0 / 0.6);
+  text-underline-offset: 0.2em;
+}
+
+/* Mentor: a cited passage flashes when its Source is pressed */
+::highlight(mentor-source) {
+  background-color: #fef08a;
+  /* Highlighted text is always black, so this reads in both themes */
+  color: #000;
+}
+.mentor-source--flash {
+  outline: 2px solid hsl(var(--mentor));
+  outline-offset: 2px;
+}
+
+/* Review comments (ODY-806), as the redesign prototype draws them
+   (ui-redesign/comments.css): teal is what the reviewer is doing, amber only
+   marks a comment. Marks are drawn by lib/anchors. */
+:root {
+  --rc-accent: #2d7597;
+  --rc-accent-text: #2d7597;
+  --rc-accent-soft: #eef7fb;
+  --rc-accent-soft-border: #aed8ea;
+  --rc-wash: rgba(45, 117, 151, 0.07);
+  --rc-caret-glow: rgba(45, 117, 151, 0.32);
+  --rc-tint: rgba(245, 158, 11, 0.2);
+  --rc-tint-strong: rgba(245, 158, 11, 0.38);
+  --rc-tint-line: #b45309;
+  --rc-draft: rgba(45, 117, 151, 0.16);
+  --rc-subtle: #64748b;
+}
+.dark {
+  --rc-accent-text: #6cc0e0;
+  --rc-accent-soft: rgba(74, 171, 207, 0.14);
+  --rc-accent-soft-border: rgba(74, 171, 207, 0.42);
+  --rc-wash: rgba(125, 191, 220, 0.09);
+  --rc-caret-glow: rgba(125, 191, 220, 0.45);
+  --rc-tint: rgba(251, 191, 36, 0.2);
+  --rc-tint-strong: rgba(251, 191, 36, 0.36);
+  --rc-tint-line: #fbbf24;
+  --rc-draft: rgba(125, 191, 220, 0.2);
+  --rc-subtle: #8a99ae;
+}
+.review-mark {
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* Not sent yet: a dashed line under the words */
+.review-mark--pending {
+  border-bottom: 2px dashed var(--rc-tint-line);
+}
+/* Sent to the author: a tint over a solid line */
+.review-mark--sent {
+  background-color: var(--rc-tint);
+  border-bottom: 2px solid var(--rc-tint-line);
+}
+.review-mark--resolved {
+  border-bottom: 1px dotted var(--rc-subtle);
+}
+/* Lit by its tag or the pointer */
+.review-mark--lit {
+  background-color: var(--rc-tint-strong);
+}
+/* Picked in the panel (ODY-849): a ring that stays, and a one-off flash */
+.review-mark--focus:not(.anchor-badge) {
+  outline: 2px solid var(--rc-accent);
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .review-mark--flash {
+    animation: review-flash 600ms ease-out;
+  }
+  @keyframes review-flash {
+    from {
+      background-color: var(--rc-tint-strong);
+    }
+  }
+  .mentor-source--flash {
+    animation: mentor-source-flash 1.5s ease-out forwards;
+  }
+  @keyframes mentor-source-flash {
+    to {
+      outline-color: transparent;
+    }
+  }
+}
+/* A whole block has no mark of its own: the comment layer outlines it */
+.review-mark--block,
+.review-mark--block.review-mark--lit {
+  background-color: transparent;
+  border-bottom: 0;
+}
+/* The words a comment is being written for */
+.review-mark--draft {
+  background-color: var(--rc-draft);
+  border-bottom: 2px solid var(--rc-accent);
+}
+/* AI findings (ODY-849): band colours mirror lib/review-panel/colors.ts */
+.review-finding--good {
+  --rf-tint: #dcfce7;
+  --rf-line: #22c55e;
+  --rf-badge: #15803d;
+}
+.review-finding--ok {
+  --rf-tint: #fef3c7;
+  --rf-line: #f59e0b;
+  --rf-badge: #b45309;
+}
+.review-finding--needs_work {
+  --rf-tint: #fee2e2;
+  --rf-line: #ef4444;
+  --rf-badge: #b91c1c;
+}
+/* Dark mode: translucent tints, like --rc-tint */
+.dark .review-finding--good {
+  --rf-tint: rgba(34, 197, 94, 0.22);
+}
+.dark .review-finding--ok {
+  --rf-tint: rgba(251, 191, 36, 0.2);
+}
+.dark .review-finding--needs_work {
+  --rf-tint: rgba(248, 113, 113, 0.24);
+}
+.review-finding {
+  background-color: var(--rf-tint);
+  border-bottom: 2px solid var(--rf-line);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* The number: an empty marker, its digit drawn from data-badge */
+.anchor-badge.review-finding {
+  display: inline-block;
+  min-width: 1.15em;
+  margin-right: 0.25em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rf-badge);
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1.15em;
+  text-align: center;
+  vertical-align: 0.15em;
+  user-select: none;
+}
+.anchor-badge::before {
+  content: attr(data-badge);
+}
+/* Comment tags step back while findings show */
+main:has(.review-finding) .rc-tag:not(:hover):not(:focus-visible) {
+  opacity: 0.45;
+}
+/* A comment at a spot: its letters have no line, only the caret beside them,
+   and light up under the pointer */
+.review-mark--point {
+  background-color: transparent;
+  border-bottom: 0;
+}
+.review-mark--point.review-mark--lit {
+  background-color: var(--rc-tint);
+}
+.review-mark--point.review-mark--draft {
+  background-color: transparent;
+}
+/* The caret at a spot: amber, dotted while pending, grey once resolved, and
+   teal with a small landing bounce while its comment is being written */
+/* Inline, not inline-block, so a word with a spot in it never wraps there */
+.anchor-caret {
+  position: relative;
+  border: 0 !important;
+  background: none !important;
+  pointer-events: none;
+}
+.anchor-caret::before {
+  content: "";
+  position: absolute;
+  top: -0.05em;
+  left: -1px;
+  width: 2px;
+  height: 1.3em;
+  border-radius: 1px;
+  background: var(--rc-tint-line);
+}
+.anchor-caret.review-mark--pending::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--rc-tint-line) 0 3px,
+    transparent 3px 5px
+  );
+}
+.anchor-caret.review-mark--resolved::before {
+  background: var(--rc-subtle);
+}
+.anchor-caret.review-mark--draft::before {
+  background: var(--rc-accent-text);
+  box-shadow: 0 0 10px var(--rc-caret-glow);
+  animation: rc-land 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes rc-land {
+  from {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+}
+/* The reviewer's caret, drawn by the comment layer: it eases along a line,
+   hops to a new one, and blinks once still */
+.rc-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 2px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rc-caret.is-on {
+  opacity: 1;
+}
+.rc-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1px;
+  background: var(--rc-accent-text);
+  box-shadow: 0 0 10px var(--rc-caret-glow);
+  transition: transform 90ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rc-caret.is-idle::before {
+  animation: rc-blink 1.06s ease-in-out infinite;
+}
+.rc-caret.is-hop::before {
+  animation: rc-hop 170ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.rc-caret.is-press::before {
+  transform: scale(1.5, 1.08);
+}
+@keyframes rc-blink {
+  0%,
+  40%,
+  100% {
+    opacity: 1;
+  }
+  55%,
+  85% {
+    opacity: 0;
+  }
+}
+@keyframes rc-hop {
+  from {
+    opacity: 0.2;
+    transform: scaleY(0.35);
+  }
+}
+/* In Comment mode the pointer stays an arrow, and a selection is teal */
+.rc-commenting,
+.rc-commenting * {
+  cursor: default;
+}
+.rc-commenting
+  [data-anchor-id^="comment-"]:not([data-anchor-id="comment-draft"]) {
+  cursor: pointer;
+}
+.rc-commenting ::selection {
+  background: var(--rc-draft);
+}
+/* The caret drawn inside quoted text: "…state‸ment…" */
+.rc-caretmark {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin: 0 1px;
+  border-radius: 1px;
+  background: var(--rc-tint-line);
+  vertical-align: -0.15em;
+}
+.rc-caretmark--draft {
+  background: var(--rc-accent);
+}
+/* The comment box opens with a small pop */
+.rc-pop-in {
+  animation: rc-pop-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes rc-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-caret,
+  .rc-caret::before {
+    transition: none;
+  }
+  .rc-caret.is-idle::before,
+  .rc-caret.is-hop::before,
+  .anchor-caret.review-mark--draft::before,
+  .rc-pop-in {
+    animation: none;
+  }
 }
 
 /* Fenced code block backgrounds: light by default, dark in dark mode.

@@ -44,7 +44,5 @@ export const DropletSchema = z.object({
       id: z.number(),
     })
     .array(),
-  inReview: z.boolean(),
   status: z.string(),
-  afterReview: z.string(),
 });

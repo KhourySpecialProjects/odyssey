@@ -2,7 +2,11 @@
 
 import { Announcement, AuthorizedUser, Droplet, Friendship } from "@/types";
 import qs from "qs";
-import { flattenAttributes, fetchAPI } from "../utils";
+import {
+  flattenAttributes,
+  fetchAPI,
+  STRAPI_RESPONSE_FORMAT_HEADER,
+} from "../utils";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
@@ -11,6 +15,7 @@ import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getCachedUserSocial } from "./cached";
+import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -152,6 +157,12 @@ export async function fetchAnnouncements(
       ],
     });
 
+    // Review outcomes reach only the recipient
+    orFilters.push({
+      type: { $in: ["review_feedback", "review_published"] },
+      authorized_user: { id: { $eq: userId } },
+    });
+
     const readAtFilter = archived
       ? { readAt: { $notNull: true } }
       : { readAt: { $null: true } };
@@ -233,7 +244,10 @@ export async function fetchAnnouncements(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         // Two-level: new announcements sweep the global tag; read-state
         // changes on a user's own system announcements use userFeed(id).
         next: {
@@ -274,16 +288,20 @@ export async function createFriendAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: user.id,
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              user.id,
+            ),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
-            droplet: droplet.id,
+            droplet: await resolveDocumentId("droplets", droplet.id),
             type: "friend",
           },
         }),
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -308,17 +326,18 @@ export async function createKudosAnnouncement(
 ) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${announcementId}`,
+      await strapiEntryUrl("announcements", announcementId),
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
             kudosGiven: {
-              connect: [user],
+              connect: [await resolveDocumentId("authorized-users", user.id)],
             },
           },
         }),
@@ -340,9 +359,12 @@ export async function createKudosAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: user.id,
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              user.id,
+            ),
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
-            droplet: droplet.id,
+            droplet: await resolveDocumentId("droplets", droplet.id),
             firstCreated: curDate,
             type: "kudos",
           },
@@ -350,6 +372,7 @@ export async function createKudosAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -379,7 +402,7 @@ export async function createPlaylistAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            playlist: id,
+            playlist: await resolveDocumentId("playlists", id),
             content: `${playlistName} has been updated. Click to view this playlist!`,
             firstCreated: curDate,
             type: "playlist",
@@ -388,6 +411,7 @@ export async function createPlaylistAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -414,7 +438,7 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            group: id,
+            group: await resolveDocumentId("groups", id),
             content: `${groupName} has been updated. Click to view this group!`,
             firstCreated: curDate,
             type: "group",
@@ -423,6 +447,7 @@ export async function createGroupAnnouncement(groupName: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -449,7 +474,7 @@ export async function createDropletAnnouncement(name: string, id: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            droplet: id,
+            droplet: await resolveDocumentId("droplets", id),
             content: `${name} has been updated. Click to view this droplet!`,
             firstCreated: curDate,
             type: "droplet",
@@ -458,6 +483,7 @@ export async function createDropletAnnouncement(name: string, id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -522,7 +548,10 @@ export async function createSystemAnnouncement(
         method: "POST",
         body: JSON.stringify({
           data: {
-            authorized_user: authUser.id,
+            authorized_user: await resolveDocumentId(
+              "authorized-users",
+              authUser.id,
+            ),
             content: content,
             firstCreated: curDate,
             type: "system",
@@ -531,6 +560,7 @@ export async function createSystemAnnouncement(
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -587,6 +617,7 @@ export async function createSystemBroadcast(content: string) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -615,7 +646,10 @@ export async function markAnnouncementRead(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      await strapiEntryUrl("announcements", {
+        id,
+        documentId: ownership.documentId,
+      }),
       {
         method: "PUT",
         body: JSON.stringify({
@@ -624,6 +658,7 @@ export async function markAnnouncementRead(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -650,7 +685,10 @@ export async function markAnnouncementUnread(id: number) {
     if (!ownership.ok) return { success: false, error: ownership.error };
 
     const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${id}`,
+      await strapiEntryUrl("announcements", {
+        id,
+        documentId: ownership.documentId,
+      }),
       {
         method: "PUT",
         body: JSON.stringify({
@@ -659,6 +697,7 @@ export async function markAnnouncementUnread(id: number) {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
       },
     );
@@ -685,7 +724,8 @@ export async function markAnnouncementUnread(id: number) {
 async function assertAnnouncementOwnership(
   id: number,
 ): Promise<
-  { ok: true; ownerId: number; type?: string } | { ok: false; error: string }
+  | { ok: true; ownerId: number; type?: string; documentId?: string }
+  | { ok: false; error: string }
 > {
   const user = await getCurrentUser();
   if (!user?.email) return { ok: false, error: "Not authenticated" };
@@ -693,14 +733,21 @@ async function assertAnnouncementOwnership(
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) return { ok: false, error: "Not authorized" };
 
-  const announcement = await fetchAPI<{
-    id: number;
-    type?: string;
-    authorized_user?: { id: number } | null;
-  }>(`/announcements/${id}`, {
+  // Filter the list endpoint by id: single-entry routes need a documentId, and
+  // this needs no lookup.
+  const [announcement] = await fetchAPI<
+    {
+      id: number;
+      documentId?: string;
+      type?: string;
+      authorized_user?: { id: number } | null;
+    }[]
+  >("/announcements", {
     urlParams: {
+      filters: { id: { $eq: id } },
       fields: ["id", "type"],
       populate: { authorized_user: { fields: ["id"] } },
+      pagination: { pageSize: 1, page: 1 },
     },
     next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
   });
@@ -717,7 +764,12 @@ async function assertAnnouncementOwnership(
   if (ownerId !== authorizedUser.id) {
     return { ok: false, error: "Not authorized" };
   }
-  return { ok: true, ownerId, type: announcement.type };
+  return {
+    ok: true,
+    ownerId,
+    type: announcement.type,
+    documentId: announcement.documentId,
+  };
 }
 
 /**
@@ -760,7 +812,7 @@ export async function fetchAnnouncementById(id: number) {
         id: { $eq: id },
       },
       populate: {
-        authorized_users: {
+        authorized_user: {
           fields: [
             "id",
             "email",
@@ -810,7 +862,10 @@ export async function fetchAnnouncementById(id: number) {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );
@@ -861,7 +916,10 @@ export async function fetchUserAnnouncements(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
         next: { tags: [CACHE_TAGS.announcements], revalidate: 900 },
       },
     );

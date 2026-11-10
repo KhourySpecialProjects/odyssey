@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { UsersPageClient } from "@/components/admin/users/users-page-client";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { AuthorizedUser, TimeZone } from "@/types";
@@ -71,6 +77,18 @@ const mockUsers = [
   }),
 ];
 
+// DialogContent already renders a "Close" button; a second, icon-only button
+// (no text, no accessible name) is the duplicate X from ODY-874.
+const expectSingleCloseButton = (dialog: HTMLElement) => {
+  expect(
+    within(dialog).getAllByRole("button", { name: /close/i }),
+  ).toHaveLength(1);
+  const iconOnly = within(dialog)
+    .getAllByRole("button")
+    .filter((button) => !button.textContent?.trim());
+  expect(iconOnly).toHaveLength(0);
+};
+
 describe("UsersPageClient", () => {
   it("renders the table with column headers", () => {
     render(<UsersPageClient users={mockUsers} />);
@@ -110,6 +128,15 @@ describe("UsersPageClient", () => {
 
     expect(editButtons).toHaveLength(mockUsers.length);
     expect(activityButtons).toHaveLength(mockUsers.length);
+  });
+
+  it("renders exactly one close button in the edit user dialog", async () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /edit user/i })[0]);
+
+    const dialog = await screen.findByRole("dialog");
+    expectSingleCloseButton(dialog);
   });
 
   it("shows email when no name is set", () => {

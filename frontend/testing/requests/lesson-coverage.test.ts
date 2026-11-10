@@ -30,6 +30,18 @@ import {
   makeFetchErrorResponse,
 } from "@/lib/testing/mock-helpers";
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn().mockResolvedValue({
+    ok: true,
+    user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+  }),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkLessonWrite: jest.fn().mockResolvedValue({ ok: true }),
+  checkDropletContentWrite: jest.fn().mockResolvedValue({ ok: true }),
+}));
+
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
   stripHtmlTags: jest.fn((str: string) => str),
@@ -109,6 +121,21 @@ describe("lesson-coverage — deleteLesson error paths", () => {
     expect(result).toEqual({
       ok: false,
       error: "Not found",
+      data: null,
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a default message when a non-ok body has no error field", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({}),
+    } as Response);
+
+    const result = await deleteLesson(5);
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete lesson.",
       data: null,
     });
     expect(revalidateTag).not.toHaveBeenCalled();

@@ -47,6 +47,9 @@
     },
     "blockId": {
       "type": "integer"
+    },
+    "context": {
+      "type": "json"
     }
   }
 }

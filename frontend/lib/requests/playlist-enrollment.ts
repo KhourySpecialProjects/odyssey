@@ -4,8 +4,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
+import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 interface PlaylistWithId {
@@ -32,17 +33,20 @@ export async function togglePlaylistEnrollment(playlistId: number) {
     );
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${authorizedUser.id}`,
+      await strapiEntryUrl("authorized-users", authorizedUser),
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
             playlists: {
-              [isEnrolled ? "disconnect" : "connect"]: [playlistId],
+              [isEnrolled ? "disconnect" : "connect"]: [
+                await resolveDocumentId("playlists", playlistId),
+              ],
             },
           },
         }),
@@ -77,17 +81,18 @@ export async function togglePlaylistEnrollment(playlistId: number) {
 export async function enrollInPlaylist(playlistId: number, userId: number) {
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      await strapiEntryUrl("authorized-users", userId),
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
         body: JSON.stringify({
           data: {
             playlists: {
-              connect: [playlistId],
+              connect: [await resolveDocumentId("playlists", playlistId)],
             },
           },
         }),

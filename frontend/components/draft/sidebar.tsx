@@ -1,14 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getPath,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-  isContentEditor,
-} from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { ContentActionButton } from "@/components/draft/metadata/content-action-button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
@@ -42,6 +35,7 @@ import {
   IconSearch,
   IconLayoutRows,
   IconHelp,
+  IconListCheck,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -68,21 +62,37 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableLesson } from "@/components/draft/sortable-lesson";
+import {
+  OpenCommentsBadge,
+  SortableLesson,
+} from "@/components/draft/sortable-lesson";
+import {
+  useSharedReviewComments,
+  useSharedSentFeedback,
+} from "@/components/draft/review/review-comments-context";
+import { ScoreWithAiButton } from "@/components/draft/review/score-with-ai-button";
+import { isResolved } from "@/lib/review-comments";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { togglePresentationEnabled } from "@/lib/requests/droplet";
+import { isFrozenFor, isReviewerFor } from "@/lib/review-roles";
+import { canScan } from "@/lib/overview-scan/access";
 
 export function Sidebar({
   user,
+  isAuthor,
   droplet,
   availableDroplets,
   expanded,
   setExpanded,
   onRestartTour,
+  hideReviewActions = false,
+  lessonDots,
 }: {
   user: User;
+  /** The caller is an author of this droplet (any role). */
+  isAuthor: boolean;
   droplet: Pick<
     Droplet,
     | "id"
@@ -91,7 +101,6 @@ export function Sidebar({
     | "lessons"
     | "status"
     | "inReview"
-    | "afterReview"
     | "focusArea"
     | "learningObjectives"
     | "isHidden"
@@ -104,10 +113,18 @@ export function Sidebar({
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onRestartTour: () => void;
+  /** The Reviewer Transcript panel has Publish and Send feedback, so only Preview stays here.
+   *  It also has its own Final Overview Scan button, so the sidebar's link hides too. */
+  hideReviewActions?: boolean;
+  /** Lowest score per lesson, for the dot beside its title */
+  lessonDots?: Record<number, "ok" | "needs_work">;
 }) {
   const [headerHeight, setHeaderHeight] = useState(69);
   const sidebarRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const scanHref = `/draft/d/${droplet.slug}/scan`;
+  const onScanPage = pathname === scanHref;
 
   const {
     dropletLessons,
@@ -178,9 +195,11 @@ export function Sidebar({
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     const updateBottom = () => {
       if (!sidebarRef.current) return;
-      const footer = document.querySelector<HTMLElement>("footer");
+      // The review panel has its own <footer>, so target the site footer by id.
+      const footer = document.getElementById("site-footer");
       if (!footer) return;
       const bottom = Math.max(
         0,
@@ -191,11 +210,15 @@ export function Sidebar({
     updateBottom();
     window.addEventListener("scroll", updateBottom, { passive: true });
     window.addEventListener("resize", updateBottom);
+    // Content can grow without a scroll, e.g. the editor loads client-side.
+    const observer = new ResizeObserver(updateBottom);
+    observer.observe(document.body);
     return () => {
       window.removeEventListener("scroll", updateBottom);
       window.removeEventListener("resize", updateBottom);
+      observer.disconnect();
     };
-  }, []);
+  }, [mounted]);
 
   const handleDropletPost = async () => {
     if (isSubmitting) return;
@@ -362,33 +385,87 @@ export function Sidebar({
     ]);
   };
 
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // A reviewer sees their open comments per lesson and on the Overview, and
+  // an author the open ones of the feedback sent to them (ODY-807)
+  const reviewComments = useSharedReviewComments();
+  const sentFeedback = useSharedSentFeedback();
+  const counted = reviewComments?.comments ?? sentFeedback?.comments;
+  const openComments = useMemo(() => {
+    const lessons = new Map<number, number>();
+    let overview = 0;
+    for (const comment of counted ?? []) {
+      if (isResolved(comment)) continue;
+      if (comment.field !== "blocks") overview++;
+      else if (comment.lesson?.id) {
+        lessons.set(
+          comment.lesson.id,
+          (lessons.get(comment.lesson.id) ?? 0) + 1,
+        );
+      }
+    }
+    return { lessons, overview };
+  }, [counted]);
+
   if (!mounted) return null;
 
   if (!user) return <UnauthorizedRoute />;
 
-  const showActionButton = droplet.status !== "published" && !droplet.inReview;
-  const isAdmin = isAuthorizedUserAdmin(user.roles);
-  const isEditor = isContentEditor(user.roles);
-  const isFaculty = isAuthorizedUserFaculty(user.roles);
-  const isCreator = isContentCreator(user.roles);
-  const actionButtonProps =
-    showActionButton && (isAdmin || isEditor || isFaculty)
-      ? {
-          actionType: (droplet.originalDropletId
-            ? "publishDraft"
-            : "publish") as "publishDraft" | "publish",
-          buttonText: "Publish",
-        }
-      : showActionButton && isCreator
-        ? { actionType: "requestReview" as const, buttonText: "Review" }
-        : null;
+  const isDraft = droplet.status !== "published";
+  // In review, only a reviewer who isn't an author publishes (with the review)
+  // or sends feedback; authors can withdraw. Outside review, Admin and Faculty
+  // authors publish directly, and other authors submit.
+  const canPublish =
+    isDraft && !droplet.inReview && isReviewerFor(user.roles, false, isAuthor);
+  const canReview =
+    isDraft && !!droplet.inReview && isReviewerFor(user.roles, true, isAuthor);
+  const canWithdrawReview = isDraft && !!droplet.inReview && isAuthor;
+
+  const canRequestReview =
+    isDraft && !droplet.inReview && isAuthor && !canPublish;
+  const isFrozen =
+    isDraft && isFrozenFor(user.roles, droplet.inReview, isAuthor);
+
+  const actionButtons: Pick<
+    Parameters<typeof ContentActionButton>[0],
+    "actionType" | "buttonText"
+  >[] = [];
+  // An edit draft overwrites its live droplet when published
+  const publishLabel = droplet.originalDropletId
+    ? "Publish changes"
+    : "Publish";
+  if (canPublish) {
+    actionButtons.push(
+      droplet.originalDropletId
+        ? { actionType: "publishDraft", buttonText: publishLabel }
+        : { actionType: "publish", buttonText: publishLabel },
+    );
+  }
+  if (canReview && !hideReviewActions) {
+    actionButtons.push(
+      { actionType: "publishWithReview", buttonText: publishLabel },
+      { actionType: "sendFeedback", buttonText: "Send feedback" },
+    );
+  }
+  if (canWithdrawReview) {
+    actionButtons.push({
+      actionType: "withdrawReview",
+      buttonText: "Withdraw from review",
+    });
+  }
+  if (canRequestReview) {
+    actionButtons.push({
+      actionType: "requestReview",
+      buttonText: sentFeedback?.review
+        ? "Resubmit for review"
+        : "Submit for review",
+    });
+  }
 
   return (
     <>
@@ -458,40 +535,42 @@ export function Sidebar({
                   <IconArrowLeft className="h-5 w-5 flex-shrink-0" />
                 </span>
               </button>
-              <div id="tour-auto-format">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {hasAutoFormatted ? (
-                        <button
-                          aria-disabled="true"
-                          onClick={(e) => e.preventDefault()}
-                          className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
-                        >
-                          <IconLayoutRows className="h-5 w-5" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setShowAutoFormatConfirm(true)}
-                          disabled={isAutoFormatting}
-                          className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
-                        >
-                          {isAutoFormatting ? (
-                            <IconLoader2 className="h-5 w-5 animate-spin" />
-                          ) : (
+              {!isFrozen && (
+                <div id="tour-auto-format">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {hasAutoFormatted ? (
+                          <button
+                            aria-disabled="true"
+                            onClick={(e) => e.preventDefault()}
+                            className="cursor-not-allowed p-2 text-slate-400 dark:text-slate-600"
+                          >
                             <IconLayoutRows className="h-5 w-5" />
-                          )}
-                        </button>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {hasAutoFormatted
-                        ? "Auto-format limit reached (10/10)"
-                        : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setShowAutoFormatConfirm(true)}
+                            disabled={isAutoFormatting}
+                            className="p-2 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-slate-300"
+                          >
+                            {isAutoFormatting ? (
+                              <IconLoader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <IconLayoutRows className="h-5 w-5" />
+                            )}
+                          </button>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {hasAutoFormatted
+                          ? "Auto-format limit reached (10/10)"
+                          : `Generate slide breaks (${autoFormatCount}/${MAX_AUTO_FORMATS})`}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
               <div id="tour-present">
                 <TooltipProvider>
                   <Tooltip>
@@ -569,6 +648,11 @@ export function Sidebar({
               <p className="mt-6 px-4 pb-3 text-2xl leading-7 font-extrabold">
                 {droplet.name}
               </p>
+              {isDraft && droplet.inReview && (
+                <p className="-mt-3 px-4 pb-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  In review
+                </p>
+              )}
 
               <Link
                 id="tour-overview"
@@ -592,6 +676,9 @@ export function Sidebar({
                 <span className="text-sm leading-none font-medium">
                   Overview
                 </span>
+                {!!openComments.overview && (
+                  <OpenCommentsBadge count={openComments.overview} />
+                )}
               </Link>
               <AlertDialog
                 open={showAutoFormatConfirm}
@@ -626,15 +713,17 @@ export function Sidebar({
               </AlertDialog>
 
               {/* Add lesson section */}
-              <div id="tour-add-lesson">
-                <AddLesson
-                  droplet={droplet}
-                  onAddLesson={addLessonCallback}
-                  onAddLessons={addLessonsCallback}
-                  availableDroplets={availableDroplets}
-                  currentLessonCount={dropletLessons.length}
-                />
-              </div>
+              {!isFrozen && (
+                <div id="tour-add-lesson">
+                  <AddLesson
+                    droplet={droplet}
+                    onAddLesson={addLessonCallback}
+                    onAddLessons={addLessonsCallback}
+                    availableDroplets={availableDroplets}
+                    currentLessonCount={dropletLessons.length}
+                  />
+                </div>
+              )}
 
               {/* Sortable lessons list */}
               <div id="tour-lessons-list">
@@ -654,6 +743,9 @@ export function Sidebar({
                           lesson={lesson}
                           droplet={droplet}
                           pathname={pathname}
+                          dragDisabled={isFrozen}
+                          openComments={openComments.lessons.get(lesson.id)}
+                          dot={lessonDots?.[lesson.id]}
                         />
                       ))}
                     </ul>
@@ -714,10 +806,29 @@ export function Sidebar({
                 />
               </button>
             </div>
-            <div className="flex gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
+            {/* The reviewer panel carries its own scan button */}
+            {canScan(user.roles, isAuthor) && !hideReviewActions && (
+              <Link
+                href={scanHref}
+                aria-current={onScanPage ? "page" : undefined}
+                className={cn(
+                  "mb-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300",
+                  onScanPage &&
+                    "border-[#2d7597] bg-[#2d7597]/10 text-[#2d7597] dark:border-[#5ba3c4] dark:bg-[#2d7597]/25 dark:text-[#9fd0e6]",
+                )}
+              >
+                <IconListCheck className="h-4 w-4" aria-hidden="true" />
+                Final Overview Scan
+              </Link>
+            )}
+            {/* Wraps so a long action label ("Submit for review", "Send
+                feedback") gets its own full-width row instead of overflowing
+                the sidebar */}
+            <div className="flex flex-wrap gap-2 [&>*]:flex-1 [&>a]:flex-1 [&>button]:flex-1">
               <Link
                 href={
-                  pathname.startsWith(`/draft/d/${droplet.slug}/`)
+                  pathname.startsWith(`/draft/d/${droplet.slug}/`) &&
+                  !onScanPage
                     ? `/d/${droplet.slug}/${pathname.replace(`/draft/d/${droplet.slug}/`, "").split("/")[0]}`
                     : `/d/${droplet.slug}`
                 }
@@ -725,18 +836,22 @@ export function Sidebar({
               >
                 Preview
               </Link>
-              {actionButtonProps && (
+              {actionButtons.map(({ actionType, buttonText }) => (
                 <ContentActionButton
+                  key={actionType}
                   droplet={
                     droplet as Parameters<
                       typeof ContentActionButton
                     >[0]["droplet"]
                   }
-                  actionType={actionButtonProps.actionType}
-                  buttonText={actionButtonProps.buttonText}
+                  actionType={actionType}
+                  buttonText={buttonText}
                 />
-              )}
+              ))}
             </div>
+            {canReview && !hideReviewActions && (
+              <ScoreWithAiButton dropletId={droplet.id} />
+            )}
           </div>
         </div>
       </aside>

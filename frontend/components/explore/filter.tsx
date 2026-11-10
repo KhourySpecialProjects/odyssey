@@ -45,6 +45,8 @@ export function Filter({
     } else {
       params.delete(name);
     }
+    // New results start again at page 1 (ODY-865)
+    params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -80,7 +82,7 @@ export function Filter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal dark:bg-slate-800"
+                        className="rounded-sm px-1 font-normal dark:bg-slate-800 dark:hover:bg-slate-800"
                       >
                         {option.label}
                       </Badge>

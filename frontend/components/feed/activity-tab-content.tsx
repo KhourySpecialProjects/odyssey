@@ -62,6 +62,7 @@ export function ActivityTabContent({ contentType, searchParams }: Props) {
                   sortOptions={sorting}
                   defaultSort={defaultSort}
                   tagOptions={[]}
+                  disabled
                 />
               }
             >

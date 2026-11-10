@@ -18,7 +18,8 @@ import { VoyagesGrid } from "@/components/explore/voyages-grid";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { getVoyages } from "@/lib/requests/voyage";
-import { SearchProvider } from "@/contexts/SearchContext";
+import { ExploreSearchProvider } from "@/components/explore/explore-search-provider";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 
 // Fields read by DropletTile / SortedDropletsGrid. Keep in sync with those
 // components; full lesson content is never needed for tiles.
@@ -36,7 +37,7 @@ const DROPLET_TILE_FIELDS = [
 const DROPLET_TILE_POPULATE = {
   lessons: { fields: ["id"] },
   tags: { fields: ["name", "slug"] },
-  authorized_users: { fields: ["id"] },
+  authorized_users: USER_POPULATES.authorName,
 };
 
 export const metadata: Metadata = {
@@ -121,7 +122,7 @@ export default async function ExplorePage({
   ]);
 
   return (
-    <SearchProvider>
+    <ExploreSearchProvider>
       <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-[56px] md:py-8">
         <div className="mb-6">
           <h1 className="text-4xl leading-tight font-semibold text-black dark:text-white">
@@ -178,6 +179,6 @@ export default async function ExplorePage({
           )}
         </div>
       </div>
-    </SearchProvider>
+    </ExploreSearchProvider>
   );
 }

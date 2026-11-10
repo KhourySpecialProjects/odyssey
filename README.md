@@ -25,6 +25,8 @@ The frontend and backend are both deployed through AWS ECS using Terraform to as
 **Development:**
 The frontend and backend are both deployed through AWS ECS. Each is deployed in a separate service. The database is deployed through AWS RDS. Media is stored in AWS S3. 
 
+**Licensing:** Odyssey itself is MIT, but the Strapi admin bundles CKEditor 5 under GPL-2.0-or-later via `@_sh/strapi-plugin-ckeditor`.
+
 ## Installation
 
 To install and run Odyssey locally, follow these steps:

@@ -1,0 +1,127 @@
+// The review rubric (ODY-799), reworded in ODY-862 to match reviewers' own scores.
+// frontend/scripts/ai-review/rubric.json holds the same text for the eval: change both.
+const CRITERION_UID = 'api::review-criterion.review-criterion';
+
+type Wording = { lessonDescription: string; overallDescription: string };
+
+export const REVIEW_CRITERIA_SEED = [
+  {
+    name: 'Tone',
+    order: 1,
+    lessonDescription:
+      "Is the lesson written for the learner in a clear, friendly voice? A plain, step-by-step voice is good. Lower the score only for something a learner would notice, such as confusing or condescending wording, or text that reads like a copied reference page. Some generic sentences don't lower it.\n5: Clear and friendly; nothing to fix. Most lessons that teach their topic plainly are a 5.\n4: One rough patch, such as a long stretch of filler.\n3: Dry or impersonal through much of the lesson.\n2: Mostly dry or impersonal, with only a line or two that speak to the learner.\n1: Reads like a reference page or policy document; nothing speaks to the learner.",
+    overallDescription:
+      "Is the voice clear, friendly and consistent from lesson to lesson?\n5: Consistent and learner-friendly throughout; nothing to fix.\n4: One lesson's voice is noticeably off from the rest.\n3: Several lessons are dry or the voice changes between lessons.\n2: Most lessons are dry or impersonal; only one or two speak to the learner.\n1: Reads like reference documentation throughout.",
+  },
+  {
+    name: 'Style',
+    order: 2,
+    lessonDescription:
+      "Is it easy to read on screen? Text is broken up with headings, lists, images or code blocks where the content calls for them, and emphasis is used consistently. Headings aren't needed in a short lesson, or when steps, images and code blocks already break up the text. Repeating a growing code listing is fine in a build-along.\n5: Easy to scan; formatting helps. Nothing to fix.\n4: One small issue, such as a lesson that is thin for its topic or one dense paragraph.\n3: Several dense paragraphs, or a block of text that is hard to digest even with some bold.\n2: Mostly dense text, with only a heading, list or image here and there to break it up.\n1: Walls of text; headings or emphasis everywhere, or none at all in a long lesson.",
+    overallDescription:
+      'Is formatting easy to read and consistent across lessons?\n5: Consistent and easy to scan; nothing to fix.\n4: One lesson is formatted noticeably differently or is hard to scan.\n3: Several lessons are dense or inconsistently formatted.\n2: Most lessons are dense or formatted inconsistently.\n1: Walls of text across the droplet.',
+  },
+  {
+    name: 'Flow',
+    order: 3,
+    lessonDescription:
+      "Does the lesson follow one thread, each step leading into the next, like a story? No formal opening, wrap-up or pointer to the next lesson is needed. Judge the teaching, not whether the code runs: mistakes in code are reported separately.\n5: Reads as one connected sequence; nothing to fix.\n4: One gap, such as a step the learner has to piece together themselves or an ending that leaves a step out.\n3: Parts in no particular order or with no connection between them, such as a list of tips.\n2: Hard to follow: parts are out of order, or ideas are used before they're introduced, though it stays on one topic.\n1: Jumps between unrelated topics; uses ideas before introducing them.",
+    overallDescription:
+      "Are the lessons in a sensible order, each building on the one before? Mistakes in code are reported separately.\n5: A clear progression from lesson to lesson; nothing to fix.\n4: One lesson depends on something that comes later, or one link between lessons is weak.\n3: Several lessons feel out of order or unconnected.\n2: Most lessons feel out of order or unconnected, or a lesson doesn't belong in the droplet.\n1: The lessons have no sensible order.",
+  },
+  {
+    name: 'Scaffolding',
+    order: 4,
+    lessonDescription:
+      "Could a learner who has done the prerequisite droplets and this droplet's earlier lessons follow this lesson? Recommending or referring to an earlier droplet is good. Pointing ahead is fine; relying on a later lesson is not. A build-along can introduce new tools as it goes: anything the lesson shows and explains, even briefly in a sentence, bullet or code comment, counts as explained. Judge the explanations, not whether the code runs: mistakes in code are reported separately.\n5: A learner can follow it; nothing to fix.\n4: One important thing used with no explanation at all, or background knowledge (such as a whole framework) that no listed prerequisite droplet covers.\n3: Several unexplained terms, or a sudden jump in difficulty.\n2: Many unexplained terms or steps; a learner would need outside help to follow most of it.\n1: Relies on things never taught, not covered by a prerequisite, or only taught in a later lesson.",
+    overallDescription:
+      "Does difficulty climb steadily, and do the listed prerequisites cover what the droplet assumes?\n5: Nothing assumed that isn't taught or covered by a prerequisite; nothing to fix.\n4: One gap, such as assumed knowledge with no prerequisite droplet listed, or a lesson relying on a later one.\n3: Several gaps or a sudden jump in difficulty.\n2: Gaps in most lessons, or a jump in difficulty most learners couldn't make.\n1: Relies throughout on things never taught or covered.",
+  },
+  {
+    name: 'Quality',
+    order: 5,
+    lessonDescription:
+      "Does the lesson use Odyssey's blocks well for its content: images, code blocks, videos, callouts and quizzes? Each block should earn its place. A quiz or check-in is a plus but not required, and a hands-on build the learner follows counts as practice. Don't lower this score for a missing quiz, check-in, practice task or screenshot of the result, or for mistakes in code, typos, broken links or missing alt text; those are reported separately.\n5: Images, code blocks, callouts or other blocks support the content well; nothing to fix. A lesson with no quiz or callout can still be a 5.\n4: Good, but one step can't be followed without a block that isn't there, such as code or an image the learner needs.\n3: Mostly text with little support, such as a short intro with one image.\n2: Text only where blocks would clearly help, such as a list of tips with no callouts or quiz.\n1: Blocks used as decoration or placeholders, or blocks that get in the way.",
+    overallDescription:
+      "Are the learning objectives taught, with blocks used well across the droplet? A quiz somewhere is a plus but not required; a hands-on build counts as practice. Don't lower this score for having no quiz or check-in, or for mistakes in code, typos or broken links.\n5: Objectives taught, with blocks that support the content well; nothing to fix. A droplet with no quiz can still be a 5.\n4: One objective is thin, or one lesson is noticeably plainer than the rest.\n3: Several lessons are mostly text, or an objective isn't really taught.\n2: Most lessons are text only, or several objectives aren't really taught.\n1: Text only, or blocks used as decoration.",
+  },
+];
+
+/**
+ * The ODY-799 starter wording, which scored about two points below reviewers
+ * (ODY-862). Kept so criteria still holding it can be reworded on boot; delete
+ * it, and upgradeReviewCriteria, once every environment has the new wording.
+ */
+export const STARTER_REVIEW_CRITERIA: Record<string, Wording> = {
+  Tone: {
+    lessonDescription:
+      'Is the lesson engaging? Does it speak to the learner, say why the topic matters, and use concrete examples?\n1: Flat and dry; reads like reference docs.\n5: Lively, consistent voice; the learner wants to keep going.',
+    overallDescription:
+      'Is the voice consistent from lesson to lesson?\n1: Flat and dry; reads like reference docs.\n5: Lively, consistent voice; the learner wants to keep going.',
+  },
+  Style: {
+    lessonDescription:
+      'Is it easy to read on screen? Headings fit the structure, bold and italics are used sparingly and consistently, and text is broken into short paragraphs, lists and visuals.\n1: Walls of text; headings or emphasis everywhere, or none at all.\n5: Scannable; formatting helps rather than distracts.',
+    overallDescription:
+      'Is formatting consistent across lessons?\n1: Walls of text; headings or emphasis everywhere, or none at all.\n5: Scannable; formatting helps rather than distracts.',
+  },
+  Flow: {
+    lessonDescription:
+      'Does the lesson follow one thread? One topic, each idea building on the one before, transitions between sections, an opening that says what the lesson is for, and a close that wraps it up.\n1: Jumps between unrelated topics; uses ideas before introducing them; ends abruptly.\n5: Reads as one connected explanation; every section leads into the next.',
+    overallDescription:
+      'Are the lessons in a sensible order, with links between them?\n1: Jumps between unrelated topics; uses ideas before introducing them; ends abruptly.\n5: Reads as one connected explanation; every section leads into the next.',
+  },
+  Scaffolding: {
+    lessonDescription:
+      "Could a learner who has done the prerequisite droplets and this droplet's earlier lessons follow this lesson? Everything it relies on is explained here, taught in an earlier lesson, or covered by a prerequisite droplet. Difficulty climbs steadily and fits the droplet's difficulty setting. Lesson 1 is judged against the prerequisites alone. Relying on a later lesson counts against it; pointing ahead is fine.\n1: Relies on things never taught earlier or covered by a prerequisite, or on a later lesson; unexplained jargon; a sudden jump in difficulty.\n5: Nothing assumed that wasn't taught earlier, covered by a prerequisite, or explained here.",
+    overallDescription:
+      "Does difficulty climb steadily across the droplet, and do the prerequisites cover what Lesson 1 assumes?\n1: Relies on things never taught earlier or covered by a prerequisite, or on a later lesson; unexplained jargon; a sudden jump in difficulty.\n5: Nothing assumed that wasn't taught earlier, covered by a prerequisite, or explained here.",
+  },
+  Quality: {
+    lessonDescription:
+      "Does the lesson use Odyssey's block types well for its own content, and give the learner a way to check what it taught (a quiz, an exercise or a check-in)?\n1: Text only, or blocks used for decoration; nothing to check understanding.\n5: Each block type earns its place; the learner can check what they learned here.",
+    overallDescription:
+      'Is every learning objective taught and checked somewhere in the droplet?\n1: Text only, or blocks used for decoration; nothing to check understanding.\n5: Each block type earns its place; the learner can check what they learned here.',
+  },
+};
+
+// Returns the number created; 0 when the table already has any rows. All-or-nothing.
+export async function seedReviewCriteria(): Promise<number> {
+  return strapi.db.transaction(async () => {
+    const documents = strapi.documents(CRITERION_UID);
+    if ((await documents.count({})) > 0) return 0;
+
+    for (const criterion of REVIEW_CRITERIA_SEED) {
+      await documents.create({ data: { ...criterion, active: true } });
+    }
+    return REVIEW_CRITERIA_SEED.length;
+  });
+}
+
+/**
+ * Rewords each criterion that still has the starter wording; one an admin has
+ * edited keeps its text. Returns the number reworded. All-or-nothing.
+ */
+export async function upgradeReviewCriteria(): Promise<number> {
+  return strapi.db.transaction(async () => {
+    const documents = strapi.documents(CRITERION_UID);
+    let reworded = 0;
+    for (const { name, lessonDescription, overallDescription } of REVIEW_CRITERIA_SEED) {
+      const starter = STARTER_REVIEW_CRITERIA[name];
+      const [row] = await documents.findMany({ filters: { name } });
+      if (
+        !row ||
+        row.lessonDescription !== starter.lessonDescription ||
+        row.overallDescription !== starter.overallDescription
+      ) {
+        continue;
+      }
+      await documents.update({
+        documentId: row.documentId,
+        data: { lessonDescription, overallDescription },
+      });
+      reworded++;
+    }
+    return reworded;
+  });
+}

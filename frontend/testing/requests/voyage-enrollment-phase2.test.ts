@@ -147,7 +147,7 @@ describe("enrollInVoyage — draft bypass security fix", () => {
 
     // Voyage status was fetched with cache: "no-store"
     expect(mockedFetchAPI).toHaveBeenCalledWith(
-      "/voyages/10",
+      "/voyages/doc10",
       expect.objectContaining({
         urlParams: expect.objectContaining({ fields: ["id", "status"] }),
         cache: "no-store",
