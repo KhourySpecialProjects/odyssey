@@ -8,7 +8,7 @@ jest.mock("@dnd-kit/sortable", () => ({
 }));
 
 const sortableReturn = () => ({
-  attributes: {},
+  attributes: { role: "button", tabIndex: 0 },
   listeners: {},
   setNodeRef: jest.fn(),
   transform: null,
@@ -141,7 +141,10 @@ describe("SortableLesson", () => {
       />,
     );
 
-    expect(container.querySelector(".cursor-grab")).not.toBeNull();
+    const handle = container.querySelector(".cursor-grab");
+    expect(handle).not.toBeNull();
+    // the dnd-kit handle must stay a real drag source and not be marked draggable=false
+    expect(handle).not.toHaveAttribute("draggable", "false");
     expect(mockUseSortable).toHaveBeenCalledWith({ id: 1, disabled: false });
   });
 
