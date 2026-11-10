@@ -97,16 +97,22 @@ export function PromptEditor({
           text === baseline[key] ? saved[key] : !isDefaultPart(key, text);
         const id = `scorecard-prompt-${key}`;
         return (
-          <div key={key} className="space-y-2">
+          <div
+            key={key}
+            className="space-y-2 rounded-[20px] border border-[#D0D5DD] bg-[#FCFCFD] p-5 md:p-6 dark:border-slate-600 dark:bg-slate-800"
+          >
             <div className="flex items-center justify-between gap-2">
-              <Label htmlFor={id} className="text-base font-medium">
+              <Label
+                htmlFor={id}
+                className="text-[18px] font-medium text-black dark:text-white"
+              >
                 {label}
               </Label>
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-xs font-medium",
                   isCustom
-                    ? "bg-[#287697]/10 text-[#1F5F7A] dark:bg-[#287697]/20 dark:text-[#4AABCF]"
+                    ? "bg-[#2D7597]/10 text-[#1F5F7A] dark:bg-[#2D7597]/20 dark:text-[#4AABCF]"
                     : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
                 )}
               >
@@ -115,7 +121,7 @@ export function PromptEditor({
             </div>
             <p
               id={`${id}-hint`}
-              className="text-sm text-[#475569] dark:text-slate-400"
+              className="text-sm text-[#667085] dark:text-slate-400"
             >
               {hint}
             </p>
@@ -125,13 +131,13 @@ export function PromptEditor({
               rows={key === "instructions" ? 14 : 5}
               aria-invalid={over || empty}
               aria-describedby={`${id}-hint ${id}-count ${id}-error`}
-              className="focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500"
+              className="rounded-[20px] border-[#efeff0] bg-[#fcfcfd] px-5 py-4 text-[16px] text-slate-900 focus:border-[#2D7597] focus-visible:ring-2 focus-visible:ring-[#2D7597]/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               onChange={(event) =>
                 setParts((prev) => ({ ...prev, [key]: event.target.value }))
               }
             />
             {key === "instructions" && (
-              <p className="text-sm text-[#475569] dark:text-slate-400">
+              <p className="text-sm text-[#667085] dark:text-slate-400">
                 The{" "}
                 <Tooltip open={noteOpen} onOpenChange={setNoteOpen}>
                   <TooltipTrigger asChild>
@@ -168,7 +174,7 @@ export function PromptEditor({
                   className={
                     over
                       ? "text-red-600 dark:text-red-400"
-                      : "text-[#475569] dark:text-slate-400"
+                      : "text-[#667085] dark:text-slate-400"
                   }
                 >
                   {text.length.toLocaleString("en-US")} /{" "}
@@ -185,7 +191,7 @@ export function PromptEditor({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                className="h-10 rounded-lg border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                 disabled={text === DEFAULT_PROMPT[key]}
                 onClick={() =>
                   setParts((prev) => ({ ...prev, [key]: DEFAULT_PROMPT[key] }))
@@ -197,9 +203,15 @@ export function PromptEditor({
           </div>
         );
       })}
-      <Button type="submit" disabled={!dirty || !valid || pending}>
-        Save
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={!dirty || !valid || pending}
+          className="h-[44px] rounded-[8px] border border-[#2D7597] bg-[#2D7597] px-5 text-[16px] font-medium text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] hover:bg-[#255e78] disabled:opacity-50"
+        >
+          Save
+        </Button>
+      </div>
     </form>
   );
 }
