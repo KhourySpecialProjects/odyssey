@@ -11,7 +11,7 @@ import { Block } from "@/types";
 import { QuizBlock } from "@/components/droplets/lessons/quiz";
 import { OpenEndedQuizBlock } from "@/components/droplets/lessons/open-ended-quiz";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
-import { CalloutIcon } from "@/components/ui/callout-icons";
+import { CalloutSurface } from "@/components/ui/callout-surface";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { TableRenderer } from "@/components/droplets/lessons/table-renderer";
 import DOMPurify from "isomorphic-dompurify";
@@ -130,15 +130,15 @@ export function PresentationBlockRenderer({
 
     case "droplets.callout":
       return (
-        <div
-          className={`my-6 flex items-start gap-4 rounded-lg p-6 text-lg ${block.color}`}
+        <CalloutSurface
+          type={block.type}
+          color={block.color}
+          iconEnabled={block.iconEnabled}
+          className="my-6 text-lg"
         >
-          {block.iconEnabled && <CalloutIcon color={block.color} />}
-          <div className="flex-1 text-slate-900">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <BlocksRenderer content={block.content as any} />
-          </div>
-        </div>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <BlocksRenderer content={block.content as any} />
+        </CalloutSurface>
       );
 
     case "droplets.quiz":

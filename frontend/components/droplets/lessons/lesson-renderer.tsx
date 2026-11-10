@@ -31,7 +31,7 @@ import {
 } from "@/lib/highlight-regions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LockIcon } from "lucide-react";
-import { CalloutIcon } from "@/components/ui/callout-icons";
+import { CalloutSurface } from "@/components/ui/callout-surface";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
 import { Highlight, HighlightColor } from "@/types";
@@ -606,25 +606,19 @@ function blockContent({
 
     case "droplets.callout":
       return (
-        <div
-          className={`relative flex flex-col items-center space-y-4 rounded-md border px-6 py-6 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-800"}`}
+        <CalloutSurface
+          type={block.type}
+          color={block.color}
+          iconEnabled={block.iconEnabled}
         >
-          {block?.iconEnabled && (
-            <div className="">
-              <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
-            </div>
-          )}
-
-          <div className="">
-            {/* As HTML rather than BlocksRenderer: highlights change its DOM,
-                which React mustn't own */}
-            <HighlightableHtml
-              ids={highlightIdsOf(block)}
-              html={DOMPurify.sanitize(blocksToHtml(block.content))}
-              className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto max-w-none text-black"
-            />
-          </div>
-        </div>
+          {/* As HTML rather than BlocksRenderer: highlights change its DOM,
+              which React mustn't own */}
+          <HighlightableHtml
+            ids={highlightIdsOf(block)}
+            html={DOMPurify.sanitize(blocksToHtml(block.content))}
+            className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 max-w-none text-slate-900"
+          />
+        </CalloutSurface>
       );
 
     case "droplets.expandable":
