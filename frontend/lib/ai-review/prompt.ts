@@ -17,10 +17,9 @@ import type {
 } from "./types";
 
 /**
- * Bump on any change to the wording, the rubric layout or the request shape,
- * so each saved score says which prompt produced it (ODY-814 stores it).
+ * Bump on any change to the wording, rubric layout or request shape (ODY-814 stores it);
+ * custom text adds a hash suffix (prompt-settings.ts).
  */
-// Saved custom text adds a hash suffix (`prompt-settings.ts`).
 export const PROMPT_VERSION = "2026-10-30.1";
 
 const MAX_TOKENS = 16000;

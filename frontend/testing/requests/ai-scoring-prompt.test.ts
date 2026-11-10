@@ -11,7 +11,6 @@ import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/auth/require-role", () => ({ requireRole: jest.fn() }));
-jest.mock("@/lib/requests/reviews", () => ({}));
 
 const mockedRequireRole = jest.mocked(requireRole);
 let fetchMock: jest.MockedFunction<typeof fetch>;

@@ -449,6 +449,7 @@ describe("editable system prompt", () => {
     createHash("sha256").update(String(text)).digest("hex");
 
   it("is byte-identical to the pre-ODY-898 prompt with the defaults", () => {
+    // Fails on any wording or rubric change: bump PROMPT_VERSION, then update the hashes.
     const lesson = buildLessonRequests(mockSnapshot, mockCriteria, options)[0];
     const overall = buildOverallRequest(
       mockSnapshot,

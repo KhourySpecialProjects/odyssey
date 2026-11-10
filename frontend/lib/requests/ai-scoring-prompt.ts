@@ -9,11 +9,7 @@ import { isDefaultPart, type PromptParts } from "@/lib/ai-review/system-prompt";
 import { aiScoringPromptSchema } from "@/lib/validations/ai-scoring-prompt";
 import type { ReviewActionResult } from "@/lib/requests/reviews";
 
-/**
- * Saves the Scorecard prompt wording (System Admin only). A part that is
- * blank or equals the code default is stored as null. Not tagged: runs read
- * it fresh (ODY-898), so only the admin page is revalidated.
- */
+/** Saves the Scorecard prompt wording (System Admin only); default or blank parts are stored as null. */
 export async function saveAiScoringPrompt(
   input: PromptParts,
 ): Promise<ReviewActionResult<{ custom: Record<keyof PromptParts, boolean> }>> {
