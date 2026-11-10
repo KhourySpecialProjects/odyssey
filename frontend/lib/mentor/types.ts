@@ -1,4 +1,4 @@
-// Types only, so the sidebar can import them (ODY-882, for ODY-886 and ODY-887)
+// Types (and MENTOR_KINDS), so the sidebar can import them (ODY-882, for ODY-886 and ODY-887)
 import type { Anchor } from "@/lib/anchors/types";
 import type { Block, CustomBlockNoteBlock } from "@/types";
 
@@ -63,7 +63,8 @@ export type Citation = {
 };
 
 /** What a request to Mentor is for (ODY-885) */
-export type MentorKind = "lesson" | "explain" | "quiz-hint";
+export const MENTOR_KINDS = ["lesson", "explain", "quiz-hint"] as const;
+export type MentorKind = (typeof MENTOR_KINDS)[number];
 
 /** An earlier turn of the sidebar's conversation, as the browser keeps it */
 export type MentorTurn = { role: "student" | "mentor"; text: string };

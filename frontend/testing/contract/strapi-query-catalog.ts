@@ -466,6 +466,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
+  "mentor-feedback": "@/lib/requests/mentor-feedback",
   "mentor-setting": "@/lib/requests/mentor-setting",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
@@ -1082,6 +1083,10 @@ const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
+  "mentor-feedback": {
+    saveMentorFeedback:
+      "custom route POST /mentor-feedbacks/record, not a v4 entry (ODY-890)",
+  },
   "authorized-user": {
     createAuthorizedUser: WRITE,
     createBatchAuthorizedUsers: WRITE,
