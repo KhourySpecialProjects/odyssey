@@ -3,7 +3,11 @@ import { getDropletById } from "@/lib/requests/droplet";
 import { CHECKS } from "@/lib/overview-scan/checks";
 import { createSafeFetcher } from "@/lib/overview-scan/network";
 import { runChecks } from "@/lib/overview-scan/run";
-import { SCAN_DROPLET_QUERY, scanDroplet } from "@/lib/overview-scan/scan";
+import {
+  SCAN_DROPLET_QUERY,
+  loadScanDocument,
+  scanDroplet,
+} from "@/lib/overview-scan/scan";
 import {
   buildScanDocument,
   type ScanSourceDroplet,
@@ -132,5 +136,51 @@ describe("scanDroplet", () => {
         .filter((k) => k !== "id")
         .sort(),
     ).toEqual(lessonKeys.sort());
+  });
+
+  it("sorts lessons by orderIndex (nulls last) then id, in the query and in memory", () => {
+    const populate = SCAN_DROPLET_QUERY.populate as Record<
+      string,
+      { sort?: string[] }
+    >;
+    expect(populate.lessons.sort).toEqual(["orderIndex:asc", "id:asc"]);
+    expect(populate.datasets.sort).toEqual(["createdAt:asc", "id:asc"]);
+  });
+});
+
+describe("loadScanDocument ordering (ODY-878)", () => {
+  const lessons = [
+    { id: 5, name: "E", orderIndex: null },
+    { id: 3, name: "C", orderIndex: 1 },
+    { id: 2, name: "B", orderIndex: 1 },
+    { id: 4, name: "D", orderIndex: null },
+    { id: 1, name: "A", orderIndex: 0 },
+  ];
+  const load = async (order: number[]) => {
+    getDroplet.mockResolvedValue({
+      id: 7,
+      name: "D",
+      lessons: order.map((i) => lessons[i]),
+    });
+    return loadScanDocument(7);
+  };
+
+  it("gives the same document and hash whatever order tied or null lessons arrive in", async () => {
+    const a = await load([0, 1, 2, 3, 4]);
+    const b = await load([4, 3, 2, 1, 0]);
+    const c = await load([2, 0, 4, 1, 3]);
+    expect(a.doc.parts.map((p) => p.id)).toEqual([
+      "droplet",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+    ]);
+    expect(b.doc).toEqual(a.doc);
+    expect(c.doc).toEqual(a.doc);
+    expect(b.contentHash).toBe(a.contentHash);
+    expect(c.contentHash).toBe(a.contentHash);
+    expect(a.doc.parts[2].title).toBe("Lesson 2 · B");
   });
 });

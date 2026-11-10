@@ -72,4 +72,79 @@ describe("hashScanDocument (ODY-878)", () => {
   ])("changes with %s", (_name, changed) => {
     expect(changed()).not.toBe(hashOf());
   });
+
+  describe("inputs with no stable order (ODY-878)", () => {
+    const link = (id: number, name = `P${id}`) => ({
+      id,
+      name,
+      status: "published",
+      isHidden: false,
+    });
+    const ds = (id: number, createdAt: string) => ({
+      id,
+      name: `ds${id}`,
+      fileUrl: `https://example.com/${id}.csv`,
+      rowCount: id,
+      createdAt,
+    });
+    const same = (a: object, b: object) =>
+      expect(hashOf(droplet(a))).toBe(hashOf(droplet(b)));
+
+    it("ignores the order tags, prerequisites and postrequisites come back in", () => {
+      same(
+        {
+          tags: [
+            { id: 1, name: "a" },
+            { id: 2, name: "b" },
+          ],
+        },
+        {
+          tags: [
+            { id: 2, name: "b" },
+            { id: 1, name: "a" },
+          ],
+        },
+      );
+      same(
+        { prerequisites: [link(1), link(2), link(3)] },
+        { prerequisites: [link(3), link(1), link(2)] },
+      );
+      same(
+        { postrequisites: [link(1), link(2)] },
+        { postrequisites: [link(2), link(1)] },
+      );
+    });
+
+    it("ignores the order datasets with equal createdAt come back in", () => {
+      const t = "2026-01-01T00:00:00.000Z";
+      same(
+        { datasets: [ds(1, t), ds(2, t), ds(3, "2026-02-01T00:00:00.000Z")] },
+        { datasets: [ds(3, "2026-02-01T00:00:00.000Z"), ds(2, t), ds(1, t)] },
+      );
+    });
+
+    it("still changes when the set or a linked droplet changes", () => {
+      const base = { tags: [{ id: 1, name: "a" }], prerequisites: [link(1)] };
+      const h = hashOf(droplet(base));
+      expect(
+        hashOf(
+          droplet({
+            ...base,
+            tags: [
+              { id: 1, name: "a" },
+              { id: 2, name: "b" },
+            ],
+          }),
+        ),
+      ).not.toBe(h);
+      expect(
+        hashOf(droplet({ ...base, prerequisites: [link(1, "Renamed")] })),
+      ).not.toBe(h);
+      expect(
+        hashOf(
+          droplet({ ...base, datasets: [ds(1, "2026-01-01T00:00:00.000Z")] }),
+        ),
+      ).not.toBe(h);
+    });
+  });
 });

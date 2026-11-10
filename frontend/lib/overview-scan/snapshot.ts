@@ -37,12 +37,16 @@ export type ScanSourceDroplet = Pick<
   | "funFact"
 > & {
   learningObjectives?: Pick<LearningObjective, "objective">[] | null;
-  tags?: Pick<Tag, "name">[] | null;
+  tags?: (Pick<Tag, "name"> & { id?: number })[] | null;
   prerequisites?: Linked[] | null;
   postrequisites?: Linked[] | null;
   nextSteps?: Pick<Resource, "label" | "url">[] | null;
   datasets?:
-    | (Pick<Dataset, "name" | "fileUrl"> & { rowCount?: number | null })[]
+    | (Pick<Dataset, "name" | "fileUrl"> & {
+        id?: number;
+        rowCount?: number | null;
+        createdAt?: string | null;
+      })[]
     | null;
 };
 
@@ -67,19 +71,25 @@ export function buildScanDocument(
         plain(o.objective),
       ),
       difficulty: droplet.difficulty ?? null,
-      tags: (droplet.tags ?? []).map((t) => plain(t.name)),
-      prerequisites: (droplet.prerequisites ?? []).map(linked),
-      postrequisites: (droplet.postrequisites ?? []).map(linked),
+      tags: (droplet.tags ?? []).map((t) => plain(t.name)).sort(),
+      prerequisites: byId(droplet.prerequisites).map(linked),
+      postrequisites: byId(droplet.postrequisites).map(linked),
       funFact: plain(droplet.funFact),
       nextSteps: (droplet.nextSteps ?? []).map((s) => ({
         label: plain(s.label),
         url: str(s.url).trim(),
       })),
-      datasets: (droplet.datasets ?? []).map((d) => ({
-        name: plain(d.name),
-        fileUrl: str(d.fileUrl).trim(),
-        rowCount: d.rowCount ?? null,
-      })),
+      datasets: [...(droplet.datasets ?? [])]
+        .sort(
+          (a, b) =>
+            str(a.createdAt).localeCompare(str(b.createdAt)) ||
+            (a.id ?? 0) - (b.id ?? 0),
+        )
+        .map((d) => ({
+          name: plain(d.name),
+          fileUrl: str(d.fileUrl).trim(),
+          rowCount: d.rowCount ?? null,
+        })),
     },
     parts: [
       {
@@ -104,6 +114,11 @@ export function buildScanDocument(
     ],
   };
 }
+
+/** Relations come back in join-table order; a stable order keeps the hash steady. */
+const byId = <T extends { id: number }>(
+  list: readonly T[] | null | undefined,
+) => [...(list ?? [])].sort((a, b) => a.id - b.id);
 
 const linked = (d: Linked): LinkedDroplet => ({
   id: d.id,
