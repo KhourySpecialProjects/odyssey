@@ -186,8 +186,11 @@ export function QuizQuestionBlock({
     dropletId !== undefined &&
     question.answerOptions.length >= 3 &&
     correctAnswers.length === 1 &&
-    picked.length === 1;
-  const hintBusy = hint !== null && hint.status !== "error";
+    picked.length === 1 &&
+    hint?.status !== "done";
+  // A finished hint or a refused request (retry === false) can't be re-asked
+  const hintBusy =
+    hint !== null && (hint.status !== "error" || !hint.error?.retry);
 
   function explain() {
     if (hintBusy) return;
@@ -203,87 +206,82 @@ export function QuizQuestionBlock({
       />
 
       {showResult ? (
-        <>
-          <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
-            {areAnswersCorrect(form.getValues("answerIds")) ? (
-              <div className="flex flex-col items-center">
-                <Badge
-                  className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
-                  role="status"
-                >
-                  That&rsquo;s Right!
-                </Badge>
+        <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
+          {areAnswersCorrect(form.getValues("answerIds")) ? (
+            <div className="flex flex-col items-center">
+              <Badge
+                className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
+                role="status"
+              >
+                That&rsquo;s Right!
+              </Badge>
 
+              <Button
+                before={<ArrowLeftIcon />}
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResult(false)}
+                className="mt-2"
+              >
+                View Answer
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Badge
+                className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200"
+                role="status"
+              >
+                Not Quite
+              </Badge>
+
+              <div className="my-8">
+                <span className="text-sm font-bold text-sky-700 uppercase">
+                  You selected:
+                </span>
+                <ul>
+                  {form.getValues("answerIds").map((id) => {
+                    const selectedAnswer = question.answerOptions.find(
+                      (opt) => String(opt.id) === id,
+                    );
+                    return selectedAnswer ? (
+                      <li key={id}>
+                        <RenderedContent
+                          html={selectedAnswer.content}
+                          className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
+                        />
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-2">
                 <Button
                   before={<ArrowLeftIcon />}
                   variant="outline"
-                  size="sm"
-                  onClick={() => setShowResult(false)}
-                  className="mt-2"
+                  onClick={() => {
+                    mentorHint.clear();
+                    setShowResult(false);
+                  }}
                 >
-                  View Answer
+                  Try Again
                 </Button>
-              </div>
-            ) : (
-              <>
-                <Badge
-                  className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200"
-                  role="status"
-                >
-                  Not Quite
-                </Badge>
-
-                <div className="my-8">
-                  <span className="text-sm font-bold text-sky-700 uppercase">
-                    You selected:
-                  </span>
-                  <ul>
-                    {form.getValues("answerIds").map((id) => {
-                      const selectedAnswer = question.answerOptions.find(
-                        (opt) => String(opt.id) === id,
-                      );
-                      return selectedAnswer ? (
-                        <li key={id}>
-                          <RenderedContent
-                            html={selectedAnswer.content}
-                            className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
-                          />
-                        </li>
-                      ) : null;
-                    })}
-                  </ul>
-                </div>
-
-                <div className="flex flex-wrap justify-center gap-2">
+                {canExplain && (
                   <Button
-                    before={<ArrowLeftIcon />}
+                    before={<Sparkles className="text-mentor" />}
                     variant="outline"
-                    onClick={() => {
-                      mentorHint.clear();
-                      setShowResult(false);
-                    }}
+                    className="border-mentor-line text-mentor-text"
+                    aria-disabled={hintBusy}
+                    onClick={explain}
                   >
-                    Try Again
+                    Explain my answer
                   </Button>
-                  {canExplain && (
-                    <Button
-                      before={<Sparkles className="text-mentor" />}
-                      variant="outline"
-                      className="border-mentor-line text-mentor-text"
-                      aria-disabled={hintBusy}
-                      onClick={explain}
-                    >
-                      Explain my answer
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          {answeredWrong && hint && (
-            <MentorHint hint={hint} onRetry={explain} />
+                )}
+              </div>
+            </>
           )}
-        </>
+        </div>
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -372,6 +370,7 @@ export function QuizQuestionBlock({
           </form>
         </Form>
       )}
+      {answeredWrong && hint && <MentorHint hint={hint} onRetry={explain} />}
     </>
   );
 }

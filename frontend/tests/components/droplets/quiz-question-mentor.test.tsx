@@ -220,6 +220,63 @@ describe("Explain my answer", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
+  it("keeps the button disabled after a daily-limit refusal and sends nothing on click", async () => {
+    fetchMock.mockResolvedValue(
+      mentorHttpErrorResponse(429, {
+        error: "daily_limit",
+        message: "You've used today's Mentor questions.",
+      }),
+    );
+    renderQuiz(questionOf(classic, 41), classic);
+    const user = await answer(1);
+    await user.click(explainButton()!);
+    await screen.findByRole("alert");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const button = explainButton();
+    if (button) {
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      await user.click(button);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the button once the hint is done", async () => {
+    fetchMock.mockImplementation(async (_url, init) =>
+      mentorSseResponse([mentorText("Hint."), mentorDone()], {
+        signal: init.signal,
+      }),
+    );
+    renderQuiz(questionOf(classic, 41), classic);
+    const user = await answer(1);
+    await user.click(explainButton()!);
+    const box = await screen.findByRole("region", { name: "Mentor hint" });
+    await waitFor(() => expect(box).toHaveAttribute("aria-busy", "false"));
+    expect(explainButton()).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("still offers Try again after a retryable 500", async () => {
+    fetchMock.mockResolvedValueOnce(
+      mentorHttpErrorResponse(500, {
+        error: "internal",
+        message: "Mentor hit a snag.",
+      }),
+    );
+    fetchMock.mockImplementation(async (_url, init) =>
+      mentorSseResponse([mentorText("Second try."), mentorDone()], {
+        signal: init.signal,
+      }),
+    );
+    renderQuiz(questionOf(classic, 41), classic);
+    const user = await answer(1);
+    await user.click(explainButton()!);
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+    const box = await screen.findByRole("region", { name: "Mentor hint" });
+    await waitFor(() => expect(box).toHaveTextContent("Second try."));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("fires only the existing PostHog event", async () => {
     fetchMock.mockImplementation(async (_url, init) =>
       mentorSseResponse([mentorText("Hint."), mentorDone()], {
