@@ -11,7 +11,6 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -55,7 +54,7 @@ export async function uploadImage(formData: FormData) {
   }
   try {
     const file = formData.get("image") as File;
-    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const fileName = `${crypto.randomUUID()}-${encodeURIComponent(file.name)}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (isLocal) {
@@ -917,7 +916,7 @@ export async function saveNotebookContent(
         : existingUrl;
       returnUrl = existingUrl;
     } else {
-      const fileName = `${uuidv4()}.ipynb`;
+      const fileName = `${crypto.randomUUID()}.ipynb`;
       s3Key = `${rootPath}/notebooks/${fileName}`;
       returnUrl = `${bucketUrl}/${s3Key}`;
     }
@@ -1032,7 +1031,7 @@ export async function uploadDataset(formData: FormData) {
   }
 
   try {
-    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const fileName = `${crypto.randomUUID()}-${encodeURIComponent(file.name)}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (isLocal) {

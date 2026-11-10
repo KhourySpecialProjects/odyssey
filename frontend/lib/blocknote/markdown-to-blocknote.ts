@@ -1,5 +1,4 @@
 import { CustomBlockNoteBlock } from "@/types";
-import { v4 as uuidv4 } from "uuid";
 
 interface ParseResult {
   title: string;
@@ -281,7 +280,7 @@ function parseBoldItalic(text: string): TextSegment[] {
  */
 function createHeading(text: string, level: 1 | 2 | 3): CustomBlockNoteBlock {
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "heading",
     props: {
       level,
@@ -320,7 +319,7 @@ function parseCallout(line: string): CustomBlockNoteBlock | null {
   }
 
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "callout",
     props: {
       calloutType,
@@ -389,7 +388,7 @@ function createTrueFalseQuiz(items: string[]): CustomBlockNoteBlock {
   const answer = items[1]?.toLowerCase() === "true";
 
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "quiz-true-false",
     props: {
       question,
@@ -410,7 +409,7 @@ function createOpenEndedQuiz(items: string[]): CustomBlockNoteBlock {
   const correctAnswer = items[1] || "";
 
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "quiz-open-ended",
     props: {
       question,
@@ -440,7 +439,7 @@ function createMultipleChoiceQuiz(items: string[]): CustomBlockNoteBlock {
   });
 
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "quiz-multiple-choice",
     props: {
       options,
@@ -501,7 +500,7 @@ function createLatexBlock(
   displayMode: boolean,
 ): CustomBlockNoteBlock {
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "latex",
     props: {
       content,
@@ -580,7 +579,7 @@ function createTable(rows: string[][]): CustomBlockNoteBlock {
   }));
 
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "table",
     props: {
       textColor: "default",
@@ -623,7 +622,7 @@ function parseList(
     }
 
     blocks.push({
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       type: listType === "numbered" ? "numberedListItem" : "bulletListItem",
       props: {
         textColor: "default",
@@ -668,7 +667,7 @@ function parseNestedList(
 
     const text = trimmed.substring(2).trim();
     const block: CustomBlockNoteBlock = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       type: "bulletListItem",
       props: {
         textColor: "default",
@@ -724,7 +723,7 @@ function parseCodeBlock(
 
   return {
     block: {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       type: "codeBlock",
       props: {
         language,
@@ -747,7 +746,7 @@ function parseCodeBlock(
  */
 function parseParagraph(text: string): CustomBlockNoteBlock {
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "paragraph",
     props: {
       textColor: "default",
@@ -761,7 +760,7 @@ function parseParagraph(text: string): CustomBlockNoteBlock {
 
 function createSeparator(): CustomBlockNoteBlock {
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "paragraph",
     props: {
       textColor: "default",
@@ -775,7 +774,7 @@ function createSeparator(): CustomBlockNoteBlock {
 
 function createImageBlock(url: string): CustomBlockNoteBlock {
   return {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     type: "image",
     props: {
       url,

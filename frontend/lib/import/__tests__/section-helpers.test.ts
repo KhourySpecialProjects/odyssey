@@ -5,13 +5,7 @@ import {
 } from "../section-helpers";
 import type { ImportSection } from "../types";
 
-let uuidCounter = 0;
-jest.mock("uuid", () => ({
-  v4: jest.fn(() => `uuid-${++uuidCounter}`),
-}));
-
 beforeEach(() => {
-  uuidCounter = 0;
   jest.clearAllMocks();
 });
 
