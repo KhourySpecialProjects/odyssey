@@ -385,11 +385,12 @@ ${
 
   return (
     <Link
+      className="block h-full"
       draggable={false}
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
-      <li className="h-full overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
-        <div className="flex h-full flex-col justify-between gap-3 p-4">
+      <li className="flex h-full flex-col overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+        <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
@@ -482,7 +483,7 @@ ${
               )}
             </div>
             <div className="flex flex-col justify-center gap-1">
-              <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
+              <span className="line-clamp-2 w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
                 {droplet.name}
               </span>
 
@@ -541,7 +542,12 @@ ${
             </div>
           )}
 
-          <div className="flex w-full flex-nowrap items-center justify-between gap-2">
+          <div
+            className={cn(
+              "flex w-full flex-nowrap items-center justify-between gap-2",
+              !hasRating && "mt-auto",
+            )}
+          >
             <div className="flex min-w-0 items-center gap-2">
               {bylineText}
               {showCreatedDate && droplet.createdAt && (
