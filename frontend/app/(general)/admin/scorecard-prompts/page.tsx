@@ -4,6 +4,8 @@ import {
   resolvePrompt,
 } from "@/lib/ai-review/prompt-settings";
 
+import { fetchActiveCriteria } from "@/lib/review-criteria";
+
 export const dynamic = "force-dynamic";
 
 async function loadResolved() {
@@ -15,7 +17,10 @@ async function loadResolved() {
 }
 
 export default async function Page() {
-  const resolved = await loadResolved();
+  const [resolved, criteria] = await Promise.all([
+    loadResolved(),
+    fetchActiveCriteria().catch(() => null),
+  ]);
 
   return (
     <div className="w-full px-4 py-4 md:px-[56px] md:py-8">
@@ -30,7 +35,11 @@ export default async function Page() {
       </div>
 
       {resolved ? (
-        <PromptEditor initial={resolved.parts} custom={resolved.custom} />
+        <PromptEditor
+          initial={resolved.parts}
+          custom={resolved.custom}
+          criteria={criteria}
+        />
       ) : (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           Couldn&apos;t load the Scorecard prompts. Refresh to try again.

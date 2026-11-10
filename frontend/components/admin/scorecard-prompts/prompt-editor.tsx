@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PromptPreview } from "@/components/admin/scorecard-prompts/prompt-preview";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DEFAULT_PROMPT, isDefaultPart } from "@/lib/ai-review/system-prompt";
 import type { PromptParts } from "@/lib/ai-review/system-prompt";
+import type { PanelCriterion } from "@/lib/requests/reviews";
 import { saveAiScoringPrompt } from "@/lib/requests/ai-scoring-prompt";
 import { AI_SCORING_PROMPT_LIMITS } from "@/lib/validations/ai-scoring-prompt";
 import { cn } from "@/lib/utils";
@@ -39,12 +41,15 @@ const PARTS: { key: keyof PromptParts; label: string; hint: string }[] = [
 export function PromptEditor({
   initial,
   custom,
+  criteria,
 }: {
   initial: PromptParts;
   custom: Custom;
+  /** Omit to hide the preview; `null` means the rubric failed to load. */
+  criteria?: PanelCriterion[] | null;
 }) {
   const [baseline, setBaseline] = useState(initial);
-  // The live form text; the preview (Task 12) reads this.
+  // The live form text; the preview reads this.
   const [parts, setParts] = useState(initial);
   const [saved, setSaved] = useState(custom);
   const [pending, startSave] = useTransition();
@@ -203,6 +208,9 @@ export function PromptEditor({
           </div>
         );
       })}
+      {criteria !== undefined && (
+        <PromptPreview parts={parts} criteria={criteria} />
+      )}
       <div className="flex justify-end">
         <Button
           type="submit"
