@@ -44,6 +44,8 @@ import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
 import type { Dataset } from "@/types";
 import { useEditingLock } from "@/hooks/useEditingLock";
+import { useSaveStatus } from "@/hooks/useSaveStatus";
+import { SaveStatusIndicator } from "./save-status-indicator";
 import {
   useDropletReviewComments,
   useSharedSentFeedback,
@@ -227,6 +229,17 @@ export function LessonRenderer({
   const markFrozenRef = useRef(markFrozen);
   markFrozenRef.current = markFrozen;
   const cancelSavesRef = useRef<() => void>(() => {});
+  const saveStatus = useSaveStatus();
+  const saveStatusRef = useRef(saveStatus);
+  saveStatusRef.current = saveStatus;
+  const {
+    markPending,
+    begin: beginSave,
+    succeed: saveSucceeded,
+    fail: saveFailed,
+    freeze: saveFrozen,
+    reset: resetSaveStatus,
+  } = saveStatus;
   // Read in effect cleanups, which run after the render that set it.
   const discardSavesRef = useRef(false);
   discardSavesRef.current = frozen || reviewEnded;
@@ -241,10 +254,11 @@ export function LessonRenderer({
       if (response?.error !== REVIEW_FROZEN_ERROR) return false;
       markFrozenRef.current?.();
       cancelSavesRef.current();
+      saveFrozen();
       toast.info(REVIEW_FROZEN_TOAST, { id: "review-frozen" });
       return true;
     },
-    [],
+    [saveFrozen],
   );
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
@@ -488,41 +502,61 @@ export function LessonRenderer({
     handleSaveResult,
   ]);
 
-  const updateBlocksBackend = useCallback(
-    async (blocks: Block[]) => {
-      const response = await updateLesson(
-        lesson.id,
-        { blocks: blocks as unknown as BaseBlock[] },
-        { skipRevalidation: true },
-      );
-
-      if (handleSaveResult(response)) return;
-      if (!response || response.error || !response.ok) {
-        return;
+  // Runs one autosave and reports its outcome to the toolbar indicator. A
+  // failure keeps a retry that sends the same content again.
+  const trackedSave = useCallback(
+    async (send: () => ReturnType<typeof updateLesson>) => {
+      const id = beginSave();
+      try {
+        const response = await send();
+        if (handleSaveResult(response)) return;
+        if (!response || response.error || !response.ok) {
+          saveFailed(id, () => void trackedSave(send));
+          return;
+        }
+        saveSucceeded(id);
+      } catch {
+        saveFailed(id, () => void trackedSave(send));
       }
     },
-    [lesson.id, handleSaveResult],
+    [beginSave, saveSucceeded, saveFailed, handleSaveResult],
+  );
+
+  const updateBlocksBackend = useCallback(
+    (blocks: Block[]) =>
+      trackedSave(() =>
+        updateLesson(
+          lesson.id,
+          { blocks: blocks as unknown as BaseBlock[] },
+          { skipRevalidation: true },
+        ),
+      ),
+    [lesson.id, trackedSave],
   );
 
   const updateBlocksV2Backend = useCallback(
-    async (blocksV2: unknown) => {
-      const response = await updateLesson(
-        lesson.id,
-        { blocksV2, blocksVersion: "v2" },
-        { skipRevalidation: true },
-      );
-
-      if (handleSaveResult(response)) return;
-      if (!response || response.error || !response.ok) {
-        return;
-      }
-    },
-    [lesson.id, handleSaveResult],
+    (blocksV2: unknown) =>
+      trackedSave(() =>
+        updateLesson(
+          lesson.id,
+          { blocksV2, blocksVersion: "v2" },
+          { skipRevalidation: true },
+        ),
+      ),
+    [lesson.id, trackedSave],
   );
 
   const debounceUpdateV2 = useMemo(
     () => debounce(updateBlocksV2Backend, 1500, { maxWait: 4000 }),
     [updateBlocksV2Backend],
+  );
+  // BlockNote edits: note the unsent change, then queue the autosave.
+  const onBlockNoteChange = useCallback(
+    (content: unknown) => {
+      markPending();
+      return debounceUpdateV2(content);
+    },
+    [markPending, debounceUpdateV2],
   );
 
   const updateBlocksBackendReload = useCallback(
@@ -563,6 +597,8 @@ export function LessonRenderer({
 
   useEffect(() => {
     if (editorVersion !== "v1" || isReadOnly) return;
+    // The first run (and a refresh) sends the content it just loaded.
+    if (blocks !== lastSavedBlocks) markPending();
     debounceUpdate(blocks);
     return () => {
       // Once the tab is frozen or the review is over, the server would refuse
@@ -570,7 +606,14 @@ export function LessonRenderer({
       if (discardSavesRef.current) debounceUpdate.cancel();
       else debounceUpdate.flush();
     };
-  }, [blocks, debounceUpdate, editorVersion, isReadOnly]);
+  }, [
+    blocks,
+    lastSavedBlocks,
+    debounceUpdate,
+    editorVersion,
+    isReadOnly,
+    markPending,
+  ]);
 
   useEffect(() => {
     setBlocks(lesson.blocks);
@@ -685,6 +728,19 @@ export function LessonRenderer({
     return () => clearTimeout(timer);
   }, [takeoverNoticeDue, tookOverFrom]);
   const showTakeoverNotice = takeoverNoticeDue && noticeVisible;
+  // Lost mid-session (not a reviewer stopping, not a freeze): say so, because
+  // the editor just turned read-only. Cleared when the lock comes back.
+  const hadLockRef = useRef(false);
+  const [lockLost, setLockLost] = useState(false);
+  useEffect(() => {
+    if (isOwnLock) {
+      hadLockRef.current = true;
+      setLockLost(false);
+    } else if (hadLockRef.current && !isRefreshing) {
+      hadLockRef.current = false;
+      if (!inReview && !reviewEnded) setLockLost(true);
+    }
+  }, [isOwnLock, isRefreshing, inReview, reviewEnded]);
   const liveMessage = isRefreshing
     ? "Loading the latest version..."
     : showTakeoverNotice
@@ -699,6 +755,7 @@ export function LessonRenderer({
   // onChange only fires on edits, so remounting unchanged content saves nothing.
   refreshLessonRef.current = async () => {
     cancelSavesRef.current();
+    resetSaveStatus();
     const response = await getLatestLessonContent(lesson.id);
     // A refusal because the droplet went into review freezes the tab at once.
     if (handleSaveResult(response)) return false;
@@ -718,8 +775,14 @@ export function LessonRenderer({
 
   // Picked up by the poll: drop every pending save rather than send it.
   useEffect(() => {
-    if (frozen || reviewEnded) cancelSavesRef.current();
-  }, [frozen, reviewEnded]);
+    if (!frozen && !reviewEnded) return;
+    cancelSavesRef.current();
+    // Dropped edits are not a failure: show them as refused for review.
+    const { status } = saveStatusRef.current;
+    if (status === "pending" || status === "saving" || status === "failed") {
+      saveFrozen();
+    }
+  }, [frozen, reviewEnded, saveFrozen]);
 
   // Stop editing: send what is pending, wait for it, then release the lock.
   const handleStopEditing = async () => {
@@ -919,6 +982,18 @@ export function LessonRenderer({
           editDisabled={isRefreshing}
         />
       )}
+      {lockLost && !isOwnLock && !inReview && !reviewEnded && (
+        <div
+          role="status"
+          className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <IconLock className="h-4 w-4 shrink-0" />
+          <span>
+            You lost the editing lock, so this lesson is read-only. If you get
+            it back, the latest version loads before you can edit.
+          </span>
+        </div>
+      )}
       {isReadOnly && lockedBy && !inReview && !reviewEnded && (
         <div className="mx-auto mb-4 flex max-w-2xl items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
           <IconLock className="h-4 w-4 shrink-0" />
@@ -1002,6 +1077,12 @@ export function LessonRenderer({
                 </TooltipProvider>
               )}
             </div>
+            {(!isReadOnly || saveStatus.status === "frozen") && (
+              <SaveStatusIndicator
+                status={saveStatus.status}
+                onRetry={saveStatus.retry}
+              />
+            )}
             {!isReadOnly && (
               <div className="flex items-center gap-1">
                 <TooltipProvider>
@@ -1243,9 +1324,6 @@ export function LessonRenderer({
       ) : (
         <div className="mt-8 w-full px-10 md:px-40 group-data-[review-panel=open]:md:px-12">
           <div className="w-full min-w-[300px] md:min-w-[700px]">
-            <p className="mb-4 text-right text-sm text-slate-400 italic dark:text-slate-400">
-              Changes saved automatically
-            </p>
             <DatasetProvider datasets={datasets}>
               <PyodideProvider>
                 <FeedbackLayer
@@ -1266,7 +1344,7 @@ export function LessonRenderer({
                     <BlockNoteEditor
                       key={`editor-${lesson.id}-${contentVersion}`}
                       initialContent={blocksV2 as unknown as BlockNoteBlock[]}
-                      onChange={isReadOnly ? () => {} : debounceUpdateV2}
+                      onChange={isReadOnly ? () => {} : onBlockNoteChange}
                       editable={!isReadOnly}
                       anchors={
                         showCommentLayer
