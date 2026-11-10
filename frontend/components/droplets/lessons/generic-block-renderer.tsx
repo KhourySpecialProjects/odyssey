@@ -12,6 +12,7 @@ import { useRegionHighlights } from "./highlight-layer";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
 import DOMPurify from "isomorphic-dompurify";
+import { replaceDollarMath } from "@/lib/latex-dollars";
 
 interface Block {
   content: string;
@@ -29,27 +30,13 @@ interface EnlargedImage {
   alt: string;
 }
 
-const processLatex = (content: string) => {
-  content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
-    try {
-      return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
-    } catch (e) {
-      console.error("Failed to process block LaTeX:", e);
-      return match;
-    }
+const processLatex = (content: string) =>
+  replaceDollarMath(content, {
+    display: (latex) =>
+      `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`,
+    inline: (latex) =>
+      `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`,
   });
-
-  content = content.replace(/\$(.*?)\$/g, (match, latex) => {
-    try {
-      return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
-    } catch (e) {
-      console.error("Failed to process inline LaTeX:", e);
-      return match;
-    }
-  });
-
-  return content;
-};
 
 /**
  * A block of HTML: text, lists, code, LaTeX, images and tables. Its

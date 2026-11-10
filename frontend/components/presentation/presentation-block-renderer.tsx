@@ -19,6 +19,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import dynamic from "next/dynamic";
 import { parseSandpackFiles } from "@/lib/utils";
+import { replaceDollarMath } from "@/lib/latex-dollars";
 
 const SandpackViewer = dynamic(
   () =>
@@ -37,28 +38,12 @@ interface PresentationBlockRendererProps {
 
 // Process LaTeX markers left inside generic block HTML ($ ... $ and $$ ... $$)
 function processLatexInHtml(content: string): string {
-  // Display-mode LaTeX: $$...$$
-  content = content.replace(/\$\$(.*?)\$\$/g, (_match, latex) => {
-    try {
-      return `<div class="my-4 flex justify-center">${katex.renderToString(latex, { throwOnError: false, displayMode: true })}</div>`;
-    } catch {
-      return _match;
-    }
+  return replaceDollarMath(content, {
+    display: (latex) =>
+      `<div class="my-4 flex justify-center">${katex.renderToString(latex, { throwOnError: false, displayMode: true })}</div>`,
+    inline: (latex) =>
+      katex.renderToString(latex, { throwOnError: false, displayMode: false }),
   });
-
-  // Inline LaTeX: $...$
-  content = content.replace(/\$([^$\n]+?)\$/g, (_match, latex) => {
-    try {
-      return katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: false,
-      });
-    } catch {
-      return _match;
-    }
-  });
-
-  return content;
 }
 
 /**
