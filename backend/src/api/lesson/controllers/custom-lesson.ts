@@ -29,6 +29,22 @@ function parseLessonRef(ref: unknown): LessonFilter | null {
   return null;
 }
 
+type LockHolder = NonNullable<LessonWithLock["lockedBy"]>;
+
+// v5 adds documentId to every populated entry, and a bare populate returns
+// every column of the holder. Keep the REST contract the frontend has always
+// seen: lockedBy is exactly { id, firstName, lastName }.
+function toLockHolder(
+  holder: LockHolder | null | undefined
+): LockHolder | null {
+  if (!holder) return null;
+  return {
+    id: holder.id,
+    firstName: holder.firstName,
+    lastName: holder.lastName,
+  };
+}
+
 async function findLessonWithLock(
   ref: unknown
 ): Promise<LessonWithLock | null> {
@@ -44,18 +60,7 @@ async function findLessonWithLock(
     })) as unknown as LessonWithLock | null;
   if (!lesson) return null;
 
-  // v5 adds documentId to every populated entry. Keep the REST contract the
-  // frontend has always seen: lockedBy is exactly { id, firstName, lastName }.
-  return {
-    ...lesson,
-    lockedBy: lesson.lockedBy
-      ? {
-          id: lesson.lockedBy.id,
-          firstName: lesson.lockedBy.firstName,
-          lastName: lesson.lockedBy.lastName,
-        }
-      : null,
-  };
+  return { ...lesson, lockedBy: toLockHolder(lesson.lockedBy) };
 }
 
 export default {
@@ -111,7 +116,7 @@ export default {
         if (currentHolder && currentHolder !== userId && !stale) {
           return {
             status: 409 as const,
-            lockedBy: lesson.lockedBy,
+            lockedBy: toLockHolder(lesson.lockedBy),
             lockedAt,
           };
         }
