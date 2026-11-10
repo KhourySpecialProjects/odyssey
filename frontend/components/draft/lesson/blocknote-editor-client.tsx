@@ -1,5 +1,6 @@
 "use client";
 
+import { parseLatexShortcut } from "@/lib/blocknote/latex-shortcut";
 import React, {
   createContext,
   useContext,
@@ -562,49 +563,22 @@ export function BlockNoteEditorClient({
             }
           }
 
-          // Check for $...$ pattern (inline LaTeX) using already-extracted plain text
+          // Whole block typed as $$...$$ becomes a LaTeX block. Single $...$
+          // is intentionally ignored so prices like "$5 and $10" stay text.
           if (!plain) continue;
-          const inlineLatexMatch = plain.match(/\$([^$]+)\$/);
-          if (inlineLatexMatch && inlineLatexMatch.index !== undefined) {
-            const latexContent = inlineLatexMatch[1].trim();
-            if (latexContent) {
-              const textBefore = plain
-                .substring(0, inlineLatexMatch.index)
-                .trim();
-              const textAfter = plain
-                .substring(inlineLatexMatch.index + inlineLatexMatch[0].length)
-                .trim();
-
-              const blocksToInsert: unknown[] = [];
-              if (textBefore) {
-                blocksToInsert.push({
-                  type: "paragraph",
-                  content: textBefore,
-                } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
-              }
-              blocksToInsert.push({
-                type: "latex",
-                props: {
-                  content: latexContent,
-                  displayMode: false,
-                },
-              } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
-              if (textAfter) {
-                blocksToInsert.push({
-                  type: "paragraph",
-                  content: textAfter,
-                } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
-              }
-
-              if (blocksToInsert.length > 0) {
-                processingPattern = true;
-                await editor.replaceBlocks(
-                  [block],
-                  blocksToInsert as Parameters<typeof editor.replaceBlocks>[1],
-                );
-                processingPattern = false;
-              }
-            }
+          const latexContent = parseLatexShortcut(plain);
+          if (latexContent) {
+            processingPattern = true;
+            await editor.replaceBlocks(
+              [block],
+              [
+                {
+                  type: "latex",
+                  props: { content: latexContent, displayMode: true },
+                } as unknown as Parameters<typeof editor.replaceBlocks>[1][0],
+              ],
+            );
+            processingPattern = false;
           }
         }
 
