@@ -1,4 +1,5 @@
 import { GradientBackground } from "@/components/gradient-bg";
+import { safeCallbackPath } from "@/lib/auth/callback-url";
 import { getLoginProviders } from "@/lib/auth/login-providers";
 import { Metadata } from "next";
 import LoginButtons from "./buttons";
@@ -7,9 +8,17 @@ export const metadata: Metadata = {
   title: "Log In",
 };
 
-// Signed-in users are redirected to /explore by middleware.ts.
-export default function SignIn() {
+type Props = {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+};
+
+// Signed-in users are redirected by middleware.ts: to a safe callbackUrl,
+// otherwise to /explore.
+export default async function SignIn({ searchParams }: Props) {
   const providers = getLoginProviders();
+  // next-auth adds ?callbackUrl= when it sends a visitor here; only a
+  // same-origin destination is passed on (open-redirect guard, ODY-628).
+  const callbackUrl = safeCallbackPath((await searchParams).callbackUrl);
 
   return (
     <GradientBackground>
@@ -25,7 +34,7 @@ export default function SignIn() {
         </div>
 
         <div className="mx-auto mt-8 max-w-2xl text-center sm:mt-12">
-          <LoginButtons providers={providers} />
+          <LoginButtons providers={providers} callbackUrl={callbackUrl} />
         </div>
       </>
     </GradientBackground>
