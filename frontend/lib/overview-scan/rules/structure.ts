@@ -16,6 +16,21 @@ import {
 
 // The scan's structure column (ODY-792), ported rule for rule from the prototype.
 
+/** The start of a paragraph for a message: markup stripped, whitespace collapsed, ~8 words, capped. */
+export function quoteStart(text: string, maxWords = 8, maxChars = 60): string {
+  const all = String(text || "")
+    .replace(/<[^>]*>/g, " ")
+    .trim()
+    .split(/\s+/);
+  let quote = all.slice(0, maxWords).join(" ");
+  let cut = all.length > maxWords;
+  if (quote.length > maxChars) {
+    quote = quote.slice(0, maxChars).trimEnd();
+    cut = true;
+  }
+  return cut ? `${quote}…` : quote;
+}
+
 /** A flag on the droplet page, anchored to one of its sections. */
 const page = (doc: ScanDocument, section: string, message: string) =>
   flag(dropletPart(doc), section, message);
@@ -79,7 +94,7 @@ export const STRUCTURE_CHECKS: readonly Check[] = [
                   flag(
                     part,
                     b.id,
-                    `This paragraph also appears in ${first.title}.`,
+                    `"${quoteStart(b.text)}" also appears in ${first.title}.`,
                   ),
                 );
               else if (!first) firstSeen.set(key, part);
