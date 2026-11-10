@@ -6,7 +6,7 @@ those scores agree with the client's. The prompt itself lives in
 the same code: one request per lesson, then an Overall request that also gets
 each lesson's scores and reasons.
 
-Production may run custom prompt text (version `+hash`), edited at `/admin/scorecard-prompts`; the eval uses the code defaults (ODY-916 adds the saved text), so check that page before changing a default.
+Production may run custom prompt text (version `+hash`), edited at `/admin/scorecard-prompts`; the eval uses the code defaults unless you pass `--saved-prompt` (step 4), so check that page before changing a default.
 
 Allowed models: `claude-sonnet-5-5` (default) and `claude-haiku-5-5`, set in
 `lib/ai-review/models.ts`. Effort defaults to `high`.
@@ -65,6 +65,20 @@ price: the lessons, then the Overall Scores built from their answers
 exact agreement, agreement within one point, and AI minus client on average
 (above 0: the AI scores high), for lessons and the Overall Score separately,
 plus the biggest gaps. `--runs 2` adds run 1 against run 2: the noise floor.
+
+### Eval the saved prompt (ODY-916)
+
+```bash
+npx tsx --env-file=.env.local scripts/ai-review/eval.ts --saved-prompt
+```
+
+Runs the wording a System Admin saved at `/admin/scorecard-prompts` instead of
+the code default (parts left blank still use the default). It reads the
+`ai-scoring-setting` with `STRAPI_ACCESS_TOKEN`, so `NEXT_PUBLIC_STRAPI_API_URL`
+and the token must point at the environment you want. The report's "Prompt
+version" line names what ran (for example `2026-10-30.1+3fa9c2d1`: the code
+version plus a hash of the saved text), and the run folder ends in `-saved`,
+so runs of different wordings can be told apart. Without the flag nothing changes.
 
 Record the cost of each spike and eval run in the PR, and the baseline in
 ODY-813.
