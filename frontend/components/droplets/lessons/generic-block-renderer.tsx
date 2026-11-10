@@ -256,6 +256,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800/50"
           onClick={handleCloseEnlarged}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- enlarged lesson image from dynamic content, dimensions unknown */}
           <img
             src={enlargedImage?.src}
             alt={enlargedImage?.alt}

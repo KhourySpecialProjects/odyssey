@@ -94,6 +94,7 @@ export function NotesManager({
 
   useEffect(() => {
     generatePDF(selectedDropletIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- regenerate the PDF only when the selection changes, not each render's new generatePDF
   }, [selectedDropletIds]);
 
   const filteredEnrollments = enrollments.filter((e, index) => {

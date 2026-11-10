@@ -970,6 +970,7 @@ const SortableSectionCard = memo(function SortableSectionCard({
                                   const blobUrl = src && imageBlobUrls.get(src);
                                   if (!blobUrl) return null;
                                   return (
+                                    // eslint-disable-next-line @next/next/no-img-element -- blob URL from imported file, dimensions unknown
                                     <img
                                       src={blobUrl}
                                       alt={alt || "Extracted image"}

@@ -56,6 +56,7 @@ export function useDropletUpdate(dropletId: number) {
     return done;
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the debounced updater keeps one identity so pending changes can be flushed; save only uses stable helpers
   const debounceUpdate = useCallback(debounce(save, 1000), []);
 
   // A change still waiting is sent when its editor closes

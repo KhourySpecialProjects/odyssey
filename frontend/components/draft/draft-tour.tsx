@@ -113,6 +113,7 @@ export function DraftTour({ run, setRun }: DraftTourProps) {
     return () => {
       if (d.isActive()) d.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setRun is only called from a driver callback; re-running the tour when the parent passes a new setter would restart it
   }, [run]);
 
   return null;

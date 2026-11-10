@@ -36,6 +36,7 @@ export function ContentCreatorBlock({
           <div>
             {contentCreator.profilePhoto && (
               <div className="flex items-center justify-center pt-4">
+                {/* eslint-disable-next-line @next/next/no-img-element -- creator profile photo URL from CMS with unknown dimensions */}
                 <img
                   src={contentCreator.profilePhoto}
                   alt={`${contentCreator.firstName}'s profile`}

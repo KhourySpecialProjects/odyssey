@@ -249,6 +249,7 @@ export function LessonRenderer({
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- analytics only: lesson.name changes together with lesson.id, which is already a dependency
   }, [lesson.id, droplet.id, enrollmentId, authUser?.id]);
 
   if (gate === "enroll") {

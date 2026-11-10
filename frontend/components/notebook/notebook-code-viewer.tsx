@@ -187,6 +187,7 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
           {result.plots.length > 0 && (
             <div className="flex flex-col items-center gap-3 px-3 py-3">
               {result.plots.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element -- plot images are runtime data URLs with unknown dimensions
                 <img
                   key={i}
                   src={src}

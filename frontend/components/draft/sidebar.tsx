@@ -194,6 +194,7 @@ export function Sidebar({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only setup: collapses the sidebar at mount and on resize; setExpanded is a state setter from the parent
   }, []);
 
   useEffect(() => {

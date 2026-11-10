@@ -44,6 +44,7 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the debounced search must keep one identity across renders; handleInputChange only reads the playlists list loaded with the page
   const debouncedSearch = useCallback(
     debounce((value: string) => handleInputChange(value), 500),
     [],

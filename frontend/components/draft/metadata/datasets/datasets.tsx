@@ -87,6 +87,7 @@ export function Datasets({
       document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("drop", handleDrop);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- drag listeners are re-bound only when the dataset count changes; handleUpload is a per-render function
   }, [datasets.length]);
 
   async function handleUpload(file: File) {

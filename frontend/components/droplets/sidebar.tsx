@@ -115,6 +115,7 @@ export default function Sidebar({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only setup: collapses the sidebar at mount and on resize; setExpanded is a state setter from the parent
   }, []);
 
   useEffect(() => {
@@ -443,10 +444,10 @@ export default function Sidebar({
             <AlertDialogDescription>
               {droplet.status === "published" ? (
                 <>
-                  We'll check if you already have a draft for this droplet. If
-                  not, a new draft titled "[EDIT] {droplet.name}" will be
-                  created. You'll be able to make changes without affecting the
-                  live content.
+                  We&apos;ll check if you already have a draft for this droplet.
+                  If not, a new draft titled &quot;[EDIT] {droplet.name}&quot;
+                  will be created. You&apos;ll be able to make changes without
+                  affecting the live content.
                 </>
               ) : (
                 <>

@@ -116,6 +116,7 @@ export function QuizQuestionBlock({
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restores the saved answer only when the lesson or question changes; form from useForm is stable
   }, [lessonId, question.id]);
 
   // Save answers whenever they change
