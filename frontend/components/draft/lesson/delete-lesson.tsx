@@ -9,7 +9,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, Loader2, Trash2Icon } from "lucide-react";
 import { IconTrash } from "@tabler/icons-react";
 import {
   Tooltip,
@@ -17,25 +17,32 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function DeleteLessonButton({
   deleteLesson,
   dropletSlug,
 }: {
-  deleteLesson: () => void;
+  deleteLesson: () => void | Promise<void>;
   dropletSlug: string;
 }) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const inFlight = useRef(false);
+
   const handleDelete = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setIsDeleting(true);
     try {
-      deleteLesson();
+      await deleteLesson();
       router.push(`/draft/d/${dropletSlug}`);
+    } catch (error) {
+      console.error("Failed to delete lesson", error);
     } finally {
+      inFlight.current = false;
       setIsDeleting(false);
     }
   };
@@ -88,9 +95,10 @@ export function DeleteLessonButton({
               onClick={handleDelete}
               variant="destructive"
               disabled={isDeleting}
+              aria-busy={isDeleting}
               after={
                 isDeleting ? (
-                  <span className="animate-spin">⟳</span>
+                  <Loader2 className="animate-spin" />
                 ) : (
                   <Trash2Icon />
                 )

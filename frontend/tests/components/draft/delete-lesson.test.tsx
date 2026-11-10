@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DeleteLessonButton } from "@/components/draft/lesson/delete-lesson";
 import { useRouter } from "next/navigation";
-import React from "react";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -82,20 +81,44 @@ describe("DeleteLessonButton", () => {
     expect(mockDeleteLesson).not.toHaveBeenCalled();
   });
 
-  it("disables buttons while deletion is in progress", async () => {
-    const useState = jest.spyOn(React, "useState");
-    useState.mockImplementationOnce(() => [true, jest.fn()]);
+  it.each([
+    ["succeeds", "resolve"],
+    ["fails", "reject"],
+  ] as const)(
+    "shows a spinner while pending and recovers when delete %s",
+    async (_label, settle) => {
+      let resolve!: () => void;
+      let reject!: (e: Error) => void;
+      mockDeleteLesson.mockReturnValue(
+        new Promise<void>((res, rej) => {
+          resolve = res;
+          reject = rej;
+        }),
+      );
+      render(
+        <DeleteLessonButton
+          deleteLesson={mockDeleteLesson}
+          dropletSlug="test-droplet"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
+      const confirm = screen.getByRole("button", { name: "Delete" });
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
 
-    render(
-      <DeleteLessonButton
-        deleteLesson={mockDeleteLesson}
-        dropletSlug="test-droplet"
-      />,
-    );
+      expect(mockDeleteLesson).toHaveBeenCalledTimes(1);
+      const busy = screen.getByRole("button", { name: "Deleting..." });
+      expect(busy).toBeDisabled();
+      expect(busy).toHaveAttribute("aria-busy", "true");
+      expect(busy.querySelector(".animate-spin")).not.toBeNull();
+      expect(screen.getByText("Cancel")).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete lesson" }));
+      if (settle === "resolve") resolve();
+      else reject(new Error("boom"));
 
-    expect(screen.getByText("Cancel")).toBeDisabled();
-    expect(screen.getByText("Deleting...")).toBeDisabled();
-  });
+      const back = await screen.findByRole("button", { name: "Delete" });
+      expect(back).toBeEnabled();
+      expect(back.querySelector(".animate-spin")).toBeNull();
+    },
+  );
 });

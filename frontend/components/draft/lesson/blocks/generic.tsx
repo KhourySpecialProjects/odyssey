@@ -1,5 +1,5 @@
 "use client";
-import { Trash2Icon } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { GenericBlockInput } from "@/components/ui/tiptap/generic-block-input";
 import { revalidateLesson } from "@/lib/requests/lesson";
 
@@ -16,7 +16,7 @@ export function GenericEditor({
 }: {
   block: GenericBlock;
   updateBlock: (block: GenericBlock) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }) {
   const handleChange = (content: string) => {
     updateBlock({
@@ -30,11 +30,7 @@ export function GenericEditor({
     <div className="w-full rounded-md border border-[#D0D5DD] p-4 hover:shadow-md dark:border-slate-600">
       <div className="mb-4 flex w-full flex-row items-center justify-between">
         <h2 className="text-lg">Text Block</h2>
-        <Trash2Icon
-          className="cursor-pointer text-red-600 hover:text-red-700"
-          onClick={deleteBlock}
-          data-testid="delete-block"
-        />
+        <DeleteBlockButton onDelete={deleteBlock} data-testid="delete-block" />
       </div>
       <GenericBlockInput
         revalidate={revalidateLesson}

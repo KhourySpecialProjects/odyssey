@@ -543,7 +543,7 @@ export function LessonRenderer({
       return () => {
         const updatedBlocks = [...blocks];
         updatedBlocks.splice(index, 1);
-        updateBlocksBackendReload(updatedBlocks);
+        return updateBlocksBackendReload(updatedBlocks);
       };
     },
     [blocks, updateBlocksBackendReload],

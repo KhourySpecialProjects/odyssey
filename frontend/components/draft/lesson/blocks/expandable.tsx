@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDownFromLineIcon, Trash2Icon } from "lucide-react";
+import { ArrowDownFromLineIcon } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ExpandableBlockInput } from "@/components/ui/tiptap/expandable-block-input";
@@ -18,7 +19,7 @@ export function ExpandableEditor({
 }: {
   block: ExpandableBlock;
   updateBlock: (block: ExpandableBlock) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }) {
   const [content, setContent] = useState(block.content);
   const [title, setTitle] = useState(block.title);
@@ -45,11 +46,7 @@ export function ExpandableEditor({
     <div className="w-full rounded-md border border-[#D0D5DD] p-4 dark:border-slate-600">
       <div className="mb-4 flex w-full flex-row items-center justify-between">
         <h2 className="text-lg">Expandable Block</h2>
-        <Trash2Icon
-          className="cursor-pointer text-red-600 hover:text-red-700"
-          onClick={deleteBlock}
-          role="trash"
-        />
+        <DeleteBlockButton onDelete={deleteBlock} role="trash" />
       </div>
       <div className="mb-4 inline-flex w-full flex-row items-center gap-2 font-bold text-sky-600">
         <Input

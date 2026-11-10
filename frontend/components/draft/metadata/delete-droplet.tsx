@@ -10,17 +10,31 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, Loader2, Trash2Icon } from "lucide-react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deepDeleteDroplet } from "@/lib/requests/droplet";
 
 export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
   const router = useRouter();
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const inFlight = useRef(false);
+
   const deleteDroplet = async () => {
-    const response = await deepDeleteDroplet(dropletId);
-    if (response.ok && !response.error) {
-      router.replace(`/my-content`);
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setIsDeleting(true);
+    try {
+      const response = await deepDeleteDroplet(dropletId);
+      if (response.ok && !response.error) {
+        router.replace(`/my-content`);
+      }
+    } catch (error) {
+      console.error("Failed to delete droplet", error);
+    } finally {
+      inFlight.current = false;
+      setIsDeleting(false);
     }
   };
 
@@ -50,16 +64,28 @@ export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
           </DialogDescription>
           <div className="flex flex-row items-center justify-center space-x-4">
             <DialogClose asChild>
-              <Button before={<ArrowLeftIcon />} variant="outline">
+              <Button
+                before={<ArrowLeftIcon />}
+                variant="outline"
+                disabled={isDeleting}
+              >
                 Cancel
               </Button>
             </DialogClose>
             <Button
               onClick={deleteDroplet}
               variant="destructive"
-              after={<Trash2Icon />}
+              disabled={isDeleting}
+              aria-busy={isDeleting}
+              after={
+                isDeleting ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Trash2Icon />
+                )
+              }
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogHeader>

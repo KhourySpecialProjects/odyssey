@@ -15,7 +15,7 @@ export function BlockListClient({
 }: {
   blocks: Block[];
   setBlock: (index: number) => (block: Block) => void;
-  deleteBlock: (index: number) => () => void;
+  deleteBlock: (index: number) => () => void | Promise<void>;
   onMoveBlock: (fromIndex: number, toIndex: number) => void;
 }) {
   const moveBlockUp = useCallback(
