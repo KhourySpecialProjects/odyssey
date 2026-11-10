@@ -9,11 +9,13 @@ const {
   unique,
   REVIEW_UID,
   OVERVIEW_SCAN_UID,
+  OVERVIEW_SCAN_DISMISSAL_UID,
   REVIEW_COMMENT_UID,
   REVIEW_SCORE_UID,
   REVIEW_CRITERION_UID,
   reviewData,
   overviewScanData,
+  dismissalData,
   reviewCommentData,
   reviewScoreData,
   dropletData,
@@ -1043,5 +1045,100 @@ describe('publish-edit overview scans (ODY-875)', () => {
       logSpy.mockRestore();
     }
     expect(await scanDropletIds(draftScans)).toEqual([s.draft.id, s.draft.id]);
+  });
+});
+
+const addDismissals = (dropletDocumentId, overridesList) =>
+  Promise.all(
+    overridesList.map((overrides) =>
+      strapi.documents(OVERVIEW_SCAN_DISMISSAL_UID).create({
+        data: dismissalData({ droplet: dropletDocumentId, ...overrides }),
+      }),
+    ),
+  );
+const dismissalsOn = async (dropletId) =>
+  strapi.documents(OVERVIEW_SCAN_DISMISSAL_UID).findMany({
+    filters: { droplet: { id: dropletId } },
+    sort: ['id:asc'],
+  });
+const dismissalDropletIds = async (rows) =>
+  (
+    await strapi.documents(OVERVIEW_SCAN_DISMISSAL_UID).findMany({
+      filters: { id: { $in: rows.map((x) => x.id) } },
+      populate: { droplet: { fields: ['id'] } },
+    })
+  ).map((x) => x.droplet?.id ?? null);
+
+describe('publish-edit overview scan dismissals (ODY-922)', () => {
+  it('re-points the draft dismissals at the original', async () => {
+    const s = await setup();
+    const [live] = await addDismissals(s.original.documentId, [
+      { ruleId: 'live-rule' },
+    ]);
+    const moved = await addDismissals(s.draft.documentId, [
+      { ruleId: 'a' },
+      { ruleId: 'b', blockId: null },
+    ]);
+
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+
+    expect(res.status).toBe(200);
+    expect(await dismissalDropletIds(moved)).toEqual([
+      s.original.id,
+      s.original.id,
+    ]);
+    expect(await dismissalDropletIds([live])).toEqual([s.original.id]);
+    expect(await dismissalsOn(s.original.id)).toHaveLength(3);
+  });
+
+  it('keeps one row when the original already dismissed the same flag', async () => {
+    const s = await setup();
+    const [live] = await addDismissals(s.original.documentId, [{}]);
+    const [dupe, other] = await addDismissals(s.draft.documentId, [
+      {},
+      { ruleId: 'different' },
+    ]);
+
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+
+    expect(res.status).toBe(200);
+    const rows = await dismissalsOn(s.original.id);
+    expect(rows.map((r) => r.id).sort()).toEqual([live.id, other.id].sort());
+    expect(
+      await strapi
+        .documents(OVERVIEW_SCAN_DISMISSAL_UID)
+        .findFirst({ filters: { id: dupe.id } }),
+    ).toBeNull();
+  });
+
+  it('publishes a draft with no dismissals as before', async () => {
+    const s = await setup();
+    const [live] = await addDismissals(s.original.documentId, [{}]);
+    const res = await publish(s.draft.id, { originalDropletId: s.original.id });
+    expect(res.status).toBe(200);
+    expect(await dismissalDropletIds([live])).toEqual([s.original.id]);
+  });
+
+  it('leaves the dismissals on the draft when the publish fails', async () => {
+    const s = await setup();
+    const draftRows = await addDismissals(s.draft.documentId, [
+      {},
+      { ruleId: 'b' },
+    ]);
+    const spy = failAfter(DROPLET_UID, 'delete');
+    const logSpy = jest.spyOn(strapi.log, 'error').mockImplementation(() => {});
+    try {
+      const res = await publish(s.draft.id, {
+        originalDropletId: s.original.id,
+      });
+      expect(res.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+      logSpy.mockRestore();
+    }
+    expect(await dismissalDropletIds(draftRows)).toEqual([
+      s.draft.id,
+      s.draft.id,
+    ]);
   });
 });
