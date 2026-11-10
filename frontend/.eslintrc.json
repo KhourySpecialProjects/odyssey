@@ -5,16 +5,16 @@
     "react-hooks/rules-of-hooks": "warn",
     "react-hooks/exhaustive-deps": "warn",
     "react/no-unescaped-entities": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": [
-      "warn",
+      "error",
       { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
     ],
     "@next/next/no-img-element": "warn",
     "react/jsx-key": "warn",
-    "prefer-const": "warn",
-    "@typescript-eslint/no-wrapper-object-types": "warn",
-    "@typescript-eslint/no-unused-expressions": "warn"
+    "prefer-const": "error",
+    "@typescript-eslint/no-wrapper-object-types": "error",
+    "@typescript-eslint/no-unused-expressions": "error"
   },
   "settings": {
     "react": {

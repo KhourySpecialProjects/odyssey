@@ -8,7 +8,7 @@ export async function getTags({
   sort = ["name:asc"],
   filters,
   fields = ["id", "name", "slug"],
-  populate,
+  populate: _populate,
 }: StrapiRequestParams = {}): Promise<Tag[]> {
   const path = `/tags`;
   const urlParams = {

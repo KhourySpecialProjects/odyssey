@@ -79,7 +79,7 @@ export const STRAPI_RESPONSE_FORMAT_HEADER = {
 export async function fetchAPI<T>(
   path: string,
   config: {
-    urlParams?: Object;
+    urlParams?: object;
     options?: RequestInit;
     next?: { revalidate?: number; tags?: string[] };
     flattenResponse?: boolean;
@@ -144,45 +144,52 @@ export async function fetchAPI<T>(
   }
 }
 
-export function flattenAttributes(data: any): any {
+// Returns `any` on purpose: many callers use the flattened result directly as
+// typed data (see lib/requests/*). Typing it as unknown breaks those call sites.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function flattenAttributes(data: unknown): any {
   if (!data) return null;
 
   if (Array.isArray(data)) {
     return data.map(flattenAttributes);
   }
 
-  let flattened: { [key: string]: any } = {};
+  const node = data as Record<string, unknown>;
+  let flattened: Record<string, unknown> = {};
 
-  if (data.attributes) {
-    for (let key in data.attributes) {
-      if (
-        typeof data.attributes[key] === "object" &&
-        data.attributes[key] !== null &&
-        "data" in data.attributes[key]
-      ) {
-        flattened[key] = flattenAttributes(data.attributes[key].data);
+  if (node.attributes) {
+    const attributes = node.attributes as Record<string, unknown>;
+    for (const key in attributes) {
+      const value = attributes[key];
+      if (typeof value === "object" && value !== null && "data" in value) {
+        flattened[key] = flattenAttributes((value as { data: unknown }).data);
       } else {
-        flattened[key] = data.attributes[key];
+        flattened[key] = value;
       }
     }
   }
 
   // Copying non-attributes and non-data properties
-  for (let key in data) {
+  for (const key in node) {
     if (key !== "attributes" && key !== "data") {
-      flattened[key] = data[key];
+      flattened[key] = node[key];
     }
   }
 
   // Handling nested data
-  if (data.data) {
-    flattened = { ...flattened, ...flattenAttributes(data.data) };
+  if (node.data) {
+    flattened = {
+      ...flattened,
+      ...(flattenAttributes(node.data) as Record<string, unknown>),
+    };
   }
 
   return flattened;
 }
 
-export function extractHeadings(html: string): any[] {
+export function extractHeadings(
+  html: string,
+): { level: number; text: string }[] {
   if (!html || html.length === 0) return [];
 
   const root = parse(html);
@@ -190,7 +197,7 @@ export function extractHeadings(html: string): any[] {
     root.querySelectorAll("h1, h2, h3, h4, h5, h6"),
   ).map((heading) => ({
     level: parseInt(heading.tagName[1]),
-    text: heading.textContent?.trim(),
+    text: heading.textContent?.trim() ?? "",
   }));
 
   return headings;
@@ -609,13 +616,41 @@ export function parseSandpackFiles(
   }
 }
 
+type BlockNoteInline = {
+  text?: string;
+  styles?: {
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strike?: boolean;
+    code?: boolean;
+  };
+};
+
+type BlockNoteQuizOption = { text?: string; isCorrect?: boolean };
+
+type BlockNoteBlock = {
+  type: string;
+  // Not always an inline array (e.g. table content), so narrowed at the use site.
+  content?: unknown;
+  props: {
+    level?: number;
+    url?: string;
+    caption?: string;
+    calloutType?: string;
+    question?: string;
+    correctAnswer?: unknown;
+    options?: BlockNoteQuizOption[];
+  };
+};
+
 // Helper function to convert BlockNote JSON to markdown
-export function convertBlockNoteToMarkdown(blocks: any[]): string {
+export function convertBlockNoteToMarkdown(blocks: BlockNoteBlock[]): string {
   return blocks
     .map((block) => {
       const text =
-        block.content
-          ?.map((content: any) => {
+        (block.content as BlockNoteInline[] | undefined)
+          ?.map((content) => {
             let formatted = content.text || "";
 
             // Apply text styles
@@ -631,7 +666,7 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
 
       switch (block.type) {
         case "heading":
-          const level = "#".repeat(block.props.level);
+          const level = "#".repeat(block.props.level ?? 0);
           return `${level} ${text}`;
 
         case "paragraph":
@@ -665,7 +700,7 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
         case "quiz-multiple-choice":
           const options = block.props.options
             ?.map(
-              (opt: any, idx: number) =>
+              (opt, idx: number) =>
                 `   ${idx + 1}. ${opt.text} ${opt.isCorrect ? "✓ (Correct)" : ""}`,
             )
             .join("\n");

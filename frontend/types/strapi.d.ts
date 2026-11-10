@@ -27,7 +27,7 @@ export interface StrapiMediaParams {
   caption?: string;
   width?: Integer;
   height?: Integer;
-  formats?: JSON<any>;
+  formats?: Record<string, unknown>;
   hash: string;
   ext?: string;
   mime: string;
@@ -96,7 +96,7 @@ export interface ImageNode {
     updatedAt: string;
     previewUrl: null | string;
     alternativeText: string;
-    provider_metadata: null | any;
+    provider_metadata: unknown;
   };
   children: BlockNode[]; //should be TextNode[]
 }

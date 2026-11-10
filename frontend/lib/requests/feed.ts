@@ -124,7 +124,7 @@ export async function fetchAnnouncements(
       ]);
 
     // Build the query with simple $in filters instead of nested relation joins
-    const orFilters: any[] = [];
+    const orFilters: Record<string, unknown>[] = [];
 
     if (groupIds.length > 0) {
       orFilters.push({ group: { id: { $in: groupIds } } });
@@ -924,7 +924,7 @@ export async function fetchUserAnnouncements(
       },
     );
     const data = await response.json();
-    return flattenAttributes(data.data);
+    return flattenAttributes(data.data) as Announcement[];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch user announcements.");

@@ -1,6 +1,11 @@
 "use server";
 
-import { VoyageEnrollment, VoyageNode, VoyageNodeCompletion } from "@/types";
+import {
+  Droplet,
+  VoyageEnrollment,
+  VoyageNode,
+  VoyageNodeCompletion,
+} from "@/types";
 import {
   fetchAPI,
   flattenAttributes,
@@ -881,7 +886,9 @@ async function checkPlaylistVoyageNode(
     if (voyageNodes.length === 0) return;
 
     // 2. Verify ALL droplets in this playlist are complete for the user
-    const playlistDroplets = await fetchAPI<{ id: number }[]>("/playlists", {
+    const playlistDroplets = await fetchAPI<
+      { id: number; droplets?: { id: number }[] }[]
+    >("/playlists", {
       urlParams: {
         filters: { id: { $eq: playlistId } },
         fields: ["id"],
@@ -892,9 +899,7 @@ async function checkPlaylistVoyageNode(
     });
 
     const dropletIds: number[] =
-      (playlistDroplets[0] as any)?.droplets?.map(
-        (d: { id: number }) => d.id,
-      ) ?? [];
+      playlistDroplets[0]?.droplets?.map((d) => d.id) ?? [];
 
     if (dropletIds.length === 0) return;
 
@@ -1014,7 +1019,7 @@ export async function claimNodeForUser(
     const voyageName = node.voyage?.name ?? "Voyage";
     const baseName = `${node.label} — ${voyageName}`;
 
-    let dropletData: any = null;
+    let dropletData: Droplet | null = null;
     let finalName = baseName;
 
     // Relation values are documentIds on Strapi v5
@@ -1064,7 +1069,7 @@ export async function claimNodeForUser(
 
       if (createRes.ok) {
         const raw = await createRes.json();
-        dropletData = flattenAttributes(raw.data);
+        dropletData = flattenAttributes(raw.data) as Droplet;
         break;
       }
       if (createRes.status !== 400) {

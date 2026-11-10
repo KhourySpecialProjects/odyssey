@@ -589,7 +589,7 @@ function createTable(rows: string[][]): CustomBlockNoteBlock {
       rows: tableRows,
       type: "tableContent",
       columnWidths: rows[0].map(() => null),
-    } as any,
+    },
     children: [],
   };
 }

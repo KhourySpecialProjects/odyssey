@@ -12,7 +12,6 @@ import {
   initPyodide,
   runPython,
   loadDatasetFile,
-  resetNamespace,
   type ExecutionResult,
 } from "./runtime";
 

@@ -84,7 +84,7 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   const resolvedPopulate = typeof populate === "object" ? populate : {};
   const existingLessons =
     resolvedPopulate && typeof resolvedPopulate === "object"
-      ? (resolvedPopulate as Record<string, any>).lessons ?? {}
+      ? (resolvedPopulate as Record<string, unknown>).lessons ?? {}
       : {};
   const urlParams = {
     sort,
@@ -425,7 +425,7 @@ async function applyDropletUpdate(
       return { ok: false, error: relationData.message, data: null };
     }
 
-    const dataToSend: any = {
+    const dataToSend: Record<string, unknown> = {
       ...(data.name && { name: data.name }),
       ...(data.slug && { slug: data.slug }),
       ...(data.focusArea && { focusArea: data.focusArea }),
@@ -483,7 +483,7 @@ async function applyDropletUpdate(
           const errorPath = responseData.error.details.errors[0].path[0];
           errorMessage = `${responseData.error.message} (${errorPath})`;
         }
-      } catch (e) {
+      } catch {
         // If we can't access the error path, just use the main error message
       }
 
@@ -692,16 +692,12 @@ export async function createNewTag(tag: string) {
   }
 }
 
-const CreateDropletSchema = DropletSchema.pick({
-  name: true,
-  focusArea: true,
-  type: true,
-  tagIds: true,
-  learningObjectives: true,
-  difficulty: true,
-});
+type CreateDropletInput = Pick<
+  z.infer<typeof DropletSchema>,
+  "name" | "focusArea" | "type" | "tagIds" | "learningObjectives" | "difficulty"
+>;
 
-export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
+export async function createDroplet(data: CreateDropletInput) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
@@ -864,7 +860,16 @@ export async function duplicateDroplet(dropletId: number) {
         },
       });
 
-      const existingDraftsData = await existingDraftsResponse.json();
+      const existingDraftsData: {
+        data?: {
+          id: number;
+          attributes: {
+            name?: string;
+            slug?: string;
+            authorized_users?: { data?: { id: number }[] };
+          };
+        }[];
+      } = await existingDraftsResponse.json();
 
       console.log("API Response status:", existingDraftsResponse.status);
       console.log("API Response:", JSON.stringify(existingDraftsData, null, 2));
@@ -880,13 +885,12 @@ export async function duplicateDroplet(dropletId: number) {
             name: draft.attributes?.name,
             slug: draft.attributes?.slug,
             authorizedUsers: draft.attributes?.authorized_users?.data?.map(
-              (u: any) => u.id,
+              (u) => u.id,
             ),
           });
 
           const authorizedUserIds =
-            draft.attributes?.authorized_users?.data?.map((u: any) => u.id) ||
-            [];
+            draft.attributes?.authorized_users?.data?.map((u) => u.id) || [];
           console.log("Draft authorized users:", authorizedUserIds);
           console.log(
             "Current user is authorized?",
@@ -1015,7 +1019,8 @@ export async function duplicateDroplet(dropletId: number) {
     // Old rows can hold null in required fields that were added later with a
     // default (callout color and type, answer isCorrect). Strapi fills in a
     // default only when the field is missing, so drop the null and let it.
-    const dropNulls = (obj: any, keys: string[]) => {
+    type Json = Record<string, unknown>;
+    const dropNulls = (obj: Json, keys: string[]): Json => {
       const result = { ...obj };
       for (const key of keys) {
         if (result[key] == null) delete result[key];
@@ -1024,7 +1029,7 @@ export async function duplicateDroplet(dropletId: number) {
     };
 
     // Helper function to remove ids from blocks while preserving structure
-    const cleanBlocks = (blocks: any[]): any[] => {
+    const cleanBlocks = (blocks: Json[]): Json[] => {
       if (!Array.isArray(blocks)) {
         console.log("Blocks is not an array:", blocks);
         return [];
@@ -1034,20 +1039,20 @@ export async function duplicateDroplet(dropletId: number) {
 
       return blocks.map((block, index) => {
         console.log(`Block ${index}:`, block.__component);
-        const { id, ...blockWithoutId } = block;
+        const { id: _id, ...blockWithoutId } = block;
 
         switch (block.__component) {
           case "droplets.quiz":
             if (block.questions) {
               return {
                 ...blockWithoutId,
-                questions: block.questions.map((q: any) => {
-                  const { id: qId, ...questionWithoutId } = q;
+                questions: (block.questions as Json[]).map((q) => {
+                  const { id: _qId, ...questionWithoutId } = q;
                   return {
                     ...questionWithoutId,
                     answerOptions:
-                      q.answerOptions?.map((a: any) => {
-                        const { id: aId, ...answerWithoutId } = a;
+                      (q.answerOptions as Json[] | undefined)?.map((a) => {
+                        const { id: _aId, ...answerWithoutId } = a;
                         return dropNulls(answerWithoutId, ["isCorrect"]);
                       }) || [],
                   };
@@ -1060,8 +1065,8 @@ export async function duplicateDroplet(dropletId: number) {
             if (block.questions) {
               return {
                 ...blockWithoutId,
-                questions: block.questions.map((q: any) => {
-                  const { id: qId, ...questionWithoutId } = q;
+                questions: (block.questions as Json[]).map((q) => {
+                  const { id: _qId, ...questionWithoutId } = q;
                   return questionWithoutId;
                 }),
               };
@@ -1072,18 +1077,18 @@ export async function duplicateDroplet(dropletId: number) {
             if (block.content && Array.isArray(block.content)) {
               return {
                 ...dropNulls(blockWithoutId, ["color", "type"]),
-                content: block.content.map((node: any) => {
-                  const { id: nodeId, ...nodeWithoutId } = node;
+                content: (block.content as Json[]).map((node) => {
+                  const { id: _nodeId, ...nodeWithoutId } = node;
                   if (
                     nodeWithoutId.children &&
                     Array.isArray(nodeWithoutId.children)
                   ) {
-                    nodeWithoutId.children = nodeWithoutId.children.map(
-                      (child: any) => {
-                        const { id: childId, ...childWithoutId } = child;
-                        return childWithoutId;
-                      },
-                    );
+                    nodeWithoutId.children = (
+                      nodeWithoutId.children as Json[]
+                    ).map((child) => {
+                      const { id: _childId, ...childWithoutId } = child;
+                      return childWithoutId;
+                    });
                   }
                   return nodeWithoutId;
                 }),
@@ -1127,7 +1132,7 @@ export async function duplicateDroplet(dropletId: number) {
           );
 
           // Prepare lesson data based on version
-          const lessonData: any = {
+          const lessonData: Record<string, unknown> = {
             name: lesson.name,
             slug: uniqueLessonSlug,
             type: lesson.type,
@@ -1230,10 +1235,18 @@ export async function duplicateDroplet(dropletId: number) {
 }
 
 /** The message in a Strapi error response, plus the field it points at when there is one. */
-function strapiErrorMessage(body: any, fallback: string): string {
+function strapiErrorMessage(
+  body: {
+    error?: {
+      message?: string;
+      details?: { errors?: { path?: string[] }[] };
+    };
+  } | null,
+  fallback: string,
+): string {
   const message = body?.error?.message;
   if (!message) return fallback;
-  const field = body.error.details?.errors?.[0]?.path?.[0];
+  const field = body?.error?.details?.errors?.[0]?.path?.[0];
   return field ? `${message} (${field})` : message;
 }
 
@@ -1385,7 +1398,7 @@ export async function favoriteDroplet(
     }
 
     const latestDroplet = await latestDropletResponse.json();
-    const currentFavorites =
+    const currentFavorites: { id?: number; documentId?: string }[] =
       latestDroplet.data.attributes.usersFavorited?.data || [];
 
     // Entries to keep favorited. Existing favorites come from the response, so
@@ -1394,14 +1407,14 @@ export async function favoriteDroplet(
     if (favoriteState) {
       // Add user to favorites if not already there
       updatedFavorites = currentFavorites.some(
-        (u: any) => u.id === authorizedUser.id,
+        (u) => u.id === authorizedUser.id,
       )
         ? currentFavorites
         : [...currentFavorites, authorizedUser];
     } else {
       // Remove user from favorites
       updatedFavorites = currentFavorites.filter(
-        (u: any) => u.id !== authorizedUser.id,
+        (u) => u.id !== authorizedUser.id,
       );
     }
 

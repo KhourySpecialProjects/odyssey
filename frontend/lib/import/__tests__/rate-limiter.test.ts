@@ -1,9 +1,4 @@
-import {
-  checkRateLimit,
-  getRoleTier,
-  RATE_LIMITS,
-  type AIAction,
-} from "../rate-limiter";
+import { getRoleTier, RATE_LIMITS, type AIAction } from "../rate-limiter";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 const realDateNow = Date.now;

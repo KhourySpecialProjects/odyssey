@@ -24,6 +24,13 @@ import { SetGroupArchivedForMeSchema } from "@/lib/validations/group";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
+// Minimal shape of a due-date row, as read by the pagination helpers below.
+type ExistingDueDate = {
+  id: number;
+  documentId: string;
+  authorized_user?: { id: number } | null;
+};
+
 /**
  * Gets all groups where the authorized user has a management role (creator, admin, or manager).
  * @param authorizedUserId The ID of the authorized user
@@ -587,7 +594,7 @@ export async function updateGroup(
 ): Promise<Group> {
   const path = `/groups/${await resolveDocumentId("groups", groupId)}`;
 
-  const dataToSend: any = {};
+  const dataToSend: Record<string, unknown> = {};
 
   if (data.groupName) dataToSend.groupName = data.groupName;
   if (data.description) dataToSend.description = data.description;
@@ -670,7 +677,7 @@ export async function enrollUsers(group: Group) {
     }
 
     // Need to collect existing enrollments if uniqueDropletIds is not empty
-    let existingSet = new Set<string>();
+    const existingSet = new Set<string>();
 
     if (uniqueDropletIds.length > 0) {
       const pageSize = 250;
@@ -678,7 +685,9 @@ export async function enrollUsers(group: Group) {
 
       while (true) {
         // 1 query: get all existing enrollments for these members + these droplets
-        const existingEnrollments = await fetchAPI<any[]>("/enrollments", {
+        const existingEnrollments = await fetchAPI<
+          { authorizedUser?: { id: number }; droplet?: { id: number } | null }[]
+        >("/enrollments", {
           urlParams: {
             filters: {
               authorizedUser: { id: { $in: memberIds } },
@@ -810,10 +819,10 @@ export async function assignDropletDueDate(
     // Paginate to handle groups larger than Strapi's maxLimit
     const pageSize = 100;
     let page = 1;
-    let allExistingDueDates: any[] = [];
+    let allExistingDueDates: ExistingDueDate[] = [];
 
     while (true) {
-      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+      const dueDatePage = await fetchAPI<ExistingDueDate[]>("/due-dates", {
         urlParams: {
           filters: {
             authorized_user: { id: { $in: memberIds } },
@@ -833,10 +842,13 @@ export async function assignDropletDueDate(
     }
 
     const existingMap = new Map(
-      allExistingDueDates.map((dd) => [
-        dd.authorized_user?.id,
-        { id: dd.id, documentId: dd.documentId },
-      ]),
+      allExistingDueDates.map(
+        (dd) =>
+          [
+            dd.authorized_user?.id,
+            { id: dd.id, documentId: dd.documentId },
+          ] as const,
+      ),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
@@ -948,10 +960,10 @@ export async function assignPlaylistDueDate(
     // Paginate to handle groups larger than Strapi's maxLimit
     const pageSize = 100;
     let page = 1;
-    let allExistingDueDates: any[] = [];
+    let allExistingDueDates: ExistingDueDate[] = [];
 
     while (true) {
-      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+      const dueDatePage = await fetchAPI<ExistingDueDate[]>("/due-dates", {
         urlParams: {
           filters: {
             authorized_user: { id: { $in: memberIds } },
@@ -971,10 +983,13 @@ export async function assignPlaylistDueDate(
     }
 
     const existingMap = new Map(
-      allExistingDueDates.map((dd) => [
-        dd.authorized_user?.id,
-        { id: dd.id, documentId: dd.documentId },
-      ]),
+      allExistingDueDates.map(
+        (dd) =>
+          [
+            dd.authorized_user?.id,
+            { id: dd.id, documentId: dd.documentId },
+          ] as const,
+      ),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
@@ -1134,9 +1149,7 @@ export async function getUserDueDates(
   authorizedUserId: number,
   {
     sort = ["dueDate:asc"],
-    filters,
     pagination = { pageSize: 250, page: 1 },
-    populate,
     fields,
   }: StrapiRequestParams = {},
 ): Promise<DueDate[]> {

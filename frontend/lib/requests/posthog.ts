@@ -24,7 +24,26 @@ function getHeaders(apiKey: string) {
   };
 }
 
-async function runHogQLQuery(query: string): Promise<any[][] | null> {
+interface PostHogInsight {
+  id: number;
+  name?: string | null;
+}
+
+interface PostHogInsightList {
+  results?: PostHogInsight[];
+}
+
+interface PostHogSeriesResult {
+  days?: string[];
+  labels?: string[];
+  data?: number[];
+}
+
+interface PostHogInsightDetail {
+  result?: PostHogSeriesResult[];
+}
+
+async function runHogQLQuery(query: string): Promise<unknown[][] | null> {
   const { apiKey, host } = getPostHogConfig();
   if (!apiKey) {
     console.error("PostHog API key is not configured");
@@ -53,24 +72,25 @@ async function runHogQLQuery(query: string): Promise<any[][] | null> {
       return null;
     }
 
-    const data = await res.json();
+    const data: { results?: unknown[][] } = await res.json();
     return data.results ?? null;
-  } catch (e: any) {
+  } catch (e: unknown) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") {
+    if ((e as Error).name === "AbortError") {
       console.warn("PostHog HogQL query timed out");
     } else {
-      console.error("PostHog HogQL query error:", e.message);
+      console.error("PostHog HogQL query error:", (e as Error).message);
     }
     return null;
   }
 }
 
 // Cache the insights list for the duration of a single request
-let insightsListCache: { data: any; timestamp: number } | null = null;
+let insightsListCache: { data: PostHogInsightList; timestamp: number } | null =
+  null;
 const CACHE_TTL = 5000; // 5 seconds
 
-async function getInsightsList(): Promise<any | null> {
+async function getInsightsList(): Promise<PostHogInsightList | null> {
   if (
     insightsListCache &&
     Date.now() - insightsListCache.timestamp < CACHE_TTL
@@ -108,12 +128,12 @@ async function getInsightsList(): Promise<any | null> {
       return null;
     }
 
-    const data = JSON.parse(listText);
+    const data = JSON.parse(listText) as PostHogInsightList;
     insightsListCache = { data, timestamp: Date.now() };
     return data;
-  } catch (e: any) {
+  } catch (e: unknown) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") {
+    if ((e as Error).name === "AbortError") {
       console.warn("PostHog insights list request timed out");
     }
     return null;
@@ -121,9 +141,9 @@ async function getInsightsList(): Promise<any | null> {
 }
 
 async function fetchInsightByName(
-  nameMatch: (insight: any) => boolean,
+  nameMatch: (insight: PostHogInsight) => boolean | undefined,
   label: string,
-): Promise<any | null> {
+): Promise<PostHogInsightDetail | null> {
   const { apiKey, host } = getPostHogConfig();
   if (!apiKey) return null;
 
@@ -160,10 +180,10 @@ async function fetchInsightByName(
       return null;
     }
 
-    return JSON.parse(insightText);
-  } catch (e: any) {
+    return JSON.parse(insightText) as PostHogInsightDetail;
+  } catch (e: unknown) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") {
+    if ((e as Error).name === "AbortError") {
       console.warn(`PostHog "${label}" insight request timed out`);
     }
     return null;
@@ -171,7 +191,7 @@ async function fetchInsightByName(
 }
 
 function extractTimeSeries(
-  data: any,
+  data: PostHogInsightDetail,
 ): { dates: string[]; values: number[] } | null {
   const result = Array.isArray(data?.result) ? data.result[0] : null;
   const dates: string[] = result?.days ?? result?.labels ?? [];
@@ -202,18 +222,18 @@ export async function fetchDailyActiveUsers(): Promise<
       date: (row[0] as string).split(" ")[0],
       count: row[1] as number,
     }));
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (DAU):", e.message);
+  } catch (e: unknown) {
+    console.error("PostHog Fetch Error (DAU):", (e as Error).message);
     return [];
   }
 }
 
 export async function fetchWeeklyActiveUsers(): Promise<
-  { date: any; count: any }[]
+  { date: string; count: number }[]
 > {
   try {
     const data = await fetchInsightByName(
-      (insight: any) =>
+      (insight: PostHogInsight) =>
         insight.name?.toLowerCase().includes("weekly active users") ||
         insight.name?.toLowerCase().includes("wau"),
       "WAU",
@@ -224,8 +244,8 @@ export async function fetchWeeklyActiveUsers(): Promise<
     if (!series) return [];
 
     return series.dates.map((date, i) => ({ date, count: series.values[i] }));
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (WAU):", e.message);
+  } catch (e: unknown) {
+    console.error("PostHog Fetch Error (WAU):", (e as Error).message);
     return [];
   }
 }
@@ -248,18 +268,18 @@ export async function fetchUniquePageview(): Promise<
       date: (row[0] as string).split(" ")[0],
       count: row[1] as number,
     }));
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (pageviews):", e.message);
+  } catch (e: unknown) {
+    console.error("PostHog Fetch Error (pageviews):", (e as Error).message);
     return [];
   }
 }
 
 export async function fetchWeeklyNewUsers(): Promise<
-  { date: any; count: any }[]
+  { date: string; count: number }[]
 > {
   try {
     const data = await fetchInsightByName(
-      (insight: any) =>
+      (insight: PostHogInsight) =>
         insight.name?.toLowerCase().includes("growth accounting"),
       "new users",
     );
@@ -269,8 +289,8 @@ export async function fetchWeeklyNewUsers(): Promise<
     if (!series) return [];
 
     return series.dates.map((date, i) => ({ date, count: series.values[i] }));
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (new users):", e.message);
+  } catch (e: unknown) {
+    console.error("PostHog Fetch Error (new users):", (e as Error).message);
     return [];
   }
 }
@@ -337,8 +357,11 @@ export async function fetchAvgSessionDuration(): Promise<
       date: (row[0] as string).split(" ")[0],
       duration: row[1] as number,
     }));
-  } catch (e: any) {
-    console.error("PostHog Fetch Error (session duration):", e.message);
+  } catch (e: unknown) {
+    console.error(
+      "PostHog Fetch Error (session duration):",
+      (e as Error).message,
+    );
     return [];
   }
 }
