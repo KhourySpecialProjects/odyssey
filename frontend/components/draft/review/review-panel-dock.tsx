@@ -56,7 +56,10 @@ export function ReviewPanelDock({
   const rail = mode === "rail";
   // Below 1280 the open panel is a modal drawer; above, a plain landmark
   const isXl = useMediaQuery("(min-width: 1280px)");
-  const modal = !isXl && !rail;
+  // The query reads false until its effect runs; keep the dialog role off until then
+  const [queryRead, setQueryRead] = useState(false);
+  useEffect(() => setQueryRead(true), []);
+  const modal = queryRead && !isXl && !rail;
   const asideId = useId();
   const aside = useRef<HTMLElement>(null);
   const mounted = useRef(false);
