@@ -279,6 +279,17 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
 }
 
 export async function deepDeleteDroplet(id: number) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error, data: null };
+  // Same write rule as updateDroplet: an author, or a System Admin or Content
+  // Editor; Faculty only their own; authors are frozen while in review.
+  const check = await checkDropletContentWrite(gate.user, id);
+  if (!check.ok) return { ok: false, error: check.error, data: null };
+  return deleteDropletRecord(id);
+}
+
+/** Raw delete with no auth. Only call it after the caller has been checked. */
+async function deleteDropletRecord(id: number) {
   try {
     const droplet = await getDropletById<Droplet>(id, {
       fields: ["id", "name", "slug"],
@@ -1186,7 +1197,7 @@ export async function duplicateDroplet(dropletId: number) {
         // A draft missing lessons can't be left behind: the next Edit would
         // open it, and publishing it would delete those lessons from the
         // live droplet along with their students' progress.
-        const cleanup = await deepDeleteDroplet(newDropletId);
+        const cleanup = await deleteDropletRecord(newDropletId);
         const reason =
           failure.reason instanceof Error
             ? failure.reason.message

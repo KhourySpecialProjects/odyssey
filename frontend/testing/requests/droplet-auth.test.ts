@@ -2,6 +2,7 @@
 import {
   togglePresentationEnabled,
   setDropletHidden,
+  deepDeleteDroplet,
 } from "@/lib/requests/droplet";
 import { requireRole } from "@/lib/auth/require-role";
 import { fetchAPI } from "@/lib/utils";
@@ -159,6 +160,57 @@ describe("setDropletHidden: extra cases", () => {
     const result = await setDropletHidden(1, true);
 
     expect(result).toEqual({ success: false, error: "forbidden" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockedRevalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+describeServerActionAuth("deepDeleteDroplet", {
+  requireRole: mockedRequireRole,
+  invoke: () => deepDeleteDroplet(1),
+  mutations: () => [fetchMock, mockedRevalidateTag],
+  denial: {
+    kind: "owner",
+    nonOwner: authFixtures.as({ id: 99 }),
+    arrange: () => {
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
+    },
+  },
+  authorized: {
+    as: authFixtures.as({ id: 7 }),
+    arrange: () => {
+      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
+      fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+    },
+    expect: (result) => {
+      expect(result).toMatchObject({ ok: true });
+    },
+  },
+  expectDenied: (result, code) =>
+    expect(result).toEqual({ ok: false, error: code, data: null }),
+});
+
+describe("deepDeleteDroplet: extra cases", () => {
+  it("allows an admin to delete a droplet owned by someone else", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(1));
+    mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
+
+    expect(await deepDeleteDroplet(1)).toMatchObject({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses an author while the droplet is in review", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
+    mockedFetchAPI.mockResolvedValue([
+      makeDroplet({ id: 1, inReview: true, authorized_users: [{ id: 7 }] }),
+    ]);
+
+    expect(await deepDeleteDroplet(1)).toEqual({
+      ok: false,
+      error: "in_review",
+      data: null,
+    });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mockedRevalidateTag).not.toHaveBeenCalled();
   });

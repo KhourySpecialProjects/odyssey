@@ -835,6 +835,36 @@ describe("ContentActionButton", () => {
       });
       expect(mockReplace).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ["forbidden", "You can't do this."],
+      ["in_review", /in review/i],
+    ])(
+      "shows a message and stays when the server refuses (%s)",
+      async (error, message) => {
+        mockDeepDeleteDroplet.mockResolvedValue({
+          ok: false,
+          error,
+          data: null,
+        });
+        renderDelete();
+        openDialog();
+        await userEvent.type(
+          screen.getByPlaceholderText(/droplet name/i),
+          mockDroplet.name,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+        await waitFor(() => {
+          expect(mockToast.error).toHaveBeenCalledWith(
+            typeof message === "string"
+              ? message
+              : expect.stringMatching(message),
+          );
+        });
+        expect(mockReplace).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("Publish Draft Action", () => {
