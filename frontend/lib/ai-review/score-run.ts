@@ -16,6 +16,7 @@ import {
   type FinishRunInput,
   type RunScoreInput,
 } from "./run-routes";
+import type { PromptParts } from "./system-prompt";
 import { findingTexts, toFindings, type FindingTexts } from "./findings";
 import type { AiRunSection } from "@/types";
 import type {
@@ -34,6 +35,8 @@ export type ScoringRun = {
   criteria: Criterion[];
   model: AiReviewModel;
   effort: Effort;
+  /** The wording this run uses, pinned when it started */
+  prompt: PromptParts;
 };
 
 export type RunDeps = {
@@ -306,7 +309,11 @@ export async function runAiScoring(
           })
         : [];
 
-    const options = { model: run.model, effort: run.effort };
+    const options = {
+      model: run.model,
+      effort: run.effort,
+      prompt: run.prompt,
+    };
     const lessonScores: LessonScores[] = [];
     const requests = buildLessonRequests(snapshot, run.criteria, options);
     const ids = requests.map((r) => r.lessonId!);

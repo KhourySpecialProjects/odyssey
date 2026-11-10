@@ -7,6 +7,8 @@ import { checkRateLimit } from "@/lib/import/rate-limiter";
 import { startRunRoute } from "@/lib/ai-review/run-routes";
 import { runAiScoring } from "@/lib/ai-review/score-run";
 import { PROMPT_VERSION } from "@/lib/ai-review/prompt";
+import { loadStoredPrompt } from "@/lib/ai-review/prompt-settings";
+import { DEFAULT_PROMPT } from "@/lib/ai-review/system-prompt";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import {
   authFixtures,
@@ -30,6 +32,10 @@ jest.mock("@/lib/import/rate-limiter", () => ({
 jest.mock("@/lib/ai-review/run-routes", () => ({
   ...jest.requireActual("@/lib/ai-review/run-routes"),
   startRunRoute: jest.fn(),
+}));
+jest.mock("@/lib/ai-review/prompt-settings", () => ({
+  ...jest.requireActual("@/lib/ai-review/prompt-settings"),
+  loadStoredPrompt: jest.fn(),
 }));
 jest.mock("@/lib/ai-review/score-run", () => ({ runAiScoring: jest.fn() }));
 
@@ -70,6 +76,11 @@ const arrangeStart = () => {
     data: { id: 5, round: 1, key: "3:9:1", state: "open" },
   });
   jest.mocked(checkRateLimit).mockReturnValue({ allowed: true });
+  jest.mocked(loadStoredPrompt).mockResolvedValue({
+    instructions: null,
+    lessonScope: null,
+    overallScope: null,
+  });
   mockedStart.mockResolvedValue({
     ok: true,
     data: { dropletId: 3, run: RUN, criteria: CRITERIA },
@@ -170,6 +181,7 @@ describe("startAiScoring", () => {
       userId: 9,
       model: "claude-sonnet-5-5",
       promptVersion: PROMPT_VERSION,
+      prompt: DEFAULT_PROMPT,
     });
     expect(revalidateTag).toHaveBeenCalledWith("review-3");
     // The scoring itself waits until after the response.
@@ -184,9 +196,50 @@ describe("startAiScoring", () => {
         criteria: CRITERIA,
         model: "claude-sonnet-5-5",
         effort: "high",
+        prompt: DEFAULT_PROMPT,
       },
       { client: expect.anything() },
     );
+  });
+
+  it("pins saved custom text and its suffixed version on the run", async () => {
+    arrangeStart();
+    jest.mocked(loadStoredPrompt).mockResolvedValue({
+      instructions: null,
+      lessonScope: "Mine",
+      overallScope: null,
+    });
+
+    await startAiScoring(3);
+
+    const prompt = { ...DEFAULT_PROMPT, lessonScope: "Mine" };
+    expect(mockedStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        promptVersion: expect.stringMatching(/^2026-10-30\.1\+[0-9a-f]{8}$/),
+        prompt,
+      }),
+    );
+    await (mockedAfter.mock.calls[0][0] as () => Promise<void>)();
+    expect(runAiScoring).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt }),
+      expect.anything(),
+    );
+  });
+
+  it("fails closed when the prompt can't be read, before the rate limit", async () => {
+    arrangeStart();
+    jest.mocked(loadStoredPrompt).mockRejectedValue(new Error("down"));
+
+    const result = await startAiScoring(3);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "failed",
+      data: null,
+      message: "Couldn't read the Scorecard prompts. Try again.",
+    });
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(mockedStart).not.toHaveBeenCalled();
   });
 
   it("refuses a second run while one is going, with Strapi's message", async () => {
