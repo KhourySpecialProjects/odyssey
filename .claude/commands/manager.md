@@ -162,6 +162,12 @@ the manager's model. Instead:
     not in the same tool block as another command. The repo hook blocks
     anything else.
   - Don't use `git stash`.
+  - Commit as the owner, so the work counts toward their GitHub
+    contributions:
+    `git -c user.name=<owner's git name> -c user.email=<owner's git email> commit -m "…"`,
+    with no Co-Authored-By or other trailers. Take the name and email from
+    the owner's local `git config user.name` and `user.email`. Cloud
+    sessions otherwise commit as `Claude <noreply@anthropic.com>`.
   - End with the branch, commit SHA, check results and a PR body.
 - **Long reports get cut off.** `get_run_log` keeps about 4,000 characters of
   the final message, so a long deliverable (a plan or review) goes in a file

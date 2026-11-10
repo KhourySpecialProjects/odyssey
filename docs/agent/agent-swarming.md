@@ -309,6 +309,11 @@ waste. Give each one:
    `--findRelatedTests`.
 6. **The report you want back:** branch, commit SHA, check results and a PR
    body.
+7. **Who the commit is from:**
+   `git -c user.name=<your git name> -c user.email=<your git email> commit`.
+   Without it, cloud sessions commit as `Claude <noreply@anthropic.com>`,
+   and GitHub doesn't count those commits toward your contributions. On
+   2026-11-10 that happened to all 23 branches.
 
 ## What we measured on 2026-11-10
 

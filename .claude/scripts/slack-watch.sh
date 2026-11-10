@@ -52,6 +52,8 @@ If there are none, print exactly NONE. Print nothing else."
     fails=0
     printf '%s\n' "$OUT" | grep -E '^MSG [0-9]+\.[0-9]+ U[A-Z0-9]+ ([0-9]+\.[0-9]+|top)$' |
       while read -r _ ts user thread; do
+        # Haiku sometimes prints a thread's old parent message; skip anything not newer than LAST
+        awk -v a="$ts" -v b="$LAST" 'BEGIN { exit !(a + 0 > b + 0) }' || continue
         if ! grep -qx "$ts" "$SEEN"; then
           echo "$ts" >> "$SEEN"
           echo "NEW ts=$ts user=$user thread=$thread"
