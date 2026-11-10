@@ -56,3 +56,31 @@ export function resolvePrompt(stored: StoredPrompt): ResolvedPrompt {
     .slice(0, 8);
   return { parts, version: `${PROMPT_VERSION}+${hash}`, custom };
 }
+
+export type PromptSavedBy = { name: string | null; at: string };
+
+/** Who saved the prompts last and when (ODY-915); null if unknown or the read fails. */
+export async function loadPromptSavedBy(): Promise<PromptSavedBy | null> {
+  try {
+    const row = await fetchAPI<{
+      promptUpdatedAt?: string | null;
+      promptUpdatedBy?: {
+        firstName?: string | null;
+        lastName?: string | null;
+      } | null;
+    } | null>("/ai-scoring-setting", {
+      urlParams: {
+        fields: ["promptUpdatedAt"],
+        populate: { promptUpdatedBy: { fields: ["firstName", "lastName"] } },
+      },
+      cache: "no-store",
+    });
+    if (!row?.promptUpdatedAt) return null;
+    const user = row.promptUpdatedBy;
+    const name =
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
+    return { name, at: row.promptUpdatedAt };
+  } catch {
+    return null;
+  }
+}

@@ -101,16 +101,38 @@ export const AI_SCORING_PROMPT_LIMITS = {
 
 export type PromptParts = Record<keyof typeof AI_SCORING_PROMPT_LIMITS, string | null>;
 
-/** Saves the three prompt parts (null = code default), seeding the row if missing. */
-export async function savePromptSettings(parts: PromptParts): Promise<PromptParts> {
+/**
+ * Saves the three prompt parts (null = code default), seeding the row if
+ * missing, and stamps who saved them and when (ODY-915). `userId` is an
+ * authorized-user id; null (no user) clears the previous name. Throws
+ * `UnknownPromptUserError` for an id that matches no user.
+ */
+export class UnknownPromptUserError extends Error {}
+
+export async function savePromptSettings(
+  parts: PromptParts,
+  userId: number | null = null,
+): Promise<PromptParts> {
   return strapi.db.transaction(async () => {
+    let userDocumentId: string | null = null;
+    if (userId !== null) {
+      const user = (await strapi
+        .documents('api::authorized-user.authorized-user')
+        .findFirst({ filters: { id: userId }, fields: ['documentId'] } as any)) as Row | null;
+      if (!user) throw new UnknownPromptUserError('No such user');
+      userDocumentId = user.documentId;
+    }
     await lockAiScoringSettings();
     const row = (await strapi
       .documents(SETTINGS_UID)
       .findFirst({ sort: ['id:asc'], fields: ['documentId'] } as any)) as Row;
     const saved = (await strapi.documents(SETTINGS_UID).update({
       documentId: row.documentId,
-      data: parts,
+      data: {
+        ...parts,
+        promptUpdatedBy: userDocumentId,
+        promptUpdatedAt: new Date().toISOString(),
+      },
       fields: ['instructions', 'lessonScope', 'overallScope'],
     } as any)) as Row;
     return {

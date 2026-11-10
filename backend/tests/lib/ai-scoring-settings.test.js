@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { setupStrapi, teardownStrapi } = require('../helpers/strapi');
 const { createFullAccessToken } = require('../helpers/api-token');
+const { USER_UID, userData } = require('../helpers/fixtures');
 
 const SETTINGS_UID = 'api::ai-scoring-setting.ai-scoring-setting';
 
@@ -172,6 +173,51 @@ describe('REST', () => {
       expect(res.status).toBe(400);
       expect((await stored()).instructions).toBe('Kept');
       expect(Number((await stored()).monthlyCapUsd)).toBe(25);
+    });
+
+    describe('who saved (ODY-915)', () => {
+      const stamped = () =>
+        settings().findFirst({ populate: { promptUpdatedBy: { fields: ['id'] } } });
+      let user;
+      beforeAll(async () => {
+        user = await strapi.documents(USER_UID).create({ data: userData() });
+      });
+
+      it('records the user and the time', async () => {
+        const res = await save(parts({ userId: user.id }));
+
+        expect(res.status).toBe(200);
+        const row = await stamped();
+        expect(row.promptUpdatedBy.id).toBe(user.id);
+        expect(Date.now() - new Date(row.promptUpdatedAt).getTime()).toBeLessThan(60000);
+        expect(res.body.data).not.toHaveProperty('userId');
+      });
+
+      it('still saves without a user, and clears the previous one', async () => {
+        await save(parts({ userId: user.id }));
+        const res = await save(parts({ instructions: 'Anon' }));
+
+        expect(res.status).toBe(200);
+        const row = await stamped();
+        expect(row.instructions).toBe('Anon');
+        expect(row.promptUpdatedBy).toBeNull();
+        expect(row.promptUpdatedAt).toBeTruthy();
+      });
+
+      it.each([
+        ['an unknown user', 999999999],
+        ['a string', 'abc'],
+        ['a fraction', 1.5],
+        ['zero', 0],
+      ])('refuses %s and leaves the row unchanged', async (_n, userId) => {
+        await save(parts({ instructions: 'Kept', userId: user.id }));
+        const res = await save(parts({ instructions: 'Changed', userId }));
+
+        expect(res.status).toBe(400);
+        const row = await stamped();
+        expect(row.instructions).toBe('Kept');
+        expect(row.promptUpdatedBy.id).toBe(user.id);
+      });
     });
 
     it('seeds the row when it is missing, then saves', async () => {

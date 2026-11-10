@@ -58,7 +58,10 @@ describe("saveAiScoringPrompt", () => {
     expect(String(url)).toMatch(/\/api\/ai-scoring-setting\/prompt$/);
     expect(init?.method).toBe("POST");
     expect(init?.headers).toMatchObject({ "Strapi-Response-Format": "v4" });
-    expect(JSON.parse(String(init?.body))).toEqual({ data: parts });
+    // The saver's id comes from the session (ODY-915), not the input.
+    expect(JSON.parse(String(init?.body))).toEqual({
+      data: { ...parts, userId: 1 },
+    });
     expect(revalidatePath).toHaveBeenCalledWith("/admin/scorecard-prompts");
   });
 
@@ -72,6 +75,19 @@ describe("saveAiScoringPrompt", () => {
       JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).data.overallScope,
     ).toBeNull();
     expect(result.ok && result.data.custom.overallScope).toBe(false);
+  });
+
+  it("sends the session user's id, and refuses a userId in the input", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.admin(42));
+    await saveAiScoringPrompt(parts);
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).data.userId,
+    ).toBe(42);
+
+    fetchMock.mockClear();
+    const result = await saveAiScoringPrompt({ ...parts, userId: 7 } as never);
+    expect(result).toMatchObject({ ok: false, error: "invalid_input" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("refuses a blank part without calling Strapi", async () => {
