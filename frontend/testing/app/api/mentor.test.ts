@@ -191,6 +191,7 @@ describe("POST /api/mentor", () => {
       "forbidden",
     ],
     ["a yes/no hint", () => {}, hint(42, 421), 400, "cannot_answer"],
+    ["a hint on the right pick", () => {}, hint(41, 411), 400, "cannot_answer"],
     [
       "a hint on a question with two right answers",
       () => {},

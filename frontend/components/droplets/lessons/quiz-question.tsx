@@ -14,12 +14,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { RenderedContent } from "@/components/ui/rendered-content";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, Sparkles } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
 import posthog from "posthog-js";
+import { useMentorHint } from "@/hooks/use-mentor-hint";
+import { useLessonPanelStore } from "@/stores/lesson-panel-store";
+import { MentorHint } from "@/components/droplets/lessons/mentor/mentor-hint";
 
 declare global {
   interface Window {
@@ -47,6 +50,10 @@ export function QuizQuestionBlock({
   userId?: number;
 }) {
   const [showResult, setShowResult] = useState(false);
+  const mentorOn = useLessonPanelStore(
+    (s) => s.mentorAvailable && s.ownerLessonId === lessonId,
+  );
+  const mentorHint = useMentorHint({ dropletId: dropletId ?? 0, lessonId });
   const correctAnswers = useMemo(
     () => question.answerOptions.filter((option) => option.isCorrect),
     [question],
@@ -169,6 +176,24 @@ export function QuizQuestionBlock({
     );
   }
 
+  const picked = form.getValues("answerIds");
+  const answeredWrong = showResult && !areAnswersCorrect(picked);
+  const hint = mentorHint.hint;
+  // The route decides for real; this only hides a button it would refuse
+  const canExplain =
+    answeredWrong &&
+    mentorOn &&
+    dropletId !== undefined &&
+    question.answerOptions.length >= 3 &&
+    correctAnswers.length === 1 &&
+    picked.length === 1;
+  const hintBusy = hint !== null && hint.status !== "error";
+
+  function explain() {
+    if (hintBusy) return;
+    void mentorHint.explain(question.id, picked.map(Number));
+  }
+
   return (
     <>
       <RenderedContent
@@ -178,66 +203,87 @@ export function QuizQuestionBlock({
       />
 
       {showResult ? (
-        <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
-          {areAnswersCorrect(form.getValues("answerIds")) ? (
-            <div className="flex flex-col items-center">
-              <Badge
-                className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
-                role="status"
-              >
-                That&rsquo;s Right!
-              </Badge>
+        <>
+          <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
+            {areAnswersCorrect(form.getValues("answerIds")) ? (
+              <div className="flex flex-col items-center">
+                <Badge
+                  className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
+                  role="status"
+                >
+                  That&rsquo;s Right!
+                </Badge>
 
-              <Button
-                before={<ArrowLeftIcon />}
-                variant="outline"
-                size="sm"
-                onClick={() => setShowResult(false)}
-                className="mt-2"
-              >
-                View Answer
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Badge
-                className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200"
-                role="status"
-              >
-                Not Quite
-              </Badge>
-
-              <div className="my-8">
-                <span className="text-sm font-bold text-sky-700 uppercase">
-                  You selected:
-                </span>
-                <ul>
-                  {form.getValues("answerIds").map((id) => {
-                    const selectedAnswer = question.answerOptions.find(
-                      (opt) => String(opt.id) === id,
-                    );
-                    return selectedAnswer ? (
-                      <li key={id}>
-                        <RenderedContent
-                          html={selectedAnswer.content}
-                          className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
-                        />
-                      </li>
-                    ) : null;
-                  })}
-                </ul>
+                <Button
+                  before={<ArrowLeftIcon />}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowResult(false)}
+                  className="mt-2"
+                >
+                  View Answer
+                </Button>
               </div>
+            ) : (
+              <>
+                <Badge
+                  className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200"
+                  role="status"
+                >
+                  Not Quite
+                </Badge>
 
-              <Button
-                before={<ArrowLeftIcon />}
-                variant="outline"
-                onClick={() => setShowResult(false)}
-              >
-                Try Again
-              </Button>
-            </>
+                <div className="my-8">
+                  <span className="text-sm font-bold text-sky-700 uppercase">
+                    You selected:
+                  </span>
+                  <ul>
+                    {form.getValues("answerIds").map((id) => {
+                      const selectedAnswer = question.answerOptions.find(
+                        (opt) => String(opt.id) === id,
+                      );
+                      return selectedAnswer ? (
+                        <li key={id}>
+                          <RenderedContent
+                            html={selectedAnswer.content}
+                            className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
+                          />
+                        </li>
+                      ) : null;
+                    })}
+                  </ul>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button
+                    before={<ArrowLeftIcon />}
+                    variant="outline"
+                    onClick={() => {
+                      mentorHint.clear();
+                      setShowResult(false);
+                    }}
+                  >
+                    Try Again
+                  </Button>
+                  {canExplain && (
+                    <Button
+                      before={<Sparkles className="text-mentor" />}
+                      variant="outline"
+                      className="border-mentor-line text-mentor-text"
+                      aria-disabled={hintBusy}
+                      onClick={explain}
+                    >
+                      Explain my answer
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+          {answeredWrong && hint && (
+            <MentorHint hint={hint} onRetry={explain} />
           )}
-        </div>
+        </>
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
