@@ -71,6 +71,7 @@ describe("scanDroplet", () => {
       needsAttention: 2,
       couldNotCheck: 3,
       results: [],
+      contentHash: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
   });
 
@@ -121,7 +122,9 @@ describe("scanDroplet", () => {
         .sort(),
     ).toEqual(dropletKeys.sort());
     const lessonKeys = [
-      ...(populate.lessons.fields ?? []).filter((k) => k !== "orderIndex"),
+      ...(populate.lessons.fields ?? []).filter(
+        (k) => k !== "orderIndex" && k !== "slug", // slug is for page links
+      ),
       ...Object.keys(populate.lessons.populate ?? {}),
     ];
     expect(

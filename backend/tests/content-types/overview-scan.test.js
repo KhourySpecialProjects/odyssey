@@ -45,6 +45,7 @@ describe('overview-scan (ODY-788)', () => {
     expect(res.body.data).toEqual([
       expect.objectContaining({
         rulesVersion: scan.rulesVersion,
+        contentHash: scan.contentHash,
         passed: 22,
         needsAttention: 1,
         couldNotCheck: 0,

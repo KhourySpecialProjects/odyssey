@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getCachedDraftDropletBySlug } from "@/lib/requests/cached";
-import { getDropletById } from "@/lib/requests/droplet";
+import { loadScanDocument } from "@/lib/overview-scan/scan";
 import {
   getLatestOverviewScan,
   getScanDismissals,
@@ -8,7 +8,6 @@ import {
 import { CHECKS } from "@/lib/overview-scan/checks";
 import { buildScanView } from "@/lib/overview-scan/view";
 import { OverviewScanPage } from "@/components/draft/overview-scan/overview-scan-page";
-import type { Droplet } from "@/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,19 +24,7 @@ export default async function ScanPage({ params }: Props) {
 
   const [scan, fresh, dismissed] = await Promise.all([
     getLatestOverviewScan(droplet.id),
-    getDropletById<Pick<Droplet, "lessons" | "updatedAt">>(
-      droplet.id,
-      {
-        fields: ["updatedAt"],
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug", "orderIndex", "updatedAt"],
-            sort: ["orderIndex:asc", "id:asc"],
-          },
-        },
-      },
-      { fresh: true },
-    ),
+    loadScanDocument(droplet.id),
     getScanDismissals(droplet.id),
   ]);
   if (!scan.ok && scan.error !== "failed") return notFound();
@@ -45,12 +32,16 @@ export default async function ScanPage({ params }: Props) {
   if (!dismissed.ok)
     console.error("getScanDismissals failed:", dismissed.error);
 
-  const lessons = fresh.lessons ?? [];
+  const lessons = fresh.lessons.map((l) => ({
+    id: l.id,
+    name: l.name,
+    slug: l.slug ?? "",
+  }));
   const view = buildScanView({
     checks: CHECKS,
     scan: scan.data,
     lessons,
-    dropletUpdatedAt: fresh.updatedAt,
+    contentHash: fresh.contentHash,
     slug,
   });
 

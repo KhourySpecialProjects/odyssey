@@ -96,7 +96,6 @@ export type ViewLesson = {
   id: number;
   name: string;
   slug: string;
-  updatedAt?: string;
 };
 
 export const plural = (n: number, word: string) =>
@@ -184,13 +183,14 @@ export function buildScanView({
   checks,
   scan,
   lessons,
-  dropletUpdatedAt,
+  contentHash,
   slug,
 }: {
   checks: readonly Check[];
   scan: OverviewScan | null;
   lessons: ViewLesson[];
-  dropletUpdatedAt?: string;
+  /** Hash of the droplet's current ScanDocument */
+  contentHash?: string;
   slug: string;
 }): ScanView {
   const saved = new Map((scan?.results ?? []).map((r) => [r.id, r]));
@@ -256,13 +256,13 @@ export function buildScanView({
     rulesVersion: RULES_VERSION,
     ruleCount: checks.reduce((n, c) => n + c.rules.length, 0),
     checksChanged: !!scan && (scan.rulesVersion !== RULES_VERSION || missing),
-    // Lock heartbeats bump updatedAt, so this can show falsely; deleting an unflagged
-    // lesson is missed (ODY-878).
+    // ODY-878: a content hash, so lock writes don't count and deletions do. A scan
+    // saved before the hash existed shows only the deleted flagged lesson case.
     editedSince:
       !!scan &&
-      ([dropletUpdatedAt, ...lessons.map((l) => l.updatedAt)].some(
-        (t) => !!t && Date.parse(t) > Date.parse(scan.ranAt),
-      ) ||
+      ((!!scan.contentHash &&
+        !!contentHash &&
+        scan.contentHash !== contentHash) ||
         scan.results.some((c) =>
           c.rules.some((r) =>
             r.flags.some(
