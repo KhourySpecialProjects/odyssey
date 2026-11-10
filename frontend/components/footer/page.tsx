@@ -13,7 +13,7 @@ export default async function Footer() {
   return (
     <footer
       id="site-footer"
-      className="relative z-50 w-full scale-x-[0.8] bg-[#83C1E1] md:scale-x-100 dark:bg-[#3A6B85]"
+      className="relative z-50 w-full bg-[#83C1E1] dark:bg-[#3A6B85]"
     >
       <div className="flex w-full flex-col items-center">
         <FooterWave />
