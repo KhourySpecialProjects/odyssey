@@ -1,6 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
+import {
+  updateDroplet,
+  publishDraftToOriginal,
+  deepDeleteDroplet,
+} from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Droplet } from "@/types";
@@ -29,6 +33,7 @@ const mockUpdateDroplet = updateDroplet as jest.MockedFunction<
 >;
 const mockPublishDraftToOriginal =
   publishDraftToOriginal as jest.MockedFunction<typeof publishDraftToOriginal>;
+const mockDeepDeleteDroplet = jest.mocked(deepDeleteDroplet);
 const mockSubmitForReview = jest.mocked(submitForReview);
 const mockWithdrawFromReview = jest.mocked(withdrawFromReview);
 const mockSendFeedback = jest.mocked(sendFeedback);
@@ -40,8 +45,10 @@ const mockToast = {
 
 const mockRefresh = jest.fn();
 
+const mockReplace = jest.fn();
 (useRouter as jest.Mock).mockReturnValue({
   push: mockPush,
+  replace: mockReplace,
   refresh: mockRefresh,
 });
 
@@ -758,6 +765,75 @@ describe("ContentActionButton", () => {
           expect.stringMatching(/could not be confirmed/i),
         );
       });
+    });
+  });
+
+  describe("Delete Draft Action", () => {
+    const renderDelete = () =>
+      render(
+        <ContentActionButton
+          droplet={mockDroplet}
+          actionType="deleteDraft"
+          buttonText="Delete draft"
+        />,
+      );
+    const openDialog = () =>
+      fireEvent.click(screen.getByRole("button", { name: /delete draft/i }));
+
+    it("keeps Confirm disabled until the droplet name is typed", async () => {
+      renderDelete();
+      openDialog();
+      const confirm = screen.getByRole("button", { name: /confirm/i });
+      expect(confirm).toBeDisabled();
+      await userEvent.type(
+        screen.getByPlaceholderText(/droplet name/i),
+        "Nope",
+      );
+      expect(confirm).toBeDisabled();
+      expect(mockDeepDeleteDroplet).not.toHaveBeenCalled();
+    });
+
+    it("deletes the draft and returns to My Content", async () => {
+      mockDeepDeleteDroplet.mockResolvedValue({
+        ok: true,
+        error: null,
+        data: null,
+      });
+      renderDelete();
+      openDialog();
+      await userEvent.type(
+        screen.getByPlaceholderText(/droplet name/i),
+        mockDroplet.name,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith("/my-content");
+      });
+      expect(mockDeepDeleteDroplet).toHaveBeenCalledWith(mockDroplet.id);
+      expect(mockToast.success).toHaveBeenCalledWith("Draft deleted");
+    });
+
+    it("shows an error and stays when the delete fails", async () => {
+      mockDeepDeleteDroplet.mockResolvedValue({
+        ok: false,
+        error: "Failed to delete droplet.",
+        data: null,
+      });
+      renderDelete();
+      openDialog();
+      await userEvent.type(
+        screen.getByPlaceholderText(/droplet name/i),
+        mockDroplet.name,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith(
+          "Failed to delete droplet.",
+        );
+      });
+      expect(mockReplace).not.toHaveBeenCalled();
     });
   });
 

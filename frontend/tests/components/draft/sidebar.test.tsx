@@ -495,6 +495,7 @@ describe("Sidebar", () => {
       );
       return screen
         .queryAllByTestId("content-action-button")
+        .filter((btn) => btn.getAttribute("data-action-type") !== "deleteDraft")
         .map((btn) => [
           btn.getAttribute("data-action-type"),
           btn.getAttribute("data-button-text"),
@@ -571,6 +572,58 @@ describe("Sidebar", () => {
       expect(renderActions([role], draftStates[state], isAuthor)).toEqual(
         expectedActions,
       );
+    });
+
+    describe("Delete draft", () => {
+      const deleteShown = (
+        roles: AuthorizedUserRoleTitle[],
+        droplet: object,
+        isAuthor: boolean,
+      ) => {
+        render(
+          <Sidebar
+            user={{ ...mockUser, roles } as any}
+            droplet={droplet as any}
+            availableDroplets={[]}
+            {...defaultProps}
+            isAuthor={isAuthor}
+          />,
+        );
+        return screen
+          .queryAllByTestId("content-action-button")
+          .some((b) => b.getAttribute("data-action-type") === "deleteDraft");
+      };
+
+      it.each([
+        [ContentCreator, "new draft", true, true],
+        [ContentCreator, "edit draft", true, true],
+        [Faculty, "new draft", true, true],
+        [SysAdmin, "new draft", true, true],
+        // frozen while in review
+        [ContentCreator, "new draft in review", true, false],
+        [SysAdmin, "new draft in review", true, false],
+        // not the author
+        [SysAdmin, "new draft", false, false],
+        [ContentEditor, "new draft in review", false, false],
+        [ContentCreator, "new draft", false, false],
+      ] as [
+        AuthorizedUserRoleTitle,
+        keyof typeof draftStates,
+        boolean,
+        boolean,
+      ][])("%s, %s, author %s: shown %s", (role, state, isAuthor, shown) => {
+        expect(deleteShown([role], draftStates[state], isAuthor)).toBe(shown);
+      });
+
+      it("never shows on a published droplet", () => {
+        expect(
+          deleteShown(
+            [SysAdmin],
+            { ...mockDroplet, status: "published" },
+            true,
+          ),
+        ).toBe(false);
+      });
     });
 
     it.each([
