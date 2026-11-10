@@ -366,7 +366,7 @@ export function AddLesson({
             )}
 
             {selectedDropletId && availableLessons.length === 0 && (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 No lessons available in this droplet
               </p>
             )}

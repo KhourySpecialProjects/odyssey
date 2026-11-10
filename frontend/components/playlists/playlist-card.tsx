@@ -181,7 +181,7 @@ export function PlaylistCard({
                     ref={textRef}
                     className={`${
                       descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md text-slate-700 dark:text-slate-300`}
+                    } text-base text-slate-700 dark:text-slate-300`}
                   >
                     {strippedDescription}
                   </p>

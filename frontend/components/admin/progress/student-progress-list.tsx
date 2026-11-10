@@ -85,7 +85,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <h3 className="font-medium">{playlist.name}</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {playlist.authorized_users.length} enrolled student
                     {playlist.authorized_users.length !== 1 ? "s" : ""}
                   </p>

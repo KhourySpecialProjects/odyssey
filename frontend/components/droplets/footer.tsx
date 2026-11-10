@@ -219,7 +219,7 @@ export default function DropletFooter({
     currentLessonId !== undefined && isViewed(currentLessonId);
 
   return (
-    <div className="justify-left flex w-full flex-col">
+    <div className="flex w-full flex-col justify-start">
       <div className="mt-2 flex w-full flex-row items-center justify-between gap-2 pb-12">
         {previous ? (
           <PaginationLinkWrapper link={previous.link} canProceed={true}>

@@ -68,7 +68,7 @@ const DropletItem = ({
       <div className="group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex items-center p-4">
           <div className="flex-grow">
-            <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
+            <div className="mb-2 flex flex-none flex-row flex-wrap gap-1.5">
               <Badge variant="default" className="dark:bg-slate-700">
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
@@ -90,7 +90,7 @@ const DropletItem = ({
             </span>
 
             {droplet.lessons && (
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {droplet.lessons.length} lessons
               </p>
             )}
@@ -101,7 +101,7 @@ const DropletItem = ({
                   <p
                     className={`${
                       descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md pt-1 pr-8 text-slate-700 dark:text-slate-300`}
+                    } pt-1 pr-8 text-base text-slate-700 dark:text-slate-300`}
                   >
                     {strippedDescription}
                   </p>

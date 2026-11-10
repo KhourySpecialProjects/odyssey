@@ -57,7 +57,7 @@ export default async function DropletRoute({ params }: Props) {
     <>
       <div className="min-h-screen bg-white pt-6 dark:bg-zinc-950">
         <div className="px-40">
-          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+          <div className="flex flex-none flex-row flex-wrap gap-1.5">
             <Badge
               variant="outline"
               className={cn(
