@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "streak_days",
+  "info": {
+    "singularName": "streak-day",
+    "pluralName": "streak-days",
+    "displayName": "Streak Day",
+    "description": "A day a learner finished at least one new lesson, in their own time zone (ODY-918)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "streak_days_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "maxLength": 40
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "lessonIds": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

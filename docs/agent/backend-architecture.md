@@ -44,6 +44,7 @@ api/
 ├── overview-scan/        One saved run of the Final Overview Scan's checks on a droplet (ODY-787)
 ├── overview-scan-dismissal/ A scan flag someone marked as fine on a droplet, for everyone (ODY-905)
 ├── playlist/             Curated droplet collections
+├── streak-day/           A day a learner finished a new lesson, in their time zone, for streaks (ODY-918)
 ├── report/               Bug reports
 ├── review/               One reviewer's review of a droplet round
 ├── review-comment/       Anchored review comments (replies via parent, carriedFrom, addressedAt)
@@ -329,6 +330,13 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   - **Reasons**, first refusal wins: `disabled` (switch off), `not_in_pilot` (pilot groups set, user in none of their `members`), `monthly_cap` (this month's Mentor spend `>=` the cap; `retryAt` is the next 1st, 00:00 Eastern; a $0 cap refuses everyone), `daily_limit` (the user's rows since midnight Eastern `>=` the limit, across all kinds; `retryAt` is the next midnight Eastern). A refusal is a normal 200, not an HTTP error; the caller maps reasons to 429 or 503. The messages are constants in `mentor-usage.ts`.
   - **Read-only check:** it takes no lock and reserves nothing, so answers still streaming can carry a user past the daily limit, or Mentor past the monthly cap, by what is in flight. Answers cost cents, so the overshoot is accepted and bounded by the frontend's per-task burst guard. In return, the check has no side effects and a crashed stream leaves no orphan row.
   - **Record:** one row per answer, tokens only (a key such as `question` is a 400). A model with no price is still saved, with a `strapi.log.warn`, and is charged at the highest price. No transaction is opened, so a DB error is never swallowed.
+
+### Streak day route (`custom-streak-day` controller, ODY-918)
+
+- **Type:** `streak-day` (collection, `draftAndPublish` off, read-only router: `find`): `key` = `<userId>:<date>` (unique index `streak_days_key_uq`), `user` (one-way manyToOne to `authorized-user`), `date` (the learner's local date) and `lessonIds` (JSON: the lessons finished for the first time that day). One row per learner per day they finished a new lesson. Code in `src/lib/streak-days.ts`; tests in `tests/api/streak-day.test.js`.
+- **`POST /api/streak-days/record`** `{ data: { userId, date, lessonId } }` returns `{ date, lessons, added }`. Service token only, strict body (400 on any other key, a non-integer id or a date that isn't a real `YYYY-MM-DD`), 404 for an unknown user. `userId` and `date` are trusted from the Next.js server, which takes the user from the session and the date from their Settings time zone (`frontend/lib/streak-days.ts`, called by `updateViewedLessons` on a lesson's first view).
+- **One transaction**, which locks the day's row (`FOR UPDATE`) and adds the lesson. A lesson already on the day is `added: false` and changes nothing, so a retry is safe. If two first lessons race to create the row, the unique index rejects one and it runs again in a new transaction (Postgres aborts the first), as review scores do.
+- **The streak itself isn't stored.** The frontend works out the current and longest streak from the dates on every read (`frontend/lib/streaks.ts`), so it moves on at the learner's midnight without a write.
 
 ### Publish-edit route (`custom-droplet` controller)
 

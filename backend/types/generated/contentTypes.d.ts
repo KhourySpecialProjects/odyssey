@@ -2053,6 +2053,45 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
+  collectionName: 'streak_days';
+  info: {
+    description: 'A day a learner finished at least one new lesson, in their own time zone (ODY-918)';
+    displayName: 'Streak Day';
+    pluralName: 'streak-days';
+    singularName: 'streak-day';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.Date & Schema.Attribute.Required;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    lessonIds: Schema.Attribute.JSON & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::streak-day.streak-day'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiTagTag extends Struct.CollectionTypeSchema {
   collectionName: 'tags';
   info: {
@@ -2810,6 +2849,7 @@ declare module '@strapi/strapi' {
       'api::review-criterion.review-criterion': ApiReviewCriterionReviewCriterion;
       'api::review-score.review-score': ApiReviewScoreReviewScore;
       'api::review.review': ApiReviewReview;
+      'api::streak-day.streak-day': ApiStreakDayStreakDay;
       'api::tag.tag': ApiTagTag;
       'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
       'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;

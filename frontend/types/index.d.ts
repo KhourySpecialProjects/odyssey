@@ -711,6 +711,19 @@ export interface VoyageNodeCompletion {
   voyageEnrollment?: VoyageEnrollment;
 }
 
+/** A day a learner finished at least one new lesson, in their time zone (ODY-918) */
+export interface StreakDayEntry {
+  id: number;
+  documentId?: string;
+  /** `<userId>:<date>`, unique */
+  key: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** The lessons finished for the first time that day */
+  lessonIds: number[];
+  user?: AuthorizedUser;
+}
+
 interface CustomBlockNoteBlock {
   id: string;
   type: string;
