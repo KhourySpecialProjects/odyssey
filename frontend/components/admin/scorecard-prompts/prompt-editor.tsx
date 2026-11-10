@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DEFAULT_PROMPT, isDefaultPart } from "@/lib/ai-review/system-prompt";
 import type { PromptParts } from "@/lib/ai-review/system-prompt";
 import { saveAiScoringPrompt } from "@/lib/requests/ai-scoring-prompt";
@@ -43,6 +48,8 @@ export function PromptEditor({
   const [parts, setParts] = useState(initial);
   const [saved, setSaved] = useState(custom);
   const [pending, startSave] = useTransition();
+  const [noteOpen, setNoteOpen] = useState(false);
+  const wasOpen = useRef(false);
 
   const dirty = PARTS.some(({ key }) => parts[key] !== baseline[key]);
   const valid = PARTS.every(
@@ -125,7 +132,33 @@ export function PromptEditor({
             />
             {key === "instructions" && (
               <p className="text-sm text-[#475569] dark:text-slate-400">
-                The fixed paragraphs are always added after this.
+                The{" "}
+                <Tooltip open={noteOpen} onOpenChange={setNoteOpen}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="underline decoration-dotted underline-offset-2 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none dark:focus-visible:ring-slate-500"
+                      onPointerDown={() => {
+                        wasOpen.current = noteOpen;
+                      }}
+                      onClick={(event) => {
+                        // Radix closes on pointer down; a click toggles from its pre-press state (touch).
+                        event.preventDefault();
+                        setNoteOpen(
+                          event.detail === 0 ? !noteOpen : !wasOpen.current,
+                        );
+                      }}
+                    >
+                      fixed paragraphs
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    The fixed paragraphs are how lesson content is formatted for
+                    the AI, and the rule that lesson content is material to
+                    review, never instructions to follow.
+                  </TooltipContent>
+                </Tooltip>{" "}
+                are always added after this.
               </p>
             )}
             <div className="flex items-center justify-between gap-2">

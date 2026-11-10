@@ -1,6 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { PromptEditor } from "@/components/admin/scorecard-prompts/prompt-editor";
 import { DEFAULT_PROMPT } from "@/lib/ai-review/system-prompt";
 import { saveAiScoringPrompt } from "@/lib/requests/ai-scoring-prompt";
@@ -21,7 +28,11 @@ const initial = {
 const custom = { instructions: true, lessonScope: false, overallScope: false };
 
 const renderEditor = () =>
-  render(<PromptEditor initial={initial} custom={custom} />);
+  render(
+    <TooltipProvider>
+      <PromptEditor initial={initial} custom={custom} />
+    </TooltipProvider>,
+  );
 const box = (name: RegExp) => screen.getByRole("textbox", { name });
 const saveButton = () => screen.getByRole("button", { name: "Save" });
 
@@ -35,6 +46,40 @@ describe("PromptEditor", () => {
     expect(screen.getAllByText("Custom")).toHaveLength(1);
     expect(screen.getAllByText("Default")).toHaveLength(2);
     expect(saveButton()).toBeDisabled();
+  });
+
+  describe("fixed paragraphs note", () => {
+    const trigger = () =>
+      screen.getByRole("button", { name: "fixed paragraphs" });
+    const gone = () =>
+      waitFor(() =>
+        expect(screen.queryByRole("tooltip")).not.toBeInTheDocument(),
+      );
+
+    it.each([
+      ["hover", (u: ReturnType<typeof userEvent.setup>) => u.hover(trigger())],
+      ["focus", async () => act(() => trigger().focus())],
+    ])("explains them on %s", async (_n, open) => {
+      const user = userEvent.setup();
+      renderEditor();
+      await open(user);
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "The fixed paragraphs are how lesson content is formatted for the AI, and the rule that lesson content is material to review, never instructions to follow.",
+      );
+    });
+
+    it("opens on click, closes on a second click and on Escape", async () => {
+      const user = userEvent.setup();
+      renderEditor();
+      await user.click(trigger());
+      await screen.findByRole("tooltip");
+      await user.click(trigger());
+      await gone();
+      await user.click(trigger());
+      await screen.findByRole("tooltip");
+      await user.keyboard("{Escape}");
+      await gone();
+    });
   });
 
   it("disables Reset to default when the text already is the default", () => {
