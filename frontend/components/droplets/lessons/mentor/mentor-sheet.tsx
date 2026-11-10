@@ -25,6 +25,8 @@ type SheetProps = {
   streaming: boolean;
   lock: string | null;
   accepted: boolean;
+  /** Opened by Explain: a wide sheet leaves focus, and the selection, in the lesson */
+  openedByExplain: boolean;
   announcement: { n: number; text: string };
   draft: string;
   setDraft: (draft: string) => void;
@@ -95,6 +97,7 @@ export function MentorSheet(p: SheetProps) {
           className={`${LESSON_PANEL.sheet} flex flex-col border-l border-slate-200 bg-white shadow-[-8px_0_16px_-8px_rgba(16,24,40,0.12)] dark:border-slate-500 dark:bg-slate-900`}
           onOpenAutoFocus={(e) => {
             e.preventDefault();
+            if (!p.modal && p.openedByExplain && p.accepted && !p.lock) return;
             const target = !p.accepted
               ? gotIt.current
               : p.lock

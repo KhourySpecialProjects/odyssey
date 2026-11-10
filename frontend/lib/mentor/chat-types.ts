@@ -2,7 +2,13 @@ import type { Citation } from "./types";
 
 // The sidebar's conversation, kept in client state only (ODY-887)
 
-export type StudentMsg = { id: string; role: "student"; text: string };
+export type StudentMsg = {
+  id: string;
+  role: "student";
+  text: string;
+  /** Set when the student asked Mentor to explain this text from the lesson (ODY-889) */
+  selection?: string;
+};
 
 export type MentorMsg = {
   id: string;

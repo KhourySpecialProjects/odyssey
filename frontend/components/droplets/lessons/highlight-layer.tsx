@@ -74,6 +74,8 @@ interface HighlightLayerProps {
   onRecolorHighlight: (highlightIds: number[], color: HighlightColor) => void;
   onDeleteHighlight: (highlightIds: number[]) => void;
   onNote: (notePos: number, highlight: Highlight) => void;
+  /** Set where Mentor is on: asks it to explain the text (ODY-889) */
+  onExplain?: (text: string) => void;
   /**
    * Set while the reader is moving a highlight whose text was deleted: the
    * toolbar then offers to move it onto the selected text instead
@@ -103,6 +105,29 @@ interface ToolbarState {
   anchor: PopoverAnchor;
   /** Where a note made from here goes, in px from the top of the block */
   notePos: number;
+  /** The highlight piece clicked to open it: with no selection, it follows this */
+  piece?: HTMLElement;
+}
+
+/** The toolbar for a saved highlight, shown at `piece`, one of its drawn pieces */
+function highlightToolbar(
+  piece: HTMLElement,
+  region: HTMLElement,
+  home: HTMLElement,
+  highlightId: number,
+): ToolbarState {
+  const firstPiece = region.querySelector(
+    `.${HIGHLIGHT_CLASS}[data-highlight-id="${highlightId}"]`,
+  );
+  return {
+    target: { kind: "highlight", highlightIds: [highlightId] },
+    home,
+    anchor: anchorIn(home, piece.getBoundingClientRect()),
+    notePos:
+      (firstPiece ?? piece).getBoundingClientRect().top -
+      region.getBoundingClientRect().top,
+    piece,
+  };
 }
 
 const HighlightsContext = createContext<PlacedHighlight[]>([]);
@@ -180,6 +205,7 @@ export function HighlightLayer({
   onRecolorHighlight,
   onDeleteHighlight,
   onNote,
+  onExplain,
   onMoveHighlight,
   className,
   children,
@@ -284,6 +310,40 @@ export function HighlightLayer({
     });
   };
   useSelectionChange(readSelection, canHighlight);
+
+  // A panel opening beside the lesson narrows it, and the toolbar stays open
+  // after Explain (see handleExplain): it follows the selected text, or the
+  // highlight clicked to open it
+  const followText = () => {
+    const selection = window.getSelection();
+    const piece = toolbar?.piece;
+    if (!piece || (selection && !selection.isCollapsed)) {
+      readSelection();
+      return;
+    }
+    const region = piece.closest<HTMLElement>(`[${REGION_ATTR}]`);
+    if (!toolbar || !region || !piece.isConnected) return;
+    setToolbar(
+      highlightToolbar(
+        piece,
+        region,
+        toolbar.home,
+        Number(piece.dataset.highlightId),
+      ),
+    );
+  };
+  const followTextRef = useRef(followText);
+  useEffect(() => {
+    followTextRef.current = followText;
+  });
+  const toolbarOpen = toolbar !== null;
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!toolbarOpen || !root || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => followTextRef.current());
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [toolbarOpen]);
 
   const closeToolbar = useCallback(() => setToolbar(null), []);
 
@@ -413,6 +473,35 @@ export function HighlightLayer({
     if (first) onNote(notePos, first);
   };
 
+  /** The lesson text the toolbar acts on, as the reader sees it now */
+  const toolbarText = (target: ToolbarTarget) => {
+    if (target.kind === "selection") {
+      return target.segments.map((segment) => segment.text).join("\n");
+    }
+    const regions = Array.from(
+      rootRef.current?.querySelectorAll<HTMLElement>(`[${REGION_ATTR}]`) ?? [],
+    );
+    return target.highlightIds
+      .flatMap((id) => {
+        const highlight = highlightsRef.current.find((h) => h.id === id);
+        if (!highlight?.position) return [];
+        const { start, end } = highlight.position;
+        const region = regions.find((r) =>
+          regionIds(r).includes(highlight.blockId),
+        );
+        return region ? [regionReader(region).slice(start, end)] : [];
+      })
+      .join("\n");
+  };
+
+  // Explain doesn't highlight. The selection and the toolbar stay (with focus
+  // on Explain), so the reader can still pick a colour.
+  const handleExplain = () => {
+    if (!toolbar) return;
+    const text = toolbarText(toolbar.target);
+    if (text.trim()) onExplain?.(text);
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     // A drag that ends on a highlight is a selection, handled above
     if (!canHighlight || onMoveHighlight) return;
@@ -429,17 +518,7 @@ export function HighlightLayer({
     const home = region && rootRef.current && homeOf(rootRef.current, region);
     if (!piece || !region || !highlight || !home) return;
 
-    const firstPiece = region.querySelector(
-      `.${HIGHLIGHT_CLASS}[data-highlight-id="${highlightId}"]`,
-    );
-    setToolbar({
-      target: { kind: "highlight", highlightIds: [highlightId] },
-      home,
-      anchor: anchorIn(home, piece.getBoundingClientRect()),
-      notePos:
-        (firstPiece ?? piece).getBoundingClientRect().top -
-        region.getBoundingClientRect().top,
-    });
+    setToolbar(highlightToolbar(piece, region, home, highlightId));
   };
 
   const toolbarTarget = toolbar?.target;
@@ -465,6 +544,9 @@ export function HighlightLayer({
             onApplyColor={handleApplyColor}
             onDelete={handleDelete}
             onNote={handleNote}
+            onExplain={
+              onExplain && !onMoveHighlight ? handleExplain : undefined
+            }
             onMoveHere={
               onMoveHighlight && toolbar.target.kind === "selection"
                 ? handleMoveHere

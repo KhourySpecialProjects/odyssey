@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { HighlightColor } from "@/types";
 import { IconTrash, IconNotebook } from "@tabler/icons-react";
+import { Sparkles } from "lucide-react";
 import { HIGHLIGHT_COLORS } from "@/lib/highlight-colors";
 import { placePopover, useDismiss, type PopoverAnchor } from "@/lib/selection";
 
@@ -13,6 +14,8 @@ interface SelectionToolbarProps {
   onApplyColor: (color: HighlightColor) => void;
   onDelete: () => void;
   onNote: () => void;
+  /** Set where Mentor is on: asks it to explain the selected text */
+  onExplain?: () => void;
   /**
    * Set while the reader is moving a highlight whose text was deleted. The
    * toolbar then only offers to move it onto the selected text.
@@ -35,6 +38,7 @@ export function SelectionToolbar({
   onApplyColor,
   onDelete,
   onNote,
+  onExplain,
   onMoveHere,
   onClose,
 }: SelectionToolbarProps) {
@@ -44,9 +48,10 @@ export function SelectionToolbar({
   // Only one button is in the tab order; the arrow keys move between them
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const buttonCount = onMoveHere
-    ? 1
-    : HIGHLIGHT_COLORS.length + (isOnHighlight ? 2 : 1);
+  // The colours, Note, then Explain and Remove when shown
+  const noteIndex = HIGHLIGHT_COLORS.length;
+  const deleteIndex = noteIndex + (onExplain ? 2 : 1);
+  const buttonCount = onMoveHere ? 1 : deleteIndex + (isOnHighlight ? 1 : 0);
   const activeIndex = Math.min(focusIndex, buttonCount - 1);
 
   // Above the selection, or below it when it would go under the site header,
@@ -100,7 +105,8 @@ export function SelectionToolbar({
       role="toolbar"
       aria-label={onMoveHere ? "Move highlight" : "Highlight text"}
       onKeyDown={handleKeyDown}
-      className="absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
+      // White in both themes, so Explain keeps Mentor's light-theme colours
+      className="mentor-on-white absolute z-50 flex items-center gap-1 rounded-lg border border-[#eaecf0] bg-white px-2 py-1.5 shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)]"
       // No margin from a block that spaces out its children (a callout's do)
       style={{ ...placement, margin: 0 }}
     >
@@ -132,7 +138,7 @@ export function SelectionToolbar({
           ))}
           <div className="mx-0.5 h-4 w-px bg-slate-200" />
           <button
-            {...rovingProps(HIGHLIGHT_COLORS.length)}
+            {...rovingProps(noteIndex)}
             title="Add note"
             aria-label="Add note"
             onClick={onNote}
@@ -140,9 +146,21 @@ export function SelectionToolbar({
           >
             <IconNotebook className="h-4 w-4" aria-hidden />
           </button>
+          {onExplain && (
+            <button
+              {...rovingProps(noteIndex + 1)}
+              title="Explain with Mentor"
+              aria-label="Explain with Mentor"
+              onClick={onExplain}
+              className="text-mentor-text hover:bg-mentor-soft inline-flex items-center gap-1 rounded px-1 py-0.5 text-sm font-semibold"
+            >
+              <Sparkles className="text-mentor h-4 w-4" aria-hidden />
+              Explain
+            </button>
+          )}
           {isOnHighlight && (
             <button
-              {...rovingProps(HIGHLIGHT_COLORS.length + 1)}
+              {...rovingProps(deleteIndex)}
               title="Remove highlight"
               aria-label="Remove highlight"
               onClick={onDelete}

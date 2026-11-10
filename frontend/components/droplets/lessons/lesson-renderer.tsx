@@ -49,7 +49,10 @@ import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 import { HighlightDropdown } from "./highlight-dropdown";
 import { lessonGate } from "@/lib/lesson-gate";
-import { useOwnedPanel } from "@/stores/lesson-panel-store";
+import {
+  useLessonPanelStore,
+  useOwnedPanel,
+} from "@/stores/lesson-panel-store";
 import { HighlightHintBanner } from "./highlight-hint-banner";
 import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
@@ -117,6 +120,8 @@ export function LessonRenderer({
   // create/delete (the wrapper is keyed by lesson, so this resets per lesson).
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
   const panel = useOwnedPanel(lesson.id);
+  const mentorAvailable = useLessonPanelStore((s) => s.mentorAvailable);
+  const explain = useLessonPanelStore((s) => s.explain);
   // A new highlight is shown under a temporary (negative) id until it's saved
   const nextTempId = useRef(-1);
   const lessonContentRef = useRef<HTMLDivElement>(null);
@@ -495,6 +500,7 @@ export function LessonRenderer({
             onRecolorHighlight={handleRecolorHighlight}
             onDeleteHighlight={handleDeleteHighlight}
             onNote={handleCreateNote}
+            onExplain={mentorAvailable ? explain : undefined}
             onMoveHighlight={
               movingId !== null ? handleMoveHighlight : undefined
             }

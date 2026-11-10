@@ -1009,6 +1009,81 @@ describe("GenericBlockRenderer", () => {
       expect(defaultProps.onDeleteHighlight).toHaveBeenCalledWith([7]);
       expect(defaultProps.onHighlight).not.toHaveBeenCalled();
     });
+
+    it("Explain sends the selected text and keeps the selection and toolbar, with no highlight", async () => {
+      const onExplain = jest.fn();
+      const { container } = render(
+        <GenericBlockRenderer
+          {...defaultProps}
+          block={sqlBlock}
+          onExplain={onExplain}
+        />,
+      );
+
+      selectText(container, "SQL");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Explain with Mentor" }),
+      );
+
+      expect(onExplain).toHaveBeenCalledWith("SQL");
+      expect(defaultProps.onHighlight).not.toHaveBeenCalled();
+      expect(screen.getByRole("toolbar")).toBeInTheDocument();
+      expect(window.getSelection()?.toString()).toBe("SQL");
+    });
+
+    it("Explain on a clicked highlight keeps focus on Explain, and the toolbar follows the highlight as the lesson reflows", async () => {
+      // JSDOM has no ResizeObserver: this one reports a reflow on demand
+      let reflow = () => {};
+      const realObserver = global.ResizeObserver;
+      global.ResizeObserver = class {
+        constructor(callback: ResizeObserverCallback) {
+          reflow = () => callback([], this as unknown as ResizeObserver);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      } as unknown as typeof ResizeObserver;
+      try {
+        const onExplain = jest.fn();
+        const { container } = render(
+          <GenericBlockRenderer
+            {...defaultProps}
+            block={sqlBlock}
+            highlights={[
+              makeHighlight({ id: 7, position: { start: 6, end: 9 } }),
+            ]}
+            onExplain={onExplain}
+          />,
+        );
+        const [piece] = pieces(container, 7) as HTMLElement[];
+        fireEvent.click(piece);
+        const explain = screen.getByRole("button", {
+          name: "Explain with Mentor",
+        });
+        explain.focus();
+        await userEvent.keyboard("{Enter}");
+
+        expect(onExplain).toHaveBeenCalledWith("SQL");
+        expect(explain).toHaveFocus();
+
+        // A panel opens beside the lesson: the highlight is now lower down
+        jest.spyOn(piece, "getBoundingClientRect").mockReturnValue({
+          top: 300,
+          bottom: 320,
+          left: 50,
+          right: 80,
+          width: 30,
+          height: 20,
+          x: 50,
+          y: 300,
+          toJSON: () => ({}),
+        } as DOMRect);
+        act(() => reflow());
+        expect(screen.getByRole("toolbar").style.top).toBe("292px");
+      } finally {
+        global.ResizeObserver = realObserver;
+      }
+    });
   });
 
   describe("Highlighting inside a highlight", () => {
