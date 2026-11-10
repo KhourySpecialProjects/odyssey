@@ -217,7 +217,7 @@ describe("Explain my answer", () => {
     await user.click(explainButton()!);
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("You've used today's Mentor questions.");
-    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry hint" })).toBeNull();
   });
 
   it("keeps the button disabled after a daily-limit refusal and sends nothing on click", async () => {
@@ -234,10 +234,8 @@ describe("Explain my answer", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const button = explainButton();
-    if (button) {
-      expect(button).toHaveAttribute("aria-disabled", "true");
-      await user.click(button);
-    }
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await user.click(button!);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -254,6 +252,8 @@ describe("Explain my answer", () => {
     await waitFor(() => expect(box).toHaveAttribute("aria-busy", "false"));
     expect(explainButton()).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Focus moves to the hint instead of falling to <body>
+    expect(box).toHaveFocus();
   });
 
   it("still offers Try again after a retryable 500", async () => {
@@ -271,7 +271,7 @@ describe("Explain my answer", () => {
     renderQuiz(questionOf(classic, 41), classic);
     const user = await answer(1);
     await user.click(explainButton()!);
-    await user.click(await screen.findByRole("button", { name: "Try again" }));
+    await user.click(await screen.findByRole("button", { name: "Retry hint" }));
     const box = await screen.findByRole("region", { name: "Mentor hint" });
     await waitFor(() => expect(box).toHaveTextContent("Second try."));
     expect(fetchMock).toHaveBeenCalledTimes(2);
