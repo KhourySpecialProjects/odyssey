@@ -1,8 +1,12 @@
+import fs from "node:fs";
+import path from "node:path";
 import {
   addDays,
   DEFAULT_STREAK_TIME_ZONE,
   localDate,
+  STREAK_ICONS,
   streakIconIndex,
+  streakIconSrc,
   streakTimeZone,
   summarizeStreak,
   UNLOCK_DAYS,
@@ -32,6 +36,14 @@ describe("streakIconIndex", () => {
   it("unlocks 24 icons, each on its own day", () => {
     expect(UNLOCK_DAYS).toHaveLength(24);
     UNLOCK_DAYS.forEach((day, i) => expect(streakIconIndex(day)).toBe(i));
+  });
+
+  it("has art in public/ for every icon", () => {
+    const missing = STREAK_ICONS.filter(
+      (icon) =>
+        !fs.existsSync(path.join(process.cwd(), "public", streakIconSrc(icon))),
+    );
+    expect(missing).toEqual([]);
   });
 });
 

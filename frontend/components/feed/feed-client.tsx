@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
+import { useStreakFeedCard } from "@/components/streaks/streak-feed-card";
 import {
   type FeedPage,
   fetchAnnouncements,
@@ -64,6 +65,8 @@ export function FeedClient({
   // Bumped on every read/unread change so fetches started before it are
   // dropped instead of resurrecting the optimistically removed item.
   const mutations = useRef(0);
+  // The learner's latest streak icon (ODY-919), atop the first page
+  const streakCard = useStreakFeedCard(authUser.id, tab, currentPage === 1);
 
   // Compared by value so a re-created array doesn't refetch. Resetting the
   // page here (not in an effect) avoids fetching the old page for new filters.
@@ -197,8 +200,9 @@ export function FeedClient({
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             />
           </div>
-        ) : announcements.length > 0 ? (
+        ) : announcements.length > 0 || streakCard ? (
           <ul className="grid grid-cols-1 gap-3 p-1">
+            {streakCard}
             {announcements.map((post) => (
               <FeedBlock
                 key={post.id}
