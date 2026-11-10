@@ -34,10 +34,12 @@ describe('seedMentorSettings', () => {
     expect(row.enabled).toBe(false);
     expect(Number(row.monthlyCapUsd)).toBe(10);
     expect(row.perUserDailyLimit).toBe(30);
+    expect(row.storeSharedAnswers).toBe(false);
     expect(MENTOR_SETTINGS_SEED).toEqual({
       enabled: false,
       monthlyCapUsd: 10,
       perUserDailyLimit: 30,
+      storeSharedAnswers: false,
     });
   });
 
@@ -70,6 +72,7 @@ describe('loadMentorSettings', () => {
         enabled: true,
         monthlyCapUsd: 12.5,
         perUserDailyLimit: 7,
+        storeSharedAnswers: true,
         pilotGroups: [group.documentId],
       },
     });
@@ -81,6 +84,7 @@ describe('loadMentorSettings', () => {
       pilotGroupIds: [group.id],
       monthlyCapUsd: 12.5,
       perUserDailyLimit: 7,
+      storeSharedAnswers: true,
     });
     expect(typeof loaded.pilotGroupIds[0]).toBe('number');
   });
@@ -94,10 +98,23 @@ describe('loadMentorSettings', () => {
       pilotGroupIds: [],
       monthlyCapUsd: 10,
       perUserDailyLimit: 30,
+      storeSharedAnswers: false,
     });
     // Seeding again puts the row back.
     expect(await seedMentorSettings()).toBe(true);
     expect(await rows()).toBe(1);
+  });
+});
+
+describe('storeSharedAnswers', () => {
+  it('reads a null stored value as off', async () => {
+    const row = await stored();
+    await strapi.db
+      .connection('mentor_settings')
+      .where({ id: row.id })
+      .update({ store_shared_answers: null });
+
+    expect((await loadMentorSettings()).storeSharedAnswers).toBe(false);
   });
 });
 
