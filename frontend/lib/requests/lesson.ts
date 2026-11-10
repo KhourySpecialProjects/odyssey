@@ -167,42 +167,6 @@ export async function markLessonAsComplete(
   }
 }
 
-export async function completeLesson(activityId: number, lessonIds: number[]) {
-  try {
-    const user = await getCurrentUser();
-    if (!user?.email) throw new Error("User not authenticated");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL +
-        `/api/authorized-user-activities/${activityId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            lessons: lessonIds,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to complete lesson");
-    }
-
-    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
-    return { success: true };
-  } catch (error) {
-    console.error("Error completing lesson:", error);
-    return { success: false, error };
-  }
-}
-
 export async function deleteLesson(id: number, revalidate: boolean = true) {
   return withAuth([], async (user) => {
     const check = await checkLessonWrite(user, id);

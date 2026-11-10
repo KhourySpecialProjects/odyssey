@@ -4,7 +4,6 @@
  * Target: 85%+ statements/lines, 75%+ branches, 75%+ functions
  *
  * Uncovered lines addressed here:
- *   117         completeLesson — response.ok false path
  *   142         deleteLesson — response.ok false path
  *   152-153     deleteLesson — catch path
  *   204-205     updateLesson — catch path
@@ -16,7 +15,6 @@
  */
 
 import {
-  completeLesson,
   deleteLesson,
   updateLesson,
   duplicateLessonToDroplet,
@@ -59,49 +57,6 @@ jest.mock("@/lib/auth/session", () => ({
 jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
-
-describe("lesson-coverage — completeLesson error paths", () => {
-  let fetchMock: jest.MockedFunction<typeof fetch>;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock = mockGlobalFetch();
-  });
-
-  it("returns { success: false } when response is not ok (line 117)", async () => {
-    const { getCurrentUser } = jest.requireMock("@/lib/auth/session");
-    const { getAuthorizedUserByEmail } = jest.requireMock(
-      "@/lib/requests/authorized-user",
-    );
-    getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-    getAuthorizedUserByEmail.mockResolvedValue({ id: 42 });
-
-    fetchMock.mockResolvedValueOnce(
-      makeFetchErrorResponse({ error: "bad request" }, 400),
-    );
-
-    const result = await completeLesson(1, [1, 2]);
-
-    expect(result).toEqual({ success: false, error: expect.any(Error) });
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("returns { success: false } when getCurrentUser returns no email", async () => {
-    const { getCurrentUser } = jest.requireMock("@/lib/auth/session");
-    getCurrentUser.mockResolvedValue({ email: null });
-
-    const result = await completeLesson(5, [1]);
-    expect(result).toEqual({ success: false, error: expect.any(Error) });
-  });
-
-  it("returns { success: false } when getCurrentUser returns null", async () => {
-    const { getCurrentUser } = jest.requireMock("@/lib/auth/session");
-    getCurrentUser.mockResolvedValue(null);
-
-    const result = await completeLesson(5, [1]);
-    expect(result).toEqual({ success: false, error: expect.any(Error) });
-  });
-});
 
 describe("lesson-coverage — deleteLesson error paths", () => {
   let fetchMock: jest.MockedFunction<typeof fetch>;
