@@ -1,4 +1,4 @@
-import { tagSpace } from "@/components/draft/review/comment-tag";
+import { tagSpace, watchTagRoom } from "@/components/draft/review/comment-tag";
 
 const rect = (left: number, right: number) =>
   ({
@@ -43,5 +43,49 @@ describe("tagSpace", () => {
     expect(space.tagMode).toBe("full");
     const underPanel = tagSpace(rect(160, 880), rect(160, 880));
     expect(underPanel.tagMode).toBe("tight");
+  });
+});
+
+describe("watchTagRoom", () => {
+  const observerOf = (el: Element) => {
+    const observer = jest.mocked(ResizeObserver);
+    const i = observer.mock.results.findIndex((r) =>
+      (r.value.observe as jest.Mock).mock.calls.some(([e]) => e === el),
+    );
+    return i < 0
+      ? null
+      : {
+          instance: observer.mock.results[i].value as ResizeObserver,
+          callback: observer.mock.calls[i][0],
+        };
+  };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls back when <main> resizes, as its padding changes for the panel", () => {
+    const main = document.createElement("main");
+    const layer = main.appendChild(document.createElement("div"));
+    document.body.append(main);
+    const onChange = jest.fn();
+
+    const unwatch = watchTagRoom(layer, onChange);
+    observerOf(main)!.callback([], {} as ResizeObserver);
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    unwatch();
+    expect(observerOf(main)!.instance.disconnect).toHaveBeenCalled();
+  });
+
+  it("calls back on a window resize until cleaned up, outside a <main> too", () => {
+    const layer = document.body.appendChild(document.createElement("div"));
+    const onChange = jest.fn();
+
+    const unwatch = watchTagRoom(layer, onChange);
+    window.dispatchEvent(new Event("resize"));
+    unwatch();
+    window.dispatchEvent(new Event("resize"));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(ResizeObserver).not.toHaveBeenCalled();
   });
 });

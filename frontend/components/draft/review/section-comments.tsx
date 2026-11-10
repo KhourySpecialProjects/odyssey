@@ -43,6 +43,7 @@ import {
   stackTags,
   tagLabel,
   tagSpace,
+  watchTagRoom,
   type TagMode,
 } from "./comment-tag";
 
@@ -180,11 +181,11 @@ export function SectionComments({
     measure();
     const resize = new ResizeObserver(later);
     resize.observe(root);
-    window.addEventListener("resize", later);
+    const unwatch = watchTagRoom(root, later);
     return () => {
       cancelAnimationFrame(frame);
       resize.disconnect();
-      window.removeEventListener("resize", later);
+      unwatch();
     };
   }, [measure]);
 
