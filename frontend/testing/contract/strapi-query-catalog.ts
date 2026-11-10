@@ -1085,6 +1085,8 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   // The temporary streak testing panel (ODY-921): writes test rows only
   "streak-testing": {
     setTestStreak: WRITE,
+    finishTestLesson: WRITE,
+    reviveTestDay: WRITE,
     moveTestDay: WRITE,
     resetTestStreak: WRITE,
   },

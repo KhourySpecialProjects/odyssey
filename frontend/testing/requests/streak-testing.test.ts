@@ -3,11 +3,17 @@ import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
+  finishTestLesson,
   moveTestDay,
   resetTestStreak,
+  reviveTestDay,
   setTestStreak,
 } from "@/lib/requests/streak-testing";
-import { getStreakFor, recordStreakDay } from "@/lib/streak-days";
+import {
+  getStreakFor,
+  recordStreakDay,
+  reviveStreakDay,
+} from "@/lib/streak-days";
 import {
   clearTestStreakDays,
   setStreakTestMode,
@@ -30,6 +36,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 jest.mock("@/lib/streak-days", () => ({
   getStreakFor: jest.fn(),
   recordStreakDay: jest.fn(),
+  reviveStreakDay: jest.fn(),
 }));
 jest.mock("@/lib/streak-testing", () => ({
   REAL_STREAK: { test: false, offsetDays: 0 },
@@ -175,6 +182,65 @@ describe("moveTestDay", () => {
       data: null,
     });
     expect(setStreakTestMode).not.toHaveBeenCalled();
+  });
+});
+
+describe("test lessons and revives", () => {
+  it("finishTestLesson lights the moved today", async () => {
+    jest.mocked(recordStreakDay).mockResolvedValue(true);
+
+    const result = await finishTestLesson();
+
+    expect(recordStreakDay).toHaveBeenCalledWith(
+      learner,
+      1,
+      expect.any(Date),
+      testMode(2),
+    );
+    expect(result).toMatchObject({ ok: true, data: { mode: testMode(2) } });
+  });
+
+  it("finishTestLesson says so when the day doesn't save", async () => {
+    jest.mocked(recordStreakDay).mockResolvedValue(false);
+
+    expect(await finishTestLesson()).toMatchObject({ ok: false });
+  });
+
+  it.each([
+    [{ ok: true }, { ok: true, data: { mode: testMode(2) } }],
+    [
+      { ok: false, message: "No revives left" },
+      { ok: false, error: "No revives left" },
+    ],
+  ])(
+    "reviveTestDay revives the moved yesterday: %p",
+    async (revived, result) => {
+      jest.mocked(reviveStreakDay).mockResolvedValue(revived as never);
+
+      expect(await reviveTestDay()).toMatchObject(result);
+      expect(reviveStreakDay).toHaveBeenCalledWith(
+        learner,
+        expect.any(Date),
+        testMode(2),
+      );
+    },
+  );
+
+  it.each([
+    ["finishTestLesson", finishTestLesson],
+    ["reviveTestDay", reviveTestDay],
+  ])("%s needs a test streak first", async (_, action) => {
+    jest
+      .mocked(streakTestMode)
+      .mockResolvedValue({ test: false, offsetDays: 0 });
+
+    expect(await action()).toEqual({
+      ok: false,
+      error: "Set a test streak first",
+      data: null,
+    });
+    expect(recordStreakDay).not.toHaveBeenCalled();
+    expect(reviveStreakDay).not.toHaveBeenCalled();
   });
 });
 
