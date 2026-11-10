@@ -13,7 +13,7 @@ import type { ReviewActionResult } from "@/lib/requests/reviews";
 export async function saveAiScoringPrompt(
   input: PromptParts,
 ): Promise<ReviewActionResult<{ custom: Record<keyof PromptParts, boolean> }>> {
-  return withAuth([AuthorizedUserRoleTitle.SysAdmin], async () => {
+  return withAuth([AuthorizedUserRoleTitle.SysAdmin], async (user) => {
     try {
       const parsed = aiScoringPromptSchema.safeParse(input);
       if (!parsed.success) {
@@ -37,7 +37,8 @@ export async function saveAiScoringPrompt(
             Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
             ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
-          body: JSON.stringify({ data }),
+          // The saver comes from the session, never from the caller's input.
+          body: JSON.stringify({ data: { ...data, userId: user.id } }),
           cache: "no-store",
         },
       );

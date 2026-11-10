@@ -5,7 +5,7 @@
     "singularName": "ai-scoring-setting",
     "pluralName": "ai-scoring-settings",
     "displayName": "AI Scoring Settings",
-    "description": "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default)"
+    "description": "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default), and who saved them last (ODY-915)"
   },
   "options": {
     "draftAndPublish": false
@@ -38,6 +38,14 @@
     "overallScope": {
       "type": "text",
       "maxLength": 1500
+    },
+    "promptUpdatedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "promptUpdatedAt": {
+      "type": "datetime"
     }
   }
 }

@@ -565,7 +565,7 @@ export interface ApiAiScoringSettingAiScoringSetting
   extends Struct.SingleTypeSchema {
   collectionName: 'ai_scoring_settings';
   info: {
-    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default)";
+    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default), and who saved them last (ODY-915)";
     displayName: 'AI Scoring Settings';
     pluralName: 'ai-scoring-settings';
     singularName: 'ai-scoring-setting';
@@ -612,6 +612,11 @@ export interface ApiAiScoringSettingAiScoringSetting
         number
       >;
     prices: Schema.Attribute.Component<'ai-scoring.model-price', true>;
+    promptUpdatedAt: Schema.Attribute.DateTime;
+    promptUpdatedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

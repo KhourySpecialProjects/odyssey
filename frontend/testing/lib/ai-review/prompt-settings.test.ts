@@ -1,4 +1,5 @@
 import {
+  loadPromptSavedBy,
   loadStoredPrompt,
   resolvePrompt,
   type StoredPrompt,
@@ -77,5 +78,52 @@ describe("loadStoredPrompt", () => {
   it("throws when the read fails", async () => {
     jest.mocked(fetchAPI).mockRejectedValue(new Error("down"));
     await expect(loadStoredPrompt()).rejects.toThrow("down");
+  });
+});
+
+describe("loadPromptSavedBy", () => {
+  it("reads who saved last and when, fresh and with only the name fields", async () => {
+    jest.mocked(fetchAPI).mockResolvedValue({
+      promptUpdatedAt: "2026-11-10T15:00:00.000Z",
+      promptUpdatedBy: { firstName: "Ada", lastName: "Lovelace" },
+    });
+
+    expect(await loadPromptSavedBy()).toEqual({
+      name: "Ada Lovelace",
+      at: "2026-11-10T15:00:00.000Z",
+    });
+    const [path, options] = jest.mocked(fetchAPI).mock.calls.at(-1)!;
+    expect(path).toBe("/ai-scoring-setting");
+    expect(options).toEqual({
+      urlParams: {
+        fields: ["promptUpdatedAt"],
+        populate: { promptUpdatedBy: { fields: ["firstName", "lastName"] } },
+      },
+      cache: "no-store",
+    });
+  });
+
+  it("has a date but no name when the user is missing", async () => {
+    jest.mocked(fetchAPI).mockResolvedValue({
+      promptUpdatedAt: "2026-11-10T15:00:00.000Z",
+      promptUpdatedBy: null,
+    });
+    expect(await loadPromptSavedBy()).toEqual({
+      name: null,
+      at: "2026-11-10T15:00:00.000Z",
+    });
+  });
+
+  it.each([
+    ["never saved with a stamp", { promptUpdatedAt: null }],
+    ["no row", null],
+  ])("is null for %s", async (_n, row) => {
+    jest.mocked(fetchAPI).mockResolvedValue(row);
+    expect(await loadPromptSavedBy()).toBeNull();
+  });
+
+  it("is null when the read fails, so the page still renders", async () => {
+    jest.mocked(fetchAPI).mockRejectedValue(new Error("down"));
+    expect(await loadPromptSavedBy()).toBeNull();
   });
 });

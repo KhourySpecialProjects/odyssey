@@ -1,5 +1,6 @@
 import { PromptEditor } from "@/components/admin/scorecard-prompts/prompt-editor";
 import {
+  loadPromptSavedBy,
   loadStoredPrompt,
   resolvePrompt,
 } from "@/lib/ai-review/prompt-settings";
@@ -17,9 +18,10 @@ async function loadResolved() {
 }
 
 export default async function Page() {
-  const [resolved, criteria] = await Promise.all([
+  const [resolved, criteria, savedBy] = await Promise.all([
     loadResolved(),
     fetchActiveCriteria().catch(() => null),
+    loadPromptSavedBy(),
   ]);
 
   return (
@@ -32,6 +34,15 @@ export default async function Page() {
           What Score with AI is told when it grades a droplet. Changes apply to
           the next run.
         </p>
+        {savedBy && (
+          <p className="mt-2 text-sm text-[#475569] dark:text-slate-400">
+            Last saved {savedBy.name ? `by ${savedBy.name} ` : ""}on{" "}
+            {new Date(savedBy.at).toLocaleDateString("en-US", {
+              dateStyle: "medium",
+              timeZone: "America/New_York",
+            })}
+          </p>
+        )}
       </div>
 
       {resolved ? (

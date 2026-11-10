@@ -1,6 +1,7 @@
 import {
   AI_SCORING_PROMPT_LIMITS,
   savePromptSettings,
+  UnknownPromptUserError,
   type PromptParts,
 } from '../../../lib/ai-scoring-settings';
 
@@ -22,9 +23,15 @@ export default {
     if (extraTop) return fail(ctx, 400, `Invalid key ${extraTop}`);
     if (!isObject(body.data)) return fail(ctx, 400, 'data must be an object');
     const extra = Object.keys(body.data).find(
-      (k) => !(KEYS as string[]).includes(k),
+      (k) => k !== 'userId' && !(KEYS as string[]).includes(k),
     );
     if (extra) return fail(ctx, 400, `Invalid key ${extra}`);
+
+    // The System Admin who saved, set by the frontend from the session.
+    const userId = body.data.userId ?? null;
+    if (userId !== null && !(Number.isInteger(userId) && (userId as number) > 0)) {
+      return fail(ctx, 400, 'userId must be null or a positive integer');
+    }
 
     const parts = {} as PromptParts;
     for (const key of KEYS) {
@@ -45,8 +52,9 @@ export default {
     }
 
     try {
-      ctx.body = { data: await savePromptSettings(parts) };
+      ctx.body = { data: await savePromptSettings(parts, userId as number | null) };
     } catch (err) {
+      if (err instanceof UnknownPromptUserError) return fail(ctx, 400, 'userId matches no user');
       strapi.log.error('Failed to save the Scorecard prompts.', err);
       return fail(ctx, 500, 'Failed to save the Scorecard prompts.');
     }
