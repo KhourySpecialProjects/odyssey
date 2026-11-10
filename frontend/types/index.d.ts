@@ -89,7 +89,7 @@ export type User = {
 };
 
 export type AuthorizedUser = {
-  groups: any;
+  groups: unknown;
   id: number;
   documentId?: string;
   email: string;
@@ -414,10 +414,10 @@ export type GroupListResponse = {
   };
 };
 
-export type ActionResponse<T = any> = {
+export type ActionResponse<T = unknown> = {
   ok: boolean;
   data?: T | null;
-  error?: any;
+  error?: unknown;
   message?: string;
 };
 
@@ -653,8 +653,8 @@ export type DueDate = {
 export type CreationRequest = {
   id: number;
   documentId?: string;
-  motivation: String;
-  dropletIdea: String;
+  motivation: string;
+  dropletIdea: string;
   user: AuthorizedUser;
   voyageNode?: VoyageNode;
 };
@@ -709,6 +709,7 @@ export interface VoyageNodeCompletion {
   voyageEnrollment?: VoyageEnrollment;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- BlockNote block props/content are dynamic, and consumers read arbitrary keys */
 interface CustomBlockNoteBlock {
   id: string;
   type: string;
@@ -722,3 +723,4 @@ interface CustomBlockNoteBlock {
       };
   children: any[];
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

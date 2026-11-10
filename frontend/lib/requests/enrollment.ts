@@ -70,7 +70,7 @@ async function putEnrollment(
     throw new Error(`Failed to update enrollment: ${response.status}`);
   }
   const json = await response.json();
-  return flattenAttributes(json.data);
+  return flattenAttributes(json.data) as Partial<Enrollment>;
 }
 
 /**
@@ -138,7 +138,7 @@ export async function getEnrollmentsForGroupMembers(
       authorizedUser: { fields: ["id"] },
     },
     fields = ["id", "isComplete", "completionDate"],
-  }: { populate?: Record<string, any>; fields?: string[] } = {},
+  }: { populate?: Record<string, unknown>; fields?: string[] } = {},
 ): Promise<Enrollment[]> {
   const path = `/enrollments`;
   const pageSize = 250;

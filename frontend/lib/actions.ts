@@ -142,7 +142,7 @@ export async function deleteDataset(fileUrl: string) {
 }
 
 export async function createAuthorizedUserWithState(
-  _prevState: any,
+  _prevState: unknown,
   formData: FormData,
 ) {
   return createAuthorizedUser(formData);
@@ -173,7 +173,7 @@ export async function deleteImage(fileName: string) {
       return { ok: false, error: "Failed to delete image" };
     }
     return { ok: true, error: null };
-  } catch (err) {
+  } catch {
     return { ok: false, error: "Failed to delete image" };
   }
 }
@@ -587,7 +587,7 @@ export async function approveCreationRequest(
 
     const userData = await userResponse.json();
     const currentRoles = userData.data.attributes.roles?.data || [];
-    const currentRoleIds = currentRoles.map((role: any) => role.id);
+    const currentRoleIds = currentRoles.map((role: { id: number }) => role.id);
 
     // Find the Content Creator role ID
     const rolesResponse = await fetch(

@@ -379,7 +379,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
     );
 
     const data = await response.json();
-    let creators: AuthorizedUser[] = flattenAttributes(data.data);
+    const creators: AuthorizedUser[] = flattenAttributes(data.data);
 
     // Sort by the custom order array
     creators.sort((a, b) => {

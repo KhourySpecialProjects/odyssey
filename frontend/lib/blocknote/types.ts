@@ -1,5 +1,7 @@
 // Type definitions for custom BlockNote blocks
 
+import type { LucideIcon } from "lucide-react";
+
 export type CalloutType =
   | "warning"
   | "question"
@@ -12,6 +14,6 @@ export type CalloutType =
 export interface CalloutConfig {
   backgroundColor: string;
   color: string;
-  icon: any;
+  icon: LucideIcon;
   label: string;
 }

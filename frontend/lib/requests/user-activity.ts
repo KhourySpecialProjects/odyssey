@@ -1,6 +1,26 @@
 // lib/requests/user-activity.ts
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 
+type PostHogProperties = Record<string, string | undefined>;
+
+interface PostHogEvent {
+  event: string;
+  timestamp: string;
+  properties: PostHogProperties;
+}
+
+interface EnrollmentActivitySource {
+  id?: string | number;
+  rating?: number | null;
+  isComplete?: boolean;
+  isFirstTime?: boolean;
+  completionDate?: Date | string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  droplet?: { id?: string | number; name?: string } | null;
+  viewedLessons?: { id: number | string; name: string; slug: string }[];
+}
+
 interface UserActivity {
   timestamp: string;
   type:
@@ -11,16 +31,16 @@ interface UserActivity {
     | "rating"
     | "quiz";
   description: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 /**
  * Converts PostHog events to our activity format
  */
-function convertPostHogEvents(events: any[]): UserActivity[] {
+function convertPostHogEvents(events: PostHogEvent[]): UserActivity[] {
   console.log(`Converting ${events.length} PostHog events`);
 
-  const filtered = events.filter((event: any) => {
+  const filtered = events.filter((event: PostHogEvent) => {
     const eventName = event.event.toLowerCase();
     const shouldKeep =
       eventName !== "$identify" &&
@@ -36,7 +56,7 @@ function convertPostHogEvents(events: any[]): UserActivity[] {
     return shouldKeep;
   });
 
-  return filtered.map((event: any) => {
+  return filtered.map((event: PostHogEvent) => {
     const eventType = mapPostHogEventType(event.event);
     const description = formatPostHogDescription(event);
 
@@ -104,10 +124,10 @@ async function getPostHogActivity(userId: number): Promise<UserActivity[]> {
       return [];
     }
 
-    const data = JSON.parse(responseText);
+    const data = JSON.parse(responseText) as { results?: PostHogEvent[] };
     const events = data.results || [];
     return convertPostHogEvents(events);
-  } catch (error: any) {
+  } catch (error) {
     console.error("PostHog Fetch Error:", error);
     return [];
   }
@@ -160,7 +180,7 @@ function mapPostHogEventType(eventName: string): UserActivity["type"] {
   return "page_view";
 }
 
-function formatPostHogDescription(event: any): string {
+function formatPostHogDescription(event: PostHogEvent): string {
   const { event: eventName, properties } = event;
 
   if (
@@ -174,7 +194,7 @@ function formatPostHogDescription(event: any): string {
     if (!pathname && properties.$current_url) {
       try {
         pathname = new URL(properties.$current_url).pathname;
-      } catch (e) {
+      } catch {
         pathname = properties.$current_url;
       }
     }
@@ -239,7 +259,6 @@ function formatPostHogDescription(event: any): string {
     const questionTitle = properties.question_title || "";
     const lessonName = properties.lesson_name;
     const dropletName = properties.droplet_name;
-    const quizType = properties.quiz_type || "";
 
     // Truncate question title if too long
     const truncatedTitle =
@@ -303,7 +322,6 @@ function formatPostHogDescription(event: any): string {
   }
   if (eventName.toLowerCase().includes("lesson_completed")) {
     const lessonName = properties.lesson_name || properties.lessonName;
-    const dropletId = properties.droplet_id;
     if (lessonName) {
       return `Completed lesson: ${lessonName}`;
     }
@@ -389,7 +407,9 @@ function formatPostHogDescription(event: any): string {
   return eventName.replace(/_/g, " ").replace(/\$/g, "");
 }
 
-function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
+function enrollmentsToActivities(
+  enrollments: EnrollmentActivitySource[],
+): UserActivity[] {
   const activities: UserActivity[] = [];
 
   enrollments.forEach((enrollment) => {
@@ -409,7 +429,7 @@ function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
 
     if (enrollment.isComplete) {
       const completionTimestamp =
-        enrollment.completionDate ||
+        (enrollment.completionDate as string | undefined) ||
         enrollment.updatedAt ||
         new Date().toISOString();
       activities.push({
@@ -440,7 +460,7 @@ function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
     }
 
     if (enrollment.viewedLessons && enrollment.viewedLessons.length > 0) {
-      enrollment.viewedLessons.forEach((lesson: any) => {
+      enrollment.viewedLessons.forEach((lesson) => {
         activities.push({
           timestamp: enrollment.updatedAt || new Date().toISOString(),
           type: "lesson_view",
@@ -480,7 +500,6 @@ function deduplicateActivities(activities: UserActivity[]): UserActivity[] {
     if (!seen.has(key)) {
       seen.set(key, activity);
     } else {
-      const existing = seen.get(key)!;
       if (
         activity.details?.source === "enrollment_data" &&
         ["enrollment", "completion", "rating"].includes(activity.type)
@@ -500,7 +519,7 @@ export async function getUserActivity(userId: number): Promise<UserActivity[]> {
       `Fetched ${posthogActivities.length} PostHog activities for user ${userId}`,
     );
 
-    let enrollments: any[] = [];
+    let enrollments: EnrollmentActivitySource[] = [];
     try {
       if (getEnrollmentsByAuthorizedUser) {
         enrollments = await getEnrollmentsByAuthorizedUser(userId, {

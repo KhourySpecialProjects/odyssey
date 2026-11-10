@@ -135,7 +135,7 @@ export const authOptions: NextAuthOptions = {
         return `/unauthorized`;
       }
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account }) {
       // Add extra properties to the JWT token
       if (user) {
         const isAzure = account?.provider === "azure-ad";
