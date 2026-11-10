@@ -10,6 +10,8 @@ export const DROPLET_UID = 'api::droplet.droplet';
 export const LESSON_UID = 'api::lesson.lesson';
 export const ENROLLMENT_UID = 'api::enrollment.enrollment';
 export const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
+export const DISMISSAL_UID =
+  'api::overview-scan-dismissal.overview-scan-dismissal';
 
 /** Document Service populate for a lesson's blocks: one `on` fragment per dynamic-zone component. */
 export const LESSON_BLOCKS_POPULATE = {
@@ -324,6 +326,45 @@ export async function moveOverviewScansToLive(
   }
 }
 
+/** A flag's identity within a droplet: the same check, rule, part and block. */
+const dismissalKey = (d: Row): string =>
+  JSON.stringify([d.checkId, d.ruleId, d.partId, d.blockId ?? null]);
+
+/**
+ * Re-points the draft's scan dismissals at the original, so a flag dismissed while editing
+ * stays dismissed. If the original already dismissed the same flag, its row wins and the
+ * draft's duplicate is deleted.
+ */
+export async function moveDismissalsToLive(
+  ctx: PublishEditContext,
+): Promise<void> {
+  assertInTransaction('moveDismissalsToLive');
+  const fields = ['checkId', 'ruleId', 'partId', 'blockId'] as const;
+  const draftRows = await strapi.documents(DISMISSAL_UID).findMany({
+    filters: { droplet: { id: ctx.draft.id } },
+    fields: [...fields],
+  });
+  if (draftRows.length === 0) return;
+
+  const liveRows = await strapi.documents(DISMISSAL_UID).findMany({
+    filters: { droplet: { id: ctx.original.id } },
+    fields: [...fields],
+  });
+  const seen = new Set(liveRows.map(dismissalKey));
+  for (const row of draftRows) {
+    const key = dismissalKey(row);
+    if (seen.has(key)) {
+      await strapi.documents(DISMISSAL_UID).delete({ documentId: row.documentId });
+      continue;
+    }
+    seen.add(key);
+    await strapi.documents(DISMISSAL_UID).update({
+      documentId: row.documentId,
+      data: { droplet: ctx.original.documentId } as any,
+    });
+  }
+}
+
 /** Deletes the draft's own lessons (never one shared with another droplet), then the draft. */
 export async function deleteEditDraft(ctx: PublishEditContext): Promise<void> {
   assertInTransaction('deleteEditDraft');
@@ -357,6 +398,7 @@ export async function publishEdit(input: {
     const { lessonMap, counts } = await applyPublishEdit(ctx);
     await moveReviewsToLive(ctx, lessonMap);
     await moveOverviewScansToLive(ctx);
+    await moveDismissalsToLive(ctx);
     await deleteEditDraft(ctx);
     const { enrollmentsMoved, ...lessons } = counts;
     return {
