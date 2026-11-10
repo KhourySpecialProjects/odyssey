@@ -1,11 +1,8 @@
 "use server";
 
 import { Dataset } from "@/types";
-import {
-  fetchAPI,
-  flattenAttributes,
-  STRAPI_RESPONSE_FORMAT_HEADER,
-} from "../utils";
+import { flattenAttributes, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
+import { fetchAllPages } from "../strapi-pagination";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { datasetSchema, DatasetInput } from "../validations/dataset";
@@ -28,23 +25,28 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
  * Gets all datasets for a given droplet.
  * @param dropletId The numeric ID of the droplet.
- * @returns Array of Dataset objects.
+ * @returns Array of Dataset objects, from every page (ODY-720).
  */
 export async function getDatasetsByDropletId(
   dropletId: number,
 ): Promise<Dataset[]> {
-  return await fetchAPI<Dataset[]>("/datasets", {
-    urlParams: {
-      filters: {
-        droplet: {
-          id: { $eq: dropletId },
+  return fetchAllPages<Dataset>(
+    "/datasets",
+    {
+      urlParams: {
+        filters: {
+          droplet: {
+            id: { $eq: dropletId },
+          },
         },
+        populate: {},
+        sort: ["createdAt:asc"],
       },
-      populate: {},
-      sort: ["createdAt:asc"],
+      next: { tags: [CACHE_TAGS.datasets], revalidate: 900 },
     },
-    next: { tags: [CACHE_TAGS.datasets], revalidate: 900 },
-  });
+    // Rows carry column name and type lists; 100 keeps a page well under 2 MB.
+    100,
+  );
 }
 
 /**
