@@ -6,7 +6,7 @@ interface BlockListProps {
   blocks: Block[];
   onReorder: (fromIndex: number, toIndex: number) => void;
   setBlock: (index: number) => (block: Block) => void;
-  deleteBlock: (index: number) => () => void;
+  deleteBlock: (index: number) => () => void | Promise<void>;
 }
 
 export default function BlockList({

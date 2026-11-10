@@ -43,4 +43,36 @@ describe("DeleteDropletButton", () => {
       expect(mockRouter.replace).toHaveBeenCalledWith("/my-content");
     });
   });
+
+  it.each([
+    ["succeeds", { ok: true }],
+    ["fails", { ok: false, error: "nope" }],
+  ])(
+    "shows a spinner while pending and recovers when delete %s",
+    async (_label, result) => {
+      let resolve!: (v: unknown) => void;
+      (deepDeleteDroplet as jest.Mock).mockReturnValue(
+        new Promise((res) => {
+          resolve = res;
+        }),
+      );
+      render(<DeleteDropletButton dropletId={1} />);
+      fireEvent.click(screen.getByText("Delete Droplet"));
+      const confirm = screen.getByRole("button", { name: "Delete" });
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+
+      expect(deepDeleteDroplet).toHaveBeenCalledTimes(1);
+      const busy = screen.getByRole("button", { name: "Deleting..." });
+      expect(busy).toBeDisabled();
+      expect(busy).toHaveAttribute("aria-busy", "true");
+      expect(busy.querySelector(".animate-spin")).not.toBeNull();
+
+      resolve(result);
+
+      const back = await screen.findByRole("button", { name: "Delete" });
+      expect(back).toBeEnabled();
+      expect(back.querySelector(".animate-spin")).toBeNull();
+    },
+  );
 });

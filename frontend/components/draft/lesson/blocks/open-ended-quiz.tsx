@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { OpenEndedQuizQuestion } from "@/types";
-import { TrashIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { TrashIcon, PlusIcon } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { useState } from "react";
 import { Block } from "@/types";
@@ -10,7 +11,7 @@ interface OpenEndedQuizEditorProps {
   updateBlock: (
     block: Partial<Extract<Block, { __component: "droplets.open-ended-quiz" }>>,
   ) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }
 
 export function OpenEndedQuizEditor({
@@ -70,11 +71,7 @@ export function OpenEndedQuizEditor({
     <div className="w-full">
       <div className="flex w-full flex-row items-center justify-between p-4">
         <h2 className="text-lg">Open Ended Quiz</h2>
-        <Trash2Icon
-          className="cursor-pointer text-red-600 hover:text-red-700"
-          onClick={deleteBlock}
-          data-testid="delete-block"
-        />
+        <DeleteBlockButton onDelete={deleteBlock} data-testid="delete-block" />
       </div>
       <p className="p-4 pb-4">
         Note: when users are typing answers in, their response must match the

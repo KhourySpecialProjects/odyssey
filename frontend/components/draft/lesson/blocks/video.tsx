@@ -1,6 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
-import { PencilIcon, CheckIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, CheckIcon } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
 import { youtubeUrlToEmbeddedUrl } from "@/lib/utils";
@@ -17,7 +18,7 @@ export function VideoEditor({
 }: {
   block: VideoBlock;
   updateBlock: (block: VideoBlock) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }) {
   const ref = useRef(null);
   const { open, setOpen } = useOffClick(ref, () => {}, true);
@@ -35,11 +36,7 @@ export function VideoEditor({
         <div className="mb-4 flex w-full flex-row items-center justify-between">
           <div className="mr-4 flex w-full flex-row items-center justify-between">
             <h2 className="text-lg">Video Block</h2>
-            <Trash2Icon
-              className="cursor-pointer text-red-600 hover:text-red-700"
-              onClick={deleteBlock}
-              role="trash"
-            />
+            <DeleteBlockButton onDelete={deleteBlock} role="trash" />
           </div>
 
           {open ? (

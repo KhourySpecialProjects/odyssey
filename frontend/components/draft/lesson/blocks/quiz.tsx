@@ -1,14 +1,15 @@
 import { Block, QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 import { isTrueFalseQuestion } from "@/lib/utils";
 
 interface QuizEditorProps {
   block: Extract<Block, { __component: "droplets.quiz" }>;
   updateBlock: (block: Partial<Block>) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }
 
 export function QuizEditor({
@@ -92,11 +93,7 @@ export function QuizEditor({
         <h2 className="text-lg">
           {isTrueFalse ? "True/False Quiz" : "Multiple Choice Quiz"}
         </h2>
-        <Trash2Icon
-          className="cursor-pointer text-red-600 hover:text-red-700"
-          onClick={deleteBlock}
-          data-testid="delete-block"
-        />
+        <DeleteBlockButton onDelete={deleteBlock} data-testid="delete-block" />
       </div>
       <div className="space-y-6">
         {questions.map((question, index) => (

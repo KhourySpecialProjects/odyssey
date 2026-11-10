@@ -4,7 +4,8 @@ import { JSONContent } from "@tiptap/react";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
-import { Trash2Icon, Ban } from "lucide-react";
+import { Ban } from "lucide-react";
+import { DeleteBlockButton } from "./delete-block-button";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
@@ -28,7 +29,7 @@ export function CalloutEditor({
 }: {
   block: CalloutBlock;
   updateBlock: (block: CalloutBlock) => void;
-  deleteBlock: () => void;
+  deleteBlock: () => void | Promise<void>;
 }) {
   const [iconEnabled, setIconEnabled] = useState(block.iconEnabled);
 
@@ -83,11 +84,7 @@ export function CalloutEditor({
         <div className="flex flex-row items-center gap-2">
           <CalloutTypeTool block={block} updateBlock={updateBlock} />
 
-          <Trash2Icon
-            className="cursor-pointer text-red-600 hover:text-red-700"
-            onClick={deleteBlock}
-            role="trash"
-          />
+          <DeleteBlockButton onDelete={deleteBlock} role="trash" />
         </div>
       </div>
       <CalloutBlockInput
