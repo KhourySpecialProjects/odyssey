@@ -38,7 +38,20 @@ jest.mock("@/components/explore/sorted-droplets-grid", () => ({
   ),
 }));
 
+jest.mock("@/components/explore/reset-filters-button", () => ({
+  ResetFiltersButton: () => <button>Reset filters</button>,
+}));
+
 describe("DropletsGrid", () => {
+  it("offers Reset filters when the filters match no droplets (ODY-256)", async () => {
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
+    render(await DropletsGrid({ droplets: [] }));
+    expect(screen.getByText("No droplets found")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Reset filters" }),
+    ).toBeInTheDocument();
+  });
+
   it("skips enrollments whose droplet is null", async () => {
     (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([
       { droplet: null, isArchived: true, viewedLessons: [] },

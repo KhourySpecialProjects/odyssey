@@ -10,6 +10,7 @@ import { getUserDueDates } from "@/lib/requests/groups";
 import { getFavoritedDropletIds } from "@/lib/requests/droplet";
 import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { ResetFiltersButton } from "./reset-filters-button";
 
 interface Lesson {
   id: number;
@@ -82,6 +83,7 @@ export async function DropletsGrid({
         }
         title="No droplets found"
         message="There are no droplets that match those filters."
+        action={<ResetFiltersButton />}
       />
     );
   }

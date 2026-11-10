@@ -13,6 +13,7 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
 import { useUrlPage } from "@/hooks/use-url-page";
 import { matchesDropletSearch } from "@/lib/author-names";
+import { ResetFiltersButton } from "./reset-filters-button";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -147,6 +148,7 @@ export function SortedDropletsGrid({
             ? `There are no Droplets that match "${searchValue}".`
             : "There are no droplets that match those filters."}
         </MessageDescription>
+        <ResetFiltersButton />
       </Message>
     );
   }
