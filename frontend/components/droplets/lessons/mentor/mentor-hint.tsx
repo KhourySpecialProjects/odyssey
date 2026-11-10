@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import type { MentorHintState } from "@/hooks/use-mentor-hint";
@@ -23,12 +23,22 @@ export function MentorHint({
   const { status } = hint;
   const streaming = status === "streaming";
   const shown = displayAnswer(hint.text, { streaming: status !== "done" });
+  const box = useRef<HTMLElement>(null);
+
+  // The Explain button leaves when the hint finishes: keep focus in the page
+  useEffect(() => {
+    if (status === "done" && document.activeElement === document.body) {
+      box.current?.focus();
+    }
+  }, [status]);
 
   return (
     <section
+      ref={box}
+      tabIndex={-1}
       aria-label="Mentor hint"
       aria-busy={streaming}
-      className="ph-no-capture border-mentor-line bg-mentor-soft text-mentor-text mt-4 rounded-lg border p-4 text-left text-sm"
+      className="ph-no-capture border-mentor-line bg-mentor-soft text-mentor-text mt-4 rounded-lg border p-4 text-left text-sm focus:outline-none"
     >
       <p className="text-mentor-text mb-2 flex items-center gap-1.5 text-xs font-semibold">
         <Sparkles className="text-mentor h-4 w-4" aria-hidden="true" />
@@ -66,7 +76,7 @@ export function MentorHint({
               onClick={onRetry}
               className="mt-1 rounded text-xs font-semibold underline"
             >
-              Try again
+              Retry hint
             </button>
           )}
         </div>
