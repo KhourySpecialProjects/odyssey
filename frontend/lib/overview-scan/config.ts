@@ -137,6 +137,7 @@ export const CONFIG = {
     dev devs df dict dicts div dropdown dropdowns dtype dtypes enum enums frontend getter getters
     github gitignore hashmap href html http https ide ides iloc img init instantiation ipynb isna
     javascript jpeg jpg js json jsx jupyter kotlin localhost macos matplotlib
+    callout heatmap lifecycle lookups loopback quartiles routable viewport
     loc md middleware modularity monospaced namespace namespaces npm nullable nullish numpy
     pandas param params png programmatically pseudocode py pytorch readme
     refactor refactored refactoring regex repo repos resizable reusability
@@ -148,10 +149,6 @@ export const CONFIG = {
   `
     .trim()
     .split(/\s+/) as readonly string[],
-  // The AI double-check of the dictionary's spelling flags (ODY-904): at most
-  // this many words go in its one call, and it gives up after this long
-  aiSpellingMaxWords: 200,
-  aiSpellingTimeoutMs: 20_000,
   // Words obscenity flags that aren't swears
   swearAllowWords: [
     "cockpit",

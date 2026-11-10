@@ -11,12 +11,6 @@ import {
   scanDoc,
 } from "@/testing/mocks/overview-scan";
 
-// The spelling rule's AI double-check doesn't run here; spelling-ai.test.ts covers it
-jest.mock("@/lib/overview-scan/spelling", () => ({
-  ...jest.requireActual("@/lib/overview-scan/spelling"),
-  confirmMisspellings: jest.fn(async () => ({ ok: false, reason: "failed" })),
-}));
-
 const noFetch: FetchUrl = () => {
   throw new Error("a content rule fetched a URL");
 };
@@ -132,14 +126,6 @@ describe("content checks", () => {
           "untill",
         ]),
         warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`, ["Wich"]),
-        // The AI double-check is mocked as not run here (spelling-ai.test.ts)
-        {
-          partId: "droplet",
-          blockId: null,
-          message:
-            "The AI double-check didn't run, so these are the dictionary's flags.",
-          severity: "unknown",
-        },
       ],
     ],
     [

@@ -5,17 +5,8 @@ import {
 } from "obscenity";
 import { CONFIG } from "@/lib/overview-scan/config";
 import { blockText, dropletPart, lessonParts } from "@/lib/overview-scan/parts";
-import {
-  confirmMisspellings,
-  unknownWords,
-  type SpellingItem,
-} from "@/lib/overview-scan/spelling";
-import {
-  norm,
-  sentenceAround,
-  sentences,
-  words,
-} from "@/lib/overview-scan/text";
+import { likelyTypos, spellingContext } from "@/lib/overview-scan/spelling";
+import { norm, sentences, words } from "@/lib/overview-scan/text";
 import {
   flag,
   type Check,
@@ -210,60 +201,36 @@ function mixedCase(
   return lower && upper ? { lower, upper } : null;
 }
 
-const AI_NOTE = {
-  failed:
-    "The AI double-check didn't run, so these are the dictionary's flags.",
-  budget:
-    "The AI double-check didn't run because this month's AI budget is used up, so these are the dictionary's flags.",
-} as const;
-
 const notKnown = (unknown: readonly string[]) =>
   `${quoteList(unknown)} ${unknown.length > 1 ? "aren't" : "isn't"} in the dictionary or the tech word list.`;
 
+/** Every code block and inline code span in the droplet. */
+function allCode(doc: ScanDocument): string[] {
+  return doc.parts.flatMap((part) =>
+    part.blocks.flatMap((b) => [
+      ...(b.inlineCode ?? []),
+      ...(b.type === "code" ? [b.code] : []),
+    ]),
+  );
+}
+
 /**
- * The dictionary's unknown words, double-checked by AI in their sentence
- * (ODY-904): one call for the whole droplet, made only when the dictionary
- * flagged something. Words past the call's limit stay flagged. If the call
- * doesn't run, the dictionary's flags stand, with a note saying so.
+ * Words that look like typos of real words (ODY-924), found offline. The
+ * whole droplet's text and code are known first, so a word used in code
+ * anywhere or used 3 or more times passes.
  */
 async function spellingFlags(doc: ScanDocument): Promise<Flag[]> {
-  const found = readableText(doc)
-    .map((s) => ({ s, unknown: unknownWords(s.text, s.code) }))
-    .filter((f) => f.unknown.length > 0);
-  if (found.length === 0) return [];
-
-  const items: SpellingItem[] = [];
-  const itemOf = new Map<string, number>();
-  const keyOf = (word: string, sentence: string) => `${word}\u0000${sentence}`;
-  for (const { s, unknown } of found) {
-    for (const word of unknown) {
-      const sentence = sentenceAround(s.text, word);
-      const key = keyOf(word, sentence);
-      if (itemOf.has(key) || items.length >= CONFIG.aiSpellingMaxWords)
-        continue;
-      itemOf.set(key, items.length);
-      items.push({ word, sentence });
-    }
-  }
-
-  // The words go with the flag, so its link can highlight them (ODY-913)
-  const spellingFlag = (s: Text, words: string[]): Flag => ({
-    ...flag(s.part, s.blockId, notKnown(words)),
-    words,
-  });
-  const check = await confirmMisspellings(items);
-  if (!check.ok) {
-    return [
-      ...found.map(({ s, unknown }) => spellingFlag(s, unknown)),
-      flag(dropletPart(doc), null, AI_NOTE[check.reason], "unknown"),
-    ];
-  }
-  return found.flatMap(({ s, unknown }) => {
-    const kept = unknown.filter((word) => {
-      const id = itemOf.get(keyOf(word, sentenceAround(s.text, word)));
-      return id === undefined || check.misspelled.has(id);
-    });
-    return kept.length ? [spellingFlag(s, kept)] : [];
+  const texts = readableText(doc);
+  const context = spellingContext(
+    texts.map((s) => s.text),
+    allCode(doc),
+  );
+  return texts.flatMap((s) => {
+    const typos = likelyTypos(s.text, context, s.code);
+    // The words go with the flag, so its link can highlight them (ODY-913)
+    return typos.length
+      ? [{ ...flag(s.part, s.blockId, notKnown(typos)), words: typos }]
+      : [];
   });
 }
 
@@ -344,7 +311,7 @@ export const CONTENT_CHECKS: readonly Check[] = [
     rules: [
       {
         id: "dictionary",
-        text: "Every word is in the English dictionary or Odyssey's tech word list. Words that aren't are double-checked by AI in their sentence, and only real misspellings are flagged",
+        text: 'No word looks like a typo of a real word. Words that aren\'t in the dictionary or Odyssey\'s tech word list are flagged only when a real word is one or two letters away ("teh", "recieve"). Names, products, code and words used three or more times pass',
         run: spellingFlags,
       },
       {
