@@ -438,13 +438,81 @@ describe("Feed tests", () => {
       expect(url).not.toContain("[$and][2][type][$in][7]");
     });
 
-    it("leaves global broadcasts out but keeps the viewer's own", async () => {
-      setupCount();
-      await getUnreadAnnouncementCount();
-      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-      expect(url).toContain("[type]=system");
-      expect(url).toContain("[authorized_user][id][$eq]=5");
-      expect(url).not.toContain("[authorized_user][id][$null]");
+    // Minimal Strapi filter matcher over qs-parsed filters (values are strings)
+    function matches(row, filter) {
+      return Object.entries(filter).every(([key, cond]) => {
+        if (key === "$and")
+          return Object.values(cond).every((c) => matches(row, c));
+        if (key === "$or")
+          return Object.values(cond).some((c) => matches(row, c));
+        const value = row?.[key];
+        if (typeof cond !== "object") return String(value) === cond;
+        if (!Object.keys(cond).some((k) => k.startsWith("$"))) {
+          return matches(value, cond);
+        }
+        return Object.entries(cond).every(([op, arg]) => {
+          if (op === "$eq") return String(value) === arg;
+          if (op === "$ne") return String(value) !== arg;
+          if (op === "$in") return Object.values(arg).includes(String(value));
+          if (op === "$null") return (value == null) === (arg === "true");
+          throw new Error(`matcher: unsupported ${op}`);
+        });
+      });
+    }
+
+    it.each([
+      ["a reminder", true, { type: "reminder", authorized_user: { id: 5 } }],
+      [
+        "a targeted system row",
+        true,
+        { type: "system", authorized_user: { id: 5 } },
+      ],
+      ["a global broadcast", false, { type: "system", authorized_user: null }],
+      [
+        "a group row",
+        false,
+        { type: "group", group: { id: 1 }, authorized_user: null },
+      ],
+      [
+        "a playlist row",
+        false,
+        { type: "playlist", playlist: { id: 2 }, authorized_user: null },
+      ],
+      [
+        "a droplet row",
+        false,
+        { type: "droplet", droplet: { id: 3 }, authorized_user: null },
+      ],
+      ["a friend row", false, { type: "friend", authorized_user: { id: 77 } }],
+      ["a kudos row", false, { type: "kudos", authorized_user: { id: 77 } }],
+    ])("%s is in the feed and counted=%s", async (_n, counted, row) => {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({
+        id: 5,
+        friendships: [{ authorized_users: [{ id: 5 }, { id: 77 }] }],
+      });
+      fetchAPI.mockImplementation(
+        async (path) =>
+          ({
+            "/groups": [{ id: 1 }],
+            "/playlists": [{ id: 2 }],
+            "/enrollments": [{ id: 9, droplet: { id: 3 } }],
+          })[path] ?? [],
+      );
+      const ok = { ok: true, json: async () => ({ data: [], meta: {} }) };
+      global.fetch.mockResolvedValue(ok);
+      await getUnreadAnnouncementCount(["system", row.type]);
+      await fetchAnnouncements(1, ["system", row.type]);
+      const filtersOf = (i) =>
+        require("qs").parse(global.fetch.mock.calls[i][0].split("?")[1], {
+          depth: 20,
+        }).filters;
+      const unread = { ...row, readAt: null };
+      expect(matches(unread, filtersOf(1))).toBe(true);
+      expect(matches(unread, filtersOf(0))).toBe(counted);
     });
 
     it("counts the given filter selection", async () => {
@@ -481,7 +549,7 @@ describe("Feed tests", () => {
       ["default roles", undefined],
       ["a filtered set", ["kudos", "friend"]],
     ])(
-      "uses the feed's filters for %s (minus broadcasts)",
+      "uses the feed's filters for %s, plus owner = viewer",
       async (_n, roles) => {
         const filtersOf = (u) => require("qs").parse(u.split("?")[1]).filters;
         const {
@@ -491,13 +559,13 @@ describe("Feed tests", () => {
         setupCount();
         await getUnreadAnnouncementCount(roles);
         setupCount();
-        await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES), {
-          archived: false,
-          excludeBroadcasts: true,
-        });
-        expect(filtersOf(global.fetch.mock.calls[0][0])).toEqual(
-          filtersOf(global.fetch.mock.calls[1][0]),
-        );
+        await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES));
+        const count = filtersOf(global.fetch.mock.calls[0][0]).$and;
+        const feed = filtersOf(global.fetch.mock.calls[1][0]).$and;
+        expect(count).toEqual([
+          ...feed,
+          { authorized_user: { id: { $eq: "5" } } },
+        ]);
       },
     );
 

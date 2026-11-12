@@ -59,9 +59,9 @@ function friendIdsOf(
 async function buildFeedFilters(
   userId: number,
   email: string,
-  opts: { archived: boolean; excludeBroadcasts: boolean; types?: string[] },
+  opts: { archived: boolean; ownedOnly?: boolean; types?: string[] },
 ) {
-  const { archived, excludeBroadcasts, types } = opts;
+  const { archived, ownedOnly, types } = opts;
   // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
   // parallel. Friends come from the social graph the activity layout already
   // reads (request-deduped there; a Data Cache hit from a Server Action).
@@ -150,9 +150,7 @@ async function buildFeedFilters(
   orFilters.push({
     type: "system",
     $or: [
-      ...(excludeBroadcasts
-        ? []
-        : [{ authorized_user: { id: { $null: true } } }]),
+      { authorized_user: { id: { $null: true } } },
       { authorized_user: { id: { $eq: userId } } },
     ],
   });
@@ -172,9 +170,15 @@ async function buildFeedFilters(
   const readAtFilter = archived
     ? { readAt: { $notNull: true } }
     : { readAt: { $null: true } };
-  return types?.length
-    ? { $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }] }
-    : { $and: [{ $or: orFilters }, readAtFilter] };
+  return {
+    $and: [
+      { $or: orFilters },
+      readAtFilter,
+      ...(types?.length ? [{ type: { $in: types } }] : []),
+      // Only rows assertAnnouncementOwnership lets the viewer mark read
+      ...(ownedOnly ? [{ authorized_user: { id: { $eq: userId } } }] : []),
+    ],
+  };
 }
 
 /**
@@ -188,11 +192,9 @@ async function buildFeedFilters(
 export async function fetchAnnouncements(
   page?: number,
   roles?: string[],
-  options?: { archived?: boolean; excludeBroadcasts?: boolean },
+  options?: { archived?: boolean },
 ): Promise<FeedPage> {
   const archived = options?.archived ?? false;
-  // Only ever narrows the result, so an untrusted caller gains nothing
-  const excludeBroadcasts = options?.excludeBroadcasts === true;
   const sessionUser = await getCurrentUser();
   const userId = await getAuthorizedUserId(sessionUser);
   if (!sessionUser?.email || !userId) {
@@ -208,7 +210,6 @@ export async function fetchAnnouncements(
   try {
     const filters = await buildFeedFilters(userId, email, {
       archived,
-      excludeBroadcasts,
       types,
     });
 
@@ -924,9 +925,8 @@ function revalidateReadState(ownership: { ownerId: number; type?: string }) {
 }
 
 /**
- * Count unread (non-archived) announcements for the nav badge: the Unread
- * tab's total for `roles` (default: the tab's default types).
- * Broadcasts are left out on purpose: they can't be marked read (ODY-943).
+ * The nav badge: unread rows of `roles` (default: the Unread tab's types).
+ * Counts only rows the viewer can mark read; shared rows wait for ODY-943.
  */
 export async function getUnreadAnnouncementCount(
   roles?: string[],
@@ -940,7 +940,7 @@ export async function getUnreadAnnouncementCount(
     if (!sessionUser?.email || !userId) throw new Error("Not authenticated");
     const filters = await buildFeedFilters(userId, sessionUser.email, {
       archived: false,
-      excludeBroadcasts: true,
+      ownedOnly: true,
       types: types.filter((t) => typeof t === "string"),
     });
     const query = qs.stringify({
