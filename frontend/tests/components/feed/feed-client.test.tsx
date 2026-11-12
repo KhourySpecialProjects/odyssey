@@ -7,13 +7,19 @@ import {
 } from "@testing-library/react";
 import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
-import { fetchAnnouncements, markAnnouncementRead } from "@/lib/requests/feed";
+import {
+  fetchAnnouncements,
+  getUnreadAnnouncementCount,
+  markAnnouncementRead,
+} from "@/lib/requests/feed";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
 import { useStreakStore } from "@/stores/streak-store";
 import { makeStreak } from "@/testing/mocks/streakMock";
 
 jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
+  getUnreadAnnouncementCount: jest.fn(),
   markAnnouncementRead: jest.fn(),
   markAnnouncementUnread: jest.fn(),
 }));
@@ -27,6 +33,8 @@ describe("FeedClient", () => {
     jest.clearAllMocks();
     (fetchAnnouncements as jest.Mock).mockReset();
     (fetchAnnouncements as jest.Mock).mockResolvedValue(mockPage([]));
+    (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(0);
+    useFeedUnreadStore.setState({ serverCount: null, feedCount: null });
     jest.useRealTimers();
     jest.spyOn(console, "error").mockRestore();
   });
@@ -547,6 +555,79 @@ describe("FeedClient", () => {
 
       expect(await screen.findByText("Announcement 300")).toBeInTheDocument();
       expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("unread badge count", () => {
+    const seededFeed = () => ({
+      roles: ["droplet"] as AnnouncementType[],
+      page: mockPage(generateMockAnnouncements(2), 1),
+    });
+    const renderFeed = () =>
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={seededFeed()}
+        />,
+      );
+    const feedCount = () => useFeedUnreadStore.getState().feedCount;
+
+    beforeEach(() => useFeedUnreadStore.setState({ serverCount: 5 }));
+
+    it("counts the selected filters, and goes back to the layout's count on unmount", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      const { unmount } = renderFeed();
+
+      await waitFor(() => expect(feedCount()).toBe(2));
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledWith(["droplet"]);
+      unmount();
+      expect(feedCount()).toBeNull();
+    });
+
+    it("drops by one on mark read, and puts it back when that fails", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      // Hold the post-action recount so the optimistic value is visible
+      (getUnreadAnnouncementCount as jest.Mock).mockReturnValue(
+        new Promise(() => {}),
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(feedCount()).toBe(2);
+    });
+
+    it("leaves a global broadcast out of the optimistic count", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+      });
+      const broadcast = {
+        ...generateMockAnnouncements(1)[0],
+        type: "system" as AnnouncementType,
+      };
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage([broadcast], 1),
+          }}
+        />,
+      );
+      await waitFor(() => expect(feedCount()).toBe(2));
+
+      fireEvent.click(screen.getByRole("button", { name: "Mark as read" }));
+      expect(feedCount()).toBe(2);
     });
   });
 

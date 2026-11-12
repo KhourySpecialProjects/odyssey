@@ -3,6 +3,7 @@ import { FeedContainer } from "@/components/feed/feed-container";
 import { ActivityGreeting } from "@/components/feed/activity-greeting";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
+import { getUnreadAnnouncementCount } from "@/lib/requests/feed";
 
 export default async function ActivityLayout({
   children,
@@ -11,12 +12,15 @@ export default async function ActivityLayout({
 }) {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
-  const authUser = await getCachedUserSocial(user.email);
+  const [authUser, unreadCount] = await Promise.all([
+    getCachedUserSocial(user.email),
+    getUnreadAnnouncementCount(),
+  ]);
   if (!authUser) return notFound();
 
   return (
     <div className="w-full">
-      <FeedContainer authUser={authUser}>
+      <FeedContainer authUser={authUser} unreadCount={unreadCount}>
         <div className="flex h-full flex-col px-4 py-6 md:px-8">
           <ActivityGreeting
             firstName={authUser.firstName}

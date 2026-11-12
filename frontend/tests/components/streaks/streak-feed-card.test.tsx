@@ -4,6 +4,7 @@ import {
   latestUnlock,
   useStreakFeedCard,
 } from "@/components/streaks/streak-feed-card";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { useStreakStore } from "@/stores/streak-store";
 import { makeStreak } from "@/testing/mocks/streakMock";
 
@@ -14,6 +15,7 @@ const card = () => screen.queryByRole("listitem");
 
 beforeEach(() => {
   localStorage.clear();
+  useFeedUnreadStore.setState({ streakReadKey: undefined });
   useStreakStore.setState({
     streak: makeStreak({ current: 24, litToday: true }),
   });
@@ -87,4 +89,12 @@ describe("useStreakFeedCard", () => {
     rerender(<Feed tab="unread" />);
     expect(card()).not.toBeInTheDocument();
   });
+});
+
+it("shares the read marker, so marking it read in the feed updates the badge", async () => {
+  render(<Feed tab="unread" />);
+  await userEvent.click(screen.getByRole("button", { name: "Mark as read" }));
+  expect(useFeedUnreadStore.getState().streakReadKey).toBe(
+    latestUnlock(makeStreak({ current: 24, litToday: true }))?.key,
+  );
 });
