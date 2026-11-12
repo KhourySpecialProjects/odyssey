@@ -179,7 +179,9 @@ describeServerActionAuth("deepDeleteDroplet", {
   authorized: {
     as: authFixtures.as({ id: 7 }),
     arrange: () => {
-      mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
+      mockedFetchAPI.mockResolvedValue([
+        { ...dropletOwnedBySeven(), status: "draft" },
+      ]);
       fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
     },
     expect: (result) => {
@@ -198,6 +200,18 @@ describe("deepDeleteDroplet: extra cases", () => {
 
     expect(await deepDeleteDroplet(1)).toMatchObject({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses an author for a published droplet", async () => {
+    mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
+    mockedFetchAPI.mockResolvedValue([dropletOwnedBySeven()]);
+
+    expect(await deepDeleteDroplet(1)).toEqual({
+      ok: false,
+      error: "forbidden",
+      data: null,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("refuses an author while the droplet is in review", async () => {

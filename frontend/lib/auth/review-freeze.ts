@@ -196,6 +196,29 @@ export async function checkDropletContentWrite(
   }
 }
 
+/**
+ * Delete rights: the write rule, and authors (Faculty included) may delete
+ * only unpublished droplets. System Admin and Content Editor may delete any.
+ */
+export async function checkDropletDelete(
+  user: AuthUser,
+  dropletId: number,
+): Promise<FreezeResult> {
+  if (!isValidId(dropletId)) return fail("forbidden");
+  try {
+    const droplet = await loadDropletForWrite(dropletId);
+    if (!droplet) return fail("Not Found");
+    const write = checkDropletWrite(user, droplet);
+    if (!write.ok) return write;
+    if (!hasBypass(user) && droplet.status === "published") {
+      return fail("forbidden");
+    }
+    return OK;
+  } catch {
+    return LOOKUP_FAILED;
+  }
+}
+
 export async function checkLessonWrite(
   user: AuthUser,
   lessonId: number,

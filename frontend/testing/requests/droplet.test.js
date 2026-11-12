@@ -36,6 +36,7 @@ jest.mock("@/lib/auth/require-role", () => ({
 jest.mock("@/lib/auth/review-freeze", () => ({
   checkDropletUpdate: jest.fn(),
   checkDropletContentWrite: jest.fn(),
+  checkDropletDelete: jest.fn(),
   checkPublishDraft: jest.fn(),
 }));
 
@@ -52,6 +53,7 @@ function allowReviewFreeze() {
   const freeze = jest.requireMock("@/lib/auth/review-freeze");
   freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
   freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
+  freeze.checkDropletDelete.mockResolvedValue({ ok: true });
   freeze.checkPublishDraft.mockResolvedValue({ ok: true });
 }
 allowReviewFreeze();

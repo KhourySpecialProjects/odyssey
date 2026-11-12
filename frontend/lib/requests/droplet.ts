@@ -12,6 +12,7 @@ import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
 import {
   checkDropletContentWrite,
+  checkDropletDelete,
   checkDropletUpdate,
   checkPublishDraft,
 } from "../auth/review-freeze";
@@ -281,9 +282,8 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
 export async function deepDeleteDroplet(id: number) {
   const gate = await requireRole([]);
   if (!gate.ok) return { ok: false, error: gate.error, data: null };
-  // Same write rule as updateDroplet: an author, or a System Admin or Content
-  // Editor; Faculty only their own; authors are frozen while in review.
-  const check = await checkDropletContentWrite(gate.user, id);
+  // The write rule, and authors may delete only unpublished droplets.
+  const check = await checkDropletDelete(gate.user, id);
   if (!check.ok) return { ok: false, error: check.error, data: null };
   return deleteDropletRecord(id);
 }
