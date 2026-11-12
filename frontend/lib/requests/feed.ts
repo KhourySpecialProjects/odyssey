@@ -163,6 +163,12 @@ export async function fetchAnnouncements(
       authorized_user: { id: { $eq: userId } },
     });
 
+    // Reminders reach only their owner
+    orFilters.push({
+      type: "reminder",
+      authorized_user: { id: { $eq: userId } },
+    });
+
     const readAtFilter = archived
       ? { readAt: { $notNull: true } }
       : { readAt: { $null: true } };
@@ -777,11 +783,11 @@ async function assertAnnouncementOwnership(
  * every feed that includes the row. A targeted system announcement is only
  * ever in its owner's feed (fetchAnnouncements matches system rows by
  * authorized_user = viewer; fetchUserAnnouncements excludes system), so its
- * owner's per-user feed tag is enough. Friend/kudos rows owned by the caller
- * appear in their friends' feeds, so those still sweep globally.
+ * owner's per-user feed tag is enough. Reminders are owner-only the same way.
+ * Friend/kudos rows owned by the caller appear in their friends' feeds, so those still sweep globally.
  */
 function revalidateReadState(ownership: { ownerId: number; type?: string }) {
-  if (ownership.type === "system") {
+  if (ownership.type === "system" || ownership.type === "reminder") {
     revalidateTag(CACHE_TAGS.userFeed(ownership.ownerId));
   } else {
     revalidateTag(CACHE_TAGS.announcements);

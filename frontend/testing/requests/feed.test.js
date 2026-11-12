@@ -219,6 +219,18 @@ describe("Feed tests", () => {
       expect(url.slice(i)).toContain("[authorized_user][id][$eq]=5");
     });
 
+    it("includes only the viewer's own reminders", async () => {
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      const i = url.indexOf("[type]=reminder");
+      expect(i).toBeGreaterThan(-1);
+      expect(url.slice(i, i + 80)).toContain("[authorized_user][id][$eq]=5");
+    });
+
     it("ignores a user object passed by the caller", async () => {
       const { fetchAPI } = require("../../lib/utils");
       mockPrecompute();

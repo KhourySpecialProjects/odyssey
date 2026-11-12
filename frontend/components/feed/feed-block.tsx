@@ -13,6 +13,7 @@ import {
   RotateCcw,
   MessageSquareText,
   BadgeCheck,
+  Bell,
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
@@ -75,6 +76,10 @@ export function FeedBlock({
     review_published: {
       icon: <BadgeCheck size={18} />,
       label: "Review published",
+    },
+    reminder: {
+      icon: <Bell size={18} />,
+      label: "Reminder",
     },
   };
 

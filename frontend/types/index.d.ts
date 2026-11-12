@@ -26,7 +26,8 @@ export type AnnouncementType =
   | "group"
   | "kudos"
   | "review_feedback"
-  | "review_published";
+  | "review_published"
+  | "reminder";
 
 export type HighlightColor =
   | "#f9a8d4"

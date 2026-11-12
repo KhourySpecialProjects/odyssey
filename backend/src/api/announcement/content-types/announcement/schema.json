@@ -22,7 +22,8 @@
         "group",
         "kudos",
         "review_feedback",
-        "review_published"
+        "review_published",
+        "reminder"
       ],
       "required": true
     },
