@@ -122,7 +122,8 @@ const METRICS = Object.keys(THRESHOLDS) as Metric[];
 const ofKind = (kinds: CaseKind[]) => (r: ResultRow) => kinds.includes(r.kind);
 const said = (q: Question) => (r: ResultRow) =>
   r.judge?.answers[q]?.answer === "yes";
-const pct = (x: number) => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
+export const pct = (x: number) =>
+  Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`;
 const mean = (xs: number[]) =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
 const median = (xs: number[]) =>
