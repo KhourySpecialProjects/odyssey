@@ -1,7 +1,7 @@
-import { getMyStreak } from "@/lib/requests/streaks";
+import { getMyStreak, reviveStreak } from "@/lib/requests/streaks";
 import { requireRole } from "@/lib/auth/require-role";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getStreakFor } from "@/lib/streak-days";
+import { getStreakFor, reviveStreakDay } from "@/lib/streak-days";
 import type { Streak } from "@/lib/streaks";
 import {
   authFixtures,
@@ -12,11 +12,15 @@ jest.mock("@/lib/auth/require-role", () => ({ requireRole: jest.fn() }));
 jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
-jest.mock("@/lib/streak-days", () => ({ getStreakFor: jest.fn() }));
+jest.mock("@/lib/streak-days", () => ({
+  getStreakFor: jest.fn(),
+  reviveStreakDay: jest.fn(),
+}));
 
 const mockedRequireRole = jest.mocked(requireRole);
 const mockedGetUser = jest.mocked(getAuthorizedUserByEmail);
 const mockedGetStreakFor = jest.mocked(getStreakFor);
+const mockedRevive = jest.mocked(reviveStreakDay);
 
 const STREAK: Streak = {
   current: 2,
@@ -28,6 +32,8 @@ const STREAK: Streak = {
     { date: "2026-11-08", lessons: 1 },
     { date: "2026-11-09", lessons: 2 },
   ],
+  revivesLeft: 2,
+  revive: null,
 };
 
 beforeEach(() => {
@@ -35,6 +41,7 @@ beforeEach(() => {
   jest.spyOn(console, "error").mockImplementation(() => {});
   mockedGetUser.mockResolvedValue({ id: 7, timeZone: "Asia/Tokyo" } as never);
   mockedGetStreakFor.mockResolvedValue(STREAK);
+  mockedRevive.mockResolvedValue({ ok: true });
 });
 
 describeServerActionAuth("getMyStreak", {
@@ -70,4 +77,36 @@ it("returns an error, not a throw, when the streak can't be read", async () => {
     error: "Couldn't load your streak.",
     data: null,
   });
+});
+
+describeServerActionAuth("reviveStreak", {
+  requireRole: mockedRequireRole,
+  invoke: () => reviveStreak(),
+  mutations: () => [mockedRevive],
+  denial: { kind: "role", roles: [] },
+  authorized: {
+    as: authFixtures.as({ id: 7 }),
+    expect: (result) => {
+      expect(result).toEqual({ ok: true, error: null, data: STREAK });
+      // The caller's own yesterday, and the streak read fresh after it
+      const learner = { id: 7, timeZone: "Asia/Tokyo" };
+      expect(mockedRevive).toHaveBeenCalledWith(learner);
+      expect(mockedGetStreakFor).toHaveBeenCalledWith(learner, { fresh: true });
+    },
+  },
+  expectDenied: (result, code) => {
+    expect(result).toEqual({ ok: false, error: code, data: null });
+  },
+});
+
+it("says why a revive was refused, without reading the streak", async () => {
+  mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
+  mockedRevive.mockResolvedValue({ ok: false, message: "No revives left" });
+
+  expect(await reviveStreak()).toEqual({
+    ok: false,
+    error: "No revives left",
+    data: null,
+  });
+  expect(mockedGetStreakFor).not.toHaveBeenCalled();
 });
