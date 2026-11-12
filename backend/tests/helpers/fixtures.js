@@ -31,6 +31,7 @@ const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
+const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
 
 const mentorUsageData = (overrides = {}) => ({
@@ -177,6 +178,7 @@ module.exports = {
   OVERVIEW_SCAN_DISMISSAL_UID,
   MENTOR_USAGE_UID,
   MENTOR_SETTING_UID,
+  STREAK_DAY_UID,
   GROUP_UID,
   mentorUsageData,
   groupData,

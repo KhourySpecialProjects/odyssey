@@ -26,6 +26,7 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { recordStreakDay } from "@/lib/streak-days";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -653,7 +654,10 @@ export async function updateViewedLessons(
     }
 
     const [authorizedUser, enrollment] = await Promise.all([
-      getAuthorizedUserByEmail(user.email),
+      // timeZone dates the streak day (ODY-918)
+      getAuthorizedUserByEmail(user.email, {
+        fields: ["id", "email", "timeZone"],
+      }),
       getEnrollByID(enrollmentId, {
         populate: {
           viewedLessons: { fields: ["id"] },
@@ -704,6 +708,13 @@ export async function updateViewedLessons(
       ];
       isComplete = updated.isComplete;
       completionDate = updated.completionDate;
+
+      // A lesson's first view lights the learner's streak for today. It
+      // never throws, so a streak that fails to save doesn't fail the lesson.
+      await recordStreakDay(
+        { id: authorizedUser.id, timeZone: authorizedUser.timeZone },
+        lessonId,
+      );
     }
 
     // The droplet's own lesson list is authoritative; the caller's copy is only
