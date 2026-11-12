@@ -8,14 +8,14 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
+  useFormField,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { RenderedContent } from "@/components/ui/rendered-content";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon, Sparkles } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
@@ -34,6 +34,27 @@ const formSchema = z.object({
   answerIds: z.array(z.string()),
 });
 
+/**
+ * Answer text rendered next to its input. RenderedContent is a block <div>,
+ * which is invalid inside a <label>, so the input names itself through
+ * aria-labelledby and clicking the text forwards the click to the input.
+ */
+function AnswerContent({ id, html }: { id: string; html: string }) {
+  const { formItemId } = useFormField();
+  return (
+    <div
+      className="flex-1 cursor-pointer"
+      onClick={() => document.getElementById(formItemId)?.click()}
+    >
+      <RenderedContent
+        id={id}
+        html={html}
+        className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
+      />
+    </div>
+  );
+}
+
 export function QuizQuestionBlock({
   question,
   lessonId,
@@ -49,6 +70,7 @@ export function QuizQuestionBlock({
   lessonName?: string;
   userId?: number;
 }) {
+  const idPrefix = useId();
   const [showResult, setShowResult] = useState(false);
   const mentorOn = useLessonPanelStore(
     (s) => s.mentorAvailable && s.ownerLessonId === lessonId,
@@ -311,16 +333,15 @@ export function QuizQuestionBlock({
                           >
                             <FormControl>
                               <RadioGroupItem
+                                aria-labelledby={`${idPrefix}-answer-${answer.id}`}
                                 value={String(answer.id)}
                                 className="border dark:border-slate-50"
                               />
                             </FormControl>
-                            <FormLabel className="flex-1 cursor-pointer">
-                              <RenderedContent
-                                html={answer.content}
-                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
-                              />
-                            </FormLabel>
+                            <AnswerContent
+                              id={`${idPrefix}-answer-${answer.id}`}
+                              html={answer.content}
+                            />
                           </FormItem>
                         ))}
                       </RadioGroup>
@@ -333,6 +354,7 @@ export function QuizQuestionBlock({
                           >
                             <FormControl>
                               <Checkbox
+                                aria-labelledby={`${idPrefix}-answer-${answer.id}`}
                                 value={String(answer.id)}
                                 checked={field.value.includes(
                                   String(answer.id),
@@ -348,12 +370,10 @@ export function QuizQuestionBlock({
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="flex-1 cursor-pointer">
-                              <RenderedContent
-                                html={answer.content}
-                                className="prose prose-sm prose-code:text-inherit prose-pre:text-base prose-p:my-0 max-w-none dark:text-slate-300"
-                              />
-                            </FormLabel>
+                            <AnswerContent
+                              id={`${idPrefix}-answer-${answer.id}`}
+                              html={answer.content}
+                            />
                           </FormItem>
                         ))}
                       </div>
