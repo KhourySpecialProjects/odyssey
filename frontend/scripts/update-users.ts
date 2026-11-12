@@ -35,7 +35,7 @@ async function fetchUsersWithoutTimeZone() {
 async function updateUserTimeZone(
   id: number,
   documentId: string,
-  timeZone = "America/New_York  ",
+  timeZone = "America/New_York",
 ) {
   // Strapi v5 single-entry routes take a documentId.
   const res = await fetch(`${STRAPI_URL}/api/authorized-users/${documentId}`, {

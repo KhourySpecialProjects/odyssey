@@ -18,6 +18,7 @@ import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
 import { feedColorFor } from "@/lib/feed-colors";
 import { cn } from "@/lib/utils";
+import { userTimeZone } from "@/lib/time-zones";
 
 interface ParsedContent {
   userName?: string | null;
@@ -111,7 +112,8 @@ export function FeedBlock({
         day: "numeric",
         hour: "numeric",
         minute: "numeric",
-        timeZone: "EST",
+        // An IANA zone, so daylight saving time applies (ODY-138)
+        timeZone: userTimeZone(authUser.timeZone),
       }).format(date);
     } catch (error) {
       console.error("Error formatting date:", error);
