@@ -293,6 +293,9 @@ describe("Feed tests", () => {
           dueDate: "2026-12-01",
           dueGroupName: "A",
         });
+        const [, dueOpts] = fetchAPI.mock.calls[4];
+        expect(dueOpts.urlParams.filters.dueDate).toEqual({ $notNull: true });
+        expect(dueOpts.urlParams.sort).toEqual(["dueDate:asc"]);
         const [, enrollmentOpts] = fetchAPI.mock.calls[3];
         expect(enrollmentOpts.next.tags).toEqual([
           CACHE_TAGS.enrollments(5),

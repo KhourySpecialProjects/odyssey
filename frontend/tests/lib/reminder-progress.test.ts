@@ -58,6 +58,15 @@ describe("earliestDue", () => {
     });
     expect(earliestDue([])).toBeNull();
   });
+
+  it("ignores null due dates from cleared groups", () => {
+    const real = { dueDate: "2026-11-14", group: { groupName: "A" } };
+    const cleared = { dueDate: null, group: { groupName: "B" } };
+    expect(
+      earliestDue([cleared, { ...real, dueDate: "2026-11-20" }, real]),
+    ).toEqual({ dueDate: "2026-11-14", dueGroupName: "A" });
+    expect(earliestDue([cleared, cleared])).toBeNull();
+  });
 });
 
 describe("dueChipText", () => {

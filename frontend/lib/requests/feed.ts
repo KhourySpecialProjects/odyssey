@@ -347,7 +347,9 @@ async function attachReminderData(
           filters: {
             authorized_user: { id: { $eq: userId } },
             droplet: { id: { $in: dropletIds } },
+            dueDate: { $notNull: true },
           },
+          sort: ["dueDate:asc"],
           fields: ["dueDate"],
           populate: {
             droplet: { fields: ["id"] },

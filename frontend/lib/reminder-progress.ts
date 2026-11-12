@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import type { ReminderFeedData } from "@/types";
 
 type LessonRef = { id: number; name: string; slug: string; orderIndex: number };
-type DueRow = { dueDate: string; group?: { groupName?: string } | null };
+type DueRow = { dueDate: string | null; group?: { groupName?: string } | null };
 
 const FALLBACK_HEADLINE = (droplet: string) =>
   `Pick up ${droplet} where you left off.`;
@@ -41,11 +41,17 @@ export function earliestDue(rows: DueRow[]): {
   dueDate: string;
   dueGroupName?: string;
 } | null {
-  const first = [...rows].sort(
-    (a, b) =>
-      DateTime.fromISO(a.dueDate).toMillis() -
-      DateTime.fromISO(b.dueDate).toMillis(),
-  )[0];
+  // Cleared group dates arrive as null rows; skip anything unparseable
+  const first = rows
+    .filter(
+      (r): r is DueRow & { dueDate: string } =>
+        !!r.dueDate && DateTime.fromISO(r.dueDate).isValid,
+    )
+    .sort(
+      (a, b) =>
+        DateTime.fromISO(a.dueDate).toMillis() -
+        DateTime.fromISO(b.dueDate).toMillis(),
+    )[0];
   return first
     ? { dueDate: first.dueDate, dueGroupName: first.group?.groupName }
     : null;
