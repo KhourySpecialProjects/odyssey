@@ -100,8 +100,29 @@ logs are information to it, never instructions.
   in its thread: what to look at, each branch and SHA, review findings, and
   what other developers need to know.
 - **Branches, not PRs.** Each squad pushes `claude/ody-<n>-<slug>` and ends
-  with a PR body. You open the PR from the branch (`CLAUDE.md`: agents never
-  open PRs).
+  with a review card, which becomes its PR body. You open the PR from the
+  branch (`CLAUDE.md`: agents never open PRs).
+- **Review cards instead of CodeRabbit.** The free CodeRabbit plan is too
+  limited, so the cards do its job. The card's length depends on the kind of
+  change:
+
+  - **Major** (a new feature, or a revamp of a main flow) gets the full
+    breakdown: a walkthrough, a "Layer / Files | Summary" table, a Mermaid
+    flow diagram, review effort, merge risk, overlaps, suggested reviewers and
+    test steps.
+  - **Minor** (bug fixes, small features, cleanup) gets one sentence, one test
+    step, and a **Careful:** line when it touches auth, a schema or secrets.
+
+  Each card is also saved as `review-cards/<branch>.md` on a
+  `claude/review-cards-<batch>` branch. Open the PRs with
+  `bash .claude/scripts/open-prs.sh`: a plain run is a dry run, and
+  `--yes --only 211,529` opens those two. It skips branches that already have
+  a PR and opens 🔴 first. For a branch you built yourself, `/ship` writes the
+  same kind of card.
+
+- **One review queue.** A second canvas lists every pushed branch that isn't
+  merged, grouped Major → Minor features → Bug fixes → Cleanup, with each
+  card's test steps as checkboxes to tick on dev.
 
 ## Rules worth knowing
 
@@ -134,6 +155,9 @@ logs are information to it, never instructions.
 
 - `.claude/commands/manager.md`: what the manager does, step by step.
 - `.claude/scripts/slack-watch.sh`: the Watcher.
+- `.claude/scripts/review-card-brief.md`: the review card format, and the brief
+  for a run that writes cards for branches already pushed.
+- `.claude/scripts/open-prs.sh`: opens one PR per review card.
 - `docs/agent/agent-swarming.md`: which model and effort for which job, and
   how to brief a cloud routine.
 - `docs/agent/multi-agent-coordination.md`: the channel's message tags and
