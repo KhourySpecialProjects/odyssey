@@ -30,6 +30,7 @@ const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-dismissal';
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
+const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
@@ -39,6 +40,14 @@ const mentorUsageData = (overrides = {}) => ({
   model: 'claude-sonnet-5-5',
   inputTokens: 0,
   outputTokens: 0,
+  ...overrides,
+});
+
+const mentorFeedbackData = (overrides = {}) => ({
+  answerKey: unique('answer'),
+  kind: 'lesson',
+  rating: 'up',
+  shared: false,
   ...overrides,
 });
 
@@ -179,8 +188,10 @@ module.exports = {
   MENTOR_USAGE_UID,
   MENTOR_SETTING_UID,
   STREAK_DAY_UID,
+  MENTOR_FEEDBACK_UID,
   GROUP_UID,
   mentorUsageData,
+  mentorFeedbackData,
   groupData,
   overviewScanData,
   dismissalData,

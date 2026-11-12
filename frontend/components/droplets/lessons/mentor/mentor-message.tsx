@@ -7,6 +7,7 @@ import { displayAnswer } from "@/lib/mentor/answer-text";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
 import { MentorMarkdown } from "./mentor-markdown";
+import { MentorRating, type MentorFeedback } from "./mentor-rating";
 
 const toolClass =
   "inline-flex items-center gap-1 rounded text-xs text-slate-600 hover:text-slate-900 aria-disabled:opacity-60 dark:text-slate-300 dark:hover:text-white";
@@ -28,8 +29,8 @@ export function MentorMessage({
   onShowSource,
   onSave,
   onRetry,
-  onRate,
-  rating,
+  feedback,
+  questionText,
 }: {
   message: MentorMsg;
   lessonName: string;
@@ -37,8 +38,10 @@ export function MentorMessage({
   /** Resolves true once saved; leave out where there is no notes bar */
   onSave?: () => Promise<boolean>;
   onRetry?: () => void;
-  onRate?: (rating: "up" | "down") => void;
-  rating?: "up" | "down";
+  /** Shows 👍/👎 on a finished answer */
+  feedback?: MentorFeedback;
+  /** The student message right before this answer */
+  questionText?: string;
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -138,35 +141,12 @@ export function MentorMessage({
       )}
 
       {showTools && (
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           {shown.trim() && (
             <button type="button" onClick={copy} className={toolClass}>
               <Copy className="h-3 w-3" aria-hidden="true" />
               Copy
             </button>
-          )}
-          {/* ODY-890: pass onRate to show 👍/👎 */}
-          {status === "done" && onRate && (
-            <>
-              <button
-                type="button"
-                aria-label="Good answer"
-                aria-pressed={rating === "up"}
-                onClick={() => onRate("up")}
-                className={toolClass}
-              >
-                👍
-              </button>
-              <button
-                type="button"
-                aria-label="Bad answer"
-                aria-pressed={rating === "down"}
-                onClick={() => onRate("down")}
-                className={toolClass}
-              >
-                👎
-              </button>
-            </>
           )}
           {status === "done" && onSave && (
             <button
@@ -178,6 +158,16 @@ export function MentorMessage({
               <NotebookPen className="h-3 w-3" aria-hidden="true" />
               {saved ? "Saved" : "Save to notes"}
             </button>
+          )}
+          {status === "done" && feedback && (
+            <MentorRating
+              kind={message.kind ?? "lesson"}
+              answerKey={message.id}
+              citations={message.citations}
+              answerText={shown.trim()}
+              questionText={questionText}
+              {...feedback}
+            />
           )}
         </div>
       )}
