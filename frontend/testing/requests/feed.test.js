@@ -415,6 +415,58 @@ describe("Feed tests", () => {
       const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
       expect(url).toContain("[readAt][$null]=true");
     });
+
+    function setupCount(total = 3) {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
+      fetchAPI.mockResolvedValue([]);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { total } } }),
+      });
+    }
+
+    it("counts the Unread tab's default types, reminders included", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[$and][2][type][$in][0]=droplet");
+      expect(url).toContain("[$and][2][type][$in][6]=reminder");
+      expect(url).not.toContain("[$and][2][type][$in][7]");
+    });
+
+    it("leaves global broadcasts out but keeps the viewer's own", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[type]=system");
+      expect(url).toContain("[authorized_user][id][$eq]=5");
+      expect(url).not.toContain("[authorized_user][id][$null]");
+    });
+
+    it("counts the given filter selection", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount(["kudos", 4]);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[$and][2][type][$in][0]=kudos");
+      expect(url).not.toContain("[$and][2][type][$in][1]");
+    });
+
+    it("is 0 with no types selected, without querying", async () => {
+      setupCount();
+      await expect(getUnreadAnnouncementCount([])).resolves.toBe(0);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("still returns broadcasts to the feed itself", async () => {
+      setupCount();
+      await fetchAnnouncements(1, ["system"]);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[authorized_user][id][$null]=true");
+    });
   });
 
   describe("createFriendAnnouncement", () => {

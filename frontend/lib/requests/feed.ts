@@ -16,6 +16,10 @@ import {
   reminderHeadline,
   reminderProgress,
 } from "@/lib/reminder-progress";
+import {
+  FILTER_VALUES,
+  toFeedRoles,
+} from "@/components/feed/feed-filter-params";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
@@ -59,9 +63,11 @@ function friendIdsOf(
 export async function fetchAnnouncements(
   page?: number,
   roles?: string[],
-  options?: { archived?: boolean },
+  options?: { archived?: boolean; excludeBroadcasts?: boolean },
 ): Promise<FeedPage> {
   const archived = options?.archived ?? false;
+  // Only ever narrows the result, so an untrusted caller gains nothing
+  const excludeBroadcasts = options?.excludeBroadcasts === true;
   const sessionUser = await getCurrentUser();
   const userId = await getAuthorizedUserId(sessionUser);
   if (!sessionUser?.email || !userId) {
@@ -163,7 +169,9 @@ export async function fetchAnnouncements(
     orFilters.push({
       type: "system",
       $or: [
-        { authorized_user: { id: { $null: true } } },
+        ...(excludeBroadcasts
+          ? []
+          : [{ authorized_user: { id: { $null: true } } }]),
         { authorized_user: { id: { $eq: userId } } },
       ],
     });
@@ -904,13 +912,20 @@ function revalidateReadState(ownership: { ownerId: number; type?: string }) {
 }
 
 /**
- * Count unread (non-archived) announcements for the current user.
- * Used for the nav badge.
+ * Count unread (non-archived) announcements for the nav badge: the Unread
+ * tab's total for `roles` (default: the tab's default types).
+ * Broadcasts are left out on purpose: they can't be marked read (ODY-943).
  */
-export async function getUnreadAnnouncementCount(): Promise<number> {
+export async function getUnreadAnnouncementCount(
+  roles?: string[],
+): Promise<number> {
   try {
-    const { pagination } = await fetchAnnouncements(1, undefined, {
+    const types = Array.isArray(roles) ? roles : toFeedRoles(FILTER_VALUES);
+    // fetchAnnouncements treats no types as "all", but the tab shows nothing
+    if (types.length === 0) return 0;
+    const { pagination } = await fetchAnnouncements(1, types, {
       archived: false,
+      excludeBroadcasts: true,
     });
     return pagination.total;
   } catch (error) {
