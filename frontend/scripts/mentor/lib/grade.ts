@@ -115,7 +115,7 @@ For each question, first copy into "quote" the one sentence of the reply your an
 // The whitespace-tolerant tag pattern of lib/mentor/prompt.ts, for the judge's tags
 const GAP = "[\\s\\u200b-\\u200d\\u2060\\ufeff\\u00ad]*";
 const JUDGE_TAG = new RegExp(
-  `<${GAP}(/?)${GAP}(student_input|quiz|forbidden|passages|reply)\\b`,
+  `<${GAP}(/?)${GAP}(student_input|learner|quiz|forbidden|passages|reply)\\b`,
   "gi",
 );
 /** The judge's own tags made harmless, as the reply is shown to it */
@@ -148,8 +148,10 @@ export function judgeRequest(
   const { case: c, context, quizzes } = facts;
   const questions = ASKED[c.kind];
   const cited = new Set(citedRefs(reply));
+  // A quiz question Mentor asks may draw on any passage it was shown
+  const asking = ASKING_KINDS.includes(c.kind);
   const passages = context.passages.filter(
-    (p) => p.ref && p.inPrompt && cited.has(p.ref),
+    (p) => p.ref && p.inPrompt && (asking || cited.has(p.ref)),
   );
   const answer = {
     type: "object",
@@ -162,6 +164,7 @@ export function judgeRequest(
   };
   const material = [
     tagged("student_input", studentInput(facts)),
+    facts.learner && tagged("learner", facts.learner.text),
     quizzes.length &&
       tagged(
         "quiz",
@@ -180,8 +183,9 @@ export function judgeRequest(
       ),
     tagged(
       "passages",
-      passages.map((p) => `[${p.ref}] ${p.markdown}`).join("\n\n") ||
-        "The reply cites no passages.",
+      (asking && passages.length ? "Every passage Mentor was shown:\n\n" : "") +
+        (passages.map((p) => `[${p.ref}] ${p.markdown}`).join("\n\n") ||
+          "The reply cites no passages."),
     ),
     tagged("reply", reply),
     `Answer about the reply:\n${questions.map((q) => `- ${q}: ${QUESTIONS[q]}`).join("\n")}`,
