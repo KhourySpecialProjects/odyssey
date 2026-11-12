@@ -24,7 +24,8 @@ export const useFeedUnreadStore = create<{
   setFeedCount: (feedCount) => set({ feedCount }),
   adjustFeedCount: (delta) =>
     set((s) => ({
-      feedCount: Math.max(0, (s.feedCount ?? s.serverCount ?? 0) + delta),
+      // Unclamped so a rollback undoes its own step; the badge hides <= 0
+      feedCount: (s.feedCount ?? s.serverCount ?? 0) + delta,
     })),
   setStreakReadKey: (streakReadKey) => set({ streakReadKey }),
 }));

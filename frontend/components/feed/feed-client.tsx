@@ -147,10 +147,10 @@ export function FeedClient({
     };
   }, [pending, currentPage, roles, tab, refresh]);
 
-  // The badge follows the Unread tab's filters while this is mounted. The
+  // The badge follows the filters (on either tab) while this is mounted. The
   // layout's count already covers the default filters before any change.
   useEffect(() => {
-    if (pending || tab !== "unread") return;
+    if (pending) return;
     const { setFeedCount } = useFeedUnreadStore.getState();
     if (refresh.key === 0 && sameRoles(roles, DEFAULT_ROLES)) {
       setFeedCount(null);
@@ -164,14 +164,15 @@ export function FeedClient({
     const mutationsAtStart = mutations.current;
     getUnreadAnnouncementCount(roles)
       .then((count) => {
-        if (!ignore && mutations.current === mutationsAtStart)
+        // null = the count failed, so keep what the badge shows
+        if (count !== null && !ignore && mutations.current === mutationsAtStart)
           setFeedCount(count);
       })
       .catch(() => {});
     return () => {
       ignore = true;
     };
-  }, [pending, tab, roles, refresh]);
+  }, [pending, roles, refresh]);
   useEffect(() => () => useFeedUnreadStore.getState().setFeedCount(null), []);
 
   const selectTab = (next: Tab) => {

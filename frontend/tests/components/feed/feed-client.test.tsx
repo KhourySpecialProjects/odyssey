@@ -11,6 +11,7 @@ import {
   fetchAnnouncements,
   getUnreadAnnouncementCount,
   markAnnouncementRead,
+  markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
@@ -603,6 +604,61 @@ describe("FeedClient", () => {
       expect(feedCount()).toBe(1);
       await waitFor(() => expect(toast.error).toHaveBeenCalled());
       expect(feedCount()).toBe(2);
+    });
+
+    const recount = getUnreadAnnouncementCount as jest.Mock;
+    const markReadClick = () =>
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+    it("drops by one on mark read, then the recount's value wins", async () => {
+      recount.mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(9);
+
+      markReadClick();
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(feedCount()).toBe(9));
+    });
+
+    it("leaves the count alone when the recount fails (null)", async () => {
+      recount.mockResolvedValue(2);
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(null);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+
+      markReadClick();
+      await waitFor(() => expect(recount).toHaveBeenCalledTimes(2));
+      await act(async () => {});
+      expect(feedCount()).toBe(1);
+    });
+
+    it("adds one on mark unread from the Read tab, from the filtered count", async () => {
+      recount.mockResolvedValue(3);
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(2, 100)),
+      );
+      (markAnnouncementUnread as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      // Switch tabs before the filtered count lands: it must still arrive
+      fireEvent.click(screen.getByRole("button", { name: "Read" }));
+      await waitFor(() => expect(feedCount()).toBe(3));
+      recount.mockReturnValue(new Promise(() => {}));
+
+      fireEvent.click(
+        (await screen.findAllByRole("button", { name: "Mark as unread" }))[0],
+      );
+      expect(feedCount()).toBe(4);
     });
 
     it("leaves a global broadcast out of the optimistic count", async () => {

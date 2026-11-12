@@ -29,13 +29,11 @@ export function FeedLeftNav({
   unreadCount,
 }: {
   userId: number;
-  /** The layout's count, shown until the store has one */
+  /** The layout's latest count, shown until the feed owns the count */
   unreadCount: number;
 }) {
   const pathname = usePathname();
-  const announcements = useFeedUnreadStore(
-    (s) => s.feedCount ?? s.serverCount ?? unreadCount,
-  );
+  const announcements = useFeedUnreadStore((s) => s.feedCount ?? unreadCount);
   const streakUnread = useStreakUnread(userId);
   const feedUnread = announcements + (streakUnread ? 1 : 0);
 

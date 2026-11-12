@@ -51,3 +51,9 @@ it("prefers the feed's count, and adds the streak card while it's unread", () =>
   render(<FeedLeftNav userId={7} unreadCount={9} />);
   expect(feedLink()).toHaveTextContent("2");
 });
+
+it("shows the layout's fresh count, not a stale store value", () => {
+  useFeedUnreadStore.setState({ serverCount: 4 });
+  render(<FeedLeftNav userId={7} unreadCount={7} />);
+  expect(feedLink()).toHaveTextContent("7");
+});
