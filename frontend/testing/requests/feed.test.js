@@ -246,6 +246,88 @@ describe("Feed tests", () => {
       expect(url.slice(i, i + 80)).toContain("[authorized_user][id][$eq]=5");
     });
 
+    describe("reminder rows", () => {
+      const reminderRow = (dropletId = 100) => ({
+        id: 9,
+        attributes: {
+          type: "reminder",
+          content: "x",
+          droplet: { id: dropletId, name: "Git", slug: "git" },
+        },
+      });
+      const lessons = [2, 1].map((n) => ({
+        id: n,
+        name: `L${n}`,
+        slug: `l${n}`,
+        orderIndex: n,
+      }));
+
+      it("attaches progress, Up next, the earliest due date and the headline", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        fetchAPI
+          .mockResolvedValueOnce([
+            { droplet: { id: 100, lessons }, viewedLessons: [{ id: 1 }] },
+          ])
+          .mockResolvedValueOnce([
+            {
+              dueDate: "2026-12-02",
+              droplet: { id: 100 },
+              group: { groupName: "B" },
+            },
+            {
+              dueDate: "2026-12-01",
+              droplet: { id: 100 },
+              group: { groupName: "A" },
+            },
+          ]);
+        mockAnnouncementsResponse([reminderRow()]);
+
+        const { data } = await fetchAnnouncements(1);
+
+        expect(data[0].reminder).toEqual({
+          headline: "You're one lesson away from finishing Git!",
+          progress: { viewed: 1, total: 2 },
+          nextLesson: { name: "L2", slug: "l2" },
+          started: true,
+          dueDate: "2026-12-01",
+          dueGroupName: "A",
+        });
+        const [, enrollmentOpts] = fetchAPI.mock.calls[3];
+        expect(enrollmentOpts.next.tags).toEqual([
+          CACHE_TAGS.enrollments(5),
+          CACHE_TAGS.droplets,
+        ]);
+      });
+
+      it("keeps the card without progress when there is no enrollment", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        fetchAPI.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+        mockAnnouncementsResponse([reminderRow()]);
+
+        const { data } = await fetchAnnouncements(1);
+
+        expect(data[0].reminder).toMatchObject({
+          headline: "Pick up Git where you left off.",
+          progress: null,
+          nextLesson: null,
+        });
+      });
+
+      it("makes no extra queries when the page has no reminders", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        mockAnnouncementsResponse([
+          { id: 1, attributes: { type: "system", content: "x" } },
+        ]);
+
+        await fetchAnnouncements(1);
+
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
+      });
+    });
+
     it("ignores a user object passed by the caller", async () => {
       const { fetchAPI } = require("../../lib/utils");
       mockPrecompute();

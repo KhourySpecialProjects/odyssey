@@ -11,6 +11,11 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import {
+  earliestDue,
+  reminderHeadline,
+  reminderProgress,
+} from "@/lib/reminder-progress";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
@@ -273,8 +278,9 @@ export async function fetchAnnouncements(
     }
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
+    const rows: Announcement[] = Array.isArray(flattened) ? flattened : [];
     return {
-      data: Array.isArray(flattened) ? flattened : [],
+      data: await attachReminderData(rows, userId),
       pagination: data.meta?.pagination ?? {
         page: 1,
         pageSize: 25,
@@ -286,6 +292,101 @@ export async function fetchAnnouncements(
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");
   }
+}
+
+type LessonRef = { id: number; name: string; slug: string; orderIndex: number };
+
+/** Adds progress, Up next, due date and headline to the viewer's reminders. */
+async function attachReminderData(
+  rows: Announcement[],
+  userId: number,
+): Promise<Announcement[]> {
+  const reminders = rows.filter((r) => r.type === "reminder");
+  if (reminders.length === 0) return rows;
+  const dropletIds = [
+    ...new Set(reminders.map((r) => r.droplet?.id).filter((id) => id != null)),
+  ] as number[];
+
+  let enrollments: {
+    droplet?: { id: number; lessons?: LessonRef[] };
+    viewedLessons?: { id: number }[];
+  }[] = [];
+  let dueRows: {
+    dueDate: string;
+    droplet?: { id: number };
+    group?: { groupName?: string };
+  }[] = [];
+  try {
+    [enrollments, dueRows] = await Promise.all([
+      fetchAPI<typeof enrollments>("/enrollments", {
+        urlParams: {
+          filters: {
+            authorizedUser: { id: { $eq: userId } },
+            droplet: { id: { $in: dropletIds } },
+          },
+          fields: ["id"],
+          populate: {
+            viewedLessons: { fields: ["id"] },
+            droplet: {
+              fields: ["id"],
+              populate: {
+                lessons: { fields: ["id", "name", "slug", "orderIndex"] },
+              },
+            },
+          },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: {
+          tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.droplets],
+          revalidate: 900,
+        },
+      }),
+      // Only rows with a droplet; playlist due dates are ignored for now
+      fetchAPI<typeof dueRows>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $eq: userId } },
+            droplet: { id: { $in: dropletIds } },
+          },
+          fields: ["dueDate"],
+          populate: {
+            droplet: { fields: ["id"] },
+            group: { fields: ["groupName"] },
+          },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
+      }),
+    ]);
+  } catch (error) {
+    // The cards still render, just without progress or a due date
+    console.error("Error loading reminder progress:", error);
+  }
+
+  return rows.map((row) => {
+    if (row.type !== "reminder") return row;
+    const name = row.droplet?.name ?? "this droplet";
+    const enrollment = enrollments.find(
+      (e) => e.droplet?.id === row.droplet?.id,
+    );
+    const computed = enrollment
+      ? reminderProgress(
+          enrollment.droplet?.lessons ?? [],
+          (enrollment.viewedLessons ?? []).map((l) => l.id),
+        )
+      : { progress: null, nextLesson: null, started: false };
+    const due = earliestDue(
+      dueRows.filter((d) => d.droplet?.id === row.droplet?.id),
+    );
+    return {
+      ...row,
+      reminder: {
+        ...computed,
+        headline: reminderHeadline(name, computed.progress),
+        ...due,
+      },
+    };
+  });
 }
 
 export async function createFriendAnnouncement(
