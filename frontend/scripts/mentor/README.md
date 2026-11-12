@@ -143,6 +143,27 @@ per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for
 a pilot `pilot-labels.json` (rows are added to it each time the report is
 rewritten). Runs are gitignored.
 
+### Checking the judge (optional, ODY-941)
+
+`judge-bakeoff.ts` judges the replies you labelled in a pilot again, with
+each candidate judge: `sonnet-medium` (today's), `sonnet-high` and
+`opus-medium`. It prints how often each agrees with your labels, overall, by
+question and by the model that wrote the reply, then every disagreement. A
+free "recorded" row shows the answers already on file.
+
+```bash
+npx tsx --env-file=.env.local scripts/mentor/judge-bakeoff.ts \
+  --run scripts/mentor/runs/<pilot dir>      # --judge sonnet-high to try one
+```
+
+It prints a cost estimate and asks before sending; with about 20 labelled
+replies, all three judges cost well under $1. It writes
+`<run>/<stamp>-bakeoff.jsonl` and `.md`. Replies are judged against today's
+`cases.jsonl` and fixtures: it warns when they've changed since the pilot,
+and skips cases that are gone or have changed kind. Label at least about 20
+replies first, or one disagreement swings the result. To switch judges, change
+`JUDGE` in `lib/grade.ts` and bump `JUDGE_VERSION`.
+
 ## 5. Results
 
 Record the chosen setup in `MENTOR_SETUP`, and here: the run's date, the
