@@ -134,8 +134,11 @@ function getGetEnrollmentByUserAndDroplet() {
 function getMockedFetchAPI() {
   return jest.mocked(jest.requireMock("@/lib/utils").fetchAPI);
 }
-function getMockedDeleteLesson() {
-  return jest.requireMock("@/lib/requests/lesson-delete").deleteLessonRecord;
+/** The backend deep-delete calls made so far. */
+function deepDeleteCalls() {
+  return (global.fetch as jest.Mock).mock.calls.filter(([url]) =>
+    String(url).endsWith("/deep-delete"),
+  );
 }
 
 // ─── getDropletById ──────────────────────────────────────────────────────────
@@ -229,12 +232,7 @@ describe("droplet-coverage — deepDeleteDroplet", () => {
     fetchMock = mockGlobalFetch();
   });
 
-  it("returns error when DELETE response is not ok (line 263)", async () => {
-    // getDropletById uses fetchAPI
-    getMockedFetchAPI().mockResolvedValueOnce([
-      makeDroplet({ id: 1, lessons: [] }),
-    ]);
-
+  it("returns error when the delete response is not ok", async () => {
     fetchMock.mockResolvedValueOnce(
       makeFetchErrorResponse({ error: "forbidden" }, 403),
     );
@@ -248,31 +246,20 @@ describe("droplet-coverage — deepDeleteDroplet", () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it("deletes associated lessons before the droplet", async () => {
-    const deleteLesson = getMockedDeleteLesson();
-    getMockedFetchAPI().mockResolvedValueOnce([
-      makeDroplet({
-        id: 1,
-        lessons: [
-          makeLesson({ id: 10, name: "L1", slug: "l1", orderIndex: 0 }),
-          makeLesson({ id: 11, name: "L2", slug: "l2", orderIndex: 1 }),
-        ],
-      }),
-    ]);
-    deleteLesson.mockResolvedValue({ ok: true, error: null, data: {} });
-
+  it("asks the backend to delete the droplet and its lessons in one call", async () => {
     fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
 
     const result = await deepDeleteDroplet(1);
-    expect(deleteLesson).toHaveBeenCalledTimes(2);
-    expect(deleteLesson).toHaveBeenCalledWith(10, false);
-    expect(deleteLesson).toHaveBeenCalledWith(11, false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toMatch(
+      /\/api\/droplets\/1\/deep-delete$/,
+    );
     expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
     expect(revalidateTag).toHaveBeenCalledWith("droplets");
   });
 
-  it("returns catch error when fetchAPI throws (line 275)", async () => {
-    getMockedFetchAPI().mockRejectedValueOnce(new Error("DB down"));
+  it("returns the catch error when the request throws", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("DB down"));
 
     const result = await deepDeleteDroplet(1);
     expect(result).toEqual({
@@ -1132,38 +1119,33 @@ describe("droplet-coverage — duplicateDroplet", () => {
     const result = await duplicateDroplet(1);
 
     expect(result.ok).toBe(true);
-    expect(getMockedDeleteLesson()).not.toHaveBeenCalled();
-    expect(
-      fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
-    ).toBe(false);
+    expect(deepDeleteCalls()).toHaveLength(0);
   });
 
   describe("when a lesson copy is rejected", () => {
     // One-lesson original, no existing draft, and the draft droplet (id 70)
-    // is created. After the lesson response come the cleanup's calls:
-    // deepDeleteDroplet reads the draft, then DELETEs it.
+    // is created. After the lesson response comes the cleanup's call:
+    // the deep delete of the draft.
     function setUpCopyOf(lessonName: string, lessonResponse: Response) {
       getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
       getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-      getMockedFetchAPI()
-        .mockResolvedValueOnce([
-          makeDroplet({
-            id: 1,
-            name: "Original",
-            authorized_users: [],
-            lessons: [
-              makeLesson({
-                id: 10,
-                name: lessonName,
-                slug: "lesson",
-                orderIndex: 0,
-                blocksVersion: "v1",
-                blocks: [],
-              }),
-            ],
-          }),
-        ])
-        .mockResolvedValueOnce([makeDroplet({ id: 70, lessons: [] })]);
+      getMockedFetchAPI().mockResolvedValueOnce([
+        makeDroplet({
+          id: 1,
+          name: "Original",
+          authorized_users: [],
+          lessons: [
+            makeLesson({
+              id: 10,
+              name: lessonName,
+              slug: "lesson",
+              orderIndex: 0,
+              blocksVersion: "v1",
+              blocks: [],
+            }),
+          ],
+        }),
+      ]);
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
       fetchMock.mockResolvedValueOnce(lessonResponse);
@@ -1253,27 +1235,22 @@ describe("droplet-coverage — duplicateDroplet", () => {
     it("deletes the draft and the lessons already copied into it", async () => {
       getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
       getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-      getMockedFetchAPI()
-        .mockResolvedValueOnce([
-          makeDroplet({
-            id: 1,
-            name: "Original",
-            authorized_users: [],
-            lessons: [
-              makeLesson({ id: 10, name: "Intro", slug: "a", orderIndex: 0 }),
-              makeLesson({
-                id: 11,
-                name: "Profile Components",
-                slug: "b",
-                orderIndex: 1,
-              }),
-            ],
-          }),
-        ])
-        // deepDeleteDroplet reads the draft: the lesson that was copied
-        .mockResolvedValueOnce([
-          makeDroplet({ id: 70, lessons: [makeLesson({ id: 101 })] }),
-        ]);
+      getMockedFetchAPI().mockResolvedValueOnce([
+        makeDroplet({
+          id: 1,
+          name: "Original",
+          authorized_users: [],
+          lessons: [
+            makeLesson({ id: 10, name: "Intro", slug: "a", orderIndex: 0 }),
+            makeLesson({
+              id: 11,
+              name: "Profile Components",
+              slug: "b",
+              orderIndex: 1,
+            }),
+          ],
+        }),
+      ]);
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 101 } }));
@@ -1288,31 +1265,28 @@ describe("droplet-coverage — duplicateDroplet", () => {
       expect(result.error).toBe(
         'Couldn\'t copy lesson "Profile Components": Bad block',
       );
-      expect(getMockedDeleteLesson()).toHaveBeenCalledWith(101, false);
-      const deleteCall = fetchMock.mock.calls.find(
-        ([, init]) => init?.method === "DELETE",
-      );
-      expect(deleteCall?.[0]).toMatch(/\/api\/droplets\/doc70$/);
+      // One backend call removes the draft and the lessons copied into it.
+      const [deleteCall] = deepDeleteCalls();
+      expect(deleteCall[0]).toMatch(/\/api\/droplets\/70\/deep-delete$/);
+      expect(JSON.parse(deleteCall[1]?.body as string)).toEqual({
+        authorOnly: false,
+      });
     });
 
     it("waits for every copy to finish before deleting the draft", async () => {
       getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
       getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-      getMockedFetchAPI()
-        .mockResolvedValueOnce([
-          makeDroplet({
-            id: 1,
-            name: "Original",
-            authorized_users: [],
-            lessons: [
-              makeLesson({ id: 10, name: "Slow", slug: "a", orderIndex: 0 }),
-              makeLesson({ id: 11, name: "Broken", slug: "b", orderIndex: 1 }),
-            ],
-          }),
-        ])
-        .mockResolvedValueOnce([
-          makeDroplet({ id: 70, lessons: [makeLesson({ id: 101 })] }),
-        ]);
+      getMockedFetchAPI().mockResolvedValueOnce([
+        makeDroplet({
+          id: 1,
+          name: "Original",
+          authorized_users: [],
+          lessons: [
+            makeLesson({ id: 10, name: "Slow", slug: "a", orderIndex: 0 }),
+            makeLesson({ id: 11, name: "Broken", slug: "b", orderIndex: 1 }),
+          ],
+        }),
+      ]);
       let finishSlowCopy: (response: Response) => void = () => {};
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
@@ -1328,40 +1302,32 @@ describe("droplet-coverage — duplicateDroplet", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // "Broken" has failed, but "Slow" is still being copied
-      expect(getMockedDeleteLesson()).not.toHaveBeenCalled();
-      expect(
-        fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
-      ).toBe(false);
+      expect(deepDeleteCalls()).toHaveLength(0);
 
       finishSlowCopy(makeFetchResponse({ data: { id: 101 } }));
       const result = await pending;
 
       expect(result.ok).toBe(false);
-      expect(getMockedDeleteLesson()).toHaveBeenCalledWith(101, false);
-      expect(
-        fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE"),
-      ).toBe(true);
+      expect(deepDeleteCalls()).toHaveLength(1);
     });
 
     it("tells the author to delete the draft when it can't be removed", async () => {
       getGetCurrentUser().mockResolvedValue({ email: "user@test.com" });
       getGetAuthorizedUserByEmail().mockResolvedValue({ id: 5 });
-      getMockedFetchAPI()
-        .mockResolvedValueOnce([
-          makeDroplet({
-            id: 1,
-            name: "Original",
-            authorized_users: [],
-            lessons: [makeLesson({ id: 10, name: "L1", orderIndex: 0 })],
-          }),
-        ])
-        .mockResolvedValueOnce([makeDroplet({ id: 70, lessons: [] })]);
+      getMockedFetchAPI().mockResolvedValueOnce([
+        makeDroplet({
+          id: 1,
+          name: "Original",
+          authorized_users: [],
+          lessons: [makeLesson({ id: 10, name: "L1", orderIndex: 0 })],
+        }),
+      ]);
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: [] }));
       fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 70 } }));
       fetchMock.mockResolvedValueOnce(
         makeFetchErrorResponse({ error: { message: "Bad block" } }, 400),
       );
-      // DELETE of the draft fails
+      // The deep delete of the draft fails
       fetchMock.mockResolvedValueOnce(makeFetchErrorResponse({}, 500));
 
       const result = await duplicateDroplet(1);
@@ -1621,35 +1587,6 @@ describe("droplet-coverage — documentIds", () => {
 
   const toDoc = async (_c: unknown, refs: any[]) =>
     refs.map((r) => "doc" + (typeof r === "object" ? r.id : r));
-
-  it("deepDeleteDroplet deletes via the fetched droplet's documentId, with no lookup", async () => {
-    const droplet = makeDroplet({ id: 1, documentId: "docD1", lessons: [] });
-    getMockedFetchAPI().mockResolvedValueOnce([droplet]);
-    fetchMock.mockResolvedValueOnce(makeFetchResponse({ data: { id: 1 } }));
-
-    await deepDeleteDroplet(1);
-
-    expect(strapiEntryUrl).toHaveBeenCalledWith("droplets", droplet);
-    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/droplets\/docD1$/);
-  });
-
-  it("deepDeleteDroplet returns the delete failure when the droplet cannot be resolved", async () => {
-    getMockedFetchAPI().mockResolvedValueOnce([
-      makeDroplet({ id: 1, lessons: [] }),
-    ]);
-    jest
-      .mocked(strapiEntryUrl)
-      .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
-
-    const result = await deepDeleteDroplet(1);
-
-    expect(result).toEqual({
-      ok: false,
-      error: "Failed to delete droplet.",
-      data: null,
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
 
   it("updateDroplet PUTs to the droplet documentId and sends author, lesson relations as documentIds", async () => {
     jest.mocked(resolveDocumentIds).mockImplementation(toDoc as any);

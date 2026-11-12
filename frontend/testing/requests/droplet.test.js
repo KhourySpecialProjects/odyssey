@@ -97,27 +97,12 @@ beforeEach(() => {
 });
 
 describe("deepDeleteDroplet", () => {
-  it("successfully deletes a droplet and revalidates tags", async () => {
-    const { fetchAPI } = require("@/lib/utils");
-    const {
-      deleteLessonRecord: deleteLessonMock,
-    } = require("@/lib/requests/lesson-delete");
+  const sent = () => {
+    const [url, init] = global.fetch.mock.calls[0];
+    return { url, method: init.method, body: JSON.parse(init.body) };
+  };
 
-    fetchAPI.mockResolvedValueOnce([
-      {
-        id: 123,
-        name: "Test Droplet",
-        lessons: [{ id: 1 }, { id: 2 }],
-        authorized_users: [{ id: 1 }],
-        tags: [],
-        prerequisites: [],
-        postrequisites: [],
-        nextSteps: [],
-        learningObjectives: [],
-      },
-    ]);
-    deleteLessonMock.mockResolvedValue({ ok: true });
-
+  it("deletes through the backend route and revalidates tags", async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ data: { id: 123 } }),
@@ -126,32 +111,12 @@ describe("deepDeleteDroplet", () => {
     const result = await deepDeleteDroplet(123);
 
     expect(result).toEqual({ ok: true, error: null, data: { id: 123 } });
-    expect(revalidateTag).toHaveBeenCalledWith("authors");
-    expect(revalidateTag).toHaveBeenCalledWith("droplets");
-    expect(revalidateTag).toHaveBeenCalledWith("enrollments");
-    // Lessons are deleted with revalidate=false, and lesson pages are tagged
-    // only with `lesson`, so deepDeleteDroplet must flush it itself.
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.lesson);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserContent);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.allUserDashboards);
-  });
-
-  it("treats an empty 204 as success (Strapi v5)", async () => {
-    const { fetchAPI } = require("@/lib/utils");
-    const {
-      deleteLessonRecord: deleteLessonMock,
-    } = require("@/lib/requests/lesson-delete");
-
-    fetchAPI.mockResolvedValueOnce([
-      { id: 123, name: "Test Droplet", lessons: [{ id: 1 }] },
-    ]);
-    deleteLessonMock.mockResolvedValue({ ok: true });
-    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
-
-    const result = await deepDeleteDroplet(123);
-
-    expect(result).toEqual({ ok: true, error: null, data: null });
-    expect(deleteLessonMock).toHaveBeenCalledWith(1, false);
+    expect(sent()).toMatchObject({
+      url: expect.stringMatching(/\/api\/droplets\/123\/deep-delete$/),
+      method: "POST",
+      body: { authorOnly: false },
+    });
+    // Lesson pages are tagged only with `lesson`, so flush it too.
     for (const tag of [
       CACHE_TAGS.authors,
       CACHE_TAGS.droplets,
@@ -164,6 +129,48 @@ describe("deepDeleteDroplet", () => {
     ]) {
       expect(revalidateTag).toHaveBeenCalledWith(tag);
     }
+  });
+
+  it("sends authorOnly for a user who is not an admin or content editor", async () => {
+    jest.requireMock("@/lib/auth/require-role").requireRole.mockResolvedValue({
+      ok: true,
+      user: { id: 7, email: "a@example.invalid", roles: ["Faculty"] },
+    });
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(200));
+
+    await deepDeleteDroplet(123);
+
+    expect(sent().body).toEqual({ authorOnly: true });
+    allowReviewFreeze();
+  });
+
+  it.each([
+    [409, "in_review"],
+    [403, "Failed to delete droplet."],
+    [500, "Failed to delete droplet."],
+  ])("maps a %i response to %s without revalidating", async (status, error) => {
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ error: { message: "x" } }),
+    });
+
+    expect(await deepDeleteDroplet(123)).toEqual({
+      ok: false,
+      error,
+      data: null,
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("treats an empty 204 as success", async () => {
+    global.fetch.mockResolvedValueOnce(makeEmptyResponse(204));
+
+    expect(await deepDeleteDroplet(123)).toEqual({
+      ok: true,
+      error: null,
+      data: null,
+    });
   });
 
   it("handles droplet deletion failure", async () => {
