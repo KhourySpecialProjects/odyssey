@@ -3,6 +3,7 @@
 import { Lesson, OpenEndedQuizQuestion, type AiFinding } from "@/types";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
+import { registerLessonEditor } from "@/lib/lesson-editor-registry";
 import { useRouter } from "next/navigation";
 import { cn, htmlToText } from "@/lib/utils";
 import { IconPencil, IconLink } from "@tabler/icons-react";
@@ -585,26 +586,6 @@ export function LessonRenderer({
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 
-  // Listen for flush-save requests from sidebar Preview button
-  useEffect(() => {
-    const handleFlushSave = async () => {
-      try {
-        if (editorVersion === "v2") {
-          await debounceUpdateV2.flush();
-        } else {
-          await debounceUpdate.flush();
-        }
-      } finally {
-        window.dispatchEvent(new CustomEvent("flush-save-complete"));
-      }
-    };
-
-    window.addEventListener("flush-save-request", handleFlushSave);
-    return () => {
-      window.removeEventListener("flush-save-request", handleFlushSave);
-    };
-  }, [editorVersion, debounceUpdateV2, debounceUpdate]);
-
   const updateNameBackend = useCallback(
     async (name: string) => {
       const response = await updateLesson(lesson.id, { name });
@@ -672,6 +653,31 @@ export function LessonRenderer({
     debounceUpdateV2.cancel();
     debouncedNameUpdate.cancel();
   };
+
+  // Tell the sidebar Preview link an editor is mounted and can answer
+  useEffect(() => registerLessonEditor(), []);
+
+  // Listen for flush-save requests from sidebar Preview button. The title has
+  // its own debounced save, so it is flushed with the blocks (ODY-471).
+  useEffect(() => {
+    const handleFlushSave = async () => {
+      try {
+        await Promise.all([
+          editorVersion === "v2"
+            ? debounceUpdateV2.flush()
+            : debounceUpdate.flush(),
+          debouncedNameUpdate.flush(),
+        ]);
+      } finally {
+        window.dispatchEvent(new CustomEvent("flush-save-complete"));
+      }
+    };
+
+    window.addEventListener("flush-save-request", handleFlushSave);
+    return () => {
+      window.removeEventListener("flush-save-request", handleFlushSave);
+    };
+  }, [editorVersion, debounceUpdateV2, debounceUpdate, debouncedNameUpdate]);
 
   // The takeover notice shows for a few seconds after the tab turns editable.
   const [noticeVisible, setNoticeVisible] = useState(false);
