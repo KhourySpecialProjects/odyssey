@@ -59,4 +59,25 @@ describe('backfillLastProgress', () => {
   it('changes nothing when run again', async () => {
     expect(await backfillLastProgress()).toBe(0);
   });
+
+  it('fills many started enrollments in one call', async () => {
+    const lesson = await strapi
+      .documents(LESSON_UID)
+      .create({ data: lessonData() });
+    const ids = [];
+    for (let i = 0; i < 50; i++) {
+      ids.push((await create([lesson.documentId])).documentId);
+    }
+
+    expect(await backfillLastProgress()).toBe(50);
+
+    const rows = await Promise.all(ids.map(read));
+    for (const r of rows) {
+      expect(new Date(r.lastProgressDate).toISOString()).toBe(
+        OLD.toISOString()
+      );
+      expect(new Date(r.updatedAt).toISOString()).toBe(OLD.toISOString());
+    }
+    expect(await backfillLastProgress()).toBe(0);
+  });
 });
