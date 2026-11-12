@@ -41,7 +41,7 @@ describe("HighlightDropdown", () => {
         <HighlightDropdown {...mockProps} expanded={true} />,
       );
 
-      const portal = baseElement.querySelector(".right-\\[360px\\]");
+      const portal = baseElement.querySelector(".right-\\[392px\\]");
       expect(portal).toBeInTheDocument();
     });
 
@@ -51,7 +51,7 @@ describe("HighlightDropdown", () => {
       );
 
       expect(
-        baseElement.querySelector(".right-\\[360px\\]"),
+        baseElement.querySelector(".right-\\[392px\\]"),
       ).toBeInTheDocument();
       expect(screen.getByTitle("View Notes Bar")).toBeInTheDocument();
     });

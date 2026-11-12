@@ -174,7 +174,7 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
+      <div className="lesson-wrapper relative h-full w-full overflow-x-hidden">
         <div
           className={cn(
             "flex w-full flex-col px-40 pt-6 transition-[padding] duration-300",
@@ -217,7 +217,7 @@ export function DropletLessonWrapper({
               className={cn(
                 "fixed top-[107px] right-0 border border-slate-200 bg-[#FCFCFD] dark:border-slate-500 dark:bg-slate-900",
                 LESSON_PANEL.width,
-                "sliding-notes-bar z-40 overflow-y-auto",
+                "sliding-notes-bar z-[55] overflow-y-auto",
                 "h-[calc(100vh-107px)]",
                 expanded ? "visible" : "invisible",
               )}
