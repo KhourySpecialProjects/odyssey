@@ -1190,6 +1190,7 @@ export interface ApiEnrollmentEnrollment extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<false>;
     isFirstTime: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    lastProgressDate: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

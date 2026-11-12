@@ -696,7 +696,11 @@ export async function updateViewedLessons(
       });
       const updated = await putEnrollment(
         enrollmentRef(enrollmentId, enrollment),
-        { viewedLessons: { connect: [lessonDocumentId] } },
+        // A first view is the learner's progress; a re-view writes nothing.
+        {
+          viewedLessons: { connect: [lessonDocumentId] },
+          lastProgressDate: new Date(),
+        },
         {
           fields: ["isComplete", "completionDate"],
           populate: { viewedLessons: { fields: ["id"] } },
