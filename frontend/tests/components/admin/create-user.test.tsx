@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { CreateUser } from "@/components/admin/users/create-user";
 
 const mockRouterRefresh = jest.fn();
@@ -24,6 +30,21 @@ jest.mock("@/lib/actions", () => ({
 describe("CreateUser", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("renders exactly one close button in the dialog (ODY-917)", async () => {
+    render(<CreateUser />);
+    fireEvent.click(screen.getByText("Create User"));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getAllByRole("button", { name: /close/i }),
+    ).toHaveLength(1);
+    expect(
+      within(dialog)
+        .getAllByRole("button")
+        .filter((b) => !b.textContent?.trim()),
+    ).toHaveLength(0);
   });
 
   it("renders the create user button", () => {
