@@ -127,10 +127,36 @@ describe("validateCases", () => {
       ],
       /covered-02: same input as covered-01/,
     ],
+    [
+      "a learner profile that doesn't exist",
+      [{ ...covered, learner: "nobody" }],
+      /no learner profile nobody in fixtures\/learners/,
+    ],
+    [
+      "a viewed lesson that isn't in the droplet",
+      [
+        {
+          ...covered,
+          learner: "someone",
+          profile: learnerProfile({ viewedLessons: ["Cooking"] }),
+        },
+      ],
+      /viewed lesson "Cooking" isn't a lesson of databases-101/,
+    ],
   ])("finds %s, once", (_, cases, problem) => {
     const problems = validateCases(cases, fixtures);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatch(problem);
+  });
+
+  it("doesn't count the same input under another learner as a repeat", () => {
+    const as = (learner: string): EvalCase => ({
+      ...covered,
+      id: learner,
+      learner,
+      profile: learnerProfile(),
+    });
+    expect(validateCases([as("first"), as("second")], fixtures)).toEqual([]);
   });
 });
 

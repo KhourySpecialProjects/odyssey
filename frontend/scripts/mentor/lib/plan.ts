@@ -75,7 +75,9 @@ export function planGroups(
             rep: i + 1,
             seq,
             facts: f,
-            params: buildMentorRequest(f.context, f.ask, SETUPS[setup]),
+            params: buildMentorRequest(f.context, f.ask, SETUPS[setup], {
+              learner: f.learner?.text,
+            }),
           })),
       ),
     ).flat(),

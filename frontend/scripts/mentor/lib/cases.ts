@@ -16,6 +16,7 @@ import {
   type EvalCase,
   type Fixtures,
 } from "./files";
+import { learnerBlock } from "./learner";
 
 // Checking the eval's cases against the fixtures (ODY-885), and the review
 // documents built from them. Everything here is free: nothing is sent.
@@ -37,6 +38,8 @@ export type CaseFacts = {
   goldRefs: string[];
   /** Wrong-pick: the question hinted at. Extraction: every hintable question in the lesson */
   quizzes: QuizKey[];
+  /** The learner block sent with the case (ODY-941): its profile's name, or "inline" */
+  learner: { name: string; text: string } | null;
 };
 
 /** The request modes each kind is written in */
@@ -130,6 +133,13 @@ export function prepareCase(
     say("an injection case needs a canary or forbidden");
   if (c.kind === "off-topic" && !c.forbidden)
     say("an off-topic case needs forbidden");
+  if (typeof c.learner === "string" && !c.profile)
+    say(`no learner profile ${c.learner} in fixtures/learners`);
+  const titles = new Set(snapshot.lessons.map((l) => l.name));
+  for (const title of c.profile?.viewedLessons ?? []) {
+    if (!titles.has(title))
+      say(`learner's viewed lesson "${title}" isn't a lesson of ${c.fixture}`);
+  }
   if (problems.length) return { facts: null, problems };
 
   const explainRefs = ask.kind === "explain" ? ask.refs : [];
@@ -137,8 +147,12 @@ export function prepareCase(
     c.kind === "covered"
       ? [...new Set([...gold.map((g) => g.passages[0].ref!), ...explainRefs])]
       : [];
+  const learner = c.profile && {
+    name: typeof c.learner === "string" ? c.learner : "inline",
+    text: learnerBlock(c.profile),
+  };
   return {
-    facts: { case: c, lesson, context, ask, goldRefs, quizzes },
+    facts: { case: c, lesson, context, ask, goldRefs, quizzes, learner },
     problems,
   };
 }
@@ -150,8 +164,11 @@ export function factsFor(c: EvalCase, fixtures: Fixtures): CaseFacts {
   return facts;
 }
 
+/** The same input under another learner isn't a repeat */
 const normalised = (c: EvalCase) =>
-  `${c.fixture}:${c.lessonId}:${JSON.stringify(c.input)
+  `${c.fixture}:${c.lessonId}:${JSON.stringify(c.learner ?? null)}:${JSON.stringify(
+    c.input,
+  )
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")}`;
 
@@ -264,7 +281,7 @@ export function lessonsMarkdown(fixtures: Fixtures): string {
   return ["# Fixture lessons, for drafting cases", ...sections].join("\n\n");
 }
 
-function caseSection({ case: c, lesson, context, ask }: CaseFacts) {
+function caseSection({ case: c, lesson, context, ask, learner }: CaseFacts) {
   const gold = resolveGold(context, c.gold ?? []).map(
     ({ snippet, passages: [p] }) =>
       `- "${snippet}" is in ${p.ref}\n\n${quoted(p.markdown)}`,
@@ -276,6 +293,7 @@ function caseSection({ case: c, lesson, context, ask }: CaseFacts) {
     `## ${c.id}`,
     `${c.kind}, ${c.input.kind}. Fixture \`${c.fixture}\`, lesson ${c.lessonId} "${lesson.name}" (${c.format}). Tags: ${c.tags.join(", ") || "none"}`,
     c.note && `_${c.note}_`,
+    learner && `Learner: \`${learner.name}\`\n\n${fenced(learner.text)}`,
     fenced(JSON.stringify(c.input, null, 2), "json"),
     gold.length && `Gold:\n\n${gold.join("\n\n")}`,
     ask.kind === "explain" && `Selection's refs: ${ask.refs.join(", ")}`,
