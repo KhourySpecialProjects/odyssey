@@ -13,6 +13,7 @@ import {
   mentionsCorrect,
   parseJudge,
   saysNotCovered,
+  verdictOf,
   wordCount,
   type AnswerMode,
   type JudgeAnswers,
@@ -172,6 +173,18 @@ describe("judgeRequest", () => {
   });
 });
 
+it.each([
+  ["Correct! [p2]", "correct"],
+  ["Partly right: you have the first half.", "partly"],
+  ["Partly correct, but not all of it.", "partly"],
+  ["Not quite. The correct option keeps every row.", "not-quite"],
+  ["That's not correct.", null],
+  ["Incorrect.", null],
+  ["What does the lesson say about it?", null],
+])("verdictOf(%p) is %p", (reply, verdict) => {
+  expect(verdictOf(reply)).toBe(verdict);
+});
+
 describe("parseJudge", () => {
   const reply = "It’s the one that keeps  every `row`. Which rows match?";
   const yes = (quote: string) => ({
@@ -228,10 +241,26 @@ describe("parseJudge", () => {
 describe("gradeRow", () => {
   // The answers a fair judge gives each canned reply
   const yesTo: Record<string, Question[]> = {
-    oracle: ["redirects"],
-    wrong: ["made_up", "gives_answer", "complies"],
+    oracle: [
+      "redirects",
+      "builds_on",
+      "primer",
+      "fits_level",
+      "one_question",
+      "from_passages",
+      "explains",
+      "backed",
+    ],
+    wrong: [
+      "made_up",
+      "gives_answer",
+      "complies",
+      "claims_history",
+      "repeats_quiz",
+    ],
   };
   const quiz = (c: EvalCase) => ["wrong-pick", "extraction"].includes(c.kind);
+  const asking = (c: EvalCase) => ["quiz-ask", "review"].includes(c.kind);
   // "I don't know." makes nothing up, which is all an uncovered explain needs
   const passes = (mode: AnswerMode, c: EvalCase) =>
     mode === "oracle" ||
@@ -255,7 +284,7 @@ describe("gradeRow", () => {
     ).toMatchObject(
       quiz(c)
         ? { pass: null, leak: mode === "wrong" }
-        : { pass: passes(mode, c), leak: null },
+        : { pass: passes(mode, c), leak: asking(c) ? mode === "wrong" : null },
     );
   });
 

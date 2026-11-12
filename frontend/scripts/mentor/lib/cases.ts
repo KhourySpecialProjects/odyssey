@@ -11,7 +11,9 @@ import type {
   Passage,
 } from "@/lib/mentor/types";
 import {
+  ASKING_KINDS,
   CASE_KINDS,
+  V1_KINDS,
   type CaseKind,
   type EvalCase,
   type Fixtures,
@@ -50,7 +52,16 @@ const MODES: Record<CaseKind, MentorKind[]> = {
   extraction: ["lesson"],
   "off-topic": ["lesson"],
   injection: ["lesson"],
+  // v2's kinds are lesson-mode chat today; 936 and 940 add their modes here
+  personalized: ["lesson"],
+  "invented-history": ["lesson"],
+  "quiz-ask": ["lesson"],
+  "quiz-grade": ["lesson"],
+  review: ["lesson"],
 };
+
+/** Kinds whose answer must cite the gold */
+const GOLD_KINDS: CaseKind[] = ["covered", "personalized", "invented-history"];
 
 /** A hintable question: 3 or more options, exactly one right */
 export function quizOf(lesson: MentorLesson, id: number): QuizKey | null {
@@ -121,9 +132,11 @@ export function prepareCase(
   const quizzes =
     ask.kind === "quiz-hint"
       ? hintable([ask.question.questionId])
-      : c.kind === "extraction"
+      : c.kind === "extraction" || ASKING_KINDS.includes(c.kind)
         ? hintable(choiceQuestionIds(lesson))
         : [];
+  if (ASKING_KINDS.includes(c.kind) && !quizzes.length)
+    say("needs a lesson with a question of 3 or more options and one right");
   if (
     c.kind === "extraction" &&
     (c.questionId === undefined || !quizOf(lesson, c.questionId))
@@ -133,6 +146,27 @@ export function prepareCase(
     say("an injection case needs a canary or forbidden");
   if (c.kind === "off-topic" && !c.forbidden)
     say("an off-topic case needs forbidden");
+  const article = /^[aeiou]/.test(c.kind) ? "an" : "a";
+  const needs = (field: string) =>
+    say(`${article} ${c.kind} case needs ${field}`);
+  if (["personalized", "invented-history", "review"].includes(c.kind)) {
+    if (!c.learner) needs("a learner");
+  }
+  if (c.kind === "personalized" && !c.should) needs("should");
+  if (GOLD_KINDS.includes(c.kind) && c.kind !== "covered" && !c.gold)
+    needs("gold");
+  if (c.kind === "quiz-grade") {
+    if (!c.verdict) needs("a verdict");
+    const history = c.input.kind === "lesson" ? c.input.history ?? [] : [];
+    if (history.at(-1)?.role !== "mentor")
+      say("a quiz-grade case needs history ending in Mentor's question");
+  }
+  if (
+    c.kind === "review" &&
+    c.profile &&
+    !c.profile.finished.some((d) => d.name === snapshot.droplet.name)
+  )
+    say(`the learner hasn't finished ${snapshot.droplet.name}`);
   if (typeof c.learner === "string" && !c.profile)
     say(`no learner profile ${c.learner} in fixtures/learners`);
   const titles = new Set(snapshot.lessons.map((l) => l.name));
@@ -143,10 +177,9 @@ export function prepareCase(
   if (problems.length) return { facts: null, problems };
 
   const explainRefs = ask.kind === "explain" ? ask.refs : [];
-  const goldRefs =
-    c.kind === "covered"
-      ? [...new Set([...gold.map((g) => g.passages[0].ref!), ...explainRefs])]
-      : [];
+  const goldRefs = GOLD_KINDS.includes(c.kind)
+    ? [...new Set([...gold.map((g) => g.passages[0].ref!), ...explainRefs])]
+    : [];
   const learner = c.profile && {
     name: typeof c.learner === "string" ? c.learner : "inline",
     text: learnerBlock(c.profile),
@@ -164,27 +197,44 @@ export function factsFor(c: EvalCase, fixtures: Fixtures): CaseFacts {
   return facts;
 }
 
-/** The same input under another learner isn't a repeat */
-const normalised = (c: EvalCase) =>
-  `${c.fixture}:${c.lessonId}:${JSON.stringify(c.learner ?? null)}:${JSON.stringify(
-    c.input,
-  )
+/** The question asked, wherever it's asked, whoever asks it */
+const question = (c: EvalCase) =>
+  `${c.fixture}:${c.lessonId}:${JSON.stringify(c.input)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")}`;
+/** The same input under another learner isn't a repeat */
+const normalised = (c: EvalCase) =>
+  `${JSON.stringify(c.learner ?? null)}:${question(c)}`;
 
-/** Every problem with each case, and ids or inputs that repeat */
+/** Every problem with each case, ids or inputs that repeat, and personalized questions asked under one profile */
 export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
   const ids = new Set<string>();
   const inputs = new Map<string, string>();
-  return cases.flatMap((c) => {
-    const problems = prepareCase(c, fixtures).problems;
-    if (ids.has(c.id)) problems.unshift(`${c.id}: duplicate id`);
+  const problems = cases.flatMap((c) => {
+    const found = prepareCase(c, fixtures).problems;
+    if (ids.has(c.id)) found.unshift(`${c.id}: duplicate id`);
     const same = inputs.get(normalised(c));
-    if (same) problems.unshift(`${c.id}: same input as ${same}`);
+    if (same) found.unshift(`${c.id}: same input as ${same}`);
     ids.add(c.id);
     inputs.set(normalised(c), c.id);
-    return problems;
+    return found;
   });
+  const profiles = new Map<string, { id: string; learners: Set<string> }>();
+  for (const c of cases.filter((c) => c.kind === "personalized")) {
+    const asked = profiles.get(question(c)) ?? {
+      id: c.id,
+      learners: new Set(),
+    };
+    asked.learners.add(JSON.stringify(c.learner ?? null));
+    profiles.set(question(c), asked);
+  }
+  for (const { id, learners } of profiles.values()) {
+    if (learners.size < 2)
+      problems.push(
+        `${id}: asked under 1 profile; a personalized question needs 2 or more`,
+      );
+  }
+  return problems;
 }
 
 const withHistory = (c: EvalCase) =>
@@ -214,6 +264,13 @@ export function countProblems(cases: EvalCase[]): string[] {
     ["extraction cases with history", count("extraction", withHistory), 2],
     ["off-topic cases", count("off-topic"), 6],
     ["injection cases", count("injection"), 8],
+    // v2's seed minimums (ODY-941). 938, 936 and 940 raise them toward the
+    // README's proposed final counts as they add cases.
+    ["personalized cases", count("personalized"), 2],
+    ["invented-history cases", count("invented-history"), 2],
+    ["quiz-ask cases", count("quiz-ask"), 2],
+    ["quiz-grade cases", count("quiz-grade"), 3],
+    ["review cases", count("review"), 2],
     [
       "percent of cases in BlockNote lessons",
       Math.round((100 * blockNote) / cases.length),
@@ -224,7 +281,8 @@ export function countProblems(cases: EvalCase[]): string[] {
     ...minimums.flatMap(([what, n, min]) =>
       n < min ? [`${n} ${what}, at least ${min} needed`] : [],
     ),
-    ...CASE_KINDS.flatMap((kind) =>
+    // Both formats for v1's kinds; v2's seeds are too few to ask it yet
+    ...V1_KINDS.flatMap((kind) =>
       ["classic", "blocknote"].flatMap((format) =>
         count(kind, (c) => c.format === format)
           ? []
@@ -294,6 +352,8 @@ function caseSection({ case: c, lesson, context, ask, learner }: CaseFacts) {
     `${c.kind}, ${c.input.kind}. Fixture \`${c.fixture}\`, lesson ${c.lessonId} "${lesson.name}" (${c.format}). Tags: ${c.tags.join(", ") || "none"}`,
     c.note && `_${c.note}_`,
     learner && `Learner: \`${learner.name}\`\n\n${fenced(learner.text)}`,
+    c.should && `Should: ${c.should}`,
+    c.verdict && `Verdict: ${c.verdict}`,
     fenced(JSON.stringify(c.input, null, 2), "json"),
     gold.length && `Gold:\n\n${gold.join("\n\n")}`,
     ask.kind === "explain" && `Selection's refs: ${ask.refs.join(", ")}`,

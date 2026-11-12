@@ -143,6 +143,60 @@ describe("validateCases", () => {
       ],
       /viewed lesson "Cooking" isn't a lesson of databases-101/,
     ],
+    [
+      "a personalized case without should",
+      [
+        { ...caseById("personalized-01"), should: undefined },
+        caseById("personalized-02"),
+      ],
+      /a personalized case needs should/,
+    ],
+    [
+      "a personalized question under one profile",
+      [caseById("personalized-01")],
+      /personalized-01: asked under 1 profile; a personalized question needs 2 or more/,
+    ],
+    [
+      "an invented-history case without a learner",
+      [
+        {
+          ...caseById("invented-history-01"),
+          learner: undefined,
+          profile: null,
+        },
+      ],
+      /an invented-history case needs a learner/,
+    ],
+    [
+      "a quiz-grade case without a verdict",
+      [{ ...caseById("quiz-grade-01"), verdict: undefined }],
+      /a quiz-grade case needs a verdict/,
+    ],
+    [
+      "a quiz-grade case without history",
+      [
+        {
+          ...caseById("quiz-grade-01"),
+          input: { kind: "lesson", message: "It keeps the matching rows." },
+        },
+      ],
+      /needs history ending in Mentor's question/,
+    ],
+    [
+      "a quiz-ask on a lesson with no hintable question",
+      [{ ...caseById("quiz-ask-01"), lessonId: 103 }],
+      /needs a lesson with a question of 3 or more options and one right/,
+    ],
+    [
+      "a review whose learner hasn't finished the droplet",
+      [{ ...caseById("review-01"), profile: learnerProfile() }],
+      /the learner hasn't finished Databases 101/,
+    ],
+    [
+      "a review without a learner",
+      [{ ...caseById("review-01"), learner: undefined, profile: null }],
+      /a review case needs a learner/,
+    ],
   ])("finds %s, once", (_, cases, problem) => {
     const problems = validateCases(cases, fixtures);
     expect(problems).toHaveLength(1);
