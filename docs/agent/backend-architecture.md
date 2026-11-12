@@ -173,6 +173,7 @@ Five types, all `draftAndPublish: false`. Relations to droplet, lesson, authoriz
 - **`droplet.reviewRound`** — The droplet lifecycle owns the counter: `beforeCreate` sets 1 if `inReview` else 0, and `beforeUpdate` adds 1 when `inReview` goes from not-true to true. Client and admin edits to it are ignored (the admin field shows as editable but a save has no effect).
 - **`droplet.inReview`** — Only the review routes change it (see "Review workflow routes"). The core droplet `update` route has a middleware (`routes/droplet.ts`, `rejectInReview`) that returns 400 `inReview can only change through the review routes.` when `body.data` has an own `inReview` key (D10). Core `create` and the Strapi admin are not guarded (accepted gaps).
 - Boot backfill (`backend/src/lib/review-round-backfill.ts`) sets in-review droplets with `reviewRound` null or below 1 to 1; it's idempotent. Adding the column leaves existing rows NULL (no column default), so code must treat NULL as 0.
+- **`enrollment.lastProgressDate`** — Set by `updateViewedLessons` on a lesson's first view (ODY-928). A boot backfill (`backend/src/lib/enrollment-progress-backfill.ts`) copies `updatedAt` onto started enrollments where it's null; never-started ones stay null, and reruns change nothing.
 - Deleting a lesson nulls the relation on its comments and scores, so they look like Overview/Overall. Read a score's lesson from `key`, and treat `field: "blocks"` with no lesson as orphaned.
 
 ## Strapi API Patterns
