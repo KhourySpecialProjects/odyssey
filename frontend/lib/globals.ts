@@ -13,6 +13,7 @@ export enum AnnouncementTypeTitle {
   System = "System",
   Friend = "Friend",
   Kudos = "Kudos",
+  Reminder = "Reminder",
 }
 
 export enum NoteTypeTitle {

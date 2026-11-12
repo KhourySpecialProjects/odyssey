@@ -2,6 +2,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
+import { ReminderCard } from "./reminder-card";
 import {
   Droplet,
   Handshake,
@@ -379,6 +380,17 @@ export function FeedBlock({
       </div>
     );
   };
+
+  if (announcement.type === "reminder" && announcement.droplet) {
+    return (
+      <ReminderCard
+        announcement={announcement}
+        timestamp={formatDate(announcement.firstCreated)}
+        onMarkRead={onMarkRead}
+        onMarkUnread={onMarkUnread}
+      />
+    );
+  }
 
   return (
     <>
