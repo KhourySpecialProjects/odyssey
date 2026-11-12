@@ -1,6 +1,10 @@
 import type { DropletSnapshot } from "@/lib/ai-review/types";
 import { blockNoteIdToNumber } from "@/lib/blocknote/convert-blocks";
-import type { EvalCase, Fixtures } from "@/scripts/mentor/lib/files";
+import type {
+  EvalCase,
+  Fixtures,
+  LearnerProfile,
+} from "@/scripts/mentor/lib/files";
 import {
   blockNoteLesson,
   blockNoteLessonWith,
@@ -85,7 +89,26 @@ export const evalCase = (
   lessonId: 101,
   tags: [],
   format: c.lessonId === 101 || !c.lessonId ? "classic" : "blocknote",
+  profile: null,
   ...c,
+});
+
+/** A learner profile (ODY-941), with one viewed lesson of databases-101 */
+export const learnerProfile = (
+  o: Partial<LearnerProfile> = {},
+): LearnerProfile => ({
+  finished: [
+    {
+      name: "SQL Basics",
+      tags: ["databases"],
+      difficulty: "beginner",
+      month: "2026-09",
+    },
+  ],
+  inProgress: [],
+  prerequisites: [{ name: "SQL Basics", finished: true }],
+  viewedLessons: ["Joining tables"],
+  ...o,
 });
 
 /** One valid case of each kind and mode */
