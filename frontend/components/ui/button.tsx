@@ -91,6 +91,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <>
         <Comp
           className={cn(buttonVariants({ variant, size, className }))}
+          // A Link under asChild is an <a>, which browsers drag by default and
+          // drop into text fields as its URL (ODY-472)
+          draggable={false}
           ref={ref}
           {...props}
         >

@@ -350,6 +350,7 @@ ${
       <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:bg-slate-800">
         <Link
           className="relative inline-flex h-full w-full p-2"
+          draggable={false}
           href={`/d/${droplet.slug}`}
         >
           <div className="flex flex-col items-center justify-center gap-1 text-center">
@@ -367,6 +368,7 @@ ${
       <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <Link
           className="relative inline-flex h-full w-full p-6"
+          draggable={false}
           href={
             (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
           }
@@ -383,6 +385,7 @@ ${
 
   return (
     <Link
+      draggable={false}
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
       <li className="h-full overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#fcfcfd] p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
