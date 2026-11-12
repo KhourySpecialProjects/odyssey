@@ -308,6 +308,21 @@ describe("announcement read state invalidation", () => {
     expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
   });
 
+  it.each([
+    ["read", markAnnouncementRead],
+    ["unread", markAnnouncementUnread],
+  ])(
+    "marking a reminder %s only revalidates the owner's feed",
+    async (_, mark) => {
+      mockOwnedAnnouncement("reminder");
+
+      await mark(11);
+
+      expect(revalidateTag).toHaveBeenCalledTimes(1);
+      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
+    },
+  );
+
   it("marking a targeted system announcement unread only revalidates the owner's feed", async () => {
     mockOwnedAnnouncement("system");
 

@@ -21,6 +21,7 @@ const FILTER_OPTIONS: { value: AnnouncementTypeTitle; label: string }[] = [
   { value: AnnouncementTypeTitle.Group, label: "Group" },
   { value: AnnouncementTypeTitle.Friend, label: "Friend" },
   { value: AnnouncementTypeTitle.Kudos, label: "Kudos" },
+  { value: AnnouncementTypeTitle.Reminder, label: "Reminder" },
 ];
 
 export function FeedCenterContent({

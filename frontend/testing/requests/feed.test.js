@@ -206,6 +206,21 @@ describe("Feed tests", () => {
       expect(url).toContain("pagination[page]=2");
     });
 
+    it("keeps reminders out of the group and playlist branches", async () => {
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      // Guard so a reminder with group/playlist set stays owner-only
+      const branchOf = (key) =>
+        url.match(new RegExp(`\\[\\$or\\]\\[(\\d+)\\]\\[${key}\\]`))[1];
+      for (const key of ["group", "playlist"]) {
+        expect(url).toContain(`[$or][${branchOf(key)}][type][$ne]=reminder`);
+      }
+    });
+
     it("includes the user's own review announcements and no one else's", async () => {
       mockPrecompute();
       mockAnnouncementsResponse();
@@ -217,6 +232,103 @@ describe("Feed tests", () => {
       expect(url).toContain("[type][$in][1]=review_published");
       const i = url.indexOf("[type][$in][1]=review_published");
       expect(url.slice(i)).toContain("[authorized_user][id][$eq]=5");
+    });
+
+    it("includes only the viewer's own reminders", async () => {
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      const i = url.indexOf("[type]=reminder");
+      expect(i).toBeGreaterThan(-1);
+      expect(url.slice(i, i + 80)).toContain("[authorized_user][id][$eq]=5");
+    });
+
+    describe("reminder rows", () => {
+      const reminderRow = (dropletId = 100) => ({
+        id: 9,
+        attributes: {
+          type: "reminder",
+          content: "x",
+          droplet: { id: dropletId, name: "Git", slug: "git" },
+        },
+      });
+      const lessons = [2, 1].map((n) => ({
+        id: n,
+        name: `L${n}`,
+        slug: `l${n}`,
+        orderIndex: n,
+      }));
+
+      it("attaches progress, Up next, the earliest due date and the headline", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        fetchAPI
+          .mockResolvedValueOnce([
+            { droplet: { id: 100, lessons }, viewedLessons: [{ id: 1 }] },
+          ])
+          .mockResolvedValueOnce([
+            {
+              dueDate: "2026-12-02",
+              droplet: { id: 100 },
+              group: { groupName: "B" },
+            },
+            {
+              dueDate: "2026-12-01",
+              droplet: { id: 100 },
+              group: { groupName: "A" },
+            },
+          ]);
+        mockAnnouncementsResponse([reminderRow()]);
+
+        const { data } = await fetchAnnouncements(1);
+
+        expect(data[0].reminder).toEqual({
+          headline: "You're one lesson away from finishing Git!",
+          progress: { viewed: 1, total: 2 },
+          nextLesson: { name: "L2", slug: "l2" },
+          started: true,
+          dueDate: "2026-12-01",
+          dueGroupName: "A",
+        });
+        const [, dueOpts] = fetchAPI.mock.calls[4];
+        expect(dueOpts.urlParams.filters.dueDate).toEqual({ $notNull: true });
+        expect(dueOpts.urlParams.sort).toEqual(["dueDate:asc"]);
+        const [, enrollmentOpts] = fetchAPI.mock.calls[3];
+        expect(enrollmentOpts.next.tags).toEqual([
+          CACHE_TAGS.enrollments(5),
+          CACHE_TAGS.droplets,
+        ]);
+      });
+
+      it("keeps the card without progress when there is no enrollment", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        fetchAPI.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+        mockAnnouncementsResponse([reminderRow()]);
+
+        const { data } = await fetchAnnouncements(1);
+
+        expect(data[0].reminder).toMatchObject({
+          headline: "Pick up Git where you left off.",
+          progress: null,
+          nextLesson: null,
+        });
+      });
+
+      it("makes no extra queries when the page has no reminders", async () => {
+        const { fetchAPI } = require("../../lib/utils");
+        mockPrecompute();
+        mockAnnouncementsResponse([
+          { id: 1, attributes: { type: "system", content: "x" } },
+        ]);
+
+        await fetchAnnouncements(1);
+
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
+      });
     });
 
     it("ignores a user object passed by the caller", async () => {
@@ -302,6 +414,105 @@ describe("Feed tests", () => {
       await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
       const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
       expect(url).toContain("[readAt][$null]=true");
+    });
+
+    function setupCount(total = 3) {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
+      fetchAPI.mockResolvedValue([]);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { total } } }),
+      });
+    }
+
+    it("counts the Unread tab's default types, reminders included", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[$and][2][type][$in][0]=droplet");
+      expect(url).toContain("[$and][2][type][$in][6]=reminder");
+      expect(url).not.toContain("[$and][2][type][$in][7]");
+    });
+
+    it("leaves global broadcasts out but keeps the viewer's own", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[type]=system");
+      expect(url).toContain("[authorized_user][id][$eq]=5");
+      expect(url).not.toContain("[authorized_user][id][$null]");
+    });
+
+    it("counts the given filter selection", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount(["kudos", 4]);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[$and][2][type][$in][0]=kudos");
+      expect(url).not.toContain("[$and][2][type][$in][1]");
+    });
+
+    it("is 0 with no types selected, without querying", async () => {
+      setupCount();
+      await expect(getUnreadAnnouncementCount([])).resolves.toBe(0);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("is a lean id-only query: one row, no populate, same tags", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const [rawUrl, init] = global.fetch.mock.calls[0];
+      const params = require("qs").parse(rawUrl.split("?")[1]);
+      expect(params.fields).toEqual(["id"]);
+      expect(params.pagination).toEqual({ pageSize: "1", page: "1" });
+      expect(params.populate).toBeUndefined();
+      expect(init.cache).toBeUndefined();
+      expect(init.next.tags).toEqual([
+        CACHE_TAGS.announcements,
+        CACHE_TAGS.userFeed(5),
+      ]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["default roles", undefined],
+      ["a filtered set", ["kudos", "friend"]],
+    ])(
+      "uses the feed's filters for %s (minus broadcasts)",
+      async (_n, roles) => {
+        const filtersOf = (u) => require("qs").parse(u.split("?")[1]).filters;
+        const {
+          toFeedRoles,
+          FILTER_VALUES,
+        } = require("../../components/feed/feed-filter-params");
+        setupCount();
+        await getUnreadAnnouncementCount(roles);
+        setupCount();
+        await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES), {
+          archived: false,
+          excludeBroadcasts: true,
+        });
+        expect(filtersOf(global.fetch.mock.calls[0][0])).toEqual(
+          filtersOf(global.fetch.mock.calls[1][0]),
+        );
+      },
+    );
+
+    it("returns null, not 0, when the fetch fails", async () => {
+      setupCount();
+      global.fetch.mockReset();
+      global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
+      await expect(getUnreadAnnouncementCount()).resolves.toBeNull();
+    });
+
+    it("still returns broadcasts to the feed itself", async () => {
+      setupCount();
+      await fetchAnnouncements(1, ["system"]);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("[authorized_user][id][$null]=true");
     });
   });
 

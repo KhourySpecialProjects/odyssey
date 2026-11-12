@@ -670,6 +670,7 @@ export interface ApiAnnouncementAnnouncement
         'kudos',
         'review_feedback',
         'review_published',
+        'reminder',
       ]
     > &
       Schema.Attribute.Required;

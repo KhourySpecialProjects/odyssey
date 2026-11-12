@@ -232,7 +232,7 @@ describe('review relations', () => {
 });
 
 describe('announcement types', () => {
-  it.each(['review_feedback', 'review_published'])(
+  it.each(['review_feedback', 'review_published', 'reminder'])(
     'accepts type %s',
     async (type) => {
       await expect(
