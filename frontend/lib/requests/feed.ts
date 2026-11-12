@@ -127,10 +127,16 @@ export async function fetchAnnouncements(
     const orFilters: any[] = [];
 
     if (groupIds.length > 0) {
-      orFilters.push({ group: { id: { $in: groupIds } } });
+      orFilters.push({
+        group: { id: { $in: groupIds } },
+        type: { $ne: "reminder" },
+      });
     }
     if (playlistIds.length > 0) {
-      orFilters.push({ playlist: { id: { $in: playlistIds } } });
+      orFilters.push({
+        playlist: { id: { $in: playlistIds } },
+        type: { $ne: "reminder" },
+      });
     }
     if (friendIds.length > 0) {
       orFilters.push({

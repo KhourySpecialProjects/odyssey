@@ -206,6 +206,21 @@ describe("Feed tests", () => {
       expect(url).toContain("pagination[page]=2");
     });
 
+    it("keeps reminders out of the group and playlist branches", async () => {
+      mockPrecompute();
+      mockAnnouncementsResponse();
+
+      await fetchAnnouncements(1);
+
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      // Guard so a reminder with group/playlist set stays owner-only
+      const branchOf = (key) =>
+        url.match(new RegExp(`\\[\\$or\\]\\[(\\d+)\\]\\[${key}\\]`))[1];
+      for (const key of ["group", "playlist"]) {
+        expect(url).toContain(`[$or][${branchOf(key)}][type][$ne]=reminder`);
+      }
+    });
+
     it("includes the user's own review announcements and no one else's", async () => {
       mockPrecompute();
       mockAnnouncementsResponse();
