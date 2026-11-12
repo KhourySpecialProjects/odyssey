@@ -53,6 +53,131 @@ function friendIdsOf(
 }
 
 /**
+ * The Strapi filters for a viewer's feed, shared by the feed page and the nav
+ * count so the two can't drift. Pre-computes ids with minimal parallel queries.
+ */
+async function buildFeedFilters(
+  userId: number,
+  email: string,
+  opts: { archived: boolean; excludeBroadcasts: boolean; types?: string[] },
+) {
+  const { archived, excludeBroadcasts, types } = opts;
+  // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
+  // parallel. Friends come from the social graph the activity layout already
+  // reads (request-deduped there; a Data Cache hit from a Server Action).
+  const [groupIds, playlistIds, enrolledDropletIds, friendIds] =
+    await Promise.all([
+      fetchAPI<{ id: number }[]>("/groups", {
+        urlParams: {
+          filters: {
+            $or: [
+              { creator: { id: { $eq: userId } } },
+              { admins: { id: { $eq: userId } } },
+              { managers: { id: { $eq: userId } } },
+              { members: { id: { $eq: userId } } },
+            ],
+          },
+          fields: ["id"],
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
+      }).then((groups) => groups.map((g) => g.id)),
+      fetchAPI<{ id: number }[]>("/playlists", {
+        urlParams: {
+          filters: {
+            authorized_users: { id: { $eq: userId } },
+          },
+          fields: ["id"],
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
+      }).then((playlists) => playlists.map((p) => p.id)),
+      fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
+        urlParams: {
+          filters: {
+            authorizedUser: { id: { $eq: userId } },
+          },
+          fields: ["id"],
+          populate: { droplet: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: {
+          tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.allEnrollments],
+          revalidate: 900,
+        },
+      }).then((enrollments) =>
+        enrollments
+          .map((e) => e.droplet?.id)
+          .filter((id): id is number => id != null),
+      ),
+      getCachedUserSocial(email).then((social) =>
+        friendIdsOf(userId, social?.friendships),
+      ),
+    ]);
+
+  // Build the query with simple $in filters instead of nested relation joins
+  const orFilters: any[] = [];
+
+  if (groupIds.length > 0) {
+    orFilters.push({
+      group: { id: { $in: groupIds } },
+      type: { $ne: "reminder" },
+    });
+  }
+  if (playlistIds.length > 0) {
+    orFilters.push({
+      playlist: { id: { $in: playlistIds } },
+      type: { $ne: "reminder" },
+    });
+  }
+  if (friendIds.length > 0) {
+    orFilters.push({
+      type: "friend",
+      authorized_user: { id: { $in: friendIds } },
+    });
+    orFilters.push({
+      type: "kudos",
+      authorized_user: { id: { $in: friendIds } },
+    });
+  }
+  if (enrolledDropletIds.length > 0) {
+    orFilters.push({
+      type: "droplet",
+      droplet: { id: { $in: enrolledDropletIds } },
+    });
+  }
+  // System announcements: global (no user) or targeted at this user
+  orFilters.push({
+    type: "system",
+    $or: [
+      ...(excludeBroadcasts
+        ? []
+        : [{ authorized_user: { id: { $null: true } } }]),
+      { authorized_user: { id: { $eq: userId } } },
+    ],
+  });
+
+  // Review outcomes reach only the recipient
+  orFilters.push({
+    type: { $in: ["review_feedback", "review_published"] },
+    authorized_user: { id: { $eq: userId } },
+  });
+
+  // Reminders reach only their owner
+  orFilters.push({
+    type: "reminder",
+    authorized_user: { id: { $eq: userId } },
+  });
+
+  const readAtFilter = archived
+    ? { readAt: { $notNull: true } }
+    : { readAt: { $null: true } };
+  return types?.length
+    ? { $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }] }
+    : { $and: [{ $or: orFilters }, readAtFilter] };
+}
+
+/**
  * The signed-in user's feed. Callable from the client as a Server Action, so
  * the viewer always comes from the session — never from arguments.
  *
@@ -81,129 +206,16 @@ export async function fetchAnnouncements(
     ? roles.filter((r) => typeof r === "string")
     : undefined;
   try {
-    // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
-    // parallel. Friends come from the social graph the activity layout already
-    // reads (request-deduped there; a Data Cache hit from a Server Action).
-    const [groupIds, playlistIds, enrolledDropletIds, friendIds] =
-      await Promise.all([
-        fetchAPI<{ id: number }[]>("/groups", {
-          urlParams: {
-            filters: {
-              $or: [
-                { creator: { id: { $eq: userId } } },
-                { admins: { id: { $eq: userId } } },
-                { managers: { id: { $eq: userId } } },
-                { members: { id: { $eq: userId } } },
-              ],
-            },
-            fields: ["id"],
-            pagination: { pageSize: 250, page: 1 },
-          },
-          next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
-        }).then((groups) => groups.map((g) => g.id)),
-        fetchAPI<{ id: number }[]>("/playlists", {
-          urlParams: {
-            filters: {
-              authorized_users: { id: { $eq: userId } },
-            },
-            fields: ["id"],
-            pagination: { pageSize: 250, page: 1 },
-          },
-          next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
-        }).then((playlists) => playlists.map((p) => p.id)),
-        fetchAPI<{ id: number; droplet?: { id: number } }[]>("/enrollments", {
-          urlParams: {
-            filters: {
-              authorizedUser: { id: { $eq: userId } },
-            },
-            fields: ["id"],
-            populate: { droplet: { fields: ["id"] } },
-            pagination: { pageSize: 250, page: 1 },
-          },
-          next: {
-            tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.allEnrollments],
-            revalidate: 900,
-          },
-        }).then((enrollments) =>
-          enrollments
-            .map((e) => e.droplet?.id)
-            .filter((id): id is number => id != null),
-        ),
-        getCachedUserSocial(email).then((social) =>
-          friendIdsOf(userId, social?.friendships),
-        ),
-      ]);
-
-    // Build the query with simple $in filters instead of nested relation joins
-    const orFilters: any[] = [];
-
-    if (groupIds.length > 0) {
-      orFilters.push({
-        group: { id: { $in: groupIds } },
-        type: { $ne: "reminder" },
-      });
-    }
-    if (playlistIds.length > 0) {
-      orFilters.push({
-        playlist: { id: { $in: playlistIds } },
-        type: { $ne: "reminder" },
-      });
-    }
-    if (friendIds.length > 0) {
-      orFilters.push({
-        type: "friend",
-        authorized_user: { id: { $in: friendIds } },
-      });
-      orFilters.push({
-        type: "kudos",
-        authorized_user: { id: { $in: friendIds } },
-      });
-    }
-    if (enrolledDropletIds.length > 0) {
-      orFilters.push({
-        type: "droplet",
-        droplet: { id: { $in: enrolledDropletIds } },
-      });
-    }
-    // System announcements: global (no user) or targeted at this user
-    orFilters.push({
-      type: "system",
-      $or: [
-        ...(excludeBroadcasts
-          ? []
-          : [{ authorized_user: { id: { $null: true } } }]),
-        { authorized_user: { id: { $eq: userId } } },
-      ],
+    const filters = await buildFeedFilters(userId, email, {
+      archived,
+      excludeBroadcasts,
+      types,
     });
-
-    // Review outcomes reach only the recipient
-    orFilters.push({
-      type: { $in: ["review_feedback", "review_published"] },
-      authorized_user: { id: { $eq: userId } },
-    });
-
-    // Reminders reach only their owner
-    orFilters.push({
-      type: "reminder",
-      authorized_user: { id: { $eq: userId } },
-    });
-
-    const readAtFilter = archived
-      ? { readAt: { $notNull: true } }
-      : { readAt: { $null: true } };
-
-    const baseFilters = {
-      $and: [{ $or: orFilters }, readAtFilter],
-    };
 
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated", "readAt"],
-      filters: types?.length
-        ? {
-            $and: [{ $or: orFilters }, readAtFilter, { type: { $in: types } }],
-          }
-        : baseFilters,
+      filters,
       populate: {
         authorized_user: {
           fields: [
@@ -918,19 +930,46 @@ function revalidateReadState(ownership: { ownerId: number; type?: string }) {
  */
 export async function getUnreadAnnouncementCount(
   roles?: string[],
-): Promise<number> {
+): Promise<number | null> {
   try {
     const types = Array.isArray(roles) ? roles : toFeedRoles(FILTER_VALUES);
-    // fetchAnnouncements treats no types as "all", but the tab shows nothing
+    // The shared filters treat no types as "all", but the tab shows nothing
     if (types.length === 0) return 0;
-    const { pagination } = await fetchAnnouncements(1, types, {
+    const sessionUser = await getCurrentUser();
+    const userId = await getAuthorizedUserId(sessionUser);
+    if (!sessionUser?.email || !userId) throw new Error("Not authenticated");
+    const filters = await buildFeedFilters(userId, sessionUser.email, {
       archived: false,
       excludeBroadcasts: true,
+      types: types.filter((t) => typeof t === "string"),
     });
-    return pagination.total;
+    const query = qs.stringify({
+      filters,
+      fields: ["id"],
+      pagination: { pageSize: 1, page: 1 },
+    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
+      {
+        headers: {
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        next: {
+          tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
+          revalidate: 900,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`Strapi returned ${response.status} for /announcements`);
+    }
+    const data = await response.json();
+    return data.meta?.pagination?.total ?? 0;
   } catch (error) {
     console.error("Error fetching unread count:", error);
-    return 0;
+    // null = unknown, so callers keep what they show instead of hiding it
+    return null;
   }
 }
 

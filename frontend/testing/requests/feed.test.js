@@ -461,6 +461,53 @@ describe("Feed tests", () => {
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
+    it("is a lean id-only query: one row, no populate, same tags", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      const [rawUrl, init] = global.fetch.mock.calls[0];
+      const params = require("qs").parse(rawUrl.split("?")[1]);
+      expect(params.fields).toEqual(["id"]);
+      expect(params.pagination).toEqual({ pageSize: "1", page: "1" });
+      expect(params.populate).toBeUndefined();
+      expect(init.cache).toBeUndefined();
+      expect(init.next.tags).toEqual([
+        CACHE_TAGS.announcements,
+        CACHE_TAGS.userFeed(5),
+      ]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["default roles", undefined],
+      ["a filtered set", ["kudos", "friend"]],
+    ])(
+      "uses the feed's filters for %s (minus broadcasts)",
+      async (_n, roles) => {
+        const filtersOf = (u) => require("qs").parse(u.split("?")[1]).filters;
+        const {
+          toFeedRoles,
+          FILTER_VALUES,
+        } = require("../../components/feed/feed-filter-params");
+        setupCount();
+        await getUnreadAnnouncementCount(roles);
+        setupCount();
+        await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES), {
+          archived: false,
+          excludeBroadcasts: true,
+        });
+        expect(filtersOf(global.fetch.mock.calls[0][0])).toEqual(
+          filtersOf(global.fetch.mock.calls[1][0]),
+        );
+      },
+    );
+
+    it("returns null, not 0, when the fetch fails", async () => {
+      setupCount();
+      global.fetch.mockReset();
+      global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
+      await expect(getUnreadAnnouncementCount()).resolves.toBeNull();
+    });
+
     it("still returns broadcasts to the feed itself", async () => {
       setupCount();
       await fetchAnnouncements(1, ["system"]);
