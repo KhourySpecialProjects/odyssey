@@ -1,0 +1,31 @@
+{
+  "about": "Finished Internet Basics in August, with every lesson viewed, as ODY-934 sends for a finished droplet. For internet-basics only: the older droplet in review cases.",
+  "finished": [
+    {
+      "name": "Internet Basics",
+      "tags": ["networking", "web"],
+      "difficulty": null,
+      "month": "2026-08"
+    },
+    {
+      "name": "Technology Ethics in Practice",
+      "tags": ["ethics", "policy"],
+      "difficulty": null,
+      "month": "2026-05"
+    }
+  ],
+  "inProgress": [],
+  "prerequisites": [],
+  "viewedLessons": [
+    "A Network of Cables",
+    "Internet Protocol",
+    "IP Addresses",
+    "DNS",
+    "Transport Protocol",
+    "World Wide Web",
+    "HTTP",
+    "URL Components",
+    "Web Browsers & Search Engines",
+    "Check-In Questions"
+  ]
+}

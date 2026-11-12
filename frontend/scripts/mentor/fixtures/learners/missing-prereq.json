@@ -1,0 +1,16 @@
+{
+  "about": "Hasn't finished the prerequisite of Fundamentals of Data Science, and viewed its first lesson. For fundamentals-of-data-science only. \"Intro to Python\" is made up: no fixture has a prerequisite.",
+  "finished": [
+    {
+      "name": "Mastering the Behavioral Interview",
+      "tags": ["careers", "interviews"],
+      "difficulty": null,
+      "month": "2026-10"
+    }
+  ],
+  "inProgress": [
+    { "name": "Fundamentals of Data Science", "viewed": 1, "total": 3 }
+  ],
+  "prerequisites": [{ "name": "Intro to Python", "finished": false }],
+  "viewedLessons": ["Introduction to Data Science and Its Workflow"]
+}
