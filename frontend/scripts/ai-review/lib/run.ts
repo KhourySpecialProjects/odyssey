@@ -4,6 +4,7 @@ import {
   costOf,
   estimateCost,
   type AiReviewModel,
+  type PricedModel,
 } from "@/lib/ai-review/models";
 import { parseScores, type ScoreRequest } from "@/lib/ai-review/prompt";
 import type { Criterion, ParsedScores } from "@/lib/ai-review/types";
@@ -44,7 +45,7 @@ export async function confirmSpend(
   requests: Priced[],
   { batch, yes }: { batch: boolean; yes: boolean },
 ): Promise<boolean> {
-  const model = (r: Priced) => r.params.model as AiReviewModel;
+  const model = (r: Priced) => r.params.model as PricedModel;
   const estimate = requests.reduce(
     (sum, r) =>
       sum +

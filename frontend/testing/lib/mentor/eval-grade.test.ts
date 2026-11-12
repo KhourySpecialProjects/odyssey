@@ -156,6 +156,19 @@ describe("judgeRequest", () => {
     expect(JSON.stringify(params.messages)).not.toMatch(/combines rows|p2/);
   });
 
+  it.each([
+    [undefined, "claude-sonnet-5-5", "medium"],
+    [
+      { model: "claude-opus-5-5", effort: "high" } as const,
+      "claude-opus-5-5",
+      "high",
+    ],
+  ])("judges with %p: %s at %s", (judge, model, effort) => {
+    const params = judgeRequest("Hi.", facts(caseById("uncovered-01")), judge);
+    expect(params.model).toBe(model);
+    expect(params.output_config).toMatchObject({ effort });
+  });
+
   it("shows an extraction every hintable question in the lesson", () => {
     const text = content("Think about ranges. Which fits?", twoQuizzes);
     expect(text).toContain("The right option: A B-tree index");

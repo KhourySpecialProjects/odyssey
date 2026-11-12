@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import type { Effort, PricedModel } from "@/lib/ai-review/models";
 import { MENTOR_NOT_COVERED } from "@/lib/mentor/prompt";
 import { quizQuestionMarkdown } from "@/lib/mentor/quiz";
 import { citedRefs, REF_PATTERN } from "@/lib/mentor/refs";
@@ -12,7 +13,12 @@ import { QUIZ_KINDS, type CaseKind } from "./files";
 
 /** Bump on any change to the judge's prompt or questions */
 export const JUDGE_VERSION = "2026-11-06.3";
-export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
+/** A model and effort for the judge; the bake-off (ODY-941) tries others */
+export type JudgeSetup = { model: PricedModel; effort: Effort };
+export const JUDGE = {
+  model: "claude-sonnet-5-5",
+  effort: "medium",
+} as const satisfies JudgeSetup;
 const JUDGE_MAX_TOKENS = 8000;
 
 /** How an answer ended; see "What is graded" in the README */
@@ -120,6 +126,7 @@ function studentInput({ ask }: CaseFacts): string {
 export function judgeRequest(
   reply: string,
   facts: CaseFacts,
+  judge: JudgeSetup = JUDGE,
 ): Anthropic.MessageCreateParamsNonStreaming {
   const { case: c, context, quizzes } = facts;
   const questions = ASKED[c.kind];
@@ -163,11 +170,11 @@ export function judgeRequest(
     `Answer about the reply:\n${questions.map((q) => `- ${q}: ${QUESTIONS[q]}`).join("\n")}`,
   ];
   return {
-    model: JUDGE.model,
+    model: judge.model,
     max_tokens: JUDGE_MAX_TOKENS,
     thinking: { type: "adaptive" },
     output_config: {
-      effort: JUDGE.effort,
+      effort: judge.effort,
       format: {
         type: "json_schema",
         schema: {

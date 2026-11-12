@@ -32,19 +32,26 @@ export function parseEffort(value: string | undefined): Effort {
   throw new Error(`Effort "${value}" must be one of: ${EFFORTS.join(", ")}`);
 }
 
+/**
+ * The models there's a price for: AI review's, plus Opus 5.5 for the Mentor
+ * eval's judge bake-off (ODY-941). Pricing Opus doesn't allow it for AI review.
+ */
+export type PricedModel = AiReviewModel | "claude-opus-5-5";
+
 type Price = { input: number; output: number };
 
 /**
- * US dollars per million tokens, from Anthropic's price list in October 2026.
- * Check https://www.anthropic.com/pricing before trusting a total. Haiku 5.5
- * costs more once a prompt passes 100K tokens.
+ * US dollars per million tokens, from Anthropic's price list in October 2026
+ * (Opus 5.5 in November 2026). Check https://www.anthropic.com/pricing before
+ * trusting a total. Haiku 5.5 costs more once a prompt passes 100K tokens.
  */
-const PRICES: Record<AiReviewModel, { base: Price; over100k?: Price }> = {
+const PRICES: Record<PricedModel, { base: Price; over100k?: Price }> = {
   "claude-sonnet-5-5": { base: { input: 2, output: 10 } },
   "claude-haiku-5-5": {
     base: { input: 0.1, output: 0.5 },
     over100k: { input: 0.5, output: 2.5 },
   },
+  "claude-opus-5-5": { base: { input: 4, output: 20 } },
 };
 
 const CACHE_WRITE = 1.25; // 5-minute cache writes, as a multiple of input
@@ -54,7 +61,7 @@ const BATCH = 0.5;
 /** What one response cost, in US dollars. Batch requests are half price. */
 export function costOf(
   usage: Anthropic.Usage,
-  model: AiReviewModel,
+  model: PricedModel,
   { batch }: { batch: boolean },
 ): number {
   const cacheWrite = usage.cache_creation_input_tokens ?? 0;
@@ -75,7 +82,7 @@ export function costOf(
 /** A rough cost before running: about 4 characters a token, and a guess at the output. */
 export function estimateCost(
   promptChars: number[],
-  model: AiReviewModel,
+  model: PricedModel,
   {
     batch,
     outputTokensEach = 3000,

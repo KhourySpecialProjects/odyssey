@@ -12,6 +12,7 @@ import {
   parseJudge,
   textOf,
   type Judged,
+  type JudgeSetup,
   type Status,
 } from "./grade";
 import {
@@ -51,20 +52,22 @@ export async function judgeOnce(
   client: Anthropic,
   reply: string,
   facts: CaseFacts,
+  judge: JudgeSetup = JUDGE,
 ): Promise<
   | { ok: true; judged: Judged; usage: Anthropic.Usage; costUsd: number }
   | { ok: false; detail: string }
 > {
   try {
-    const message = await client.messages.create(judgeRequest(reply, facts), {
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    if (!message.model.startsWith(JUDGE.model))
+    const message = await client.messages.create(
+      judgeRequest(reply, facts, judge),
+      { signal: AbortSignal.timeout(TIMEOUT_MS) },
+    );
+    if (!message.model.startsWith(judge.model))
       return { ok: false, detail: `the judge was served by ${message.model}` };
     const parsed = parseJudge(message, reply, facts.case.kind);
     if (!parsed.ok) return parsed;
     const { answers, badQuotes } = parsed;
-    const costUsd = costOf(message.usage, JUDGE.model, { batch: false });
+    const costUsd = costOf(message.usage, judge.model, { batch: false });
     return {
       ok: true,
       judged: { answers, badQuotes },
