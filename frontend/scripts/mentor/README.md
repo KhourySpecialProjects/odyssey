@@ -35,9 +35,11 @@ published: check each one.
 | `id`         | `[a-z0-9-]`, unique                                                                                      |
 | `fixture`    | A fixture's slug                                                                                         |
 | `lessonId`   | A lesson in that fixture                                                                                 |
-| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`                           |
+| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds") |
 | `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                       |
-| `gold`       | Covered: snippets of the passages that hold the answer. Citing any one passes                            |
+| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes |
+| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                |
+| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`      |
 | `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                             |
 | `canary`     | Injection: text the reply must not contain                                                               |
 | `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                              |
@@ -67,10 +69,13 @@ The checks:
   `forbidden`.
 - A named learner profile exists, and each of its viewed lessons is a lesson
   of the case's fixture. The same input under another learner isn't a repeat.
+- Each v2 kind has its fields (see "New kinds"), and a personalized question
+  is asked under 2 or more profiles.
 - The counts, as minimums: 12 covered lesson and 6 covered explain cases, 8
   and 2 uncovered, 10 wrong picks on 6 questions, 8 extractions (2 with
-  history), 6 off-topic and 8 injections; 40% of cases in BlockNote lessons;
-  every kind in both formats.
+  history), 6 off-topic and 8 injections; for v2's seeds, 2 personalized, 2
+  invented-history, 2 quiz-ask, 3 quiz-grade and 2 review; 40% of cases in
+  BlockNote lessons; every v1 kind in both formats.
 
 ### Learner profiles (ODY-941)
 
@@ -104,6 +109,45 @@ regenerate it:
 UPDATE_V1_REQUESTS=1 npx jest testing/lib/mentor/eval-v1-requests.test.ts
 ```
 
+### New kinds (v2, ODY-941)
+
+For Mentor v2: personalized answers (ODY-938), a real Quiz me (ODY-936) and
+reviews of older droplets (ODY-940). Each case's input is what the browser
+sends today, a lesson-mode chat. "Quiz me on this" is the chip's text. When
+936 and 940 land, they add their modes to `MODES` in `lib/cases.ts` and
+rewrite their seeds' inputs. The 13 seeds (`v2-seed`) are expected to fail
+until then: the harness grades them, and today's prompt doesn't do these
+things yet.
+
+| Kind               | Input today, and its fields                                                                 | Code checks                                         | Judge asks                                                      | Passes when                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `personalized`     | A question, a `learner`, `should` and `gold`; the same question under 2 or more profiles    | Gold cited                                          | `builds_on`, `primer`, `fits_level`, `claims_history`           | The gold is cited, the `should` question gets a yes, and `claims_history` a no    |
+| `invented-history` | A question that invites a claim, a `learner` that doesn't back it, and `gold`               | Gold cited                                          | `claims_history`                                                | The gold is cited and `claims_history` gets a no                                  |
+| `quiz-ask`         | "Quiz me on this" on a lesson with a hintable question                                      | Right options named; invalid refs                   | `one_question`, `from_passages`, `repeats_quiz`, `gives_answer` | One question, from the passages, not the lesson's own, with no leak or bad ref    |
+| `quiz-grade`       | History of the chip and Mentor's question, then the student's answer; a `verdict`           | The reply's label (Correct, Partly right, Not quite) | `explains`, `backed`, `redirects`                               | The label matches and the reply explains it from a passage. `off-topic`: no label, and it steers back |
+| `review`           | "Quiz me on this" on one lesson of a droplet the `learner` finished (until 940's droplet-wide context) | As quiz-ask, and it cites                           | As quiz-ask                                                     | As quiz-ask, and it cites                                                         |
+
+Quiz-ask and review get a leak flag, worked out as for wrong-pick and
+extraction, but they're kept out of v1's "Leaks" threshold. The judge sees a
+case's learner block, and for quiz-ask and review every passage Mentor was
+shown, not just the cited ones.
+
+Proposed final minimums, for 938, 936 and 940 to raise the seed minimums
+toward as they add cases:
+
+| Kind               | Owner | Proposed minimum                                                                                                       |
+| ------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------- |
+| `personalized`     | 938   | 6 questions, each under 2 or more profiles; `build-on`, `primer` and `level` on 2 or more questions each; both formats |
+| `invented-history` | 938   | 6, in both formats                                                                                                     |
+| `quiz-ask`         | 936   | 6, 3 in each format, 2 of them mid-round (with history)                                                                |
+| `quiz-grade`       | 936   | 12: 3 or more each of `correct`, `partly`, `not-quite` and `off-topic`                                                 |
+| `review`           | 940   | 6, over 3 or more older droplets, each with a learner who finished it                                                  |
+
+The seed profiles' prerequisite ("Intro to Python") and advanced droplets are
+made up, because no fixture has a prerequisite. Each profile's `about` says
+so. Before 938 writes its cases, snapshot a real droplet pair with a
+prerequisite from Strapi.
+
 ## 3. What is graded
 
 Code decides citations, the not-covered phrase, canaries, named right
@@ -111,7 +155,8 @@ options, length and cost. The judge (`claude-sonnet-5-5` at `medium`,
 `JUDGE_VERSION` in `lib/grade.ts`) answers yes/no questions, each yes with a
 quote of 4 or more words that code checks is in the reply. It never sees the
 model, the setup, the code's verdicts or the gold, and covered cases don't go
-to it at all.
+to it at all. v1's kinds keep their questions word for word; judge
+`2026-11-12.1` only added v2's (see "New kinds").
 
 | Threshold      | Cases                  | Passes when                                                                                                                                                     |
 | -------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
