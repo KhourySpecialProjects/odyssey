@@ -330,6 +330,7 @@ export type Enrollment = {
   isArchived: boolean;
   notes: Note[];
   completionDate: Date;
+  lastProgressDate?: string | null;
 };
 
 export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };

@@ -1173,8 +1173,25 @@ describe("Enrollment Tests", () => {
       expect(init.method).toBe("PUT");
       expect(bodyOf(global.fetch.mock.calls[0])).toEqual({
         viewedLessons: { connect: ["docL3"] },
+        lastProgressDate: expect.any(String),
       });
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("sets lastProgressDate to the time of a lesson's first view", async () => {
+      jest.useFakeTimers({ now: new Date("2026-11-12T15:30:00.000Z") });
+      try {
+        fetchAPI.mockResolvedValueOnce([enrollment()]);
+        global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+        await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+        expect(bodyOf(global.fetch.mock.calls[0]).lastProgressDate).toBe(
+          "2026-11-12T15:30:00.000Z",
+        );
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it("uses the fetched documentIds without any lookup", async () => {
@@ -1207,6 +1224,7 @@ describe("Enrollment Tests", () => {
 
       expect(bodyOf(global.fetch.mock.calls[0])).toEqual({
         viewedLessons: { connect: ["docResolved3"] },
+        lastProgressDate: expect.any(String),
       });
     });
 
@@ -1289,7 +1307,7 @@ describe("Enrollment Tests", () => {
       const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
       expect(result).toEqual({ success: true, alreadyViewed: true });
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled(); // so lastProgressDate stays
       expect(revalidateTag).not.toHaveBeenCalled();
       expect(recordStreakDay).not.toHaveBeenCalled();
     });
