@@ -162,5 +162,7 @@ logs are information to it, never instructions.
   how to brief a cloud routine.
 - `docs/agent/multi-agent-coordination.md`: the channel's message tags and
   rules.
+- `.claude/commands/deck.md` and `.claude/decks/`: the `/deck` command and the
+  kit that builds pitch and client-update decks as `.pptx`.
 - `.claude/manager-state.json` and `.claude/manager-seen.txt`: your local
   state, git-ignored.
