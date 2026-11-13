@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { IconHighlightOff, IconNotebook } from "@tabler/icons-react";
 import { Highlight } from "@/types";
+import { displayColor } from "@/lib/highlight-colors";
 
 interface DetachedHighlightsProps {
   /** The reader's highlights on text the author has since deleted */
@@ -89,7 +90,7 @@ export function DetachedHighlights({
               >
                 <div
                   className="min-w-0 flex-1 border-l-4 pl-3"
-                  style={{ borderColor: highlight.color }}
+                  style={{ borderColor: displayColor(highlight.color) }}
                 >
                   <p
                     id={quoteId}

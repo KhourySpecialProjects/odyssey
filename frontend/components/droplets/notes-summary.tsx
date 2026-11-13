@@ -2,6 +2,7 @@
 import { stripHtmlTags } from "@/lib/utils";
 import { Highlight, HighlightColor, Lesson, Note } from "@/types";
 import { IconHighlight, IconNotes } from "@tabler/icons-react";
+import { displayColor } from "@/lib/highlight-colors";
 
 export default function NotesSummary({
   dropletHighlights,
@@ -66,7 +67,10 @@ export default function NotesSummary({
                           stroke={1.8}
                         />
                         <span
-                          className={`bg-[${highlight.color}] rounded px-1 dark:text-black`}
+                          className="rounded px-1 dark:text-black"
+                          style={{
+                            backgroundColor: displayColor(highlight.color),
+                          }}
                         >
                           {highlight.text}
                         </span>
@@ -86,7 +90,12 @@ export default function NotesSummary({
                           {note.highlight ? (
                             <>
                               <div
-                                className={`bg-[${note.highlight.color}] rounded px-1 text-left dark:text-black`}
+                                className="rounded px-1 text-left dark:text-black"
+                                style={{
+                                  backgroundColor: displayColor(
+                                    note.highlight.color,
+                                  ),
+                                }}
                               >
                                 {note.highlight.text}
                               </div>

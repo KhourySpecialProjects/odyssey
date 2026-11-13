@@ -58,13 +58,13 @@ export function NoteBlock({
       case "#fbd38d":
         return "bg-[#fbd38d] dark:bg-[#fbd38d]";
       case "#fff300":
-        return "bg-[#fff300] dark:bg-[#fff300]";
+        return "bg-[#fef08a] dark:bg-[#fef08a]";
       case "#86efac":
         return "bg-[#86efac] dark:bg-[#86efac]";
       case "#93c5fd":
         return "bg-[#93c5fd] dark:bg-[#93c5fd]";
       default:
-        return "bg-[#fff300] dark:bg-[#fff300]";
+        return "bg-[#fef08a] dark:bg-[#fef08a]";
     }
   };
 

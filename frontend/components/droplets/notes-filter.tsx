@@ -23,7 +23,7 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
     {
       value: NoteTypeTitle.Yellow,
       label: "Yellow",
-      switchColor: "peer-checked:bg-[#fff300]",
+      switchColor: "peer-checked:bg-[#fef08a]",
     },
     {
       value: NoteTypeTitle.Green,

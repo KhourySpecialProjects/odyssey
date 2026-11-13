@@ -1,6 +1,7 @@
 import { stripHtmlTags } from "@/lib/utils";
 import { Droplet, Highlight, Note } from "@/types";
 import { PDFDocument, rgb } from "pdf-lib";
+import { displayColor } from "@/lib/highlight-colors";
 
 export async function NoteSummary({
   filteredHighlights,
@@ -221,7 +222,7 @@ export async function NoteSummary({
         }
 
         if (note.highlight) {
-          const hexColor = note.highlight.color;
+          const hexColor = displayColor(note.highlight.color);
           const r = parseInt(hexColor.slice(1, 3), 16) / 255;
           const g = parseInt(hexColor.slice(3, 5), 16) / 255;
           const b = parseInt(hexColor.slice(5, 7), 16) / 255;
@@ -275,7 +276,7 @@ export async function NoteSummary({
           yPosition = height - 50;
         }
 
-        const hexColor = highlight.color;
+        const hexColor = displayColor(highlight.color);
         const r = parseInt(hexColor.slice(1, 3), 16) / 255;
         const g = parseInt(hexColor.slice(3, 5), 16) / 255;
         const b = parseInt(hexColor.slice(5, 7), 16) / 255;

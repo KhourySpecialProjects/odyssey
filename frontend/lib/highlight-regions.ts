@@ -1,5 +1,6 @@
 import type { EditorView } from "@codemirror/view";
 import { Highlight } from "@/types";
+import { displayColor } from "@/lib/highlight-colors";
 
 /**
  * Highlights are drawn in regions: the elements holding a block's text, each
@@ -224,7 +225,7 @@ function drawHighlight(region: HTMLElement, highlight: DrawnHighlight) {
     );
     element.classList.add(HIGHLIGHT_CLASS);
     element.dataset.highlightId = String(highlight.id);
-    element.style.backgroundColor = highlight.color;
+    element.style.backgroundColor = displayColor(highlight.color);
     element.style.borderRadius = `${left} ${right} ${right} ${left}`;
     element.style.setProperty("color", "black", "important");
     if (highlight.edited) {
@@ -290,7 +291,7 @@ export function codeMarks(highlights: DrawnHighlight[], code: string) {
                 "data-highlight-edited": "",
                 title: editedTitle(highlight),
               }),
-              style: `background-color: ${highlight.color}; color: black !important; border-radius: 8px`,
+              style: `background-color: ${displayColor(highlight.color)}; color: black !important; border-radius: 8px`,
             },
           },
         ]

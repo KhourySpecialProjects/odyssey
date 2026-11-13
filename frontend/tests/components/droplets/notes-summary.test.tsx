@@ -179,7 +179,7 @@ describe("NotesSummary", () => {
       );
 
       const highlightSpan = screen.getByText("Test highlight");
-      expect(highlightSpan).toHaveClass("bg-[#fff300]");
+      expect(highlightSpan).toHaveStyle({ backgroundColor: "#fef08a" });
       expect(highlightSpan).toHaveClass("rounded");
       expect(highlightSpan).toHaveClass("px-1");
     });

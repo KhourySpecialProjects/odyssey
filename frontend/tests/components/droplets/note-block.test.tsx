@@ -308,7 +308,7 @@ describe("NoteBlock", () => {
       render(<NoteBlock {...mockProps} />);
 
       const badge = screen.getByText("Highlighted text");
-      expect(badge).toHaveClass("bg-[#fff300]");
+      expect(badge).toHaveClass("bg-[#fef08a]");
     });
 
     it("applies correct background color for pink highlight", () => {
@@ -383,7 +383,7 @@ describe("NoteBlock", () => {
       render(<NoteBlock {...mockProps} note={unknownColorNote} />);
 
       const badge = screen.getByText("Highlighted text");
-      expect(badge).toHaveClass("bg-[#fff300]");
+      expect(badge).toHaveClass("bg-[#fef08a]");
     });
 
     it("handles clicking on highlight badge", async () => {
@@ -839,7 +839,7 @@ describe("NoteBlock", () => {
 
       const badge = screen.getByTitle("Highlighted text");
       // Slate-700 bg would hide the chip's slate-700 text
-      expect(badge).toHaveClass("dark:bg-[#fff300]");
+      expect(badge).toHaveClass("dark:bg-[#fef08a]");
       expect(badge).not.toHaveClass("dark:bg-slate-700");
     });
   });

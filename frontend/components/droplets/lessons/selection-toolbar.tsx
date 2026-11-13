@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { HighlightColor } from "@/types";
 import { IconTrash, IconNotebook } from "@tabler/icons-react";
 import { Sparkles } from "lucide-react";
-import { HIGHLIGHT_COLORS } from "@/lib/highlight-colors";
+import { HIGHLIGHT_COLORS, displayColor } from "@/lib/highlight-colors";
 import { placePopover, useDismiss, type PopoverAnchor } from "@/lib/selection";
 
 interface SelectionToolbarProps {
@@ -133,7 +133,7 @@ export function SelectionToolbar({
                   ? "ring-2 ring-[#2D7597] ring-offset-1"
                   : ""
               }`}
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: displayColor(color) }}
             />
           ))}
           <div className="mx-0.5 h-4 w-px bg-slate-200" />

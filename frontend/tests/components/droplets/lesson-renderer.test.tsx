@@ -400,7 +400,7 @@ describe("LessonRenderer (viewer)", () => {
         expect(toast.error).toHaveBeenCalledWith("Failed to save highlight"),
       );
       expect(pieces(container, 7)[0]).toHaveStyle({
-        backgroundColor: "#fff300",
+        backgroundColor: "#fef08a",
       });
     });
   });
@@ -951,7 +951,7 @@ describe("LessonRenderer (viewer)", () => {
         });
         expect(createHighlight).not.toHaveBeenCalled();
         expect(pieces(first, 4).map((p) => p.textContent)).toEqual(["joins"]);
-        expect(pieces(first, 4)[0]).toHaveStyle({ backgroundColor: "#fff300" });
+        expect(pieces(first, 4)[0]).toHaveStyle({ backgroundColor: "#fef08a" });
         expect(notice()).not.toBeInTheDocument();
         await waitFor(() =>
           expect(toast.success).toHaveBeenCalledWith("Highlight moved"),
