@@ -125,3 +125,33 @@ Then report the file path and how to import it:
 3. Skim every slide and fix what moved.
 
 Say what you could not check.
+
+### 7. Post it to Slack (only if they say yes)
+
+Ask: "Post the deck to Slack?" Offer the thread the request came from, or
+`#prj-odyssey-agents` (C0CG95FFZ09). Never a DM, and never a channel shared
+with another organisation. If they name a channel, look up its ID first.
+
+Before you upload, read every slide against the confidentiality rules again.
+
+Then upload the `.pptx` with the Slack connector:
+
+1. `slack_get_file_upload_url` with the file name and its exact size in bytes
+   (`stat -f %z <file>`).
+2. POST the bytes to the returned URL. Put the URL in a shell variable first,
+   exactly as returned:
+
+   ```bash
+   URL='<url>'
+   curl -sS -X POST "$URL" --data-binary @<file> \
+     -H "Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation"
+   ```
+
+3. `slack_complete_file_upload` with the file ID, the channel ID, the thread
+   `ts` if it goes in a thread, and a short comment:
+   - one line on what the deck is for;
+   - the slide list, one line each;
+   - which screenshots are `Figma design` and which are `Built`;
+   - any placeholders left, and what you could not check.
+
+This needs a session where Slack is signed in. Cloud runs can't post files.
