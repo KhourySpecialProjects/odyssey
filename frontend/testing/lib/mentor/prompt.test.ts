@@ -26,11 +26,15 @@ function request(
   lesson: MentorLesson,
   input: MentorInput,
   setup?: Parameters<typeof buildMentorRequest>[2],
+  options?: Parameters<typeof buildMentorRequest>[3],
 ) {
   const context = buildLessonContext(lesson, mentorDroplet);
   const resolved = resolveMentorAsk(lesson, context, input);
   if (!resolved.ok) throw new Error(resolved.error);
-  return { context, params: buildMentorRequest(context, resolved.ask, setup) };
+  return {
+    context,
+    params: buildMentorRequest(context, resolved.ask, setup, options),
+  };
 }
 
 const blocks = (message: Anthropic.MessageParam) =>
@@ -231,6 +235,32 @@ describe("buildMentorRequest", () => {
       "assistant",
       "user",
     ]);
+    expect(breakpoints(params)).toEqual([[0, 0]]);
+  });
+
+  it("puts a learner block after the cached lesson, before the first turn", () => {
+    const { params } = request(
+      classicLesson(),
+      {
+        kind: "lesson",
+        message: "And now?",
+        history: [
+          { role: "student", text: "What is a join?" },
+          { role: "mentor", text: "It combines rows [p2]." },
+        ],
+      },
+      undefined,
+      { learner: "Finished droplets:\n- SQL Basics" },
+    );
+    const opening = blocks(params.messages[0]).map(textOf);
+    expect(opening).toHaveLength(3);
+    expect(opening[0]).toMatch(/^<lesson>/);
+    expect(opening[1]).toBe(
+      "<learner>\nFinished droplets:\n- SQL Basics\n</learner>",
+    );
+    expect(opening[2]).toBe(
+      "<student_message>\nWhat is a join?\n</student_message>",
+    );
     expect(breakpoints(params)).toEqual([[0, 0]]);
   });
 

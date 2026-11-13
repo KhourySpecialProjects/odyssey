@@ -13,7 +13,8 @@ import type { LessonContext } from "./types";
  * conversation and carries the only cache breakpoint, so the system prompt
  * and the lesson are one cached prefix for every kind of request on that
  * lesson. The student's words come after it, and everything inside the
- * prompt's tags has its own tags made harmless.
+ * prompt's tags has its own tags made harmless. An optional learner block
+ * (ODY-934) goes after the lesson's breakpoint, before the student's words.
  *
  * Nothing here can hold a quiz answer: an ask carries the question without
  * its answers, and resolveMentorAsk checks the pick is wrong before
@@ -91,11 +92,21 @@ function askText(ask: MentorAsk): string {
   }
 }
 
-/** The request for an ask: the lesson, any earlier turns, then the ask */
+export type MentorRequestOptions = {
+  /**
+   * ODY-934's learner block: what the student has finished and is working
+   * on. It's sent after the lesson's breakpoint and before any earlier turns,
+   * so the cached prefix stays the lesson's. Without it, the request is v1's.
+   */
+  learner?: string;
+};
+
+/** The request for an ask: the lesson, any learner block, any earlier turns, then the ask */
 export function buildMentorRequest(
   context: LessonContext,
   ask: MentorAsk,
   setup: MentorSetup = MENTOR_SETUP,
+  { learner }: MentorRequestOptions = {},
 ): Anthropic.MessageCreateParamsNonStreaming {
   const history = ask.kind === "quiz-hint" ? [] : ask.history;
   // mentorInputSchema checks this; getting here without it is a bug
@@ -107,6 +118,14 @@ export function buildMentorRequest(
     text: `<lesson>\n${asMaterial(context.text)}\n</lesson>`,
     cache_control: { type: "ephemeral" },
   };
+  // Not cached: it changes with the student, and the lesson's prefix doesn't.
+  // ODY-934 adds `learner` to the tags asMaterial makes harmless.
+  const opening: Anthropic.TextBlockParam[] = learner
+    ? [
+        lesson,
+        { type: "text", text: `<learner>\n${asMaterial(learner)}\n</learner>` },
+      ]
+    : [lesson];
   const turns = [
     ...history.map((turn) =>
       turn.role === "student" ? studentMessage(turn.text) : turn.text,
@@ -125,7 +144,7 @@ export function buildMentorRequest(
           ? { role: "assistant", content: text }
           : {
               role: "user",
-              content: [...(i ? [] : [lesson]), { type: "text", text }],
+              content: [...(i ? [] : opening), { type: "text", text }],
             },
     ),
   };

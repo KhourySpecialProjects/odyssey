@@ -38,6 +38,7 @@ import {
   type ResultRow,
   type RunMeta,
 } from "./lib/metrics";
+import { learnersSha } from "./lib/learner";
 import { cannedGroups, parseSetups, pilotCases, planGroups } from "./lib/plan";
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
 
@@ -103,6 +104,7 @@ async function main() {
       .createHash("sha256")
       .update(fs.readFileSync(CASES_FILE))
       .digest("hex"),
+    learnersSha: learnersSha(all),
     promptVersion: MENTOR_PROMPT_VERSION,
     judgeVersion: JUDGE_VERSION,
     fixtures: [...fixtures].map(([slug, s]) => ({ slug, takenAt: s.takenAt })),
