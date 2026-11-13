@@ -1,7 +1,10 @@
 import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 
 beforeEach(() =>
-  useFeedUnreadStore.setState({ serverCount: 4, feedCount: null }),
+  useFeedUnreadStore.setState({
+    serverCount: 4,
+    feedCount: null,
+  }),
 );
 
 it("adjusts from the layout's count until the feed owns one, unclamped so rollbacks are exact", () => {
