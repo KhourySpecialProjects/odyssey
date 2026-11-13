@@ -1096,7 +1096,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   droplet: {
     updateDropletAverageRating: WRITE,
     updateDropletFunFact: WRITE,
-    deepDeleteDroplet: WRITE,
+    deepDeleteDroplet: "custom deep-delete route (ODY-211)",
     togglePresentationEnabled: WRITE,
     archiveDroplet: WRITE,
     setDropletHidden: WRITE,

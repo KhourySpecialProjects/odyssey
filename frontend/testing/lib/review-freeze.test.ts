@@ -6,6 +6,7 @@ import { fetchAPI } from "@/lib/utils";
 import {
   checkDatasetWrite,
   checkDropletContentWrite,
+  checkDropletDelete,
   checkDropletUpdate,
   checkLessonWrite,
   checkPublishDraft,
@@ -367,6 +368,94 @@ describe("checkDropletContentWrite", () => {
       ok: false,
       error: "Could not verify edit access.",
     });
+  });
+});
+
+describe("checkDropletDelete", () => {
+  const flags = (refuseInReview: boolean, refusePublished: boolean) => ({
+    ok: true,
+    refuseInReview,
+    refusePublished,
+  });
+  it.each([
+    ["author, draft", 7, [Role.ContentCreator], {}, flags(true, true)],
+    [
+      "author, edit",
+      7,
+      [Role.ContentCreator],
+      { status: "edit" },
+      flags(true, true),
+    ],
+    [
+      "faculty author, published",
+      7,
+      [Role.Faculty],
+      { status: "published" },
+      { ok: false, error: "forbidden" },
+    ],
+    [
+      "author, published",
+      7,
+      [Role.ContentCreator],
+      { status: "published" },
+      { ok: false, error: "forbidden" },
+    ],
+    [
+      "non-author",
+      9,
+      [Role.ContentCreator],
+      {},
+      { ok: false, error: "forbidden" },
+    ],
+    [
+      "author, in review",
+      7,
+      [Role.ContentCreator],
+      { inReview: true },
+      { ok: false, error: "in_review" },
+    ],
+    [
+      "System Admin, published",
+      9,
+      [Role.SysAdmin],
+      { status: "published" },
+      flags(false, false),
+    ],
+    [
+      "Content Editor, published",
+      9,
+      [Role.ContentEditor],
+      { status: "published" },
+      flags(false, false),
+    ],
+    ["Faculty author, draft", 7, [Role.Faculty], {}, flags(true, true)],
+    ["System Admin author, draft", 7, [Role.SysAdmin], {}, flags(true, false)],
+    [
+      "System Admin author, published",
+      7,
+      [Role.SysAdmin],
+      { status: "published" },
+      flags(true, false),
+    ],
+    [
+      "Content Editor author, draft",
+      7,
+      [Role.ContentEditor],
+      {},
+      flags(true, false),
+    ],
+    [
+      "System Admin non-author, draft",
+      9,
+      [Role.SysAdmin],
+      {},
+      flags(false, false),
+    ],
+  ])("%s", async (_name, id, roles, over, expected) => {
+    mockFetch.mockResolvedValue([droplet(over)]);
+    expect(await checkDropletDelete(user(id, roles) as never, 1)).toEqual(
+      expected,
+    );
   });
 });
 

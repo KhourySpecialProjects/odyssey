@@ -41,9 +41,9 @@ export function assertInTransaction(step: string): void {
 
 /** A guard failure the controller maps to its HTTP status. */
 export class PublishEditError extends Error {
-  status: 400 | 404 | 409;
+  status: 400 | 403 | 404 | 409;
 
-  constructor(status: 400 | 404 | 409, message: string) {
+  constructor(status: 400 | 403 | 404 | 409, message: string) {
     super(message);
     this.name = 'PublishEditError';
     this.status = status;

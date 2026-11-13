@@ -25,5 +25,10 @@ export default {
       path: '/droplets/:id/publish-review',
       handler: 'custom-droplet.publishReview',
     },
+    {
+      method: 'POST',
+      path: '/droplets/:id/deep-delete',
+      handler: 'custom-droplet.deepDelete',
+    },
   ],
 };
