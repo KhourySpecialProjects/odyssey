@@ -7,16 +7,26 @@ import {
 } from "@testing-library/react";
 import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
-import { fetchAnnouncements, markAnnouncementRead } from "@/lib/requests/feed";
+import {
+  fetchAnnouncements,
+  getUnreadAnnouncementCount,
+  markAnnouncementRead,
+  markAnnouncementUnread,
+} from "@/lib/requests/feed";
+import { checkMyReminder } from "@/lib/requests/reminders";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
 import { useStreakStore } from "@/stores/streak-store";
 import { makeStreak } from "@/testing/mocks/streakMock";
 
 jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
+  getUnreadAnnouncementCount: jest.fn(),
   markAnnouncementRead: jest.fn(),
   markAnnouncementUnread: jest.fn(),
 }));
+
+jest.mock("@/lib/requests/reminders", () => ({ checkMyReminder: jest.fn() }));
 
 jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn() },
@@ -27,6 +37,14 @@ describe("FeedClient", () => {
     jest.clearAllMocks();
     (fetchAnnouncements as jest.Mock).mockReset();
     (fetchAnnouncements as jest.Mock).mockResolvedValue(mockPage([]));
+    (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(0);
+    (checkMyReminder as jest.Mock).mockReset();
+    (checkMyReminder as jest.Mock).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { raised: false },
+    });
+    useFeedUnreadStore.setState({ serverCount: null, feedCount: null });
     jest.useRealTimers();
     jest.spyOn(console, "error").mockRestore();
   });
@@ -550,6 +568,217 @@ describe("FeedClient", () => {
     });
   });
 
+  describe("unread badge count", () => {
+    const seededFeed = () => ({
+      roles: ["droplet"] as AnnouncementType[],
+      page: mockPage(generateMockAnnouncements(2), 1),
+    });
+    const renderFeed = () =>
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={seededFeed()}
+        />,
+      );
+    const feedCount = () => useFeedUnreadStore.getState().feedCount;
+
+    beforeEach(() => useFeedUnreadStore.setState({ serverCount: 5 }));
+
+    it("counts the selected filters, and goes back to the layout's count on unmount", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      const { unmount } = renderFeed();
+
+      await waitFor(() => expect(feedCount()).toBe(2));
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledWith(["droplet"]);
+      unmount();
+      expect(feedCount()).toBeNull();
+    });
+
+    it("drops by one on mark read, and puts it back when that fails", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      // Hold the post-action recount so the optimistic value is visible
+      (getUnreadAnnouncementCount as jest.Mock).mockReturnValue(
+        new Promise(() => {}),
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(feedCount()).toBe(2);
+    });
+
+    const recount = getUnreadAnnouncementCount as jest.Mock;
+    const markReadClick = () =>
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+    it("drops by one on mark read, then the recount's value wins", async () => {
+      recount.mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(9);
+
+      markReadClick();
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(feedCount()).toBe(9));
+    });
+
+    it("leaves the count alone when the recount fails (null)", async () => {
+      recount.mockResolvedValue(2);
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(null);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+
+      markReadClick();
+      await waitFor(() => expect(recount).toHaveBeenCalledTimes(2));
+      await act(async () => {});
+      expect(feedCount()).toBe(1);
+    });
+
+    it("adds one on mark unread from the Read tab, from the filtered count", async () => {
+      recount.mockResolvedValue(3);
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(2, 100)),
+      );
+      (markAnnouncementUnread as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      // Switch tabs before the filtered count lands: it must still arrive
+      fireEvent.click(screen.getByRole("button", { name: "Read" }));
+      await waitFor(() => expect(feedCount()).toBe(3));
+      recount.mockReturnValue(new Promise(() => {}));
+
+      fireEvent.click(
+        (await screen.findAllByRole("button", { name: "Mark as unread" }))[0],
+      );
+      expect(feedCount()).toBe(4);
+    });
+
+    it("leaves a global broadcast out of the optimistic count", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+      });
+      const broadcast = {
+        ...generateMockAnnouncements(1)[0],
+        type: "system" as AnnouncementType,
+      };
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage([broadcast], 1),
+          }}
+        />,
+      );
+      await waitFor(() => expect(feedCount()).toBe(2));
+
+      fireEvent.click(screen.getByRole("button", { name: "Mark as read" }));
+      expect(feedCount()).toBe(2);
+    });
+  });
+
+  describe("reminder check (ODY-931)", () => {
+    const renderLoaded = async () => {
+      (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+        mockPage(generateMockAnnouncements(2)),
+      );
+      const view = render(
+        <FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />,
+      );
+      expect(await screen.findByText("Announcement 0")).toBeInTheDocument();
+      return view;
+    };
+
+    it("checks once per mount, when not pending", async () => {
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+    });
+
+    it("refetches silently and recounts the badge when a reminder is raised", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the old list must stay on screen
+      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
+        new Promise(() => {}),
+      );
+      await renderLoaded();
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it("on a seeded page, refetches silently once and recounts the badge", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the seeded list must stay on screen
+      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
+        new Promise(() => {}),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage(generateMockAnnouncements(2), 1),
+          }}
+        />,
+      );
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it.each([
+      ["nothing raised", () => Promise.resolve({ data: { raised: false } })],
+      ["a failed check", () => Promise.resolve({ ok: false, data: null })],
+      ["a rejected check", () => Promise.reject(new Error("down"))],
+    ])("changes nothing on %s", async (_, result) => {
+      (checkMyReminder as jest.Mock).mockImplementation(result);
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("does not fetch while pending (Suspense fallback)", async () => {
     render(
       <FeedClient
@@ -562,5 +791,6 @@ describe("FeedClient", () => {
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
     await act(async () => {});
     expect(fetchAnnouncements).not.toHaveBeenCalled();
+    expect(checkMyReminder).not.toHaveBeenCalled();
   });
 });

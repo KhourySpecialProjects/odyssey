@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, Coins, RotateCcw } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { iconsFor, unlockedMessage } from "@/lib/streak-messages";
 import { addDays, type Streak, type StreakIconInfo } from "@/lib/streaks";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { useStreakStore } from "@/stores/streak-store";
 import { StreakIcon } from "./streak-icon";
 
@@ -54,6 +55,24 @@ function saveRead(userId: number, key: string | null) {
   }
 }
 
+/** Loads the card's read marker into the shared store; undefined until then. */
+function useStreakReadKey(userId: number) {
+  const readKey = useFeedUnreadStore((s) => s.streakReadKey);
+  useEffect(
+    () => useFeedUnreadStore.getState().setStreakReadKey(loadRead(userId)),
+    [userId],
+  );
+  return readKey;
+}
+
+/** Whether the streak card is unread: counts +1 on the My Feed badge. */
+export function useStreakUnread(userId: number): boolean {
+  const streak = useStreakStore((s) => s.streak);
+  const readKey = useStreakReadKey(userId);
+  const unlock = streak && latestUnlock(streak);
+  return !!unlock && readKey !== undefined && readKey !== unlock.key;
+}
+
 /**
  * The streak card for the feed's `tab`, or null when it belongs on the
  * other tab, there's no streak, or `shown` is false (a later page).
@@ -64,8 +83,7 @@ export function useStreakFeedCard(
   shown = true,
 ): ReactNode {
   const streak = useStreakStore((s) => s.streak);
-  const [readKey, setReadKey] = useState<string | null>(null);
-  useEffect(() => setReadKey(loadRead(userId)), [userId]);
+  const readKey = useStreakReadKey(userId);
 
   const unlock = streak && latestUnlock(streak);
   if (!shown || !unlock) return null;
@@ -74,7 +92,7 @@ export function useStreakFeedCard(
 
   const mark = (key: string | null) => {
     saveRead(userId, key);
-    setReadKey(key);
+    useFeedUnreadStore.getState().setStreakReadKey(key);
   };
   return (
     <StreakFeedCard

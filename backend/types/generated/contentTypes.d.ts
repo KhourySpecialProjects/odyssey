@@ -660,6 +660,15 @@ export interface ApiAnnouncementAnnouncement
     playlist: Schema.Attribute.Relation<'manyToOne', 'api::playlist.playlist'>;
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
+    reminderCount: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    reminderMuted: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    reminderSnoozedUntil: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
       [
         'playlist',
@@ -670,6 +679,7 @@ export interface ApiAnnouncementAnnouncement
         'kudos',
         'review_feedback',
         'review_published',
+        'reminder',
       ]
     > &
       Schema.Attribute.Required;
@@ -1189,6 +1199,7 @@ export interface ApiEnrollmentEnrollment extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<false>;
     isFirstTime: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    lastProgressDate: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

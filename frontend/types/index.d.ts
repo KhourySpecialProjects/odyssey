@@ -26,7 +26,8 @@ export type AnnouncementType =
   | "group"
   | "kudos"
   | "review_feedback"
-  | "review_published";
+  | "review_published"
+  | "reminder";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -330,6 +331,7 @@ export type Enrollment = {
   isArchived: boolean;
   notes: Note[];
   completionDate: Date;
+  lastProgressDate?: string | null;
 };
 
 export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
@@ -425,6 +427,16 @@ export type Friendship = {
   authorized_users: AuthorizedUser[];
 };
 
+/** Worked out when the feed loads, never stored on the reminder. */
+export type ReminderFeedData = {
+  headline: string;
+  progress: { viewed: number; total: number } | null;
+  nextLesson: { name: string; slug: string } | null;
+  started: boolean;
+  dueDate?: string;
+  dueGroupName?: string;
+};
+
 export type Announcement = {
   id: number;
   documentId?: string;
@@ -437,6 +449,10 @@ export type Announcement = {
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
   readAt?: string | null;
+  reminderCount?: number | null;
+  reminderSnoozedUntil?: string | null;
+  reminderMuted?: boolean | null;
+  reminder?: ReminderFeedData;
 };
 
 export type ReviewState = "open" | "sent" | "published";

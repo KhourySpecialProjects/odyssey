@@ -25,7 +25,7 @@ api/
 ├── access-request/       User requests for platform access
 ├── ai-scoring-run/       One AI scoring attempt for a review (tokens, runState)
 ├── ai-scoring-setting/   Single type: Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)
-├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist, review_feedback, review_published)
+├── announcement/         Feed items (friend, system, group, kudos, droplet, playlist, review_feedback, review_published, reminder)
 ├── authorized-user/      User profiles (email-based, linked to roles)
 ├── authorized-user-role/ Role definitions (System Admin, Content Creator, etc.)
 ├── creation-request/     Requests to become a Content Creator
@@ -154,7 +154,7 @@ Group
 
 ### Other Key Types
 
-- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published. Relations to droplet, playlist, group, sender/receiver users.
+- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published, reminder. Relations to droplet, playlist, group, sender/receiver users. A `reminder` row (one per learner and droplet) also uses `reminderCount` (integer, min 0), `reminderSnoozedUntil` (datetime) and `reminderMuted` (boolean, default false); NULL means 0, no snooze, not muted (ODY-931).
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
 - **Highlight** — A learner's highlight of one block's text: `color` (pink #f9a8d4, orange #fbd38d, yellow #fff300, green #86efac, blue #93c5fd), `text`, `position` (`{ start, end }` character offsets in the block's text) and `blockId`. A generic block's highlights use its id; other blocks' (callouts, expandables, code) use `blockNoteIdToNumber("<__component>:<id>")`, since Classic lessons' block ids are only unique within a type. A selection across blocks is saved as one highlight per block. `context` (`{ quote, prefix, suffix }`, ODY-198) lets the lesson viewer find a highlight again after the author edits the lesson (`frontend/lib/highlight-placement.ts`); one whose text was deleted is listed for the reader to move or remove, never dropped. Drawn by `HighlightLayer` (`components/droplets/lessons/highlight-layer.tsx`) and `lib/highlight-regions.ts`.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
@@ -174,6 +174,7 @@ Five types, all `draftAndPublish: false`. Relations to droplet, lesson, authoriz
 - **`droplet.reviewRound`** — The droplet lifecycle owns the counter: `beforeCreate` sets 1 if `inReview` else 0, and `beforeUpdate` adds 1 when `inReview` goes from not-true to true. Client and admin edits to it are ignored (the admin field shows as editable but a save has no effect).
 - **`droplet.inReview`** — Only the review routes change it (see "Review workflow routes"). The core droplet `update` route has a middleware (`routes/droplet.ts`, `rejectInReview`) that returns 400 `inReview can only change through the review routes.` when `body.data` has an own `inReview` key (D10). Core `create` and the Strapi admin are not guarded (accepted gaps).
 - Boot backfill (`backend/src/lib/review-round-backfill.ts`) sets in-review droplets with `reviewRound` null or below 1 to 1; it's idempotent. Adding the column leaves existing rows NULL (no column default), so code must treat NULL as 0.
+- **`enrollment.lastProgressDate`** — Set by `updateViewedLessons` on a lesson's first view (ODY-928). A boot backfill (`backend/src/lib/enrollment-progress-backfill.ts`) copies `updatedAt` onto started enrollments where it's null; never-started ones stay null, and reruns change nothing.
 - Deleting a lesson nulls the relation on its comments and scores, so they look like Overview/Overall. Read a score's lesson from `key`, and treat `field: "blocks"` with no lesson as orphaned.
 
 ## Strapi API Patterns
@@ -387,6 +388,23 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 - **Send:** marks the caller's open review `sent` (with `sentAt` and optional `summaryNote`), sets `inReview: false`, and creates one `review_feedback` announcement per author.
 - **Publish:** needs an open review with a confirmed Overall score for every active criterion. `[EDIT]` runs `applyPublishEdit`, `moveReviewsToLive` (the caller's review becomes `published`), one `review_published` announcement per author (attached to the live droplet, addressed to that author) and `deleteEditDraft`. A new droplet is set `published` with `inReview: false` in place. Announcement text never mentions AI.
 - **Known gap (G9):** ODY-802's comment REST writes are not serialized with Publish. A comment written while Publish runs can land on a draft lesson that is then deleted. Documented, not fixed.
+
+## Reminder raise route (ODY-931)
+
+`POST /api/announcements/raise-reminder` (`src/lib/reminders.ts`, `custom-announcement` controller and route) records at most one reminder per learner per day. The rules live in Next (`frontend/lib/reminder-rules.ts`); Strapi only does check-and-set.
+
+- **Body:** `{ data: { userId, dropletId, now, dayStart, lastRaisedAt, count, content } }`, and no other keys (400 `Invalid key <k>`). `count` is 0 to 100; `content` is trimmed, 1 to 500 characters; `lastRaisedAt` is an ISO datetime or `null`.
+- **Answers:** 200 `{ data: { raised: true, id } }` or `{ data: { raised: false, reason } }` with reason `today` (any of the learner's reminders has `firstCreated >= dayStart`), `changed` (the row's `firstCreated` is not `lastRaisedAt`) or `declined` (muted, or snoozed past `now`). 404 unknown user, 409 not enrolled, 500 `Failed to raise a reminder.`
+- **Lock and CAS:** one `strapi.db.transaction()` locks the learner's `authorized-user` row with `forUpdate`, finds the (user, droplet) reminder row, locks it by id with `forUpdate` and re-reads it, then checks the three conditions above. A concurrent ODY-932 snooze or mute write either commits first (the raise declines) or waits for the raise. A raise creates the row or re-raises it: `firstCreated = now`, `readAt = null`, `reminderCount = count`, `reminderSnoozedUntil = null`. SQLite ignores `forUpdate`, so the tests check outcomes only.
+- **NULL:** rows predating the fields have NULL; treat it as 0 or false.
+
+**Contract for ODY-932** (Remind me later, Stop reminding me, Undo):
+
+- Never delete reminder rows. Clear one by setting `readAt`; deleting loses the count and the mute.
+- Snooze and mute never change `firstCreated` (it drives the 7-day gap, the "today" check and the feed sort).
+- An ODY-932 write must not lock the learner's `authorized-user` row, or must lock it before the reminder row: the raise locks the user row then the reminder row, so the reverse order can deadlock and the raise returns 500.
+- Mute lasts until Undo, even after the learner makes progress.
+- An ended snooze (`reminderSnoozedUntil <= now`, no progress since the last raise) is re-raised on the next `/activity` load, ahead of other droplets, ignoring the wait and the gap, and that raise clears `reminderSnoozedUntil`.
 
 ## Database
 
