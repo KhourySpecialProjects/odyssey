@@ -1,50 +1,9 @@
 "use client";
 
 import { setTimeZone } from "@/lib/actions";
+import { TIME_ZONES } from "@/lib/time-zones";
 import { useState } from "react";
 import { toast } from "sonner";
-
-const timeZones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Phoenix",
-  "America/Los_Angeles",
-  "America/Anchorage",
-  "America/Honolulu",
-  "America/Bogota",
-  "America/Lima",
-  "America/Caracas",
-  "America/Santiago",
-  "America/Argentina/Buenos_Aires",
-  "America/Sao_Paulo",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Paris",
-  "Europe/Madrid",
-  "Europe/Rome",
-  "Europe/Athens",
-  "Europe/Istanbul",
-  "Europe/Moscow",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Asia/Shanghai",
-  "Asia/Tokyo",
-  "Asia/Seoul",
-  "Asia/Bangkok",
-  "Asia/Singapore",
-  "Asia/Jakarta",
-  "Asia/Hong_Kong",
-  "Australia/Sydney",
-  "Australia/Melbourne",
-  "Australia/Brisbane",
-  "Pacific/Auckland",
-  "Pacific/Fiji",
-  "Africa/Cairo",
-  "Africa/Johannesburg",
-  "Africa/Lagos",
-  "Africa/Nairobi",
-];
 
 interface TimeZoneSelectorProps {
   currentZone: string;
@@ -56,7 +15,11 @@ export default function TimeZoneSelector({
 }: TimeZoneSelectorProps) {
   const [selectedTimeZone, setSelectedTimeZone] = useState(currentZone);
   const handleChange = async (zone: string) => {
-    await setTimeZone(zone);
+    const result = await setTimeZone(zone).catch(() => null);
+    if (!result || !("success" in result) || !result.success) {
+      toast.error("Could not update your time zone. Please try again.");
+      return;
+    }
     setSelectedTimeZone(zone);
     toast.success("Time zone updated successfully!");
   };
@@ -74,7 +37,7 @@ export default function TimeZoneSelector({
         <option value="" disabled>
           Choose a time zone
         </option>
-        {timeZones.map((tz) => (
+        {TIME_ZONES.map((tz) => (
           <option key={tz} value={tz}>
             {tz}
           </option>

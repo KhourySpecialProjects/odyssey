@@ -29,6 +29,7 @@ const {
 const mockEnrollments = require("../mocks/enrollmentsMock");
 const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
+const { recordStreakDay } = require("../../lib/streak-days");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -49,6 +50,11 @@ jest.mock("../../lib/auth/session", () => ({
 
 jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
+}));
+
+// Tested in testing/lib/streak-days.test.ts; here only whether it's called
+jest.mock("../../lib/streak-days", () => ({
+  recordStreakDay: jest.fn(async () => true),
 }));
 
 jest.mock("next/cache", () => ({
@@ -1130,7 +1136,25 @@ describe("Enrollment Tests", () => {
 
     beforeEach(() => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      getAuthorizedUserByEmail.mockResolvedValue({
+        id: 1,
+        timeZone: "America/Chicago",
+      });
+    });
+
+    it("lights the learner's streak on a lesson's first view, in their time zone", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+      await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com", {
+        fields: ["id", "email", "timeZone"],
+      });
+      expect(recordStreakDay).toHaveBeenCalledWith(
+        { id: 1, timeZone: "America/Chicago" },
+        3,
+      );
     });
 
     it("adds the lesson with a relation connect instead of rewriting the list", async () => {
@@ -1267,6 +1291,7 @@ describe("Enrollment Tests", () => {
       expect(result).toEqual({ success: true, alreadyViewed: true });
       expect(global.fetch).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
+      expect(recordStreakDay).not.toHaveBeenCalled();
     });
 
     it("marks complete when every lesson was already viewed but completion wasn't recorded", async () => {

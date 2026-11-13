@@ -91,6 +91,7 @@ const blockComment = {
 function mount(
   enabled = true,
   over: Partial<React.ComponentProps<typeof CommentLayer>> = {},
+  container?: HTMLElement,
 ) {
   return render(
     <CommentLayer
@@ -116,6 +117,9 @@ function mount(
     >
       {over.children ?? <Editor />}
     </CommentLayer>,
+    container
+      ? { container: container.appendChild(document.createElement("div")) }
+      : undefined,
   );
 }
 
@@ -599,12 +603,16 @@ describe("Comment with the keyboard", () => {
 });
 
 describe("tags and the comment card (Task 6)", () => {
-  const withComments = (over = {}) =>
-    mount(true, {
-      comments: [wordsComment, blockComment],
-      numbers: new Map([[1, 1]]),
-      ...over,
-    });
+  const withComments = (over = {}, container?: HTMLElement) =>
+    mount(
+      true,
+      {
+        comments: [wordsComment, blockComment],
+        numbers: new Map([[1, 1]]),
+        ...over,
+      },
+      container,
+    );
 
   beforeEach(() => {
     onEdit.mockResolvedValue({ ok: true });
@@ -653,6 +661,38 @@ describe("tags and the comment card (Task 6)", () => {
       );
     } finally {
       window.innerWidth = width;
+    }
+  });
+
+  it("follows <main> when the Reviewer Transcript takes more of it, without a window resize (ODY-895)", () => {
+    jest.useFakeTimers();
+    const main = document.body.appendChild(document.createElement("main"));
+    main.dataset.reviewPanel = "open";
+    main.getBoundingClientRect = () =>
+      ({ left: 0, right: 1024, top: 0, bottom: 0 }) as DOMRect;
+    try {
+      withComments({}, main);
+      const snippet = () =>
+        screen
+          .getByRole("button", { name: "Comment 1, pending: “loop”" })
+          .querySelector("span:last-child")!;
+      expect(snippet()).not.toHaveClass("hidden");
+
+      // The panel is dragged wider: only <main>'s padding changes
+      main.style.paddingRight = "924px";
+      const observer = jest.mocked(ResizeObserver);
+      const i = observer.mock.results.findIndex((r) =>
+        (r.value.observe as jest.Mock).mock.calls.some(([el]) => el === main),
+      );
+      act(() => {
+        observer.mock.calls[i][0]([], {} as ResizeObserver);
+        jest.runOnlyPendingTimers();
+      });
+
+      expect(snippet()).toHaveClass("hidden");
+    } finally {
+      main.remove();
+      jest.useRealTimers();
     }
   });
 

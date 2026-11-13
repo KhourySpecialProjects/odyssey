@@ -610,7 +610,7 @@ export type TimeZone =
   | "America/Phoenix"
   | "America/Los_Angeles"
   | "America/Anchorage"
-  | "America/Honolulu"
+  | "Pacific/Honolulu"
   | "America/Bogota"
   | "America/Lima"
   | "America/Caracas"
@@ -709,6 +709,21 @@ export interface VoyageNodeCompletion {
   authorizedUser?: AuthorizedUser;
   voyageNode?: VoyageNode;
   voyageEnrollment?: VoyageEnrollment;
+}
+
+/** A day a learner finished at least one new lesson, in their time zone (ODY-918) */
+export interface StreakDayEntry {
+  id: number;
+  documentId?: string;
+  /** `<userId>:<date>`, unique */
+  key: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** The lessons finished for the first time that day */
+  lessonIds: number[];
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
+  user?: AuthorizedUser;
 }
 
 interface CustomBlockNoteBlock {

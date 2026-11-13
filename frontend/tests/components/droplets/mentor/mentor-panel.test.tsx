@@ -2,9 +2,11 @@ import { StrictMode } from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { MentorPanel } from "@/components/droplets/lessons/mentor/mentor-panel";
 import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import { createNote } from "@/lib/requests/notes";
+import { saveMentorFeedback } from "@/lib/requests/mentor-feedback";
 import { showCitation } from "@/lib/mentor/locate";
 import {
   mentorCitation,
@@ -26,6 +28,9 @@ jest.mock("@/hooks/use-media-query", () => ({
   useMediaQuery: jest.fn(() => true),
 }));
 jest.mock("@/lib/requests/notes", () => ({ createNote: jest.fn() }));
+jest.mock("@/lib/requests/mentor-feedback", () => ({
+  saveMentorFeedback: jest.fn(),
+}));
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollByID: jest.fn().mockResolvedValue({ id: 5 }),
 }));
@@ -78,6 +83,9 @@ beforeEach(async () => {
   jest.mocked(useMediaQuery).mockReturnValue(true);
   global.fetch = fetchMock as unknown as typeof fetch;
   answer();
+  jest
+    .mocked(saveMentorFeedback)
+    .mockResolvedValue({ ok: true, canShare: true, promptVersion: "v1" });
 });
 
 describe("MentorPanel", () => {
@@ -501,6 +509,28 @@ describe("MentorPanel", () => {
       inLesson.remove();
     });
 
+    it("rates an Explain answer as explain, sharing the student bubble as the question", async () => {
+      screenIs(true);
+      explain("LEFT JOIN");
+      renderPanel();
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Good answer" }),
+      );
+      await userEvent.click(
+        await screen.findByLabelText(/Share this question/),
+      );
+
+      await waitFor(() =>
+        expect(saveMentorFeedback).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            kind: "explain",
+            shared: true,
+            questionText: "Explain “LEFT JOIN”",
+          }),
+        ),
+      );
+    });
+
     it("isn't stopped by StrictMode's remount", async () => {
       // Answered after a moment, as a server does, so an abort lands
       fetchMock.mockImplementation(async (_u, init) =>
@@ -565,5 +595,199 @@ describe("MentorPanel", () => {
       expect(sent().map((body) => body.kind)).toEqual(["lesson", "explain"]);
       expect(screen.queryByText("Stopped")).toBeNull();
     });
+  });
+});
+
+describe("MentorPanel analytics and privacy (ODY-890)", () => {
+  it("sends only ids and enums to PostHog, never question, answer or lesson text", async () => {
+    jest.mocked(createNote).mockResolvedValue({ success: true });
+    jest.mocked(showCitation).mockResolvedValue(true);
+    answer([
+      mentorText("SENTINEL-A-91bc [p1]"),
+      mentorDone({
+        citations: [mentorCitation({ ref: "p1", label: "SENTINEL-L-55d0" })],
+      }),
+    ]);
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "SENTINEL-Q-7f3a{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /show in lesson/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /save to notes/i }),
+    );
+    await waitFor(() => expect(onNoteSaved).toHaveBeenCalled());
+    await userEvent.click(screen.getByRole("button", { name: "Good answer" }));
+    await waitFor(() =>
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "mentor_rated",
+        expect.anything(),
+      ),
+    );
+
+    const calls = jest.mocked(posthog.capture).mock.calls;
+    expect(calls.map(([name]) => name)).toEqual([
+      "mentor_opened",
+      "mentor_asked",
+      "mentor_source_clicked",
+      "mentor_saved_to_notes",
+      "mentor_rated",
+    ]);
+    const sent = JSON.stringify(calls);
+    const rating = JSON.stringify(jest.mocked(saveMentorFeedback).mock.calls);
+    for (const sentinel of [
+      "SENTINEL-Q-7f3a",
+      "SENTINEL-A-91bc",
+      "SENTINEL-L-55d0",
+    ]) {
+      expect(sent).not.toContain(sentinel);
+      expect(rating).not.toContain(sentinel);
+    }
+    expect(rating).not.toMatch(/answerText|questionText/);
+  });
+
+  it("marks the sheet root ph-no-capture", async () => {
+    renderPanel();
+    act(open);
+
+    expect(await screen.findByRole("dialog")).toHaveClass("ph-no-capture");
+  });
+
+  it("shares only the question right before each answer", async () => {
+    answer([mentorText("First answer."), mentorDone()]);
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "First question{Enter}");
+    await screen.findByText("First answer.");
+    answer([mentorText("Second answer."), mentorDone()]);
+    await userEvent.type(composer(), "Second question{Enter}");
+    await screen.findByText("Second answer.");
+
+    const thumbs = screen.getAllByRole("button", { name: "Good answer" });
+    await userEvent.click(thumbs[1]);
+    await userEvent.click(await screen.findByLabelText(/Share this question/));
+
+    await waitFor(() =>
+      expect(saveMentorFeedback).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          shared: true,
+          answerText: "Second answer.",
+          questionText: "Second question",
+        }),
+      ),
+    );
+  });
+
+  it("fires mentor_opened once per open: a re-render adds none, a reopen one", async () => {
+    const opened = () =>
+      jest
+        .mocked(posthog.capture)
+        .mock.calls.filter(([name]) => name === "mentor_opened").length;
+    renderPanel();
+    act(open);
+    await screen.findByRole("dialog");
+    expect(opened()).toBe(1);
+
+    await userEvent.type(composer(), "re-render");
+    expect(opened()).toBe(1);
+    act(() => useLessonPanelStore.getState().setPanel("notes"));
+    act(open);
+
+    await waitFor(() => expect(opened()).toBe(2));
+  });
+
+  it("keeps a rating and its tick when the sheet closes and reopens", async () => {
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Good answer" }),
+    );
+    await userEvent.click(await screen.findByLabelText(/Share this question/));
+    await waitFor(() => expect(saveMentorFeedback).toHaveBeenCalledTimes(2));
+    act(() => useLessonPanelStore.getState().setPanel("notes"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    jest.mocked(saveMentorFeedback).mockClear();
+    jest.mocked(posthog.capture).mockClear();
+    act(() => useLessonPanelStore.getState().setPanel("mentor"));
+
+    const thumb = await screen.findByRole("button", { name: "Good answer" });
+    expect(thumb).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText(/Share this question/)).toBeChecked();
+    await userEvent.click(thumb);
+    expect(saveMentorFeedback).not.toHaveBeenCalled();
+    expect(posthog.capture).not.toHaveBeenCalledWith(
+      "mentor_rated",
+      expect.anything(),
+    );
+  });
+
+  describe("a save that is pending when the sheet closes and reopens", () => {
+    type Saved = Awaited<ReturnType<typeof saveMentorFeedback>>;
+    const rateThenReopen = async () => {
+      let finish!: (v: Saved) => void;
+      jest
+        .mocked(saveMentorFeedback)
+        .mockReturnValue(new Promise<Saved>((r) => (finish = r)));
+      renderPanel();
+      act(open);
+      await userEvent.type(composer(), "What?{Enter}");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Good answer" }),
+      );
+      act(() => useLessonPanelStore.getState().setPanel("notes"));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      act(() => useLessonPanelStore.getState().setPanel("mentor"));
+      return {
+        finish,
+        thumb: await screen.findByRole("button", { name: "Good answer" }),
+      };
+    };
+
+    it("shows the tick when the late save returns canShare, and sends nothing more", async () => {
+      const { finish, thumb } = await rateThenReopen();
+      await userEvent.click(screen.getByRole("button", { name: "Bad answer" }));
+      expect(saveMentorFeedback).toHaveBeenCalledTimes(1);
+
+      await act(async () =>
+        finish({ ok: true, canShare: true, promptVersion: "v1" }),
+      );
+
+      expect(thumb).toHaveAttribute("aria-pressed", "true");
+      expect(await screen.findByLabelText(/Share this question/)).toBeVisible();
+    });
+
+    it("un-presses the thumb when the late save fails", async () => {
+      const { finish, thumb } = await rateThenReopen();
+      expect(thumb).toHaveAttribute("aria-pressed", "true");
+
+      await act(async () => finish({ ok: false, error: "failed" }));
+
+      expect(thumb).toHaveAttribute("aria-pressed", "false");
+    });
+  });
+
+  it.each([
+    ["on a phone (modal sheet)", false, true],
+    ["on desktop, where the toast is reachable", true, false],
+  ])("announces a rating failure %s: %s", async (_name, wide, announced) => {
+    jest.mocked(useMediaQuery).mockReturnValue(wide);
+    jest
+      .mocked(saveMentorFeedback)
+      .mockResolvedValue({ ok: false, error: "failed" });
+    renderPanel();
+    act(open);
+    await userEvent.type(composer(), "What?{Enter}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Good answer" }),
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't save your rating"),
+    );
+    expect(screen.queryByText("Couldn't save your rating") !== null).toBe(
+      announced,
+    );
   });
 });

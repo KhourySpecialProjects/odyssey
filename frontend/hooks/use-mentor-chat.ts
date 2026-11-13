@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MentorStreamError, readMentorEvents } from "@/lib/mentor/events";
 import { displayAnswer } from "@/lib/mentor/answer-text";
+import { trackMentor } from "@/lib/mentor/analytics";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { MentorTurn } from "@/lib/mentor/types";
 import {
@@ -218,11 +219,17 @@ export function useMentorChat({
     (input: MentorAsk) => {
       const shown = studentOf(input);
       if (busy.current || locked.current || !shown) return;
+      trackMentor("mentor_asked", {
+        kind: input.kind,
+        droplet_id: dropletId,
+        lesson_id: lessonId,
+      });
       const student: StudentMsg = { id: newId(), role: "student", ...shown };
       const answer: MentorMsg = {
         id: newId(),
         role: "mentor",
         askId: student.id,
+        kind: input.kind,
         status: "streaming",
         text: "",
         citations: [],
@@ -235,7 +242,7 @@ export function useMentorChat({
       commit([...messagesRef.current, student, answer]);
       void run(answer.id, student, history);
     },
-    [commit, run],
+    [commit, run, dropletId, lessonId],
   );
 
   const retry = useCallback(

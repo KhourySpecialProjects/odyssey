@@ -39,11 +39,13 @@ api/
 ├── highlight/            Text selections within lessons (colored annotations)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
+├── mentor-feedback/      One rating per Mentor answer: ids-only citations, text only when shared (ODY-890)
 ├── mentor-setting/       Single type: Mentor's on/off switch, pilot groups, monthly cap and daily limit (ODY-884)
 ├── mentor-usage/         One row per Mentor answer: user, kind, model and tokens, never text (ODY-884)
 ├── overview-scan/        One saved run of the Final Overview Scan's checks on a droplet (ODY-787)
 ├── overview-scan-dismissal/ A scan flag someone marked as fine on a droplet, for everyone (ODY-905)
 ├── playlist/             Curated droplet collections
+├── streak-day/           A day a learner finished a new lesson, in their time zone, for streaks (ODY-918)
 ├── report/               Bug reports
 ├── review/               One reviewer's review of a droplet round
 ├── review-comment/       Anchored review comments (replies via parent, carriedFrom, addressedAt)
@@ -333,6 +335,20 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   - **Reasons**, first refusal wins: `disabled` (switch off), `not_in_pilot` (pilot groups set, user in none of their `members`), `monthly_cap` (this month's Mentor spend `>=` the cap; `retryAt` is the next 1st, 00:00 Eastern; a $0 cap refuses everyone), `daily_limit` (the user's rows since midnight Eastern `>=` the limit, across all kinds; `retryAt` is the next midnight Eastern). A refusal is a normal 200, not an HTTP error; the caller maps reasons to 429 or 503. The messages are constants in `mentor-usage.ts`.
   - **Read-only check:** it takes no lock and reserves nothing, so answers still streaming can carry a user past the daily limit, or Mentor past the monthly cap, by what is in flight. Answers cost cents, so the overshoot is accepted and bounded by the frontend's per-task burst guard. In return, the check has no side effects and a crashed stream leaves no orphan row.
   - **Record:** one row per answer, tokens only (a key such as `question` is a 400). A model with no price is still saved, with a `strapi.log.warn`, and is charged at the highest price. No transaction is opened, so a DB error is never swallowed.
+
+- **Mentor feedback (ODY-890):** `mentor-feedback` (collection, no core router) holds one rating per (user, `answerKey`); code in `src/lib/mentor-feedback.ts`, strict-body helpers shared via `src/lib/route-body.ts`. Citations are ids only. `answerText` and `questionText` are private and stored only when `shared` is true **and** `mentor-setting.storeSharedAnswers` is on (default off until ODY-883; null reads as off); unticking nulls both. The daily cap (`perUserDailyLimit`) applies to creates only.
+
+  | Route                               | Body                                                                                                                                             | 200 `data`         | Errors                                                      |
+  | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------------------- |
+  | `POST /api/mentor-feedbacks/record` | `{ userId, lessonId, dropletId, answerKey, kind, rating, shared, questionId?, citations?, answerText?, questionText?, promptVersion? }` (strict) | `{ id, canShare }` | 400 bad body, 403 sharing off, 404 unknown id, 429 cap, 500 |
+
+### Streak day route (`custom-streak-day` controller, ODY-918)
+
+- **Type:** `streak-day` (collection, `draftAndPublish` off, read-only router: `find`): `key` = `<userId>:<date>` (unique index `streak_days_key_uq`), `user` (one-way manyToOne to `authorized-user`), `date` (the learner's local date), `lessonIds` (JSON: the lessons finished for the first time that day) and `revived` (ODY-920: a missed day the learner spent a revive on, with no lessons). One row per learner per day that counts toward their streak. Code in `src/lib/streak-days.ts`; tests in `tests/api/streak-day.test.js`.
+- **`POST /api/streak-days/record`** `{ data: { userId, date, lessonId } }` returns `{ date, lessons, added }`. Service token only, strict body (400 on any other key, a non-integer id or a date that isn't a real `YYYY-MM-DD`), 404 for an unknown user. `userId` and `date` are trusted from the Next.js server, which takes the user from the session and the date from their Settings time zone (`frontend/lib/streak-days.ts`, called by `updateViewedLessons` on a lesson's first view).
+- **One transaction**, which locks the day's row (`FOR UPDATE`) and adds the lesson. A lesson already on the day is `added: false` and changes nothing, so a retry is safe. If two first lessons race to create the row, the unique index rejects one and it runs again in a new transaction (Postgres aborts the first), as review scores do.
+- **`POST /api/streak-days/revive`** `{ data: { userId, date } }` returns `{ date, revivesLeft, added }` (ODY-920). It creates a `revived` row for `date`, which must be missing while the day before it counts. Each learner has `STREAK_REVIVES` (2) for good: revives left is 2 minus their `revived` rows. 409 for a day that already counts (`That day already counts`), no day before it (`There's no streak to revive`) or no revives left (`No revives left`). One transaction locks the learner's `authorized-user` row, so their revives are serialized; a repeat for a day already revived is `added: false` and spends nothing. The Next.js server only ever sends the learner's yesterday.
+- **The streak itself isn't stored.** The frontend works out the current and longest streak from the dates on every read (`frontend/lib/streaks.ts`), so it moves on at the learner's midnight without a write.
 
 ### Publish-edit route (`custom-droplet` controller)
 

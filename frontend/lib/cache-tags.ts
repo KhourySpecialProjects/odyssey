@@ -159,6 +159,9 @@
  * mentor-setting  Global tag: read by getMentorSetting (Ask Mentor gate);     60s
  *                 no action invalidates it, it just expires (admins edit
  *                 the setting in Strapi)
+ * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
+ *                 learner's streak days); invalidated by recordStreakDay,
+ *                 which updateViewedLessons calls on a lesson's first view
  */
 
 export const CACHE_TAGS = {
@@ -199,6 +202,7 @@ export const CACHE_TAGS = {
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
+  streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores

@@ -14,6 +14,10 @@ import {
   useViewedLessonsStore,
 } from "@/stores/viewed-lessons-store";
 import { toast } from "sonner";
+import {
+  refreshStreakAfterLesson,
+  StreakLessonBanner,
+} from "@/components/streaks/streak-lesson-banner";
 
 type PaginationProps = {
   link: string;
@@ -74,9 +78,13 @@ export default function DropletFooter({
   // The recap page shows the droplet as completed based on this save, so
   // wait for it before going there. Throwing keeps the user on the lesson.
   const saveBeforeRecap = async () => {
-    if ((await saveLessonViewed()) === "failed") {
+    const outcome = await saveLessonViewed();
+    if (outcome === "failed") {
       throw new Error("Lesson progress wasn't saved");
     }
+    // The recap page has no banner, so the streak is told in a toast
+    if (outcome === "changed")
+      void refreshStreakAfterLesson({ announce: true });
   };
 
   // Lesson to lesson: navigate first and save in the background, then
@@ -87,7 +95,11 @@ export default function DropletFooter({
   const saveInBackground = async () => {
     const lessonId = currentLessonId;
     const outcome = await saveLessonViewed();
-    if (outcome === "changed") router.refresh();
+    if (outcome === "changed") {
+      router.refresh();
+      // The next lesson's banner is off screen, so the streak is told in a toast
+      void refreshStreakAfterLesson({ announce: true });
+    }
     if (outcome === "failed") {
       // Usually shown after moving on, so name the lesson it's about
       const lessonName = droplet.lessons?.find((l) => l.id === lessonId)?.name;
@@ -107,16 +119,19 @@ export default function DropletFooter({
       // the droplet's completion (isComplete + completionDate).
       // A rejected call (network drop, redeployed action) is a failure too;
       // left uncaught it would reach the lesson's error boundary
-      const { success } = await updateViewedLessons(
+      const result = await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
       ).catch(() => ({ success: false as const }));
       // No router.refresh(): the action's revalidateTag already re-renders
       // the route, and a refresh here would be a second full server render.
-      if (!success) {
+      if (!result.success) {
         console.error("Failed to mark lesson as complete");
         toast.error("Failed to mark lesson as complete");
+      } else if (!result.alreadyViewed) {
+        // The banner below lights in place, so no toast
+        void refreshStreakAfterLesson({ announce: false });
       }
     });
   };
@@ -260,6 +275,9 @@ export default function DropletFooter({
           )}
         </div>
       </div>
+      {isOnLesson && enrollmentId && (
+        <StreakLessonBanner lessonCompleted={isCompleted} />
+      )}
     </div>
   );
 }

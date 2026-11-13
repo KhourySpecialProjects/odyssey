@@ -6,8 +6,11 @@ import { ClientSafeProvider, signIn } from "next-auth/react";
 
 export default function LoginButtons({
   providers,
+  callbackUrl,
 }: {
   providers: Record<string, ClientSafeProvider> | null;
+  /** Already validated as a same-origin path by the login page. */
+  callbackUrl?: string;
 }) {
   if (!providers) throw new Error("No auth providers configured");
 
@@ -16,7 +19,9 @@ export default function LoginButtons({
       {Object.values(providers).map((provider: ClientSafeProvider) => (
         <div key={provider.name}>
           <Button
-            onClick={() => signIn(provider.id)}
+            onClick={() =>
+              signIn(provider.id, callbackUrl ? { callbackUrl } : undefined)
+            }
             after={<ArrowRightIcon />}
             className="dark:bg-slate-300"
           >

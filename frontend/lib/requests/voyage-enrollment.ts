@@ -1,6 +1,11 @@
 "use server";
 
-import { VoyageEnrollment, VoyageNode, VoyageNodeCompletion } from "@/types";
+import {
+  Enrollment,
+  VoyageEnrollment,
+  VoyageNode,
+  VoyageNodeCompletion,
+} from "@/types";
 import {
   fetchAPI,
   flattenAttributes,
@@ -252,16 +257,23 @@ export async function enrollInVoyage(voyageId: number) {
       };
     }
 
+    const created = flattenAttributes(responseData.data);
+    // Steps finished before joining count right away (ODY-675).
+    if (created?.id) {
+      await recordFinishedVoyageNodes(
+        authorizedUser.id,
+        userDocId,
+        voyageId,
+        created,
+      );
+    }
+
     // Per-user only. Every cached voyage-enrollment read also carries the
     // per-user tag of each user it returns (incl. the group progress grid),
     // and voyage reads (`voyages`) contain no enrollment data or counts.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
+    return { ok: true, error: null, data: created };
   } catch (err) {
     console.error("Error in enrollInVoyage:", err);
     return {
@@ -332,15 +344,22 @@ export async function enrollInVoyageDirect(
       };
     }
 
+    const created = flattenAttributes(responseData.data);
+    // Steps the member finished before joining count right away (ODY-675).
+    if (created?.id) {
+      await recordFinishedVoyageNodes(
+        authorizedUserId,
+        userDocId,
+        voyageId,
+        created,
+      );
+    }
+
     // Per-user only (see enrollInVoyage). Group enrollment calls this once
     // per member x voyage, so global sweeps here multiplied quickly.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
+    return { ok: true, error: null, data: created };
   } catch (err) {
     console.error("Error in enrollInVoyageDirect:", err);
     return {
@@ -481,6 +500,196 @@ export async function getVoyageNodeCompletions(
       revalidate: 900,
     },
   });
+}
+
+/**
+ * Recounts the user's completed nodes in a voyage and PUTs the new
+ * completionPercentage on their voyage enrollment. Not exported and does no
+ * auth: callers have already checked that `enrollment` is the user's.
+ */
+async function putCompletionPercentage(
+  allNodes: VoyageNode[],
+  voyageId: number,
+  userId: number,
+  enrollment: EntryRef,
+): Promise<Response> {
+  const completions = await fetchAPI<VoyageNodeCompletion[]>(
+    "/voyage-node-completions",
+    {
+      urlParams: {
+        filters: {
+          $and: [
+            { authorizedUser: { id: { $eq: userId } } },
+            { voyageEnrollment: { voyage: { id: { $eq: voyageId } } } },
+          ],
+        },
+        populate: { voyageNode: { fields: ["id"] } },
+        pagination: { pageSize: 250, page: 1 },
+      },
+      next: { revalidate: 0 },
+    },
+  );
+
+  const completedNodeIds = new Set(
+    completions
+      .map((c) => c.voyageNode?.id)
+      .filter((id): id is number => id !== undefined),
+  );
+  const { computeCompletionPercentage } = await import("@/lib/voyage-progress");
+  const newPercentage = Math.round(
+    computeCompletionPercentage(allNodes, completedNodeIds),
+  );
+
+  return fetch(await strapiEntryUrl("voyage-enrollments", enrollment), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
+    },
+    body: JSON.stringify({ data: { completionPercentage: newPercentage } }),
+  });
+}
+
+/** The droplets a node needs finished: its droplet, or its playlist's droplets. */
+function nodeDropletIds(node: VoyageNode): number[] {
+  if (node.nodeType === "droplet") {
+    return node.droplet?.id ? [node.droplet.id] : [];
+  }
+  return (node.playlist?.droplets ?? []).map((d) => d.id);
+}
+
+/**
+ * Records a completion for every node of the voyage the user has already
+ * finished (ODY-675): a droplet node whose droplet is complete, or a playlist
+ * node whose droplets are all complete. Lesson views only record a node at the
+ * moment a droplet first completes, so this runs when the user joins a voyage.
+ * Nodes already recorded on this enrollment are skipped, so it is safe to
+ * repeat.
+ *
+ * Not exported and does no auth: callers pass a user and the voyage enrollment
+ * they just created for that user. Errors are logged and swallowed so joining
+ * still succeeds.
+ */
+async function recordFinishedVoyageNodes(
+  userId: number,
+  userDocId: string,
+  voyageId: number,
+  enrollment: { id: number; documentId?: string },
+): Promise<void> {
+  try {
+    const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
+      urlParams: {
+        filters: { voyage: { id: { $eq: voyageId } } },
+        fields: ["id", "branchType", "nodeType"],
+        populate: {
+          droplet: { fields: ["id", "status"] },
+          playlist: {
+            fields: ["id"],
+            populate: { droplets: { fields: ["id"] } },
+          },
+        },
+        pagination: { pageSize: 250, page: 1 },
+      },
+      next: { revalidate: 0 },
+    });
+    if (!nodes?.length) return;
+
+    const dropletIds = [...new Set(nodes.flatMap(nodeDropletIds))];
+    if (dropletIds.length === 0) return;
+
+    const completedEnrollments =
+      (await fetchAPI<Enrollment[]>("/enrollments", {
+        urlParams: {
+          filters: {
+            $and: [
+              { authorizedUser: { id: { $eq: userId } } },
+              { droplet: { id: { $in: dropletIds } } },
+              { isComplete: { $eq: true } },
+            ],
+          },
+          fields: ["id"],
+          populate: { droplet: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { revalidate: 0 },
+      })) ?? [];
+    const finished = new Set(completedEnrollments.map((e) => e.droplet?.id));
+
+    const recorded =
+      (await fetchAPI<VoyageNodeCompletion[]>("/voyage-node-completions", {
+        urlParams: {
+          filters: {
+            $and: [
+              { authorizedUser: { id: { $eq: userId } } },
+              { voyageEnrollment: { id: { $eq: enrollment.id } } },
+            ],
+          },
+          populate: { voyageNode: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { revalidate: 0 },
+      })) ?? [];
+    const recordedNodeIds = new Set(recorded.map((c) => c.voyageNode?.id));
+
+    const toRecord = nodes.filter((node) => {
+      const ids = nodeDropletIds(node);
+      return (
+        !recordedNodeIds.has(node.id) &&
+        ids.length > 0 &&
+        ids.every((id) => finished.has(id))
+      );
+    });
+    if (toRecord.length === 0) return;
+
+    const voyageEnrollment = await resolveDocumentId(
+      "voyage-enrollments",
+      enrollment,
+    );
+    const completedAt = new Date().toISOString();
+    for (const node of toRecord) {
+      const response = await fetch(
+        `${STRAPI_API_URL}/api/voyage-node-completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+          body: JSON.stringify({
+            data: {
+              voyageNode: await resolveDocumentId("voyage-nodes", node),
+              voyageEnrollment,
+              authorizedUser: userDocId,
+              completedAt,
+            },
+          }),
+        },
+      );
+      if (!response.ok) {
+        console.error(
+          `Failed to record voyage node ${node.id} as complete:`,
+          response.status,
+        );
+      }
+    }
+
+    const putResponse = await putCompletionPercentage(
+      nodes,
+      voyageId,
+      userId,
+      enrollment,
+    );
+    if (!putResponse.ok) {
+      console.error(
+        "Failed to update voyage enrollment percentage:",
+        putResponse.status,
+      );
+    }
+  } catch (err) {
+    console.error("Error in recordFinishedVoyageNodes:", err);
+  }
 }
 
 /**
@@ -663,51 +872,12 @@ export async function markVoyageNodeComplete(
         },
       });
 
-      // 3. Fetch all completions for this user and voyage (includes newly created)
-      const completions = await fetchAPI<VoyageNodeCompletion[]>(
-        "/voyage-node-completions",
-        {
-          urlParams: {
-            filters: {
-              $and: [
-                { authorizedUser: { id: { $eq: authorizedUser.id } } },
-                { voyageEnrollment: { voyage: { id: { $eq: voyageId } } } },
-              ],
-            },
-            populate: { voyageNode: { fields: ["id"] } },
-            pagination: { pageSize: 250, page: 1 },
-          },
-          next: { revalidate: 0 },
-        },
-      );
-
-      // 4. Count required nodes and completed required nodes
-      const completedNodeIds = new Set(
-        completions
-          .map((c) => c.voyageNode?.id)
-          .filter((id): id is number => id !== undefined),
-      );
-      const { computeCompletionPercentage } = await import(
-        "@/lib/voyage-progress"
-      );
-      const newPercentage = Math.round(
-        computeCompletionPercentage(allNodes, completedNodeIds),
-      );
-
-      // 5. PUT updated percentage on voyage-enrollment
-      const putResponse = await fetch(
-        await strapiEntryUrl("voyage-enrollments", enrollmentRef),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
-          body: JSON.stringify({
-            data: { completionPercentage: newPercentage },
-          }),
-        },
+      // 3-5. Recount completions (incl. the new one) and save the percentage
+      const putResponse = await putCompletionPercentage(
+        allNodes,
+        voyageId,
+        authorizedUser.id,
+        enrollmentRef,
       );
 
       if (!putResponse.ok) {

@@ -26,6 +26,7 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { recordStreakDay } from "@/lib/streak-days";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -71,6 +72,21 @@ async function putEnrollment(
   }
   const json = await response.json();
   return flattenAttributes(json.data);
+}
+
+/**
+ * Records the voyage steps this complete droplet finishes for the user: its
+ * droplet nodes, and playlist nodes whose droplets are now all complete
+ * (ODY-675). Safe to repeat, since steps already recorded are skipped. Errors
+ * are logged, never thrown, so the caller's own write still succeeds.
+ */
+async function recordVoyageSteps(dropletId: number, userId: number) {
+  try {
+    const { checkAndCompleteVoyageNode } = await import("./voyage-enrollment");
+    await checkAndCompleteVoyageNode(dropletId, userId);
+  } catch (err) {
+    console.error("Voyage node completion failed:", err);
+  }
 }
 
 /**
@@ -223,7 +239,10 @@ export async function changeEnrollmentRating(
     const [authorizedUser, enrollment] = await Promise.all([
       getAuthorizedUserByEmail(user.email),
       getEnrollByID(enrollmentID, {
-        populate: { authorizedUser: { fields: ["id"] } },
+        populate: {
+          authorizedUser: { fields: ["id"] },
+          droplet: { fields: ["id"] },
+        },
         fields: ["id", "completionDate"],
       }),
     ]);
@@ -241,6 +260,11 @@ export async function changeEnrollmentRating(
     });
 
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+
+    // The droplet is complete now, so its voyage steps are too.
+    if (enrollment.droplet?.id) {
+      await recordVoyageSteps(enrollment.droplet.id, authorizedUser.id);
+    }
 
     return { success: true };
   } catch (error) {
@@ -630,7 +654,10 @@ export async function updateViewedLessons(
     }
 
     const [authorizedUser, enrollment] = await Promise.all([
-      getAuthorizedUserByEmail(user.email),
+      // timeZone dates the streak day (ODY-918)
+      getAuthorizedUserByEmail(user.email, {
+        fields: ["id", "email", "timeZone"],
+      }),
       getEnrollByID(enrollmentId, {
         populate: {
           viewedLessons: { fields: ["id"] },
@@ -681,6 +708,13 @@ export async function updateViewedLessons(
       ];
       isComplete = updated.isComplete;
       completionDate = updated.completionDate;
+
+      // A lesson's first view lights the learner's streak for today. It
+      // never throws, so a streak that fails to save doesn't fail the lesson.
+      await recordStreakDay(
+        { id: authorizedUser.id, timeZone: authorizedUser.timeZone },
+        lessonId,
+      );
     }
 
     // The droplet's own lesson list is authoritative; the caller's copy is only
@@ -770,6 +804,9 @@ export async function recordMissingCompletion(enrollmentId: string) {
       completionDate: enrollment.completionDate ?? new Date(),
     });
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    if (enrollment.droplet?.id) {
+      await recordVoyageSteps(enrollment.droplet.id, authorizedUser.id);
+    }
     return { success: true, updated: true };
   } catch (error) {
     console.error("Error recording missing completion:", error);

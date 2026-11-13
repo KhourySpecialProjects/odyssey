@@ -10,6 +10,7 @@ import type { MentorMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
 import { MentorMessage, StudentMessage } from "./mentor-message";
 import { MentorNotice } from "./mentor-notice";
+import type { MentorFeedback } from "./mentor-rating";
 
 export const STARTERS = [
   "Summarize this lesson",
@@ -37,6 +38,13 @@ type SheetProps = {
   onRetry: (id: string) => void;
   onShowSource: (citation: Citation) => void;
   onSave?: (message: MentorMsg) => Promise<boolean>;
+  feedback?: MentorFeedback;
+};
+
+/** The student message an answer replies to, if there is one */
+const questionOf = (messages: ChatMsg[], answer: MentorMsg) => {
+  const q = messages.find((m) => m.id === answer.askId);
+  return q?.role === "student" ? q.text : undefined;
 };
 
 /** The dialog chrome: header, conversation, composer. State lives in MentorPanel. */
@@ -94,7 +102,7 @@ export function MentorSheet(p: SheetProps) {
       <Dialog.Portal container={p.modal ? undefined : wrapper}>
         <Dialog.Content
           ref={content}
-          className={`${LESSON_PANEL.sheet} flex flex-col border-l border-slate-200 bg-white shadow-[-8px_0_16px_-8px_rgba(16,24,40,0.12)] dark:border-slate-500 dark:bg-slate-900`}
+          className={`${LESSON_PANEL.sheet} ph-no-capture flex flex-col border-l border-slate-200 bg-white shadow-[-8px_0_16px_-8px_rgba(16,24,40,0.12)] dark:border-slate-500 dark:bg-slate-900`}
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             if (!p.modal && p.openedByExplain && p.accepted && !p.lock) return;
@@ -195,6 +203,8 @@ export function MentorSheet(p: SheetProps) {
                     lessonName={p.lessonName}
                     onShowSource={p.onShowSource}
                     onSave={p.onSave && (() => p.onSave!(m))}
+                    feedback={p.feedback}
+                    questionText={questionOf(p.messages, m)}
                     onRetry={
                       m.error?.retry && !p.lock
                         ? () => p.onRetry(m.id)

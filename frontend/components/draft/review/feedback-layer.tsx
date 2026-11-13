@@ -38,6 +38,7 @@ import {
   TAG_MAX,
   tagLabel,
   tagSpace,
+  watchTagRoom,
   type TagMode,
 } from "./comment-tag";
 
@@ -170,12 +171,12 @@ export function FeedbackLayer({
       attributes: true,
       attributeFilter: ["data-anchor-id"],
     });
-    window.addEventListener("resize", later);
+    const unwatch = watchTagRoom(content, later);
     return () => {
       cancelAnimationFrame(frame);
       resize.disconnect();
       mutations.disconnect();
-      window.removeEventListener("resize", later);
+      unwatch();
     };
   }, [enabled, measure]);
 

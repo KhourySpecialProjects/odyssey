@@ -822,48 +822,48 @@ export interface ApiAuthorizedUserAuthorizedUser
     >;
     timeZone: Schema.Attribute.Enumeration<
       [
-        'America/New_York  ',
-        'America/Chicago  ',
-        'America/Denver  ',
-        'America/Phoenix  ',
-        'America/Los_Angeles  ',
-        'America/Anchorage  ',
-        'America/Honolulu  ',
-        'America/Bogota  ',
-        'America/Lima  ',
-        'America/Caracas  ',
-        'America/Santiago  ',
-        'America/Argentina/Buenos_Aires  ',
-        'America/Sao_Paulo  ',
-        'Europe/London  ',
-        'Europe/Berlin  ',
-        'Europe/Paris  ',
-        'Europe/Madrid  ',
-        'Europe/Rome  ',
-        'Europe/Athens  ',
-        'Europe/Istanbul  ',
-        'Europe/Moscow  ',
-        'Asia/Dubai  ',
-        'Asia/Kolkata  ',
-        'Asia/Shanghai  ',
-        'Asia/Tokyo  ',
-        'Asia/Seoul  ',
-        'Asia/Bangkok  ',
-        'Asia/Singapore  ',
-        'Asia/Jakarta  ',
-        'Asia/Hong_Kong  ',
-        'Australia/Sydney  ',
-        'Australia/Melbourne  ',
-        'Australia/Brisbane  ',
-        'Pacific/Auckland  ',
-        'Pacific/Fiji  ',
-        'Africa/Cairo  ',
-        'Africa/Johannesburg  ',
-        'Africa/Lagos  ',
-        'Africa/Nairobi  ',
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Phoenix',
+        'America/Los_Angeles',
+        'America/Anchorage',
+        'Pacific/Honolulu',
+        'America/Bogota',
+        'America/Lima',
+        'America/Caracas',
+        'America/Santiago',
+        'America/Argentina/Buenos_Aires',
+        'America/Sao_Paulo',
+        'Europe/London',
+        'Europe/Berlin',
+        'Europe/Paris',
+        'Europe/Madrid',
+        'Europe/Rome',
+        'Europe/Athens',
+        'Europe/Istanbul',
+        'Europe/Moscow',
+        'Asia/Dubai',
+        'Asia/Kolkata',
+        'Asia/Shanghai',
+        'Asia/Tokyo',
+        'Asia/Seoul',
+        'Asia/Bangkok',
+        'Asia/Singapore',
+        'Asia/Jakarta',
+        'Asia/Hong_Kong',
+        'Australia/Sydney',
+        'Australia/Melbourne',
+        'Australia/Brisbane',
+        'Pacific/Auckland',
+        'Pacific/Fiji',
+        'Africa/Cairo',
+        'Africa/Johannesburg',
+        'Africa/Lagos',
+        'Africa/Nairobi',
       ]
     > &
-      Schema.Attribute.DefaultTo<'America/New_York  '>;
+      Schema.Attribute.DefaultTo<'America/New_York'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1480,10 +1480,79 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorFeedbackMentorFeedback
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_feedbacks';
+  info: {
+    description: 'One row per rated Mentor answer. Text is stored only when the student shares it (ODY-890)';
+    displayName: 'Mentor Feedback';
+    pluralName: 'mentor-feedbacks';
+    singularName: 'mentor-feedback';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    answerKey: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    answerText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    citations: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain', 'quiz-hint']> &
+      Schema.Attribute.Required;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-feedback.mentor-feedback'
+    > &
+      Schema.Attribute.Private;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    questionId: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    questionText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    rating: Schema.Attribute.Enumeration<['up', 'down']> &
+      Schema.Attribute.Required;
+    shared: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
   collectionName: 'mentor_settings';
   info: {
-    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884)";
+    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890)";
     displayName: 'Mentor Settings';
     pluralName: 'mentor-settings';
     singularName: 'mentor-setting';
@@ -1522,6 +1591,8 @@ export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
       >;
     pilotGroups: Schema.Attribute.Relation<'manyToMany', 'api::group.group'>;
     publishedAt: Schema.Attribute.DateTime;
+    storeSharedAnswers: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2067,6 +2138,46 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
+  collectionName: 'streak_days';
+  info: {
+    description: 'A day a learner finished at least one new lesson, or revived (ODY-920), in their own time zone (ODY-918)';
+    displayName: 'Streak Day';
+    pluralName: 'streak-days';
+    singularName: 'streak-day';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.Date & Schema.Attribute.Required;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    lessonIds: Schema.Attribute.JSON & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::streak-day.streak-day'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    revived: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -2816,6 +2927,7 @@ declare module '@strapi/strapi' {
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
       'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;
@@ -2827,6 +2939,7 @@ declare module '@strapi/strapi' {
       'api::review-criterion.review-criterion': ApiReviewCriterionReviewCriterion;
       'api::review-score.review-score': ApiReviewScoreReviewScore;
       'api::review.review': ApiReviewReview;
+      'api::streak-day.streak-day': ApiStreakDayStreakDay;
       'api::tag.tag': ApiTagTag;
       'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
       'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;

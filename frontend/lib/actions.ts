@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { accessRequestSchema } from "./validations/access-request";
 import { reportSchema } from "./validations/report";
-import type { CreationRequest, TimeZone } from "@/types";
+import type { CreationRequest } from "@/types";
+import { isTimeZone } from "./time-zones";
 import {
   S3Client,
   PutObjectCommand,
@@ -185,6 +186,10 @@ export async function setTimeZone(zone: string) {
     return { ok: false, error: auth.error };
   }
   const { user } = auth;
+  // The timeZone enum rejects anything else, and Intl throws on it (ODY-627).
+  if (!isTimeZone(zone)) {
+    return { success: false, error: "invalid_time_zone" };
+  }
 
   try {
     const response = await fetch(
@@ -201,7 +206,7 @@ export async function setTimeZone(zone: string) {
         },
         body: JSON.stringify({
           data: {
-            timeZone: zone as TimeZone,
+            timeZone: zone,
           },
         }),
       },

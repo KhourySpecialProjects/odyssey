@@ -270,6 +270,22 @@ describe("Server Actions", () => {
       expect(mockedRevalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.users);
     });
 
+    it.each(["America/New_York  ", "America/Honolulu", "EST", ""])(
+      "refuses %p without a write, since the enum would reject it",
+      async (zone) => {
+        mockedRequireRole.mockResolvedValueOnce({
+          ok: true,
+          user: { id: 42, email: "user@northeastern.edu", roles: [] },
+        });
+
+        const result = await setTimeZone(zone);
+
+        expect(result).toEqual({ success: false, error: "invalid_time_zone" });
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(mockedRevalidateTag).not.toHaveBeenCalled();
+      },
+    );
+
     it("handles fetch response not ok", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
