@@ -92,3 +92,33 @@ Say, in plain sentences:
 
 Then offer to start the work in this session. If they say yes, follow
 `PROMPT.md` as the brief. Do not commit or push.
+
+### 7. Post the film to Slack (only if they say yes)
+
+When the film exists and its checks have run, ask: "Post the film to Slack?"
+Offer the thread the request came from, or `#prj-odyssey-agents`
+(C0CG95FFZ09). Never a DM, and never a channel shared with another
+organisation. If they name a channel, look up its ID first.
+
+Upload each master (`out/master_16x9.mp4`, `out/master_9x16.mp4`) and
+`storyboard/contact.png` with the Slack connector:
+
+1. `slack_get_file_upload_url` with the file name and its exact size in bytes
+   (`stat -f %z <file>`). Give the contact sheet a short `alt_txt`.
+2. POST the bytes to the returned URL. Put the URL in a shell variable first,
+   exactly as returned (use `image/png` for the contact sheet):
+
+   ```bash
+   URL='<url>'
+   curl -sS -X POST "$URL" --data-binary @<file> -H "Content-Type: video/mp4"
+   ```
+
+3. `slack_complete_file_upload` with the file ID, the channel ID and the
+   thread `ts` if it goes in a thread. On the first file, add a short comment:
+   - what the film covers, its length and aspect ratio;
+   - from `verify/report.md`: loudness, true peak and whether the checks
+     passed;
+   - what nobody has done yet (listened to it, watched it on a device).
+
+If a file is larger than the workspace's upload limit, say so and post its
+path on the laptop instead. This needs a session where Slack is signed in.
