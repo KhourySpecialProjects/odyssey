@@ -1,0 +1,13 @@
+{
+  "name": "odyssey-deck-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Builds Odyssey slide decks (.pptx) from an outline JSON.",
+  "scripts": {
+    "build": "node build-deck.mjs"
+  },
+  "dependencies": {
+    "pptxgenjs": "4.0.1"
+  }
+}

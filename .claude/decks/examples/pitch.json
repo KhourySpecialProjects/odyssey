@@ -1,0 +1,105 @@
+{
+  "title": "Example pitch",
+  "slides": [
+    {
+      "layout": "title",
+      "title": "Odyssey V3",
+      "subtitle": "Chart Your Own Course",
+      "presenters": ["Presenter 1", "Presenter 2", "Presenter 3"]
+    },
+    {
+      "layout": "bullets",
+      "title": "The problem",
+      "bullets": [
+        "Placeholder problem one",
+        "Placeholder problem two",
+        { "text": "Placeholder problem three", "sub": ["A supporting detail"] }
+      ]
+    },
+    {
+      "layout": "bullets",
+      "title": "Our goals",
+      "bullets": ["Goal one", "Goal two", "Goal three"]
+    },
+    {
+      "layout": "pillars",
+      "title": "How will we achieve this?",
+      "subtitle": "A one-line framing of the approach",
+      "pillars": [
+        {
+          "label": "Pillar 1",
+          "name": "First pillar",
+          "line": "What this pillar does"
+        },
+        {
+          "label": "Pillar 2",
+          "name": "Second pillar",
+          "line": "What this pillar does"
+        }
+      ],
+      "footer": {
+        "label": "Both pillars support",
+        "text": "The shared outcome for learners, creators and reviewers."
+      }
+    },
+    {
+      "layout": "feature-what",
+      "title": "First Feature",
+      "tag": { "pillar": "Pillar 1", "index": 1, "count": 3 },
+      "what": "What the feature is, in one or two sentences.",
+      "users": {
+        "learner": "Learner view.",
+        "creator": "Creator view.",
+        "reviewer": "Reviewer view."
+      },
+      "why": "Why it matters for the goals.",
+      "goals": ["Goal one"]
+    },
+    {
+      "layout": "feature-steps",
+      "title": "First Feature",
+      "tag": { "pillar": "Pillar 1", "index": 1, "count": 3 },
+      "steps": [
+        {
+          "line": "Step one.",
+          "imageAlt": "Screenshot of step one",
+          "label": "Figma design"
+        },
+        {
+          "line": "Step two.",
+          "imageAlt": "Screenshot of step two",
+          "label": "Figma design"
+        }
+      ]
+    },
+    {
+      "layout": "feature-steps",
+      "title": "Second Feature",
+      "tag": { "pillar": "Pillar 1", "index": 2, "count": 3 },
+      "steps": [
+        { "line": "Step one.", "imageAlt": "Screenshot of step one" },
+        { "line": "Step two.", "imageAlt": "Screenshot of step two" },
+        { "line": "Step three.", "imageAlt": "Screenshot of step three" },
+        { "line": "Step four.", "imageAlt": "Screenshot of step four" }
+      ],
+      "label": "Figma design"
+    },
+    {
+      "layout": "bullets",
+      "title": "Stretch goals",
+      "bullets": ["Stretch goal one", "Stretch goal two"]
+    },
+    {
+      "layout": "recap",
+      "title": "Recap",
+      "items": [
+        { "heading": "The problem", "text": "One sentence." },
+        { "heading": "The approach", "text": "One sentence." },
+        { "heading": "What is next", "text": "One sentence." }
+      ]
+    },
+    { "layout": "questions" },
+    { "layout": "thank-you", "subtitle": "Placeholder contact line" },
+    { "layout": "appendix", "title": "Appendix" }
+  ]
+}
