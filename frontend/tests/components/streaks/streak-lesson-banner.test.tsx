@@ -15,6 +15,17 @@ const mockedGetMyStreak = jest.mocked(getMyStreak);
 const setStreak = (streak: ReturnType<typeof makeStreak>) =>
   act(() => useStreakStore.setState({ streak }));
 
+const mockReducedMotion = (reduce: boolean) => {
+  window.matchMedia = jest.fn().mockReturnValue({
+    matches: reduce,
+  }) as unknown as typeof window.matchMedia;
+};
+
+afterEach(() => {
+  // @ts-expect-error jsdom has no matchMedia
+  delete window.matchMedia;
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
   useStreakStore.setState({ streak: null });
@@ -50,17 +61,51 @@ describe("StreakLessonBanner", () => {
     },
   );
 
-  it("lights in place once a lesson is finished today", () => {
-    render(<StreakLessonBanner lessonCompleted />);
+  it("before today is lit shows the greyed treasure, then the next one", () => {
+    const { container } = render(<StreakLessonBanner lessonCompleted />);
     setStreak(makeStreak({ current: 23 }));
-    setStreak(makeStreak({ current: 24, litToday: true }));
 
-    expect(
-      screen.getByText("Day 24 · You earned the Spilling Sack!"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Come back tomorrow for day 25."),
-    ).toBeInTheDocument();
+    const images = container.querySelectorAll("img");
+    expect(images).toHaveLength(2);
+    expect(images[0]).toHaveClass("grayscale");
+    expect(images[1]).not.toHaveClass("grayscale");
+  });
+
+  it.each([
+    [24, "Day 24 · You earned the Spilling Sack!", "2 days to the Two Sacks"],
+    [7, "Day 7 · A whole week!", "2 of 3 days to the Big Pile"],
+    [100, "Day 100 · The final treasure is yours!", null],
+  ])(
+    "once day %i is lit shows one full-colour treasure, the day and %p",
+    (current, title, progress) => {
+      mockReducedMotion(true);
+      const { container } = render(<StreakLessonBanner lessonCompleted />);
+      setStreak(makeStreak({ current: current - 1 }));
+      setStreak(makeStreak({ current, litToday: true }));
+
+      const images = container.querySelectorAll("img");
+      expect(images).toHaveLength(1);
+      expect(images[0]).not.toHaveClass("grayscale");
+      expect(screen.getByText(String(current))).toBeInTheDocument();
+      expect(screen.getByText(title)).toBeInTheDocument();
+      expect(screen.queryByText(/days to the/)?.textContent ?? null).toBe(
+        progress,
+      );
+    },
+  );
+
+  it("counts up from yesterday's number unless motion is reduced", () => {
+    jest.useFakeTimers();
+    mockReducedMotion(false);
+    render(<StreakLessonBanner lessonCompleted />);
+    setStreak(makeStreak({ current: 6, litToday: true }));
+
+    expect(screen.getByText("5")).toBeInTheDocument();
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+    expect(screen.getByText("6")).toBeInTheDocument();
+    jest.useRealTimers();
   });
 });
 
