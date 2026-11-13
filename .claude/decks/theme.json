@@ -1,0 +1,54 @@
+{
+  "slide": { "width": 13.333, "height": 7.5 },
+  "colors": {
+    "navy": "073763",
+    "teal": "287496",
+    "blue": "307AF3",
+    "blueDark": "0942A1",
+    "sail": "E2ECF5",
+    "ink": "1F2933",
+    "muted": "6B7785",
+    "line": "D5DBE1",
+    "callout": "EFEFEF",
+    "placeholder": "E8EAED",
+    "white": "FFFFFF",
+    "good": "6AA84F",
+    "warn": "F1C232"
+  },
+  "fonts": {
+    "heading": "Roboto",
+    "body": "Roboto",
+    "accent": "Play",
+    "display": "Lexend",
+    "condensed": "Roboto Condensed"
+  },
+  "sizes": {
+    "title": 32,
+    "bigTitle": 54,
+    "subtitle": 24,
+    "body": 18,
+    "small": 14,
+    "caption": 12,
+    "label": 10,
+    "slideNumber": 9
+  },
+  "grid": {
+    "marginX": 0.7,
+    "titleY": 0.5,
+    "titleH": 0.9,
+    "contentTop": 1.65,
+    "contentBottom": 6.65,
+    "gutter": 0.4
+  },
+  "chrome": {
+    "bracketX": 0.27,
+    "bracketY": 0.27,
+    "bracketLen": 6.4,
+    "bracketDrop": 1.9,
+    "bottomLineY": 7.24,
+    "bottomLineX": 2.2,
+    "bottomLineEnd": 13.07,
+    "logo": { "x": 0.3, "y": 6.85, "w": 1.4 },
+    "slideNumber": { "x": 12.3, "y": 7.1, "w": 0.77, "h": 0.25 }
+  }
+}
