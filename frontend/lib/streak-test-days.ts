@@ -15,7 +15,7 @@ export type TestStreakSettings = {
   litToday: boolean;
   /** Yesterday was missed, so the streak ended the day before (and can be revived) */
   missedYesterday: boolean;
-  /** Revives already spent, 0 to 2 */
+  /** Revives already spent this month, 0 to 2 */
   revivesUsed: number;
   /** Scattered activity in the months before, for the calendar */
   history: boolean;
@@ -48,13 +48,27 @@ export function testStreakDays(
   for (let i = 0; i < current; i++) add(addDays(end, -i), 1 + (i % 3));
   if (settings.missedYesterday && settings.litToday) add(today, 1);
 
-  // Spent revives: each a missed day revived after a day that counts. Inside
-  // a long streak the day is simply marked revived.
+  // Spent revives: each a day revived right after a day that counts. They
+  // count in the month they were spent (the day after), so they go on this
+  // month's streak days, then on a day and its revive before the streak.
+  // Early in a month fewer fit, as they would for a learner.
   const used = Math.max(0, Math.min(STREAK_REVIVES, settings.revivesUsed));
-  for (let k = 0; k < used; k++) {
-    const day = addDays(today, -(60 + 4 * k));
-    if (!byDate.has(addDays(day, -1))) add(addDays(day, -1), 1);
+  const earliest = addDays(`${today.slice(0, 7)}-01`, -1);
+  let spent = 0;
+  for (let day = earliest; spent < used && day < today; day = addDays(day, 1)) {
+    if (!byDate.has(day) || !byDate.has(addDays(day, -1))) continue;
     add(day, 0, true);
+    spent++;
+  }
+  const first = [...byDate.keys()].sort()[0] ?? today;
+  for (
+    let day = addDays(first, -3);
+    spent < used && day >= earliest;
+    day = addDays(day, -3)
+  ) {
+    add(addDays(day, -1), 1);
+    add(day, 0, true);
+    spent++;
   }
 
   // History: about half the days in the 150 before the streak

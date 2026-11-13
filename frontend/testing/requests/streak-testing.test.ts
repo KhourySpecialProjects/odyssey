@@ -106,7 +106,8 @@ describe("setTestStreak", () => {
     );
     today.setUTCDate(today.getUTCDate() + 2);
     expect(userId).toBe(7);
-    expect(days).toHaveLength(26);
+    // The spent revive goes on one of this month's streak days, adding none
+    expect(days).toHaveLength(24);
     expect(days.at(-1)?.date).toBe(today.toISOString().slice(0, 10));
     expect(setStreakTestMode).toHaveBeenCalledWith(testMode(2));
     expect(revalidateTag).toHaveBeenCalledWith("streak-7");

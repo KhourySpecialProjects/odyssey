@@ -239,7 +239,7 @@ export function StreakTestingPanel({
 
           <fieldset>
             <legend className="text-sm font-medium">
-              Revives already used
+              Revives already used this month
             </legend>
             <div className="mt-1 flex gap-1.5">
               {[0, 1, 2].map((used) => (

@@ -3,7 +3,12 @@ import {
   nextDayOutlook,
   testStreakDays,
 } from "@/lib/streak-test-days";
-import { addDays, reviveOffer, summarizeStreak } from "@/lib/streaks";
+import {
+  addDays,
+  reviveOffer,
+  revivesLeftOn,
+  summarizeStreak,
+} from "@/lib/streaks";
 
 const TODAY = "2026-11-10";
 const settings = {
@@ -58,13 +63,38 @@ describe("testStreakDays", () => {
     expect(streak.current).toBe(24);
   });
 
-  it("marks a revive inside a long streak instead of adding days", () => {
+  it("marks this month's first streak day revived instead of adding days", () => {
     const streak = streakOf({ current: 100, revivesUsed: 1 });
 
     expect(streak.current).toBe(100);
     expect(streak.days).toHaveLength(100);
-    expect(streak.days.find((d) => d.revived)?.date).toBe("2026-09-11");
+    // Spent on 1 Nov, so it's one of November's
+    expect(streak.days.find((d) => d.revived)?.date).toBe("2026-10-31");
   });
+
+  it.each([
+    [
+      "a short streak: a day and its revive before it",
+      { current: 2 },
+      TODAY,
+      2,
+    ],
+    ["no streak", { current: 0 }, TODAY, 2],
+    ["the 1st: only yesterday's fits", { current: 24 }, "2026-12-01", 1],
+  ])(
+    "spends this month's revives with %s",
+    (_name, { current }, today, fit) => {
+      const days = testStreakDays(
+        { ...settings, current, revivesUsed: 2 },
+        today,
+      );
+      const dates = days.map((d) => d.date);
+
+      expect(revivesLeftOn(days, today)).toBe(2 - fit);
+      expect(summarizeStreak(dates, today).current).toBe(current);
+      expect(reviveOffer(dates, today, 2)).toBeNull();
+    },
+  );
 
   it("adds the same history before the streak every time", () => {
     const first = streakOf({ history: true }).days;
