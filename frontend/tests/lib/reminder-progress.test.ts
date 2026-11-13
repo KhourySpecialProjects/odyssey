@@ -4,6 +4,8 @@ import {
   earliestDue,
   reminderHeadline,
   reminderProgress,
+  reminderTemplate,
+  type ReminderTemplateState,
 } from "@/lib/reminder-progress";
 
 const lessons = [3, 1, 2].map((n) => ({
@@ -36,13 +38,89 @@ describe("reminderProgress", () => {
 });
 
 describe("reminderHeadline", () => {
+  const state = (
+    over: Partial<ReminderTemplateState> = {},
+  ): ReminderTemplateState => ({
+    progress: { viewed: 1, total: 4 },
+    started: true,
+    dueInDays: null,
+    idleDays: 5,
+    enrollmentAgeDays: 10,
+    today: "2026-11-20", // a Friday
+    ...over,
+  });
+  const none = { progress: { viewed: 0, total: 4 }, started: false };
+  const fallback = "Pick up Git where you left off.";
+
   it.each([
-    [{ viewed: 2, total: 3 }, "You're one lesson away from finishing Git!"],
-    [{ viewed: 1, total: 3 }, "Pick up Git where you left off."],
-    [{ viewed: 3, total: 3 }, "Pick up Git where you left off."],
-    [null, "Pick up Git where you left off."],
-  ])("%j", (progress, text) => {
-    expect(reminderHeadline("Git", progress)).toBe(text);
+    [
+      "due today, started",
+      { dueInDays: 0 },
+      "Git is due today. You've already started, so keep going!",
+    ],
+    [
+      "due tomorrow, one left: due soon wins",
+      { dueInDays: 1, progress: { viewed: 3, total: 4 } },
+      "Git is due tomorrow. You've already started, so keep going!",
+    ],
+    [
+      "due in 3 days, not started: a weekday",
+      { ...none, dueInDays: 3 },
+      "Git is due Monday. Lesson 1 is a good place to start.",
+    ],
+    [
+      "not started, 4 days",
+      { ...none, enrollmentAgeDays: 4 },
+      "You enrolled in Git a few days ago. Ready when you are!",
+    ],
+    [
+      "not started, 7 days",
+      { ...none, enrollmentAgeDays: 7 },
+      "You enrolled in Git last week. Ready when you are!",
+    ],
+    [
+      "not started, 13 days",
+      { ...none, enrollmentAgeDays: 13 },
+      "You enrolled in Git last week. Ready when you are!",
+    ],
+    [
+      "not started, 20 days",
+      { ...none, enrollmentAgeDays: 20 },
+      "You enrolled in Git 2 weeks ago. Ready when you are!",
+    ],
+    [
+      "one-lesson droplet, not started: not one left",
+      { progress: { viewed: 0, total: 1 }, started: false },
+      "You enrolled in Git last week. Ready when you are!",
+    ],
+    [
+      "one left beats a long gap",
+      { progress: { viewed: 3, total: 4 }, idleDays: 30 },
+      "You're one lesson away from finishing Git!",
+    ],
+    [
+      "long gap beats halfway",
+      { progress: { viewed: 2, total: 4 }, idleDays: 21 },
+      "Welcome back! Pick up Git where you left off.",
+    ],
+    [
+      "exactly 0.5 is halfway",
+      { progress: { viewed: 2, total: 4 } },
+      "You're over halfway through Git. Keep it going!",
+    ],
+    ["fallback", {}, fallback],
+    ["no progress", { progress: null }, fallback],
+    ["due in 4 days is not due soon", { dueInDays: 4 }, fallback],
+  ] as [string, Partial<ReminderTemplateState>, string][])(
+    "%s",
+    (_, over, text) => {
+      expect(reminderHeadline("Git", state(over))).toBe(text);
+    },
+  );
+
+  it("names the template", () => {
+    expect(reminderTemplate(state({ dueInDays: 2 }))).toBe("due_soon_started");
+    expect(reminderTemplate(state())).toBe("fallback");
   });
 });
 
