@@ -55,9 +55,11 @@ describe("StreakLessonBanner", () => {
     setStreak(makeStreak({ current: 23 }));
     setStreak(makeStreak({ current: 24, litToday: true }));
 
-    expect(screen.getByText("Day 24 · new treasure!")).toBeInTheDocument();
     expect(
-      screen.getByText("Streak kept. Your treasure grows again on day 26."),
+      screen.getByText("Day 24 · You earned the Spilling Sack!"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Come back tomorrow for day 25."),
     ).toBeInTheDocument();
   });
 });
@@ -88,9 +90,9 @@ describe("refreshStreakAfterLesson", () => {
       expect(toast.success).toHaveBeenCalledTimes(toasts);
       if (toasts) {
         expect(toast.success).toHaveBeenCalledWith(
-          "Day 24 · new treasure!",
+          "Day 24 · You earned the Spilling Sack!",
           expect.objectContaining({
-            description: "Streak kept. Your treasure grows again on day 26.",
+            description: "Come back tomorrow for day 25.",
           }),
         );
       }

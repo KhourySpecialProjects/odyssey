@@ -3,6 +3,8 @@ import {
   litMessage,
   panelMessage,
   pendingMessage,
+  progressText,
+  progressToNext,
   reviveOfferMessage,
   revivedMessage,
   revivesLeftText,
@@ -38,29 +40,56 @@ it("writes a date the same in every browser time zone", () => {
 
 describe("litMessage", () => {
   it.each([
+    [1, "Streak started!", "Come back tomorrow to make it 2 days."],
     [
-      1,
-      "Day 1 · new treasure!",
-      "Streak started. Your treasure grows again on day 2.",
+      6,
+      "Day 6, and counting!",
+      "Come back tomorrow for day 7. 2 more days to the Big Pile.",
+    ],
+    [7, "Day 7 · A whole week!", "Come back tomorrow to keep it going."],
+    [
+      9,
+      "Day 9, and counting!",
+      "Come back tomorrow for day 10. 1 more day to the Gold Heap.",
     ],
     [
       24,
-      "Day 24 · new treasure!",
-      "Streak kept. Your treasure grows again on day 26.",
+      "Day 24 · You earned the Spilling Sack!",
+      "Come back tomorrow for day 25.",
     ],
-    [23, "Day 23 · streak kept", "Your treasure grows again on day 24."],
+    [
+      30,
+      "Day 30 · A whole month! You earned the Sack Hoard.",
+      "Come back tomorrow to keep it going.",
+    ],
     [
       100,
-      "Day 100 · new treasure!",
-      "Streak kept. This is the final treasure. It stays for as long as your streak does.",
+      "Day 100 · The final treasure is yours!",
+      "It stays for as long as your streak does.",
     ],
     [
-      140,
-      "Day 140 · streak kept",
-      "This is the final treasure. It stays for as long as your streak does.",
+      120,
+      "Day 120, and counting!",
+      "Your final treasure stays for as long as your streak does.",
     ],
   ])("day %i", (current, title, detail) => {
     expect(litMessage(current)).toEqual({ title, detail });
+  });
+});
+
+describe("progressToNext", () => {
+  it.each([
+    [7, 2, 3, "Big Pile", "2 of 3 days to the Big Pile"],
+    [8, 0, 2, "Gold Heap", "2 days to the Gold Heap"],
+    [99, 49, 50, "Super Duper Mega Golden Crowned Diamond Chest", null],
+    [100, null, null, null, null],
+    [0, null, null, null, null],
+  ])("day %i", (current, done, span, next, text) => {
+    const progress = progressToNext(current);
+    expect(
+      progress && [progress.done, progress.span, progress.next.name],
+    ).toEqual(done === null ? null : [done, span, next]);
+    if (progress && text) expect(progressText(progress)).toBe(text);
   });
 });
 

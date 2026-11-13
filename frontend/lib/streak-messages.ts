@@ -40,16 +40,77 @@ export function shortDate(date: string): string {
   });
 }
 
-/** Once a lesson has lit today: the lit banner and the toast */
+const MILESTONES: Record<number, string> = {
+  7: "A whole week!",
+  30: "A whole month!",
+};
+
+/** Once a lesson has lit today: the lit banner and the toast (ODY-950) */
 export function litMessage(current: number): Message {
   const { icon, next } = iconsFor(current);
-  const grows = next
-    ? `Your treasure grows again on day ${next.day}.`
-    : "This is the final treasure. It stays for as long as your streak does.";
-  const kept = current === 1 ? "Streak started." : "Streak kept.";
-  return icon?.day === current
-    ? { title: `Day ${current} · new treasure!`, detail: `${kept} ${grows}` }
-    : { title: `Day ${current} · streak kept`, detail: grows };
+  const tomorrow = `Come back tomorrow for day ${current + 1}.`;
+  if (icon && !next) {
+    return current === icon.day
+      ? {
+          title: `Day ${current} · The final treasure is yours!`,
+          detail: "It stays for as long as your streak does.",
+        }
+      : {
+          title: `Day ${current}, and counting!`,
+          detail: "Your final treasure stays for as long as your streak does.",
+        };
+  }
+  if (current === 1) {
+    return {
+      title: "Streak started!",
+      detail: "Come back tomorrow to make it 2 days.",
+    };
+  }
+  const earned = icon?.day === current ? icon : null;
+  const milestone = MILESTONES[current];
+  if (milestone) {
+    return {
+      title: `Day ${current} · ${milestone}${earned ? ` You earned the ${earned.name}.` : ""}`,
+      detail: "Come back tomorrow to keep it going.",
+    };
+  }
+  if (earned) {
+    return {
+      title: `Day ${current} · You earned the ${earned.name}!`,
+      detail: tomorrow,
+    };
+  }
+  const left = next ? next.day - current : 0;
+  return {
+    title: `Day ${current}, and counting!`,
+    detail: next
+      ? `${tomorrow} ${left} more ${left === 1 ? "day" : "days"} to the ${next.name}.`
+      : tomorrow,
+  };
+}
+
+/**
+ * How far a streak is from its next treasure: `done` of `span` days since
+ * the current one unlocked. Null before a streak starts and once the final
+ * treasure is reached.
+ */
+export function progressToNext(
+  current: number,
+): { done: number; span: number; next: StreakIconInfo } | null {
+  const { icon, next } = iconsFor(current);
+  if (!icon || !next) return null;
+  return { done: current - icon.day, span: next.day - icon.day, next };
+}
+
+/** The line under the lit banner's progress bar */
+export function progressText(progress: {
+  done: number;
+  span: number;
+  next: StreakIconInfo;
+}): string {
+  return progress.done === 0
+    ? `${progress.span} days to the ${progress.next.name}`
+    : `${progress.done} of ${progress.span} days to the ${progress.next.name}`;
 }
 
 /** The lesson banner before today is lit. `lessonCompleted` is this lesson, already finished. */
