@@ -68,6 +68,17 @@
     },
     "readAt": {
       "type": "datetime"
+    },
+    "reminderCount": {
+      "type": "integer",
+      "min": 0
+    },
+    "reminderSnoozedUntil": {
+      "type": "datetime"
+    },
+    "reminderMuted": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

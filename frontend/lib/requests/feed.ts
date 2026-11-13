@@ -16,6 +16,7 @@ import {
   reminderHeadline,
   reminderProgress,
 } from "@/lib/reminder-progress";
+import { templateState } from "@/lib/reminder-rules";
 import {
   FILTER_VALUES,
   toFeedRoles,
@@ -301,7 +302,7 @@ export async function fetchAnnouncements(
     const flattened = flattenAttributes(data.data);
     const rows: Announcement[] = Array.isArray(flattened) ? flattened : [];
     return {
-      data: await attachReminderData(rows, userId),
+      data: await attachReminderData(rows, userId, email),
       pagination: data.meta?.pagination ?? {
         page: 1,
         pageSize: 25,
@@ -321,6 +322,7 @@ type LessonRef = { id: number; name: string; slug: string; orderIndex: number };
 async function attachReminderData(
   rows: Announcement[],
   userId: number,
+  email: string,
 ): Promise<Announcement[]> {
   const reminders = rows.filter((r) => r.type === "reminder");
   if (reminders.length === 0) return rows;
@@ -331,21 +333,24 @@ async function attachReminderData(
   let enrollments: {
     droplet?: { id: number; lessons?: LessonRef[] };
     viewedLessons?: { id: number }[];
+    lastProgressDate?: string | null;
+    createdAt?: string;
   }[] = [];
   let dueRows: {
     dueDate: string;
     droplet?: { id: number };
     group?: { groupName?: string };
   }[] = [];
+  let timeZone: string | null | undefined;
   try {
-    [enrollments, dueRows] = await Promise.all([
+    [enrollments, dueRows, timeZone] = await Promise.all([
       fetchAPI<typeof enrollments>("/enrollments", {
         urlParams: {
           filters: {
             authorizedUser: { id: { $eq: userId } },
             droplet: { id: { $in: dropletIds } },
           },
-          fields: ["id"],
+          fields: ["id", "lastProgressDate", "createdAt"],
           populate: {
             viewedLessons: { fields: ["id"] },
             droplet: {
@@ -380,11 +385,19 @@ async function attachReminderData(
         },
         next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
       }),
+      // A failed lookup falls back to Boston rather than failing the feed
+      getAuthorizedUserByEmail<Pick<AuthorizedUser, "id" | "timeZone">>(email, {
+        fields: ["id", "timeZone"],
+      })
+        .then((u) => u?.timeZone)
+        .catch(() => null),
     ]);
   } catch (error) {
     // The cards still render, just without progress or a due date
     console.error("Error loading reminder progress:", error);
   }
+
+  const now = new Date();
 
   return rows.map((row) => {
     if (row.type !== "reminder") return row;
@@ -401,11 +414,26 @@ async function attachReminderData(
     const due = earliestDue(
       dueRows.filter((d) => d.droplet?.id === row.droplet?.id),
     );
+    const headline = reminderHeadline(
+      name,
+      templateState(
+        {
+          progress: computed.progress,
+          started: computed.started,
+          idleFrom:
+            enrollment?.lastProgressDate ?? enrollment?.createdAt ?? null,
+          dueDate: due?.dueDate ?? null,
+          enrolledAt: enrollment?.createdAt ?? null,
+        },
+        now,
+        timeZone,
+      ),
+    );
     return {
       ...row,
       reminder: {
         ...computed,
-        headline: reminderHeadline(name, computed.progress),
+        headline,
         ...due,
       },
     };

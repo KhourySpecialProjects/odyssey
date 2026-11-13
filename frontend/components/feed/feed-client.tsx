@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { FILTER_VALUES, toFeedRoles } from "./feed-filter-params";
 import { useFeedUnreadStore } from "@/stores/feed-unread-store";
+import { checkMyReminder } from "@/lib/requests/reminders";
 
 type Tab = "unread" | "read";
 
@@ -174,6 +175,21 @@ export function FeedClient({
     };
   }, [pending, roles, refresh]);
   useEffect(() => () => useFeedUnreadStore.getState().setFeedCount(null), []);
+
+  // Once per mount, when not pending (ODY-931). A raise refetches the list and, through
+  // the effect above, recounts the badge. A repeat call just answers "today".
+  const checkedReminder = useRef(false);
+  useEffect(() => {
+    if (pending || checkedReminder.current) return;
+    checkedReminder.current = true;
+    checkMyReminder()
+      .then((result) => {
+        if (result.data?.raised) {
+          setRefresh((r) => ({ key: r.key + 1, silent: true }));
+        }
+      })
+      .catch(() => {});
+  }, [pending]);
 
   const selectTab = (next: Tab) => {
     if (next === tab) return;

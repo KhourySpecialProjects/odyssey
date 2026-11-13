@@ -660,6 +660,15 @@ export interface ApiAnnouncementAnnouncement
     playlist: Schema.Attribute.Relation<'manyToOne', 'api::playlist.playlist'>;
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
+    reminderCount: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    reminderMuted: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    reminderSnoozedUntil: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
       [
         'playlist',

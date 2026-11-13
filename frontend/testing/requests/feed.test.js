@@ -303,6 +303,80 @@ describe("Feed tests", () => {
         ]);
       });
 
+      describe("template state", () => {
+        const { DateTime } = require("luxon");
+        const { fetchAPI } = require("../../lib/utils");
+        const zone = "America/New_York";
+        const day = (n) =>
+          DateTime.now().setZone(zone).plus({ days: n }).toISODate();
+        const enrollment = (over = {}) => ({
+          droplet: { id: 100, lessons },
+          viewedLessons: [],
+          createdAt: DateTime.now().minus({ days: 40 }).toISO(),
+          ...over,
+        });
+
+        const headlineFor = async (enrollments, dueRows, tz) => {
+          mockPrecompute();
+          fetchAPI
+            .mockResolvedValueOnce(enrollments)
+            .mockResolvedValueOnce(dueRows);
+          tz === "fail"
+            ? fetchAPI.mockRejectedValueOnce(new Error("down"))
+            : fetchAPI.mockResolvedValueOnce([{ id: 5, timeZone: tz }]);
+          mockAnnouncementsResponse([reminderRow()]);
+          const { data } = await fetchAnnouncements(1);
+          return data[0].reminder.headline;
+        };
+
+        it("uses the long-gap headline after 25 idle days", async () => {
+          const idle = enrollment({
+            droplet: {
+              id: 100,
+              lessons: [...lessons, { ...lessons[0], id: 3 }],
+            },
+            viewedLessons: [{ id: 1 }],
+            lastProgressDate: DateTime.now().minus({ days: 25 }).toISO(),
+          });
+          expect(await headlineFor([idle], [], zone)).toBe(
+            "Welcome back! Pick up Git where you left off.",
+          );
+        });
+
+        it("uses the due-soon headline for a droplet due tomorrow", async () => {
+          const due = [{ dueDate: day(1), droplet: { id: 100 } }];
+          const e = enrollment({ viewedLessons: [{ id: 1 }] });
+          expect(await headlineFor([e], due, zone)).toBe(
+            "Git is due tomorrow. You've already started, so keep going!",
+          );
+        });
+
+        it("still renders the card when a date is invalid", async () => {
+          const e = enrollment({ viewedLessons: [{ id: 1 }] });
+          const due = [{ dueDate: "nonsense", droplet: { id: 100 } }];
+          expect(await headlineFor([e], due, zone)).toBe(
+            "You're one lesson away from finishing Git!",
+          );
+        });
+
+        it("asks the enrollment query for progress and creation dates", async () => {
+          await headlineFor([enrollment()], [], zone);
+          const [, opts] = fetchAPI.mock.calls[3];
+          expect(opts.urlParams.fields).toEqual([
+            "id",
+            "lastProgressDate",
+            "createdAt",
+          ]);
+        });
+
+        it("still renders when the time-zone lookup fails", async () => {
+          const e = enrollment({ viewedLessons: [{ id: 1 }] });
+          expect(await headlineFor([e], [], "fail")).toBe(
+            "You're one lesson away from finishing Git!",
+          );
+        });
+      });
+
       it("keeps the card without progress when there is no enrollment", async () => {
         const { fetchAPI } = require("../../lib/utils");
         mockPrecompute();

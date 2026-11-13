@@ -182,6 +182,12 @@ export async function completeLesson(
 - Content mutations that affect all users also invalidate the global tag (e.g., `CACHE_TAGS.allEnrollments`)
 - See the full invalidation matrix in the docblock at the top of `cache-tags.ts`
 
+### Reminder check (ODY-931)
+
+`FeedClient` (the My Feed list, not its Suspense fallback) calls the `checkMyReminder` action once per mount, when not pending (after load when the page was not seeded, on mount when it was). It reads the learner's data with `cache: "no-store"`, may raise one reminder through Strapi, and on `raised: true` calls `revalidateTag(CACHE_TAGS.userFeed(userId))`. The client then refetches the list silently, which also recounts the badge. There is no `router.refresh()`: the action's revalidation already refreshes the layout's server count. Strapi-written rows can't clear Next's cache (ODY-474), which is why the raise goes through a Next action.
+
+Locally, `/api/dev/reminders` (needs `NODE_ENV=development` and `ENABLE_REMINDER_TEST_CLOCK=true`) previews or raises as of `?at=<ISO with Z or an offset>` (`+09:00` works as typed, or as `%2B09:00`). A future `at` pins your local reminders until that date: real loads answer `today` and the gap blocks the next. Reset by editing the row's `firstCreated` in the local database.
+
 ### Default Revalidation Times
 
 - Most content: 900 seconds (15 minutes)

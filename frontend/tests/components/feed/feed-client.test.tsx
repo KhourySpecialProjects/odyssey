@@ -13,6 +13,7 @@ import {
   markAnnouncementRead,
   markAnnouncementUnread,
 } from "@/lib/requests/feed";
+import { checkMyReminder } from "@/lib/requests/reminders";
 import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
 import { useStreakStore } from "@/stores/streak-store";
@@ -25,6 +26,8 @@ jest.mock("@/lib/requests/feed", () => ({
   markAnnouncementUnread: jest.fn(),
 }));
 
+jest.mock("@/lib/requests/reminders", () => ({ checkMyReminder: jest.fn() }));
+
 jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn() },
 }));
@@ -35,6 +38,12 @@ describe("FeedClient", () => {
     (fetchAnnouncements as jest.Mock).mockReset();
     (fetchAnnouncements as jest.Mock).mockResolvedValue(mockPage([]));
     (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(0);
+    (checkMyReminder as jest.Mock).mockReset();
+    (checkMyReminder as jest.Mock).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { raised: false },
+    });
     useFeedUnreadStore.setState({ serverCount: null, feedCount: null });
     jest.useRealTimers();
     jest.spyOn(console, "error").mockRestore();
@@ -687,6 +696,89 @@ describe("FeedClient", () => {
     });
   });
 
+  describe("reminder check (ODY-931)", () => {
+    const renderLoaded = async () => {
+      (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+        mockPage(generateMockAnnouncements(2)),
+      );
+      const view = render(
+        <FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />,
+      );
+      expect(await screen.findByText("Announcement 0")).toBeInTheDocument();
+      return view;
+    };
+
+    it("checks once per mount, when not pending", async () => {
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+    });
+
+    it("refetches silently and recounts the badge when a reminder is raised", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the old list must stay on screen
+      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
+        new Promise(() => {}),
+      );
+      await renderLoaded();
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it("on a seeded page, refetches silently once and recounts the badge", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the seeded list must stay on screen
+      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
+        new Promise(() => {}),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage(generateMockAnnouncements(2), 1),
+          }}
+        />,
+      );
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it.each([
+      ["nothing raised", () => Promise.resolve({ data: { raised: false } })],
+      ["a failed check", () => Promise.resolve({ ok: false, data: null })],
+      ["a rejected check", () => Promise.reject(new Error("down"))],
+    ])("changes nothing on %s", async (_, result) => {
+      (checkMyReminder as jest.Mock).mockImplementation(result);
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("does not fetch while pending (Suspense fallback)", async () => {
     render(
       <FeedClient
@@ -699,5 +791,6 @@ describe("FeedClient", () => {
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
     await act(async () => {});
     expect(fetchAnnouncements).not.toHaveBeenCalled();
+    expect(checkMyReminder).not.toHaveBeenCalled();
   });
 });
