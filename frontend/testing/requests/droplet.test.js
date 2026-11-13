@@ -53,7 +53,11 @@ function allowReviewFreeze() {
   const freeze = jest.requireMock("@/lib/auth/review-freeze");
   freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
   freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
-  freeze.checkDropletDelete.mockResolvedValue({ ok: true });
+  freeze.checkDropletDelete.mockResolvedValue({
+    ok: true,
+    refuseInReview: false,
+    refusePublished: false,
+  });
   freeze.checkPublishDraft.mockResolvedValue({ ok: true });
 }
 allowReviewFreeze();
@@ -114,7 +118,7 @@ describe("deepDeleteDroplet", () => {
     expect(sent()).toMatchObject({
       url: expect.stringMatching(/\/api\/droplets\/123\/deep-delete$/),
       method: "POST",
-      body: { authorOnly: false },
+      body: { refuseInReview: false, refusePublished: false },
     });
     // Lesson pages are tagged only with `lesson`, so flush it too.
     for (const tag of [
@@ -131,16 +135,22 @@ describe("deepDeleteDroplet", () => {
     }
   });
 
-  it("sends authorOnly for a user who is not an admin or content editor", async () => {
-    jest.requireMock("@/lib/auth/require-role").requireRole.mockResolvedValue({
-      ok: true,
-      user: { id: 7, email: "a@example.invalid", roles: ["Faculty"] },
-    });
+  it.each([
+    ["an author", { refuseInReview: true, refusePublished: true }],
+    [
+      "a privileged non-author",
+      { refuseInReview: false, refusePublished: false },
+    ],
+    ["a privileged author", { refuseInReview: true, refusePublished: false }],
+  ])("sends the flags checkDropletDelete returns for %s", async (_n, flags) => {
+    jest
+      .requireMock("@/lib/auth/review-freeze")
+      .checkDropletDelete.mockResolvedValue({ ok: true, ...flags });
     global.fetch.mockResolvedValueOnce(makeEmptyResponse(200));
 
     await deepDeleteDroplet(123);
 
-    expect(sent().body).toEqual({ authorOnly: true });
+    expect(sent().body).toEqual(flags);
     allowReviewFreeze();
   });
 

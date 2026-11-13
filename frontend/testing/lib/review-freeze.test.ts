@@ -372,10 +372,20 @@ describe("checkDropletContentWrite", () => {
 });
 
 describe("checkDropletDelete", () => {
-  const ok = { ok: true };
+  const flags = (refuseInReview: boolean, refusePublished: boolean) => ({
+    ok: true,
+    refuseInReview,
+    refusePublished,
+  });
   it.each([
-    ["author, draft", 7, [Role.ContentCreator], {}, ok],
-    ["author, edit", 7, [Role.ContentCreator], { status: "edit" }, ok],
+    ["author, draft", 7, [Role.ContentCreator], {}, flags(true, true)],
+    [
+      "author, edit",
+      7,
+      [Role.ContentCreator],
+      { status: "edit" },
+      flags(true, true),
+    ],
     [
       "faculty author, published",
       7,
@@ -409,14 +419,37 @@ describe("checkDropletDelete", () => {
       9,
       [Role.SysAdmin],
       { status: "published" },
-      ok,
+      flags(false, false),
     ],
     [
       "Content Editor, published",
       9,
       [Role.ContentEditor],
       { status: "published" },
-      ok,
+      flags(false, false),
+    ],
+    ["Faculty author, draft", 7, [Role.Faculty], {}, flags(true, true)],
+    ["System Admin author, draft", 7, [Role.SysAdmin], {}, flags(true, false)],
+    [
+      "System Admin author, published",
+      7,
+      [Role.SysAdmin],
+      { status: "published" },
+      flags(true, false),
+    ],
+    [
+      "Content Editor author, draft",
+      7,
+      [Role.ContentEditor],
+      {},
+      flags(true, false),
+    ],
+    [
+      "System Admin non-author, draft",
+      9,
+      [Role.SysAdmin],
+      {},
+      flags(false, false),
     ],
   ])("%s", async (_name, id, roles, over, expected) => {
     mockFetch.mockResolvedValue([droplet(over)]);

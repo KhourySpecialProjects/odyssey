@@ -28,7 +28,6 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { REVIEW_FROZEN_ERROR } from "@/lib/review-roles";
 import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 
@@ -286,22 +285,21 @@ export async function deepDeleteDroplet(id: number) {
   // The write rule, and authors may delete only unpublished droplets.
   const check = await checkDropletDelete(gate.user, id);
   if (!check.ok) return { ok: false, error: check.error, data: null };
-  const privileged = gate.user.roles.some(
-    (role) =>
-      role === AuthorizedUserRoleTitle.SysAdmin ||
-      role === AuthorizedUserRoleTitle.ContentEditor,
-  );
-  return deleteDropletRecord(id, { authorOnly: !privileged });
+  const { refuseInReview, refusePublished } = check;
+  return deleteDropletRecord(id, {
+    refuseInReview,
+    refusePublished,
+  });
 }
 
 /**
  * Raw delete with no auth. Only call it after the caller has been checked.
  * Strapi deletes the lessons and the droplet in one transaction and, with
- * `authorOnly`, re-checks review and published state under a row lock.
+ * the flags, re-checks review and published state under a row lock.
  */
 async function deleteDropletRecord(
   id: number,
-  { authorOnly }: { authorOnly: boolean },
+  flags: { refuseInReview: boolean; refusePublished: boolean },
 ) {
   try {
     const response = await fetch(
@@ -314,7 +312,10 @@ async function deleteDropletRecord(
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
           ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
-        body: JSON.stringify({ authorOnly }),
+        body: JSON.stringify({
+          refuseInReview: flags.refuseInReview,
+          refusePublished: flags.refusePublished,
+        }),
       },
     );
 
@@ -1190,7 +1191,8 @@ export async function duplicateDroplet(dropletId: number) {
         // open it, and publishing it would delete those lessons from the
         // live droplet along with their students' progress.
         const cleanup = await deleteDropletRecord(newDropletId, {
-          authorOnly: false,
+          refuseInReview: false,
+          refusePublished: false,
         });
         const reason =
           failure.reason instanceof Error

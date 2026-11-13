@@ -23,6 +23,12 @@ export type FreezeError =
 
 export type FreezeResult = { ok: true } | { ok: false; error: FreezeError };
 
+/** What the backend must re-check under its row lock before deleting. */
+export type DeleteFlags = { refuseInReview: boolean; refusePublished: boolean };
+export type DeleteCheckResult =
+  | ({ ok: true } & DeleteFlags)
+  | { ok: false; error: FreezeError };
+
 export type DropletForWrite = {
   id: number;
   documentId: string | null;
@@ -203,19 +209,26 @@ export async function checkDropletContentWrite(
 export async function checkDropletDelete(
   user: AuthUser,
   dropletId: number,
-): Promise<FreezeResult> {
-  if (!isValidId(dropletId)) return fail("forbidden");
+): Promise<DeleteCheckResult> {
+  if (!isValidId(dropletId)) return fail("forbidden") as DeleteCheckResult;
   try {
     const droplet = await loadDropletForWrite(dropletId);
-    if (!droplet) return fail("Not Found");
+    if (!droplet) return fail("Not Found") as DeleteCheckResult;
     const write = checkDropletWrite(user, droplet);
     if (!write.ok) return write;
-    if (!hasBypass(user) && droplet.status === "published") {
-      return fail("forbidden");
+    const privileged = hasBypass(user);
+    if (!privileged && droplet.status === "published") {
+      return fail("forbidden") as DeleteCheckResult;
     }
-    return OK;
+    // The backend repeats both rules under its lock. The freeze also covers
+    // an author of any role; the published rule covers only non-privileged users.
+    return {
+      ok: true,
+      refuseInReview: droplet.ownerIds.includes(user.id) || !privileged,
+      refusePublished: !privileged,
+    };
   } catch {
-    return LOOKUP_FAILED;
+    return LOOKUP_FAILED as DeleteCheckResult;
   }
 }
 

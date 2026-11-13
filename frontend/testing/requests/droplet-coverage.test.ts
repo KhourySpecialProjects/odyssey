@@ -88,7 +88,11 @@ function allowReviewFreeze() {
   const freeze = jest.requireMock("@/lib/auth/review-freeze");
   freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
   freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
-  freeze.checkDropletDelete.mockResolvedValue({ ok: true });
+  freeze.checkDropletDelete.mockResolvedValue({
+    ok: true,
+    refuseInReview: false,
+    refusePublished: false,
+  });
   freeze.checkPublishDraft.mockResolvedValue({ ok: true });
 }
 allowReviewFreeze();
@@ -1269,7 +1273,8 @@ describe("droplet-coverage — duplicateDroplet", () => {
       const [deleteCall] = deepDeleteCalls();
       expect(deleteCall[0]).toMatch(/\/api\/droplets\/70\/deep-delete$/);
       expect(JSON.parse(deleteCall[1]?.body as string)).toEqual({
-        authorOnly: false,
+        refuseInReview: false,
+        refusePublished: false,
       });
     });
 

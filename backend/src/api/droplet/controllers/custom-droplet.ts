@@ -4,7 +4,7 @@ import {
   PublishEditError,
   type DraftRef,
 } from '../../../lib/publish-edit';
-import { deepDeleteDroplet } from '../../../lib/droplet-delete';
+import { deepDeleteDroplet, type DeleteFlags } from '../../../lib/droplet-delete';
 import {
   publishWithReview,
   sendFeedback,
@@ -127,18 +127,23 @@ const emptyBodyHandler =
     return run(ctx, () => step(ref), failMessage);
   };
 
-/** Body is exactly `{ authorOnly: boolean }`. */
-function parseDeleteBody(body: unknown): { authorOnly: boolean } | { error: string } {
+/** Body is exactly `{ refuseInReview: boolean, refusePublished: boolean }`. */
+function parseDeleteBody(body: unknown): DeleteFlags | { error: string } {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return { error: 'Body must be an object' };
   }
   const record = body as Record<string, unknown>;
-  const extra = Object.keys(record).find((key) => key !== 'authorOnly');
+  const extra = Object.keys(record).find(
+    (key) => key !== 'refuseInReview' && key !== 'refusePublished',
+  );
   if (extra) return { error: `Invalid key ${extra}` };
-  if (typeof record.authorOnly !== 'boolean') {
-    return { error: 'authorOnly must be a boolean' };
+  for (const key of ['refuseInReview', 'refusePublished']) {
+    if (typeof record[key] !== 'boolean') return { error: `${key} must be a boolean` };
   }
-  return { authorOnly: record.authorOnly };
+  return {
+    refuseInReview: record.refuseInReview as boolean,
+    refusePublished: record.refusePublished as boolean,
+  };
 }
 
 export default {
@@ -149,7 +154,7 @@ export default {
     if ('error' in body) return fail(ctx, 400, body.error);
     return run(
       ctx,
-      () => deepDeleteDroplet(ref, body.authorOnly),
+      () => deepDeleteDroplet(ref, body),
       'Deleting failed.',
     );
   },
