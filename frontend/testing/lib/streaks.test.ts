@@ -5,6 +5,7 @@ import {
   DEFAULT_STREAK_TIME_ZONE,
   localDate,
   reviveOffer,
+  revivesLeftOn,
   STREAK_ICONS,
   streakIconIndex,
   streakIconSrc,
@@ -221,5 +222,41 @@ describe("reviveOffer", () => {
 
   it("offers nothing with no revives left", () => {
     expect(reviveOffer(ended, today, 0)).toBeNull();
+  });
+});
+
+describe("revivesLeftOn", () => {
+  const revived = (...dates: string[]) =>
+    dates.map((date) => ({ date, lessons: 0, revived: true }));
+
+  // ODY-920: 2 a month, counted in the month spent (the day after)
+  it.each([
+    ["none spent", [], "2026-11-25", 2],
+    [
+      "both spent this month",
+      revived("2026-11-10", "2026-11-20"),
+      "2026-11-25",
+      0,
+    ],
+    [
+      "back to 2 on the 1st",
+      revived("2026-11-10", "2026-11-20"),
+      "2026-12-01",
+      2,
+    ],
+    [
+      "30 Nov saved on 1 Dec uses December's",
+      revived("2026-11-30"),
+      "2026-12-01",
+      1,
+    ],
+    [
+      "31 Oct saved on 1 Nov uses November's",
+      revived("2026-10-31"),
+      "2026-11-15",
+      1,
+    ],
+  ])("%s", (_name, days, today, left) => {
+    expect(revivesLeftOn(days, today)).toBe(left);
   });
 });

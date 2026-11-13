@@ -7,7 +7,7 @@ import {
   addDays,
   localDate,
   reviveOffer,
-  STREAK_REVIVES,
+  revivesLeftOn,
   streakTimeZone,
   summarizeStreak,
   type Streak,
@@ -147,8 +147,7 @@ export async function getStreakFor(
   const today = todayFor(learner, m, now);
   const days = await getStreakDays(learner.id, { fresh, test: m.test });
   const dates = days.map((day) => day.date);
-  const revived = days.filter((day) => day.revived).length;
-  const revivesLeft = Math.max(0, STREAK_REVIVES - revived);
+  const revivesLeft = revivesLeftOn(days, today);
   return {
     ...summarizeStreak(dates, today),
     today,
