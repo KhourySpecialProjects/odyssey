@@ -235,6 +235,40 @@ describe("reportMarkdown", () => {
     reply: "A reply the judge refused.",
   });
 
+  it("shows how often hints explain the miss and guide back", () => {
+    const hint = (caseId: string, answer: "yes" | "no") =>
+      row({
+        caseId,
+        kind: "wrong-pick",
+        leak: false,
+        judge: {
+          answers: {
+            explains_miss: { quote: "", answer },
+            guides: { quote: "", answer },
+          },
+          badQuotes: [],
+          usage: sonnet,
+          costUsd: 0.01,
+        },
+      });
+    const report = reportMarkdown(
+      [
+        ...setupRows(18).filter((r) => r.kind !== "wrong-pick"),
+        hint("h1", "yes"),
+        hint("h2", "no"),
+      ],
+      [],
+      meta,
+      [],
+    );
+    expect(report).toContain(
+      "| Setup | Hints ask back | Hints explain the miss | Hints guide back |",
+    );
+    expect(report).toMatch(
+      /\| 100% \(2\/2\) \| 50% \(1\/2\) \| 50% \(1\/2\) \|/,
+    );
+  });
+
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {
     const personalized = row({
       caseId: "pers",
