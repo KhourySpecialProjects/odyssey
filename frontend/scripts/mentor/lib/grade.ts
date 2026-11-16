@@ -18,7 +18,7 @@ import {
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-16.1";
+export const JUDGE_VERSION = "2026-11-16.2";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 const JUDGE_MAX_TOKENS = 8000;
 
@@ -59,7 +59,7 @@ const QUESTIONS = {
   backs_points:
     "Does each passage the reply cites say what the reply cites it for? A link written [words][p3] cites p3 for those words; a ref after a sentence cites it for that sentence.",
   covers_main:
-    "Leaving aside anything a question in <quiz> asks about, does the reply state every main point of the lesson in <passages>? Examples and passing details aren't main points.",
+    "Does the reply state every main point of the lesson in <passages>? A main point is what a section of the lesson teaches. Examples, passing details, images, videos and code blocks aren't main points. Nor is a point whose statement would answer a question in <quiz>: for one of those, naming its topic is enough, and so is leaving it out.",
   guides:
     "Does the reply end by sending the student back to a passage it cites, with a question or a pointer to think about there?",
 };

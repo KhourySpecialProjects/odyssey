@@ -194,7 +194,9 @@ quote of 4 or more words that code checks is in the reply. It never sees the
 model, the setup, the code's verdicts or the gold, and covered cases don't go
 to it at all. v1's kinds keep their questions word for word; judge
 `2026-11-12.1` only added v2's (see "New kinds"), and `2026-11-16.1` added
-ODY-968's questions (see "Summaries and teaching hints").
+ODY-968's questions (see "Summaries and teaching hints"). `2026-11-16.2`
+reworded `covers_main`: the grading check's judge counted a quizzed point and
+a video section as main points a summary had missed.
 
 | Threshold      | Cases                  | Passes when                                                                                                                                                     |
 | -------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
