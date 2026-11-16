@@ -18,6 +18,8 @@ const CREATION_REQUEST_UID = 'api::creation-request.creation-request';
 const ACCESS_REQUEST_UID = 'api::access-request.access-request';
 const VOYAGE_UID = 'api::voyage.voyage';
 const USER_UID = 'api::authorized-user.authorized-user';
+const ANNOUNCEMENT_UID = 'api::announcement.announcement';
+const ANNOUNCEMENT_READ_UID = 'api::announcement-read.announcement-read';
 
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
@@ -65,6 +67,8 @@ const userData = (overrides = {}) => ({
 
 module.exports = {
   unique,
+  ANNOUNCEMENT_UID,
+  ANNOUNCEMENT_READ_UID,
   SLUG_PLACEHOLDER,
   DROPLET_UID,
   LESSON_UID,

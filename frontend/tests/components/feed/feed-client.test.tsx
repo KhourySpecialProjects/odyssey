@@ -466,6 +466,31 @@ describe("FeedClient", () => {
       expect(screen.getByText("Announcement 0")).toBeInTheDocument();
     });
 
+    it("shows the server's error message in the toast", async () => {
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: "Announcement not found",
+      });
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(25), 3),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={initialFeed()}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Announcement not found"),
+      );
+    });
+
     it("moves back a page when a refresh finds the current page emptied", async () => {
       (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
         success: true,
