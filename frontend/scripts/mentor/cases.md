@@ -1769,7 +1769,7 @@ _A long BlockNote lesson whose quiz asks EDA's goal, which p4 states almost word
 A reply that should pass:
 
 ```
-Exploratory data analysis means [summarizing a dataset visually and statistically][p3]. The lesson walks through its [key visualizations][p7], from histograms to correlation heatmaps, and [three pandas one-liners][p16] for a first look. Its rule of thumb: [one histogram can reveal problems][p25] that would distort every later result.
+This lesson introduces [exploratory data analysis][p3], a step that statistician [John Tukey formalized in 1977][p5] and that the lesson calls the most critical in any analysis. It covers five [key visualizations][p7]: histograms, boxplots, scatter plots, correlation heatmaps and bar charts, each with its pandas or matplotlib call. Before plotting, [three pandas one-liners][p16] give a first look: df.head(), df.info() and df.describe(). Its rule of thumb: [a single histogram can reveal problems][p25], like an outlier or a data entry error, that would distort every later result.
 ```
 
 ## ethics-summary-01
@@ -1788,7 +1788,7 @@ _The chip on a classic lesson with no quiz: two sections of list-heavy passages,
 A reply that should pass:
 
 ```
-This lesson puts tech ethics into practice. It sets out [principles of ethical design][p3], such as privacy by design and bias mitigation, and [strategies for building them in][p5]. It then gives [guidelines for responsible use][p8], like informed consent and data minimization, and stresses [digital literacy and critical thinking][p10].
+This lesson puts tech ethics into practice. Its [principles of ethical design][p3] are privacy by design, accessibility and inclusivity, transparency and accountability, and bias mitigation. Its [strategies for building them in][p5] are engaging diverse stakeholders, running ethical impact assessments, and reviewing ethics throughout development. Its [guidelines for responsible use][p8] are informed consent, data minimization and user empowerment. Finally, it stresses [digital literacy and critical thinking][p10]: evaluating information sources and questioning assumptions.
 ```
 
 ## ethics-summary-02
@@ -1807,7 +1807,7 @@ _Asked in the student's own words, just before three quizzes that each ask a mai
 A reply that should pass:
 
 ```
-This case study is about [Cambridge Analytica, a political consulting firm][p3] that used data analytics in campaigns. The lesson explains [how it got Facebook users' data][p4] and what it built from it, then [how it targeted voters][p5] in 2016 and in the Brexit vote, and [what the scandal led to][p7].
+This case study is about [Cambridge Analytica, a British political consulting firm][p3] that used data analytics in political campaigns. It covers [how the firm got Facebook users' data][p4] and what it built from it, and how it then [targeted voters with personalized political ads][p5] in the 2016 US election and the Brexit referendum. When this came out, it [sparked outrage and investigations][p6] in the US and the UK, and exposed how vulnerable social media platforms were. It ends with [the ethical issues the scandal raised][p8].
 ```
 
 ## ethics-wrongpick-02
