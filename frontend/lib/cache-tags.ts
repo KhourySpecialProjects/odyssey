@@ -102,7 +102,7 @@
  *                 ↳ Per-user tag "user-{email}" (every
  *                   getAuthorizedUserByEmail read, incl. getCachedUser):
  *                   setTimeZone, updateUserInfo (self edits),
- *                   togglePlaylistEnrollment
+ *                   togglePlaylistEnrollment, saveLearnerProfile
  *                 (profile fields, roles, account data only)
  * user-content    Two-level tag system (getCachedUserCreation):              900s
  *                 ↳ Per-user tag "user-content-{userId}":
@@ -167,7 +167,7 @@
  *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
  *                 reads only "droplets".
  * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
- *                 getLearnerProfile (engine, onboarding check, Settings);
+ *                 getLearnerProfile (engine, Settings);
  *                 invalidated by saveLearnerProfile
  */
 

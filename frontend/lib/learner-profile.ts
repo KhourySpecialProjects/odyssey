@@ -1,12 +1,7 @@
 import "server-only";
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import {
-  resolveDocumentId,
-  resolveDocumentIds,
-  strapiEntryUrl,
-  StrapiEntryNotFoundError,
-} from "@/lib/strapi-document-id";
+import { strapiEntryUrl } from "@/lib/strapi-document-id";
 import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import {
   FOCUS_AREAS,
@@ -18,14 +13,14 @@ import type { FocusArea, LearnerProfile, LearnerProfileInput } from "@/types";
 // A student's quiz answers (ODY-953). Trusts the user it's given: call it with
 // the session user. Never a "use server" file, which would expose it to browsers.
 
+const SAVE_FAILED = "Couldn't save your answers." as const;
+
 type SaveResult =
   | { ok: true; error: null }
   | {
       ok: false;
-      error: "invalid_input" | "unknown_tag" | "Couldn't save your answers.";
+      error: "invalid_input" | "unknown_tag" | typeof SAVE_FAILED;
     };
-
-const SAVE_FAILED = "Couldn't save your answers." as const;
 
 class SaveFailed extends Error {}
 
@@ -69,7 +64,7 @@ export async function getLearnerProfile(
 async function findRow(userId: number): Promise<Row | null> {
   const rows = await fetchAPI<Row[] | null>("/learner-profiles", {
     urlParams: {
-      filters: { user: { id: { $eq: userId } } },
+      filters: { key: { $eq: String(userId) } },
       fields: ["id"],
       sort: ["id:asc"],
       pagination: { page: 1, pageSize: 1 },
@@ -77,6 +72,29 @@ async function findRow(userId: number): Promise<Row | null> {
     cache: "no-store",
   });
   return rows?.[0] ?? null;
+}
+
+const TAG_PAGE_SIZE = 100;
+
+/** Maps tag ids to documentIds from the full tag list, so no student id is in a URL. */
+async function tagDocumentIds(ids: number[]): Promise<string[] | null> {
+  const byId = new Map<number, string>();
+  for (let page = 1; ; page++) {
+    const tags = await fetchAPI<{ id: number; documentId: string }[] | null>(
+      "/tags",
+      {
+        urlParams: {
+          fields: ["id"],
+          pagination: { pageSize: TAG_PAGE_SIZE, page },
+        },
+        next: { tags: [CACHE_TAGS.tags], revalidate: 900 },
+      },
+    );
+    (tags ?? []).forEach((t) => byId.set(t.id, t.documentId));
+    if ((tags?.length ?? 0) < TAG_PAGE_SIZE) break;
+  }
+  const docs = ids.map((id) => byId.get(id));
+  return docs.every((d): d is string => !!d) ? docs : null;
 }
 
 async function write(
@@ -118,35 +136,16 @@ export async function saveLearnerProfile(
   if (!parsed.success) return { ok: false, error: "invalid_input" };
   const { interestTagIds, ...rest } = parsed.data;
 
-  let profileWritten = false;
+  let profileAttempted = false;
   try {
     const data: Record<string, unknown> = { ...rest };
     if (interestTagIds) {
-      data.interests = {
-        set: await resolveDocumentIds("tags", interestTagIds),
-      };
+      const docs = interestTagIds.length
+        ? await tagDocumentIds(interestTagIds)
+        : [];
+      if (!docs) return { ok: false, error: "unknown_tag" };
+      data.interests = { set: docs };
     }
-
-    const existing = await findRow(user.id);
-    const base = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-    if (existing) {
-      await putRow(existing, data);
-    } else {
-      const created = await write("POST", `${base}/api/learner-profiles`, {
-        ...data,
-        key: String(user.id),
-        user: await resolveDocumentId("authorized-users", user.id),
-      });
-      if (!created.ok) {
-        const raced = await findRow(user.id);
-        if (!raced) {
-          console.error("saveLearnerProfile failed:", created.status);
-          throw new SaveFailed();
-        }
-        await putRow(raced, data);
-      }
-    }
-    profileWritten = true;
 
     const users = await fetchAPI<
       { documentId: string; onboardedAt?: string | null }[] | null
@@ -158,7 +157,32 @@ export async function saveLearnerProfile(
       cache: "no-store",
     });
     const self = users?.[0];
-    if (!self) throw new SaveFailed();
+    if (!self) {
+      console.error("saveLearnerProfile failed: no user row");
+      throw new SaveFailed();
+    }
+
+    const existing = await findRow(user.id);
+    const base = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    profileAttempted = true;
+    if (existing) {
+      await putRow(existing, data);
+    } else {
+      const created = await write("POST", `${base}/api/learner-profiles`, {
+        ...data,
+        key: String(user.id),
+        user: self.documentId,
+      });
+      if (!created.ok) {
+        const raced = await findRow(user.id);
+        if (!raced) {
+          console.error("saveLearnerProfile failed:", created.status);
+          throw new SaveFailed();
+        }
+        await putRow(raced, data);
+      }
+    }
+
     if (!self.onboardedAt) {
       const url = await strapiEntryUrl("authorized-users", {
         documentId: self.documentId,
@@ -172,13 +196,10 @@ export async function saveLearnerProfile(
     revalidateTag(CACHE_TAGS.user(user.email));
     return { ok: true, error: null };
   } catch (error) {
-    if (error instanceof StrapiEntryNotFoundError) {
-      return { ok: false, error: "unknown_tag" };
-    }
     if (!(error instanceof SaveFailed)) {
       console.error("saveLearnerProfile failed:", (error as Error)?.name);
     }
-    if (profileWritten) revalidateTag(CACHE_TAGS.learnerProfile(user.id));
+    if (profileAttempted) revalidateTag(CACHE_TAGS.learnerProfile(user.id));
     return { ok: false, error: SAVE_FAILED };
   }
 }

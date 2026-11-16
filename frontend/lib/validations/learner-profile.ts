@@ -40,3 +40,14 @@ export const LearnerProfileInputSchema = z
       .optional(),
   })
   .strict() satisfies z.ZodType<LearnerProfileInput, z.ZodTypeDef, unknown>;
+
+// Type-level drift guards: the arrays and schema must match the types (no runtime cost).
+type _Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
+export type _DriftGuards = [
+  _Same<LearnerGoal, (typeof LEARNER_GOALS)[number]>,
+  _Same<FocusArea, (typeof FOCUS_AREAS)[number]>,
+  _Same<
+    keyof z.input<typeof LearnerProfileInputSchema>,
+    keyof LearnerProfileInput
+  >,
+];
