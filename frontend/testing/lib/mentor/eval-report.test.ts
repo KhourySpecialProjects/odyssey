@@ -293,9 +293,10 @@ describe("reportMarkdown", () => {
       [],
     );
     expect(report).toContain("## Summaries");
-    // The median of three is the middle one
+    // The median of three is the middle one; only 7 is over the cap of 5
+    expect(report).toContain("The cap is 5");
     expect(report).toContain(
-      "| haiku-low | 5 / 7 | 5 | 0% (0/3) | 0% (0/3) | 0% (0/3) |",
+      "| haiku-low | 5 / 7 | 33% (1/3) | 5 | 0% (0/3) | 0% (0/3) | 0% (0/3) |",
     );
     expect(report).toContain("Links outside summaries");
     expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(
