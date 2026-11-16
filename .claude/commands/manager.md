@@ -63,9 +63,14 @@ the manager's model. Instead:
 
 ## check
 
-1. **Read.** `slack_read_channel` on `C0CG95FFZ09` with `oldest` set to
-   `lastCheck`. Also read the threads of every request whose phase is
-   `asking`, `awaiting-approval` or `building`.
+1. **Read everything new, not just the message that woke you.** Several
+   messages often arrive together, and the owner often replies in a thread
+   after its summary was posted.
+   - `slack_read_channel` on `C0CG95FFZ09` with `oldest` set to `lastCheck`.
+   - Then read the thread of every request from the last 24 hours, `done`
+     ones included. Also read every top-level message whose latest reply is
+     newer than `lastCheck`.
+   - Act on each new message from the owner before saving state.
 2. **New request from the owner:** add it to state as `asking`, then triage
    (below).
 3. **Owner's reply in a tracked thread:**
@@ -157,7 +162,57 @@ the manager's model. Instead:
     not in the same tool block as another command. The repo hook blocks
     anything else.
   - Don't use `git stash`.
-  - End with the branch, commit SHA, check results and a PR body.
+  - Commit as the owner, so the work counts toward their GitHub
+    contributions:
+    `git -c user.name=<owner's git name> -c user.email=<owner's git email> commit -m "…"`,
+    with no Co-Authored-By or other trailers. Take the name and email from
+    the owner's local `git config user.name` and `user.email`. Cloud
+    sessions otherwise commit as `Claude <noreply@anthropic.com>`.
+  - End with the branch, commit SHA, check results and a review card (below).
+  - Also write the card to `review-cards/<branch-name-without-claude/>.md`
+    on a `claude/review-cards-<batch>` branch, so
+    `bash .claude/scripts/open-prs.sh` can open the PR with it as the body.
+- **The review card** is the PR body, and it does CodeRabbit's job (the free
+  plan is too limited). It starts with three lines the script reads:
+
+  - `title: <PR title> (ODY-<n>)`
+  - `risk: 🟢 skim | 🟡 test on dev | 🔴 careful`
+  - `kind: major | feature | bug | cleanup`
+
+  Then a `---` line, then the body. How long the body is depends on the kind:
+
+  - **`major`** is a new feature, or a revamp of a main flow (editing,
+    publishing, review, the learner path). The team reads these closely, so
+    the body has:
+    - _Walkthrough:_ 2–3 sentences, high level.
+    - _Changes:_ a "Layer / Files | Summary" table with 3–6 rows. Each row is
+      one step below the walkthrough.
+    - _How it flows:_ a Mermaid `sequenceDiagram` of the main path.
+    - Estimated review effort (1–5, in minutes), merge risk with its reason,
+      depends on, overlaps, and suggested reviewers (by area: Brady for
+      streaks, enrollment and header; Jaylen for Mentor, AI review and
+      ESLint; Awad for the rest).
+    - _How to test on dev:_ 3–6 steps.
+    - _Checklist._
+  - **`feature`, `bug` and `cleanup`** are minor. Bug fixes and small changes
+    that don't change a main flow aren't worth studying, so the body is:
+    - one plain sentence;
+    - a **Careful:** line when the risk is 🔴;
+    - one **Test on dev:** step;
+    - **Overlaps** and **Suggested reviewer**;
+    - the _Checklist_.
+  - The full format is in `.claude/scripts/review-card-brief.md`. To write
+    cards for branches that are already pushed, fill in its `{{BRANCHES}}`
+    (one `` `<name>` · <kind> `` line each), `{{GROUP}}` and `{{GROUP_LABEL}}`,
+    and paste it into a Sonnet run. Give the 5 or so majors a run of their own.
+  - _Checklist:_ tick only "added tests" (if tests changed) and the
+    `"use server"` box (if no such file changed, or every changed export is
+    guarded or allowlisted). The person opening the PR ticks the rest.
+  - Risk: 🔴 for a schema, auth, a `"use server"` export, env or secrets, or
+    a data migration or deletion. These also get an Opus review before the
+    owner sees them. 🟡 when a user sees or can do something different. 🟢
+    for lint, copy, tests, types, or dead code.
+
 - **Long reports get cut off.** `get_run_log` keeps about 4,000 characters of
   the final message, so a long deliverable (a plan or review) goes in a file
   the routine pushes on its `claude/` branch.
@@ -178,6 +233,15 @@ the manager's model. Instead:
     - **Running now:** `<n> <2–3 words> · <model> · <10-character bar> <pct>%`;
     - **Finished today:** `<n> · <minutes> min · <short SHA> <a few words>`;
   - below it, a `Ticket overview` table: Ticket, Type, Status, Review.
+- **One review queue.** A second canvas (its ID in state as `reviewQueue`)
+  lists every pushed branch without a merged PR. It's grouped Major → Minor
+  features → Bug fixes → Cleanup, 🔴 first in each group, in merge order.
+  Each ticket has its title, branch, and PR link once opened. A major also
+  gets its walkthrough and its "How to test on dev" steps as a checklist that
+  reviewers tick on dev. A minor gets its one sentence, its **Careful:** line
+  as a paragraph above the list, and one checkbox. Canvases turn a checkbox
+  into a plain bullet when it shares a list with a plain bullet. Add new cards
+  when a batch finishes. Drop a ticket once its PR merges.
 - **One summary post per batch.** When a batch is done and the canvas is up
   to date, post once in the request's thread (with `reply_broadcast`): what
   the owner should look at, and the context other developers need

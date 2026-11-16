@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "announcement_reads",
+  "info": {
+    "singularName": "announcement-read",
+    "pluralName": "announcement-reads",
+    "displayName": "Announcement Read",
+    "description": "One row per user per announcement they marked read (ODY-786)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "announcement": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::announcement.announcement",
+      "inversedBy": "reads"
+    },
+    "authorized_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    }
+  }
+}

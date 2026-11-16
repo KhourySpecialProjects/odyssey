@@ -15,7 +15,7 @@ import { RenderedContent } from "@/components/ui/rendered-content";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon, Sparkles } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
@@ -23,6 +23,9 @@ import posthog from "posthog-js";
 import { useMentorHint } from "@/hooks/use-mentor-hint";
 import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import { MentorHint } from "@/components/droplets/lessons/mentor/mentor-hint";
+import { MentorRating } from "@/components/droplets/lessons/mentor/mentor-rating";
+import { displayAnswer } from "@/lib/mentor/answer-text";
+import { trackMentor } from "@/lib/mentor/analytics";
 
 declare global {
   interface Window {
@@ -54,6 +57,8 @@ export function QuizQuestionBlock({
     (s) => s.mentorAvailable && s.ownerLessonId === lessonId,
   );
   const mentorHint = useMentorHint({ dropletId: dropletId ?? 0, lessonId });
+  // A finished hint waits here for the next Check Answer; Try Again keeps it
+  const hinted = useRef(false);
   const correctAnswers = useMemo(
     () => question.answerOptions.filter((option) => option.isCorrect),
     [question],
@@ -81,6 +86,10 @@ export function QuizQuestionBlock({
       }
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (mentorHint.hint?.status === "done") hinted.current = true;
+  }, [mentorHint.hint?.status]);
 
   // Load saved answer on mount
   useEffect(() => {
@@ -158,6 +167,16 @@ export function QuizQuestionBlock({
         });
       }
 
+      if (hinted.current && dropletId !== undefined) {
+        trackMentor("mentor_hint_next_try", {
+          droplet_id: dropletId,
+          lesson_id: lessonId,
+          question_id: question.id,
+          is_correct: isCorrect,
+        });
+      }
+      hinted.current = false;
+
       setShowResult(true);
     }
   }
@@ -192,9 +211,25 @@ export function QuizQuestionBlock({
   const hintBusy =
     hint !== null && (hint.status !== "error" || !hint.error?.retry);
 
-  function explain() {
-    if (hintBusy) return;
+  function request() {
+    if (hintBusy || dropletId === undefined) return;
     void mentorHint.explain(question.id, picked.map(Number));
+  }
+
+  // The events count one ask; the hint's own retry calls request() alone
+  function explain() {
+    if (hintBusy || dropletId === undefined) return;
+    trackMentor("mentor_explain_answer", {
+      droplet_id: dropletId,
+      lesson_id: lessonId,
+      question_id: question.id,
+    });
+    trackMentor("mentor_asked", {
+      kind: "quiz-hint",
+      droplet_id: dropletId,
+      lesson_id: lessonId,
+    });
+    request();
   }
 
   return (
@@ -370,7 +405,26 @@ export function QuizQuestionBlock({
           </form>
         </Form>
       )}
-      {answeredWrong && hint && <MentorHint hint={hint} onRetry={explain} />}
+      {answeredWrong && hint && (
+        <MentorHint hint={hint} onRetry={request}>
+          {dropletId !== undefined && (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <MentorRating
+                key={hint.id}
+                kind="quiz-hint"
+                dropletId={dropletId}
+                lessonId={lessonId}
+                questionId={question.id}
+                answerKey={hint.id}
+                citations={hint.citations}
+                answerText={displayAnswer(hint.text, {
+                  streaming: false,
+                }).trim()}
+              />
+            </div>
+          )}
+        </MentorHint>
+      )}
     </>
   );
 }

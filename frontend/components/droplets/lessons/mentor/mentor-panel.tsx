@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMentorChat } from "@/hooks/use-mentor-chat";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { answerNoteHtml, displayAnswer } from "@/lib/mentor/answer-text";
+import { trackMentor } from "@/lib/mentor/analytics";
 import { noteYFor, showCitation } from "@/lib/mentor/locate";
 import type { MentorMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
@@ -17,6 +18,7 @@ import {
 import type { Lesson } from "@/types";
 import { MentorSheet } from "./mentor-sheet";
 import { acceptNotice, noticeAccepted } from "./mentor-notice";
+import { createRatingStore, type MentorFeedback } from "./mentor-rating";
 
 const lessonRoot = () => document.querySelector(".lesson-wrapper");
 
@@ -50,8 +52,13 @@ export function MentorPanel({
 
   // A reopened sheet shouldn't replay the last announcement
   useEffect(() => {
-    if (open) setAnnouncement((a) => ({ n: a.n + 1, text: "" }));
-  }, [open]);
+    if (!open) return;
+    setAnnouncement((a) => ({ n: a.n + 1, text: "" }));
+    trackMentor("mentor_opened", {
+      droplet_id: dropletId,
+      lesson_id: lesson.id,
+    });
+  }, [open, dropletId, lesson.id]);
 
   useEffect(() => {
     abort.current = new AbortController();
@@ -99,11 +106,16 @@ export function MentorPanel({
       const shown = root
         ? await showCitation(root, citation, abort.current?.signal)
         : false;
+      trackMentor("mentor_source_clicked", {
+        droplet_id: dropletId,
+        lesson_id: lesson.id,
+        found: shown,
+      });
       if (!shown && !abort.current?.signal.aborted) {
         toast("Couldn't find that passage in the lesson.");
       }
     },
-    [wide, setPanel],
+    [wide, setPanel, dropletId, lesson.id],
   );
 
   const save = useCallback(
@@ -124,6 +136,10 @@ export function MentorPanel({
           answerNoteHtml(question?.text ?? "", message.text),
         );
         if (!result.success) throw new Error("not saved");
+        trackMentor("mentor_saved_to_notes", {
+          droplet_id: dropletId,
+          lesson_id: lesson.id,
+        });
         await onNoteSaved();
         // The toast sits outside the phone's modal sheet, where it can't be reached
         toast.success(
@@ -143,7 +159,30 @@ export function MentorPanel({
         return false;
       }
     },
-    [chat.messages, enrollmentId, lesson, userId, onNoteSaved, setPanel, wide],
+    [
+      chat.messages,
+      enrollmentId,
+      lesson,
+      userId,
+      onNoteSaved,
+      setPanel,
+      wide,
+      dropletId,
+    ],
+  );
+  // Ratings live here so they survive the sheet closing
+  const [ratings] = useState(createRatingStore);
+  const feedback = useMemo<MentorFeedback>(
+    () => ({
+      dropletId,
+      lessonId: lesson.id,
+      memory: ratings,
+      // The desktop sheet's toasts are reachable; only the modal one needs this
+      announce: wide
+        ? undefined
+        : (text) => setAnnouncement((a) => ({ n: a.n + 1, text })),
+    }),
+    [dropletId, lesson.id, wide, ratings],
   );
 
   return (
@@ -169,6 +208,7 @@ export function MentorPanel({
       onRetry={chat.retry}
       onShowSource={onShowSource}
       onSave={enrollmentId ? save : undefined}
+      feedback={feedback}
     />
   );
 }

@@ -619,6 +619,43 @@ export interface ApiAiScoringSettingAiScoringSetting
   };
 }
 
+export interface ApiAnnouncementReadAnnouncementRead
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'announcement_reads';
+  info: {
+    description: 'One row per user per announcement they marked read (ODY-786)';
+    displayName: 'Announcement Read';
+    pluralName: 'announcement-reads';
+    singularName: 'announcement-read';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    announcement: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::announcement.announcement'
+    >;
+    authorized_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiAnnouncementAnnouncement
   extends Struct.CollectionTypeSchema {
   collectionName: 'announcements';
@@ -660,6 +697,10 @@ export interface ApiAnnouncementAnnouncement
     playlist: Schema.Attribute.Relation<'manyToOne', 'api::playlist.playlist'>;
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
+    reads: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    >;
     reminderCount: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -1491,10 +1532,79 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorFeedbackMentorFeedback
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_feedbacks';
+  info: {
+    description: 'One row per rated Mentor answer. Text is stored only when the student shares it (ODY-890)';
+    displayName: 'Mentor Feedback';
+    pluralName: 'mentor-feedbacks';
+    singularName: 'mentor-feedback';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    answerKey: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    answerText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    citations: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain', 'quiz-hint']> &
+      Schema.Attribute.Required;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-feedback.mentor-feedback'
+    > &
+      Schema.Attribute.Private;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    questionId: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    questionText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    rating: Schema.Attribute.Enumeration<['up', 'down']> &
+      Schema.Attribute.Required;
+    shared: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
   collectionName: 'mentor_settings';
   info: {
-    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884)";
+    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890)";
     displayName: 'Mentor Settings';
     pluralName: 'mentor-settings';
     singularName: 'mentor-setting';
@@ -1533,6 +1643,8 @@ export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
       >;
     pilotGroups: Schema.Attribute.Relation<'manyToMany', 'api::group.group'>;
     publishedAt: Schema.Attribute.DateTime;
+    storeSharedAnswers: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2853,6 +2965,7 @@ declare module '@strapi/strapi' {
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::ai-scoring-run.ai-scoring-run': ApiAiScoringRunAiScoringRun;
       'api::ai-scoring-setting.ai-scoring-setting': ApiAiScoringSettingAiScoringSetting;
+      'api::announcement-read.announcement-read': ApiAnnouncementReadAnnouncementRead;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
@@ -2867,6 +2980,7 @@ declare module '@strapi/strapi' {
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
       'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;

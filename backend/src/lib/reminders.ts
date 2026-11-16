@@ -5,6 +5,7 @@ const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const USER_UID = 'api::authorized-user.authorized-user';
 const ENROLLMENT_UID = 'api::enrollment.enrollment';
 const DROPLET_UID = 'api::droplet.droplet';
+const READ_UID = 'api::announcement-read.announcement-read';
 
 /** Thrown with the HTTP status the controller should answer with. */
 export class ReminderError extends Error {
@@ -123,7 +124,6 @@ export async function raiseReminder(
     // A raise clears the snooze: it is null or already over by now.
     const data = {
       firstCreated: input.now,
-      readAt: null,
       reminderCount: input.count,
       reminderSnoozedUntil: null,
       content: input.content,
@@ -133,6 +133,10 @@ export async function raiseReminder(
         documentId: row.documentId,
         data,
       } as any);
+      // Back in Unread: read state is per user (ODY-786)
+      await strapi.db.query(READ_UID).deleteMany({
+        where: { announcement: row.id, authorized_user: input.userId },
+      });
       return { raised: true, id: row.id } as const;
     }
     const created = (await strapi.documents(ANNOUNCEMENT_UID).create({

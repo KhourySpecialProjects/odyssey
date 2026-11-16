@@ -5,7 +5,7 @@
     "singularName": "mentor-setting",
     "pluralName": "mentor-settings",
     "displayName": "Mentor Settings",
-    "description": "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884)"
+    "description": "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890)"
   },
   "options": {
     "draftAndPublish": false
@@ -31,6 +31,10 @@
       "type": "integer",
       "required": true,
       "min": 0
+    },
+    "storeSharedAnswers": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

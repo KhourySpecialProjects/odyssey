@@ -37,14 +37,8 @@ const sameRoles = (a: AnnouncementType[], b: AnnouncementType[]) =>
 
 const DEFAULT_ROLES = toFeedRoles(FILTER_VALUES);
 
-// Global broadcasts can't be marked read and aren't in the badge (ODY-943)
-const isBroadcast = (a?: Announcement) =>
-  a?.type === "system" && !a.authorized_user;
-
-// A rejected server action takes the same path as `{ ok: false }`.
 const safe = <T extends { ok: boolean }>(promise: Promise<T>) =>
   promise.catch(() => ({ ok: false as const, error: "network", data: null }));
-
 const paramsKey = (tab: Tab, page: number, roles: AnnouncementType[]) =>
   `${tab}|${page}|${roles.join(",")}`;
 
@@ -232,15 +226,11 @@ export function FeedClient({
 
   const updateReadState = async (
     id: number,
-    update: (id: number) => Promise<{ success: boolean }>,
+    update: (id: number) => Promise<{ success: boolean; error?: unknown }>,
     errorMessage: string,
   ) => {
     mutations.current += 1;
-    const delta = isBroadcast(announcements.find((a) => a.id === id))
-      ? 0
-      : tab === "unread"
-        ? -1
-        : 1;
+    const delta = tab === "unread" ? -1 : 1;
     useFeedUnreadStore.getState().adjustFeedCount(delta);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await update(id);
@@ -248,7 +238,11 @@ export function FeedClient({
       // After unmount the override is gone, so a rollback would recreate it wrongly
       if (mounted.current)
         useFeedUnreadStore.getState().adjustFeedCount(-delta);
-      toast.error(errorMessage);
+      toast.error(
+        typeof result.error === "string" && result.error
+          ? result.error
+          : errorMessage,
+      );
     }
     // Re-sync with the server: on success this quietly backfills the page;
     // on failure it restores the item behind the spinner.

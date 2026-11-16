@@ -39,6 +39,7 @@ api/
 ├── highlight/            Text selections within lessons (colored annotations)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
+├── mentor-feedback/      One rating per Mentor answer: ids-only citations, text only when shared (ODY-890)
 ├── mentor-setting/       Single type: Mentor's on/off switch, pilot groups, monthly cap and daily limit (ODY-884)
 ├── mentor-usage/         One row per Mentor answer: user, kind, model and tokens, never text (ODY-884)
 ├── overview-scan/        One saved run of the Final Overview Scan's checks on a droplet (ODY-787)
@@ -153,7 +154,7 @@ Group
 
 ### Other Key Types
 
-- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published, reminder. Relations to droplet, playlist, group, sender/receiver users. A `reminder` row (one per learner and droplet) also uses `reminderCount` (integer, min 0), `reminderSnoozedUntil` (datetime) and `reminderMutedUntil` (datetime); NULL means 0, no snooze, not muted (ODY-931).
+- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos, review_feedback, review_published, reminder. Relations to droplet, playlist, group, sender/receiver users. A `reminder` row (one per learner and droplet) also uses `reminderCount` (integer, min 0), `reminderSnoozedUntil` (datetime) and `reminderMuted` (boolean, default false); NULL means 0, no snooze, not muted (ODY-931). Read state is per user: one `announcement-read` row (announcement, authorized_user) per read mark (ODY-786); the old shared `readAt` is only a backfill source. `GET /api/announcements?unreadBy=<userId>` leaves out that user's read rows server-side; deleting a read mark also clears its row's leftover `readAt`.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
 - **Highlight** — A learner's highlight of one block's text: `color` (pink #f9a8d4, orange #fbd38d, yellow #fff300, green #86efac, blue #93c5fd), `text`, `position` (`{ start, end }` character offsets in the block's text) and `blockId`. A generic block's highlights use its id; other blocks' (callouts, expandables, code) use `blockNoteIdToNumber("<__component>:<id>")`, since Classic lessons' block ids are only unique within a type. A selection across blocks is saved as one highlight per block. `context` (`{ quote, prefix, suffix }`, ODY-198) lets the lesson viewer find a highlight again after the author edits the lesson (`frontend/lib/highlight-placement.ts`); one whose text was deleted is listed for the reader to move or remove, never dropped. Drawn by `HighlightLayer` (`components/droplets/lessons/highlight-layer.tsx`) and `lib/highlight-regions.ts`.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
@@ -336,6 +337,12 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   - **Read-only check:** it takes no lock and reserves nothing, so answers still streaming can carry a user past the daily limit, or Mentor past the monthly cap, by what is in flight. Answers cost cents, so the overshoot is accepted and bounded by the frontend's per-task burst guard. In return, the check has no side effects and a crashed stream leaves no orphan row.
   - **Record:** one row per answer, tokens only (a key such as `question` is a 400). A model with no price is still saved, with a `strapi.log.warn`, and is charged at the highest price. No transaction is opened, so a DB error is never swallowed.
 
+- **Mentor feedback (ODY-890):** `mentor-feedback` (collection, no core router) holds one rating per (user, `answerKey`); code in `src/lib/mentor-feedback.ts`, strict-body helpers shared via `src/lib/route-body.ts`. Citations are ids only. `answerText` and `questionText` are private and stored only when `shared` is true **and** `mentor-setting.storeSharedAnswers` is on (default off until ODY-883; null reads as off); unticking nulls both. The daily cap (`perUserDailyLimit`) applies to creates only.
+
+  | Route                               | Body                                                                                                                                             | 200 `data`         | Errors                                                      |
+  | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------------------- |
+  | `POST /api/mentor-feedbacks/record` | `{ userId, lessonId, dropletId, answerKey, kind, rating, shared, questionId?, citations?, answerText?, questionText?, promptVersion? }` (strict) | `{ id, canShare }` | 400 bad body, 403 sharing off, 404 unknown id, 429 cap, 500 |
+
 ### Streak day route (`custom-streak-day` controller, ODY-918)
 
 - **Type:** `streak-day` (collection, `draftAndPublish` off, read-only router: `find`): `key` = `<userId>:<date>` (unique index `streak_days_key_uq`), `user` (one-way manyToOne to `authorized-user`), `date` (the learner's local date), `lessonIds` (JSON: the lessons finished for the first time that day) and `revived` (ODY-920: a missed day the learner spent a revive on, with no lessons). One row per learner per day that counts toward their streak. Code in `src/lib/streak-days.ts`; tests in `tests/api/streak-day.test.js`.
@@ -387,13 +394,13 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 `POST /api/announcements/raise-reminder` (`src/lib/reminders.ts`, `custom-announcement` controller and route) records at most one reminder per learner per day. The rules live in Next (`frontend/lib/reminder-rules.ts`); Strapi only does check-and-set.
 
 - **Body:** `{ data: { userId, dropletId, now, dayStart, lastRaisedAt, count, content } }`, and no other keys (400 `Invalid key <k>`). `count` is 0 to 100; `content` is trimmed, 1 to 500 characters; `lastRaisedAt` is an ISO datetime or `null`.
-- **Answers:** 200 `{ data: { raised: true, id } }` or `{ data: { raised: false, reason } }` with reason `today` (any of the learner's reminders has `firstCreated >= dayStart`), `changed` (the row's `firstCreated` is not `lastRaisedAt`) or `declined` (muted or snoozed past `now`). 404 unknown user, 409 not enrolled, 500 `Failed to raise a reminder.`
-- **Lock and CAS:** one `strapi.db.transaction()` locks the learner's `authorized-user` row with `forUpdate`, finds the (user, droplet) reminder row, locks it by id with `forUpdate` and re-reads it, then checks the three conditions above. A concurrent ODY-932 snooze or mute write either commits first (the raise declines) or waits for the raise. A raise creates the row or re-raises it: `firstCreated = now`, `readAt = null`, `reminderCount = count`, `reminderSnoozedUntil = null`, and leaves `reminderMutedUntil` as it is. SQLite ignores `forUpdate`, so the tests check outcomes only.
-- **NULL:** rows predating the fields have NULL; treat it as 0, no snooze, not muted.
+- **Answers:** 200 `{ data: { raised: true, id } }` or `{ data: { raised: false, reason } }` with reason `today` (any of the learner's reminders has `firstCreated >= dayStart`), `changed` (the row's `firstCreated` is not `lastRaisedAt`) or `declined` (muted, or snoozed past `now`). 404 unknown user, 409 not enrolled, 500 `Failed to raise a reminder.`
+- **Lock and CAS:** one `strapi.db.transaction()` locks the learner's `authorized-user` row with `forUpdate`, finds the (user, droplet) reminder row, locks it by id with `forUpdate` and re-reads it, then checks the three conditions above. A concurrent ODY-932 snooze or mute write either commits first (the raise declines) or waits for the raise. A raise creates the row or re-raises it: `firstCreated = now`, `reminderCount = count`, `reminderSnoozedUntil = null`, and the learner's `announcement-read` rows for it are deleted (back in Unread; ODY-786). SQLite ignores `forUpdate`, so the tests check outcomes only.
+- **NULL:** rows predating the fields have NULL; treat it as 0 or false.
 
 **Contract for ODY-932** (Remind me later, Stop reminding me, Undo):
 
-- Never delete reminder rows. Clear one by setting `readAt`; deleting loses the count and the mute.
+- Never delete reminder rows. Clear one by marking it read (an `announcement-read` row); deleting loses the count and the mute.
 - Snooze and mute never change `firstCreated` (it drives the 7-day gap, the "today" check and the feed sort).
 - An ODY-932 write must not lock the learner's `authorized-user` row, or must lock it before the reminder row: the raise locks the user row then the reminder row, so the reverse order can deadlock and the raise returns 500.
 - Mute lasts until `reminderMutedUntil` (30 days, `REMINDER_RULES.muteDays`) or Undo, even after progress. When it ends, the rules count it as progress (fresh count); it is not an ended snooze.

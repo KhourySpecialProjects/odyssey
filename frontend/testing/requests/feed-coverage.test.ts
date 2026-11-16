@@ -17,9 +17,12 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { strapiEntryUrl } from "@/lib/strapi-document-id";
-import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
+import { getCachedUserSocial } from "@/lib/requests/cached";
+import {
+  mockGlobalFetch,
+  makeEmptyResponse,
+  makeFetchResponse,
+} from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -38,8 +41,9 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
+  getCachedUserSocial: jest.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -264,141 +268,150 @@ describe("fetchUserAnnouncements", () => {
 });
 
 // ---------------------------------------------------------------------------
-// markAnnouncementRead / markAnnouncementUnread — invalidation scope
+// markAnnouncementRead / markAnnouncementUnread — per-user read state (ODY-786)
 // ---------------------------------------------------------------------------
 
-describe("announcement read state invalidation", () => {
+describe("announcement read state", () => {
   let fetchMock: jest.MockedFunction<typeof fetch>;
-
-  function mockOwnedAnnouncement(type: string, ownerId = 5) {
-    // The ownership check filters the list endpoint by id, so it returns an array.
-    jest.mocked(fetchAPI).mockResolvedValueOnce([
-      {
-        id: 11,
-        documentId: "doc11",
-        type,
-        authorized_user: { id: ownerId },
-      },
-    ]);
-  }
+  let visible: { id: number; documentId: string }[];
+  let existingReads: { id: number; documentId: string }[];
 
   beforeEach(() => {
     jest.clearAllMocks();
     fetchMock = mockGlobalFetch();
-    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 11 } }));
+    fetchMock.mockResolvedValue(makeFetchResponse({ data: { id: 1 } }));
     jest.spyOn(console, "error").mockImplementation(() => {});
+    visible = [{ id: 11, documentId: "doc11" }];
+    existingReads = [];
     jest
       .mocked(getCurrentUser)
-      .mockResolvedValue({ email: "owner@test.com" } as never);
-    jest.mocked(getAuthorizedUserByEmail).mockResolvedValue({ id: 5 } as never);
+      .mockResolvedValue({ id: 5, email: "me@test.com" } as never);
+    jest
+      .mocked(getCachedUserSocial)
+      .mockResolvedValue({ friendships: [] } as never);
+    jest.mocked(fetchAPI).mockImplementation((async (path: string) => {
+      if (path === "/announcements") return visible;
+      if (path === "/announcement-reads") return existingReads;
+      return [];
+    }) as never);
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it("marking a targeted system announcement read only revalidates the owner's feed", async () => {
-    mockOwnedAnnouncement("system");
-
-    const result = await markAnnouncementRead(11);
-
-    expect(result).toEqual({ success: true });
-    expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
-  });
-
-  it.each([
-    ["read", markAnnouncementRead],
-    ["unread", markAnnouncementUnread],
-  ])(
-    "marking a reminder %s only revalidates the owner's feed",
-    async (_, mark) => {
-      mockOwnedAnnouncement("reminder");
-
-      await mark(11);
-
-      expect(revalidateTag).toHaveBeenCalledTimes(1);
-      expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-    },
-  );
-
-  it("marking a targeted system announcement unread only revalidates the owner's feed", async () => {
-    mockOwnedAnnouncement("system");
-
-    const result = await markAnnouncementUnread(11);
-
-    expect(result).toEqual({ success: true });
-    expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-  });
-
-  it("friend announcements still sweep globally (they appear in friends' feeds)", async () => {
-    mockOwnedAnnouncement("friend");
-
-    await markAnnouncementRead(11);
-
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.announcements);
-    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-  });
-
-  it("requests the announcement type in the ownership check", async () => {
-    mockOwnedAnnouncement("system");
-
-    await markAnnouncementRead(11);
-
-    expect(fetchAPI).toHaveBeenCalledWith(
-      "/announcements",
-      expect.objectContaining({
-        urlParams: expect.objectContaining({
-          filters: { id: { $eq: 11 } },
-          fields: ["id", "type"],
-        }),
-      }),
-    );
-  });
-
-  it("writes to the announcement's documentId taken from the ownership check, without a lookup", async () => {
-    mockOwnedAnnouncement("system");
+  const lookup = () =>
     jest
-      .mocked(strapiEntryUrl)
-      .mockImplementationOnce(
-        async (collection, ref) =>
-          `http://x/api/${collection}/${(ref as { documentId: string }).documentId}`,
-      );
+      .mocked(fetchAPI)
+      .mock.calls.find(([path]) => path === "/announcements")![1] as {
+      urlParams: { filters: unknown };
+    };
 
-    await markAnnouncementRead(11);
+  // Every card goes through the same visibility check; the row written never
+  // depends on who authored the card.
+  it("marks an announcement read for the viewer only", async () => {
+    const result = await markAnnouncementRead(11);
 
-    expect(strapiEntryUrl).toHaveBeenCalledWith("announcements", {
-      id: 11,
-      documentId: "doc11",
+    expect(result).toEqual({ success: true });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/announcement-reads");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(init?.body as string)).toEqual({
+      data: { announcement: "doc11", authorized_user: "doc5" },
     });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://x/api/announcements/doc11",
-      expect.objectContaining({ method: "PUT" }),
-    );
+    // The shared announcement row is never written
+    expect(
+      fetchMock.mock.calls.some(([u]) => `${u}`.includes("/announcements")),
+    ).toBe(false);
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
   });
 
-  it("reports a missing announcement instead of throwing", async () => {
-    jest.mocked(fetchAPI).mockResolvedValueOnce([]);
+  it("checks the announcement is in the viewer's feed, not that they own it", async () => {
+    await markAnnouncementRead(11);
+
+    const filters = JSON.stringify(lookup().urlParams.filters);
+    expect(filters).toContain('{"id":{"$eq":11}}');
+    // Broadcast and targeted system rows, and review outcomes, are in the $or
+    expect(filters).toContain('"type":"system"');
+    expect(filters).toContain('{"authorized_user":{"id":{"$null":true}}}');
+    expect(filters).toContain('"review_feedback"');
+    expect(filters).toContain('"type":"reminder"');
+  });
+
+  it("does not let a viewer mark an announcement outside their feed", async () => {
+    visible = [];
 
     const result = await markAnnouncementRead(11);
 
-    expect(result).toEqual({
-      success: false,
-      error: "Announcement not found",
-    });
+    expect(result).toEqual({ success: false, error: "Announcement not found" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it("does not revalidate when the caller doesn't own the announcement", async () => {
-    mockOwnedAnnouncement("system", 99);
+  it("rejects a caller without a session", async () => {
+    jest.mocked(getCurrentUser).mockResolvedValue(undefined as never);
 
     const result = await markAnnouncementRead(11);
 
-    expect(result).toEqual({ success: false, error: "Not authorized" });
+    expect(result).toEqual({ success: false, error: "Not authenticated" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("looks up and writes only the viewer's own read rows", async () => {
+    existingReads = [{ id: 70, documentId: "doc70" }];
+    fetchMock.mockResolvedValue(makeEmptyResponse(204));
+
+    await markAnnouncementUnread(11);
+
+    const readsCall = jest
+      .mocked(fetchAPI)
+      .mock.calls.find(([path]) => path === "/announcement-reads")![1] as {
+      urlParams: { filters: unknown };
+    };
+    expect(readsCall.urlParams.filters).toEqual({
+      announcement: { id: { $eq: 11 } },
+      authorized_user: { id: { $eq: 5 } },
+    });
+  });
+
+  it("does not add a second read row when already read", async () => {
+    existingReads = [{ id: 70, documentId: "doc70" }];
+
+    const result = await markAnnouncementRead(11);
+
+    expect(result).toEqual({ success: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("marks unread by deleting the viewer's read row", async () => {
+    existingReads = [{ id: 70, documentId: "doc70" }];
+    fetchMock.mockResolvedValue(makeEmptyResponse(204));
+
+    const result = await markAnnouncementUnread(11);
+
+    expect(result).toEqual({ success: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/announcement-reads/doc70");
+    expect(init?.method).toBe("DELETE");
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
+    expect(revalidateTag).not.toHaveBeenCalledWith(CACHE_TAGS.announcements);
+  });
+
+  it("marking unread with nothing to remove succeeds without a write", async () => {
+    const result = await markAnnouncementUnread(11);
+
+    expect(result).toEqual({ success: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns a readable error and skips revalidation when Strapi rejects the write", async () => {
+    fetchMock.mockResolvedValue(makeFetchResponse({}, 500));
+
+    const result = await markAnnouncementRead(11);
+
+    expect(result).toEqual({ success: false, error: "Failed to mark as read" });
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

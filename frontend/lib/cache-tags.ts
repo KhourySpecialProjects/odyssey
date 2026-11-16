@@ -80,11 +80,9 @@
  *                   createPlaylistAnnouncement, createGroupAnnouncement,
  *                   createDropletAnnouncement, createSystemAnnouncement,
  *                   createSystemBroadcast, sendFeedback,
- *                   publishWithReview, markAnnouncementRead/Unread
- *                   (friend/kudos only — those rows show in friends' feeds)
+ *                   publishWithReview
  *                 ↳ Per-user tag "user-feed-{userId}" (fetchAnnouncements):
- *                   markAnnouncementRead/Unread on a targeted system
- *                   announcement (only its owner's feed can contain it)
+ *                   markAnnouncementRead/Unread (read state is per user)
  * tags           createNewTag                                              3600s
  * due-dates       assignDropletDueDate, assignPlaylistDueDate,              900s
  *                 updateGroup, updateGroupMembers, deleteGroup,
@@ -162,6 +160,12 @@
  * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
  *                 learner's streak days); invalidated by recordStreakDay,
  *                 which updateViewedLessons calls on a lesson's first view
+ * recommendations Per-user tag "recommendations-{userId}": first read by      900s
+ *                 getRecommendations in ODY-957, only on per-student
+ *                 queries (never a shared URL). Invalidated by
+ *                 dismissRecommendation (ODY-954), the enrollments-{userId}
+ *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
+ *                 reads only "droplets".
  */
 
 export const CACHE_TAGS = {
@@ -203,6 +207,7 @@ export const CACHE_TAGS = {
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
+  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores

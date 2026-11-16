@@ -26,10 +26,12 @@ const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+const ANNOUNCEMENT_READ_UID = 'api::announcement-read.announcement-read';
 const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-dismissal';
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
+const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
@@ -39,6 +41,14 @@ const mentorUsageData = (overrides = {}) => ({
   model: 'claude-sonnet-5-5',
   inputTokens: 0,
   outputTokens: 0,
+  ...overrides,
+});
+
+const mentorFeedbackData = (overrides = {}) => ({
+  answerKey: unique('answer'),
+  kind: 'lesson',
+  rating: 'up',
+  shared: false,
   ...overrides,
 });
 
@@ -174,13 +184,16 @@ module.exports = {
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
+  ANNOUNCEMENT_READ_UID,
   OVERVIEW_SCAN_UID,
   OVERVIEW_SCAN_DISMISSAL_UID,
   MENTOR_USAGE_UID,
   MENTOR_SETTING_UID,
   STREAK_DAY_UID,
+  MENTOR_FEEDBACK_UID,
   GROUP_UID,
   mentorUsageData,
+  mentorFeedbackData,
   groupData,
   overviewScanData,
   dismissalData,

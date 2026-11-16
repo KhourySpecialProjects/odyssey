@@ -152,8 +152,9 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements();
 
-      // fetchAPI called 3 times for pre-compute
+      // 3 pre-compute lookups; Strapi drops the user's read rows (unreadBy)
       expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(global.fetch.mock.calls[0][0]).toContain("unreadBy=5");
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
@@ -202,7 +203,9 @@ describe("Feed tests", () => {
       expect(url).toContain("[authorized_user][id][$eq]=5");
       expect(url).toContain("[type][$in][0]=friend");
       expect(url).toContain("[type][$in][1]=system");
-      expect(url).toContain("[readAt][$notNull]=true");
+      expect(url).toContain("[reads][authorized_user][id][$eq]=5");
+      expect(url).not.toContain("readAt");
+      expect(url).not.toContain("unreadBy");
       expect(url).toContain("pagination[page]=2");
     });
 
@@ -504,7 +507,7 @@ describe("Feed tests", () => {
       mockCountApi(7);
 
       await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
-      expect(countQuery()).toContain("[readAt][$null]=true");
+      expect(countQuery()).not.toContain("readAt");
     });
 
     function setupCount(total = 3) {
@@ -523,9 +526,9 @@ describe("Feed tests", () => {
       setupCount();
       await getUnreadAnnouncementCount();
       const url = countQuery();
-      expect(url).toContain("[$and][2][type][$in][0]=droplet");
-      expect(url).toContain("[$and][2][type][$in][6]=reminder");
-      expect(url).not.toContain("[$and][2][type][$in][7]");
+      expect(url).toContain("[$and][1][type][$in][0]=droplet");
+      expect(url).toContain("[$and][1][type][$in][6]=reminder");
+      expect(url).not.toContain("[$and][1][type][$in][7]");
     });
 
     // Minimal Strapi filter matcher over qs-parsed filters (values are strings)
@@ -551,31 +554,15 @@ describe("Feed tests", () => {
     }
 
     it.each([
-      ["a reminder", true, { type: "reminder", authorized_user: { id: 5 } }],
-      [
-        "a targeted system row",
-        true,
-        { type: "system", authorized_user: { id: 5 } },
-      ],
-      ["a global broadcast", false, { type: "system", authorized_user: null }],
-      [
-        "a group row",
-        false,
-        { type: "group", group: { id: 1 }, authorized_user: null },
-      ],
-      [
-        "a playlist row",
-        false,
-        { type: "playlist", playlist: { id: 2 }, authorized_user: null },
-      ],
-      [
-        "a droplet row",
-        false,
-        { type: "droplet", droplet: { id: 3 }, authorized_user: null },
-      ],
-      ["a friend row", false, { type: "friend", authorized_user: { id: 77 } }],
-      ["a kudos row", false, { type: "kudos", authorized_user: { id: 77 } }],
-    ])("%s is in the feed and counted=%s", async (_n, counted, row) => {
+      ["a reminder", { type: "reminder", authorized_user: { id: 5 } }],
+      ["a targeted system row", { type: "system", authorized_user: { id: 5 } }],
+      ["a global broadcast", { type: "system", authorized_user: null }],
+      ["a group row", { type: "group", group: { id: 1 } }],
+      ["a playlist row", { type: "playlist", playlist: { id: 2 } }],
+      ["a droplet row", { type: "droplet", droplet: { id: 3 } }],
+      ["a friend row", { type: "friend", authorized_user: { id: 77 } }],
+      ["a kudos row", { type: "kudos", authorized_user: { id: 77 } }],
+    ])("%s is in the feed and in the count", async (_n, row) => {
       const { getCurrentUser } = require("../../lib/auth/session");
       const { getCachedUserSocial } = require("../../lib/requests/cached");
       const { fetchAPI } = require("../../lib/utils");
@@ -601,17 +588,16 @@ describe("Feed tests", () => {
         global.fetch.mock.calls[0][0].split("?")[1],
         { depth: 20 },
       ).filters;
-      const unread = { ...row, readAt: null };
-      expect(matches(unread, feedFilters)).toBe(true);
-      expect(matches(unread, countFilters())).toBe(counted);
+      expect(matches(row, feedFilters)).toBe(true);
+      expect(matches(row, countFilters())).toBe(true);
     });
 
     it("counts the given filter selection", async () => {
       setupCount();
       await getUnreadAnnouncementCount(["kudos", 4]);
       const url = countQuery();
-      expect(url).toContain("[$and][2][type][$in][0]=kudos");
-      expect(url).not.toContain("[$and][2][type][$in][1]");
+      expect(url).toContain("[$and][1][type][$in][0]=kudos");
+      expect(url).not.toContain("[$and][1][type][$in][1]");
     });
 
     it("is 0 with no types selected, without querying", async () => {
@@ -643,26 +629,20 @@ describe("Feed tests", () => {
     it.each([
       ["default roles", undefined],
       ["a filtered set", ["kudos", "friend"]],
-    ])(
-      "uses the feed's filters for %s, plus owner = viewer",
-      async (_n, roles) => {
-        const filtersOf = (u) =>
-          require("qs").parse(u.split("?")[1], { depth: 20 }).filters;
-        const {
-          toFeedRoles,
-          FILTER_VALUES,
-        } = require("../../components/feed/feed-filter-params");
-        setupCount();
-        await getUnreadAnnouncementCount(roles);
-        await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES));
-        const count = countFilters().$and;
-        const feed = filtersOf(global.fetch.mock.calls[0][0]).$and;
-        expect(count).toEqual([
-          ...feed,
-          { authorized_user: { id: { $eq: "5" } } },
-        ]);
-      },
-    );
+    ])("uses exactly the feed's filters for %s", async (_n, roles) => {
+      const filtersOf = (u) =>
+        require("qs").parse(u.split("?")[1], { depth: 20 }).filters;
+      const {
+        toFeedRoles,
+        FILTER_VALUES,
+      } = require("../../components/feed/feed-filter-params");
+      setupCount();
+      await getUnreadAnnouncementCount(roles);
+      await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES));
+      const count = countFilters().$and;
+      const feed = filtersOf(global.fetch.mock.calls[0][0]).$and;
+      expect(count).toEqual(feed);
+    });
 
     it("returns null, not 0, when the fetch fails", async () => {
       setupCount();
@@ -678,6 +658,17 @@ describe("Feed tests", () => {
       await fetchAnnouncements(1, ["system"]);
       const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
       expect(url).toContain("[authorized_user][id][$null]=true");
+    });
+
+    it("leaves out only this user's reads, through unreadBy, like the Unread tab", async () => {
+      setupCount();
+      await getUnreadAnnouncementCount();
+      expect(countCall()[1].urlParams.unreadBy).toBe(5);
+      expect(
+        require("../../lib/utils").fetchAPI.mock.calls.some(
+          ([path]) => path === "/announcement-reads",
+        ),
+      ).toBe(false);
     });
   });
 

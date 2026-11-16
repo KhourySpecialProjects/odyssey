@@ -277,7 +277,7 @@ describe("Explain my answer", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("fires only the existing PostHog event", async () => {
+  it("fires the quiz event, then only Mentor's Explain events (ODY-890)", async () => {
     fetchMock.mockImplementation(async (_url, init) =>
       mentorSseResponse([mentorText("Hint."), mentorDone()], {
         signal: init.signal,
@@ -288,6 +288,10 @@ describe("Explain my answer", () => {
     await user.click(explainButton()!);
     await screen.findByRole("region", { name: "Mentor hint" });
     const names = (posthog.capture as jest.Mock).mock.calls.map((c) => c[0]);
-    expect(names).toEqual(["quiz_answer_submitted"]);
+    expect(names).toEqual([
+      "quiz_answer_submitted",
+      "mentor_explain_answer",
+      "mentor_asked",
+    ]);
   });
 });
