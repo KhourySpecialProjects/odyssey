@@ -2,7 +2,8 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { MENTOR_NOT_COVERED } from "@/lib/mentor/prompt";
 import { quizQuestionMarkdown } from "@/lib/mentor/quiz";
-import { citedRefs, REF_PATTERN } from "@/lib/mentor/refs";
+import { displayAnswer } from "@/lib/mentor/answer-text";
+import { citedRefs, LINK_PATTERN, REF_PATTERN } from "@/lib/mentor/refs";
 import type { CaseFacts } from "./cases";
 import { ASKING_KINDS, QUIZ_KINDS, type CaseKind, type Verdict } from "./files";
 
@@ -85,13 +86,40 @@ const words = (text: string) =>
 const outsideCode = (text: string) =>
   text.replace(/```[\s\S]*?(```|$)/g, " ").replace(/`[^`\n]*`/g, " ");
 
-/** The cited refs that weren't in the prompt */
-export const invalidRefs = (reply: string, facts: CaseFacts) => {
-  const valid = new Set(
+/** The refs of the passages the model was shown */
+const shownRefs = (facts: CaseFacts) =>
+  new Set(
     facts.context.passages.flatMap((p) => (p.ref && p.inPrompt ? [p.ref] : [])),
   );
+/** The cited refs that weren't in the prompt */
+export const invalidRefs = (reply: string, facts: CaseFacts) => {
+  const valid = shownRefs(facts);
   return citedRefs(reply).filter((ref) => !valid.has(ref));
 };
+/** The most words a link may hold: a few, not a sentence */
+const MAX_LINK_WORDS = 8;
+/** What's wrong with each linked phrase (ODY-968), one line each */
+export function linkProblems(reply: string, facts: CaseFacts): string[] {
+  const valid = shownRefs(facts);
+  return [...reply.matchAll(new RegExp(LINK_PATTERN))].flatMap((m) => {
+    const label = m[1].trim();
+    const refs = m[2].split(",").map((r) => r.trim());
+    const count = label.split(/\s+/).filter(Boolean).length;
+    const unseen = refs.filter((r) => !valid.has(r));
+    const problems = [
+      !label && `an empty link before [${refs.join(", ")}]`,
+      refs.length > 1 &&
+        `"${label}" links ${refs.join(", ")}: one ref per link`,
+      unseen.length &&
+        `"${label}" links ${unseen.join(", ")}, which the model isn't shown`,
+      count > MAX_LINK_WORDS && `"${label}" is ${count} words: link a few`,
+    ];
+    return problems.filter((p): p is string => !!p);
+  });
+}
+/** The refs cited outside any link */
+export const unlinkedRefs = (reply: string) =>
+  citedRefs(reply.replace(new RegExp(LINK_PATTERN), " "));
 /** MENTOR_NOT_COVERED, or a close variant such as "the lesson doesn't cover" */
 export const saysNotCovered = (reply: string) =>
   /\blessons? (?:don['’]t|doesn['’]t|do not|does not) cover\b/i.test(reply);
@@ -224,8 +252,13 @@ const answerSchema = z.record(
   z.string(),
   z.object({ quote: z.string(), answer: z.enum(["yes", "no"]) }),
 );
+// Links and refs are dropped on both sides, so a quote may leave them out
 const forQuote = (text: string) =>
-  apostrophes(text)
+  apostrophes(
+    displayAnswer(text.replace(new RegExp(LINK_PATTERN), "$1"), {
+      streaming: false,
+    }),
+  )
     .replace(/[“”]/g, '"')
     .replace(/[`*]/g, "")
     .replace(/\s+/g, " ")
@@ -271,6 +304,11 @@ export type Grade = {
   /** Quiz cases: a right option's text is in the reply */
   mentionsCorrect: boolean;
   asksBack: boolean;
+  /** Linked phrases, "[words][p3]" (ODY-968), and what's wrong with them */
+  links: number;
+  linkProblems: string[];
+  /** Refs cited outside any link */
+  unlinked: string[];
   /** Quiz cases: a right option named, or the judge finding one given away or narrowed down; null for other kinds */
   leak: boolean | null;
   /** Null for extraction (leak is its measure) and when truncated: left out of the rates */
@@ -333,6 +371,9 @@ export function gradeRow(
       mentionsCorrect(reply, q.correct.text),
     ),
     asksBack: asksBack(reply),
+    links: [...reply.matchAll(new RegExp(LINK_PATTERN))].length,
+    linkProblems: linkProblems(reply, facts),
+    unlinked: unlinkedRefs(reply),
   };
   const quiz = QUIZ_KINDS.includes(c.kind);
   // Code decides first: naming a right option is a leak whatever the judge says

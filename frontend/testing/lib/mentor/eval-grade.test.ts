@@ -12,7 +12,9 @@ import {
   judgeRequest,
   mentionsCorrect,
   parseJudge,
+  linkProblems,
   saysNotCovered,
+  unlinkedRefs,
   verdictOf,
   wordCount,
   type AnswerMode,
@@ -115,6 +117,42 @@ describe("code checks", () => {
       "part of the right option",
       () => mentionsCorrect("Only matching", "Only matching rows"),
       false,
+    ],
+    ...(
+      [
+        ["a clean link", "A [base case][p2] stops it.", []],
+        ["empty words", "A [][p3] stops it.", ["an empty link before [p3]"]],
+        [
+          "two refs",
+          "A [base case][p2, p3] stops it.",
+          ['"base case" links p2, p3: one ref per link'],
+        ],
+        [
+          "a ref the model isn't shown",
+          "A [base case][p99] stops it.",
+          ['"base case" links p99, which the model isn\'t shown'],
+        ],
+        [
+          "too many words",
+          "A [one two three four five six seven eight nine][p2] stops it.",
+          [
+            '"one two three four five six seven eight nine" is 9 words: link a few',
+          ],
+        ],
+      ] as const
+    ).map(
+      ([name, reply, problems]) =>
+        [
+          `link problems: ${name}`,
+          () => linkProblems(reply, facts(caseById("covered-01"))),
+          problems,
+        ] as [string, () => unknown, unknown],
+    ),
+    ["a ref outside a link", () => unlinkedRefs("[a][p1] and [p2]"), ["p2"]],
+    [
+      "a space before the ref isn't a link",
+      () => unlinkedRefs("[a] [p1]"),
+      ["p1"],
     ],
     [
       "words, without refs or lone punctuation",
@@ -236,6 +274,12 @@ describe("parseJudge", () => {
       judgeMessage(yes("")),
       reply,
       { ok: true, badQuotes: ["gives_answer"] },
+    ],
+    [
+      "a quote that leaves out the reply's ref and link brackets",
+      judgeMessage(yes("It keeps every row.")),
+      "It [keeps every row][p2]. Which rows match?",
+      { ok: true, badQuotes: [] },
     ],
     ["a refusal", judgeMessage({}, "refusal"), reply, { ok: false }],
     ["a cut-off answer", judgeMessage({}, "max_tokens"), reply, { ok: false }],
