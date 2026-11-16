@@ -473,6 +473,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
+  recommendations: "@/lib/requests/recommendations",
   reviews: "@/lib/requests/reviews",
   reminders: "@/lib/requests/reminders",
   streaks: "@/lib/requests/streaks",
@@ -935,6 +936,20 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       "getScanDismissals",
       (m) => m.getScanDismissals(1),
       OVERVIEW_SCAN_ROUTES,
+    ),
+  ]),
+  recommendations: defineModule<
+    typeof import("@/lib/requests/recommendations")
+  >([
+    call(
+      "getMyRecommendations",
+      (m) =>
+        m.getMyRecommendations({
+          surface: "activity",
+          limit: 3,
+          excludeDropletIds: [7],
+        }),
+      routes([ME_ROUTE]),
     ),
   ]),
   streaks: defineModule<typeof import("@/lib/requests/streaks")>([
