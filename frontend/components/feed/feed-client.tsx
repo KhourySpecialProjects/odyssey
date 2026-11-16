@@ -275,6 +275,8 @@ export function FeedClient({
     focusAfterRemoval.current =
       (card?.nextElementSibling as HTMLElement | null) ?? "list";
     useFeedUnreadStore.getState().adjustFeedCount(-1);
+    const index = announcements.findIndex((a) => a.id === id);
+    const removed = announcements[index];
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result =
       choice === "stop"
@@ -299,10 +301,18 @@ export function FeedClient({
         },
       );
     } else {
-      useFeedUnreadStore.getState().adjustFeedCount(1);
+      if (mounted.current) useFeedUnreadStore.getState().adjustFeedCount(1);
+      // Put the card back so it stays visible if the refetch fails
+      if (removed) {
+        setAnnouncements((prev) =>
+          prev.some((a) => a.id === id)
+            ? prev
+            : [...prev.slice(0, index), removed, ...prev.slice(index)],
+        );
+      }
       toast.error("Couldn't update this reminder");
     }
-    setRefresh((r) => ({ key: r.key + 1, silent: result.ok }));
+    setRefresh((r) => ({ key: r.key + 1, silent: true }));
   };
 
   const tabButtonClass = (active: boolean) =>

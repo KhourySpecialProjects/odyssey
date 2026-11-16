@@ -106,19 +106,24 @@ export async function raiseReminder(
       return { raised: false, reason: 'declined' } as const;
     }
 
-    const enrollment = await strapi.documents(ENROLLMENT_UID).findFirst({
+    const enrollment = (await strapi.documents(ENROLLMENT_UID).findFirst({
       filters: {
         authorizedUser: { id: input.userId },
         droplet: { id: input.dropletId },
       },
-      fields: ['id'],
-    } as any);
+      fields: ['id', 'lastProgressDate'],
+    } as any)) as Row | null;
     const droplet = (await strapi.documents(DROPLET_UID).findFirst({
       filters: { id: input.dropletId },
       fields: ['id'],
     } as any)) as Row | null;
     if (!enrollment || !droplet) {
       throw new ReminderError(409, 'Not enrolled in this droplet');
+    }
+    // Progress after the caller decided has cleared (or will clear) the row.
+    const progressAt = time(enrollment.lastProgressDate);
+    if (progressAt !== null && progressAt > now) {
+      return { raised: false, reason: 'changed' } as const;
     }
 
     // A raise clears the snooze: it is null or already over by now.

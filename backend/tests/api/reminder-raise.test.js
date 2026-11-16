@@ -200,6 +200,33 @@ describe('POST /announcements/raise-reminder', () => {
     expect(row.reminderCount).toBe(2);
   });
 
+  it.each([
+    ['after now: declines as changed and keeps the read state', '2026-11-13T09:00:00.000Z', false],
+    ['before now: still raises', '2026-11-13T08:00:00.000Z', true],
+  ])('with lastProgressDate %s', async (_label, progressAt, raised) => {
+    const first = await raise(valid());
+    const reads = { announcement: first.body.data.id, authorized_user: user.id };
+    await strapi.db.query(ANNOUNCEMENT_READ_UID).create({ data: reads });
+    await strapi.db
+      .query(ENROLLMENT_UID)
+      .updateMany({ where: {}, data: { lastProgressDate: new Date(progressAt) } });
+    const res = await raise(
+      valid({
+        now: '2026-11-13T08:30:00.000Z',
+        dayStart: '2026-11-13T05:00:00.000Z',
+        lastRaisedAt: NOW,
+        count: 2,
+      })
+    );
+
+    expect(res.body.data.raised).toBe(raised);
+    if (!raised) expect(res.body.data.reason).toBe('changed');
+    expect(await strapi.db.query(ANNOUNCEMENT_READ_UID).count({ where: reads })).toBe(
+      raised ? 0 : 1
+    );
+    expect((await rows())[0].reminderCount).toBe(raised ? 2 : 1);
+  });
+
   it('answers 409 when the learner is not enrolled', async () => {
     const res = await raise(valid({ userId: other.id }));
 

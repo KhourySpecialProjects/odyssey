@@ -23,6 +23,7 @@ import {
 import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
 import { useStreakStore } from "@/stores/streak-store";
+import { makeReminderAnnouncement } from "@/testing/mocks/reminderMock";
 import { makeStreak } from "@/testing/mocks/streakMock";
 
 jest.mock("@/lib/requests/feed", () => ({
@@ -841,20 +842,7 @@ describe("FeedClient", () => {
       const promise = new Promise<T>((r) => (resolve = r));
       return { promise, resolve };
     };
-    const reminderCard = (id = 7) =>
-      ({
-        id,
-        type: "reminder",
-        content: "x",
-        firstCreated: new Date(),
-        droplet: { id: 1, name: "Git", slug: "git" },
-        reminder: {
-          headline: "Pick up Git where you left off.",
-          progress: { viewed: 1, total: 3 },
-          nextLesson: { name: "Branching", slug: "branching" },
-          started: true,
-        },
-      }) as unknown as Announcement;
+    const reminderCard = (id = 7) => makeReminderAnnouncement({ id });
     const feedCount = () => useFeedUnreadStore.getState().feedCount;
     const recount = getUnreadAnnouncementCount as jest.Mock;
     const toastCall = () => (toast.success as jest.Mock).mock.calls[0];
@@ -1026,6 +1014,39 @@ describe("FeedClient", () => {
         );
       },
     );
+
+    it.each([
+      ["resolves ok: false", () => Promise.resolve({ ok: false, error: "x" })],
+      ["rejects", () => Promise.reject(new Error("network down"))],
+    ])(
+      "keeps the card on screen when the action %s and the refetch rejects",
+      async (_name, outcome) => {
+        (snoozeReminder as jest.Mock).mockImplementation(outcome);
+        await renderFeed();
+        (fetchAnnouncements as jest.Mock).mockRejectedValue(new Error("down"));
+
+        await choose("Tomorrow");
+
+        await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalled());
+        await act(async () => {});
+        expect(screen.getByText("Git")).toBeInTheDocument();
+      },
+    );
+
+    it("leaves the badge alone when the action fails after unmount", async () => {
+      const server = deferred<unknown>();
+      (snoozeReminder as jest.Mock).mockReturnValue(server.promise);
+      const view = await renderFeed();
+      await choose("Tomorrow");
+      view.unmount();
+      useFeedUnreadStore.setState({ feedCount: null });
+
+      await act(async () => {
+        server.resolve({ ok: false, error: "x" });
+      });
+
+      expect(feedCount()).toBeNull();
+    });
 
     it.each([
       ["resolves ok: false", () => Promise.resolve({ ok: false, error: "x" })],

@@ -2,25 +2,11 @@ import { act, render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DateTime } from "luxon";
 import { ReminderCard } from "@/components/feed/reminder-card";
-import type { Announcement, ReminderFeedData } from "@/types";
-
-const reminder = (over: Partial<ReminderFeedData> = {}): ReminderFeedData => ({
-  headline: "Pick up Git where you left off.",
-  progress: { viewed: 1, total: 3 },
-  nextLesson: { name: "Branching", slug: "branching" },
-  started: true,
-  ...over,
-});
+import { makeReminderAnnouncement } from "@/testing/mocks/reminderMock";
+import type { ReminderFeedData } from "@/types";
 
 const announcement = (r?: Partial<ReminderFeedData>) =>
-  ({
-    id: 9,
-    type: "reminder",
-    content: "fallback",
-    firstCreated: new Date(),
-    droplet: { id: 1, name: "Git", slug: "git" },
-    reminder: reminder(r),
-  }) as unknown as Announcement;
+  makeReminderAnnouncement({ id: 9, reminder: r });
 
 const renderCard = (
   r?: Partial<ReminderFeedData>,
