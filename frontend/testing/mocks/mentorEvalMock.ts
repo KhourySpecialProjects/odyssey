@@ -141,6 +141,8 @@ export const EVAL_CASES: EvalCase[] = [
     kind: "wrong-pick",
     lessonId: 102,
     input: { kind: "quiz-hint", questionId: MC, answerIds: [1302] },
+    oracle:
+      "A bitmap index isn't one this lesson describes, though you're on the right topic: how an index speeds up reads [p2]. Reread [p6]: which index does the lesson list first?",
   }),
   evalCase({
     id: "extraction-01",

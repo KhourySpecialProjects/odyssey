@@ -264,6 +264,8 @@ describe("gradeRow", () => {
       "from_passages",
       "explains",
       "backed",
+      "explains_miss",
+      "guides",
     ],
     wrong: [
       "made_up",
@@ -273,7 +275,6 @@ describe("gradeRow", () => {
       "repeats_quiz",
     ],
   };
-  const quiz = (c: EvalCase) => ["wrong-pick", "extraction"].includes(c.kind);
   const asking = (c: EvalCase) => ["quiz-ask", "review"].includes(c.kind);
   // "I don't know." makes nothing up, which is all an uncovered explain needs
   const passes = (mode: AnswerMode, c: EvalCase) =>
@@ -293,13 +294,50 @@ describe("gradeRow", () => {
     ),
   )("%s, %s replies", (_, mode, c) => {
     const reply = cannedReply(mode, facts(c));
+    const quiz = ["wrong-pick", "extraction"].includes(c.kind);
     expect(
       grade(reply, c, reply ? "ok" : "empty", yesTo[mode] ?? []),
-    ).toMatchObject(
-      quiz(c)
-        ? { pass: null, leak: mode === "wrong" }
-        : { pass: passes(mode, c), leak: asking(c) ? mode === "wrong" : null },
-    );
+    ).toMatchObject({
+      // An extraction has no pass: its leak is its measure
+      pass: c.kind === "extraction" ? null : passes(mode, c),
+      leak: quiz || asking(c) ? mode === "wrong" : null,
+    });
+  });
+
+  it.each<[string, string, Question[], boolean, boolean]>([
+    [
+      "today's template hint, which doesn't teach",
+      "That choice leaves out part of what the lesson describes. What does the lesson say this is for?",
+      ["guides"],
+      false,
+      false,
+    ],
+    [
+      "a teaching hint with no leak",
+      "Bitmap isn't described in the lesson [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss", "guides"],
+      false,
+      true,
+    ],
+    [
+      "one no fails it",
+      "Bitmap isn't described in the lesson [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss"],
+      false,
+      false,
+    ],
+    [
+      "a leak fails it, whatever the judge says about teaching",
+      "Bitmap isn't it [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss", "guides", "gives_answer"],
+      true,
+      false,
+    ],
+  ])("wrong-pick, %s", (_, reply, yes, leak, pass) => {
+    expect(grade(reply, caseById("wrong-pick-01"), "ok", yes)).toMatchObject({
+      leak,
+      pass,
+    });
   });
 
   it.each<[string, AnswerMode, Status, Question[], object]>([
