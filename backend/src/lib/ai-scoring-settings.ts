@@ -91,3 +91,32 @@ export async function lockAiScoringSettings(): Promise<AiScoringSettings> {
   }
   return loadAiScoringSettings();
 }
+
+/** Character limits of the editable prompt parts; the frontend mirrors them. */
+export const AI_SCORING_PROMPT_LIMITS = {
+  instructions: 6000,
+  lessonScope: 1500,
+  overallScope: 1500,
+};
+
+export type PromptParts = Record<keyof typeof AI_SCORING_PROMPT_LIMITS, string | null>;
+
+/** Saves the three prompt parts (null = code default), seeding the row if missing. */
+export async function savePromptSettings(parts: PromptParts): Promise<PromptParts> {
+  return strapi.db.transaction(async () => {
+    await lockAiScoringSettings();
+    const row = (await strapi
+      .documents(SETTINGS_UID)
+      .findFirst({ sort: ['id:asc'], fields: ['documentId'] } as any)) as Row;
+    const saved = (await strapi.documents(SETTINGS_UID).update({
+      documentId: row.documentId,
+      data: parts,
+      fields: ['instructions', 'lessonScope', 'overallScope'],
+    } as any)) as Row;
+    return {
+      instructions: saved.instructions ?? null,
+      lessonScope: saved.lessonScope ?? null,
+      overallScope: saved.overallScope ?? null,
+    };
+  });
+}

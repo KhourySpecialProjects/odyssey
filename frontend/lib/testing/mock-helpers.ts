@@ -345,6 +345,7 @@ export function makeEnrollment(
     isArchived: false,
     notes: [],
     completionDate: new Date(),
+    lastProgressDate: null,
     ...overrides,
   };
 }

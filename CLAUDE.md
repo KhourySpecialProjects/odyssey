@@ -132,7 +132,7 @@ Each developer's Claude Code session coordinates with the others through one pri
 
 ## Restrictions
 
-- NEVER push code, create remote branches, or modify the remote repository
+- NEVER push code, create remote branches, or modify the remote repository. **One exception:** a cloud session (Claude Code on the web) may push its own `claude/` branch with `git push -u origin claude/<name>`, because that's how its work reaches the developer. It never pushes any other branch, force-pushes, opens or merges PRs, or touches `develop` or `production`. `.claude/hooks/block-dangerous-commands.sh` enforces this.
 - Local git worktrees are allowed ONLY via the implementer agent's `isolation: worktree` setting — do not manually run git worktree commands
 - NEVER delete files without explicit approval
 - NEVER modify .env, credentials, terraform/, or docker-compose.yml

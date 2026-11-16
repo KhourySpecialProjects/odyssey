@@ -3,17 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MentorStreamError, readMentorEvents } from "@/lib/mentor/events";
 import { displayAnswer } from "@/lib/mentor/answer-text";
+import { trackMentor } from "@/lib/mentor/analytics";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { MentorTurn } from "@/lib/mentor/types";
 import {
   MENTOR_HISTORY_MAX,
   MENTOR_MESSAGE_MAX,
   MENTOR_REPLY_MAX,
+  MENTOR_SELECTION_MAX,
 } from "@/lib/validations/mentor";
 
 export type ChatMsg = StudentMsg | MentorMsg;
-/** ODY-889 adds { kind: "explain", selection } here */
-export type MentorAsk = { kind: "lesson"; message: string };
+/** A question typed in the sidebar, or text selected in the lesson to explain */
+export type MentorAsk =
+  | { kind: "lesson"; message: string }
+  | { kind: "explain"; selection: string };
 
 // Codes the student can't fix by waiting: the composer locks
 const LOCK_CODES = new Set([
@@ -35,8 +39,44 @@ const NOT_RESPONDING =
 const BROKE_OFF = "The answer broke off. Try again.";
 
 let counter = 0;
-const newId = () =>
+export const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `mentor-msg-${(counter += 1)}`;
+
+/**
+ * A selection as the route takes it: whitespace collapsed (the route ignores
+ * it) and at most MENTOR_SELECTION_MAX characters, cut at a word. Any part of
+ * the selection is still lesson text, so a cut one is still found.
+ */
+function clipSelection(text: string) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= MENTOR_SELECTION_MAX)
+    return { selection: flat, cut: false };
+  // Not half of an emoji
+  const head = flat
+    .slice(0, MENTOR_SELECTION_MAX)
+    .replace(/[\uD800-\uDBFF]$/, "");
+  const space = head.lastIndexOf(" ");
+  const atWord = flat[MENTOR_SELECTION_MAX] === " " || space <= 0;
+  return { selection: atWord ? head : head.slice(0, space), cut: true };
+}
+
+/** What the student's message shows, or null when there's nothing to ask */
+function studentOf(input: MentorAsk): Omit<StudentMsg, "id" | "role"> | null {
+  if (input.kind === "lesson") {
+    const text = input.message.trim().slice(0, MENTOR_MESSAGE_MAX);
+    return text ? { text } : null;
+  }
+  const { selection, cut } = clipSelection(input.selection);
+  if (!selection) return null;
+  // The ellipsis shows the student what was left out
+  return { text: `Explain “${selection}${cut ? "…" : ""}”`, selection };
+}
+
+/** What the route is asked for a student message, so a retry asks it again */
+const askOf = (question: StudentMsg): MentorAsk =>
+  question.selection === undefined
+    ? { kind: "lesson", message: question.text }
+    : { kind: "explain", selection: question.selection };
 
 /** The last three finished exchanges before `upTo`, as the route takes them. */
 function historyOf(messages: ChatMsg[], upTo: number): MentorTurn[] {
@@ -55,7 +95,7 @@ function historyOf(messages: ChatMsg[], upTo: number): MentorTurn[] {
   return turns.slice(-MENTOR_HISTORY_MAX);
 }
 
-async function failureOf(res: Response) {
+export async function failureOf(res: Response) {
   let body: { error?: unknown; message?: unknown } | null = null;
   try {
     body = await res.json();
@@ -117,7 +157,7 @@ export function useMentorChat({
   }, []);
 
   const run = useCallback(
-    async (answerId: string, message: string, history: MentorTurn[]) => {
+    async (answerId: string, question: StudentMsg, history: MentorTurn[]) => {
       const ctl = new AbortController();
       controller.current = ctl;
       stopped.current = false;
@@ -130,10 +170,9 @@ export function useMentorChat({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            kind: "lesson",
+            ...askOf(question),
             dropletId,
             lessonId,
-            message,
             history,
           }),
           signal: ctl.signal,
@@ -178,17 +217,19 @@ export function useMentorChat({
 
   const ask = useCallback(
     (input: MentorAsk) => {
-      const message = input.message.trim().slice(0, MENTOR_MESSAGE_MAX);
-      if (busy.current || locked.current || !message) return;
-      const student: StudentMsg = {
-        id: newId(),
-        role: "student",
-        text: message,
-      };
+      const shown = studentOf(input);
+      if (busy.current || locked.current || !shown) return;
+      trackMentor("mentor_asked", {
+        kind: input.kind,
+        droplet_id: dropletId,
+        lesson_id: lessonId,
+      });
+      const student: StudentMsg = { id: newId(), role: "student", ...shown };
       const answer: MentorMsg = {
         id: newId(),
         role: "mentor",
         askId: student.id,
+        kind: input.kind,
         status: "streaming",
         text: "",
         citations: [],
@@ -199,9 +240,9 @@ export function useMentorChat({
         messagesRef.current.length,
       );
       commit([...messagesRef.current, student, answer]);
-      void run(answer.id, message, history);
+      void run(answer.id, student, history);
     },
-    [commit, run],
+    [commit, run, dropletId, lessonId],
   );
 
   const retry = useCallback(
@@ -220,7 +261,7 @@ export function useMentorChat({
         truncated: false,
         error: undefined,
       });
-      void run(id, question.text, historyOf(list, at));
+      void run(id, question, historyOf(list, at));
     },
     [patch, run],
   );

@@ -3,7 +3,7 @@
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const READ_UID = 'api::announcement-read.announcement-read';
 // Rows whose authorized_user is the recipient; friend/kudos rows belong to the actor.
-const TARGETED_TYPES = ['system', 'review_feedback', 'review_published'];
+const TARGETED_TYPES = ['system', 'review_feedback', 'review_published', 'reminder'];
 
 export async function backfillAnnouncementReads(): Promise<number> {
   const rows = await strapi.db.query(ANNOUNCEMENT_UID).findMany({

@@ -342,6 +342,7 @@ describe("announcement read state", () => {
     expect(filters).toContain('"type":"system"');
     expect(filters).toContain('{"authorized_user":{"id":{"$null":true}}}');
     expect(filters).toContain('"review_feedback"');
+    expect(filters).toContain('"type":"reminder"');
   });
 
   it("does not let a viewer mark an announcement outside their feed", async () => {

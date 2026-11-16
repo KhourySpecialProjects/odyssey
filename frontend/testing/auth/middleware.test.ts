@@ -16,6 +16,11 @@ jest.mock("next/server", () => ({
   },
 }));
 
+const SIGNED_IN_DESTINATIONS: Record<string, string> = {
+  "/": "/activity",
+  "/request-access": "/explore",
+};
+
 const signedInToken = { user: { email: "a@northeastern.edu", roles: [] } };
 
 /** Only `nextUrl` is read by withAuth and our middleware (getToken is mocked). */
@@ -31,14 +36,19 @@ async function run(path: string) {
 
 describe("middleware", () => {
   const originalSecret = process.env.NEXTAUTH_SECRET;
+  const originalUrl = process.env.NEXTAUTH_URL;
 
   beforeAll(() => {
     process.env.NEXTAUTH_SECRET = "test-secret";
+    // The origin callbackUrls are checked against (and the requests' origin).
+    process.env.NEXTAUTH_URL = "http://localhost:3000";
   });
 
   afterAll(() => {
     if (originalSecret === undefined) delete process.env.NEXTAUTH_SECRET;
     else process.env.NEXTAUTH_SECRET = originalSecret;
+    if (originalUrl === undefined) delete process.env.NEXTAUTH_URL;
+    else process.env.NEXTAUTH_URL = originalUrl;
   });
 
   beforeEach(() => {
@@ -58,11 +68,60 @@ describe("middleware", () => {
       await expect(run(path)).resolves.toEqual({ redirectedTo: destination });
     });
 
-    it("drops the query string, like the pages' redirect() did", async () => {
+    it.each([
+      ["a relative path", "%2Fd%2Fsome-droplet"],
+      // next-auth's /api/auth/signin passes an absolute URL on NEXTAUTH_URL.
+      [
+        "an absolute same-origin URL",
+        "http%3A%2F%2Flocalhost%3A3000%2Fd%2Fsome-droplet",
+      ],
+    ])(
+      "sends /auth/login to its callbackUrl when it is %s",
+      async (_label, callbackUrl) => {
+        await expect(
+          run(`/auth/login?callbackUrl=${callbackUrl}`),
+        ).resolves.toEqual({
+          redirectedTo: "http://localhost:3000/d/some-droplet",
+        });
+      },
+    );
+
+    it("keeps the callbackUrl's own query string", async () => {
       await expect(
-        run("/auth/login?callbackUrl=%2Fd%2Fsome-droplet"),
-      ).resolves.toEqual({ redirectedTo: "http://localhost:3000/explore" });
+        run(
+          `/auth/login?callbackUrl=${encodeURIComponent("/d/some-droplet/lesson/2?tab=quiz")}`,
+        ),
+      ).resolves.toEqual({
+        redirectedTo: "http://localhost:3000/d/some-droplet/lesson/2?tab=quiz",
+      });
     });
+
+    it.each([
+      "https://evil.com/d/x",
+      "//evil.com",
+      "/\\evil.com",
+      "/.//evil.com",
+      "javascript:alert(1)",
+      "/auth/login",
+    ])(
+      "ignores the unsafe callbackUrl %s and lands on /explore",
+      async (callbackUrl) => {
+        await expect(
+          run(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`),
+        ).resolves.toEqual({ redirectedTo: "http://localhost:3000/explore" });
+      },
+    );
+
+    it.each(["/", "/request-access"])(
+      "drops the query string on %s",
+      async (path) => {
+        await expect(
+          run(`${path}?callbackUrl=%2Fd%2Fsome-droplet`),
+        ).resolves.toEqual({
+          redirectedTo: `http://localhost:3000${SIGNED_IN_DESTINATIONS[path]}`,
+        });
+      },
+    );
   });
 
   describe("anonymous users on public entry pages", () => {
@@ -85,22 +144,27 @@ describe("middleware", () => {
   });
 
   describe("protected routes", () => {
-    it.each(["/activity", "/admin", "/admin/users", "/d/some-droplet"])(
-      "still redirects anonymous %s to sign-in",
-      async (path) => {
-        jest.mocked(getToken).mockResolvedValue(null);
+    it.each([
+      "/activity",
+      "/admin",
+      "/admin/users",
+      "/d/some-droplet",
+      "/g/fall-cs2500",
+      "/g/dashboard",
+    ])("still redirects anonymous %s to sign-in", async (path) => {
+      jest.mocked(getToken).mockResolvedValue(null);
 
-        await expect(run(path)).resolves.toEqual({
-          redirectedTo: `http://localhost:3000/api/auth/signin?callbackUrl=${encodeURIComponent(path)}`,
-        });
-      },
-    );
+      await expect(run(path)).resolves.toEqual({
+        redirectedTo: `http://localhost:3000/api/auth/signin?callbackUrl=${encodeURIComponent(path)}`,
+      });
+    });
 
     it("lets signed-in users through", async () => {
       jest.mocked(getToken).mockResolvedValue(signedInToken as never);
 
       await expect(run("/activity")).resolves.toBeUndefined();
       await expect(run("/d/some-droplet")).resolves.toBeUndefined();
+      await expect(run("/g/fall-cs2500")).resolves.toBeUndefined();
     });
   });
 
@@ -114,6 +178,7 @@ describe("middleware", () => {
       "/d/:path*",
       "/activity",
       "/activity/:path*",
+      "/g/:path*",
     ]);
   });
 });

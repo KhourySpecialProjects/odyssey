@@ -26,7 +26,8 @@ export type AnnouncementType =
   | "group"
   | "kudos"
   | "review_feedback"
-  | "review_published";
+  | "review_published"
+  | "reminder";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -330,6 +331,7 @@ export type Enrollment = {
   isArchived: boolean;
   notes: Note[];
   completionDate: Date;
+  lastProgressDate?: string | null;
 };
 
 export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
@@ -425,6 +427,16 @@ export type Friendship = {
   authorized_users: AuthorizedUser[];
 };
 
+/** Worked out when the feed loads, never stored on the reminder. */
+export type ReminderFeedData = {
+  headline: string;
+  progress: { viewed: number; total: number } | null;
+  nextLesson: { name: string; slug: string } | null;
+  started: boolean;
+  dueDate?: string;
+  dueGroupName?: string;
+};
+
 export type Announcement = {
   id: number;
   documentId?: string;
@@ -436,6 +448,10 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
+  reminderCount?: number | null;
+  reminderSnoozedUntil?: string | null;
+  reminderMuted?: boolean | null;
+  reminder?: ReminderFeedData;
 };
 
 export type ReviewState = "open" | "sent" | "published";
@@ -609,7 +625,7 @@ export type TimeZone =
   | "America/Phoenix"
   | "America/Los_Angeles"
   | "America/Anchorage"
-  | "America/Honolulu"
+  | "Pacific/Honolulu"
   | "America/Bogota"
   | "America/Lima"
   | "America/Caracas"
@@ -708,6 +724,21 @@ export interface VoyageNodeCompletion {
   authorizedUser?: AuthorizedUser;
   voyageNode?: VoyageNode;
   voyageEnrollment?: VoyageEnrollment;
+}
+
+/** A day a learner finished at least one new lesson, in their time zone (ODY-918) */
+export interface StreakDayEntry {
+  id: number;
+  documentId?: string;
+  /** `<userId>:<date>`, unique */
+  key: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** The lessons finished for the first time that day */
+  lessonIds: number[];
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
+  user?: AuthorizedUser;
 }
 
 interface CustomBlockNoteBlock {

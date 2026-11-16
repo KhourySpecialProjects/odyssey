@@ -18,54 +18,13 @@ import { Logo } from "../header/logo";
 import { createSystemAnnouncement } from "@/lib/requests/feed";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import { setTimeZone } from "@/lib/actions";
+import { TIME_ZONES } from "@/lib/time-zones";
 import {
   createEnrollment,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { getDropletById } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-
-const timeZones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Phoenix",
-  "America/Los_Angeles",
-  "America/Anchorage",
-  "America/Honolulu",
-  "America/Bogota",
-  "America/Lima",
-  "America/Caracas",
-  "America/Santiago",
-  "America/Argentina/Buenos_Aires",
-  "America/Sao_Paulo",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Paris",
-  "Europe/Madrid",
-  "Europe/Rome",
-  "Europe/Athens",
-  "Europe/Istanbul",
-  "Europe/Moscow",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Asia/Shanghai",
-  "Asia/Tokyo",
-  "Asia/Seoul",
-  "Asia/Bangkok",
-  "Asia/Singapore",
-  "Asia/Jakarta",
-  "Asia/Hong_Kong",
-  "Australia/Sydney",
-  "Australia/Melbourne",
-  "Australia/Brisbane",
-  "Pacific/Auckland",
-  "Pacific/Fiji",
-  "Africa/Cairo",
-  "Africa/Johannesburg",
-  "Africa/Lagos",
-  "Africa/Nairobi",
-];
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -209,7 +168,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             <option value="" disabled>
               Choose a time zone...
             </option>
-            {timeZones.map((tz) => (
+            {TIME_ZONES.map((tz) => (
               <option key={tz} value={tz}>
                 {tz}
               </option>

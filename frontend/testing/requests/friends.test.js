@@ -1243,6 +1243,30 @@ describe("Friends tests", () => {
       });
     });
 
+    // ODY-720: one page of 250 dropped the rest of a user's friendships.
+    it("reads every page when a user has more than 250 friendships", async () => {
+      const page = (from, count) => ({
+        ok: true,
+        json: async () => ({
+          data: Array.from({ length: count }, (_, i) => ({
+            id: from + i,
+            attributes: { authorized_users: [] },
+          })),
+        }),
+      });
+      global.fetch
+        .mockResolvedValueOnce(page(1, 250))
+        .mockResolvedValueOnce(page(251, 3));
+
+      const result = await fetchFriendshipsById(5);
+
+      expect(result).toHaveLength(253);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      const secondUrl = decodeURIComponent(global.fetch.mock.calls[1][0]);
+      expect(secondUrl).toContain("pagination[page]=2");
+      expect(secondUrl).toContain("pagination[pageSize]=250");
+    });
+
     it("should handle fetch errors", async () => {
       const userId = 5;
       global.fetch.mockRejectedValueOnce(new Error("Network error"));

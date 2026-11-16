@@ -11,6 +11,8 @@ export type MentorSettings = {
   monthlyCapUsd: number;
   /** Answers one user may ask per day (Boston time), across all kinds */
   perUserDailyLimit: number;
+  /** Students may share question and answer text; off until ODY-883 approves */
+  storeSharedAnswers: boolean;
 };
 
 /** Placeholders; ODY-891 sets the real cap from the ODY-885 eval. */
@@ -18,6 +20,7 @@ export const MENTOR_SETTINGS_SEED = {
   enabled: false,
   monthlyCapUsd: 10,
   perUserDailyLimit: 30,
+  storeSharedAnswers: false,
 };
 
 type Row = Record<string, any>;
@@ -48,5 +51,7 @@ export async function loadMentorSettings(): Promise<MentorSettings> {
     // Postgres returns decimals as strings.
     monthlyCapUsd: Number(source.monthlyCapUsd),
     perUserDailyLimit: Number(source.perUserDailyLimit),
+    // Existing rows hold null, which reads as off.
+    storeSharedAnswers: source.storeSharedAnswers === true,
   };
 }

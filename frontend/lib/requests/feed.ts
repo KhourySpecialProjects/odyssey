@@ -11,8 +11,19 @@ import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "../cache-tags";
 import { requireRole } from "@/lib/auth/require-role";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import {
+  earliestDue,
+  reminderHeadline,
+  reminderProgress,
+} from "@/lib/reminder-progress";
+import { templateState } from "@/lib/reminder-rules";
+import {
+  FILTER_VALUES,
+  toFeedRoles,
+} from "@/components/feed/feed-filter-params";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserId } from "../auth/current-user-id";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getCachedUserSocial } from "./cached";
 import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
 
@@ -44,8 +55,8 @@ function friendIdsOf(
 
 /**
  * Which announcements the viewer's feed includes, as a Strapi `$or` filter.
- * Shared by the feed and by the read/unread check, so a user can mark read
- * exactly the cards they can see.
+ * Shared by the feed, the nav count and the read/unread check, so a user can
+ * mark read exactly the cards they can see.
  *
  * Pre-computes the IDs needed using fast, minimal queries run in parallel, so
  * the announcements query needs only simple $in filters, not nested joins.
@@ -110,10 +121,16 @@ async function buildVisibilityFilters(
   const orFilters: any[] = [];
 
   if (groupIds.length > 0) {
-    orFilters.push({ group: { id: { $in: groupIds } } });
+    orFilters.push({
+      group: { id: { $in: groupIds } },
+      type: { $ne: "reminder" },
+    });
   }
   if (playlistIds.length > 0) {
-    orFilters.push({ playlist: { id: { $in: playlistIds } } });
+    orFilters.push({
+      playlist: { id: { $in: playlistIds } },
+      type: { $ne: "reminder" },
+    });
   }
   if (friendIds.length > 0) {
     orFilters.push({
@@ -145,7 +162,43 @@ async function buildVisibilityFilters(
     type: { $in: ["review_feedback", "review_published"] },
     authorized_user: { id: { $eq: userId } },
   });
+
+  // Reminders reach only their owner
+  orFilters.push({
+    type: "reminder",
+    authorized_user: { id: { $eq: userId } },
+  });
   return orFilters;
+}
+
+/**
+ * The feed's filters: visible rows in the viewer's own read state, of `types`.
+ * Shared by the feed page and the nav count so the two can't drift.
+ */
+async function buildFeedFilters(
+  userId: number,
+  email: string,
+  opts: { archived: boolean; types?: string[] },
+) {
+  const { archived, types } = opts;
+  // Read state is per user (announcement-reads), never the shared row.
+  // Unread excludes the user's read ids: a negated relation filter would
+  // also match rows another user has read.
+  const [orFilters, readFilter] = await Promise.all([
+    buildVisibilityFilters(userId, email),
+    archived
+      ? { reads: { authorized_user: { id: { $eq: userId } } } }
+      : fetchReadAnnouncementIds(userId).then((ids) =>
+          ids.length ? { id: { $notIn: ids } } : null,
+        ),
+  ]);
+  return {
+    $and: [
+      { $or: orFilters },
+      ...(readFilter ? [readFilter] : []),
+      ...(types?.length ? [{ type: { $in: types } }] : []),
+    ],
+  };
 }
 
 /**
@@ -175,31 +228,15 @@ export async function fetchAnnouncements(
     ? roles.filter((r) => typeof r === "string")
     : undefined;
   try {
-    const orFilters = await buildVisibilityFilters(userId, email);
-
-    // Read state is per user (announcement-reads), never the shared row.
-    // Unread excludes the user's read ids: a negated relation filter would
-    // also match rows another user has read.
-    let readFilter: Record<string, unknown>;
-    if (archived) {
-      readFilter = { reads: { authorized_user: { id: { $eq: userId } } } };
-    } else {
-      const readIds = await fetchReadAnnouncementIds(userId);
-      readFilter = readIds.length ? { id: { $notIn: readIds } } : {};
-    }
-
-    const baseFilters = {
-      $and: [{ $or: orFilters }, readFilter],
-    };
+    const filters = await buildFeedFilters(userId, email, {
+      archived,
+      types,
+    });
 
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated"],
-      filters: types?.length
-        ? {
-            $and: [{ $or: orFilters }, readFilter, { type: { $in: types } }],
-          }
-        : baseFilters,
+      filters,
       populate: {
         authorized_user: {
           fields: [
@@ -282,8 +319,9 @@ export async function fetchAnnouncements(
     }
     const data = await response.json();
     const flattened = flattenAttributes(data.data);
+    const rows: Announcement[] = Array.isArray(flattened) ? flattened : [];
     return {
-      data: Array.isArray(flattened) ? flattened : [],
+      data: await attachReminderData(rows, userId, email),
       pagination: data.meta?.pagination ?? {
         page: 1,
         pageSize: 25,
@@ -295,6 +333,130 @@ export async function fetchAnnouncements(
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");
   }
+}
+
+type LessonRef = { id: number; name: string; slug: string; orderIndex: number };
+
+/** Adds progress, Up next, due date and headline to the viewer's reminders. */
+async function attachReminderData(
+  rows: Announcement[],
+  userId: number,
+  email: string,
+): Promise<Announcement[]> {
+  const reminders = rows.filter((r) => r.type === "reminder");
+  if (reminders.length === 0) return rows;
+  const dropletIds = [
+    ...new Set(reminders.map((r) => r.droplet?.id).filter((id) => id != null)),
+  ] as number[];
+
+  let enrollments: {
+    droplet?: { id: number; lessons?: LessonRef[] };
+    viewedLessons?: { id: number }[];
+    lastProgressDate?: string | null;
+    createdAt?: string;
+  }[] = [];
+  let dueRows: {
+    dueDate: string;
+    droplet?: { id: number };
+    group?: { groupName?: string };
+  }[] = [];
+  let timeZone: string | null | undefined;
+  try {
+    [enrollments, dueRows, timeZone] = await Promise.all([
+      fetchAPI<typeof enrollments>("/enrollments", {
+        urlParams: {
+          filters: {
+            authorizedUser: { id: { $eq: userId } },
+            droplet: { id: { $in: dropletIds } },
+          },
+          fields: ["id", "lastProgressDate", "createdAt"],
+          populate: {
+            viewedLessons: { fields: ["id"] },
+            droplet: {
+              fields: ["id"],
+              populate: {
+                lessons: { fields: ["id", "name", "slug", "orderIndex"] },
+              },
+            },
+          },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: {
+          tags: [CACHE_TAGS.enrollments(userId), CACHE_TAGS.droplets],
+          revalidate: 900,
+        },
+      }),
+      // Only rows with a droplet; playlist due dates are ignored for now
+      fetchAPI<typeof dueRows>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $eq: userId } },
+            droplet: { id: { $in: dropletIds } },
+            dueDate: { $notNull: true },
+          },
+          sort: ["dueDate:asc"],
+          fields: ["dueDate"],
+          populate: {
+            droplet: { fields: ["id"] },
+            group: { fields: ["groupName"] },
+          },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
+      }),
+      // A failed lookup falls back to Boston rather than failing the feed
+      getAuthorizedUserByEmail<Pick<AuthorizedUser, "id" | "timeZone">>(email, {
+        fields: ["id", "timeZone"],
+      })
+        .then((u) => u?.timeZone)
+        .catch(() => null),
+    ]);
+  } catch (error) {
+    // The cards still render, just without progress or a due date
+    console.error("Error loading reminder progress:", error);
+  }
+
+  const now = new Date();
+
+  return rows.map((row) => {
+    if (row.type !== "reminder") return row;
+    const name = row.droplet?.name ?? "this droplet";
+    const enrollment = enrollments.find(
+      (e) => e.droplet?.id === row.droplet?.id,
+    );
+    const computed = enrollment
+      ? reminderProgress(
+          enrollment.droplet?.lessons ?? [],
+          (enrollment.viewedLessons ?? []).map((l) => l.id),
+        )
+      : { progress: null, nextLesson: null, started: false };
+    const due = earliestDue(
+      dueRows.filter((d) => d.droplet?.id === row.droplet?.id),
+    );
+    const headline = reminderHeadline(
+      name,
+      templateState(
+        {
+          progress: computed.progress,
+          started: computed.started,
+          idleFrom:
+            enrollment?.lastProgressDate ?? enrollment?.createdAt ?? null,
+          dueDate: due?.dueDate ?? null,
+          enrolledAt: enrollment?.createdAt ?? null,
+        },
+        now,
+        timeZone,
+      ),
+    );
+    return {
+      ...row,
+      reminder: {
+        ...computed,
+        headline,
+        ...due,
+      },
+    };
+  });
 }
 
 export async function createFriendAnnouncement(
@@ -825,18 +987,43 @@ async function assertAnnouncementVisible(
 }
 
 /**
- * Count unread (non-archived) announcements for the current user.
- * Used for the nav badge.
+ * The nav badge: unread rows of `roles` (default: the Unread tab's types).
+ * Read state is per user, so it matches the Unread tab, broadcasts included.
  */
-export async function getUnreadAnnouncementCount(): Promise<number> {
+export async function getUnreadAnnouncementCount(
+  roles?: string[],
+): Promise<number | null> {
   try {
-    const { pagination } = await fetchAnnouncements(1, undefined, {
+    const types = Array.isArray(roles) ? roles : toFeedRoles(FILTER_VALUES);
+    // The shared filters treat no types as "all", but the tab shows nothing
+    if (types.length === 0) return 0;
+    const sessionUser = await getCurrentUser();
+    const userId = await getAuthorizedUserId(sessionUser);
+    if (!sessionUser?.email || !userId) throw new Error("Not authenticated");
+    const filters = await buildFeedFilters(userId, sessionUser.email, {
       archived: false,
+      types: types.filter((t) => typeof t === "string"),
     });
-    return pagination.total;
+    const data = await fetchAPI<{ meta?: { pagination?: { total?: number } } }>(
+      "/announcements",
+      {
+        urlParams: {
+          filters,
+          fields: ["id"],
+          pagination: { pageSize: 1, page: 1 },
+        },
+        next: {
+          tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
+          revalidate: 900,
+        },
+        flattenResponse: false,
+      },
+    );
+    return data.meta?.pagination?.total ?? 0;
   } catch (error) {
     console.error("Error fetching unread count:", error);
-    return 0;
+    // null = unknown, so callers keep what they show instead of hiding it
+    return null;
   }
 }
 

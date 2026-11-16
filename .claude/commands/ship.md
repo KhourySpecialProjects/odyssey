@@ -68,30 +68,37 @@ Look in `docs/plans/` for the active plan and spec files. Extract:
 - Acceptance criteria and their completion status from the plan
 - Any audit verdict if an audit was run
 
-### 5. Generate PR summary
+### 5. Generate PR summary (the review card)
 
-Present a ready-to-copy PR description:
+The PR body does CodeRabbit's job, because the free plan is too limited. Use
+the same format as the manager's review cards, from
+`.claude/scripts/review-card-brief.md`. Read that file first, then:
 
-```markdown
-## Summary
-
-- [1-3 bullet points from the spec/plan]
-
-## Changes
-
-- [Categorized file changes: frontend, backend, tests, config]
-
-## Acceptance Criteria
-
-- [x] [Each criterion from the spec, checked if met]
-
-## Test Plan
-
-- [ ] CI passes locally (Prettier, ESLint, Jest, builds)
-- [ ] [Additional test steps based on what changed]
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-```
+1. **Decide the kind.**
+   - **`major`:** a new feature, or a revamp of a main flow (editing,
+     publishing, review, the learner path).
+   - **`feature`, `bug` or `cleanup`:** everything else. Bug fixes and small
+     changes that don't change a main flow aren't worth studying.
+2. **Decide the risk.**
+   - 🔴 for a schema, auth, a `"use server"` export, env or secrets, or a data
+     migration or deletion.
+   - 🟡 when a user can see or do something different.
+   - 🟢 for lint, copy, tests, types, or dead code.
+3. **Write the body** in that file's format for the kind.
+   - **A major** gets:
+     - a Walkthrough;
+     - a "Layer / Files | Summary" Changes table;
+     - a Mermaid "How it flows" diagram;
+     - review effort, merge risk, depends on, overlaps and suggested reviewers;
+     - 3–6 "How to test on dev" steps;
+     - the Checklist.
+   - **A minor** gets one sentence, a **Careful:** line if it's 🔴, one
+     **Test on dev:** step, overlaps, a suggested reviewer and the Checklist.
+4. **Check overlaps.** Run `git diff --name-only origin/develop...<branch>` on
+   other open branches, and use `gh pr list` if it works.
+5. **Present it ready to copy.** Put the PR title first, then the body. Leave
+   out the `title:`, `risk:` and `kind:` lines and the `---` line; those are
+   only for `open-prs.sh`. Add no AI attribution line.
 
 ### 6. Final status
 

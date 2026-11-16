@@ -3,14 +3,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
+import { useStreakFeedCard } from "@/components/streaks/streak-feed-card";
 import {
   type FeedPage,
   fetchAnnouncements,
+  getUnreadAnnouncementCount,
   markAnnouncementRead,
   markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { FILTER_VALUES, toFeedRoles } from "./feed-filter-params";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
+import { checkMyReminder } from "@/lib/requests/reminders";
 
 type Tab = "unread" | "read";
 
@@ -22,6 +27,8 @@ export type InitialFeed = {
 
 const sameRoles = (a: AnnouncementType[], b: AnnouncementType[]) =>
   a.length === b.length && a.every((role, i) => role === b[i]);
+
+const DEFAULT_ROLES = toFeedRoles(FILTER_VALUES);
 
 const paramsKey = (tab: Tab, page: number, roles: AnnouncementType[]) =>
   `${tab}|${page}|${roles.join(",")}`;
@@ -64,6 +71,8 @@ export function FeedClient({
   // Bumped on every read/unread change so fetches started before it are
   // dropped instead of resurrecting the optimistically removed item.
   const mutations = useRef(0);
+  // The learner's latest streak icon (ODY-919), atop the first page
+  const streakCard = useStreakFeedCard(authUser.id, tab, currentPage === 1);
 
   // Compared by value so a re-created array doesn't refetch. Resetting the
   // page here (not in an effect) avoids fetching the old page for new filters.
@@ -135,6 +144,56 @@ export function FeedClient({
     };
   }, [pending, currentPage, roles, tab, refresh]);
 
+  // The badge follows the filters (on either tab) while this is mounted. The
+  // layout's count already covers the default filters before any change.
+  useEffect(() => {
+    if (pending) return;
+    const { setFeedCount } = useFeedUnreadStore.getState();
+    if (refresh.key === 0 && sameRoles(roles, DEFAULT_ROLES)) {
+      setFeedCount(null);
+      return;
+    }
+    if (roles.length === 0) {
+      setFeedCount(0);
+      return;
+    }
+    let ignore = false;
+    const mutationsAtStart = mutations.current;
+    getUnreadAnnouncementCount(roles)
+      .then((count) => {
+        // null = the count failed, so keep what the badge shows
+        if (count !== null && !ignore && mutations.current === mutationsAtStart)
+          setFeedCount(count);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [pending, roles, refresh]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      useFeedUnreadStore.getState().setFeedCount(null);
+    };
+  }, []);
+
+  // Once per mount, when not pending (ODY-931). A raise refetches the list and, through
+  // the effect above, recounts the badge. A repeat call just answers "today".
+  const checkedReminder = useRef(false);
+  useEffect(() => {
+    if (pending || checkedReminder.current) return;
+    checkedReminder.current = true;
+    checkMyReminder()
+      .then((result) => {
+        if (result.data?.raised) {
+          setRefresh((r) => ({ key: r.key + 1, silent: true }));
+        }
+      })
+      .catch(() => {});
+  }, [pending]);
+
   const selectTab = (next: Tab) => {
     if (next === tab) return;
     setTab(next);
@@ -147,9 +206,14 @@ export function FeedClient({
     errorMessage: string,
   ) => {
     mutations.current += 1;
+    const delta = tab === "unread" ? -1 : 1;
+    useFeedUnreadStore.getState().adjustFeedCount(delta);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await update(id);
     if (!result.success) {
+      // After unmount the override is gone, so a rollback would recreate it wrongly
+      if (mounted.current)
+        useFeedUnreadStore.getState().adjustFeedCount(-delta);
       toast.error(
         typeof result.error === "string" && result.error
           ? result.error
@@ -203,8 +267,9 @@ export function FeedClient({
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             />
           </div>
-        ) : announcements.length > 0 ? (
+        ) : announcements.length > 0 || streakCard ? (
           <ul className="grid grid-cols-1 gap-3 p-1">
+            {streakCard}
             {announcements.map((post) => (
               <FeedBlock
                 key={post.id}

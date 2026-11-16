@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
+import { userTimeZone } from "@/lib/time-zones";
 import Link from "next/link";
 import { CopyIcon, UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -279,7 +280,7 @@ export function SocialForms({
           />
         </div>
         <TimeZoneSelector
-          currentZone={authorizedUser.timeZone?.trim()}
+          currentZone={userTimeZone(authorizedUser.timeZone)}
           userId={authorizedUser.id}
         />
       </div>

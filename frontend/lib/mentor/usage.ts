@@ -6,14 +6,15 @@ import {
 } from "@/lib/import/rate-limiter";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { MENTOR_KINDS, type MentorKind } from "./types";
 
 // Mentor's allowance check and usage record (ODY-884). The limits live in
 // Strapi (`backend/src/lib/mentor-usage.ts`); this wraps its routes and adds
 // the in-memory burst guard. Deliberately not a "use server" file: every
 // export of one is a public endpoint, and these trust the `user` they are given.
 
-export const MENTOR_KINDS = ["lesson", "explain", "quiz-hint"] as const;
-export type MentorKind = (typeof MENTOR_KINDS)[number];
+export { MENTOR_KINDS };
+export type { MentorKind };
 
 /** Models Mentor may call. Each one has a price in ai-scoring-setting (test-enforced). */
 export const MENTOR_MODELS = ["claude-sonnet-5-5", "claude-haiku-5-5"] as const;

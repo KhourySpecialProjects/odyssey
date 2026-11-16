@@ -4,6 +4,8 @@ import { seedReviewCriteria, upgradeReviewCriteria } from './lib/review-criteria
 import { seedAiScoringSettings } from './lib/ai-scoring-settings';
 import { seedMentorSettings } from './lib/mentor-settings';
 import { backfillReviewRounds } from './lib/review-round-backfill';
+import { backfillTimeZones } from './lib/time-zone-backfill';
+import { backfillLastProgress } from './lib/enrollment-progress-backfill';
 import { backfillAnnouncementReads } from './lib/announcement-read-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
@@ -85,6 +87,22 @@ export default {
       if (count > 0) strapi.log.info(`Backfilled reviewRound on ${count} in-review droplet(s)`);
     } catch (error) {
       strapi.log.error('Could not backfill review rounds', error);
+    }
+
+    // Time zones saved with the old enum values (padded, America/Honolulu) get fixed (ODY-627); never blocks startup.
+    try {
+      const count = await backfillTimeZones();
+      if (count > 0) strapi.log.info(`Fixed the time zone on ${count} user(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill user time zones', error);
+    }
+
+    // Started enrollments with no last progress get their updatedAt (ODY-928); never blocks startup.
+    try {
+      const count = await backfillLastProgress();
+      if (count > 0) strapi.log.info(`Backfilled lastProgressDate on ${count} enrollment(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill enrollment last progress', error);
     }
 
     // Targeted rows already marked read keep that state per user; never blocks startup.

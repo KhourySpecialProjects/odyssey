@@ -403,6 +403,20 @@ const MENTOR_SETTING_ROUTES = routes([
   ["GET", /^\/groups$/, list(ent(7))],
 ]);
 
+const STREAK_ROUTES = routes([
+  ME_ROUTE,
+  [
+    "GET",
+    /^\/streak-days$/,
+    list(ent(1, { date: "2026-11-10", lessonIds: [1, 2], revived: false })),
+  ],
+  [
+    "POST",
+    /^\/streak-days\/revive$/,
+    { data: { date: "2026-11-09", revivesLeft: 1, added: true } },
+  ],
+]);
+
 const OVERVIEW_SCAN_ROUTES = routes([
   ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
   ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
@@ -433,6 +447,7 @@ const call = <T extends Mod>(
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
   "ai-scoring": "@/lib/requests/ai-scoring",
+  "ai-scoring-prompt": "@/lib/requests/ai-scoring-prompt",
   "overview-scan": "@/lib/requests/overview-scan",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
@@ -452,12 +467,15 @@ export const MODULE_PATHS: Record<string, string> = {
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
+  "mentor-feedback": "@/lib/requests/mentor-feedback",
   "mentor-setting": "@/lib/requests/mentor-setting",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
   reviews: "@/lib/requests/reviews",
+  reminders: "@/lib/requests/reminders",
+  streaks: "@/lib/requests/streaks",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -919,6 +937,10 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       OVERVIEW_SCAN_ROUTES,
     ),
   ]),
+  streaks: defineModule<typeof import("@/lib/requests/streaks")>([
+    call("getMyStreak", (m) => m.getMyStreak(), STREAK_ROUTES),
+    call("reviveStreak", (m) => m.reviveStreak(), STREAK_ROUTES),
+  ]),
   reviews: defineModule<typeof import("@/lib/requests/reviews")>([
     call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
     call(
@@ -1063,6 +1085,10 @@ const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
+  "mentor-feedback": {
+    saveMentorFeedback:
+      "custom route POST /mentor-feedbacks/record, not a v4 entry (ODY-890)",
+  },
   "authorized-user": {
     createAuthorizedUser: WRITE,
     createBatchAuthorizedUsers: WRITE,
@@ -1160,6 +1186,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring": {
     startAiScoring: "custom ai-scoring-run start route (ODY-814)",
   },
+  "ai-scoring-prompt": {
+    saveAiScoringPrompt: "custom ai-scoring-setting prompt route (ODY-898)",
+  },
   "overview-scan": {
     runOverviewScan: WRITE,
     dismissScanFlag: WRITE,
@@ -1173,6 +1202,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     withdrawFromReview: REVIEW_WORKFLOW,
     sendFeedback: REVIEW_WORKFLOW,
     publishWithReview: REVIEW_WORKFLOW,
+  },
+  reminders: {
+    checkMyReminder: "custom raise-reminder route (ODY-931)",
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

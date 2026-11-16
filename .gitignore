@@ -17,6 +17,9 @@ frontend/providers/PHProvider.tsx
 
 # When this worktree's agent last checked Slack and Linear (/coord)
 .claude/coord-last-check
+# The manager agent's requests and phases, and the Watcher's seen list (/manager)
+.claude/manager-state.json
+.claude/manager-seen.txt
 
 # Playwright MCP logs
 .playwright-mcp/

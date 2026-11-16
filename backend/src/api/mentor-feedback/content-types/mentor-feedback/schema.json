@@ -1,0 +1,72 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mentor_feedbacks",
+  "info": {
+    "singularName": "mentor-feedback",
+    "pluralName": "mentor-feedbacks",
+    "displayName": "Mentor Feedback",
+    "description": "One row per rated Mentor answer. Text is stored only when the student shares it (ODY-890)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "answerKey": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": ["lesson", "explain", "quiz-hint"],
+      "required": true
+    },
+    "rating": {
+      "type": "enumeration",
+      "enum": ["up", "down"],
+      "required": true
+    },
+    "questionId": {
+      "type": "integer",
+      "min": 1
+    },
+    "citations": {
+      "type": "json"
+    },
+    "shared": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "answerText": {
+      "type": "text",
+      "private": true,
+      "maxLength": 20000
+    },
+    "questionText": {
+      "type": "text",
+      "private": true,
+      "maxLength": 2000
+    },
+    "promptVersion": {
+      "type": "string",
+      "maxLength": 40
+    }
+  }
+}

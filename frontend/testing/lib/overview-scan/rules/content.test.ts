@@ -42,11 +42,17 @@ const p = (id: string, text: string): ScanBlock => ({
   text,
 });
 const nWords = (n: number) => Array(n).fill("word").join(" ");
-const warn = (partId: string, blockId: string | null, message: string) => ({
+const warn = (
+  partId: string,
+  blockId: string | null,
+  message: string,
+  words?: string[],
+) => ({
   partId,
   blockId,
   message,
   severity: "warn",
+  ...(words && { words }),
 });
 const NOT_KNOWN = "in the dictionary or the tech word list.";
 
@@ -119,9 +125,13 @@ describe("content checks", () => {
         ],
       }),
       [
-        warn("1", null, `"Teh" isn't ${NOT_KNOWN}`),
-        warn("1", "a", `"recieve" and "untill" aren't ${NOT_KNOWN}`),
-        warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`),
+        // Each flag keeps its words, for the lesson link to highlight (ODY-913)
+        warn("1", null, `"Teh" isn't ${NOT_KNOWN}`, ["Teh"]),
+        warn("1", "a", `"recieve" and "untill" aren't ${NOT_KNOWN}`, [
+          "recieve",
+          "untill",
+        ]),
+        warn("droplet", "description", `"Wich" isn't ${NOT_KNOWN}`, ["Wich"]),
         // The AI double-check is mocked as not run here (spelling-ai.test.ts)
         {
           partId: "droplet",

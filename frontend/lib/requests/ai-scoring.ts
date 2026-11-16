@@ -19,7 +19,10 @@ import {
   formatRateLimitError,
 } from "@/lib/import/rate-limiter";
 import { DEFAULT_EFFORT, DEFAULT_MODEL } from "@/lib/ai-review/models";
-import { PROMPT_VERSION } from "@/lib/ai-review/prompt";
+import {
+  loadStoredPrompt,
+  resolvePrompt,
+} from "@/lib/ai-review/prompt-settings";
 import { STALE_RUN_MS, startRunRoute } from "@/lib/ai-review/run-routes";
 import { runAiScoring } from "@/lib/ai-review/score-run";
 import {
@@ -86,6 +89,19 @@ export async function startAiScoring(
         return { ok: false, error: "review_closed", data: null };
       }
 
+      let resolved;
+      try {
+        resolved = resolvePrompt(await loadStoredPrompt());
+      } catch (error) {
+        console.error("startAiScoring: reading the prompt failed", error);
+        return {
+          ok: false,
+          error: "failed",
+          data: null,
+          message: "Couldn't read the Scorecard prompts. Try again.",
+        };
+      }
+
       const limit = checkRateLimit(user.email, user.roles, "ai-scoring");
       if (!limit.allowed) {
         return {
@@ -100,7 +116,8 @@ export async function startAiScoring(
         reviewId: review.data.id,
         userId: user.id,
         model: DEFAULT_MODEL,
-        promptVersion: PROMPT_VERSION,
+        promptVersion: resolved.version,
+        prompt: resolved.parts,
       });
       if (!started.ok) {
         return {
@@ -126,6 +143,7 @@ export async function startAiScoring(
             criteria,
             model: DEFAULT_MODEL,
             effort: DEFAULT_EFFORT,
+            prompt: resolved.parts,
           },
           { client },
         ),

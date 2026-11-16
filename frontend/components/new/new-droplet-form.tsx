@@ -26,6 +26,8 @@ import { RadioSelect } from "./radio-select";
 import { createDroplet } from "@/lib/requests/droplet";
 import { getDroplets } from "@/lib/requests/droplet";
 import Link from "next/link";
+import { CategoryInfo } from "@/components/new/category-info";
+import { DROPLET_FOCUS_AREAS, DROPLET_TYPES } from "@/lib/droplet-categories";
 
 type SubmissionState = {
   error: string | React.ReactNode | null;
@@ -213,6 +215,10 @@ export function CreateDropletForm({
                   <SelectLabel className="pb-2 pl-0 text-xl font-bold text-slate-900 dark:text-white">
                     {focusAreaFilter.label}{" "}
                     <span className="text-red-500">*</span>
+                    <CategoryInfo
+                      label="What do the focus areas mean?"
+                      categories={DROPLET_FOCUS_AREAS}
+                    />
                   </SelectLabel>
                   <SelectTrigger className="w-full border-[#D0D5DD] dark:border-slate-700">
                     <SelectValue
@@ -291,6 +297,12 @@ export function CreateDropletForm({
                 selected={typeValue}
                 setSelected={setTypeValue}
                 firstTime={true}
+                labelAddon={
+                  <CategoryInfo
+                    label="What do Knowledge and Skill mean?"
+                    categories={DROPLET_TYPES}
+                  />
+                }
               />
 
               <div>

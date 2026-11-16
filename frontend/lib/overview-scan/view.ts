@@ -161,9 +161,22 @@ function flagView(
     label: `Lesson ${index + 1} · ${lesson.name}`,
     message,
     severity,
-    href: `/draft/d/${slug}/${lesson.slug}`,
+    href: `/draft/d/${slug}/${lesson.slug}${lessonTarget(flag)}`,
     linkText: "Go to lesson",
   };
+}
+
+/** The block a lesson flag's link scrolls to, and the words it highlights (ODY-913). */
+export const SCAN_TARGET_TITLE = "title";
+
+function lessonTarget({ blockId, words }: Flag): string {
+  const params = new URLSearchParams();
+  // A flag with no block is on the lesson's name when it has words
+  const block = blockId ?? (words?.length ? SCAN_TARGET_TITLE : null);
+  if (!block) return "";
+  params.set("block", block);
+  if (words?.length) params.set("words", words.join(","));
+  return `?${params}`;
 }
 
 /** Joins the current checks with the saved scan by id; the page passes CHECKS in. */

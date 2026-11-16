@@ -11,6 +11,9 @@ import {
   IconNews,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
+import { useStreakUnread } from "@/components/streaks/streak-feed-card";
+import { UnreadBadge } from "./unread-badge";
 
 const TABS = [
   { href: "/activity", label: "My Feed", Icon: IconNews },
@@ -21,8 +24,18 @@ const TABS = [
   { href: "/activity/archived", label: "Archived", Icon: IconArchive },
 ];
 
-export function FeedLeftNav() {
+export function FeedLeftNav({
+  userId,
+  unreadCount,
+}: {
+  userId: number;
+  /** The layout's latest count, shown until the feed owns the count */
+  unreadCount: number;
+}) {
   const pathname = usePathname();
+  const announcements = useFeedUnreadStore((s) => s.feedCount ?? unreadCount);
+  const streakUnread = useStreakUnread(userId);
+  const feedUnread = announcements + (streakUnread ? 1 : 0);
 
   return (
     <div className="flex h-full flex-col overflow-hidden py-6">
@@ -51,7 +64,8 @@ export function FeedLeftNav() {
                     )}
                     stroke={1.75}
                   />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {href === "/activity" && <UnreadBadge count={feedUnread} />}
                 </Link>
               </li>
             );

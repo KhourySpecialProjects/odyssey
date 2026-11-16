@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
 import { useViewedLessonsStore } from "@/stores/viewed-lessons-store";
 import { toast } from "sonner";
+import { refreshStreakAfterLesson } from "@/components/streaks/streak-lesson-banner";
 
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
@@ -19,6 +20,12 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   updateViewedLessons: jest.fn(),
+}));
+
+// Tested in tests/components/streaks; here only when the footer asks
+jest.mock("@/components/streaks/streak-lesson-banner", () => ({
+  StreakLessonBanner: () => null,
+  refreshStreakAfterLesson: jest.fn(),
 }));
 
 // Restored before each test (one test swaps in a throwing markViewed)
@@ -162,7 +169,10 @@ describe("DropletFooter", () => {
   describe("Mark as complete", () => {
     it("records the view through updateViewedLessons with all droplet lesson ids", async () => {
       (usePathname as jest.Mock).mockReturnValue("/d/test-droplet/lesson-3");
-      (updateViewedLessons as jest.Mock).mockResolvedValue({ success: true });
+      (updateViewedLessons as jest.Mock).mockResolvedValue({
+        success: true,
+        alreadyViewed: false,
+      });
       const mockRefresh = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({
         push: mockPush,
@@ -185,6 +195,12 @@ describe("DropletFooter", () => {
       );
       // The action's revalidateTag re-renders the route; no extra refresh.
       expect(mockRefresh).not.toHaveBeenCalled();
+      // The banner lights in place, without a toast
+      await waitFor(() =>
+        expect(refreshStreakAfterLesson).toHaveBeenCalledWith({
+          announce: false,
+        }),
+      );
     });
   });
 
@@ -283,10 +299,11 @@ describe("DropletFooter", () => {
       // Same pending feedback as "Mark as complete"
       expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
 
-      resolveSave({ success: true });
+      resolveSave({ success: true, alreadyViewed: false });
       await waitFor(() =>
         expect(mockPush).toHaveBeenCalledWith("/d/test-droplet/recap"),
       );
+      expect(refreshStreakAfterLesson).toHaveBeenCalledWith({ announce: true });
     });
 
     it("re-enables Next and stays put when the recap save throws", async () => {
@@ -376,6 +393,8 @@ describe("DropletFooter", () => {
       clickNextFromLesson1();
 
       await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
+      // The next lesson's banner is off screen: the streak gets a toast
+      expect(refreshStreakAfterLesson).toHaveBeenCalledWith({ announce: true });
     });
 
     it("doesn't refresh when the server already had the view", async () => {
@@ -389,6 +408,7 @@ describe("DropletFooter", () => {
       await waitFor(() => expect(updateViewedLessons).toHaveBeenCalled());
       await waitFor(() => expect(mockPush).toHaveBeenCalled());
       expect(mockRefresh).not.toHaveBeenCalled();
+      expect(refreshStreakAfterLesson).not.toHaveBeenCalled();
     });
 
     it("skips the save for a lesson already recorded as viewed", async () => {
