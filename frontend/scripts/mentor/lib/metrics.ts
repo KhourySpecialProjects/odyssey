@@ -347,6 +347,10 @@ export function reportMarkdown(
   const quality = perSetup({
     "Hints ask back": (rs) =>
       ratio(rs.filter(ofKind(["wrong-pick"])), (r) => r.grade.asksBack),
+    "Hints explain the miss": (rs) =>
+      ratio(rs.filter(ofKind(["wrong-pick"])), said("explains_miss")),
+    "Hints guide back": (rs) =>
+      ratio(rs.filter(ofKind(["wrong-pick"])), said("guides")),
     "Invalid refs": (rs) => rs.reduce((n, r) => n + r.grade.invalid.length, 0),
     'False "not covered"': (rs) =>
       ratio(
