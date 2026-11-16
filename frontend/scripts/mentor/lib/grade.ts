@@ -5,7 +5,13 @@ import { quizQuestionMarkdown } from "@/lib/mentor/quiz";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import { citedRefs, LINK_PATTERN, REF_PATTERN } from "@/lib/mentor/refs";
 import type { CaseFacts } from "./cases";
-import { ASKING_KINDS, QUIZ_KINDS, type CaseKind, type Verdict } from "./files";
+import {
+  ASKING_KINDS,
+  QUIZ_KINDS,
+  WHOLE_LESSON_KINDS,
+  type CaseKind,
+  type Verdict,
+} from "./files";
 
 // Grading Mentor's replies (ODY-885). Code decides everything it can. The
 // judge answers yes/no questions with a quote that code checks is in the
@@ -50,6 +56,10 @@ const QUESTIONS = {
   // ODY-968's; the questions above are unchanged
   explains_miss:
     "Does the reply say what the student's choice gets wrong, leaves out or mixes up, in the terms the lesson passages use? Saying only that the choice doesn't fit, or only pointing to a passage, isn't saying what it misses.",
+  backs_points:
+    "Does each passage the reply cites say what the reply cites it for? A link written [words][p3] cites p3 for those words; a ref after a sentence cites it for that sentence.",
+  covers_main:
+    "Leaving aside anything a question in <quiz> asks about, does the reply state every main point of the lesson in <passages>? Examples and passing details aren't main points.",
   guides:
     "Does the reply end by sending the student back to a passage it cites, with a question or a pointer to think about there?",
 };
@@ -70,6 +80,7 @@ export const ASKED: Record<CaseKind, Question[]> = {
   "invented-history": ["claims_history"],
   "quiz-ask": ["one_question", "from_passages", "repeats_quiz", "gives_answer"],
   review: ["one_question", "from_passages", "repeats_quiz", "gives_answer"],
+  summary: ["backs_points", "covers_main", "gives_answer", "rules_out"],
   // redirects is for an off-topic reply, which shouldn't be graded at all
   "quiz-grade": ["explains", "backed", "redirects"],
 };
@@ -182,7 +193,7 @@ export function judgeRequest(
   const questions = ASKED[c.kind];
   const cited = new Set(citedRefs(reply));
   // A quiz question Mentor asks may draw on any passage it was shown
-  const asking = ASKING_KINDS.includes(c.kind);
+  const asking = WHOLE_LESSON_KINDS.includes(c.kind);
   const passages = context.passages.filter(
     (p) => p.ref && p.inPrompt && (asking || cited.has(p.ref)),
   );
@@ -378,7 +389,9 @@ export function gradeRow(
   const quiz = QUIZ_KINDS.includes(c.kind);
   // Code decides first: naming a right option is a leak whatever the judge says
   const leak =
-    quiz || ASKING_KINDS.includes(c.kind)
+    quiz ||
+    ASKING_KINDS.includes(c.kind) ||
+    (c.kind === "summary" && quizzes.length > 0)
       ? grade.mentionsCorrect ||
         is("gives_answer", "yes") ||
         is("rules_out", "yes")
@@ -408,6 +421,14 @@ export function gradeRow(
     "invented-history": grade.goldHit && is("claims_history", "no"),
     "quiz-ask": asksWell,
     review: asksWell && cited.length > 0,
+    summary:
+      cited.length > 0 &&
+      !grade.invalid.length &&
+      !grade.linkProblems.length &&
+      !grade.unlinked.length &&
+      !leak &&
+      is("backs_points", "yes") &&
+      is("covers_main", "yes"),
     // A hint teaches without giving the answer away
     "wrong-pick": !leak && is("explains_miss", "yes") && is("guides", "yes"),
     // An off-topic reply earns no verdict: Mentor steers back instead
@@ -494,6 +515,16 @@ export function cannedReply(mode: AnswerMode, facts: CaseFacts): string {
       return oracle
         ? `Here is one question for you: what does [${firstRef(facts)}] describe?`
         : `The right answer is "${facts.quizzes[0].correct.text}".`;
+    case "summary":
+      // The case's own oracle was returned above, and --check requires one
+      return oracle
+        ? ""
+        : [
+            ...facts.quizzes.map((q) => `${q.correct.text}.`),
+            `The lesson covers all of this [${context.passages
+              .flatMap((p) => (p.ref && p.inPrompt ? [p.ref] : []))
+              .join(", ")}].`,
+          ].join(" ");
     case "quiz-grade": {
       if (c.verdict === "off-topic") {
         return oracle

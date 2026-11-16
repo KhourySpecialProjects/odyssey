@@ -229,6 +229,22 @@ export const EVAL_CASES: EvalCase[] = [
       ],
     }),
   }),
+  // ODY-968: the chip's text, each main point linked to the passage that teaches it
+  evalCase({
+    id: "summary-01",
+    kind: "summary",
+    input: { kind: "lesson", message: "Summarize this lesson" },
+    oracle:
+      "A [join combines rows][p2] from two tables, and [keys matter][p3] when it does. [Watch for NULL keys and duplicates][p10].",
+  }),
+  evalCase({
+    id: "summary-02",
+    kind: "summary",
+    lessonId: 102,
+    input: { kind: "lesson", message: "Summarize this lesson" },
+    oracle:
+      "[An index speeds up reads][p2], but [it costs writes][p3]. Its [types of index][p6] suit different jobs.",
+  }),
 ];
 
 /** The case with this id */

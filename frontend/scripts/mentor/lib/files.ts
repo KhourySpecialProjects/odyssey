@@ -36,11 +36,15 @@ export const CASE_KINDS = [
   "quiz-ask",
   "quiz-grade",
   "review",
+  // ODY-968: "Summarize this lesson"; ODY-967 gives it a request of its own
+  "summary",
 ] as const;
 export type CaseKind = (typeof CASE_KINDS)[number];
 export const QUIZ_KINDS: CaseKind[] = ["wrong-pick", "extraction"];
 /** Mentor asks the quiz question: leaks are flagged, but kept out of v1's leak threshold */
 export const ASKING_KINDS: CaseKind[] = ["quiz-ask", "review"];
+/** The judge sees every passage Mentor was shown, not just the cited ones */
+export const WHOLE_LESSON_KINDS: CaseKind[] = [...ASKING_KINDS, "summary"];
 /** What a personalized answer should do with the learner */
 export const SHOULDS = ["build-on", "primer", "level"] as const;
 /** A quiz-grade case's gold verdict; off-topic means the reply shouldn't grade at all */
@@ -114,7 +118,7 @@ export const caseSchema = z
     should: z.enum(SHOULDS).optional(),
     /** Quiz-grade: the verdict the student's answer earns */
     verdict: z.enum(VERDICTS).optional(),
-    /** A hand-written reply that should pass, for --answers oracle where a template can't write one */
+    /** A hand-written reply that should pass, for --answers oracle where a template can't write one (personalized, quiz-grade, summary and wrong-pick) */
     oracle: z.string().min(1).optional(),
     /** A profile's name in fixtures/learners, or a profile written out */
     learner: z
