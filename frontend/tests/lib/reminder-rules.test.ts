@@ -4,7 +4,10 @@ import {
   daysBetween,
   effectiveCount,
   evaluateCandidate,
+  isSnoozeChoice,
   pickReminder,
+  REMINDER_RULES,
+  snoozeDateLabel,
   type ReminderCandidate,
 } from "@/lib/reminder-rules";
 
@@ -28,11 +31,14 @@ const make = (over: Partial<ReminderCandidate> = {}): ReminderCandidate => ({
   ...over,
 });
 
+const future = (n: number) =>
+  new Date(NOW.getTime() + n * 86_400_000).toISOString();
+
 const reminder = (over: object = {}) => ({
   lastRaisedAt: daysAgo(10),
   count: 1,
   snoozedUntil: null,
-  muted: false,
+  mutedUntil: null,
   ...over,
 });
 
@@ -59,12 +65,36 @@ describe("daysBetween / dayStartUtc / effectiveCount", () => {
     );
   });
 
+  it("lands on local midnight when a zone's day starts at 01:00 after spring forward", () => {
+    // Santiago springs forward at 00:00 on 2026-09-06, so that day starts at 01:00
+    const now = new Date("2026-09-06T15:00:00Z");
+    const tz = "America/Santiago";
+    expect(dayStartUtc(now, tz, 3).toISOString()).toBe(
+      "2026-09-09T03:00:00.000Z",
+    );
+  });
+
   it("resets the count on progress after the last raise", () => {
+    const r = { count: 2, lastRaisedAt: daysAgo(10), mutedUntil: null };
+    expect(effectiveCount(r, daysAgo(12), NOW)).toBe(2);
+    expect(effectiveCount(r, daysAgo(5), NOW)).toBe(0);
+    expect(
+      effectiveCount(
+        { count: null, lastRaisedAt: null, mutedUntil: null },
+        null,
+        NOW,
+      ),
+    ).toBe(0);
+    expect(effectiveCount(null, null, NOW)).toBe(0);
+  });
+
+  it("resets the count once a mute that began after the last raise has ended", () => {
     const r = { count: 2, lastRaisedAt: daysAgo(10) };
-    expect(effectiveCount(r, daysAgo(12))).toBe(2);
-    expect(effectiveCount(r, daysAgo(5))).toBe(0);
-    expect(effectiveCount({ count: null, lastRaisedAt: null }, null)).toBe(0);
-    expect(effectiveCount(null, null)).toBe(0);
+    expect(effectiveCount({ ...r, mutedUntil: daysAgo(1) }, null, NOW)).toBe(0);
+    expect(effectiveCount({ ...r, mutedUntil: future(1) }, null, NOW)).toBe(2);
+    expect(effectiveCount({ ...r, mutedUntil: daysAgo(10) }, null, NOW)).toBe(
+      2,
+    );
   });
 });
 
@@ -85,7 +115,7 @@ describe("skip reasons", () => {
       { droplet: { status: "published", isHidden: false, lessonIds: [] } },
     ],
     ["complete", { viewedLessonIds: [1, 2, 3, 4, 99] }],
-    ["muted", { reminder: reminder({ muted: true }) }],
+    ["muted", { reminder: reminder({ mutedUntil: future(5) }) }],
     [
       "snoozed",
       {
@@ -128,7 +158,7 @@ describe("skip reasons", () => {
   it("muted beats the skips after it, even with progress after the last raise", () => {
     const c = make({
       lastProgressAt: daysAgo(1),
-      reminder: reminder({ muted: true, lastRaisedAt: daysAgo(3) }),
+      reminder: reminder({ mutedUntil: future(5), lastRaisedAt: daysAgo(3) }),
     });
     expect(reason(c)).toBe("muted");
   });
@@ -136,6 +166,48 @@ describe("skip reasons", () => {
   it("completion uses current lessons, not isComplete", () => {
     expect(reason(make({ viewedLessonIds: [1, 2, 3] }))).toBe("eligible");
     expect(reason(make({ viewedLessonIds: [1, 2, 3, 4] }))).toBe("complete");
+  });
+});
+
+describe("mute ended", () => {
+  const unmuted = (over: Partial<ReminderCandidate> = {}, r: object = {}) =>
+    make({
+      lastProgressAt: daysAgo(40),
+      reminder: reminder({
+        lastRaisedAt: daysAgo(35),
+        mutedUntil: daysAgo(1),
+        count: 3,
+        ...r,
+      }),
+      ...over,
+    });
+
+  it.each([
+    ["a fresh count, not stopped", {}],
+    ["an old snooze on the row too", { snoozedUntil: daysAgo(20) }],
+  ])("is eligible as a normal raise with %s", (_label, r) => {
+    expect(evalOf(unmuted({}, r))).toMatchObject({
+      eligible: true,
+      snoozeEnded: false,
+      count: 1,
+    });
+  });
+
+  it("still applies the stale rule", () => {
+    expect(reason(unmuted({ lastProgressAt: daysAgo(61) }))).toBe("stale");
+  });
+
+  it("does not reset the count for a mute that ended before the last raise", () => {
+    const c = unmuted(
+      { lastProgressAt: daysAgo(20) },
+      { lastRaisedAt: daysAgo(10), mutedUntil: daysAgo(15) },
+    );
+    expect(reason(c)).toBe("stopped");
+  });
+
+  it("treats a mute ending exactly now as ended, not muted", () => {
+    const c = unmuted({}, { mutedUntil: NOW.toISOString() });
+    expect(evalOf(c)).toMatchObject({ eligible: true, count: 1 });
   });
 });
 
@@ -178,12 +250,26 @@ describe("snooze ended", () => {
     expect(reason(ended(over))).toBe(r);
   });
 
+  it("stays an ended snooze when a mute ended before the last raise", () => {
+    const d = evalOf(
+      ended({
+        reminder: reminder({
+          lastRaisedAt: daysAgo(2),
+          snoozedUntil: daysAgo(1),
+          mutedUntil: daysAgo(5),
+          count: 2,
+        }),
+      }),
+    );
+    expect(d).toMatchObject({ eligible: true, snoozeEnded: true, count: 2 });
+  });
+
   it("still skips muted", () => {
     expect(
       reason(
         ended({
           reminder: reminder({
-            muted: true,
+            mutedUntil: future(5),
             snoozedUntil: daysAgo(1),
             lastRaisedAt: daysAgo(2),
           }),
@@ -468,5 +554,75 @@ describe("alreadyRaisedToday", () => {
   it("is false with no rows or a null date", () => {
     expect(alreadyRaisedToday([], dayStart)).toBe(false);
     expect(alreadyRaisedToday([{ firstCreated: null }], dayStart)).toBe(false);
+  });
+});
+
+describe("snooze and mute dates", () => {
+  it.each([
+    [TZ, 1, "2026-11-21T05:00:00.000Z"],
+    [TZ, 3, "2026-11-23T05:00:00.000Z"],
+    [TZ, 7, "2026-11-27T05:00:00.000Z"],
+    [TZ, 30, "2026-12-20T05:00:00.000Z"],
+    ["Asia/Tokyo", 1, "2026-11-21T15:00:00.000Z"],
+    ["Asia/Tokyo", 30, "2026-12-20T15:00:00.000Z"],
+    ["Nope/Zone", 1, "2026-11-21T05:00:00.000Z"],
+    [null, 3, "2026-11-23T05:00:00.000Z"],
+  ])("dayStartUtc in %s plus %i days", (tz, days, expected) => {
+    expect(dayStartUtc(NOW, tz, days).toISOString()).toBe(expected);
+  });
+
+  it("stays on local midnight across the DST change", () => {
+    const now = new Date("2026-11-01T04:30:00Z"); // 00:30 Boston, before the change
+    expect(dayStartUtc(now, TZ, 1).toISOString()).toBe(
+      "2026-11-02T05:00:00.000Z",
+    );
+  });
+
+  it("labels the date in the learner's zone", () => {
+    expect(snoozeDateLabel(new Date("2026-11-07T05:00:00Z"), TZ)).toBe(
+      "Sat, Nov 7",
+    );
+  });
+
+  it.each([
+    ["tomorrow", true],
+    ["in_3_days", true],
+    ["next_week", true],
+    ["toString", false],
+    ["stop", false],
+    [3, false],
+  ])("isSnoozeChoice(%p) is %p", (v, expected) => {
+    expect(isSnoozeChoice(v)).toBe(expected);
+  });
+
+  it("keeps a snooze until local midnight of its date", () => {
+    const until = dayStartUtc(NOW, TZ, 1);
+    const c = make({
+      lastProgressAt: daysAgo(20),
+      reminder: reminder({
+        lastRaisedAt: daysAgo(2),
+        snoozedUntil: until.toISOString(),
+      }),
+    });
+    const before = new Date(until.getTime() - 60_000); // 23:59 local
+    expect(evalOf(c, before)).toEqual({ eligible: false, reason: "snoozed" });
+    expect(evalOf(c, until)).toMatchObject({
+      eligible: true,
+      snoozeEnded: true,
+    });
+  });
+
+  it("keeps a mute for the full 30 days", () => {
+    const until = dayStartUtc(NOW, TZ, REMINDER_RULES.muteDays);
+    const c = make({
+      lastProgressAt: daysAgo(20),
+      reminder: reminder({ mutedUntil: until.toISOString() }),
+    });
+    const before = new Date(until.getTime() - 60_000);
+    expect(evalOf(c, before)).toEqual({ eligible: false, reason: "muted" });
+    expect(evalOf(c, until)).toMatchObject({
+      eligible: true,
+      snoozeEnded: false,
+    });
   });
 });

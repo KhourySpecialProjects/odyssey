@@ -667,7 +667,7 @@ export interface ApiAnnouncementAnnouncement
         },
         number
       >;
-    reminderMuted: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    reminderMutedUntil: Schema.Attribute.DateTime;
     reminderSnoozedUntil: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
       [

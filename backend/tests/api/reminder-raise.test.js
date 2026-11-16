@@ -80,6 +80,7 @@ describe('POST /announcements/raise-reminder', () => {
       reminderCount: 1,
       readAt: null,
       content: 'Pick up where you left off.',
+      reminderMutedUntil: null,
     });
     expect(new Date(all[0].firstCreated).toISOString()).toBe(NOW);
     expect(all[0].authorized_user.id).toBe(user.id);
@@ -144,7 +145,7 @@ describe('POST /announcements/raise-reminder', () => {
   });
 
   it.each([
-    ['muted', { reminderMuted: true }],
+    ['muted', { reminderMutedUntil: new Date('2026-11-20T00:00:00Z') }],
     ['snoozed past now', { reminderSnoozedUntil: new Date('2026-11-20T00:00:00Z') }],
   ])('answers "declined" for a row that is %s', async (_label, patch) => {
     await raise(valid());
@@ -158,6 +159,26 @@ describe('POST /announcements/raise-reminder', () => {
     );
 
     expect(res.body.data).toEqual({ raised: false, reason: 'declined' });
+  });
+
+  it.each([
+    ['2026-11-13T00:00:00Z'],
+    ['2026-11-13T15:00:00.000Z'],
+  ])('raises a row whose mute ended at %s and keeps the old mute date', async (at) => {
+    await raise(valid());
+    const ended = new Date(at);
+    await patchRow({ reminderMutedUntil: ended });
+    const res = await raise(
+      valid({
+        now: '2026-11-13T15:00:00.000Z',
+        dayStart: '2026-11-13T05:00:00.000Z',
+        lastRaisedAt: NOW,
+      })
+    );
+
+    expect(res.body.data.raised).toBe(true);
+    const [row] = await rows();
+    expect(new Date(row.reminderMutedUntil)).toEqual(ended);
   });
 
   it('raises a row whose snooze has ended, clears it, and stores count as sent', async () => {
@@ -257,7 +278,7 @@ describe('POST /announcements/raise-reminder', () => {
   });
 
   it.each([
-    ['muted', { reminderMuted: true }],
+    ['muted', { reminderMutedUntil: new Date('2026-11-20T00:00:00Z') }],
     ['snoozed', { reminderSnoozedUntil: new Date('2026-11-20T00:00:00Z') }],
   ])('keeps a %s row as the learner left it', async (_label, patch) => {
     await raise(valid());
@@ -274,7 +295,7 @@ describe('POST /announcements/raise-reminder', () => {
 
     expect(res.body.data).toEqual({ raised: false, reason: 'declined' });
     const [after] = await rows();
-    expect(after.reminderMuted).toBe(before.reminderMuted);
+    expect(after.reminderMutedUntil).toEqual(before.reminderMutedUntil);
     expect(after.reminderSnoozedUntil).toEqual(before.reminderSnoozedUntil);
     expect(after.reminderCount).toBe(1);
   });

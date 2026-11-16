@@ -1,5 +1,6 @@
 import "server-only";
 import { revalidateTag } from "next/cache";
+import { assertOwner, type AuthUser } from "@/lib/auth/guards";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { earliestDue, reminderHeadline } from "@/lib/reminder-progress";
 import {
@@ -8,6 +9,7 @@ import {
   pickReminder,
   type ReminderCandidate,
 } from "@/lib/reminder-rules";
+import { strapiEntryUrl } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import { streakTimeZone } from "@/lib/streaks";
 import type { StreakLearner } from "@/lib/streak-days";
@@ -24,7 +26,7 @@ type ReminderRow = {
   firstCreated?: string | null;
   reminderCount?: number | null;
   reminderSnoozedUntil?: string | null;
-  reminderMuted?: boolean | null;
+  reminderMutedUntil?: string | null;
   droplet?: { id: number } | null;
 };
 
@@ -76,7 +78,7 @@ export async function runReminderCheck(
           "firstCreated",
           "reminderCount",
           "reminderSnoozedUntil",
-          "reminderMuted",
+          "reminderMutedUntil",
         ],
         populate: { droplet: { fields: ["id"] } },
         sort: ["id:asc"],
@@ -148,7 +150,7 @@ export async function runReminderCheck(
               lastRaisedAt: row.firstCreated ?? null,
               count: row.reminderCount ?? null,
               snoozedUntil: row.reminderSnoozedUntil ?? null,
-              muted: !!row.reminderMuted,
+              mutedUntil: row.reminderMutedUntil ?? null,
             }
           : null,
       };
@@ -199,5 +201,113 @@ export async function runReminderCheck(
   } catch (error) {
     console.error("Error checking reminders:", error);
     return { raised: false, reason: "error" };
+  }
+}
+
+export type OwnReminder = {
+  id: number;
+  documentId: string;
+};
+
+/** True for a positive safe integer, the only valid reminder id. */
+export const isReminderId = (id: unknown): id is number =>
+  typeof id === "number" && Number.isSafeInteger(id) && id > 0;
+
+/** Reads the caller's own reminder fresh; refuses bad ids, non-reminders and other users' rows (no admin bypass). */
+export async function loadOwnReminder(
+  id: unknown,
+  user: AuthUser,
+): Promise<
+  | { ok: true; row: OwnReminder }
+  | { ok: false; error: "invalid" | "not_found" | "forbidden" }
+> {
+  if (!isReminderId(id)) {
+    return { ok: false, error: "invalid" };
+  }
+  const rows = await fetchAPI<
+    (OwnReminder & { authorized_user?: { id: number } | null })[]
+  >("/announcements", {
+    urlParams: {
+      filters: { id: { $eq: id }, type: { $eq: "reminder" } },
+      fields: ["id"],
+      populate: { authorized_user: { fields: ["id"] } },
+      pagination: { pageSize: 1, page: 1 },
+    },
+    cache: "no-store",
+  });
+  const row = rows?.[0];
+  if (!row) return { ok: false, error: "not_found" };
+  const owner = assertOwner(row.authorized_user?.id, user, {
+    bypassRoles: [],
+  });
+  if (!owner.ok) return { ok: false, error: "forbidden" };
+  return { ok: true, row };
+}
+
+/** PUTs only the given reminder-state fields, then revalidates the learner's feed. Throws on failure. */
+export async function writeReminderState(
+  row: Pick<OwnReminder, "id" | "documentId">,
+  data: Partial<{
+    readAt: string | null;
+    reminderSnoozedUntil: string | null;
+    reminderMutedUntil: string | null;
+  }>,
+  userId: number,
+): Promise<void> {
+  const response = await fetch(
+    await strapiEntryUrl("announcements", {
+      id: row.id,
+      documentId: row.documentId,
+    }),
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
+      },
+      body: JSON.stringify({ data }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to update reminder (${response.status})`);
+  }
+  revalidateTag(CACHE_TAGS.userFeed(userId));
+}
+
+/** Marks the droplet's unread reminder read after a new lesson view. Never throws; true if it cleared one. */
+export async function clearReminderOnProgress(
+  learner: StreakLearner,
+  dropletId: number,
+  now = new Date(),
+): Promise<boolean> {
+  try {
+    const rows = await fetchAPI<Pick<OwnReminder, "id" | "documentId">[]>(
+      "/announcements",
+      {
+        urlParams: {
+          filters: {
+            type: { $eq: "reminder" },
+            authorized_user: { id: { $eq: learner.id } },
+            droplet: { id: { $eq: dropletId } },
+            readAt: { $null: true },
+          },
+          fields: ["id"],
+          pagination: { pageSize: 1, page: 1 },
+        },
+        cache: "no-store",
+      },
+    );
+    if (!rows?.[0]) return false;
+    await writeReminderState(
+      rows[0],
+      { readAt: now.toISOString() },
+      learner.id,
+    );
+    return true;
+  } catch (error) {
+    console.error("Error clearing reminder on progress:", error);
+    return false;
   }
 }

@@ -451,7 +451,7 @@ export type Announcement = {
   readAt?: string | null;
   reminderCount?: number | null;
   reminderSnoozedUntil?: string | null;
-  reminderMuted?: boolean | null;
+  reminderMutedUntil?: string | null;
   reminder?: ReminderFeedData;
 };
 

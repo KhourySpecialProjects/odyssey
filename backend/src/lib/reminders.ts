@@ -26,7 +26,7 @@ export type RaiseReminderInput = {
   dayStart: string;
   /** firstCreated the caller saw on the row, or null when it saw none */
   lastRaisedAt: string | null;
-  /** Reminders since the last progress, this one included */
+  /** Reminders since the last progress or ended mute, this one included */
   count: number;
   content: string;
 };
@@ -71,7 +71,7 @@ export async function raiseReminder(
 
     const rowQuery = {
       filters: { ...mine, droplet: { id: input.dropletId } },
-      fields: ['firstCreated', 'reminderSnoozedUntil', 'reminderMuted'],
+      fields: ['firstCreated', 'reminderSnoozedUntil', 'reminderMutedUntil'],
       sort: { id: 'asc' },
     } as any;
     let row = (await strapi
@@ -95,10 +95,12 @@ export async function raiseReminder(
       return { raised: false, reason: 'changed' } as const;
     }
     const snoozedUntil = time(row?.reminderSnoozedUntil);
+    const mutedUntil = time(row?.reminderMutedUntil);
+    const now = time(input.now)!;
     if (
       row &&
-      (row.reminderMuted ||
-        (snoozedUntil !== null && snoozedUntil > time(input.now)!))
+      ((mutedUntil !== null && mutedUntil > now) ||
+        (snoozedUntil !== null && snoozedUntil > now))
     ) {
       return { raised: false, reason: 'declined' } as const;
     }
@@ -137,7 +139,6 @@ export async function raiseReminder(
       data: {
         ...data,
         type: 'reminder',
-        reminderMuted: false,
         authorized_user: user.documentId,
         droplet: droplet.documentId,
       },
