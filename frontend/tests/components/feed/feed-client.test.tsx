@@ -697,10 +697,12 @@ describe("FeedClient", () => {
   });
 
   describe("reminder check (ODY-931)", () => {
-    const renderLoaded = async () => {
+    const renderLoaded = async (refresh?: Promise<unknown>) => {
       (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
         mockPage(generateMockAnnouncements(2)),
       );
+      if (refresh)
+        (fetchAnnouncements as jest.Mock).mockReturnValueOnce(refresh);
       const view = render(
         <FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />,
       );
@@ -721,10 +723,7 @@ describe("FeedClient", () => {
         data: { raised: true },
       });
       // The refetch never resolves, so the old list must stay on screen
-      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
-        new Promise(() => {}),
-      );
-      await renderLoaded();
+      await renderLoaded(new Promise(() => {}));
 
       await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(2));
       expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();

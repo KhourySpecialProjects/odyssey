@@ -262,6 +262,11 @@ describe("Feed tests", () => {
         orderIndex: n,
       }));
 
+      const { DateTime } = require("luxon");
+      const zone = "America/New_York";
+      const day = (n) =>
+        DateTime.now().setZone(zone).plus({ days: n }).toISODate();
+
       it("attaches progress, Up next, the earliest due date and the headline", async () => {
         const { fetchAPI } = require("../../lib/utils");
         mockPrecompute();
@@ -271,12 +276,12 @@ describe("Feed tests", () => {
           ])
           .mockResolvedValueOnce([
             {
-              dueDate: "2026-12-02",
+              dueDate: day(11),
               droplet: { id: 100 },
               group: { groupName: "B" },
             },
             {
-              dueDate: "2026-12-01",
+              dueDate: day(10),
               droplet: { id: 100 },
               group: { groupName: "A" },
             },
@@ -290,7 +295,7 @@ describe("Feed tests", () => {
           progress: { viewed: 1, total: 2 },
           nextLesson: { name: "L2", slug: "l2" },
           started: true,
-          dueDate: "2026-12-01",
+          dueDate: day(10),
           dueGroupName: "A",
         });
         const [, dueOpts] = fetchAPI.mock.calls[4];
@@ -304,11 +309,7 @@ describe("Feed tests", () => {
       });
 
       describe("template state", () => {
-        const { DateTime } = require("luxon");
         const { fetchAPI } = require("../../lib/utils");
-        const zone = "America/New_York";
-        const day = (n) =>
-          DateTime.now().setZone(zone).plus({ days: n }).toISODate();
         const enrollment = (over = {}) => ({
           droplet: { id: 100, lessons },
           viewedLessons: [],
@@ -473,40 +474,55 @@ describe("Feed tests", () => {
   });
 
   describe("getUnreadAnnouncementCount", () => {
+    // The count goes through fetchAPI; the feed still uses raw fetch
+    function mockCountApi(total = 3) {
+      const { fetchAPI } = require("../../lib/utils");
+      fetchAPI.mockImplementation(async (path) =>
+        path === "/announcements"
+          ? { data: [], meta: { pagination: { total } } }
+          : [],
+      );
+    }
+    const countCall = () =>
+      require("../../lib/utils").fetchAPI.mock.calls.find(
+        ([path]) => path === "/announcements",
+      );
+    const countQuery = () =>
+      decodeURIComponent(require("qs").stringify(countCall()[1].urlParams));
+    // Round-trips like the feed's URL so values compare as strings
+    const countFilters = () =>
+      require("qs").parse(
+        require("qs").stringify({ filters: countCall()[1].urlParams.filters }),
+        { depth: 20 },
+      ).filters;
+
     it("counts the session user's unread feed", async () => {
       const { getCurrentUser } = require("../../lib/auth/session");
       const { getCachedUserSocial } = require("../../lib/requests/cached");
-      const { fetchAPI } = require("../../lib/utils");
       getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
       getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
-      fetchAPI.mockResolvedValue([]);
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: [], meta: { pagination: { total: 7 } } }),
-      });
+      mockCountApi(7);
 
       await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
-      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-      expect(url).toContain("[readAt][$null]=true");
+      expect(countQuery()).toContain("[readAt][$null]=true");
     });
 
     function setupCount(total = 3) {
       const { getCurrentUser } = require("../../lib/auth/session");
       const { getCachedUserSocial } = require("../../lib/requests/cached");
-      const { fetchAPI } = require("../../lib/utils");
       getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
       getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
-      fetchAPI.mockResolvedValue([]);
-      global.fetch.mockResolvedValueOnce({
+      mockCountApi(total);
+      global.fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ data: [], meta: { pagination: { total } } }),
+        json: async () => ({ data: [], meta: {} }),
       });
     }
 
     it("counts the Unread tab's default types, reminders included", async () => {
       setupCount();
       await getUnreadAnnouncementCount();
-      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      const url = countQuery();
       expect(url).toContain("[$and][2][type][$in][0]=droplet");
       expect(url).toContain("[$and][2][type][$in][6]=reminder");
       expect(url).not.toContain("[$and][2][type][$in][7]");
@@ -574,25 +590,26 @@ describe("Feed tests", () => {
             "/groups": [{ id: 1 }],
             "/playlists": [{ id: 2 }],
             "/enrollments": [{ id: 9, droplet: { id: 3 } }],
+            "/announcements": { data: [], meta: {} },
           })[path] ?? [],
       );
       const ok = { ok: true, json: async () => ({ data: [], meta: {} }) };
       global.fetch.mockResolvedValue(ok);
       await getUnreadAnnouncementCount(["system", row.type]);
       await fetchAnnouncements(1, ["system", row.type]);
-      const filtersOf = (i) =>
-        require("qs").parse(global.fetch.mock.calls[i][0].split("?")[1], {
-          depth: 20,
-        }).filters;
+      const feedFilters = require("qs").parse(
+        global.fetch.mock.calls[0][0].split("?")[1],
+        { depth: 20 },
+      ).filters;
       const unread = { ...row, readAt: null };
-      expect(matches(unread, filtersOf(1))).toBe(true);
-      expect(matches(unread, filtersOf(0))).toBe(counted);
+      expect(matches(unread, feedFilters)).toBe(true);
+      expect(matches(unread, countFilters())).toBe(counted);
     });
 
     it("counts the given filter selection", async () => {
       setupCount();
       await getUnreadAnnouncementCount(["kudos", 4]);
-      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      const url = countQuery();
       expect(url).toContain("[$and][2][type][$in][0]=kudos");
       expect(url).not.toContain("[$and][2][type][$in][1]");
     });
@@ -600,23 +617,27 @@ describe("Feed tests", () => {
     it("is 0 with no types selected, without querying", async () => {
       setupCount();
       await expect(getUnreadAnnouncementCount([])).resolves.toBe(0);
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(countCall()).toBeUndefined();
     });
 
     it("is a lean id-only query: one row, no populate, same tags", async () => {
       setupCount();
       await getUnreadAnnouncementCount();
-      const [rawUrl, init] = global.fetch.mock.calls[0];
-      const params = require("qs").parse(rawUrl.split("?")[1]);
-      expect(params.fields).toEqual(["id"]);
-      expect(params.pagination).toEqual({ pageSize: "1", page: "1" });
-      expect(params.populate).toBeUndefined();
-      expect(init.cache).toBeUndefined();
-      expect(init.next.tags).toEqual([
+      const [, opts] = countCall();
+      expect(opts.urlParams.fields).toEqual(["id"]);
+      expect(opts.urlParams.pagination).toEqual({ pageSize: 1, page: 1 });
+      expect(opts.urlParams.populate).toBeUndefined();
+      expect(opts.flattenResponse).toBe(false);
+      expect(opts.cache).toBeUndefined();
+      expect(opts.next.tags).toEqual([
         CACHE_TAGS.announcements,
         CACHE_TAGS.userFeed(5),
       ]);
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(
+        require("../../lib/utils").fetchAPI.mock.calls.filter(
+          ([path]) => path === "/announcements",
+        ),
+      ).toHaveLength(1);
     });
 
     it.each([
@@ -625,17 +646,17 @@ describe("Feed tests", () => {
     ])(
       "uses the feed's filters for %s, plus owner = viewer",
       async (_n, roles) => {
-        const filtersOf = (u) => require("qs").parse(u.split("?")[1]).filters;
+        const filtersOf = (u) =>
+          require("qs").parse(u.split("?")[1], { depth: 20 }).filters;
         const {
           toFeedRoles,
           FILTER_VALUES,
         } = require("../../components/feed/feed-filter-params");
         setupCount();
         await getUnreadAnnouncementCount(roles);
-        setupCount();
         await fetchAnnouncements(1, roles ?? toFeedRoles(FILTER_VALUES));
-        const count = filtersOf(global.fetch.mock.calls[0][0]).$and;
-        const feed = filtersOf(global.fetch.mock.calls[1][0]).$and;
+        const count = countFilters().$and;
+        const feed = filtersOf(global.fetch.mock.calls[0][0]).$and;
         expect(count).toEqual([
           ...feed,
           { authorized_user: { id: { $eq: "5" } } },
@@ -645,8 +666,10 @@ describe("Feed tests", () => {
 
     it("returns null, not 0, when the fetch fails", async () => {
       setupCount();
-      global.fetch.mockReset();
-      global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
+      require("../../lib/utils").fetchAPI.mockImplementation(async (path) => {
+        if (path === "/announcements") throw new Error("Strapi 500");
+        return [];
+      });
       await expect(getUnreadAnnouncementCount()).resolves.toBeNull();
     });
 

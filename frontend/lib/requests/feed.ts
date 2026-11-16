@@ -971,28 +971,21 @@ export async function getUnreadAnnouncementCount(
       ownedOnly: true,
       types: types.filter((t) => typeof t === "string"),
     });
-    const query = qs.stringify({
-      filters,
-      fields: ["id"],
-      pagination: { pageSize: 1, page: 1 },
-    });
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
+    const data = await fetchAPI<{ meta?: { pagination?: { total?: number } } }>(
+      "/announcements",
       {
-        headers: {
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        urlParams: {
+          filters,
+          fields: ["id"],
+          pagination: { pageSize: 1, page: 1 },
         },
         next: {
           tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
           revalidate: 900,
         },
+        flattenResponse: false,
       },
     );
-    if (!response.ok) {
-      throw new Error(`Strapi returned ${response.status} for /announcements`);
-    }
-    const data = await response.json();
     return data.meta?.pagination?.total ?? 0;
   } catch (error) {
     console.error("Error fetching unread count:", error);
