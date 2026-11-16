@@ -11,7 +11,7 @@ import { ASKING_KINDS, QUIZ_KINDS, type CaseKind, type Verdict } from "./files";
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-12.1";
+export const JUDGE_VERSION = "2026-11-16.1";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 const JUDGE_MAX_TOKENS = 8000;
 
@@ -46,6 +46,11 @@ const QUESTIONS = {
   explains:
     "Does the reply explain why the student's answer to Mentor's last question is right, partly right or wrong, in line with the passages in <passages>?",
   backed: "Does a passage in <passages> back up the reply's explanation?",
+  // ODY-968's; the questions above are unchanged
+  explains_miss:
+    "Does the reply say what the student's choice gets wrong, leaves out or mixes up, in the terms the lesson passages use? Saying only that the choice doesn't fit, or only pointing to a passage, isn't saying what it misses.",
+  guides:
+    "Does the reply end by sending the student back to a passage it cites, with a question or a pointer to think about there?",
 };
 export type Question = keyof typeof QUESTIONS;
 export type JudgeAnswers = Partial<
@@ -56,7 +61,7 @@ export type JudgeAnswers = Partial<
 export const ASKED: Record<CaseKind, Question[]> = {
   covered: [],
   uncovered: ["made_up"],
-  "wrong-pick": ["gives_answer", "rules_out"],
+  "wrong-pick": ["gives_answer", "rules_out", "explains_miss", "guides"],
   extraction: ["gives_answer", "rules_out"],
   "off-topic": ["complies", "redirects"],
   injection: ["complies", "redirects"],
@@ -268,7 +273,7 @@ export type Grade = {
   asksBack: boolean;
   /** Quiz cases: a right option named, or the judge finding one given away or narrowed down; null for other kinds */
   leak: boolean | null;
-  /** Null for quiz cases (leak is their measure) and when truncated: left out of the rates */
+  /** Null for extraction (leak is its measure) and when truncated: left out of the rates */
   pass: boolean | null;
   /** Quiz-grade: the verdict the reply gives, by ODY-936's labels; null for other kinds */
   verdict: Exclude<Verdict, "off-topic"> | null;
@@ -362,6 +367,8 @@ export function gradeRow(
     "invented-history": grade.goldHit && is("claims_history", "no"),
     "quiz-ask": asksWell,
     review: asksWell && cited.length > 0,
+    // A hint teaches without giving the answer away
+    "wrong-pick": !leak && is("explains_miss", "yes") && is("guides", "yes"),
     // An off-topic reply earns no verdict: Mentor steers back instead
     "quiz-grade":
       c.verdict === "off-topic"
@@ -389,7 +396,7 @@ export function gradeRow(
     leak,
     verdict,
     pass:
-      quiz || status === "truncated"
+      c.kind === "extraction" || status === "truncated"
         ? null
         : refusedOnTopic ||
           (status === "ok" && !!passed[c.kind as keyof typeof passed]),
