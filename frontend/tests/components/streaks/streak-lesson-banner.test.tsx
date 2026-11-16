@@ -94,18 +94,39 @@ describe("StreakLessonBanner", () => {
     },
   );
 
-  it("counts up from yesterday's number unless motion is reduced", () => {
-    jest.useFakeTimers();
-    mockReducedMotion(false);
-    render(<StreakLessonBanner lessonCompleted />);
-    setStreak(makeStreak({ current: 6, litToday: true }));
+  it.each([
+    ["lights here", true, false, 6, "5", true],
+    ["was already lit when the lesson opened", false, false, 6, "6", false],
+    ["lights here with reduced motion", true, true, 6, "6", false],
+    ["lights day 1 here, with no day 0", true, false, 1, "1", true],
+  ])(
+    "when the streak %s, the count starts right and animates only then",
+    (_, lightsHere, reduce, current, first, animated) => {
+      jest.useFakeTimers();
+      mockReducedMotion(reduce);
+      const { container } = render(<StreakLessonBanner lessonCompleted />);
+      if (lightsHere) setStreak(makeStreak({ current: current - 1 }));
+      setStreak(makeStreak({ current, litToday: true }));
 
-    expect(screen.getByText("5")).toBeInTheDocument();
-    act(() => {
-      jest.advanceTimersByTime(500);
-    });
-    expect(screen.getByText("6")).toBeInTheDocument();
-    jest.useRealTimers();
+      expect(screen.getByText(first)).toBeInTheDocument();
+      expect(!!container.querySelector(".animate-in")).toBe(animated);
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByText(String(current))).toBeInTheDocument();
+      jest.useRealTimers();
+    },
+  );
+
+  it("keeps one status region as the streak lights, so it's read out", () => {
+    render(<StreakLessonBanner lessonCompleted />);
+    setStreak(makeStreak({ current: 2 }));
+    const region = screen.getByRole("status");
+
+    setStreak(makeStreak({ current: 3, litToday: true }));
+
+    expect(screen.getByRole("status")).toBe(region);
+    expect(region).toHaveTextContent("Day 3 · You earned the Three Coins!");
   });
 });
 

@@ -11,7 +11,7 @@ import {
   progressText,
   progressToNext,
 } from "@/lib/streak-messages";
-import { STREAK_ICONS } from "@/lib/streaks";
+import { STREAK_ICONS, type Streak } from "@/lib/streaks";
 import { cn } from "@/lib/utils";
 import { useStreakStore } from "@/stores/streak-store";
 import { StreakIcon } from "./streak-icon";
@@ -28,14 +28,9 @@ function prefersReducedMotion() {
   );
 }
 
-/**
- * The day count ticking up from yesterday's number to today's, once the
- * treasure has popped in. Shows the final number at once with reduced motion.
- */
+/** The day count ticking up from `from` to `to`, once the treasure has popped in */
 function useDayCount(from: number, to: number) {
-  const [shown, setShown] = useState(() =>
-    prefersReducedMotion() ? to : from,
-  );
+  const [shown, setShown] = useState(from);
   useEffect(() => {
     if (shown === to) return;
     const timer = setTimeout(() => setShown(to), 450);
@@ -44,34 +39,55 @@ function useDayCount(from: number, to: number) {
   return shown;
 }
 
-/** True one frame after mounting, so a bar can grow from empty (already true with reduced motion) */
-function useAfterMount() {
-  const [ready, setReady] = useState(prefersReducedMotion);
+/** True one frame after mounting, so a bar can grow from empty (or at once when `now`) */
+function useAfterMount(now: boolean) {
+  const [ready, setReady] = useState(now);
   useEffect(() => {
+    if (ready) return;
     const frame = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [ready]);
   return ready;
 }
 
-/** Today's streak is lit: only the current treasure, a big day count and a short moment of delight */
-function LitCard({ current }: { current: number }) {
+/**
+ * Today's streak is lit: only the current treasure, a big day count and,
+ * when it `celebrate`s, a short moment of delight. Without it, or with
+ * reduced motion, the card shows its final state at once.
+ */
+function LitCard({
+  current,
+  celebrate,
+}: {
+  current: number;
+  celebrate: boolean;
+}) {
   const { icon } = iconsFor(current);
   const { title, detail } = litMessage(current);
   const progress = progressToNext(current);
-  const shown = useDayCount(current - 1, current);
-  const barReady = useAfterMount();
+  const [animate] = useState(() => celebrate && !prefersReducedMotion());
+  // Day 1 has no yesterday to count up from
+  const shown = useDayCount(
+    animate && current > 1 ? current - 1 : current,
+    current,
+  );
+  const barReady = useAfterMount(!animate);
 
   return (
     <div
-      aria-live="polite"
       className={cn(
         card,
-        "animate-in fade-in duration-500 motion-reduce:animate-none",
+        animate && "animate-in fade-in duration-500 motion-reduce:animate-none",
       )}
     >
       {icon && (
-        <div className="animate-in zoom-in-50 fade-in shrink-0 duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:animate-none">
+        <div
+          className={cn(
+            "shrink-0",
+            animate &&
+              "animate-in zoom-in-50 fade-in duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:animate-none",
+          )}
+        >
           <StreakIcon icon={icon} size={64} />
         </div>
       )}
@@ -84,7 +100,11 @@ function LitCard({ current }: { current: number }) {
           Day{" "}
           <span
             key={shown}
-            className="animate-in fade-in slide-in-from-bottom-2 inline-block duration-300 motion-reduce:animate-none"
+            className={cn(
+              "inline-block",
+              animate &&
+                "animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none",
+            )}
           >
             {shown}
           </span>
@@ -103,7 +123,11 @@ function LitCard({ current }: { current: number }) {
               className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700"
             >
               <div
-                className="h-full rounded-full bg-amber-400 transition-[width] duration-700 ease-out motion-reduce:transition-none"
+                className={cn(
+                  "h-full rounded-full bg-amber-400",
+                  animate &&
+                    "transition-[width] duration-700 ease-out motion-reduce:transition-none",
+                )}
                 style={{
                   width: barReady
                     ? `${(progress.done / progress.span) * 100}%`
@@ -121,6 +145,39 @@ function LitCard({ current }: { current: number }) {
   );
 }
 
+/** Before today is lit: what finishing a lesson unlocks, greyed treasure → the next one */
+function PendingCard({
+  streak,
+  lessonCompleted,
+}: {
+  streak: Streak;
+  lessonCompleted: boolean;
+}) {
+  const from = iconsFor(streak.current).icon;
+  const to = iconsFor(streak.current + 1).icon ?? STREAK_ICONS[0];
+  const { title, detail } = pendingMessage(streak, lessonCompleted);
+
+  return (
+    <div className={card}>
+      <div className="flex shrink-0 items-center gap-2">
+        {from && (
+          <>
+            <StreakIcon icon={from} size={44} unlit />
+            <ArrowRight className="h-4 w-4 text-slate-500" aria-hidden="true" />
+          </>
+        )}
+        <StreakIcon icon={to} size={56} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-bold text-slate-900 dark:text-white">
+          {title}
+        </p>
+        <p className="mt-0.5 text-slate-600 dark:text-slate-400">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Under a lesson's Previous / Next buttons (ODY-919). Until a lesson is
  * finished today it says what finishing one unlocks; then it celebrates
@@ -132,43 +189,20 @@ export function StreakLessonBanner({
   lessonCompleted: boolean;
 }) {
   const streak = useStreakStore((s) => s.streak);
+  // Celebrate only when today lights while this banner is on screen, not on
+  // every lesson the learner opens after that
+  const [sawUnlit, setSawUnlit] = useState(false);
+  if (streak && !streak.litToday && !sawUnlit) setSawUnlit(true);
   if (!streak) return null;
 
-  if (streak.litToday) {
-    // Keyed so it mounts, and animates in, when the streak lights
-    return (
-      <div className="mb-12 flex justify-end">
-        <LitCard key="lit" current={streak.current} />
-      </div>
-    );
-  }
-
-  const from = iconsFor(streak.current).icon;
-  const to = iconsFor(streak.current + 1).icon ?? STREAK_ICONS[0];
-  const { title, detail } = pendingMessage(streak, lessonCompleted);
-
   return (
-    <div className="mb-12 flex justify-end">
-      <div aria-live="polite" key="pending" className={card}>
-        <div className="flex shrink-0 items-center gap-2">
-          {from && (
-            <>
-              <StreakIcon icon={from} size={44} unlit />
-              <ArrowRight
-                className="h-4 w-4 text-slate-500"
-                aria-hidden="true"
-              />
-            </>
-          )}
-          <StreakIcon icon={to} size={56} />
-        </div>
-        <div className="min-w-0">
-          <p className="text-lg font-bold text-slate-900 dark:text-white">
-            {title}
-          </p>
-          <p className="mt-0.5 text-slate-600 dark:text-slate-400">{detail}</p>
-        </div>
-      </div>
+    // One status region for both cards, so screen readers hear the change
+    <div role="status" className="mb-12 flex justify-end">
+      {streak.litToday ? (
+        <LitCard current={streak.current} celebrate={sawUnlit} />
+      ) : (
+        <PendingCard streak={streak} lessonCompleted={lessonCompleted} />
+      )}
     </div>
   );
 }
