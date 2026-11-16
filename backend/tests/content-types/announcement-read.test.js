@@ -19,21 +19,10 @@ const markRead = (announcement, user) =>
     data: { announcement: announcement.documentId, authorized_user: user.documentId },
   });
 
-// The filters fetchAnnouncements sends. Unread is "not in the user's read ids":
+// The filters fetchAnnouncements sends. Unread is the controller's unreadBy:
 // a negated relation filter ($not) is wrong when another user also read the row.
 const readBy = (user) => `filters[reads][authorized_user][id][$eq]=${user.id}`;
-const unreadBy = async (user) => {
-  const res = await api(
-    'get',
-    `/api/announcement-reads?filters[authorized_user][id][$eq]=${user.id}` +
-      '&fields[0]=id&populate[announcement][fields][0]=id&pagination[pageSize]=250'
-  );
-  expect(res.status).toBe(200);
-  const readIds = res.body.data.map((r) => r.announcement.id);
-  return readIds.length
-    ? readIds.map((id, i) => `filters[id][$notIn][${i}]=${id}`).join('&')
-    : 'filters[id][$gt]=0';
-};
+const unreadBy = (user) => `unreadBy=${user.id}`;
 const ids = async (query) => {
   const res = await api('get', `/api/announcements?${query}&pagination[pageSize]=100`);
   expect(res.status).toBe(200);
@@ -68,6 +57,35 @@ describe('announcement-read (ODY-786)', () => {
     expect(del.status).toBe(204);
   });
 
+  it('keeps other filters next to unreadBy, and rejects a bad one', async () => {
+    const read = await makeAnnouncement({ type: 'system' });
+    const unread = await makeAnnouncement({ type: 'system' });
+    const user = await makeUser();
+    await markRead(read, user);
+
+    const listed = await ids(`${unreadBy(user)}&filters[type][$eq]=system`);
+    expect(listed).toContain(unread.id);
+    expect(listed).not.toContain(read.id);
+    expect((await api('get', '/api/announcements?unreadBy=abc')).status).toBe(400);
+  });
+
+  it('keeps a mark-unread made before the backfill reached the row', async () => {
+    const { backfillAnnouncementReads } = require('../../dist/src/lib/announcement-read-backfill');
+    const user = await makeUser();
+    const announcement = await makeAnnouncement({
+      type: 'system',
+      authorized_user: user.documentId,
+      readAt: new Date().toISOString(),
+    });
+    const read = await markRead(announcement, user);
+
+    const del = await api('delete', `/api/announcement-reads/${read.documentId}`);
+    expect(del.status).toBe(204);
+    await backfillAnnouncementReads();
+
+    expect(await ids(unreadBy(user))).toContain(announcement.id);
+  });
+
   it.each(['droplet', 'group', 'playlist', 'friend', 'kudos', 'system', 'review_feedback', 'review_published'])(
     'a %s announcement read by one user stays unread for another',
     async (type) => {
@@ -77,9 +95,9 @@ describe('announcement-read (ODY-786)', () => {
       await markRead(announcement, reader);
 
       expect(await ids(readBy(reader))).toContain(announcement.id);
-      expect(await ids(await unreadBy(reader))).not.toContain(announcement.id);
+      expect(await ids(unreadBy(reader))).not.toContain(announcement.id);
       expect(await ids(readBy(other))).not.toContain(announcement.id);
-      expect(await ids(await unreadBy(other))).toContain(announcement.id);
+      expect(await ids(unreadBy(other))).toContain(announcement.id);
     }
   );
 
@@ -91,8 +109,8 @@ describe('announcement-read (ODY-786)', () => {
     await markRead(announcement, a);
     await markRead(announcement, b);
 
-    expect(await ids(await unreadBy(c))).toContain(announcement.id);
-    expect(await ids(await unreadBy(a))).not.toContain(announcement.id);
+    expect(await ids(unreadBy(c))).toContain(announcement.id);
+    expect(await ids(unreadBy(a))).not.toContain(announcement.id);
     // Not a duplicate row per reader
     expect((await ids(readBy(a))).filter((id) => id === announcement.id)).toHaveLength(1);
   });

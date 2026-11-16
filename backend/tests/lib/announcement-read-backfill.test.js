@@ -18,9 +18,11 @@ const make = (data) =>
     data: { content: 'Hi.', firstCreated: new Date().toISOString(), ...data },
   });
 const readsOf = (announcement) =>
-  strapi.db.query(ANNOUNCEMENT_READ_UID).findMany({ where: { announcement: announcement.id } });
+  strapi.documents(ANNOUNCEMENT_READ_UID).findMany({
+    filters: { announcement: { id: announcement.id } },
+  });
 const readAtOf = async (announcement) =>
-  (await strapi.db.query(ANNOUNCEMENT_UID).findOne({ where: { id: announcement.id } })).readAt;
+  (await strapi.documents(ANNOUNCEMENT_UID).findOne({ documentId: announcement.documentId })).readAt;
 
 describe('backfillAnnouncementReads', () => {
   it('turns readAt on a targeted row into a read mark for its recipient, once', async () => {
@@ -42,7 +44,9 @@ describe('backfillAnnouncementReads', () => {
     expect(await readAtOf(system)).toBeNull();
 
     // Undo it, restart: the old mark must not come back
-    await strapi.db.query(ANNOUNCEMENT_READ_UID).deleteMany({ where: { announcement: system.id } });
+    for (const read of await readsOf(system)) {
+      await strapi.documents(ANNOUNCEMENT_READ_UID).delete({ documentId: read.documentId });
+    }
     expect(await backfillAnnouncementReads()).toBe(0);
     expect(await readsOf(system)).toHaveLength(0);
   });

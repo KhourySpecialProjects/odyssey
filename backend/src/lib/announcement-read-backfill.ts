@@ -1,19 +1,21 @@
 // Carries readAt on targeted rows over to per-user read rows (ODY-786), then clears
 // it so the copy runs once and a later "mark unread" is never undone on restart.
+// Rows not reached yet are safe too: deleting a read mark clears its row's readAt.
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const READ_UID = 'api::announcement-read.announcement-read';
 // Rows whose authorized_user is the recipient; friend/kudos rows belong to the actor.
 const TARGETED_TYPES = ['system', 'review_feedback', 'review_published', 'reminder'];
 
 export async function backfillAnnouncementReads(): Promise<number> {
-  const rows = await strapi.db.query(ANNOUNCEMENT_UID).findMany({
-    where: {
+  const rows = (await strapi.documents(ANNOUNCEMENT_UID).findMany({
+    filters: {
       readAt: { $notNull: true },
       type: { $in: TARGETED_TYPES },
       authorized_user: { id: { $notNull: true } },
     },
-    populate: { authorized_user: { select: ['id'] } },
-  });
+    fields: ['id'],
+    populate: { authorized_user: { fields: ['id'] } },
+  } as any)) as unknown as { id: number; authorized_user: { id: number } }[];
 
   let copied = 0;
   for (const row of rows) {

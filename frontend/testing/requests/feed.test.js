@@ -100,14 +100,10 @@ describe("Feed tests", () => {
 
     function mockPrecompute() {
       const { fetchAPI } = require("../../lib/utils");
-      // Drop once-values a test that skipped the read lookup left queued
-      fetchAPI.mockReset();
       fetchAPI
         .mockResolvedValueOnce([{ id: 1 }]) // groups
         .mockResolvedValueOnce([{ id: 2 }]) // playlists
-        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]) // enrollments
-        .mockResolvedValueOnce([]) // the user's read announcement ids (Unread tab)
-        .mockResolvedValue([]);
+        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]); // enrollments
     }
 
     function mockAnnouncementsResponse(data = []) {
@@ -156,8 +152,9 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements();
 
-      // 3 pre-compute lookups plus the user's read ids
-      expect(fetchAPI).toHaveBeenCalledTimes(4);
+      // 3 pre-compute lookups; Strapi drops the user's read rows (unreadBy)
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(global.fetch.mock.calls[0][0]).toContain("unreadBy=5");
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
@@ -208,6 +205,7 @@ describe("Feed tests", () => {
       expect(url).toContain("[type][$in][1]=system");
       expect(url).toContain("[reads][authorized_user][id][$eq]=5");
       expect(url).not.toContain("readAt");
+      expect(url).not.toContain("unreadBy");
       expect(url).toContain("pagination[page]=2");
     });
 
@@ -303,10 +301,10 @@ describe("Feed tests", () => {
           dueDate: day(10),
           dueGroupName: "A",
         });
-        const [, dueOpts] = fetchAPI.mock.calls[5];
+        const [, dueOpts] = fetchAPI.mock.calls[4];
         expect(dueOpts.urlParams.filters.dueDate).toEqual({ $notNull: true });
         expect(dueOpts.urlParams.sort).toEqual(["dueDate:asc"]);
-        const [, enrollmentOpts] = fetchAPI.mock.calls[4];
+        const [, enrollmentOpts] = fetchAPI.mock.calls[3];
         expect(enrollmentOpts.next.tags).toEqual([
           CACHE_TAGS.enrollments(5),
           CACHE_TAGS.droplets,
@@ -367,7 +365,7 @@ describe("Feed tests", () => {
 
         it("asks the enrollment query for progress and creation dates", async () => {
           await headlineFor([enrollment()], [], zone);
-          const [, opts] = fetchAPI.mock.calls[4];
+          const [, opts] = fetchAPI.mock.calls[3];
           expect(opts.urlParams.fields).toEqual([
             "id",
             "lastProgressDate",
@@ -407,7 +405,7 @@ describe("Feed tests", () => {
 
         await fetchAnnouncements(1);
 
-        expect(fetchAPI).toHaveBeenCalledTimes(4);
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
       });
     });
 
@@ -446,7 +444,7 @@ describe("Feed tests", () => {
       await fetchAnnouncements(1);
 
       expect(getCachedUser).toHaveBeenCalledWith("test.user@northeastern.edu");
-      expect(fetchAPI).toHaveBeenCalledTimes(4);
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
       expect(global.fetch.mock.calls[0][1].next.tags).toContain(
         CACHE_TAGS.userFeed(5),
       );
@@ -662,30 +660,15 @@ describe("Feed tests", () => {
       expect(url).toContain("[authorized_user][id][$null]=true");
     });
 
-    it("excludes only this user's read announcements, so the badge matches the Unread tab", async () => {
+    it("leaves out only this user's reads, through unreadBy, like the Unread tab", async () => {
       setupCount();
-      const { fetchAPI } = require("../../lib/utils");
-      fetchAPI.mockImplementation(
-        async (path) =>
-          ({
-            "/announcement-reads": [
-              { announcement: { id: 41 } },
-              { announcement: { id: 42 } },
-            ],
-            "/announcements": { data: [], meta: { pagination: { total: 3 } } },
-          })[path] ?? [],
-      );
-
-      await expect(getUnreadAnnouncementCount()).resolves.toBe(3);
-      const readCall = fetchAPI.mock.calls.find(
-        ([path]) => path === "/announcement-reads",
-      );
-      expect(readCall[1].urlParams.filters).toEqual({
-        authorized_user: { id: { $eq: 5 } },
-      });
-      expect(countFilters().$and).toContainEqual({
-        id: { $notIn: ["41", "42"] },
-      });
+      await getUnreadAnnouncementCount();
+      expect(countCall()[1].urlParams.unreadBy).toBe(5);
+      expect(
+        require("../../lib/utils").fetchAPI.mock.calls.some(
+          ([path]) => path === "/announcement-reads",
+        ),
+      ).toBe(false);
     });
   });
 

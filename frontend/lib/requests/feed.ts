@@ -172,32 +172,29 @@ async function buildVisibilityFilters(
 }
 
 /**
- * The feed's filters: visible rows in the viewer's own read state, of `types`.
+ * The feed's query: visible rows in the viewer's own read state, of `types`.
  * Shared by the feed page and the nav count so the two can't drift.
  */
-async function buildFeedFilters(
+async function buildFeedQuery(
   userId: number,
   email: string,
   opts: { archived: boolean; types?: string[] },
 ) {
   const { archived, types } = opts;
-  // Read state is per user (announcement-reads), never the shared row.
-  // Unread excludes the user's read ids: a negated relation filter would
-  // also match rows another user has read.
-  const [orFilters, readFilter] = await Promise.all([
-    buildVisibilityFilters(userId, email),
-    archived
-      ? { reads: { authorized_user: { id: { $eq: userId } } } }
-      : fetchReadAnnouncementIds(userId).then((ids) =>
-          ids.length ? { id: { $notIn: ids } } : null,
-        ),
-  ]);
+  const orFilters = await buildVisibilityFilters(userId, email);
+  // Read state is per user (announcement-reads), never the shared row. Strapi
+  // drops the user's read rows for unreadBy, so the URL never grows with them.
   return {
-    $and: [
-      { $or: orFilters },
-      ...(readFilter ? [readFilter] : []),
-      ...(types?.length ? [{ type: { $in: types } }] : []),
-    ],
+    filters: {
+      $and: [
+        { $or: orFilters },
+        ...(archived
+          ? [{ reads: { authorized_user: { id: { $eq: userId } } } }]
+          : []),
+        ...(types?.length ? [{ type: { $in: types } }] : []),
+      ],
+    },
+    ...(archived ? {} : { unreadBy: userId }),
   };
 }
 
@@ -228,7 +225,7 @@ export async function fetchAnnouncements(
     ? roles.filter((r) => typeof r === "string")
     : undefined;
   try {
-    const filters = await buildFeedFilters(userId, email, {
+    const feedQuery = await buildFeedQuery(userId, email, {
       archived,
       types,
     });
@@ -236,7 +233,7 @@ export async function fetchAnnouncements(
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated"],
-      filters,
+      ...feedQuery,
       populate: {
         authorized_user: {
           fields: [
@@ -818,33 +815,6 @@ export async function createSystemBroadcast(content: string) {
   }
 }
 
-const READ_PAGE_SIZE = 250;
-const READ_MAX_PAGES = 40;
-
-/** The ids of every announcement this user has marked read. */
-async function fetchReadAnnouncementIds(userId: number): Promise<number[]> {
-  const ids: number[] = [];
-  for (let page = 1; page <= READ_MAX_PAGES; page++) {
-    const rows = await fetchAPI<{ announcement?: { id: number } | null }[]>(
-      "/announcement-reads",
-      {
-        urlParams: {
-          filters: { authorized_user: { id: { $eq: userId } } },
-          fields: ["id"],
-          populate: { announcement: { fields: ["id"] } },
-          pagination: { pageSize: READ_PAGE_SIZE, page },
-        },
-        next: { tags: [CACHE_TAGS.userFeed(userId)], revalidate: 900 },
-      },
-    );
-    for (const row of rows) {
-      if (row.announcement) ids.push(row.announcement.id);
-    }
-    if (rows.length < READ_PAGE_SIZE) break;
-  }
-  return ids;
-}
-
 /**
  * Mark an announcement as read for the signed-in user only: adds a row to
  * announcement-reads, so it leaves their Unread feed and shows in Read.
@@ -1000,7 +970,7 @@ export async function getUnreadAnnouncementCount(
     const sessionUser = await getCurrentUser();
     const userId = await getAuthorizedUserId(sessionUser);
     if (!sessionUser?.email || !userId) throw new Error("Not authenticated");
-    const filters = await buildFeedFilters(userId, sessionUser.email, {
+    const feedQuery = await buildFeedQuery(userId, sessionUser.email, {
       archived: false,
       types: types.filter((t) => typeof t === "string"),
     });
@@ -1008,7 +978,7 @@ export async function getUnreadAnnouncementCount(
       "/announcements",
       {
         urlParams: {
-          filters,
+          ...feedQuery,
           fields: ["id"],
           pagination: { pageSize: 1, page: 1 },
         },

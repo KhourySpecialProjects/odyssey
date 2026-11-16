@@ -32,6 +32,14 @@ export default {
           SLUG_UPDATE_HANDLERS.includes(route.handler),
       },
     });
+    // The feed's Unread list: the controller leaves out this user's read marks (ODY-786).
+    strapi.contentAPI.addQueryParams({
+      unreadBy: {
+        schema: (z) => z.string().regex(/^[1-9]\d*$/).optional(),
+        matchRoute: (route) =>
+          route.method === "GET" && route.handler === "api::announcement.announcement.find",
+      },
+    });
   },
 
   /**
