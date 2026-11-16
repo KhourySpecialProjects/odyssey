@@ -223,8 +223,7 @@ export function BlockNoteEditorClient({
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
     // Review comment marks, drawn as decorations (ODY-806). A BlockNote
-    // extension rather than a TipTap one: BlockNote only accepts TipTap
-    // extensions made with its own nested copy of @tiptap/core.
+    // extension rather than a TipTap one.
     extensions: [
       createExtension({
         key: "reviewAnchors",
@@ -242,14 +241,8 @@ export function BlockNoteEditorClient({
       cellTextColor: false,
     },
     // Additional TipTap extensions layered on top of BlockNote's defaults.
-    // The cast is required because BlockNote ships a nested @tiptap/core,
-    // so types from our top-level @tiptap/core don't line up.
     _tiptapOptions: {
-      extensions: [
-        StripSpuriousAutolinks,
-        MarkdownLinkInputRule,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any,
+      extensions: [StripSpuriousAutolinks, MarkdownLinkInputRule],
     },
   });
 
