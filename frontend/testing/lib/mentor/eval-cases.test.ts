@@ -197,6 +197,11 @@ describe("validateCases", () => {
       [{ ...caseById("review-01"), learner: undefined, profile: null }],
       /a review case needs a learner/,
     ],
+    [
+      "an oracle citing a passage the model isn't shown",
+      [{ ...covered, oracle: "Joins combine rows [p2, p99]." }],
+      /the oracle cites p99, which the model isn't shown/,
+    ],
   ])("finds %s, once", (_, cases, problem) => {
     const problems = validateCases(cases, fixtures);
     expect(problems).toHaveLength(1);

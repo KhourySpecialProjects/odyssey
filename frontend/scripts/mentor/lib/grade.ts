@@ -410,6 +410,8 @@ export function cannedReply(mode: AnswerMode, facts: CaseFacts): string {
   if (mode === "null") return "";
   if (mode === "idk") return "I don't know.";
   const oracle = mode === "oracle";
+  // A good personalized answer or grading depends on the case: its author writes one
+  if (oracle && c.oracle) return c.oracle;
   switch (c.kind) {
     case "covered": {
       const said = c.gold?.[0] ?? (ask.kind === "explain" ? ask.selection : "");

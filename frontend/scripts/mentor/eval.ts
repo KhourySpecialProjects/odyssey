@@ -27,7 +27,6 @@ import {
   ASKED,
   JUDGE,
   JUDGE_VERSION,
-  judgeRequest,
   type AnswerMode,
 } from "./lib/grade";
 import {
@@ -39,12 +38,15 @@ import {
   type RunMeta,
 } from "./lib/metrics";
 import { learnersSha } from "./lib/learner";
-import { cannedGroups, parseSetups, pilotCases, planGroups } from "./lib/plan";
+import {
+  cannedGroups,
+  FULL_REPS,
+  parseSetups,
+  pilotCases,
+  planGroups,
+  pricedRequests,
+} from "./lib/plan";
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
-
-const FULL_REPS = 2;
-/** About a 120-word reply, to estimate the judge's cost before there is one */
-const PLACEHOLDER = "word ".repeat(150);
 
 /** report.md, after adding any rows still missing from pilot-labels.json */
 function writeReport(dir: string, meta: RunMeta) {
@@ -146,18 +148,12 @@ async function main() {
   if (!todo.length && !values.resume) return console.log("No cases to run.");
   if (todo.length) {
     const sender = client ?? makeClient({ maxRetries: 4 });
-    const requests = todo.flat().flatMap((job) => {
-      const reply = job.saved?.reply ?? PLACEHOLDER;
-      const mentor = job.saved || !job.params ? [] : [job.params];
-      const judged = reply && ASKED[job.facts.case.kind].length;
-      return [
-        ...mentor.map((params) => ({ params, outputTokens: 1000 })),
-        ...(judged
-          ? [{ params: judgeRequest(reply, job.facts), outputTokens: 2500 }]
-          : []),
-      ];
-    });
-    if (!(await confirmSpend(requests, { batch: false, yes: values.yes })))
+    if (
+      !(await confirmSpend(pricedRequests(todo), {
+        batch: false,
+        yes: values.yes,
+      }))
+    )
       return console.log("Nothing sent.");
     if (!values.resume) writeJson(path.join(dir, "meta.json"), meta);
     console.log(`Writing to ${path.relative(process.cwd(), dir)}`);

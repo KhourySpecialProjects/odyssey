@@ -7,10 +7,12 @@ To run, from frontend/:
   npx tsx scripts/mentor/cases.ts --check   # the checks only; exits 1 on any problem
   npx tsx scripts/mentor/cases.ts           # the checks, then cases.md for review
   npx tsx scripts/mentor/cases.ts --dump    # runs/lessons.md, every lesson for drafting
+  npx tsx scripts/mentor/cases.ts --cost    # the checks, then a full run's rough cost (an upper bound)
 */
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { confirmSpend } from "@/scripts/ai-review/lib/run";
 import {
   casesMarkdown,
   countProblems,
@@ -25,6 +27,7 @@ import {
   MENTOR_DIR,
   RUNS_DIR,
 } from "./lib/files";
+import { FULL_REPS, parseSetups, planGroups, pricedRequests } from "./lib/plan";
 
 const write = (file: string, text: string) => {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -32,11 +35,12 @@ const write = (file: string, text: string) => {
   console.log(`Wrote ${path.relative(process.cwd(), file)}`);
 };
 
-function main() {
+async function main() {
   const { values } = parseArgs({
     options: {
       check: { type: "boolean", default: false },
       dump: { type: "boolean", default: false },
+      cost: { type: "boolean", default: false },
     },
   });
   const fixtures = loadFixtures();
@@ -59,14 +63,20 @@ function main() {
   console.log(
     `${path.basename(CASES_FILE)}: ${cases.length} cases, no problems`,
   );
+  if (values.cost) {
+    // Prints and returns: `yes` skips the question, and no client is made
+    await confirmSpend(
+      pricedRequests(planGroups(cases, fixtures, parseSetups(), FULL_REPS)),
+      { batch: false, yes: true },
+    );
+    return;
+  }
   if (!values.check) {
     write(path.join(MENTOR_DIR, "cases.md"), casesMarkdown(cases, fixtures));
   }
 }
 
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);
-}
+});

@@ -114,6 +114,8 @@ export const caseSchema = z
     should: z.enum(SHOULDS).optional(),
     /** Quiz-grade: the verdict the student's answer earns */
     verdict: z.enum(VERDICTS).optional(),
+    /** A hand-written reply that should pass, for --answers oracle where a template can't write one */
+    oracle: z.string().min(1).optional(),
     /** A profile's name in fixtures/learners, or a profile written out */
     learner: z
       .union([z.string().regex(/^[a-z0-9-]+$/), learnerSchema])
