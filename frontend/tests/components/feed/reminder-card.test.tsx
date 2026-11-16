@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DateTime } from "luxon";
 import { ReminderCard } from "@/components/feed/reminder-card";
 import type { Announcement, ReminderFeedData } from "@/types";
@@ -23,7 +24,11 @@ const announcement = (r?: Partial<ReminderFeedData>) =>
 
 const renderCard = (
   r?: Partial<ReminderFeedData>,
-  props: { onMarkRead?: jest.Mock; onMarkUnread?: jest.Mock } = {},
+  props: {
+    onMarkRead?: jest.Mock;
+    onMarkUnread?: jest.Mock;
+    onRemindLater?: jest.Mock;
+  } = {},
 ) =>
   render(
     <ul>
@@ -102,16 +107,71 @@ describe("ReminderCard", () => {
     expect(screen.queryByText(/CS 101/)).not.toBeInTheDocument();
   });
 
-  it("marks read, and Remind me later is disabled", () => {
+  it("marks read", () => {
     const onMarkRead = jest.fn();
     renderCard(undefined, { onMarkRead });
 
     fireEvent.click(screen.getByRole("button", { name: "Mark as read" }));
 
     expect(onMarkRead).toHaveBeenCalledWith(9);
-    expect(
-      screen.getByRole("button", { name: "Remind me later" }),
-    ).toBeDisabled();
+  });
+
+  describe("Remind me later", () => {
+    const openMenu = async () => {
+      const onRemindLater = jest.fn();
+      renderCard(undefined, { onRemindLater });
+      const trigger = screen.getByRole("button", { name: "Remind me later" });
+      expect(trigger).toBeEnabled();
+      await userEvent.click(trigger);
+      return { onRemindLater, trigger };
+    };
+
+    it("opens a menu with four items", async () => {
+      await openMenu();
+
+      expect(screen.getAllByRole("menuitem")).toHaveLength(4);
+    });
+
+    it.each([
+      ["Tomorrow", "tomorrow"],
+      ["In 3 days", "in_3_days"],
+      ["Next week", "next_week"],
+      ["Stop reminding me", "stop"],
+    ])("selecting %s calls onRemindLater with %s", async (name, choice) => {
+      const { onRemindLater } = await openMenu();
+
+      await userEvent.click(screen.getByRole("menuitem", { name }));
+
+      expect(onRemindLater).toHaveBeenCalledWith(9, choice);
+    });
+
+    it("closes on Escape and returns focus to the trigger", async () => {
+      const { trigger } = await openMenu();
+
+      await userEvent.keyboard("{Escape}");
+
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
+
+    it("leaves focus to the parent after a selection instead of the trigger", async () => {
+      const { trigger } = await openMenu();
+
+      await userEvent.click(screen.getByRole("menuitem", { name: "Tomorrow" }));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 10));
+      });
+
+      expect(trigger).not.toHaveFocus();
+    });
+
+    it("renders no button without the prop", () => {
+      renderCard();
+
+      expect(
+        screen.queryByRole("button", { name: "Remind me later" }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("refreshes the due chip when local midnight passes", () => {
