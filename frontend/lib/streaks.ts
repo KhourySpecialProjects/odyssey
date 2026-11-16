@@ -99,8 +99,20 @@ export type StreakDay = {
   revived?: boolean;
 };
 
-/** Revives each learner gets, for good (ODY-920; backend STREAK_REVIVES) */
+/** Revives each learner gets each month: back to 2 on the 1st, unused ones don't carry over (ODY-920; backend STREAK_REVIVES) */
 export const STREAK_REVIVES = 2;
+
+/**
+ * Revives left on `today`. A revive counts in the month it was spent, the
+ * day after the day it saved, so saving 30 Nov on 1 Dec uses December's.
+ */
+export function revivesLeftOn(days: StreakDay[], today: string): number {
+  const month = today.slice(0, 7);
+  const spent = days.filter(
+    (day) => day.revived && addDays(day.date, 1).slice(0, 7) === month,
+  ).length;
+  return Math.max(0, STREAK_REVIVES - spent);
+}
 
 /** A revive the learner can spend now: yesterday, missed right after a day that counts */
 export type StreakRevive = {
