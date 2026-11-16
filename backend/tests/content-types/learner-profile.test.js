@@ -32,7 +32,7 @@ async function makeProfile(overrides = {}) {
     data: {
       ...learnerProfileData({ interestNote: 'Robotics' }),
       user: user.documentId,
-      interests: tags.map((t) => t.documentId),
+      interests: { set: tags.map((t) => t.documentId) },
       ...overrides,
     },
   });
@@ -139,6 +139,23 @@ describe('learner-profile (ODY-953)', () => {
       expect(res.status).toBe(200);
       const body = JSON.stringify(res.body);
       expect(body).not.toMatch(/learnerProfile|learner_profiles|"goal"|focusAreas|interestNote/);
+      expect(body).not.toContain('zzprivatenote');
     }
+    expect(tagRes.body.data).toHaveLength(1);
+  });
+
+  it('is the only type with a relation that targets it', () => {
+    const target = 'api::learner-profile.learner-profile';
+    const pointing = [
+      ...Object.entries(strapi.contentTypes),
+      ...Object.entries(strapi.components),
+    ]
+      .filter(([uid]) => uid !== target)
+      .flatMap(([uid, ct]) =>
+        Object.entries(ct.attributes)
+          .filter(([, attr]) => attr.target === target)
+          .map(([name]) => `${uid}.${name}`)
+      );
+    expect(pointing).toEqual([]);
   });
 });
