@@ -2,6 +2,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
+import { ReminderCard } from "./reminder-card";
 import {
   Droplet,
   Handshake,
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   MessageSquareText,
   BadgeCheck,
+  Bell,
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
@@ -75,6 +77,10 @@ export function FeedBlock({
     review_published: {
       icon: <BadgeCheck size={18} />,
       label: "Review published",
+    },
+    reminder: {
+      icon: <Bell size={18} />,
+      label: "Reminder",
     },
   };
 
@@ -374,6 +380,17 @@ export function FeedBlock({
       </div>
     );
   };
+
+  if (announcement.type === "reminder" && announcement.droplet) {
+    return (
+      <ReminderCard
+        announcement={announcement}
+        timestamp={formatDate(announcement.firstCreated)}
+        onMarkRead={onMarkRead}
+        onMarkUnread={onMarkUnread}
+      />
+    );
+  }
 
   return (
     <>

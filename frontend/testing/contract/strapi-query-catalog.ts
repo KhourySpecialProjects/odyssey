@@ -473,6 +473,7 @@ export const MODULE_PATHS: Record<string, string> = {
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
   reviews: "@/lib/requests/reviews",
+  reminders: "@/lib/requests/reminders",
   streaks: "@/lib/requests/streaks",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
@@ -1200,6 +1201,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     withdrawFromReview: REVIEW_WORKFLOW,
     sendFeedback: REVIEW_WORKFLOW,
     publishWithReview: REVIEW_WORKFLOW,
+  },
+  reminders: {
+    checkMyReminder: "custom raise-reminder route (ODY-931)",
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

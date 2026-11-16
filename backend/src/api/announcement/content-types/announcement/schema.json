@@ -22,7 +22,8 @@
         "group",
         "kudos",
         "review_feedback",
-        "review_published"
+        "review_published",
+        "reminder"
       ],
       "required": true
     },
@@ -67,6 +68,17 @@
     },
     "readAt": {
       "type": "datetime"
+    },
+    "reminderCount": {
+      "type": "integer",
+      "min": 0
+    },
+    "reminderSnoozedUntil": {
+      "type": "datetime"
+    },
+    "reminderMuted": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
