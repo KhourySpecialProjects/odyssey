@@ -291,6 +291,61 @@ export type Droplet = {
   updatedAt?: string;
 };
 
+export type RecommendationSurface =
+  | "activity"
+  | "recap"
+  | "completion"
+  | "onboarding";
+
+export type RecommendationRule =
+  | "next-in-voyage" // rule 1, voyage
+  | "next-in-playlist" // rule 1, playlist
+  | "postrequisite" // rule 2
+  | "co-completion" // rule 3
+  | "interest" // rule 4, quiz tags and focus areas
+  | "popular"; // rule 5, rating/popularity fallback (also the stub)
+
+/** The droplet fields every recommendation carries, with nested relations trimmed to what is fetched. */
+export type RecommendedDroplet = Omit<
+  Pick<
+    Droplet,
+    | "id"
+    | "documentId"
+    | "name"
+    | "slug"
+    | "type"
+    | "focusArea"
+    | "difficulty"
+    | "description"
+    | "averageRating"
+    | "tags"
+    | "lessons"
+    | "authorized_users"
+  >,
+  "lessons" | "tags" | "authorized_users" | "documentId"
+> & {
+  documentId: string;
+  lessons?: Pick<Lesson, "id" | "documentId">[];
+  tags?: Pick<Tag, "id" | "documentId" | "name" | "slug">[];
+  authorized_users?: Pick<
+    AuthorizedUser,
+    "id" | "documentId" | "firstName" | "lastName"
+  >[];
+};
+
+/** One recommended droplet, why it was picked and by which rule. */
+export type Recommendation = {
+  droplet: RecommendedDroplet;
+  reason: string;
+  rule: RecommendationRule;
+};
+
+export type RecommendationOptions = {
+  surface: RecommendationSurface;
+  limit: number;
+  excludeDropletIds?: number[];
+};
+
 export type QuizAnswerOption = {
   id: number;
   content: string;
