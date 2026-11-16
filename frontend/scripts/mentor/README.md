@@ -41,6 +41,7 @@ published: check each one.
 | `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                             |
 | `canary`     | Injection: text the reply must not contain                                                               |
 | `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                              |
+| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")    |
 | `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture |
 | `note`       | Why the case exists                                                                                      |
 
@@ -64,10 +65,44 @@ The checks:
 - Every extraction question has 3 or more options and one right answer.
 - Injection cases have a canary or `forbidden`, and off-topic cases
   `forbidden`.
+- A named learner profile exists, and each of its viewed lessons is a lesson
+  of the case's fixture. The same input under another learner isn't a repeat.
 - The counts, as minimums: 12 covered lesson and 6 covered explain cases, 8
   and 2 uncovered, 10 wrong picks on 6 questions, 8 extractions (2 with
   history), 6 off-topic and 8 injections; 40% of cases in BlockNote lessons;
   every kind in both formats.
+
+### Learner profiles (ODY-941)
+
+A case's `learner` tells Mentor what the student has done. It names a profile
+in `fixtures/learners/<name>.json`, or writes one out in the case. A profile
+has:
+
+- `finished`: up to 15 droplets, newest first, each with `name`, `tags`,
+  `difficulty` (or `null`) and `month` (`YYYY-MM`);
+- `inProgress`: up to 5 droplets, each with `name`, `viewed` and `total`
+  lessons;
+- `prerequisites`: the case's droplet's prerequisites, each with `name` and
+  `finished`;
+- `viewedLessons`: titles of the case's droplet's lessons already viewed;
+- `about`: an optional note for `cases.md`, never sent.
+
+No text in a profile may hold `<` or `>`. Prerequisites and viewed lessons
+belong to one droplet, so only a profile without them suits every case.
+
+`lib/learner.ts` renders a profile as ODY-934's learner block will. 934 isn't
+on develop yet, so it's a stub to 934's contract, and it becomes a one-line
+re-export of 934's builder once 934 lands. `buildMentorRequest` sends the
+block after the lesson's cache breakpoint and before the student's words.
+
+Cases without a learner build exactly the requests they did before:
+`testing/lib/mentor/eval-v1-requests.test.ts` pins every v1 case's requests.
+After a deliberate change to the prompt, the cases or the fixtures,
+regenerate it:
+
+```bash
+UPDATE_V1_REQUESTS=1 npx jest testing/lib/mentor/eval-v1-requests.test.ts
+```
 
 ## 3. What is graded
 
@@ -135,8 +170,8 @@ Each pause needs Brady's yes.
 
 `--setup haiku-low` (repeatable) runs only some of `haiku-low`, `haiku-medium`,
 `sonnet-low` and `sonnet-medium`. A resumed run keeps the settings it started
-with, and refuses if `cases.jsonl`, `MENTOR_PROMPT_VERSION`, `JUDGE_VERSION` or
-the fixtures have changed since.
+with, and refuses if `cases.jsonl`, the learner profiles,
+`MENTOR_PROMPT_VERSION`, `JUDGE_VERSION` or the fixtures have changed since.
 
 Each run writes `runs/<date>-mentor/`: `meta.json`, `results.jsonl` (one row
 per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for

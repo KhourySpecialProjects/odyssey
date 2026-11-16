@@ -25,6 +25,8 @@ export type ResultRow = Key & {
   format: EvalCase["format"];
   fixture: string;
   lessonId: number;
+  /** The learner profile's name, "inline", or null; missing on rows written before ODY-941 */
+  learner?: string | null;
   seq: number;
   model: MentorModel | null;
   servedModel: string | null;
@@ -62,6 +64,8 @@ export type RunMeta = {
   judgeVersion: string;
   judge: MentorSetup;
   casesSha: string;
+  /** What the cases' learner blocks say (ODY-941); null with none, missing on older runs */
+  learnersSha?: string | null;
   fixtures: { slug: string; takenAt: string }[];
   setups: string[];
   reps: number;

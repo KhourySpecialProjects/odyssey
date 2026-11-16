@@ -157,6 +157,7 @@ async function runOne(
     format: facts.case.format,
     fixture: facts.case.fixture,
     lessonId: facts.case.lessonId,
+    learner: facts.learner?.name ?? null,
     seq,
     model,
     ...said,
@@ -206,13 +207,15 @@ export function resumeProblems(
   then: RunMeta,
   now: Pick<
     RunMeta,
-    "casesSha" | "promptVersion" | "judgeVersion" | "fixtures"
+    "casesSha" | "learnersSha" | "promptVersion" | "judgeVersion" | "fixtures"
   >,
 ): string[] {
   const fixtures = (m: Pick<RunMeta, "fixtures">) =>
     JSON.stringify(m.fixtures.map((f) => [f.slug, f.takenAt]));
   return [
     then.casesSha !== now.casesSha && "cases.jsonl",
+    (then.learnersSha ?? null) !== (now.learnersSha ?? null) &&
+      "the learner profiles",
     then.promptVersion !== now.promptVersion && "MENTOR_PROMPT_VERSION",
     then.judgeVersion !== now.judgeVersion && "JUDGE_VERSION",
     fixtures(then) !== fixtures(now) && "the fixtures",
