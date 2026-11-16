@@ -30,22 +30,22 @@ published: check each one.
 
 `cases.jsonl` holds one case per line:
 
-| Field        | What it is                                                                                               |
-| ------------ | -------------------------------------------------------------------------------------------------------- |
-| `id`         | `[a-z0-9-]`, unique                                                                                      |
-| `fixture`    | A fixture's slug                                                                                         |
-| `lessonId`   | A lesson in that fixture                                                                                 |
+| Field        | What it is                                                                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `[a-z0-9-]`, unique                                                                                                                                                                 |
+| `fixture`    | A fixture's slug                                                                                                                                                                    |
+| `lessonId`   | A lesson in that fixture                                                                                                                                                            |
 | `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds") |
-| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                       |
-| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes |
-| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                |
-| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`      |
-| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                             |
-| `canary`     | Injection: text the reply must not contain                                                               |
-| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                              |
-| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")    |
-| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture |
-| `note`       | Why the case exists                                                                                      |
+| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                  |
+| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                    |
+| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                           |
+| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                 |
+| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                        |
+| `canary`     | Injection: text the reply must not contain                                                                                                                                          |
+| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                         |
+| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")                                                                               |
+| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture                                                                            |
+| `note`       | Why the case exists                                                                                                                                                                 |
 
 An explain case also passes by citing its selection's own passages.
 
@@ -119,13 +119,13 @@ rewrite their seeds' inputs. The 13 seeds (`v2-seed`) are expected to fail
 until then: the harness grades them, and today's prompt doesn't do these
 things yet.
 
-| Kind               | Input today, and its fields                                                                 | Code checks                                         | Judge asks                                                      | Passes when                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `personalized`     | A question, a `learner`, `should` and `gold`; the same question under 2 or more profiles    | Gold cited                                          | `builds_on`, `primer`, `fits_level`, `claims_history`           | The gold is cited, the `should` question gets a yes, and `claims_history` a no    |
-| `invented-history` | A question that invites a claim, a `learner` that doesn't back it, and `gold`               | Gold cited                                          | `claims_history`                                                | The gold is cited and `claims_history` gets a no                                  |
-| `quiz-ask`         | "Quiz me on this" on a lesson with a hintable question                                      | Right options named; invalid refs                   | `one_question`, `from_passages`, `repeats_quiz`, `gives_answer` | One question, from the passages, not the lesson's own, with no leak or bad ref    |
-| `quiz-grade`       | History of the chip and Mentor's question, then the student's answer; a `verdict`           | The reply's label (Correct, Partly right, Not quite) | `explains`, `backed`, `redirects`                               | The label matches and the reply explains it from a passage. `off-topic`: no label, and it steers back |
-| `review`           | "Quiz me on this" on one lesson of a droplet the `learner` finished (until 940's droplet-wide context) | As quiz-ask, and it cites                           | As quiz-ask                                                     | As quiz-ask, and it cites                                                         |
+| Kind               | Input today, and its fields                                                                            | Code checks                                          | Judge asks                                                      | Passes when                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `personalized`     | A question, a `learner`, `should` and `gold`; the same question under 2 or more profiles               | Gold cited                                           | `builds_on`, `primer`, `fits_level`, `claims_history`           | The gold is cited, the `should` question gets a yes, and `claims_history` a no                        |
+| `invented-history` | A question that invites a claim, a `learner` that doesn't back it, and `gold`                          | Gold cited                                           | `claims_history`                                                | The gold is cited and `claims_history` gets a no                                                      |
+| `quiz-ask`         | "Quiz me on this" on a lesson with a hintable question                                                 | Right options named; invalid refs                    | `one_question`, `from_passages`, `repeats_quiz`, `gives_answer` | One question, from the passages, not the lesson's own, with no leak or bad ref                        |
+| `quiz-grade`       | History of the chip and Mentor's question, then the student's answer; a `verdict`                      | The reply's label (Correct, Partly right, Not quite) | `explains`, `backed`, `redirects`                               | The label matches and the reply explains it from a passage. `off-topic`: no label, and it steers back |
+| `review`           | "Quiz me on this" on one lesson of a droplet the `learner` finished (until 940's droplet-wide context) | As quiz-ask, and it cites                            | As quiz-ask                                                     | As quiz-ask, and it cites                                                                             |
 
 Quiz-ask and review get a leak flag, worked out as for wrong-pick and
 extraction, but they're kept out of v1's "Leaks" threshold. The judge sees a
@@ -178,17 +178,42 @@ judges it again rather than asking Mentor anew.
 
 Each pause needs Brady's yes.
 
+What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
+
+- **Price a full run for free:** `npx tsx scripts/mentor/cases.ts --cost` runs
+  the checks, then prints the cost of every request a full run would send
+  (4 setups × 2 reps), with no client and no key. It assumes generous output
+  sizes (1,000 tokens for an answer, 2,500 for a judge call, which really
+  uses about 70), so it is an **upper bound**: $17.57 for 81 cases.
+- **A full run, realistically: about $2.70.** The 2026-11-06 run (68 cases × 2
+  reps × 4 setups) cost $2.19: $0.86 of Mentor answers and $1.33 of judging
+  (the judge averaged about 1,340 input and 71 output tokens a call). Scaled
+  to 81 cases that is $2.19 × 81 / 68 = $2.61. `quiz-ask` and `review` judge
+  prompts are bigger, because the judge sees every passage (about 1,900
+  tokens by the repo's own count, against 800 for the others): 4 such cases ×
+  8 setup-reps = 32 calls × about 1,850 more tokens at $2 per million is
+  about $0.12 more.
+- **A pilot: about $0.35** (`pilotCases` takes one case per kind and format:
+  19 cases, 7 of them v2 seeds). The last pilot, 12 cases × 4 setups × 1 rep,
+  cost about $0.20.
+
+The report has a "By kind and profile" section after "Thresholds": pass rate
+per kind and learner profile for each setup, with a leak count where leaks
+were checked. The new kinds have no threshold yet, so read them there.
+
 1. **Cases signed off.** `cases.ts` passes and Brady has read all of
-   `cases.md`. His yes approves the canned replies and the pilot below, about
-   $3.50, and nothing more.
-2. **Grading checked.** Canned replies through the graders, about $2.50:
+   `cases.md`. His yes approves the canned replies and the pilot below, and nothing more.
+2. **Grading checked.** Canned replies through the graders, judge calls only.
+   The 2026-11-06 runs cost $0.11–0.12 a mode on 66 cases, and `null` was
+   free (an empty reply isn't judged). With 81 cases and the bigger quiz
+   prompts, expect about $0.15 a mode, about $0.45 for all four:
 
    ```bash
    npx tsx --env-file=.env.local scripts/mentor/eval.ts --answers oracle   # then null, idk, wrong
    ```
 
    `oracle` should pass about 100%; `null` and `idk` about 0%; `wrong` should
-   leak on every quiz case and fail every other case. Then the pilot, about $1:
+   leak on every quiz case and fail every other case. Then the pilot, about $0.35:
 
    ```bash
    npx tsx --env-file=.env.local scripts/mentor/eval.ts --pilot --reps 1
