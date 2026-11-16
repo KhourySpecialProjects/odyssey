@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function useOffClick(
-  ref: React.RefObject<HTMLElement>,
+  ref: React.RefObject<HTMLElement | null>,
   func: () => void = () => {},
   initialOpen: boolean = false,
 ) {

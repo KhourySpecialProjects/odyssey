@@ -73,8 +73,10 @@ const INITIAL_STATE: EditingLockState = {
 export function useEditingLock(lessonId: number, refresh: RefreshLesson) {
   const [state, setState] = useState<EditingLockState>(INITIAL_STATE);
   const userIdRef = useRef<number | null>(null);
-  const heartbeatRef = useRef<ReturnType<typeof setTimeout>>();
-  const pollRef = useRef<ReturnType<typeof setTimeout>>();
+  const heartbeatRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const pollRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
   const holdsLockRef = useRef(false);
   const editRequestedRef = useRef(false);
