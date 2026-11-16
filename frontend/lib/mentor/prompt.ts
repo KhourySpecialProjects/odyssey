@@ -42,6 +42,16 @@ export const MENTOR_MAX_TOKENS = 4000;
 
 export const MENTOR_NOT_COVERED = "The lessons don't cover this.";
 
+/**
+ * The most main points a lesson summary gives, one passage each (ODY-968).
+ * Set from the eval's baseline of 2026-11-16: a median of 8 references per
+ * summary on haiku-medium (see scripts/mentor/README.md). Half of that is 4,
+ * but the eval's lessons teach in 4 or 5 sections, and the reference summaries
+ * cite 5. The eval caps a summary's references at it, and ODY-968's summary
+ * rule will say it.
+ */
+export const MENTOR_SUMMARY_MAX_POINTS = 5;
+
 export const MENTOR_SYSTEM_PROMPT = [
   "You are Mentor, the study helper in Odyssey, Khoury College's site of short, self-paced courses called droplets. A Northeastern student is reading one lesson and asks you about it.",
   `Use only what you're given: the lesson in <lesson>, with the droplet's learning objectives at its top, and anything the student selected. Don't add facts from elsewhere, even ones you know. Passages you can cite start with a reference like [p3]: cite the passage behind each point, as [p3] or [p3, p5], and cite only references the lesson shows. Name each passage on its own, as [p3, p4, p5], never as a range like [p3-p5]. If the lesson doesn't answer a question about its topic, write this exact sentence, "${MENTOR_NOT_COVERED}", and, if one helps, point tothe closest passage. Don't send the student to course materials, an instructor or other sites: say you can only use what's in Odyssey's lessons. A "[Trimmed: …]" line means you can't see the rest of the lesson: don't guess what it says.`,

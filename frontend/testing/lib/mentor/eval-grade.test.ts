@@ -390,6 +390,18 @@ describe("gradeRow", () => {
     ],
     ["covers_main no", "A [join][p2] combines rows.", ["backs_points"], false],
     [
+      "more references than the cap",
+      "[Joins][p1]: [a join][p2], [keys][p3], [inner joins][p4], [wraps][p6], [loose text][p7].",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "as many references as the cap",
+      "[Joins][p1]: [a join][p2], [keys][p3], [inner joins][p4], [wraps][p6].",
+      ["backs_points", "covers_main"],
+      true,
+    ],
+    [
       "everything in order",
       "A [join][p2] combines rows.",
       ["backs_points", "covers_main"],
