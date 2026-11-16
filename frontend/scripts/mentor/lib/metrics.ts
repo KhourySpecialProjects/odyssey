@@ -352,6 +352,11 @@ export function reportMarkdown(
     "Hints guide back": (rs) =>
       ratio(rs.filter(ofKind(["wrong-pick"])), said("guides")),
     "Invalid refs": (rs) => rs.reduce((n, r) => n + r.grade.invalid.length, 0),
+    // Only a summary links words (ODY-968): 0 once the prompt says so
+    "Links outside summaries": (rs) =>
+      rs
+        .filter((r) => r.kind !== "summary")
+        .reduce((n, r) => n + r.grade.links, 0),
     'False "not covered"': (rs) =>
       ratio(
         rs.filter(ofKind(["covered"])),
@@ -361,6 +366,23 @@ export function reportMarkdown(
       (["refused", "truncated", "empty"] as const)
         .map((s) => rs.filter((r) => r.status === s).length)
         .join(" / "),
+  });
+  const summaryRows = (rs: ResultRow[]) => rs.filter(ofKind(["summary"]));
+  const summaryTable = perSetup({
+    "References (median / max)": (rs) => {
+      const cited = ok(summaryRows(rs)).map((r) => r.grade.cited.length);
+      return cited.length ? `${median(cited)} / ${Math.max(...cited)}` : "–";
+    },
+    "Linked phrases (median)": (rs) =>
+      whole(median(ok(summaryRows(rs)).map((r) => r.grade.links))),
+    "With link problems": (rs) =>
+      ratio(
+        summaryRows(rs),
+        (r) => !!r.grade.linkProblems.length || !!r.grade.unlinked.length,
+      ),
+    "Backs its points": (rs) => ratio(summaryRows(rs), said("backs_points")),
+    "Covers the main points": (rs) =>
+      ratio(summaryRows(rs), said("covers_main")),
   });
   const length = perSetup({
     "Median words": (rs) => whole(median(words(rs))),
@@ -464,6 +486,9 @@ export function reportMarkdown(
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations.\n\n${thresholds}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
     "By kind and profile": `Pass rates by kind and learner profile; new kinds have no threshold yet.\n\n${byKindAndProfile}`,
+    Summaries:
+      rows.some((r) => r.kind === "summary") &&
+      `References are the distinct passages a summary cites: one Sources chip each.\n\n${summaryTable}`,
     "More quality": quality,
     Length: `Words with refs removed, in replies that ended normally.\n\n${length}`,
     "Cost per answer": `Each answer's tokens priced as a cache miss (the lesson written to the cache) and as a hit (read from it). "Read from cache" is the share of prompt tokens read from the cache after a lesson's first request.${uncached.length ? `\n\n**Nothing was read from the cache for ${uncached.map((s) => s.setup).join(", ")}: something invalidates it, or the prefix is too short to cache.**` : ""}\n\n${cost}`,

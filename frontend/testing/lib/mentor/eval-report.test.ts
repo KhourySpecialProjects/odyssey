@@ -272,6 +272,37 @@ describe("reportMarkdown", () => {
     );
   });
 
+  it("reports a summary's references and links, and nothing without one", () => {
+    const summary = (caseId: string, cited: string[], o = {}) => {
+      const r = row({ caseId, kind: "summary", ...o });
+      return {
+        ...r,
+        grade: { ...r.grade, cited, links: cited.length, unlinked: [] },
+      };
+    };
+    const refs = (n: number) => Array.from({ length: n }, (_, i) => `p${i}`);
+    const report = reportMarkdown(
+      [
+        ...setupRows(18),
+        summary("s1", refs(3)),
+        summary("s2", refs(5)),
+        summary("s3", refs(7)),
+      ],
+      [],
+      meta,
+      [],
+    );
+    expect(report).toContain("## Summaries");
+    // The median of three is the middle one
+    expect(report).toContain(
+      "| haiku-low | 5 / 7 | 5 | 0% (0/3) | 0% (0/3) | 0% (0/3) |",
+    );
+    expect(report).toContain("Links outside summaries");
+    expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(
+      "## Summaries",
+    );
+  });
+
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {
     const personalized = row({
       caseId: "pers",
