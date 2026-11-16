@@ -88,6 +88,7 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   galleries: true,
   groups: true,
   highlights: true,
+  "learner-profiles": true,
   lessons: true,
   notes: true,
   "overview-scan-dismissals": true,

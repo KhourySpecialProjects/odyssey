@@ -103,6 +103,7 @@ export type AuthorizedUser = {
   github: string;
   website: string;
   firstTime: boolean;
+  onboardedAt?: string | null; // set once by saveLearnerProfile (ODY-953)
   firstName: string;
   lastName: string;
   bio: string;
@@ -246,6 +247,26 @@ export type Tag = {
   slug: string;
   name: string;
   droplets: Droplet[];
+};
+
+export type LearnerGoal = "class" | "career" | "self" | "browsing";
+
+/** One student's quiz answers (ODY-953). Student data: never log or capture it. */
+export type LearnerProfile = {
+  id: number;
+  documentId?: string;
+  goal: LearnerGoal | null;
+  focusAreas: FocusArea[];
+  interests: Pick<Tag, "id" | "name" | "slug">[];
+  interestNote: string | null;
+};
+
+/** What saveLearnerProfile accepts. An omitted key is left unchanged, and null or [] clears it. */
+export type LearnerProfileInput = {
+  goal?: LearnerGoal | null;
+  focusAreas?: FocusArea[];
+  interestTagIds?: number[];
+  interestNote?: string | null;
 };
 
 export type LearningObjective = {

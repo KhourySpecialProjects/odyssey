@@ -23,7 +23,7 @@ export const USER_POPULATES = {
     fields: ["id", "firstName", "lastName"],
   },
   profile: {
-    fields: PROFILE_FIELDS,
+    fields: [...PROFILE_FIELDS, "onboardedAt"] as string[],
     populate: {
       roles: { fields: ["id", "title"] },
     },

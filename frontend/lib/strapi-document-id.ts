@@ -27,6 +27,7 @@ export type StrapiCollection =
   | "galleries"
   | "groups"
   | "highlights"
+  | "learner-profiles"
   | "lessons"
   | "notes"
   | "overview-scan-dismissals"
