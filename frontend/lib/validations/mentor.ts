@@ -59,7 +59,7 @@ export const mentorInputSchema = z.discriminatedUnion("kind", [
     questionId: id,
     answerIds: z.array(id).min(1).max(10),
   }),
-]) satisfies z.ZodType<MentorInput, z.ZodTypeDef, unknown>;
+]) satisfies z.ZodType<MentorInput, unknown>;
 
 /** Numeric ids, as `id` filters take: not documentIds */
 const ids = z.object({
@@ -75,4 +75,4 @@ export type MentorRequest = MentorInput & {
 /** POST /api/mentor's body. Each side drops its own unknown keys. */
 export const mentorRequestSchema = mentorInputSchema.and(
   ids,
-) satisfies z.ZodType<MentorRequest, z.ZodTypeDef, unknown>;
+) satisfies z.ZodType<MentorRequest, unknown>;
