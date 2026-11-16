@@ -34,9 +34,9 @@ export function ChipGroup({
             aria-pressed={on}
             onClick={() => onToggle(o.value)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-[#2f7a9a] focus-visible:ring-offset-1 focus-visible:outline-none",
+              "focus-visible:ring-onboarding inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none",
               on
-                ? "border-[#2f7a9a] bg-[#2f7a9a] text-white"
+                ? "border-onboarding bg-onboarding text-white"
                 : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100",
               muted && !on && "opacity-60",
             )}

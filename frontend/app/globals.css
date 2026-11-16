@@ -43,6 +43,7 @@
     --mentor-text: 258 54% 52%;
     --mentor-soft: 264 100% 98%;
     --mentor-line: 268 95% 92%;
+    --onboarding: 198 53% 39%;
   }
 
   .dark {
@@ -55,6 +56,7 @@
     --mentor-text: 265 89% 86%;
     --mentor-soft: 256 48% 20%;
     --mentor-line: 256 48% 42%;
+    --onboarding: 198 55% 55%;
   }
 
   html {
