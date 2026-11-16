@@ -102,7 +102,7 @@
  *                 ↳ Per-user tag "user-{email}" (every
  *                   getAuthorizedUserByEmail read, incl. getCachedUser):
  *                   setTimeZone, updateUserInfo (self edits),
- *                   togglePlaylistEnrollment
+ *                   togglePlaylistEnrollment, saveLearnerProfile
  *                 (profile fields, roles, account data only)
  * user-content    Two-level tag system (getCachedUserCreation):              900s
  *                 ↳ Per-user tag "user-content-{userId}":
@@ -166,6 +166,9 @@
  *                 dismissRecommendation (ODY-954), the enrollments-{userId}
  *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
  *                 reads only "droplets".
+ * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
+ *                 getLearnerProfile (engine, Settings);
+ *                 invalidated by saveLearnerProfile
  */
 
 export const CACHE_TAGS = {
@@ -208,6 +211,7 @@ export const CACHE_TAGS = {
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
   recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores

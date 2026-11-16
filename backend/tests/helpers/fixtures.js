@@ -35,6 +35,16 @@ const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
+const TAG_UID = 'api::tag.tag';
+const LEARNER_PROFILE_UID = 'api::learner-profile.learner-profile';
+
+const learnerProfileData = (overrides = {}) => ({
+  key: String(Date.now() % 1e9) + String(++counter),
+  goal: 'career',
+  focusAreas: ['technical'],
+  interestNote: null,
+  ...overrides,
+});
 
 const mentorUsageData = (overrides = {}) => ({
   kind: 'lesson',
@@ -192,6 +202,9 @@ module.exports = {
   STREAK_DAY_UID,
   MENTOR_FEEDBACK_UID,
   GROUP_UID,
+  TAG_UID,
+  LEARNER_PROFILE_UID,
+  learnerProfileData,
   mentorUsageData,
   mentorFeedbackData,
   groupData,

@@ -37,6 +37,7 @@ api/
 ├── gallery/              Image galleries
 ├── group/                Study groups with membership and assigned content
 ├── highlight/            Text selections within lessons (colored annotations)
+├── learner-profile/      One student's onboarding quiz answers: goal, focus areas, interests (ODY-953)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
 ├── mentor-feedback/      One rating per Mentor answer: ids-only citations, text only when shared (ODY-890)
@@ -336,6 +337,8 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   - **Reasons**, first refusal wins: `disabled` (switch off), `not_in_pilot` (pilot groups set, user in none of their `members`), `monthly_cap` (this month's Mentor spend `>=` the cap; `retryAt` is the next 1st, 00:00 Eastern; a $0 cap refuses everyone), `daily_limit` (the user's rows since midnight Eastern `>=` the limit, across all kinds; `retryAt` is the next midnight Eastern). A refusal is a normal 200, not an HTTP error; the caller maps reasons to 429 or 503. The messages are constants in `mentor-usage.ts`.
   - **Read-only check:** it takes no lock and reserves nothing, so answers still streaming can carry a user past the daily limit, or Mentor past the monthly cap, by what is in flight. Answers cost cents, so the overshoot is accepted and bounded by the frontend's per-task burst guard. In return, the check has no side effects and a crashed stream leaves no orphan row.
   - **Record:** one row per answer, tokens only (a key such as `question` is a 400). A model with no price is still saved, with a `strapi.log.warn`, and is charged at the highest price. No transaction is opened, so a DB error is never swallowed.
+
+- **LearnerProfile (ODY-953):** `learner-profile` (collection, `draftAndPublish` off, router `find`/`create`/`update`) holds one student's onboarding answers. One row per student: `key` = the user id (unique index `learner_profiles_key_uq`). `user` and `interests` are one-way relations, so no user or tag query can populate it. `goal` is an enumeration, `focusAreas` is JSON of `FocusArea`, and no row means no answers. Link tables: `learner_profiles_user_lnk`, `learner_profiles_interests_lnk`. Read and written only through `frontend/lib/learner-profile.ts` (server-only); answers stay out of logs, PostHog and Slack, and per-student values never go in a Strapi request URL because `strapi::logger` logs URLs (tag ids resolve from the full tag list). `authorized-user.onboardedAt` marks onboarding done. Only `saveLearnerProfile` writes it, and only `USER_POPULATES.profile` selects it.
 
 - **Mentor feedback (ODY-890):** `mentor-feedback` (collection, no core router) holds one rating per (user, `answerKey`); code in `src/lib/mentor-feedback.ts`, strict-body helpers shared via `src/lib/route-body.ts`. Citations are ids only. `answerText` and `questionText` are private and stored only when `shared` is true **and** `mentor-setting.storeSharedAnswers` is on (default off until ODY-883; null reads as off); unticking nulls both. The daily cap (`perUserDailyLimit`) applies to creates only.
 

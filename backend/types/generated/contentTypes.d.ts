@@ -848,6 +848,7 @@ export interface ApiAuthorizedUserAuthorizedUser
       'api::authorized-user.authorized-user'
     > &
       Schema.Attribute.Private;
+    onboardedAt: Schema.Attribute.DateTime;
     playlists: Schema.Attribute.Relation<
       'manyToMany',
       'api::playlist.playlist'
@@ -1457,6 +1458,51 @@ export interface ApiHighlightHighlight extends Struct.CollectionTypeSchema {
         },
         number
       >;
+  };
+}
+
+export interface ApiLearnerProfileLearnerProfile
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'learner_profiles';
+  info: {
+    description: "One student's onboarding quiz answers, read only by the recommender and Settings. Student data: keep out of logs, PostHog and Slack (ODY-953)";
+    displayName: 'Learner Profile';
+    pluralName: 'learner-profiles';
+    singularName: 'learner-profile';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    focusAreas: Schema.Attribute.JSON;
+    goal: Schema.Attribute.Enumeration<['class', 'career', 'self', 'browsing']>;
+    interestNote: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    interests: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::learner-profile.learner-profile'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -2979,6 +3025,7 @@ declare module '@strapi/strapi' {
       'api::gallery.gallery': ApiGalleryGallery;
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
+      'api::learner-profile.learner-profile': ApiLearnerProfileLearnerProfile;
       'api::lesson.lesson': ApiLessonLesson;
       'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
