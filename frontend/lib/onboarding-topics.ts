@@ -6,7 +6,8 @@ export interface OnboardingTopic {
   area: FocusArea;
 }
 
-// Tag name (lowercase) to area. Some tags are created by another ticket.
+// Tag name (lowercase) to area; Figma names plus the live Git and Cybersecurity tags.
+// Tags missing on prod are created by ODY-955.
 const TOPIC_AREAS: Record<string, FocusArea> = {
   python: "technical",
   web: "technical",
@@ -17,7 +18,9 @@ const TOPIC_AREAS: Record<string, FocusArea> = {
   cloud: "technical",
   containerization: "technical",
   "git & version control": "technical",
+  git: "technical",
   security: "technical",
+  cybersecurity: "technical",
   ios: "technical",
   cad: "technical",
   interviews: "professional",

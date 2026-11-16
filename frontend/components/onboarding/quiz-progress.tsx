@@ -23,7 +23,7 @@ export function QuizProgress({ step, total }: { step: number; total: number }) {
             key={i}
             className={cn(
               "h-1 flex-1 rounded-full",
-              i < step ? "bg-[#2f7a9a]" : "bg-slate-200 dark:bg-slate-700",
+              i < step ? "bg-onboarding" : "bg-slate-200 dark:bg-slate-700",
             )}
           />
         ))}

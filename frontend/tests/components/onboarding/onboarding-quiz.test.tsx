@@ -20,7 +20,8 @@ const profile = {
   timeZone: "America/Chicago",
 };
 
-const next = () => screen.getByRole("button", { name: /next|finish/i });
+const next = () =>
+  screen.getByRole("button", { name: /continue|see my recommendations/i });
 const heading = (name: RegExp) => screen.getByRole("heading", { name });
 
 function setup(props = {}) {
@@ -51,7 +52,7 @@ describe("OnboardingQuiz", () => {
     sessionStorage.clear();
   });
 
-  it("blocks Next until each step has its required answers", async () => {
+  it("blocks Continue until each step has its required answers", async () => {
     const { user } = setup({ initialProfile: { first: "A", last: "B" } });
     // Step 1 needs a time zone (jsdom's zone is not guaranteed to be listed)
     await user.selectOptions(screen.getByRole("combobox"), "Europe/London");
@@ -68,7 +69,9 @@ describe("OnboardingQuiz", () => {
     await user.click(screen.getByRole("button", { name: /personal/i }));
     await user.click(next());
 
-    expect(screen.getByRole("button", { name: "Finish" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "See my recommendations" }),
+    ).toBeDisabled();
   });
 
   it("keeps answers when going Back and moves focus to the heading", async () => {
@@ -117,12 +120,14 @@ describe("OnboardingQuiz", () => {
     expect(screen.getByRole("radio", { name: /on my own/i })).toBeChecked();
   });
 
-  it("submits on Finish and clears storage; a rejection keeps the answers", async () => {
+  it("submits on See my recommendations and clears storage; a rejection keeps the answers", async () => {
     const { user, onSubmit } = setup();
     onSubmit.mockRejectedValueOnce(new Error("boom"));
     await toStep4(user);
     await user.click(screen.getByRole("button", { name: "Python" }));
-    await user.click(screen.getByRole("button", { name: "Finish" }));
+    await user.click(
+      screen.getByRole("button", { name: "See my recommendations" }),
+    );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /couldn't save/i,
     );
@@ -132,7 +137,9 @@ describe("OnboardingQuiz", () => {
     );
     expect(sessionStorage.getItem(ONBOARDING_STORAGE_KEY)).not.toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Finish" }));
+    await user.click(
+      screen.getByRole("button", { name: "See my recommendations" }),
+    );
     await waitFor(() =>
       expect(sessionStorage.getItem(ONBOARDING_STORAGE_KEY)).toBeNull(),
     );
@@ -146,7 +153,7 @@ describe("OnboardingQuiz", () => {
     );
   });
 
-  it("treats Enter on a valid step as Next", async () => {
+  it("treats Enter on a valid step as Continue", async () => {
     const { user } = setup();
     await user.click(screen.getByLabelText(/last name/i));
     await user.keyboard("{Enter}");

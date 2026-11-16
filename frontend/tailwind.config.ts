@@ -50,6 +50,7 @@ const config: Config = {
           500: "hsl(var(--primary-500) / <alpha-value>)",
           600: "hsl(var(--primary-600) / <alpha-value>)",
         },
+        onboarding: "hsl(var(--onboarding) / <alpha-value>)",
         secondary: "hsl(var(--secondary) / <alpha-value>)",
         destructive: "hsl(var(--destructive) / <alpha-value>)",
         mentor: {
