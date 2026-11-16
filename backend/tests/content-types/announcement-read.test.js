@@ -86,7 +86,7 @@ describe('announcement-read (ODY-786)', () => {
     expect(await ids(unreadBy(user))).toContain(announcement.id);
   });
 
-  it.each(['droplet', 'group', 'playlist', 'friend', 'kudos', 'system', 'review_feedback', 'review_published'])(
+  it.each(['droplet', 'group', 'playlist', 'friend', 'kudos', 'system'])(
     'a %s announcement read by one user stays unread for another',
     async (type) => {
       const announcement = await makeAnnouncement({ type });

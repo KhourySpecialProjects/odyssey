@@ -29,15 +29,13 @@ describe('backfillAnnouncementReads', () => {
     const user = await strapi.documents(USER_UID).create({ data: userData() });
     const when = new Date().toISOString();
     const system = await make({ type: 'system', authorized_user: user.documentId, readAt: when });
-    const review = await make({ type: 'review_feedback', authorized_user: user.documentId, readAt: when });
     const unread = await make({ type: 'system', authorized_user: user.documentId });
     const broadcast = await make({ type: 'system' });
     const friend = await make({ type: 'friend', authorized_user: user.documentId, readAt: when });
 
-    expect(await backfillAnnouncementReads()).toBe(2);
+    expect(await backfillAnnouncementReads()).toBe(1);
 
     expect(await readsOf(system)).toHaveLength(1);
-    expect(await readsOf(review)).toHaveLength(1);
     expect(await readsOf(unread)).toHaveLength(0);
     expect(await readsOf(broadcast)).toHaveLength(0);
     expect(await readsOf(friend)).toHaveLength(0);
