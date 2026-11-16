@@ -166,10 +166,6 @@ jest.mock("@/lib/requests/authorized-user", () => ({
   createAuthorizedUser: jest.fn(),
 }));
 
-jest.mock("uuid", () => ({
-  v4: jest.fn(() => "test-uuid-1234"),
-}));
-
 // S3 mock — factory runs before any require() of production modules.
 // The `sendMock` is created here and attached to the constructor so tests
 // can retrieve it via  require("@aws-sdk/client-s3").S3Client.__sendMock
