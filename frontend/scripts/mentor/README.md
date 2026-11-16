@@ -35,12 +35,12 @@ published: check each one.
 | `id`         | `[a-z0-9-]`, unique                                                                                                                                                                      |
 | `fixture`    | A fixture's slug                                                                                                                                                                         |
 | `lessonId`   | A lesson in that fixture                                                                                                                                                                 |
-| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds")      |
+| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds"); ODY-968 adds `summary` (see "Summaries and teaching hints") |
 | `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                       |
 | `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                         |
 | `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                                |
 | `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                      |
-| `oracle`     | Optional: a hand-written reply that should pass, used by `--answers oracle` where a template can't write one (personalized and quiz-grade). It may cite only passages the model is shown |
+| `oracle`     | A hand-written reply that should pass, used by `--answers oracle` where a template can't write one: required for `summary`, optional for `wrong-pick` (without one it gets a template hint that doesn't teach), and used by personalized and quiz-grade. It may cite only passages the model is shown |
 | `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                             |
 | `canary`     | Injection: text the reply must not contain                                                                                                                                               |
 | `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                              |
@@ -72,11 +72,13 @@ The checks:
   of the case's fixture. The same input under another learner isn't a repeat.
 - Each v2 kind has its fields (see "New kinds"), and a personalized question
   is asked under 2 or more profiles.
+- A summary is a lesson-mode request with its own `oracle`.
 - The counts, as minimums: 12 covered lesson and 6 covered explain cases, 8
   and 2 uncovered, 10 wrong picks on 6 questions, 8 extractions (2 with
   history), 6 off-topic and 8 injections; for v2's seeds, 2 personalized, 2
   invented-history, 2 quiz-ask, 3 quiz-grade and 2 review; 40% of cases in
-  BlockNote lessons; every v1 kind in both formats.
+  BlockNote lessons; every v1 kind in both formats; and ODY-968's 2 summary
+  cases in each format.
 
 ### Learner profiles (ODY-941)
 
@@ -149,6 +151,40 @@ made up, because no fixture has a prerequisite. Each profile's `about` says
 so. Before 938 writes its cases, snapshot a real droplet pair with a
 prerequisite from Strapi.
 
+### Summaries and teaching hints (ODY-968)
+
+Two things Mentor's replies get wrong today, measured before the prompt
+changes: "Summarize this lesson" cites most of the lesson (one Sources chip per
+passage, with nothing saying which point came from where), and a wrong-answer
+hint says the pick doesn't fit without saying what it misses.
+
+| Kind      | Input today, and its fields                                                           | Code checks                                                                                            | Judge asks                                                 | Passes when                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `summary` | "Summarize this lesson" (the chip's text, or the student's own words), and an `oracle` | A citation; no invalid ref, link problem or ref outside a link; right options named, on a lesson with a quiz | `backs_points`, `covers_main`, `gives_answer`, `rules_out` | Cited, none of those code problems, no leak, and a yes to `backs_points` and `covers_main`                    |
+
+- **Linked text.** Mentor writes a summary's main points as `[the words][p3]`:
+  a few words, then one ref, with no space between. A link problem is empty
+  words, more than one ref, a ref the model wasn't shown, or more than 8 words.
+  A ref outside any link counts as unlinked. `LINK_PATTERN` in
+  `lib/mentor/refs.ts` finds the links, and the report counts them.
+- **The judge sees the whole lesson** for a summary, as for quiz-ask: every
+  passage Mentor was shown, and the lesson's hintable questions, so it can tell
+  a main point from a detail and find a quiz answer given away.
+- **The quizzes are every hintable question in the lesson**, as for extraction,
+  so a summary of a lesson with one gets the leak check.
+- **Wrong-pick gets two questions and a pass.** `explains_miss` asks whether the
+  reply says what the choice gets wrong or leaves out, in the lesson's terms;
+  `guides` whether it ends by sending the student back to a passage it cites. A
+  wrong-pick passes when there's no leak and both get a yes. "More quality" in
+  the report shows each rate.
+- **The summary cap** is set from the baseline in Task 8 of the plan: the prompt
+  will ask for at most N main points, and a summary citing more than N passages
+  will fail.
+- **Oracle mode.** A summary needs its own `oracle`. A wrong-pick without one
+  gets today's template hint ("That choice leaves out part of what the lesson
+  describes…"), which shouldn't teach, so `--answers oracle` fails it on
+  `explains_miss`. The 4 seeded hints carry a teaching `oracle`.
+
 ## 3. What is graded
 
 Code decides citations, the not-covered phrase, canaries, named right
@@ -157,7 +193,8 @@ options, length and cost. The judge (`claude-sonnet-5-5` at `medium`,
 quote of 4 or more words that code checks is in the reply. It never sees the
 model, the setup, the code's verdicts or the gold, and covered cases don't go
 to it at all. v1's kinds keep their questions word for word; judge
-`2026-11-12.1` only added v2's (see "New kinds").
+`2026-11-12.1` only added v2's (see "New kinds"), and `2026-11-16.1` added
+ODY-968's questions (see "Summaries and teaching hints").
 
 | Threshold      | Cases                  | Passes when                                                                                                                                                     |
 | -------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -185,7 +222,7 @@ What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
   the checks, then prints the cost of every request a full run would send
   (4 setups × 2 reps), with no client and no key. It assumes generous output
   sizes (1,000 tokens for an answer, 2,500 for a judge call, which really
-  uses about 70), so it is an **upper bound**: $17.57 for 81 cases.
+  uses about 70), so it is an **upper bound**: $19.83 for 89 cases.
 - **A full run, realistically: about $2.70.** The 2026-11-06 run (68 cases × 2
   reps × 4 setups) cost $2.19: $0.86 of Mentor answers and $1.33 of judging
   (the judge averaged about 1,340 input and 71 output tokens a call). Scaled
@@ -194,6 +231,9 @@ What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
   tokens by the repo's own count, against 800 for the others): 4 such cases ×
   8 setup-reps = 32 calls × about 1,850 more tokens at $2 per million is
   about $0.12 more.
+- **With ODY-968's 8 cases (89 in all):** a full 4-setup run is about $3.20, a
+  haiku-medium-only run (`--setup haiku-medium`) about $0.60, and each canned
+  mode about $0.18. A summary's judge call is the bigger kind, about $0.0071.
 - **A pilot: about $0.35** (`pilotCases` takes one case per kind and format:
   19 cases, 7 of them v2 seeds). The last pilot, 12 cases × 4 setups × 1 rep,
   cost about $0.20.
