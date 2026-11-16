@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { DateTime } from "luxon";
 import { ReminderCard } from "@/components/feed/reminder-card";
 import type { Announcement, ReminderFeedData } from "@/types";
@@ -112,5 +112,22 @@ describe("ReminderCard", () => {
     expect(
       screen.getByRole("button", { name: "Remind me later" }),
     ).toBeDisabled();
+  });
+
+  it("refreshes the due chip when local midnight passes", () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(DateTime.local(2026, 11, 10, 23, 59, 30).toJSDate());
+      renderCard({ dueDate: "2026-11-11" });
+      expect(screen.getByText("Due tomorrow")).toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(60_000);
+      });
+
+      expect(screen.getByText("Due today")).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { DateTime } from "luxon";
 import {
   ArrowRight,
   Bell,
@@ -36,11 +37,21 @@ export function ReminderCard({
   // Computed after mount so it uses the browser's time zone, not the server's.
   const [chip, setChip] = useState<string | null>(null);
   useEffect(() => {
-    setChip(
-      reminder?.dueDate
-        ? dueChipText(reminder.dueDate, reminder.dueGroupName)
-        : null,
-    );
+    const dueDate = reminder?.dueDate;
+    if (!dueDate) {
+      setChip(null);
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout>;
+    // Recompute at each local midnight so an open feed doesn't keep a stale chip
+    const update = () => {
+      const now = DateTime.local();
+      setChip(dueChipText(dueDate, reminder?.dueGroupName, now));
+      const nextDay = now.plus({ days: 1 }).startOf("day");
+      timer = setTimeout(update, nextDay.toMillis() - now.toMillis());
+    };
+    update();
+    return () => clearTimeout(timer);
   }, [reminder?.dueDate, reminder?.dueGroupName]);
 
   const progress = reminder?.progress;

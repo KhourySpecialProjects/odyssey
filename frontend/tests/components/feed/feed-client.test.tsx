@@ -595,6 +595,24 @@ describe("FeedClient", () => {
       expect(feedCount()).toBeNull();
     });
 
+    it("leaves the badge alone when a mark read fails after unmount", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      let finish: (r: { success: boolean }) => void = () => {};
+      (markAnnouncementRead as jest.Mock).mockReturnValueOnce(
+        new Promise((resolve) => (finish = resolve)),
+      );
+      const { unmount } = renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+      unmount();
+      await act(async () => finish({ success: false }));
+
+      expect(feedCount()).toBeNull();
+    });
+
     it("drops by one on mark read, and puts it back when that fails", async () => {
       (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
       (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({

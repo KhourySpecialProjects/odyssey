@@ -174,7 +174,14 @@ export function FeedClient({
       ignore = true;
     };
   }, [pending, roles, refresh]);
-  useEffect(() => () => useFeedUnreadStore.getState().setFeedCount(null), []);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      useFeedUnreadStore.getState().setFeedCount(null);
+    };
+  }, []);
 
   // Once per mount, when not pending (ODY-931). A raise refetches the list and, through
   // the effect above, recounts the badge. A repeat call just answers "today".
@@ -212,7 +219,9 @@ export function FeedClient({
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await update(id);
     if (!result.success) {
-      useFeedUnreadStore.getState().adjustFeedCount(-delta);
+      // After unmount the override is gone, so a rollback would recreate it wrongly
+      if (mounted.current)
+        useFeedUnreadStore.getState().adjustFeedCount(-delta);
       toast.error(errorMessage);
     }
     // Re-sync with the server: on success this quietly backfills the page;
