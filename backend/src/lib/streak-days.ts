@@ -7,7 +7,7 @@
 export const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const USER_UID = 'api::authorized-user.authorized-user';
 
-/** Revives each learner gets, for good (ODY-920) */
+/** Revives each learner gets each month: back to 2 on the 1st, unused ones don't carry over (ODY-920) */
 export const STREAK_REVIVES = 2;
 
 /** Thrown with the HTTP status the controller should answer with. */
@@ -63,6 +63,19 @@ async function findDay(key: string): Promise<Row | null> {
 function addDays(date: string, days: number): string {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * The revived dates whose revive was spent in the same month as reviving
+ * `date`'s. A revive is spent the day after the day it saves, so for
+ * December that's 30 Nov to 30 Dec.
+ */
+function spentSameMonth(date: string) {
+  const spent = addDays(date, 1);
+  const [y, m] = spent.split('-').map(Number);
+  const first = `${spent.slice(0, 7)}-01`;
+  const next = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+  return { $gte: addDays(first, -1), $lt: addDays(next, -1) };
 }
 
 /** Reruns `fn` once when a concurrent request created the day's row first (see recordStreakDay) */
@@ -158,7 +171,11 @@ export async function reviveStreakDay(
   const key = streakDayKey(input.userId, input.date);
   const revivedSoFar = () =>
     strapi.documents(STREAK_DAY_UID).count({
-      filters: { user: { id: input.userId }, revived: true },
+      filters: {
+        user: { id: input.userId },
+        revived: true,
+        date: spentSameMonth(input.date),
+      },
     } as any);
 
   const once = () =>
