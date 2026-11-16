@@ -57,4 +57,13 @@ describe("tagsToTopics", () => {
       { documentId: "a", name: "  Git & Version Control ", area: "technical" },
     ]);
   });
+
+  it("maps the live tag names Git and Cybersecurity", () => {
+    expect(
+      tagsToTopics([
+        { documentId: "g", name: "Git" },
+        { documentId: "c", name: "Cybersecurity" },
+      ]).map((t) => t.area),
+    ).toEqual(["technical", "technical"]);
+  });
 });

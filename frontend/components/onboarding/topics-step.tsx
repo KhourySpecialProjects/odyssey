@@ -55,7 +55,7 @@ export function TopicsStep({
       {mine.map((a) => areaGroup(a))}
       {others.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-xs font-medium text-[#2f7a9a]">
+          <summary className="text-onboarding cursor-pointer text-xs font-medium">
             More topics
           </summary>
           <div className="mt-3 space-y-4">
@@ -63,7 +63,7 @@ export function TopicsStep({
           </div>
         </details>
       )}
-      <p aria-live="polite" className="text-xs text-[#2f7a9a]">
+      <p aria-live="polite" className="text-onboarding text-xs">
         {value.length} selected
       </p>
       {onNoteChange && (

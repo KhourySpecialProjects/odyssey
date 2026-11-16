@@ -230,9 +230,9 @@ export function OnboardingQuiz({
                 type="submit"
                 size="sm"
                 disabled={!valid || submitting}
-                className="bg-[#2f7a9a] text-white hover:bg-[#2f7a9a]/90"
+                className="bg-onboarding hover:bg-onboarding/90 text-white"
               >
-                {last ? "Finish" : "Next"}
+                {last ? "See my recommendations" : "Continue"}
                 {!last && <ArrowRight className="h-4 w-4" />}
               </Button>
             </div>

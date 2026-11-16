@@ -30,9 +30,9 @@ export function OptionCard({
       {...a11y}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-[#2f7a9a] focus-visible:outline-none",
+        "focus-visible:ring-onboarding flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none",
         selected
-          ? "border-[#2f7a9a] bg-[#2f7a9a]/5"
+          ? "border-onboarding bg-onboarding/5"
           : "border-slate-200 hover:bg-slate-50 dark:border-slate-700",
       )}
     >
@@ -48,7 +48,7 @@ export function OptionCard({
         className={cn(
           "flex h-4 w-4 items-center justify-center border border-slate-300",
           role ? "rounded-full" : "rounded-sm",
-          selected && "border-[#2f7a9a] bg-[#2f7a9a] text-white",
+          selected && "border-onboarding bg-onboarding text-white",
         )}
       >
         {selected && <Check className="h-3 w-3" />}
