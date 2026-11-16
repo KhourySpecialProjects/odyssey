@@ -8,6 +8,16 @@
  */
 export const REF_PATTERN = /\[(p\d+(?:\s*,\s*p\d+)*)\]/g;
 
+/**
+ * A linked phrase in Mentor's answer (ODY-968): "[the words][p3]", the
+ * words in group 1 and the refs in group 2, with no space between. Global
+ * like REF_PATTERN, so copy it for exec(), test() and matchAll().
+ */
+export const LINK_PATTERN = new RegExp(
+  `\\[([^\\[\\]\\n]*)\\]${REF_PATTERN.source}`,
+  "g",
+);
+
 /** The refs an answer cites, in the order first cited, each once */
 export function citedRefs(answer: string): string[] {
   const refs = new Set<string>();
