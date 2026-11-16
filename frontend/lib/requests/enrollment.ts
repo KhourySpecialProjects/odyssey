@@ -26,6 +26,7 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { clearReminderOnProgress } from "@/lib/reminders";
 import { recordStreakDay } from "@/lib/streak-days";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -678,6 +679,8 @@ export async function updateViewedLessons(
     const viewedIds = enrollment.viewedLessons?.map((l: Lesson) => l.id) || [];
     const alreadyViewed = viewedIds.includes(lessonId);
 
+    const dropletId = enrollment.droplet?.id;
+
     let finalViewedIds = viewedIds;
     let isComplete: boolean | undefined = enrollment.isComplete;
     let completionDate: Date | undefined = enrollment.completionDate;
@@ -713,12 +716,15 @@ export async function updateViewedLessons(
       isComplete = updated.isComplete;
       completionDate = updated.completionDate;
 
-      // A lesson's first view lights the learner's streak for today. It
-      // never throws, so a streak that fails to save doesn't fail the lesson.
-      await recordStreakDay(
-        { id: authorizedUser.id, timeZone: authorizedUser.timeZone },
-        lessonId,
-      );
+      // Streak (ODY-918) and reminder clear (ODY-932) never throw, so the lesson always saves
+      await Promise.all([
+        recordStreakDay(
+          { id: authorizedUser.id, timeZone: authorizedUser.timeZone },
+          lessonId,
+        ),
+        dropletId != null &&
+          clearReminderOnProgress({ id: authorizedUser.id }, dropletId),
+      ]);
     }
 
     // The droplet's own lesson list is authoritative; the caller's copy is only
@@ -749,7 +755,6 @@ export async function updateViewedLessons(
 
     // When the droplet is newly completed, check if it belongs to a voyage node
     // and auto-complete that node. Fire-and-forget: do not block the response.
-    const dropletId = enrollment.droplet?.id;
     if (isNowComplete && !enrollment.isComplete && dropletId) {
       import("./voyage-enrollment")
         .then(({ checkAndCompleteVoyageNode }) =>
