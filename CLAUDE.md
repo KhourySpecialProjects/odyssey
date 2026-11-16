@@ -43,6 +43,7 @@ Workflow commands:
 - `/audit [scope]` — Invoke the auditor agent (expensive, use once before merge)
 - `/ship` — Run CI, prepare PR summary, verify branch is ready to push
 - `/coord [status|watch|open] [ODY-123]` — Coordination check: blockers on develop, the tracker, owed `[OPEN]` items (`watch`: develop every minute, Slack and Linear every 10 min)
+- `/dependabot [triage|fix <pr>|fix all]` — Sort the open Dependabot PRs into lanes, fix failing ones on a `claude/` branch and list the ready ones; never merges (`docs/agent/dependabot-workflow.md`)
 
 ## Core Patterns
 
