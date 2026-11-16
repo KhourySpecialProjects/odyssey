@@ -108,9 +108,9 @@ export function progressText(progress: {
   span: number;
   next: StreakIconInfo;
 }): string {
-  return progress.done === 0
-    ? `${progress.span} days to the ${progress.next.name}`
-    : `${progress.done} of ${progress.span} days to the ${progress.next.name}`;
+  const { done, span, next } = progress;
+  if (done > 0) return `${done} of ${span} days to the ${next.name}`;
+  return `${span} ${span === 1 ? "day" : "days"} to the ${next.name}`;
 }
 
 /** The lesson banner before today is lit. `lessonCompleted` is this lesson, already finished. */

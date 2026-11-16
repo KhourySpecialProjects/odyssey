@@ -81,6 +81,7 @@ describe("progressToNext", () => {
   it.each([
     [7, 2, 3, "Big Pile", "2 of 3 days to the Big Pile"],
     [8, 0, 2, "Gold Heap", "2 days to the Gold Heap"],
+    [1, 0, 1, "Two Coins", "1 day to the Two Coins"],
     [99, 49, 50, "Super Duper Mega Golden Crowned Diamond Chest", null],
     [100, null, null, null, null],
     [0, null, null, null, null],
