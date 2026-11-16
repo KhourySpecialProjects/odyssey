@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "learner_profiles",
+  "info": {
+    "singularName": "learner-profile",
+    "pluralName": "learner-profiles",
+    "displayName": "Learner Profile",
+    "description": "One student's onboarding quiz answers, read only by the recommender and Settings. Student data: keep out of logs, PostHog and Slack (ODY-953)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "learner_profiles_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "maxLength": 20
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "goal": {
+      "type": "enumeration",
+      "enum": ["class", "career", "self", "browsing"]
+    },
+    "focusAreas": {
+      "type": "json"
+    },
+    "interests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag"
+    },
+    "interestNote": {
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

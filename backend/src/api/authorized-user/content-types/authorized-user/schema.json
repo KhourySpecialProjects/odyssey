@@ -74,6 +74,9 @@
       "type": "boolean",
       "default": true
     },
+    "onboardedAt": {
+      "type": "datetime"
+    },
     "firstName": {
       "type": "string"
     },
