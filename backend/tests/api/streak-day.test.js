@@ -225,6 +225,22 @@ describe('POST /streak-days/revive', () => {
     expect((await rows()).filter((r) => r.revived)).toHaveLength(2);
   });
 
+  it("gives 2 more on the 1st: saving 30 Nov on 1 Dec uses December's", async () => {
+    await revive(yesterday());
+    await record(valid({ date: '2026-11-10' }));
+    await revive(yesterday({ date: '2026-11-11' }));
+    await record(valid({ date: '2026-11-29' }));
+
+    const res = await revive(yesterday({ date: '2026-11-30' }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      date: '2026-11-30',
+      revivesLeft: 1,
+      added: true,
+    });
+  });
+
   it.each([
     [
       'a day that already counts',
