@@ -12,13 +12,8 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import {
-  Github,
-  Linkedin,
-  User2Icon,
-  ExternalLink,
-  LinkIcon,
-} from "lucide-react";
+import { User2Icon, ExternalLink, LinkIcon } from "lucide-react";
+import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -79,14 +74,14 @@ export function ProfileBlock({
             {otherUser.linkedin && (
               <Link href={otherUser.linkedin} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
-                  <Linkedin />
+                  <IconBrandLinkedin />
                 </a>
               </Link>
             )}
             {otherUser.github && (
               <Link href={otherUser.github} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
-                  <Github />
+                  <IconBrandGithub />
                 </a>
               </Link>
             )}
