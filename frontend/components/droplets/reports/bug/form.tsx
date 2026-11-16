@@ -35,7 +35,11 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("adminTab");
 
-  const form = useForm<z.infer<typeof reportSchema>>({
+  const form = useForm<
+    z.input<typeof reportSchema>,
+    unknown,
+    z.output<typeof reportSchema>
+  >({
     resolver: zodResolver(reportSchema),
     defaultValues: {
       fullName: name ?? "",
@@ -45,7 +49,7 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof reportSchema>) {
+  function onSubmit(values: z.output<typeof reportSchema>) {
     const sessionUrl = posthog.get_session_replay_url({
       withTimestamp: true,
       timestampLookBack: 30,
