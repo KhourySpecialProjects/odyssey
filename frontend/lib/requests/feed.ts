@@ -149,6 +149,33 @@ async function buildVisibilityFilters(
 }
 
 /**
+ * The feed's query: visible rows in the viewer's own read state, of `types`.
+ * Shared by the feed page and the nav count so the two can't drift.
+ */
+async function buildFeedQuery(
+  userId: number,
+  email: string,
+  opts: { archived: boolean; types?: string[] },
+) {
+  const { archived, types } = opts;
+  const orFilters = await buildVisibilityFilters(userId, email);
+  // Read state is per user (announcement-reads), never the shared row. Strapi
+  // drops the user's read rows for unreadBy, so the URL never grows with them.
+  return {
+    filters: {
+      $and: [
+        { $or: orFilters },
+        ...(archived
+          ? [{ reads: { authorized_user: { id: { $eq: userId } } } }]
+          : []),
+        ...(types?.length ? [{ type: { $in: types } }] : []),
+      ],
+    },
+    ...(archived ? {} : { unreadBy: userId }),
+  };
+}
+
+/**
  * The signed-in user's feed. Callable from the client as a Server Action, so
  * the viewer always comes from the session — never from arguments.
  *
@@ -175,31 +202,15 @@ export async function fetchAnnouncements(
     ? roles.filter((r) => typeof r === "string")
     : undefined;
   try {
-    const orFilters = await buildVisibilityFilters(userId, email);
-
-    // Read state is per user (announcement-reads), never the shared row.
-    // Unread excludes the user's read ids: a negated relation filter would
-    // also match rows another user has read.
-    let readFilter: Record<string, unknown>;
-    if (archived) {
-      readFilter = { reads: { authorized_user: { id: { $eq: userId } } } };
-    } else {
-      const readIds = await fetchReadAnnouncementIds(userId);
-      readFilter = readIds.length ? { id: { $notIn: readIds } } : {};
-    }
-
-    const baseFilters = {
-      $and: [{ $or: orFilters }, readFilter],
-    };
+    const feedQuery = await buildFeedQuery(userId, email, {
+      archived,
+      types,
+    });
 
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
       fields: ["id", "type", "content", "firstCreated"],
-      filters: types?.length
-        ? {
-            $and: [{ $or: orFilters }, readFilter, { type: { $in: types } }],
-          }
-        : baseFilters,
+      ...feedQuery,
       populate: {
         authorized_user: {
           fields: [
@@ -654,33 +665,6 @@ export async function createSystemBroadcast(content: string) {
     console.error("Error creating broadcast:", error);
     return { success: false, error: "Unexpected error" };
   }
-}
-
-const READ_PAGE_SIZE = 250;
-const READ_MAX_PAGES = 40;
-
-/** The ids of every announcement this user has marked read. */
-async function fetchReadAnnouncementIds(userId: number): Promise<number[]> {
-  const ids: number[] = [];
-  for (let page = 1; page <= READ_MAX_PAGES; page++) {
-    const rows = await fetchAPI<{ announcement?: { id: number } | null }[]>(
-      "/announcement-reads",
-      {
-        urlParams: {
-          filters: { authorized_user: { id: { $eq: userId } } },
-          fields: ["id"],
-          populate: { announcement: { fields: ["id"] } },
-          pagination: { pageSize: READ_PAGE_SIZE, page },
-        },
-        next: { tags: [CACHE_TAGS.userFeed(userId)], revalidate: 900 },
-      },
-    );
-    for (const row of rows) {
-      if (row.announcement) ids.push(row.announcement.id);
-    }
-    if (rows.length < READ_PAGE_SIZE) break;
-  }
-  return ids;
 }
 
 /**

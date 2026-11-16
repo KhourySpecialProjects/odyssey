@@ -18,7 +18,11 @@ import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
-import { mockGlobalFetch, makeFetchResponse } from "@/lib/testing/mock-helpers";
+import {
+  mockGlobalFetch,
+  makeEmptyResponse,
+  makeFetchResponse,
+} from "@/lib/testing/mock-helpers";
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -303,18 +307,9 @@ describe("announcement read state", () => {
       urlParams: { filters: unknown };
     };
 
-  // Every card type goes through the same visibility check, so every type can
-  // be marked; the row written never depends on who authored the card.
-  it.each([
-    "droplet",
-    "group",
-    "playlist",
-    "friend",
-    "kudos",
-    "system",
-    "review_feedback",
-    "review_published",
-  ])("marks a %s announcement read for the viewer only", async (type) => {
+  // Every card goes through the same visibility check; the row written never
+  // depends on who authored the card.
+  it("marks an announcement read for the viewer only", async () => {
     const result = await markAnnouncementRead(11);
 
     expect(result).toEqual({ success: true });
@@ -330,7 +325,6 @@ describe("announcement read state", () => {
     ).toBe(false);
     expect(revalidateTag).toHaveBeenCalledTimes(1);
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(5));
-    expect(type).toBeTruthy();
   });
 
   it("checks the announcement is in the viewer's feed, not that they own it", async () => {
@@ -365,6 +359,7 @@ describe("announcement read state", () => {
 
   it("looks up and writes only the viewer's own read rows", async () => {
     existingReads = [{ id: 70, documentId: "doc70" }];
+    fetchMock.mockResolvedValue(makeEmptyResponse(204));
 
     await markAnnouncementUnread(11);
 
@@ -390,6 +385,7 @@ describe("announcement read state", () => {
 
   it("marks unread by deleting the viewer's read row", async () => {
     existingReads = [{ id: 70, documentId: "doc70" }];
+    fetchMock.mockResolvedValue(makeEmptyResponse(204));
 
     const result = await markAnnouncementUnread(11);
 

@@ -141,7 +141,7 @@ Group
 
 ### Other Key Types
 
-- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos. Relations to droplet, playlist, group, sender/receiver users.
+- **Announcement** — Feed items. Types: droplet, playlist, friend, system, group, kudos. Relations to droplet, playlist, group, sender/receiver users. Read state is per user: one `announcement-read` row (announcement, authorized_user) per read mark (ODY-786); the old shared `readAt` is only a backfill source. `GET /api/announcements?unreadBy=<userId>` leaves out that user's read rows server-side; deleting a read mark also clears its row's leftover `readAt`.
 - **Note** — User annotation on a lesson. Has `content` (text), `yPosition` (vertical placement), linked to enrollment and lesson.
 - **Highlight** — Text selection with `color` (pink #f9a8d4, yellow #fff300, lime #86efac, blue #93c5fd, orange #fbd38d), `selectedText`, `startOffset`/`endOffset` for position.
 - **Friendship** — Bidirectional with status: pending, accepted, rejected, blocked.
