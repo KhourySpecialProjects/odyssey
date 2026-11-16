@@ -500,6 +500,31 @@ describe("FeedClient", () => {
       expect(screen.getByText("Announcement 0")).toBeInTheDocument();
     });
 
+    it("shows the server's error message in the toast", async () => {
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: "Announcement not found",
+      });
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(25), 3),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={initialFeed()}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Announcement not found"),
+      );
+    });
+
     it("moves back a page when a refresh finds the current page emptied", async () => {
       (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
         success: true,
@@ -688,11 +713,12 @@ describe("FeedClient", () => {
       expect(feedCount()).toBe(4);
     });
 
-    it("leaves a global broadcast out of the optimistic count", async () => {
+    it("counts a global broadcast, and rolls back when marking fails", async () => {
       (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
-      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
-        success: false,
-      });
+      let fail!: (r: { success: boolean }) => void;
+      (markAnnouncementRead as jest.Mock).mockReturnValueOnce(
+        new Promise((resolve) => (fail = resolve)),
+      );
       const broadcast = {
         ...generateMockAnnouncements(1)[0],
         type: "system" as AnnouncementType,
@@ -710,6 +736,8 @@ describe("FeedClient", () => {
       await waitFor(() => expect(feedCount()).toBe(2));
 
       fireEvent.click(screen.getByRole("button", { name: "Mark as read" }));
+      expect(feedCount()).toBe(1);
+      await act(async () => fail({ success: false }));
       expect(feedCount()).toBe(2);
     });
   });

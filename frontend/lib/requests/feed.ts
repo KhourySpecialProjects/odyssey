@@ -54,15 +54,17 @@ function friendIdsOf(
 }
 
 /**
- * The Strapi filters for a viewer's feed, shared by the feed page and the nav
- * count so the two can't drift. Pre-computes ids with minimal parallel queries.
+ * Which announcements the viewer's feed includes, as a Strapi `$or` filter.
+ * Shared by the feed, the nav count and the read/unread check, so a user can
+ * mark read exactly the cards they can see.
+ *
+ * Pre-computes the IDs needed using fast, minimal queries run in parallel, so
+ * the announcements query needs only simple $in filters, not nested joins.
  */
-async function buildFeedFilters(
+async function buildVisibilityFilters(
   userId: number,
   email: string,
-  opts: { archived: boolean; ownedOnly?: boolean; types?: string[] },
-) {
-  const { archived, ownedOnly, types } = opts;
+): Promise<any[]> {
   // Fetch group IDs, playlist IDs, enrolled droplet IDs, and friend IDs in
   // parallel. Friends come from the social graph the activity layout already
   // reads (request-deduped there; a Data Cache hit from a Server Action).
@@ -116,7 +118,6 @@ async function buildFeedFilters(
       ),
     ]);
 
-  // Build the query with simple $in filters instead of nested relation joins
   const orFilters: any[] = [];
 
   if (groupIds.length > 0) {
@@ -167,18 +168,33 @@ async function buildFeedFilters(
     type: "reminder",
     authorized_user: { id: { $eq: userId } },
   });
+  return orFilters;
+}
 
-  const readAtFilter = archived
-    ? { readAt: { $notNull: true } }
-    : { readAt: { $null: true } };
+/**
+ * The feed's query: visible rows in the viewer's own read state, of `types`.
+ * Shared by the feed page and the nav count so the two can't drift.
+ */
+async function buildFeedQuery(
+  userId: number,
+  email: string,
+  opts: { archived: boolean; types?: string[] },
+) {
+  const { archived, types } = opts;
+  const orFilters = await buildVisibilityFilters(userId, email);
+  // Read state is per user (announcement-reads), never the shared row. Strapi
+  // drops the user's read rows for unreadBy, so the URL never grows with them.
   return {
-    $and: [
-      { $or: orFilters },
-      readAtFilter,
-      ...(types?.length ? [{ type: { $in: types } }] : []),
-      // Only rows assertAnnouncementOwnership lets the viewer mark read
-      ...(ownedOnly ? [{ authorized_user: { id: { $eq: userId } } }] : []),
-    ],
+    filters: {
+      $and: [
+        { $or: orFilters },
+        ...(archived
+          ? [{ reads: { authorized_user: { id: { $eq: userId } } } }]
+          : []),
+        ...(types?.length ? [{ type: { $in: types } }] : []),
+      ],
+    },
+    ...(archived ? {} : { unreadBy: userId }),
   };
 }
 
@@ -209,15 +225,15 @@ export async function fetchAnnouncements(
     ? roles.filter((r) => typeof r === "string")
     : undefined;
   try {
-    const filters = await buildFeedFilters(userId, email, {
+    const feedQuery = await buildFeedQuery(userId, email, {
       archived,
       types,
     });
 
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
-      fields: ["id", "type", "content", "firstCreated", "readAt"],
-      filters,
+      fields: ["id", "type", "content", "firstCreated"],
+      ...feedQuery,
       populate: {
         authorized_user: {
           fields: [
@@ -287,8 +303,8 @@ export async function fetchAnnouncements(
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
           ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
-        // Two-level: new announcements sweep the global tag; read-state
-        // changes on a user's own system announcements use userFeed(id).
+        // Two-level: new announcements sweep the global tag; a user's own
+        // read-state changes use userFeed(id).
         next: {
           tags: [CACHE_TAGS.announcements, CACHE_TAGS.userFeed(userId)],
           revalidate: 900,
@@ -800,161 +816,149 @@ export async function createSystemBroadcast(content: string) {
 }
 
 /**
- * Mark an announcement as read — sets its readAt timestamp so it
- * disappears from the Unread feed and shows in Read.
- * Idempotent: re-marking an already-read announcement refreshes readAt.
+ * Mark an announcement as read for the signed-in user only: adds a row to
+ * announcement-reads, so it leaves their Unread feed and shows in Read.
+ * Idempotent: an already-read announcement is left as it is.
  */
 export async function markAnnouncementRead(id: number) {
-  try {
-    const ownership = await assertAnnouncementOwnership(id);
-    if (!ownership.ok) return { success: false, error: ownership.error };
-
-    const response = await fetch(
-      await strapiEntryUrl("announcements", {
-        id,
-        documentId: ownership.documentId,
-      }),
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          data: { readAt: new Date().toISOString() },
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-      },
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Failed to mark announcement as read (${response.status})`,
-      );
-    }
-    revalidateReadState(ownership);
-    return { success: true };
-  } catch (error) {
-    console.error("Error marking announcement as read:", error);
-    return { success: false, error };
-  }
+  return setReadState(id, true);
 }
 
 /**
- * Mark an announcement as unread — clears its readAt so it shows in
- * the Unread feed again.
+ * Mark an announcement as unread for the signed-in user only: removes their
+ * read rows so it shows in the Unread feed again.
  */
 export async function markAnnouncementUnread(id: number) {
-  try {
-    const ownership = await assertAnnouncementOwnership(id);
-    if (!ownership.ok) return { success: false, error: ownership.error };
+  return setReadState(id, false);
+}
 
-    const response = await fetch(
-      await strapiEntryUrl("announcements", {
-        id,
-        documentId: ownership.documentId,
-      }),
+async function setReadState(
+  id: number,
+  read: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const access = await assertAnnouncementVisible(id);
+    if (!access.ok) return { success: false, error: access.error };
+
+    const existing = await fetchAPI<{ id: number; documentId?: string }[]>(
+      "/announcement-reads",
       {
-        method: "PUT",
-        body: JSON.stringify({
-          data: { readAt: null },
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        urlParams: {
+          filters: {
+            announcement: { id: { $eq: id } },
+            authorized_user: { id: { $eq: access.userId } },
+          },
+          fields: ["id"],
+          pagination: { pageSize: 25, page: 1 },
         },
+        cache: "no-store",
       },
     );
-    if (!response.ok) {
-      throw new Error(
-        `Failed to mark announcement as unread (${response.status})`,
+
+    if (read && existing.length === 0) {
+      const response = await fetch(
+        NEXT_PUBLIC_STRAPI_API_URL + "/api/announcement-reads",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            data: {
+              announcement: access.documentId,
+              authorized_user: await resolveDocumentId(
+                "authorized-users",
+                access.userId,
+              ),
+            },
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+        },
       );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to mark announcement as read (${response.status})`,
+        );
+      }
     }
-    revalidateReadState(ownership);
+
+    if (!read) {
+      for (const row of existing) {
+        const response = await fetch(
+          await strapiEntryUrl("announcement-reads", row),
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              ...STRAPI_RESPONSE_FORMAT_HEADER,
+            },
+          },
+        );
+        if (!response.ok) {
+          throw new Error(
+            `Failed to mark announcement as unread (${response.status})`,
+          );
+        }
+      }
+    }
+
+    // Read state is per user, so only this user's feed changes.
+    revalidateTag(CACHE_TAGS.userFeed(access.userId));
     return { success: true };
   } catch (error) {
-    console.error("Error marking announcement as unread:", error);
-    return { success: false, error };
-  }
-}
-
-/**
- * Verifies that the current authenticated user is the authorized_user on the
- * announcement identified by `id`. Broadcasts (authorized_user = null) are
- * rejected because their `readAt` column is shared across all recipients —
- * marking one read would hide it from everyone. Per-user read state for
- * broadcasts requires a schema change (join table) not yet in place.
- */
-async function assertAnnouncementOwnership(
-  id: number,
-): Promise<
-  | { ok: true; ownerId: number; type?: string; documentId?: string }
-  | { ok: false; error: string }
-> {
-  const user = await getCurrentUser();
-  if (!user?.email) return { ok: false, error: "Not authenticated" };
-
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  if (!authorizedUser) return { ok: false, error: "Not authorized" };
-
-  // Filter the list endpoint by id: single-entry routes need a documentId, and
-  // this needs no lookup.
-  const [announcement] = await fetchAPI<
-    {
-      id: number;
-      documentId?: string;
-      type?: string;
-      authorized_user?: { id: number } | null;
-    }[]
-  >("/announcements", {
-    urlParams: {
-      filters: { id: { $eq: id } },
-      fields: ["id", "type"],
-      populate: { authorized_user: { fields: ["id"] } },
-      pagination: { pageSize: 1, page: 1 },
-    },
-    next: { tags: [CACHE_TAGS.announcements], revalidate: 0 },
-  });
-
-  if (!announcement) return { ok: false, error: "Announcement not found" };
-
-  const ownerId = announcement.authorized_user?.id;
-  if (ownerId == null) {
+    console.error("Error changing announcement read state:", error);
     return {
-      ok: false,
-      error: "Broadcast announcements cannot be marked read",
+      success: false,
+      error: `Failed to mark as ${read ? "read" : "unread"}`,
     };
   }
-  if (ownerId !== authorizedUser.id) {
-    return { ok: false, error: "Not authorized" };
-  }
-  return {
-    ok: true,
-    ownerId,
-    type: announcement.type,
-    documentId: announcement.documentId,
-  };
 }
 
 /**
- * readAt lives on the announcement row, so a read-state change is visible in
- * every feed that includes the row. A targeted system announcement is only
- * ever in its owner's feed (fetchAnnouncements matches system rows by
- * authorized_user = viewer; fetchUserAnnouncements excludes system), so its
- * owner's per-user feed tag is enough. Reminders are owner-only the same way.
- * Friend/kudos rows owned by the caller appear in their friends' feeds, so those still sweep globally.
+ * Confirms the announcement is in the signed-in user's feed, by the same
+ * rules as fetchAnnouncements. Nobody can mark a card they cannot see, and
+ * the viewer always comes from the session.
  */
-function revalidateReadState(ownership: { ownerId: number; type?: string }) {
-  if (ownership.type === "system" || ownership.type === "reminder") {
-    revalidateTag(CACHE_TAGS.userFeed(ownership.ownerId));
-  } else {
-    revalidateTag(CACHE_TAGS.announcements);
+async function assertAnnouncementVisible(
+  id: number,
+): Promise<
+  | { ok: true; userId: number; documentId: string }
+  | { ok: false; error: string }
+> {
+  const sessionUser = await getCurrentUser();
+  const userId = await getAuthorizedUserId(sessionUser);
+  if (!sessionUser?.email || !userId) {
+    return { ok: false, error: "Not authenticated" };
   }
+  if (!Number.isInteger(id) || id <= 0) {
+    return { ok: false, error: "Announcement not found" };
+  }
+
+  const orFilters = await buildVisibilityFilters(userId, sessionUser.email);
+  // Filter the list endpoint by id: single-entry routes need a documentId, and
+  // this needs no lookup.
+  const [announcement] = await fetchAPI<{ id: number; documentId?: string }[]>(
+    "/announcements",
+    {
+      urlParams: {
+        filters: { $and: [{ id: { $eq: id } }, { $or: orFilters }] },
+        fields: ["id"],
+        pagination: { pageSize: 1, page: 1 },
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!announcement?.documentId) {
+    return { ok: false, error: "Announcement not found" };
+  }
+  return { ok: true, userId, documentId: announcement.documentId };
 }
 
 /**
  * The nav badge: unread rows of `roles` (default: the Unread tab's types).
- * Counts only rows the viewer can mark read; shared rows wait for ODY-943.
+ * Read state is per user, so it matches the Unread tab, broadcasts included.
  */
 export async function getUnreadAnnouncementCount(
   roles?: string[],
@@ -966,16 +970,15 @@ export async function getUnreadAnnouncementCount(
     const sessionUser = await getCurrentUser();
     const userId = await getAuthorizedUserId(sessionUser);
     if (!sessionUser?.email || !userId) throw new Error("Not authenticated");
-    const filters = await buildFeedFilters(userId, sessionUser.email, {
+    const feedQuery = await buildFeedQuery(userId, sessionUser.email, {
       archived: false,
-      ownedOnly: true,
       types: types.filter((t) => typeof t === "string"),
     });
     const data = await fetchAPI<{ meta?: { pagination?: { total?: number } } }>(
       "/announcements",
       {
         urlParams: {
-          filters,
+          ...feedQuery,
           fields: ["id"],
           pagination: { pageSize: 1, page: 1 },
         },

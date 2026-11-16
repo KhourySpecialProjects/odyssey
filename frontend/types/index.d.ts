@@ -448,7 +448,6 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
-  readAt?: string | null;
   reminderCount?: number | null;
   reminderSnoozedUntil?: string | null;
   reminderMuted?: boolean | null;

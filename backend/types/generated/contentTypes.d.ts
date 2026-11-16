@@ -619,6 +619,43 @@ export interface ApiAiScoringSettingAiScoringSetting
   };
 }
 
+export interface ApiAnnouncementReadAnnouncementRead
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'announcement_reads';
+  info: {
+    description: 'One row per user per announcement they marked read (ODY-786)';
+    displayName: 'Announcement Read';
+    pluralName: 'announcement-reads';
+    singularName: 'announcement-read';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    announcement: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::announcement.announcement'
+    >;
+    authorized_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiAnnouncementAnnouncement
   extends Struct.CollectionTypeSchema {
   collectionName: 'announcements';
@@ -660,6 +697,10 @@ export interface ApiAnnouncementAnnouncement
     playlist: Schema.Attribute.Relation<'manyToOne', 'api::playlist.playlist'>;
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
+    reads: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    >;
     reminderCount: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -2924,6 +2965,7 @@ declare module '@strapi/strapi' {
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::ai-scoring-run.ai-scoring-run': ApiAiScoringRunAiScoringRun;
       'api::ai-scoring-setting.ai-scoring-setting': ApiAiScoringSettingAiScoringSetting;
+      'api::announcement-read.announcement-read': ApiAnnouncementReadAnnouncementRead;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;

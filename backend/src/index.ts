@@ -6,6 +6,7 @@ import { seedMentorSettings } from './lib/mentor-settings';
 import { backfillReviewRounds } from './lib/review-round-backfill';
 import { backfillTimeZones } from './lib/time-zone-backfill';
 import { backfillLastProgress } from './lib/enrollment-progress-backfill';
+import { backfillAnnouncementReads } from './lib/announcement-read-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
   "api::droplet.droplet.update",
@@ -29,6 +30,14 @@ export default {
           route.method === "PUT" &&
           typeof route.handler === "string" &&
           SLUG_UPDATE_HANDLERS.includes(route.handler),
+      },
+    });
+    // The feed's Unread list: the controller leaves out this user's read marks (ODY-786).
+    strapi.contentAPI.addQueryParams({
+      unreadBy: {
+        schema: (z) => z.string().regex(/^[1-9]\d*$/).optional(),
+        matchRoute: (route) =>
+          route.method === "GET" && route.handler === "api::announcement.announcement.find",
       },
     });
   },
@@ -102,6 +111,14 @@ export default {
       if (count > 0) strapi.log.info(`Backfilled lastProgressDate on ${count} enrollment(s)`);
     } catch (error) {
       strapi.log.error('Could not backfill enrollment last progress', error);
+    }
+
+    // Targeted rows already marked read keep that state per user; never blocks startup.
+    try {
+      const count = await backfillAnnouncementReads();
+      if (count > 0) strapi.log.info(`Backfilled ${count} announcement read mark(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill announcement reads', error);
     }
   },
 };

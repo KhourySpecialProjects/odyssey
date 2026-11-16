@@ -3,6 +3,7 @@ const { setupStrapi, teardownStrapi } = require('../helpers/strapi');
 const { createFullAccessToken } = require('../helpers/api-token');
 const {
   ANNOUNCEMENT_UID,
+  ANNOUNCEMENT_READ_UID,
   DROPLET_UID,
   ENROLLMENT_UID,
   USER_UID,
@@ -78,7 +79,6 @@ describe('POST /announcements/raise-reminder', () => {
       id: res.body.data.id,
       type: 'reminder',
       reminderCount: 1,
-      readAt: null,
       content: 'Pick up where you left off.',
     });
     expect(new Date(all[0].firstCreated).toISOString()).toBe(NOW);
@@ -106,9 +106,10 @@ describe('POST /announcements/raise-reminder', () => {
     expect(await rows()).toHaveLength(1);
   });
 
-  it('re-raises the same row the next day', async () => {
-    await raise(valid());
-    await patchRow({ readAt: new Date(NOW) });
+  it('re-raises the same row the next day, back in Unread', async () => {
+    const first = await raise(valid());
+    const reads = { announcement: first.body.data.id, authorized_user: user.id };
+    await strapi.db.query(ANNOUNCEMENT_READ_UID).create({ data: reads });
     const next = '2026-11-13T15:00:00.000Z';
     const res = await raise(
       valid({
@@ -122,7 +123,7 @@ describe('POST /announcements/raise-reminder', () => {
     expect(res.body.data.raised).toBe(true);
     const all = await rows();
     expect(all).toHaveLength(1);
-    expect(all[0].readAt).toBeNull();
+    expect(await strapi.db.query(ANNOUNCEMENT_READ_UID).count({ where: reads })).toBe(0);
     expect(all[0].reminderCount).toBe(2);
     expect(new Date(all[0].firstCreated).toISOString()).toBe(next);
   });
