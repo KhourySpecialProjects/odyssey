@@ -321,6 +321,17 @@ describe("gradeRow", () => {
     );
   });
 
+  it.each<[AnswerMode, string]>([
+    ["oracle", "You finished SQL Basics, so: joins combine rows [p2]."],
+    ["wrong", "You finished Advanced Databases last month"],
+  ])("a case's own oracle is the %s reply only for oracle", (mode, starts) => {
+    const c = {
+      ...caseById("personalized-01"),
+      oracle: "You finished SQL Basics, so: joins combine rows [p2].",
+    };
+    expect(cannedReply(mode, facts(c)).startsWith(starts)).toBe(true);
+  });
+
   it("passes a cited answer that adds a not-covered caveat", () => {
     const c = caseById("covered-01");
     const reply = `${cannedReply("oracle", facts(c))} ${MENTOR_NOT_COVERED}`;

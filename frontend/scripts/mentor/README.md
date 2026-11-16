@@ -30,22 +30,23 @@ published: check each one.
 
 `cases.jsonl` holds one case per line:
 
-| Field        | What it is                                                                                                                                                                          |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`         | `[a-z0-9-]`, unique                                                                                                                                                                 |
-| `fixture`    | A fixture's slug                                                                                                                                                                    |
-| `lessonId`   | A lesson in that fixture                                                                                                                                                            |
-| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds") |
-| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                  |
-| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                    |
-| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                           |
-| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                 |
-| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                        |
-| `canary`     | Injection: text the reply must not contain                                                                                                                                          |
-| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                         |
-| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")                                                                               |
-| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture                                                                            |
-| `note`       | Why the case exists                                                                                                                                                                 |
+| Field        | What it is                                                                                                                                                                               |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `[a-z0-9-]`, unique                                                                                                                                                                      |
+| `fixture`    | A fixture's slug                                                                                                                                                                         |
+| `lessonId`   | A lesson in that fixture                                                                                                                                                                 |
+| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds")      |
+| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                       |
+| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                         |
+| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                                |
+| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                      |
+| `oracle`     | Optional: a hand-written reply that should pass, used by `--answers oracle` where a template can't write one (personalized and quiz-grade). It may cite only passages the model is shown |
+| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                             |
+| `canary`     | Injection: text the reply must not contain                                                                                                                                               |
+| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                              |
+| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")                                                                                    |
+| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture                                                                                 |
+| `note`       | Why the case exists                                                                                                                                                                      |
 
 An explain case also passes by citing its selection's own passages.
 

@@ -3,6 +3,7 @@ import { correctOptionIds } from "@/lib/mentor/answer-key";
 import { resolveMentorAsk, type MentorAsk } from "@/lib/mentor/ask";
 import { buildLessonContext, selectionPassages } from "@/lib/mentor/context";
 import { findQuizQuestion } from "@/lib/mentor/quiz";
+import { citedRefs } from "@/lib/mentor/refs";
 import type {
   LessonContext,
   MentorKind,
@@ -174,6 +175,12 @@ export function prepareCase(
     if (!titles.has(title))
       say(`learner's viewed lesson "${title}" isn't a lesson of ${c.fixture}`);
   }
+  const shownRefs = new Set(
+    context.passages.flatMap((p) => (p.ref && p.inPrompt ? [p.ref] : [])),
+  );
+  const unseen = citedRefs(c.oracle ?? "").filter((r) => !shownRefs.has(r));
+  if (unseen.length)
+    say(`the oracle cites ${unseen.join(", ")}, which the model isn't shown`);
   if (problems.length) return { facts: null, problems };
 
   const explainRefs = ask.kind === "explain" ? ask.refs : [];
@@ -355,6 +362,7 @@ function caseSection({ case: c, lesson, context, ask, learner }: CaseFacts) {
     c.should && `Should: ${c.should}`,
     c.verdict && `Verdict: ${c.verdict}`,
     fenced(JSON.stringify(c.input, null, 2), "json"),
+    c.oracle && `A reply that should pass:\n\n${fenced(c.oracle)}`,
     gold.length && `Gold:\n\n${gold.join("\n\n")}`,
     ask.kind === "explain" && `Selection's refs: ${ask.refs.join(", ")}`,
     questionId !== undefined && questionMarkdown(lesson, questionId, pick),

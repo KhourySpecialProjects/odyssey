@@ -1340,6 +1340,12 @@ Should: build-on
 }
 ```
 
+A reply that should pass:
+
+```
+Since you finished Intro to Python, you have the tools this workflow puts to work. It follows five stages [p4]: collect raw data [p7], clean it [p8], explore it [p9], model it [p10] and communicate the findings [p11].
+```
+
 Gold:
 
 - "A typical workflow follows five stages" is in p4
@@ -1372,6 +1378,12 @@ Should: primer
   "kind": "lesson",
   "message": "what are the steps of the data science workflow?"
 }
+```
+
+A reply that should pass:
+
+```
+A quick primer first: this droplet builds on Intro to Python, which you haven't finished yet. It's where you learn to write Python, which the cleaning stage relies on with pandas [p8], so I'd take Intro to Python alongside this. The workflow itself follows five stages [p4]: collect [p7], clean [p8], explore [p9], model [p10] and communicate [p11].
 ```
 
 Gold:
@@ -1408,6 +1420,12 @@ Should: level
   "kind": "lesson",
   "message": "what are the steps of the data science workflow?"
 }
+```
+
+A reply that should pass:
+
+```
+The pipeline is the usual five stages [p4]: collect, clean, explore, model, communicate. Given your modeling background, the point worth keeping is that most of the time goes to the first three, before any model is trained [p13, p14].
 ```
 
 Gold:
@@ -1544,6 +1562,12 @@ Verdict: correct
 }
 ```
 
+A reply that should pass:
+
+```
+Correct. Zip codes look like numbers, but they're nominal: arithmetic on them doesn't make sense, so you treat them as categories [p13, p14]. You gave both the kind and the reason.
+```
+
 ## datasci-quizgrade-02
 
 quiz-grade, lesson. Fixture `fundamentals-of-data-science`, lesson 423 "Understanding Data Types and Variable Classification" (blocknote). Tags: v2-seed
@@ -1567,6 +1591,12 @@ Verdict: partly
     }
   ]
 }
+```
+
+A reply that should pass:
+
+```
+Partly right. They are categorical, but the lesson is more specific: zip codes are nominal, categories with no meaningful order [p9]. The question also asked why, and the lesson's test is whether arithmetic on the column makes sense [p13, p14].
 ```
 
 ## datasci-quizgrade-03
@@ -1594,6 +1624,12 @@ Verdict: not-quite
 }
 ```
 
+A reply that should pass:
+
+```
+Not quite. Zip codes look numeric, but they aren't continuous: adding or averaging zip codes means nothing. The lesson calls them nominal, because arithmetic on them doesn't make sense [p13, p14]. That's the beginner mistake it warns about, treating a categorical variable as a number [p4].
+```
+
 ## datasci-quizgrade-04
 
 quiz-grade, lesson. Fixture `fundamentals-of-data-science`, lesson 423 "Understanding Data Types and Variable Classification" (blocknote). Tags: v2-seed
@@ -1617,6 +1653,12 @@ Verdict: off-topic
     }
   ]
 }
+```
+
+A reply that should pass:
+
+```
+I can only help with this lesson, so let's stay on the quiz. Zip codes look like numbers: what kind of variable are they, and why? [p13]
 ```
 
 ## internet-review-01
