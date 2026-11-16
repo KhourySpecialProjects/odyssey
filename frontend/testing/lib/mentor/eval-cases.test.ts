@@ -265,6 +265,8 @@ describe("countProblems", () => {
         "1 questions with wrong picks, at least 6 needed",
         "0 extraction cases with history, at least 2 needed",
         "no off-topic case in a blocknote lesson",
+        "1 summary cases in classic lessons, at least 2 needed",
+        "1 summary cases in BlockNote lessons, at least 2 needed",
       ]),
     );
   });

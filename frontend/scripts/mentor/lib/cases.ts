@@ -283,6 +283,17 @@ export function countProblems(cases: EvalCase[]): string[] {
     ["quiz-ask cases", count("quiz-ask"), 2],
     ["quiz-grade cases", count("quiz-grade"), 3],
     ["review cases", count("review"), 2],
+    // ODY-968
+    [
+      "summary cases in classic lessons",
+      count("summary", (c) => c.format === "classic"),
+      2,
+    ],
+    [
+      "summary cases in BlockNote lessons",
+      count("summary", (c) => c.format === "blocknote"),
+      2,
+    ],
     [
       "percent of cases in BlockNote lessons",
       Math.round((100 * blockNote) / cases.length),
