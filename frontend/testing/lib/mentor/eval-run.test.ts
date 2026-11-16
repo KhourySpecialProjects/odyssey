@@ -13,6 +13,7 @@ import {
   cannedGroups,
   pilotCases,
   planGroups,
+  pricedRequests,
   SETUPS,
   type SetupName,
 } from "@/scripts/mentor/lib/plan";
@@ -145,6 +146,25 @@ describe("planGroups", () => {
         output_config: { effort: SETUPS[setup as SetupName].effort },
       });
     }
+  });
+});
+
+describe("pricedRequests", () => {
+  it("prices a request to Mentor and a judge call, or only the judge call for a saved reply", () => {
+    const planned = planGroups(
+      [caseById("uncovered-01")],
+      fixtures,
+      ["haiku-low"],
+      1,
+    );
+    const canned = cannedGroups([caseById("uncovered-01")], fixtures, "oracle");
+    expect(pricedRequests(planned)).toEqual([
+      expect.objectContaining({ outputTokens: 1000 }),
+      expect.objectContaining({ outputTokens: 2500 }),
+    ]);
+    expect(pricedRequests(canned)).toEqual([
+      expect.objectContaining({ outputTokens: 2500 }),
+    ]);
   });
 });
 

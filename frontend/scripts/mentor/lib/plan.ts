@@ -2,7 +2,13 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { buildMentorRequest, type MentorSetup } from "@/lib/mentor/prompt";
 import { factsFor, type CaseFacts } from "./cases";
 import type { EvalCase, Fixtures } from "./files";
-import { cannedReply, type AnswerMode, type Status } from "./grade";
+import {
+  ASKED,
+  cannedReply,
+  judgeRequest,
+  type AnswerMode,
+  type Status,
+} from "./grade";
 import type { ErrorRow } from "./metrics";
 
 // What a run of Mentor's eval (ODY-885) will send, built with the route's
@@ -39,6 +45,28 @@ export type Planned = {
   params?: Anthropic.MessageCreateParamsNonStreaming;
   saved?: Answered;
 };
+
+export const FULL_REPS = 2;
+/** About a 120-word reply, to estimate the judge's cost before there is one */
+const PLACEHOLDER = "word ".repeat(150);
+
+/**
+ * What a run would send, for confirmSpend: each request to Mentor, and a
+ * judge call wherever the case has questions. A reply in hand is judged
+ * without a request to Mentor; otherwise the judge's is priced on a placeholder.
+ */
+export const pricedRequests = (groups: Planned[][]) =>
+  groups.flat().flatMap((job) => {
+    const reply = job.saved?.reply ?? PLACEHOLDER;
+    const mentor = job.saved || !job.params ? [] : [job.params];
+    const judged = reply && ASKED[job.facts.case.kind].length;
+    return [
+      ...mentor.map((params) => ({ params, outputTokens: 1000 })),
+      ...(judged
+        ? [{ params: judgeRequest(reply, job.facts), outputTokens: 2500 }]
+        : []),
+    ];
+  });
 
 /** --pilot: the first case of each kind in each format, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
