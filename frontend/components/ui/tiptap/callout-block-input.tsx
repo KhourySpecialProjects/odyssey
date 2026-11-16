@@ -16,7 +16,7 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import GeneralToolBar from "./toolbar/general-toolbar";
-import { EditorView } from "prosemirror-view";
+import { EditorView } from "@tiptap/pm/view";
 
 const lowlight = createLowlight(all);
 

@@ -10,7 +10,7 @@ import {
 } from "@blocknote/core";
 import { CellSelection, TableMap } from "prosemirror-tables";
 import { useCallback, useMemo } from "react";
-import { RiPaintFill } from "react-icons/ri";
+import { IconPaintFilled } from "@tabler/icons-react";
 
 import {
   useBlockNoteEditor,
@@ -217,7 +217,7 @@ export const TableCellColorButton = () => {
           className="bn-button"
           label="Cell background color"
           mainTooltip="Cell background color"
-          icon={<RiPaintFill />}
+          icon={<IconPaintFilled size={16} />}
           isSelected={currentColor !== undefined && currentColor !== "default"}
         />
       </Components.Generic.Menu.Trigger>
