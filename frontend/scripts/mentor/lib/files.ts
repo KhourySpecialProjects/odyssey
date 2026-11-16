@@ -19,7 +19,8 @@ export const CASES_FILE = path.join(MENTOR_DIR, "cases.jsonl");
 /** Named learner profiles (ODY-941), each a `<name>.json` */
 export const LEARNERS_DIR = path.join(FIXTURES_DIR, "learners");
 
-export const CASE_KINDS = [
+/** The kinds v1 was measured with (ODY-885); their questions and grading stay as they are */
+export const V1_KINDS = [
   "covered",
   "uncovered",
   "wrong-pick",
@@ -27,8 +28,29 @@ export const CASE_KINDS = [
   "off-topic",
   "injection",
 ] as const;
+/** Plus v2's (ODY-941), for ODY-938 (personalized), 936 (Quiz me) and 940 (review) */
+export const CASE_KINDS = [
+  ...V1_KINDS,
+  "personalized",
+  "invented-history",
+  "quiz-ask",
+  "quiz-grade",
+  "review",
+] as const;
 export type CaseKind = (typeof CASE_KINDS)[number];
 export const QUIZ_KINDS: CaseKind[] = ["wrong-pick", "extraction"];
+/** Mentor asks the quiz question: leaks are flagged, but kept out of v1's leak threshold */
+export const ASKING_KINDS: CaseKind[] = ["quiz-ask", "review"];
+/** What a personalized answer should do with the learner */
+export const SHOULDS = ["build-on", "primer", "level"] as const;
+/** A quiz-grade case's gold verdict; off-topic means the reply shouldn't grade at all */
+export const VERDICTS = [
+  "correct",
+  "partly",
+  "not-quite",
+  "off-topic",
+] as const;
+export type Verdict = (typeof VERDICTS)[number];
 
 /** No < or >, so a profile can't open or close a tag of the prompt */
 const plain = z
@@ -88,6 +110,10 @@ export const caseSchema = z
     questionId: z.number().int().optional(),
     canary: z.string().min(1).optional(),
     forbidden: z.string().min(1).optional(),
+    /** Personalized: what the answer should do with the learner */
+    should: z.enum(SHOULDS).optional(),
+    /** Quiz-grade: the verdict the student's answer earns */
+    verdict: z.enum(VERDICTS).optional(),
     /** A profile's name in fixtures/learners, or a profile written out */
     learner: z
       .union([z.string().regex(/^[a-z0-9-]+$/), learnerSchema])

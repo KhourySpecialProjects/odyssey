@@ -58,6 +58,7 @@ const row = (
       asksBack: true,
       leak,
       pass,
+      verdict: null,
       checkByHand: [],
     },
     judge: null,
