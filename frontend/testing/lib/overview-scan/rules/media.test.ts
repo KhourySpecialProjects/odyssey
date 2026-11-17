@@ -487,7 +487,7 @@ describe("the network media rules", () => {
       "the checks running out of time",
       unchecked("budget"),
       "unknown",
-      "This image wasn't checked before the checks ran out of time.",
+      "This image wasn't checked in time.",
     ],
     [
       "too many redirects",

@@ -1,12 +1,18 @@
 import fs from "fs";
 import path from "path";
 
-// ODY-901: the review panel, scan page and quoted passages were renamed in the UI.
-// Fails if an old name comes back under components/draft or app/(editing).
+// ODY-901: the review panel, checks page and quoted passages were renamed in the UI.
+// Fails if an old name comes back under the UI folders or the review lib folders.
 
 const ROOT = path.resolve(__dirname, "../..");
-const DIRS = ["components/draft", "app/(editing)"];
-const OLD_NAMES = /reviewer transcript|final overview scan|transgression/i;
+const DIRS = [
+  "components/draft",
+  "app/(editing)",
+  "lib/review-panel",
+  "lib/overview-scan",
+];
+const OLD_NAMES =
+  /reviewer\s+transcript|final\s+overview\s+scan|transgression/i;
 
 function sourceFiles(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -18,7 +24,9 @@ function sourceFiles(dir: string): string[] {
 
 describe("old review names", () => {
   it.each(DIRS)("do not appear under %s", (dir) => {
-    const offenders = sourceFiles(path.join(ROOT, dir)).filter((file) =>
+    const files = sourceFiles(path.join(ROOT, dir));
+    expect(files.length).toBeGreaterThan(0);
+    const offenders = files.filter((file) =>
       OLD_NAMES.test(fs.readFileSync(file, "utf8")),
     );
     expect(offenders.map((f) => path.relative(ROOT, f))).toEqual([]);

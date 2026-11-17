@@ -6,7 +6,7 @@ import { IconListCheck } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { FOCUS } from "@/components/draft/overview-scan/focus";
 
-/** Opens the Pre-publish checks; the panel only shows for reviewers, who may run them. */
+/** Links to the pre-publish checks; the panel only shows for reviewers, who may run them. */
 export function ScanLink({
   slug,
   className,
