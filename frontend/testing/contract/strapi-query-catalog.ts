@@ -399,7 +399,13 @@ const MENTOR_SETTING_ROUTES = routes([
   [
     "GET",
     /^\/mentor-setting$/,
-    { data: ent(1, { enabled: true, pilotGroups: rel(ent(7)) }) },
+    {
+      data: ent(1, {
+        enabled: true,
+        personalize: true,
+        pilotGroups: rel(ent(7)),
+      }),
+    },
   ],
   ["GET", /^\/groups$/, list(ent(7))],
 ]);

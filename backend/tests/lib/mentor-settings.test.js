@@ -35,11 +35,13 @@ describe('seedMentorSettings', () => {
     expect(Number(row.monthlyCapUsd)).toBe(10);
     expect(row.perUserDailyLimit).toBe(30);
     expect(row.storeSharedAnswers).toBe(false);
+    expect(row.personalize).toBe(false);
     expect(MENTOR_SETTINGS_SEED).toEqual({
       enabled: false,
       monthlyCapUsd: 10,
       perUserDailyLimit: 30,
       storeSharedAnswers: false,
+      personalize: false,
     });
   });
 
