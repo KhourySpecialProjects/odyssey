@@ -16,6 +16,7 @@ on:
       - 'bug/**'
       - 'improvement/**'
       - 'dependabot/**'
+      - 'claude/**'
 
 jobs:
   frontend-build:
