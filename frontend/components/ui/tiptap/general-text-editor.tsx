@@ -21,29 +21,24 @@ export function GeneralTextEditor({
   placeholder = "Enter text...",
   className = "",
 }: GeneralTextEditorProps) {
-  const CustomLink = Link.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        autolink: true,
-        linkOnPaste: true,
-        openOnClick: false,
-        HTMLAttributes: {
-          rel: "noopener noreferrer",
-          target: "_blank",
-        },
-        validate: (href) => {
-          return /^(https?:\/\/)(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}|[\w.-]+\.[a-zA-Z]{2,})(:\d+)?(\/\S*)?$/.test(
-            href,
-          );
-        },
-      };
+  const CustomLink = Link.configure({
+    autolink: true,
+    linkOnPaste: true,
+    openOnClick: false,
+    HTMLAttributes: {
+      rel: "noopener noreferrer",
+      target: "_blank",
     },
   });
 
   const editor = useEditor({
     extensions: [
-      StartingKit,
+      StartingKit.configure({
+        link: false,
+        underline: false,
+        trailingNode: false,
+        listKeymap: false,
+      }),
       Underline,
       CustomLink.configure({
         openOnClick: false,
@@ -91,6 +86,7 @@ export function GeneralTextEditor({
       },
     },
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
   });
 
   if (!editor) return null;

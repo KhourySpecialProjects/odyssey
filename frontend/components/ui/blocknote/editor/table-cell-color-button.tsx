@@ -8,6 +8,7 @@ import {
   StyleSchema,
   TableContent,
 } from "@blocknote/core";
+import { TableHandlesExtension } from "@blocknote/core/extensions";
 import { CellSelection, TableMap } from "prosemirror-tables";
 import { useCallback, useMemo } from "react";
 import { IconPaintFilled } from "@tabler/icons-react";
@@ -15,6 +16,7 @@ import { IconPaintFilled } from "@tabler/icons-react";
 import {
   useBlockNoteEditor,
   useComponentsContext,
+  usePortalElement,
   useSelectedBlocks,
 } from "@blocknote/react";
 
@@ -43,12 +45,15 @@ export const TableCellColorButton = () => {
     StyleSchema
   >();
   const selectedBlocks = useSelectedBlocks(editor);
+  const portalElement = usePortalElement();
 
   const currentColor = useMemo(() => {
     const block = selectedBlocks[0];
     if (!block || block.type !== "table") return undefined;
 
-    const cellSelection = editor.tableHandles?.getCellSelection();
+    const cellSelection = editor
+      .getExtension(TableHandlesExtension)
+      ?.getCellSelection();
     if (!cellSelection || cellSelection.cells.length === 0) return undefined;
 
     const colors = cellSelection.cells.map(({ row, col }) => {
@@ -73,7 +78,9 @@ export const TableCellColorButton = () => {
       for (const block of selectedBlocks) {
         if (block.type !== "table") continue;
 
-        const cellSelection = editor.tableHandles?.getCellSelection();
+        const cellSelection = editor
+          .getExtension(TableHandlesExtension)
+          ?.getCellSelection();
         if (!cellSelection) continue;
 
         // Build a set of selected (row, col) pairs for O(1) lookup
@@ -202,7 +209,8 @@ export const TableCellColorButton = () => {
     return selectedBlocks.some(
       (block) =>
         block.type === "table" &&
-        editor.tableHandles?.getCellSelection()?.cells?.length,
+        editor.getExtension(TableHandlesExtension)?.getCellSelection()?.cells
+          ?.length,
     );
   }, [editor, selectedBlocks]);
 
@@ -211,7 +219,10 @@ export const TableCellColorButton = () => {
   }
 
   return (
-    <Components.Generic.Menu.Root position={"bottom"}>
+    <Components.Generic.Menu.Root
+      position={"bottom"}
+      portalElement={portalElement}
+    >
       <Components.Generic.Menu.Trigger>
         <Components.FormattingToolbar.Button
           className="bn-button"

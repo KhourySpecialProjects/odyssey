@@ -52,6 +52,7 @@ export function DropletOverviewInput({
     content: initialContent,
     editorProps: {
       attributes: {
+        "aria-label": "Droplet overview",
         class:
           "prose prose-sky w-full h-full p-8 border rounded-lg bg-[#fcfcfd] dark:bg-slate-900 border-[#D0D5DD] dark:text-slate-200 dark:border-slate-600 hover:border-slate-400 focus:border-[#2D7597] transition-colors outline-none cursor-text",
       },
@@ -119,11 +120,6 @@ export function DropletOverviewInput({
   }
 
   return (
-    <EditorContent
-      className="flex-1"
-      role="textbox"
-      name="droplet-overview"
-      editor={editor}
-    />
+    <EditorContent className="flex-1" name="droplet-overview" editor={editor} />
   );
 }

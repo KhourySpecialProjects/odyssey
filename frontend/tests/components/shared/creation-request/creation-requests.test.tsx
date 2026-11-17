@@ -96,15 +96,15 @@ describe("CreationRequests", () => {
 
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[0] }),
-      expect.anything(),
+      undefined,
     );
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[1] }),
-      expect.anything(),
+      undefined,
     );
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[2] }),
-      expect.anything(),
+      undefined,
     );
   });
 
@@ -193,7 +193,7 @@ describe("CreationRequests", () => {
         expect.objectContaining({
           request: expect.objectContaining({ id: request.id }),
         }),
-        expect.anything(),
+        undefined,
       );
     });
   });

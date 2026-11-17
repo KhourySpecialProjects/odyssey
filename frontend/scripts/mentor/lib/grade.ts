@@ -216,6 +216,7 @@ export function judgeRequest(
 export type Judged = { answers: JudgeAnswers; badQuotes: Question[] };
 
 const answerSchema = z.record(
+  z.string(),
   z.object({ quote: z.string(), answer: z.enum(["yes", "no"]) }),
 );
 const forQuote = (text: string) =>

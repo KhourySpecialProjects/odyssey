@@ -21,29 +21,25 @@ export function ExpandableBlockInput({
   initialContent: string;
   updateContent: (content: string) => void;
 }) {
-  const CustomLink = Link.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        autolink: true,
-        linkOnPaste: true,
-        openOnClick: false,
-        HTMLAttributes: {
-          rel: "noopener noreferrer",
-          target: "_blank",
-        },
-        validate: (href) => {
-          return /^(https?:\/\/)(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}|[\w.-]+\.[a-zA-Z]{2,})(:\d+)?(\/\S*)?$/.test(
-            href,
-          );
-        },
-      };
+  const CustomLink = Link.configure({
+    autolink: true,
+    linkOnPaste: true,
+    openOnClick: false,
+    HTMLAttributes: {
+      rel: "noopener noreferrer",
+      target: "_blank",
     },
   });
 
   const editor = useEditor({
     extensions: [
-      StartingKit,
+      StartingKit.configure({
+        link: false,
+        underline: false,
+        trailingNode: false,
+        listKeymap: false,
+        codeBlock: false,
+      }),
       CustomLink,
       Underline,
       CustomImage.configure({
@@ -92,6 +88,7 @@ export function ExpandableBlockInput({
       },
     },
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
   });
 
   return (

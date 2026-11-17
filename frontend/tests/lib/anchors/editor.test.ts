@@ -1,23 +1,4 @@
-// BlockNote's HTML and Markdown converters are ESM-only, and next/jest
-// doesn't transform node_modules. The editor doesn't use them to mount or
-// edit, so they're stubbed. prosemirror-highlight only colours code blocks.
-for (const name of [
-  "rehype-parse",
-  "rehype-remark",
-  "rehype-stringify",
-  "remark-gfm",
-  "remark-parse",
-  "remark-rehype",
-  "remark-stringify",
-]) {
-  jest.doMock(name, () => ({
-    __esModule: true,
-    default: () => () => undefined,
-  }));
-}
-jest.mock("unified", () => ({ unified: jest.fn() }));
-jest.mock("hast-util-from-dom", () => ({ fromDom: jest.fn() }));
-jest.mock("unist-util-visit", () => ({ visit: jest.fn() }));
+// prosemirror-highlight only colours code blocks, so it is stubbed.
 jest.mock("prosemirror-highlight", () => {
   const { Plugin } = jest.requireActual("prosemirror-state");
   return { createHighlightPlugin: () => new Plugin({}) };
@@ -37,7 +18,8 @@ import {
   resolveAnchor,
 } from "@/lib/anchors";
 
-const { BlockNoteEditor } = jest.requireActual("@blocknote/core");
+const { BlockNoteEditor, createExtension } =
+  jest.requireActual("@blocknote/core");
 
 const text = (value: string, styles = {}) => ({
   type: "text" as const,
@@ -162,6 +144,30 @@ describe("anchors in the BlockNote editor", () => {
       const span = root.querySelector('[data-anchor-id="c2"]')!;
       expect(span.textContent).toBe("Databases store data.");
       expect(span).toHaveClass("review-mark", "review-mark--pending");
+    });
+
+    it("draws marks when the plugin comes in through createExtension, as in production", () => {
+      const own = BlockNoteEditor.create({
+        initialContent: [
+          { id: "intro", type: "paragraph", content: "Databases store data." },
+        ],
+        extensions: [
+          createExtension({
+            key: "reviewAnchors",
+            prosemirrorPlugins: [anchorsPlugin(() => [whole("c0")])],
+          }),
+        ],
+      });
+      const ownRoot = document.createElement("div");
+      document.body.appendChild(ownRoot);
+      own.mount(ownRoot);
+
+      const span = ownRoot.querySelector('[data-anchor-id="c0"]')!;
+      expect(span.textContent).toBe("Databases store data.");
+      expect(span).toHaveClass("review-mark");
+
+      own.unmount();
+      ownRoot.remove();
     });
 
     it("keeps a mark through an edit to another block", () => {

@@ -39,7 +39,7 @@ export const LearnerProfileInputSchema = z
       .nullable()
       .optional(),
   })
-  .strict() satisfies z.ZodType<LearnerProfileInput, z.ZodTypeDef, unknown>;
+  .strict() satisfies z.ZodType<LearnerProfileInput, unknown>;
 
 // Type-level drift guards: the arrays and schema must match the types (no runtime cost).
 type _Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;

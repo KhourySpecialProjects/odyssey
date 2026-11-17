@@ -967,7 +967,9 @@ const SortableSectionCard = memo(function SortableSectionCard({
                             <Markdown
                               components={{
                                 img: ({ src, alt }) => {
-                                  const blobUrl = src && imageBlobUrls.get(src);
+                                  const blobUrl =
+                                    typeof src === "string" &&
+                                    imageBlobUrls.get(src);
                                   if (!blobUrl) return null;
                                   return (
                                     <img

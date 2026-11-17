@@ -48,7 +48,7 @@ import {
 import { TableCellColorButton } from "@/components/ui/blocknote/editor/table-cell-color-button";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { AutoFormatOperation } from "@/lib/actions/auto-format-slides";
-import { createBlockNoteExtension, type Block } from "@blocknote/core";
+import { createExtension, type Block } from "@blocknote/core";
 import type { CustomBlockNoteBlock } from "@/types";
 import { useSlideOverflowDetection } from "@/hooks/useSlideOverflowDetection";
 
@@ -223,12 +223,11 @@ export function BlockNoteEditorClient({
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
     // Review comment marks, drawn as decorations (ODY-806). A BlockNote
-    // extension rather than a TipTap one: BlockNote only accepts TipTap
-    // extensions made with its own nested copy of @tiptap/core.
+    // extension rather than a TipTap one.
     extensions: [
-      createBlockNoteExtension({
+      createExtension({
         key: "reviewAnchors",
-        plugins: [anchorsPlugin(() => anchorsRef.current)],
+        prosemirrorPlugins: [anchorsPlugin(() => anchorsRef.current)],
       }),
     ],
     initialContent:
@@ -242,14 +241,8 @@ export function BlockNoteEditorClient({
       cellTextColor: false,
     },
     // Additional TipTap extensions layered on top of BlockNote's defaults.
-    // The cast is required because BlockNote ships a nested @tiptap/core,
-    // so types from our top-level @tiptap/core don't line up.
     _tiptapOptions: {
-      extensions: [
-        StripSpuriousAutolinks,
-        MarkdownLinkInputRule,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any,
+      extensions: [StripSpuriousAutolinks, MarkdownLinkInputRule],
     },
   });
 
@@ -721,10 +714,10 @@ export function BlockNoteEditorClient({
 
   const filteredBlockTypeItems = useMemo(
     () =>
-      blockTypeSelectItems(editor.dictionary).filter(
+      blockTypeSelectItems(editor).filter(
         (item) => !BLOCKED_BLOCK_TYPES.has(item.name ?? ""),
       ),
-    [editor.dictionary],
+    [editor],
   );
 
   const toolbarItems = useMemo(() => {

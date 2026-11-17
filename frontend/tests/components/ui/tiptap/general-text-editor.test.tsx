@@ -4,12 +4,10 @@ import { useEditor } from "@tiptap/react";
 
 // Mock the Link extension
 jest.mock("@tiptap/extension-link", () => {
-  const mockExtend = jest.fn().mockImplementation(() => ({
-    configure: jest.fn().mockReturnValue({}),
-  }));
-
   const mockLink = {
-    extend: mockExtend,
+    configure: jest.fn().mockImplementation(() => ({
+      configure: jest.fn().mockReturnValue({}),
+    })),
   };
 
   return {
@@ -25,7 +23,9 @@ jest.mock("@tiptap/extension-placeholder", () => ({
 
 jest.mock("@tiptap/extension-underline", () => ({}));
 
-jest.mock("@tiptap/starter-kit", () => ({}));
+jest.mock("@tiptap/starter-kit", () => ({
+  configure: () => ({}),
+}));
 
 jest.mock("@tiptap/extension-image", () => ({
   configure: () => ({}),
