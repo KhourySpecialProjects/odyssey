@@ -94,6 +94,24 @@ describe("saveMentorExchange", () => {
   });
 });
 
+describe("saveMentorExchange length", () => {
+  it("cuts a question and answer over 20000 characters so they are still saved", async () => {
+    const chatDocumentId = await start(7);
+
+    await saveMentorExchange({
+      chatDocumentId,
+      userId: 7,
+      question: "q".repeat(25000),
+      answer: "a".repeat(30000),
+      citations: [],
+    });
+
+    expect(store.messages.map((m) => (m.text as string).length)).toEqual([
+      20000, 20000,
+    ]);
+  });
+});
+
 describe("deleteMentorChatOf", () => {
   it("deletes the owner's chat with its messages and says no for anyone else", async () => {
     const id = await start(7);

@@ -12,6 +12,8 @@ import type { Citation } from "./types";
 // given. It never logs text, titles or questions, only ids and statuses.
 
 export const MENTOR_CHAT_TITLE_MAX = 80;
+/** Strapi rejects message text longer than this */
+const MENTOR_TEXT_MAX = 20000;
 const DOCUMENT_ID = /^[A-Za-z0-9]{8,40}$/;
 
 export type MentorChatRow = {
@@ -120,7 +122,7 @@ export async function ownedChat(
   }
 }
 
-/** Writes the student's question and Mentor's answer. Strapi re-checks the chat first. */
+/** Writes the question and answer (cut to 20000 characters, the Strapi limit). Strapi re-checks the chat first. */
 export async function saveMentorExchange(input: {
   chatDocumentId: string;
   /** Whose chat it is */
@@ -132,8 +134,8 @@ export async function saveMentorExchange(input: {
   await chatApi("POST", `/owned/${input.chatDocumentId}/exchange`, {
     body: {
       userId: input.userId,
-      question: input.question,
-      answer: input.answer,
+      question: input.question.slice(0, MENTOR_TEXT_MAX),
+      answer: input.answer.slice(0, MENTOR_TEXT_MAX),
       citations: input.citations,
     },
   });

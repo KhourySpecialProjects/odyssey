@@ -106,9 +106,54 @@ describe('mentor-chat and mentor-message (ODY-937)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('is not reachable without the service token', async () => {
-    const res = await request(strapi.server.httpServer).get('/api/mentor-chats/owned?userId=1');
+  const ROUTES = [
+    ['post', '/api/mentor-chats/start'],
+    ['get', '/api/mentor-chats/owned?userId=1'],
+    ['delete', '/api/mentor-chats/owned?userId=1'],
+    ['get', '/api/mentor-chats/owned/abcdefgh12?userId=1'],
+    ['post', '/api/mentor-chats/owned/abcdefgh12/exchange'],
+    ['delete', '/api/mentor-chats/owned/abcdefgh12?userId=1'],
+  ];
+
+  it.each(ROUTES)('%s %s is not reachable without a token', async (method, path) => {
+    const res = await request(strapi.server.httpServer)[method](path);
 
     expect([401, 403]).toContain(res.status);
+  });
+
+  it('refuses a registered user JWT on all six routes even when the role is granted the actions', async () => {
+    const roleService = strapi.plugin('users-permissions').service('role');
+    const { id } = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'authenticated' } });
+    const role = await roleService.findOne(id);
+    const actions = ['start', 'list', 'removeAll', 'findOwned', 'exchange', 'remove'];
+    const [apiName, controller] = ['api::mentor-chat', 'custom-mentor-chat'];
+    await roleService.updateRole(id, {
+      permissions: {
+        ...role.permissions,
+        [apiName]: { controllers: { ...(role.permissions[apiName]?.controllers ?? {}), [controller]: Object.fromEntries(actions.map((a) => [a, { enabled: true }])) } },
+      },
+    });
+    const registered = await request(strapi.server.httpServer)
+      .post('/api/auth/local/register')
+      .send({ username: `u${Date.now()}`, email: `u${Date.now()}@example.test`, password: 'Passw0rd!long' });
+    expect(registered.body.jwt).toBeTruthy();
+    const granted = await strapi.db
+      .query('plugin::users-permissions.permission')
+      .count({ where: { role: id, action: { $startsWith: 'api::mentor-chat.custom-mentor-chat.' } } });
+    expect(granted).toBe(6);
+
+    for (const [method, path] of ROUTES) {
+      const res = await request(strapi.server.httpServer)
+        [method](path)
+        .set('Authorization', `Bearer ${registered.body.jwt}`)
+        .send({});
+      expect(res.status).toBe(403);
+    }
+  });
+
+  it('still works with the server API token', async () => {
+    const res = await api('get', '/api/mentor-chats/owned?userId=1');
+
+    expect(res.status).toBe(200);
   });
 });

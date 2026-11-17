@@ -168,32 +168,44 @@ export async function saveExchange(input: {
   }
 }
 
-/** Deletes messages matching `filters`, in batches, until none are left */
-async function deleteMessagesWhere(filters: Record<string, any>): Promise<void> {
+/** Deletes messages matching `where` in batches until none are left; stops if a batch removes nothing */
+async function deleteMessagesWhere(where: Record<string, any>): Promise<void> {
   for (;;) {
-    const batch = (await messages().findMany({ filters, fields: ['id'], limit: BATCH } as any)) as Row[];
+    const batch = (await strapi.db
+      .query(MENTOR_MESSAGE_UID)
+      .findMany({ where, select: ['id'], limit: BATCH })) as Row[];
     if (!batch.length) return;
-    for (const row of batch) await messages().delete({ documentId: row.documentId } as any);
+    const { count } = await strapi.db
+      .query(MENTOR_MESSAGE_UID)
+      .deleteMany({ where: { id: { $in: batch.map((row) => row.id) } } });
+    if (!count) return;
   }
 }
 
-/** Deletes a chat's messages, then the chat. The chat goes only once no message is left. */
+/** Messages are always created with their chat, so one without a chat is never legitimate */
+const deleteOrphanMessages = () => deleteMessagesWhere({ chat: { id: { $null: true } } });
+
+/** Deletes a chat's messages, then the chat, then any message a racing save left behind */
 export async function deleteChat(chatDocumentId: string): Promise<void> {
   await deleteMessagesWhere({ chat: { documentId: chatDocumentId } });
-  await chats().delete({ documentId: chatDocumentId } as any);
+  await strapi.db.query(MENTOR_CHAT_UID).deleteMany({ where: { documentId: chatDocumentId } });
+  await deleteOrphanMessages();
 }
 
-/** Deletes every chat matching `filters`, in batches. Returns how many. */
-async function deleteChatsWhere(filters: Record<string, any>): Promise<number> {
+/** Deletes every chat matching `where` with its messages, in batches. Returns how many. */
+async function deleteChatsWhere(where: Record<string, any>): Promise<number> {
   let deleted = 0;
   for (;;) {
-    const batch = (await chats().findMany({ filters, fields: ['id'], limit: BATCH } as any)) as Row[];
-    if (!batch.length) return deleted;
-    for (const row of batch) {
-      await deleteChat(row.documentId);
-      deleted += 1;
-    }
+    const batch = (await strapi.db.query(MENTOR_CHAT_UID).findMany({ where, select: ['id'], limit: BATCH })) as Row[];
+    if (!batch.length) break;
+    const ids = batch.map((row) => row.id);
+    await deleteMessagesWhere({ chat: { id: { $in: ids } } });
+    const { count } = await strapi.db.query(MENTOR_CHAT_UID).deleteMany({ where: { id: { $in: ids } } });
+    if (!count) break;
+    deleted += count;
   }
+  await deleteOrphanMessages();
+  return deleted;
 }
 
 export const deleteChatsOf = (userId: number) => deleteChatsWhere({ authorizedUser: { id: userId } });
@@ -202,6 +214,5 @@ export const deleteChatsOf = (userId: number) => deleteChatsWhere({ authorizedUs
 export async function purgeExpiredChats(now = new Date()): Promise<{ chats: number }> {
   const cutoff = retentionCutoff(now);
   const count = await deleteChatsWhere(expiredFilter(cutoff));
-  await deleteMessagesWhere({ chat: { $null: true }, createdAt: { $lt: cutoff } });
   return { chats: count };
 }

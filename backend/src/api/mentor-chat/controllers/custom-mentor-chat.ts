@@ -34,7 +34,8 @@ function readQuery(query: Record<string, unknown>) {
 
 function handle(ctx: any, error: unknown, what: string) {
   if (error instanceof MentorChatError) return fail(ctx, error.status, error.message);
-  strapi.log.error(`Failed to ${what}.`, error);
+  const { name, message } = error as Error;
+  strapi.log.error(`Failed to ${what}: ${name}: ${message}`);
   return fail(ctx, 500, `Failed to ${what}.`);
 }
 
