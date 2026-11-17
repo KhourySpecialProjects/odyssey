@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.4.0",
-    "@anthropic-ai/sdk": "^0.137.0",
+    "@anthropic-ai/sdk": "^1.8.0",
     "@aws-sdk/client-s3": "^3.1161.0",
     "@blocknote/core": "^0.57.0",
     "@blocknote/mantine": "^0.57.0",
