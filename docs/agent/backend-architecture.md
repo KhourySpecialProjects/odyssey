@@ -39,7 +39,7 @@ api/
 ├── highlight/            Text selections within lessons (colored annotations)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
-├── overview-scan/        One saved run of the pre-publish checks's checks on a droplet (ODY-787)
+├── overview-scan/        One saved run of the pre-publish checks on a droplet (ODY-787)
 ├── playlist/             Curated droplet collections
 ├── report/               Bug reports
 ├── review/               One reviewer's review of a droplet round
