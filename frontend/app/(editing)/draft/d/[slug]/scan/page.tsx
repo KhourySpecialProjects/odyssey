@@ -15,7 +15,7 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const droplet = await getCachedDraftDropletBySlug(slug);
-  return droplet ? { title: `Final Overview Scan | ${droplet.name}` } : {};
+  return droplet ? { title: `Pre-publish checks | ${droplet.name}` } : {};
 }
 
 export default async function ScanPage({ params }: Props) {

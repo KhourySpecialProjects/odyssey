@@ -91,6 +91,9 @@ describe("OverviewScanPage", () => {
   it("shows a droplet that was never scanned", () => {
     renderPage();
     expect(
+      screen.getByRole("heading", { level: 1, name: "Pre-publish checks" }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: "Run checks" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Not run yet")).toHaveLength(1 + CHECKS.length);
@@ -113,7 +116,7 @@ describe("OverviewScanPage", () => {
   it("shows the pills, who ran it and each row's word", () => {
     renderPage(viewOf(saved()));
     expect(document.body).toHaveTextContent(
-      /Last scanned Today, .* by Ada Lovelace/,
+      /Last run Today, .* by Ada Lovelace/,
     );
     expect(screen.getByText("1 passed")).toBeInTheDocument();
     expect(screen.getByText("1 need attention")).toBeInTheDocument();
@@ -131,18 +134,18 @@ describe("OverviewScanPage", () => {
     [false, 0],
   ])("with editedSince %s shows the note %i times", (editedSince, count) => {
     renderPage({ ...viewOf(saved()), editedSince });
-    expect(screen.queryAllByText(/Edited since the last scan/)).toHaveLength(
-      count,
-    );
+    expect(
+      screen.queryAllByText(/Edited since the checks last ran/),
+    ).toHaveLength(count);
   });
 
   it("shows the checks-changed note and the load error", () => {
     renderPage(viewOf(saved({ rulesVersion: "old" })), true);
     expect(
-      screen.getByText(/The checks changed since this scan/),
+      screen.getByText(/The checks changed since this run/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Couldn't load the last scan."),
+      screen.getByText("Couldn't load the last results."),
     ).toBeInTheDocument();
   });
 
