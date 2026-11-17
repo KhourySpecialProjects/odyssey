@@ -74,6 +74,7 @@ export const GROUP = {
 const COLLECTIONS: Record<StrapiCollection, true> = {
   "access-requests": true,
   "ai-scoring-runs": true,
+  "announcement-reads": true,
   announcements: true,
   "authorized-users": true,
   "authorized-user-roles": true,

@@ -26,6 +26,7 @@ const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+const ANNOUNCEMENT_READ_UID = 'api::announcement-read.announcement-read';
 const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 
 const dropletData = (overrides = {}) => ({
@@ -145,6 +146,7 @@ module.exports = {
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
+  ANNOUNCEMENT_READ_UID,
   OVERVIEW_SCAN_UID,
   overviewScanData,
   reviewData,

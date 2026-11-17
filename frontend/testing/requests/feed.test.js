@@ -152,8 +152,9 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements();
 
-      // fetchAPI called 3 times for pre-compute
+      // 3 pre-compute lookups; Strapi drops the user's read rows (unreadBy)
       expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(global.fetch.mock.calls[0][0]).toContain("unreadBy=5");
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
@@ -202,7 +203,9 @@ describe("Feed tests", () => {
       expect(url).toContain("[authorized_user][id][$eq]=5");
       expect(url).toContain("[type][$in][0]=friend");
       expect(url).toContain("[type][$in][1]=system");
-      expect(url).toContain("[readAt][$notNull]=true");
+      expect(url).toContain("[reads][authorized_user][id][$eq]=5");
+      expect(url).not.toContain("readAt");
+      expect(url).not.toContain("unreadBy");
       expect(url).toContain("pagination[page]=2");
     });
 
@@ -301,7 +304,27 @@ describe("Feed tests", () => {
 
       await expect(getUnreadAnnouncementCount()).resolves.toBe(7);
       const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
-      expect(url).toContain("[readAt][$null]=true");
+      expect(url).not.toContain("readAt");
+    });
+
+    it("leaves out only this user's reads, through unreadBy, like the Unread tab", async () => {
+      const { getCurrentUser } = require("../../lib/auth/session");
+      const { getCachedUserSocial } = require("../../lib/requests/cached");
+      const { fetchAPI } = require("../../lib/utils");
+      getCurrentUser.mockResolvedValue({ id: 5, email: "a@b.edu" });
+      getCachedUserSocial.mockResolvedValue({ id: 5, friendships: [] });
+      fetchAPI.mockResolvedValue([]);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { total: 3 } } }),
+      });
+
+      await expect(getUnreadAnnouncementCount()).resolves.toBe(3);
+      const url = decodeURIComponent(global.fetch.mock.calls[0][0]);
+      expect(url).toContain("unreadBy=5");
+      expect(
+        fetchAPI.mock.calls.some(([path]) => path === "/announcement-reads"),
+      ).toBe(false);
     });
   });
 
