@@ -5,7 +5,7 @@ kind: feature
 
 Students get a "Personalize Mentor" switch in Settings (on by default), and the Mentor notice now says what Mentor sends and links to that switch.
 
-**Review fixes:** A failed save now reverts the switch and shows an error, the switch is announced as a switch with a visible focus ring, and the help text matches the notice.
+**Review fixes:** Across two review rounds, a failed save now reverts the Mentor switch and shows an error, the switch is announced as a switch with a visible focus ring, the help text matches the notice, and the profile-visibility switch and photo removal also show an error (and keep their old state) when saving fails.
 
 **Careful:** New boolean `mentorPersonalization` on the `authorized-user` content type (default true). It is self-only: only the signed-in user can change their own value, and an admin can't set another user's.
 
