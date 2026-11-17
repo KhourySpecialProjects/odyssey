@@ -7,7 +7,7 @@ kind: major
 
 Mentor chats used to live only in React state, so a reload lost them. This PR adds the server half of chat history: two Strapi types (`mentor-chat`, `mentor-message`), server helpers that save each finished exchange from `POST /api/mentor`, and owner-only server actions for listing, opening and deleting a student's chats. Chats are student-only, instructors have no route to them, and anything older than 30 days is deleted. The UI is PR 2.
 
-**Review fixes:** Chat text is now readable only through owner-only Strapi routes, and a daily cleanup job deletes chats and messages older than 30 days.
+**Review fixes:** Chat text is now readable only through owner-only Strapi routes that accept only the server's API token (a signed-in user's login is refused), and a daily cleanup at 03:30 Boston time deletes chats and messages older than 30 days, plus any message left without a chat, in fast batches.
 
 ## Changes
 
