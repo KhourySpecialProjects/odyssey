@@ -47,6 +47,7 @@ api/
 ├── overview-scan/        One saved run of the pre-publish checks on a droplet (ODY-787)
 ├── overview-scan-dismissal/ A scan flag someone marked as fine on a droplet, for everyone (ODY-905)
 ├── playlist/             Curated droplet collections
+├── quiz-attempt/         One row per lesson quiz submit: ids and a result, never answer text (ODY-939)
 ├── recommendation-dismissal/ A droplet a student marked "Not interested" (ODY-954)
 ├── streak-day/           A day a learner finished a new lesson, in their time zone, for streaks (ODY-918)
 ├── report/               Bug reports
@@ -360,6 +361,12 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   | --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------ | ----------------- |
   | `POST /api/mentor-cached-replies/find`  | `{ key }` (strict)                                                               | `{ text }` or `{ text: null }` | 400 bad body, 500 |
   | `POST /api/mentor-cached-replies/store` | `{ key, slot, scope, dropletId, lessonId, promptVersion, model, text }` (strict) | `{ id, stored }`               | 400 bad body, 500 |
+
+- **Quiz attempts (ODY-939):** `quiz-attempt` (collection, no core router, so no REST find/create/update/delete) holds one row per quiz submit: `user`, `lesson`, `droplet`, `quizType` (`choice` | `open-ended`), `questionId` (biginteger: a hashed BlockNote id can be 2^31), `correct`, `attempt` and a private `submitId`. No answer text. Code in `src/lib/quiz-attempt.ts`. `attempt` = rows for (user, lesson, quizType, question) + 1; the same (user, `submitId`) returns the first row; 500 rows a day per user. Private (`global::service-token-only`). Rows older than 30 days, or with no user, are deleted nightly by `purgeQuizAttempts` (`config/cron-tasks.ts`).
+
+  | Route                            | Body                                                                                | 200 `data`        | Errors                                                       |
+  | -------------------------------- | ----------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------ |
+  | `POST /api/quiz-attempts/record` | `{ userId, lessonId, dropletId, quizType, questionId, correct, submitId }` (strict) | `{ id, attempt }` | 400 bad body, 403 not enrolled, 404 unknown id, 429 cap, 500 |
 
 ### Streak day route (`custom-streak-day` controller, ODY-918)
 

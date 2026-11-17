@@ -34,6 +34,7 @@ const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const MENTOR_CHAT_UID = 'api::mentor-chat.mentor-chat';
+const QUIZ_ATTEMPT_UID = 'api::quiz-attempt.quiz-attempt';
 const MENTOR_CACHED_REPLY_UID = 'api::mentor-cached-reply.mentor-cached-reply';
 const MENTOR_MESSAGE_UID = 'api::mentor-message.mentor-message';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
@@ -232,6 +233,7 @@ module.exports = {
   mentorUsageData,
   mentorFeedbackData,
   cachedReplyData,
+  QUIZ_ATTEMPT_UID,
   groupData,
   overviewScanData,
   dismissalData,
