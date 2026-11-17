@@ -59,6 +59,10 @@ const content = [
 function normalised(html: string) {
   const element = document.createElement("div");
   element.innerHTML = html;
+  // React 19 hoists a preload link for images; the stored markup has none
+  element
+    .querySelectorAll("link[rel=preload]")
+    .forEach((link) => link.remove());
   return element.innerHTML;
 }
 

@@ -72,7 +72,7 @@ function ReviewFrame({
   expanded: boolean;
   reviewing: boolean;
   panelMode: "open" | "rail";
-  mainRef: RefObject<HTMLElement>;
+  mainRef: RefObject<HTMLElement | null>;
   onOpen: () => void;
   onCollapse: () => void;
   transcript: ReactNode;

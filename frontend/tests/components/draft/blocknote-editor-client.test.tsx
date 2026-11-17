@@ -42,7 +42,11 @@ jest.mock("@blocknote/core", () => ({
     propSchema: config.propSchema,
     ...spec,
   })),
-  createBlockNoteExtension: jest.fn((options) => options),
+  createExtension: jest.fn((options) => options),
+}));
+
+jest.mock("@blocknote/core/extensions", () => ({
+  TableHandlesExtension: jest.fn(),
 }));
 
 jest.mock("@/components/ui/blocknote/blocks/callout-block", () => ({
@@ -353,7 +357,9 @@ describe("BlockNoteEditorClient", () => {
       const extension = options.extensions.find(
         (e: { key: string }) => e.key === "reviewAnchors",
       );
-      expect(extension.plugins[0].spec.key.key).toMatch(/^anchors\$/);
+      expect(extension.prosemirrorPlugins[0].spec.key.key).toMatch(
+        /^anchors\$/,
+      );
     });
 
     it("redraws when the anchors change", async () => {

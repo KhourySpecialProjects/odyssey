@@ -269,13 +269,19 @@ const transgressionSchema = z.object({
   lesson: z.number().int().min(0).optional(),
 });
 
-/** Keeps the entries that are well formed: a bad one never fails the score. */
-const transgressionList = z.unknown().transform((list): Transgression[] =>
-  (Array.isArray(list) ? list : []).flatMap((entry) => {
-    const parsed = transgressionSchema.safeParse(entry);
-    return parsed.success ? [parsed.data] : [];
-  }),
-);
+/**
+ * Keeps the entries that are well formed: a bad one never fails the score.
+ * `.optional()` keeps a missing key valid: zod 4 requires `unknown` keys.
+ */
+const transgressionList = z
+  .unknown()
+  .optional()
+  .transform((list): Transgression[] =>
+    (Array.isArray(list) ? list : []).flatMap((entry) => {
+      const parsed = transgressionSchema.safeParse(entry);
+      return parsed.success ? [parsed.data] : [];
+    }),
+  );
 
 const answerSchema = z.object({
   scores: z.array(

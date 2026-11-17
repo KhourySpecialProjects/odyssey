@@ -1,5 +1,5 @@
 import { DefaultReactSuggestionItem } from "@blocknote/react";
-import { insertOrUpdateBlock } from "@blocknote/core";
+import { insertOrUpdateBlockForSlashMenu } from "@blocknote/core";
 import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
@@ -31,7 +31,7 @@ const createCalloutItem = (
   title,
   icon,
   onItemClick: () => {
-    insertOrUpdateBlock(editor, {
+    insertOrUpdateBlockForSlashMenu(editor, {
       type: "callout",
       props: { calloutType: type },
     });

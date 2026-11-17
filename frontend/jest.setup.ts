@@ -106,3 +106,17 @@ jest.mock("posthog-js", () => ({
   getFeatureFlag: jest.fn(),
   people: { set: jest.fn() },
 }));
+
+// jest-environment-jsdom 29's jsdom 20 lacks randomUUID
+if (!globalThis.crypto?.randomUUID) {
+  Object.defineProperty(globalThis, "crypto", {
+    value: globalThis.crypto ?? {},
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(globalThis.crypto, "randomUUID", {
+    value: require("node:crypto").randomUUID,
+    configurable: true,
+    writable: true,
+  });
+}

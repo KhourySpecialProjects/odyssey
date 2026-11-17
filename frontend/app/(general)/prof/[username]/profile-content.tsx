@@ -3,16 +3,7 @@
 import React, { useState } from "react";
 import { AuthorizedUser, Enrollment } from "@/types";
 import DOMPurify from "dompurify";
-import {
-  Star,
-  Check,
-  UserPlus,
-  Clock,
-  X,
-  LinkIcon,
-  LinkedinIcon,
-  GithubIcon,
-} from "lucide-react";
+import { Star, Check, UserPlus, Clock, X, LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { sendFriendRequest, cancelFriendRequest } from "@/lib/requests/friends";
@@ -20,7 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
-import { IconDroplet, IconUsers } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandLinkedin,
+  IconDroplet,
+  IconUsers,
+} from "@tabler/icons-react";
 
 interface ProfileContentProps {
   userData: AuthorizedUser;
@@ -173,7 +169,7 @@ export function ProfileContent({
                     rel="noopener noreferrer"
                     className="text-[#667085] transition-colors hover:text-[#287697] dark:text-slate-400"
                   >
-                    <LinkedinIcon className="h-5 w-5" />
+                    <IconBrandLinkedin className="h-5 w-5" />
                   </Link>
                 )}
                 {userData.github && (
@@ -187,7 +183,7 @@ export function ProfileContent({
                     rel="noopener noreferrer"
                     className="text-[#667085] transition-colors hover:text-[#287697] dark:text-slate-400"
                   >
-                    <GithubIcon className="h-5 w-5" />
+                    <IconBrandGithub className="h-5 w-5" />
                   </Link>
                 )}
                 {userData.website && (

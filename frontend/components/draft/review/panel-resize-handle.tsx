@@ -43,12 +43,15 @@ export function PanelResizeHandle({
   onDragChange: (dragging: boolean) => void;
   dragging?: boolean;
 }) {
-  const drag = useRef<{
-    pointerId: number;
-    startX: number;
-    startWidth: number;
-    x: number;
-  }>();
+  const drag = useRef<
+    | {
+        pointerId: number;
+        startX: number;
+        startWidth: number;
+        x: number;
+      }
+    | undefined
+  >(undefined);
   const frame = useRef(0);
   const dragChange = useRef(onDragChange);
   dragChange.current = onDragChange;

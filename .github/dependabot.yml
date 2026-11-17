@@ -18,6 +18,15 @@ updates:
         patterns:
           - "@tiptap/*"
           - "@aarkue/tiptap-math-extension"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      radix:
+        patterns:
+          - "@radix-ui/*"
 
   - package-ecosystem: "npm"
     directory: "/backend"
