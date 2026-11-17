@@ -261,7 +261,7 @@ bug/description
 improvement/description
 ```
 
-All work starts from `develop`. Branch naming: `feature/[description]`, `bug/[description]`, or `improvement/[description]`.
+All work starts from `develop`. Branch naming: `feature/[description]`, `bug/[description]`, or `improvement/[description]`. Cloud agent sessions push `claude/[description]`; CI accepts those too (`.github/workflows/pull-request.yml`).
 
 ### Local Development
 
