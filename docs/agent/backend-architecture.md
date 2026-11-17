@@ -408,7 +408,7 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 - An ODY-932 write must not lock the learner's `authorized-user` row, or must lock it before the reminder row: the raise locks the user row then the reminder row, so the reverse order can deadlock and the raise returns 500.
 - Mute lasts until `reminderMutedUntil` (30 days, `REMINDER_RULES.muteDays`) or Undo, even after progress. When it ends, the rules count it as progress (fresh count); it is not an ended snooze.
 - An ended snooze (`reminderSnoozedUntil <= now`, no progress or ended mute since the last raise) is re-raised on the next `/activity` load, ahead of other droplets, ignoring the wait and the gap, and that raise clears `reminderSnoozedUntil`.
-- ODY-932 writes are a plain REST PUT, safe against a raise because of the row lock. Snooze and mute clear each other; progress sets `readAt` only. The count resets through `lastProgressDate` or an ended mute, never a write.
+- ODY-932 writes are a plain REST PUT, safe against a raise because of the row lock. Snooze and mute clear each other and add the learner's `announcement-read` row; Undo deletes it; progress only adds it (`writeAnnouncementRead`, `frontend/lib/announcement-reads.ts`). Each PUT also clears the legacy `readAt` so the boot backfill can't re-mark the row read. The count resets through `lastProgressDate` or an ended mute, never a write.
 
 ## Database
 
