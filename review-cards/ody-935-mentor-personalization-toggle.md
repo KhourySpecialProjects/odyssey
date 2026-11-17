@@ -5,6 +5,8 @@ kind: feature
 
 Students get a "Personalize Mentor" switch in Settings (on by default), and the Mentor notice now says what Mentor sends and links to that switch.
 
+**Review fixes:** A failed save now reverts the switch and shows an error, the switch is announced as a switch with a visible focus ring, and the help text matches the notice.
+
 **Careful:** New boolean `mentorPersonalization` on the `authorized-user` content type (default true). It is self-only: only the signed-in user can change their own value, and an admin can't set another user's.
 
 **Test on dev:** Open Settings, turn "Personalize Mentor" off, reload and check it stays off; then open a lesson's Mentor panel and check the new notice (with a Settings link) shows once.
