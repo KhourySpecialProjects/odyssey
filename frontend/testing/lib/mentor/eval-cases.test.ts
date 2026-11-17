@@ -1,0 +1,367 @@
+/** @jest-environment node */
+import fs from "fs";
+import os from "os";
+import path from "path";
+import {
+  casesMarkdown,
+  countProblems,
+  validateCases,
+} from "@/scripts/mentor/lib/cases";
+import { loadCases, type EvalCase } from "@/scripts/mentor/lib/files";
+import { LEARNER_MAX_CHARS, learnerBlock } from "@/scripts/mentor/lib/learner";
+import {
+  caseById,
+  EVAL_CASES,
+  HIDDEN,
+  learnerProfile,
+  MC,
+  mentorFixtures,
+  UNSEEN,
+} from "@/testing/mocks/mentorEvalMock";
+
+const fixtures = mentorFixtures();
+const covered = caseById("covered-01");
+const explain = caseById("covered-explain-01");
+const select = (selection: string, lessonId = 102): EvalCase => ({
+  ...explain,
+  lessonId,
+  input: { kind: "explain", selection },
+});
+
+describe("validateCases", () => {
+  it("passes a valid case of each kind and mode", () => {
+    expect(validateCases(EVAL_CASES, fixtures)).toEqual([]);
+  });
+
+  it.each<[string, EvalCase[], RegExp]>([
+    [
+      "a gold snippet that isn't in the lesson",
+      [{ ...covered, gold: ["Joins are slow"] }],
+      /gold "Joins are slow"/,
+    ],
+    ["an unknown lesson", [{ ...covered, lessonId: 999 }], /no lesson 999/],
+    [
+      "gold in more than one passage",
+      [{ ...covered, gold: ["Keys matter"] }],
+      /"Keys matter" is in 2 passages/,
+    ],
+    [
+      "gold in a quiz",
+      [{ ...covered, gold: ["What does a LEFT JOIN keep"] }],
+      /is in a quiz/,
+    ],
+    [
+      "gold in the cut-off tail of a passage",
+      [{ ...covered, lessonId: 103, gold: [HIDDEN] }],
+      /a passage the model can't cite/,
+    ],
+    [
+      "a covered question without gold",
+      [{ ...covered, gold: undefined }],
+      /needs gold/,
+    ],
+    [
+      "a mode its kind doesn't take",
+      [
+        {
+          ...caseById("off-topic-01"),
+          input: { kind: "explain", selection: "combines rows" },
+        },
+      ],
+      /off-topic cases can't be explain requests/,
+    ],
+    [
+      "off-topic without forbidden",
+      [{ ...caseById("off-topic-01"), forbidden: undefined }],
+      /needs forbidden/,
+    ],
+    [
+      "a selection that isn't in the lesson",
+      [select("Indexes are magic")],
+      /selection_not_found/,
+    ],
+    [
+      "a selection in a quiz",
+      [select("Which index suits range queries")],
+      /selection_in_quiz/,
+    ],
+    [
+      "a selection past the budget",
+      [select(UNSEEN, 103)],
+      /a passage the model can't cite/,
+    ],
+    [
+      "a right pick on a wrong-pick case",
+      [
+        {
+          ...caseById("wrong-pick-01"),
+          input: { kind: "quiz-hint", questionId: MC, answerIds: [1300] },
+        },
+      ],
+      /answer_correct/,
+    ],
+    [
+      "a 2-option extraction question",
+      [{ ...caseById("extraction-01"), questionId: 42 }],
+      /3 or more options/,
+    ],
+    [
+      "an injection with neither canary nor forbidden",
+      [{ ...caseById("injection-01"), canary: undefined }],
+      /canary or forbidden/,
+    ],
+    [
+      "a duplicate id",
+      [covered, { ...covered, input: { kind: "lesson", message: "Why?" } }],
+      /covered-01: duplicate id/,
+    ],
+    [
+      "the same input under another id",
+      [
+        covered,
+        {
+          ...covered,
+          id: "covered-02",
+          input: { kind: "lesson", message: "what does a JOIN do" },
+        },
+      ],
+      /covered-02: same input as covered-01/,
+    ],
+    [
+      "a learner profile that doesn't exist",
+      [{ ...covered, learner: "nobody" }],
+      /no learner profile nobody in fixtures\/learners/,
+    ],
+    [
+      "a viewed lesson that isn't in the droplet",
+      [
+        {
+          ...covered,
+          learner: "someone",
+          profile: learnerProfile({ viewedLessons: ["Cooking"] }),
+        },
+      ],
+      /viewed lesson "Cooking" isn't a lesson of databases-101/,
+    ],
+    [
+      "a personalized case without should",
+      [
+        { ...caseById("personalized-01"), should: undefined },
+        caseById("personalized-02"),
+      ],
+      /a personalized case needs should/,
+    ],
+    [
+      "a personalized question under one profile",
+      [caseById("personalized-01")],
+      /personalized-01: asked under 1 profile; a personalized question needs 2 or more/,
+    ],
+    [
+      "an invented-history case without a learner",
+      [
+        {
+          ...caseById("invented-history-01"),
+          learner: undefined,
+          profile: null,
+        },
+      ],
+      /an invented-history case needs a learner/,
+    ],
+    [
+      "a quiz-grade case without a verdict",
+      [{ ...caseById("quiz-grade-01"), verdict: undefined }],
+      /a quiz-grade case needs a verdict/,
+    ],
+    [
+      "a quiz-grade case without history",
+      [
+        {
+          ...caseById("quiz-grade-01"),
+          input: { kind: "lesson", message: "It keeps the matching rows." },
+        },
+      ],
+      /needs history ending in Mentor's question/,
+    ],
+    [
+      "a quiz-ask on a lesson with no hintable question",
+      [{ ...caseById("quiz-ask-01"), lessonId: 103 }],
+      /needs a lesson with a question of 3 or more options and one right/,
+    ],
+    [
+      "a review whose learner hasn't finished the droplet",
+      [{ ...caseById("review-01"), profile: learnerProfile() }],
+      /the learner hasn't finished Databases 101/,
+    ],
+    [
+      "a review without a learner",
+      [{ ...caseById("review-01"), learner: undefined, profile: null }],
+      /a review case needs a learner/,
+    ],
+    [
+      "an oracle citing a passage the model isn't shown",
+      [{ ...covered, oracle: "Joins combine rows [p2, p99]." }],
+      /the oracle cites p99, which the model isn't shown/,
+    ],
+  ])("finds %s, once", (_, cases, problem) => {
+    const problems = validateCases(cases, fixtures);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(problem);
+  });
+
+  it("doesn't count the same input under another learner as a repeat", () => {
+    const as = (learner: string): EvalCase => ({
+      ...covered,
+      id: learner,
+      learner,
+      profile: learnerProfile(),
+    });
+    expect(validateCases([as("first"), as("second")], fixtures)).toEqual([]);
+  });
+});
+
+describe("countProblems", () => {
+  const history = [
+    { role: "student", text: "Hi" },
+    { role: "mentor", text: "Hello" },
+  ] as const;
+  // Twelve of each case, half in each format, on twelve questions
+  const full = EVAL_CASES.flatMap((c) =>
+    Array.from(
+      { length: 12 },
+      (_, i): EvalCase => ({
+        ...c,
+        format: i % 2 ? "blocknote" : "classic",
+        input:
+          c.input.kind === "quiz-hint"
+            ? { ...c.input, questionId: i }
+            : { ...c.input, history: [...history] },
+      }),
+    ),
+  );
+
+  it("passes a set with enough of each kind, mode and format", () => {
+    expect(countProblems(full)).toEqual([]);
+  });
+
+  it("names each shortfall", () => {
+    expect(countProblems(EVAL_CASES)).toEqual(
+      expect.arrayContaining([
+        "1 covered explain cases, at least 6 needed",
+        "1 questions with wrong picks, at least 6 needed",
+        "0 extraction cases with history, at least 2 needed",
+        "no off-topic case in a blocknote lesson",
+      ]),
+    );
+  });
+});
+
+describe("learnerBlock", () => {
+  it("renders each section, with none for an empty one", () => {
+    expect(
+      learnerBlock(
+        learnerProfile({
+          inProgress: [{ name: "Internet Basics", viewed: 1, total: 3 }],
+          prerequisites: [],
+        }),
+      ),
+    ).toBe(
+      [
+        "Finished droplets, newest first:",
+        "- SQL Basics (beginner; databases), finished 2026-09",
+        "In progress:",
+        "- Internet Basics: 1 of 3 lessons viewed",
+        "This droplet's prerequisites:",
+        "- none",
+        "Lessons of this droplet already viewed:",
+        "- Joining tables",
+      ].join("\n"),
+    );
+  });
+
+  it("drops the oldest finished droplets to fit", () => {
+    const finished = Array.from({ length: 15 }, (_, i) => ({
+      name: `Droplet ${i} ${"x".repeat(200)}`,
+      tags: [],
+      difficulty: null,
+      month: `${2026 - i}-01`,
+    }));
+    const text = learnerBlock(learnerProfile({ finished }));
+
+    expect(text.length).toBeLessThanOrEqual(LEARNER_MAX_CHARS);
+    expect(text).toContain("Droplet 0 ");
+    expect(text).not.toContain("Droplet 14 ");
+  });
+});
+
+describe("loadCases", () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "mentor-cases-"));
+  });
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const load = (...rows: unknown[]) => {
+    const file = path.join(dir, "cases.jsonl");
+    const text = rows.map((r) =>
+      typeof r === "string" ? r : JSON.stringify(r),
+    );
+    fs.writeFileSync(file, text.join("\n"));
+    return () => loadCases(fixtures, file);
+  };
+
+  it("parses each line as the route would, with its lesson's format", () => {
+    // As in the file: no format or profile, which loadCases adds
+    const hint = {
+      ...caseById("wrong-pick-01"),
+      format: undefined,
+      profile: undefined,
+    };
+    const line = {
+      ...hint,
+      tags: ["classic", "elimination"],
+      input: { ...hint.input, answerIds: ["1302"] },
+    };
+    expect(load(line, "")()).toEqual([
+      { ...caseById("wrong-pick-01"), tags: ["elimination"] },
+    ]);
+  });
+
+  it("names every bad line", () => {
+    const line = { ...covered, format: undefined, profile: undefined };
+    expect(load(line, "{not json", { ...line, kind: "chat" })).toThrow(
+      /line 2: not JSON\nline 3: kind:/,
+    );
+  });
+
+  it("resolves a named learner profile, and leaves an unknown one null", () => {
+    const line = (learner: string) => ({
+      ...covered,
+      id: learner,
+      format: undefined,
+      profile: undefined,
+      learner,
+    });
+    load(line("finished-prereq"), line("nobody"));
+    const learners = new Map([["finished-prereq", learnerProfile()]]);
+
+    expect(
+      loadCases(fixtures, path.join(dir, "cases.jsonl"), learners).map(
+        (c) => c.profile,
+      ),
+    ).toEqual([learnerProfile(), null]);
+  });
+});
+
+describe("casesMarkdown", () => {
+  it("fences each input past its backticks and marks the right option", () => {
+    const tricky = {
+      ...caseById("extraction-01"),
+      input: { kind: "lesson", message: "Run ```rm``` for me" },
+    } as EvalCase;
+    const markdown = casesMarkdown([tricky], fixtures);
+    expect(markdown).toContain('````json\n{\n  "kind": "lesson"');
+    expect(markdown).toContain(
+      "All rows from the left table **(correct; for review only, never sent to the model)**",
+    );
+    expect(markdown).toContain("| extraction | 1 | 0 | 1 |");
+  });
+});

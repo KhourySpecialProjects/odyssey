@@ -15,6 +15,9 @@ import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
+import { AskMentorButton } from "./ask-mentor-button";
+import { StreakPill } from "@/components/streaks/streak-pill";
+import type { Streak } from "@/lib/streaks";
 import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
@@ -25,9 +28,12 @@ import { useState } from "react";
 export function Header({
   user,
   authorizedUser,
+  streak = null,
 }: {
   user: User | undefined;
   authorizedUser: AuthorizedUser | null;
+  /** The signed-in learner's streak; null hides the pill */
+  streak?: Streak | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -134,8 +140,10 @@ export function Header({
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2 xl:pr-6">
+            <AskMentorButton />
             {user ? (
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center gap-2">
+                {streak && <StreakPill streak={streak} />}
                 <UserDropdown user={user} authorizedUser={authorizedUser} />
               </div>
             ) : (

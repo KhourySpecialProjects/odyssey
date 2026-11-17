@@ -81,6 +81,46 @@ describe("requireRole", () => {
     });
   });
 
+  it("passes documentId through from the Strapi record", async () => {
+    mockedGetCurrentUser.mockResolvedValue(
+      mockUser({ email: "student@northeastern.edu" }),
+    );
+    mockedGetCachedUser.mockResolvedValue(
+      mockAuthUser({
+        id: 7,
+        documentId: "abc123",
+        roles: [{ id: 1, title: AuthorizedUserRoleTitle.User }],
+      }),
+    );
+
+    const open = await requireRole([]);
+    const gated = await requireRole([AuthorizedUserRoleTitle.User]);
+
+    for (const result of [open, gated]) {
+      expect(result).toMatchObject({
+        ok: true,
+        user: { id: 7, documentId: "abc123" },
+      });
+    }
+  });
+
+  it("is still ok with documentId undefined when the record lacks it", async () => {
+    mockedGetCurrentUser.mockResolvedValue(
+      mockUser({ email: "student@northeastern.edu" }),
+    );
+    mockedGetCachedUser.mockResolvedValue(
+      mockAuthUser({
+        id: 7,
+        roles: [{ id: 1, title: AuthorizedUserRoleTitle.User }],
+      }),
+    );
+
+    const result = await requireRole([]);
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.user.documentId).toBeUndefined();
+  });
+
   // Test 4: User has one of the allowed roles → ok:true
   it("returns ok:true when user has one of the allowed roles", async () => {
     mockedGetCurrentUser.mockResolvedValue(

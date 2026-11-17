@@ -8,11 +8,15 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { LESSON_PANEL } from "@/lib/lesson-panel";
+import type { LessonPanel } from "@/stores/lesson-panel-store";
 
 interface HighlightDropdownProps {
   setExpanded: (expanded: boolean) => void;
   expanded: boolean;
   isActive: boolean;
+  /** Mentor open also moves the toggles beside it. */
+  panel?: LessonPanel;
 }
 
 const btnClass =
@@ -22,6 +26,7 @@ export function HighlightDropdown({
   setExpanded,
   expanded,
   isActive,
+  panel,
 }: HighlightDropdownProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -29,12 +34,15 @@ export function HighlightDropdown({
     setMounted(true);
   }, []);
 
+  const panelOpen = expanded || panel === "mentor";
+  const label = expanded ? "Hide Notes Bar" : "View Notes Bar";
+
   if (!isActive) return null;
   if (!mounted) return null;
 
   return createPortal(
     <div
-      className={`fixed flex ${expanded ? "xs:top-44 top-36 right-[355px] flex-col md:top-36" : "top-36 right-5 flex-col"} z-50 gap-2`}
+      className={`fixed flex ${panelOpen ? `xs:top-44 top-36 ${LESSON_PANEL.toggleRight} flex-col md:top-36` : "top-36 right-5 flex-col"} z-50 gap-2`}
     >
       {/* Help */}
       <div className={`${btnClass} z-50`}>
@@ -59,13 +67,15 @@ export function HighlightDropdown({
       </div>
 
       {/* Notes bar toggle */}
-      <div
-        title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
+      <button
+        type="button"
+        title={label}
+        aria-label={label}
         className={`${btnClass} z-50`}
         onClick={() => setExpanded(!expanded)}
       >
         <IconNotes className="h-5 w-5" />
-      </div>
+      </button>
     </div>,
     document.body,
   );

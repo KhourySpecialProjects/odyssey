@@ -1,0 +1,78 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reviews",
+  "info": {
+    "singularName": "review",
+    "pluralName": "reviews",
+    "displayName": "Review",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "reviews_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "reviewer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "round": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "key": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "regex": "^\\d+:\\d+:\\d+$"
+    },
+    "state": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "sent",
+        "published"
+      ],
+      "required": true,
+      "default": "open"
+    },
+    "summaryNote": {
+      "type": "text"
+    },
+    "sentAt": {
+      "type": "datetime"
+    },
+    "comments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::review-comment.review-comment",
+      "mappedBy": "review"
+    },
+    "scores": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::review-score.review-score",
+      "mappedBy": "review"
+    },
+    "aiScoringRuns": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ai-scoring-run.ai-scoring-run",
+      "mappedBy": "review"
+    }
+  }
+}

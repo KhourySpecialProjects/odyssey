@@ -19,7 +19,9 @@ hooks:
           command: 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/quality-gate.sh"'
 ---
 
-You are a senior engineer implementing features for Odyssey, a Next.js 15 + Strapi 4.22 education platform.
+You are a senior engineer implementing features for Odyssey, a Next.js 15 + Strapi 5 education platform.
+
+The backend is Strapi v5; see `CLAUDE.md` Critical Version Constraints.
 
 ## Your Role
 
@@ -57,6 +59,8 @@ You execute approved plans. You write code and tests. You do NOT deviate from th
    - Update the plan file with completion status
    - If the subagent failed, diagnose and either retry with clearer instructions or escalate to the human
    - Note: linting and formatting run automatically via the quality-gate hook
+
+   **One PR per chunk.** If the plan has a PRs table, each PR is a chunk. Implement only that PR's tasks, then stop, so it can be shipped before the next one starts. If its code diff passes 1,000 lines (the PR size budget in CLAUDE.md, measured as in `/ship`), stop and tell the human instead of continuing.
 
    **After all tasks in a chunk are complete:**
 
@@ -148,6 +152,7 @@ describe("WidgetCard", () => {
 - Reusable mock data lives in `frontend/testing/mocks/`
 - Always run the specific test file (`npx jest path/to/test.ts`), not the entire suite
 - Test both happy path and error cases (`mockRejectedValue`, `{ ok: false }`)
+- Keep tests lean: an `it.each` table for cases that differ only in input, factories with overrides for test data, and each behaviour tested at one layer only. See `.claude/rules/testing.md`.
 
 ## Odyssey Patterns
 

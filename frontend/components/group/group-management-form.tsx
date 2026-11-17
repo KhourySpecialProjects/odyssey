@@ -270,12 +270,15 @@ export function GroupManagementForm({
       if (existingGroup) {
         await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
+        // Announce with the name just saved, not the one the page loaded with.
+        setSavedGroup({ id: existingGroup.id, name: data.groupName });
+        // Only edits offer to announce changes; new groups go straight to the dashboard.
+        setIsOpen(true);
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
-        setSavedGroup({ id: newGroup.id, name: data.groupName });
+        router.push("/g/dashboard?tab=creator");
       }
-      setIsOpen(true);
     } catch (error) {
       console.error("Failed to update group", error);
       setSubmissionState({

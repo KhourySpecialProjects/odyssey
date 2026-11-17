@@ -20,7 +20,10 @@
         "friend",
         "system",
         "group",
-        "kudos"
+        "kudos",
+        "review_feedback",
+        "review_published",
+        "reminder"
       ],
       "required": true
     },
@@ -63,7 +66,23 @@
       "target": "api::authorized-user.authorized-user",
       "mappedBy": "gaveKudos"
     },
+    "reads": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::announcement-read.announcement-read",
+      "mappedBy": "announcement"
+    },
     "readAt": {
+      "type": "datetime"
+    },
+    "reminderCount": {
+      "type": "integer",
+      "min": 0
+    },
+    "reminderSnoozedUntil": {
+      "type": "datetime"
+    },
+    "reminderMutedUntil": {
       "type": "datetime"
     }
   }

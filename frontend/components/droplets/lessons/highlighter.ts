@@ -233,6 +233,145 @@ const LANGUAGE_LOADERS: Record<string, LanguageLoader> = {
   zephir: () => import("highlight.js/lib/languages/zephir"),
 };
 
+// Alias -> loader key for every lazily loaded language, so a block tagged
+// `language-yml` or `language-ps1` loads the grammar highlight.js itself would
+// resolve it to. Generated from each grammar's own `aliases` (call the
+// language function with highlight.js/lib/core and read `.aliases`),
+// skipping aliases that collide with an eager language or another loader key
+// or that are claimed by two lazy languages (ls, ml). Regenerate when
+// highlight.js is upgraded.
+const LANGUAGE_ALIASES: Record<string, string> = {
+  ado: "stata",
+  adoc: "asciidoc",
+  ahk: "autohotkey",
+  apacheconf: "apache",
+  arm: "armasm",
+  as: "actionscript",
+  asc: "angelscript",
+  bat: "dos",
+  bf: "brainfuck",
+  bind: "dns",
+  capnp: "capnproto",
+  clj: "clojure",
+  cls: "cos",
+  "cmake.in": "cmake",
+  cmd: "dos",
+  coffee: "coffeescript",
+  cr: "crystal",
+  craftcms: "twig",
+  crm: "crmsh",
+  cson: "coffeescript",
+  dcl: "clean",
+  dfm: "delphi",
+  do: "stata",
+  docker: "dockerfile",
+  dpr: "delphi",
+  dst: "dust",
+  edn: "clojure",
+  erl: "erlang",
+  ex: "elixir",
+  exs: "elixir",
+  "f#": "fsharp",
+  f90: "fortran",
+  f95: "fortran",
+  feature: "gherkin",
+  fs: "fsharp",
+  gms: "gams",
+  gql: "graphql",
+  graph: "roboconf",
+  gss: "gauss",
+  hbs: "handlebars",
+  hs: "haskell",
+  "html.handlebars": "handlebars",
+  "html.hbs": "handlebars",
+  htmlbars: "handlebars",
+  https: "http",
+  hx: "haxe",
+  hylang: "hy",
+  i7: "inform7",
+  iced: "coffeescript",
+  icl: "clean",
+  ino: "arduino",
+  instances: "roboconf",
+  jinja: "django",
+  jldoctest: "julia-repl",
+  k: "q",
+  kdb: "q",
+  lassoscript: "lasso",
+  m: "mercury",
+  mak: "makefile",
+  make: "makefile",
+  md: "markdown",
+  mikrotik: "routeros",
+  mips: "mipsasm",
+  mk: "makefile",
+  mkd: "markdown",
+  mkdown: "markdown",
+  mm: "objectivec",
+  mma: "mathematica",
+  moo: "mercury",
+  moon: "moonscript",
+  nc: "gcode",
+  nginxconf: "nginx",
+  nixos: "nix",
+  nt: "nestedtext",
+  "obj-c": "objectivec",
+  "obj-c++": "objectivec",
+  objc: "objectivec",
+  "objective-c++": "objectivec",
+  osascript: "applescript",
+  p21: "step21",
+  pas: "delphi",
+  pascal: "delphi",
+  patch: "diff",
+  pb: "purebasic",
+  pbi: "purebasic",
+  pcmk: "crmsh",
+  pde: "processing",
+  "pf.conf": "pf",
+  pl: "perl",
+  pluto: "lua",
+  pm: "perl",
+  postgres: "pgsql",
+  postgresql: "pgsql",
+  pp: "puppet",
+  proto: "protobuf",
+  ps: "powershell",
+  ps1: "powershell",
+  pwsh: "powershell",
+  pycon: "python-repl",
+  qt: "qml",
+  re: "reasonml",
+  scad: "openscad",
+  sci: "scilab",
+  scm: "scheme",
+  st: "smalltalk",
+  stanfuncs: "stan",
+  step: "step21",
+  stp: "step21",
+  styl: "stylus",
+  sv: "verilog",
+  svh: "verilog",
+  tao: "xl",
+  tex: "latex",
+  tk: "tcl",
+  toml: "ini",
+  v: "verilog",
+  vb: "vbnet",
+  vbs: "vbscript",
+  "wildfly-cli": "jboss-cli",
+  wl: "mathematica",
+  "x++": "axapta",
+  xls: "excel",
+  xlsx: "excel",
+  xpath: "xquery",
+  xq: "xquery",
+  xqm: "xquery",
+  yml: "yaml",
+  zep: "zephir",
+  zone: "dns",
+};
+
 // The class names highlight.js reads a block's language from (language-* or
 // lang-* on the code element or its parent), matching its own detection.
 const LANGUAGE_CLASS_RE = /\blang(?:uage)?-([\w-]+)\b/i;
@@ -242,26 +381,35 @@ function blockLanguage(block: HTMLElement): string | null {
   return LANGUAGE_CLASS_RE.exec(classes)?.[1].toLowerCase() ?? null;
 }
 
-function canLoad(name: string): boolean {
-  return Object.prototype.hasOwnProperty.call(LANGUAGE_LOADERS, name);
+function has(map: Record<string, unknown>, name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(map, name);
+}
+
+// The LANGUAGE_LOADERS key for a language name or alias, if it can be loaded
+function loaderKey(name: string): string | null {
+  if (has(LANGUAGE_LOADERS, name)) return name;
+  if (has(LANGUAGE_ALIASES, name)) return LANGUAGE_ALIASES[name];
+  return null;
 }
 
 // Shared per language so blocks that need the same grammar fetch it once
 const languagePromises = new Map<string, Promise<void>>();
 
-function loadLanguage(name: string): Promise<void> {
-  let promise = languagePromises.get(name);
+// Registers the grammar under its canonical name; highlight.js then resolves
+// the grammar's own aliases through getLanguage.
+function loadLanguage(key: string): Promise<void> {
+  let promise = languagePromises.get(key);
   if (!promise) {
-    promise = LANGUAGE_LOADERS[name]()
+    promise = LANGUAGE_LOADERS[key]()
       .then((mod) => {
-        if (!hljs.getLanguage(name)) hljs.registerLanguage(name, mod.default);
+        if (!hljs.getLanguage(key)) hljs.registerLanguage(key, mod.default);
       })
       .catch((error) => {
         // Allow a later render to retry (e.g. after a transient chunk failure)
-        languagePromises.delete(name);
+        languagePromises.delete(key);
         throw error;
       });
-    languagePromises.set(name, promise);
+    languagePromises.set(key, promise);
   }
   return promise;
 }
@@ -275,10 +423,12 @@ function loadLanguage(name: string): Promise<void> {
 export async function loadLanguages(
   root: ParentNode = document,
 ): Promise<boolean> {
-  const missing = new Set<string>();
+  const missing = new Set<string>(); // loader keys
   root.querySelectorAll<HTMLElement>("pre code").forEach((block) => {
     const name = blockLanguage(block);
-    if (name && !hljs.getLanguage(name) && canLoad(name)) missing.add(name);
+    if (!name || hljs.getLanguage(name)) return;
+    const key = loaderKey(name);
+    if (key) missing.add(key);
   });
   if (missing.size === 0) return false;
 
@@ -292,7 +442,7 @@ export async function loadLanguages(
       );
     }
   });
-  return names.some((name) => hljs.getLanguage(name) !== undefined);
+  return names.some((key) => hljs.getLanguage(key) !== undefined);
 }
 
 /**

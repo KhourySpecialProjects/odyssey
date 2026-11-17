@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -12,13 +12,8 @@ interface DraftTourProps {
 }
 
 export function DraftTour({ run, setRun }: DraftTourProps) {
-  const driverRef = useRef<ReturnType<typeof driver> | null>(null);
-
   useEffect(() => {
-    if (!run) {
-      driverRef.current?.destroy();
-      return;
-    }
+    if (!run) return;
 
     const d = driver({
       showProgress: true,
@@ -34,13 +29,12 @@ export function DraftTour({ run, setRun }: DraftTourProps) {
       nextBtnText: "Next",
       prevBtnText: "Back",
       doneBtnText: "Done",
-      onCloseClick: () => {
-        setRun(false);
-        localStorage.setItem(TOUR_KEY, "completed");
-      },
+      // X, Done, Escape and overlay clicks all land here. Destroy directly: a
+      // parent unmounted by navigation never re-renders to do it
       onDestroyStarted: () => {
-        setRun(false);
         localStorage.setItem(TOUR_KEY, "completed");
+        d.destroy();
+        setRun(false);
       },
       steps: [
         {
@@ -114,8 +108,11 @@ export function DraftTour({ run, setRun }: DraftTourProps) {
       ],
     });
 
-    driverRef.current = d;
     d.drive();
+    // Leaving the page mid-tour would otherwise orphan it on document.body
+    return () => {
+      if (d.isActive()) d.destroy();
+    };
   }, [run]);
 
   return null;

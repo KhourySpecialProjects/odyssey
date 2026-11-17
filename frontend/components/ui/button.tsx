@@ -59,6 +59,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const useAsChild = asChild && React.isValidElement(children);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const asChildElement = children as React.ReactElement<any>;
     const Comp = asChild ? Slot : "button";
 
     const renderIcon = (icon: React.ReactElement<HTMLElement>) => {
@@ -68,13 +70,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const innerContent = useAsChild ? (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.cloneElement(children as React.ReactElement<any>, {
-        className: cn(children.props.className, "gap-2"),
+      React.cloneElement(asChildElement, {
+        className: cn(asChildElement.props.className, "gap-2"),
         children: (
           <>
             {before ? renderIcon(before) : null}
-            {children && <>{children.props.children}</>}
+            {children && <>{asChildElement.props.children}</>}
             {after ? renderIcon(after) : null}
           </>
         ),

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
+import { userTimeZone } from "@/lib/time-zones";
 import Link from "next/link";
 import { CopyIcon, UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -279,7 +280,7 @@ export function SocialForms({
           />
         </div>
         <TimeZoneSelector
-          currentZone={authorizedUser.timeZone?.trim()}
+          currentZone={userTimeZone(authorizedUser.timeZone)}
           userId={authorizedUser.id}
         />
       </div>
@@ -321,7 +322,7 @@ export function SocialForms({
                   toast.success("Profile link copied to clipboard");
                   navigator.clipboard.writeText(profileLink);
                 }}
-                className="inline-block cursor-pointer align-middle text-gray-600 hover:text-gray-800 dark:text-slate-300"
+                className="inline-block cursor-pointer rounded-sm align-middle text-gray-600 ring-offset-white hover:text-gray-800 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-slate-300 dark:ring-offset-slate-950 dark:hover:text-slate-100 dark:focus-visible:ring-slate-300"
               >
                 <CopyIcon className="h-5 w-5" aria-hidden="true" />
               </button>

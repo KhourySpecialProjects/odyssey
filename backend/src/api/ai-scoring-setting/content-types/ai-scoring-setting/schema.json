@@ -1,0 +1,43 @@
+{
+  "kind": "singleType",
+  "collectionName": "ai_scoring_settings",
+  "info": {
+    "singularName": "ai-scoring-setting",
+    "pluralName": "ai-scoring-settings",
+    "displayName": "AI Scoring Settings",
+    "description": "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "monthlyCapUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "perRunCapUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "prices": {
+      "type": "component",
+      "repeatable": true,
+      "component": "ai-scoring.model-price"
+    },
+    "instructions": {
+      "type": "text",
+      "maxLength": 6000
+    },
+    "lessonScope": {
+      "type": "text",
+      "maxLength": 1500
+    },
+    "overallScope": {
+      "type": "text",
+      "maxLength": 1500
+    }
+  }
+}

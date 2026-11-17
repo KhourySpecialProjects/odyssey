@@ -18,6 +18,13 @@ jest.mock("@/components/group/group-card", () => ({
 
 const ROLE_COLORS = { member: "bg-green-100" };
 
+const ACTIVE_STATE = {
+  archivedForMe: false,
+  archivedForEveryone: false,
+  isEffectivelyArchived: false,
+  canManage: false,
+};
+
 /** Builds `count` groups named "Group 1".."Group N". */
 function makeGroups(count: number) {
   return Array.from({ length: count }, (_, i) => ({
@@ -28,6 +35,7 @@ function makeGroups(count: number) {
       isArchived: false,
     } as Group,
     role: "member" as const,
+    archiveState: ACTIVE_STATE,
   }));
 }
 

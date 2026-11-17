@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { IconArchive } from "@tabler/icons-react";
 import { getCachedEnrollmentsFavorites } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
@@ -19,7 +20,9 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
   const userId = await getAuthorizedUserId(user);
   if (!userId) return null;
 
-  const enrollments = await getCachedEnrollmentsFavorites(userId);
+  const enrollments = (await getCachedEnrollmentsFavorites(userId)).filter(
+    hasDroplet,
+  );
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);
 

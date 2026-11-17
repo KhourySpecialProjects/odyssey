@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { AuthorizedUser } from "@/types";
+import { formatName } from "@/lib/author-names";
 import { Button } from "../ui/button";
 
 interface AuthorCardProps {
@@ -71,9 +72,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
       </Avatar>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="leading-relaxed font-bold">
-          {author.firstName + " " + author.lastName}
-        </span>
+        <span className="leading-relaxed font-bold">{formatName(author)}</span>
 
         {author.bio && (
           <p className="text-sm text-slate-600 dark:text-slate-300">

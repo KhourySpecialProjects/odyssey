@@ -14,18 +14,18 @@ const config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
     "^@uiw/react-codemirror$": "<rootDir>/__mocks__/@uiw/react-codemirror.js",
+    // ESM-only, with an "import" export condition Jest doesn't match
+    "^@handlewithcare/prosemirror-inputrules$":
+      "<rootDir>/node_modules/@handlewithcare/prosemirror-inputrules/dist/index.js",
     "^@uiw/codemirror-theme-github$":
       "<rootDir>/__mocks__/@uiw/codemirror-theme-github.js",
   },
   transform: {
     "^.+\\.(ts|tsx|js|jsx)$": ["babel-jest", { presets: ["next/babel"] }],
   },
-  transformIgnorePatterns: [
-    "/node_modules/(?!(@panva|jose|openid-client|next-auth|uuid|@smithy|@aws-sdk|node-fetch|isomorphic-dompurify|lowlight|@blocknote|prosemirror-highlight|papaparse|@tanstack)(/.*)?)",
-  ],
   moduleDirectories: ["node_modules", "<rootDir>"],
   testEnvironmentOptions: {
-    customExportConditions: ["react-native", "node", "default"],
+    customExportConditions: ["node", "default"],
   },
   globals: {
     "ts-jest": {
@@ -35,4 +35,13 @@ const config = {
   testPathIgnorePatterns: ["/e2e/", "/playwright-report/", "/test-results/"],
 };
 
-module.exports = createJestConfig(config);
+// next/jest ignores all node_modules and appends our patterns after its own,
+// so un-ignore the ESM-only packages BlockNote 0.57 needs here instead.
+module.exports = async () => {
+  const resolved = await createJestConfig(config)();
+  resolved.transformIgnorePatterns = [
+    "/node_modules/(?!(@blocknote|lib0|@handlewithcare)/)",
+    "^.+\\.module\\.(css|sass|scss)$",
+  ];
+  return resolved;
+};

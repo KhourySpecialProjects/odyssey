@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { ENROLLMENT_POPULATES } from "@/lib/requests/enrollment-populates";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { FriendCompletedDropletsList } from "./friend-completed-droplets-list";
 
 export function FriendCompletedDroplets({
@@ -22,8 +23,9 @@ export function FriendCompletedDroplets({
       });
       if (enrollments) {
         const completed = enrollments
+          .filter(hasDroplet)
           .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
-          .map((d) => d.droplet);
+          .map((e) => e.droplet);
         setCompletedDroplets(completed);
       }
     }

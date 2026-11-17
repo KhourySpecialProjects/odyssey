@@ -5,13 +5,12 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { IconPencil, IconUser, IconActivity, IconX } from "@tabler/icons-react";
+import { IconPencil, IconUser, IconActivity } from "@tabler/icons-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   DialogHeader,
   Dialog,
-  DialogClose,
   DialogTrigger,
   DialogContent,
   DialogTitle,
@@ -269,9 +268,6 @@ export function AuthorizedUserBlock({
             </DialogTrigger>
 
             <DialogContent>
-              <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-                <IconX className="h-4 w-4" />
-              </DialogClose>
               <DialogHeader>
                 <DialogTitle>Edit User</DialogTitle>
                 <DialogDescription>Update user information</DialogDescription>
@@ -397,9 +393,6 @@ export function AuthorizedUserBlock({
       {/* Activity Timeline Dialog */}
       <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
         <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&:hover::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&:hover::-webkit-scrollbar-thumb]:bg-slate-600">
-          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-            <IconX className="h-4 w-4" />
-          </DialogClose>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <IconActivity className="h-5 w-5" />

@@ -4,9 +4,31 @@ import { toast } from "sonner";
 import userEvent from "@testing-library/user-event";
 import { TimeZone } from "@/types";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
+import {
+  createEnrollment,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
+import { getDropletById } from "@/lib/requests/droplet";
 
 jest.mock("@/lib/requests/authorized-user", () => ({
   updateUserInfo: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/feed", () => ({
+  createSystemAnnouncement: jest.fn(),
+}));
+
+jest.mock("@/lib/actions", () => ({
+  setTimeZone: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/enrollment", () => ({
+  getEnrollmentsByAuthorizedUser: jest.fn(),
+  createEnrollment: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/droplet", () => ({
+  getDropletById: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -132,6 +154,33 @@ describe("FirstVisitPopup", () => {
 
       expect(updateUserInfo).toHaveBeenCalled();
     });
+  });
+
+  it("enrolls in the intro droplet when an enrollment's droplet is null", async () => {
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValueOnce([
+      { id: "1", droplet: null },
+    ]);
+    (getDropletById as jest.Mock).mockResolvedValueOnce({ id: 43 });
+
+    const { getByRole, getByLabelText } = render(
+      <FirstVisitPopup user={mockUser} />,
+    );
+    fireEvent.change(getByLabelText("First name"), {
+      target: { value: "John" },
+    });
+    fireEvent.change(getByLabelText("Last name"), {
+      target: { value: "Doe" },
+    });
+    fireEvent.change(getByLabelText("Choose a time zone..."), {
+      target: { value: "America/New_York" },
+    });
+
+    const dialog = getByRole("dialog", { hidden: true });
+    await act(async () => {
+      fireEvent.keyDown(dialog, { key: "Escape" });
+    });
+
+    expect(createEnrollment).toHaveBeenCalledWith({ id: 43 }, []);
   });
 
   it("validates form fields when attempting to close", async () => {

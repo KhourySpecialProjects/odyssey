@@ -66,8 +66,10 @@ const StarRating: React.FC<StarRatingProps> = ({
         ).droplet;
         setRating(newRating);
         setHover(newRating);
-        const averageRating = await calculateDropletAverageRating(droplet);
-        await updateDropletAverageRating(averageRating, droplet.id);
+        if (droplet) {
+          const averageRating = await calculateDropletAverageRating(droplet);
+          await updateDropletAverageRating(averageRating, droplet.id);
+        }
         toast.success("Rating submitted successfully");
       } catch (error) {
         console.error("Error updating rating:", error);

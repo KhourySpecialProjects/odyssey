@@ -17,6 +17,23 @@ import {
   assertOk,
 } from "@/lib/testing/mock-helpers";
 import { revalidateTag } from "next/cache";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "@/lib/strapi-document-id";
+
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn().mockResolvedValue({
+    ok: true,
+    user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+  }),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkDatasetWrite: jest.fn().mockResolvedValue({ ok: true }),
+  checkDropletContentWrite: jest.fn().mockResolvedValue({ ok: true }),
+}));
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -60,10 +77,32 @@ describe("dataset requests", () => {
         urlParams: expect.objectContaining({
           filters: { droplet: { id: { $eq: 42 } } },
           sort: ["createdAt:asc"],
+          pagination: { page: 1, pageSize: 100 },
         }),
         next: { tags: [CACHE_TAGS.datasets], revalidate: 900 },
       });
       expect(result).toEqual(mockDatasets);
+    });
+
+    // ODY-720: without pagination Strapi stops at 25 rows.
+    it("returns every dataset when a droplet has more than 25", async () => {
+      const page = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => ({ id: from + i }));
+      mockedFetchAPI
+        .mockResolvedValueOnce(page(1, 100))
+        .mockResolvedValueOnce(page(101, 30));
+
+      const result = await getDatasetsByDropletId(42);
+
+      expect(result).toHaveLength(130);
+      expect(mockedFetchAPI).toHaveBeenLastCalledWith(
+        "/datasets",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            pagination: { page: 2, pageSize: 100 },
+          }),
+        }),
+      );
     });
 
     it("returns empty array when no datasets exist", async () => {
@@ -301,9 +340,73 @@ describe("dataset requests", () => {
       await deleteDataset(42);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/datasets/42"),
+        expect.stringContaining("/api/datasets/doc42"),
         expect.objectContaining({ method: "DELETE" }),
       );
+    });
+
+    it("resolves the dataset documentId for the DELETE URL", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockResolvedValueOnce("http://strapi/api/datasets/docDs42");
+      mockFetch.mockResolvedValueOnce(makeFetchResponse({}, 200));
+
+      await deleteDataset(42);
+
+      expect(strapiEntryUrl).toHaveBeenCalledWith("datasets", 42);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://strapi/api/datasets/docDs42",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    it("returns the 404 result when the dataset cannot be resolved", async () => {
+      jest
+        .mocked(strapiEntryUrl)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      const result = await deleteDataset(999);
+
+      expect(result).toEqual({ ok: false, error: "Failed to delete dataset." });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createDataset relation write", () => {
+    it("sends the droplet documentId, not the numeric id", async () => {
+      jest.mocked(resolveDocumentId).mockResolvedValueOnce("docDroplet7");
+      mockFetch.mockResolvedValueOnce(
+        makeFetchResponse({ data: { id: 1 } }, 200),
+      );
+
+      await createDataset({
+        name: "d.csv",
+        fileUrl: "/uploads/d.csv",
+        format: "csv",
+        fileSize: 10,
+        droplet: 7,
+      });
+
+      expect(resolveDocumentId).toHaveBeenCalledWith("droplets", 7);
+      const body = JSON.parse(mockFetch.mock.calls[0][1]!.body as string);
+      expect(body.data.droplet).toBe("docDroplet7");
+    });
+
+    it("returns ok:false without calling Strapi when the droplet is missing", async () => {
+      jest
+        .mocked(resolveDocumentId)
+        .mockRejectedValueOnce(new StrapiEntryNotFoundError("missing"));
+
+      const result = await createDataset({
+        name: "d.csv",
+        fileUrl: "/uploads/d.csv",
+        format: "csv",
+        fileSize: 10,
+        droplet: 7,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 });

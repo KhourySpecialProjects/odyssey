@@ -2,7 +2,7 @@
 
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Message,
   MessageDescription,
@@ -11,6 +11,8 @@ import {
 import { useSearch } from "@/contexts/SearchContext";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { useUrlPage } from "@/hooks/use-url-page";
+import { matchesDropletSearch } from "@/lib/author-names";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -41,7 +43,7 @@ export function SortedDropletsGrid({
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const activeSortKey = useSortKey(sortKey);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useUrlPage();
 
   const sortedDroplets = useMemo(() => {
     const sorted = [...droplets];
@@ -122,15 +124,13 @@ export function SortedDropletsGrid({
 
   const filteredDroplets = useMemo(() => {
     return sortedDroplets.filter((droplet) =>
-      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      matchesDropletSearch(droplet, searchQuery),
     );
   }, [sortedDroplets, searchQuery]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [sortedDroplets, searchQuery]);
-
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
+  // A stale or hand-edited ?page= past the end shows the last page
+  const currentPage = Math.min(page, Math.max(totalPages, 1));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
   const paginatedDroplets = filteredDroplets.slice(
@@ -180,7 +180,7 @@ export function SortedDropletsGrid({
       <AdminPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={setPage}
         variant="standalone"
       />
     </>

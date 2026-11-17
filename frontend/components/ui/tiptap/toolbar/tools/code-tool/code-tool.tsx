@@ -66,7 +66,7 @@ function CodeBlockComponent({
             </div>
           ))}
         </div>
-        <NodeViewContent
+        <NodeViewContent<"code">
           as="code"
           className="block font-mono text-sm whitespace-pre text-gray-800 dark:text-slate-50"
           style={{ lineHeight: "1.25rem" }}

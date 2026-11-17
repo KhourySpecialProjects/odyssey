@@ -3,9 +3,10 @@
 import { DueDate, Playlist } from "@/types";
 import { PlaylistCard } from "../playlists/playlist-card";
 import { useSearch } from "@/contexts/SearchContext";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { useUrlPage } from "@/hooks/use-url-page";
 import { sortPlaylists } from "@/lib/playlist-sort";
 
 const ITEMS_PER_PAGE = 9;
@@ -22,7 +23,7 @@ export function SortedPlaylistsGrid({
   currentUserId?: number;
 }) {
   const { searchQuery } = useSearch();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const activeSortKey = useSortKey(sortKey);
 
   const filteredPlaylists = useMemo(() => {
@@ -32,11 +33,9 @@ export function SortedPlaylistsGrid({
     );
   }, [playlistsWithCompletion, activeSortKey, searchQuery]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [playlistsWithCompletion, searchQuery, activeSortKey]);
-
   const totalPages = Math.ceil(filteredPlaylists.length / ITEMS_PER_PAGE);
+  // A stale or hand-edited ?page= past the end shows the last page
+  const currentPage = Math.min(page, Math.max(totalPages, 1));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedPlaylists = filteredPlaylists.slice(
     startIndex,
@@ -69,7 +68,7 @@ export function SortedPlaylistsGrid({
       <AdminPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={setPage}
         variant="standalone"
       />
     </section>

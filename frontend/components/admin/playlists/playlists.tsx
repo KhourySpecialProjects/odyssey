@@ -14,7 +14,7 @@ export async function Playlists() {
         },
       },
       authors: {
-        fields: ["id", "name"],
+        fields: ["id"],
       },
     },
   });

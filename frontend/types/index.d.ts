@@ -7,6 +7,7 @@ export type DropletType = "knowledge" | "skill";
 
 export type Dataset = {
   id: number;
+  documentId?: string;
   name: string;
   fileUrl: string;
   format: string;
@@ -23,7 +24,10 @@ export type AnnouncementType =
   | "friend"
   | "system"
   | "group"
-  | "kudos";
+  | "kudos"
+  | "review_feedback"
+  | "review_published"
+  | "reminder";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -32,14 +36,27 @@ export type HighlightColor =
   | "#86efac"
   | "#93c5fd";
 
+/**
+ * The exact text a highlight covered when it was saved, and up to 30
+ * characters either side of it, so it can be found again after the lesson
+ * is edited. Highlights saved before ODY-198 have none.
+ */
+export type HighlightContext = {
+  quote: string;
+  prefix: string;
+  suffix: string;
+};
+
 export type AuthorizedUserRole = {
   id: number;
+  documentId?: string;
   title: AuthorizedUserRoleTitle;
   authorizedUsers?: AuthorizedUser[];
 };
 
 export type Highlight = {
   id?: number;
+  documentId?: string;
   authorized_user?: AuthorizedUser;
   text: string;
   position: {
@@ -50,11 +67,20 @@ export type Highlight = {
   lesson?: Lesson;
   yLevel?: number;
   blockId: number;
+  context?: HighlightContext | null;
+  createdAt?: string;
+  /**
+   * The note linked to this highlight (one-to-one). Only the lesson viewer's
+   * highlight fetch populates it; `id` is unknown for a note made since.
+   */
+  note?: { id?: number } | null;
 };
 
 export type User = {
-  /** Strapi authorized-user id. Absent on tokens issued before it was added. */
+  /** Strapi authorized-user id. Absent on tokens issued before it was added, or when the account no longer exists. */
   id?: number;
+  /** Strapi v5 documentId. Absent on pre-v5 tokens. */
+  documentId?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
@@ -66,6 +92,7 @@ export type User = {
 export type AuthorizedUser = {
   groups: any;
   id: number;
+  documentId?: string;
   email: string;
   roles: AuthorizedUserRole[];
   isEnabled: boolean;
@@ -76,6 +103,7 @@ export type AuthorizedUser = {
   github: string;
   website: string;
   firstTime: boolean;
+  onboardedAt?: string | null; // set once by saveLearnerProfile (ODY-953)
   firstName: string;
   lastName: string;
   bio: string;
@@ -111,6 +139,7 @@ export type GalleryItem = {
 
 export type Gallery = {
   id: number;
+  documentId?: string;
   title?: string;
   slug: string;
   items: GalleryItem[];
@@ -198,6 +227,7 @@ export type Block =
 
 export type Lesson = {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   type: string;
@@ -207,13 +237,36 @@ export type Lesson = {
   droplets: Droplet[];
   notes: string;
   orderIndex: number;
+  originalLessonId?: number | null; // [EDIT]-draft lessons only: id of the live lesson this was cloned from
+  updatedAt?: string;
 };
 
 export type Tag = {
   id: number;
+  documentId?: string;
   slug: string;
   name: string;
   droplets: Droplet[];
+};
+
+export type LearnerGoal = "class" | "career" | "self" | "browsing";
+
+/** One student's quiz answers (ODY-953). Student data: never log or capture it. */
+export type LearnerProfile = {
+  id: number;
+  documentId?: string;
+  goal: LearnerGoal | null;
+  focusAreas: FocusArea[];
+  interests: Pick<Tag, "id" | "name" | "slug">[];
+  interestNote: string | null;
+};
+
+/** What saveLearnerProfile accepts. An omitted key is left unchanged, and null or [] clears it. */
+export type LearnerProfileInput = {
+  goal?: LearnerGoal | null;
+  focusAreas?: FocusArea[];
+  interestTagIds?: number[];
+  interestNote?: string | null;
 };
 
 export type LearningObjective = {
@@ -229,13 +282,14 @@ export type Resource = {
 
 export type Droplet = {
   id: number;
+  documentId?: string;
   slug: string;
   name: string;
   description?: string;
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
-  difficulty: DropletDifficulty;
+  difficulty?: DropletDifficulty | null;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
@@ -248,7 +302,7 @@ export type Droplet = {
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;
-  afterReview?: string;
+  reviewRound?: number | null;
   funFact?: string;
   averageRating?: number;
   usersFavorited?: AuthorizedUser[];
@@ -256,6 +310,61 @@ export type Droplet = {
   presentationEnabled?: boolean;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type RecommendationSurface =
+  | "activity"
+  | "recap"
+  | "completion"
+  | "onboarding";
+
+export type RecommendationRule =
+  | "next-in-voyage" // rule 1, voyage
+  | "next-in-playlist" // rule 1, playlist
+  | "postrequisite" // rule 2
+  | "co-completion" // rule 3
+  | "interest" // rule 4, quiz tags and focus areas
+  | "popular"; // rule 5, rating/popularity fallback (also the stub)
+
+/** The droplet fields every recommendation carries, with nested relations trimmed to what is fetched. */
+export type RecommendedDroplet = Omit<
+  Pick<
+    Droplet,
+    | "id"
+    | "documentId"
+    | "name"
+    | "slug"
+    | "type"
+    | "focusArea"
+    | "difficulty"
+    | "description"
+    | "averageRating"
+    | "tags"
+    | "lessons"
+    | "authorized_users"
+  >,
+  "lessons" | "tags" | "authorized_users" | "documentId"
+> & {
+  documentId: string;
+  lessons?: Pick<Lesson, "id" | "documentId">[];
+  tags?: Pick<Tag, "id" | "documentId" | "name" | "slug">[];
+  authorized_users?: Pick<
+    AuthorizedUser,
+    "id" | "documentId" | "firstName" | "lastName"
+  >[];
+};
+
+/** One recommended droplet, why it was picked and by which rule. */
+export type Recommendation = {
+  droplet: RecommendedDroplet;
+  reason: string;
+  rule: RecommendationRule;
+};
+
+export type RecommendationOptions = {
+  surface: RecommendationSurface;
+  limit: number;
+  excludeDropletIds?: number[];
 };
 
 export type QuizAnswerOption = {
@@ -288,8 +397,9 @@ export type OpenEndedQuiz = {
 
 export type Enrollment = {
   id: string;
+  documentId?: string;
   authorizedUser: AuthorizedUser;
-  droplet: Droplet;
+  droplet: Droplet | null;
   viewedLessons: Lesson[];
   isComplete: boolean;
   rating: number;
@@ -297,10 +407,14 @@ export type Enrollment = {
   isArchived: boolean;
   notes: Note[];
   completionDate: Date;
+  lastProgressDate?: string | null;
 };
+
+export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
 
 export interface Playlist {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   isPublic: boolean;
@@ -350,6 +464,7 @@ export type GroupSemester =
 
 export type Group = {
   id: number;
+  documentId?: string;
   groupName: string;
   slug: string;
   description?: string;
@@ -388,8 +503,19 @@ export type Friendship = {
   authorized_users: AuthorizedUser[];
 };
 
+/** Worked out when the feed loads, never stored on the reminder. */
+export type ReminderFeedData = {
+  headline: string;
+  progress: { viewed: number; total: number } | null;
+  nextLesson: { name: string; slug: string } | null;
+  started: boolean;
+  dueDate?: string;
+  dueGroupName?: string;
+};
+
 export type Announcement = {
   id: number;
+  documentId?: string;
   type: AnnouncementType;
   firstCreated: Date;
   content: string;
@@ -398,11 +524,169 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
-  readAt?: string | null;
+  reminderCount?: number | null;
+  reminderSnoozedUntil?: string | null;
+  reminderMutedUntil?: string | null;
+  reminder?: ReminderFeedData;
+};
+
+export type ReviewState = "open" | "sent" | "published";
+
+export type ReviewCommentField =
+  | "blocks"
+  | "description"
+  | "overview"
+  | "objective"
+  // The Overview's title, and its other sections (whole-section comments)
+  | "name"
+  | "authors"
+  | "nextSteps"
+  | "prerequisites"
+  | "postrequisites"
+  | "funFact"
+  | "datasets";
+
+export type AiScoringRunState =
+  | "queued"
+  | "running"
+  | "done"
+  | "partial"
+  | "failed";
+
+/**
+ * Text in a block or field (with its quote and context), a whole block, or a
+ * whole Overview section
+ */
+export type ReviewAnchor =
+  | {
+      v: 1;
+      field: ReviewCommentField;
+      blockId?: string;
+      /** Across BlockNote blocks: the last block, which `end` is in */
+      endBlockId?: string;
+      start?: number;
+      end?: number;
+      quote: string;
+      prefix: string;
+      suffix: string;
+      /** At one spot: just before the quote, or just after it */
+      point?: "before" | "after";
+    }
+  | { v: 1; field: ReviewCommentField; blockId: string }
+  | { v: 1; field: ReviewCommentField; blockId?: never };
+
+/** The text-quote member of ReviewAnchor */
+export type ReviewTextAnchor = Extract<ReviewAnchor, { quote: string }>;
+
+/** A passage the AI flagged in a score (ODY-805 contract) */
+export type AiFinding = {
+  id: string;
+  quote: string;
+  reason: string;
+  /** Null: an Overview field */
+  lessonId: number | null;
+  anchor: ReviewTextAnchor;
+};
+
+export type AiRunSection = number | "overall";
+
+export type AiRunProgress = {
+  done: AiRunSection[];
+  current: AiRunSection | null;
+};
+
+export type ReviewCriterion = {
+  id: number;
+  documentId?: string;
+  name: string;
+  lessonDescription: string;
+  overallDescription: string;
+  order: number;
+  active: boolean;
+};
+
+export type ReviewCriterionSnapshot = Pick<
+  ReviewCriterion,
+  "id" | "name" | "lessonDescription" | "overallDescription" | "order"
+>;
+
+export type Review = {
+  id: number;
+  documentId?: string;
+  droplet?: Droplet | null;
+  reviewer?: AuthorizedUser | null;
+  round: number;
+  key: string;
+  state: ReviewState;
+  summaryNote?: string | null;
+  sentAt?: string | null;
+  comments?: ReviewComment[];
+  scores?: ReviewScore[];
+  aiScoringRuns?: AiScoringRun[];
+};
+
+export type ReviewComment = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  field: ReviewCommentField;
+  anchor: ReviewAnchor;
+  body: string;
+  author?: AuthorizedUser | null;
+  resolvedAt?: string | null;
+  /** The creator marked it addressed; only the reviewer resolves it (ODY-807) */
+  addressedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  /** Set on a reply: the root comment it belongs to */
+  parent?: Pick<ReviewComment, "id"> | null;
+  /** The root's thread, oldest first; attached by the read (ODY-881) */
+  replies?: ReviewComment[];
+  /** The viewer wrote this comment or reply */
+  mine?: boolean;
+  /**
+   * A comment carried into a later round is a copy: this is the comment as
+   * first written, with its date and its review's round (ODY-807)
+   */
+  carriedFrom?: Pick<ReviewComment, "id" | "createdAt" | "review"> | null;
+};
+
+export type ReviewScore = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  lesson?: Lesson | null;
+  criterion?: ReviewCriterion | null;
+  criterionName: string;
+  value: number | null;
+  aiValue: number | null;
+  aiRationale?: string | null;
+  /** Reviewer-only: never returned to authors */
+  aiFindings?: AiFinding[] | null;
+  key: string;
+};
+
+export type AiScoringRun = {
+  id: number;
+  documentId?: string;
+  review?: Review | null;
+  runState: AiScoringRunState;
+  model?: string | null;
+  promptVersion?: string | null;
+  criteria?: ReviewCriterionSnapshot[] | null;
+  failedLessons?: AiRunSection[] | null;
+  progress?: AiRunProgress | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  error?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
 };
 
 export type Note = {
   id: number;
+  documentId?: string;
   content: string;
   lesson: Lesson;
   enrollment: Enrollment;
@@ -417,7 +701,7 @@ export type TimeZone =
   | "America/Phoenix"
   | "America/Los_Angeles"
   | "America/Anchorage"
-  | "America/Honolulu"
+  | "Pacific/Honolulu"
   | "America/Bogota"
   | "America/Lima"
   | "America/Caracas"
@@ -461,6 +745,7 @@ export type DueDate = {
 
 export type CreationRequest = {
   id: number;
+  documentId?: string;
   motivation: String;
   dropletIdea: String;
   user: AuthorizedUser;
@@ -469,6 +754,7 @@ export type CreationRequest = {
 
 export interface Voyage {
   id: number;
+  documentId?: string;
   name: string;
   slug: string;
   description: string;
@@ -483,6 +769,7 @@ export interface Voyage {
 
 export interface VoyageNode {
   id: number;
+  documentId?: string;
   isMainPath: boolean;
   branchType: "required" | "optional";
   nodeType: "playlist" | "droplet";
@@ -499,6 +786,7 @@ export interface VoyageNode {
 
 export interface VoyageEnrollment {
   id: number;
+  documentId?: string;
   enrolledAt: string;
   completionPercentage: number;
   authorizedUser?: AuthorizedUser;
@@ -507,10 +795,26 @@ export interface VoyageEnrollment {
 
 export interface VoyageNodeCompletion {
   id: number;
+  documentId?: string;
   completedAt: string;
   authorizedUser?: AuthorizedUser;
   voyageNode?: VoyageNode;
   voyageEnrollment?: VoyageEnrollment;
+}
+
+/** A day a learner finished at least one new lesson, in their time zone (ODY-918) */
+export interface StreakDayEntry {
+  id: number;
+  documentId?: string;
+  /** `<userId>:<date>`, unique */
+  key: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** The lessons finished for the first time that day */
+  lessonIds: number[];
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
+  user?: AuthorizedUser;
 }
 
 interface CustomBlockNoteBlock {

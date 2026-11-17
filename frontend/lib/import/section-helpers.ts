@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import type { ImportSection } from "./types";
 
 /**
@@ -27,7 +26,7 @@ export function mergeSections(
   const second = sections[secondIndex];
 
   const merged: ImportSection = {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     title: first.title,
     markdownContent: [first.markdownContent, second.markdownContent]
       .filter(Boolean)

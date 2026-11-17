@@ -4,6 +4,9 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
+import type { Enrollment } from "@/types";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -42,13 +45,13 @@ export default async function PlaylistPage({ params }: Props) {
             lessons: {
               fields: ["id", "name", "slug"],
             },
+            authorized_users: USER_POPULATES.authorName,
             fields: [
               "id",
               "name",
               "slug",
               "type",
               "focusArea",
-              "learningObjectives",
               "isHidden",
               "status",
             ],
@@ -58,17 +61,18 @@ export default async function PlaylistPage({ params }: Props) {
           fields: ["id"],
         },
         authors: {
-          fields: ["id", "name"],
-          populate: "*",
+          fields: ["id"],
         },
       },
     }),
-    userId ? getCachedEnrollmentsWithLessonIds(userId) : [],
+    userId ? getCachedEnrollmentsWithLessonIds(userId) : ([] as Enrollment[]),
   ]);
   if (!playlist) {
     notFound();
   }
-  const enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+  const enrolledDropletIds = enrollments
+    .filter(hasDroplet)
+    .map((e) => e.droplet.id);
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||

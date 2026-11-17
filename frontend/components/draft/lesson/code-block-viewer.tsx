@@ -5,6 +5,7 @@ import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LazyCodeEditor } from "@/components/ui/lazy-code-editor";
 import { executeCode } from "@/lib/code-execution";
+import { useCodeHighlights } from "@/components/droplets/lessons/highlight-layer";
 
 const LANGUAGE_LABELS: Record<string, string> = {
   javascript: "JavaScript",
@@ -28,6 +29,11 @@ interface CodeBlockViewerProps {
   code: string;
   editable: boolean;
   runnable: boolean;
+  /**
+   * In a lesson, the block ids its highlights are saved under. Code the
+   * reader can edit isn't highlighted: a click on it starts editing.
+   */
+  highlightIds?: number[];
 }
 
 export function CodeBlockViewer({
@@ -35,12 +41,14 @@ export function CodeBlockViewer({
   code: initialCode,
   editable,
   runnable,
+  highlightIds = [],
 }: CodeBlockViewerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [code, setCode] = useState(initialCode);
   const [output, setOutput] = useState<string>("");
   const [isRunning, setIsRunning] = useState(false);
   const [executionSuccess, setExecutionSuccess] = useState(true);
+  const highlighting = useCodeHighlights(editable ? [] : highlightIds, code);
 
   const languageLabel = LANGUAGE_LABELS[language] || language;
 
@@ -112,7 +120,15 @@ export function CodeBlockViewer({
             className="group relative cursor-pointer"
             onClick={() => editable && setIsEditing(true)}
           >
-            <LazyCodeEditor language={language} value={code} readOnly />
+            <div ref={highlighting.regionRef} {...highlighting.regionProps}>
+              <LazyCodeEditor
+                language={language}
+                value={code}
+                readOnly
+                marks={highlighting.marks}
+                onCreateEditor={highlighting.onCreateEditor}
+              />
+            </div>
             {editable && (
               <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">

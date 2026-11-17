@@ -49,40 +49,32 @@ export function NoteBlock({
     }
   }, [content, note.id, authorizedUserId, onUpdate]);
 
+  // The dark: copy overrides the secondary Badge's dark:bg-slate-700, which
+  // would otherwise hide the slate-700 text and the highlight colour
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
       case "#f9a8d4":
-        return "bg-[#f9a8d4]";
+        return "bg-[#f9a8d4] dark:bg-[#f9a8d4]";
       case "#fbd38d":
-        return "bg-[#fbd38d]";
+        return "bg-[#fbd38d] dark:bg-[#fbd38d]";
       case "#fff300":
-        return "bg-[#fff300]";
+        return "bg-[#fff300] dark:bg-[#fff300]";
       case "#86efac":
-        return "bg-[#86efac]";
+        return "bg-[#86efac] dark:bg-[#86efac]";
       case "#93c5fd":
-        return "bg-[#93c5fd]";
+        return "bg-[#93c5fd] dark:bg-[#93c5fd]";
       default:
-        return "bg-[#fff300]";
+        return "bg-[#fff300] dark:bg-[#fff300]";
     }
   };
 
-  const CustomLink = Link.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        autolink: true,
-        linkOnPaste: true,
-        openOnClick: false,
-        HTMLAttributes: {
-          rel: "noopener noreferrer",
-          target: "_blank",
-        },
-        validate: (href) => {
-          return /^(https?:\/\/)(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}|[\w.-]+\.[a-zA-Z]{2,})(:\d+)?(\/\S*)?$/.test(
-            href,
-          );
-        },
-      };
+  const CustomLink = Link.configure({
+    autolink: true,
+    linkOnPaste: true,
+    openOnClick: false,
+    HTMLAttributes: {
+      rel: "noopener noreferrer",
+      target: "_blank",
     },
   });
 
@@ -90,7 +82,12 @@ export function NoteBlock({
     extensions: [
       CustomLink,
       Underline,
-      StartingKit,
+      StartingKit.configure({
+        link: false,
+        underline: false,
+        trailingNode: false,
+        listKeymap: false,
+      }),
       Placeholder.configure({
         placeholder: "Type something...",
         emptyEditorClass:
@@ -121,6 +118,7 @@ export function NoteBlock({
       },
     },
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
   });
   const { theme } = useTheme();
 

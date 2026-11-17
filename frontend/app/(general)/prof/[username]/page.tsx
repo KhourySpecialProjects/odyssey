@@ -2,6 +2,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { getCachedUserSocial } from "@/lib/requests/cached";
 import { AuthorizedUser, Enrollment } from "@/types";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
@@ -127,7 +128,7 @@ async function getViewerData(
               },
             },
           })
-        : [],
+        : ([] as Enrollment[]),
     ]);
     if (!maybeUserData || typeof maybeUserData.id !== "number") {
       throw new Error("Current user data is missing a valid id");
@@ -135,9 +136,10 @@ async function getViewerData(
 
     return {
       currentUserData: maybeUserData,
-      currentUserCompletedIds: (currentUserEnrollments || [])
-        .filter((enrollment: Enrollment) => enrollment.isComplete)
-        .map((enrollment: Enrollment) => enrollment.droplet.id),
+      currentUserCompletedIds: currentUserEnrollments
+        .filter(hasDroplet)
+        .filter((e) => e.isComplete)
+        .map((e) => e.droplet.id),
     };
   } catch (error) {
     console.error("Error fetching current user data:", error);

@@ -121,6 +121,25 @@ describe("EnrolledDropletsGrid", () => {
     expect(screen.getByText("Showing 1 enrolled droplets")).toBeInTheDocument();
   });
 
+  it("skips enrollments whose droplet is null", async () => {
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([
+      { isArchived: false, droplet: null, viewedLessons: [] },
+      {
+        isArchived: false,
+        droplet: {
+          id: 1,
+          name: "Enrolled Droplet",
+          lessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],
+        },
+        viewedLessons: [],
+      },
+    ]);
+
+    render(await EnrolledDropletsGrid({}));
+
+    expect(screen.getByText("Showing 1 enrolled droplets")).toBeInTheDocument();
+  });
+
   it("returns null when user is not found", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue(null);
 

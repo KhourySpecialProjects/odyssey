@@ -32,11 +32,27 @@ export function Search() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, pathname, searchParams]);
 
+  const onChange = (value: string) => {
+    setSearchQuery(value);
+    // New results start again at page 1 (ODY-865). Done now, not after the
+    // debounce, so the grid never shows a clamped page of the new results.
+    if (searchParams.has("page")) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("page");
+      const query = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        query ? `${pathname}?${query}` : pathname,
+      );
+    }
+  };
+
   return (
     <SearchBar
       placeholder="Search..."
       value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
       className="w-full md:w-[560px]"
       inputClassName="h-9"
     />

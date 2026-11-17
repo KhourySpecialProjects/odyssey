@@ -595,4 +595,93 @@ describe("LearningObjectivesInput", () => {
       expect(heading.tagName).toBe("H2");
     });
   });
+
+  describe("Pasting a list", () => {
+    const paste = (input: HTMLElement, text: string) =>
+      fireEvent.paste(input, { clipboardData: { getData: () => text } });
+
+    it("adds one objective per pasted line", () => {
+      render(
+        <LearningObjectivesInput
+          learningObjectives={mockLearningObjectives}
+          setLearningObjectives={mockSetLearningObjectives}
+        />,
+      );
+
+      const input = screen.getByPlaceholderText("New Learning Objective...");
+      paste(input, "- Understand hooks\r\n2. Write tests\n\nShip it");
+
+      expect(mockSetLearningObjectives).toHaveBeenCalledTimes(1);
+      expect(mockSetLearningObjectives).toHaveBeenCalledWith([
+        "Learn React",
+        "Master TypeScript",
+        "Understand hooks",
+        "Write tests",
+        "Ship it",
+      ]);
+    });
+
+    it("prevents the default paste for multi-line text", () => {
+      render(
+        <LearningObjectivesInput
+          learningObjectives={[]}
+          setLearningObjectives={mockSetLearningObjectives}
+        />,
+      );
+
+      const input = screen.getByPlaceholderText("New Learning Objective...");
+      const notPrevented = paste(input, "One\nTwo");
+
+      expect(notPrevented).toBe(false);
+    });
+
+    it("skips objectives already in the list", () => {
+      render(
+        <LearningObjectivesInput
+          learningObjectives={mockLearningObjectives}
+          setLearningObjectives={mockSetLearningObjectives}
+        />,
+      );
+
+      const input = screen.getByPlaceholderText("New Learning Objective...");
+      paste(input, "Learn React\nNew one");
+
+      expect(mockSetLearningObjectives).toHaveBeenCalledWith([
+        "Learn React",
+        "Master TypeScript",
+        "New one",
+      ]);
+    });
+
+    it("leaves typed text in the input", () => {
+      render(
+        <LearningObjectivesInput
+          learningObjectives={[]}
+          setLearningObjectives={mockSetLearningObjectives}
+        />,
+      );
+
+      const input = screen.getByPlaceholderText("New Learning Objective...");
+      fireEvent.change(input, { target: { value: "half typed" } });
+      paste(input, "One\nTwo");
+
+      expect(mockSetLearningObjectives).toHaveBeenCalledWith(["One", "Two"]);
+      expect(input).toHaveValue("half typed");
+    });
+
+    it("does not intercept a single-line paste", () => {
+      render(
+        <LearningObjectivesInput
+          learningObjectives={[]}
+          setLearningObjectives={mockSetLearningObjectives}
+        />,
+      );
+
+      const input = screen.getByPlaceholderText("New Learning Objective...");
+      const notPrevented = paste(input, "Just one line");
+
+      expect(notPrevented).toBe(true);
+      expect(mockSetLearningObjectives).not.toHaveBeenCalled();
+    });
+  });
 });

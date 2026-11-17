@@ -1,3 +1,5 @@
+import type { Enrollment, EnrollmentWithDroplet } from "@/types";
+
 /**
  * Whether an enrollment is missing completion data it should have: every
  * lesson viewed but not marked complete or without a completionDate, or
@@ -34,4 +36,29 @@ export function enrollmentNeedsCompletionBackfill(
     enrollment.completionDate,
     allViewed,
   );
+}
+
+/**
+ * Percent (0-100) of the droplet's lessons this enrollment has viewed. Counts
+ * only viewed lessons still in the droplet, like the lesson sidebar, so stray
+ * viewedLessons links can't push it past 100. A droplet with no lessons is 0.
+ */
+export function enrollmentProgressPercent(
+  enrollment: EnrollmentProgress,
+): number {
+  const lessonIds = new Set(
+    (enrollment.droplet?.lessons ?? []).map((l) => l.id),
+  );
+  if (lessonIds.size === 0) return 0;
+  const viewed = new Set(
+    (enrollment.viewedLessons ?? [])
+      .map((l) => l.id)
+      .filter((id) => lessonIds.has(id)),
+  );
+  return (viewed.size / lessonIds.size) * 100;
+}
+
+/** Type guard that drops enrollments whose droplet is null (unpublished or deleted). */
+export function hasDroplet(e: Enrollment): e is EnrollmentWithDroplet {
+  return e.droplet != null;
 }

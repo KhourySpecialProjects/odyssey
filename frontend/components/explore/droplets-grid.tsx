@@ -8,6 +8,7 @@ import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { getFavoritedDropletIds } from "@/lib/requests/droplet";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
@@ -44,8 +45,9 @@ export async function DropletsGrid({
       getFavoritedDropletIds(userId),
     ]);
 
-    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
-    archivedDropletIds = enrollments
+    const withDroplet = enrollments.filter(hasDroplet);
+    enrolledDropletIds = withDroplet.map((e) => e.droplet.id);
+    archivedDropletIds = withDroplet
       .filter((e) => e.isArchived)
       .map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(

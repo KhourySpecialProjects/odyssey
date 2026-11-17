@@ -38,6 +38,7 @@ export function DropletNameInput({
     content: initialContent,
     editorProps: {
       attributes: {
+        "aria-label": "Droplet name",
         class: "outline-none cursor-text px-1 py-2",
       },
     },
@@ -50,5 +51,5 @@ export function DropletNameInput({
     }
   }, [editor]);
 
-  return <EditorContent name="droplet-name" editor={editor} role="textbox" />;
+  return <EditorContent name="droplet-name" editor={editor} />;
 }

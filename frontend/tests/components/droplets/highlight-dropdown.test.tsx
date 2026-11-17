@@ -41,8 +41,27 @@ describe("HighlightDropdown", () => {
         <HighlightDropdown {...mockProps} expanded={true} />,
       );
 
-      const portal = baseElement.querySelector(".right-\\[355px\\]");
+      const portal = baseElement.querySelector(".right-\\[360px\\]");
       expect(portal).toBeInTheDocument();
+    });
+
+    it("sits beside the panel when Mentor is open", () => {
+      const { baseElement } = render(
+        <HighlightDropdown {...mockProps} panel="mentor" />,
+      );
+
+      expect(
+        baseElement.querySelector(".right-\\[360px\\]"),
+      ).toBeInTheDocument();
+      expect(screen.getByTitle("View Notes Bar")).toBeInTheDocument();
+    });
+
+    it("renders the toggle as a labelled button", () => {
+      render(<HighlightDropdown {...mockProps} />);
+
+      expect(
+        screen.getByRole("button", { name: "View Notes Bar" }),
+      ).toBeInTheDocument();
     });
 
     it("applies correct positioning when collapsed", () => {

@@ -1,0 +1,69 @@
+{
+  "scorer": "Claude, to Brady Cai's bar (Brady asked the AI to match these, 2026-11-02)",
+  "split": "tune",
+  "rubricVersion": "2026-10-26-seed",
+  "lessons": [
+    {
+      "lessonId": 162,
+      "lessonName": "Building a Profile Generator",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 5,
+        "Scaffolding": 4,
+        "Quality": 5
+      },
+      "reasons": {
+        "Scaffolding": "Relies on React (useState, props, create-react-app) but the droplet lists no prerequisite droplets, and the refresher links go to Notion, not Odyssey."
+      }
+    },
+    {
+      "lessonId": 163,
+      "lessonName": "Profile Components",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 4,
+        "Scaffolding": 5,
+        "Quality": 5
+      },
+      "reasons": {
+        "Flow": "Says \"add these into the form component\" but never shows the assembled Form."
+      }
+    },
+    {
+      "lessonId": 164,
+      "lessonName": "Profile Touch-ups and Styling",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 4,
+        "Scaffolding": 4,
+        "Quality": 5
+      },
+      "reasons": {
+        "Flow": "Ends on \"Drop this into the src directory\" without naming the CSS file or where it's imported, and doesn't show the styled result.",
+        "Scaffolding": "The CSS styles div.output and div.column, which the Output component only gets in lesson 4."
+      }
+    },
+    {
+      "lessonId": 165,
+      "lessonName": "Extending the Profile Generator",
+      "scores": {
+        "Tone": 5,
+        "Style": 5,
+        "Flow": 5,
+        "Scaffolding": 5,
+        "Quality": 5
+      }
+    }
+  ],
+  "overall": {
+    "Tone": 5,
+    "Style": 5,
+    "Flow": 4,
+    "Scaffolding": 4,
+    "Quality": 5
+  },
+  "notes": "Broken code (lesson 3's missing showOutput state, lesson 4's Output props, the JSX comment in lesson 2, the CSS @import) is not counted in the scores; it's reported as findings."
+}

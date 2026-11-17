@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getAllNotesByUser } from "@/lib/requests/notes";
 import { getAllHighlightsByUser } from "@/lib/requests/highlights";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { Note, Highlight } from "@/types";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
@@ -20,7 +21,7 @@ export default async function NotesPage() {
 
   const userId = await getAuthorizedUserId(currentUser);
   if (!userId) redirect("/");
-  const [enrollments, allUserNotes, allUserHighlights] = await Promise.all([
+  const [rawEnrollments, allUserNotes, allUserHighlights] = await Promise.all([
     getEnrollmentsByAuthorizedUser(userId, {
       populate: {
         droplet: {
@@ -36,6 +37,8 @@ export default async function NotesPage() {
     getAllNotesByUser(userId),
     getAllHighlightsByUser(userId),
   ]);
+
+  const enrollments = rawEnrollments.filter(hasDroplet);
 
   // Build lessonId -> dropletId map from enrollments
   const lessonToDroplet = new Map<number, number>();

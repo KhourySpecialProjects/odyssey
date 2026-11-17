@@ -13,6 +13,7 @@ export function RadioSelect({
   setSelected,
   className = "",
   firstTime,
+  labelAddon,
 }: {
   label: string;
   items: RadioItem[];
@@ -20,11 +21,13 @@ export function RadioSelect({
   setSelected: (selected: string) => void;
   className?: string;
   firstTime?: boolean;
+  labelAddon?: React.ReactNode;
 }) {
   return (
     <div className={`flex flex-col items-start ${className}`}>
       <div className="py-1.5 text-xl font-bold text-slate-900 dark:text-white">
         {label} {firstTime && <span className="text-red-500">*</span>}
+        {labelAddon}
       </div>
       <RadioGroup
         className="xs:flex-col flex gap-4 md:flex-row"

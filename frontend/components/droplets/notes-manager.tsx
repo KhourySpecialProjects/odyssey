@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { NotesSummaryClient } from "./notes-summary-client";
 import { NotesPdfButton } from "./notes-pdf-button";
-import { Enrollment, Highlight, Note } from "@/types";
+import { EnrollmentWithDroplet, Highlight, Note } from "@/types";
 import { Button } from "../ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconNotes } from "@tabler/icons-react";
@@ -12,7 +12,7 @@ export function NotesManager({
   allNotes,
   initialPdfBytes,
 }: {
-  enrollments: Enrollment[];
+  enrollments: EnrollmentWithDroplet[];
   allNotes: {
     dropletId: number;
     notes: Note[];

@@ -7,6 +7,7 @@ import {
   getCachedUserDueDates,
 } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
@@ -34,10 +35,11 @@ export async function EnrolledDropletsGrid({
   const userId = await getAuthorizedUserId(user);
   if (!userId) return null;
 
-  const [enrollments, dueDates] = await Promise.all([
+  const [allEnrollments, dueDates] = await Promise.all([
     getCachedEnrollmentsFavorites(userId),
     getCachedUserDueDates(userId),
   ]);
+  const enrollments = allEnrollments.filter(hasDroplet);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
 

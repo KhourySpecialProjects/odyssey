@@ -164,6 +164,21 @@ No action needed:
    → Correct behavior, not a real violation
 ```
 
+## Phase 4: Draft Slack Handoff
+
+If Phase 0.5 wrote a progress file, draft a `[STATUS]` handoff for the team's
+Slack channel (`#prj-odyssey-agents`) in the format from `docs/agent/multi-agent-coordination.md`:
+completed work, remaining work, blockers and next action, with the branch or
+PR, in five lines or fewer. Mark work `COMPLETED` only if it is on develop
+(`.claude/scripts/coord-status.sh ODY-<n>` reads `ON DEVELOP`). You have no
+Slack tools — put the drafts at the end of your report for the main session to
+post:
+
+- **Tracker row:** the new State, Branch or PR, On develop and Open items for
+  this ticket's row in the "Odyssey agent tracker" list.
+- **Owed items:** every follow-up this session promised or question it asked
+  that isn't settled, each as an `[OPEN]` draft, unless one is already posted.
+
 ## Bloat Prevention
 
 Before writing anything, count existing files:
@@ -199,4 +214,5 @@ Promoted: [N items promoted to CLAUDE.md or reference docs]
 Pruned: [N stale learnings removed]
 Total learnings on file: [N]
 Next session: [any flagged items for follow-up]
+Slack handoff: [drafts from Phase 4: [STATUS], tracker row, [OPEN] items — or "nothing to post"]
 ```

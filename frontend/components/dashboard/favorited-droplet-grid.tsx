@@ -4,6 +4,7 @@ import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
 import { getCachedEnrollmentsFavorites } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
+import { hasDroplet } from "@/lib/enrollment-completion";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { IconHeart } from "@tabler/icons-react";
 
@@ -14,7 +15,9 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const userId = await getAuthorizedUserId(user);
   if (!userId) return null;
 
-  const enrollments = await getCachedEnrollmentsFavorites(userId);
+  const enrollments = (await getCachedEnrollmentsFavorites(userId)).filter(
+    hasDroplet,
+  );
 
   // Fixed: Added return and compare IDs instead of objects
   const filteredEnrollments = enrollments.filter((e) =>

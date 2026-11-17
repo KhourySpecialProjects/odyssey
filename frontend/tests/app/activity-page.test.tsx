@@ -67,14 +67,22 @@ describe("Activity feed page", () => {
     expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
     expect(fetchAnnouncements).toHaveBeenCalledWith(
       1,
-      ["droplet", "playlist", "group", "system", "friend", "kudos"],
+      ["droplet", "playlist", "group", "system", "friend", "kudos", "reminder"],
       { archived: false },
     );
     expect(streamed.type).toBe(FeedCenterContent);
     expect(streamed.props).toEqual({
       authUser,
       initialFeed: {
-        roles: ["droplet", "playlist", "group", "system", "friend", "kudos"],
+        roles: [
+          "droplet",
+          "playlist",
+          "group",
+          "system",
+          "friend",
+          "kudos",
+          "reminder",
+        ],
         page: feedPage,
       },
     });

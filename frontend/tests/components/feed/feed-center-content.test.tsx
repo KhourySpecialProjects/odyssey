@@ -36,6 +36,7 @@ describe("FeedCenterContent", () => {
       "system",
       "friend",
       "kudos",
+      "reminder",
     ]);
   });
 
@@ -88,9 +89,21 @@ describe("FeedCenterContent", () => {
     replaceState.mockRestore();
   });
 
+  it("toggles the Reminder pill and leaves it out of old links without it", () => {
+    const replaceState = jest.spyOn(window.history, "replaceState");
+    mockSearch = "filters=system.droplet.playlist.group.friend.kudos";
+    render(<FeedCenterContent authUser={authUser} />);
+    expect(lastFeedClientProps().selectedRoles).not.toContain("reminder");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reminder" }));
+
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/activity");
+    replaceState.mockRestore();
+  });
+
   it("drops the filters param when every role is selected", () => {
     const replaceState = jest.spyOn(window.history, "replaceState");
-    mockSearch = "filters=droplet.playlist.group.system.friend";
+    mockSearch = "filters=droplet.playlist.group.system.friend.reminder";
     render(<FeedCenterContent authUser={authUser} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Kudos" }));

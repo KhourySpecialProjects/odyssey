@@ -52,6 +52,12 @@ const config: Config = {
         },
         secondary: "hsl(var(--secondary) / <alpha-value>)",
         destructive: "hsl(var(--destructive) / <alpha-value>)",
+        mentor: {
+          DEFAULT: "hsl(var(--mentor) / <alpha-value>)",
+          text: "hsl(var(--mentor-text) / <alpha-value>)",
+          soft: "hsl(var(--mentor-soft) / <alpha-value>)",
+          line: "hsl(var(--mentor-line) / <alpha-value>)",
+        },
       },
       spacing: {
         40: "10rem",
