@@ -293,6 +293,14 @@ describe("updateUserInfo — mentorPersonalization is self-only (ODY-935)", () =
     expect(revalidateTag as jest.Mock).toHaveBeenCalledTimes(1);
   });
 
+  it("returns ok:false when Strapi refuses the save", async () => {
+    mockNonAdmin(42);
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+    const result = await updateUserInfo(42, { mentorPersonalization: false });
+    expect(result.ok).toBe(false);
+    expect(revalidateTag as jest.Mock).not.toHaveBeenCalled();
+  });
+
   it("refuses another user, admin included, without writing", async () => {
     mockNonAdmin(42);
     expect(

@@ -20,27 +20,30 @@ describe("MentorPersonalizationToggle", () => {
 
   it.each([true, false])("renders the saved value %s", (value) => {
     render(<MentorPersonalizationToggle userId={5} initialValue={value} />);
-    expect(screen.getByLabelText("Personalize Mentor")).toHaveProperty(
-      "checked",
-      value,
-    );
+    expect(
+      screen.getByRole("switch", { name: "Personalize Mentor" }),
+    ).toHaveProperty("checked", value);
     expect(
       screen.getByText(/Mentor answers everyone the same way/),
     ).toBeInTheDocument();
   });
 
+  it("explains everything the notice lists", () => {
+    render(<MentorPersonalizationToggle userId={5} initialValue={true} />);
+    expect(screen.getByText(/prerequisites, and which lessons/)).toBeVisible();
+  });
+
   it("saves on change", async () => {
     render(<MentorPersonalizationToggle userId={5} initialValue={true} />);
-    fireEvent.click(screen.getByLabelText("Personalize Mentor"));
+    fireEvent.click(screen.getByRole("switch", { name: "Personalize Mentor" }));
     await waitFor(() =>
       expect(mockUpdate).toHaveBeenCalledWith(5, {
         mentorPersonalization: false,
       }),
     );
-    expect(screen.getByLabelText("Personalize Mentor")).toHaveProperty(
-      "checked",
-      false,
-    );
+    expect(
+      screen.getByRole("switch", { name: "Personalize Mentor" }),
+    ).toHaveProperty("checked", false);
   });
 
   it.each([
@@ -52,11 +55,10 @@ describe("MentorPersonalizationToggle", () => {
   ])("reverts and toasts on %s", async (_n, arrange) => {
     arrange();
     render(<MentorPersonalizationToggle userId={5} initialValue={true} />);
-    fireEvent.click(screen.getByLabelText("Personalize Mentor"));
+    fireEvent.click(screen.getByRole("switch", { name: "Personalize Mentor" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(screen.getByLabelText("Personalize Mentor")).toHaveProperty(
-      "checked",
-      true,
-    );
+    expect(
+      screen.getByRole("switch", { name: "Personalize Mentor" }),
+    ).toHaveProperty("checked", true);
   });
 });

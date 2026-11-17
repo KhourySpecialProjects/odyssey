@@ -51,9 +51,10 @@ export function MentorPersonalizationToggle({
         id={`${id}-help`}
         className="text-sm text-gray-600 dark:text-slate-300"
       >
-        Mentor uses the droplets you&apos;ve finished and are working on to
-        tailor its answers. Turn this off and Mentor answers everyone the same
-        way.
+        Mentor uses the droplets you&apos;ve finished and are working on,
+        whether you&apos;ve finished this droplet&apos;s prerequisites, and
+        which lessons you&apos;ve viewed to tailor its answers. Turn this off
+        and Mentor answers everyone the same way. Saved automatically.
       </p>
     </div>
   );

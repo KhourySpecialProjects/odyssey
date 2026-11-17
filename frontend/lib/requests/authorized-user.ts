@@ -695,18 +695,25 @@ export async function updateUserInfo(
         };
       }
 
-      await fetch(await strapiEntryUrl("authorized-users", userId), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
+      const res = await fetch(
+        await strapiEntryUrl("authorized-users", userId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+          body: JSON.stringify({ data }),
         },
-        body: JSON.stringify({ data }),
-      });
+      );
+      // A refused save must not look saved (the toggle reverts on ok:false).
+      if (!res.ok) {
+        console.error("Error updating user info: PUT status", res.status);
+        return { ok: false, error: "update_failed", data: null };
+      }
     } catch (err) {
-      // The PUT response was never inspected, so a 404/400 for a missing user
-      // or role was silently ignored. Keep that.
+      // A missing user has nothing to update; keep ignoring it.
       if (!(err instanceof StrapiEntryNotFoundError)) throw err;
     }
     // firstTime and isPublic never appear in another user's cached view: the
