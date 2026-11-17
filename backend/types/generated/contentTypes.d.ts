@@ -1650,7 +1650,7 @@ export interface ApiMentorFeedbackMentorFeedback
 export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
   collectionName: 'mentor_settings';
   info: {
-    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890)";
+    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890). personalize lets Mentor add the student's own learning history to answers, when the student allows it (ODY-934)";
     displayName: 'Mentor Settings';
     pluralName: 'mentor-settings';
     singularName: 'mentor-setting';
@@ -1679,6 +1679,7 @@ export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
         },
         number
       >;
+    personalize: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     perUserDailyLimit: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

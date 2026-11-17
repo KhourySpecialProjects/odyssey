@@ -9,8 +9,9 @@ jest.mock("@/lib/utils", () => ({ fetchAPI: jest.fn() }));
 
 const mockedFetchAPI = jest.mocked(fetchAPI);
 
-const setting = (enabled: boolean, pilot: number[]) => ({
+const setting = (enabled: boolean, pilot: number[], personalize?: boolean) => ({
   enabled,
+  personalize,
   pilotGroups: pilot.map((id) => ({ id })),
 });
 
@@ -21,15 +22,16 @@ beforeEach(() => {
 
 describe("getMentorSetting", () => {
   it("reads the single type with its pilot group ids, cached 60s", async () => {
-    mockedFetchAPI.mockResolvedValueOnce(setting(true, [3, 4]));
+    mockedFetchAPI.mockResolvedValueOnce(setting(true, [3, 4], true));
 
     await expect(getMentorSetting()).resolves.toEqual({
       enabled: true,
+      personalize: true,
       pilotGroupIds: [3, 4],
     });
     expect(mockedFetchAPI).toHaveBeenCalledWith("/mentor-setting", {
       urlParams: {
-        fields: ["enabled"],
+        fields: ["enabled", "personalize"],
         populate: { pilotGroups: { fields: ["id"] } },
       },
       next: { tags: [CACHE_TAGS.mentorSetting], revalidate: 60 },
@@ -40,14 +42,30 @@ describe("getMentorSetting", () => {
     mockedFetchAPI.mockResolvedValueOnce(value);
     await expect(getMentorSetting()).resolves.toEqual({
       enabled: false,
+      personalize: false,
       pilotGroupIds: [],
     });
   });
+
+  it.each([null, undefined, false])(
+    "reads personalize %p as off",
+    async (p) => {
+      mockedFetchAPI.mockResolvedValueOnce({
+        ...setting(true, []),
+        personalize: p,
+      });
+      await expect(getMentorSetting()).resolves.toMatchObject({
+        enabled: true,
+        personalize: false,
+      });
+    },
+  );
 
   it("is closed when the read fails", async () => {
     mockedFetchAPI.mockRejectedValueOnce(new Error("down"));
     await expect(getMentorSetting()).resolves.toEqual({
       enabled: false,
+      personalize: false,
       pilotGroupIds: [],
     });
   });
