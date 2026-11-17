@@ -1614,6 +1614,7 @@ export interface ApiMentorChatMentorChat extends Struct.CollectionTypeSchema {
     >;
     publishedAt: Schema.Attribute.DateTime;
     title: Schema.Attribute.String &
+      Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 80;
       }>;
@@ -1722,7 +1723,11 @@ export interface ApiMentorMessageMentorMessage
     publishedAt: Schema.Attribute.DateTime;
     role: Schema.Attribute.Enumeration<['user', 'assistant']> &
       Schema.Attribute.Required;
-    text: Schema.Attribute.Text & Schema.Attribute.Private;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

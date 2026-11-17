@@ -34,7 +34,8 @@
     },
     "title": {
       "type": "string",
-      "maxLength": 80
+      "maxLength": 80,
+      "private": true
     },
     "lastMessageAt": {
       "type": "datetime"

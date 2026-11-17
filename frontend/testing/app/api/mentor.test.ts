@@ -388,7 +388,10 @@ describe("POST /api/mentor", () => {
 
       const response = await post(ask({ chatId: "ownedchat01" }));
 
-      expect(owned).toHaveBeenCalledWith(7, "ownedchat01");
+      expect(owned).toHaveBeenCalledWith(7, "ownedchat01", {
+        lessonId: expect.any(Number),
+        kind: expect.any(String),
+      });
       expect(start).not.toHaveBeenCalled();
       expect(response.headers.get("X-Mentor-Chat-Id")).toBe("ownedchat01");
     });

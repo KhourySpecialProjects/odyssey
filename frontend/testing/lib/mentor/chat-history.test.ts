@@ -1,22 +1,15 @@
 /** @jest-environment node */
 import { revalidateTag } from "next/cache";
 import {
-  deleteChatRows,
-  MENTOR_CHAT_RETENTION_DAYS,
+  deleteMentorChatOf,
+  errorName,
   ownedChat,
-  purgeExpiredMentorChats,
   saveMentorExchange,
   startMentorChat,
 } from "@/lib/mentor/chat-history";
-import {
-  agedChat,
-  fakeMentorStrapi,
-} from "@/testing/mocks/mentorChatStrapiMock";
+import { fakeMentorStrapi } from "@/testing/mocks/mentorChatStrapiMock";
 
 jest.mock("next/cache", () => ({ revalidateTag: jest.fn() }));
-jest.mock("@/lib/strapi-document-id", () => ({
-  resolveDocumentId: jest.fn(async (c: string, id: number) => `${c}:${id}`),
-}));
 
 let store: ReturnType<typeof fakeMentorStrapi>;
 const start = (userId = 7, title = "What is an index?") =>
@@ -56,6 +49,27 @@ describe("startMentorChat and ownedChat", () => {
     expect(await ownedChat(7, "not a document id!")).toBeNull();
     expect(await ownedChat(0, id)).toBeNull();
   });
+
+  it("matches the lesson and kind when given", async () => {
+    const id = await start(7);
+
+    expect(
+      await ownedChat(7, id, { lessonId: 9, kind: "lesson" }),
+    ).not.toBeNull();
+    expect(await ownedChat(7, id, { lessonId: 10 })).toBeNull();
+    expect(await ownedChat(7, id, { kind: "explain" })).toBeNull();
+  });
+
+  it("keeps the HTTP status in the error it throws", async () => {
+    const id = await start(7);
+    global.fetch = jest.fn(
+      async () => new Response("{}", { status: 503 }),
+    ) as never;
+
+    const error = await ownedChat(7, id).catch((e) => e);
+
+    expect(errorName(error)).toMatch(/GET .*owned\/.* 503$/);
+  });
 });
 
 describe("saveMentorExchange", () => {
@@ -80,45 +94,22 @@ describe("saveMentorExchange", () => {
   });
 });
 
-describe("purgeExpiredMentorChats", () => {
-  it("deletes only chats past 30 days, with their messages", async () => {
-    expect(MENTOR_CHAT_RETENTION_DAYS).toBe(30);
-    const old = agedChat(store, 7, 31);
-    const recent = agedChat(store, 7, 29);
-
-    expect(await purgeExpiredMentorChats()).toBe(1);
-
-    expect(store.chats.map((c) => c.documentId)).toEqual([recent.documentId]);
-    expect(store.messages.map((m) => m.chat)).toEqual([recent.documentId]);
-    expect(store.messages.some((m) => m.chat === old.documentId)).toBe(false);
-  });
-
-  it("limits itself to one user when given one", async () => {
-    agedChat(store, 7, 40);
-    const other = agedChat(store, 8, 40);
-
-    expect(await purgeExpiredMentorChats(7)).toBe(1);
-    expect(store.chats.map((c) => c.documentId)).toEqual([other.documentId]);
-    expect(revalidateTag).toHaveBeenCalledWith("mentor-chats-7");
-  });
-
-  it("deletes a chat that never got a message once it is 30 days old", async () => {
+describe("deleteMentorChatOf", () => {
+  it("deletes the owner's chat with its messages and says no for anyone else", async () => {
     const id = await start(7);
-    store.chats[0].createdAt = new Date(
-      Date.now() - 31 * 86_400_000,
-    ).toISOString();
+    await saveMentorExchange({
+      chatDocumentId: id,
+      userId: 7,
+      question: "q",
+      answer: "a",
+      citations: [],
+    });
 
-    expect(await purgeExpiredMentorChats(7)).toBe(1);
-    expect(await ownedChat(7, id)).toBeNull();
-  });
-
-  it("keeps going quietly when Strapi fails", async () => {
-    global.fetch = jest.fn(
-      async () => new Response("{}", { status: 500 }),
-    ) as never;
-    jest.spyOn(console, "error").mockImplementation(() => {});
-
-    expect(await purgeExpiredMentorChats()).toBe(0);
+    expect(await deleteMentorChatOf(8, id)).toBe(false);
+    expect(store.chats).toHaveLength(1);
+    expect(await deleteMentorChatOf(7, id)).toBe(true);
+    expect(store.chats).toHaveLength(0);
+    expect(store.messages).toHaveLength(0);
   });
 });
 
@@ -142,8 +133,7 @@ describe("logging", () => {
         citations: [],
       }),
     ).rejects.toThrow();
-    await deleteChatRows(id).catch(() => {});
-    await purgeExpiredMentorChats();
+    await deleteMentorChatOf(7, id).catch(() => {});
 
     const logged = JSON.stringify(spies.flatMap((s) => s.mock.calls));
     expect(logged).not.toContain(secret);

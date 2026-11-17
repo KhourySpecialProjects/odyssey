@@ -119,7 +119,10 @@ export async function POST(request: Request): Promise<Response> {
     if (input.kind !== "quiz-hint") {
       try {
         const own = input.chatId
-          ? await ownedChat(gate.user.id, input.chatId)
+          ? await ownedChat(gate.user.id, input.chatId, {
+              lessonId: input.lessonId,
+              kind: input.kind,
+            })
           : null;
         chatId =
           own?.documentId ??

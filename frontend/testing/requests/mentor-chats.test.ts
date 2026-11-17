@@ -8,16 +8,10 @@ import {
   listMentorChats,
 } from "@/lib/requests/mentor-chats";
 import { saveMentorExchange, startMentorChat } from "@/lib/mentor/chat-history";
-import {
-  agedChat,
-  fakeMentorStrapi,
-} from "@/testing/mocks/mentorChatStrapiMock";
+import { fakeMentorStrapi } from "@/testing/mocks/mentorChatStrapiMock";
 
 jest.mock("next/cache", () => ({ revalidateTag: jest.fn() }));
 jest.mock("@/lib/auth/require-role", () => ({ requireRole: jest.fn() }));
-jest.mock("@/lib/strapi-document-id", () => ({
-  resolveDocumentId: jest.fn(async (c: string, id: number) => `${c}:${id}`),
-}));
 
 const gate = jest.mocked(requireRole);
 let store: ReturnType<typeof fakeMentorStrapi>;
@@ -72,12 +66,11 @@ describe("signed out", () => {
 });
 
 describe("listMentorChats", () => {
-  it("lists only the caller's saved chats, newest first, after purging old ones", async () => {
+  it("lists only the caller's saved chats, newest first", async () => {
     const first = await saved(7, "first");
     await new Promise((r) => setTimeout(r, 5));
     const second = await saved(7, "second");
     await saved(8, "someone else's");
-    agedChat(store, 7, 45);
 
     const res = await listMentorChats();
 
@@ -85,7 +78,6 @@ describe("listMentorChats", () => {
       second,
       first,
     ]);
-    expect(store.chats.some((c) => c.title === "old question")).toBe(false);
   });
 
   it("refuses a bad lessonId", async () => {

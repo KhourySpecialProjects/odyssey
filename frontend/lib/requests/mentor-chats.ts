@@ -1,16 +1,14 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/require-role";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   chatApi,
-  deleteChatRows,
+  deleteMentorChatOf,
   deleteMentorChatsOf,
   errorName,
-  ownedChat,
-  purgeExpiredMentorChats,
+  MentorChatRequestError,
   type MentorChatRow,
 } from "@/lib/mentor/chat-history";
 import type { Citation } from "@/lib/mentor/types";
@@ -25,7 +23,6 @@ export type MentorChatSummary = MentorChatRow & {
   lesson: { name: string; slug: string } | null;
 };
 export type MentorChatMessage = {
-  id: number;
   documentId: string;
   role: "user" | "assistant";
   text: string;
@@ -42,7 +39,7 @@ function failed(error: unknown): Failure {
   return { ok: false, error: "failed" };
 }
 
-/** The student's chats, newest first. Chats over 30 days old are deleted first. */
+/** The student's chats, newest first. Strapi leaves out chats over 30 days old. */
 export async function listMentorChats(
   input: { lessonId?: number } = {},
 ): Promise<{ ok: true; data: MentorChatSummary[] } | Failure> {
@@ -52,30 +49,10 @@ export async function listMentorChats(
   if (!parsed.success) return { ok: false, error: "not_found" };
   const userId = gate.user.id;
   try {
-    await purgeExpiredMentorChats(userId);
-    const rows = await chatApi<MentorChatSummary[] | null>(
-      "GET",
-      "/mentor-chats",
-      {
-        query: {
-          filters: {
-            authorizedUser: { id: { $eq: userId } },
-            lastMessageAt: { $notNull: true },
-            ...(parsed.data.lessonId !== undefined && {
-              lesson: { id: { $eq: parsed.data.lessonId } },
-            }),
-          },
-          fields: ["documentId", "kind", "title", "lastMessageAt"],
-          populate: {
-            droplet: { fields: ["name", "slug"] },
-            lesson: { fields: ["name", "slug"] },
-          },
-          sort: ["lastMessageAt:desc"],
-          pagination: { pageSize: 100 },
-        },
-        next: { revalidate: 60, tags: [CACHE_TAGS.mentorChats(userId)] },
-      },
-    );
+    const rows = await chatApi<MentorChatSummary[] | null>("GET", "/owned", {
+      query: { userId, lessonId: parsed.data.lessonId },
+      next: { revalidate: 60, tags: [CACHE_TAGS.mentorChats(userId)] },
+    });
     return { ok: true, data: rows ?? [] };
   } catch (error) {
     return failed(error);
@@ -94,21 +71,22 @@ export async function getMentorChat(
   const id = chatIdSchema.safeParse(chatId);
   if (!id.success) return { ok: false, error: "not_found" };
   try {
-    const chat = await ownedChat(gate.user.id, id.data);
-    if (!chat) return { ok: false, error: "not_found" };
-    const messages = await chatApi<MentorChatMessage[] | null>(
-      "GET",
-      "/mentor-messages",
-      {
-        query: {
-          filters: { chat: { documentId: { $eq: chat.documentId } } },
-          fields: ["documentId", "role", "text", "citations"],
-          sort: ["createdAt:asc", "id:asc"],
-          pagination: { pageSize: 100 },
-        },
-      },
-    );
-    return { ok: true, data: { chat, messages: messages ?? [] } };
+    const found = await chatApi<{
+      chat: MentorChatRow;
+      messages: MentorChatMessage[];
+    }>("GET", `/owned/${id.data}`, {
+      query: { userId: gate.user.id, messages: true },
+    }).catch((error) => {
+      if (error instanceof MentorChatRequestError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    });
+    if (!found) return { ok: false, error: "not_found" };
+    return {
+      ok: true,
+      data: { chat: found.chat, messages: found.messages ?? [] },
+    };
   } catch (error) {
     return failed(error);
   }
@@ -123,11 +101,8 @@ export async function deleteMentorChat(
   const id = chatIdSchema.safeParse(chatId);
   if (!id.success) return { ok: false, error: "not_found" };
   try {
-    const chat = await ownedChat(gate.user.id, id.data);
-    if (!chat) return { ok: false, error: "not_found" };
-    await deleteChatRows(chat.documentId);
-    revalidateTag(CACHE_TAGS.mentorChats(gate.user.id));
-    return { ok: true };
+    const deleted = await deleteMentorChatOf(gate.user.id, id.data);
+    return deleted ? { ok: true } : { ok: false, error: "not_found" };
   } catch (error) {
     return failed(error);
   }

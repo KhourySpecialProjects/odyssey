@@ -25,6 +25,8 @@
     },
     "text": {
       "type": "text",
+      "private": true,
+      "maxLength": 20000
     },
     "citations": {
       "type": "json"
