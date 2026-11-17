@@ -282,3 +282,26 @@ describe("updateUserInfo — cache invalidation", () => {
     expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
 });
+
+describe("updateUserInfo — mentorPersonalization is self-only (ODY-935)", () => {
+  it("lets a user set their own value and keeps the sweep per-user", async () => {
+    mockNonAdmin(42);
+    const result = await updateUserInfo(42, { mentorPersonalization: false });
+    expect(result.ok).toBe(true);
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body.data.mentorPersonalization).toBe(false);
+    expect(revalidateTag as jest.Mock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses another user, admin included, without writing", async () => {
+    mockNonAdmin(42);
+    expect(
+      (await updateUserInfo(99, { mentorPersonalization: false })).error,
+    ).toBe("forbidden");
+    mockAdmin(1);
+    expect(
+      (await updateUserInfo(99, { mentorPersonalization: false })).error,
+    ).toBe("forbidden");
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+});

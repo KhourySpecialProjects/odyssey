@@ -212,6 +212,10 @@
       "default": false,
       "required": false
     },
+    "mentorPersonalization": {
+      "type": "boolean",
+      "default": true
+    },
     "dropletsFavorited": {
       "type": "relation",
       "relation": "manyToMany",

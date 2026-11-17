@@ -11,6 +11,7 @@ import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
+import { MentorPersonalizationToggle } from "@/components/settings/mentor-personalization-toggle";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
 import { userTimeZone } from "@/lib/time-zones";
 import Link from "next/link";
@@ -339,6 +340,11 @@ export function SocialForms({
           Save Changes
         </Button>
       </div>
+
+      <MentorPersonalizationToggle
+        userId={authorizedUser.id}
+        initialValue={authorizedUser.mentorPersonalization !== false}
+      />
 
       <div>
         <ProfileBlock

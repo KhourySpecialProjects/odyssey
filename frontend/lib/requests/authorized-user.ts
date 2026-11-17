@@ -610,6 +610,7 @@ export async function updateUserInfo(
     isEnabled?: boolean;
     isPublic?: boolean;
     firstTime?: boolean;
+    mentorPersonalization?: boolean;
     linkedin?: string | null;
     github?: string | null;
     photo?: string | null;
@@ -622,6 +623,10 @@ export async function updateUserInfo(
     return { ok: false, error: auth.error, data: null };
   }
   const isSelf = auth.user.id === userId;
+  // Self-only: not even an admin sets another user's Mentor choice
+  if (!isSelf && updates.mentorPersonalization !== undefined) {
+    return { ok: false, error: "forbidden", data: null };
+  }
   const isAdmin = auth.user.roles.some(
     (r) => r === AuthorizedUserRoleTitle.SysAdmin,
   );
@@ -655,6 +660,7 @@ export async function updateUserInfo(
       isEnabled,
       isPublic,
       firstTime,
+      mentorPersonalization,
       linkedin,
       github,
       photo,
@@ -676,6 +682,8 @@ export async function updateUserInfo(
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
     if (isPublic !== undefined) data.isPublic = isPublic;
     if (firstTime !== undefined) data.firstTime = firstTime;
+    if (mentorPersonalization !== undefined)
+      data.mentorPersonalization = mentorPersonalization;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
     if (website !== undefined) data.website = website;
@@ -707,7 +715,11 @@ export async function updateUserInfo(
     // getAuthorizedUserByEmail, which carries the per-user tag. Any other
     // field (names, photo, links, roles, isEnabled) is visible in those lists,
     // so it still needs the global sweep. Unknown fields default to global.
-    const SELF_ONLY_FIELDS = new Set(["firstTime", "isPublic"]);
+    const SELF_ONLY_FIELDS = new Set([
+      "firstTime",
+      "isPublic",
+      "mentorPersonalization",
+    ]);
     const selfOnlyChange =
       isSelf && Object.keys(data).every((key) => SELF_ONLY_FIELDS.has(key));
 
