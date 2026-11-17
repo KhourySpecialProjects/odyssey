@@ -830,3 +830,12 @@ interface CustomBlockNoteBlock {
       };
   children: any[];
 }
+
+/** One saved lesson quiz submit (ODY-939): ids and a result, never answer text */
+export type QuizAttempt = {
+  id: number;
+  quizType: "choice" | "open-ended";
+  questionId: number;
+  correct: boolean;
+  attempt: number;
+};
