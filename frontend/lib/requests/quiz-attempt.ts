@@ -12,20 +12,19 @@ type RecordResult =
   | { ok: true }
   | {
       ok: false;
-      error:
-        | "unauthenticated"
-        | "forbidden"
-        | "invalid"
-        | "not_found"
-        | "not_enrolled"
-        | "limit"
-        | "failed";
+      error: "unauthenticated" | "forbidden" | "not_saved" | "limit" | "failed";
     };
 
-const STATUS_ERRORS: Record<number, "not_enrolled" | "not_found" | "limit"> = {
-  403: "not_enrolled",
-  404: "not_found",
+// One client code for every "can't save this" so ids and enrollment don't leak; detail is logged.
+const STATUS_ERRORS: Record<number, "not_saved" | "limit"> = {
+  403: "not_saved",
+  404: "not_saved",
   429: "limit",
+};
+
+const notSaved = (reason: string, ids: object) => {
+  console.warn(`Quiz attempt not saved: ${reason}`, ids);
+  return { ok: false, error: "not_saved" } as const;
 };
 
 /** Saves one quiz submit (ids and result, never the answer) for the signed-in student (ODY-939). */
@@ -34,17 +33,18 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
   if (!gate.ok) return { ok: false, error: gate.error };
 
   const parsed = quizAttemptSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (!parsed.success) return notSaved("invalid body", {});
   const body = parsed.data;
+  const ids = { dropletId: body.dropletId, lessonId: body.lessonId };
 
   const source = await getMentorSource(body.dropletId, body.lessonId);
   const access = source && lessonAccess(source.droplet, body.lessonId);
-  if (!source?.lesson || !access?.ok) return { ok: false, error: "not_found" };
+  if (!source?.lesson || !access?.ok) return notSaved("not_found", ids);
   const known =
     body.quizType === "choice"
       ? choiceQuestionById(source.lesson, body.questionId) !== null
       : hasOpenEndedQuestion(source.lesson, body.questionId);
-  if (!known) return { ok: false, error: "invalid" };
+  if (!known) return notSaved("invalid question", ids);
 
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/quiz-attempts/record`;
   try {
@@ -60,7 +60,7 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
     });
     const json = await readJsonOrNull(response).catch(() => null);
     if (!response.ok || !json?.data) {
-      console.error(`POST ${url} failed:`, response.status);
+      console.error(`POST ${url} failed:`, response.status, ids);
       return { ok: false, error: STATUS_ERRORS[response.status] ?? "failed" };
     }
     return { ok: true };

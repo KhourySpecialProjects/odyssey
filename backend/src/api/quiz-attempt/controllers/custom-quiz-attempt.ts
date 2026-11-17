@@ -11,8 +11,8 @@ function bodyError(body: Record<string, unknown>): string | null {
     return `quizType must be one of ${QUIZ_TYPES.join(', ')}`;
   }
   const q = body.questionId;
-  if (typeof q !== 'number' || !Number.isSafeInteger(q) || q < 1 || q > MAX_QUESTION_ID) {
-    return 'questionId must be a positive integer';
+  if (typeof q !== 'number' || !Number.isSafeInteger(q) || q < 0 || q > MAX_QUESTION_ID) {
+    return 'questionId must be a non-negative integer';
   }
   if (typeof body.correct !== 'boolean') return 'correct must be true or false';
   if (typeof body.submitId !== 'string' || !SUBMIT_ID.test(body.submitId)) {

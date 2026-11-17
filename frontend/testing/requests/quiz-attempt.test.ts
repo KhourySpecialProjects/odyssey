@@ -30,7 +30,7 @@ const input = {
   submitId: "7b1f0c2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b",
 };
 
-const source = (over: { lessons?: { id: number }[] } = {}) =>
+const source = (over: Record<string, unknown> = {}) =>
   ({
     droplet: {
       status: "published",
@@ -46,6 +46,7 @@ const sentBody = () => JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
   fetchMock = mockGlobalFetch();
   mockedRequireRole.mockResolvedValue(authFixtures.as({ id: 7 }));
   mockedSource.mockResolvedValue(source());
@@ -77,6 +78,33 @@ describeServerActionAuth("recordQuizAttempt", {
 });
 
 describe("recordQuizAttempt", () => {
+  it("accepts question id 0 and refuses -1", async () => {
+    await expect(
+      recordQuizAttempt({ ...input, questionId: 0 }),
+    ).resolves.toEqual({ ok: true });
+    expect(sentBody()).toMatchObject({ questionId: 0 });
+    await expect(
+      recordQuizAttempt({ ...input, questionId: -1 }),
+    ).resolves.toEqual({ ok: false, error: "not_saved" });
+  });
+
+  it.each([
+    ["hidden", { isHidden: true }],
+    ["edit-status", { status: "edit" }],
+  ])("still records for a %s droplet (Q6)", async (_name, over) => {
+    mockedSource.mockResolvedValue(source(over as never));
+    await expect(recordQuizAttempt(input)).resolves.toEqual({ ok: true });
+  });
+
+  it("never loads the droplet for an unauthenticated call", async () => {
+    mockedRequireRole.mockResolvedValue({
+      ok: false,
+      error: "unauthenticated",
+    } as never);
+    await recordQuizAttempt(input);
+    expect(mockedSource).not.toHaveBeenCalled();
+  });
+
   it("posts the gate user's id with the ids and result, and nothing else", async () => {
     await expect(recordQuizAttempt(input)).resolves.toEqual({ ok: true });
 
@@ -95,10 +123,10 @@ describe("recordQuizAttempt", () => {
     ["a bad submitId", { ...input, submitId: "abc" }],
     ["a non-boolean correct", { ...input, correct: "yes" }],
     ["no questionId", { ...input, questionId: undefined }],
-  ])("refuses %s as invalid and sends nothing", async (_name, body) => {
+  ])("refuses %s as not_saved and sends nothing", async (_name, body) => {
     await expect(recordQuizAttempt(body)).resolves.toEqual({
       ok: false,
-      error: "invalid",
+      error: "not_saved",
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -106,12 +134,12 @@ describe("recordQuizAttempt", () => {
   it.each([
     ["a missing droplet", null],
     ["a lesson not in the droplet", source({ lessons: [{ id: 99 }] })],
-  ])("returns not_found for %s", async (_name, found) => {
+  ])("returns not_saved for %s", async (_name, found) => {
     mockedSource.mockResolvedValue(found);
 
     await expect(recordQuizAttempt(input)).resolves.toEqual({
       ok: false,
-      error: "not_found",
+      error: "not_saved",
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -121,7 +149,7 @@ describe("recordQuizAttempt", () => {
 
     await expect(recordQuizAttempt(input)).resolves.toEqual({
       ok: false,
-      error: "invalid",
+      error: "not_saved",
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -136,12 +164,12 @@ describe("recordQuizAttempt", () => {
     mockedOpen.mockReturnValue(false);
     await expect(
       recordQuizAttempt({ ...input, quizType: "open-ended" }),
-    ).resolves.toEqual({ ok: false, error: "invalid" });
+    ).resolves.toEqual({ ok: false, error: "not_saved" });
   });
 
   it.each([
-    [403, "not_enrolled"],
-    [404, "not_found"],
+    [403, "not_saved"],
+    [404, "not_saved"],
     [429, "limit"],
     [400, "failed"],
     [500, "failed"],

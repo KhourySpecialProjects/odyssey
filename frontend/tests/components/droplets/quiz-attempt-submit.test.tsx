@@ -96,6 +96,33 @@ describe("quiz attempt on submit (ODY-939)", () => {
     await user.click(screen.getAllByRole("radio")[0]);
     await user.click(screen.getByRole("button", { name: "Check Answer" }));
 
-    expect(await screen.findByText(/Right/)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /That.s Right!/,
+    );
+  });
+
+  it("still shows the result when crypto.randomUUID throws", async () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const original = crypto.randomUUID;
+    Object.defineProperty(crypto, "randomUUID", {
+      configurable: true,
+      value: () => {
+        throw new TypeError("no randomUUID");
+      },
+    });
+    try {
+      const user = userEvent.setup();
+      render(<QuizQuestionBlock question={choice} {...ids} />);
+      await user.click(screen.getAllByRole("radio")[0]);
+      await user.click(screen.getByRole("button", { name: "Check Answer" }));
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        /That.s Right!/,
+      );
+    } finally {
+      Object.defineProperty(crypto, "randomUUID", {
+        configurable: true,
+        value: original,
+      });
+    }
   });
 });
