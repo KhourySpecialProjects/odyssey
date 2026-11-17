@@ -4,14 +4,8 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { fetchAPI } from "@/lib/utils";
 import type { DropletStatus } from "@/types";
+import type { LearnerPrerequisite } from "./learner";
 import type { MentorDroplet, MentorLesson } from "./types";
-
-type Prerequisite = {
-  id: number;
-  name: string;
-  status?: DropletStatus | null;
-  isHidden?: boolean | null;
-};
 
 type RawDroplet = {
   id: number;
@@ -21,14 +15,14 @@ type RawDroplet = {
   isHidden?: boolean | null;
   learningObjectives?: { objective?: string | null }[] | null;
   lessons?: MentorLesson[] | null;
-  prerequisites?: Prerequisite[] | null;
+  prerequisites?: LearnerPrerequisite[] | null;
 };
 
 export type MentorSource = {
   /** What Mentor's prompt reads, plus what `lessonAccess` decides with */
   droplet: MentorDroplet & {
     id: number;
-    prerequisites: Prerequisite[];
+    prerequisites: LearnerPrerequisite[];
     status: DropletStatus | null;
     isHidden: boolean;
     lessons: { id: number }[];

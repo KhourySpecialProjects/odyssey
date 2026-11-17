@@ -34,7 +34,7 @@ export async function getLearnerEnrollments(
         },
         viewedLessons: { fields: ["name"] },
       },
-      sort: ["lastProgressDate:desc"],
+      sort: ["updatedAt:desc"],
       pagination: { pageSize: 250, page: 1 },
     },
     next: {

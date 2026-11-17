@@ -178,9 +178,51 @@ describe("toLearnerContext prerequisites and viewed lessons", () => {
     expect(viewedLessons).not.toContain("Elsewhere");
     expect(viewedLessons).not.toContain("Gone");
   });
+  it("keeps viewed titles in lesson order", () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({ id: i + 1 }));
+    const here: LearnerEnrollment = {
+      isComplete: false,
+      droplet: droplet(99, { lessons: many }),
+      viewedLessons: [...many]
+        .reverse()
+        .map((l) => ({ id: l.id, name: `L${l.id}` })),
+    };
+    const { viewedLessons } = run([here]);
+    expect(viewedLessons[0]).toBe("L1");
+    expect(viewedLessons[14]).toBe("L15");
+  });
+
+  it("drops hidden in-progress droplets", () => {
+    const row: LearnerEnrollment = {
+      isComplete: false,
+      droplet: droplet(5, { isHidden: true }),
+      viewedLessons: [{ id: 1, name: "A" }],
+    };
+    expect(run([row]).inProgress).toEqual([]);
+  });
+
+  it("drops draft and unflagged prerequisites", () => {
+    const c: LearnerCurrentDroplet = {
+      id: 99,
+      prerequisites: [
+        { id: 1, name: "Draft", status: "draft", isHidden: false },
+        { id: 2, name: "Null", status: "published", isHidden: null },
+        { id: 3, name: "Ok", status: "published", isHidden: false },
+      ],
+    };
+    expect(run([], c).prerequisites.map((p) => p.name)).toEqual(["Ok"]);
+  });
 });
 
 describe("toLearnerContext bounds", () => {
+  it("keeps at most 3 tags per finished droplet", () => {
+    const tags = ["a", "b", "c", "d", "e"].map((name) => ({ name }));
+    const { finished } = run([
+      done(1, "2025-01-10T12:00:00Z", { droplet: droplet(1, { tags }) }),
+    ]);
+    expect(finished[0].tags).toEqual(["a", "b", "c"]);
+  });
+
   it("cuts long names to 60 characters with an ellipsis", () => {
     const long = "x".repeat(100);
     const { finished } = run([
@@ -195,6 +237,7 @@ describe("toLearnerContext bounds", () => {
 
   it("keeps the block within its cap for 40 droplets and the worst case of the rest", () => {
     const long = "y".repeat(100);
+    const manyLessons = Array.from({ length: 22 }, (_, i) => ({ id: i + 1 }));
     const rows: LearnerEnrollment[] = [
       ...Array.from({ length: 40 }, (_, i) =>
         done(
@@ -208,6 +251,11 @@ describe("toLearnerContext bounds", () => {
           },
         ),
       ),
+      {
+        isComplete: false,
+        droplet: droplet(99, { lessons: manyLessons }),
+        viewedLessons: manyLessons.map((l) => ({ id: l.id, name: long })),
+      },
       ...Array.from({ length: 6 }, (_, i) => ({
         isComplete: false,
         lastProgressDate: "2025-02-01T12:00:00Z",
@@ -226,5 +274,6 @@ describe("toLearnerContext bounds", () => {
     // with nothing finished, everything else still fits
     const rest = learnerBlock({ ...ctx, finished: [] });
     expect(rest.length).toBeLessThanOrEqual(LEARNER_MAX_CHARS);
+    expect(ctx.viewedLessons).toHaveLength(15);
   });
 });

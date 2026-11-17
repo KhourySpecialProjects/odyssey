@@ -125,10 +125,11 @@ describe('REST', () => {
 
   it('can be read with the service token', async () => {
     const res = await rest()
-      .get('/api/mentor-setting')
+      .get('/api/mentor-setting?fields[0]=enabled&fields[1]=personalize')
       .set({ Authorization: `Bearer ${token}` });
 
     expect(res.status).toBe(200);
+    expect(res.body.data.personalize).toBe(false);
   });
 
   it('cannot be changed over REST, only in the admin', async () => {

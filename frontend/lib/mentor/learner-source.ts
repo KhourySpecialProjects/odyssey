@@ -21,7 +21,8 @@ export async function getLearnerContext(
 ): Promise<LearnerContext | null> {
   try {
     return toLearnerContext(await getLearnerEnrollments(userId), droplet);
-  } catch {
+  } catch (e) {
+    console.warn("mentor learner context failed", (e as Error).message);
     return null;
   }
 }

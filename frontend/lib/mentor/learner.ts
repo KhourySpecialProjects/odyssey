@@ -81,15 +81,17 @@ export type LearnerEnrollment = {
   viewedLessons?: { id: number; name: string }[] | null;
 };
 
+export type LearnerPrerequisite = {
+  id: number;
+  name: string;
+  status?: string | null;
+  isHidden?: boolean | null;
+};
+
 /** The droplet Mentor is answering in */
 export type LearnerCurrentDroplet = {
   id: number;
-  prerequisites: {
-    id: number;
-    name: string;
-    status?: string | null;
-    isHidden?: boolean | null;
-  }[];
+  prerequisites: LearnerPrerequisite[];
 };
 
 const NAME_MAX = 60;
@@ -97,6 +99,7 @@ const PREREQUISITES_MAX = 8;
 const FINISHED_MAX = 15;
 const IN_PROGRESS_MAX = 5;
 const VIEWED_MAX = 15;
+const TAGS_MAX = 3;
 
 const cut = (text: string) =>
   text.length > NAME_MAX ? `${text.slice(0, NAME_MAX - 1).trimEnd()}…` : text;
@@ -150,7 +153,7 @@ export function toLearnerContext(
       if (!date) continue;
       finished.push({
         name: cut(droplet.name),
-        tags: (droplet.tags ?? []).map((t) => cut(t.name)),
+        tags: (droplet.tags ?? []).slice(0, TAGS_MAX).map((t) => cut(t.name)),
         difficulty: droplet.difficulty ?? null,
         month: date.month,
         time: date.time,
@@ -167,7 +170,8 @@ export function toLearnerContext(
   }
 
   const here = shown.find((r) => r.droplet!.id === current.id);
-  const hereLessons = new Set((here?.droplet?.lessons ?? []).map((l) => l.id));
+  const hereOrder = (here?.droplet?.lessons ?? []).map((l) => l.id);
+  const hereLessons = new Set(hereOrder);
   const newest = <T extends { time: number }>(a: T, b: T) => b.time - a.time;
   return {
     finished: finished
@@ -182,8 +186,10 @@ export function toLearnerContext(
       .filter(visible)
       .slice(0, PREREQUISITES_MAX)
       .map((p) => ({ name: cut(p.name), finished: finishedIds.has(p.id) })),
+    // Lesson order, so the 15 kept are the course's first ones
     viewedLessons: (here?.viewedLessons ?? [])
       .filter((l) => hereLessons.has(l.id))
+      .sort((a, b) => hereOrder.indexOf(a.id) - hereOrder.indexOf(b.id))
       .slice(0, VIEWED_MAX)
       .map((l) => cut(l.name)),
   };

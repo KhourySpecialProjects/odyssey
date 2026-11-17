@@ -24,13 +24,14 @@ const EXCLUDED_DIRS = new Set([
 ]);
 const CLIENT = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*["']use client["']/;
 const LESSON_MODULE =
-  /["']@\/lib\/mentor\/(context|quiz|ask|answer-key|prompt|source|answer|client|learner-source)["']/;
+  /["']@\/lib\/(?:mentor\/(?:context|quiz|ask|answer-key|prompt|source|answer|client|learner-source)|requests\/learner-enrollments)["']/;
+const USE_SERVER = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*["']use server["']/;
 
 /** Whether source imports a module that reads lessons; type-only imports are fine */
 const importsLessonModule = (source: string) =>
   LESSON_MODULE.test(source.replace(/import\s+type\b[^;]*;/g, ""));
 
-function clientFiles(root: string): string[] {
+function filesWith(root: string, directive: RegExp): string[] {
   return SOURCE_DIRS.flatMap((top) => {
     const base = path.join(root, top);
     if (!fs.existsSync(base)) return [];
@@ -41,10 +42,12 @@ function clientFiles(root: string): string[] {
           /\.(ts|tsx)$/.test(rel) &&
           !/\.(test|spec)\.tsx?$/.test(rel) &&
           !rel.split(path.sep).some((seg) => EXCLUDED_DIRS.has(seg)) &&
-          CLIENT.test(fs.readFileSync(path.join(root, rel), "utf8")),
+          directive.test(fs.readFileSync(path.join(root, rel), "utf8")),
       );
   });
 }
+
+const clientFiles = (root: string) => filesWith(root, CLIENT);
 
 describe("Mentor's lesson modules stay out of client components", () => {
   it.each([
@@ -54,6 +57,10 @@ describe("Mentor's lesson modules stay out of client components", () => {
     ['import { buildMentorRequest } from "@/lib/mentor/prompt";', true],
     ['import type { LessonContext } from "@/lib/mentor/context";', false],
     ['import { getLearnerContext } from "@/lib/mentor/learner-source";', true],
+    [
+      'import { getLearnerEnrollments } from "@/lib/requests/learner-enrollments";',
+      true,
+    ],
     ['import { citedRefs } from "@/lib/mentor/refs";', false],
   ])("checks %j", (source, flagged) => {
     expect(importsLessonModule(source)).toBe(flagged);
@@ -67,6 +74,19 @@ describe("Mentor's lesson modules stay out of client components", () => {
     expect(
       files.filter((file) =>
         importsLessonModule(fs.readFileSync(path.join(root, file), "utf8")),
+      ),
+    ).toEqual([]);
+  });
+
+  it("finds no Server Action file that imports the learner fetches", () => {
+    const root = path.join(__dirname, "..", "..", "..");
+    const files = filesWith(root, USE_SERVER);
+    expect(files.length).toBeGreaterThan(5);
+    expect(
+      files.filter((file) =>
+        /["']@\/lib\/(?:mentor\/learner-source|requests\/learner-enrollments)["']/.test(
+          fs.readFileSync(path.join(root, file), "utf8"),
+        ),
       ),
     ).toEqual([]);
   });
