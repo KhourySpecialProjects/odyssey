@@ -6,7 +6,7 @@ import { IconListCheck } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { FOCUS } from "@/components/draft/overview-scan/focus";
 
-/** Opens the Final Overview Scan; the panel only shows for reviewers, who may scan. */
+/** Opens the Pre-publish checks; the panel only shows for reviewers, who may run them. */
 export function ScanLink({
   slug,
   className,
@@ -27,7 +27,7 @@ export function ScanLink({
       )}
     >
       <IconListCheck className="h-4 w-4" aria-hidden="true" />
-      Final Overview Scan
+      Pre-publish checks
     </Link>
   );
 }

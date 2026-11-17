@@ -110,7 +110,7 @@ const REFUSED_TEXT: Record<RefusedReason, string> = {
 // "5 s" is NETWORK_LIMITS.urlTimeoutMs, which can't be imported here
 const UNCHECKED_TEXT: Record<UncheckedReason, string> = {
   timeout: "didn't answer within 5 s",
-  budget: "wasn't checked before the scan's time ran out",
+  budget: "wasn't checked before the checks ran out of time",
   "too-many-redirects": "redirects too many times to check",
   "rate-limited": "asked us to slow down (429), so it wasn't checked",
   "network-error": "couldn't be reached",

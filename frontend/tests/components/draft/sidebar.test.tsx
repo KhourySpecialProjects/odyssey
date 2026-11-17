@@ -380,7 +380,7 @@ describe("Sidebar", () => {
     expect(previewButton).toBeInTheDocument();
   });
 
-  describe("Final Overview Scan link", () => {
+  describe("Pre-publish checks link", () => {
     const renderAs = (roles: AuthorizedUserRoleTitle[], isAuthor: boolean) =>
       render(
         <Sidebar
@@ -408,7 +408,7 @@ describe("Sidebar", () => {
       ],
     ])("for %s, shown is %s", (_n, roles, isAuthor, shown) => {
       renderAs(roles, isAuthor);
-      const link = screen.queryByRole("link", { name: "Final Overview Scan" });
+      const link = screen.queryByRole("link", { name: "Pre-publish checks" });
       expect(!!link).toBe(shown);
       if (link) {
         expect(link).toHaveAttribute("href", "/draft/d/test-droplet/scan");
@@ -433,7 +433,7 @@ describe("Sidebar", () => {
         />,
       );
       expect(
-        screen.queryByRole("link", { name: "Final Overview Scan" }),
+        screen.queryByRole("link", { name: "Pre-publish checks" }),
       ).toBeNull();
     });
 
@@ -441,7 +441,7 @@ describe("Sidebar", () => {
       (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet/scan");
       renderAs([AuthorizedUserRoleTitle.User], true);
       expect(
-        screen.getByRole("link", { name: "Final Overview Scan" }),
+        screen.getByRole("link", { name: "Pre-publish checks" }),
       ).toHaveAttribute("aria-current", "page");
       expect(screen.getByRole("link", { name: "Preview" })).toHaveAttribute(
         "href",
