@@ -45,9 +45,13 @@ export async function recordQuizAttempt(
   if (!user) throw new QuizAttemptError(404, 'User not found');
   const lesson = await findId(LESSON_UID, input.lessonId);
   if (!lesson) throw new QuizAttemptError(404, 'Lesson not found');
-  const droplet = await findId(DROPLET_UID, input.dropletId);
-  if (!droplet) throw new QuizAttemptError(404, 'Droplet not found');
+  const droplet = (await strapi.documents(DROPLET_UID as any).findFirst({
+    filters: { id: input.dropletId, lessons: { id: input.lessonId } },
+    fields: ['id'],
+  } as any)) as Row | null;
+  if (!droplet) throw new QuizAttemptError(404, 'Droplet not found, or the lesson is not in it');
 
+  // Archived enrollments still count: an archived student can still open the lesson.
   const enrolled = await strapi.documents(ENROLLMENT_UID as any).count({
     filters: { authorizedUser: { id: input.userId }, droplet: { id: input.dropletId } },
   } as any);

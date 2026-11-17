@@ -9,7 +9,7 @@ export const quizAttemptSchema = z
     dropletId: id,
     lessonId: id,
     quizType: z.enum(["choice", "open-ended"]),
-    questionId: id.max(2147483648),
+    questionId: z.number().int().nonnegative().max(2147483648),
     correct: z.boolean(),
     submitId: z.string().uuid(),
   })

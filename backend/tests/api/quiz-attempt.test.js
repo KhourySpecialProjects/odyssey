@@ -14,6 +14,7 @@ const {
 } = require('../helpers/fixtures');
 
 let strapi;
+let dayBounds;
 let token;
 let user;
 let other;
@@ -46,6 +47,7 @@ const rows = () =>
 
 beforeAll(async () => {
   strapi = await setupStrapi();
+  ({ dayBounds } = require('../../dist/src/lib/ai-scoring-spend'));
   token = await createFullAccessToken(strapi);
 });
 
@@ -58,7 +60,9 @@ beforeEach(async () => {
   user = await strapi.documents(USER_UID).create({ data: userData() });
   other = await strapi.documents(USER_UID).create({ data: userData() });
   lesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
-  droplet = await strapi.documents(DROPLET_UID).create({ data: dropletData() });
+  droplet = await strapi.documents(DROPLET_UID).create({
+    data: dropletData({ lessons: [lesson.documentId] }),
+  });
   await strapi.documents(ENROLLMENT_UID).create({
     data: enrollmentData({ authorizedUser: user.documentId, droplet: droplet.documentId }),
   });
@@ -106,6 +110,38 @@ describe('POST /quiz-attempts/record', () => {
     expect(await rows()).toHaveLength(0);
   });
 
+  it('accepts question id 0', async () => {
+    expect((await record({ questionId: 0 })).status).toBe(200);
+  });
+
+  it('is a 404 when the lesson is not in the droplet', async () => {
+    const stray = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+
+    expect((await record({ lessonId: stray.id })).status).toBe(404);
+    expect(await rows()).toHaveLength(0);
+  });
+
+  it("does not count rows from before Boston midnight toward today's cap", async () => {
+    for (let i = 0; i < 500; i += 1) {
+      await strapi.documents(QUIZ_ATTEMPT_UID).create({
+        data: {
+          user: user.documentId,
+          lesson: lesson.documentId,
+          droplet: droplet.documentId,
+          quizType: 'choice',
+          questionId: '1',
+          correct: false,
+          attempt: 1,
+          submitId: submitId(),
+        },
+      });
+    }
+    const { start } = dayBounds(new Date());
+    await strapi.db.connection('quiz_attempts').update({ created_at: new Date(start.getTime() - 60000) });
+
+    expect((await record()).status).toBe(200);
+  }, 120000);
+
   it('is a 404 for an unknown user, lesson or droplet', async () => {
     for (const overrides of [
       { userId: 2147483000 },
@@ -121,7 +157,7 @@ describe('POST /quiz-attempts/record', () => {
     ['an unknown key', { answer: 'Paris' }],
     ['a missing userId', { userId: undefined }],
     ['a bad quizType', { quizType: 'essay' }],
-    ['a zero questionId', { questionId: 0 }],
+    ['a negative questionId', { questionId: -1 }],
     ['a questionId past 2^31', { questionId: 2147483649 }],
     ['a non-boolean correct', { correct: 'yes' }],
     ['a bad submitId', { submitId: 'x' }],
