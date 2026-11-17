@@ -664,7 +664,7 @@ describe("tags and the comment card (Task 6)", () => {
     }
   });
 
-  it("follows <main> when the Reviewer Transcript takes more of it, without a window resize (ODY-895)", () => {
+  it("follows <main> when the Scorecard takes more of it, without a window resize (ODY-895)", () => {
     jest.useFakeTimers();
     const main = document.body.appendChild(document.createElement("main"));
     main.dataset.reviewPanel = "open";

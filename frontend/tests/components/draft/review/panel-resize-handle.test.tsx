@@ -41,14 +41,14 @@ const setup = () => {
     min: 384,
     max: 640,
     controls: "dock",
-    label: "Reviewer Transcript",
+    label: "Scorecard",
     onResize: jest.fn(),
     onReset: jest.fn(),
     onDragChange: jest.fn(),
   };
   const view = render(<PanelResizeHandle {...props} />);
   const handle = screen.getByRole("separator", {
-    name: "Resize Reviewer Transcript",
+    name: "Resize Scorecard",
   });
   return { ...props, props, handle, ...view };
 };

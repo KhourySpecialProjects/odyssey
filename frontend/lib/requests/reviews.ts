@@ -1362,7 +1362,7 @@ export type PanelRunData = PanelRun & {
   error?: string | null;
 };
 
-/** What the Reviewer Transcript panel reads: no comments (the shared context has them). */
+/** What the Scorecard panel reads: no comments (the shared context has them). */
 export type ReviewPanelData = {
   review: { id: number; round: number; state: ReviewState } | null;
   criteria: PanelCriterion[];
