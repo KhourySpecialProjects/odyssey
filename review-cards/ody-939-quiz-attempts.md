@@ -18,3 +18,5 @@ Every Check Answer on a lesson quiz (multiple choice, true/false and open-ended)
 - [x] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
 - [x] Every new/changed export in a `"use server"` file calls `requireRole`/`withAuth`, or is listed in the auth allowlist with a reason.
+
+Security review passed (docs/reviews/ODY-939.md); its fixes N1, N2, N5, N7-N9 are in on 5c932379.
