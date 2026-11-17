@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mentor_messages",
+  "info": {
+    "singularName": "mentor-message",
+    "pluralName": "mentor-messages",
+    "displayName": "Mentor Message",
+    "description": "One question or answer in a saved Mentor chat (ODY-937)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "chat": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::mentor-chat.mentor-chat",
+      "inversedBy": "messages"
+    },
+    "role": {
+      "type": "enumeration",
+      "enum": ["user", "assistant"],
+      "required": true
+    },
+    "text": {
+      "type": "text",
+    },
+    "citations": {
+      "type": "json"
+    }
+  }
+}

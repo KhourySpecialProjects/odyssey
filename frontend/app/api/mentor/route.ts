@@ -4,6 +4,12 @@ import { lessonAccess } from "@/lib/lesson-access";
 import { streamMentorAnswer } from "@/lib/mentor/answer";
 import { resolveMentorAsk } from "@/lib/mentor/ask";
 import { mentorClient } from "@/lib/mentor/client";
+import {
+  errorName,
+  ownedChat,
+  saveMentorExchange,
+  startMentorChat,
+} from "@/lib/mentor/chat-history";
 import { buildLessonContext } from "@/lib/mentor/context";
 import type { MentorHttpError, MentorHttpErrorCode } from "@/lib/mentor/events";
 import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
@@ -108,16 +114,53 @@ export async function POST(request: Request): Promise<Response> {
     });
     if (!answer) return fail(502, "model_unavailable");
 
+    // ODY-937: quiz hints are never saved; a failure here never costs the answer
+    let chatId: string | null = null;
+    if (input.kind !== "quiz-hint") {
+      try {
+        const own = input.chatId
+          ? await ownedChat(gate.user.id, input.chatId)
+          : null;
+        chatId =
+          own?.documentId ??
+          (await startMentorChat({
+            userId: gate.user.id,
+            dropletId: input.dropletId,
+            lessonId: input.lessonId,
+            kind: input.kind,
+            title: input.kind === "lesson" ? input.message : input.selection,
+          }));
+        answer.response.headers.set("X-Mentor-Chat-Id", chatId);
+      } catch (error) {
+        chatId = null;
+        console.error("[mentor] chat start failed:", errorName(error));
+      }
+    }
+
     // Once the answer has ended, however it ended
     after(async () => {
       const usage = await answer.usage;
-      if (!usage) return;
-      await recordMentorUsage({
-        user: gate.user,
-        kind: input.kind,
-        model: MENTOR_SETUP.model,
-        usage,
-      });
+      if (usage) {
+        await recordMentorUsage({
+          user: gate.user,
+          kind: input.kind,
+          model: MENTOR_SETUP.model,
+          usage,
+        });
+      }
+      const done = await answer.completed;
+      if (!chatId || !done || input.kind === "quiz-hint") return;
+      try {
+        await saveMentorExchange({
+          chatDocumentId: chatId,
+          userId: gate.user.id,
+          question: input.kind === "lesson" ? input.message : input.selection,
+          answer: done.text,
+          citations: done.citations,
+        });
+      } catch (error) {
+        console.error("[mentor] chat save failed:", errorName(error));
+      }
     });
     return answer.response;
   } catch (error) {

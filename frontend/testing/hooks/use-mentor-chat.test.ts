@@ -70,6 +70,29 @@ describe("useMentorChat", () => {
     });
   });
 
+  it("sends the saved chat's id back on the next ask, until cleared (ODY-937)", async () => {
+    fetchMock.mockImplementation(async () => {
+      const res = mentorSseResponse([mentorText("Hi"), mentorDone()]);
+      return Object.assign(Object.create(res), {
+        body: res.body,
+        ok: true,
+        headers: {
+          get: (k: string) =>
+            k === "X-Mentor-Chat-Id" ? "chatabc12345" : null,
+        },
+      });
+    });
+    const { result } = setup();
+    await ask(result, "one");
+    await ask(result, "two");
+    act(() => result.current.clear());
+    await ask(result, "three");
+
+    expect(bodyOf(0).chatId).toBeUndefined();
+    expect(bodyOf(1).chatId).toBe("chatabc12345");
+    expect(bodyOf(2).chatId).toBeUndefined();
+  });
+
   it("stop keeps the text received so far", async () => {
     fetchMock.mockImplementation(async (_url, init) =>
       mentorSseResponse([mentorText("One "), mentorText("two"), mentorDone()], {

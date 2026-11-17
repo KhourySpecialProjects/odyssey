@@ -1578,6 +1578,51 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorChatMentorChat extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_chats';
+  info: {
+    description: 'One saved Mentor conversation of one student, deleted after 30 days. Never shown to instructors (ODY-937)';
+    displayName: 'Mentor Chat';
+    pluralName: 'mentor-chats';
+    singularName: 'mentor-chat';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorizedUser: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain']> &
+      Schema.Attribute.Required;
+    lastMessageAt: Schema.Attribute.DateTime;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-chat.mentor-chat'
+    > &
+      Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-message.mentor-message'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 80;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMentorFeedbackMentorFeedback
   extends Struct.CollectionTypeSchema {
   collectionName: 'mentor_feedbacks';
@@ -1644,6 +1689,43 @@ export interface ApiMentorFeedbackMentorFeedback
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
+  };
+}
+
+export interface ApiMentorMessageMentorMessage
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_messages';
+  info: {
+    description: 'One question or answer in a saved Mentor chat (ODY-937)';
+    displayName: 'Mentor Message';
+    pluralName: 'mentor-messages';
+    singularName: 'mentor-message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    chat: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::mentor-chat.mentor-chat'
+    >;
+    citations: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-message.mentor-message'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    role: Schema.Attribute.Enumeration<['user', 'assistant']> &
+      Schema.Attribute.Required;
+    text: Schema.Attribute.Text & Schema.Attribute.Private;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -3027,7 +3109,9 @@ declare module '@strapi/strapi' {
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::learner-profile.learner-profile': ApiLearnerProfileLearnerProfile;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-chat.mentor-chat': ApiMentorChatMentorChat;
       'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
+      'api::mentor-message.mentor-message': ApiMentorMessageMentorMessage;
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
       'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;

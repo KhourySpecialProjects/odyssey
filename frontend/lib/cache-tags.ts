@@ -166,6 +166,9 @@
  *                 dismissRecommendation (ODY-954), the enrollments-{userId}
  *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
  *                 reads only "droplets".
+ * mentor-chats   Per-user tag "mentor-chats-{userId}": read by                60s
+ *                 listMentorChats; invalidated by saveMentorExchange and
+ *                 the delete actions (ODY-937)
  * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
  *                 getLearnerProfile (engine, Settings);
  *                 invalidated by saveLearnerProfile
@@ -211,6 +214,7 @@ export const CACHE_TAGS = {
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
   recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  mentorChats: (userId: number) => `mentor-chats-${userId}`, // one student's saved Mentor chats (ODY-937)
   learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
   // Per-droplet (scoped to one droplet)

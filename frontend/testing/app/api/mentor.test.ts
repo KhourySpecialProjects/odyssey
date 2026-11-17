@@ -3,6 +3,11 @@ import { after } from "next/server";
 import { POST } from "@/app/api/mentor/route";
 import { requireRole } from "@/lib/auth/require-role";
 import { blockNoteIdToNumber } from "@/lib/blocknote/convert-blocks";
+import {
+  ownedChat,
+  saveMentorExchange,
+  startMentorChat,
+} from "@/lib/mentor/chat-history";
 import { mentorClient } from "@/lib/mentor/client";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
 import { MENTOR_SETUP } from "@/lib/mentor/prompt";
@@ -29,6 +34,12 @@ jest.mock("next/server", () => ({ after: jest.fn() }));
 jest.mock("@/lib/auth/require-role", () => ({ requireRole: jest.fn() }));
 jest.mock("@/lib/mentor/source", () => ({ getMentorSource: jest.fn() }));
 jest.mock("@/lib/mentor/client", () => ({ mentorClient: jest.fn() }));
+jest.mock("@/lib/mentor/chat-history", () => ({
+  ownedChat: jest.fn(),
+  saveMentorExchange: jest.fn(),
+  startMentorChat: jest.fn(),
+  errorName: (e: unknown) => (e instanceof Error ? e.name : "UnknownError"),
+}));
 jest.mock("@/lib/mentor/usage", () => ({
   checkMentorAllowance: jest.fn(),
   recordMentorUsage: jest.fn(),
@@ -38,6 +49,9 @@ const gate = jest.mocked(requireRole);
 const source = jest.mocked(getMentorSource);
 const allowance = jest.mocked(checkMentorAllowance);
 const record = jest.mocked(recordMentorUsage);
+const owned = jest.mocked(ownedChat);
+const start = jest.mocked(startMentorChat);
+const save = jest.mocked(saveMentorExchange);
 
 const user = { id: 7, email: "s@example.invalid", roles: [] };
 const lesson = classicLesson();
@@ -112,6 +126,9 @@ beforeEach(() => {
   source.mockResolvedValue(sourceOf());
   allowance.mockResolvedValue({ allowed: true });
   record.mockResolvedValue(true);
+  owned.mockResolvedValue(null);
+  start.mockResolvedValue("newchat0001");
+  save.mockResolvedValue(undefined);
   useClaude();
 });
 
@@ -341,5 +358,103 @@ describe("POST /api/mentor", () => {
         usage: expect.objectContaining({ output_tokens: 8 }),
       }),
     );
+  });
+
+  describe("saved chats (ODY-937)", () => {
+    it("starts a chat, returns its id in a header and saves the exchange", async () => {
+      const response = await post(ask());
+
+      expect(response.headers.get("X-Mentor-Chat-Id")).toBe("newchat0001");
+      expect(start).toHaveBeenCalledWith({
+        userId: 7,
+        dropletId: 5,
+        lessonId: lesson.id,
+        kind: "lesson",
+        title: "What does an index do?",
+      });
+      await readAllMentorEvents(response.body!);
+      await afterResponse();
+      expect(save).toHaveBeenCalledWith({
+        chatDocumentId: "newchat0001",
+        userId: 7,
+        question: "What does an index do?",
+        answer: "An index speeds up reads [p2].",
+        citations: expect.any(Array),
+      });
+    });
+
+    it("reuses a chat the user owns", async () => {
+      owned.mockResolvedValue({ documentId: "ownedchat01" } as never);
+
+      const response = await post(ask({ chatId: "ownedchat01" }));
+
+      expect(owned).toHaveBeenCalledWith(7, "ownedchat01");
+      expect(start).not.toHaveBeenCalled();
+      expect(response.headers.get("X-Mentor-Chat-Id")).toBe("ownedchat01");
+    });
+
+    it("starts a new chat when the chatId isn't the user's", async () => {
+      const response = await post(ask({ chatId: "foreignchat1" }));
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(response.headers.get("X-Mentor-Chat-Id")).toBe("newchat0001");
+    });
+
+    it("titles an explain chat with the selection", async () => {
+      await post(
+        ask({
+          kind: "explain",
+          message: undefined,
+          selection: "Inner join",
+        }),
+      );
+
+      expect(start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "explain",
+          title: "Inner join",
+        }),
+      );
+    });
+
+    it("saves nothing for a quiz hint", async () => {
+      const response = await post(hint(41, 413));
+      await readAllMentorEvents(response.body!);
+      await afterResponse();
+
+      expect(response.headers.get("X-Mentor-Chat-Id")).toBeNull();
+      expect(start).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
+    });
+
+    it("refuses a chatId on a quiz hint", async () => {
+      const response = await post({ ...hint(41, 413), chatId: "ownedchat01" });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("still returns the answer when saving fails", async () => {
+      save.mockRejectedValue(new Error("down"));
+
+      const response = await post(ask());
+      const events = await readAllMentorEvents(response.body!);
+      await afterResponse();
+
+      expect(response.status).toBe(200);
+      expect(events.at(-1)).toMatchObject({ type: "done" });
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+
+    it("still returns the answer, with no header, when the chat can't start", async () => {
+      start.mockRejectedValue(new Error("down"));
+
+      const response = await post(ask());
+      await readAllMentorEvents(response.body!);
+      await afterResponse();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("X-Mentor-Chat-Id")).toBeNull();
+      expect(save).not.toHaveBeenCalled();
+    });
   });
 });

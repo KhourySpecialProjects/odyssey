@@ -3,7 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { citationsFor } from "./context";
 import type { MentorErrorCode, MentorEvent } from "./events";
 import { openSse, type SseStream } from "./sse";
-import type { LessonContext } from "./types";
+import type { Citation, LessonContext } from "./types";
 import type { MentorTokenUsage } from "./usage";
 
 // Streams one Mentor answer from Claude to the browser (ODY-886). It uses the
@@ -30,6 +30,8 @@ export type MentorAnswer = {
    * about 4 to a token, because its last usage report never came.
    */
   usage: Promise<MentorTokenUsage | null>;
+  /** The question's answer text (refs kept) and citations if it finished; else null (ODY-937) */
+  completed: Promise<{ text: string; citations: Citation[] } | null>;
 };
 
 const failure = (code: MentorErrorCode): MentorEvent => ({
@@ -135,7 +137,7 @@ export async function streamMentorAnswer({
   const open = (sse = openSse({ onCancel: () => stop("student") }));
   // Text that arrived while the stream opened
   if (answer) open.send({ type: "text", text: answer });
-  const usage = (async () => {
+  const outcome = (async () => {
     let end: MentorEvent | null = null;
     let finished = false;
     try {
@@ -155,7 +157,17 @@ export async function streamMentorAnswer({
     }
     if (end) open.send(end);
     open.close();
-    return usedTokens(message, finished ? 0 : answer.length + thinkingChars);
+    return {
+      usage: usedTokens(message, finished ? 0 : answer.length + thinkingChars),
+      completed:
+        end?.type === "done"
+          ? { text: answer, citations: end.citations }
+          : null,
+    };
   })();
-  return { response: open.response, usage };
+  return {
+    response: open.response,
+    usage: outcome.then((o) => o.usage),
+    completed: outcome.then((o) => o.completed),
+  };
 }
