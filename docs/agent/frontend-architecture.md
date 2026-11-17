@@ -178,7 +178,7 @@ A reviewer of a droplet in review (System Admin or Content Editor, never an auth
 
   A live region says where the caret is. Block bars are pointer-only.
 
-### Reviewer Transcript panel (ODY-805)
+### Scorecard panel (ODY-805)
 
 The same reviewer sees the panel on every page of the draft (`review/review-panel.tsx`, wired by `review-transcript.tsx`). Plan: `docs/plans/ODY-805.md`.
 
@@ -218,7 +218,7 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
   - **Edit:** the editors. Switching back runs `settleDropletUpdates()` and then `router.refresh()`.
   - **The strip:** shows the summary note, and how many comments are on lessons.
 - **Carried comments.** Submit copies each unresolved comment into the next round with `carriedFrom` pointing at the comment as first written. The reviewer's card reads "Pending · carried from round 1" with the original's date, and the strip and tags count the carried and addressed comments (`carriedRound`, `carriedNotes` and `carriedMeta` in `lib/review-comments.ts`).
-- **Not here:** a read-only Transcript panel for authors (confirmed scores, the summary note and a comment list that jumps to each comment's text). ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
+- **Not here:** a read-only Scorecard panel for authors (confirmed scores, the summary note and a comment list that jumps to each comment's text). ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
 
 ## Static Assets and Media
 
