@@ -58,7 +58,13 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
     setIsSubmitting(true);
     try {
       if (user) {
-        await updateUserInfo(user.id, { firstTime: false });
+        const flagResult = await updateUserInfo(user.id, { firstTime: false });
+        if (!flagResult.ok) {
+          // Not saved: stay on the popup so the student can retry.
+          toast.error("Couldn't save your information. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
         await updateUserInfo(user.id, {
           first: firstName,
           last: lastName,
