@@ -30,6 +30,7 @@ const mockEnrollments = require("../mocks/enrollmentsMock");
 const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
 const { recordStreakDay } = require("../../lib/streak-days");
+const { clearReminderOnProgress } = require("../../lib/reminders");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -55,6 +56,11 @@ jest.mock("../../lib/requests/authorized-user", () => ({
 // Tested in testing/lib/streak-days.test.ts; here only whether it's called
 jest.mock("../../lib/streak-days", () => ({
   recordStreakDay: jest.fn(async () => true),
+}));
+
+// Tested in testing/lib/reminders.test.ts; here only whether it's called
+jest.mock("../../lib/reminders", () => ({
+  clearReminderOnProgress: jest.fn(async () => true),
 }));
 
 jest.mock("next/cache", () => ({
@@ -1157,6 +1163,27 @@ describe("Enrollment Tests", () => {
       );
     });
 
+    it("clears the droplet's reminder on a first view, and still succeeds if nothing was cleared", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+      clearReminderOnProgress.mockResolvedValueOnce(false);
+
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(clearReminderOnProgress).toHaveBeenCalledWith({ id: 1 }, 9);
+      expect(result).toEqual({ success: true, alreadyViewed: false });
+    });
+
+    it("skips the reminder clear for an enrollment with no droplet", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment({ droplet: null })]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(result).toMatchObject({ success: true });
+      expect(clearReminderOnProgress).not.toHaveBeenCalled();
+    });
+
     it("adds the lesson with a relation connect instead of rewriting the list", async () => {
       fetchAPI.mockResolvedValueOnce([enrollment()]);
       global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
@@ -1310,6 +1337,7 @@ describe("Enrollment Tests", () => {
       expect(global.fetch).not.toHaveBeenCalled(); // so lastProgressDate stays
       expect(revalidateTag).not.toHaveBeenCalled();
       expect(recordStreakDay).not.toHaveBeenCalled();
+      expect(clearReminderOnProgress).not.toHaveBeenCalled();
     });
 
     it("marks complete when every lesson was already viewed but completion wasn't recorded", async () => {

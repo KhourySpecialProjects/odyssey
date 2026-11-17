@@ -398,7 +398,7 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 
 - **Body:** `{ data: { userId, dropletId, now, dayStart, lastRaisedAt, count, content } }`, and no other keys (400 `Invalid key <k>`). `count` is 0 to 100; `content` is trimmed, 1 to 500 characters; `lastRaisedAt` is an ISO datetime or `null`.
 - **Answers:** 200 `{ data: { raised: true, id } }` or `{ data: { raised: false, reason } }` with reason `today` (any of the learner's reminders has `firstCreated >= dayStart`), `changed` (the row's `firstCreated` is not `lastRaisedAt`) or `declined` (muted, or snoozed past `now`). 404 unknown user, 409 not enrolled, 500 `Failed to raise a reminder.`
-- **Lock and CAS:** one `strapi.db.transaction()` locks the learner's `authorized-user` row with `forUpdate`, finds the (user, droplet) reminder row, locks it by id with `forUpdate` and re-reads it, then checks the three conditions above. A concurrent ODY-932 snooze or mute write either commits first (the raise declines) or waits for the raise. A raise creates the row or re-raises it: `firstCreated = now`, `reminderCount = count`, `reminderSnoozedUntil = null`, and the learner's `announcement-read` rows for it are deleted (back in Unread; ODY-786). SQLite ignores `forUpdate`, so the tests check outcomes only.
+- **Lock and CAS:** one `strapi.db.transaction()` locks the learner's `authorized-user` row with `forUpdate`, finds the (user, droplet) reminder row, locks it by id with `forUpdate` and re-reads it, then checks the three conditions above. A concurrent ODY-932 snooze or mute write either commits first (the raise declines) or waits for the raise. After the checks, an enrollment whose `lastProgressDate` is later than `now` also declines as `changed`: the learner progressed after the caller decided, so the row was or will be cleared. A raise creates the row or re-raises it: `firstCreated = now`, `reminderCount = count`, `reminderSnoozedUntil = null`, and the learner's `announcement-read` rows for it are deleted (back in Unread; ODY-786). SQLite ignores `forUpdate`, so the tests check outcomes only.
 - **NULL:** rows predating the fields have NULL; treat it as 0 or false.
 
 **Contract for ODY-932** (Remind me later, Stop reminding me, Undo):
@@ -406,8 +406,9 @@ ODY-804. Logic is in `src/lib/review-workflow.ts` (plus `review-move.ts` and `pu
 - Never delete reminder rows. Clear one by marking it read (an `announcement-read` row); deleting loses the count and the mute.
 - Snooze and mute never change `firstCreated` (it drives the 7-day gap, the "today" check and the feed sort).
 - An ODY-932 write must not lock the learner's `authorized-user` row, or must lock it before the reminder row: the raise locks the user row then the reminder row, so the reverse order can deadlock and the raise returns 500.
-- Mute lasts until Undo, even after the learner makes progress.
-- An ended snooze (`reminderSnoozedUntil <= now`, no progress since the last raise) is re-raised on the next `/activity` load, ahead of other droplets, ignoring the wait and the gap, and that raise clears `reminderSnoozedUntil`.
+- Mute lasts until `reminderMutedUntil` (30 days, `REMINDER_RULES.muteDays`) or Undo, even after progress. When it ends, the rules count it as progress (fresh count); it is not an ended snooze.
+- An ended snooze (`reminderSnoozedUntil <= now`, no progress or ended mute since the last raise) is re-raised on the next `/activity` load, ahead of other droplets, ignoring the wait and the gap, and that raise clears `reminderSnoozedUntil`.
+- ODY-932 writes are a plain REST PUT, safe against a raise because of the row lock. Snooze and mute clear each other; progress sets `readAt` only. The count resets through `lastProgressDate` or an ended mute, never a write.
 
 ## Database
 

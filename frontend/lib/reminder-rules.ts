@@ -13,13 +13,20 @@ export const REMINDER_RULES = {
   staleAfterDays: 60,
   longGapDays: 21,
   halfway: 0.5,
+  muteDays: 30,
+  snoozeDays: { tomorrow: 1, in_3_days: 3, next_week: 7 },
 } as const;
+
+export type SnoozeChoice = keyof typeof REMINDER_RULES.snoozeDays;
+
+export const isSnoozeChoice = (v: unknown): v is SnoozeChoice =>
+  typeof v === "string" && Object.hasOwn(REMINDER_RULES.snoozeDays, v);
 
 export type ReminderState = {
   lastRaisedAt: string | null;
   count: number | null;
   snoozedUntil: string | null;
-  muted: boolean;
+  mutedUntil: string | null;
 };
 
 export type ReminderCandidate = {
@@ -131,29 +138,52 @@ export function templateState(
   };
 }
 
-/** The instant the learner's local day containing `now` began */
-export function dayStartUtc(now: Date, timeZone?: string | null): Date {
+/** The learner's local midnight `days` calendar days after the day containing `now`, in UTC */
+export function dayStartUtc(
+  now: Date,
+  timeZone?: string | null,
+  days = 0,
+): Date {
   return DateTime.fromJSDate(now, { zone: streakTimeZone(timeZone) })
+    .plus({ days })
     .startOf("day")
     .toUTC()
     .toJSDate();
 }
 
-const progressedSince = (
-  lastProgressAt: string | null,
-  raisedAt: string | null,
-) =>
-  !!lastProgressAt &&
-  !!raisedAt &&
-  new Date(lastProgressAt).getTime() > new Date(raisedAt).getTime();
+/** A snooze date as shown in the toast, like "Sat, Nov 7" */
+export function snoozeDateLabel(until: Date, timeZone?: string | null): string {
+  return DateTime.fromJSDate(until, {
+    zone: streakTimeZone(timeZone),
+  }).toFormat("ccc, LLL d");
+}
 
-/** Reminders raised since the last progress: progress after the last raise resets it. */
-export function effectiveCount(
-  reminder: Pick<ReminderState, "count" | "lastRaisedAt"> | null,
+/** True when progress came after the last raise, or a mute ended after it. */
+const resetSince = (
+  reminder: Pick<ReminderState, "lastRaisedAt" | "mutedUntil"> | null,
   lastProgressAt: string | null,
+  now: Date,
+) => {
+  const raised = reminder?.lastRaisedAt
+    ? new Date(reminder.lastRaisedAt).getTime()
+    : null;
+  if (raised === null) return false;
+  if (lastProgressAt && new Date(lastProgressAt).getTime() > raised)
+    return true;
+  const muted = reminder?.mutedUntil
+    ? new Date(reminder.mutedUntil).getTime()
+    : null;
+  return muted !== null && muted > raised && muted <= now.getTime();
+};
+
+/** Reminders raised since the last reset: progress or an ended mute starts the count over. */
+export function effectiveCount(
+  reminder: Pick<ReminderState, "count" | "lastRaisedAt" | "mutedUntil"> | null,
+  lastProgressAt: string | null,
+  now: Date,
 ): number {
   if (!reminder) return 0;
-  if (progressedSince(lastProgressAt, reminder.lastRaisedAt)) return 0;
+  if (resetSince(reminder, lastProgressAt, now)) return 0;
   return reminder.count ?? 0;
 }
 
@@ -191,12 +221,10 @@ export function evaluateCandidate(
   if (viewedCount === d.lessonIds.length) return skip("complete");
 
   const r = c.reminder;
-  if (r?.muted) return skip("muted");
+  if (r?.mutedUntil && new Date(r.mutedUntil) > now) return skip("muted");
   const snoozedUntil = r?.snoozedUntil ? new Date(r.snoozedUntil) : null;
   if (snoozedUntil && snoozedUntil > now) return skip("snoozed");
-  const snoozeEnded =
-    !!snoozedUntil &&
-    !progressedSince(c.lastProgressAt, r?.lastRaisedAt ?? null);
+  const snoozeEnded = !!snoozedUntil && !resetSince(r, c.lastProgressAt, now);
 
   const counts = dayCounts(
     {
@@ -230,13 +258,14 @@ export function evaluateCandidate(
       return skip("gap");
     }
     if (
-      effectiveCount(r, c.lastProgressAt) >= REMINDER_RULES.maxSinceProgress
+      effectiveCount(r, c.lastProgressAt, now) >=
+      REMINDER_RULES.maxSinceProgress
     ) {
       return skip("stopped");
     }
   }
 
-  const effective = effectiveCount(r, c.lastProgressAt);
+  const effective = effectiveCount(r, c.lastProgressAt, now);
   return {
     eligible: true,
     snoozeEnded,

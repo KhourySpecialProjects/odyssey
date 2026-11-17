@@ -82,9 +82,8 @@
     "reminderSnoozedUntil": {
       "type": "datetime"
     },
-    "reminderMuted": {
-      "type": "boolean",
-      "default": false
+    "reminderMutedUntil": {
+      "type": "datetime"
     }
   }
 }

@@ -1,8 +1,9 @@
 /** @jest-environment node */
 import { revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { runReminderCheck } from "@/lib/reminders";
+import { clearReminderOnProgress, runReminderCheck } from "@/lib/reminders";
 import { fetchAPI } from "@/lib/utils";
+import { installDocumentIdMock } from "@/lib/testing/document-id-mock";
 
 jest.mock("next/cache", () => ({ revalidateTag: jest.fn() }));
 jest.mock("@/lib/utils", () => ({
@@ -52,6 +53,7 @@ const body = () => JSON.parse(fetchMock.mock.calls[0][1].body).data;
 
 beforeEach(() => {
   jest.resetAllMocks();
+  installDocumentIdMock();
   global.fetch = fetchMock as unknown as typeof fetch;
   jest.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -188,6 +190,25 @@ describe("runReminderCheck", () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
+  it("reads a future reminderMutedUntil as a muted decision", async () => {
+    load([
+      {
+        id: 1,
+        firstCreated: daysAgo(10),
+        reminderMutedUntil: new Date(NOW.getTime() + 86_400_000).toISOString(),
+        droplet: { id: 10 },
+      },
+    ]);
+
+    const result = await runReminderCheck(learner, { now: NOW, dryRun: true });
+
+    expect(result.pick).toBeNull();
+    expect(result.decisions?.[0].decision).toEqual({
+      eligible: false,
+      reason: "muted",
+    });
+  });
+
   it.each([
     ["a failed read", () => fetchApiMock.mockRejectedValueOnce(new Error("x"))],
     [
@@ -227,5 +248,63 @@ describe("runReminderCheck", () => {
 
     expect(second).toEqual({ raised: false, reason: "today" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("clearReminderOnProgress", () => {
+  const unread = { id: 4, documentId: "doc4" };
+
+  it("reads the droplet's unread reminder fresh", async () => {
+    fetchApiMock.mockResolvedValueOnce([]);
+    await clearReminderOnProgress({ id: 7 }, 10, NOW);
+
+    const opts = fetchApiMock.mock.calls[0][1];
+    expect(opts.cache).toBe("no-store");
+    expect(opts.next).toBeUndefined();
+    expect(opts.urlParams.filters).toEqual({
+      type: { $eq: "reminder" },
+      authorized_user: { id: { $eq: 7 } },
+      droplet: { id: { $eq: 10 } },
+      readAt: { $null: true },
+    });
+  });
+
+  it("sets only readAt and revalidates the feed", async () => {
+    fetchApiMock.mockResolvedValueOnce([unread]);
+    reply({ data: {} });
+
+    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(true);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/announcements\/doc4$/);
+    expect(init.method).toBe("PUT");
+    expect(body()).toEqual({ readAt: NOW.toISOString() });
+    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(7));
+  });
+
+  it("writes nothing when there is no unread reminder", async () => {
+    fetchApiMock.mockResolvedValueOnce([]);
+
+    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      "the read fails",
+      () => fetchApiMock.mockRejectedValueOnce(new Error("x")),
+    ],
+    [
+      "the PUT fails",
+      () => {
+        fetchApiMock.mockResolvedValueOnce([unread]);
+        reply({}, false);
+      },
+    ],
+  ])("returns false, not a throw, when %s", async (_label, arrange) => {
+    arrange();
+
+    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(false);
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

@@ -189,6 +189,8 @@ export async function completeLesson(
 
 Locally, `/api/dev/reminders` (needs `NODE_ENV=development` and `ENABLE_REMINDER_TEST_CLOCK=true`) previews or raises as of `?at=<ISO with Z or an offset>` (`+09:00` works as typed, or as `%2B09:00`). A future `at` pins your local reminders until that date: real loads answer `today` and the gap blocks the next. Reset by editing the row's `firstCreated` in the local database.
 
+The reminder actions (`snoozeReminder`, `muteReminder`, `undoReminder`) and the clear on a new lesson view (`clearReminderOnProgress`) all call `revalidateTag(CACHE_TAGS.userFeed(userId))`. The actions use `withAuth` plus `assertOwner` with no admin bypass.
+
 ### Default Revalidation Times
 
 - Most content: 900 seconds (15 minutes)

@@ -2,7 +2,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
-import { ReminderCard } from "./reminder-card";
+import { ReminderCard, type RemindLaterChoice } from "./reminder-card";
 import {
   Droplet,
   Handshake,
@@ -34,11 +34,13 @@ export function FeedBlock({
   authUser,
   onMarkRead,
   onMarkUnread,
+  onRemindLater,
 }: {
   announcement: Announcement;
   authUser: AuthorizedUser;
   onMarkRead?: (id: number) => void | Promise<void>;
   onMarkUnread?: (id: number) => void | Promise<void>;
+  onRemindLater?: (id: number, choice: RemindLaterChoice) => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [playlistPopupOpen, setPlaylistPopupOpen] = useState(false);
@@ -388,6 +390,7 @@ export function FeedBlock({
         timestamp={formatDate(announcement.firstCreated)}
         onMarkRead={onMarkRead}
         onMarkUnread={onMarkUnread}
+        onRemindLater={onRemindLater}
       />
     );
   }

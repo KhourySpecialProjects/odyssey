@@ -80,6 +80,7 @@ describe('POST /announcements/raise-reminder', () => {
       type: 'reminder',
       reminderCount: 1,
       content: 'Pick up where you left off.',
+      reminderMutedUntil: null,
     });
     expect(new Date(all[0].firstCreated).toISOString()).toBe(NOW);
     expect(all[0].authorized_user.id).toBe(user.id);
@@ -145,7 +146,7 @@ describe('POST /announcements/raise-reminder', () => {
   });
 
   it.each([
-    ['muted', { reminderMuted: true }],
+    ['muted', { reminderMutedUntil: new Date('2026-11-20T00:00:00Z') }],
     ['snoozed past now', { reminderSnoozedUntil: new Date('2026-11-20T00:00:00Z') }],
   ])('answers "declined" for a row that is %s', async (_label, patch) => {
     await raise(valid());
@@ -159,6 +160,26 @@ describe('POST /announcements/raise-reminder', () => {
     );
 
     expect(res.body.data).toEqual({ raised: false, reason: 'declined' });
+  });
+
+  it.each([
+    ['2026-11-13T00:00:00Z'],
+    ['2026-11-13T15:00:00.000Z'],
+  ])('raises a row whose mute ended at %s and keeps the old mute date', async (at) => {
+    await raise(valid());
+    const ended = new Date(at);
+    await patchRow({ reminderMutedUntil: ended });
+    const res = await raise(
+      valid({
+        now: '2026-11-13T15:00:00.000Z',
+        dayStart: '2026-11-13T05:00:00.000Z',
+        lastRaisedAt: NOW,
+      })
+    );
+
+    expect(res.body.data.raised).toBe(true);
+    const [row] = await rows();
+    expect(new Date(row.reminderMutedUntil)).toEqual(ended);
   });
 
   it('raises a row whose snooze has ended, clears it, and stores count as sent', async () => {
@@ -177,6 +198,33 @@ describe('POST /announcements/raise-reminder', () => {
     const [row] = await rows();
     expect(row.reminderSnoozedUntil).toBeNull();
     expect(row.reminderCount).toBe(2);
+  });
+
+  it.each([
+    ['after now: declines as changed and keeps the read state', '2026-11-13T09:00:00.000Z', false],
+    ['before now: still raises', '2026-11-13T08:00:00.000Z', true],
+  ])('with lastProgressDate %s', async (_label, progressAt, raised) => {
+    const first = await raise(valid());
+    const reads = { announcement: first.body.data.id, authorized_user: user.id };
+    await strapi.db.query(ANNOUNCEMENT_READ_UID).create({ data: reads });
+    await strapi.db
+      .query(ENROLLMENT_UID)
+      .updateMany({ where: {}, data: { lastProgressDate: new Date(progressAt) } });
+    const res = await raise(
+      valid({
+        now: '2026-11-13T08:30:00.000Z',
+        dayStart: '2026-11-13T05:00:00.000Z',
+        lastRaisedAt: NOW,
+        count: 2,
+      })
+    );
+
+    expect(res.body.data.raised).toBe(raised);
+    if (!raised) expect(res.body.data.reason).toBe('changed');
+    expect(await strapi.db.query(ANNOUNCEMENT_READ_UID).count({ where: reads })).toBe(
+      raised ? 0 : 1
+    );
+    expect((await rows())[0].reminderCount).toBe(raised ? 2 : 1);
   });
 
   it('answers 409 when the learner is not enrolled', async () => {
@@ -258,7 +306,7 @@ describe('POST /announcements/raise-reminder', () => {
   });
 
   it.each([
-    ['muted', { reminderMuted: true }],
+    ['muted', { reminderMutedUntil: new Date('2026-11-20T00:00:00Z') }],
     ['snoozed', { reminderSnoozedUntil: new Date('2026-11-20T00:00:00Z') }],
   ])('keeps a %s row as the learner left it', async (_label, patch) => {
     await raise(valid());
@@ -275,7 +323,7 @@ describe('POST /announcements/raise-reminder', () => {
 
     expect(res.body.data).toEqual({ raised: false, reason: 'declined' });
     const [after] = await rows();
-    expect(after.reminderMuted).toBe(before.reminderMuted);
+    expect(after.reminderMutedUntil).toEqual(before.reminderMutedUntil);
     expect(after.reminderSnoozedUntil).toEqual(before.reminderSnoozedUntil);
     expect(after.reminderCount).toBe(1);
   });

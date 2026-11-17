@@ -1221,6 +1221,9 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   },
   reminders: {
     checkMyReminder: "custom raise-reminder route (ODY-931)",
+    snoozeReminder: WRITE,
+    muteReminder: WRITE,
+    undoReminder: WRITE,
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

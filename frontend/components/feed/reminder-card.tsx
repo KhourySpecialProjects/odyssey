@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
@@ -9,27 +9,47 @@ import {
   Calendar,
   Check,
   Clock,
+  EyeOff,
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { feedColorFor } from "@/lib/feed-colors";
 import { dueChipText } from "@/lib/reminder-progress";
+import type { SnoozeChoice } from "@/lib/reminder-rules";
 import type { Announcement } from "@/types";
 
 const markButtonClass =
   "rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200";
+
+export type RemindLaterChoice = SnoozeChoice | "stop";
+
+const remindChoices: { choice: RemindLaterChoice; label: string }[] = [
+  { choice: "tomorrow", label: "Tomorrow" },
+  { choice: "in_3_days", label: "In 3 days" },
+  { choice: "next_week", label: "Next week" },
+];
 
 export function ReminderCard({
   announcement,
   timestamp,
   onMarkRead,
   onMarkUnread,
+  onRemindLater,
 }: {
   announcement: Announcement;
   timestamp: string;
   onMarkRead?: (id: number) => void;
   onMarkUnread?: (id: number) => void;
+  onRemindLater?: (id: number, choice: RemindLaterChoice) => void;
 }) {
   const { droplet, reminder } = announcement;
   const colors = feedColorFor("reminder");
@@ -54,6 +74,13 @@ export function ReminderCard({
     return () => clearTimeout(timer);
   }, [reminder?.dueDate, reminder?.dueGroupName]);
 
+  // Escape returns focus to the trigger; a selection leaves it to FeedClient.
+  const selected = useRef(false);
+  const choose = (choice: RemindLaterChoice) => {
+    selected.current = true;
+    onRemindLater?.(announcement.id, choice);
+  };
+
   const progress = reminder?.progress;
   const next = reminder?.nextLesson;
   const base = `/d/${droplet?.slug}`;
@@ -61,6 +88,7 @@ export function ReminderCard({
 
   return (
     <li
+      data-announcement-id={announcement.id}
       className={cn(
         "relative flex flex-col gap-3 rounded-lg border p-4",
         colors.card,
@@ -148,16 +176,49 @@ export function ReminderCard({
           )}
         </div>
         <div className="flex gap-2">
-          {/* ODY-932 wires this up */}
-          <Button
-            type="button"
-            variant="outline"
-            disabled
-            before={<Clock size={16} />}
-            className="h-9 gap-2 rounded-lg border-[#D0D5DD] px-[14px] text-[#344054] shadow-[0_1px_1px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
-          >
-            Remind me later
-          </Button>
+          {onRemindLater && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  before={<Clock size={16} />}
+                  className="h-9 gap-2 rounded-lg border-[#D0D5DD] px-[14px] text-[#344054] shadow-[0_1px_1px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  Remind me later
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-48"
+                onCloseAutoFocus={(e) => {
+                  if (selected.current) e.preventDefault();
+                  selected.current = false;
+                }}
+              >
+                <DropdownMenuLabel className="text-xs text-slate-500 dark:text-slate-400">
+                  Remind me
+                </DropdownMenuLabel>
+                {remindChoices.map(({ choice, label }) => (
+                  <DropdownMenuItem
+                    key={choice}
+                    onSelect={() => choose(choice)}
+                    className="cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => choose("stop")}
+                  className="cursor-pointer gap-2 text-slate-700 dark:text-slate-200"
+                >
+                  <EyeOff size={14} />
+                  Stop reminding me
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             asChild
             after={<ArrowRight size={16} />}
