@@ -474,6 +474,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
+  "learner-enrollments": "@/lib/requests/learner-enrollments",
   "mentor-feedback": "@/lib/requests/mentor-feedback",
   "mentor-setting": "@/lib/requests/mentor-setting",
   notes: "@/lib/requests/notes",
@@ -919,6 +920,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
     call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
   ]),
+  "learner-enrollments": defineModule<
+    typeof import("@/lib/requests/learner-enrollments")
+  >([call("getLearnerEnrollments", (m) => m.getLearnerEnrollments(1))]),
   "mentor-setting": defineModule<
     typeof import("@/lib/requests/mentor-setting")
   >([

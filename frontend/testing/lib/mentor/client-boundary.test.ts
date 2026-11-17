@@ -24,7 +24,7 @@ const EXCLUDED_DIRS = new Set([
 ]);
 const CLIENT = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*["']use client["']/;
 const LESSON_MODULE =
-  /["']@\/lib\/mentor\/(context|quiz|ask|answer-key|prompt|source|answer|client)["']/;
+  /["']@\/lib\/mentor\/(context|quiz|ask|answer-key|prompt|source|answer|client|learner-source)["']/;
 
 /** Whether source imports a module that reads lessons; type-only imports are fine */
 const importsLessonModule = (source: string) =>
@@ -53,6 +53,7 @@ describe("Mentor's lesson modules stay out of client components", () => {
     ['const m = await import("@/lib/mentor/context");', true],
     ['import { buildMentorRequest } from "@/lib/mentor/prompt";', true],
     ['import type { LessonContext } from "@/lib/mentor/context";', false],
+    ['import { getLearnerContext } from "@/lib/mentor/learner-source";', true],
     ['import { citedRefs } from "@/lib/mentor/refs";', false],
   ])("checks %j", (source, flagged) => {
     expect(importsLessonModule(source)).toBe(flagged);
