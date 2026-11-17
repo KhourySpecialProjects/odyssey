@@ -1,4 +1,4 @@
-/** Band colours for the Reviewer Transcript panel (ODY-805 D5); WCAG-checked on white */
+/** Band colours for the Scorecard panel (ODY-805 D5); WCAG-checked on white */
 export const BAND_COLORS = {
   good: {
     outline: "#16A34A",

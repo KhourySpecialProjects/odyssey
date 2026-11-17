@@ -31,7 +31,7 @@ type PanelLesson = {
 };
 
 /**
- * The Reviewer Transcript panel body (ODY-805): AI bar, one card per section,
+ * The Scorecard panel body (ODY-805): AI bar, one card per section,
  * and a footer slot. Scores come from the caller (optimistic state lives above).
  */
 export function ReviewPanel({
@@ -149,13 +149,10 @@ export function ReviewPanel({
   };
 
   return (
-    <section
-      aria-label="Reviewer Transcript"
-      className="flex h-full min-h-0 flex-col"
-    >
+    <section aria-label="Scorecard" className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 border-b border-slate-200 px-4 pt-4 pb-3">
         <h2 className="pr-8 text-base font-semibold text-slate-900">
-          Reviewer Transcript
+          Scorecard
         </h2>
         <p className="mt-0.5 truncate text-sm font-medium text-[#344054]">
           {droplet.name}

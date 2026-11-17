@@ -94,7 +94,7 @@ const cardNames = () =>
   screen
     .getAllByRole("region")
     .map((r) => r.getAttribute("aria-label"))
-    .filter((name) => name !== "Reviewer Transcript");
+    .filter((name) => name !== "Scorecard");
 
 /** Opens a card's comments (its header is the first button) */
 const expand = (name: string) =>
@@ -326,7 +326,11 @@ describe("a card's two states", () => {
     expect(
       within(card).queryByRole("button", { name: /^(Hide|Show) comments$/ }),
     ).toBeNull();
-    expect(screen.getByText(/No comments yet/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "No comments yet. Highlight text in the lesson, or add a point as a comment.",
+      ),
+    ).toBeInTheDocument();
   });
 
   describe("when the comment count changes", () => {
