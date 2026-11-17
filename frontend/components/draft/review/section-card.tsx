@@ -314,7 +314,7 @@ export function SectionCard({
                 {commentCount === 0 && (
                   <p className="text-xs text-[#667085]">
                     No comments yet. Highlight text in the lesson, or add a
-                    transgression as a comment.
+                    point as a comment.
                   </p>
                 )}
                 {commentsShown && children}

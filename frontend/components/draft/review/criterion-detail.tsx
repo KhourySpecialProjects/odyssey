@@ -54,7 +54,7 @@ export type CriterionDetailProps = {
   pending?: boolean;
 };
 
-/** A criterion's open detail: score, reason, transgressions and the change control */
+/** A criterion's open detail: score, reason, points and the change control */
 export function CriterionDetail({
   criterion,
   score,
@@ -188,7 +188,7 @@ export function CriterionDetail({
       {!unscored && (
         <>
           <p className="mt-3 text-xs font-semibold tracking-wide text-[#667085] uppercase">
-            Transgressions · {total}
+            Points · {total}
           </p>
           {noFindings ? (
             <p className="mt-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-center text-xs text-[#667085]">
