@@ -98,6 +98,7 @@ export async function startMentorChat(input: {
       title: input.title.trim().slice(0, MENTOR_CHAT_TITLE_MAX),
     },
   });
+  revalidateTag(CACHE_TAGS.mentorChats(input.userId));
   return created.documentId;
 }
 

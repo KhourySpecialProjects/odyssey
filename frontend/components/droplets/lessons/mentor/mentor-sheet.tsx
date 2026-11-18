@@ -23,6 +23,7 @@ export const STARTERS = [
 type SheetProps = {
   open: boolean;
   modal: boolean;
+  lessonId: number;
   lessonName: string;
   messages: ChatMsg[];
   streaming: boolean;
@@ -254,10 +255,8 @@ export function MentorSheet(p: SheetProps) {
                   openId={p.openChatId}
                   busy={p.streaming}
                   onOpen={p.onOpenChat}
-                  onDelete={async (chat) => {
-                    await p.onDeleteChat(chat);
-                    focusSoon(() => listHeading.current);
-                  }}
+                  onDelete={p.onDeleteChat}
+                  onFocusHeading={() => listHeading.current?.focus()}
                   onRetry={p.onRetryChats}
                 />
               </section>
@@ -290,6 +289,9 @@ export function MentorSheet(p: SheetProps) {
                       key={m.id}
                       message={m}
                       lessonName={p.lessonName}
+                      stale={
+                        m.lessonId !== undefined && m.lessonId !== p.lessonId
+                      }
                       onShowSource={p.onShowSource}
                       onSave={p.onSave && (() => p.onSave!(m))}
                       feedback={p.feedback}
