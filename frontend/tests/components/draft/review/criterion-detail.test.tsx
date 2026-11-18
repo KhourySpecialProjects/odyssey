@@ -78,6 +78,7 @@ describe("CriterionDetail", () => {
     expect(screen.getByText("Needs work")).toBeInTheDocument();
     expect(screen.getByText(/Hard to scan/)).toBeInTheDocument();
     expect(screen.getByText(/Why:/)).toBeInTheDocument();
+    expect(screen.getByText("Points · 2")).toBeInTheDocument();
     const items = screen.getAllByRole("listitem");
     expect(items).toHaveLength(2);
     expect(within(items[0]).getByText("1")).toBeInTheDocument();

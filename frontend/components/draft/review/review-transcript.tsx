@@ -175,14 +175,9 @@ export function ReviewTranscript({
 
   if (!panel) {
     return (
-      <section
-        aria-label="Reviewer Transcript"
-        className="flex h-full min-h-0 flex-col"
-      >
+      <section aria-label="Scorecard" className="flex h-full min-h-0 flex-col">
         <div className="flex-1 p-4">
-          <h2 className="text-base font-semibold text-slate-900">
-            Reviewer Transcript
-          </h2>
+          <h2 className="text-base font-semibold text-slate-900">Scorecard</h2>
           <p className="mt-0.5 truncate text-sm font-medium text-[#344054]">
             {droplet.name}
           </p>
