@@ -21,11 +21,14 @@ import {
   listMentorChats,
   type MentorChatSummary,
 } from "@/lib/requests/mentor-chats";
+
 import type { ChatListState } from "./mentor-chat-list";
 import { MentorSheet } from "./mentor-sheet";
 import { acceptNotice, noticeAccepted } from "./mentor-notice";
 import { createRatingStore, type MentorFeedback } from "./mentor-rating";
 
+// Matches MENTOR_CHAT_TITLE_MAX in lib/mentor/chat-history.ts (server-only)
+const CHAT_TITLE_MAX = 80;
 const lessonRoot = () => document.querySelector(".lesson-wrapper");
 
 /** Holds the conversation while kept; unmounting it aborts any request. */
@@ -50,6 +53,7 @@ export function MentorPanel({
   const openedByExplain = useLessonPanelStore((s) => s.openedByExplain);
   const wide = useMediaQuery("(min-width: 640px)");
   const chat = useMentorChat({ dropletId, lessonId: lesson.id });
+  const { loadChat, clear, openChatId, messages } = chat;
   const [accepted, setAccepted] = useState(noticeAccepted);
   const [draft, setDraft] = useState("");
   // A new n remounts the live-region text, so an identical message is heard again
@@ -95,7 +99,6 @@ export function MentorPanel({
   }, []);
 
   // First open with nothing in progress: continue the most recent chat
-  const { loadChat } = chat;
   useEffect(() => {
     if (!open || !accepted || defaulted.current) return;
     if (explainSelection !== null) return;
@@ -132,22 +135,31 @@ export function MentorPanel({
     [loadList],
   );
 
+  // The toast sits outside the phone's modal sheet, where it can't be reached
+  const fail = useCallback(
+    (text: string) => {
+      toast.error(text);
+      if (!wide) setAnnouncement((a) => ({ n: a.n + 1, text }));
+    },
+    [wide],
+  );
+
   const openChat = useCallback(
     async (id: string) => {
-      if (await chat.loadChat(id)) setView("chat");
-      else toast.error("Couldn't open that chat");
+      if (await loadChat(id)) setView("chat");
+      else fail("Couldn't open that chat");
     },
-    [chat],
+    [loadChat, fail],
   );
 
   const removeChat = useCallback(
     async (target: MentorChatSummary) => {
       const res = await deleteMentorChat(target.documentId);
       if (!res.ok && res.error !== "not_found") {
-        toast.error("Couldn't delete that chat");
+        fail("Couldn't delete that chat");
         return;
       }
-      if (target.documentId === chat.openChatId) chat.clear();
+      if (target.documentId === openChatId) clear();
       setChatList((s) =>
         s.status === "ready"
           ? {
@@ -157,8 +169,44 @@ export function MentorPanel({
           : s,
       );
     },
-    [chat],
+    [openChatId, clear, fail],
   );
+
+  // Until a list reload includes the open chat, show its row from what we know
+  const firstQuestion =
+    messages[0]?.role === "student" && messages[0].selection === undefined
+      ? messages[0].text.trim().slice(0, CHAT_TITLE_MAX)
+      : null;
+  const shownList = useMemo<ChatListState>(() => {
+    if (
+      chatList.status !== "ready" ||
+      !openChatId ||
+      !firstQuestion ||
+      chatList.chats.some((c) => c.documentId === openChatId)
+    )
+      return chatList;
+    const row: MentorChatSummary = {
+      documentId: openChatId,
+      kind: "lesson",
+      title: firstQuestion,
+      lastMessageAt: new Date().toISOString(),
+      lesson: { id: lesson.id, name: lesson.name, slug: lesson.slug },
+      droplet: null,
+    };
+    return { status: "ready", chats: [row, ...chatList.chats] };
+  }, [chatList, openChatId, firstQuestion, lesson.name, lesson.slug]);
+
+  // Say what the list holds when it shows and when its count changes
+  const listCount =
+    shownList.status === "ready" ? shownList.chats.length : null;
+  useEffect(() => {
+    if (view !== "list" || listCount === null) return;
+    const text =
+      listCount === 0
+        ? "No saved chats yet"
+        : `${listCount} ${listCount === 1 ? "chat" : "chats"}`;
+    setAnnouncement((a) => ({ n: a.n + 1, text }));
+  }, [view, listCount]);
 
   // Explain from the lesson waits for the notice to be accepted and for an
   // answer that's still streaming. Once locked, the ask is dropped. It's sent
@@ -225,7 +273,11 @@ export function MentorPanel({
         const result = await createNote(
           lesson,
           enrollment,
-          root ? noteYFor(root, message.citations) : 0,
+          // Citations from another lesson don't point into this one
+          root &&
+            (message.lessonId === undefined || message.lessonId === lesson.id)
+            ? noteYFor(root, message.citations)
+            : 0,
           userId,
           undefined,
           answerNoteHtml(question?.text ?? "", message.text),
@@ -284,6 +336,7 @@ export function MentorPanel({
     <MentorSheet
       open={open}
       modal={!wide}
+      lessonId={lesson.id}
       lessonName={lesson.name}
       messages={chat.messages}
       streaming={chat.streaming}
@@ -306,9 +359,9 @@ export function MentorPanel({
       feedback={feedback}
       view={view}
       onView={showList}
-      onNewChat={chat.clear}
-      chatList={chatList}
-      openChatId={chat.openChatId}
+      onNewChat={clear}
+      chatList={shownList}
+      openChatId={openChatId}
       onOpenChat={openChat}
       onDeleteChat={removeChat}
       onRetryChats={() => showList("list")}

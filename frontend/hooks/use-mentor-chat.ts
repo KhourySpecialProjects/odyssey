@@ -120,7 +120,7 @@ export async function failureOf(res: Response) {
 }
 
 /** A saved chat's messages as the panel shows them: answers done, one question each */
-function savedMessages(saved: MentorChatMessage[], keepCitations: boolean) {
+function savedMessages(saved: MentorChatMessage[], lessonId?: number) {
   const out: ChatMsg[] = [];
   let askId = "";
   for (const m of saved) {
@@ -134,8 +134,9 @@ function savedMessages(saved: MentorChatMessage[], keepCitations: boolean) {
         askId,
         status: "done",
         text: m.text,
-        citations: keepCitations ? m.citations ?? [] : [],
+        citations: m.citations ?? [],
         truncated: false,
+        lessonId,
       });
       askId = "";
     }
@@ -254,6 +255,8 @@ export function useMentorChat({
     (input: MentorAsk) => {
       const shown = studentOf(input);
       if (busy.current || locked.current || !shown) return;
+      // A chat load still in flight must not replace this conversation
+      loadToken.current += 1;
       trackMentor("mentor_asked", {
         kind: input.kind,
         droplet_id: dropletId,
@@ -269,6 +272,7 @@ export function useMentorChat({
         text: "",
         citations: [],
         truncated: false,
+        lessonId,
       };
       const history = historyOf(
         messagesRef.current,
@@ -289,7 +293,9 @@ export function useMentorChat({
       const at = list.findIndex((m) => m.id === answer.askId);
       const question = list[at];
       if (question?.role !== "student") return;
+      loadToken.current += 1;
       patch(id, {
+        lessonId,
         status: "streaming",
         text: "",
         citations: [],
@@ -298,7 +304,7 @@ export function useMentorChat({
       });
       void run(id, question, historyOf(list, at));
     },
-    [patch, run],
+    [patch, run, lessonId],
   );
 
   const stop = useCallback(() => {
@@ -319,13 +325,18 @@ export function useMentorChat({
   /**
    * Opens a saved chat in place of the conversation, stopping any stream.
    * `onlyIfEmpty` gives up if the student has started something meanwhile.
-   * Answers from another lesson lose their citations (they point elsewhere).
+   * Answers remember their lesson: the sheet drops citations from another one.
    */
   const loadChat = useCallback(
     async (id: string, opts: { onlyIfEmpty?: boolean } = {}) => {
       const token = (loadToken.current += 1);
       const res = await getMentorChat(id);
-      if (!res.ok || token !== loadToken.current || !mounted.current)
+      if (
+        !res.ok ||
+        token !== loadToken.current ||
+        !mounted.current ||
+        busy.current
+      )
         return false;
       if (
         opts.onlyIfEmpty &&
@@ -336,12 +347,10 @@ export function useMentorChat({
       controller.current?.abort();
       chatId.current = id;
       setOpenChatId(id);
-      commit(
-        savedMessages(res.data.messages, res.data.chat.lesson?.id === lessonId),
-      );
+      commit(savedMessages(res.data.messages, res.data.chat.lesson?.id));
       return true;
     },
-    [commit, lessonId],
+    [commit],
   );
 
   return {

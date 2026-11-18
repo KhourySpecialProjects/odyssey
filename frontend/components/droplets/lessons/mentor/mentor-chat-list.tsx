@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -45,6 +45,7 @@ export function MentorChatList({
   onOpen,
   onDelete,
   onRetry,
+  onFocusHeading,
 }: {
   state: ChatListState;
   openId: string | null;
@@ -53,13 +54,20 @@ export function MentorChatList({
   onOpen: (id: string) => void;
   onDelete: (chat: MentorChatSummary) => Promise<void>;
   onRetry: () => void;
+  /** Where focus goes when the button that opened the dialog is gone */
+  onFocusHeading: () => void;
 }) {
   const [pending, setPending] = useState<MentorChatSummary | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   if (state.status === "loading")
     return (
-      <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
+      <p
+        aria-live="polite"
+        aria-busy="true"
+        className="text-sm text-slate-600 dark:text-slate-300"
+      >
         Loading chats…
       </p>
     );
@@ -126,7 +134,10 @@ export function MentorChatList({
                 type="button"
                 aria-label={`Delete chat: ${chatTitle(c)}`}
                 disabled={busy && current}
-                onClick={() => setPending(c)}
+                onClick={(e) => {
+                  opener.current = e.currentTarget;
+                  setPending(c);
+                }}
                 className="rounded p-2 text-slate-600 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#287697] disabled:opacity-60 dark:text-slate-300"
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -140,7 +151,13 @@ export function MentorChatList({
         open={pending !== null}
         onOpenChange={(o) => !o && !deleting && setPending(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            if (opener.current?.isConnected) opener.current.focus();
+            else onFocusHeading();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>

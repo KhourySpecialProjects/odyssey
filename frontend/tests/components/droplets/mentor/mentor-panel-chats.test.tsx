@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { MentorPanel } from "@/components/droplets/lessons/mentor/mentor-panel";
 import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import {
@@ -82,6 +83,18 @@ const saved = (text: string) => ({
   },
 });
 
+const withChatId = (res: Response, id: string) =>
+  Object.defineProperty(res, "headers", {
+    value: {
+      get: (k: string) => (k.toLowerCase() === "x-mentor-chat-id" ? id : null),
+    },
+  });
+const panel = (l: Lesson = lesson) => (
+  <>
+    <button id="ask-mentor-button">Ask Mentor</button>
+    <MentorPanel dropletId={3} lesson={l} userId={7} onNoteSaved={jest.fn()} />
+  </>
+);
 const renderPanel = () =>
   render(
     <>
@@ -110,6 +123,7 @@ const showList = async () => {
 beforeEach(async () => {
   await new Promise((r) => setTimeout(r, 10));
   jest.clearAllMocks();
+  jest.mocked(useMediaQuery).mockReturnValue(true);
   localStorage.clear();
   localStorage.setItem("mentor-notice-v1", "1");
   useLessonPanelStore.getState().reset();
@@ -146,7 +160,10 @@ describe("Mentor chat list", () => {
     await waitFor(() => expect(listMentorChats).toHaveBeenCalled());
     expect(getMentorChat).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Chats" }));
-    expect(await screen.findByText("No saved chats yet")).toBeInTheDocument();
+    // The list and the live region both say it
+    await waitFor(() =>
+      expect(screen.getAllByText("No saved chats yet")).toHaveLength(2),
+    );
   });
 
   it("lists this panel's chats newest first with where they started", async () => {
@@ -314,5 +331,150 @@ describe("Mentor chat list", () => {
     expect(
       await screen.findByRole("list", { name: "Saved chats" }),
     ).toBeInTheDocument();
+  });
+
+  it("announces the list result", async () => {
+    renderPanel();
+    open();
+    await showList();
+    expect(screen.getByText("2 chats")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete chat: Why index?" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText("1 chat")).toBeInTheDocument();
+  });
+
+  it("puts focus on the list heading after a delete", async () => {
+    renderPanel();
+    open();
+    await showList();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete chat: Why index?" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Your chats" })).toHaveFocus(),
+    );
+  });
+
+  it("shows a row for a new chat until the list includes it", async () => {
+    jest.mocked(listMentorChats).mockResolvedValue({ ok: true, data: [] });
+    fetchMock.mockImplementation(async (_u, init) =>
+      withChatId(
+        mentorSseResponse([mentorText("Hi."), mentorDone()], {
+          signal: init.signal,
+        }),
+        "chatNEW11111",
+      ),
+    );
+    renderPanel();
+    open();
+    await waitFor(() => expect(listMentorChats).toHaveBeenCalled());
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /ask about/i }),
+      "  How do joins work?{Enter}",
+    );
+    await screen.findByText("Hi.");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "New chat" })).toBeEnabled(),
+    );
+
+    const list = await showList();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+    expect(list).toHaveTextContent("How do joins work?");
+    expect(list).toHaveTextContent("just now");
+
+    jest.mocked(listMentorChats).mockResolvedValue({
+      ok: true,
+      data: [chat("chatNEW11111", "How do joins work?")] as never,
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Back to chat" }));
+    await userEvent.click(screen.getByRole("button", { name: "Chats" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("list", { name: "Saved chats" }),
+      ).toHaveTextContent("2 hr ago"),
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("drops a saved answer's sources and Read line once the lesson changes", async () => {
+    const citation = {
+      ref: "p1",
+      anchor: { v: 1, field: "blocks", blockId: "b" },
+      blockIndex: 0,
+      label: "Join source",
+    };
+    jest.mocked(getMentorChat).mockResolvedValue({
+      ok: true,
+      data: {
+        chat: CHATS[0],
+        messages: [
+          { documentId: "m1", role: "user", text: "Q", citations: null },
+          {
+            documentId: "m2",
+            role: "assistant",
+            text: "An answer [p1].",
+            citations: [citation],
+          },
+        ],
+      },
+    } as never);
+    const { rerender } = render(panel());
+    open();
+    expect(
+      await screen.findByRole("button", { name: /Join source/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Read Joins")).toBeInTheDocument();
+
+    act(() => useLessonPanelStore.setState({ ownerLessonId: 10 }));
+    rerender(panel({ id: 10, name: "Views" } as Lesson));
+
+    expect(await screen.findByText("An answer.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Join source/ })).toBeNull();
+    expect(screen.queryByText(/^Read /)).toBeNull();
+  });
+
+  describe("at phone width", () => {
+    beforeEach(() => jest.mocked(useMediaQuery).mockReturnValue(false));
+
+    it("switches between the list and the conversation", async () => {
+      renderPanel();
+      open();
+      await screen.findByText("An answer.");
+
+      await showList();
+      expect(screen.queryByText("An answer.")).toBeNull();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Back to chat" }),
+      );
+      expect(screen.getByText("An answer.")).toBeInTheDocument();
+
+      await showList();
+      await userEvent.click(screen.getByRole("button", { name: /^Why index/ }));
+      expect(
+        await screen.findByRole("textbox", { name: /ask about/i }),
+      ).toBeVisible();
+      expect(screen.queryByRole("list", { name: "Saved chats" })).toBeNull();
+    });
+
+    it("announces a failed open in the sheet, not only a toast", async () => {
+      renderPanel();
+      open();
+      await screen.findByText("An answer.");
+      await showList();
+      jest
+        .mocked(getMentorChat)
+        .mockResolvedValueOnce({ ok: false, error: "failed" });
+      await userEvent.click(screen.getByRole("button", { name: /^Why index/ }));
+
+      expect(
+        await screen.findByText("Couldn't open that chat"),
+      ).toBeInTheDocument();
+    });
   });
 });
