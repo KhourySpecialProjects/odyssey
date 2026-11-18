@@ -1205,6 +1205,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring-prompt": {
     saveAiScoringPrompt: "custom ai-scoring-setting prompt route (ODY-898)",
   },
+  recommendations: { dismissRecommendation: WRITE },
   "overview-scan": {
     runOverviewScan: WRITE,
     dismissScanFlag: WRITE,
