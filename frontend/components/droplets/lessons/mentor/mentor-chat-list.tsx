@@ -15,8 +15,6 @@ import {
 import { chatTitle, relativeTime, startedIn } from "@/lib/mentor/chat-row";
 import type { MentorChatSummary } from "@/lib/requests/mentor-chats";
 
-export { chatTitle, relativeTime };
-
 export type ChatListState =
   | { status: "loading" }
   | { status: "error" }

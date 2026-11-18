@@ -48,7 +48,7 @@ describe("RecentMentorChats", () => {
       screen.getAllByText("Started in Joins · SQL Basics · 2 hr ago"),
     ).toHaveLength(3);
     expect(
-      screen.getByRole("link", { name: "Continue: What is a join?" }),
+      screen.getByRole("link", { name: "Continue in lesson: What is a join?" }),
     ).toHaveAttribute("href", "/d/sql-basics/joins?mentorChat=chatAAAA1111");
     expect(
       screen.getByRole("link", { name: "View in Mentor chats: Explain this" }),
@@ -71,12 +71,15 @@ describe("RecentMentorChats", () => {
     expect(listMentorChats).not.toHaveBeenCalled();
   });
 
-  it("renders nothing for faculty", async () => {
+  it("shows the card to faculty and TAs too, like the rest of Mentor", async () => {
     jest
       .mocked(getCurrentUser)
       .mockResolvedValue({ email: "p@b.edu", roles: ["Faculty"] } as never);
-    expect(await RecentMentorChats()).toBeNull();
-    expect(listMentorChats).not.toHaveBeenCalled();
+    ok([chat("chatAAAA1111", "What is a join?")]);
+    await show();
+    expect(
+      screen.getByRole("heading", { name: "Recent Mentor chats" }),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing when the list fails or throws", async () => {
@@ -84,8 +87,11 @@ describe("RecentMentorChats", () => {
       .mocked(listMentorChats)
       .mockResolvedValue({ ok: false, error: "failed" });
     expect(await RecentMentorChats()).toBeNull();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
     jest.mocked(listMentorChats).mockRejectedValue(new Error("boom"));
+    expect(await RecentMentorChats()).toBeNull();
+    expect(log).toHaveBeenCalledWith("[mentor] recent chats failed:", "Error");
+    jest.mocked(listMentorChats).mockRejectedValue("not an error");
     expect(await RecentMentorChats()).toBeNull();
   });
 });

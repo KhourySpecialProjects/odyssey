@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import {
   chatTitle,
   continueHref,
   relativeTime,
   startedIn,
 } from "@/lib/mentor/chat-row";
+import { errorName } from "@/lib/mentor/chat-history";
 import { listMentorChats } from "@/lib/requests/mentor-chats";
 
 const RECENT = 3;
@@ -14,12 +14,11 @@ const MENTOR_CHATS_HREF = "/activity/mentor-chats";
 const linkCls =
   "rounded font-medium text-[#287697] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#287697] dark:text-[#4AABCF]";
 
-/** The student's 3 newest Mentor chats on the Activity home; renders nothing if there are none or the list fails (ODY-937). */
+/** The signed-in user's 3 newest Mentor chats on the Activity home; nothing if there are none or the list fails (ODY-937). */
 export async function RecentMentorChats() {
   try {
     const user = await getCurrentUser();
-    if (!user?.email || user.roles?.includes(AuthorizedUserRoleTitle.Faculty))
-      return null;
+    if (!user?.email) return null;
     const res = await listMentorChats();
     if (!res.ok || res.data.length === 0) return null;
     const chats = res.data.slice(0, RECENT);
@@ -59,7 +58,7 @@ export async function RecentMentorChats() {
                   href={href ?? MENTOR_CHATS_HREF}
                   aria-label={
                     href
-                      ? `Continue: ${chatTitle(c)}`
+                      ? `Continue in lesson: ${chatTitle(c)}`
                       : `View in Mentor chats: ${chatTitle(c)}`
                   }
                   className={`text-xs ${linkCls}`}
@@ -73,7 +72,7 @@ export async function RecentMentorChats() {
       </section>
     );
   } catch (error) {
-    console.error("[mentor] recent chats failed:", (error as Error)?.name);
+    console.error("[mentor] recent chats failed:", errorName(error));
     return null;
   }
 }
