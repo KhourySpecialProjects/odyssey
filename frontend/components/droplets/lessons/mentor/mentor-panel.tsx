@@ -16,6 +16,12 @@ import {
   useOwnedPanel,
 } from "@/stores/lesson-panel-store";
 import type { Lesson } from "@/types";
+import {
+  deleteMentorChat,
+  listMentorChats,
+  type MentorChatSummary,
+} from "@/lib/requests/mentor-chats";
+import type { ChatListState } from "./mentor-chat-list";
 import { MentorSheet } from "./mentor-sheet";
 import { acceptNotice, noticeAccepted } from "./mentor-notice";
 import { createRatingStore, type MentorFeedback } from "./mentor-rating";
@@ -49,6 +55,11 @@ export function MentorPanel({
   // A new n remounts the live-region text, so an identical message is heard again
   const [announcement, setAnnouncement] = useState({ n: 0, text: "" });
   const abort = useRef<AbortController | null>(null);
+  const [view, setView] = useState<"chat" | "list">("chat");
+  const [chatList, setChatList] = useState<ChatListState>({
+    status: "loading",
+  });
+  const defaulted = useRef(false);
 
   // A reopened sheet shouldn't replay the last announcement
   useEffect(() => {
@@ -64,6 +75,90 @@ export function MentorPanel({
     abort.current = new AbortController();
     return () => abort.current?.abort();
   }, []);
+
+  // This panel's chats only: an explain chat never opens in the sidebar
+  const loadList = useCallback(async (): Promise<
+    MentorChatSummary[] | null
+  > => {
+    const res = await listMentorChats();
+    if (!abort.current?.signal.aborted) {
+      setChatList(
+        res.ok
+          ? {
+              status: "ready",
+              chats: res.data.filter((c) => c.kind === "lesson"),
+            }
+          : { status: "error" },
+      );
+    }
+    return res.ok ? res.data.filter((c) => c.kind === "lesson") : null;
+  }, []);
+
+  // First open with nothing in progress: continue the most recent chat
+  const { loadChat } = chat;
+  useEffect(() => {
+    if (!open || !accepted || defaulted.current) return;
+    if (explainSelection !== null) return;
+    defaulted.current = true;
+    void (async () => {
+      const chats = await loadList();
+      if (chats?.[0])
+        await loadChat(chats[0].documentId, { onlyIfEmpty: true });
+    })();
+  }, [open, accepted, explainSelection, loadList, loadChat]);
+
+  // A chat that just got its first answer joins the list
+  const wasStreaming = useRef(false);
+  useEffect(() => {
+    if (wasStreaming.current && !chat.streaming && defaulted.current) {
+      void loadList();
+    }
+    wasStreaming.current = chat.streaming;
+  }, [chat.streaming, loadList]);
+
+  // An explain from the lesson answers in the conversation, not behind the list
+  useEffect(() => {
+    if (explainSelection !== null) setView("chat");
+  }, [explainSelection]);
+
+  const showList = useCallback(
+    (next: "chat" | "list") => {
+      setView(next);
+      if (next === "list") {
+        setChatList((s) => (s.status === "ready" ? s : { status: "loading" }));
+        void loadList();
+      }
+    },
+    [loadList],
+  );
+
+  const openChat = useCallback(
+    async (id: string) => {
+      if (await chat.loadChat(id)) setView("chat");
+      else toast.error("Couldn't open that chat");
+    },
+    [chat],
+  );
+
+  const removeChat = useCallback(
+    async (target: MentorChatSummary) => {
+      const res = await deleteMentorChat(target.documentId);
+      if (!res.ok && res.error !== "not_found") {
+        toast.error("Couldn't delete that chat");
+        return;
+      }
+      if (target.documentId === chat.openChatId) chat.clear();
+      setChatList((s) =>
+        s.status === "ready"
+          ? {
+              status: "ready",
+              chats: s.chats.filter((c) => c.documentId !== target.documentId),
+            }
+          : s,
+      );
+    },
+    [chat],
+  );
 
   // Explain from the lesson waits for the notice to be accepted and for an
   // answer that's still streaming. Once locked, the ask is dropped. It's sent
@@ -209,6 +304,14 @@ export function MentorPanel({
       onShowSource={onShowSource}
       onSave={enrollmentId ? save : undefined}
       feedback={feedback}
+      view={view}
+      onView={showList}
+      onNewChat={chat.clear}
+      chatList={chatList}
+      openChatId={chat.openChatId}
+      onOpenChat={openChat}
+      onDeleteChat={removeChat}
+      onRetryChats={() => showList("list")}
     />
   );
 }
