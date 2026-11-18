@@ -41,6 +41,7 @@ type StrapiBlocksTextNode = {
 };
 
 type BlockNoteListItem = {
+  id?: string;
   type: string;
   content?: BlockNoteInlineContent[];
   children?: BlockNoteListItem[];
@@ -58,7 +59,7 @@ type BlockNoteTableRow = {
 };
 
 // Convert BlockNote string ID to a deterministic number for database storage
-function blockNoteIdToNumber(blockId: string): number {
+export function blockNoteIdToNumber(blockId: string): number {
   let hash = 0;
   for (let i = 0; i < blockId.length; i++) {
     const char = blockId.charCodeAt(i);
@@ -75,6 +76,12 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+// Marks the element holding a block's own text with its BlockNote id, so
+// lib/anchors can find the block a reader selected in the merged HTML
+function blockIdAttr(block: { id?: string }): string {
+  return block.id ? ` data-block-id="${escapeHtml(block.id)}"` : "";
 }
 
 function renderTextWithStyles(
@@ -193,11 +200,13 @@ function renderBlockNoteBlockAsHtml(block: any): string {
   switch (block.type) {
     case "paragraph":
     case "quote":
-      ownHtml = text ? `<p>${text}</p>` : "";
+      ownHtml = text ? `<p${blockIdAttr(block)}>${text}</p>` : "";
       break;
     case "heading": {
       const level = Number(block.props?.level) || 1;
-      ownHtml = text ? `<h${level}>${text}</h${level}>` : "";
+      ownHtml = text
+        ? `<h${level}${blockIdAttr(block)}>${text}</h${level}>`
+        : "";
       break;
     }
     case "bulletListItem":
@@ -251,7 +260,10 @@ function convertNumberedListItem(
           return convertNumberedListItem(child, depth + 1);
         }
         if (child.content) {
-          return convertInlineContentToHtml(child.content);
+          const childHtml = convertInlineContentToHtml(child.content);
+          return child.id && childHtml
+            ? `<span${blockIdAttr(child)}>${childHtml}</span>`
+            : childHtml;
         }
         return "";
       })
@@ -263,7 +275,7 @@ function convertNumberedListItem(
     }
   }
 
-  return `<li>${textContent}${nestedListHtml}</li>`;
+  return `<li${blockIdAttr(item)}>${textContent}${nestedListHtml}</li>`;
 }
 
 // Helper function to convert a bullet list item and its children recursively
@@ -293,7 +305,10 @@ function convertBulletListItem(
           return convertBulletListItem(child, depth + 1);
         }
         if (child.content) {
-          return convertInlineContentToHtml(child.content);
+          const childHtml = convertInlineContentToHtml(child.content);
+          return child.id && childHtml
+            ? `<span${blockIdAttr(child)}>${childHtml}</span>`
+            : childHtml;
         }
         return "";
       })
@@ -305,7 +320,7 @@ function convertBulletListItem(
     }
   }
 
-  return `<li>${textContent}${nestedListHtml}</li>`;
+  return `<li${blockIdAttr(item)}>${textContent}${nestedListHtml}</li>`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -322,8 +337,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const headingLevel = Number(blockAny.props?.level) || 1;
       const ownHtml =
         blockAny.type === "heading"
-          ? `<h${headingLevel}>${textContent}</h${headingLevel}>`
-          : `<p>${textContent}</p>`;
+          ? `<h${headingLevel}${blockIdAttr(blockAny)}>${textContent}</h${headingLevel}>`
+          : `<p${blockIdAttr(blockAny)}>${textContent}</p>`;
 
       const childrenHtml = renderBlockNoteChildrenAsHtml(
         blockAny.children ?? [],
@@ -576,7 +591,9 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.code-block",
-        id: blockIndex,
+        // Highlights are saved under it, so it mustn't change when blocks
+        // are added above
+        id: blockId,
         language,
         code,
         editable,
@@ -778,7 +795,8 @@ export function convertBlockNoteToV1Blocks(
         blockAny.children ?? [],
       );
       const combined =
-        (textContent ? `<p>${textContent}</p>` : "") + childrenHtml;
+        (textContent ? `<p${blockIdAttr(blockAny)}>${textContent}</p>` : "") +
+        childrenHtml;
       if (combined) {
         const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : i;
         processedBlocks.push({

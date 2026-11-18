@@ -164,6 +164,14 @@ No action needed:
    → Correct behavior, not a real violation
 ```
 
+## Phase 4: Draft Slack Handoff
+
+If Phase 0.5 wrote a progress file, draft a `[STATUS]` handoff for the team's
+Slack group DM in the format from `docs/agent/multi-agent-coordination.md`:
+completed work, remaining work, blockers and next action, with the branch or
+PR. Mark work `COMPLETED` only if it is merged. You have no Slack tools — put
+the draft at the end of your report for the main session to post.
+
 ## Bloat Prevention
 
 Before writing anything, count existing files:
@@ -199,4 +207,5 @@ Promoted: [N items promoted to CLAUDE.md or reference docs]
 Pruned: [N stale learnings removed]
 Total learnings on file: [N]
 Next session: [any flagged items for follow-up]
+Slack handoff: [draft from Phase 4, or "nothing to post"]
 ```

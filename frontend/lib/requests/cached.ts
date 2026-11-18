@@ -114,7 +114,6 @@ export const getCachedDraftDropletBySlug = cache((slug: string) =>
       "isHidden",
       "status",
       "inReview",
-      "afterReview",
       "funFact",
       "originalDropletId",
       "presentationEnabled",

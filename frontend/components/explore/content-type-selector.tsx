@@ -32,6 +32,8 @@ export function ContentTypeSelector({
   const createQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("contentType", value);
+    // The other tab has its own pages (ODY-865)
+    params.delete("page");
     return params.toString();
   };
 

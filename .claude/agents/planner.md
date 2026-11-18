@@ -265,6 +265,13 @@ Use this structure:
 
 [Key choices made and rationale — enough for the reviewer to understand why]
 
+## PRs
+
+| PR                    | Tasks | Est. code lines | Depends on |
+| --------------------- | ----- | --------------- | ---------- |
+| 1. [name, e.g. route] | 1–3   | ~250            | —          |
+| 2. [name, e.g. UI]    | 4–6   | ~300            | PR 1       |
+
 ## Implementation Tasks
 
 - [ ] **Task 1:** [name] (independent)
@@ -286,10 +293,20 @@ Use this structure:
 - If a task requires understanding more than ~5 files of existing code, split it or add explicit context excerpts
 - Group tightly coupled changes (e.g., type + function that uses it) into one task
 - Keep independent changes (e.g., two unrelated components) as separate tasks for parallel execution
+- In **Verify**, list each behaviour once, at the layer that owns it (see `.claude/rules/testing.md`). A rule the Strapi route enforces is tested there, not again in the server action.
+
+**PR split rules (see the PR size budget in CLAUDE.md):**
+
+- Group tasks into PRs and estimate each PR's code lines, not counting tests, Markdown and generated files. Aim for 400 or fewer. If a PR can't get under 1,000, the ticket is too big: say so in Phase 7 and propose how to split it.
+- Split along layers, in order: backend (schema or route, with its tests), then frontend data (request functions and actions, with their tests), then UI.
+- A mechanical change (rename, file move, find-and-replace) gets its own PR, first, so reviewers can skim it.
+- Every PR merges on its own: CI passes, and nothing half-built is reachable. Hide unfinished UI behind a flag or leave it unlinked.
+- Later PRs stack: branch from the previous PR's branch and target it until it merges.
+- A plan small enough for one PR has a one-row PRs table.
 
 ### Phase 7: Present for approval.
 
-After writing the plan file, present a concise summary: the key design decisions, any assumptions you made, and the task breakdown at a glance. The human will review `docs/plans/<ticket-id>.md` and re-invoke you if changes are needed.
+After writing the plan file, present a concise summary: the key design decisions, any assumptions you made, the task breakdown at a glance, and the PR split with each PR's estimated size. The human will review `docs/plans/<ticket-id>.md` and re-invoke you if changes are needed.
 
 **Do NOT create Linear sub-issues yet.** Sub-issues are created by `/implement` after the human approves the plan — not before.
 

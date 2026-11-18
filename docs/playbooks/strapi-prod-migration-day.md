@@ -8,12 +8,12 @@ This playbook covers **ODY-633: turning off Draft & Publish** and the **Strapi v
 
 ## Roles
 
-| Role              | Who   | Does                                                                                                   |
-| ----------------- | ----- | ------------------------------------------------------------------------------------------------------ |
-| Driver            | _TBD_ | Runs the SQL and AWS steps, and makes the go/no-go calls                                               |
-| Reviewer          | _TBD_ | Reviews the per-row decisions and the prod handling SQL before the window                              |
-| Comms             | _TBD_ | Announces the window and the admin edit freeze, and confirms when both end                             |
-| Rollback approver | _TBD_ | Signs off on any rollback after the site has reopened ([strapi-v5-rollback.md](strapi-v5-rollback.md)) |
+| Role              | Who    | Does                                                                                                   |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| Driver            | Jaylen | Runs the SQL and AWS steps, and makes the go/no-go calls                                               |
+| Reviewer          | Jaylen | Reviews the per-row decisions and the prod handling SQL before the window                              |
+| Comms             | Brady  | Announces the window and the admin edit freeze, and confirms when both end                             |
+| Rollback approver | Awad   | Signs off on any rollback after the site has reopened ([strapi-v5-rollback.md](strapi-v5-rollback.md)) |
 
 ## Strapi v5: timeline to migration day
 
@@ -60,7 +60,7 @@ Status as of 2026-10-06. Migration day (**M**) isn't set yet. Set it at gate C, 
 
 **Gate B:** the ODY-596 restore has been tested, the v5 version of `03` exists, the Reviewer has reviewed the window steps, and ODY-605 has landed.
 
-### Phase 3: Rehearsal, ODY-602 (Awad)
+### Phase 3: Rehearsal, ODY-602
 
 Runs after gate D, alongside the dev soak (phase 5). Gate E needs gate C.
 

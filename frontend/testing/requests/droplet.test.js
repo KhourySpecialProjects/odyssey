@@ -11,7 +11,6 @@ import {
   getDraftDroplets,
   getInReviewDroplets,
   getRandomFunFactDroplet,
-  publishDraftToOriginal,
   updateDropletAverageRating,
   updateDropletFunFact,
   updateDroplet,
@@ -20,7 +19,6 @@ import {
   favoriteDroplet,
   getFavoritedDropletIds,
 } from "@/lib/requests/droplet";
-import { deleteLesson, addLesson } from "@/lib/requests/lesson";
 import { getEnrollmentByUserAndDroplet } from "@/lib/requests/enrollment";
 import { revalidateTag } from "next/cache";
 import { fetchAPI } from "@/lib/utils";
@@ -31,6 +29,32 @@ jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkDropletUpdate: jest.fn(),
+  checkDropletContentWrite: jest.fn(),
+  checkPublishDraft: jest.fn(),
+}));
+
+const ADMIN_GATE = {
+  ok: true,
+  user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+};
+
+/** Auth and the review freeze pass; these tests are about the request logic. */
+function allowReviewFreeze() {
+  jest
+    .requireMock("@/lib/auth/require-role")
+    .requireRole.mockResolvedValue(ADMIN_GATE);
+  const freeze = jest.requireMock("@/lib/auth/review-freeze");
+  freeze.checkDropletUpdate.mockResolvedValue({ ok: true });
+  freeze.checkDropletContentWrite.mockResolvedValue({ ok: true });
+  freeze.checkPublishDraft.mockResolvedValue({ ok: true });
+}
+allowReviewFreeze();
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -44,8 +68,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -73,7 +97,9 @@ beforeEach(() => {
 describe("deepDeleteDroplet", () => {
   it("successfully deletes a droplet and revalidates tags", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       {
@@ -110,7 +136,9 @@ describe("deepDeleteDroplet", () => {
 
   it("treats an empty 204 as success (Strapi v5)", async () => {
     const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
+    const {
+      deleteLessonRecord: deleteLessonMock,
+    } = require("@/lib/requests/lesson-delete");
 
     fetchAPI.mockResolvedValueOnce([
       { id: 123, name: "Test Droplet", lessons: [{ id: 1 }] },
@@ -569,9 +597,22 @@ describe("Droplet API Functions", () => {
           }),
       });
 
-      await updateDroplet(123, { status: "published", inReview: false });
+      await updateDroplet(123, { status: "published" });
 
       expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.voyages);
+    });
+
+    it("never sends a client inReview or reviewRound", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 123, attributes: {} } }),
+      });
+
+      await updateDroplet(123, { name: "N", inReview: true, reviewRound: 5 });
+
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(body.data).not.toHaveProperty("inReview");
+      expect(body.data).not.toHaveProperty("reviewRound");
     });
 
     it("saves that don't publish leave the voyages cache alone", async () => {
@@ -1172,124 +1213,6 @@ describe("duplicateDroplet", () => {
     });
 
     const result = await duplicateDroplet(10);
-
-    expect(result.ok).toBe(false);
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-});
-
-describe("publishDraftToOriginal", () => {
-  beforeEach(() => {
-    global.fetch.mockReset();
-    const { fetchAPI } = require("@/lib/utils");
-    fetchAPI.mockReset();
-    jest.clearAllMocks();
-    getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-    getAuthorizedUserByEmail.mockResolvedValue({ id: 5 });
-  });
-
-  it("successfully publishes a draft to original", async () => {
-    const { fetchAPI } = require("@/lib/utils");
-    const { deleteLesson: deleteLessonMock } = require("@/lib/requests/lesson");
-
-    // First fetchAPI call: getDropletById for draft droplet
-    fetchAPI.mockResolvedValueOnce([
-      {
-        id: 20,
-        name: "[EDIT] Original Droplet",
-        focusArea: "Science",
-        type: "standard",
-        difficulty: "beginner",
-        description: "A droplet",
-        overview: "Overview",
-        slug: "edit-original-droplet",
-        tags: [],
-        authorized_users: [{ id: 5 }],
-        learningObjectives: [],
-        prerequisites: [],
-        postrequisites: [],
-        nextSteps: [],
-        lessons: [],
-      },
-    ]);
-
-    // Second fetchAPI call: getDropletById for original droplet
-    fetchAPI.mockResolvedValueOnce([
-      {
-        id: 10,
-        name: "Original Droplet",
-        slug: "original-droplet",
-        tags: [],
-        authorized_users: [{ id: 5 }],
-        learningObjectives: [],
-        prerequisites: [],
-        postrequisites: [],
-        nextSteps: [],
-        lessons: [],
-      },
-    ]);
-
-    // Fetch enrollments for the draft
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: [] }),
-    });
-
-    // updateDroplet calls global.fetch internally — mock the PUT
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({ data: { id: 10, name: "Original Droplet" } }),
-    });
-
-    // deepDeleteDroplet: fetchAPI call for getDropletById inside deepDeleteDroplet
-    fetchAPI.mockResolvedValueOnce([
-      {
-        id: 20,
-        name: "[EDIT] Original Droplet",
-        lessons: [],
-        authorized_users: [{ id: 5 }],
-        tags: [],
-        prerequisites: [],
-        postrequisites: [],
-        nextSteps: [],
-        learningObjectives: [],
-      },
-    ]);
-
-    // deepDeleteDroplet: actual delete fetch
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 20 } }),
-    });
-
-    const result = await publishDraftToOriginal(20, 10);
-
-    expect(result.ok).toBe(true);
-    // Revalidation now happens in finally block
-    expect(revalidateTag).toHaveBeenCalledWith("authors");
-    expect(revalidateTag).toHaveBeenCalledWith("droplets");
-    expect(revalidateTag).toHaveBeenCalledWith("lesson");
-    expect(revalidateTag).toHaveBeenCalledWith("playlists");
-    expect(revalidateTag).toHaveBeenCalledWith("enrollments");
-  });
-
-  it("fails when user not authenticated", async () => {
-    getCurrentUser.mockResolvedValue(null);
-
-    const result = await publishDraftToOriginal(20, 10);
-
-    expect(result.ok).toBe(false);
-    expect(revalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("fails when draft droplet not found", async () => {
-    const { fetchAPI } = require("@/lib/utils");
-
-    // getDropletById returns null for the draft droplet
-    fetchAPI.mockResolvedValueOnce([]);
-
-    const result = await publishDraftToOriginal(20, 10);
 
     expect(result.ok).toBe(false);
     expect(revalidateTag).not.toHaveBeenCalled();

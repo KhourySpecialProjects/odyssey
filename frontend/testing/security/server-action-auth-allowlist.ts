@@ -29,8 +29,6 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/import/custom-prompt-ai.ts#customPromptAI": "ODY-504",
   "lib/import/expand-with-ai.ts#expandLessonContent": "ODY-504",
   "lib/import/split-with-ai.ts#splitTextWithAI": "ODY-504",
-  "lib/requests/dataset.ts#createDataset": "ODY-504",
-  "lib/requests/dataset.ts#deleteDataset": "ODY-504",
   "lib/requests/dataset.ts#getDatasetsByDropletId": "ODY-504",
   "lib/requests/droplet.ts#archiveDroplet": "ODY-504",
   "lib/requests/droplet.ts#createDroplet": "ODY-504",
@@ -45,22 +43,13 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/droplet.ts#getFavoritedDropletIds": "ODY-504",
   "lib/requests/droplet.ts#getInReviewDroplets": "ODY-504",
   "lib/requests/droplet.ts#getRandomFunFactDroplet": "ODY-504",
-  "lib/requests/droplet.ts#publishDraftToOriginal": "ODY-504",
-  "lib/requests/droplet.ts#updateDroplet": "ODY-504",
   "lib/requests/droplet.ts#updateDropletAverageRating": "ODY-504",
-  "lib/requests/droplet.ts#updateDropletFunFact": "ODY-504",
-  "lib/requests/droplet.ts#updateDropletLearningObjective": "ODY-504",
   "lib/requests/galleries.ts#getGalleryBySlug": "ODY-504",
   "lib/requests/lesson-lock.ts#getCurrentAuthorizedUserId": "ODY-504",
-  "lib/requests/lesson-lock.ts#getLessonLockStatus": "ODY-504",
-  "lib/requests/lesson.ts#addLesson": "ODY-504",
   "lib/requests/lesson.ts#completeLesson": "ODY-504",
-  "lib/requests/lesson.ts#deleteLesson": "ODY-504",
-  "lib/requests/lesson.ts#duplicateLessonToDroplet": "ODY-504",
   "lib/requests/lesson.ts#getLessonBySlug": "ODY-504",
   "lib/requests/lesson.ts#markLessonAsComplete": "ODY-504",
   "lib/requests/lesson.ts#revalidateLesson": "ODY-504",
-  "lib/requests/lesson.ts#updateLesson": "ODY-504",
 
   // ODY-505
   "lib/requests/playlist.ts#archivePlaylist": "ODY-505",
@@ -132,10 +121,7 @@ export const PENDING_AUTH: Record<string, `ODY-${number}`> = {
   "lib/requests/voyage-enrollment.ts#unenrollFromVoyage": "ODY-507",
 
   // ODY-508
-  "lib/requests/highlights.ts#createHighlight": "ODY-508",
-  "lib/requests/highlights.ts#deleteHighlight": "ODY-508",
   "lib/requests/highlights.ts#getAllHighlightsByUser": "ODY-508",
-  "lib/requests/highlights.ts#getHighlights": "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByAuthorizedUserAndLesson":
     "ODY-508",
   "lib/requests/highlights.ts#getHighlightsByDroplet": "ODY-508",

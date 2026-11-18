@@ -23,6 +23,18 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 
+jest.mock("@/lib/auth/require-role", () => ({
+  requireRole: jest.fn().mockResolvedValue({
+    ok: true,
+    user: { id: 1, email: "a@example.invalid", roles: ["System Admin"] },
+  }),
+}));
+
+jest.mock("@/lib/auth/review-freeze", () => ({
+  checkDatasetWrite: jest.fn().mockResolvedValue({ ok: true }),
+  checkDropletContentWrite: jest.fn().mockResolvedValue({ ok: true }),
+}));
+
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data: unknown) => data),

@@ -6,6 +6,8 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Metadata } from "next";
 import { getInReviewDroplets } from "@/lib/requests/droplet";
+import { getReviewsAwaitingReply } from "@/lib/requests/reviews";
+import { AwaitingReplyList } from "@/components/review/awaiting-reply-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconClipboardList } from "@tabler/icons-react";
 
@@ -23,7 +25,10 @@ export default async function CreateRoute() {
   )
     redirect("/unauthorized");
 
-  const drafts = await getInReviewDroplets();
+  const [drafts, waiting] = await Promise.all([
+    getInReviewDroplets(),
+    getReviewsAwaitingReply(),
+  ]);
 
   return (
     <>
@@ -36,6 +41,8 @@ export default async function CreateRoute() {
             Look over draft droplets that have been submitted for review.
           </p>
         </div>
+
+        <AwaitingReplyList rows={waiting.ok ? waiting.data : []} />
 
         {!drafts || drafts.length === 0 ? (
           <EmptyState

@@ -28,6 +28,11 @@ describe('Strapi boot', () => {
     'api::access-request.access-request',
     'api::authorized-user.authorized-user',
     'api::tag.tag',
+    'api::review-criterion.review-criterion',
+    'api::review.review',
+    'api::review-comment.review-comment',
+    'api::review-score.review-score',
+    'api::ai-scoring-run.ai-scoring-run',
   ])('registers the %s content type', (uid) => {
     expect(strapi.contentTypes[uid]).toBeDefined();
   });

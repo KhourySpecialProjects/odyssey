@@ -21,6 +21,13 @@ import {
   StrapiEntryNotFoundError,
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { isValidId } from "@/lib/auth/valid-id";
+import { withAuth } from "@/lib/auth/guards";
+import {
+  checkDropletContentWrite,
+  checkLessonWrite,
+} from "@/lib/auth/review-freeze";
+import { deleteLessonRecord } from "@/lib/requests/lesson-delete";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -61,6 +68,55 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
       ? { cache: "no-store" as const }
       : { next: { tags: [CACHE_TAGS.lesson], revalidate: 900 } }),
   }).then((lessons) => lessons[0]);
+}
+
+/**
+ * The lesson's latest saved content, never cached. A tab that takes over the
+ * edit lock calls this before turning editable, so it never autosaves the
+ * copy it loaded earlier over a co-author's newer edits (ODY-811). Needs the
+ * same rights as taking the lock.
+ */
+export async function getLatestLessonContent(lessonId: number) {
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, lessonId);
+    if (!check.ok)
+      return { ok: false as const, error: check.error, data: null };
+
+    try {
+      const lessons = await fetchAPI<
+        Pick<Lesson, "name" | "blocks" | "blocksV2" | "blocksVersion">[]
+      >("/lessons", {
+        urlParams: {
+          filters: { id: { $eq: lessonId } },
+          fields: ["name", "blocksV2", "blocksVersion"],
+          populate: LESSON_BLOCKS_POPULATE,
+          pagination: { pageSize: 1, page: 1 },
+        },
+        cache: "no-store",
+      });
+      const lesson = lessons?.[0];
+      if (!lesson) {
+        return { ok: false as const, error: "Not Found", data: null };
+      }
+      return {
+        ok: true as const,
+        error: null,
+        data: {
+          name: lesson.name,
+          blocks: lesson.blocks ?? [],
+          blocksV2: lesson.blocksV2 ?? null,
+          blocksVersion: lesson.blocksVersion ?? null,
+        },
+      };
+    } catch (err) {
+      console.error(err);
+      return {
+        ok: false as const,
+        error: "Could not load the latest lesson content.",
+        data: null,
+      };
+    }
+  });
 }
 
 export async function markLessonAsComplete(
@@ -148,52 +204,39 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
 }
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
-  try {
-    const response = await fetch(await strapiEntryUrl("lessons", id), {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-    });
-    const body = await readJsonOrNull(response);
-    if (!response.ok || body?.error)
-      return {
-        ok: false,
-        error: body?.error?.message ?? "Failed to delete lesson.",
-        data: null,
-      };
-
-    if (revalidate) {
-      revalidateTag(CACHE_TAGS.droplets);
-      revalidateTag(CACHE_TAGS.allEnrollments);
-      revalidateTag(CACHE_TAGS.lesson);
-    }
-
-    return { ok: true, error: null, data: body?.data ?? null };
-  } catch (err) {
-    // Same result as the 404 Strapi used to return for a missing lesson.
-    if (err instanceof StrapiEntryNotFoundError) {
-      return { ok: false, error: "Not Found", data: null };
-    }
-    console.error(err);
-    return { error: "Database Error: Failed to Delete Lesson." };
-  }
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, id);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return deleteLessonRecord(id, revalidate);
+  });
 }
+
+type UpdateLessonOptions = {
+  reload?: boolean;
+  regenerateSlug?: boolean;
+  skipRevalidation?: boolean;
+};
 
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
-  options: {
-    reload?: boolean;
-    regenerateSlug?: boolean;
-    skipRevalidation?: boolean;
-  } = {
+  options: UpdateLessonOptions = {
     reload: false,
     regenerateSlug: false,
     skipRevalidation: false,
   },
+) {
+  return withAuth([], async (user) => {
+    const check = await checkLessonWrite(user, id);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyLessonUpdate(id, data, options);
+  });
+}
+
+async function applyLessonUpdate(
+  id: number,
+  data: Partial<z.infer<typeof LessonSchema>>,
+  options: UpdateLessonOptions,
 ) {
   try {
     if (data.blocks) {
@@ -264,6 +307,14 @@ const CreateLessonSchema = LessonSchema.pick({
 });
 
 export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
+  return withAuth([], async (user) => {
+    const check = await checkDropletContentWrite(user, formData.dropletId);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyAddLesson(formData);
+  });
+}
+
+async function applyAddLesson(formData: z.infer<typeof CreateLessonSchema>) {
   try {
     const lessonData: any = {
       name: formData.name,
@@ -316,6 +367,22 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 }
 
 export async function duplicateLessonToDroplet(
+  sourceLessonId: number,
+  targetDropletId: number,
+  newOrderIndex: number,
+) {
+  return withAuth([], async (user) => {
+    // The source is only read, but it is resolved from this argument too.
+    if (!isValidId(sourceLessonId)) {
+      return { ok: false, error: "forbidden", data: null };
+    }
+    const check = await checkDropletContentWrite(user, targetDropletId);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyDuplicateLesson(sourceLessonId, targetDropletId, newOrderIndex);
+  });
+}
+
+async function applyDuplicateLesson(
   sourceLessonId: number,
   targetDropletId: number,
   newOrderIndex: number,

@@ -83,7 +83,9 @@ describe("paragraph blocks", () => {
     ]);
     expect(result).toHaveLength(1);
     expect(result[0].__component).toBe("droplets.generic");
-    expect(getContent(result[0])).toContain("<p>hello world</p>");
+    expect(getContent(result[0])).toContain(
+      '<p data-block-id="test-id">hello world</p>',
+    );
   });
 
   it("groups consecutive non-empty paragraphs into one block", () => {
@@ -94,8 +96,8 @@ describe("paragraph blocks", () => {
     // Both paragraphs merged into one generic block
     expect(result).toHaveLength(1);
     const content = getContent(result[0]);
-    expect(content).toContain("<p>first</p>");
-    expect(content).toContain("<p>second</p>");
+    expect(content).toContain('<p data-block-id="p1">first</p>');
+    expect(content).toContain('<p data-block-id="p2">second</p>');
   });
 
   it("stores sourceBlockIds when multiple paragraphs are grouped", () => {
@@ -153,7 +155,7 @@ describe("paragraph blocks", () => {
     // 1 empty-spacing block + 1 text block
     expect(result).toHaveLength(2);
     expect(getContent(result[0])).toContain("empty-paragraph-spacing");
-    expect(getContent(result[1])).toContain("<p>text</p>");
+    expect(getContent(result[1])).toContain('<p data-block-id="p1">text</p>');
   });
 
   it("paragraph with no id uses index as block id", () => {
@@ -192,7 +194,9 @@ describe("heading blocks", () => {
     ]);
     expect(result).toHaveLength(1);
     expect(result[0].__component).toBe("droplets.generic");
-    expect(getContent(result[0])).toBe("<h1>Title</h1>");
+    expect(getContent(result[0])).toBe(
+      '<h1 data-block-id="test-id">Title</h1>',
+    );
   });
 
   it("converts heading level 2", () => {
@@ -203,7 +207,7 @@ describe("heading blocks", () => {
         content: [makeText("Sub")],
       }),
     ]);
-    expect(getContent(result[0])).toBe("<h2>Sub</h2>");
+    expect(getContent(result[0])).toBe('<h2 data-block-id="test-id">Sub</h2>');
   });
 
   it("converts heading level 3", () => {
@@ -214,14 +218,16 @@ describe("heading blocks", () => {
         content: [makeText("H3")],
       }),
     ]);
-    expect(getContent(result[0])).toBe("<h3>H3</h3>");
+    expect(getContent(result[0])).toBe('<h3 data-block-id="test-id">H3</h3>');
   });
 
   it("defaults to h1 when level is missing", () => {
     const result = convertBlockNoteToV1Blocks([
       makeBlock({ type: "heading", content: [makeText("No level")] }),
     ]);
-    expect(getContent(result[0])).toBe("<h1>No level</h1>");
+    expect(getContent(result[0])).toBe(
+      '<h1 data-block-id="test-id">No level</h1>',
+    );
   });
 
   it("renders empty heading without throwing", () => {
@@ -229,7 +235,7 @@ describe("heading blocks", () => {
       makeBlock({ type: "heading", props: { level: 1 }, content: [] }),
     ]);
     expect(result).toHaveLength(1);
-    expect(getContent(result[0])).toBe("<h1></h1>");
+    expect(getContent(result[0])).toBe('<h1 data-block-id="test-id"></h1>');
   });
 });
 
@@ -243,7 +249,9 @@ describe("quote blocks", () => {
     ]);
     expect(result).toHaveLength(1);
     expect(result[0].__component).toBe("droplets.generic");
-    expect(getContent(result[0])).toContain("<p>A wise saying</p>");
+    expect(getContent(result[0])).toContain(
+      '<p data-block-id="test-id">A wise saying</p>',
+    );
   });
 
   it("skips empty quote blocks", () => {
@@ -287,8 +295,8 @@ describe("bulletListItem blocks", () => {
     expect(result[0].__component).toBe("droplets.generic");
     const content = getContent(result[0]);
     expect(content).toContain("<ul");
-    expect(content).toContain("<li>item 1</li>");
-    expect(content).toContain("<li>item 2</li>");
+    expect(content).toContain('<li data-block-id="b1">item 1</li>');
+    expect(content).toContain('<li data-block-id="b2">item 2</li>');
   });
 
   it("stores sourceBlockIds when multiple list items are grouped", () => {
@@ -381,8 +389,8 @@ describe("numberedListItem blocks", () => {
     expect(result).toHaveLength(1);
     const content = getContent(result[0]);
     expect(content).toContain("<ol");
-    expect(content).toContain("<li>step 1</li>");
-    expect(content).toContain("<li>step 2</li>");
+    expect(content).toContain('<li data-block-id="n1">step 1</li>');
+    expect(content).toContain('<li data-block-id="n2">step 2</li>');
   });
 
   it("handles a quote interspersed in a numbered list (skips it)", () => {
@@ -1072,6 +1080,17 @@ describe("code-block blocks", () => {
     }
   });
 
+  it("keeps its id when blocks are added above it, as its highlights use it", () => {
+    const code = makeBlock({ id: "query", type: "code-block", props: {} });
+    const [before] = convertBlockNoteToV1Blocks([code]);
+    const [, after] = convertBlockNoteToV1Blocks([
+      makeBlock({ id: "new", type: "divider" }),
+      code,
+    ]);
+
+    expect(after.id).toBe(before.id);
+  });
+
   it("defaults to javascript language when missing", () => {
     const result = convertBlockNoteToV1Blocks([
       makeBlock({ type: "code-block", props: {} }),
@@ -1364,7 +1383,7 @@ describe("inline content styles", () => {
     ]);
     // Should not throw; empty text is treated as ""
     expect(result).toHaveLength(1);
-    expect(getContent(result[0])).toBe("<h1></h1>");
+    expect(getContent(result[0])).toBe('<h1 data-block-id="test-id"></h1>');
   });
 
   it("combines bold + italic on same node", () => {
@@ -1476,7 +1495,7 @@ describe("mixed block sequences", () => {
     // heading, paragraph (grouped but only 1), bullet list, code-block, slide-break
     expect(result.length).toBeGreaterThanOrEqual(4);
     expect(result[0].__component).toBe("droplets.generic"); // heading
-    expect(getContent(result[0])).toBe("<h1>Intro</h1>");
+    expect(getContent(result[0])).toBe('<h1 data-block-id="h1">Intro</h1>');
   });
 
   it("handles an empty paragraph between content blocks correctly", () => {

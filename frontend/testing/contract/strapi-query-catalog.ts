@@ -73,6 +73,7 @@ export const GROUP = {
 // Record<StrapiCollection, true> fails to compile when a collection is added without updating this list.
 const COLLECTIONS: Record<StrapiCollection, true> = {
   "access-requests": true,
+  "ai-scoring-runs": true,
   "announcement-reads": true,
   announcements: true,
   "authorized-users": true,
@@ -91,6 +92,10 @@ const COLLECTIONS: Record<StrapiCollection, true> = {
   notes: true,
   playlists: true,
   reports: true,
+  "review-comments": true,
+  "review-criteria": true,
+  "review-scores": true,
+  reviews: true,
   tags: true,
   voyages: true,
   "voyage-enrollments": true,
@@ -187,34 +192,210 @@ const dropletEnt = (id: number, extra: Record<string, unknown> = {}) =>
     ...extra,
   });
 
+// What the review-freeze lookups read: a draft droplet (not in review) in a lesson.
+const FREEZE_DROPLET = ent(1, {
+  name: "Sentinel droplet",
+  inReview: false,
+  status: "draft",
+  authorized_users: rel(),
+});
+const FREEZE_LOOKUPS: Route[] = [
+  ["GET", /^\/lessons$/, list(ent(1, { droplets: rel(FREEZE_DROPLET) }))],
+  ["GET", /^\/droplets$/, list(FREEZE_DROPLET)],
+];
+
 const DUPLICATE_DROPLET = routes([
   ME_ROUTE,
   ["GET", /^\/droplets$/, list(), /originalDropletId/],
   ["GET", /^\/droplets$/, list(dropletEnt(1))],
 ]);
 
-const PUBLISH_DRAFT = routes([
-  ME_ROUTE,
+const REVIEW_ROW = ent(5, {
+  round: 1,
+  key: "1:1:1",
+  state: "open",
+  droplet: { data: ent(1) },
+  reviewer: { data: ent(1) },
+});
+const REVIEW_COMMENT_ROW = ent(7, {
+  field: "description",
+  body: "Sentinel comment",
+  author: { data: ent(1) },
+  review: { data: ent(5, { state: "open", droplet: { data: ent(1) } }) },
+});
+
+const REVIEW_OPEN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["POST", /^\/reviews$/, { data: REVIEW_ROW }],
+]);
+
+const REVIEW_WRITE_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { value: 3 }))],
+  ["GET", /^\/lessons$/, list(ent(6, { name: "Lesson 6" }))],
+]);
+
+// A comment of feedback sent to the sentinel user, who wrote the droplet (ODY-807)
+const ADDRESSED_ROUTES = routes([
   [
     "GET",
-    /^\/droplets$/,
+    /^\/review-comments$/,
     list(
-      dropletEnt(1, {
-        status: "draft",
-        lessons: rel(lessonEnt(5, "v1"), lessonEnt(7, "v2")),
+      ent(7, {
+        review: {
+          data: ent(5, {
+            state: "sent",
+            round: 1,
+            droplet: {
+              data: ent(1, {
+                inReview: false,
+                reviewRound: 1,
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
       }),
     ),
-    /id\]\[\$eq\]=1(&|$)/,
+  ],
+]);
+
+// A comment of sent feedback on a droplet the sentinel user wrote (ODY-881)
+const REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        field: "description",
+        anchor: {},
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  [
+    "POST",
+    /^\/review-comments$/,
+    { data: ent(30, { body: "Sentinel reply" }) },
+  ],
+]);
+
+// The sentinel user's own reply on sent feedback for a droplet they wrote
+const OWN_REPLY_ROUTES = routes([
+  ["GET", /^\/review-comments$/, list(), /\$or|\$gt/],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        parent: { data: ent(4) },
+        author: { data: ent(1) },
+        review: {
+          data: ent(5, {
+            state: "sent",
+            droplet: {
+              data: ent(1, {
+                status: "draft",
+                authorized_users: { data: [ent(1)] },
+              }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+  ["PUT", /^\/review-comments\//, { data: ent(7, { body: "Edited reply" }) }],
+  ["DELETE", /^\/review-comments\//, null],
+]);
+
+// The newest reply on a droplet the sentinel user wrote (ODY-881)
+const THREAD_STAMP_ROUTES = routes([
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(
+      ent(7, {
+        updatedAt: "2026-11-04T00:00:00.000Z",
+        review: {
+          data: ent(5, {
+            droplet: {
+              data: ent(1, { authorized_users: { data: [ent(1)] } }),
+            },
+          }),
+        },
+      }),
+    ),
+  ],
+]);
+
+// A sent review on a draft the sentinel user didn't write, with a creator reply (ODY-894)
+const AWAITING_REVIEW = ent(5, {
+  round: 1,
+  droplet: {
+    data: ent(1, {
+      name: "Sentinel droplet",
+      slug: "sentinel-droplet",
+      authorized_users: { data: [ent(2)] },
+    }),
+  },
+});
+const AWAITING_ROUTES = routes([
+  ["GET", /^\/reviews$/, list(AWAITING_REVIEW)],
+  [
+    "GET",
+    /^\/review-comments$/,
+    list(ent(7, { review: { data: ent(5) } })),
+    /\$null/,
   ],
   [
     "GET",
-    /^\/droplets$/,
+    /^\/review-comments$/,
     list(
-      dropletEnt(2, { lessons: rel(lessonEnt(6, "v1"), lessonEnt(8, "v1")) }),
+      ent(8, {
+        createdAt: "2026-11-04T00:00:00.000Z",
+        parent: { data: ent(7) },
+        author: { data: ent(2) },
+      }),
     ),
-    /id\]\[\$eq\]=2(&|$)/,
   ],
-  ["GET", /^\/enrollments$/, list(ent(30, { authorizedUser: rel(ent(1)) }))],
+]);
+
+const MY_REVIEW_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+]);
+
+const AI_RUN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/ai-scoring-runs$/, list(ent(40, { runState: "done" }))],
+]);
+
+const REVIEW_PANEL_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { inReview: true, reviewRound: 1 }))],
+  ["GET", /^\/review-criteria$/, list(ent(2, { name: "Tone", order: 0 }))],
+  ["GET", /^\/reviews$/, list(REVIEW_ROW)],
+  ["GET", /^\/review-scores$/, list(ent(9, { key: "5:6:2", value: 3 }))],
+  ["GET", /^\/review-comments$/, list(REVIEW_COMMENT_ROW)],
+  ["GET", /^\/ai-scoring-runs$/, list(ent(4, { runState: "done" }))],
+]);
+
+const OVERVIEW_SCAN_ROUTES = routes([
+  ["GET", /^\/droplets$/, list(ent(1, { authorized_users: [{ id: 1 }] }))],
+  ["GET", /^\/overview-scans$/, list(ent(3, { passed: 1, results: [] }))],
 ]);
 
 type Mod = Record<string, unknown>;
@@ -227,6 +408,8 @@ const call = <T extends Mod>(
 /** Request modules (keys of CAPTURED / SKIPPED) and where they live. */
 export const MODULE_PATHS: Record<string, string> = {
   "admin-stats": "@/lib/requests/admin-stats",
+  "ai-scoring": "@/lib/requests/ai-scoring",
+  "overview-scan": "@/lib/requests/overview-scan",
   analytics: "@/lib/requests/analytics",
   "authorized-user-roles": "@/lib/requests/authorized-user-roles",
   "authorized-user": "@/lib/requests/authorized-user",
@@ -241,12 +424,15 @@ export const MODULE_PATHS: Record<string, string> = {
   galleries: "@/lib/requests/galleries",
   groups: "@/lib/requests/groups",
   highlights: "@/lib/requests/highlights",
+  "droplet-authors": "@/lib/requests/droplet-authors",
+  "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
   posthog: "@/lib/requests/posthog",
+  reviews: "@/lib/requests/reviews",
   tag: "@/lib/requests/tag",
   "user-activity": "@/lib/requests/user-activity",
   "voyage-enrollment": "@/lib/requests/voyage-enrollment",
@@ -391,33 +577,46 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     call("getInReviewDroplets", (m) => m.getInReviewDroplets()),
     call("getRandomFunFactDroplet", (m) => m.getRandomFunFactDroplet()),
     call("getFavoritedDropletIds", (m) => m.getFavoritedDropletIds(1)),
-    call("updateDroplet", (m) =>
-      m.updateDroplet(
-        1,
-        {
-          name: "Sentinel droplet",
-          slug: SLUG,
-          focusArea: "technical",
-          type: "knowledge",
-          difficulty: "beginner",
-          isHidden: false,
-          presentationEnabled: true,
-          learningObjectives: ["Learn"],
-          nextSteps: [{ label: "Next", url: "https://example.com" }],
-          description: "d",
-          overview: "o",
-          authorized_users: [1],
-          tagIds: [1],
-          prerequisiteIds: [2],
-          postrequisiteIds: [3],
-          lessons: [{ id: 1 }],
-          datasets: [1] as never,
-          inReview: false,
-          status: "draft",
-          afterReview: "",
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "updateDroplet",
+      (m) =>
+        m.updateDroplet(
+          1,
+          {
+            name: "Sentinel droplet",
+            slug: SLUG,
+            focusArea: "technical",
+            type: "knowledge",
+            difficulty: "beginner",
+            isHidden: false,
+            presentationEnabled: true,
+            learningObjectives: ["Learn"],
+            nextSteps: [{ label: "Next", url: "https://example.com" }],
+            description: "d",
+            overview: "o",
+            authorized_users: [1],
+            tagIds: [1],
+            prerequisiteIds: [2],
+            postrequisiteIds: [3],
+            lessons: [{ id: 1 }],
+            datasets: [1] as never,
+            status: "draft",
+          },
+          { regenerateSlug: false },
+        ),
+      // The caller writes the droplet: only an author sets status outside review (ODY-860)
+      routes([
+        [
+          "GET",
+          /^\/droplets$/,
+          list(
+            ent(1, {
+              ...FREEZE_DROPLET.attributes,
+              authorized_users: rel(ent(1)),
+            }),
+          ),
+        ],
+      ]),
     ),
     call(
       "createDroplet",
@@ -433,11 +632,6 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       routes([ME_ROUTE]),
     ),
     call("duplicateDroplet", (m) => m.duplicateDroplet(1), DUPLICATE_DROPLET),
-    call(
-      "publishDraftToOriginal",
-      (m) => m.publishDraftToOriginal(1, 2),
-      PUBLISH_DRAFT,
-    ),
     call(
       "favoriteDroplet",
       (m) => m.favoriteDroplet(DROPLET, true),
@@ -562,19 +756,13 @@ export const CAPTURED: Record<string, Call<never>[]> = {
     ),
   ]),
   highlights: defineModule<typeof import("@/lib/requests/highlights")>([
-    call("getHighlights", (m) => m.getHighlights(1, "text")),
     call("createHighlight", (m) =>
       m.createHighlight({
-        data: {
-          text: "t",
-          color: "yellow",
-          position: { x: 1 },
-          yLevel: 1.5,
-          blockId: 1,
-          lesson: 1,
-          authorized_user: 1,
-          note: 1,
-        },
+        text: "t",
+        color: "#fff300",
+        position: { start: 0, end: 1 },
+        blockId: 1,
+        lessonId: 1,
       }),
     ),
     call("getHighlightsByDroplet", (m) => m.getHighlightsByDroplet(1, 1)),
@@ -585,38 +773,55 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   ]),
   lesson: defineModule<typeof import("@/lib/requests/lesson")>([
     call("getLessonBySlug", (m) => m.getLessonBySlug(SLUG)),
-    call("updateLesson", (m) =>
-      m.updateLesson(
-        1,
-        {
-          name: "Sentinel lesson",
-          slug: SLUG,
-          blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
-          blocksV2: [{ type: "paragraph", content: "x" }],
-          blocksVersion: "v1",
-          orderIndex: 0,
-        },
-        { regenerateSlug: false },
-      ),
+    call(
+      "getLatestLessonContent",
+      (m) => m.getLatestLessonContent(1),
+      routes(FREEZE_LOOKUPS),
     ),
-    call("addLesson", (m) =>
-      m.addLesson({
-        name: "Sentinel lesson",
-        dropletId: 1,
-        orderIndex: 1,
-        blocksV2: [{ type: "paragraph", content: "x" }],
-        blocksVersion: "v2",
-      }),
+    call(
+      "updateLesson",
+      (m) =>
+        m.updateLesson(
+          1,
+          {
+            name: "Sentinel lesson",
+            slug: SLUG,
+            blocks: [QUIZ_BLOCK, GENERIC_BLOCK] as never,
+            blocksV2: [{ type: "paragraph", content: "x" }],
+            blocksVersion: "v1",
+            orderIndex: 0,
+          },
+          { regenerateSlug: false },
+        ),
+      routes(FREEZE_LOOKUPS),
+    ),
+    call(
+      "addLesson",
+      (m) =>
+        m.addLesson({
+          name: "Sentinel lesson",
+          dropletId: 1,
+          orderIndex: 1,
+          blocksV2: [{ type: "paragraph", content: "x" }],
+          blocksVersion: "v2",
+        }),
+      routes(FREEZE_LOOKUPS),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(5, 1, 3),
-      routes([["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc5$/, { data: lessonEnt(5, "v1") }],
+      ]),
     ),
     call(
       "duplicateLessonToDroplet",
       (m) => m.duplicateLessonToDroplet(6, 1, 4),
-      routes([["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }]]),
+      routes([
+        ...FREEZE_LOOKUPS,
+        ["GET", /^\/lessons\/doc6$/, { data: lessonEnt(6, "v2") }],
+      ]),
     ),
   ]),
   notes: defineModule<typeof import("@/lib/requests/notes")>([
@@ -660,6 +865,69 @@ export const CAPTURED: Record<string, Call<never>[]> = {
       }),
     ),
   ]),
+  "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
+    call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
+  ]),
+  "overview-scan": defineModule<typeof import("@/lib/requests/overview-scan")>([
+    call(
+      "getLatestOverviewScan",
+      (m) => m.getLatestOverviewScan(1),
+      OVERVIEW_SCAN_ROUTES,
+    ),
+  ]),
+  reviews: defineModule<typeof import("@/lib/requests/reviews")>([
+    call("getOrOpenReview", (m) => m.getOrOpenReview(1), REVIEW_OPEN_ROUTES),
+    call(
+      "addComment",
+      (m) =>
+        m.addComment({
+          reviewId: 5,
+          lessonId: 6,
+          field: "blocks",
+          anchor: {
+            v: 1,
+            field: "blocks",
+            blockId: "b1",
+            quote: "q",
+            prefix: "",
+            suffix: "",
+          },
+          body: "Sentinel comment",
+        }),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("editComment", (m) => m.editComment(7, "Edited"), REVIEW_WRITE_ROUTES),
+    call("deleteComment", (m) => m.deleteComment(7), REVIEW_WRITE_ROUTES),
+    call(
+      "resolveComment",
+      (m) => m.resolveComment(7, true),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call("markAddressed", (m) => m.markAddressed(7, true), ADDRESSED_ROUTES),
+    call(
+      "replyToComment",
+      (m) => m.replyToComment(7, "Sentinel reply"),
+      REPLY_ROUTES,
+    ),
+    call("editReply", (m) => m.editReply(7, "Edited reply"), OWN_REPLY_ROUTES),
+    call("deleteReply", (m) => m.deleteReply(7), OWN_REPLY_ROUTES),
+    call("getThreadStamp", (m) => m.getThreadStamp(1), THREAD_STAMP_ROUTES),
+    call(
+      "getReviewForDroplet",
+      (m) => m.getReviewForDroplet(1),
+      REVIEW_WRITE_ROUTES,
+    ),
+    call(
+      "getReviewsAwaitingReply",
+      (m) => m.getReviewsAwaitingReply(),
+      AWAITING_ROUTES,
+    ),
+    call("getMyReview", (m) => m.getMyReview(1), MY_REVIEW_ROUTES),
+    call("getReviewPanel", (m) => m.getReviewPanel(1), REVIEW_PANEL_ROUTES),
+  ]),
+  "droplet-authors": defineModule<
+    typeof import("@/lib/requests/droplet-authors")
+  >([call("getAuthorNames", (m) => m.getAuthorNames([1, 2]))]),
   tag: defineModule<typeof import("@/lib/requests/tag")>([
     call("getTags", (m) => m.getTags()),
     call("getTagBySlug", (m) => m.getTagBySlug(SLUG)),
@@ -747,6 +1015,7 @@ export const CAPTURED: Record<string, Call<never>[]> = {
 };
 
 const WRITE = "write: not in curated set";
+const REVIEW_WORKFLOW = "custom review-workflow route (ODY-804)";
 
 /** Exports that make no captured Strapi call, with the reason. */
 export const SKIPPED: Record<string, Record<string, string>> = {
@@ -765,6 +1034,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     setDropletHidden: WRITE,
     createNewTag: WRITE,
     updateDropletLearningObjective: WRITE,
+    publishDraftToOriginal: "custom publish-edit route (ODY-800)",
   },
   enrollment: {
     changeEnrollmentRating: WRITE,
@@ -806,7 +1076,8 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     archiveGroup: WRITE,
     setGroupArchivedForMe: WRITE,
   },
-  highlights: { deleteHighlight: WRITE },
+  highlights: { deleteHighlight: WRITE, updateHighlight: WRITE },
+  "lesson-delete": { deleteLessonRecord: WRITE },
   "lesson-lock": {
     getCurrentAuthorizedUserId:
       "delegates to getAuthorizedUserByEmail (captured)",
@@ -841,6 +1112,19 @@ export const SKIPPED: Record<string, Record<string, string>> = {
     fetchWeeklyNewUsers: "PostHog only, no Strapi",
     fetchLessonScrollDepth: "PostHog only, no Strapi",
     fetchAvgSessionDuration: "PostHog only, no Strapi",
+  },
+  "ai-scoring": {
+    startAiScoring: "custom ai-scoring-run start route (ODY-814)",
+  },
+  "overview-scan": { runOverviewScan: WRITE },
+  reviews: {
+    saveReviewScore: "custom review-score upsert route (ODY-803)",
+    acceptAiScores: "custom review-score accept-ai route (ODY-803)",
+    unconfirmScores: "custom review-score unconfirm route (ODY-805)",
+    submitForReview: REVIEW_WORKFLOW,
+    withdrawFromReview: REVIEW_WORKFLOW,
+    sendFeedback: REVIEW_WORKFLOW,
+    publishWithReview: REVIEW_WORKFLOW,
   },
   "user-activity": { getUserActivity: "PostHog only, no Strapi" },
   voyage: {

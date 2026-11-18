@@ -12,6 +12,7 @@ import { fetchAPI } from "@/lib/utils";
 
 export type StrapiCollection =
   | "access-requests"
+  | "ai-scoring-runs"
   | "announcement-reads"
   | "announcements"
   | "authorized-users"
@@ -30,6 +31,10 @@ export type StrapiCollection =
   | "notes"
   | "playlists"
   | "reports"
+  | "review-comments"
+  | "review-criteria"
+  | "review-scores"
+  | "reviews"
   | "tags"
   | "voyages"
   | "voyage-enrollments"

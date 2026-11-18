@@ -47,6 +47,12 @@ if [ -d "$PROJECT_ROOT/docs/plans" ]; then
     fi
 fi
 
+# ─── Multi-agent coordination reminder ───────────────────────────────
+# Names the ticket from the branch (e.g. bug/ody-785-… → ODY-785) so the
+# agent checks the team's Slack group DM before starting work on it.
+TICKET=$(echo "$BRANCH" | grep -oiE 'ody-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
+COORDINATION="Coordination: before starting work${TICKET:+ on $TICKET}, read the team's Slack group DM (C0CE3S8B872) and follow \"Multi-Agent Development Coordination\" in CLAUDE.md"
+
 # ─── Check for progress file from previous session ───────────────────
 PROGRESS_FILE="$PROJECT_ROOT/docs/plans/PROGRESS.md"
 PROGRESS_CONTEXT=""
@@ -61,6 +67,7 @@ Session context:
 - Recent commits: $RECENT_COMMITS
 - Working tree: $CHANGED_FILES
 ${ACTIVE_PLAN:+- $ACTIVE_PLAN}
+- $COORDINATION
 ${PROGRESS_CONTEXT:+
 Previous session progress:
 $PROGRESS_CONTEXT}

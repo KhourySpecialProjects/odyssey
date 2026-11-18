@@ -1,5 +1,8 @@
 import type { Core } from "@strapi/strapi";
 import { markClaimedVoyageNodesAuthored } from './lib/lifecycle-utils';
+import { seedReviewCriteria, upgradeReviewCriteria } from './lib/review-criteria-seed';
+import { seedAiScoringSettings } from './lib/ai-scoring-settings';
+import { backfillReviewRounds } from './lib/review-round-backfill';
 import { backfillAnnouncementReads } from './lib/announcement-read-backfill';
 
 const SLUG_UPDATE_HANDLERS = [
@@ -51,6 +54,37 @@ export default {
       if (count > 0) strapi.log.info(`Marked ${count} claimed voyage node(s) as authored`);
     } catch (error) {
       strapi.log.error('Could not mark published voyage claims as authored', error);
+    }
+
+    // Seeds the starter rubric only into an empty table; never blocks startup.
+    try {
+      const seeded = await seedReviewCriteria();
+      if (seeded > 0) strapi.log.info(`Seeded ${seeded} review criteria`);
+    } catch (error) {
+      strapi.log.error('Could not seed review criteria', error);
+    }
+
+    // Criteria still on the starter wording get the ODY-862 wording; never blocks startup.
+    try {
+      const reworded = await upgradeReviewCriteria();
+      if (reworded > 0) strapi.log.info(`Reworded ${reworded} review criteria`);
+    } catch (error) {
+      strapi.log.error('Could not reword review criteria', error);
+    }
+
+    // Score with AI's cost limits start as placeholders; never blocks startup.
+    try {
+      if (await seedAiScoringSettings()) strapi.log.info('Seeded the AI scoring settings');
+    } catch (error) {
+      strapi.log.error('Could not seed the AI scoring settings', error);
+    }
+
+    // Droplets already in review start at round 1; never blocks startup.
+    try {
+      const count = await backfillReviewRounds();
+      if (count > 0) strapi.log.info(`Backfilled reviewRound on ${count} in-review droplet(s)`);
+    } catch (error) {
+      strapi.log.error('Could not backfill review rounds', error);
     }
 
     // Targeted rows already marked read keep that state per user; never blocks startup.

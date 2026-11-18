@@ -18,8 +18,16 @@ const CREATION_REQUEST_UID = 'api::creation-request.creation-request';
 const ACCESS_REQUEST_UID = 'api::access-request.access-request';
 const VOYAGE_UID = 'api::voyage.voyage';
 const USER_UID = 'api::authorized-user.authorized-user';
+const ENROLLMENT_UID = 'api::enrollment.enrollment';
+
+const REVIEW_CRITERION_UID = 'api::review-criterion.review-criterion';
+const REVIEW_UID = 'api::review.review';
+const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
+const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
+const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
 const ANNOUNCEMENT_READ_UID = 'api::announcement-read.announcement-read';
+const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 
 const dropletData = (overrides = {}) => ({
   name: unique('Droplet'),
@@ -65,10 +73,86 @@ const userData = (overrides = {}) => ({
   ...overrides,
 });
 
+const enrollmentData = (overrides = {}) => ({
+  isComplete: false,
+  ...overrides,
+});
+
+// Distinct numeric ids per call keep the review and score keys unique.
+let keyCounter = 1000;
+
+const reviewData = (overrides = {}) => ({
+  round: 1,
+  key: `${++keyCounter}:1:1`,
+  ...overrides,
+});
+
+const reviewCommentData = (overrides = {}) => ({
+  field: 'blocks',
+  anchor: { blockId: 'bn-1' },
+  body: 'Please fix this',
+  ...overrides,
+});
+
+const reviewScoreData =(overrides = {}) => ({
+  criterionName: 'Tone',
+  key: `${++keyCounter}:overall:1`,
+  ...overrides,
+});
+
+const reviewCriterionData = (overrides = {}) => ({
+  name: unique('Criterion'),
+  lessonDescription: 'Lesson question',
+  overallDescription: 'Overall question',
+  order: 1,
+  ...overrides,
+});
+
+// One check needing attention: its rule's flag shows the results shape (ODY-788)
+const overviewScanData = (overrides = {}) => ({
+  ranAt: new Date().toISOString(),
+  rulesVersion: 'test',
+  passed: 22,
+  needsAttention: 1,
+  couldNotCheck: 0,
+  results: [
+    {
+      id: 'overview',
+      status: 'warn',
+      rules: [
+        {
+          id: 'length',
+          status: 'warn',
+          flags: [
+            {
+              partId: 'droplet',
+              blockId: 'overview',
+              message: 'The overview is under 50 words.',
+              severity: 'warn',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  ...overrides,
+});
+
 module.exports = {
   unique,
+  REVIEW_CRITERION_UID,
+  REVIEW_UID,
+  REVIEW_COMMENT_UID,
+  REVIEW_SCORE_UID,
+  AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
   ANNOUNCEMENT_READ_UID,
+  OVERVIEW_SCAN_UID,
+  overviewScanData,
+  reviewData,
+  reviewCommentData,
+  reviewScoreData,
+  reviewCriterionData,
   SLUG_PLACEHOLDER,
   DROPLET_UID,
   LESSON_UID,
@@ -77,10 +161,12 @@ module.exports = {
   ACCESS_REQUEST_UID,
   USER_UID,
   VOYAGE_UID,
+  ENROLLMENT_UID,
   dropletData,
   voyageData,
   lessonData,
   playlistData,
   accessRequestData,
   userData,
+  enrollmentData,
 };

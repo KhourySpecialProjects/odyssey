@@ -34,8 +34,8 @@ jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentByUserAndDroplet: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/lesson", () => ({
-  deleteLesson: jest.fn(),
+jest.mock("@/lib/requests/lesson-delete", () => ({
+  deleteLessonRecord: jest.fn(),
 }));
 
 jest.mock("@/lib/utils", () => ({
