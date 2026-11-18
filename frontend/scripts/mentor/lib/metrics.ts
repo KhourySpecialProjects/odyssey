@@ -74,6 +74,8 @@ export type RunMeta = {
   setups: string[];
   reps: number;
   pilot: boolean;
+  /** --kind: only these kinds; null or missing for all */
+  kinds?: CaseKind[] | null;
   answers: AnswerMode | null;
   /** How many cases this run asks, for each setup and rep */
   cases: number;
@@ -521,7 +523,7 @@ export function reportMarkdown(
       `- Prompt \`${meta.promptVersion}\`, judge \`${meta.judgeVersion}\`, cases.jsonl \`${meta.casesSha.slice(0, 12)}\``,
       `- Judge: ${meta.judge.model} at ${meta.judge.effort}, also a model under test. Code decides citations, the not-covered phrase, canaries, named right options, length and cost.`,
       `- Fixtures: ${meta.fixtures.map((f) => `${f.slug} (taken ${f.takenAt.slice(0, 10)})`).join(", ")}`,
-      `- ${meta.answers ? `Canned replies: ${meta.answers}` : `Setups: ${meta.setups.join(", ")}`}; ${meta.cases} cases × ${meta.reps} reps${meta.pilot ? "; pilot" : ""}; started ${meta.startedAt}`,
+      `- ${meta.answers ? `Canned replies: ${meta.answers}` : `Setups: ${meta.setups.join(", ")}`}; ${meta.cases} cases × ${meta.reps} reps${meta.pilot ? "; pilot" : ""}${meta.kinds?.length ? `; only ${meta.kinds.join(", ")}` : ""}; started ${meta.startedAt}`,
       `- ${rows.length} rows, ${errors.length} errors`,
     ].join("\n"),
     ...Object.entries(sections).flatMap(([title, body]) =>

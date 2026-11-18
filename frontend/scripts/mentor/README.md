@@ -287,7 +287,9 @@ were checked. The new kinds have no threshold yet, so read them there.
    ```
 
 `--setup haiku-low` (repeatable) runs only some of `haiku-low`, `haiku-medium`,
-`sonnet-low` and `sonnet-medium`. A resumed run keeps the settings it started
+`haiku-high`, `sonnet-low` and `sonnet-medium`. `--kind wrong-pick`
+(repeatable) runs only those kinds, for testing one kind's rule or model
+cheaply. A resumed run keeps the settings it started
 with, and refuses if `cases.jsonl`, the learner profiles,
 `MENTOR_PROMPT_VERSION`, `JUDGE_VERSION` or the fixtures have changed since.
 

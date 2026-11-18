@@ -13,6 +13,7 @@ import { makeClient } from "@/scripts/ai-review/lib/plan";
 import { confirmSpend } from "@/scripts/ai-review/lib/run";
 import { validateCases } from "./lib/cases";
 import {
+  CASE_KINDS,
   CASES_FILE,
   loadCases,
   loadFixtures,
@@ -21,6 +22,7 @@ import {
   RUNS_DIR,
   runDirName,
   writeJson,
+  type CaseKind,
 } from "./lib/files";
 import {
   ANSWER_MODES,
@@ -42,9 +44,9 @@ import {
   cannedGroups,
   FULL_REPS,
   parseSetups,
-  pilotCases,
   planGroups,
   pricedRequests,
+  runCases,
 } from "./lib/plan";
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
 
@@ -80,6 +82,7 @@ async function main() {
       setup: { type: "string", multiple: true },
       reps: { type: "string", default: String(FULL_REPS) },
       pilot: { type: "boolean", default: false },
+      kind: { type: "string", multiple: true },
       answers: { type: "string" },
       resume: { type: "string" },
       yes: { type: "boolean", default: false },
@@ -88,6 +91,10 @@ async function main() {
   const answers = values.answers as AnswerMode | undefined;
   if (answers && !ANSWER_MODES.includes(answers))
     throw new Error(`--answers must be one of ${ANSWER_MODES.join(", ")}`);
+  const kinds = (values.kind ?? []) as CaseKind[];
+  for (const kind of kinds)
+    if (!CASE_KINDS.includes(kind))
+      throw new Error(`Unknown kind ${kind}: use ${CASE_KINDS.join(", ")}`);
   const reps = Number(values.reps);
   if (!Number.isInteger(reps) || reps < 1 || reps > 3)
     throw new Error("--reps must be 1, 2 or 3");
@@ -133,14 +140,15 @@ async function main() {
       setups: answers ? [`answers-${answers}`] : parseSetups(values.setup),
       reps: answers ? 1 : reps,
       pilot: values.pilot,
+      kinds: kinds.length ? kinds : null,
       answers: answers ?? null,
-      cases: (values.pilot ? pilotCases(all) : all).length,
+      cases: runCases(all, { pilot: values.pilot, kinds }).length,
       fullRun: { cases: all.length, reps: FULL_REPS },
       startedAt: new Date().toISOString(),
     };
   }
 
-  const cases = meta.pilot ? pilotCases(all) : all;
+  const cases = runCases(all, meta);
   const groups = meta.answers
     ? cannedGroups(cases, fixtures, meta.answers)
     : planGroups(cases, fixtures, parseSetups(meta.setups), meta.reps);
