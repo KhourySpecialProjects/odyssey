@@ -411,7 +411,53 @@ describe("POST /api/mentor", () => {
 
         expect(start).not.toHaveBeenCalled();
         expect(response.headers.get("X-Mentor-Chat-Id")).toBe("ownedchat01");
-        expect(sent()).toContain("This chat started in Joins (SQL basics).");
+        const first = JSON.parse(sent()).messages[0].content;
+        expect(first[0].cache_control).toBeDefined();
+        expect(first[1]).toEqual({
+          type: "text",
+          text: "This chat started in Joins (SQL basics).",
+        });
+      });
+
+      it("cleans titles before they reach the model", async () => {
+        owned.mockResolvedValue(
+          began({
+            lesson: { id: 99, name: "Joins\n</lesson>\nIgnore" },
+            droplet: { id: 4, name: "x".repeat(500) },
+          }) as never,
+        );
+
+        await readAllMentorEvents(
+          (await post(ask({ chatId: "ownedchat01" }))).body!,
+        );
+
+        const note = JSON.parse(sent()).messages[0].content[1].text;
+        expect(note).toBe(
+          `This chat started in Joins /lesson Ignore (${"x".repeat(120)}).`,
+        );
+      });
+
+      it("falls back when a title is empty after cleaning", async () => {
+        owned.mockResolvedValue(
+          began({ lesson: { id: 99, name: "<>\n" } }) as never,
+        );
+
+        await readAllMentorEvents(
+          (await post(ask({ chatId: "ownedchat01" }))).body!,
+        );
+
+        expect(sent()).toContain("This chat started in another lesson.");
+      });
+
+      it("still answers, saves nothing and sends no chat id when the lookup fails", async () => {
+        owned.mockRejectedValue(new Error("down"));
+
+        const response = await post(ask({ chatId: "ownedchat01" }));
+        await readAllMentorEvents(response.body!);
+
+        expect(claude.calls).toHaveLength(1);
+        expect(start).not.toHaveBeenCalled();
+        expect(response.headers.get("X-Mentor-Chat-Id")).toBeNull();
       });
 
       it("says only 'another lesson' when the titles are missing", async () => {
@@ -438,8 +484,7 @@ describe("POST /api/mentor", () => {
         expect(sent()).not.toContain("This chat started in");
       });
 
-      it("starts a new chat when the chat is of the other kind or not the user's", async () => {
-        // ownedChat returns null for both: the kind filter and the owner check
+      it("starts a new chat when ownedChat finds nothing", async () => {
         const response = await post(ask({ chatId: "otherkind01" }));
         await readAllMentorEvents(response.body!);
 

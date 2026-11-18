@@ -74,7 +74,7 @@ export default {
     if ('error' in q) return fail(ctx, 400, q.error as string);
     if (!validId(ctx)) return fail(ctx, 404, 'Chat not found');
     try {
-      const chat = await ownedChatRow(q.userId, ctx.params.documentId, { kind: q.kind });
+      const chat = await ownedChatRow(q.userId, ctx.params.documentId, { kind: q.kind, withStart: true });
       if (!chat) return fail(ctx, 404, 'Chat not found');
       ctx.body = { data: { chat, ...(q.withMessages && { messages: await chatMessages(chat.documentId) }) } };
     } catch (error) {

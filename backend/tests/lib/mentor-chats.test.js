@@ -1,5 +1,14 @@
 const { setupStrapi, teardownStrapi } = require('../helpers/strapi');
-const { MENTOR_CHAT_UID, MENTOR_MESSAGE_UID, USER_UID, userData } = require('../helpers/fixtures');
+const {
+  MENTOR_CHAT_UID,
+  MENTOR_MESSAGE_UID,
+  USER_UID,
+  DROPLET_UID,
+  LESSON_UID,
+  userData,
+  dropletData,
+  lessonData,
+} = require('../helpers/fixtures');
 
 let strapi;
 let lib;
@@ -70,7 +79,7 @@ describe('purgeExpiredChats (30-day retention)', () => {
 });
 
 describe('ownership and saves', () => {
-  it('treats a chat past 30 days, or or of another kind, as not found', async () => {
+  it('treats a chat past 30 days, or of another kind, as not found', async () => {
     const user = await strapi.documents(USER_UID).create({ data: userData() });
     const old = await chatWithMessages(user, daysAgo(31));
     const fresh = await chatWithMessages(user, daysAgo(1));
@@ -78,8 +87,28 @@ describe('ownership and saves', () => {
     expect(await lib.ownedChatRow(user.id, old.documentId)).toBeNull();
     expect(await lib.ownedChatRow(user.id, fresh.documentId)).not.toBeNull();
     expect(await lib.ownedChatRow(user.id, fresh.documentId, { kind: 'explain' })).toBeNull();
-    expect(await lib.ownedChatRow(user.id, fresh.documentId, { lessonId: 987654 })).not.toBeNull();
     expect(await lib.ownedChatRow(user.id + 999, fresh.documentId)).toBeNull();
+  });
+
+  it('returns the start lesson and droplet as { id, name } only when asked', async () => {
+    const user = await strapi.documents(USER_UID).create({ data: userData() });
+    const droplet = await strapi.documents(DROPLET_UID).create({ data: dropletData() });
+    const lesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    const chat = await strapi.documents(MENTOR_CHAT_UID).create({
+      data: {
+        authorizedUser: user.documentId,
+        droplet: droplet.documentId,
+        lesson: lesson.documentId,
+        kind: 'lesson',
+        title: 'q',
+        lastMessageAt: daysAgo(1),
+      },
+    });
+
+    const row = await lib.ownedChatRow(user.id, chat.documentId, { withStart: true });
+    expect(row.lesson).toMatchObject({ id: lesson.id, name: expect.any(String) });
+    expect(row.droplet).toMatchObject({ id: droplet.id, name: expect.any(String) });
+    expect((await lib.ownedChatRow(user.id, chat.documentId)).lesson).toBeUndefined();
   });
 
   it('refuses to save into a deleted chat and leaves no message behind', async () => {

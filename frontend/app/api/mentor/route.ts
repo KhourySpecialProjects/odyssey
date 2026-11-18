@@ -69,9 +69,16 @@ const fail = (status: number, error: keyof typeof MESSAGES) =>
 /** Tells the model where a chat continued from another lesson began, in one line */
 function startNote(chat: MentorChatRow, lessonId: number): string | null {
   if (chat.lesson?.id === lessonId) return null;
-  const { lesson, droplet } = chat;
-  return lesson?.name && droplet?.name
-    ? `This chat started in ${lesson.name} (${droplet.name}).`
+  // Titles are creator text: no tag or line breaks, bounded length
+  const clean = (name?: string | null) =>
+    (name ?? "")
+      .replace(/[<>\r\n]+/g, " ")
+      .trim()
+      .slice(0, 120);
+  const lesson = clean(chat.lesson?.name);
+  const droplet = clean(chat.droplet?.name);
+  return lesson && droplet
+    ? `This chat started in ${lesson} (${droplet}).`
     : "This chat started in another lesson.";
 }
 

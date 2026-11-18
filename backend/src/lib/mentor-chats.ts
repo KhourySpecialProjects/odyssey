@@ -69,7 +69,7 @@ async function findAll(
 export async function ownedChatRow(
   userId: number,
   documentId: string,
-  match: { kind?: MentorChatKind } = {},
+  match: { kind?: MentorChatKind; withStart?: boolean } = {},
   now = new Date(),
 ): Promise<Row | null> {
   return (await chats().findFirst({
@@ -81,7 +81,8 @@ export async function ownedChatRow(
       ],
     },
     fields: ['documentId', 'kind', 'title', 'lastMessageAt'],
-    populate: { droplet: { fields: ['name'] }, lesson: { fields: ['name'] } },
+    // Start relations only when asked: saves never use them
+    ...(match.withStart && { populate: { droplet: { fields: ['name'] }, lesson: { fields: ['name'] } } }),
   } as any)) as Row | null;
 }
 
