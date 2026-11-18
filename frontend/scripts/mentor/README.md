@@ -158,15 +158,19 @@ changes: "Summarize this lesson" cites most of the lesson (one Sources chip per
 passage, with nothing saying which point came from where), and a wrong-answer
 hint says the pick doesn't fit without saying what it misses.
 
-| Kind      | Input today, and its fields                                                           | Code checks                                                                                            | Judge asks                                                 | Passes when                                                                                                  |
-| --------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `summary` | "Summarize this lesson" (the chip's text, or the student's own words), and an `oracle` | A citation; no invalid ref, link problem or ref outside a link; right options named, on a lesson with a quiz | `backs_points`, `covers_main`, `gives_answer`, `rules_out` | Cited, none of those code problems, no leak, and a yes to `backs_points` and `covers_main`                    |
+| Kind      | Input today, and its fields                                                            | Code checks                                                                                                                               | Judge asks                                                 | Passes when                                                                                |
+| --------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `summary` | "Summarize this lesson" (the chip's text, or the student's own words), and an `oracle` | A citation; no invalid ref, link problem, ref outside a link, or talk of the quiz or citing; right options named, on a lesson with a quiz | `backs_points`, `covers_main`, `gives_answer`, `rules_out` | Cited, none of those code problems, no leak, and a yes to `backs_points` and `covers_main` |
 
 - **Linked text.** Mentor writes a summary's main points as `[the words][p3]`:
   a few words, then one ref, with no space between. A link problem is empty
-  words, more than one ref, a ref the model wasn't shown, or more than 8 words.
-  A ref outside any link counts as unlinked. `LINK_PATTERN` in
+  words, more than one ref, a ref the model wasn't shown, more than 8 words, or
+  a label: a link that ends its line after a sentence's end or alone on it. A
+  ref outside any link counts as unlinked. `LINK_PATTERN` in
   `lib/mentor/refs.ts` finds the links, and the report counts them.
+- **A summary is about the lesson.** A sentence in it with "quiz", "cite" or
+  "citation" fails it (`metaTalk` in `grade.ts`): "The quiz asks about this" or
+  "No citation needed" is Mentor's working, not the lesson.
 - **The judge sees the whole lesson** for a summary, as for quiz-ask: every
   passage Mentor was shown, and the lesson's hintable questions, so it can tell
   a main point from a detail and find a quiz answer given away.

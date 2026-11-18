@@ -11,6 +11,7 @@ import {
   invalidRefs,
   judgeRequest,
   mentionsCorrect,
+  metaTalk,
   parseJudge,
   linkProblems,
   saysNotCovered,
@@ -139,6 +140,18 @@ describe("code checks", () => {
             '"one two three four five six seven eight nine" is 9 words: link a few',
           ],
         ],
+        [
+          "a label after a sentence",
+          "A base case stops it. [Base case][p2]\nNext point.",
+          ['"Base case" is a label outside its sentence: link words inside it'],
+        ],
+        [
+          "a label alone on a list item",
+          "- [Base case][p2]",
+          ['"Base case" is a label outside its sentence: link words inside it'],
+        ],
+        ["words ending a sentence", "It stops at the [base case][p2].", []],
+        ["words starting a sentence", "Done. [A base case][p2] stops it.", []],
       ] as const
     ).map(
       ([name, reply, problems]) =>
@@ -148,6 +161,14 @@ describe("code checks", () => {
           problems,
         ] as [string, () => unknown, unknown],
     ),
+    [
+      "a summary's sentences about the quiz or citing",
+      () =>
+        metaTalk(
+          "Joins combine rows.\n- **Keys:** The quiz asks about this. No citation needed.",
+        ),
+      ["- **Keys:** The quiz asks about this.", "No citation needed."],
+    ],
     ["a ref outside a link", () => unlinkedRefs("[a][p1] and [p2]"), ["p2"]],
     [
       "a space before the ref isn't a link",
@@ -389,6 +410,12 @@ describe("gradeRow", () => {
       false,
     ],
     ["covers_main no", "A [join][p2] combines rows.", ["backs_points"], false],
+    [
+      "talk about the quiz",
+      "A [join][p2] combines rows. The quiz asks about keys.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
     [
       "more references than the cap",
       "[Joins][p1]: [a join][p2], [keys][p3], [inner joins][p4], [wraps][p6].",

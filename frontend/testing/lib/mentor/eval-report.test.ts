@@ -59,6 +59,7 @@ const row = (
       links: 0,
       linkProblems: [],
       unlinked: [],
+      metaTalk: [],
       leak,
       pass,
       verdict: null,
@@ -273,11 +274,15 @@ describe("reportMarkdown", () => {
   });
 
   it("reports a summary's references and links, and nothing without one", () => {
-    const summary = (caseId: string, cited: string[], o = {}) => {
-      const r = row({ caseId, kind: "summary", ...o });
+    const summary = (
+      caseId: string,
+      cited: string[],
+      metaTalk: string[] = [],
+    ) => {
+      const r = row({ caseId, kind: "summary" });
       return {
         ...r,
-        grade: { ...r.grade, cited, links: cited.length, unlinked: [] },
+        grade: { ...r.grade, cited, links: cited.length, metaTalk },
       };
     };
     const refs = (n: number) => Array.from({ length: n }, (_, i) => `p${i}`);
@@ -287,7 +292,7 @@ describe("reportMarkdown", () => {
         summary("s1", refs(3)),
         summary("s2", refs(5)),
         summary("s3", refs(7)),
-        summary("s4", refs(9)),
+        summary("s4", refs(9), ["The quiz asks about this."]),
       ],
       [],
       meta,
@@ -297,7 +302,7 @@ describe("reportMarkdown", () => {
     // The median of four averages the middle two; 5, 7 and 9 are over the cap of 4
     expect(report).toContain("The cap is 4");
     expect(report).toContain(
-      "| haiku-low | 6 / 9 | 75% (3/4) | 6 | 0% (0/4) | 0% (0/4) | 0% (0/4) |",
+      "| haiku-low | 6 / 9 | 75% (3/4) | 6 | 0% (0/4) | 25% (1/4) | 0% (0/4) | 0% (0/4) |",
     );
     expect(report).toContain("Links outside summaries");
     expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(

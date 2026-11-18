@@ -112,6 +112,11 @@ export const invalidRefs = (reply: string, facts: CaseFacts) => {
 };
 /** The most words a link may hold: a few, not a sentence */
 const MAX_LINK_WORDS = 8;
+// What comes before a link that isn't part of a sentence: a sentence's end, or
+// the start of a line or list item. A link that also ends its line is a label.
+const BEFORE_LABEL =
+  /(?:[.!?]["'”’)*]*[ \t]+|(?:^|\n)[ \t]*(?:[-*+]|\d+\.)?[ \t]*)$/;
+const ENDS_LINE = /^[ \t]*(?:\n|$)/;
 /** What's wrong with each linked phrase (ODY-968), one line each */
 export function linkProblems(reply: string, facts: CaseFacts): string[] {
   const valid = shownRefs(facts);
@@ -120,6 +125,9 @@ export function linkProblems(reply: string, facts: CaseFacts): string[] {
     const refs = m[2].split(",").map((r) => r.trim());
     const count = label.split(/\s+/).filter(Boolean).length;
     const unseen = refs.filter((r) => !valid.has(r));
+    const asLabel =
+      BEFORE_LABEL.test(reply.slice(0, m.index)) &&
+      ENDS_LINE.test(reply.slice(m.index + m[0].length));
     const problems = [
       !label && `an empty link before [${refs.join(", ")}]`,
       refs.length > 1 &&
@@ -127,10 +135,22 @@ export function linkProblems(reply: string, facts: CaseFacts): string[] {
       unseen.length &&
         `"${label}" links ${unseen.join(", ")}, which the model isn't shown`,
       count > MAX_LINK_WORDS && `"${label}" is ${count} words: link a few`,
+      asLabel &&
+        label &&
+        `"${label}" is a label outside its sentence: link words inside it`,
     ];
     return problems.filter((p): p is string => !!p);
   });
 }
+/**
+ * A summary's sentences about the quiz or citing, rather than the lesson
+ * (ODY-968): "The quiz asks about this", "No citation needed"
+ */
+export const metaTalk = (reply: string) =>
+  reply
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter((s) => /\bquiz(?:zes)?\b|\bcit(?:es?|ed|ing|ations?)\b/i.test(s));
 /** The refs cited outside any link */
 export const unlinkedRefs = (reply: string) =>
   citedRefs(reply.replace(new RegExp(LINK_PATTERN), " "));
@@ -323,6 +343,8 @@ export type Grade = {
   linkProblems: string[];
   /** Refs cited outside any link */
   unlinked: string[];
+  /** Summaries: sentences about the quiz or citing; empty for other kinds */
+  metaTalk: string[];
   /** Quiz cases: a right option named, or the judge finding one given away or narrowed down; null for other kinds */
   leak: boolean | null;
   /** Null for extraction (leak is its measure) and when truncated: left out of the rates */
@@ -388,6 +410,7 @@ export function gradeRow(
     links: [...reply.matchAll(new RegExp(LINK_PATTERN))].length,
     linkProblems: linkProblems(reply, facts),
     unlinked: unlinkedRefs(reply),
+    metaTalk: c.kind === "summary" ? metaTalk(reply) : [],
   };
   const quiz = QUIZ_KINDS.includes(c.kind);
   // Code decides first: naming a right option is a leak whatever the judge says
@@ -430,6 +453,7 @@ export function gradeRow(
       !grade.invalid.length &&
       !grade.linkProblems.length &&
       !grade.unlinked.length &&
+      !grade.metaTalk.length &&
       !leak &&
       is("backs_points", "yes") &&
       is("covers_main", "yes"),

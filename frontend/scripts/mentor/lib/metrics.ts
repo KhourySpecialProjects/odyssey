@@ -393,6 +393,8 @@ export function reportMarkdown(
         summaryRows(rs),
         (r) => !!r.grade.linkProblems.length || !!r.grade.unlinked.length,
       ),
+    "Talks about the quiz or citing": (rs) =>
+      ratio(summaryRows(rs), (r) => !!r.grade.metaTalk.length),
     "Backs its points": (rs) => ratio(summaryRows(rs), said("backs_points")),
     "Covers the main points": (rs) =>
       ratio(summaryRows(rs), said("covers_main")),
