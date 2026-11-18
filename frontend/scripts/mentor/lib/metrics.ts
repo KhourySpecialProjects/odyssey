@@ -133,8 +133,12 @@ const said = (q: Question) => (r: ResultRow) =>
 const pct = (x: number) => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
 const mean = (xs: number[]) =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
-const median = (xs: number[]) =>
-  xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] : NaN;
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  if (!s.length) return NaN;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
 const money = (x: number) => (Number.isNaN(x) ? "–" : dollars(x));
 const whole = (x: number) => (Number.isNaN(x) ? "–" : Math.round(x));
 const seconds = (ms: number) =>
