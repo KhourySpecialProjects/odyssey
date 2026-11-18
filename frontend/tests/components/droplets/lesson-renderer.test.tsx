@@ -215,6 +215,33 @@ describe("LessonRenderer (viewer)", () => {
     Range.prototype.getBoundingClientRect = originalRangeRect;
   });
 
+  it("shows where the learner is in the droplet above the title", () => {
+    const lessons = [
+      { id: 9, name: "Intro", slug: "intro", orderIndex: 0 },
+      { id: 1, name: "Test Lesson", slug: "test-lesson", orderIndex: 1 },
+      { id: 3, name: "Last", slug: "last", orderIndex: 2 },
+    ];
+    render(
+      <LessonRenderer
+        {...props}
+        completedLessonIds={[9]}
+        droplet={{ ...props.droplet, lessons } as never}
+      />,
+    );
+
+    expect(screen.getByText("Lesson 2 of 3")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "Lesson 2 of 3" }),
+    ).toHaveAttribute("aria-valuenow", "2");
+  });
+
+  it("omits the lesson position when the lesson isn't in the droplet's list", () => {
+    render(<LessonRenderer {...props} />);
+
+    expect(screen.queryByText(/^Lesson \d+ of \d+$/)).toBeNull();
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
   it("draws the server-provided highlights without fetching on mount", async () => {
     const { container } = render(<LessonRenderer {...props} />);
 
