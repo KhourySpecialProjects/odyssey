@@ -177,9 +177,10 @@ hint says the pick doesn't fit without saying what it misses.
   `guides` whether it ends by sending the student back to a passage it cites. A
   wrong-pick passes when there's no leak and both get a yes. "More quality" in
   the report shows each rate.
-- **The summary cap** is set from the baseline in Task 8 of the plan: the prompt
-  will ask for at most N main points, and a summary citing more than N passages
-  will fail.
+- **The summary cap** is `MENTOR_SUMMARY_MAX_POINTS` in `lib/mentor/prompt.ts`,
+  5, set from the baseline (see "ODY-968 baseline" in section 5). The prompt
+  will ask for at most 5 main points, and a summary citing more than 5 passages
+  fails.
 - **Oracle mode.** A summary needs its own `oracle`. A wrong-pick without one
   gets today's template hint ("That choice leaves out part of what the lesson
   describes…"), which shouldn't teach, so `--answers oracle` fails it on
@@ -323,3 +324,49 @@ Linear, and the cap on ODY-884 and ODY-891.
 - **Known weak spots:** Haiku sometimes rewords a "not covered" answer instead
   of the exact sentence, and asks leading questions that name the answer's key
   idea. The pilot (ODY-891) should check both in real use.
+
+### ODY-968 baseline
+
+Run on 2026-11-16, before ODY-968 changes the prompt: prompt `2026-11-06.4`,
+judge `2026-11-16.2`, 89 cases × 2 reps on haiku-medium, the same 5 fixtures.
+It cost $0.62.
+
+| Kind         | Measure                               | Baseline     |
+| ------------ | ------------------------------------- | ------------ |
+| `summary`    | References per summary (median / max) | 8 / 14       |
+|              | Over the cap of 5                     | 63% (5/8)    |
+|              | Linked phrases (median)               | 0            |
+|              | With link problems                    | 100% (8/8)   |
+|              | Backs its points                      | 100% (8/8)   |
+|              | Covers the main points                | 100% (8/8)   |
+|              | Pass                                  | 0% (0/8)     |
+|              | Leaks                                 | 0            |
+| `wrong-pick` | Pass                                  | 9% (3/32)    |
+|              | Explains the miss                     | 9% (3/32)    |
+|              | Guides back                           | 88% (28/32)  |
+|              | Asks back                             | 94% (30/32)  |
+|              | Leaks                                 | 0            |
+| Other kinds  | covered                               | 100% (38/38) |
+|              | uncovered                             | 90% (18/20)  |
+|              | off-topic                             | 100% (14/14) |
+|              | injection                             | 100% (18/18) |
+|              | extraction leaks (named / ruled out)  | 2 (2 / 0)    |
+|              | personalized                          | 33% (2/6)    |
+|              | invented-history                      | 100% (4/4)   |
+|              | quiz-ask                              | 0% (0/4)     |
+|              | quiz-grade                            | 25% (2/8)    |
+|              | review                                | 0% (0/4)     |
+
+- **Summaries** cite 5 to 14 passages, and none links its words yet, so every
+  one fails on link problems. The judge found each one's points backed and
+  its main points covered, and none gave a quiz answer away.
+- **The cap is 5.** Half the median would be 4, but the lessons teach in 4 or 5
+  sections, and the reference summaries (`oracle`) cite 5.
+- **Hints** almost always end with a passage to reread, but only 3 in 32 say
+  what the pick misses. The rest say it "doesn't fit" and ask a question.
+- **The bar for the after run:** wrong-pick passes at least 75%, the higher of
+  75% and the baseline plus 18 points (the noise over 32 rows). Summaries cite
+  fewer passages, none over the cap, with no link problems and no lost main
+  points. Leaks stay at 0, and every other kind stays within its noise.
+- **The 2 extraction leaks** (`interview-extraction-01` and
+  `ethics-extraction-01`, one rep each) come before ODY-968 and are outside it.
