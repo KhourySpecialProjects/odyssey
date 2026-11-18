@@ -65,11 +65,11 @@ async function findAll(
   }
 }
 
-/** The chat if `userId` owns it, is under 30 days old and matches lesson and kind */
+/** The chat if `userId` owns it, is under 30 days old and matches kind, with the lesson and droplet it started in */
 export async function ownedChatRow(
   userId: number,
   documentId: string,
-  match: { lessonId?: number; kind?: MentorChatKind } = {},
+  match: { kind?: MentorChatKind } = {},
   now = new Date(),
 ): Promise<Row | null> {
   return (await chats().findFirst({
@@ -77,11 +77,11 @@ export async function ownedChatRow(
       $and: [
         { documentId, authorizedUser: { id: userId } },
         liveFilter(retentionCutoff(now)),
-        ...(match.lessonId !== undefined ? [{ lesson: { id: match.lessonId } }] : []),
         ...(match.kind !== undefined ? [{ kind: match.kind }] : []),
       ],
     },
     fields: ['documentId', 'kind', 'title', 'lastMessageAt'],
+    populate: { droplet: { fields: ['name'] }, lesson: { fields: ['name'] } },
   } as any)) as Row | null;
 }
 

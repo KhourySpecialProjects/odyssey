@@ -388,12 +388,65 @@ describe("POST /api/mentor", () => {
 
       const response = await post(ask({ chatId: "ownedchat01" }));
 
-      expect(owned).toHaveBeenCalledWith(7, "ownedchat01", {
-        lessonId: expect.any(Number),
-        kind: expect.any(String),
-      });
+      expect(owned).toHaveBeenCalledWith(7, "ownedchat01", { kind: "lesson" });
       expect(start).not.toHaveBeenCalled();
       expect(response.headers.get("X-Mentor-Chat-Id")).toBe("ownedchat01");
+    });
+
+    describe("a chat continued on another lesson", () => {
+      const began = (over: Record<string, unknown> = {}) => ({
+        documentId: "ownedchat01",
+        kind: "lesson" as const,
+        lesson: { id: lesson.id + 1, name: "Joins" },
+        droplet: { id: 4, name: "SQL basics" },
+        ...over,
+      });
+      const sent = () => claude.calls[0].body;
+
+      it("appends to the same chat and tells the model where it started", async () => {
+        owned.mockResolvedValue(began() as never);
+
+        const response = await post(ask({ chatId: "ownedchat01" }));
+        await readAllMentorEvents(response.body!);
+
+        expect(start).not.toHaveBeenCalled();
+        expect(response.headers.get("X-Mentor-Chat-Id")).toBe("ownedchat01");
+        expect(sent()).toContain("This chat started in Joins (SQL basics).");
+      });
+
+      it("says only 'another lesson' when the titles are missing", async () => {
+        owned.mockResolvedValue(
+          began({ lesson: { id: 99 }, droplet: null }) as never,
+        );
+
+        await readAllMentorEvents(
+          (await post(ask({ chatId: "ownedchat01" }))).body!,
+        );
+
+        expect(sent()).toContain("This chat started in another lesson.");
+      });
+
+      it("adds no note on the lesson it started in", async () => {
+        owned.mockResolvedValue(
+          began({ lesson: { id: lesson.id, name: "Same" } }) as never,
+        );
+
+        await readAllMentorEvents(
+          (await post(ask({ chatId: "ownedchat01" }))).body!,
+        );
+
+        expect(sent()).not.toContain("This chat started in");
+      });
+
+      it("starts a new chat when the chat is of the other kind or not the user's", async () => {
+        // ownedChat returns null for both: the kind filter and the owner check
+        const response = await post(ask({ chatId: "otherkind01" }));
+        await readAllMentorEvents(response.body!);
+
+        expect(start).toHaveBeenCalledTimes(1);
+        expect(response.headers.get("X-Mentor-Chat-Id")).toBe("newchat0001");
+        expect(sent()).not.toContain("This chat started in");
+      });
     });
 
     it("starts a new chat when the chatId isn't the user's", async () => {

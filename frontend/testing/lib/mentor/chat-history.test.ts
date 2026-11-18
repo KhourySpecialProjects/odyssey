@@ -50,13 +50,10 @@ describe("startMentorChat and ownedChat", () => {
     expect(await ownedChat(0, id)).toBeNull();
   });
 
-  it("matches the lesson and kind when given", async () => {
+  it("matches the kind when given, whatever the lesson", async () => {
     const id = await start(7);
 
-    expect(
-      await ownedChat(7, id, { lessonId: 9, kind: "lesson" }),
-    ).not.toBeNull();
-    expect(await ownedChat(7, id, { lessonId: 10 })).toBeNull();
+    expect(await ownedChat(7, id, { kind: "lesson" })).not.toBeNull();
     expect(await ownedChat(7, id, { kind: "explain" })).toBeNull();
   });
 

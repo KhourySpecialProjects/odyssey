@@ -70,7 +70,7 @@ describe('purgeExpiredChats (30-day retention)', () => {
 });
 
 describe('ownership and saves', () => {
-  it('treats a chat past 30 days, or from another lesson or kind, as not found', async () => {
+  it('treats a chat past 30 days, or or of another kind, as not found', async () => {
     const user = await strapi.documents(USER_UID).create({ data: userData() });
     const old = await chatWithMessages(user, daysAgo(31));
     const fresh = await chatWithMessages(user, daysAgo(1));
@@ -78,7 +78,7 @@ describe('ownership and saves', () => {
     expect(await lib.ownedChatRow(user.id, old.documentId)).toBeNull();
     expect(await lib.ownedChatRow(user.id, fresh.documentId)).not.toBeNull();
     expect(await lib.ownedChatRow(user.id, fresh.documentId, { kind: 'explain' })).toBeNull();
-    expect(await lib.ownedChatRow(user.id, fresh.documentId, { lessonId: 987654 })).toBeNull();
+    expect(await lib.ownedChatRow(user.id, fresh.documentId, { lessonId: 987654 })).not.toBeNull();
     expect(await lib.ownedChatRow(user.id + 999, fresh.documentId)).toBeNull();
   });
 

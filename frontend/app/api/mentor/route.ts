@@ -9,6 +9,7 @@ import {
   ownedChat,
   saveMentorExchange,
   startMentorChat,
+  type MentorChatRow,
 } from "@/lib/mentor/chat-history";
 import { buildLessonContext } from "@/lib/mentor/context";
 import type { MentorHttpError, MentorHttpErrorCode } from "@/lib/mentor/events";
@@ -65,6 +66,15 @@ function refuse(
 const fail = (status: number, error: keyof typeof MESSAGES) =>
   refuse(status, error, MESSAGES[error]);
 
+/** Tells the model where a chat continued from another lesson began, in one line */
+function startNote(chat: MentorChatRow, lessonId: number): string | null {
+  if (chat.lesson?.id === lessonId) return null;
+  const { lesson, droplet } = chat;
+  return lesson?.name && droplet?.name
+    ? `This chat started in ${lesson.name} (${droplet.name}).`
+    : "This chat started in another lesson.";
+}
+
 function parseJson(raw: string): unknown {
   try {
     return JSON.parse(raw);
@@ -106,9 +116,30 @@ export async function POST(request: Request): Promise<Response> {
       return refuse(status, reason, message, retryAt);
     }
 
+    // ODY-937: any saved chat of this kind continues on any lesson; quiz hints are never saved
+    let own: MentorChatRow | null = null;
+    let chatLookupFailed = false;
+    if (input.kind !== "quiz-hint" && input.chatId) {
+      try {
+        own = await ownedChat(gate.user.id, input.chatId, { kind: input.kind });
+      } catch (error) {
+        chatLookupFailed = true;
+        console.error("[mentor] chat lookup failed:", errorName(error));
+      }
+    }
+
+    const params = buildMentorRequest(context, resolved.ask);
+    const note = own && startNote(own, input.lessonId);
+    // After the cached lesson block, so the cached prefix stays the lesson's
+    if (note) {
+      const first = params.messages[0].content;
+      if (Array.isArray(first))
+        first.splice(1, 0, { type: "text", text: note });
+    }
+
     const answer = await streamMentorAnswer({
       client: mentorClient(),
-      params: buildMentorRequest(context, resolved.ask),
+      params,
       context,
       signal: request.signal,
     });
@@ -116,14 +147,8 @@ export async function POST(request: Request): Promise<Response> {
 
     // ODY-937: quiz hints are never saved; a failure here never costs the answer
     let chatId: string | null = null;
-    if (input.kind !== "quiz-hint") {
+    if (input.kind !== "quiz-hint" && !chatLookupFailed) {
       try {
-        const own = input.chatId
-          ? await ownedChat(gate.user.id, input.chatId, {
-              lessonId: input.lessonId,
-              kind: input.kind,
-            })
-          : null;
         chatId =
           own?.documentId ??
           (await startMentorChat({

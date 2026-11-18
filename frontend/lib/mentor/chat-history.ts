@@ -21,6 +21,9 @@ export type MentorChatRow = {
   kind: "lesson" | "explain";
   title: string | null;
   lastMessageAt: string | null;
+  /** Where the chat started */
+  droplet?: { id: number; name: string } | null;
+  lesson?: { id: number; name: string } | null;
 };
 
 export const isChatId = (value: unknown): value is string =>
@@ -97,12 +100,12 @@ export async function startMentorChat(input: {
 
 /**
  * The chat if `userId` owns it, it is under 30 days old and it matches the
- * lesson and kind when given, else null. A bad id is null, not an error.
+ * kind when given, on any lesson, else null. A bad id is null, not an error.
  */
 export async function ownedChat(
   userId: number,
   chatDocumentId: string,
-  match: { lessonId?: number; kind?: "lesson" | "explain" } = {},
+  match: { kind?: "lesson" | "explain" } = {},
 ): Promise<MentorChatRow | null> {
   if (!Number.isInteger(userId) || userId < 1 || !isChatId(chatDocumentId)) {
     return null;
