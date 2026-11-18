@@ -287,16 +287,17 @@ describe("reportMarkdown", () => {
         summary("s1", refs(3)),
         summary("s2", refs(5)),
         summary("s3", refs(7)),
+        summary("s4", refs(9)),
       ],
       [],
       meta,
       [],
     );
     expect(report).toContain("## Summaries");
-    // The median of three is the middle one; only 7 is over the cap of 5
+    // The median of four averages the middle two; 7 and 9 are over the cap of 5
     expect(report).toContain("The cap is 5");
     expect(report).toContain(
-      "| haiku-low | 5 / 7 | 33% (1/3) | 5 | 0% (0/3) | 0% (0/3) | 0% (0/3) |",
+      "| haiku-low | 6 / 9 | 50% (2/4) | 6 | 0% (0/4) | 0% (0/4) | 0% (0/4) |",
     );
     expect(report).toContain("Links outside summaries");
     expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(
