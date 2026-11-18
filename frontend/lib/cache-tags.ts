@@ -161,12 +161,13 @@
  *                 learner's streak days); invalidated by recordStreakDay,
  *                 which updateViewedLessons calls on a lesson's first view
  * recommendations Per-user tag "recommendations-{userId}": read by            900s
- *                 getDismissedDropletIds (ODY-954) and, from ODY-957, by
- *                 getRecommendations, only on per-student
- *                 queries (never a shared URL). Invalidated by
- *                 dismissRecommendation (ODY-954), the enrollments-{userId}
- *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
- *                 reads only "droplets".
+ *                 getDismissedDropletIds and the engine's voyage and
+ *                 playlist reads (lib/recommendations/candidates.ts), only
+ *                 on per-student URLs (never a shared one). Invalidated by
+ *                 dismissRecommendation. Enrollment, voyage and quiz changes
+ *                 reach the picks through enrollments-{id},
+ *                 voyage-enrollments-{id} and learner-profile-{id}, which
+ *                 the engine's reads also carry.
  * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
  *                 getLearnerProfile (engine, Settings);
  *                 invalidated by saveLearnerProfile

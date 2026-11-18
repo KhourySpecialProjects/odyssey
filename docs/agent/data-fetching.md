@@ -267,6 +267,10 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 
 The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
 
+## Recommendations (ODY-957)
+
+`getRecommendations` (`lib/recommendations/`) is server-only. It ranks in memory from one shared candidate read (tag `droplets`) plus per-student reads, so there is no result cache to invalidate. Freshness comes from the input tags: `enrollments(id)` (enroll, finish, archive), `voyageEnrollments(id)`, `voyages` and `playlists` (the voyage read carries both, since playlist nodes expand through the playlist), `learnerProfile(id)` (quiz save) and `recommendations(id)` (dismissals). A new enrollment write needs only its usual `enrollments(id)` revalidate. Exclusion ids are removed in memory and never go in a URL.
+
 ## Common Mistakes
 
 1. **Using both `cache` and `next` on fetchAPI** — Next.js silently ignores both. Use one or the other.
