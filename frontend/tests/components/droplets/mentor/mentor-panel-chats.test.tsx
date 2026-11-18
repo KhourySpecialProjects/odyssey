@@ -128,6 +128,24 @@ beforeEach(async () => {
   jest.mocked(deleteMentorChat).mockResolvedValue({ ok: true });
 });
 
+describe("?mentorChat link", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  it("opens that chat once and drops the param from the URL", async () => {
+    window.history.replaceState(null, "", "/d/x/y?mentorChat=chatBBBB2222&a=1");
+    jest
+      .mocked(getMentorChat)
+      .mockImplementation(async () => saved("Why index?") as never);
+    renderPanel();
+    open();
+
+    expect(await screen.findByText("Why index?")).toBeInTheDocument();
+    expect(getMentorChat).toHaveBeenCalledWith("chatBBBB2222");
+    expect(getMentorChat).toHaveBeenCalledTimes(1);
+    expect(window.location.search).toBe("?a=1");
+  });
+});
+
 describe("Mentor chat list", () => {
   it("opens the most recent lesson chat by default", async () => {
     renderPanel();

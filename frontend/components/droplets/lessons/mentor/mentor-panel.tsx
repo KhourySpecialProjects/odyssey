@@ -94,8 +94,31 @@ export function MentorPanel({
     return res.ok ? res.data.filter((c) => c.kind === "lesson") : null;
   }, []);
 
-  // First open with nothing in progress: continue the most recent chat
   const { loadChat } = chat;
+  // ?mentorChat=<id> (from Mentor chats): open that chat once, then drop the param
+  const linkedChat = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("mentorChat");
+    if (!id || linkedChat.current === id) return;
+    linkedChat.current = id;
+    defaulted.current = true;
+    params.delete("mentorChat");
+    const rest = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        (rest ? `?${rest}` : "") +
+        window.location.hash,
+    );
+    void loadChat(id).then((ok) => {
+      if (ok) setView("chat");
+      else toast.error("Couldn't open that chat");
+    });
+  }, [loadChat]);
+
+  // First open with nothing in progress: continue the most recent chat
   useEffect(() => {
     if (!open || !accepted || defaulted.current) return;
     if (explainSelection !== null) return;

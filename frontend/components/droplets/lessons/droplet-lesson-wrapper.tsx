@@ -172,6 +172,13 @@ export function DropletLessonWrapper({
     return () => setMentorAvailable(false);
   }, [available]);
 
+  // A link from Mentor chats (?mentorChat=<id>) opens the panel; MentorPanel loads the chat
+  useEffect(() => {
+    if (!available) return;
+    if (new URLSearchParams(window.location.search).has("mentorChat"))
+      useLessonPanelStore.getState().openMentor();
+  }, [available]);
+
   return (
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">

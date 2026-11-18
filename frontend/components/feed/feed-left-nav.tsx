@@ -8,6 +8,7 @@ import {
   IconHeart,
   IconLayoutList,
   IconMap,
+  IconMessageChatbot,
   IconNews,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,11 @@ const TABS = [
   { href: "/activity/playlists", label: "My Playlists", Icon: IconLayoutList },
   { href: "/activity/voyages", label: "My Voyages", Icon: IconMap },
   { href: "/activity/favorited", label: "My Favorited", Icon: IconHeart },
+  {
+    href: "/activity/mentor-chats",
+    label: "Mentor chats",
+    Icon: IconMessageChatbot,
+  },
   { href: "/activity/archived", label: "Archived", Icon: IconArchive },
 ];
 
