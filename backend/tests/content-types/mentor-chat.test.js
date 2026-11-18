@@ -166,6 +166,9 @@ describe('owner list search (X-Mentor-Search header)', () => {
     ['over 100 characters', 'a'.repeat(101)],
     ['badly encoded', '%E0%A4%A'],
     ['repeated', 'a, b'],
+    ['a NUL', 'a%00b'],
+    ['a newline', 'a%0Ab'],
+    ['a DEL', 'a%7Fb'],
   ])('rejects a %s term with 400', async (_name, q) => {
     expect((await search(q)).status).toBe(400);
   });

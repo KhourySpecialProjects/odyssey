@@ -1,6 +1,5 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useSearchParams } from "next/navigation";
 import { MentorChatsPage } from "@/components/feed/mentor-chats-page";
 import {
   deleteAllMentorChats,
@@ -13,7 +12,7 @@ const replace = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/activity/mentor-chats",
-  useSearchParams: jest.fn(),
+  useSearchParams: () => new URLSearchParams(),
 }));
 jest.mock("sonner", () => ({ toast: { error: jest.fn() } }));
 jest.mock("@/lib/requests/mentor-chats", () => ({
@@ -37,16 +36,11 @@ const CHATS = [
   chat("chatAAAA1111", "What is a join?"),
   chat("chatBBBB2222", "Explain this", { kind: "explain" }),
 ];
-const setQuery = (q?: string) =>
-  jest
-    .mocked(useSearchParams)
-    .mockReturnValue(new URLSearchParams(q ? { q } : {}) as never);
 const user = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
 beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
-  setQuery();
   jest
     .mocked(listMentorChats)
     .mockResolvedValue({ ok: true, data: CHATS as never });
@@ -86,50 +80,49 @@ describe("MentorChatsPage", () => {
       "Started in Joins · SQL Basics · 2 hr ago",
     );
     expect(rows[1]).toHaveTextContent("Explain");
-    expect(screen.getByRole("status")).toHaveTextContent("2 chats");
+    expect(screen.getByText("2 chats")).toBeInTheDocument();
   });
 
-  it("searches after a pause and puts q in the URL, and clears it", async () => {
+  it("searches after a pause without touching the URL, and clears", async () => {
     const u = user();
     render(<MentorChatsPage />);
     await screen.findByRole("list");
+    const url = window.location.href;
 
     await u.type(
       screen.getByRole("searchbox", { name: "Search Mentor chats" }),
       "join",
     );
-    expect(replace).not.toHaveBeenCalled();
+    expect(listMentorChats).toHaveBeenCalledTimes(1);
     act(() => jest.advanceTimersByTime(300));
-    expect(replace).toHaveBeenCalledWith("/activity/mentor-chats?q=join", {
-      scroll: false,
-    });
+    await waitFor(() =>
+      expect(listMentorChats).toHaveBeenLastCalledWith({ q: "join" }),
+    );
+    expect(replace).not.toHaveBeenCalled();
+    expect(window.location.href).toBe(url);
+
+    await u.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(screen.getByRole("searchbox")).toHaveValue("");
+    await waitFor(() => expect(listMentorChats).toHaveBeenLastCalledWith({}));
+    expect(replace).not.toHaveBeenCalled();
+    expect(window.location.href).toBe(url);
   });
 
-  it("clears the search from the URL", async () => {
-    setQuery("join");
+  it("keeps characters typed while a search is loading and shows no-results", async () => {
+    const u = user();
     render(<MentorChatsPage />);
     await screen.findByRole("list");
-
-    await user().click(screen.getByRole("button", { name: "Clear search" }));
-
-    expect(replace).toHaveBeenLastCalledWith("/activity/mentor-chats", {
-      scroll: false,
-    });
-    expect(screen.getByRole("searchbox")).toHaveValue("");
-  });
-
-  it("reads q from the URL and shows the no-results state", async () => {
-    setQuery("zzz");
     jest.mocked(listMentorChats).mockResolvedValue({ ok: true, data: [] });
-    render(<MentorChatsPage />);
 
+    const box = screen.getByRole("searchbox");
+    await u.type(box, "zzz");
+    act(() => jest.advanceTimersByTime(300));
+    await u.type(box, "y");
+
+    expect(box).toHaveValue("zzzy");
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "No chats match ‘zzz’",
-      ),
+      expect(screen.getByText("No chats match ‘zzz’")).toBeInTheDocument(),
     );
-    expect(listMentorChats).toHaveBeenCalledWith({ q: "zzz" });
-    expect(screen.getByRole("searchbox")).toHaveValue("zzz");
   });
 
   it("shows the empty state without a delete-all button", async () => {
@@ -228,5 +221,89 @@ describe("MentorChatsPage", () => {
 
     expect(deleteAllMentorChats).not.toHaveBeenCalled();
     expect(screen.getByText("What is a join?")).toBeInTheDocument();
+  });
+
+  it("uses no role=status live regions", async () => {
+    const u = user();
+    const { container } = render(<MentorChatsPage />);
+    await u.click(
+      await screen.findByRole("button", { name: /^What is a join\?/ }),
+    );
+    await screen.findByText("It combines rows.");
+
+    expect(container.querySelectorAll("[role='status']")).toHaveLength(0);
+  });
+
+  describe("focus after the delete dialog", () => {
+    const openOne = async (u: ReturnType<typeof user>) => {
+      const button = await screen.findByRole("button", {
+        name: "Delete chat: What is a join?",
+      });
+      await u.click(button);
+      return button;
+    };
+
+    it("returns to the opening button after Cancel", async () => {
+      const u = user();
+      render(<MentorChatsPage />);
+      const button = await openOne(u);
+      await u.click(screen.getByRole("button", { name: "Cancel" }));
+
+      await waitFor(() => expect(button).toHaveFocus());
+    });
+
+    it("returns to the opening button after Escape", async () => {
+      const u = user();
+      render(<MentorChatsPage />);
+      const button = await openOne(u);
+      await u.keyboard("{Escape}");
+
+      await waitFor(() => expect(button).toHaveFocus());
+    });
+
+    it("returns to the opening button after a failed delete", async () => {
+      jest
+        .mocked(deleteMentorChat)
+        .mockResolvedValue({ ok: false, error: "failed" } as never);
+      const u = user();
+      render(<MentorChatsPage />);
+      const button = await openOne(u);
+      await u.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(button).toHaveFocus());
+    });
+
+    it("moves to the heading after a successful delete", async () => {
+      const u = user();
+      render(<MentorChatsPage />);
+      await openOne(u);
+      await u.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("heading", { name: "Mentor chats" }),
+        ).toHaveFocus(),
+      );
+    });
+  });
+
+  it("says Delete all removes every chat, not only the matches, while searching", async () => {
+    const u = user();
+    render(<MentorChatsPage />);
+    await screen.findByRole("list");
+    jest
+      .mocked(listMentorChats)
+      .mockResolvedValue({ ok: true, data: [CHATS[0]] as never });
+    await u.type(screen.getByRole("searchbox"), "join");
+    act(() => jest.advanceTimersByTime(300));
+    await screen.findByText("1 chat match ‘join’");
+
+    await u.click(screen.getByRole("button", { name: "Delete all chats" }));
+
+    expect(
+      screen.getByText(
+        "This deletes all 2 of your chats, not only the ones matching ‘join’. This can't be undone.",
+      ),
+    ).toBeInTheDocument();
   });
 });
