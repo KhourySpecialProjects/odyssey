@@ -89,8 +89,8 @@ the manager's model. Instead:
 
 1. **Understand it.** Work out what kind of request it is: a feature, a bug,
    a question, a status request or a chore. If the request is unclear in a
-   way that changes the work, reply with at most 3 numbered questions, keep
-   the phase `asking`, and stop.
+   way that changes the work, ask at most 4 questions with options (see
+   **Asking questions**), keep the phase `asking`, and stop.
 2. **Questions and status requests:** answer in the thread from the repo,
    Linear (`list_issues`, `get_issue`) and `/coord status`, then set `done`.
 3. **Features, bugs and chores:**
@@ -139,9 +139,31 @@ the manager's model. Instead:
 7. **Report** on the live canvas while runs are active, then one summary
    post when the batch is done (below). Set `done` when every ticket is
    pushed, held or dropped.
-8. **Stuck?** If a ticket needs a decision, ask in the thread with
-   `[OPEN] … · NEEDS INPUT`, and carry on with the tickets that don't
-   depend on it.
+8. **Stuck?** If a ticket needs a decision, ask with
+   `[OPEN] … · NEEDS INPUT` (see **Asking questions**), and carry on with
+   the tickets that don't depend on it.
+
+## Asking questions
+
+Ask in the question window when you're running on the owner's laptop. See
+`docs/agent/question-window.md`.
+
+1. Write `.claude/grill/questions.json`: at most 4 questions, each with 2–4
+   options drawn from this codebase. Put your recommendation first, marked
+   `recommended`, with a one-line trade-off in `description`. Use a new
+   `id` each time.
+2. Run `python3 .claude/scripts/grill_app.py` in the background. It opens
+   over Slack.
+3. Post a short `[OPEN] … · NEEDS INPUT` in the thread saying the questions
+   are in the window.
+4. The watcher prints `GRILL_ANSWERS <file>` when they submit. Read the
+   file, repeat their picks in the thread, then carry on. A file with
+   `"declined": true` means they cancelled: ask what they'd like instead.
+
+In a cloud session, or when the window can't open, reply in the thread with
+at most 3 numbered questions instead. Never add number reactions for them to
+click: the Slack tools post and react as the owner, so a reaction you add is
+already theirs.
 
 ## Starting a cloud routine
 
