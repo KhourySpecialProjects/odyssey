@@ -1,4 +1,16 @@
-import { citedRefs, REF_PATTERN } from "@/lib/mentor/refs";
+import { citedRefs, LINK_PATTERN, REF_PATTERN } from "@/lib/mentor/refs";
+
+describe("LINK_PATTERN", () => {
+  it.each([
+    ["a linked phrase", "A [base case][p2] stops it.", [["base case", "p2"]]],
+    ["a link to several refs", "[two][p2, p3]", [["two", "p2, p3"]]],
+    ["refs side by side", "See [p3][p5] and [p3, p4][p5].", []],
+    ["a ref, then a link", "See [p3][words][p5].", [["words", "p5"]]],
+  ])("%s", (_, answer, links) => {
+    const found = [...answer.matchAll(new RegExp(LINK_PATTERN))];
+    expect(found.map((m) => [m[1], m[2]])).toEqual(links);
+  });
+});
 
 describe("citedRefs", () => {
   it.each([
