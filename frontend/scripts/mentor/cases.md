@@ -1769,7 +1769,7 @@ _A long BlockNote lesson whose quiz asks EDA's goal, which p4 states almost word
 A reply that should pass:
 
 ```
-This lesson introduces [exploratory data analysis][p3], a step that statistician [John Tukey formalized in 1977][p5] and that the lesson calls the most critical in any analysis. It covers five [key visualizations][p7]: histograms, boxplots, scatter plots, correlation heatmaps and bar charts, each with its pandas or matplotlib call. Before plotting, [three pandas one-liners][p16] give a first look: df.head(), df.info() and df.describe(). Its rule of thumb: [a single histogram can reveal problems][p25], like an outlier or a data entry error, that would distort every later result.
+This lesson introduces [exploratory data analysis][p3], a step that statistician John Tukey formalized in 1977 and that the lesson calls the most critical in any analysis. It covers five [key visualizations][p7]: histograms, boxplots, scatter plots, correlation heatmaps and bar charts, each with its pandas or matplotlib call. Before plotting, [three pandas one-liners][p16] give a first look: df.head(), df.info() and df.describe(). Its rule of thumb: [a single histogram can reveal problems][p25], like an outlier or a data entry error, that would distort every later result.
 ```
 
 ## ethics-summary-01
@@ -1807,7 +1807,7 @@ _Asked in the student's own words, just before three quizzes that each ask a mai
 A reply that should pass:
 
 ```
-This case study is about [Cambridge Analytica, a British political consulting firm][p3] that used data analytics in political campaigns. It covers [how the firm got Facebook users' data][p4] and what it built from it, and how it then [targeted voters with personalized political ads][p5] in the 2016 US election and the Brexit referendum. When this came out, it [sparked outrage and investigations][p6] in the US and the UK, and exposed how vulnerable social media platforms were. It ends with [the ethical issues the scandal raised][p8].
+This case study is about [Cambridge Analytica, a British political consulting firm][p3] that used data analytics in political campaigns. It covers [how the firm got Facebook users' data][p4] and what it built from it, and how it then [targeted voters with personalized political ads][p5] in the 2016 US election and the Brexit referendum. When this came out, it sparked outrage and investigations in the US and the UK, and exposed how vulnerable social media platforms were. It ends with [the ethical issues the scandal raised][p8].
 ```
 
 ## ethics-wrongpick-02

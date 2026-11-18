@@ -43,14 +43,13 @@ export const MENTOR_MAX_TOKENS = 4000;
 export const MENTOR_NOT_COVERED = "The lessons don't cover this.";
 
 /**
- * The most main points a lesson summary gives, one passage each (ODY-968).
- * Set from the eval's baseline of 2026-11-16: a median of 8 references per
- * summary on haiku-medium (see scripts/mentor/README.md). Half of that is 4,
- * but the eval's lessons teach in 4 or 5 sections, and the reference summaries
- * cite 5. The eval caps a summary's references at it, and ODY-968's summary
- * rule will say it.
+ * The most passages a lesson summary links, one main point each (ODY-968).
+ * A summary states every main point, but links only this many: the ones most
+ * worth rereading. Half the median of the eval's baseline of 2026-11-16 (8
+ * references per summary on haiku-medium; see scripts/mentor/README.md). The
+ * eval caps a summary's references at it.
  */
-export const MENTOR_SUMMARY_MAX_POINTS = 5;
+export const MENTOR_SUMMARY_MAX_LINKS = 4;
 
 export const MENTOR_SYSTEM_PROMPT = [
   "You are Mentor, the study helper in Odyssey, Khoury College's site of short, self-paced courses called droplets. A Northeastern student is reading one lesson and asks you about it.",

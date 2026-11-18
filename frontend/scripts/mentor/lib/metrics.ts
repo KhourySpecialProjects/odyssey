@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { costOf } from "@/lib/ai-review/models";
 import {
-  MENTOR_SUMMARY_MAX_POINTS,
+  MENTOR_SUMMARY_MAX_LINKS,
   type MentorModel,
   type MentorSetup,
 } from "@/lib/mentor/prompt";
@@ -384,7 +384,7 @@ export function reportMarkdown(
     "Over the cap": (rs) =>
       ratio(
         ok(summaryRows(rs)),
-        (r) => r.grade.cited.length > MENTOR_SUMMARY_MAX_POINTS,
+        (r) => r.grade.cited.length > MENTOR_SUMMARY_MAX_LINKS,
       ),
     "Linked phrases (median)": (rs) =>
       whole(median(ok(summaryRows(rs)).map((r) => r.grade.links))),
@@ -501,7 +501,7 @@ export function reportMarkdown(
     "By kind and profile": `Pass rates by kind and learner profile; new kinds have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&
-      `References are the distinct passages a summary cites: one Sources chip each. The cap is ${MENTOR_SUMMARY_MAX_POINTS} (\`MENTOR_SUMMARY_MAX_POINTS\`).\n\n${summaryTable}`,
+      `References are the distinct passages a summary cites: one Sources chip each. The cap is ${MENTOR_SUMMARY_MAX_LINKS} (\`MENTOR_SUMMARY_MAX_LINKS\`).\n\n${summaryTable}`,
     "More quality": quality,
     Length: `Words with refs removed, in replies that ended normally.\n\n${length}`,
     "Cost per answer": `Each answer's tokens priced as a cache miss (the lesson written to the cache) and as a hit (read from it). "Read from cache" is the share of prompt tokens read from the cache after a lesson's first request.${uncached.length ? `\n\n**Nothing was read from the cache for ${uncached.map((s) => s.setup).join(", ")}: something invalidates it, or the prefix is too short to cache.**` : ""}\n\n${cost}`,

@@ -177,10 +177,10 @@ hint says the pick doesn't fit without saying what it misses.
   `guides` whether it ends by sending the student back to a passage it cites. A
   wrong-pick passes when there's no leak and both get a yes. "More quality" in
   the report shows each rate.
-- **The summary cap** is `MENTOR_SUMMARY_MAX_POINTS` in `lib/mentor/prompt.ts`,
-  5, set from the baseline (see "ODY-968 baseline" in section 5). The prompt
-  will ask for at most 5 main points, and a summary citing more than 5 passages
-  fails.
+- **The summary cap** is `MENTOR_SUMMARY_MAX_LINKS` in `lib/mentor/prompt.ts`,
+  4, set from the baseline (see "ODY-968 baseline" in section 5). A summary
+  states every main point but links at most 4 of them, and one citing more
+  than 4 passages fails.
 - **Oracle mode.** A summary needs its own `oracle`. A wrong-pick without one
   gets today's template hint ("That choice leaves out part of what the lesson
   describes…"), which shouldn't teach, so `--answers oracle` fails it on
@@ -334,7 +334,7 @@ It cost $0.62.
 | Kind         | Measure                               | Baseline     |
 | ------------ | ------------------------------------- | ------------ |
 | `summary`    | References per summary (median / max) | 8 / 14       |
-|              | Over the cap of 5                     | 63% (5/8)    |
+|              | Over the cap of 4                     | 100% (8/8)   |
 |              | Linked phrases (median)               | 0            |
 |              | With link problems                    | 100% (8/8)   |
 |              | Backs its points                      | 100% (8/8)   |
@@ -360,13 +360,16 @@ It cost $0.62.
 - **Summaries** cite 5 to 14 passages, and none links its words yet, so every
   one fails on link problems. The judge found each one's points backed and
   its main points covered, and none gave a quiz answer away.
-- **The cap is 5.** Half the median would be 4, but the lessons teach in 4 or 5
-  sections, and the reference summaries (`oracle`) cite 5.
+- **The cap is 4,** half the median: the point is fewer citations. A summary
+  still states every main point; only the 4 most worth rereading get a link.
 - **Hints** almost always end with a passage to reread, but only 3 in 32 say
   what the pick misses. The rest say it "doesn't fit" and ask a question.
-- **The bar for the after run:** wrong-pick passes at least 75%, the higher of
-  75% and the baseline plus 18 points (the noise over 32 rows). Summaries cite
-  fewer passages, none over the cap, with no link problems and no lost main
-  points. Leaks stay at 0, and every other kind stays within its noise.
+- **The bars for the after run:**
+  - **Summaries:** none over the cap, no link problems, and at least 7 of 8
+    cover the main points. Brady reads every summary the judge says misses one.
+  - **Hints:** wrong-pick passes at least 75%, and no hint gives the answer
+    away. Brady rules on every hint the judge flags.
+  - **Everything else** stays no worse than the baseline, extraction leaks
+    included.
 - **The 2 extraction leaks** (`interview-extraction-01` and
   `ethics-extraction-01`, one rep each) come before ODY-968 and are outside it.

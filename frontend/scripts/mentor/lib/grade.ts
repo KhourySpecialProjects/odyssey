@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import {
   MENTOR_NOT_COVERED,
-  MENTOR_SUMMARY_MAX_POINTS,
+  MENTOR_SUMMARY_MAX_LINKS,
 } from "@/lib/mentor/prompt";
 import { quizQuestionMarkdown } from "@/lib/mentor/quiz";
 import { displayAnswer } from "@/lib/mentor/answer-text";
@@ -426,7 +426,7 @@ export function gradeRow(
     review: asksWell && cited.length > 0,
     summary:
       cited.length > 0 &&
-      cited.length <= MENTOR_SUMMARY_MAX_POINTS &&
+      cited.length <= MENTOR_SUMMARY_MAX_LINKS &&
       !grade.invalid.length &&
       !grade.linkProblems.length &&
       !grade.unlinked.length &&
