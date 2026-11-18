@@ -74,6 +74,7 @@ function buildEligible({
   const eligible = new Map<number, CandidateDroplet>();
   for (const d of candidates) {
     if (
+      !d.documentId ||
       student.enrolledIds.has(d.id) ||
       student.dismissedIds.has(d.id) ||
       skip.has(d.id) ||

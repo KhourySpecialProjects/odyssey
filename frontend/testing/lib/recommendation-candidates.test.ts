@@ -6,6 +6,11 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchAPI } from "@/lib/utils";
 import { USER_POPULATES } from "@/lib/requests/user-populates";
+import {
+  enrollmentRow,
+  playlistRow,
+  voyageEnrollmentRow,
+} from "../mocks/recommendations";
 
 jest.mock("server-only", () => ({}));
 jest.mock("@/lib/requests/droplet", () => ({ getDroplets: jest.fn() }));
@@ -27,31 +32,8 @@ const profile = jest.mocked(getLearnerProfile);
 const dismissed = jest.mocked(getDismissedDropletIds);
 const api = fetchAPI as jest.Mock;
 
-const voyageRow = (over = {}) => ({
-  voyage: {
-    name: "V",
-    status: "published",
-    isArchived: false,
-    voyage_nodes: [
-      {
-        id: 1,
-        orderIndex: 1,
-        isMainPath: true,
-        branchType: "required",
-        nodeType: "droplet",
-        droplet: { id: 10 },
-      },
-    ],
-    ...over,
-  },
-});
-const playlistRow = (over = {}) => ({
-  name: "P",
-  isArchived: false,
-  droplets: [{ id: 20 }],
-  users_archived: [],
-  ...over,
-});
+const fullPage = (from = 1) =>
+  Array.from({ length: 1000 }, (_, i) => enrollmentRow(from + i));
 
 let voyages: unknown;
 let playlists: unknown;
@@ -59,7 +41,7 @@ let playlists: unknown;
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
-  voyages = [voyageRow()];
+  voyages = [voyageEnrollmentRow()];
   playlists = [playlistRow()];
   droplets.mockResolvedValue([]);
   enrollments.mockResolvedValue([]);
@@ -128,19 +110,15 @@ it("reads voyages and playlists under the student's own tags", async () => {
 describe("normalisation", () => {
   it("counts finished as enrolled too, and archived as enrolled only", async () => {
     enrollments.mockResolvedValue([
-      {
-        isComplete: true,
-        completionDate: "2026-01-02T00:00:00Z",
-        droplet: { id: 1, name: "One" },
-      },
-      { isComplete: false, isArchived: true, droplet: { id: 2, name: "Two" } },
+      enrollmentRow(1, { isComplete: true, completionDate: "2026-01-02" }),
+      enrollmentRow(2, { isArchived: true }),
     ] as never);
 
     const { student } = await getRankInput(7, []);
 
     expect([...student.enrolledIds]).toEqual([1, 2]);
     expect(student.finished).toEqual([
-      { id: 1, name: "One", at: Date.parse("2026-01-02T00:00:00Z") },
+      { id: 1, name: "Droplet 1", at: Date.parse("2026-01-02") },
     ]);
   });
 
@@ -154,8 +132,8 @@ describe("normalisation", () => {
   });
 
   it.each([
-    ["draft voyage", "voyages", [voyageRow({ status: "draft" })]],
-    ["archived voyage", "voyages", [voyageRow({ isArchived: true })]],
+    ["draft voyage", "voyages", [voyageEnrollmentRow({ status: "draft" })]],
+    ["archived voyage", "voyages", [voyageEnrollmentRow({ isArchived: true })]],
     ["archived playlist", "playlists", [playlistRow({ isArchived: true })]],
     [
       "self-archived playlist",
@@ -188,35 +166,40 @@ describe("normalisation", () => {
 
   it("orders finished droplets newest first", async () => {
     enrollments.mockResolvedValue([
-      {
-        isComplete: true,
-        completionDate: "2026-01-01",
-        droplet: { id: 1, name: "A" },
-      },
-      {
-        isComplete: true,
-        completionDate: "2026-02-01",
-        droplet: { id: 2, name: "B" },
-      },
+      enrollmentRow(1, { isComplete: true, completionDate: "2026-01-01" }),
+      enrollmentRow(2, { isComplete: true, completionDate: "2026-02-01" }),
     ] as never);
     const { student } = await getRankInput(7, []);
     expect(student.finished.map((f) => f.id)).toEqual([2, 1]);
   });
+});
 
+describe("paging", () => {
   it.each([
-    ["candidate", () => droplets, "recommendations: candidate cap reached"],
-    [
-      "enrollment",
-      () => enrollments,
-      "recommendations: enrollment cap reached",
-    ],
-  ])("warns when the %s read hits the 1000 cap", async (_l, mock, message) => {
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-    (mock() as jest.Mock).mockResolvedValue(
-      Array.from({ length: 1000 }, (_, i) => ({ id: i + 1 })),
-    );
-    await getRankInput(7, []);
-    expect(console.warn).toHaveBeenCalledWith(message);
+    ["candidate", () => droplets],
+    ["enrollment", () => enrollments],
+  ])("reads every %s page until a short page", async (label, mock) => {
+    (mock() as jest.Mock)
+      .mockResolvedValueOnce(fullPage(1))
+      .mockResolvedValueOnce([enrollmentRow(1001)]);
+
+    const { candidates, student } = await getRankInput(7, []);
+
+    const calls = (mock() as jest.Mock).mock.calls;
+    const pages = calls.map((c) => c.at(-1).pagination);
+    expect(pages).toEqual([
+      { page: 1, pageSize: 1000 },
+      { page: 2, pageSize: 1000 },
+    ]);
+    expect(
+      label === "candidate" ? candidates.length : student.enrolledIds.size,
+    ).toBe(1001);
+  });
+
+  it("rejects rather than cut a list off after 20 full pages", async () => {
+    enrollments.mockResolvedValue(fullPage() as never);
+    await expect(getRankInput(7, [])).rejects.toThrow(RangeError);
+    expect(enrollments).toHaveBeenCalledTimes(20);
   });
 });
 

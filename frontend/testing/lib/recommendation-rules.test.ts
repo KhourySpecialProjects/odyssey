@@ -209,6 +209,17 @@ describe("rules 1, 2 and 4", () => {
       expect(result[0].rule).toBe("next-in-voyage");
     });
 
+    it("doesn't spend a path slot on a droplet with no documentId", () => {
+      const candidates = [
+        candidateDroplet({ id: 1, documentId: undefined as never }),
+        ...live(2, 3),
+      ];
+      const result = rank(candidates, {
+        paths: [voyage("A", [1]), voyage("B", [2]), voyage("C", [3])],
+      });
+      expect(pathPicks(result)).toEqual([2, 3]);
+    });
+
     it("words a playlist pick with the playlist name", () => {
       const result = rank(live(1), { paths: [playlist("Intro", [1])] });
       expect(result[0]).toMatchObject({

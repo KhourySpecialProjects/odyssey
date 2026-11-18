@@ -15,7 +15,8 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { fetchAPI } from "@/lib/utils";
 
-const PAGE_CAP = 1000;
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 20;
 
 // Trusts the user id it's given: pass the session user. Never a "use server" file.
 
@@ -51,37 +52,50 @@ async function optional<T>(
   }
 }
 
-/** Every live droplet, the same request for every student. */
+/** Reads pages of PAGE_SIZE until a short page; throws past MAX_PAGES so nothing is silently cut off. */
+async function readAllPages<T>(
+  read: (pagination: { page: number; pageSize: number }) => Promise<T[]>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = (await read({ page, pageSize: PAGE_SIZE })) ?? [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) return rows;
+  }
+  throw new RangeError("page limit reached");
+}
+
+/** Every live droplet, the same requests for every student. */
 export async function getCandidates(): Promise<CandidateDroplet[]> {
-  const candidates = (await getDroplets({
-    filters: {
-      $and: [
-        { status: { $eq: "published" } },
-        { isHidden: false },
-        { lessons: { id: { $notNull: true } } },
-      ],
-    },
-    fields: [
-      "name",
-      "slug",
-      "type",
-      "focusArea",
-      "difficulty",
-      "description",
-      "averageRating",
-    ],
-    populate: {
-      lessons: { fields: ["id"] },
-      tags: { fields: ["name", "slug"] },
-      authorized_users: USER_POPULATES.authorName,
-      prerequisites: { fields: ["id"] },
-    },
-    sort: ["id:asc"],
-    pagination: { page: 1, pageSize: PAGE_CAP },
-  })) as CandidateDroplet[];
-  if (candidates.length >= PAGE_CAP)
-    console.warn("recommendations: candidate cap reached");
-  return candidates;
+  return readAllPages(
+    (pagination) =>
+      getDroplets({
+        filters: {
+          $and: [
+            { status: { $eq: "published" } },
+            { isHidden: false },
+            { lessons: { id: { $notNull: true } } },
+          ],
+        },
+        fields: [
+          "name",
+          "slug",
+          "type",
+          "focusArea",
+          "difficulty",
+          "description",
+          "averageRating",
+        ],
+        populate: {
+          lessons: { fields: ["id"] },
+          tags: { fields: ["name", "slug"] },
+          authorized_users: USER_POPULATES.authorName,
+          prerequisites: { fields: ["id"] },
+        },
+        sort: ["id:asc"],
+        pagination,
+      }) as Promise<CandidateDroplet[]>,
+  );
 }
 
 const getVoyageRows = (userId: number) =>
@@ -147,19 +161,19 @@ const getPlaylistRows = (userId: number) =>
 export async function getStudentState(userId: number): Promise<StudentState> {
   const [enrollments, voyages, playlists, profile, dismissed] =
     await Promise.all([
-      getEnrollmentsByAuthorizedUser(userId, {
-        fields: ["isComplete", "completionDate"],
-        populate: { droplet: { fields: ["name"] } },
-        pagination: { page: 1, pageSize: PAGE_CAP },
-      }),
+      readAllPages((pagination) =>
+        getEnrollmentsByAuthorizedUser(userId, {
+          fields: ["isComplete", "completionDate"],
+          populate: { droplet: { fields: ["name"] } },
+          pagination,
+        }),
+      ),
       optional("voyages", getVoyageRows(userId), []),
       optional("playlists", getPlaylistRows(userId), []),
       optional("profile", getLearnerProfile(userId), null),
       getDismissedDropletIds(userId),
     ]);
 
-  if (enrollments.length >= PAGE_CAP)
-    console.warn("recommendations: enrollment cap reached");
   const rows = enrollments.filter((e) => e.droplet);
   const finished = rows
     .filter((e) => e.isComplete)
