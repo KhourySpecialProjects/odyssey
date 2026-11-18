@@ -316,9 +316,12 @@ describe("MENTOR_SYSTEM_PROMPT", () => {
   // Ties the syntax the prompt teaches to the one the sidebar reads (ODY-968)
   it("teaches summaries the link syntax the sidebar reads, within the cap", () => {
     const links = [...MENTOR_SYSTEM_PROMPT.matchAll(new RegExp(LINK_PATTERN))];
-    expect(links.map((m) => [m[1], m[2]])).toEqual([["the key idea", "p3"]]);
+    expect(links.map((m) => [m[1], m[2]])).toEqual([
+      ["combine rows from two tables", "p3"],
+      ["Joins", "p3"],
+    ]);
     expect(displayAnswer(links[0][0], { streaming: false })).toBe(
-      "the key idea",
+      "combine rows from two tables",
     );
     expect(MENTOR_SYSTEM_PROMPT).toContain(
       `Link at most ${MENTOR_SUMMARY_MAX_LINKS} of them`,
