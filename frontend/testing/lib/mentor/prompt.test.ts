@@ -4,12 +4,15 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { blockNoteIdToNumber } from "@/lib/blocknote/convert-blocks";
 import { resolveMentorAsk, type MentorAsk } from "@/lib/mentor/ask";
 import { buildLessonContext } from "@/lib/mentor/context";
+import { displayAnswer } from "@/lib/mentor/answer-text";
 import {
   buildMentorRequest,
   MENTOR_MAX_TOKENS,
   MENTOR_SETUP,
+  MENTOR_SUMMARY_MAX_LINKS,
   MENTOR_SYSTEM_PROMPT,
 } from "@/lib/mentor/prompt";
+import { LINK_PATTERN } from "@/lib/mentor/refs";
 import type { MentorInput, MentorLesson } from "@/lib/mentor/types";
 import {
   blockNoteLesson,
@@ -305,6 +308,20 @@ describe("buildMentorRequest", () => {
     );
     expect(source.replace(/import\s+type\b[^;]*;/g, "")).not.toMatch(
       /answer-key|["'](\.|@\/lib\/mentor)\/ask["']|choiceQuestionById/,
+    );
+  });
+});
+
+describe("MENTOR_SYSTEM_PROMPT", () => {
+  // Ties the syntax the prompt teaches to the one the sidebar reads (ODY-968)
+  it("teaches summaries the link syntax the sidebar reads, within the cap", () => {
+    const links = [...MENTOR_SYSTEM_PROMPT.matchAll(new RegExp(LINK_PATTERN))];
+    expect(links.map((m) => [m[1], m[2]])).toEqual([["the key idea", "p3"]]);
+    expect(displayAnswer(links[0][0], { streaming: false })).toBe(
+      "the key idea",
+    );
+    expect(MENTOR_SYSTEM_PROMPT).toContain(
+      `Link at most ${MENTOR_SUMMARY_MAX_LINKS} of them`,
     );
   });
 });

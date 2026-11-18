@@ -11,6 +11,7 @@ import { MENTOR_PROMPT_VERSION } from "@/lib/mentor/prompt";
 import {
   loadCases,
   loadFixtures,
+  V1_KINDS,
   type EvalCase,
 } from "@/scripts/mentor/lib/files";
 import { planGroups, SETUPS, type SetupName } from "@/scripts/mentor/lib/plan";
@@ -35,7 +36,9 @@ const hashOf = (c: EvalCase) =>
 
 if (process.env.UPDATE_V1_REQUESTS) {
   it("writes the pinned requests", () => {
-    const hashes = Object.fromEntries(cases.map((c) => [c.id, hashOf(c)]));
+    const v1Kinds: readonly string[] = V1_KINDS;
+    const v1 = cases.filter((c) => v1Kinds.includes(c.kind));
+    const hashes = Object.fromEntries(v1.map((c) => [c.id, hashOf(c)]));
     const pinned = { promptVersion: MENTOR_PROMPT_VERSION, hashes };
     fs.writeFileSync(PINNED, `${JSON.stringify(pinned, null, 2)}\n`);
   });
