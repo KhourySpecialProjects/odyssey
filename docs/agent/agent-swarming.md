@@ -304,11 +304,11 @@ waste. Give each one:
 2. **The ticket text**, pasted in, because there's no Linear in the cloud.
 3. **The files** it may change, and the ones it must not.
 4. **What's been ruled out.**
-5. **The check that proves it's done:** Prettier 3.3.2 from the repo root,
-   root `npm run lint`, `tsc --noEmit`, and Jest with `--runInBand` and
-   `--findRelatedTests`.
-6. **The report you want back:** branch, commit SHA, check results and a PR
-   body.
+5. **The check that proves it's done:** `bash scripts/ci-local.sh --agent`
+   before pushing. Push only if it passes. It runs Prettier, ESLint, frontend
+   and backend Jest and the builds, and ends with one `checks: ...` line.
+6. **The report you want back:** branch, commit SHA, that `checks:` line
+   pasted unchanged, and a PR body.
 7. **Who the commit is from:**
    `git -c user.name=<your git name> -c user.email=<your git email> commit`.
    Without it, cloud sessions commit as `Claude <noreply@anthropic.com>`,
