@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { ActivityGreeting } from "@/components/feed/activity-greeting";
+import { HomeOnly } from "@/components/feed/home-only";
+import { RecentMentorChats } from "@/components/feed/recent-mentor-chats";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
 import { getUnreadAnnouncementCount } from "@/lib/requests/feed";
@@ -26,6 +29,11 @@ export default async function ActivityLayout({
             firstName={authUser.firstName}
             firstTime={authUser.firstTime}
           />
+          <HomeOnly>
+            <Suspense fallback={null}>
+              <RecentMentorChats />
+            </Suspense>
+          </HomeOnly>
           <div className="min-h-0 flex-1">{children}</div>
         </div>
       </FeedContainer>
