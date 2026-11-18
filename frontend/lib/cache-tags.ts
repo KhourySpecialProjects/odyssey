@@ -160,8 +160,9 @@
  * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
  *                 learner's streak days); invalidated by recordStreakDay,
  *                 which updateViewedLessons calls on a lesson's first view
- * recommendations Per-user tag "recommendations-{userId}": first read by      900s
- *                 getRecommendations in ODY-957, only on per-student
+ * recommendations Per-user tag "recommendations-{userId}": read by            900s
+ *                 getDismissedDropletIds (ODY-954) and, from ODY-957, by
+ *                 getRecommendations, only on per-student
  *                 queries (never a shared URL). Invalidated by
  *                 dismissRecommendation (ODY-954), the enrollments-{userId}
  *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
@@ -210,7 +211,7 @@ export const CACHE_TAGS = {
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
-  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks and dismissals (ODY-952, ODY-954)
   learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
   // Per-droplet (scoped to one droplet)
