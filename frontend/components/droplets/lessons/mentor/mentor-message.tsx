@@ -53,6 +53,13 @@ export function MentorMessage({
   // A stopped answer can end mid-ref, so only a finished one keeps a trailing "["
   const shown = displayAnswer(message.text, { streaming: status !== "done" });
   const citations = stale ? [] : message.citations;
+  // Linked phrases become buttons once the answer is done and its sources
+  // known. A stale answer has none, so its phrases stay plain words.
+  const sources = status === "done" ? citations : [];
+  const linked = displayAnswer(message.text, {
+    streaming: status !== "done",
+    linkRefs: sources.map((c) => c.ref),
+  });
   const showTools = status === "done" || status === "stopped";
 
   const copy = async () => {
@@ -89,7 +96,13 @@ export function MentorMessage({
 
       {shown && (
         <div className="prose prose-sm prose-p:my-2 prose-code:before:content-none prose-code:after:content-none dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
-          <MentorMarkdown>{shown}</MentorMarkdown>
+          <MentorMarkdown
+            fallback={shown}
+            citations={sources}
+            onShowSource={onShowSource}
+          >
+            {linked}
+          </MentorMarkdown>
         </div>
       )}
       {streaming && (
