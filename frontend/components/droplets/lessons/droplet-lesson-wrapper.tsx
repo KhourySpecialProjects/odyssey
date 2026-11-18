@@ -174,9 +174,19 @@ export function DropletLessonWrapper({
 
   // A link from Mentor chats (?mentorChat=<id>) opens the panel; MentorPanel loads the chat
   useEffect(() => {
-    if (!available) return;
-    if (new URLSearchParams(window.location.search).has("mentorChat"))
-      useLessonPanelStore.getState().openMentor();
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("mentorChat")) return;
+    if (available) return useLessonPanelStore.getState().openMentor();
+    // Mentor can't open here, so don't leave the link in the address bar
+    params.delete("mentorChat");
+    const rest = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        (rest ? `?${rest}` : "") +
+        window.location.hash,
+    );
   }, [available]);
 
   return (

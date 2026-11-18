@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -51,10 +50,10 @@ type Pending = { kind: "one"; chat: MentorChatSummary } | { kind: "all" };
 
 /** Activity > Mentor chats: search, read, continue and delete saved chats (ODY-937). */
 export function MentorChatsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const q = (useSearchParams()?.get("q") ?? "").trim().slice(0, SEARCH_MAX);
-  const [input, setInput] = useState(q);
+  const [input, setInput] = useState("");
+  // The term lives in state only, never the URL, so analytics and logs can't see it
+  const [q, setQ] = useState("");
+  const [total, setTotal] = useState<number | null>(null);
   const [listing, setListing] = useState<Listing>({ status: "loading" });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [opened, setOpened] = useState<Opened>({ id: "", status: "loading" });
@@ -62,27 +61,22 @@ export function MentorChatsPage() {
   const [deleting, setDeleting] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const latest = useRef(0);
+  const trigger = useRef<HTMLElement | null>(null);
+  const deleted = useRef(false);
 
-  // Typing updates the URL after a pause; Back and a cleared box come the other way
   useEffect(() => {
-    const next = input.trim();
+    const next = input.trim().slice(0, SEARCH_MAX);
     if (next === q) return;
-    const timer = setTimeout(
-      () =>
-        router.replace(
-          next ? `${pathname}?q=${encodeURIComponent(next)}` : pathname,
-          { scroll: false },
-        ),
-      DEBOUNCE_MS,
-    );
+    const timer = setTimeout(() => setQ(next), DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [input, q, pathname, router]);
-  useEffect(() => setInput(q), [q]);
+  }, [input, q]);
 
   const load = useCallback(async () => {
     const call = (latest.current += 1);
     const res = await listMentorChats(q ? { q } : {});
     if (call !== latest.current) return;
+    // An unfiltered load is the student's whole history
+    if (res.ok && !q) setTotal(res.data.length);
     setListing(
       res.ok
         ? { status: "ready", chats: res.data }
@@ -118,11 +112,14 @@ export function MentorChatsPage() {
         ? await deleteAllMentorChats()
         : await deleteMentorChat(pending.chat.documentId);
     setDeleting(false);
+    deleted.current = false;
     if (!res.ok && !(pending.kind === "one" && res.error === "not_found")) {
       toast.error("Couldn't delete");
       setPending(null);
       return;
     }
+    deleted.current = true;
+    setTotal((n) => (pending.kind === "all" ? 0 : n === null ? n : n - 1));
     setListing((s) =>
       s.status !== "ready"
         ? s
@@ -139,8 +136,12 @@ export function MentorChatsPage() {
     if (pending.kind === "all" || expanded === pending.chat.documentId)
       setExpanded(null);
     setPending(null);
-    // The row that had focus is gone
-    setTimeout(() => heading.current?.focus());
+  };
+
+  const ask = (p: Pending, e: React.MouseEvent<HTMLElement>) => {
+    trigger.current = e.currentTarget;
+    deleted.current = false;
+    setPending(p);
   };
 
   const chats = listing.status === "ready" ? listing.chats : [];
@@ -169,7 +170,7 @@ export function MentorChatsPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setPending({ kind: "all" })}
+            onClick={(e) => ask({ kind: "all" }, e)}
           >
             Delete all chats
           </Button>
@@ -192,7 +193,7 @@ export function MentorChatsPage() {
             aria-label="Clear search"
             onClick={() => {
               setInput("");
-              if (q) router.replace(pathname, { scroll: false });
+              setQ("");
             }}
             className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#287697] dark:text-slate-300"
           >
@@ -202,7 +203,6 @@ export function MentorChatsPage() {
       </div>
 
       <p
-        role="status"
         aria-live="polite"
         className="mb-3 text-sm text-slate-600 dark:text-slate-300"
       >
@@ -265,7 +265,7 @@ export function MentorChatsPage() {
                   <button
                     type="button"
                     aria-label={`Delete chat: ${chatTitle(c)}`}
-                    onClick={() => setPending({ kind: "one", chat: c })}
+                    onClick={(e) => ask({ kind: "one", chat: c }, e)}
                     className="rounded p-2 text-slate-600 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#287697] dark:text-slate-300"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -277,7 +277,7 @@ export function MentorChatsPage() {
                     className="space-y-3 border-t border-slate-200 p-3 text-sm dark:border-slate-700"
                   >
                     {body?.status === "loading" && (
-                      <p role="status">Loading conversation…</p>
+                      <p aria-live="polite">Loading conversation…</p>
                     )}
                     {body?.status === "error" && (
                       <p
@@ -322,12 +322,20 @@ export function MentorChatsPage() {
         open={pending !== null}
         onOpenChange={(o) => !o && !deleting && setPending(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // The opening button, or the heading once its row is gone
+            e.preventDefault();
+            (deleted.current ? heading : trigger).current?.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               {pending?.kind === "all"
-                ? "Delete all your Mentor chats? This can't be undone."
+                ? searching
+                  ? `This deletes all ${total ?? chats.length} of your chats, not only the ones matching ‘${q}’. This can't be undone.`
+                  : "Delete all your Mentor chats? This can't be undone."
                 : "Delete this chat? This can't be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>

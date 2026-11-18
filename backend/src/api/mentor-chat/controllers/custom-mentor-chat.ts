@@ -28,6 +28,8 @@ function readSearch(raw: string): string | null {
   if (raw.includes(',')) return null;
   try {
     const q = decodeURIComponent(raw).trim();
+    // Control characters (a NUL is a Postgres error) are never a search
+    if (/[\u0000-\u001f\u007f]/.test(q)) return null;
     return q.length >= 1 && q.length <= MENTOR_SEARCH_MAX ? q : null;
   } catch {
     return null;
