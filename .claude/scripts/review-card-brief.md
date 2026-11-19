@@ -24,6 +24,15 @@ Kinds: `major` = a new feature or a revamp of a main flow (full breakdown). `fea
    Before pushing a code branch, run `bash scripts/ci-local.sh --agent`, push only if it passes, and paste its `checks:` line unchanged in the card.
 6. Push with a Bash command that is exactly `git push -u origin claude/review-cards-{{GROUP}}`. Put it alone in its own tool call, with no `cd`, `&&`, `;` or pipe, because a repo hook blocks anything else. Never use git stash, rebase, merge or force-push.
 
+## Review loop lines (ODY-975)
+
+For a branch built by a squad with the review loop (`.claude/scripts/loop-reviewer-brief.md`), put these two lines under the body, before the checklist, in both formats:
+
+**Reviews:** n of 3 · last verdict <ship|fix>
+**Checks:** <the `checks:` line from `bash scripts/ci-local.sh --agent`, unchanged>
+
+**Needs human rule.** If review 3 ended with open blocking findings, set `risk:` to 🔴 and add a `**Needs human:**` section above the checklist. List each open finding as `n. file:line · the problem` (copy it from `docs/reviews/ODY-<n>.md`), and add the builder's "won't fix" reason when there is one. The branch is pushed anyway.
+
 ## Format for `major` (the first three lines are parsed by a script: copy them exactly)
 
 ````
