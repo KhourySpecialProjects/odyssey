@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { RecentMentorChats } from "@/components/feed/recent-mentor-chats";
 import { FeedCenterContent } from "@/components/feed/feed-center-content";
 import {
   parseFilters,
@@ -60,9 +61,20 @@ export default async function FeedPage({ searchParams }: Props) {
   if (!authUser) return notFound();
 
   return (
-    <Suspense fallback={<FeedCenterContent authUser={authUser} pending />}>
-      <SeededFeed authUser={authUser} roles={roles} initialPage={initialPage} />
-    </Suspense>
+    <div className="flex h-full flex-col">
+      <Suspense fallback={null}>
+        <RecentMentorChats />
+      </Suspense>
+      <div className="min-h-0 flex-1">
+        <Suspense fallback={<FeedCenterContent authUser={authUser} pending />}>
+          <SeededFeed
+            authUser={authUser}
+            roles={roles}
+            initialPage={initialPage}
+          />
+        </Suspense>
+      </div>
+    </div>
   );
 }
 

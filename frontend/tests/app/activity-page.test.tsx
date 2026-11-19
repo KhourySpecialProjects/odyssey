@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import FeedPage from "@/app/(general)/activity/page";
+import { RecentMentorChats } from "@/components/feed/recent-mentor-chats";
 import { FeedCenterContent } from "@/components/feed/feed-center-content";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUserSocial } from "@/lib/requests/cached";
@@ -12,6 +13,10 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/components/feed/feed-center-content", () => ({
   FeedCenterContent: jest.fn(() => null),
+}));
+
+jest.mock("@/components/feed/recent-mentor-chats", () => ({
+  RecentMentorChats: jest.fn(() => null),
 }));
 
 jest.mock("@/lib/auth/session", () => ({
@@ -36,9 +41,13 @@ type Props = Record<string, unknown>;
 
 /** Renders the page, then the streamed child inside its <Suspense>. */
 async function renderPage(search: Record<string, string | string[]> = {}) {
-  const page = (await FeedPage({
+  const shell = (await FeedPage({
     searchParams: Promise.resolve(search),
-  })) as ReactElement<{
+  })) as ReactElement<{ children: ReactElement<Props>[] }>;
+  // The recent chats card, then the feed's own Suspense inside the filling box
+  const [chats, feedBox] = shell.props.children;
+  const page = (feedBox as ReactElement<{ children: ReactElement }>).props
+    .children as ReactElement<{
     fallback: ReactElement<Props>;
     children: ReactElement;
   }>;
@@ -46,7 +55,7 @@ async function renderPage(search: Record<string, string | string[]> = {}) {
   const streamed = (await (
     seeded.type as (props: Props) => Promise<ReactElement<Props>>
   )(seeded.props)) as ReactElement<Props>;
-  return { page, streamed };
+  return { shell, chats, page, streamed };
 }
 
 describe("Activity feed page", () => {
@@ -89,6 +98,13 @@ describe("Activity feed page", () => {
     // The shell streams first without fetching client-side
     expect(page.props.fallback.type).toBe(FeedCenterContent);
     expect(page.props.fallback.props).toEqual({ authUser, pending: true });
+  });
+
+  it("renders the recent Mentor chats card above the feed", async () => {
+    const { shell, chats } = await renderPage();
+
+    expect(shell.props).toMatchObject({ className: "flex h-full flex-col" });
+    expect((chats.props.children as ReactElement).type).toBe(RecentMentorChats);
   });
 
   it("fetches for the URL's filters", async () => {
