@@ -13,7 +13,7 @@ import { cn, stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
 import type { Recommendation, RecommendationRule } from "@/types";
 
 /** The Figma Reason Line icon for each rule. */
-const RULE_ICONS = {
+export const RULE_ICONS = {
   "next-in-voyage": Route,
   "next-in-playlist": Route,
   postrequisite: TrendingUp,
