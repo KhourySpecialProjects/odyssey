@@ -358,7 +358,7 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
 
 ### Co-completion route (`custom-enrollment` controller, ODY-962)
 
-- **`GET /api/co-completions`** returns `{ data: { pairs: [{ source, target, count }] } }` (droplet ids and counts only). Service token only, the query string is ignored (a full-access `STRAPI_ACCESS_TOKEN` works as is; a custom-type token needs `enrollment › custom-enrollment › coCompletion` granted). Tests in `tests/api/co-completion.test.js`.
+- **`GET /api/co-completions`** returns `{ data: { pairs: [{ source, target, count }] } }` (droplet ids and counts only). API tokens only (`auth.strategies: ['content-api-token']`, so a Public or Authenticated role grant can't open it), the query string is ignored (a full-access `STRAPI_ACCESS_TOKEN` works as is; a custom-type token needs `enrollment › custom-enrollment › coCompletion` granted). Tests in `tests/api/co-completion.test.js`.
 - **Counting** (`src/lib/co-completion.ts`): `count` is the distinct students with an `isComplete` enrollment for both droplets, archived included, in-progress never. Each pair appears in both directions.
 - **Bounds:** `MIN_PAIR_COUNT` (3) drops smaller pairs and `MAX_TARGETS_PER_SOURCE` (20) keeps each source's top targets (count desc, then lowest target id). Both are backend constants, never request parameters.
 - **Raw knex, read-only,** over the link tables read from `strapi.db.metadata` (no transaction, no Entity Service). `count` is cast with `Number()` because Postgres returns a string.

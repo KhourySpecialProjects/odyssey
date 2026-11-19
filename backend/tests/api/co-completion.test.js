@@ -121,6 +121,21 @@ describe('GET /co-completions', () => {
     const res = await get();
     expect([401, 403]).toContain(res.status);
   });
+
+  it('stays token-only even if the Public role is granted the action', async () => {
+    const permissions = strapi.documents('plugin::users-permissions.permission');
+    const role = await strapi
+      .documents('plugin::users-permissions.role')
+      .findFirst({ filters: { type: 'public' } });
+    const grant = await permissions.create({
+      data: { action: 'api::enrollment.custom-enrollment.coCompletion', role: role.documentId },
+    });
+    try {
+      expect((await get()).status).toBe(401);
+    } finally {
+      await permissions.delete({ documentId: grant.documentId });
+    }
+  });
 });
 
 describe('coCompletionPairs', () => {
