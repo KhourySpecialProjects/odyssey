@@ -13,16 +13,19 @@ export async function OnboardingQuizLoader() {
     const user = await getCachedUser(session.email);
     if (!user) return null;
 
-    const [enrollments, tags] = await Promise.all([
-      getCachedEnrollments(user.id),
-      getTags(),
-    ]);
-    if (!needsOnboarding(user, enrollments ?? [])) return null;
+    const enrollments = await getCachedEnrollments(user.id);
+    // The host stays mounted for signed-in users so its Results screen survives
+    // the save's refresh; topics and prefill are sent only while the quiz shows.
+    if (!needsOnboarding(user, enrollments ?? [])) {
+      return <OnboardingQuizHost show={false} user={user} />;
+    }
 
+    const tags = await getTags();
     // Prefill from the user record, else from the sign-in name.
     const fromSession = splitName(session.name);
     return (
       <OnboardingQuizHost
+        show
         topics={tagsToTopics(
           (tags ?? []).flatMap((t) =>
             t.documentId ? [{ ...t, documentId: t.documentId }] : [],

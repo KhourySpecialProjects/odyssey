@@ -1,5 +1,6 @@
 import { OnboardingQuizLoader } from "@/components/onboarding/onboarding-quiz-loader";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getTags } from "@/lib/requests/tag";
 import { getCachedEnrollments, getCachedUser } from "@/lib/requests/cached";
 
 jest.mock("@/lib/auth/session", () => ({ getCurrentUser: jest.fn() }));
@@ -21,13 +22,16 @@ describe("OnboardingQuizLoader", () => {
     expect(getCachedUser).not.toHaveBeenCalled();
   });
 
-  it("renders nothing for an onboarded user", async () => {
+  it("mounts the host hidden, without topics, for an onboarded user", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ email: "a@x.edu" });
     (getCachedUser as jest.Mock).mockResolvedValue({
       id: 1,
       onboardedAt: "2026-11-01T00:00:00Z",
     });
     (getCachedEnrollments as jest.Mock).mockResolvedValue([]);
-    expect(await OnboardingQuizLoader()).toBeNull();
+    const el = await OnboardingQuizLoader();
+    expect(el?.props).toMatchObject({ show: false });
+    expect(el?.props.topics).toBeUndefined();
+    expect(getTags).not.toHaveBeenCalled();
   });
 });
