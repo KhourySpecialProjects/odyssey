@@ -21,6 +21,7 @@ Kinds: `major` = a new feature or a revamp of a main flow (full breakdown). `fea
 5. Create branch `claude/review-cards-{{GROUP}}` from `origin/develop` and add only the `review-cards/` files. Commit with exactly:
    `git -c user.name=ABuisir10 -c user.email=Buisir.a@northeastern.edu commit -m "Review cards for {{GROUP_LABEL}}"`
    Add no Co-Authored-By or any other trailer.
+   Before pushing a code branch, run `bash scripts/ci-local.sh --agent`, push only if it passes, and paste its `checks:` line unchanged in the card.
 6. Push with a Bash command that is exactly `git push -u origin claude/review-cards-{{GROUP}}`. Put it alone in its own tool call, with no `cd`, `&&`, `;` or pipe, because a repo hook blocks anything else. Never use git stash, rebase, merge or force-push.
 
 ## Format for `major` (the first three lines are parsed by a script: copy them exactly)
