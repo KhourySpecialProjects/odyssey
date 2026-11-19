@@ -30,6 +30,9 @@ It validates and rewrites first name, last name and time zone, which this sectio
 
 - ODY-963, 964, 958 and 965 (base).
 - The Settings page (`frontend/app/(general)/settings/page.tsx`).
+- `frontend/components/onboarding/topics-step.tsx` (963's file): new optional `defaultNoteOpen` prop, default `false`, so the quiz is unchanged.
+
+**Review fixes:** saved topics with no chip are dropped from the form, a saved note shows on load, the section is hidden when there are no topics, and tests now cover the dropped topics, the saved note, the success toast, a thrown save, and no revalidation or answer logging on failure.
 
 **Suggested reviewer:** `JaylenZeng`
 
