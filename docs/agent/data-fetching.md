@@ -269,7 +269,7 @@ The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowa
 
 ## Recommendations (ODY-957)
 
-`getRecommendations` (`lib/recommendations/`) is server-only. It ranks in memory from one shared candidate read (tag `droplets`) plus per-student reads, so there is no result cache to invalidate. Freshness comes from the input tags: `enrollments(id)` (enroll, finish, archive), `voyageEnrollments(id)`, `voyages` and `playlists` (the voyage read carries both, since playlist nodes expand through the playlist), `learnerProfile(id)` (quiz save) and `recommendations(id)` (dismissals). A new enrollment write needs only its usual `enrollments(id)` revalidate. Exclusion ids are removed in memory and never go in a URL.
+`getRecommendations` (`lib/recommendations/`) is server-only. It ranks in memory from one shared candidate read (tag `droplets`) plus per-student reads, so there is no result cache to invalidate. Freshness comes from the input tags: `enrollments(id)` (enroll, finish, archive), `voyageEnrollments(id)`, `voyages` and `playlists` (the voyage read carries both, since playlist nodes expand through the playlist), `learnerProfile(id)` (quiz save) and `recommendations(id)` (dismissals). A new enrollment write needs only its usual `enrollments(id)` revalidate. Exclusion ids are removed in memory and never go in a URL. Rule 3 (co-completion, ODY-962) reads the global `co-completion` tag (3600 s, never revalidated), so its counts lag by up to an hour while the student's own exclusions stay immediate.
 
 ## Common Mistakes
 

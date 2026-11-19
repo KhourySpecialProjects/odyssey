@@ -356,6 +356,14 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
 - **`POST /api/streak-days/revive`** `{ data: { userId, date } }` returns `{ date, revivesLeft, added }` (ODY-920). It creates a `revived` row for `date`, which must be missing while the day before it counts. Each learner gets `STREAK_REVIVES` (2) a month: back to 2 on the 1st, and unused ones don't carry over. A revive counts in the month it was spent, the day after the date it saves, so revives left is 2 minus their `revived` rows dated from the last day of the month before to the second-to-last day of this one (the frontend's `revivesLeftOn` uses the same rule). 409 for a day that already counts (`That day already counts`), no day before it (`There's no streak to revive`) or no revives left (`No revives left`). One transaction locks the learner's `authorized-user` row, so their revives are serialized; a repeat for a day already revived is `added: false` and spends nothing. The Next.js server only ever sends the learner's yesterday.
 - **The streak itself isn't stored.** The frontend works out the current and longest streak from the dates on every read (`frontend/lib/streaks.ts`), so it moves on at the learner's midnight without a write.
 
+### Co-completion route (`custom-enrollment` controller, ODY-962)
+
+- **`GET /api/co-completions`** returns `{ data: { pairs: [{ source, target, count }] } }` (droplet ids and counts only). Service token only, the query string is ignored (a full-access `STRAPI_ACCESS_TOKEN` works as is; a custom-type token needs `enrollment › custom-enrollment › coCompletion` granted). Tests in `tests/api/co-completion.test.js`.
+- **Counting** (`src/lib/co-completion.ts`): `count` is the distinct students with an `isComplete` enrollment for both droplets, archived included, in-progress never. Each pair appears in both directions.
+- **Bounds:** `MIN_PAIR_COUNT` (3) drops smaller pairs and `MAX_TARGETS_PER_SOURCE` (20) keeps each source's top targets (count desc, then lowest target id). Both are backend constants, never request parameters.
+- **Raw knex, read-only,** over the link tables read from `strapi.db.metadata` (no transaction, no Entity Service). `count` is cast with `Number()` because Postgres returns a string.
+- **Logs** only `co-completion: <n> pairs in <ms> ms`. The frontend reads it through `getCoCompletion` (`docs/agent/data-fetching.md`).
+
 ### Publish-edit route (`custom-droplet` controller)
 
 `POST /api/droplets/:id/publish-edit` (ODY-800; tests in `tests/api/publish-edit.test.js`). Logic lives in plain modules, not `services/` (Strapi auto-loads those): `src/lib/publish-edit.ts` and `src/lib/lesson-sync.ts`.
