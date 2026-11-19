@@ -385,6 +385,9 @@ describe('POST /droplets/:id/publish-edit success', () => {
     const s = await setup();
     const real = strapi.eventHub.emit.bind(strapi.eventHub);
     const inTx = [];
+    // Strapi 5.61+ only emits events that have a listener.
+    const noop = () => {};
+    const off = strapi.eventHub.on('entry.update', noop);
     const emit = jest
       .spyOn(strapi.eventHub, 'emit')
       .mockImplementation((name, payload) => {
@@ -404,6 +407,7 @@ describe('POST /droplets/:id/publish-edit success', () => {
       expect(inTx.every((flag) => flag === false)).toBe(true);
     } finally {
       emit.mockRestore();
+      off();
     }
   });
 
