@@ -58,7 +58,9 @@ laptop nothing. They count against your Claude plan's usage.
    ```
 
    `/manager check` fills in the rest, including `lastCheck` and the canvas
-   ID.
+   ID. Each branch also gets a `reviewRound` (0–3). The Manager uses it only
+   when it falls back to chaining Review and fix routines, because subagents
+   failed in a cloud session. At 3 it starts no more runs on that branch.
 
 ## Every session
 

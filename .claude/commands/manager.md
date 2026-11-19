@@ -130,12 +130,21 @@ the manager's model. Instead:
    `docs/agent/agent-swarming.md`: a squad on Sonnet for most tickets, Haiku
    for trivial ones, a Plan routine on Opus first for big features.
 5. **Read results** with `list_runs` and `get_run_log`. A run ends with its
-   branch, commit SHA, check results and PR body. If nothing was pushed or
-   the checks failed, read why before rerunning. Rerun one step up the
-   ladder in `agent-swarming.md`, not the same brief again.
-6. **Review** with an Opus Review routine when the owner asks, or when the
-   route requires one (schema, auth, server actions). Fixes go to a new
-   squad run on the same branch.
+   branch, commit SHA, the `checks:` line and a review card with
+   `Reviews: n of 3 · last verdict ...`. If nothing was pushed or the
+   checks failed, read why before rerunning. Rerun one step up the ladder
+   in `agent-swarming.md`, not the same brief again.
+6. **Review.** The squad runs the review loop itself, with at most 3
+   reviews (see "Review loop" in `agent-swarming.md`), so don't start a
+   separate Review routine unless the route needs an Audit (schema, auth,
+   server actions) or the owner asks. Don't chain fix runs by hand.
+   - **Needs human:** if a card has a `Needs human:` section (risk 🔴),
+     post `[OPEN] … · NEEDS INPUT` in the thread with the open findings,
+     start no more runs on that branch, and wait for the owner.
+   - **Fallback:** if a run log shows the `Agent` tool failed, chain a
+     Review routine and a fix squad run on the same branch. Count rounds
+     in state as `reviewRound` per branch, and stop at 3 with the same
+     Needs-human post.
 7. **Report** on the live canvas while runs are active, then one summary
    post when the batch is done (below). Set `done` when every ticket is
    pushed, held or dropped.
@@ -190,7 +199,17 @@ already theirs.
     with no Co-Authored-By or other trailers. Take the name and email from
     the owner's local `git config user.name` and `user.email`. Cloud
     sessions otherwise commit as `Claude <noreply@anthropic.com>`.
-  - End with the branch, commit SHA, check results and a review card (below).
+  - Build, commit, then run `bash scripts/ci-local.sh --agent`. It must pass
+    before every review and before the push.
+  - Run the review loop in `.claude/scripts/loop-reviewer-brief.md`: a fresh
+    `reviewer` subagent (`subagent_type: "reviewer"`, `model: "opus"`,
+    effort `medium`) with the fixed prompt in that file, findings written to
+    `docs/reviews/ODY-<n>.md`, at most 3 reviews. After review 3 with open
+    findings, push anyway, set the card's risk to 🔴 and add `Needs human:`.
+    Paste that file into the brief; the squad never writes its own reviewer
+    prompt.
+  - End with the branch, commit SHA, the `checks:` line unchanged, and a
+    review card (below) with `Reviews: n of 3 · last verdict <ship|fix>`.
   - Also write the card to `review-cards/<branch-name-without-claude/>.md`
     on a `claude/review-cards-<batch>` branch, so
     `bash .claude/scripts/open-prs.sh` can open the PR with it as the body.
@@ -264,6 +283,8 @@ already theirs.
   as a paragraph above the list, and one checkbox. Canvases turn a checkbox
   into a plain bullet when it shares a list with a plain bullet. Add new cards
   when a batch finishes. Drop a ticket once its PR merges.
+- **Review column.** In the `Ticket overview` table, show
+  `Reviews n/3 · ship|fix`, or `Needs human` when a card has that section.
 - **One summary post per batch.** When a batch is done and the canvas is up
   to date, post once in the request's thread (with `reply_broadcast`): what
   the owner should look at, and the context other developers need
