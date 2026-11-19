@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { toast } from "sonner";
+
 import { LearningInterests } from "@/components/settings/learning-interests";
 import { saveLearningInterests } from "@/lib/actions/onboarding";
 import { tagsToTopics } from "@/lib/onboarding-topics";
@@ -86,6 +88,51 @@ describe("LearningInterests", () => {
     render(<LearningInterests topics={topics} initial={saved} />);
     await user.click(saveBtn());
     expect(await screen.findByText("Couldn't save.")).toBeInTheDocument();
+    expect(saveBtn()).toBeEnabled();
+  });
+
+  it("shows a saved note on load and sends it with the save", async () => {
+    const user = userEvent.setup();
+    render(
+      <LearningInterests
+        topics={topics}
+        initial={{ ...saved, interestNote: "Rust please" }}
+      />,
+    );
+    const note = screen.getByRole("textbox", {
+      name: /anything specific you want to learn/i,
+    });
+    expect(note).toHaveValue("Rust please");
+    await user.click(saveBtn());
+    await waitFor(() =>
+      expect(mockedSave).toHaveBeenCalledWith(
+        expect.objectContaining({ interestNote: "Rust please" }),
+      ),
+    );
+  });
+
+  it("keeps the note closed when none is saved", () => {
+    render(<LearningInterests topics={topics} initial={saved} />);
+    expect(
+      screen.queryByRole("textbox", {
+        name: /anything specific you want to learn/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("confirms with a toast on success", async () => {
+    const user = userEvent.setup();
+    render(<LearningInterests topics={topics} initial={saved} />);
+    await user.click(saveBtn());
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+  });
+
+  it("shows a retry message when the save throws", async () => {
+    mockedSave.mockRejectedValue(new Error("network"));
+    const user = userEvent.setup();
+    render(<LearningInterests topics={topics} initial={saved} />);
+    await user.click(saveBtn());
+    expect(await screen.findByText(/please try again/i)).toBeInTheDocument();
     expect(saveBtn()).toBeEnabled();
   });
 });

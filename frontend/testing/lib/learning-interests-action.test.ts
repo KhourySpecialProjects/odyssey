@@ -45,6 +45,7 @@ describe("saveLearningInterests", () => {
     const res = await saveLearningInterests({ ...INPUT, ...bad } as never);
     expect(res.ok).toBe(false);
     expect(mockedSave).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("saves for the session user with unique ids and revalidates picks", async () => {
@@ -72,6 +73,11 @@ describe("saveLearningInterests", () => {
   it("logs no answers when the save throws", async () => {
     mockedSave.mockRejectedValue(new Error("boom Secret note text"));
     expect((await saveLearningInterests(INPUT)).ok).toBe(false);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "saveLearningInterests failed",
+      "Error",
+    );
     expect(JSON.stringify(errorSpy.mock.calls)).not.toContain("Secret");
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

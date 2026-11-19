@@ -3,7 +3,7 @@ import { SocialForms } from "@/app/(general)/settings/social-forms";
 import { getCurrentUser } from "@/lib/auth/session";
 import { LearningInterests } from "@/components/settings/learning-interests";
 import { getLearnerProfile } from "@/lib/learner-profile";
-import { tagsToTopics } from "@/lib/onboarding-topics";
+import { tagsToTopics, visibleInterestIds } from "@/lib/onboarding-topics";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getTags } from "@/lib/requests/tag";
 import { AuthorizedUser, LearnerProfile } from "@/types";
@@ -39,6 +39,14 @@ export default async function Settings() {
     }),
   ]);
 
+  const topics = tags
+    ? tagsToTopics(
+        tags.flatMap((t) =>
+          t.documentId ? [{ ...t, documentId: t.documentId }] : [],
+        ),
+      )
+    : [];
+
   return (
     <div className="flex w-full flex-col">
       <h1 className="mb-2 text-4xl font-semibold text-black dark:text-white">
@@ -63,17 +71,16 @@ export default async function Settings() {
         effect.
       </p>
 
-      {tags && (
+      {topics.length > 0 && (
         <LearningInterests
-          topics={tagsToTopics(
-            tags.flatMap((t) =>
-              t.documentId ? [{ ...t, documentId: t.documentId }] : [],
-            ),
-          )}
+          topics={topics}
           initial={{
             goal: profile?.goal ?? undefined,
             focusAreas: profile?.focusAreas ?? [],
-            interestTagIds: profile?.interests.map((t) => t.id) ?? [],
+            interestTagIds: visibleInterestIds(
+              profile?.interests.map((t) => t.id) ?? [],
+              topics,
+            ),
             interestNote: profile?.interestNote ?? undefined,
           }}
         />
