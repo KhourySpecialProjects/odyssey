@@ -4,17 +4,20 @@ import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import type { OnboardingTopic } from "@/lib/onboarding-topics";
-import { FOCUS_AREAS, type FocusArea } from "@/lib/validations/onboarding";
+import { FOCUS_AREAS } from "@/lib/validations/learner-profile";
+import type { FocusArea } from "@/types";
 import { AREA_LABELS } from "./areas-step";
+import { errorProps, FieldError } from "./field-error";
 import { ChipGroup } from "./chip-group";
 
 interface TopicsStepProps {
   topics: OnboardingTopic[];
   focusAreas: FocusArea[];
-  value: string[];
-  onChange: (ids: string[]) => void;
+  value: number[];
+  onChange: (ids: number[]) => void;
   note?: string;
   onNoteChange?: (note: string) => void;
+  errors?: { topics?: string; note?: string };
 }
 
 export function TopicsStep({
@@ -24,9 +27,10 @@ export function TopicsStep({
   onChange,
   note = "",
   onNoteChange,
+  errors = {},
 }: TopicsStepProps) {
   const [noteOpen, setNoteOpen] = useState(false);
-  const toggle = (id: string) =>
+  const toggle = (id: number) =>
     onChange(
       value.includes(id) ? value.filter((v) => v !== id) : [...value, id],
     );
@@ -41,7 +45,7 @@ export function TopicsStep({
         <ChipGroup
           label={AREA_LABELS[area]}
           muted={muted}
-          options={own.map((t) => ({ value: t.documentId, label: t.name }))}
+          options={own.map((t) => ({ value: t.id, label: t.name }))}
           selected={value}
           onToggle={toggle}
         />
@@ -51,7 +55,12 @@ export function TopicsStep({
   const mine = FOCUS_AREAS.filter((a) => focusAreas.includes(a));
   const others = FOCUS_AREAS.filter((a) => !focusAreas.includes(a));
   return (
-    <div className="space-y-4">
+    <div
+      role="group"
+      aria-label="Topics"
+      {...errorProps("err-topics", errors.topics)}
+      className="space-y-4"
+    >
       {mine.map((a) => areaGroup(a))}
       {others.length > 0 && (
         <details>
@@ -66,6 +75,7 @@ export function TopicsStep({
       <p aria-live="polite" className="text-onboarding text-xs">
         {value.length} selected
       </p>
+      <FieldError id="err-topics" message={errors.topics} />
       {onNoteChange && (
         <div>
           <button
@@ -82,8 +92,10 @@ export function TopicsStep({
               className="mt-2"
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
+              {...errorProps("err-note", errors.note)}
             />
           )}
+          <FieldError id="err-note" message={errors.note} />
         </div>
       )}
     </div>

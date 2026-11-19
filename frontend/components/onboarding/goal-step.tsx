@@ -3,11 +3,12 @@
 import { Briefcase, Compass, GraduationCap, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
-import type { Goal } from "@/lib/validations/onboarding";
+import type { LearnerGoal } from "@/types";
+import { errorProps, FieldError } from "./field-error";
 import { OptionCard } from "./option-card";
 
 const GOAL_OPTIONS: {
-  value: Goal;
+  value: LearnerGoal;
   title: string;
   hint: string;
   icon: ReactNode;
@@ -41,23 +42,33 @@ const GOAL_OPTIONS: {
 export function GoalStep({
   value,
   onChange,
+  error,
 }: {
-  value?: Goal;
-  onChange: (goal: Goal) => void;
+  value?: LearnerGoal;
+  onChange: (goal: LearnerGoal) => void;
+  error?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label="Why you are here" className="grid gap-2">
-      {GOAL_OPTIONS.map((o) => (
-        <OptionCard
-          key={o.value}
-          role="radio"
-          title={o.title}
-          hint={o.hint}
-          icon={o.icon}
-          selected={value === o.value}
-          onClick={() => onChange(o.value)}
-        />
-      ))}
+    <div>
+      <div
+        role="radiogroup"
+        aria-label="Why you are here"
+        {...errorProps("err-goal", error)}
+        className="grid gap-2"
+      >
+        {GOAL_OPTIONS.map((o) => (
+          <OptionCard
+            key={o.value}
+            role="radio"
+            title={o.title}
+            hint={o.hint}
+            icon={o.icon}
+            selected={value === o.value}
+            onClick={() => onChange(o.value)}
+          />
+        ))}
+      </div>
+      <FieldError id="err-goal" message={error} />
     </div>
   );
 }

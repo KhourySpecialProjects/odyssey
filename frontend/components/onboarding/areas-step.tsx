@@ -3,7 +3,8 @@
 import { Code2, Heart, Users } from "lucide-react";
 import type { ReactNode } from "react";
 
-import type { FocusArea } from "@/lib/validations/onboarding";
+import type { FocusArea } from "@/types";
+import { errorProps, FieldError } from "./field-error";
 import { OptionCard } from "./option-card";
 
 export const AREA_LABELS: Record<FocusArea, string> = {
@@ -33,24 +34,34 @@ const AREA_OPTIONS: { value: FocusArea; hint: string; icon: ReactNode }[] = [
 export function AreasStep({
   value,
   onChange,
+  error,
 }: {
   value: FocusArea[];
   onChange: (areas: FocusArea[]) => void;
+  error?: string;
 }) {
   const toggle = (a: FocusArea) =>
     onChange(value.includes(a) ? value.filter((v) => v !== a) : [...value, a]);
   return (
-    <div role="group" aria-label="Areas" className="grid gap-2">
-      {AREA_OPTIONS.map((o) => (
-        <OptionCard
-          key={o.value}
-          title={AREA_LABELS[o.value]}
-          hint={o.hint}
-          icon={o.icon}
-          selected={value.includes(o.value)}
-          onClick={() => toggle(o.value)}
-        />
-      ))}
+    <div>
+      <div
+        role="group"
+        aria-label="Areas"
+        {...errorProps("err-areas", error)}
+        className="grid gap-2"
+      >
+        {AREA_OPTIONS.map((o) => (
+          <OptionCard
+            key={o.value}
+            title={AREA_LABELS[o.value]}
+            hint={o.hint}
+            icon={o.icon}
+            selected={value.includes(o.value)}
+            onClick={() => toggle(o.value)}
+          />
+        ))}
+      </div>
+      <FieldError id="err-areas" message={error} />
     </div>
   );
 }
