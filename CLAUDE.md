@@ -80,6 +80,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/learnings/`                  | Accumulated gotchas and discoveries from past sessions       |
 | `docs/agent/server-action-auth.md`       | Writing or changing any "use server" export                  |
 | `docs/agent/multi-agent-coordination.md` | Posting to or reading the team's Slack coordination DM       |
+| `docs/agent/question-window.md`          | Asking your developer to decide something, with options      |
 
 ## Skills
 

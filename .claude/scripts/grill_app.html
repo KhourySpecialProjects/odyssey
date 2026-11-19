@@ -1,0 +1,1078 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Questions</title>
+    <style>
+      /* Copies the Claude Code VS Code panel's AskUserQuestion card (webview CSS modules
+   _hONcXw and _qlaBag), with the VS Code "Dark Modern" / "Light Modern" theme values
+   filled in for the --vscode-* variables it reads. */
+      :root {
+        --vscode-chat-font-family: -apple-system, BlinkMacSystemFont,
+          "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif;
+        --vscode-chat-font-size: 13px;
+        /* Dark Modern */
+        --vscode-foreground: #cccccc;
+        --vscode-descriptionForeground: #9d9d9d;
+        --vscode-button-background: #0078d4;
+        --vscode-button-foreground: #ffffff;
+        --vscode-input-border: #3c3c3c;
+        --vscode-inputOption-activeBorder: #2488db;
+        --vscode-editor-background: #1f1f1f;
+        --vscode-sideBar-background: #181818;
+        --vscode-menu-background: #1f1f1f;
+        --vscode-toolbar-hoverBackground: #5a5d5e50;
+        --vscode-editorWidget-border: #313131;
+        --app-transparent-inner-border: #ffffff1a;
+        color-scheme: dark;
+
+        --app-primary-foreground: var(--vscode-foreground);
+        --app-secondary-foreground: var(--vscode-descriptionForeground);
+        --app-button-background: var(--vscode-button-background);
+        --app-button-foreground: var(--vscode-button-foreground);
+        --app-input-border: var(--vscode-input-border);
+        --app-input-active-border: var(--vscode-inputOption-activeBorder);
+        --app-tool-background: var(--vscode-editor-background);
+        --app-input-secondary-background: var(--vscode-menu-background);
+        --app-ghost-button-hover-background: var(
+          --vscode-toolbar-hoverBackground
+        );
+        --app-widget-border: var(--vscode-editorWidget-border);
+        --app-primary-background: var(--vscode-sideBar-background);
+        --corner-radius-large: 8px;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          /* Light Modern */
+          --vscode-foreground: #3b3b3b;
+          --vscode-descriptionForeground: #3b3b3b;
+          --vscode-button-background: #005fb8;
+          --vscode-button-foreground: #ffffff;
+          --vscode-input-border: #cecece;
+          --vscode-inputOption-activeBorder: #005fb8;
+          --vscode-editor-background: #ffffff;
+          --vscode-sideBar-background: #f8f8f8;
+          --vscode-menu-background: #ffffff;
+          --vscode-toolbar-hoverBackground: #b8b8b850;
+          --vscode-editorWidget-border: #e5e5e5;
+          --app-transparent-inner-border: #00000012;
+          color-scheme: light;
+        }
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        background: var(--app-primary-background);
+        color: var(--app-primary-foreground);
+        font-family: var(--vscode-chat-font-family);
+        font-size: var(--vscode-chat-font-size, 13px);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+      button,
+      input,
+      textarea {
+        font-family: inherit;
+      }
+
+      /* _qlaBag: permission request card */
+      .permissionRequestContainer {
+        display: flex;
+        background-color: var(--app-input-secondary-background);
+        border: 1px solid var(--app-input-border);
+        border-radius: var(--corner-radius-large);
+        overflow: hidden;
+        outline: 0;
+        position: relative;
+        flex-direction: column;
+        max-height: calc(100vh - 20px);
+        margin-bottom: 6px;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      .permissionRequestContainer:focus-within {
+        border-color: color-mix(
+          in srgb,
+          var(--app-input-active-border) 65%,
+          transparent
+        );
+      }
+      .permissionRequestContent {
+        color: var(--app-primary-foreground);
+        display: flex;
+        z-index: 1;
+        flex-direction: column;
+        flex-shrink: 1;
+        min-height: 0;
+        font-size: 1.1em;
+      }
+      .buttonContainer {
+        display: flex;
+        z-index: 1;
+        flex-direction: column;
+        flex-shrink: 0;
+        gap: 8px;
+        min-width: 0;
+        margin-top: 8px;
+      }
+      .button {
+        color: var(--app-primary-foreground);
+        cursor: pointer;
+        outline: none;
+        font-weight: 500;
+        font-family: var(--vscode-chat-font-family);
+        font-size: var(--vscode-chat-font-size, 13px);
+        background-color: #0000;
+        box-shadow: inset 0 0 0 1px var(--app-transparent-inner-border);
+        text-align: left;
+        box-sizing: border-box;
+        border-width: 0;
+        border-radius: 4px;
+        width: 100%;
+        padding: 6px 8px;
+      }
+      .permissionRequestContainer[data-focused-index="0"]
+        .buttonContainer
+        .button:first-child:not(:disabled) {
+        background-color: var(--app-button-background);
+        border: 0 solid var(--app-button-background);
+        color: var(--app-button-foreground);
+        position: relative;
+        font-weight: 700;
+      }
+      .button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .button:hover:not(:disabled) {
+        filter: brightness(1.1);
+      }
+      .shortcutNum {
+        opacity: 0.6;
+        padding-right: 4px;
+      }
+      .keyboardHints {
+        color: var(--app-secondary-foreground);
+        z-index: 1;
+        flex-shrink: 0;
+        margin-top: 8px;
+        font-size: 0.85em;
+      }
+
+      /* _hONcXw: questions */
+      .navigationBar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        margin-top: -4px;
+        margin-bottom: 12px;
+        padding: 4px 0;
+      }
+      .navTab {
+        color: var(--app-primary-foreground);
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: 0 0;
+        border: none;
+        border-bottom: 2px solid #0000;
+        flex-shrink: 1;
+        min-width: 0;
+        padding: 4px 2px;
+        font-size: 0.85em;
+        font-weight: 500;
+      }
+      .navTab:hover {
+        opacity: 0.8;
+      }
+      .navTabAnswered {
+        color: var(--app-secondary-foreground);
+        font-weight: 400;
+      }
+      .navTabActive {
+        border-bottom-color: var(--app-button-background);
+      }
+      .navTabLabel {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+        display: block;
+      }
+      .navSpacer {
+        flex: 1;
+      }
+      .closeButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--app-primary-foreground);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .closeButton:hover {
+        background-color: var(--app-ghost-button-hover-background);
+      }
+      .questionsContainer {
+        display: flex;
+        overflow-y: auto;
+        border-top: 1px solid #0000;
+        border-bottom: 1px solid #0000;
+        flex-direction: column;
+        gap: 16px;
+        margin: 8px -8px;
+        padding-left: 8px;
+        padding-right: 8px;
+        transition: border-color 0.15s ease-in-out;
+        min-height: 0;
+      }
+      .questionsContainerOverflowTop {
+        border-top-color: var(--app-widget-border);
+      }
+      .questionsContainerOverflowBottom {
+        border-bottom-color: var(--app-widget-border);
+      }
+      .questionBlock {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .questionHeader {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .questionTextLarge {
+        color: var(--app-primary-foreground);
+        font-size: 0.95em;
+        font-weight: 500;
+      }
+      .optionsContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .option {
+        display: flex;
+        cursor: pointer;
+        background-color: #0000;
+        border-radius: 4px;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 4px;
+      }
+      .optionConfirming {
+        animation: 0.3s ease-out selectionConfirm;
+      }
+      @keyframes selectionConfirm {
+        0% {
+          background-color: var(--app-input-secondary-background);
+        }
+        50% {
+          background-color: var(--app-button-background);
+          opacity: 0.3;
+        }
+        to {
+          background-color: var(--app-input-secondary-background);
+        }
+      }
+      .option:hover {
+        background-color: var(--app-ghost-button-hover-background);
+      }
+      .option:focus {
+        outline: none;
+        background-color: var(--app-ghost-button-hover-background);
+      }
+      .optionCheckbox {
+        flex-shrink: 0;
+        align-self: center;
+        margin-top: 2px;
+      }
+      .checkbox {
+        border: 1.5px solid var(--app-input-border);
+        display: flex;
+        background-color: #0000;
+        border-radius: 3px;
+        justify-content: center;
+        align-items: center;
+        width: 16px;
+        height: 16px;
+        box-sizing: border-box;
+      }
+      .checkboxChecked {
+        background-color: var(--app-button-background);
+        border-color: var(--app-button-background);
+        color: var(--app-button-foreground);
+      }
+      .radio {
+        border: 1.5px solid var(--app-input-border);
+        display: flex;
+        background-color: #0000;
+        border-radius: 50%;
+        justify-content: center;
+        align-items: center;
+        width: 16px;
+        height: 16px;
+        box-sizing: border-box;
+      }
+      .radioChecked {
+        border-color: var(--app-button-background);
+      }
+      .radioDot {
+        background-color: var(--app-button-background);
+        border-radius: 50%;
+        width: 8px;
+        height: 8px;
+      }
+      .optionContent {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 0;
+        min-width: 0;
+      }
+      .optionLabel {
+        color: var(--app-primary-foreground);
+        font-size: 0.9em;
+        font-weight: 500;
+      }
+      .optionDescription {
+        color: var(--app-secondary-foreground);
+        font-size: 0.85em;
+        line-height: 1.4;
+      }
+      .otherInput {
+        border: 1px solid var(--app-input-border);
+        background-color: var(--app-tool-background);
+        color: var(--app-primary-foreground);
+        outline: none;
+        box-sizing: border-box;
+        border-radius: 4px;
+        width: 100%;
+        margin-top: 6px;
+        padding: 6px 8px;
+        font-size: 0.9em;
+        resize: none;
+        overflow: hidden;
+        display: block;
+        line-height: 1.4;
+      }
+      .otherInput:focus-within {
+        border-color: var(--app-input-active-border);
+      }
+      .reviewBody {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 8px;
+        overflow-y: auto;
+      }
+      .optionReadOnly,
+      .optionReadOnly:hover {
+        cursor: default;
+        background-color: #0000;
+      }
+      .optionDimmed {
+        opacity: 0.6;
+      }
+      .typedAnswer {
+        white-space: pre-wrap;
+      }
+      .statusLine {
+        color: var(--app-secondary-foreground);
+        font-size: 0.95em;
+        padding: 4px 8px 0;
+      }
+      .error {
+        color: #f48771;
+        font-size: 0.85em;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (() => {
+        const PARAMS = new URLSearchParams(location.search);
+        const TOKEN = PARAMS.get("t") || "";
+        const CX = Number(PARAMS.get("cx")),
+          CY = Number(PARAMS.get("cy"));
+        const root = document.getElementById("root");
+        let questions = [],
+          data = null;
+        let current = 0;
+        const selected = {}; // question index -> Set of labels ("Other" for other)
+        const otherText = {}; // question index -> string
+        let confirming = null,
+          confirmTimer = null,
+          done = false,
+          error = "";
+
+        const el = (tag, props = {}, ...kids) => {
+          const n = document.createElement(tag);
+          for (const [k, v] of Object.entries(props)) {
+            if (k === "class") n.className = v;
+            else if (k.startsWith("on"))
+              n.addEventListener(k.slice(2).toLowerCase(), v);
+            else if (v !== undefined && v !== null && v !== false)
+              n.setAttribute(k, v === true ? "" : v);
+          }
+          for (const kid of kids.flat())
+            if (kid !== null && kid !== undefined && kid !== false)
+              n.append(kid.nodeType ? kid : String(kid));
+          return n;
+        };
+        const svgCheck = () => {
+          const s = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+          );
+          s.setAttribute("width", "12");
+          s.setAttribute("height", "12");
+          s.setAttribute("viewBox", "0 0 12 12");
+          s.setAttribute("fill", "none");
+          const p = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+          );
+          p.setAttribute("d", "M2 6L5 9L10 3");
+          p.setAttribute("stroke", "currentColor");
+          p.setAttribute("stroke-width", "2");
+          p.setAttribute("stroke-linecap", "round");
+          p.setAttribute("stroke-linejoin", "round");
+          s.append(p);
+          return s;
+        };
+        const svgClose = () => {
+          const s = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+          );
+          s.setAttribute("width", "16");
+          s.setAttribute("height", "16");
+          s.setAttribute("viewBox", "0 0 16 16");
+          s.setAttribute("fill", "currentColor");
+          const p = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+          );
+          p.setAttribute("fill-rule", "evenodd");
+          p.setAttribute("clip-rule", "evenodd");
+          p.setAttribute(
+            "d",
+            "M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z",
+          );
+          s.append(p);
+          return s;
+        };
+
+        const labelOf = (o) =>
+          o.label +
+          (o.recommended && !/\(Recommended\)/.test(o.label)
+            ? " (Recommended)"
+            : "");
+        const answered = (i) =>
+          (selected[i]?.size ?? 0) > 0 &&
+          !(
+            selected[i].has("Other") &&
+            selected[i].size === 1 &&
+            !(otherText[i] || "").trim()
+          );
+        const allAnswered = () =>
+          questions.length > 0 && questions.every((_, i) => answered(i));
+
+        function optionRow({
+          multi,
+          label,
+          description,
+          isSelected,
+          readOnly,
+          dimmed,
+          isConfirming,
+          onSelect,
+          children,
+        }) {
+          const box = multi
+            ? el(
+                "div",
+                { class: "checkbox" + (isSelected ? " checkboxChecked" : "") },
+                isSelected ? svgCheck() : null,
+              )
+            : el(
+                "div",
+                { class: "radio" + (isSelected ? " radioChecked" : "") },
+                isSelected ? el("div", { class: "radioDot" }) : null,
+              );
+          return el(
+            "div",
+            {
+              class:
+                "option" +
+                (isConfirming ? " optionConfirming" : "") +
+                (readOnly ? " optionReadOnly" : "") +
+                (dimmed ? " optionDimmed" : ""),
+              tabindex: readOnly ? null : "0",
+              role: multi ? "checkbox" : "radio",
+              "aria-checked": String(!!isSelected),
+              onclick: readOnly ? undefined : onSelect,
+              onkeydown: readOnly
+                ? undefined
+                : (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (!e.repeat) onSelect();
+                    }
+                  },
+            },
+            el("div", { class: "optionCheckbox" }, box),
+            el(
+              "div",
+              { class: "optionContent" },
+              el("div", { class: "optionLabel" }, label),
+              description
+                ? el("div", { class: "optionDescription" }, description)
+                : null,
+              children || null,
+            ),
+          );
+        }
+
+        function select(qi, label) {
+          const q = questions[qi];
+          const set = new Set(selected[qi] || []);
+          let focusOther = false;
+          if (q.multi) {
+            if (set.has(label)) set.delete(label);
+            else {
+              set.add(label);
+              if (label === "Other") focusOther = true;
+            }
+          } else {
+            set.clear();
+            set.add(label);
+            if (label === "Other") focusOther = true;
+            else if (confirming === null && qi < questions.length - 1) {
+              confirming = label;
+              confirmTimer = setTimeout(() => {
+                confirming = null;
+                current = qi + 1;
+                render(true);
+              }, 300);
+            }
+          }
+          selected[qi] = set;
+          render(false, focusOther ? "other" : "keep");
+        }
+
+        function questionBlock(qi) {
+          const q = questions[qi];
+          const sel = selected[qi] || new Set();
+          const rows = q.options.map((o) =>
+            optionRow({
+              multi: q.multi,
+              label: labelOf(o),
+              description: o.description,
+              isSelected: sel.has(o.label),
+              isConfirming: confirming === o.label,
+              onSelect: () => select(qi, o.label),
+            }),
+          );
+          let otherInput = null;
+          if (sel.has("Other")) {
+            otherInput = el("textarea", {
+              class: "otherInput",
+              rows: "1",
+              placeholder: "Type your answer…",
+              id: "other-" + qi,
+              onclick: (e) => e.stopPropagation(),
+              oninput: (e) => {
+                otherText[qi] = e.target.value;
+                autosize(e.target);
+                refreshChrome();
+                fit();
+              },
+              onkeydown: (e) => {
+                if (!e.metaKey && !e.ctrlKey && e.key !== "Escape")
+                  e.stopPropagation();
+                if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.isComposing) return;
+                  e.preventDefault();
+                  if (qi < questions.length - 1) {
+                    current = qi + 1;
+                    render(true);
+                  }
+                }
+              },
+            });
+            otherInput.value = otherText[qi] || "";
+          }
+          rows.push(
+            optionRow({
+              multi: q.multi,
+              label: "Other",
+              isSelected: sel.has("Other"),
+              isConfirming: confirming === "Other",
+              onSelect: () => select(qi, "Other"),
+              children: otherInput,
+            }),
+          );
+          return el(
+            "div",
+            { class: "questionBlock" },
+            el(
+              "div",
+              { class: "questionHeader" },
+              el("span", { class: "questionTextLarge" }, q.question),
+            ),
+            el("div", { class: "optionsContainer", id: "options" }, rows),
+          );
+        }
+
+        function autosize(t) {
+          t.style.height = "auto";
+          t.style.height = t.scrollHeight + 2 + "px";
+        }
+
+        function refreshChrome() {
+          const btn = document.getElementById("submit");
+          if (btn) btn.disabled = !allAnswered();
+          document
+            .querySelectorAll(".navTab")
+            .forEach((b, i) =>
+              b.classList.toggle("navTabAnswered", answered(i)),
+            );
+        }
+
+        function render(focusFirst, focusMode) {
+          const active = document.activeElement;
+          const activeIndex =
+            active && active.closest && active.closest(".option")
+              ? [...document.querySelectorAll(".option")].indexOf(
+                  active.closest(".option"),
+                )
+              : -1;
+          root.replaceChildren();
+          if (done) return renderDone();
+          if (!questions.length) {
+            root.append(
+              el(
+                "div",
+                { class: "permissionRequestContainer" },
+                el(
+                  "div",
+                  { class: "permissionRequestContent" },
+                  "No questions provided",
+                ),
+              ),
+            );
+            return;
+          }
+          const nav = el(
+            "div",
+            { class: "navigationBar" },
+            questions.map((q, i) =>
+              el(
+                "button",
+                {
+                  class:
+                    "navTab" +
+                    (i === current ? " navTabActive" : "") +
+                    (answered(i) ? " navTabAnswered" : ""),
+                  onclick: () => {
+                    current = i;
+                    render(true);
+                  },
+                },
+                el("span", { class: "navTabLabel" }, q.header || "Q" + (i + 1)),
+              ),
+            ),
+            el("div", { class: "navSpacer" }),
+            el(
+              "button",
+              {
+                class: "closeButton",
+                title: "Cancel",
+                "aria-label": "Cancel",
+                onclick: cancel,
+              },
+              svgClose(),
+            ),
+          );
+          const container = el(
+            "div",
+            { class: "questionsContainer", id: "qc" },
+            questionBlock(current),
+          );
+          const card = el(
+            "div",
+            {
+              class: "permissionRequestContainer",
+              tabindex: "0",
+              "data-focused-index": "0",
+              onkeydown: cardKeys,
+            },
+            el(
+              "div",
+              { class: "permissionRequestContent" },
+              el(
+                "div",
+                {
+                  onkeydown: questionKeys,
+                  style: "display:flex;flex-direction:column;min-height:0",
+                },
+                nav,
+                container,
+              ),
+            ),
+            el(
+              "div",
+              { class: "buttonContainer" },
+              el(
+                "button",
+                {
+                  class: "button primary",
+                  id: "submit",
+                  onclick: submit,
+                  disabled: !allAnswered(),
+                },
+                el("span", { class: "shortcutNum" }, "1"),
+                " ",
+                "Submit answers",
+              ),
+            ),
+            error ? el("div", { class: "error" }, error) : null,
+            el("div", { class: "keyboardHints" }, "Esc to cancel"),
+          );
+          root.append(card);
+          overflowShadows();
+          container.addEventListener("scroll", overflowShadows);
+          const ta = document.getElementById("other-" + current);
+          if (ta) autosize(ta);
+          if (focusMode === "other" && ta) {
+            ta.focus();
+            ta.setSelectionRange(ta.value.length, ta.value.length);
+          } else if (focusFirst) {
+            const opts = [...document.querySelectorAll("#options .option")];
+            (
+              opts.find((o) => o.getAttribute("aria-checked") === "true") ||
+              opts[0]
+            )?.focus();
+          } else if (activeIndex >= 0) {
+            document.querySelectorAll(".option")[activeIndex]?.focus();
+          }
+          fit();
+        }
+
+        // Size the window to the card, like the panel does: no empty space around it.
+        let reported = false;
+        function fit() {
+          const card = document.querySelector(".permissionRequestContainer");
+          if (!card) return;
+          const qc = document.getElementById("qc");
+          const saved = [
+            card.style.maxHeight,
+            card.style.flexShrink,
+            qc && qc.style.overflowY,
+          ];
+          card.style.maxHeight = "none";
+          card.style.flexShrink = "0";
+          if (qc) qc.style.overflowY = "visible";
+          const need = Math.ceil(card.getBoundingClientRect().height) + 20 + 6; // body padding + card margin
+          card.style.maxHeight = saved[0];
+          card.style.flexShrink = saved[1];
+          if (qc) qc.style.overflowY = saved[2];
+          const gap = window.outerHeight - window.innerHeight;
+          const frame = gap > 0 && gap < 120 ? gap : 28; // title bar; some hosts report nonsense
+          const maxH = Math.floor((screen.availHeight || 900) * 0.85);
+          const h = Math.min(need + frame, maxH);
+          try {
+            if (Math.abs(window.outerHeight - h) > 1)
+              window.resizeTo(window.outerWidth, h);
+            if (Number.isFinite(CX) && Number.isFinite(CY) && CX && CY) {
+              window.moveTo(
+                Math.round(CX - window.outerWidth / 2),
+                Math.round(CY - h / 2),
+              );
+            }
+          } catch {}
+          setTimeout(() => {
+            overflowShadows();
+            if (!reported) {
+              reported = true;
+              fetch("/api/log?t=" + encodeURIComponent(TOKEN), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  need,
+                  frame,
+                  outerH: window.outerHeight,
+                  innerH: window.innerHeight,
+                  x: window.screenX,
+                  y: window.screenY,
+                  focused: document.hasFocus(),
+                  visible: document.visibilityState,
+                }),
+              }).catch(() => {});
+            }
+          }, 150);
+        }
+        window.addEventListener("focus", () =>
+          fetch("/api/log?t=" + encodeURIComponent(TOKEN), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event: "focus" }),
+          }).catch(() => {}),
+        );
+
+        function overflowShadows() {
+          const c = document.getElementById("qc");
+          if (!c) return;
+          c.classList.toggle("questionsContainerOverflowTop", c.scrollTop > 0);
+          c.classList.toggle(
+            "questionsContainerOverflowBottom",
+            c.scrollTop + c.clientHeight < c.scrollHeight - 1,
+          );
+        }
+
+        function questionKeys(e) {
+          if (e.target.matches("textarea")) return;
+          if (e.key === "ArrowLeft" && current > 0) {
+            current--;
+            render(true);
+            e.stopPropagation();
+          } else if (e.key === "ArrowRight" && current < questions.length - 1) {
+            current++;
+            render(true);
+            e.stopPropagation();
+          } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            const opts = [
+              ...document.querySelectorAll(
+                '#options [role="radio"], #options [role="checkbox"]',
+              ),
+            ];
+            if (!opts.length) return;
+            const at = opts.indexOf(document.activeElement);
+            const next =
+              e.key === "ArrowUp"
+                ? at <= 0
+                  ? opts.length - 1
+                  : at - 1
+                : at >= opts.length - 1
+                  ? 0
+                  : at + 1;
+            opts[next].focus();
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }
+
+        function cardKeys(e) {
+          if (e.target.matches("textarea") && e.key !== "Escape") return;
+          if (e.key === "Escape") {
+            e.preventDefault();
+            cancel();
+          } else if (e.key === "1" && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            if (allAnswered()) submit();
+          } else if (
+            e.key === "Enter" &&
+            !e.target.closest(".option") &&
+            !e.metaKey &&
+            !e.ctrlKey
+          ) {
+            e.preventDefault();
+            if (allAnswered()) submit();
+          }
+        }
+        document.addEventListener("keydown", (e) => {
+          if (done || e.defaultPrevented) return;
+          if (
+            !e.target.closest ||
+            !e.target.closest(".permissionRequestContainer")
+          )
+            cardKeys(e);
+        });
+
+        function buildResult(declined) {
+          const answers = questions.map((q, i) => {
+            const sel = selected[i] || new Set();
+            const picked = q.options
+              .map((o, j) => (sel.has(o.label) ? j + 1 : 0))
+              .filter(Boolean);
+            const other = sel.has("Other")
+              ? (otherText[i] || "").trim() || null
+              : null;
+            return {
+              id: q.id || "Q" + (i + 1),
+              header: q.header || "",
+              question: q.question,
+              picked,
+              labels: picked.map((n) => q.options[n - 1].label),
+              other,
+            };
+          });
+          const compact = answers
+            .map(
+              (a, i) =>
+                i +
+                1 +
+                ":" +
+                [
+                  ...a.picked.map(String),
+                  ...(a.other ? ['other "' + a.other + '"'] : []),
+                ].join(","),
+            )
+            .join(" ");
+          return {
+            id: data.id,
+            title: data.title,
+            declined: !!declined,
+            answers: declined ? [] : answers,
+            compact: declined ? "declined" : compact,
+            answeredAt: new Date().toISOString(),
+          };
+        }
+
+        async function send(result) {
+          const res = await fetch(
+            "/api/answers?t=" + encodeURIComponent(TOKEN),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(result),
+            },
+          );
+          if (!res.ok) throw new Error("HTTP " + res.status);
+        }
+
+        async function submit() {
+          if (!allAnswered() || done) return;
+          try {
+            await send(buildResult(false));
+            done = "answered";
+            error = "";
+          } catch {
+            error =
+              "Couldn't save your answers. Is the Grill window's script still running?";
+          }
+          render();
+        }
+
+        async function cancel() {
+          if (done) return;
+          try {
+            await send(buildResult(true));
+          } catch {}
+          done = "declined";
+          render();
+        }
+
+        function renderDone() {
+          const status = done === "declined" ? "Declined" : "Answered";
+          const n = questions.length;
+          const body = el("div", { class: "reviewBody" });
+          if (done === "answered") {
+            questions.forEach((q, i) => {
+              const sel = selected[i] || new Set();
+              const rows = q.options.map((o) =>
+                optionRow({
+                  multi: q.multi,
+                  label: labelOf(o),
+                  description: o.description,
+                  isSelected: sel.has(o.label),
+                  readOnly: true,
+                  dimmed: !sel.has(o.label),
+                }),
+              );
+              if (sel.has("Other"))
+                rows.push(
+                  optionRow({
+                    multi: q.multi,
+                    label: "Other",
+                    isSelected: true,
+                    readOnly: true,
+                    children: el(
+                      "div",
+                      { class: "optionDescription typedAnswer" },
+                      otherText[i] || "",
+                    ),
+                  }),
+                );
+              body.append(
+                el(
+                  "div",
+                  { class: "questionBlock" },
+                  el(
+                    "div",
+                    { class: "questionHeader" },
+                    el("span", { class: "questionTextLarge" }, q.question),
+                  ),
+                  el("div", { class: "optionsContainer" }, rows),
+                ),
+              );
+            });
+          }
+          root.append(
+            el(
+              "div",
+              { class: "permissionRequestContainer" },
+              el(
+                "div",
+                { class: "statusLine" },
+                status +
+                  (n
+                    ? " · " + n + " " + (n === 1 ? "question" : "questions")
+                    : ""),
+              ),
+              body,
+              el(
+                "div",
+                { class: "keyboardHints", style: "padding:0 8px" },
+                "Saved for your manager agent. You can close this window.",
+              ),
+            ),
+          );
+          fit();
+          setTimeout(() => window.close(), done === "declined" ? 1200 : 4000);
+        }
+
+        // Heartbeat so the local script knows the window is still open.
+        setInterval(() => {
+          if (!done)
+            fetch("/api/ping?t=" + encodeURIComponent(TOKEN)).catch(() => {});
+        }, 3000);
+
+        fetch("/api/questions?t=" + encodeURIComponent(TOKEN))
+          .then((r) => r.json())
+          .then((d) => {
+            data = d;
+            questions = Array.isArray(d.questions) ? d.questions : [];
+            document.title = d.title || "Questions";
+            render(true);
+          })
+          .catch(() => {
+            root.textContent = "Couldn't load the questions.";
+          });
+      })();
+    </script>
+  </body>
+</html>
