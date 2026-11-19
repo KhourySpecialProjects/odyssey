@@ -4,6 +4,7 @@ import {
   PublishEditError,
   type DraftRef,
 } from '../../../lib/publish-edit';
+import { deepDeleteDroplet, type DeleteFlags } from '../../../lib/droplet-delete';
 import {
   publishWithReview,
   sendFeedback,
@@ -42,6 +43,7 @@ function parseBody(
 
 const ERROR_NAMES: Record<number, string> = {
   400: 'BadRequestError',
+  403: 'ForbiddenError',
   404: 'NotFoundError',
   409: 'ConflictError',
   500: 'InternalServerError',
@@ -125,7 +127,38 @@ const emptyBodyHandler =
     return run(ctx, () => step(ref), failMessage);
   };
 
+/** Body is exactly `{ refuseInReview: boolean, refusePublished: boolean }`. */
+function parseDeleteBody(body: unknown): DeleteFlags | { error: string } {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return { error: 'Body must be an object' };
+  }
+  const record = body as Record<string, unknown>;
+  const extra = Object.keys(record).find(
+    (key) => key !== 'refuseInReview' && key !== 'refusePublished',
+  );
+  if (extra) return { error: `Invalid key ${extra}` };
+  for (const key of ['refuseInReview', 'refusePublished']) {
+    if (typeof record[key] !== 'boolean') return { error: `${key} must be a boolean` };
+  }
+  return {
+    refuseInReview: record.refuseInReview as boolean,
+    refusePublished: record.refusePublished as boolean,
+  };
+}
+
 export default {
+  async deepDelete(ctx) {
+    const ref = parseDraftRef(ctx.params.id);
+    if (!ref) return fail(ctx, 404, DRAFT_GONE_MESSAGE);
+    const body = parseDeleteBody(ctx.request.body);
+    if ('error' in body) return fail(ctx, 400, body.error);
+    return run(
+      ctx,
+      () => deepDeleteDroplet(ref, body),
+      'Deleting failed.',
+    );
+  },
+
   submitReview: emptyBodyHandler(submitForReview, 'Submitting failed.'),
   withdrawReview: emptyBodyHandler(withdrawFromReview, 'Withdrawing failed.'),
 
