@@ -17,6 +17,7 @@ interface TopicsStepProps {
   onChange: (ids: number[]) => void;
   note?: string;
   onNoteChange?: (note: string) => void;
+  defaultNoteOpen?: boolean;
   errors?: { topics?: string; note?: string };
 }
 
@@ -27,9 +28,10 @@ export function TopicsStep({
   onChange,
   note = "",
   onNoteChange,
+  defaultNoteOpen = false,
   errors = {},
 }: TopicsStepProps) {
-  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(defaultNoteOpen);
   const toggle = (id: number) =>
     onChange(
       value.includes(id) ? value.filter((v) => v !== id) : [...value, id],

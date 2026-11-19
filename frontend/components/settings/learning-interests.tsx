@@ -90,6 +90,7 @@ export function LearningInterests({ topics, initial }: LearningInterestsProps) {
         onChange={(interestTagIds) => patch({ interestTagIds })}
         note={draft.interestNote}
         onNoteChange={(interestNote) => patch({ interestNote })}
+        defaultNoteOpen={!!initial.interestNote}
         errors={{ topics: errors.interestTagIds, note: errors.interestNote }}
       />
       {error && (
