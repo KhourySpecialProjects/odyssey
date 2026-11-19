@@ -1,28 +1,39 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { saveOnboarding } from "@/lib/actions/onboarding";
 import type { OnboardingTopic } from "@/lib/onboarding-topics";
 import { createSystemAnnouncement } from "@/lib/requests/feed";
+import { getMyRecommendations } from "@/lib/requests/recommendations";
 import type { OnboardingAnswers } from "@/lib/validations/onboarding";
-import type { AuthorizedUser } from "@/types";
+import type { AuthorizedUser, Recommendation } from "@/types";
 import { OnboardingQuiz } from "./onboarding-quiz";
+import { ResultsStep } from "./results-step";
 
 interface Props {
-  topics: OnboardingTopic[];
-  initial: Partial<OnboardingAnswers>;
+  /** False once the student is onboarded; Results then stays up until they leave. */
+  show: boolean;
+  topics?: OnboardingTopic[];
+  initial?: Partial<OnboardingAnswers>;
   user: AuthorizedUser;
 }
 
-export function OnboardingQuizHost({ topics, initial, user }: Props) {
-  const [open, setOpen] = useState(true);
-  const router = useRouter();
+type Phase = "quiz" | "saving" | "results" | "done";
+
+export function OnboardingQuizHost({ show, topics, initial, user }: Props) {
+  // Phase state survives the save's RSC refresh, which flips `show` to false.
+  const [phase, setPhase] = useState<Phase>("quiz");
+  const [picks, setPicks] = useState<Recommendation[]>([]);
+  const [firstName, setFirstName] = useState("");
 
   async function onSubmit(answers: OnboardingAnswers) {
+    setPhase("saving");
     const result = await saveOnboarding(answers);
-    if (!result.ok) return result;
+    if (!result.ok) {
+      setPhase("quiz");
+      return result;
+    }
     // Deduped server-side; a failed welcome post shouldn't undo a saved quiz.
     try {
       await createSystemAnnouncement(
@@ -36,13 +47,32 @@ export function OnboardingQuizHost({ topics, initial, user }: Props) {
     } catch {
       console.error("Welcome announcements failed");
     }
-    setOpen(false);
-    router.refresh();
+    // A failed fetch shows the no-picks message instead of an error.
+    const recs = await getMyRecommendations({
+      surface: "onboarding",
+      limit: 3,
+    }).catch(() => null);
+    setPicks(recs?.data ?? []);
+    setFirstName(answers.firstName);
+    setPhase("results");
     return result;
   }
 
-  if (!open) return null;
+  if (phase === "done" || (phase === "quiz" && !show)) return null;
   return (
-    <OnboardingQuiz topics={topics} initial={initial} onSubmit={onSubmit} />
+    <OnboardingQuiz
+      topics={topics ?? []}
+      initial={initial}
+      onSubmit={onSubmit}
+      results={
+        phase === "results" ? (
+          <ResultsStep
+            picks={picks}
+            firstName={firstName}
+            onLeave={() => setPhase("done")}
+          />
+        ) : undefined
+      }
+    />
   );
 }

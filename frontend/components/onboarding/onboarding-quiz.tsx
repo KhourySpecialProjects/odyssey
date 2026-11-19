@@ -2,7 +2,13 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +65,8 @@ export interface OnboardingQuizProps {
   initial?: Partial<OnboardingAnswers>;
   /** Saves the answers; on `ok: false` the quiz stays open with the error. */
   onSubmit: (answers: OnboardingAnswers) => Promise<OnboardingResult>;
+  /** Shown in this dialog in place of the steps once the save has succeeded. */
+  results?: ReactNode;
 }
 
 function browserTimeZone() {
@@ -74,6 +82,7 @@ export function OnboardingQuiz({
   topics,
   initial,
   onSubmit,
+  results,
 }: OnboardingQuizProps) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<OnboardingDraft>(() => ({
@@ -146,89 +155,93 @@ export function OnboardingQuiz({
           }}
           className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-[640px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-lg dark:bg-slate-800"
         >
-          <form onSubmit={next} className="space-y-4">
-            <QuizProgress step={step + 1} total={STEPS.length} />
-            <div>
-              <DialogTitle
-                ref={heading}
-                tabIndex={-1}
-                className="text-xl font-bold outline-none"
-              >
-                {STEPS[step].title}
-              </DialogTitle>
-              <DialogDescription className="mt-1">
-                {STEPS[step].hint}
-              </DialogDescription>
-            </div>
-            {step === 0 && (
-              <ProfileStep value={draft} onChange={patch} errors={errors} />
-            )}
-            {step === 1 && (
-              <GoalStep
-                value={draft.goal}
-                onChange={(goal) => patch({ goal })}
-                error={errors.goal}
-              />
-            )}
-            {step === 2 && (
-              <AreasStep
-                value={draft.focusAreas ?? []}
-                onChange={(focusAreas) => patch({ focusAreas })}
-                error={errors.focusAreas}
-              />
-            )}
-            {step === 3 && (
-              <TopicsStep
-                topics={topics}
-                focusAreas={draft.focusAreas ?? []}
-                value={draft.interestTagIds ?? []}
-                onChange={(interestTagIds) => patch({ interestTagIds })}
-                note={draft.interestNote}
-                onNoteChange={(interestNote) => patch({ interestNote })}
-                errors={{
-                  topics: errors.interestTagIds,
-                  note: errors.interestNote,
-                }}
-              />
-            )}
-            {error && (
-              <p role="alert" className="text-sm text-red-600">
-                {error}
-              </p>
-            )}
-            <div className="flex items-center justify-between border-t pt-4">
-              {step > 0 ? (
+          {results ? (
+            results
+          ) : (
+            <form onSubmit={next} className="space-y-4">
+              <QuizProgress step={step + 1} total={STEPS.length} />
+              <div>
+                <DialogTitle
+                  ref={heading}
+                  tabIndex={-1}
+                  className="text-xl font-bold outline-none"
+                >
+                  {STEPS[step].title}
+                </DialogTitle>
+                <DialogDescription className="mt-1">
+                  {STEPS[step].hint}
+                </DialogDescription>
+              </div>
+              {step === 0 && (
+                <ProfileStep value={draft} onChange={patch} errors={errors} />
+              )}
+              {step === 1 && (
+                <GoalStep
+                  value={draft.goal}
+                  onChange={(goal) => patch({ goal })}
+                  error={errors.goal}
+                />
+              )}
+              {step === 2 && (
+                <AreasStep
+                  value={draft.focusAreas ?? []}
+                  onChange={(focusAreas) => patch({ focusAreas })}
+                  error={errors.focusAreas}
+                />
+              )}
+              {step === 3 && (
+                <TopicsStep
+                  topics={topics}
+                  focusAreas={draft.focusAreas ?? []}
+                  value={draft.interestTagIds ?? []}
+                  onChange={(interestTagIds) => patch({ interestTagIds })}
+                  note={draft.interestNote}
+                  onNoteChange={(interestNote) => patch({ interestNote })}
+                  errors={{
+                    topics: errors.interestTagIds,
+                    note: errors.interestNote,
+                  }}
+                />
+              )}
+              {error && (
+                <p role="alert" className="text-sm text-red-600">
+                  {error}
+                </p>
+              )}
+              <div className="flex items-center justify-between border-t pt-4">
+                {step > 0 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={submitting}
+                    onClick={() => go(step - 1)}
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </Button>
+                ) : (
+                  <span />
+                )}
                 <Button
-                  type="button"
-                  variant="outline"
+                  type="submit"
                   size="sm"
                   disabled={submitting}
-                  onClick={() => go(step - 1)}
+                  className="bg-onboarding hover:bg-onboarding/90 text-white"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  {submitting
+                    ? "Saving…"
+                    : last
+                      ? "See my recommendations"
+                      : "Continue"}
+                  {!last && !submitting && <ArrowRight className="h-4 w-4" />}
                 </Button>
-              ) : (
-                <span />
-              )}
-              <Button
-                type="submit"
-                size="sm"
-                disabled={submitting}
-                className="bg-onboarding hover:bg-onboarding/90 text-white"
-              >
-                {submitting
-                  ? "Saving…"
-                  : last
-                    ? "See my recommendations"
-                    : "Continue"}
-                {!last && !submitting && <ArrowRight className="h-4 w-4" />}
-              </Button>
-            </div>
-            <p className="text-center text-xs text-slate-500">
-              Takes about a minute. You can change your answers later in
-              Settings.
-            </p>
-          </form>
+              </div>
+              <p className="text-center text-xs text-slate-500">
+                Takes about a minute. You can change your answers later in
+                Settings.
+              </p>
+            </form>
+          )}
         </DialogPrimitive.Content>
       </DialogPortal>
     </Dialog>
