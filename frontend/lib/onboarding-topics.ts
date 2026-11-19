@@ -1,6 +1,7 @@
-import type { FocusArea } from "@/lib/validations/onboarding";
+import type { FocusArea } from "@/types";
 
 export interface OnboardingTopic {
+  id: number;
   documentId: string;
   name: string;
   area: FocusArea;
@@ -36,10 +37,10 @@ const TOPIC_AREAS: Record<string, FocusArea> = {
 
 /** Tags that have an area, in the order given; unmapped tags are left out. */
 export function tagsToTopics(
-  tags: { documentId: string; name: string }[],
+  tags: { id: number; documentId: string; name: string }[],
 ): OnboardingTopic[] {
-  return tags.flatMap(({ documentId, name }) => {
+  return tags.flatMap(({ id, documentId, name }) => {
     const area = TOPIC_AREAS[name.trim().toLowerCase()];
-    return area ? [{ documentId, name, area }] : [];
+    return area ? [{ id, documentId, name, area }] : [];
   });
 }

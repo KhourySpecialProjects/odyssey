@@ -2,27 +2,27 @@ import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export interface ChipOption {
-  value: string;
+export interface ChipOption<T extends string | number> {
+  value: T;
   label: string;
 }
 
-interface ChipGroupProps {
+interface ChipGroupProps<T extends string | number> {
   label: string;
-  options: ChipOption[];
-  selected: string[];
-  onToggle: (value: string) => void;
+  options: ChipOption<T>[];
+  selected: T[];
+  onToggle: (value: T) => void;
   muted?: boolean;
 }
 
 /** A labelled row of toggle chips. */
-export function ChipGroup({
+export function ChipGroup<T extends string | number>({
   label,
   options,
   selected,
   onToggle,
   muted,
-}: ChipGroupProps) {
+}: ChipGroupProps<T>) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {options.map((o) => {

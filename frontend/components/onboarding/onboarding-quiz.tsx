@@ -29,8 +29,6 @@ import { ProfileStep } from "./profile-step";
 import { QuizProgress } from "./quiz-progress";
 import { TopicsStep } from "./topics-step";
 
-export const ONBOARDING_STORAGE_KEY = "odyssey:onboarding-quiz";
-
 const STEPS = [
   {
     schema: profileStepSchema,
@@ -54,16 +52,13 @@ const STEPS = [
   },
 ];
 
+export type OnboardingResult = { ok: true } | { ok: false; error: string };
+
 export interface OnboardingQuizProps {
   topics: OnboardingTopic[];
-  initialProfile?: {
-    first?: string;
-    last?: string;
-    bio?: string;
-    timeZone?: string;
-  };
-  /** Saves the answers; a rejection keeps the quiz open on the last step. */
-  onSubmit: (answers: OnboardingAnswers) => Promise<void>;
+  initial?: Partial<OnboardingAnswers>;
+  /** Saves the answers; on `ok: false` the quiz stays open with the error. */
+  onSubmit: (answers: OnboardingAnswers) => Promise<OnboardingResult>;
 }
 
 function browserTimeZone() {
@@ -75,56 +70,27 @@ function browserTimeZone() {
   }
 }
 
-function readSaved(): { step: number; draft: OnboardingDraft } | null {
-  try {
-    const raw = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
 export function OnboardingQuiz({
   topics,
-  initialProfile,
+  initial,
   onSubmit,
 }: OnboardingQuizProps) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<OnboardingDraft>(() => ({
-    first: initialProfile?.first ?? "",
-    last: initialProfile?.last ?? "",
-    bio: initialProfile?.bio ?? "",
-    timeZone: isTimeZone(initialProfile?.timeZone)
-      ? initialProfile?.timeZone
-      : browserTimeZone(),
+    firstName: "",
+    lastName: "",
+    bio: "",
     focusAreas: [],
-    interests: [],
+    interestTagIds: [],
+    ...initial,
+    timeZone: isTimeZone(initial?.timeZone)
+      ? initial?.timeZone
+      : browserTimeZone(),
   }));
-  const [restored, setRestored] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
-
-  useEffect(() => {
-    const saved = readSaved();
-    if (saved) {
-      setDraft((d) => ({ ...d, ...saved.draft }));
-      setStep(Math.min(Math.max(saved.step, 0), STEPS.length - 1));
-    }
-    setRestored(true);
-  }, []);
-
-  useEffect(() => {
-    if (!restored) return;
-    try {
-      sessionStorage.setItem(
-        ONBOARDING_STORAGE_KEY,
-        JSON.stringify({ step, draft }),
-      );
-    } catch {
-      // Storage can be blocked; the quiz still works without it.
-    }
-  }, [restored, step, draft]);
 
   useEffect(() => {
     heading.current?.focus();
@@ -132,23 +98,33 @@ export function OnboardingQuiz({
 
   const patch = (p: OnboardingDraft) => setDraft((d) => ({ ...d, ...p }));
   const last = step === STEPS.length - 1;
-  const valid = STEPS[step].schema.safeParse(draft).success;
+  const parsed = STEPS[step].schema.safeParse(draft);
+  const fieldErrors: Record<string, string | undefined> = {};
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      fieldErrors[String(issue.path[0])] ??= issue.message;
+    }
+  }
+  const errors = attempted ? fieldErrors : {};
+
+  function go(to: number) {
+    setStep(to);
+    setAttempted(false);
+    setError("");
+  }
 
   async function next(e: FormEvent) {
     e.preventDefault();
-    if (!valid || submitting) return;
-    if (!last) return setStep(step + 1);
+    if (submitting) return;
+    if (!parsed.success) return setAttempted(true);
+    if (!last) return go(step + 1);
     const answers = onboardingAnswersSchema.safeParse(draft);
     if (!answers.success) return setError("Some answers are missing.");
     setSubmitting(true);
     setError("");
     try {
-      await onSubmit(answers.data);
-      try {
-        sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
-      } catch {
-        // The answers are saved; a failed cleanup is not an error.
-      }
+      const result = await onSubmit(answers.data);
+      if (!result.ok) setError(result.error);
     } catch {
       setError("We couldn't save your answers. Please try again.");
     } finally {
@@ -184,27 +160,35 @@ export function OnboardingQuiz({
                 {STEPS[step].hint}
               </DialogDescription>
             </div>
-            {step === 0 && <ProfileStep value={draft} onChange={patch} />}
+            {step === 0 && (
+              <ProfileStep value={draft} onChange={patch} errors={errors} />
+            )}
             {step === 1 && (
               <GoalStep
                 value={draft.goal}
                 onChange={(goal) => patch({ goal })}
+                error={errors.goal}
               />
             )}
             {step === 2 && (
               <AreasStep
                 value={draft.focusAreas ?? []}
                 onChange={(focusAreas) => patch({ focusAreas })}
+                error={errors.focusAreas}
               />
             )}
             {step === 3 && (
               <TopicsStep
                 topics={topics}
                 focusAreas={draft.focusAreas ?? []}
-                value={draft.interests ?? []}
-                onChange={(interests) => patch({ interests })}
+                value={draft.interestTagIds ?? []}
+                onChange={(interestTagIds) => patch({ interestTagIds })}
                 note={draft.interestNote}
                 onNoteChange={(interestNote) => patch({ interestNote })}
+                errors={{
+                  topics: errors.interestTagIds,
+                  note: errors.interestNote,
+                }}
               />
             )}
             {error && (
@@ -219,7 +203,7 @@ export function OnboardingQuiz({
                   variant="outline"
                   size="sm"
                   disabled={submitting}
-                  onClick={() => setStep(step - 1)}
+                  onClick={() => go(step - 1)}
                 >
                   <ArrowLeft className="h-4 w-4" /> Back
                 </Button>
@@ -229,11 +213,15 @@ export function OnboardingQuiz({
               <Button
                 type="submit"
                 size="sm"
-                disabled={!valid || submitting}
+                disabled={submitting}
                 className="bg-onboarding hover:bg-onboarding/90 text-white"
               >
-                {last ? "See my recommendations" : "Continue"}
-                {!last && <ArrowRight className="h-4 w-4" />}
+                {submitting
+                  ? "Saving…"
+                  : last
+                    ? "See my recommendations"
+                    : "Continue"}
+                {!last && !submitting && <ArrowRight className="h-4 w-4" />}
               </Button>
             </div>
             <p className="text-center text-xs text-slate-500">
