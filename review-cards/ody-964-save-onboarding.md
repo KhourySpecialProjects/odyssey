@@ -14,9 +14,9 @@ Not wired to a page yet, so the Jest tests (`frontend/testing/lib/onboarding-act
 ## Security
 
 - Guard: `requireRole([])` at `frontend/lib/actions/onboarding.ts:48`; the only export is guarded, nothing added to the allowlist.
-- Session-only user: the id comes from the gate (`:49`); the action takes no user id from the client.
+- Session-only user: the id comes from the gate (`:50`); the action takes no user id from the client.
 - Validation: `onboardingAnswersSchema.safeParse` (`:52`) and `UpdateUserInfoSelfSchema.safeParse` (`:57`) run before any write.
-- No answer logging: the only `console.error` calls log a status code (`:38`) or an error name (`:84`); tests assert no answer appears in logs.
+- No answer logging: the only `console.error` calls log a status code (`:38`) or an error name (`:92`); tests assert no answer appears in logs.
 - `firstTime: false` is written last, so a failed save shows the quiz again. Writes are idempotent, so retrying is safe.
 - I used one checked PUT instead of `updateUserInfo` and `setTimeZone`, since `updateUserInfo` never inspects the response and would report a failed write as success.
 
@@ -24,6 +24,8 @@ Not wired to a page yet, so the Jest tests (`frontend/testing/lib/onboarding-act
 
 - ODY-963 (base), and ODY-958, 965 and 966 stack on this.
 - ODY-953's `saveLearnerProfile` (called, unchanged).
+
+**Review fixes:** also clears the global `users` and `authors` caches so other people see the new name; cache clearing now runs inside the `try`, so a failure returns `{ ok: false }`; duplicate topic ids are removed before saving; tests now assert all four tags, the exact learner-profile input, the number of writes per failure, and that a failed cache clear or thrown fetch returns an error.
 
 **Suggested reviewer:** `JaylenZeng`
 
