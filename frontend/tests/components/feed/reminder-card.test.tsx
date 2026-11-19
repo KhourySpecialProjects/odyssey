@@ -27,7 +27,7 @@ const renderCard = (
   );
 
 describe("ReminderCard", () => {
-  it("shows the headline, progress, Up next and a Resume link to that lesson", () => {
+  it("shows the headline, progress and a Resume link to the next lesson, without naming it", () => {
     renderCard();
 
     expect(screen.getByText("Git")).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe("ReminderCard", () => {
       "aria-valuenow",
       "1",
     );
-    expect(screen.getByText("Branching")).toBeInTheDocument();
+    expect(screen.queryByText(/Up next|Branching/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Resume" })).toHaveAttribute(
       "href",
       "/d/git/branching",
@@ -69,7 +69,6 @@ describe("ReminderCard", () => {
       "href",
       "/d/git",
     );
-    expect(screen.queryByText(/Up next/)).not.toBeInTheDocument();
   });
 
   it("leaves out the bar and count when there is no progress", () => {
