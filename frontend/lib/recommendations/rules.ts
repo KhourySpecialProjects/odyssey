@@ -24,10 +24,13 @@ export type StudentState = {
   focusAreas: FocusArea[];
   dismissedIds: Set<number>;
 };
+/** Source droplet id to the droplets finished alongside it, with student counts. */
+export type CoCompletion = Map<number, { id: number; count: number }[]>;
 export type RankInput = {
   candidates: CandidateDroplet[];
   student: StudentState;
   excludeIds: number[];
+  coCompletion?: CoCompletion;
 };
 type Pick = { id: number; rule: RecommendationRule; reason: string };
 export type Rule = (
@@ -173,6 +176,35 @@ const postrequisite: Rule = (eligible, { student }) =>
       reason: REASONS.postrequisite(source.name),
     }));
 
+export const MAX_CO_COMPLETION_PICKS = 2;
+
+/** Rule 3: eligible droplets finished by others who finished one of yours, most popular first. */
+const coCompletion: Rule = (eligible, { student, coCompletion: pairs }) => {
+  if (!pairs?.size) return [];
+  const best = new Map<
+    number,
+    { count: number; source: StudentState["finished"][number] }
+  >();
+  for (const source of student.finished) {
+    for (const { id, count } of pairs.get(source.id) ?? []) {
+      if (!eligible.has(id)) continue;
+      if (count > (best.get(id)?.count ?? 0)) best.set(id, { count, source });
+    }
+  }
+  return [...best]
+    .map(([id, pick]) => ({ d: eligible.get(id)!, ...pick }))
+    .sort(
+      (a, b) =>
+        b.count - a.count || b.source.at - a.source.at || byRating(a.d, b.d),
+    )
+    .slice(0, MAX_CO_COMPLETION_PICKS)
+    .map(({ d, source }) => ({
+      id: d.id,
+      rule: "co-completion" as const,
+      reason: REASONS.coCompletion(source.name),
+    }));
+};
+
 /** Rule 4: quiz tag matches first, then focus-only matches (when 1 or 2 areas are chosen). */
 const interest: Rule = (eligible, { student }) => {
   const wanted = new Set(student.interests.map((i) => i.id));
@@ -200,7 +232,7 @@ const interest: Rule = (eligible, { student }) => {
 export const RULES: Rule[] = [
   nextInPath,
   postrequisite,
-  // ODY-962: coCompletion goes here
+  coCompletion,
   interest,
   popular,
 ];
@@ -211,13 +243,16 @@ export function rankRecommendations(
   rules: Rule[] = RULES,
 ): Recommendation[] {
   const eligible = buildEligible(input);
+  // Picked droplets leave `remaining`, so a later rule's cap isn't spent on them.
+  const remaining = new Map(eligible);
   const seen = new Set<number>();
   const out: Recommendation[] = [];
   for (const rule of rules) {
-    for (const pick of rule(eligible, input)) {
+    for (const pick of rule(remaining, input)) {
       const candidate = eligible.get(pick.id);
       if (!candidate || seen.has(pick.id)) continue;
       seen.add(pick.id);
+      remaining.delete(pick.id);
       const droplet = toRecommended(candidate);
       if (droplet) out.push({ droplet, reason: pick.reason, rule: pick.rule });
     }

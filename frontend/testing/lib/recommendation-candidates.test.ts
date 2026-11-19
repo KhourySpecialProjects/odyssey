@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import { getRankInput } from "@/lib/recommendations/candidates";
+import { getCoCompletion } from "@/lib/recommendations/co-completion";
 import { getDismissedDropletIds } from "@/lib/recommendations/dismissals";
 import { getLearnerProfile } from "@/lib/learner-profile";
 import { getDroplets } from "@/lib/requests/droplet";
@@ -21,6 +22,9 @@ jest.mock("@/lib/learner-profile", () => ({ getLearnerProfile: jest.fn() }));
 jest.mock("@/lib/recommendations/dismissals", () => ({
   getDismissedDropletIds: jest.fn(),
 }));
+jest.mock("@/lib/recommendations/co-completion", () => ({
+  getCoCompletion: jest.fn(),
+}));
 jest.mock("@/lib/utils", () => ({
   ...jest.requireActual("@/lib/utils"),
   fetchAPI: jest.fn(),
@@ -30,6 +34,7 @@ const droplets = jest.mocked(getDroplets);
 const enrollments = jest.mocked(getEnrollmentsByAuthorizedUser);
 const profile = jest.mocked(getLearnerProfile);
 const dismissed = jest.mocked(getDismissedDropletIds);
+const coCompletion = jest.mocked(getCoCompletion);
 const api = fetchAPI as jest.Mock;
 
 const fullPage = (from = 1) =>
@@ -53,12 +58,20 @@ beforeEach(() => {
     focusAreas: ["technical"],
   });
   dismissed.mockResolvedValue([]);
+  coCompletion.mockResolvedValue(new Map());
   api.mockImplementation(async (path: string) =>
     path === "/voyage-enrollments" ? voyages : playlists,
   );
 });
 
 const apiCall = (path: string) => api.mock.calls.find(([p]) => p === path)![1];
+
+it("passes the co-completion map through", async () => {
+  const map = new Map([[1, [{ id: 2, count: 3 }]]]);
+  coCompletion.mockResolvedValue(map);
+
+  expect((await getRankInput(7, [])).coCompletion).toBe(map);
+});
 
 it("reads live droplets once, with no exclusion ids and no per-user tag", async () => {
   await getRankInput(7, [3, 4]);
@@ -211,6 +224,21 @@ describe("failures", () => {
   ])("a failed %s read rejects", async (_label, fail) => {
     fail();
     await expect(getRankInput(7, [])).rejects.toThrow();
+  });
+
+  it("a failed co-completion read falls back to an empty map, logging only the error name", async () => {
+    coCompletion.mockRejectedValue(
+      new TypeError("http://strapi/co-completions"),
+    );
+
+    const { coCompletion: map, student } = await getRankInput(7, []);
+
+    expect(map).toEqual(new Map());
+    expect(student.interests).toEqual([{ id: 1, name: "React" }]);
+    expect(console.error).toHaveBeenCalledWith(
+      "recommendations: co-completion read failed:",
+      "TypeError",
+    );
   });
 
   it.each([

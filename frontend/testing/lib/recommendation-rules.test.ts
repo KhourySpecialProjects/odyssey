@@ -3,6 +3,7 @@ import {
   voyageDropletIds,
 } from "@/lib/recommendations/rules";
 import type {
+  CoCompletion,
   LearningPath,
   RankInput,
   Rule,
@@ -348,6 +349,240 @@ describe("rules 1, 2 and 4", () => {
         focusAreas: ["personal", "professional", "technical"],
       });
       expect(result[0].rule).toBe("popular");
+    });
+  });
+
+  describe("rule 3", () => {
+    const pairs = (...entries: [number, [number, number][]][]): CoCompletion =>
+      new Map(
+        entries.map(([source, targets]) => [
+          source,
+          targets.map(([id, count]) => ({ id, count })),
+        ]),
+      );
+    const coRank = (
+      candidates: RankInput["candidates"],
+      coCompletion: CoCompletion,
+      student: Partial<StudentState> = {},
+      excludeIds: number[] = [],
+    ) =>
+      rankRecommendations(
+        input({
+          candidates,
+          coCompletion,
+          excludeIds,
+          student: studentState({
+            finished: [fin(1)],
+            enrolledIds: new Set([1]),
+            ...student,
+          }),
+        }),
+        24,
+      );
+    const coPicks = (r: ReturnType<typeof rankRecommendations>) =>
+      r.filter((p) => p.rule === "co-completion").map((p) => p.droplet.id);
+
+    it("picks a paired droplet and names the finished source", () => {
+      const result = coRank(live(2), pairs([1, [[2, 3]]]), {
+        finished: [{ id: 1, name: "Intro to Git", at: 1 }],
+      });
+      expect(result[0]).toMatchObject({
+        droplet: { id: 2 },
+        rule: "co-completion",
+        reason: "Popular with students who finished Intro to Git",
+      });
+    });
+
+    it.each([
+      ["enrolled", { enrolledIds: new Set([1, 2]) }, []],
+      [
+        "finished",
+        { finished: [fin(1), fin(2)], enrolledIds: new Set([1, 2]) },
+        [],
+      ],
+      ["dismissed", { dismissedIds: new Set([2]) }, []],
+      ["excluded", {}, [2]],
+    ] as const)("never picks a %s target", (_label, student, excluded) => {
+      const result = coRank(
+        live(2),
+        pairs([1, [[2, 3]]]),
+        student as Partial<StudentState>,
+        [...excluded],
+      );
+      expect(coPicks(result)).toEqual([]);
+    });
+
+    it("never picks an authored or non-candidate target", () => {
+      const candidates = [
+        candidateDroplet({ id: 2, authorized_users: [{ id: 7 } as never] }),
+      ];
+      const result = coRank(
+        candidates,
+        pairs([
+          1,
+          [
+            [2, 3],
+            [99, 9],
+          ],
+        ]),
+      );
+      expect(coPicks(result)).toEqual([]);
+    });
+
+    it.each([
+      ["a source the student has not finished", [5], {}],
+      ["a source that is only in progress", [1], { finished: [] }],
+      [
+        "a student with nothing finished",
+        [1],
+        { finished: [], enrolledIds: new Set<number>() },
+      ],
+    ])("gives no picks for %s", (_label, [source], student) => {
+      const result = coRank(live(2), pairs([source, [[2, 3]]]), student);
+      expect(coPicks(result)).toEqual([]);
+    });
+
+    it.each([
+      ["the highest count", 10, 20, 5, 3, "Done 1"],
+      ["the newest finish on a tie", 10, 20, 4, 4, "Done 2"],
+    ])("names %s", (_label, atOne, atTwo, countOne, countTwo, expectedName) => {
+      const result = coRank(
+        live(3),
+        pairs([1, [[3, countOne]]], [2, [[3, countTwo]]]),
+        {
+          finished: [
+            { id: 2, name: "Done 2", at: atTwo },
+            { id: 1, name: "Done 1", at: atOne },
+          ],
+        },
+      );
+      expect(result[0].reason).toBe(
+        `Popular with students who finished ${expectedName}`,
+      );
+    });
+
+    it("orders by count, then source recency, then rating", () => {
+      const candidates = [
+        candidateDroplet({ id: 2, averageRating: 1 }),
+        candidateDroplet({ id: 3, averageRating: 5 }),
+        candidateDroplet({ id: 4, averageRating: 1 }),
+      ];
+      const result = coRank(
+        candidates,
+        pairs([
+          1,
+          [
+            [2, 5],
+            [3, 5],
+            [4, 9],
+          ],
+        ]),
+        { finished: [fin(1)] },
+      );
+      expect(coPicks(result)).toEqual([4, 3]);
+      const recency = coRank(live(2, 3), pairs([1, [[2, 4]]], [8, [[3, 4]]]), {
+        finished: [fin(1, 10), fin(8, 20)],
+      });
+      expect(coPicks(recency)).toEqual([3, 2]);
+    });
+
+    it("caps picks at 2 and lets the rest fall through", () => {
+      const tag = [{ id: 9, name: "T" } as never];
+      const candidates = [
+        candidateDroplet({ id: 2 }),
+        candidateDroplet({ id: 3 }),
+        candidateDroplet({ id: 4, tags: tag }),
+        candidateDroplet({ id: 5 }),
+      ];
+      const result = coRank(
+        candidates,
+        pairs([
+          1,
+          [
+            [2, 5],
+            [3, 4],
+            [4, 3],
+            [5, 2],
+          ],
+        ]),
+        { interests: [{ id: 9, name: "T" }] },
+      );
+      expect(result.map((p) => [p.droplet.id, p.rule])).toEqual([
+        [2, "co-completion"],
+        [3, "co-completion"],
+        [4, "interest"],
+        [5, "popular"],
+      ]);
+    });
+
+    it("still gives 2 picks when the top pair is already a postrequisite", () => {
+      const candidates = [
+        candidateDroplet({ id: 2, prerequisites: [{ id: 1 }] }),
+        candidateDroplet({ id: 3 }),
+        candidateDroplet({ id: 4 }),
+        candidateDroplet({ id: 5 }),
+      ];
+      const result = coRank(
+        candidates,
+        pairs([
+          1,
+          [
+            [2, 9],
+            [3, 5],
+            [4, 4],
+            [5, 3],
+          ],
+        ]),
+      );
+      expect(result.map((p) => [p.droplet.id, p.rule])).toEqual([
+        [2, "postrequisite"],
+        [3, "co-completion"],
+        [4, "co-completion"],
+        [5, "popular"],
+      ]);
+    });
+
+    it("skips a high-count target the student is enrolled in", () => {
+      const result = coRank(
+        live(2, 3, 4),
+        pairs([
+          1,
+          [
+            [2, 99],
+            [3, 5],
+            [4, 4],
+          ],
+        ]),
+        { enrolledIds: new Set([1, 2]) },
+      );
+      expect(coPicks(result)).toEqual([3, 4]);
+    });
+
+    it("ranks after rule 2 and ahead of rule 4", () => {
+      const tag = [{ id: 9, name: "T" } as never];
+      const candidates = [
+        candidateDroplet({ id: 2, prerequisites: [{ id: 1 }] }),
+        candidateDroplet({ id: 3, tags: tag }),
+        candidateDroplet({ id: 4, tags: tag }),
+      ];
+      const result = coRank(
+        candidates,
+        pairs([
+          1,
+          [
+            [2, 9],
+            [3, 3],
+          ],
+        ]),
+        {
+          interests: [{ id: 9, name: "T" }],
+        },
+      );
+      expect(result.map((p) => [p.droplet.id, p.rule])).toEqual([
+        [2, "postrequisite"],
+        [3, "co-completion"],
+        [4, "interest"],
+      ]);
     });
   });
 
