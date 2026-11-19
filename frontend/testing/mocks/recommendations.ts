@@ -1,8 +1,10 @@
+import { REASONS } from "@/lib/recommendations/reasons";
 import type {
   CandidateDroplet,
   StudentState,
   VoyageNodeInput,
 } from "@/lib/recommendations/rules";
+import type { Recommendation } from "@/types";
 
 export const candidateDroplet = (
   overrides: Partial<CandidateDroplet> & { id: number },
@@ -19,6 +21,17 @@ export const candidateDroplet = (
     prerequisites: [],
     ...overrides,
   }) as CandidateDroplet;
+
+/** A ranked pick as getRecommendations returns it. */
+export const recommendation = (
+  droplet: Partial<CandidateDroplet> & { id: number },
+  overrides: Partial<Omit<Recommendation, "droplet">> = {},
+): Recommendation => ({
+  droplet: candidateDroplet(droplet),
+  reason: REASONS.topRated,
+  rule: "popular",
+  ...overrides,
+});
 
 export const studentState = (
   overrides: Partial<StudentState> = {},
