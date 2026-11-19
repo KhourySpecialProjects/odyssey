@@ -11,6 +11,7 @@ export const REASONS = {
   voyage: (name: string) => `Next in your voyage: ${name}`,
   playlist: (name: string) => `Next in your playlist: ${name}`,
   postrequisite: (name: string) => `Builds on ${name}`,
+  coCompletion: (name: string) => `Popular with students who finished ${name}`,
   interest: (name: string) => `Matches your interest: ${name}`,
   focus: (area: FocusArea) => `Matches your focus: ${FOCUS_LABELS[area]}`,
   topRated: "Top rated on Odyssey",
