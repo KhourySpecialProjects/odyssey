@@ -37,8 +37,8 @@ Owner (in Slack)
          ├─ Squad ....... Sonnet 5.5, medium     one per ticket, pushes claude/ody-<n>-…
          │   ├─ Workers   Haiku 5.5, low/medium  0–5 subagents inside the squad's session
          │   └─ Reviewer  Opus 5.5, medium       fresh read-only subagent, at most 3 rounds
-         ├─ Review ...... Opus 5.5, medium       only when the route needs an Audit or the owner asks
-         └─ Audit ....... Opus 5.5, high         once per branch, before merge
+         ├─ Review ...... Opus 5.5, medium       final, fresh session: 🟢/🟡 after the loop
+         └─ Audit ....... Opus 5.5, high         🔴, once per branch, before merge; the fresh-session gate
 ```
 
 Each cloud routine is its own session, in its own container, with its own
@@ -150,16 +150,26 @@ To move it to the cloud later, three things are needed:
   the squad runs Jest, once, after the workers finish, because parallel Jest
   runs flake.
 
-### Review routine (a Lead): Opus 5.5 at `medium`
+### Final Review routine (a Lead): Opus 5.5 at `medium`
 
-Not the default. Squads review themselves (see "Review loop"). Use this routine
-only when the route needs an Audit or the owner asks, and as the fallback
-when subagents fail.
+The one fresh-session review for 🟢 and 🟡 tickets, after the squad's loop. The
+loop's reviewer only sees files the builder wrote. The Manager starts this
+routine after the squad pushes. It also runs when the owner asks, and as the
+fallback when subagents fail. 🔴 tickets get the Audit instead.
 
-- **Does:** checks out the squad's `claude/` branch, reviews the diff against
-  the plan and the repo's patterns (the `reviewer` agent's checklist), and
-  reports in its final message.
-- **Doesn't:** edit or push. Fixes go to a new squad run on the same branch.
+- **Does:** fetches the pushed branch and reads the diff itself
+  (`git fetch`, then `git diff origin/develop...origin/claude/<branch>`), never
+  from files the builder wrote. The Manager pastes in the ticket text and the
+  plan. It uses the fixed Reviewer prompt in
+  `.claude/scripts/loop-reviewer-brief.md` with round `final`, and the
+  branch's `docs/reviews/ODY-<n>.md` as the previous reviews, so it can judge
+  the builder's "won't fix" answers.
+- **Pushes:** only its review, as `docs/reviews/ODY-<n>-final.md` on its own
+  branch `claude/ody-<n>-final-review`. It doesn't edit the code and needs no
+  `npm ci`.
+- **Result:** `verdict: ship` is noted as `Final review: ship`. `verdict: fix`
+  goes to the owner as `[OPEN] ... · NEEDS INPUT`, and the Manager starts no
+  more fix runs.
 
 ### Audit routine (a Lead): Opus 5.5 at `high`
 
@@ -182,15 +192,15 @@ auth and server actions, where being right matters more than cost.
    `get_run_log`. If the checks failed or nothing was pushed, it reruns the
    squad one step up the ladder.
 6. **Review:** the squad reviews its own work inside its session (see
-   "Review loop" below), at most 3 reviews. A separate Review routine runs
-   only if the route needs an Audit or the owner asks. If a card says
-   `Needs human:`, the Manager posts `[OPEN] ... · NEEDS INPUT` and starts
-   no more runs on that branch.
+   "Review loop" below), at most 3 reviews. Then one fresh-session gate: the
+   final Review routine for 🟢 and 🟡, or the Audit for 🔴, with no separate
+   Review routine. If a card says `Needs human:`, the Manager posts
+   `[OPEN] ... · NEEDS INPUT` and starts no more runs on that branch.
 7. **Hand-off:** the Manager posts the branch, the PR body and the review in
    Slack. **The owner opens the PR** from the `claude/` branch. Agents never
    open or merge PRs.
-8. **Audit:** before merge, an Audit routine runs where the route requires
-   one.
+8. **Audit:** for 🔴 work, an Audit routine runs after the loop and before
+   the owner sees the card.
 
 ## Review loop
 
@@ -219,6 +229,11 @@ reviewer prompt.
 Every review card shows `Reviews: n of 3 · last verdict <ship|fix>` and the
 `checks:` line.
 
+**Final gate.** The loop's reviewer only sees what the builder wrote, so one
+more review runs in a new session (see "Final Review routine"; 🔴 tickets get
+the Audit). It can't start fix runs: on `verdict: fix` the owner decides. The
+cap is 3 loop reviews plus 1 final gate.
+
 **Fallback.** If subagents fail in a cloud session, the Manager chains a
 Review routine and a fix squad run with the same cap of 3. It counts the
 rounds in its state file (`reviewRound`, per branch).
@@ -231,7 +246,7 @@ rounds in its state file (`reviewRound`, per branch).
 | The same mechanical change across many files (e.g. ODY-527's ~40 broken Tailwind classes) | One squad routine plus one Haiku worker per group of files, up to 5                      | Workers `low`, squad `medium`                  |
 | A bug with a known cause in one area (e.g. ODY-628)                                       | One squad routine                                                                        | `medium`                                       |
 | A bug whose cause is unknown                                                              | One squad routine using `systematic-debugging`. A Plan routine if it finds no root cause | `high`                                         |
-| A feature over ~100 lines (e.g. ODY-888)                                                  | Plan → squad with review loop                                                            | Plan `high`, squad `medium`, reviewer `medium` |
+| A feature over ~100 lines (e.g. ODY-888)                                                  | Plan → squad with review loop → final Review                                             | Plan `high`, squad `medium`, reviewer `medium` |
 | A schema change, backfill, auth or server action (e.g. ODY-786)                           | Plan → squad with review loop → Audit (owner reviews the 🔴 card)                        | Plan `high`, squad `high`, Audit `high`/`max`  |
 | A batch of small independent tickets                                                      | One squad routine per ticket, in parallel (start with 3 at once)                         | As per ticket                                  |
 | Read-only work: finding usages, summarizing a log                                         | A Haiku worker inside whichever squad needs it                                           | `low`                                          |

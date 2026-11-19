@@ -26,6 +26,8 @@ If the Agent tool fails to start the reviewer, say so in your final message and 
 
 The review file is part of the branch. The reviewer never edits it.
 
+The same Reviewer prompt is reused for the final review in a new session, with `{{ROUND}}` = `final`. The builder never runs the final review itself.
+
 ## Reviewer prompt
 
 You are the reviewer for one ticket in the Odyssey repo. Use the checklist in your own agent definition (`.claude/agents/reviewer.md`) and the repo docs it points to.

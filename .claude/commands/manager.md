@@ -135,9 +135,14 @@ the manager's model. Instead:
    checks failed, read why before rerunning. Rerun one step up the ladder
    in `agent-swarming.md`, not the same brief again.
 6. **Review.** The squad runs the review loop itself, with at most 3
-   reviews (see "Review loop" in `agent-swarming.md`), so don't start a
-   separate Review routine unless the route needs an Audit (schema, auth,
-   server actions) or the owner asks. Don't chain fix runs by hand.
+   reviews (see "Review loop" in `agent-swarming.md`). Then one fresh-session
+   gate. For 🟢 and 🟡, start the final Review routine after the squad
+   pushes. For 🔴 (schema, auth, server actions), start the Audit instead,
+   with no separate Review routine. Don't chain fix runs by hand.
+   - **Final review:** `verdict: ship` goes in the Review column and the
+     `[PR]` post as `Final review: ship`. `verdict: fix` gets
+     `[OPEN] … · NEEDS INPUT` with the blocking findings and no more fix
+     runs; the owner decides.
    - **Needs human:** if a card has a `Needs human:` section (risk 🔴),
      post `[OPEN] … · NEEDS INPUT` in the thread with the open findings,
      start no more runs on that branch, and wait for the owner.
@@ -213,6 +218,13 @@ already theirs.
   - Also write the card to `review-cards/<branch-name-without-claude/>.md`
     on a `claude/review-cards-<batch>` branch, so
     `bash .claude/scripts/open-prs.sh` can open the PR with it as the body.
+- **The final Review routine's brief:** Opus. The Manager pastes in the
+  ticket text (and plan). The routine fetches and reads the diff from the
+  pushed branch (`git diff origin/develop...origin/claude/<branch>`), and uses
+  the fixed Reviewer prompt in `.claude/scripts/loop-reviewer-brief.md` with
+  round `final` and the branch's `docs/reviews/ODY-<n>.md` as previous
+  reviews. It pushes only `docs/reviews/ODY-<n>-final.md` on
+  `claude/ody-<n>-final-review`, with the exact push command rule above.
 - **The review card** is the PR body, and it does CodeRabbit's job (the free
   plan is too limited). It starts with three lines the script reads:
 
@@ -250,7 +262,7 @@ already theirs.
     `"use server"` box (if no such file changed, or every changed export is
     guarded or allowlisted). The person opening the PR ticks the rest.
   - Risk: 🔴 for a schema, auth, a `"use server"` export, env or secrets, or
-    a data migration or deletion. These also get an Opus review before the
+    a data migration or deletion. These get the Audit before the
     owner sees them. 🟡 when a user sees or can do something different. 🟢
     for lint, copy, tests, types, or dead code.
 
@@ -284,7 +296,8 @@ already theirs.
   into a plain bullet when it shares a list with a plain bullet. Add new cards
   when a batch finishes. Drop a ticket once its PR merges.
 - **Review column.** In the `Ticket overview` table, show
-  `Reviews n/3 · ship|fix`, or `Needs human` when a card has that section.
+  `Reviews n/3 · final ship|fix`, `Audit ship|fix` for 🔴, or `Needs human`
+  when a card has that section.
 - **One summary post per batch.** When a batch is done and the canvas is up
   to date, post once in the request's thread (with `reply_broadcast`): what
   the owner should look at, and the context other developers need
