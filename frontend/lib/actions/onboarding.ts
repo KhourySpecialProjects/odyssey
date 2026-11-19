@@ -73,13 +73,21 @@ export async function saveOnboarding(
     const saved = await saveLearnerProfile(user, {
       goal: a.goal,
       focusAreas: a.focusAreas,
-      interestTagIds: a.interestTagIds,
+      // saveLearnerProfile rejects duplicates; the quiz schema allows them.
+      interestTagIds: [...new Set(a.interestTagIds)],
       interestNote: a.interestNote,
     });
     if (!saved.ok) return fail();
 
     // Last, so a failed save shows the quiz again next time.
     if (!(await putSelf(user, { firstTime: false }))) return fail();
+
+    // Names are cached under the global lists too (see updateUserInfo).
+    revalidateTag(CACHE_TAGS.user(user.email));
+    revalidateTag(CACHE_TAGS.users);
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.recommendations(user.id));
+    return { ok: true };
   } catch (error) {
     console.error(
       "saveOnboarding failed",
@@ -87,8 +95,4 @@ export async function saveOnboarding(
     );
     return fail();
   }
-
-  revalidateTag(CACHE_TAGS.user(user.email));
-  revalidateTag(CACHE_TAGS.recommendations(user.id));
-  return { ok: true };
 }

@@ -1,6 +1,7 @@
 /** @jest-environment node */
 import { revalidateTag } from "next/cache";
 import { requireRole } from "@/lib/auth/require-role";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { saveLearnerProfile } from "@/lib/learner-profile";
 import type { OnboardingAnswers } from "@/lib/validations/onboarding";
 import { saveOnboarding } from "@/lib/actions/onboarding";
@@ -91,7 +92,12 @@ describe("saveOnboarding", () => {
     ]);
     expect(mockedSave).toHaveBeenCalledWith(
       expect.objectContaining({ id: 7 }),
-      expect.objectContaining({ interestTagIds: [31, 42] }),
+      {
+        goal: "career",
+        focusAreas: ["technical"],
+        interestTagIds: [31, 42],
+        interestNote: "Secret note text",
+      },
     );
     const order = [
       fetchMock.mock.invocationCallOrder[0],
@@ -99,7 +105,34 @@ describe("saveOnboarding", () => {
       fetchMock.mock.invocationCallOrder[1],
     ];
     expect(order).toEqual([...order].sort((a, b) => a - b));
-    expect(revalidateTag).toHaveBeenCalledWith("recommendations-7");
+    const tags = jest.mocked(revalidateTag).mock.calls.map(([t]) => t);
+    expect(tags).toEqual([
+      CACHE_TAGS.user("user7@northeastern.edu"),
+      CACHE_TAGS.users,
+      CACHE_TAGS.authors,
+      CACHE_TAGS.recommendations(7),
+    ]);
+  });
+
+  it("removes duplicate topic ids before saving", async () => {
+    const res = await saveOnboarding({
+      ...ANSWERS,
+      interestTagIds: [31, 31, 42, 31],
+    });
+    expect(res).toEqual({ ok: true });
+    expect(mockedSave).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ interestTagIds: [31, 42] }),
+    );
+  });
+
+  it("returns ok:false when revalidation throws", async () => {
+    jest.mocked(revalidateTag).mockImplementationOnce(() => {
+      throw new Error("cache Zelda");
+    });
+    const res = await saveOnboarding(ANSWERS);
+    expect(res.ok).toBe(false);
+    SECRETS.forEach((s) => expect(loggedText()).not.toContain(s));
   });
 
   it("clears an empty bio", async () => {
@@ -111,7 +144,7 @@ describe("saveOnboarding", () => {
     [
       "profile write",
       () => fetchMock.mockResolvedValueOnce({ ok: false, status: 500 }),
-      0,
+      1,
     ],
     [
       "learner profile",
@@ -129,9 +162,9 @@ describe("saveOnboarding", () => {
         fetchMock
           .mockResolvedValueOnce(ok)
           .mockResolvedValueOnce({ ok: false, status: 500 }),
-      1,
+      2,
     ],
-  ])("when the %s fails", (_n, arrange, _w) => {
+  ])("when the %s fails", (_n, arrange, writes) => {
     it("returns ok:false, skips revalidation and logs no answers", async () => {
       arrange();
       const res = await saveOnboarding({
@@ -143,9 +176,11 @@ describe("saveOnboarding", () => {
         error: "Couldn't save your answers. Try again.",
       });
       expect(revalidateTag).not.toHaveBeenCalled();
-      if (_n !== "firstTime write") {
-        expect(bodies().some((b) => "firstTime" in b)).toBe(false);
-      }
+      // the firstTime flag is only attempted after the learner profile saved
+      expect(fetchMock).toHaveBeenCalledTimes(writes);
+      expect(bodies().some((b) => "firstTime" in b)).toBe(
+        _n === "firstTime write",
+      );
       SECRETS.forEach((s) => expect(loggedText()).not.toContain(s));
     });
   });
@@ -157,6 +192,7 @@ describe("saveOnboarding", () => {
       focusAreas: ANSWERS.focusAreas,
     });
     expect(res.ok).toBe(false);
+    expect(revalidateTag).not.toHaveBeenCalled();
     SECRETS.forEach((s) => expect(loggedText()).not.toContain(s));
   });
 });
