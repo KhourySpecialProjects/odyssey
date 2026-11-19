@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "recommendation_dismissals",
+  "info": {
+    "singularName": "recommendation-dismissal",
+    "pluralName": "recommendation-dismissals",
+    "displayName": "Recommendation Dismissal",
+    "description": "A droplet a student said isn't for them; never recommended to them again. Student data: keep out of logs, PostHog and Slack (ODY-954)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "recommendation_dismissals_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "maxLength": 70
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    }
+  }
+}

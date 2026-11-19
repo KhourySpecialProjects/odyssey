@@ -1,102 +1,88 @@
 # Dependabot workflow
 
-How Dependabot PRs on `develop` get checked, fixed and merged with as little
-hand work as possible. The agent side is the `/dependabot` command
-(`.claude/commands/dependabot.md`).
+How Dependabot PRs on `develop` get sorted, fixed, planned and merged with
+as little hand work as possible. The agent side is the `/dependabot` command
+(`.claude/commands/dependabot.md`). The developer's side is one script,
+`.claude/scripts/dependabot-open-prs.sh`. This is the process the team ran by
+hand on 2026-11-17, written down so a routine can repeat it every week.
 
-## Who does what
+## The weekly loop
 
-| Step                                                                | Done by                                               | Needs                                      |
-| ------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------ |
-| Open PRs each week, rebase them on conflicts                        | Dependabot                                            | `.github/dependabot.yml` (already set up)  |
-| Run the checks                                                      | GitHub Actions                                        | The existing workflows                     |
-| Sort PRs into lanes, fix failing ones on `claude/` branches, report | `/dependabot`, weekly as a cloud routine              | A routine set up with `/schedule`          |
-| Open the fix PRs                                                    | The developer                                         | `bash .claude/scripts/open-prs.sh`         |
-| Approve and merge patch and minor PRs                               | The developer today, or the auto-merge Action (below) | The team's agreement and two repo settings |
-| Major upgrades                                                      | A person, through a Linear ticket                     | ODY-906 holds today's                      |
+| Step                  | Who                                       | What happens                                                                                                                                                                                                                                                                                          |
+| --------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. New PRs            | Dependabot                                | It opens and rebases PRs on its own schedule (`.github/dependabot.yml`), and CI runs on each.                                                                                                                                                                                                         |
+| 2. Sort               | The weekly cloud routine, Tuesday 9:00 ET | `/dependabot fix all` reads every open Dependabot PR through GitHub's REST API, plus its failing logs, and sorts each into a lane: Held, Blocked, Conflicts, Waiting, Ready, Needs a read, Fix or Plan.                                                                                               |
+| 3. Fix and plan       | The routine, one agent per PR in parallel | Fix lane: start from develop, apply the bump, regenerate the lockfile, run CI's checks, adapt small test setups (assertions unchanged), and push `claude/dependabot-<pr>-<package>` with a review card. Plan lane: write `docs/plans/<package>-<major>-migration.md` on `claude/plan-…`, with a card. |
+| 4. Report             | The routine                               | It writes `dependabot-reports/<date>.md` on `claude/dependabot-report-<date>`, ending with the exact commands for step 5. With Slack connected, it also posts one update per finished PR in `#prj-odyssey-agents` and updates the developer's canvas.                                                 |
+| 5. Open, close, merge | The developer                             | Paste the report's commands: `dependabot-open-prs.sh --yes --close` opens each fix and plan as a PR from an `improvement/` branch and closes the Dependabot PRs the fixes replace. Then approve and merge the Ready ones.                                                                             |
+| 6. Decisions          | The team                                  | Blocked and Plan items, such as a CLAUDE.md version pin, a Node upgrade or a framework migration. Once decided, run `/dependabot fix <pr> (<decision>)`.                                                                                                                                              |
 
-Agents never approve or merge (`CLAUDE.md`). Auto-merge keeps that rule:
-GitHub does the merge, and only once every check has passed.
+Agents never open, approve, merge or close PRs (`CLAUDE.md`). That's why
+step 5 is the developer's, and why it's a single command.
 
-## Today's state (2026-11-16)
+## What the routine fixes on its own, and what it doesn't
 
-- 13 open Dependabot PRs. Most pass every check, but they're `BLOCKED` because
-  `develop` needs one approving review.
-- The repo has **Allow auto-merge** turned off.
-- Jaylen's ODY-906 owns the majors that need code changes. He asked that
-  #1342, #1345, #1347, #1346, #1351 and #1352 not be merged, and #1350
-  (Next 16) belongs to P-ODY-137.
+- **On its own:** lockfiles out of sync with `package.json`; new transitive
+  dependencies, majors included; test setups that a dependency's behaviour
+  change broke (at most 15 lines per file, assertions unchanged); code fixes
+  up to about 200 lines that users can't see.
+- **As a plan, not code:** majors that need a migration (Next, React, Tailwind,
+  a Strapi major), or anything bigger than the limits above.
+- **Never, and it says why:** anything that needs a Node version CI doesn't
+  run, a version past a CLAUDE.md pin nobody has okayed, a PR into
+  `production` (which only takes PRs from develop), a single `@radix-ui/*`
+  bump (Radix moves only as the grouped PR), a `dependabot-hold` PR, or an
+  upgrade a teammate owns in Linear.
+
+## Lessons from 2026-11-17
+
+- **GraphQL is blocked in cloud sessions.** `gh pr list` and `gh pr checks`
+  fail there with 403; `gh api` REST calls work.
+- **Branch names decide `check-branches`, not PR titles.** Cloud agents can
+  only push `claude/` branches, and `check-branches` only accepts `feature/`,
+  `bug/`, `improvement/` or `dependabot/` into develop. So the open script
+  copies each `claude/` branch to `improvement/<name>` before opening its PR.
+- **A PR's version can move between triage and fix.** #1277 went from 5.61.1
+  to 5.62.0. Use the PR's current diff unless a developer okayed another
+  version.
+- **Framework upgrades can change behaviour tests rely on.** Strapi 5.61 stopped
+  emitting events that have no listener, so one test needed a no-op listener.
 
 ## Setting it up
 
-1. **Agree with the team.** Post an `[OPEN]` in `#prj-odyssey-agents`. Jaylen
-   owns ODY-906, and auto-merge changes how everyone's PRs land. The decision
-   is whether patch and minor Dependabot PRs may merge without a person
-   approving each one.
-2. **Add a `dependabot-hold` label,** and put it on the PRs ODY-906 asks to
-   hold. Both `/dependabot` and the Action skip labelled PRs.
-3. **Try `/dependabot triage` by hand** on today's PRs and check the lanes.
-4. **Schedule it.** Run `/schedule` and create a weekly routine for Tuesday
-   9:00 ET (`0 14 * * 2`), the day after Dependabot opens its PRs. Use the
-   developer's environment and `claude-sonnet-5-5`, with the brief
-   "Run /dependabot fix all and write the report". The manager agent relays
-   the report to Slack.
-5. **Only if the team agreed to auto-merge in step 1,** a repo admin:
-   - turns on **Settings → General → Allow auto-merge**;
-   - turns on **Settings → Actions → General → Allow GitHub Actions to create
-     and approve pull requests**;
-   - adds the workflow below as `.github/workflows/dependabot-auto-merge.yml`;
-   - checks on one patch PR that the Action's approval counts toward
-     `develop`'s required review. If it doesn't, the ruleset needs a bypass for
-     the Action, or a person keeps approving.
-6. **Add a cooldown** to each `updates` entry in `.github/dependabot.yml`, so a
-   brand-new release waits a few days before it can merge:
+Done already:
 
-   ```yaml
-   cooldown:
-     default-days: 3
-     semver-major-days: 7
-   ```
+- The `/dependabot` command and this doc are on develop (#1368), and the team
+  voted "approve 1" on 2026-11-16: a weekly routine, and no auto-merge.
+- Brady's weekly routine (`trig_01NVGwVEXLDy9d98YsVjoEw3`) runs on Tuesdays
+  at 9:00 ET. Its brief points at this command.
 
-## The auto-merge Action
+Still to do:
 
-It approves and turns on auto-merge only for Dependabot's patch and minor
-updates on `develop` that don't have the hold label. GitHub then merges each
-PR when every check passes, and never merges a failing one.
+1. **Connect Slack for routines** at https://claude.ai/customize/connectors.
+   Routines can only use claude.ai connectors. Without it, the report branch is
+   the record, and someone relays it.
+2. **Create a `dependabot-hold` label** on GitHub, and put it on any PR the team
+   wants left alone. It replaces hold lists written into the routine's brief.
+3. **Optional: allow `claude/` in `.github/workflows/pull-request.yml`.** Then
+   the open script wouldn't need `improvement/` copies. It's a team decision,
+   because it changes the branch rule for everyone.
+4. **Optional: start the routine when Dependabot opens a PR,** with a GitHub
+   event trigger as well as the Tuesday schedule (`/schedule`).
 
-```yaml
-name: Dependabot auto-merge
-on: pull_request
+## Auto-merge (not adopted)
 
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  auto-merge:
-    if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.base.ref == 'develop' &&
-      !contains(github.event.pull_request.labels.*.name, 'dependabot-hold')
-    runs-on: ubuntu-latest
-    steps:
-      - id: meta
-        uses: dependabot/fetch-metadata@v2
-      - if: steps.meta.outputs.update-type != 'version-update:semver-major'
-        run: |
-          gh pr review --approve "$PR_URL"
-          gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+The team chose not to auto-merge, on 2026-11-16. If that changes, a GitHub
+Action can approve patch and minor Dependabot PRs and turn on GitHub's
+auto-merge, so GitHub merges each one once every check passes. That needs
+"Allow auto-merge" and "Allow GitHub Actions to create and approve pull
+requests" turned on by a repo admin, plus a cooldown in `.github/dependabot.yml`
+(`cooldown: { default-days: 3 }`) so a brand-new release can't merge at once.
 
 ## Risks
 
-- **Supply chain:** an auto-merged update can carry a compromised release.
-  The cooldown and the "never majors" rule lower that risk, and every PR
-  still has to pass the full test suite and both builds.
-- **Prompt injection:** PR bodies and changelogs are written by outsiders.
-  `/dependabot` treats them as data and never runs anything they suggest.
-- **Lockfile churn:** each merge makes the other PRs rebase. Dependabot does
-  that on its own, so the next run just sees them as Waiting.
+- **Supply chain:** a new release can be compromised. Every fix still has to
+  pass the full test suite and both builds, and a person merges it.
+- **Prompt injection:** PR bodies, changelogs and CI logs are written by
+  outsiders. The command treats them as data and never runs anything they
+  suggest.

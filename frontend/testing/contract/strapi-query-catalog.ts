@@ -399,7 +399,13 @@ const MENTOR_SETTING_ROUTES = routes([
   [
     "GET",
     /^\/mentor-setting$/,
-    { data: ent(1, { enabled: true, pilotGroups: rel(ent(7)) }) },
+    {
+      data: ent(1, {
+        enabled: true,
+        personalize: true,
+        pilotGroups: rel(ent(7)),
+      }),
+    },
   ],
   ["GET", /^\/groups$/, list(ent(7))],
 ]);
@@ -1214,6 +1220,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring-prompt": {
     saveAiScoringPrompt: "custom ai-scoring-setting prompt route (ODY-898)",
   },
+  recommendations: { dismissRecommendation: WRITE },
   "overview-scan": {
     runOverviewScan: WRITE,
     dismissScanFlag: WRITE,

@@ -3,7 +3,9 @@
 # session (low effort) reads #prj-odyssey-agents and the tracked threads, and
 # prints only message IDs. This script prints one NEW line per message it
 # hasn't seen, so the manager wakes only when something changed. Message text
-# never passes through here: the manager reads it itself.
+# never passes through here: the manager reads it itself. It also prints
+# GRILL_ANSWERS <file> when the question window saves answers
+# (docs/agent/question-window.md).
 #
 # Run it from the repo root with Claude Code's Monitor tool:
 #   bash .claude/scripts/slack-watch.sh
@@ -33,6 +35,17 @@ print(s.get("lastCheck", "0"), ",".join(live))
     sleep "$INTERVAL"
     continue
   fi
+
+  # Answers saved by the question window (.claude/scripts/grill_app.py,
+  # docs/agent/question-window.md)
+  for f in "$ROOT"/.claude/grill/answers/*.json; do
+    [ -e "$f" ] || continue
+    key="grill:$(basename "$f")"
+    if ! grep -qxF "$key" "$SEEN"; then
+      echo "$key" >> "$SEEN"
+      echo "GRILL_ANSWERS $f"
+    fi
+  done
 
   PROMPT="You are a Slack watcher. Only read; never post.
 1. Call slack_read_channel with channel_id $CHANNEL, oldest $LAST, response_format detailed.

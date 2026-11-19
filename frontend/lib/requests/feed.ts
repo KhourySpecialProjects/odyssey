@@ -26,6 +26,7 @@ import { getAuthorizedUserId } from "../auth/current-user-id";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getCachedUserSocial } from "./cached";
 import { resolveDocumentId, strapiEntryUrl } from "../strapi-document-id";
+import { writeAnnouncementRead } from "../announcement-reads";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -840,68 +841,11 @@ async function setReadState(
     const access = await assertAnnouncementVisible(id);
     if (!access.ok) return { success: false, error: access.error };
 
-    const existing = await fetchAPI<{ id: number; documentId?: string }[]>(
-      "/announcement-reads",
-      {
-        urlParams: {
-          filters: {
-            announcement: { id: { $eq: id } },
-            authorized_user: { id: { $eq: access.userId } },
-          },
-          fields: ["id"],
-          pagination: { pageSize: 25, page: 1 },
-        },
-        cache: "no-store",
-      },
+    await writeAnnouncementRead(
+      { id, documentId: access.documentId },
+      access.userId,
+      read,
     );
-
-    if (read && existing.length === 0) {
-      const response = await fetch(
-        NEXT_PUBLIC_STRAPI_API_URL + "/api/announcement-reads",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            data: {
-              announcement: access.documentId,
-              authorized_user: await resolveDocumentId(
-                "authorized-users",
-                access.userId,
-              ),
-            },
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(
-          `Failed to mark announcement as read (${response.status})`,
-        );
-      }
-    }
-
-    if (!read) {
-      for (const row of existing) {
-        const response = await fetch(
-          await strapiEntryUrl("announcement-reads", row),
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-              ...STRAPI_RESPONSE_FORMAT_HEADER,
-            },
-          },
-        );
-        if (!response.ok) {
-          throw new Error(
-            `Failed to mark announcement as unread (${response.status})`,
-          );
-        }
-      }
-    }
 
     // Read state is per user, so only this user's feed changes.
     revalidateTag(CACHE_TAGS.userFeed(access.userId));

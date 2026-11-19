@@ -484,10 +484,10 @@ describe("the network media rules", () => {
       "This image didn't answer within 5 s.",
     ],
     [
-      "the scan's time running out",
+      "the checks running out of time",
       unchecked("budget"),
       "unknown",
-      "This image wasn't checked before the scan's time ran out.",
+      "This image wasn't checked in time.",
     ],
     [
       "too many redirects",

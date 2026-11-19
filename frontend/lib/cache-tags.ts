@@ -160,12 +160,14 @@
  * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
  *                 learner's streak days); invalidated by recordStreakDay,
  *                 which updateViewedLessons calls on a lesson's first view
- * recommendations Per-user tag "recommendations-{userId}": first read by      900s
- *                 getRecommendations in ODY-957, only on per-student
- *                 queries (never a shared URL). Invalidated by
- *                 dismissRecommendation (ODY-954), the enrollments-{userId}
- *                 call sites (ODY-957) and the quiz save. The ODY-952 stub
- *                 reads only "droplets".
+ * recommendations Per-user tag "recommendations-{userId}": read by            900s
+ *                 getDismissedDropletIds and the engine's voyage and
+ *                 playlist reads (lib/recommendations/candidates.ts), only
+ *                 on per-student URLs (never a shared one). Invalidated by
+ *                 dismissRecommendation. Enrollment, voyage and quiz changes
+ *                 reach the picks through enrollments-{id},
+ *                 voyage-enrollments-{id} and learner-profile-{id}, which
+ *                 the engine's reads also carry.
  * mentor-chats   Per-user tag "mentor-chats-{userId}": read by                60s
  *                 listMentorChats; invalidated by saveMentorExchange and
  *                 the delete actions (ODY-937)

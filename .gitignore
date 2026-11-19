@@ -47,6 +47,9 @@ docker-compose.playwright.yml
 # claude worktrees
 .claude/worktrees/
 
+# question window: local questions and answers (docs/agent/question-window.md)
+.claude/grill/
+
 # Strapi auto-generated docs (regenerated on schema changes)
 backend/src/extensions/documentation/documentation/
 
