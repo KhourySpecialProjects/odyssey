@@ -557,6 +557,30 @@ describe("gradeRow", () => {
       expect(g.checkByHand).toContain("claims history the block doesn't show");
     });
 
+    it("doesn't flag a reply naming the lesson's own droplet and one finished droplet", () => {
+      const base = caseById("covered-01");
+      const own = facts(base).droplet;
+      const finished = (name: string) => ({
+        name,
+        tags: [],
+        difficulty: null,
+        month: "2026-07",
+      });
+      const twin: EvalCase = {
+        ...base,
+        id: "covered-01+own",
+        learner: "own",
+        profile: learnerProfile({
+          finished: [finished(own.toUpperCase()), finished("SQL Basics")],
+        }),
+        twinOf: "covered-01",
+      };
+      const reply = `In ${own} you built on SQL Basics. A join combines rows [p2].`;
+      expect(grade(reply, twin, "ok", [])).toMatchObject({
+        recitesHistory: false,
+      });
+    });
+
     it("grades neither without a learner", () => {
       expect(
         grade("Keys matter [p3].", caseById("covered-01"), "ok", []),

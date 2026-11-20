@@ -406,7 +406,7 @@ export function recites(
 ): boolean {
   const named = [...profile.finished, ...profile.inProgress].filter(
     ({ name }) =>
-      name !== current &&
+      words(name) !== words(current) &&
       name.trim().split(/\s+/).length >= 2 &&
       words(reply).includes(words(name)),
   );

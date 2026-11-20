@@ -344,8 +344,8 @@ settings it started with, and refuses if `cases.jsonl`, the learner profiles,
 `MENTOR_PROMPT_VERSION`, `JUDGE_VERSION`, the fixtures, `--twins` or `--kind`
 have changed since.
 
-**Dismissing a false positive.** One judge false positive on History claims or
-Recited history fails a setup. After reading the row under "Check by hand",
+**Dismissing a false positive.** One false positive on History claims (judge) or
+Recited history (code) fails a setup. After reading the row under "Check by hand",
 add `hand-checks.json` to the run folder:
 `[{ "key": "haiku-low|covered-01+broad-history|1", "reason": "it quotes the lesson" }]`.
 A key is a row's `setup|caseId|rep`. The next report, which a free `--resume`
