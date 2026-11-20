@@ -237,43 +237,69 @@ export const questionKey = (c: EvalCase) =>
 const normalised = (c: EvalCase) =>
   `${JSON.stringify(c.learner ?? null)}:${questionKey(c)}`;
 
-/** The profile a case asks under, as a comparable string */
+/** The profile a case asks under: its rendered learner block, which leaves out `about` */
 const profileKey = (c: EvalCase) =>
-  JSON.stringify(c.profile ?? c.learner ?? null);
+  c.profile ? learnerBlock(c.profile) : "none";
 
-/** Pairs: each `with` is another case of the same question under another profile, once; once any is written, each question under 2 or more profiles needs one */
+/** Pairs: each `with` is a personalized case of the same question under another profile, one way and once; each such question needs every profile in a pair */
 function pairProblems(cases: EvalCase[]): string[] {
   const byId = new Map(cases.map((c) => [c.id, c]));
+  // Questions with a bad pair are reported once, not again for their profiles
+  const broken = new Set<string>();
   const problems = cases.flatMap((c) => {
     const found: string[] = [];
-    for (const [i, { with: other, expect }] of (c.pairs ?? []).entries()) {
+    for (const [i, { with: other }] of (c.pairs ?? []).entries()) {
       const b = byId.get(other);
       if (!b) found.push(`${c.id}: pair with ${other}, which doesn't exist`);
+      else if (c.kind !== "personalized" || b.kind !== "personalized")
+        found.push(`${c.id}: pair with ${other}, both must be personalized`);
       else if (questionKey(b) !== questionKey(c))
         found.push(`${c.id}: pair with ${other}, a different question`);
       else if (profileKey(b) === profileKey(c))
         found.push(`${c.id}: pair with ${other}, the same profile`);
+      else if (
+        cases.indexOf(b) < cases.indexOf(c) &&
+        b.pairs?.some((p) => p.with === c.id)
+      )
+        found.push(`${c.id}: pair with ${other}, which pairs back`);
       if (c.pairs!.findIndex((p) => p.with === other) !== i)
         found.push(`${c.id}: pair with ${other} listed twice`);
-      if (!/\bA\b/.test(expect) || !/\bB\b/.test(expect))
-        found.push(`${c.id}: the expect line for ${other} must name A and B`);
     }
+    if (c.pairs?.length && !c.contrastOracles)
+      found.push(`${c.id}: a case with pairs needs contrastOracles.same`);
+    if (found.length)
+      for (const { with: other } of c.pairs ?? []) {
+        broken.add(questionKey(c));
+        if (byId.has(other)) broken.add(questionKey(byId.get(other)!));
+      }
     return found;
   });
-  const personalized = cases.filter((c) => c.kind === "personalized");
-  if (!personalized.some((c) => c.pairs?.length)) return problems;
-  const paired = new Set(
-    personalized.flatMap((c) => (c.pairs?.length ? [questionKey(c)] : [])),
-  );
+  // Conditional until the cases have pairs; the pair minimum should then be unconditional
+  if (!cases.some((c) => c.pairs?.length)) return problems;
   const questions = new Map<string, EvalCase[]>();
-  for (const c of personalized)
+  for (const c of cases.filter((c) => c.kind === "personalized"))
     questions.set(questionKey(c), [
       ...(questions.get(questionKey(c)) ?? []),
       c,
     ]);
   for (const [key, asked] of questions) {
-    if (!paired.has(key) && new Set(asked.map(profileKey)).size >= 2)
-      problems.push(`${asked[0].id}: a personalized question needs a pair`);
+    if (broken.has(key)) continue;
+    const profiles = new Set(asked.map(profileKey));
+    const paired = new Set(
+      asked.flatMap((c) =>
+        (c.pairs ?? []).flatMap(({ with: other }) => {
+          const b = byId.get(other);
+          return b?.kind === "personalized" && questionKey(b) === key
+            ? [profileKey(c), profileKey(b)]
+            : [];
+        }),
+      ),
+    );
+    const unpaired = [...profiles].filter((p) => !paired.has(p)).length;
+    if (profiles.size >= 2 && unpaired)
+      problems.push(
+        `${asked[0].id}: ${unpaired} of ${profiles.size} profiles of this question are in no pair`,
+      );
   }
   return problems;
 }

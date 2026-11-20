@@ -178,8 +178,23 @@ describe("validateCases", () => {
     ],
     [
       "a pair with another question",
-      [pairedWith("covered-01"), caseById("personalized-02"), covered],
-      /pair with covered-01, a different question/,
+      [
+        pairedWith("other-q"),
+        caseById("personalized-02"),
+        {
+          ...caseById("personalized-02"),
+          id: "other-q",
+          learner: "elsewhere",
+          input: { kind: "lesson", message: "Why do keys matter?" },
+        },
+        {
+          ...caseById("personalized-01"),
+          id: "other-q-2",
+          pairs: undefined,
+          input: { kind: "lesson", message: "Why do keys matter?" },
+        },
+      ],
+      /pair with other-q, a different question/,
     ],
     [
       "a pair with the same profile",
@@ -209,15 +224,67 @@ describe("validateCases", () => {
       /pair with personalized-02 listed twice/,
     ],
     [
-      "an expect line that doesn't name A and B",
+      "a pair with a case that isn't personalized",
       [
         {
           ...caseById("personalized-01"),
-          pairs: [{ with: "personalized-02", expect: "the first is shorter" }],
+          pairs: [{ with: "covered-01", expect: "A is short, B is long" }],
         },
         caseById("personalized-02"),
+        { ...covered, input: caseById("personalized-01").input },
       ],
-      /expect line for personalized-02 must name A and B/,
+      /pair with covered-01, both must be personalized/,
+    ],
+    [
+      "a pair that pairs back",
+      [
+        caseById("personalized-01"),
+        {
+          ...caseById("personalized-02"),
+          pairs: [{ with: "personalized-01", expect: "B is short, A is long" }],
+          contrastOracles: { same: "Same reply." },
+        },
+      ],
+      /personalized-02: pair with personalized-01, which pairs back/,
+    ],
+    [
+      "a pair with a profile that differs only in its note",
+      [
+        pairedWith("noted"),
+        {
+          ...caseById("personalized-02"),
+          id: "noted",
+          should: "build-on",
+          profile: { ...learnerProfile(), about: "Different note" },
+        },
+      ],
+      /pair with noted, the same profile/,
+    ],
+    [
+      "a paired case without contrastOracles",
+      [
+        { ...caseById("personalized-01"), contrastOracles: undefined },
+        caseById("personalized-02"),
+      ],
+      /personalized-01: a case with pairs needs contrastOracles.same/,
+    ],
+    [
+      "a profile of a paired question that is in no pair",
+      [
+        caseById("personalized-01"),
+        caseById("personalized-02"),
+        {
+          ...caseById("personalized-02"),
+          id: "personalized-03",
+          learner: "third",
+          profile: learnerProfile({
+            finished: [],
+            viewedLessons: [],
+            prerequisites: [{ name: "SQL Basics", finished: false }],
+          }),
+        },
+      ],
+      /1 of 3 profiles of this question are in no pair/,
     ],
     [
       "a personalized question with no pair, once another has one",
@@ -226,7 +293,7 @@ describe("validateCases", () => {
         caseById("personalized-02"),
         ...otherQuestion,
       ],
-      /a personalized question needs a pair/,
+      /2 of 2 profiles of this question are in no pair/,
     ],
     [
       "a personalized question under one profile",
