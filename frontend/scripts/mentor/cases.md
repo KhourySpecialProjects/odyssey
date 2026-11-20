@@ -1424,7 +1424,7 @@ Lessons of this droplet already viewed:
 
 Should: level
 
-Pair with `datasci-personalized-02`, expect: A is short and technical, pitched at someone advanced in modeling; B is gentler and gives a short primer on Intro to Python
+Pair with `datasci-personalized-02`, expect: A is short and technical, pitched at someone advanced in modeling; B is gentler and gives a short primer from the lesson itself, then suggests Intro to Python by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
@@ -2013,7 +2013,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this lesson picks how to summarize a variable by its type, such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
+A quick primer first: this lesson picks how to summarize a variable by its type [p3], such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
 ```
 
 Gold:
@@ -2101,7 +2101,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: a sketch is a 2D drawing made with tools like Line, Rectangle and Circle, sized with Smart Dimension [p7]. I'd take Engineering Drawing Basics too. To start, click Sketch and select a plane: Front, Top or Right [p6]. Everything in SolidWorks starts with a 2D sketch [p6].
+A quick primer first: a sketch is a 2D drawing made with tools like Line, Rectangle and Circle, and sized with Smart Dimension [p6, p7]. I'd take Engineering Drawing Basics too. To start, click Sketch and select a plane: Front, Top or Right [p6]. Everything in SolidWorks starts with a 2D sketch [p6].
 ```
 
 Gold:
@@ -2221,7 +2221,7 @@ Lessons of this droplet already viewed:
 
 Should: level
 
-Pair with `internet-personalized-04`, expect: A is short and technical, assuming web experience; B gives a short primer on How the Web Works and suggests it by name
+Pair with `internet-personalized-04`, expect: A is short and technical, assuming web experience; B gives a short primer from the lesson itself, then suggests How the Web Works by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
@@ -2309,7 +2309,7 @@ Lessons of this droplet already viewed:
 
 Should: build-on
 
-Pair with `interview-personalized-02`, expect: A builds on Career Readiness 101 in a few words; B is gentler and more basic, as for someone new to interviewing
+Pair with `interview-personalized-02`, expect: A builds on Career Readiness 101 by name in a few words, without saying what it taught; B is gentler and more basic, as for someone new to interviewing
 
 Contrast oracle (for --answers oracle), A reworded:
 
@@ -2327,7 +2327,7 @@ Building on Career Readiness 101, here is only the new part: research the compan
 A reply that should pass:
 
 ```
-This builds on Career Readiness 101, so here is just the interview-specific part: take the time to research the company, its mission, values and culture [p3], know your resume in detail [p7] and prepare questions to ask the interviewer [p10].
+This builds on Career Readiness 101, so here is just the new part: take the time to research the company, its mission, values and culture [p3], know your resume in detail [p7] and prepare questions to ask the interviewer [p10].
 ```
 
 Gold:

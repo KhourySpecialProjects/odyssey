@@ -297,6 +297,11 @@ describe("validateCases", () => {
       /2 of 2 profiles of this question are in no pair/,
     ],
     [
+      "two profiles of one question and no pair anywhere",
+      otherQuestion,
+      /2 of 2 profiles of this question are in no pair/,
+    ],
+    [
       "a personalized question under one profile",
       [{ ...caseById("personalized-01"), pairs: undefined }],
       /personalized-01: asked under 1 profile; a personalized question needs 2 or more/,
