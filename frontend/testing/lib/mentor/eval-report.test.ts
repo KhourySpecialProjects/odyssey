@@ -632,6 +632,7 @@ describe("reportMarkdown", () => {
         "- haiku-low, pa vs pb (real), rep 1: the judge stopped: refusal",
       );
       expect(run([])).not.toContain("1 open errors");
+      expect(run([])).toContain("1 contrasts missing");
       expect(run([contrast()])).not.toContain("Contrast calls that failed");
     });
 

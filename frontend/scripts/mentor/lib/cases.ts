@@ -241,7 +241,7 @@ const normalised = (c: EvalCase) =>
 const profileKey = (c: EvalCase) =>
   c.profile ? learnerBlock(c.profile) : "none";
 
-/** Pairs: each `with` is a personalized case of the same question under another profile, one way and once; each such question needs every profile in a pair */
+/** Pairs: each `with` names a personalized case of the same question under another profile, once each way */
 function pairProblems(cases: EvalCase[]): string[] {
   const byId = new Map(cases.map((c) => [c.id, c]));
   // Questions with a bad pair are reported once, not again for their profiles
