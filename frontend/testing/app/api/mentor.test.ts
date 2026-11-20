@@ -38,6 +38,8 @@ import {
   type MentorAllowance,
 } from "@/lib/mentor/usage";
 import { getMentorSetting } from "@/lib/requests/mentor-setting";
+import { mentorRequestSchema } from "@/lib/validations/mentor";
+import * as askModule from "@/lib/mentor/ask";
 import { fakeClaude } from "@/testing/mocks/claudeStreamMock";
 import {
   mentorText,
@@ -71,6 +73,10 @@ jest.mock("@/lib/mentor/cached-reply-store", () => ({
   findCachedReply: jest.fn(),
   storeCachedReply: jest.fn(),
 }));
+jest.mock("@/lib/mentor/ask", () => {
+  const actual = jest.requireActual("@/lib/mentor/ask");
+  return { ...actual, resolveMentorAsk: jest.fn(actual.resolveMentorAsk) };
+});
 jest.mock("@/lib/mentor/learner-source", () => ({
   studentAllowsPersonalization: jest.fn(),
   getLearnerContext: jest.fn(),
@@ -99,6 +105,8 @@ const setting = jest.mocked(getMentorSetting);
 const allows = jest.mocked(studentAllowsPersonalization);
 const learnerOf = jest.mocked(getLearnerContext);
 
+const resolveReal =
+  jest.requireActual<typeof askModule>("@/lib/mentor/ask").resolveMentorAsk;
 const user = { id: 7, email: "s@example.invalid", roles: [] };
 const lesson = classicLesson();
 const MC = blockNoteIdToNumber("mc-1");
@@ -413,10 +421,73 @@ describe("POST /api/mentor", () => {
       const content = JSON.parse(claude.calls[0].body).messages[0].content;
       expect(content).toHaveLength(sent ? 3 : 2);
       if (sent) expect(content[1].text).toMatch(/^<learner>[\s\S]*SQL Basics/);
+      // The cache breakpoint stays on the lesson; the learner block has none
+      expect(content[0].cache_control).toEqual({ type: "ephemeral" });
+      if (sent) expect(content[1].cache_control).toBeUndefined();
       // The id comes from the session, not the body
-      expect(allows).toHaveBeenCalledWith(user.id);
+      if (personalize) expect(allows).toHaveBeenCalledWith(user.id);
+      else expect(allows).not.toHaveBeenCalled();
+      if (personalize && studentAllows) {
+        expect(learnerOf).toHaveBeenCalledWith(user.id, expect.anything());
+      } else expect(learnerOf).not.toHaveBeenCalled();
     },
   );
+
+  it("puts a start note after the learner block, just before the turn", async () => {
+    setting.mockResolvedValue({
+      enabled: true,
+      personalize: true,
+      pilotGroupIds: [],
+    });
+    allows.mockResolvedValue(true);
+    learnerOf.mockResolvedValue(LEARNER);
+    owned.mockResolvedValue({
+      documentId: "ownedchat01",
+      kind: "lesson",
+      lesson: { id: lesson.id + 1, name: "Joins" },
+      droplet: { id: 4, name: "SQL basics" },
+    } as never);
+    const response = await post(ask({ chatId: "ownedchat01" }));
+    await readAllMentorEvents(response.body!);
+    const content = JSON.parse(claude.calls[0].body).messages[0].content;
+    expect(content.map((b: { text: string }) => b.text.slice(0, 9))).toEqual([
+      "<lesson>\n",
+      "<learner>",
+      "This chat",
+      "<student_",
+    ]);
+  });
+
+  it("sends no learner block for a kind outside the allowlist", async () => {
+    setting.mockResolvedValue({
+      enabled: true,
+      personalize: true,
+      pilotGroupIds: [],
+    });
+    allows.mockResolvedValue(true);
+    learnerOf.mockResolvedValue(LEARNER);
+    const parse = mentorRequestSchema.safeParse.bind(mentorRequestSchema);
+    const spy = jest.spyOn(mentorRequestSchema, "safeParse");
+    spy.mockImplementation((raw) => {
+      const result = parse(raw);
+      return result.success
+        ? { ...result, data: { ...result.data, kind: "summary" } as never }
+        : result;
+    });
+    jest
+      .mocked(askModule.resolveMentorAsk)
+      .mockImplementationOnce((...args) =>
+        resolveReal(args[0], args[1], { ...args[2], kind: "lesson" } as never),
+      );
+    const response = await post(ask());
+    spy.mockRestore();
+    expect(response.status).toBe(200);
+    await readAllMentorEvents(response.body!);
+    expect(JSON.parse(claude.calls[0].body).messages[0].content).toHaveLength(
+      2,
+    );
+    expect(learnerOf).not.toHaveBeenCalled();
+  });
 
   it.each([
     ["Classic", lesson, classicLesson({ mc: 412 }), 41, 413],
