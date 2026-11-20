@@ -476,6 +476,9 @@ describe("countProblems", () => {
       }),
     ),
   );
+  const elevenPersonalized = new Set(
+    full.filter((c) => c.kind === "personalized").slice(0, 11),
+  );
   const index = (c: EvalCase) =>
     c.input.kind === "lesson" ? Number(c.input.message.split(" ").at(-1)) : 0;
 
@@ -503,6 +506,26 @@ describe("countProblems", () => {
       "no invented-history case in a classic lesson",
       (c) => c.kind !== "invented-history" || c.format === "blocknote",
       /invented-history cases in classic lessons/,
+    ],
+    [
+      "11 personalized cases",
+      (c) => c.kind !== "personalized" || elevenPersonalized.has(c),
+      /personalized cases, at least 12/,
+    ],
+    [
+      "no personalized question in a classic lesson",
+      (c) => c.kind !== "personalized" || c.format === "blocknote",
+      /personalized questions in classic lessons/,
+    ],
+    [
+      "5 invented-history cases",
+      (c) => c.kind !== "invented-history" || index(c) < 5,
+      /5 invented-history cases, at least 6/,
+    ],
+    [
+      "no invented-history case in a BlockNote lesson",
+      (c) => c.kind !== "invented-history" || c.format === "classic",
+      /invented-history cases in BlockNote lessons/,
     ],
     [
       "no extraction case with a learner",

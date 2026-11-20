@@ -75,8 +75,10 @@ The checks:
 - A summary is a lesson-mode request with its own `oracle`.
 - The counts, as minimums: 12 covered lesson and 6 covered explain cases, 8
   and 2 uncovered, 10 wrong picks on 6 questions, 8 extractions (2 with
-  history), 6 off-topic and 8 injections; for v2's seeds, 2 personalized, 2
-  invented-history, 2 quiz-ask, 3 quiz-grade and 2 review; 40% of cases in
+  history), 6 off-topic and 8 injections; for v2, 12 personalized cases on 6 or more
+  questions (2 or more questions per `should`, 1 or more per format), 6
+  invented-history (3 or more per format) and 2 extractions with a learner;
+  for v2's seeds, 2 quiz-ask, 3 quiz-grade and 2 review; 40% of cases in
   BlockNote lessons; every v1 kind in both formats; and ODY-968's 2 summary
   cases in each format.
 
