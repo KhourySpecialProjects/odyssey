@@ -28,12 +28,12 @@ type Row = Record<string, any>;
 
 const replies = () => strapi.documents(MENTOR_CACHED_REPLY_UID as any);
 
-const rowOf = (key: string) =>
-  replies().findFirst({ filters: { key }, fields: ['id', 'text'] } as any) as Promise<Row | null>;
+const rowOf = (key: string, fields: string[]) =>
+  replies().findFirst({ filters: { key }, fields } as any) as Promise<Row | null>;
 
 /** The saved text for a key, or null */
 export async function findCachedReply(key: string): Promise<string | null> {
-  const row = await rowOf(key);
+  const row = await rowOf(key, ['text']);
   return row ? (row.text as string) : null;
 }
 
@@ -47,7 +47,7 @@ async function cleanUp({ key, slot, dropletId }: StoreCachedReplyInput, now: Dat
         key: { $ne: key },
         createdAt: { $lt: new Date(now.getTime() - SUPERSEDED_AFTER_MS).toISOString() },
       },
-      fields: ['id'],
+      fields: ['documentId'],
       limit: CLEANUP_LIMIT,
     } as any)) as Row[];
     for (const row of stale) await replies().delete({ documentId: row.documentId });
@@ -65,7 +65,7 @@ export async function storeCachedReply(
   input: StoreCachedReplyInput,
   now = new Date(),
 ): Promise<{ id: number; stored: boolean }> {
-  const existing = await rowOf(input.key);
+  const existing = await rowOf(input.key, ['id']);
   if (existing) return { id: existing.id, stored: false };
 
   let created: Row;
@@ -84,7 +84,7 @@ export async function storeCachedReply(
       fields: ['id'],
     } as any)) as Row;
   } catch (err) {
-    const winner = await rowOf(input.key);
+    const winner = await rowOf(input.key, ['id']);
     if (winner) return { id: winner.id, stored: false };
     throw err;
   }
