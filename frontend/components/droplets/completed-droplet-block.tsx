@@ -5,7 +5,6 @@ import { useState } from "react";
 import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
-import { IconX } from "@tabler/icons-react";
 
 export function CompletedDropletBlock({
   droplet,
@@ -42,12 +41,6 @@ export function CompletedDropletBlock({
         <DialogTitle></DialogTitle>
         <DialogHeader>
           <div className="relative px-6 py-8">
-            <button
-              className="absolute top-0 right-0 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              onClick={handleClose}
-            >
-              <IconX className="h-5 w-5" stroke={1.8} />
-            </button>
             <div className="mx-auto max-w-2xl">
               <p className="text-pretty text-slate-700 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
                 <strong>You did it!</strong> Congratulations on completing this

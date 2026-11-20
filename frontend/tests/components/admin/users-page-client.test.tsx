@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { UsersPageClient } from "@/components/admin/users/users-page-client";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { AuthorizedUser, TimeZone } from "@/types";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
@@ -110,6 +111,15 @@ describe("UsersPageClient", () => {
 
     expect(editButtons).toHaveLength(mockUsers.length);
     expect(activityButtons).toHaveLength(mockUsers.length);
+  });
+
+  it("renders exactly one close button in the edit user dialog", async () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /edit user/i })[0]);
+
+    const dialog = await screen.findByRole("dialog");
+    expectSingleCloseButton(dialog);
   });
 
   it("shows email when no name is set", () => {
