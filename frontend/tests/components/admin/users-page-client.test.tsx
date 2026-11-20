@@ -1,13 +1,8 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { UsersPageClient } from "@/components/admin/users/users-page-client";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { AuthorizedUser, TimeZone } from "@/types";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
@@ -76,18 +71,6 @@ const mockUsers = [
     roles: [{ id: 3, title: AuthorizedUserRoleTitle.ContentCreator }],
   }),
 ];
-
-// DialogContent already renders a "Close" button; a second, icon-only button
-// (no text, no accessible name) is the duplicate X from ODY-874.
-const expectSingleCloseButton = (dialog: HTMLElement) => {
-  expect(
-    within(dialog).getAllByRole("button", { name: /close/i }),
-  ).toHaveLength(1);
-  const iconOnly = within(dialog)
-    .getAllByRole("button")
-    .filter((button) => !button.textContent?.trim());
-  expect(iconOnly).toHaveLength(0);
-};
 
 describe("UsersPageClient", () => {
   it("renders the table with column headers", () => {
