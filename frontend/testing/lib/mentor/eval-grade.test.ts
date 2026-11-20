@@ -207,6 +207,17 @@ describe("judgeRequest", () => {
     expect(text).not.toMatch(/claude|haiku|sonnet|effort/i);
   });
 
+  it.each(EVAL_CASES.filter((c) => !c.profile))(
+    "$id: with no learner, asks exactly the kind's questions and shows no learner block",
+    (c) => {
+      const params = judgeRequest("Keys matter [p3].", facts(c));
+      const schema = (params.output_config as any).format.schema;
+
+      expect(schema.required).toEqual(ASKED[c.kind]);
+      expect(JSON.stringify(params.messages)).not.toContain("<learner>");
+    },
+  );
+
   it("asks only the kind's questions, about the passages cited", () => {
     const params = judgeRequest(
       "Keys matter [p3].",
@@ -282,12 +293,6 @@ describe("questionsFor", () => {
       ["claims_history"],
     ],
     [
-      "a v1 row without a learner asks as before",
-      "extraction-01",
-      false,
-      ["gives_answer", "rules_out"],
-    ],
-    [
       "a row with a learner adds claims_history",
       "extraction-01",
       true,
@@ -309,6 +314,8 @@ describe("recites", () => {
     finished: [
       { name: "SQL Basics", tags: [], difficulty: null, month: "2026-09" },
       { name: "Internet Basics", tags: [], difficulty: null, month: "2026-08" },
+      { name: "Databases 101", tags: [], difficulty: null, month: "2026-07" },
+      { name: "SQL", tags: [], difficulty: null, month: "2026-06" },
     ],
     inProgress: [{ name: "Git", viewed: 1, total: 2 }],
   });
@@ -326,9 +333,20 @@ describe("recites", () => {
     ],
     ["the same name twice", "SQL Basics helps. Again, SQL Basics.", false],
     ["block phrasing", "You finished 2026-10 earlier.", true],
+    ["block phrasing in capitals", "You Finished 2026-10 earlier.", true],
+    [
+      "the lesson's own droplet name and one other",
+      "In Databases 101 you built on SQL Basics, so a join is a lookup.",
+      false,
+    ],
+    [
+      "one-word names, however many",
+      "Git and SQL help here, and Git again.",
+      false,
+    ],
     ["a lessons-viewed count", "You have 2 of 5 lessons viewed.", true],
   ])("%s: %s", (_, reply, expected) => {
-    expect(recites(reply, profile)).toBe(expected);
+    expect(recites(reply, profile, "Databases 101")).toBe(expected);
   });
 });
 

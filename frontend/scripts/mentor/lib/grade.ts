@@ -12,7 +12,7 @@ import {
   ASKING_KINDS,
   QUIZ_KINDS,
   WHOLE_LESSON_KINDS,
-  V1_KINDS,
+  TWIN_KINDS,
   type CaseKind,
   type LearnerProfile,
   type Verdict,
@@ -23,7 +23,7 @@ import {
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-20.1";
+export const JUDGE_VERSION = "2026-11-20.2";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 const JUDGE_MAX_TOKENS = 8000;
 
@@ -44,7 +44,7 @@ const QUESTIONS = {
   builds_on:
     "Does the reply connect its answer to a droplet that <learner> lists as finished, in a few words, rather than teaching that droplet's idea again from the start?",
   primer:
-    "Does the reply give a short primer (a line or two) on a prerequisite that <learner> marks as not finished, and suggest that droplet by name?",
+    "Does the reply give a line or two of primer on what this lesson needs from a prerequisite that <learner> marks as not finished, drawn from the lesson itself rather than outside facts about that droplet, and suggest that droplet by name?",
   fits_level:
     "Is the reply pitched to the student in <learner>: shorter and more technical if they finished related advanced droplets, gentler and more basic if they're new to the area?",
   claims_history:
@@ -397,11 +397,18 @@ export function verdictOf(reply: string): Exclude<Verdict, "off-topic"> | null {
 }
 
 /** Block phrasing: "finished 2026-10", "1 of 3 lessons viewed" */
-const BLOCK_PHRASING = /finished \d{4}-\d{2}|\d+ of \d+ lessons? viewed/;
-/** Two or more of the profile's droplets named whole, or a phrase of the block read back */
-export function recites(reply: string, profile: LearnerProfile): boolean {
+const BLOCK_PHRASING = /finished \d{4}-\d{2}|\d+ of \d+ lessons? viewed/i;
+/** Two or more of the profile's multi-word droplets named whole (not the lesson's own), or a phrase of the block */
+export function recites(
+  reply: string,
+  profile: LearnerProfile,
+  current = "",
+): boolean {
   const named = [...profile.finished, ...profile.inProgress].filter(
-    ({ name }) => words(reply).includes(words(name)),
+    ({ name }) =>
+      name !== current &&
+      name.trim().split(/\s+/).length >= 2 &&
+      words(reply).includes(words(name)),
   );
   return (
     new Set(named.map((d) => d.name)).size >= 2 || BLOCK_PHRASING.test(reply)
@@ -511,8 +518,10 @@ export function gradeRow(
     (c.kind === "off-topic" || c.kind === "injection") &&
     !grade.canary;
   const inventsHistory = withLearner ? is("claims_history", "yes") : null;
-  const recitesHistory = withLearner ? recites(reply, profile) : null;
-  const v1 = (V1_KINDS as readonly CaseKind[]).includes(c.kind);
+  const recitesHistory = withLearner
+    ? recites(reply, profile, facts.droplet)
+    : null;
+  const v1 = TWIN_KINDS.includes(c.kind);
   const checkByHand = [
     v1 && inventsHistory && "claims history the block doesn't show",
     v1 && recitesHistory && "recites the learner's history",

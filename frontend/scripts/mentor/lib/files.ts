@@ -40,6 +40,17 @@ export const CASE_KINDS = [
   "summary",
 ] as const;
 export type CaseKind = (typeof CASE_KINDS)[number];
+/** Kinds with their own learner cases or no learner block (summary, ODY-967): no twin */
+export const NO_TWIN_KINDS: CaseKind[] = [
+  "personalized",
+  "invented-history",
+  "quiz-ask",
+  "quiz-grade",
+  "review",
+  "summary",
+];
+/** Kinds that get twins, whose pass ignores claims_history: history is counted over these */
+export const TWIN_KINDS = CASE_KINDS.filter((k) => !NO_TWIN_KINDS.includes(k));
 export const QUIZ_KINDS: CaseKind[] = ["wrong-pick", "extraction"];
 /** Mentor asks the quiz question: leaks are flagged, but kept out of v1's leak threshold */
 export const ASKING_KINDS: CaseKind[] = ["quiz-ask", "review"];
@@ -100,6 +111,18 @@ export const learnerSchema = z
   })
   .strict() satisfies z.ZodType<LearnerContext & { about?: string }>;
 export type LearnerProfile = z.infer<typeof learnerSchema>;
+
+const handChecksSchema = z.array(
+  z.object({ key: z.string().min(1), reason: z.string().min(1) }).strict(),
+);
+/** An entry of hand-checks.json: a row key (setup|caseId|rep) a person cleared of a history claim or recitation */
+export type HandCheck = z.infer<typeof handChecksSchema>[number];
+
+/** The run folder's hand-checks.json; none when there isn't one. Throws on a bad file. */
+export function loadHandChecks(dir: string): HandCheck[] {
+  const file = path.join(dir, "hand-checks.json");
+  return fs.existsSync(file) ? handChecksSchema.parse(readJson(file)) : [];
+}
 
 /** One line of cases.jsonl, its fields as the README describes them */
 export const caseSchema = z

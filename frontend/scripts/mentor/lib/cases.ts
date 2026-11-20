@@ -14,6 +14,7 @@ import type {
 import {
   ASKING_KINDS,
   CASE_KINDS,
+  NO_TWIN_KINDS,
   V1_KINDS,
   type CaseKind,
   type EvalCase,
@@ -44,6 +45,8 @@ export type CaseFacts = {
   quizzes: QuizKey[];
   /** The learner block sent with the case (ODY-941): its profile's name, or "inline" */
   learner: { name: string; text: string } | null;
+  /** The name of the droplet the lesson belongs to */
+  droplet: string;
 };
 
 /** The request modes each kind is written in */
@@ -159,6 +162,12 @@ export function prepareCase(
     if (!c.learner) needs("a learner");
   }
   if (c.kind === "personalized" && !c.should) needs("should");
+  if (
+    c.should === "primer" &&
+    c.profile &&
+    !c.profile.prerequisites.some((p) => !p.finished)
+  )
+    say("a primer case needs a prerequisite with finished: false");
   if (c.kind === "summary" && !c.oracle) needs("an oracle");
   if (GOLD_KINDS.includes(c.kind) && c.kind !== "covered" && !c.gold)
     needs("gold");
@@ -198,7 +207,16 @@ export function prepareCase(
     text: learnerBlock(c.profile),
   };
   return {
-    facts: { case: c, lesson, context, ask, goldRefs, quizzes, learner },
+    facts: {
+      case: c,
+      lesson,
+      context,
+      ask,
+      goldRefs,
+      quizzes,
+      learner,
+      droplet: snapshot.droplet.name,
+    },
     problems,
   };
 }
@@ -249,15 +267,6 @@ export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
   }
   return problems;
 }
-
-/** Kinds with their own learner cases, or still seeds for 936 and 940: no twin */
-export const NO_TWIN_KINDS: CaseKind[] = [
-  "personalized",
-  "invented-history",
-  "quiz-ask",
-  "quiz-grade",
-  "review",
-];
 
 /** Each case without a learner, copied under this profile as `<id>+<name>` */
 export function learnerTwins(

@@ -8,7 +8,11 @@ import {
   learnerTwins,
   validateCases,
 } from "@/scripts/mentor/lib/cases";
-import { loadCases, type EvalCase } from "@/scripts/mentor/lib/files";
+import {
+  loadCases,
+  TWIN_KINDS,
+  type EvalCase,
+} from "@/scripts/mentor/lib/files";
 import { LEARNER_MAX_CHARS, learnerBlock } from "@/scripts/mentor/lib/learner";
 import {
   caseById,
@@ -158,6 +162,14 @@ describe("validateCases", () => {
       /personalized-01: asked under 1 profile; a personalized question needs 2 or more/,
     ],
     [
+      "a primer case whose prerequisites are all finished",
+      [
+        caseById("personalized-01"),
+        { ...caseById("personalized-02"), profile: learnerProfile() },
+      ],
+      /a primer case needs a prerequisite with finished: false/,
+    ],
+    [
       "an invented-history case without a learner",
       [
         {
@@ -242,21 +254,45 @@ describe("learnerTwins", () => {
     ["tied", learnerProfile()],
   ]);
 
+  // Spelled out, so emptying NO_TWIN_KINDS can't make this pass
+  const excluded = [
+    "personalized",
+    "invented-history",
+    "quiz-ask",
+    "quiz-grade",
+    "review",
+    "summary",
+  ];
+
   it("copies each case without a learner, and skips the kinds with their own", () => {
     const twins = learnerTwins(EVAL_CASES, "broad", learners);
 
-    expect(twins.map((c) => c.id)).toEqual(
-      expect.arrayContaining(["covered-01+broad", "summary-01+broad"]),
-    );
+    expect(twins.map((c) => c.id)).toContain("covered-01+broad");
     expect(twins[0]).toMatchObject({
       learner: "broad",
       profile: broad,
       twinOf: "covered-01",
     });
-    expect(twins.map((c) => c.kind)).not.toEqual(
-      expect.arrayContaining(["personalized", "quiz-ask", "review"]),
+    expect(twins.filter((c) => excluded.includes(c.kind))).toEqual([]);
+    expect(EVAL_CASES.map((c) => c.kind)).toEqual(
+      expect.arrayContaining(excluded),
     );
-    expect(twins.every((c) => !c.id.startsWith("personalized"))).toBe(true);
+  });
+
+  it("gives no twin to a case with a learner of its own, and TWIN_KINDS are the kinds that get one", () => {
+    const own: EvalCase = {
+      ...covered,
+      id: "covered-own",
+      learner: "tied",
+      profile: learnerProfile(),
+    };
+    const twins = learnerTwins([...EVAL_CASES, own], "broad", learners);
+
+    expect(twins.map((c) => c.twinOf)).not.toContain("covered-own");
+    expect([...new Set(twins.map((c) => c.kind))].sort()).toEqual(
+      [...TWIN_KINDS].sort(),
+    );
+    expect(TWIN_KINDS).not.toContain("summary");
   });
 
   it.each([

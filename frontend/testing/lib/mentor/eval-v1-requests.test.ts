@@ -1,6 +1,6 @@
 /** @jest-environment node */
-// Pins the exact requests every v1 case builds, on all four setups (ODY-941),
-// so the learner seam and the new case kinds can't change how v1 is asked.
+// Pins the exact requests every case in cases.jsonl builds, on every setup
+// (ODY-941), so the learner seam and new case kinds can't change how one is asked.
 // The hashes change only with a deliberate change to the prompt, the cases or
 // the fixtures. Then regenerate them with
 //   UPDATE_V1_REQUESTS=1 npx jest testing/lib/mentor/eval-v1-requests.test.ts
