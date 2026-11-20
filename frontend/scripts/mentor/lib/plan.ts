@@ -15,7 +15,7 @@ import {
   type AnswerMode,
   type Status,
 } from "./grade";
-import type { ErrorRow } from "./metrics";
+import type { ErrorRow, RunMeta } from "./metrics";
 
 // What a run of Mentor's eval (ODY-885) will send, built with the route's
 // own code: resolveMentorAsk, then buildMentorRequest.
@@ -51,6 +51,25 @@ export function parseKinds(kinds: string[] = []): CaseKind[] | null {
     if (!(CASE_KINDS as readonly string[]).includes(kind))
       throw new Error(`Unknown kind ${kind}: use ${CASE_KINDS.join(", ")}`);
   return kinds.length ? [...new Set(kinds as CaseKind[])] : null;
+}
+
+/** A run's twins and kinds: the flags given, else those a resumed run started with (null for none or an old run) */
+export function runSettings(
+  values: { twins?: string; kind?: string[] },
+  started: Pick<RunMeta, "twins" | "kinds"> | null,
+): { twins: string | null; kinds: CaseKind[] | null } {
+  return {
+    twins: values.twins
+      ? parseTwins(values.twins)
+      : started
+        ? started.twins ?? null
+        : parseTwins(),
+    kinds: values.kind?.length
+      ? parseKinds(values.kind)
+      : started
+        ? started.kinds ?? null
+        : null,
+  };
 }
 
 /** The cases a run asks: every case, plus its twins, kept to the kinds given */

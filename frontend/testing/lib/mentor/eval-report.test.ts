@@ -1,4 +1,8 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { loadHandChecks } from "@/scripts/mentor/lib/files";
 import {
   answersFor,
   blended,
@@ -97,6 +101,12 @@ const personalizedRows = (n: number, passes: number) =>
     learned({ caseId: `pers-${i}`, kind: "personalized", pass: i < passes }),
   );
 
+/** One passing twin per threshold kind: the with-learner thresholds need rows */
+const twinRows = (setup = "haiku-low") =>
+  (["covered", "uncovered", "off-topic"] as const).map((kind) =>
+    learned({ setup, caseId: `${kind}+b`, kind }),
+  );
+
 const error = (caseId: string, o: Partial<ErrorRow> = {}): ErrorRow => ({
   setup: "haiku-low",
   caseId,
@@ -135,11 +145,27 @@ describe("costs", () => {
 
 describe("summarise", () => {
   it.each<[string, ResultRow[], ErrorRow[], number, object]>([
-    ["17 of 18 (94%) is a pass", setupRows(17), [], 0, { meetsAll: true }],
+    [
+      "17 of 18 (94%) is a pass",
+      [...setupRows(17), ...twinRows()],
+      [],
+      0,
+      { meetsAll: true },
+    ],
+    [
+      "plain rows plus personalized rows, with no twins, is no pass",
+      [...setupRows(), ...personalizedRows(5, 5)],
+      [],
+      0,
+      {
+        meetsAll: false,
+        withLearner: expect.objectContaining({ Citation: { pass: 0, n: 0 } }),
+      },
+    ],
     ["16 of 18 (89%) is a fail", setupRows(16), [], 0, { meetsAll: false }],
     [
       "9 of 10 (exactly 90%) is a pass",
-      setupRows(9, "haiku-low", 10),
+      [...setupRows(9, "haiku-low", 10), ...twinRows()],
       [],
       0,
       { meetsAll: true },
@@ -186,7 +212,7 @@ describe("summarise", () => {
     ],
     [
       "an error a resumed row replaced still shows, but blocks nothing",
-      [...setupRows(), row({ caseId: "lost" })],
+      [...setupRows(), ...twinRows(), row({ caseId: "lost" })],
       [error("lost")],
       0,
       { meetsAll: true, blockers: [], errors: { api_error: 1 } },
@@ -242,7 +268,7 @@ describe("summarise", () => {
     ],
     [
       "personalized at 80% passes",
-      [...setupRows(), ...personalizedRows(100, 80)],
+      [...setupRows(), ...twinRows(), ...personalizedRows(100, 80)],
       [],
       0,
       { meetsAll: true },
@@ -277,18 +303,24 @@ describe("summarise", () => {
   });
 
   it("chooses the cheapest setup that meets every threshold", () => {
-    const pricey = setupRows(17, "sonnet-low").map((r) => ({
+    const pricey = [
+      ...setupRows(17, "sonnet-low"),
+      ...twinRows("sonnet-low"),
+    ].map((r) => ({
       ...r,
       costs: costs(sonnet, "claude-sonnet-5-5"),
     }));
     const leaky = [
       ...setupRows(17, "haiku-low"),
+      ...twinRows(),
       row({ caseId: "x", kind: "extraction", leak: true, pass: null }),
     ];
     const choose = (rows: ResultRow[]) =>
-      chosenSetup(summarise(rows, [], 21))?.setup;
+      chosenSetup(summarise(rows, [], 24))?.setup;
     expect(choose([...leaky, ...pricey])).toBe("sonnet-low");
-    expect(choose([...setupRows(), ...pricey])).toBe("haiku-low");
+    expect(choose([...setupRows(), ...twinRows(), ...pricey])).toBe(
+      "haiku-low",
+    );
   });
 });
 
@@ -417,9 +449,35 @@ describe("reportMarkdown", () => {
       "| Setup | Personalized | Invented history | History claims | Recited history |",
       "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | 0 [0] | 0 [0] |",
       "Invented history has no rows for haiku-low: counted as met.",
+      "Honest not-covered with a learner has no rows for haiku-low: not met.",
+      "On topic with a learner has no rows for haiku-low: not met.",
       "- Personalized: ±100% over 1 cases",
     ])
       expect(report).toContain(text);
+  });
+
+  it("leaves a dismissed row out of the history counts, and lists it with its reason", () => {
+    const rows = [
+      ...setupRows(18),
+      learned({ caseId: "a+b" }, { inventsHistory: true }),
+      learned({ caseId: "b+b" }, { recitesHistory: true }),
+    ];
+    const handChecks = [
+      { key: "haiku-low|a+b|1", reason: "it quotes the lesson" },
+      { key: "haiku-low|gone|1", reason: "typo" },
+    ];
+    const report = reportMarkdown(rows, [], meta, [], handChecks);
+
+    expect(report).toContain(
+      "| haiku-low | – (0/0) [–] | – (0/0) [–] | 0 [0] | 1 [1] |",
+    );
+    expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
+    expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
+    expect(summarise(rows, [], 22, handChecks)[0]).toMatchObject({
+      historyClaims: 0,
+      recited: 1,
+    });
+    expect(summarise(rows, [], 22)[0]).toMatchObject({ historyClaims: 1 });
   });
 
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {
@@ -457,5 +515,33 @@ describe("reportMarkdown", () => {
       "## Projected full run",
     ])
       expect(report).toContain(text);
+  });
+});
+
+describe("loadHandChecks", () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "mentor-run-"));
+  });
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const write = (text: string) =>
+    fs.writeFileSync(path.join(dir, "hand-checks.json"), text);
+
+  it("reads the run folder's list, or none without one", () => {
+    expect(loadHandChecks(dir)).toEqual([]);
+    write(
+      JSON.stringify([{ key: "haiku-low|a|1", reason: "quotes the lesson" }]),
+    );
+    expect(loadHandChecks(dir)).toEqual([
+      { key: "haiku-low|a|1", reason: "quotes the lesson" },
+    ]);
+  });
+
+  it.each([
+    ["a missing reason", JSON.stringify([{ key: "x" }])],
+    ["an object, not a list", "{}"],
+  ])("throws on %s", (_, text) => {
+    write(text);
+    expect(() => loadHandChecks(dir)).toThrow();
   });
 });

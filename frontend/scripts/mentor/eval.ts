@@ -17,6 +17,7 @@ import {
   CASES_FILE,
   loadCases,
   loadFixtures,
+  loadHandChecks,
   readJson,
   readJsonl,
   RUNS_DIR,
@@ -44,12 +45,11 @@ import {
   cannedGroups,
   FULL_REPS,
   parseSetups,
-  parseKinds,
-  parseTwins,
   pilotCases,
   planGroups,
   pricedRequests,
   runCases,
+  runSettings,
 } from "./lib/plan";
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
 
@@ -75,7 +75,7 @@ function writeReport(dir: string, meta: RunMeta) {
   const errors = readJsonl<ErrorRow>(file(ERRORS));
   fs.writeFileSync(
     file("report.md"),
-    `${reportMarkdown(rows, errors, meta, labels)}\n`,
+    `${reportMarkdown(rows, errors, meta, labels, loadHandChecks(dir))}\n`,
   );
   console.log(`Report: ${path.relative(process.cwd(), file("report.md"))}`);
 }
@@ -118,16 +118,7 @@ async function main() {
   const started = values.resume
     ? readJson<RunMeta>(path.join(values.resume, "meta.json"))
     : null;
-  const twins = values.twins
-    ? parseTwins(values.twins)
-    : started
-      ? started.twins ?? null
-      : parseTwins();
-  const kinds = values.kind
-    ? parseKinds(values.kind)
-    : started
-      ? started.kinds ?? null
-      : null;
+  const { twins, kinds } = runSettings(values, started);
   const all = runCases(base, twins, kinds);
   const now = {
     twins,

@@ -21,6 +21,7 @@ import {
   planGroups,
   pricedRequests,
   runCases,
+  runSettings,
   SETUPS,
   type SetupName,
 } from "@/scripts/mentor/lib/plan";
@@ -402,6 +403,77 @@ describe("runGroups", () => {
     expect(rows().every((r) => r.setup === "answers-oracle" && !r.model)).toBe(
       true,
     );
+  });
+});
+
+describe("runSettings", () => {
+  const base = {
+    casesSha: "abc",
+    learnersSha: null,
+    promptVersion: "p1",
+    judgeVersion: "j1",
+    fixtures: [{ slug: "databases-101", takenAt: "2026-11-05" }],
+  };
+  const started = (twins?: string | null, kinds?: CaseKind[] | null) =>
+    ({ ...base, twins, kinds }) as RunMeta;
+
+  it.each<
+    [
+      string,
+      { twins?: string; kind?: string[] },
+      RunMeta | null,
+      { twins: string | null; kinds: CaseKind[] | null },
+      string[],
+    ]
+  >([
+    [
+      "a fresh run with no flags",
+      {},
+      null,
+      { twins: "broad-history", kinds: null },
+      [],
+    ],
+    [
+      "a saved none with no flag stays none",
+      {},
+      started(null),
+      { twins: null, kinds: null },
+      [],
+    ],
+    [
+      "a matching flag is fine",
+      { twins: "broad-history", kind: ["covered"] },
+      started("broad-history", ["covered"]),
+      { twins: "broad-history", kinds: ["covered"] },
+      [],
+    ],
+    [
+      "a differing flag is refused",
+      { twins: "none" },
+      started("broad-history"),
+      { twins: null, kinds: null },
+      ["--twins"],
+    ],
+    [
+      "a differing kind is refused",
+      { kind: ["covered"] },
+      started("broad-history", ["uncovered"]),
+      { twins: "broad-history", kinds: ["covered"] },
+      ["--kind"],
+    ],
+    [
+      "old meta with no field resolves to null",
+      {},
+      started(),
+      { twins: null, kinds: null },
+      [],
+    ],
+  ])("%s", (_, values, then, expected, refused) => {
+    const settings = runSettings(values, then);
+
+    expect(settings).toEqual(expected);
+    if (then)
+      expect(resumeProblems(then, { ...base, ...settings })).toEqual(refused);
   });
 });
 

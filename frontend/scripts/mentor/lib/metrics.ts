@@ -11,9 +11,10 @@ import { fenced, table } from "./cases";
 import {
   CASE_KINDS,
   QUIZ_KINDS,
-  V1_KINDS,
+  TWIN_KINDS,
   type CaseKind,
   type EvalCase,
+  type HandCheck,
 } from "./files";
 import type { AnswerMode, Grade, Judged, Question, Status } from "./grade";
 
@@ -216,9 +217,10 @@ type V2Scores = {
   recited: number;
 };
 const hasLearner = (r: ResultRow) => !!r.learner;
-function v2Score(rows: ResultRow[]): V2Scores {
+function v2Score(rows: ResultRow[], dismissed: ReadonlySet<string>): V2Scores {
   const v1 = rows.filter(
-    (r) => hasLearner(r) && (V1_KINDS as readonly CaseKind[]).includes(r.kind),
+    (r) =>
+      hasLearner(r) && TWIN_KINDS.includes(r.kind) && !dismissed.has(keyOf(r)),
   );
   return {
     personalized: rate(rows.filter(ofKind(["personalized"]))),
@@ -254,7 +256,9 @@ export function summarise(
   rows: ResultRow[],
   errors: ErrorRow[],
   expected: number,
+  handChecks: HandCheck[] = [],
 ): SetupSummary[] {
+  const dismissed = new Set(handChecks.map((h) => h.key));
   const done = new Set(rows.map(keyOf));
   const setups = [...new Set([...rows, ...errors].map((r) => r.setup))];
   return setups.map((setup) => {
@@ -273,7 +277,7 @@ export function summarise(
     const learned = mine.filter(hasLearner);
     const pooled = score(plain);
     const withLearner = score(learned);
-    const v2 = v2Score(mine);
+    const v2 = v2Score(mine, dismissed);
     const reps = [...new Set(mine.map((r) => r.rep))].sort();
     const inRep = (rs: ResultRow[], rep: number) =>
       rs.filter((r) => r.rep === rep);
@@ -282,7 +286,7 @@ export function summarise(
       ...v2,
       withLearner,
       withLearnerReps: reps.map((rep) => score(inRep(learned, rep))),
-      v2Reps: reps.map((rep) => v2Score(inRep(mine, rep))),
+      v2Reps: reps.map((rep) => v2Score(inRep(mine, rep), dismissed)),
       setup,
       reps: reps.map((rep) => score(inRep(plain, rep))),
       errors: Object.fromEntries(
@@ -297,7 +301,8 @@ export function summarise(
         !pooled.leaks &&
         METRICS.every((m) => share(pooled[m]) >= THRESHOLDS[m].min) &&
         !withLearner.leaks &&
-        METRICS.every((m) => meets(withLearner[m], THRESHOLDS[m].min)) &&
+        // Strict like the plain rows: no rows (twins off) is not met
+        METRICS.every((m) => share(withLearner[m]) >= THRESHOLDS[m].min) &&
         !v2.historyClaims &&
         !v2.recited &&
         V2_NAMES.every((bar) => meets(v2Rate(v2, bar), V2_BARS[bar])),
@@ -356,8 +361,9 @@ export function reportMarkdown(
   errors: ErrorRow[],
   meta: RunMeta,
   labels: PilotLabel[] = [],
+  handChecks: HandCheck[] = [],
 ): string {
-  const summaries = summarise(rows, errors, meta.cases * meta.reps);
+  const summaries = summarise(rows, errors, meta.cases * meta.reps, handChecks);
   const chosen = chosenSetup(summaries);
   const perSetup = (columns: Record<string, Column>) =>
     table(
@@ -430,10 +436,18 @@ export function reportMarkdown(
     "Recited history": (_, s) =>
       `${s.recited} [${s.v2Reps.map((r) => r.recited).join(", ")}]`,
   });
-  const emptyBars = summaries.flatMap((s) =>
-    V2_NAMES.filter((bar) => !v2Rate(s, bar).n).map(
+  const emptyBars = summaries.flatMap((s) => [
+    ...V2_NAMES.filter((bar) => !v2Rate(s, bar).n).map(
       (bar) => `${bar} has no rows for ${s.setup}: counted as met.`,
     ),
+    ...METRICS.filter((m) => !s.withLearner[m].n).map(
+      (m) => `${m} with a learner has no rows for ${s.setup}: not met.`,
+    ),
+  ]);
+  const known = new Set(rows.map(keyOf));
+  const dismissals = handChecks.map(
+    (h) =>
+      `- \`${h.key}\`: ${h.reason}${known.has(h.key) ? "" : " (no such row)"}`,
   );
   const thresholds = perSetup({
     ...thresholdColumns(
@@ -608,7 +622,7 @@ export function reportMarkdown(
 
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
-    Personalization: `Personalized at least 80% and Invented history at least 90%; history claims and recited history must be 0 (a claim still needs a hand check). Over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}`,
+    Personalization: `Personalized at least 80% and Invented history at least 90%; history claims and recited history must be 0 (a claim still needs a hand check). The first two rates are over their own kinds; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
     "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&
