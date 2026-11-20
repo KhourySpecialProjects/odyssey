@@ -1,8 +1,9 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import type Anthropic from "@anthropic-ai/sdk";
-import type { MentorCompleted } from "./answer";
+import type { MentorAnswer, MentorCompleted } from "./answer";
 import type { MentorAsk } from "./ask";
+import { citationsFor } from "./context";
 import { storeCachedReply, type CachedReplyRow } from "./cached-reply-store";
 import {
   buildMentorRequest,
@@ -11,6 +12,7 @@ import {
   MENTOR_SETUP,
   type MentorSetup,
 } from "./prompt";
+import { openSse } from "./sse";
 import { summaryRequest } from "./summary-request";
 import type { LessonContext } from "./types";
 
@@ -156,4 +158,77 @@ export async function storeCachedReplyWhenDone(
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+/** Words per text event when a saved reply is replayed */
+export const REPLAY_CHUNK_WORDS = 4;
+/** A replay of any length takes about this long */
+export const REPLAY_TOTAL_MS = 2000;
+/** ...and never waits longer than this between events */
+export const REPLAY_STEP_MS = 30;
+
+/** The text in pieces of a few words; joined, they're exactly the text */
+export function replayChunks(text: string): string[] {
+  const words = text.split(/(?<=\s)(?=\S)/);
+  // Leading whitespace stays with the first word
+  if (words.length > 1 && !words[0].trim()) {
+    words.splice(0, 2, words[0] + words[1]);
+  }
+  const chunks: string[] = [];
+  for (let i = 0; i < words.length; i += REPLAY_CHUNK_WORDS) {
+    chunks.push(words.slice(i, i + REPLAY_CHUNK_WORDS).join(""));
+  }
+  return chunks;
+}
+
+/**
+ * A saved reply as the events a live answer sends: its text a few words
+ * at a time, paced so any length takes about 2 s, then done with
+ * citations from the current context. Shaped like streamMentorAnswer's
+ * answer, with no usage. Stops, with no done, when the student goes.
+ */
+export function replayCachedReply({
+  text,
+  context,
+  signal,
+}: {
+  text: string;
+  context: LessonContext;
+  signal: AbortSignal;
+}): MentorAnswer {
+  const chunks = replayChunks(text);
+  const step = Math.min(REPLAY_STEP_MS, REPLAY_TOTAL_MS / chunks.length);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let settle!: (value: MentorCompleted | null) => void;
+  const completed = new Promise<MentorCompleted | null>((resolve) => {
+    settle = resolve;
+  });
+
+  const stop = () => {
+    clearTimeout(timer);
+    signal.removeEventListener("abort", stop);
+    sse.close();
+    settle(null);
+  };
+  const sse = openSse({ onCancel: stop });
+  signal.addEventListener("abort", stop, { once: true });
+
+  const finish = () => {
+    const citations = citationsFor(context, text);
+    sse.send({ type: "done", citations, truncated: false });
+    sse.close();
+    signal.removeEventListener("abort", stop);
+    settle({ text, citations, stopReason: "end_turn" });
+  };
+  const sendFrom = (i: number) => {
+    sse.send({ type: "text", text: chunks[i] });
+    if (i + 1 < chunks.length) timer = setTimeout(() => sendFrom(i + 1), step);
+    else finish();
+  };
+
+  if (signal.aborted) stop();
+  else if (chunks.length) sendFrom(0);
+  else finish();
+
+  return { response: sse.response, usage: Promise.resolve(null), completed };
 }
