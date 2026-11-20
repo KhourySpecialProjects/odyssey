@@ -31,6 +31,8 @@ export type ResultRow = Key & {
   lessonId: number;
   /** The learner profile's name, "inline", or null; missing on rows written before ODY-941 */
   learner?: string | null;
+  /** The question asked (questionKey), to pair rows of one question; missing on older rows */
+  question?: string;
   seq: number;
   model: MentorModel | null;
   servedModel: string | null;
@@ -70,6 +72,10 @@ export type RunMeta = {
   casesSha: string;
   /** What the cases' learner blocks say (ODY-941); null with none, missing on older runs */
   learnersSha?: string | null;
+  /** The twin profile's name (ODY-938), or null for none; missing on older runs */
+  twins?: string | null;
+  /** The kinds kept (--kind), or null for all; missing on older runs */
+  kinds?: CaseKind[] | null;
   fixtures: { slug: string; takenAt: string }[];
   setups: string[];
   reps: number;

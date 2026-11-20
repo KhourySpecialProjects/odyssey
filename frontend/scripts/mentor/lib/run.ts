@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import path from "node:path";
 import { costOf } from "@/lib/ai-review/models";
 import type { MentorModel } from "@/lib/mentor/prompt";
-import type { CaseFacts } from "./cases";
+import { questionKey, type CaseFacts } from "./cases";
 import { appendJsonl, readJsonl } from "./files";
 import {
   ASKED,
@@ -158,6 +158,7 @@ async function runOne(
     fixture: facts.case.fixture,
     lessonId: facts.case.lessonId,
     learner: facts.learner?.name ?? null,
+    question: questionKey(facts.case),
     seq,
     model,
     ...said,
@@ -207,7 +208,13 @@ export function resumeProblems(
   then: RunMeta,
   now: Pick<
     RunMeta,
-    "casesSha" | "learnersSha" | "promptVersion" | "judgeVersion" | "fixtures"
+    | "casesSha"
+    | "learnersSha"
+    | "promptVersion"
+    | "judgeVersion"
+    | "fixtures"
+    | "twins"
+    | "kinds"
   >,
 ): string[] {
   const fixtures = (m: Pick<RunMeta, "fixtures">) =>
@@ -219,6 +226,9 @@ export function resumeProblems(
     then.promptVersion !== now.promptVersion && "MENTOR_PROMPT_VERSION",
     then.judgeVersion !== now.judgeVersion && "JUDGE_VERSION",
     fixtures(then) !== fixtures(now) && "the fixtures",
+    (then.twins ?? null) !== (now.twins ?? null) && "--twins",
+    JSON.stringify([...(then.kinds ?? [])].sort()) !==
+      JSON.stringify([...(now.kinds ?? [])].sort()) && "--kind",
   ].filter((p): p is string => !!p);
 }
 

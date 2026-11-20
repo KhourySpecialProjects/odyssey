@@ -44,6 +44,9 @@ import {
   cannedGroups,
   FULL_REPS,
   parseSetups,
+  parseKinds,
+  parseTwins,
+  pilotCases,
   planGroups,
   pricedRequests,
   runCases,
@@ -84,6 +87,8 @@ async function main() {
       pilot: { type: "boolean", default: false },
       kind: { type: "string", multiple: true },
       answers: { type: "string" },
+      twins: { type: "string" },
+      kind: { type: "string", multiple: true },
       resume: { type: "string" },
       yes: { type: "boolean", default: false },
     },
@@ -102,13 +107,30 @@ async function main() {
   const client = values.resume ? null : makeClient({ maxRetries: 4 });
 
   const fixtures = loadFixtures();
-  const all = loadCases(fixtures);
-  const problems = validateCases(all, fixtures);
+  const base = loadCases(fixtures);
+  const problems = validateCases(base, fixtures);
   if (problems.length)
     throw new Error(
       `${problems.length} problems in cases.jsonl: run cases.ts --check`,
     );
+  // A resume keeps the twins and kinds it started with unless a flag says otherwise
+  const started = values.resume
+    ? readJson<RunMeta>(path.join(values.resume, "meta.json"))
+    : null;
+  const twins = values.twins
+    ? parseTwins(values.twins)
+    : started
+      ? started.twins ?? null
+      : parseTwins();
+  const kinds = values.kind
+    ? parseKinds(values.kind)
+    : started
+      ? started.kinds ?? null
+      : null;
+  const all = runCases(base, twins, kinds);
   const now = {
+    twins,
+    kinds,
     casesSha: crypto
       .createHash("sha256")
       .update(fs.readFileSync(CASES_FILE))
@@ -124,7 +146,7 @@ async function main() {
   if (values.resume) {
     // A resumed run keeps the settings it started with
     dir = values.resume;
-    meta = readJson<RunMeta>(path.join(dir, "meta.json"));
+    meta = started!;
     const changed = resumeProblems(meta, now);
     if (changed.length)
       throw new Error(

@@ -5,6 +5,7 @@ import path from "path";
 import {
   casesMarkdown,
   countProblems,
+  learnerTwins,
   validateCases,
 } from "@/scripts/mentor/lib/cases";
 import { loadCases, type EvalCase } from "@/scripts/mentor/lib/files";
@@ -231,6 +232,38 @@ describe("validateCases", () => {
       profile: learnerProfile(),
     });
     expect(validateCases([as("first"), as("second")], fixtures)).toEqual([]);
+  });
+});
+
+describe("learnerTwins", () => {
+  const broad = learnerProfile({ prerequisites: [], viewedLessons: [] });
+  const learners = new Map([
+    ["broad", broad],
+    ["tied", learnerProfile()],
+  ]);
+
+  it("copies each case without a learner, and skips the kinds with their own", () => {
+    const twins = learnerTwins(EVAL_CASES, "broad", learners);
+
+    expect(twins.map((c) => c.id)).toEqual(
+      expect.arrayContaining(["covered-01+broad", "summary-01+broad"]),
+    );
+    expect(twins[0]).toMatchObject({
+      learner: "broad",
+      profile: broad,
+      twinOf: "covered-01",
+    });
+    expect(twins.map((c) => c.kind)).not.toEqual(
+      expect.arrayContaining(["personalized", "quiz-ask", "review"]),
+    );
+    expect(twins.every((c) => !c.id.startsWith("personalized"))).toBe(true);
+  });
+
+  it.each([
+    ["a profile with prerequisites or viewed lessons", "tied", /neither/],
+    ["a profile that doesn't exist", "nobody", /no learner profile nobody/],
+  ])("throws for %s", (_, name, error) => {
+    expect(() => learnerTwins(EVAL_CASES, name, learners)).toThrow(error);
   });
 });
 

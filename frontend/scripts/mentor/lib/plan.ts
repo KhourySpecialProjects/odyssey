@@ -1,7 +1,13 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { buildMentorRequest, type MentorSetup } from "@/lib/mentor/prompt";
-import { factsFor, type CaseFacts } from "./cases";
-import type { CaseKind, EvalCase, Fixtures } from "./files";
+import { factsFor, learnerTwins, type CaseFacts } from "./cases";
+import {
+  CASE_KINDS,
+  loadLearners,
+  type CaseKind,
+  type EvalCase,
+  type Fixtures,
+} from "./files";
 import {
   ASKED,
   cannedReply,
@@ -30,6 +36,32 @@ export function parseSetups(names: string[] = []): SetupName[] {
     if (!known.includes(name))
       throw new Error(`Unknown setup ${name}: use ${known.join(", ")}`);
   return (names.length ? [...new Set(names)] : known) as SetupName[];
+}
+
+/** The twin profile (ODY-938) when --twins isn't given */
+export const DEFAULT_TWINS = "broad-history";
+
+/** --twins: a profile's name, or null for "none" */
+export const parseTwins = (name = DEFAULT_TWINS) =>
+  name === "none" ? null : name;
+
+/** --kind, repeated: null with none given */
+export function parseKinds(kinds: string[] = []): CaseKind[] | null {
+  for (const kind of kinds)
+    if (!(CASE_KINDS as readonly string[]).includes(kind))
+      throw new Error(`Unknown kind ${kind}: use ${CASE_KINDS.join(", ")}`);
+  return kinds.length ? [...new Set(kinds as CaseKind[])] : null;
+}
+
+/** The cases a run asks: every case, plus its twins, kept to the kinds given */
+export function runCases(
+  all: EvalCase[],
+  twins: string | null,
+  kinds: CaseKind[] | null,
+  learners = loadLearners(),
+): EvalCase[] {
+  const pool = [...all, ...(twins ? learnerTwins(all, twins, learners) : [])];
+  return kinds ? pool.filter((c) => kinds.includes(c.kind)) : pool;
 }
 
 /** A reply in hand: one the judge failed on, kept on its error line, or a canned one */
@@ -70,20 +102,11 @@ export const pricedRequests = (groups: Planned[][]) =>
     ];
   });
 
-/** The cases a run asks: --pilot's sample, then only --kind's kinds if given */
-export function runCases(
-  cases: EvalCase[],
-  { pilot, kinds }: { pilot: boolean; kinds?: CaseKind[] | null },
-): EvalCase[] {
-  const picked = pilot ? pilotCases(cases) : cases;
-  return kinds?.length ? picked.filter((c) => kinds.includes(c.kind)) : picked;
-}
-
-/** --pilot: the first case of each kind in each format, in file order */
+/** --pilot: the first case of each kind in each format, and of each twin, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
   const seen = new Set<string>();
   return cases.filter((c) => {
-    const key = `${c.kind} ${c.format}`;
+    const key = `${c.kind} ${c.format}${c.twinOf ? " twin" : ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

@@ -3,7 +3,11 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
-import { appendJsonl, readJsonl } from "@/scripts/mentor/lib/files";
+import {
+  appendJsonl,
+  readJsonl,
+  type CaseKind,
+} from "@/scripts/mentor/lib/files";
 import type {
   ErrorRow,
   ResultRow,
@@ -11,10 +15,12 @@ import type {
 } from "@/scripts/mentor/lib/metrics";
 import {
   cannedGroups,
+  parseKinds,
   pilotCases,
   runCases,
   planGroups,
   pricedRequests,
+  runCases,
   SETUPS,
   type SetupName,
 } from "@/scripts/mentor/lib/plan";
@@ -28,6 +34,7 @@ import {
 import {
   caseById,
   EVAL_CASES,
+  learnerProfile,
   mentorFixtures,
 } from "@/testing/mocks/mentorEvalMock";
 
@@ -203,6 +210,56 @@ describe("pilotCases", () => {
   });
 });
 
+describe("pilotCases with twins", () => {
+  it("keeps one twin per kind and format, apart from the plain cases", () => {
+    const twin = (id: string) => ({
+      ...caseById(id),
+      id: `${id}+broad`,
+      twinOf: id,
+    });
+    const cases = [
+      caseById("covered-01"),
+      twin("covered-01"),
+      twin("uncovered-01"),
+    ];
+    expect(pilotCases([...cases, twin("covered-01")]).map((c) => c.id)).toEqual(
+      ["covered-01", "covered-01+broad", "uncovered-01+broad"],
+    );
+  });
+});
+
+describe("runCases", () => {
+  const learners = new Map([
+    ["broad", learnerProfile({ prerequisites: [], viewedLessons: [] })],
+  ]);
+
+  it("adds twins, then keeps only the kinds asked for", () => {
+    const run = runCases(
+      EVAL_CASES,
+      "broad",
+      ["covered", "personalized"],
+      learners,
+    );
+    expect(run.map((c) => c.id)).toEqual([
+      "covered-01",
+      "covered-explain-01",
+      "personalized-01",
+      "personalized-02",
+      "covered-01+broad",
+      "covered-explain-01+broad",
+    ]);
+  });
+
+  it("adds no twins for none, and every case for no kinds", () => {
+    expect(runCases(EVAL_CASES, null, null, learners)).toEqual(EVAL_CASES);
+  });
+
+  it("refuses a kind that doesn't exist", () => {
+    expect(() => parseKinds(["covered", "chat"])).toThrow(/Unknown kind chat/);
+    expect(parseKinds([])).toBeNull();
+  });
+});
+
 describe("runGroups", () => {
   const one = (id: string) =>
     planGroups([caseById(id)], fixtures, ["haiku-low"], 1);
@@ -355,6 +412,8 @@ describe("resumeProblems", () => {
     promptVersion: "p1",
     judgeVersion: "j1",
     fixtures: [{ slug: "databases-101", takenAt: "2026-11-05" }],
+    twins: "broad-history" as string | null,
+    kinds: null as CaseKind[] | null,
   };
   it.each<[string, Partial<typeof then>, string[]]>([
     ["nothing", {}, []],
@@ -362,6 +421,8 @@ describe("resumeProblems", () => {
     ["the learner profiles", { learnersSha: "x" }, ["the learner profiles"]],
     ["the prompt", { promptVersion: "p2" }, ["MENTOR_PROMPT_VERSION"]],
     ["the judge", { judgeVersion: "j2" }, ["JUDGE_VERSION"]],
+    ["the twins", { twins: null }, ["--twins"]],
+    ["the kinds", { kinds: ["covered" as const] }, ["--kind"]],
     [
       "a fixture retaken",
       { fixtures: [{ slug: "databases-101", takenAt: "2026-11-06" }] },

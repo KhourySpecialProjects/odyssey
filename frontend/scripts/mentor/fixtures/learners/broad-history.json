@@ -1,0 +1,59 @@
+{
+  "about": "The twin profile: eight finished droplets across areas and two in progress, with no prerequisites and no viewed lessons, so it suits any case. Three names are real fixtures, the rest made up. Tags are made up: snapshots carry none.",
+  "finished": [
+    {
+      "name": "Fundamentals of Data Science",
+      "tags": ["data science", "statistics"],
+      "difficulty": "beginner",
+      "month": "2026-10"
+    },
+    {
+      "name": "Internet Basics",
+      "tags": ["networking", "web"],
+      "difficulty": "beginner",
+      "month": "2026-09"
+    },
+    {
+      "name": "Technology Ethics in Practice",
+      "tags": ["ethics", "careers"],
+      "difficulty": "beginner",
+      "month": "2026-08"
+    },
+    {
+      "name": "Version Control with Git",
+      "tags": ["tools", "collaboration"],
+      "difficulty": "intermediate",
+      "month": "2026-06"
+    },
+    {
+      "name": "Designing Relational Databases",
+      "tags": ["databases", "sql"],
+      "difficulty": "advanced",
+      "month": "2026-05"
+    },
+    {
+      "name": "Writing Clear Documentation",
+      "tags": ["writing", "communication"],
+      "difficulty": "beginner",
+      "month": "2026-03"
+    },
+    {
+      "name": "Intro to Mechanical Design",
+      "tags": ["design", "engineering"],
+      "difficulty": "beginner",
+      "month": "2026-02"
+    },
+    {
+      "name": "Productivity for Students",
+      "tags": ["study skills"],
+      "difficulty": null,
+      "month": "2025-12"
+    }
+  ],
+  "inProgress": [
+    { "name": "Cloud Computing Foundations", "viewed": 2, "total": 5 },
+    { "name": "Presenting Your Work", "viewed": 1, "total": 3 }
+  ],
+  "prerequisites": [],
+  "viewedLessons": []
+}

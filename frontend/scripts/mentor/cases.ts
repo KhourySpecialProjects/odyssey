@@ -8,6 +8,7 @@ To run, from frontend/:
   npx tsx scripts/mentor/cases.ts           # the checks, then cases.md for review
   npx tsx scripts/mentor/cases.ts --dump    # runs/lessons.md, every lesson for drafting
   npx tsx scripts/mentor/cases.ts --cost    # the checks, then a full run's rough cost (an upper bound)
+    # --cost takes --setup (repeatable), --kind (repeatable) and --twins <name|none>, as eval.ts does
 */
 import fs from "node:fs";
 import path from "node:path";
@@ -27,7 +28,15 @@ import {
   MENTOR_DIR,
   RUNS_DIR,
 } from "./lib/files";
-import { FULL_REPS, parseSetups, planGroups, pricedRequests } from "./lib/plan";
+import {
+  FULL_REPS,
+  parseKinds,
+  parseSetups,
+  parseTwins,
+  planGroups,
+  pricedRequests,
+  runCases,
+} from "./lib/plan";
 
 const write = (file: string, text: string) => {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -41,6 +50,9 @@ async function main() {
       check: { type: "boolean", default: false },
       dump: { type: "boolean", default: false },
       cost: { type: "boolean", default: false },
+      setup: { type: "string", multiple: true },
+      kind: { type: "string", multiple: true },
+      twins: { type: "string" },
     },
   });
   const fixtures = loadFixtures();
@@ -65,8 +77,15 @@ async function main() {
   );
   if (values.cost) {
     // Prints and returns: `yes` skips the question, and no client is made
+    const planned = runCases(
+      cases,
+      parseTwins(values.twins),
+      parseKinds(values.kind),
+    );
     await confirmSpend(
-      pricedRequests(planGroups(cases, fixtures, parseSetups(), FULL_REPS)),
+      pricedRequests(
+        planGroups(planned, fixtures, parseSetups(values.setup), FULL_REPS),
+      ),
       { batch: false, yes: true },
     );
     return;

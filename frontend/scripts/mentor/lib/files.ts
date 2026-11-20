@@ -133,6 +133,8 @@ export type EvalCase = z.infer<typeof caseSchema> & {
   format: "classic" | "blocknote";
   /** Null with no learner, or a name with no profile (prepareCase reports that) */
   profile: LearnerProfile | null;
+  /** On a twin (a case copied with a learner), the id of the case it copies */
+  twinOf?: string;
 };
 
 /** Droplet snapshots by slug */

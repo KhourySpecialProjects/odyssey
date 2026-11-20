@@ -18,6 +18,7 @@ import {
   type CaseKind,
   type EvalCase,
   type Fixtures,
+  type LearnerProfile,
 } from "./files";
 import { learnerBlock } from "./learner";
 
@@ -210,13 +211,13 @@ export function factsFor(c: EvalCase, fixtures: Fixtures): CaseFacts {
 }
 
 /** The question asked, wherever it's asked, whoever asks it */
-const question = (c: EvalCase) =>
+export const questionKey = (c: EvalCase) =>
   `${c.fixture}:${c.lessonId}:${JSON.stringify(c.input)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")}`;
 /** The same input under another learner isn't a repeat */
 const normalised = (c: EvalCase) =>
-  `${JSON.stringify(c.learner ?? null)}:${question(c)}`;
+  `${JSON.stringify(c.learner ?? null)}:${questionKey(c)}`;
 
 /** Every problem with each case, ids or inputs that repeat, and personalized questions asked under one profile */
 export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
@@ -233,12 +234,12 @@ export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
   });
   const profiles = new Map<string, { id: string; learners: Set<string> }>();
   for (const c of cases.filter((c) => c.kind === "personalized")) {
-    const asked = profiles.get(question(c)) ?? {
+    const asked = profiles.get(questionKey(c)) ?? {
       id: c.id,
       learners: new Set(),
     };
     asked.learners.add(JSON.stringify(c.learner ?? null));
-    profiles.set(question(c), asked);
+    profiles.set(questionKey(c), asked);
   }
   for (const { id, learners } of profiles.values()) {
     if (learners.size < 2)
@@ -247,6 +248,39 @@ export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
       );
   }
   return problems;
+}
+
+/** Kinds with their own learner cases, or still seeds for 936 and 940: no twin */
+export const NO_TWIN_KINDS: CaseKind[] = [
+  "personalized",
+  "invented-history",
+  "quiz-ask",
+  "quiz-grade",
+  "review",
+];
+
+/** Each case without a learner, copied under this profile as `<id>+<name>` */
+export function learnerTwins(
+  cases: EvalCase[],
+  name: string,
+  learners: Map<string, LearnerProfile>,
+): EvalCase[] {
+  const profile = learners.get(name);
+  if (!profile)
+    throw new Error(`no learner profile ${name} in fixtures/learners`);
+  if (profile.prerequisites.length || profile.viewedLessons.length)
+    throw new Error(
+      `${name} has prerequisites or viewed lessons: a twin profile has neither`,
+    );
+  return cases
+    .filter((c) => !c.learner && !NO_TWIN_KINDS.includes(c.kind))
+    .map((c) => ({
+      ...c,
+      id: `${c.id}+${name}`,
+      learner: name,
+      profile,
+      twinOf: c.id,
+    }));
 }
 
 const withHistory = (c: EvalCase) =>
