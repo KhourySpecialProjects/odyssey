@@ -77,7 +77,12 @@ describe("replayCachedReply", () => {
     const { response } = replay(words(2000));
     const { events } = listen(response);
 
-    await jest.advanceTimersByTimeAsync(2000);
+    await jest.advanceTimersByTimeAsync(1000);
+    // Spread out, not sent at once: about half at the midpoint
+    expect(texts(events).length).toBeGreaterThanOrEqual(240);
+    expect(texts(events).length).toBeLessThanOrEqual(260);
+    expect(events.some((e) => e.type === "done")).toBe(false);
+    await jest.advanceTimersByTimeAsync(1000);
     expect(texts(events)).toHaveLength(500);
     expect(events.at(-1)?.type).toBe("done");
   });

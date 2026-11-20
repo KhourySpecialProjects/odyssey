@@ -162,7 +162,7 @@ export async function storeCachedReplyWhenDone(
 
 /** Words per text event when a saved reply is replayed */
 export const REPLAY_CHUNK_WORDS = 4;
-/** A replay of any length takes about this long */
+/** No replay takes longer than this; short ones finish sooner (30 ms a step) */
 export const REPLAY_TOTAL_MS = 2000;
 /** ...and never waits longer than this between events */
 export const REPLAY_STEP_MS = 30;
