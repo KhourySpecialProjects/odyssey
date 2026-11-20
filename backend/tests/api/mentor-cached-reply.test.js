@@ -80,6 +80,8 @@ describe('mentor-cached-reply routes (ODY-967)', () => {
     ['a slot for another lesson', { slot: 'lesson:2', key: `lesson:2:${hash}` }],
     ['a hint slot with two ids', { scope: 'hint', slot: 'hint:1:7', key: `hint:1:7:${hash}` }],
     ['a key whose slot differs from slot', { key: `lesson:2:${hash}` }],
+    ['a leading zero in the slot', { slot: 'lesson:01', key: `lesson:01:${hash}` }],
+    ['a leading zero in a hint id', { scope: 'hint', slot: 'hint:1:07:3', key: `hint:1:07:3:${hash}` }],
     ['dropletId 0', { dropletId: 0 }],
     ['an empty text', { text: '' }],
     ['a 20001-character text', { text: 'x'.repeat(20001) }],
@@ -101,6 +103,7 @@ describe('mentor-cached-reply routes (ODY-967)', () => {
     ['no key', {}],
     ['an extra key', { key: `lesson:1:${hash}`, extra: 1 }],
     ['a malformed key', { key: 'lesson:1:abc' }],
+    ['a leading zero', { key: `lesson:01:${hash}` }],
   ])('refuses a find with %s', async (_name, body) => {
     const res = await api('post', '/api/mentor-cached-replies/find').send(body);
 

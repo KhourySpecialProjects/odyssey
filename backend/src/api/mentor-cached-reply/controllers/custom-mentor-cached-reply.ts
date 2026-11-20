@@ -8,12 +8,14 @@ import {
 } from '../../../lib/mentor-cached-replies';
 import { fail, isText, parseBody } from '../../../lib/route-body';
 
-// A hint slot's question and option ids can be 0 (BlockNote id hashes), so no isRowId here
+// A hint slot's question and option ids can be 0 (BlockNote id hashes), so no isRowId here.
+// No leading zeros: "lesson:01" would be a slot that clean-up never matches.
+const ID = '(?:0|[1-9]\\d{0,9})';
 const SLOT = {
-  lesson: /^lesson:(\d{1,10})$/,
-  hint: /^hint:(\d{1,10}):\d{1,10}:\d{1,10}$/,
+  lesson: new RegExp(`^lesson:(${ID})$`),
+  hint: new RegExp(`^hint:(${ID}):${ID}:${ID}$`),
 };
-const KEY = /^(?:lesson:\d{1,10}|hint:\d{1,10}:\d{1,10}:\d{1,10}):[0-9a-f]{64}$/;
+const KEY = new RegExp(`^(?:lesson:${ID}|hint:${ID}:${ID}:${ID}):[0-9a-f]{64}$`);
 
 const STORE_KEYS = ['key', 'slot', 'scope', 'dropletId', 'lessonId', 'promptVersion', 'model', 'text'];
 
