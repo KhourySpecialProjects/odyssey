@@ -34,6 +34,7 @@ const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const MENTOR_CHAT_UID = 'api::mentor-chat.mentor-chat';
+const MENTOR_CACHED_REPLY_UID = 'api::mentor-cached-reply.mentor-cached-reply';
 const MENTOR_MESSAGE_UID = 'api::mentor-message.mentor-message';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
@@ -56,6 +57,22 @@ const mentorUsageData = (overrides = {}) => ({
   outputTokens: 0,
   ...overrides,
 });
+
+/** A valid lesson summary row; the key's hash is 64 hex characters */
+const cachedReplyData = (overrides = {}) => {
+  const hash = `${String(++counter).padStart(8, '0')}${'ab'.repeat(28)}`;
+  return {
+    key: `lesson:1:${hash}`,
+    slot: 'lesson:1',
+    scope: 'lesson',
+    dropletId: 1,
+    lessonId: 1,
+    promptVersion: 'v1',
+    model: 'claude-sonnet-5-5',
+    text: 'A summary.',
+    ...overrides,
+  };
+};
 
 const mentorFeedbackData = (overrides = {}) => ({
   answerKey: unique('answer'),
@@ -205,6 +222,7 @@ module.exports = {
   STREAK_DAY_UID,
   MENTOR_FEEDBACK_UID,
   MENTOR_CHAT_UID,
+  MENTOR_CACHED_REPLY_UID,
   MENTOR_MESSAGE_UID,
   GROUP_UID,
   TAG_UID,
@@ -213,6 +231,7 @@ module.exports = {
   learnerProfileData,
   mentorUsageData,
   mentorFeedbackData,
+  cachedReplyData,
   groupData,
   overviewScanData,
   dismissalData,

@@ -136,6 +136,24 @@ describe('POST /mentor-usages/check', () => {
       });
     });
 
+    // The frontend's checkMentorAccess (ODY-967) serves saved replies over the cap and
+    // the limit, so a cap or limit answer must mean the switch and the pilot passed.
+    it.each([
+      [
+        'the daily limit',
+        async () => {
+          for (let i = 0; i < 3; i++) await usage({}, undefined, other);
+        },
+      ],
+      ['the monthly cap', () => setSettings({ monthlyCapUsd: 0 })],
+    ])('refuses someone outside the group with not_in_pilot before %s', async (_name, exceed) => {
+      await exceed();
+
+      const res = await check(other.id);
+
+      expect(res.body.data).toMatchObject({ allowed: false, reason: 'not_in_pilot' });
+    });
+
     it('lets everyone in once the pilot groups are empty', async () => {
       await setSettings({ pilotGroups: [] });
 

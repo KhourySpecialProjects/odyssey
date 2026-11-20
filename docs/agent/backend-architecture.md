@@ -40,6 +40,7 @@ api/
 ├── learner-profile/      One student's onboarding quiz answers: goal, focus areas, interests (ODY-953)
 ├── lesson/               Individual lesson pages within droplets
 ├── note/                 User notes on lessons (positioned vertically)
+├── mentor-cached-reply/  One shared Mentor reply per version (a lesson summary or a quiz explanation), no student data (ODY-967)
 ├── mentor-feedback/      One rating per Mentor answer: ids-only citations, text only when shared (ODY-890)
 ├── mentor-setting/       Single type: Mentor's on/off switch, pilot groups, monthly cap and daily limit (ODY-884)
 ├── mentor-usage/         One row per Mentor answer: user, kind, model and tokens, never text (ODY-884)
@@ -347,6 +348,18 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
   | Route                               | Body                                                                                                                                             | 200 `data`         | Errors                                                      |
   | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------------------- |
   | `POST /api/mentor-feedbacks/record` | `{ userId, lessonId, dropletId, answerKey, kind, rating, shared, questionId?, citations?, answerText?, questionText?, promptVersion? }` (strict) | `{ id, canShare }` | 400 bad body, 403 sharing off, 404 unknown id, 429 cap, 500 |
+
+- **Mentor cached replies (ODY-967):** `mentor-cached-reply` (collection, `draftAndPublish` off, no core router) holds one shared reply per version, with no student data; code in `src/lib/mentor-cached-replies.ts`.
+
+  - **Formats:** `key` is `lesson:<lessonId>:<hash>` or `hint:<lessonId>:<questionId>:<answerId>:<hash>`; `slot` is the key without its hash. The hash (SHA-256 hex of the prompt version and request) is computed by the Next server; the backend only checks its shape (64 lowercase hex) and that `slot` and `key` agree with `scope` and `lessonId`.
+  - **Access:** both routes are private (`global::service-token-only`) with strict bodies. Ids are plain integers, not relations. Hint question and option ids are BlockNote hashes and can be 0, so they are checked as `\d{1,10}`, not `isRowId`.
+  - **Race:** `key` has a unique index (`mentor_cached_replies_key_uq`). A store reads first; if the create then fails, it re-reads and returns `stored: false` when a row is there. No transaction, because a failed insert aborts one on Postgres.
+  - **Clean-up:** a new row deletes rows with the same `slot` and `dropletId`, another `key`, and more than an hour old (`SUPERSEDED_AFTER_MS`), at most 50 per store. Best effort: a failure is logged and ignored.
+
+  | Route                                   | Body                                                                             | 200 `data`                     | Errors            |
+  | --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------ | ----------------- |
+  | `POST /api/mentor-cached-replies/find`  | `{ key }` (strict)                                                               | `{ text }` or `{ text: null }` | 400 bad body, 500 |
+  | `POST /api/mentor-cached-replies/store` | `{ key, slot, scope, dropletId, lessonId, promptVersion, model, text }` (strict) | `{ id, stored }`               | 400 bad body, 500 |
 
 ### Streak day route (`custom-streak-day` controller, ODY-918)
 

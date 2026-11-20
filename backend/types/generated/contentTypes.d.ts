@@ -1578,6 +1578,78 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorCachedReplyMentorCachedReply
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_cached_replies';
+  info: {
+    description: 'One shared Mentor reply (a lesson summary or a quiz explanation) per version: no student data (ODY-967)';
+    displayName: 'Mentor Cached Reply';
+    pluralName: 'mentor-cached-replies';
+    singularName: 'mentor-cached-reply';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dropletId: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 120;
+      }>;
+    lessonId: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-cached-reply.mentor-cached-reply'
+    > &
+      Schema.Attribute.Private;
+    model: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    scope: Schema.Attribute.Enumeration<['lesson', 'hint']> &
+      Schema.Attribute.Required;
+    slot: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 60;
+      }>;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMentorChatMentorChat extends Struct.CollectionTypeSchema {
   collectionName: 'mentor_chats';
   info: {
@@ -3154,6 +3226,7 @@ declare module '@strapi/strapi' {
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::learner-profile.learner-profile': ApiLearnerProfileLearnerProfile;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-cached-reply.mentor-cached-reply': ApiMentorCachedReplyMentorCachedReply;
       'api::mentor-chat.mentor-chat': ApiMentorChatMentorChat;
       'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
       'api::mentor-message.mentor-message': ApiMentorMessageMentorMessage;
