@@ -131,19 +131,20 @@ profile has either throws). `--twins <name>` picks another such profile, and
 
 ### Pairs and the contrast judge (ODY-938)
 
-Each personalized question under 2 or more profiles needs a pair. On one case
-of the question (the A side), `pairs` lists `{ with: <other case's id>, expect }`:
+Each personalized question under 2 or more profiles needs every profile in a
+pair (once any case has one; the minimum becomes unconditional with the cases).
+Both sides must be personalized, and pairs run one way only. On one case of the
+question (the A side), `pairs` lists `{ with: <other case's id>, expect }`:
 the other case asks the same question under another profile, and `expect` says
 how the two answers should differ, naming the droplet or level the difference
-rests on. Write the two students as the words `A` and `B` and nothing else
-spelled that way (not a capital "A" as an article), because the line is
-relabelled when the order swaps. `--check` requires pairs on every such
-question once any case has one.
+rests on. Write the two students as `A` (this case) and `B` (the partner); the
+line is never rewritten. The A side also needs `contrastOracles.same`.
 
 For each (setup, rep, pair), one extra call of the judge model sees the
 question, both blocks, both replies and the `expect` line, and answers
-`differs_as_expected` (yes or no) with a one-line reason. A is shown first on
-rep 1 and second on rep 2, with `expect` relabelled to fit. The call shares
+`differs_as_expected` (yes or no) with a one-line reason. A's blocks come
+first on rep 1 and second on rep 2; labels stay with the students and only the
+order changes (in an oracle check it alternates by pair instead). The call shares
 `JUDGE_VERSION` and writes a row to `contrast.jsonl`. A pair passes only when
 both rows pass their own `should` and the verdict is yes. A pair with a row
 missing gets no call, and the report blocks the setup until it's filled in.
@@ -151,8 +152,10 @@ missing gets no call, and the report blocks the setup until it's filled in.
 `--answers oracle` also grades the contrast judge: per pair it asks about the
 real oracles (expect yes), A's oracle against `contrastOracles.same`, a reworded
 copy of it (expect no), and the two oracles swapped (expect no). The report
-says "Contrast judge vs oracle pairs: n/N", and N/N is needed before any
-iteration run.
+says "Contrast judge vs oracle pairs: agreed/expected" (pairs × 3), lists each
+disagreement, and blocks while any call is missing; all must agree before any
+iteration run. A failed call goes to `errors.jsonl` as `contrast_error` and a
+resume retries it.
 
 ### New kinds (v2, ODY-941)
 
@@ -245,6 +248,7 @@ ODY-968's questions (see "Summaries and teaching hints"). `2026-11-16.2`
 reworded `covers_main`: the grading check's judge counted a quizzed point and
 a video section as main points a summary had missed. `2026-11-20.1` (ODY-938)
 asks `claims_history` of every row with a learner block, twins included.
+`2026-11-20.3` words the contrast prompt for either order of blocks.
 `2026-11-20.2` words the `primer` question as the prompt's rule does: a line
 or two on what the lesson needs from the prerequisite, drawn from the lesson.
 
@@ -320,7 +324,7 @@ What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
 
   Contrast calls (7 pairs) add about $0.10 to the grading check (3 per pair)
   and about $0.20 to the final run (1 per pair, setup and rep). `cases.ts --cost`
-  counts them.
+  prices the final run's contrasts (1 per pair, setup and rep).
 
 The report has "With a learner" under "Thresholds", then a "Personalization"
 section, then "By kind and profile": pass rate per kind and learner profile for
