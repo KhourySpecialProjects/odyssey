@@ -248,9 +248,11 @@ ODY-968's questions (see "Summaries and teaching hints"). `2026-11-16.2`
 reworded `covers_main`: the grading check's judge counted a quizzed point and
 a video section as main points a summary had missed. `2026-11-20.1` (ODY-938)
 asks `claims_history` of every row with a learner block, twins included.
-`2026-11-20.3` words the contrast prompt for either order of blocks.
 `2026-11-20.2` words the `primer` question as the prompt's rule does: a line
 or two on what the lesson needs from the prerequisite, drawn from the lesson.
+`2026-11-20.3` words the contrast prompt for either order of blocks.
+`2026-11-20.4` has the prompt say that A and B in `expect` mean the students
+in `learner_a`/`reply_a` and `learner_b`/`reply_b`, wherever those appear.
 
 From prompt `2026-11-24.5`, summaries follow ODY-968's summary rule (see
 "Summaries and teaching hints"). Hints still follow the old rule: ODY-972

@@ -39,7 +39,7 @@ export function pairsOf(cases: EvalCase[]): Pair[] {
   );
 }
 
-const CONTRAST_SYSTEM = `You compare two replies from Mentor, a study helper that answers a student's questions about one lesson of an online course. Two students, A and B, asked the same question. Each has their own record of what they have done, shown in <learner_a> or <learner_b>, and got the reply in <reply_a> or <reply_b>. The two students' blocks may appear in either order; each is named for its student.
+const CONTRAST_SYSTEM = `You compare two replies from Mentor, a study helper that answers a student's questions about one lesson of an online course. Two students, A and B, asked the same question. Each has their own record of what they have done, shown in <learner_a> or <learner_b>, and got the reply in <reply_a> or <reply_b>. The two students' blocks may appear in either order; each is named for its student. In <expect>, A always means the student in <learner_a> and <reply_a>, and B the one in <learner_b> and <reply_b>, wherever those appear.
 
 Answer one question about the replies: do they differ in the way <expect> says? Say yes only if the difference <expect> describes is there, in the direction it describes. Replies that say much the same thing, or that differ the other way round, or in some other way, are no. Ignore differences in wording that <expect> doesn't mention.
 
@@ -201,7 +201,7 @@ export function contrastJobs(
 export const requestFor = (j: ContrastJob) =>
   contrastRequest(j.a, j.b, j.pair.expect, j.order);
 
-/** Runs the calls not yet in contrast.jsonl, 4 at a time; returns how many ran. A failed call goes to errors.jsonl for a resume. */
+/** Runs the calls missing from contrast.jsonl, 4 at a time; a failed call goes to errors.jsonl */
 export async function runContrasts(
   client: Anthropic,
   jobs: ContrastJob[],

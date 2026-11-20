@@ -23,7 +23,7 @@ import {
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-20.3";
+export const JUDGE_VERSION = "2026-11-20.4";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 export const JUDGE_MAX_TOKENS = 8000;
 
