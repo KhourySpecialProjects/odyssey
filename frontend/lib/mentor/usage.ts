@@ -4,8 +4,7 @@ import {
   checkRateLimit,
   formatRateLimitError,
 } from "@/lib/import/rate-limiter";
-import { readJsonOrNull } from "@/lib/strapi-response";
-import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { postMentorRoute } from "./strapi-route";
 import { MENTOR_KINDS, type MentorKind } from "./types";
 
 // Mentor's allowance check and usage record (ODY-884). The limits live in
@@ -84,42 +83,50 @@ const UNAVAILABLE: MentorAllowance = {
 
 const RECORD_RETRIES = 2;
 
-type RouteResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string | null };
+/** The backend's answer to a check, or null when it couldn't be read */
+async function askBackend(user: MentorUser): Promise<CheckData | null> {
+  const result = await postMentorRoute<CheckData>("mentor-usages/check", {
+    userId: user.id,
+  });
+  if (!result.ok || typeof result.data.allowed !== "boolean") return null;
+  return result.data;
+}
+
+/** A backend refusal as a MentorAllowance; an unknown reason fails closed */
+function refusalOf(
+  answer: Extract<CheckData, { allowed: false }>,
+): MentorAllowance {
+  const status = REFUSAL_STATUS[answer.reason];
+  if (!status) return UNAVAILABLE;
+  return {
+    allowed: false,
+    reason: answer.reason,
+    status,
+    message: answer.message,
+    retryAt: answer.retryAt ?? null,
+  };
+}
 
 /**
- * Calls a Mentor usage route (`backend/src/api/mentor-usage`) with the service
- * token. Bodies are `{ data }`, not v4 entries, so nothing is flattened. A
- * network failure is status 0.
+ * For a reply that calls no model, such as a saved summary (ODY-967).
+ * Only Mentor's switch and the pilot can refuse it: the monthly cap and the
+ * daily limit bound spending, and the burst guard bounds model calls. The
+ * backend refuses in order (switch, pilot, cap, limit), so a cap or limit
+ * refusal means the first two passed. Never throws.
  */
-async function postMentorRoute<T>(
-  path: "check" | "record",
-  body: object,
-): Promise<RouteResult<T>> {
-  const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/mentor-usages/${path}`;
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
-    const json = await readJsonOrNull(response).catch(() => null);
-    if (!response.ok || !json?.data) {
-      const message: string | null = json?.error?.message ?? null;
-      console.error(`POST ${url} failed:`, response.status, message);
-      return { ok: false, status: response.status, message };
-    }
-    return { ok: true, data: json.data as T };
-  } catch (error) {
-    console.error(`POST ${url} failed:`, error);
-    return { ok: false, status: 0, message: null };
+export async function checkMentorAccess(
+  user: MentorUser,
+): Promise<MentorAllowance> {
+  const answer = await askBackend(user);
+  if (!answer) return UNAVAILABLE;
+  if (
+    !answer.allowed &&
+    answer.reason !== "monthly_cap" &&
+    answer.reason !== "daily_limit"
+  ) {
+    return refusalOf(answer);
   }
+  return { allowed: true };
 }
 
 /**
@@ -132,24 +139,9 @@ async function postMentorRoute<T>(
 export async function checkMentorAllowance(
   user: MentorUser,
 ): Promise<MentorAllowance> {
-  const result = await postMentorRoute<CheckData>("check", {
-    userId: user.id,
-  });
-  if (!result.ok || typeof result.data.allowed !== "boolean") {
-    return UNAVAILABLE;
-  }
-  const answer = result.data;
-  if (!answer.allowed) {
-    const status = REFUSAL_STATUS[answer.reason];
-    if (!status) return UNAVAILABLE;
-    return {
-      allowed: false,
-      reason: answer.reason,
-      status,
-      message: answer.message,
-      retryAt: answer.retryAt ?? null,
-    };
-  }
+  const answer = await askBackend(user);
+  if (!answer) return UNAVAILABLE;
+  if (!answer.allowed) return refusalOf(answer);
 
   const burst = checkRateLimit(user.email, user.roles, "mentor");
   if (!burst.allowed) {
@@ -189,7 +181,10 @@ export async function recordMentorUsage(input: {
   };
   try {
     for (let attempt = 0; attempt <= RECORD_RETRIES; attempt++) {
-      const result = await postMentorRoute<{ id: number }>("record", body);
+      const result = await postMentorRoute<{ id: number }>(
+        "mentor-usages/record",
+        body,
+      );
       if (result.ok) return true;
       if (result.status !== 0 && result.status < 500) break;
     }
