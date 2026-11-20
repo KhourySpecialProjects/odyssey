@@ -18,6 +18,7 @@ import {
   loadFixtures,
   loadHandChecks,
   type EvalCase,
+  type HandCheck,
   readJson,
   readJsonl,
   RUNS_DIR,
@@ -83,7 +84,7 @@ function writeReport(dir: string, meta: RunMeta, handChecks: HandCheck[]) {
   const contrasts = readJsonl<ContrastRow>(file(CONTRAST));
   fs.writeFileSync(
     file("report.md"),
-    `${reportMarkdown(rows, errors, meta, labels, contrasts, loadHandChecks(dir))}\n`,
+    `${reportMarkdown(rows, errors, meta, labels, contrasts, handChecks)}\n`,
   );
   console.log(`Report: ${path.relative(process.cwd(), file("report.md"))}`);
 }

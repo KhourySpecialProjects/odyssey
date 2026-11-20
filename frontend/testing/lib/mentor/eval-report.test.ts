@@ -528,10 +528,17 @@ describe("reportMarkdown", () => {
     const report = reportMarkdown(rows, [], meta, [], [], handChecks);
 
     expect(report).toContain(
-      "| haiku-low | – (0/0) [–] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
+      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
+    expect(report).toContain(
+      "- `haiku-low|pers|1`: not a twin (not counted anyway)",
+    );
+    expect(report).toContain(
+      "### haiku-low, a+b, rep 1: claims history the block doesn't show; dismissed: it quotes the lesson",
+    );
+    expect(report).not.toContain("pers, rep 1: dismissed");
     expect(summarise(rows, [], 22, { handChecks })[0]).toMatchObject({
       historyClaims: 0,
       recited: 1,
