@@ -10,6 +10,7 @@ import {
 } from "@/scripts/mentor/lib/cases";
 import {
   loadCases,
+  SHOULDS,
   TWIN_KINDS,
   type EvalCase,
 } from "@/scripts/mentor/lib/files";
@@ -450,7 +451,8 @@ describe("countProblems", () => {
     { role: "student", text: "Hi" },
     { role: "mentor", text: "Hello" },
   ] as const;
-  // Twelve of each case, half in each format, on twelve questions
+  // Twelve of each case, half in each format, on twelve questions; personalized
+  // ones cycle through the shoulds, and the first two extractions have a learner
   const full = EVAL_CASES.flatMap((c) =>
     Array.from(
       { length: 12 },
@@ -460,13 +462,55 @@ describe("countProblems", () => {
         input:
           c.input.kind === "quiz-hint"
             ? { ...c.input, questionId: i }
-            : { ...c.input, history: [...history] },
+            : c.input.kind === "lesson"
+              ? {
+                  ...c.input,
+                  message: `${c.input.message} ${i}`,
+                  history: [...history],
+                }
+              : { ...c.input, history: [...history] },
+        ...(c.kind === "personalized" ? { should: SHOULDS[i % 3] } : {}),
+        ...(c.kind === "extraction" && i < 2
+          ? { learner: "broad", profile: learnerProfile() }
+          : {}),
       }),
     ),
   );
+  const index = (c: EvalCase) =>
+    c.input.kind === "lesson" ? Number(c.input.message.split(" ").at(-1)) : 0;
 
   it("passes a set with enough of each kind, mode and format", () => {
     expect(countProblems(full)).toEqual([]);
+  });
+
+  it.each<[string, (c: EvalCase) => boolean, RegExp]>([
+    [
+      "5 personalized questions",
+      (c) => c.kind !== "personalized" || index(c) < 5,
+      /5 personalized questions, at least 6/,
+    ],
+    [
+      "no personalized question to level",
+      (c) => c.should !== "level",
+      /personalized questions to level/,
+    ],
+    [
+      "no personalized question in BlockNote",
+      (c) => c.kind !== "personalized" || c.format === "classic",
+      /personalized questions in BlockNote lessons/,
+    ],
+    [
+      "no invented-history case in a classic lesson",
+      (c) => c.kind !== "invented-history" || c.format === "blocknote",
+      /invented-history cases in classic lessons/,
+    ],
+    [
+      "no extraction case with a learner",
+      (c) => c.kind !== "extraction" || !c.learner,
+      /extraction cases with a learner/,
+    ],
+  ])("finds %s", (_, keep, problem) => {
+    expect(countProblems(full.filter(keep)).join("\n")).toMatch(problem);
   });
 
   it("names each shortfall", () => {

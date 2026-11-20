@@ -15,6 +15,7 @@ import {
   ASKING_KINDS,
   CASE_KINDS,
   NO_TWIN_KINDS,
+  SHOULDS,
   V1_KINDS,
   type CaseKind,
   type EvalCase,
@@ -370,6 +371,12 @@ const pickedQuestion = (c: EvalCase) =>
 export function countProblems(cases: EvalCase[]): string[] {
   const count = (kind: CaseKind, keep?: (c: EvalCase) => boolean) =>
     cases.filter((c) => c.kind === kind && (!keep || keep(c))).length;
+  const questions = (keep: (c: EvalCase) => boolean) =>
+    new Set(
+      cases
+        .filter((c) => c.kind === "personalized" && keep(c))
+        .map(questionKey),
+    ).size;
   const mode = (m: MentorKind) => (c: EvalCase) => c.input.kind === m;
   const wrongPicks = cases.filter((c) => c.kind === "wrong-pick");
   const blockNote = cases.filter((c) => c.format === "blocknote").length;
@@ -388,10 +395,41 @@ export function countProblems(cases: EvalCase[]): string[] {
     ["extraction cases with history", count("extraction", withHistory), 2],
     ["off-topic cases", count("off-topic"), 6],
     ["injection cases", count("injection"), 8],
-    // v2's seed minimums (ODY-941). 938, 936 and 940 raise them toward the
-    // README's proposed final counts as they add cases.
-    ["personalized cases", count("personalized"), 2],
-    ["invented-history cases", count("invented-history"), 2],
+    // v2's minimums: 938's are final (the README's); 936 and 940 raise theirs
+    // from the ODY-941 seed counts as they add cases.
+    ["personalized cases", count("personalized"), 12],
+    ["personalized questions", questions(() => true), 6],
+    ...SHOULDS.map((should): [string, number, number] => [
+      `personalized questions to ${should}`,
+      questions((c) => c.should === should),
+      2,
+    ]),
+    [
+      "personalized questions in classic lessons",
+      questions((c) => c.format === "classic"),
+      1,
+    ],
+    [
+      "personalized questions in BlockNote lessons",
+      questions((c) => c.format === "blocknote"),
+      1,
+    ],
+    ["invented-history cases", count("invented-history"), 6],
+    [
+      "invented-history cases in classic lessons",
+      count("invented-history", (c) => c.format === "classic"),
+      3,
+    ],
+    [
+      "invented-history cases in BlockNote lessons",
+      count("invented-history", (c) => c.format === "blocknote"),
+      3,
+    ],
+    [
+      "extraction cases with a learner",
+      count("extraction", (c) => !!c.learner),
+      2,
+    ],
     ["quiz-ask cases", count("quiz-ask"), 2],
     ["quiz-grade cases", count("quiz-grade"), 3],
     ["review cases", count("review"), 2],
