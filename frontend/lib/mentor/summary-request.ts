@@ -22,11 +22,9 @@ const SUMMARY_PHRASES = new Set([
 ]);
 
 const FILLER = new Set([
-  "this",
   "the",
   "lesson",
   "page",
-  "it",
   "please",
   "can",
   "could",
@@ -49,15 +47,36 @@ const FILLER = new Set([
   "briefly",
   "pls",
   "plz",
+  "for",
+  "all",
 ]);
 
-/** True when the message asks for a summary of this lesson and nothing else */
-export function isSummaryRequest(message: string): boolean {
-  const words = message
+// With earlier turns, a bare "it" or "this" probably points at Mentor's last
+// answer ("summarize it"), so it isn't filler; "this lesson" still is.
+const CHAT_ONLY_FILLER = new Set(["it", "this"]);
+
+/**
+ * True when the message asks for a summary of this lesson and nothing else.
+ * The route passes `hasHistory: input.history.length > 0`: mid-chat, "summarize
+ * it" and "summarize this" go to Mentor live, but "summarize this lesson",
+ * "summarise" and "quick summary" still match.
+ */
+export function isSummaryRequest(
+  message: string,
+  { hasHistory = false }: { hasHistory?: boolean } = {},
+): boolean {
+  const text = message
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\bthis lesson\b/g, "lesson");
+  const words = text
     .split(/\s+/)
-    .filter((word) => word && !FILLER.has(word));
+    .filter(
+      (word) =>
+        word &&
+        !FILLER.has(word) &&
+        !(!hasHistory && CHAT_ONLY_FILLER.has(word)),
+    );
   return SUMMARY_PHRASES.has(words.join(" "));
 }
 

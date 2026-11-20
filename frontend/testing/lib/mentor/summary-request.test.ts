@@ -23,9 +23,26 @@ describe("isSummaryRequest", () => {
     "could you sum it up",
     "please summarise the whole page",
     "I want to get a summary of this lesson",
+    "summarize this for me",
+    "sum it all up",
+    "summarize it",
   ])("accepts %j", (message) => {
     expect(isSummaryRequest(message)).toBe(true);
   });
+
+  it.each(["summarize it", "sum it up", "summarize this", "sum it all up"])(
+    "refuses %j mid-chat, where it points at the last answer",
+    (message) => {
+      expect(isSummaryRequest(message, { hasHistory: true })).toBe(false);
+    },
+  );
+
+  it.each(["summarize this lesson", "summarise", "quick summary"])(
+    "still accepts %j mid-chat",
+    (message) => {
+      expect(isSummaryRequest(message, { hasHistory: true })).toBe(true);
+    },
+  );
 
   it.each([
     "summarize the part about recursion",
