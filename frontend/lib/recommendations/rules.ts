@@ -26,11 +26,14 @@ export type StudentState = {
 };
 /** Source droplet id to the droplets finished alongside it, with student counts. */
 export type CoCompletion = Map<number, { id: number; count: number }[]>;
+/** Droplet id to its distinct finishers (the backend only sends 3 or more). */
+export type CompletionCounts = Map<number, number>;
 export type RankInput = {
   candidates: CandidateDroplet[];
   student: StudentState;
   excludeIds: number[];
   coCompletion?: CoCompletion;
+  completions?: CompletionCounts;
 };
 type Pick = { id: number; rule: RecommendationRule; reason: string };
 export type Rule = (
@@ -89,12 +92,17 @@ function buildEligible({
   return eligible;
 }
 
-const popular: Rule = (eligible) =>
-  [...eligible.values()].sort(byRating).map((d) => ({
-    id: d.id,
-    rule: "popular",
-    reason: rating(d) > 0 ? REASONS.topRated : REASONS.unrated,
-  }));
+/** Rule 5: most finished first (0 when unknown), then the shared tie-break. */
+const popular: Rule = (eligible, { completions }) => {
+  const finishes = (d: CandidateDroplet) => completions?.get(d.id) ?? 0;
+  const reason = (d: CandidateDroplet) => {
+    if (finishes(d) > 0) return REASONS.popular;
+    return rating(d) > 0 ? REASONS.topRated : REASONS.unrated;
+  };
+  return [...eligible.values()]
+    .sort((a, b) => finishes(b) - finishes(a) || byRating(a, b))
+    .map((d) => ({ id: d.id, rule: "popular", reason: reason(d) }));
+};
 
 export type VoyageNodeInput = {
   id: number;
