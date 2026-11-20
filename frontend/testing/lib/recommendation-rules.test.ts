@@ -1,3 +1,4 @@
+import { REASONS } from "@/lib/recommendations/reasons";
 import {
   rankRecommendations,
   voyageDropletIds,
@@ -82,6 +83,87 @@ describe("rule 5 and exclusions", () => {
     expect(
       rankRecommendations(input({ candidates }), 2).map((p) => p.reason),
     ).toEqual(["Top rated on Odyssey", "Something new to try"]);
+  });
+
+  it("orders by completion count first, treating a missing count as 0", () => {
+    const candidates = [
+      candidateDroplet({ id: 1, averageRating: 5 }),
+      candidateDroplet({ id: 2, averageRating: 4 }),
+      candidateDroplet({ id: 3, averageRating: 0 }),
+    ];
+    const completions = new Map([
+      [3, 10],
+      [2, 4],
+    ]);
+    expect(
+      ids(rankRecommendations(input({ candidates, completions }), 3)),
+    ).toEqual([3, 2, 1]);
+  });
+
+  it("gives counted picks the popular line, even over a rating", () => {
+    const candidates = [
+      candidateDroplet({ id: 1, averageRating: 5 }),
+      candidateDroplet({ id: 2, averageRating: 4 }),
+      candidateDroplet({ id: 3, averageRating: 0 }),
+      candidateDroplet({ id: 4, averageRating: 0 }),
+    ];
+    const completions = new Map([
+      [3, 10],
+      [2, 4],
+    ]);
+    const reasons = new Map(
+      rankRecommendations(input({ candidates, completions }), 4).map((p) => [
+        p.droplet.id,
+        p.reason,
+      ]),
+    );
+    expect(reasons.get(3)).toBe(REASONS.popular);
+    expect(reasons.get(2)).toBe(REASONS.popular);
+    expect(reasons.get(1)).toBe(REASONS.topRated);
+    expect(reasons.get(4)).toBe(REASONS.unrated);
+  });
+
+  it.each([
+    [
+      "rating when counts tie",
+      [
+        { id: 1, averageRating: 1 },
+        { id: 2, averageRating: 3 },
+      ],
+      new Map([
+        [1, 5],
+        [2, 5],
+      ]),
+      [2, 1],
+    ],
+    [
+      "name then id when counts and rating tie",
+      [
+        { id: 3, name: "B" },
+        { id: 2, name: "A" },
+        { id: 1, name: "A" },
+      ],
+      new Map([
+        [1, 5],
+        [2, 5],
+        [3, 5],
+      ]),
+      [1, 2, 3],
+    ],
+    [
+      "today's order with an empty map",
+      [
+        { id: 1, averageRating: 1 },
+        { id: 2, averageRating: 3 },
+      ],
+      new Map<number, number>(),
+      [2, 1],
+    ],
+  ])("falls back to %s", (_name, drops, completions, expected) => {
+    const candidates = drops.map((d) => candidateDroplet(d));
+    expect(
+      ids(rankRecommendations(input({ candidates, completions }), 5)),
+    ).toEqual(expected);
   });
 
   it("drops a candidate with no documentId", () => {

@@ -157,7 +157,7 @@
  * mentor-setting  Global tag: read by getMentorSetting (Ask Mentor gate);     60s
  *                 no action invalidates it, it just expires (admins edit
  *                 the setting in Strapi)
- * co-completion   Global tag: read by getCoCompletion (recommendations);   3600s
+ * co-completion   Global tag: read by getCoCompletion (rec. rules 3 and 5);    3600s
  *                 no action invalidates it, it just expires (aggregate counts)
  * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
  *                 learner's streak days); invalidated by recordStreakDay,
@@ -190,7 +190,7 @@ export const CACHE_TAGS = {
   lesson: "lesson",
   announcements: "announcements",
   mentorSetting: "mentor-setting", // Ask Mentor gate; expires after 60s
-  coCompletion: "co-completion", // droplet pair counts (ODY-962); expires after 3600s
+  coCompletion: "co-completion", // droplet pair and completion counts (ODY-962, ODY-976); expires after 3600s
   tags: "tags",
   reports: "reports",
   accessRequests: "access-requests",

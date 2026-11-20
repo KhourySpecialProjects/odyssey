@@ -53,7 +53,42 @@ it.each([
 ])("%s", async (_name, pairs, expected) => {
   api.mockResolvedValue({ data: pairs === undefined ? {} : { pairs } });
 
-  expect([...(await getCoCompletion())]).toEqual(expected);
+  expect([...(await getCoCompletion()).pairs]).toEqual(expected);
+});
+
+it.each([
+  [
+    "reads droplet counts",
+    [
+      { droplet: 1, count: 4 },
+      { droplet: 2, count: 3 },
+    ],
+    [
+      [1, 4],
+      [2, 3],
+    ],
+  ],
+  [
+    "skips malformed entries",
+    [
+      { droplet: "1", count: 4 },
+      { droplet: 1 },
+      null,
+      { droplet: 5, count: 3 },
+    ],
+    [[5, 3]],
+  ],
+  ["gives an empty map for a non-array", "nope", []],
+  ["gives an empty map when missing (old backend)", undefined, []],
+])("completions: %s", async (_name, completions, expected) => {
+  api.mockResolvedValue({
+    data: { pairs: [{ source: 1, target: 2, count: 3 }], completions },
+  });
+
+  const result = await getCoCompletion();
+
+  expect([...result.completions]).toEqual(expected);
+  expect([...result.pairs]).toEqual([[1, [{ id: 2, count: 3 }]]]);
 });
 
 it("throws when the read fails", async () => {

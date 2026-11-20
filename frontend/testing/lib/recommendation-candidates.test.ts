@@ -58,7 +58,10 @@ beforeEach(() => {
     focusAreas: ["technical"],
   });
   dismissed.mockResolvedValue([]);
-  coCompletion.mockResolvedValue(new Map());
+  coCompletion.mockResolvedValue({
+    pairs: new Map(),
+    completions: new Map(),
+  });
   api.mockImplementation(async (path: string) =>
     path === "/voyage-enrollments" ? voyages : playlists,
   );
@@ -66,11 +69,15 @@ beforeEach(() => {
 
 const apiCall = (path: string) => api.mock.calls.find(([p]) => p === path)![1];
 
-it("passes the co-completion map through", async () => {
-  const map = new Map([[1, [{ id: 2, count: 3 }]]]);
-  coCompletion.mockResolvedValue(map);
+it("passes pairs and completions through", async () => {
+  const pairs = new Map([[1, [{ id: 2, count: 3 }]]]);
+  const completions = new Map([[2, 4]]);
+  coCompletion.mockResolvedValue({ pairs, completions });
 
-  expect((await getRankInput(7, [])).coCompletion).toBe(map);
+  const input = await getRankInput(7, []);
+
+  expect(input.coCompletion).toBe(pairs);
+  expect(input.completions).toBe(completions);
 });
 
 it("reads live droplets once, with no exclusion ids and no per-user tag", async () => {
@@ -226,14 +233,19 @@ describe("failures", () => {
     await expect(getRankInput(7, [])).rejects.toThrow();
   });
 
-  it("a failed co-completion read falls back to an empty map, logging only the error name", async () => {
+  it("a failed co-completion read falls back to empty maps, logging only the error name", async () => {
     coCompletion.mockRejectedValue(
       new TypeError("http://strapi/co-completions"),
     );
 
-    const { coCompletion: map, student } = await getRankInput(7, []);
+    const {
+      coCompletion: pairs,
+      completions,
+      student,
+    } = await getRankInput(7, []);
 
-    expect(map).toEqual(new Map());
+    expect(pairs).toEqual(new Map());
+    expect(completions).toEqual(new Map());
     expect(student.interests).toEqual([{ id: 1, name: "React" }]);
     expect(console.error).toHaveBeenCalledWith(
       "recommendations: co-completion read failed:",
