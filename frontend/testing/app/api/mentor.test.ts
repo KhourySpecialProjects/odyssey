@@ -429,6 +429,7 @@ describe("POST /api/mentor", () => {
       else expect(allows).not.toHaveBeenCalled();
       if (personalize && studentAllows) {
         expect(learnerOf).toHaveBeenCalledWith(user.id, expect.anything());
+        expect(learnerOf).toHaveBeenCalledTimes(1);
       } else expect(learnerOf).not.toHaveBeenCalled();
     },
   );
@@ -479,14 +480,21 @@ describe("POST /api/mentor", () => {
       .mockImplementationOnce((...args) =>
         resolveReal(args[0], args[1], { ...args[2], kind: "lesson" } as never),
       );
-    const response = await post(ask());
-    spy.mockRestore();
-    expect(response.status).toBe(200);
-    await readAllMentorEvents(response.body!);
-    expect(JSON.parse(claude.calls[0].body).messages[0].content).toHaveLength(
-      2,
-    );
-    expect(learnerOf).not.toHaveBeenCalled();
+    try {
+      const response = await post(ask());
+      expect(response.status).toBe(200);
+      await readAllMentorEvents(response.body!);
+      expect(JSON.parse(claude.calls[0].body).messages[0].content).toHaveLength(
+        2,
+      );
+      expect(learnerOf).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+      jest
+        .mocked(askModule.resolveMentorAsk)
+        .mockReset()
+        .mockImplementation(resolveReal);
+    }
   });
 
   it.each([
