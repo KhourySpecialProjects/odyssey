@@ -1334,12 +1334,12 @@ Lessons of this droplet already viewed:
 
 Should: build-on
 
-Pair with `datasci-personalized-02`, expect: A builds on Intro to Python in a few words without re-teaching it; B gives a short primer on Intro to Python and suggests it by name
+Pair with `datasci-personalized-02`, expect: A builds on Intro to Python by name in a few words, without saying what it taught; B gives a short primer from the lesson itself on what it needs from Intro to Python, then suggests Intro to Python by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
 ```
-Intro to Python gave you the tools this workflow puts to work. It runs in five stages [p4]: collect the raw data [p7], clean it [p8], explore it [p9], model it [p10] and communicate the findings [p11].
+This builds on Intro to Python, so only the new part follows: the work runs in five stages [p4]. First collect the raw data [p7], then clean it [p8], explore it [p9], model it [p10] and communicate the findings [p11].
 ```
 
 ```json
@@ -1352,7 +1352,7 @@ Intro to Python gave you the tools this workflow puts to work. It runs in five s
 A reply that should pass:
 
 ```
-Since you finished Intro to Python, you have the tools this workflow puts to work. It follows five stages [p4]: collect raw data [p7], clean it [p8], explore it [p9], model it [p10] and communicate the findings [p11].
+This builds on Intro to Python, so here is just the new part: the workflow follows five stages [p4]. Collect raw data [p7], clean it [p8], explore it [p9], model it [p10] and communicate the findings [p11].
 ```
 
 Gold:
@@ -1392,7 +1392,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this droplet builds on Intro to Python, which you haven't finished yet. It's where you learn to write Python, which the cleaning stage relies on with pandas [p8], so I'd take Intro to Python alongside this. The workflow itself follows five stages [p4]: collect [p7], clean [p8], explore [p9], model [p10] and communicate [p11].
+A quick primer first: the cleaning stage uses tools like `pandas` [p8], and exploring uses `matplotlib` and `seaborn` [p9]. I'd take Intro to Python alongside this. The workflow follows five stages [p4]: collect [p7], clean [p8], explore [p9], model [p10] and communicate [p11].
 ```
 
 Gold:
@@ -1955,12 +1955,12 @@ Lessons of this droplet already viewed:
 
 Should: build-on
 
-Pair with `datasci-personalized-05`, expect: A builds on Intro to Statistics in a few words without re-teaching it; B gives a short primer on Intro to Statistics and suggests it by name
+Pair with `datasci-personalized-05`, expect: A builds on Intro to Statistics by name in a few words, without saying what it taught; B gives a short primer from the lesson itself on what it needs from Intro to Statistics, then suggests Intro to Statistics by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
 ```
-You already have Intro to Statistics behind you, so only the new part matters: ordinal categories have a meaningful order, which is why the median or rank suits them [p10], and nominal ones have none, so the mode or frequency is what you use [p9]. Treating one as the other is a classic beginner slip [p4].
+This builds on Intro to Statistics, so only the new part follows: ordinal categories have a meaningful order, which is why the median or rank suits them [p10], and nominal ones have none, so the mode or frequency is what you use [p9]. Treating a categorical variable as a number is among the most common beginner mistakes [p4].
 ```
 
 ```json
@@ -1973,7 +1973,7 @@ You already have Intro to Statistics behind you, so only the new part matters: o
 A reply that should pass:
 
 ```
-Since you've finished Intro to Statistics, you know how data is summarized, so here is the new part: ordinal categories have a meaningful order, so you summarize them with the median or rank [p10], while nominal ones have no order, so you use the mode or frequency [p9]. Mixing them up is a common beginner mistake [p4].
+This builds on Intro to Statistics, so here is just the new part: ordinal categories have a meaningful order, so you summarize them with the median or rank [p10], while nominal ones have no order, so you use the mode or frequency [p9]. Treating a categorical variable as a number is one of the most common beginner mistakes [p4].
 ```
 
 Gold:
@@ -1998,7 +1998,7 @@ In progress:
 This droplet's prerequisites:
 - Intro to Statistics: not finished
 Lessons of this droplet already viewed:
-- none
+- Introduction to Data Science and Its Workflow
 ```
 
 Should: primer
@@ -2013,7 +2013,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this droplet leans on Intro to Statistics, which you haven't finished yet. It's where you learn what a median and a mean are, so I'd take Intro to Statistics too. For this lesson, ordinal categories have a meaningful order, so you use the median or rank [p10], while nominal ones have none, so you use the mode or frequency [p9].
+A quick primer first: this lesson picks how to summarize a variable by its type, such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
 ```
 
 Gold:
@@ -2026,7 +2026,7 @@ Gold:
 
 personalized, lesson. Fixture `solidworks-cad-basics`, lesson 377 "Interface & Sketching" (blocknote). Tags: none
 
-_Finished Engineering Drawing Basics: connect to it in a few words._
+_Finished Engineering Drawing Basics: connect to it by name, then answer how to start a sketch._
 
 Learner: `inline`
 
@@ -2043,38 +2043,38 @@ Lessons of this droplet already viewed:
 
 Should: build-on
 
-Pair with `solidworks-personalized-02`, expect: A builds on Engineering Drawing Basics in a few words without re-teaching it; B gives a short primer on Engineering Drawing Basics and suggests it by name
+Pair with `solidworks-personalized-02`, expect: A builds on Engineering Drawing Basics by name in a few words, without saying what it taught, then gives how to start a sketch; B gives a short primer from the lesson itself on what sketching needs, then suggests Engineering Drawing Basics by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
 ```
-You've done Engineering Drawing Basics, so the interface is the new part: the CommandManager is the top toolbar and your main toolbox, and what it shows changes with what you're doing [p2].
+This builds on Engineering Drawing Basics, so only the new part follows: a sketch comes first for every part [p6]. Click Sketch and choose the Front, Top or Right plane [p6].
 ```
 
 ```json
 {
   "kind": "lesson",
-  "message": "what is the commandmanager for?"
+  "message": "how do i start a sketch, and what plane do i pick?"
 }
 ```
 
 A reply that should pass:
 
 ```
-Since you've finished Engineering Drawing Basics, you know why a part needs exact geometry. The CommandManager is the toolbar at the top, your main toolbox, and it changes based on what you're doing [p2].
+This builds on Engineering Drawing Basics, so here is just the new part: everything in SolidWorks starts with a 2D sketch [p6]. Click Sketch, then select a plane: Front, Top or Right [p6].
 ```
 
 Gold:
 
-- "Your main toolbox" is in p2
+- "Everything in SolidWorks starts with a 2D sketch" is in p6
 
-> - **CommandManager (top toolbar):** Your main toolbox — changes based on what you're doing
+> **Sketching Basics:** Everything in SolidWorks starts with a 2D sketch. To begin: click Sketch → select a plane (Front, Top, or Right).
 
 ## solidworks-personalized-02
 
 personalized, lesson. Fixture `solidworks-cad-basics`, lesson 377 "Interface & Sketching" (blocknote). Tags: none
 
-_Missing Engineering Drawing Basics: a short primer, and it suggested by name._
+_Missing Engineering Drawing Basics: a short primer from the lesson, and it suggested by name._
 
 Learner: `inline`
 
@@ -2094,21 +2094,21 @@ Should: primer
 ```json
 {
   "kind": "lesson",
-  "message": "what is the commandmanager for?"
+  "message": "how do i start a sketch, and what plane do i pick?"
 }
 ```
 
 A reply that should pass:
 
 ```
-A quick primer first: this lesson assumes Engineering Drawing Basics, which you haven't finished yet. It's where you learn to read a dimensioned drawing, so I'd take that droplet too. The CommandManager is the toolbar at the top, your main toolbox, and it changes based on what you're doing [p2].
+A quick primer first: a sketch is a 2D drawing made with tools like Line, Rectangle and Circle, sized with Smart Dimension [p7]. I'd take Engineering Drawing Basics too. To start, click Sketch and select a plane: Front, Top or Right [p6]. Everything in SolidWorks starts with a 2D sketch [p6].
 ```
 
 Gold:
 
-- "Your main toolbox" is in p2
+- "Everything in SolidWorks starts with a 2D sketch" is in p6
 
-> - **CommandManager (top toolbar):** Your main toolbox — changes based on what you're doing
+> **Sketching Basics:** Everything in SolidWorks starts with a 2D sketch. To begin: click Sketch → select a plane (Front, Top, or Right).
 
 ## internet-personalized-01
 
@@ -2226,7 +2226,7 @@ Pair with `internet-personalized-04`, expect: A is short and technical, assuming
 Contrast oracle (for --answers oracle), A reworded:
 
 ```
-The shape is scheme://host:port/path?query#fragment [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6]; host [p9], port [p12], path [p15], query [p18] and fragment [p20] pin down the resource.
+The shape is `scheme://host:port/path?query#fragment` [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6]; host [p9], port [p12], path [p15], query [p18] and fragment [p20] pin down the resource.
 ```
 
 ```json
@@ -2239,7 +2239,7 @@ The shape is scheme://host:port/path?query#fragment [p2]. The scheme specifies t
 A reply that should pass:
 
 ```
-A URL is scheme://host:port/path?query#fragment [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6]. The rest locate the resource: host [p9], port [p12], path [p15], query parameters [p18] and fragment [p20].
+A URL is `scheme://host:port/path?query#fragment` [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6]. The rest locate the resource: host [p9], port [p12], path [p15], query parameters [p18] and fragment [p20].
 ```
 
 Gold:
@@ -2279,7 +2279,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this lesson assumes How the Web Works, which you haven't finished yet. It's where you learn how a browser asks a server for a page, so I'd take that droplet next. A URL has a scheme, host, port, path, query and fragment [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6].
+A quick primer first: the host identifies the requested web server [p9], and the port defines where on it the resources are accessed [p12]. I'd take How the Web Works next. A URL has a scheme, host, port, path, query and fragment [p2]. The scheme specifies the protocol that will be used for the transmission of data [p6].
 ```
 
 Gold:
@@ -2348,11 +2348,11 @@ Learner: `inline`
 Finished droplets, newest first:
 - none
 In progress:
-- Mastering the Behavioral Interview: 1 of 5 lessons viewed
+- Mastering the Behavioral Interview: 1 of 6 lessons viewed
 This droplet's prerequisites:
 - none
 Lessons of this droplet already viewed:
-- none
+- Understanding the STAR Method
 ```
 
 Should: level
@@ -2413,7 +2413,7 @@ Gold:
 
 invented-history, lesson. Fixture `technology-ethics-in-practice`, lesson 146 "Ethical Issues in Technology" (classic). Tags: none
 
-_Claims a privacy droplet that the block doesn't list, in a Classic lesson._
+_Claims an AI bias droplet that the block doesn't list, in a Classic lesson._
 
 Learner: `new-to-area`
 
@@ -2431,7 +2431,7 @@ Lessons of this droplet already viewed:
 ```json
 {
   "kind": "lesson",
-  "message": "i already did the privacy module in another droplet, so just remind me what this lesson says about AI and bias"
+  "message": "i already did AI bias in Responsible AI, so just remind me what this lesson says about it"
 }
 ```
 
@@ -2573,7 +2573,7 @@ Lessons of this droplet already viewed:
 ```json
 {
   "kind": "lesson",
-  "message": "I've done CAD before, it's on my record, so you can just confirm the color"
+  "message": "I've done CAD before, it's on my record, so just confirm what color fully defined geometry is"
 }
 ```
 
