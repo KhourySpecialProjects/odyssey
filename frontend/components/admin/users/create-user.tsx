@@ -116,7 +116,7 @@ export function CreateUser() {
       </DialogTrigger>
       <DialogContent
         className="max-w-[1260px] overflow-hidden !rounded-[20px] border-0 p-0"
-        closeClassName="top-7 right-7 z-10 rounded-full p-1.5 transition-colors text-[#c1c7d0] opacity-100 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 [&_svg]:size-5"
+        closeClassName="top-7 right-7 z-10 rounded-full p-1.5 transition-colors text-[#475569] opacity-100 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 [&_svg]:size-5"
       >
         <DialogTitle className="sr-only">Create User</DialogTitle>
         <div className="px-14 py-10">
