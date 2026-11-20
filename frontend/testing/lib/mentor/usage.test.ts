@@ -170,6 +170,67 @@ describe("checkMentorAllowance", () => {
   });
 });
 
+describe("checkMentorAccess", () => {
+  const refusal = (reason: string, message = "m") => ({
+    data: { allowed: false, reason, message, retryAt: null },
+  });
+
+  it.each([
+    ["allowed", { data: { allowed: true } }],
+    ["monthly_cap", refusal("monthly_cap")],
+    ["daily_limit", refusal("daily_limit")],
+  ])("allows when the backend says %s", async (_, body) => {
+    const { checkMentorAccess } = await load();
+    reply(200, body);
+
+    expect(await checkMentorAccess(user)).toEqual({ allowed: true });
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/mentor-usages/check");
+  });
+
+  it.each([
+    ["disabled", "Mentor isn't available right now."],
+    ["not_in_pilot", "Mentor isn't available for your account yet."],
+  ])("refuses %s with the backend's message", async (reason, message) => {
+    const { checkMentorAccess } = await load();
+    reply(200, refusal(reason, message));
+
+    expect(await checkMentorAccess(user)).toEqual({
+      allowed: false,
+      reason,
+      status: 503,
+      message,
+      retryAt: null,
+    });
+  });
+
+  it.each([
+    ["a 500", () => reply(500, { error: { message: "boom" } })],
+    ["a network error", () => fetchMock.mockRejectedValueOnce(new Error("x"))],
+  ])("is unavailable on %s", async (_, arrange) => {
+    const { checkMentorAccess } = await load();
+    arrange();
+
+    expect(await checkMentorAccess(user)).toMatchObject({
+      allowed: false,
+      reason: "unavailable",
+      status: 503,
+    });
+  });
+
+  it("never takes a burst slot", async () => {
+    const { checkMentorAccess, checkMentorAllowance } = await load();
+    const { RATE_LIMITS } = await import("@/lib/import/rate-limiter");
+    const limit = RATE_LIMITS.mentor.student;
+
+    for (let i = 0; i < limit + 2; i++) {
+      allow();
+      expect(await checkMentorAccess(user)).toEqual({ allowed: true });
+    }
+    allow();
+    expect(await checkMentorAllowance(user)).toEqual({ allowed: true });
+  });
+});
+
 describe("recordMentorUsage", () => {
   const input = {
     user: { id: 7 },

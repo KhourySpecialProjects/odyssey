@@ -83,6 +83,52 @@ const UNAVAILABLE: MentorAllowance = {
 
 const RECORD_RETRIES = 2;
 
+/** The backend's answer to a check, or null when it couldn't be read */
+async function askBackend(user: MentorUser): Promise<CheckData | null> {
+  const result = await postMentorRoute<CheckData>("mentor-usages/check", {
+    userId: user.id,
+  });
+  if (!result.ok || typeof result.data.allowed !== "boolean") return null;
+  return result.data;
+}
+
+/** A backend refusal as a MentorAllowance; an unknown reason fails closed */
+function refusalOf(
+  answer: Extract<CheckData, { allowed: false }>,
+): MentorAllowance {
+  const status = REFUSAL_STATUS[answer.reason];
+  if (!status) return UNAVAILABLE;
+  return {
+    allowed: false,
+    reason: answer.reason,
+    status,
+    message: answer.message,
+    retryAt: answer.retryAt ?? null,
+  };
+}
+
+/**
+ * For a reply that calls no model, such as a saved summary (ODY-967).
+ * Only Mentor's switch and the pilot can refuse it: the monthly cap and the
+ * daily limit bound spending, and the burst guard bounds model calls. The
+ * backend refuses in order (switch, pilot, cap, limit), so a cap or limit
+ * refusal means the first two passed. Never throws.
+ */
+export async function checkMentorAccess(
+  user: MentorUser,
+): Promise<MentorAllowance> {
+  const answer = await askBackend(user);
+  if (!answer) return UNAVAILABLE;
+  if (
+    !answer.allowed &&
+    answer.reason !== "monthly_cap" &&
+    answer.reason !== "daily_limit"
+  ) {
+    return refusalOf(answer);
+  }
+  return { allowed: true };
+}
+
 /**
  * Call before creating the Anthropic client. Never throws.
  * Only `{ allowed: true }` permits a model call.
@@ -93,24 +139,9 @@ const RECORD_RETRIES = 2;
 export async function checkMentorAllowance(
   user: MentorUser,
 ): Promise<MentorAllowance> {
-  const result = await postMentorRoute<CheckData>("mentor-usages/check", {
-    userId: user.id,
-  });
-  if (!result.ok || typeof result.data.allowed !== "boolean") {
-    return UNAVAILABLE;
-  }
-  const answer = result.data;
-  if (!answer.allowed) {
-    const status = REFUSAL_STATUS[answer.reason];
-    if (!status) return UNAVAILABLE;
-    return {
-      allowed: false,
-      reason: answer.reason,
-      status,
-      message: answer.message,
-      retryAt: answer.retryAt ?? null,
-    };
-  }
+  const answer = await askBackend(user);
+  if (!answer) return UNAVAILABLE;
+  if (!answer.allowed) return refusalOf(answer);
 
   const burst = checkRateLimit(user.email, user.roles, "mentor");
   if (!burst.allowed) {
