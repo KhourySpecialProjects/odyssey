@@ -44,7 +44,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 const lesson = { id: 9, name: "Joins" } as Lesson;
 const onNoteSaved = jest.fn();
 const fetchMock = jest.fn();
-const KEY = "mentor-notice-v1";
+const KEY = "mentor-notice-v2";
 
 const renderPanel = (enrollmentId = "5") =>
   render(
