@@ -463,6 +463,7 @@ export const MODULE_PATHS: Record<string, string> = {
   data: "@/lib/requests/data",
   dataset: "@/lib/requests/dataset",
   "droplet-analytics": "@/lib/requests/droplet-analytics",
+  "droplet-badge": "@/lib/requests/droplet-badge",
   droplet: "@/lib/requests/droplet",
   enrollment: "@/lib/requests/enrollment",
   feed: "@/lib/requests/feed",
@@ -1119,6 +1120,16 @@ export const SKIPPED: Record<string, Record<string, string>> = {
       "service-token routes, covered by testing/requests (ODY-937)",
     deleteMentorChat: WRITE,
     deleteAllMentorChats: WRITE,
+  },
+  "droplet-badge": {
+    getPickedBadges:
+      "custom route GET /droplet-badges/picked, not a v4 entry (ODY-987)",
+    getBadgeOptions:
+      "custom route GET /droplet-badges/options, not a v4 entry (ODY-987)",
+    saveBadgeOptions:
+      "custom route POST /droplet-badges/options, not a v4 entry (ODY-987)",
+    pickBadge:
+      "custom route POST /droplet-badges/pick, not a v4 entry (ODY-987)",
   },
   "mentor-feedback": {
     saveMentorFeedback:

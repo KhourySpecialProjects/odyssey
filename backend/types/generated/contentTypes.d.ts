@@ -1016,6 +1016,54 @@ export interface ApiDatasetDataset extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiDropletBadgeDropletBadge
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'droplet_badges';
+  info: {
+    description: "A droplet's picked badge, or one of its up to 3 options until one is picked (ODY-987)";
+    displayName: 'Droplet Badge';
+    pluralName: 'droplet-badges';
+    singularName: 'droplet-badge';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    createdByUser: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'> &
+      Schema.Attribute.Required;
+    emblemHash: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    emblemSvg: Schema.Attribute.Text & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::droplet-badge.droplet-badge'
+    > &
+      Schema.Attribute.Private;
+    model: Schema.Attribute.String;
+    promptVersion: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<['option', 'picked']> &
+      Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 60;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDropletLessonDropletLesson
   extends Struct.CollectionTypeSchema {
   collectionName: 'droplet_lessons';
@@ -3144,6 +3192,7 @@ declare module '@strapi/strapi' {
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::creation-request.creation-request': ApiCreationRequestCreationRequest;
       'api::dataset.dataset': ApiDatasetDataset;
+      'api::droplet-badge.droplet-badge': ApiDropletBadgeDropletBadge;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;
