@@ -206,6 +206,8 @@ describe("checkMentorAccess", () => {
   it.each([
     ["a 500", () => reply(500, { error: { message: "boom" } })],
     ["a network error", () => fetchMock.mockRejectedValueOnce(new Error("x"))],
+    ["an unknown reason", () => reply(200, refusal("mystery"))],
+    ["a body with no answer", () => reply(200, { data: {} })],
   ])("is unavailable on %s", async (_, arrange) => {
     const { checkMentorAccess } = await load();
     arrange();
