@@ -1,4 +1,4 @@
-import { tagsToTopics } from "@/lib/onboarding-topics";
+import { tagsToTopics, visibleInterestIds } from "@/lib/onboarding-topics";
 import {
   areasStepSchema,
   goalStepSchema,
@@ -73,5 +73,17 @@ describe("tagsToTopics", () => {
         { id: 2, documentId: "c", name: "Cybersecurity" },
       ]).map((t) => t.area),
     ).toEqual(["technical", "technical"]);
+  });
+});
+
+describe("visibleInterestIds", () => {
+  it("drops saved ids that have no chip, keeping order", () => {
+    const topics = tagsToTopics([
+      { id: 7, documentId: "a", name: "Python" },
+      { id: 9, documentId: "b", name: "Resumes" },
+    ]);
+    expect(visibleInterestIds([9, 99, 7], topics)).toEqual([9, 7]);
+    expect(visibleInterestIds([99], topics)).toEqual([]);
+    expect(visibleInterestIds([7], [])).toEqual([]);
   });
 });

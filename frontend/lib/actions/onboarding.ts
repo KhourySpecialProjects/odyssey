@@ -1,13 +1,19 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import type { z } from "zod";
 import { requireRole } from "@/lib/auth/require-role";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { saveLearnerProfile } from "@/lib/learner-profile";
 import { strapiEntryUrl } from "@/lib/strapi-document-id";
 import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
 import { UpdateUserInfoSelfSchema } from "@/lib/validations/authorized-user";
-import { onboardingAnswersSchema } from "@/lib/validations/onboarding";
+import {
+  areasStepSchema,
+  goalStepSchema,
+  onboardingAnswersSchema,
+  topicsStepSchema,
+} from "@/lib/validations/onboarding";
 import type { OnboardingAnswers } from "@/lib/validations/onboarding";
 import type { OnboardingResult } from "@/components/onboarding/onboarding-quiz";
 
@@ -91,6 +97,41 @@ export async function saveOnboarding(
   } catch (error) {
     console.error(
       "saveOnboarding failed",
+      error instanceof Error ? error.name : "unknown",
+    );
+    return fail();
+  }
+}
+
+const learningInterestsSchema = goalStepSchema
+  .merge(areasStepSchema)
+  .merge(topicsStepSchema);
+
+/** Saves only the goal, areas and topics from Settings (ODY-966). */
+export async function saveLearningInterests(
+  input: z.input<typeof learningInterestsSchema>,
+): Promise<OnboardingResult> {
+  const gate = await requireRole([]);
+  if (!gate.ok) return fail();
+  const { user } = gate;
+
+  const parsed = learningInterestsSchema.safeParse(input);
+  if (!parsed.success) return fail();
+  const a = parsed.data;
+
+  try {
+    const saved = await saveLearnerProfile(user, {
+      goal: a.goal,
+      focusAreas: a.focusAreas,
+      interestTagIds: [...new Set(a.interestTagIds)],
+      interestNote: a.interestNote,
+    });
+    if (!saved.ok) return fail();
+    revalidateTag(CACHE_TAGS.recommendations(user.id));
+    return { ok: true };
+  } catch (error) {
+    console.error(
+      "saveLearningInterests failed",
       error instanceof Error ? error.name : "unknown",
     );
     return fail();

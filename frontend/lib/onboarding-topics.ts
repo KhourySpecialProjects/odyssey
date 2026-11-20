@@ -44,3 +44,12 @@ export function tagsToTopics(
     return area ? [{ id, documentId, name, area }] : [];
   });
 }
+
+/** Saved ids that have a chip in `topics`, so the form holds only what it shows. */
+export function visibleInterestIds(
+  ids: number[],
+  topics: { id: number }[],
+): number[] {
+  const shown = new Set(topics.map((t) => t.id));
+  return ids.filter((id) => shown.has(id));
+}
