@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { buildMentorRequest, type MentorSetup } from "@/lib/mentor/prompt";
 import { factsFor, learnerTwins, type CaseFacts } from "./cases";
+import { contrastJobs, contrastKey, requestFor, type Pair } from "./contrast";
 import {
   CASE_KINDS,
   loadLearners,
@@ -15,7 +16,7 @@ import {
   type AnswerMode,
   type Status,
 } from "./grade";
-import type { ErrorRow, RunMeta } from "./metrics";
+import type { ErrorRow, ResultRow, RunMeta } from "./metrics";
 
 // What a run of Mentor's eval (ODY-885) will send, built with the route's
 // own code: resolveMentorAsk, then buildMentorRequest.
@@ -121,6 +122,33 @@ export const pricedRequests = (groups: Planned[][]) =>
         : []),
     ];
   });
+
+/** The contrast calls a run would send, priced like the rest: each pair on each setup and rep, minus those in `done` */
+export function pricedContrasts(
+  pairs: Pair[],
+  fixtures: Fixtures,
+  runs: { setup: string; rep: number }[],
+  oracle: boolean,
+  done = new Set<string>(),
+) {
+  const facts = new Map(
+    pairs
+      .flatMap(({ a, b }) => [a, b])
+      .map((c) => [c.id, factsFor(c, fixtures)]),
+  );
+  const rows = runs.flatMap(({ setup, rep }) =>
+    pairs.flatMap(({ a, b }) =>
+      [a, b].map(
+        (c) => ({ setup, rep, caseId: c.id, reply: PLACEHOLDER }) as ResultRow,
+      ),
+    ),
+  );
+  return contrastJobs(pairs, rows, facts, oracle)
+    .filter(
+      (j) => !done.has(contrastKey({ ...j, a: j.pair.a.id, b: j.pair.b.id })),
+    )
+    .map((j) => ({ params: requestFor(j), outputTokens: 2500 }));
+}
 
 /** --pilot: the first case of each kind in each format, and of each twin, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {

@@ -237,7 +237,10 @@ describe("validateCases", () => {
       "a primer case whose prerequisites are all finished",
       [
         caseById("personalized-01"),
-        { ...caseById("personalized-02"), profile: learnerProfile() },
+        {
+          ...caseById("personalized-02"),
+          profile: learnerProfile({ viewedLessons: [] }),
+        },
       ],
       /a primer case needs a prerequisite with finished: false/,
     ],

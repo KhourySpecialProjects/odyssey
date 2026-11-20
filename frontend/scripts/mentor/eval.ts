@@ -11,13 +11,13 @@ import { parseArgs } from "node:util";
 import { MENTOR_PROMPT_VERSION } from "@/lib/mentor/prompt";
 import { makeClient } from "@/scripts/ai-review/lib/plan";
 import { confirmSpend } from "@/scripts/ai-review/lib/run";
-import { validateCases } from "./lib/cases";
+import { factsFor, validateCases } from "./lib/cases";
 import {
   CASES_FILE,
   loadCases,
   loadFixtures,
   loadHandChecks,
-  type HandCheck,
+  type EvalCase,
   readJson,
   readJsonl,
   RUNS_DIR,
@@ -34,6 +34,7 @@ import {
 import {
   keyOf,
   reportMarkdown,
+  type ContrastRow,
   type ErrorRow,
   type PilotLabel,
   type ResultRow,
@@ -45,12 +46,19 @@ import {
   FULL_REPS,
   parseSetups,
   planGroups,
-  pilotCases,
+  pricedContrasts,
   pricedRequests,
   runCases,
   runSettings,
 } from "./lib/plan";
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
+import {
+  CONTRAST,
+  contrastJobs,
+  contrastKey,
+  pairsOf,
+  runContrasts,
+} from "./lib/contrast";
 
 /** report.md, after adding any rows still missing from pilot-labels.json */
 function writeReport(dir: string, meta: RunMeta, handChecks: HandCheck[]) {
@@ -72,12 +80,17 @@ function writeReport(dir: string, meta: RunMeta, handChecks: HandCheck[]) {
     writeJson(file("pilot-labels.json"), labels);
   }
   const errors = readJsonl<ErrorRow>(file(ERRORS));
+  const contrasts = readJsonl<ContrastRow>(file(CONTRAST));
   fs.writeFileSync(
     file("report.md"),
-    `${reportMarkdown(rows, errors, meta, labels, handChecks)}\n`,
+    `${reportMarkdown(rows, errors, meta, labels, contrasts, loadHandChecks(dir))}\n`,
   );
   console.log(`Report: ${path.relative(process.cwd(), file("report.md"))}`);
 }
+
+/** The pairs the contrast judge sees: none for the canned modes that give no real replies */
+const contrastPairs = (cases: EvalCase[], answers: AnswerMode | null) =>
+  !answers || answers === "oracle" ? pairsOf(cases) : [];
 
 async function main() {
   const { values } = parseArgs({
@@ -150,6 +163,10 @@ async function main() {
       pilot: values.pilot,
       answers: answers ?? null,
       cases: (values.pilot ? pilotCases(all) : all).length,
+      pairs: contrastPairs(
+        values.pilot ? pilotCases(all) : all,
+        answers ?? null,
+      ).length,
       fullRun: { cases: all.length, reps: FULL_REPS },
       startedAt: new Date().toISOString(),
     };
@@ -162,11 +179,26 @@ async function main() {
     ? cannedGroups(cases, fixtures, meta.answers)
     : planGroups(cases, fixtures, parseSetups(meta.setups), meta.reps);
   const todo = pending(groups, dir);
-  if (!todo.length && !values.resume) return console.log("No cases to run.");
-  if (todo.length) {
+  const pairs = contrastPairs(cases, meta.answers);
+  const oracle = meta.answers === "oracle";
+  const contrastDone = new Set(
+    readJsonl<ContrastRow>(path.join(dir, CONTRAST)).map(contrastKey),
+  );
+  const contrastCost = pricedContrasts(
+    pairs,
+    fixtures,
+    meta.setups.flatMap((setup) =>
+      Array.from({ length: meta.reps }, (_, i) => ({ setup, rep: i + 1 })),
+    ),
+    oracle,
+    contrastDone,
+  );
+  if (!todo.length && !contrastCost.length && !values.resume)
+    return console.log("No cases to run.");
+  if (todo.length || contrastCost.length) {
     const sender = client ?? makeClient({ maxRetries: 4 });
     if (
-      !(await confirmSpend(pricedRequests(todo), {
+      !(await confirmSpend([...pricedRequests(todo), ...contrastCost], {
         batch: false,
         yes: values.yes,
       }))
@@ -174,7 +206,15 @@ async function main() {
       return console.log("Nothing sent.");
     if (!values.resume) writeJson(path.join(dir, "meta.json"), meta);
     console.log(`Writing to ${path.relative(process.cwd(), dir)}`);
-    await runGroups(sender, todo, dir);
+    if (todo.length) await runGroups(sender, todo, dir);
+    // Contrast calls come last: each needs both rows of its pair
+    const facts = new Map(
+      pairs
+        .flatMap(({ a, b }) => [a, b])
+        .map((c) => [c.id, factsFor(c, fixtures)]),
+    );
+    const rows = readJsonl<ResultRow>(path.join(dir, RESULTS));
+    await runContrasts(sender, contrastJobs(pairs, rows, facts, oracle), dir);
   }
   writeReport(dir, meta, handChecks);
 }

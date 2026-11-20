@@ -84,6 +84,8 @@ export type RunMeta = {
   /** The kinds kept (--kind), or null for all; missing on older runs */
   kinds?: CaseKind[] | null;
   fixtures: { slug: string; takenAt: string }[];
+  /** The pairs the contrast judge sees on each setup and rep (ODY-938); missing on older runs */
+  pairs?: number;
   setups: string[];
   reps: number;
   pilot: boolean;
@@ -93,6 +95,24 @@ export type RunMeta = {
   /** The full run's size, for a pilot's projection */
   fullRun: { cases: number; reps: number };
   startedAt: string;
+};
+
+/**
+ * One line of contrast.jsonl (ODY-938): the contrast judge's verdict on a
+ * pair's replies to one question. `expected` is set only in an oracle check.
+ */
+export type ContrastRow = {
+  setup: string;
+  rep: number;
+  a: string;
+  b: string;
+  order: "AB" | "BA";
+  variant: "real" | "same" | "swapped";
+  expected: "yes" | "no" | null;
+  verdict: "yes" | "no";
+  reason: string;
+  usage: Anthropic.Usage;
+  costUsd: number;
 };
 
 /** An entry of pilot-labels.json: Brady's answers, null where he left one blank */
@@ -202,12 +222,18 @@ function score(rows: ResultRow[]): Scores {
 }
 
 /** v2's bars (ODY-938): each rate at least this; history claims and recitations must be 0 */
-export const V2_BARS = { Personalized: 0.8, "Invented history": 0.9 } as const;
+export const V2_BARS = {
+  Personalized: 0.8,
+  Pairs: 0.8,
+  "Invented history": 0.9,
+} as const;
 type V2Bar = keyof typeof V2_BARS;
 const V2_NAMES = Object.keys(V2_BARS) as V2Bar[];
 
 type V2Scores = {
   personalized: Rate;
+  /** (setup, rep, pair) where both rows pass and the contrast judge says they differ as expected */
+  pairs: Rate;
   inventedHistory: Rate;
   /** v1-kind rows with a learner where the judge finds a claimed history */
   historyClaims: number;
@@ -215,20 +241,64 @@ type V2Scores = {
   recited: number;
 };
 const hasLearner = (r: ResultRow) => !!r.learner;
-function v2Score(rows: ResultRow[], dismissed: ReadonlySet<string>): V2Scores {
+type PairOutcome = {
+  contrast: ContrastRow;
+  aPass: boolean;
+  bPass: boolean;
+  pass: boolean;
+};
+/** Each real contrast verdict whose two rows are in */
+function pairOutcomes(
+  rows: ResultRow[],
+  contrasts: ContrastRow[],
+): PairOutcome[] {
+  const passed = new Map(
+    rows.map((r) => [`${r.setup}|${r.caseId}|${r.rep}`, r.grade.pass === true]),
+  );
+  return contrasts.flatMap((c) => {
+    const aPass = passed.get(`${c.setup}|${c.a}|${c.rep}`);
+    const bPass = passed.get(`${c.setup}|${c.b}|${c.rep}`);
+    return c.variant !== "real" || aPass === undefined || bPass === undefined
+      ? []
+      : [
+          {
+            contrast: c,
+            aPass,
+            bPass,
+            pass: aPass && bPass && c.verdict === "yes",
+          },
+        ];
+  });
+}
+function v2Score(
+  rows: ResultRow[],
+  contrasts: ContrastRow[],
+  dismissed: ReadonlySet<string>,
+): V2Scores {
   const v1 = rows.filter(
     (r) =>
       hasLearner(r) && TWIN_KINDS.includes(r.kind) && !dismissed.has(keyOf(r)),
   );
   return {
     personalized: rate(rows.filter(ofKind(["personalized"]))),
+    pairs: (() => {
+      const outcomes = pairOutcomes(rows, contrasts);
+      return {
+        pass: outcomes.filter((o) => o.pass).length,
+        n: outcomes.length,
+      };
+    })(),
     inventedHistory: rate(rows.filter(ofKind(["invented-history"]))),
     historyClaims: v1.filter((r) => r.grade.inventsHistory).length,
     recited: v1.filter((r) => r.grade.recitesHistory).length,
   };
 }
 const v2Rate = (s: V2Scores, bar: V2Bar): Rate =>
-  bar === "Personalized" ? s.personalized : s.inventedHistory;
+  bar === "Personalized"
+    ? s.personalized
+    : bar === "Pairs"
+      ? s.pairs
+      : s.inventedHistory;
 /** A rate with no rows is met: there is nothing wrong to measure */
 const meets = (r: Rate, min: number) => !r.n || share(r) >= min;
 
@@ -254,6 +324,8 @@ export function summarise(
   rows: ResultRow[],
   errors: ErrorRow[],
   expected: number,
+  contrasts: ContrastRow[] = [],
+  expectedPairs = 0,
   handChecks: HandCheck[] = [],
 ): SetupSummary[] {
   const dismissed = new Set(handChecks.map((h) => h.key));
@@ -264,18 +336,22 @@ export function summarise(
     const errs = errors.filter((e) => e.setup === setup);
     const open = new Set(errs.filter((e) => !done.has(keyOf(e))).map(keyOf));
     const missing = expected - mine.length - open.size;
+    const myContrasts = contrasts.filter((c) => c.setup === setup);
+    const missingPairs =
+      expectedPairs - myContrasts.filter((c) => c.variant === "real").length;
     const truncated = mine.filter((r) => r.status === "truncated").length;
     const blockers = [
       open.size && `${open.size} open errors`,
       missing > 0 && `${missing} rows missing`,
       truncated && `${truncated} truncated`,
+      missingPairs > 0 && `${missingPairs} contrasts missing`,
     ].filter((b): b is string => !!b);
     // Rows with a learner (twins and v2's kinds) are scored apart from v1's
     const plain = mine.filter((r) => !hasLearner(r));
     const learned = mine.filter(hasLearner);
     const pooled = score(plain);
     const withLearner = score(learned);
-    const v2 = v2Score(mine, dismissed);
+    const v2 = v2Score(mine, myContrasts, dismissed);
     const reps = [...new Set(mine.map((r) => r.rep))].sort();
     const inRep = (rs: ResultRow[], rep: number) =>
       rs.filter((r) => r.rep === rep);
@@ -284,7 +360,13 @@ export function summarise(
       ...v2,
       withLearner,
       withLearnerReps: reps.map((rep) => score(inRep(learned, rep))),
-      v2Reps: reps.map((rep) => v2Score(inRep(mine, rep), dismissed)),
+      v2Reps: reps.map((rep) =>
+        v2Score(
+          inRep(mine, rep),
+          myContrasts.filter((c) => c.rep === rep),
+          dismissed,
+        ),
+      ),
       setup,
       reps: reps.map((rep) => score(inRep(plain, rep))),
       errors: Object.fromEntries(
@@ -359,9 +441,17 @@ export function reportMarkdown(
   errors: ErrorRow[],
   meta: RunMeta,
   labels: PilotLabel[] = [],
+  contrasts: ContrastRow[] = [],
   handChecks: HandCheck[] = [],
 ): string {
-  const summaries = summarise(rows, errors, meta.cases * meta.reps, handChecks);
+  const summaries = summarise(
+    rows,
+    errors,
+    meta.cases * meta.reps,
+    contrasts,
+    (meta.pairs ?? 0) * meta.reps,
+    handChecks,
+  );
   const chosen = chosenSetup(summaries);
   const perSetup = (columns: Record<string, Column>) =>
     table(
@@ -424,11 +514,24 @@ export function reportMarkdown(
       (s) => s.withLearnerReps,
     ),
   );
+  const contrastsOf = (setup: string) =>
+    contrasts.filter((c) => c.setup === setup);
+  const failedPairs = pairOutcomes(rows, contrasts).filter((o) => !o.pass);
+  const oracleChecks = contrasts.filter((c) => c.expected);
+  const agreed = oracleChecks.filter((c) => c.verdict === c.expected).length;
   const personalization = perSetup({
     Personalized: (_, s) =>
       `${rateCell(s.personalized)} [${s.v2Reps.map((r) => pct(share(r.personalized))).join(", ")}]`,
     "Invented history": (_, s) =>
       `${rateCell(s.inventedHistory)} [${s.v2Reps.map((r) => pct(share(r.inventedHistory))).join(", ")}]`,
+    Pairs: (_, s) =>
+      `${rateCell(s.pairs)} [${s.v2Reps.map((r) => pct(share(r.pairs))).join(", ")}]`,
+    "Contrast disagreed": (rs, s) =>
+      String(
+        pairOutcomes(rs, contrastsOf(s.setup)).filter(
+          (o) => o.aPass && o.bPass && !o.pass,
+        ).length,
+      ),
     "History claims": (_, s) =>
       `${s.historyClaims} [${s.v2Reps.map((r) => r.historyClaims).join(", ")}]`,
     "Recited history": (_, s) =>
@@ -612,6 +715,12 @@ export function reportMarkdown(
     ]),
   );
   const byHand = [
+    ...failedPairs
+      .filter((o) => o.aPass && o.bPass)
+      .map(
+        (o) =>
+          `### ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep}: both replies pass, but the judge says they don't differ as expected\n${o.contrast.reason}`,
+      ),
     ...rows.flatMap((r) => {
       const fails = r.grade.pass === false;
       const why = [
@@ -640,8 +749,8 @@ export function reportMarkdown(
   ];
 
   const sections: Record<string, string | false> = {
-    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}${learnerNotes.length ? `\n\n${learnerNotes.join("\n")}` : ""}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
-    Personalization: `Personalized at least 80% and Invented history at least 90%; history claims and recited history must be 0 (a claim still needs a hand check). The first two rates are over their own kinds; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
+    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
+    Personalization: `Personalized and Pairs at least 80% and Invented history at least 90%; a pair passes when both its rows pass and the contrast judge says they differ as expected; history claims and recited history must be 0 (a claim still needs a hand check). Personalized, Pairs and Invented history are over their own rows; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${failedPairs.length ? `\n\nFailed pairs:\n\n${failedPairs.map((o) => `- ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep} (shown ${o.contrast.order}): ${o.aPass && o.bPass ? "both pass, " : ""}judge says ${o.contrast.verdict}: ${o.contrast.reason}`).join("\n")}` : ""}${oracleChecks.length ? `\n\nContrast judge vs oracle pairs: ${agreed}/${oracleChecks.length}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
     "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&

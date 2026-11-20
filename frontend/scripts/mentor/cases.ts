@@ -34,9 +34,11 @@ import {
   parseSetups,
   parseTwins,
   planGroups,
+  pricedContrasts,
   pricedRequests,
   runCases,
 } from "./lib/plan";
+import { pairsOf } from "./lib/contrast";
 
 const write = (file: string, text: string) => {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -82,10 +84,15 @@ async function main() {
       parseTwins(values.twins),
       parseKinds(values.kind),
     );
+    const setups = parseSetups(values.setup);
+    const runs = setups.flatMap((setup) =>
+      Array.from({ length: FULL_REPS }, (_, i) => ({ setup, rep: i + 1 })),
+    );
     await confirmSpend(
-      pricedRequests(
-        planGroups(planned, fixtures, parseSetups(values.setup), FULL_REPS),
-      ),
+      [
+        ...pricedRequests(planGroups(planned, fixtures, setups, FULL_REPS)),
+        ...pricedContrasts(pairsOf(planned), fixtures, runs, false),
+      ],
       { batch: false, yes: true },
     );
     return;
