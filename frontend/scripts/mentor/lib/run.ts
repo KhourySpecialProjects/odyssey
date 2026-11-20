@@ -5,11 +5,11 @@ import type { MentorModel } from "@/lib/mentor/prompt";
 import { questionKey, type CaseFacts } from "./cases";
 import { appendJsonl, readJsonl } from "./files";
 import {
-  ASKED,
   gradeRow,
   JUDGE,
   judgeRequest,
   parseJudge,
+  questionsFor,
   textOf,
   type Judged,
   type Status,
@@ -61,7 +61,11 @@ export async function judgeOnce(
     });
     if (!message.model.startsWith(JUDGE.model))
       return { ok: false, detail: `the judge was served by ${message.model}` };
-    const parsed = parseJudge(message, reply, facts.case.kind);
+    const parsed = parseJudge(
+      message,
+      reply,
+      questionsFor(facts.case.kind, !!facts.learner),
+    );
     if (!parsed.ok) return parsed;
     const { answers, badQuotes } = parsed;
     const costUsd = costOf(message.usage, JUDGE.model, { batch: false });
@@ -135,7 +139,7 @@ async function runOne(
   if ("class" in answered) return failed(answered);
   const { reply, ...said } = answered;
   const judge =
-    reply.trim() && ASKED[facts.case.kind].length
+    reply.trim() && questionsFor(facts.case.kind, !!facts.learner).length
       ? await judgeOnce(client, reply, facts)
       : null;
   if (judge && !judge.ok) {

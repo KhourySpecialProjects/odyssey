@@ -9,9 +9,9 @@ import {
   type Fixtures,
 } from "./files";
 import {
-  ASKED,
   cannedReply,
   judgeRequest,
+  questionsFor,
   type AnswerMode,
   type Status,
 } from "./grade";
@@ -93,7 +93,8 @@ export const pricedRequests = (groups: Planned[][]) =>
   groups.flat().flatMap((job) => {
     const reply = job.saved?.reply ?? PLACEHOLDER;
     const mentor = job.saved || !job.params ? [] : [job.params];
-    const judged = reply && ASKED[job.facts.case.kind].length;
+    const { case: c, learner } = job.facts;
+    const judged = reply && questionsFor(c.kind, !!learner).length;
     return [
       ...mentor.map((params) => ({ params, outputTokens: 1000 })),
       ...(judged

@@ -26,9 +26,9 @@ import {
 } from "./lib/files";
 import {
   ANSWER_MODES,
-  ASKED,
   JUDGE,
   JUDGE_VERSION,
+  questionsFor,
   type AnswerMode,
 } from "./lib/grade";
 import {
@@ -62,11 +62,12 @@ function writeReport(dir: string, meta: RunMeta) {
     if (fs.existsSync(file("pilot-labels.json")))
       labels = readJson<PilotLabel[]>(file("pilot-labels.json"));
     const labelled = new Set(labels.map(keyOf));
-    // Covered cases aren't judged, so there's nothing to label
+    // Covered cases without a learner aren't judged: nothing to label
     for (const r of rows) {
-      if (labelled.has(keyOf(r)) || !ASKED[r.kind].length) continue;
+      const asked = questionsFor(r.kind, !!r.learner);
+      if (labelled.has(keyOf(r)) || !asked.length) continue;
       const { setup, caseId, rep } = r;
-      const blank = Object.fromEntries(ASKED[r.kind].map((q) => [q, null]));
+      const blank = Object.fromEntries(asked.map((q) => [q, null]));
       labels.push({ setup, caseId, rep, writer: r.model, labels: blank });
     }
     writeJson(file("pilot-labels.json"), labels);

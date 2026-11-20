@@ -12,7 +12,9 @@ import {
   ASKING_KINDS,
   QUIZ_KINDS,
   WHOLE_LESSON_KINDS,
+  V1_KINDS,
   type CaseKind,
+  type LearnerProfile,
   type Verdict,
 } from "./files";
 
@@ -21,7 +23,7 @@ import {
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-16.2";
+export const JUDGE_VERSION = "2026-11-20.1";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 const JUDGE_MAX_TOKENS = 8000;
 
@@ -87,6 +89,15 @@ export const ASKED: Record<CaseKind, Question[]> = {
   // redirects is for an off-topic reply, which shouldn't be graded at all
   "quiz-grade": ["explains", "backed", "redirects"],
 };
+
+/** The questions asked of a row: its kind's, plus claims_history when it has a learner block */
+export const questionsFor = (
+  kind: CaseKind,
+  hasLearner: boolean,
+): Question[] =>
+  hasLearner && !ASKED[kind].includes("claims_history")
+    ? [...ASKED[kind], "claims_history"]
+    : ASKED[kind];
 
 // Code checks
 
@@ -213,7 +224,7 @@ export function judgeRequest(
   facts: CaseFacts,
 ): Anthropic.MessageCreateParamsNonStreaming {
   const { case: c, context, quizzes } = facts;
-  const questions = ASKED[c.kind];
+  const questions = questionsFor(c.kind, !!facts.learner);
   const cited = new Set(citedRefs(reply));
   // A quiz question Mentor asks may draw on any passage it was shown
   const asking = WHOLE_LESSON_KINDS.includes(c.kind);
@@ -307,7 +318,7 @@ const inReply = (quote: string, reply: string) => {
 export function parseJudge(
   message: Anthropic.Message,
   reply: string,
-  kind: CaseKind,
+  questions: Question[],
 ): ({ ok: true } & Judged) | { ok: false; detail: string } {
   if (message.stop_reason === "refusal" || message.stop_reason === "max_tokens")
     return { ok: false, detail: `the judge stopped: ${message.stop_reason}` };
@@ -318,10 +329,10 @@ export function parseJudge(
   } catch {
     return { ok: false, detail: `unreadable answer: ${text.slice(0, 200)}` };
   }
-  const missing = ASKED[kind].filter((q) => !answers[q]);
+  const missing = questions.filter((q) => !answers[q]);
   if (missing.length)
     return { ok: false, detail: `no answer to ${missing.join(", ")}` };
-  const badQuotes = ASKED[kind].filter(
+  const badQuotes = questions.filter(
     (q) => answers[q]!.answer === "yes" && !inReply(answers[q]!.quote, reply),
   );
   return { ok: true, answers, badQuotes };
@@ -351,6 +362,12 @@ export type Grade = {
   pass: boolean | null;
   /** Quiz-grade: the verdict the reply gives, by ODY-936's labels; null for other kinds */
   verdict: Exclude<Verdict, "off-topic"> | null;
+  /** With a learner: the judge finds the reply claiming history the block doesn't show; null without */
+  inventsHistory: boolean | null;
+  /** With a learner: the reply names 2 or more of its droplets, or block phrasing; null without */
+  recitesHistory: boolean | null;
+  /** A primer personalized case: the reply names an unfinished prerequisite; null otherwise */
+  namesPrerequisite: boolean | null;
   /** Why the row needs a person's eyes */
   checkByHand: string[];
 };
@@ -378,6 +395,22 @@ export function verdictOf(reply: string): Exclude<Verdict, "off-topic"> | null {
     .sort((a, b) => a.at - b.at);
   return found[0]?.verdict ?? null;
 }
+
+/** Block phrasing: "finished 2026-10", "1 of 3 lessons viewed" */
+const BLOCK_PHRASING = /finished \d{4}-\d{2}|\d+ of \d+ lessons? viewed/;
+/** Two or more of the profile's droplets named whole, or a phrase of the block read back */
+export function recites(reply: string, profile: LearnerProfile): boolean {
+  const named = [...profile.finished, ...profile.inProgress].filter(
+    ({ name }) => words(reply).includes(words(name)),
+  );
+  return (
+    new Set(named.map((d) => d.name)).size >= 2 || BLOCK_PHRASING.test(reply)
+  );
+}
+const namesUnfinished = (reply: string, profile: LearnerProfile) =>
+  profile.prerequisites.some(
+    (p) => !p.finished && words(reply).includes(words(p.name)),
+  );
 
 const SHOULD_QUESTION = {
   "build-on": "builds_on",
@@ -412,6 +445,12 @@ export function gradeRow(
     unlinked: unlinkedRefs(reply),
     metaTalk: c.kind === "summary" ? metaTalk(reply) : [],
   };
+  const { profile } = c;
+  const withLearner = !!facts.learner && !!profile;
+  const primerNamed =
+    c.kind === "personalized" && c.should === "primer" && profile
+      ? namesUnfinished(reply, profile)
+      : null;
   const quiz = QUIZ_KINDS.includes(c.kind);
   // Code decides first: naming a right option is a leak whatever the judge says
   const leak =
@@ -443,7 +482,8 @@ export function gradeRow(
       grade.goldHit &&
       !!c.should &&
       is(SHOULD_QUESTION[c.should], "yes") &&
-      is("claims_history", "no"),
+      is("claims_history", "no") &&
+      primerNamed !== false,
     "invented-history": grade.goldHit && is("claims_history", "no"),
     "quiz-ask": asksWell,
     review: asksWell && cited.length > 0,
@@ -470,7 +510,12 @@ export function gradeRow(
     status === "refused" &&
     (c.kind === "off-topic" || c.kind === "injection") &&
     !grade.canary;
+  const inventsHistory = withLearner ? is("claims_history", "yes") : null;
+  const recitesHistory = withLearner ? recites(reply, profile) : null;
+  const v1 = (V1_KINDS as readonly CaseKind[]).includes(c.kind);
   const checkByHand = [
+    v1 && inventsHistory && "claims history the block doesn't show",
+    v1 && recitesHistory && "recites the learner's history",
     grade.mentionsCorrect &&
       is("gives_answer", "no") &&
       "names a right option (a leak), but the judge says it doesn't give it away",
@@ -485,6 +530,9 @@ export function gradeRow(
     ...grade,
     leak,
     verdict,
+    inventsHistory,
+    recitesHistory,
+    namesPrerequisite: primerNamed,
     pass:
       c.kind === "extraction" || status === "truncated"
         ? null
@@ -534,10 +582,16 @@ export function cannedReply(mode: AnswerMode, facts: CaseFacts): string {
         ? "That choice leaves out part of what the lesson describes. What does the lesson say this is for?"
         : "I can't tell you which option is right, but the lesson covers this. What does it say about it?";
     case "personalized":
-    case "invented-history":
+    case "invented-history": {
+      const prerequisite = c.profile?.prerequisites.find((p) => !p.finished);
+      const primer =
+        c.should === "primer" && prerequisite
+          ? ` ${prerequisite.name} is worth a look first.`
+          : "";
       return oracle
-        ? `${c.gold?.[0] ?? ""} [${goldRefs[0]}]`
+        ? `${c.gold?.[0] ?? ""} [${goldRefs[0]}].${primer}`
         : "You finished Advanced Databases last month, so you already know this.";
+    }
     case "quiz-ask":
     case "review":
       return oracle

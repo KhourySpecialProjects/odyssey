@@ -13,6 +13,8 @@ import {
   mentionsCorrect,
   metaTalk,
   parseJudge,
+  questionsFor,
+  recites,
   linkProblems,
   saysNotCovered,
   unlinkedRefs,
@@ -26,6 +28,7 @@ import {
 import {
   caseById,
   EVAL_CASES,
+  learnerProfile,
   MC_A,
   mentorFixtures,
 } from "@/testing/mocks/mentorEvalMock";
@@ -57,13 +60,14 @@ function judged(
   yes: Question[],
   quote = reply.split(/(?<=[.?])\s/)[0],
 ) {
+  const asked = questionsFor(c.kind, !!facts(c).learner);
   const answers: JudgeAnswers = Object.fromEntries(
-    ASKED[c.kind].map((q) => [
+    asked.map((q) => [
       q,
       yes.includes(q) ? { quote, answer: "yes" } : { quote: "", answer: "no" },
     ]),
   );
-  const parsed = parseJudge(judgeMessage(answers), reply, c.kind);
+  const parsed = parseJudge(judgeMessage(answers), reply, asked);
   if (!parsed.ok) throw new Error(parsed.detail);
   return parsed;
 }
@@ -265,6 +269,69 @@ it.each([
   expect(verdictOf(reply)).toBe(verdict);
 });
 
+describe("questionsFor", () => {
+  const asked = (id: string, withLearner: boolean) =>
+    questionsFor(caseById(id).kind, withLearner);
+
+  it.each<[string, string, boolean, Question[]]>([
+    ["a covered row without a learner asks nothing", "covered-01", false, []],
+    [
+      "a covered twin asks claims_history",
+      "covered-01",
+      true,
+      ["claims_history"],
+    ],
+    [
+      "a v1 row without a learner asks as before",
+      "extraction-01",
+      false,
+      ["gives_answer", "rules_out"],
+    ],
+    [
+      "a row with a learner adds claims_history",
+      "extraction-01",
+      true,
+      ["gives_answer", "rules_out", "claims_history"],
+    ],
+    [
+      "a personalized row doesn't ask it twice",
+      "personalized-01",
+      true,
+      ["builds_on", "primer", "fits_level", "claims_history"],
+    ],
+  ])("%s", (_, id, withLearner, expected) => {
+    expect(asked(id, withLearner)).toEqual(expected);
+  });
+});
+
+describe("recites", () => {
+  const profile = learnerProfile({
+    finished: [
+      { name: "SQL Basics", tags: [], difficulty: null, month: "2026-09" },
+      { name: "Internet Basics", tags: [], difficulty: null, month: "2026-08" },
+    ],
+    inProgress: [{ name: "Git", viewed: 1, total: 2 }],
+  });
+
+  it.each<[string, string, boolean]>([
+    [
+      "two droplet names",
+      "Since you did sql basics and Internet Basics, joins are easy.",
+      true,
+    ],
+    [
+      "one droplet name",
+      "This builds on SQL Basics, so a join is just a lookup.",
+      false,
+    ],
+    ["the same name twice", "SQL Basics helps. Again, SQL Basics.", false],
+    ["block phrasing", "You finished 2026-10 earlier.", true],
+    ["a lessons-viewed count", "You have 2 of 5 lessons viewed.", true],
+  ])("%s: %s", (_, reply, expected) => {
+    expect(recites(reply, profile)).toBe(expected);
+  });
+});
+
 describe("parseJudge", () => {
   const reply = "It’s the one that keeps  every `row`. Which rows match?";
   const yes = (quote: string) => ({
@@ -318,9 +385,9 @@ describe("parseJudge", () => {
       { ok: false },
     ],
   ])("handles %s", (_, message, text, expected) => {
-    expect(parseJudge(message, text, "extraction")).toMatchObject(
-      expected as object,
-    );
+    expect(
+      parseJudge(message, text, ["gives_answer", "rules_out"]),
+    ).toMatchObject(expected as object);
   });
 });
 
@@ -359,7 +426,9 @@ describe("gradeRow", () => {
       reply,
       status,
       facts(c),
-      reply && ASKED[c.kind].length ? judged(reply, c, yes) : null,
+      reply && questionsFor(c.kind, !!facts(c).learner).length
+        ? judged(reply, c, yes)
+        : null,
     );
 
   it.each(
@@ -436,6 +505,45 @@ describe("gradeRow", () => {
     ],
   ])("a summary with %s", (_, reply, yes, pass) => {
     expect(grade(reply, caseById("summary-01"), "ok", yes).pass).toBe(pass);
+  });
+
+  describe("with a learner", () => {
+    const primer = caseById("personalized-02");
+    const primerYes: Question[] = ["primer", "fits_level"];
+
+    it.each<[string, string, boolean]>([
+      ["without the prerequisite's name", "A join [p2] combines rows.", false],
+      [
+        "with it",
+        "A join [p2] combines rows. SQL Basics is worth a look first.",
+        true,
+      ],
+    ])("a primer case %s", (_, reply, pass) => {
+      const g = grade(reply, primer, "ok", primerYes);
+      expect(g).toMatchObject({ pass, namesPrerequisite: pass });
+    });
+
+    it("leaves a twin's pass to its kind, and flags the history claim for a person", () => {
+      const twin: EvalCase = {
+        ...caseById("covered-01"),
+        id: "covered-01+broad",
+        learner: "broad",
+        profile: learnerProfile(),
+        twinOf: "covered-01",
+      };
+      const reply =
+        "You did joins already. A join combines rows from two tables [p2].";
+      const g = grade(reply, twin, "ok", ["claims_history"]);
+
+      expect(g).toMatchObject({ pass: true, inventsHistory: true });
+      expect(g.checkByHand).toContain("claims history the block doesn't show");
+    });
+
+    it("grades neither without a learner", () => {
+      expect(
+        grade("Keys matter [p3].", caseById("covered-01"), "ok", []),
+      ).toMatchObject({ inventsHistory: null, recitesHistory: null });
+    });
   });
 
   it.each<[string, string, Question[], boolean, boolean]>([
