@@ -28,7 +28,8 @@ export const V1_KINDS = [
   "off-topic",
   "injection",
 ] as const;
-/** Plus v2's (ODY-941), for ODY-938 (personalized), 936 (Quiz me) and 940 (review) */
+/** Plus v2's (ODY-941), for ODY-938 (personalized), 936 (Quiz me) and 940 (review).
+ * quiz-ask and quiz-grade are still seeds for 936/940. */
 export const CASE_KINDS = [
   ...V1_KINDS,
   "personalized",
@@ -121,7 +122,13 @@ export type HandCheck = z.infer<typeof handChecksSchema>[number];
 /** The run folder's hand-checks.json; none when there isn't one. Throws on a bad file. */
 export function loadHandChecks(dir: string): HandCheck[] {
   const file = path.join(dir, "hand-checks.json");
-  return fs.existsSync(file) ? handChecksSchema.parse(readJson(file)) : [];
+  if (!fs.existsSync(file)) return [];
+  const parsed = handChecksSchema.safeParse(readJson(file));
+  if (parsed.success) return parsed.data;
+  const issues = parsed.error.issues.map(
+    (issue) => `${issue.path.join(".")}: ${issue.message}`,
+  );
+  throw new Error(`hand-checks.json: ${file}: ${issues.join("; ")}`);
 }
 
 /** One line of cases.jsonl, its fields as the README describes them */

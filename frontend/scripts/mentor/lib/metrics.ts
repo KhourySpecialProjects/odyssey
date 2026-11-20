@@ -436,19 +436,33 @@ export function reportMarkdown(
     "Recited history": (_, s) =>
       `${s.recited} [${s.v2Reps.map((r) => r.recited).join(", ")}]`,
   });
-  const emptyBars = summaries.flatMap((s) => [
-    ...V2_NAMES.filter((bar) => !v2Rate(s, bar).n).map(
+  const emptyBars = summaries.flatMap((s) =>
+    V2_NAMES.filter((bar) => !v2Rate(s, bar).n).map(
       (bar) => `${bar} has no rows for ${s.setup}: counted as met.`,
     ),
-    ...METRICS.filter((m) => !s.withLearner[m].n).map(
+  );
+  const emptyLearner = summaries.flatMap((s) =>
+    METRICS.filter((m) => !s.withLearner[m].n).map(
       (m) => `${m} with a learner has no rows for ${s.setup}: not met.`,
     ),
-  ]);
-  const known = new Set(rows.map(keyOf));
-  const dismissals = handChecks.map(
-    (h) =>
-      `- \`${h.key}\`: ${h.reason}${known.has(h.key) ? "" : " (no such row)"}`,
   );
+  // A --kind run drops kinds, so every empty line would say the same
+  const learnerNotes = meta.kinds?.length
+    ? emptyLearner.length
+      ? ["A --kind run can't meet v1's thresholds."]
+      : []
+    : emptyLearner;
+  const byKey = new Map(rows.map((r) => [keyOf(r), r]));
+  const dismissedReason = new Map(handChecks.map((h) => [h.key, h.reason]));
+  const dismissals = handChecks.map((h) => {
+    const r = byKey.get(h.key);
+    const note = !r
+      ? " (no such row)"
+      : hasLearner(r) && TWIN_KINDS.includes(r.kind)
+        ? ""
+        : " (not counted anyway)";
+    return `- \`${h.key}\`: ${h.reason}${note}`;
+  });
   const thresholds = perSetup({
     ...thresholdColumns(
       (s) => s,
@@ -604,6 +618,8 @@ export function reportMarkdown(
         ...r.grade.checkByHand,
       ];
       if (!why.some(Boolean)) return [];
+      const reason = dismissedReason.get(keyOf(r));
+      if (reason) why.push(`dismissed: ${reason}`);
       const judged = Object.entries(r.judge?.answers ?? {}).map(
         ([q, a]) => `- ${q}: ${a!.answer}${a!.quote ? `, "${a!.quote}"` : ""}`,
       );
@@ -621,7 +637,7 @@ export function reportMarkdown(
   ];
 
   const sections: Record<string, string | false> = {
-    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
+    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}${learnerNotes.length ? `\n\n${learnerNotes.join("\n")}` : ""}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
     Personalization: `Personalized at least 80% and Invented history at least 90%; history claims and recited history must be 0 (a claim still needs a hand check). The first two rates are over their own kinds; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
     "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:

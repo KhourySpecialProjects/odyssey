@@ -18,6 +18,7 @@ import {
   loadCases,
   loadFixtures,
   loadHandChecks,
+  type HandCheck,
   readJson,
   readJsonl,
   RUNS_DIR,
@@ -54,7 +55,7 @@ import {
 import { ERRORS, pending, RESULTS, resumeProblems, runGroups } from "./lib/run";
 
 /** report.md, after adding any rows still missing from pilot-labels.json */
-function writeReport(dir: string, meta: RunMeta) {
+function writeReport(dir: string, meta: RunMeta, handChecks: HandCheck[]) {
   const file = (name: string) => path.join(dir, name);
   const rows = readJsonl<ResultRow>(file(RESULTS));
   let labels: PilotLabel[] = [];
@@ -75,7 +76,7 @@ function writeReport(dir: string, meta: RunMeta) {
   const errors = readJsonl<ErrorRow>(file(ERRORS));
   fs.writeFileSync(
     file("report.md"),
-    `${reportMarkdown(rows, errors, meta, labels, loadHandChecks(dir))}\n`,
+    `${reportMarkdown(rows, errors, meta, labels, handChecks)}\n`,
   );
   console.log(`Report: ${path.relative(process.cwd(), file("report.md"))}`);
 }
@@ -162,7 +163,9 @@ async function main() {
     };
   }
 
-  const cases = runCases(all, meta);
+  // Before any spend: a bad file would otherwise fail after the run
+  const handChecks = loadHandChecks(dir);
+  const cases = meta.pilot ? pilotCases(all) : all;
   const groups = meta.answers
     ? cannedGroups(cases, fixtures, meta.answers)
     : planGroups(cases, fixtures, parseSetups(meta.setups), meta.reps);
@@ -181,7 +184,7 @@ async function main() {
     console.log(`Writing to ${path.relative(process.cwd(), dir)}`);
     await runGroups(sender, todo, dir);
   }
-  writeReport(dir, meta);
+  writeReport(dir, meta, handChecks);
 }
 
 main().catch((err) => {

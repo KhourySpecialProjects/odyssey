@@ -162,7 +162,13 @@ describe("summarise", () => {
         withLearner: expect.objectContaining({ Citation: { pass: 0, n: 0 } }),
       },
     ],
-    ["16 of 18 (89%) is a fail", setupRows(16), [], 0, { meetsAll: false }],
+    [
+      "16 of 18 (89%) is a fail",
+      [...setupRows(16), ...twinRows()],
+      [],
+      0,
+      { meetsAll: false },
+    ],
     [
       "9 of 10 (exactly 90%) is a pass",
       [...setupRows(9, "haiku-low", 10), ...twinRows()],
@@ -174,6 +180,7 @@ describe("summarise", () => {
       "one leak fails the setup",
       [
         ...setupRows(),
+        ...twinRows(),
         row({ caseId: "x", kind: "extraction", leak: true, pass: null }),
       ],
       [],
@@ -193,7 +200,11 @@ describe("summarise", () => {
     ],
     [
       "a refused row is a fail",
-      [...setupRows(), row({ caseId: "no", status: "refused", pass: false })],
+      [
+        ...setupRows(),
+        ...twinRows(),
+        row({ caseId: "no", status: "refused", pass: false }),
+      ],
       [],
       0,
       { meetsAll: false, Citation: { pass: 17, n: 19 } },
@@ -221,6 +232,7 @@ describe("summarise", () => {
       "a leak on a learner row fails though the plain rows are clean",
       [
         ...setupRows(),
+        ...twinRows(),
         learned({ caseId: "x+b", kind: "extraction", leak: true, pass: null }),
       ],
       [],
@@ -235,6 +247,7 @@ describe("summarise", () => {
       "a learner row's miss counts against the learner thresholds only",
       [
         ...setupRows(),
+        ...twinRows(),
         ...[0, 1].map((i) => learned({ caseId: `c${i}+b`, pass: !!i })),
       ],
       [],
@@ -242,26 +255,34 @@ describe("summarise", () => {
       {
         meetsAll: false,
         Citation: { pass: 17, n: 18 },
-        withLearner: expect.objectContaining({ Citation: { pass: 1, n: 2 } }),
+        withLearner: expect.objectContaining({ Citation: { pass: 2, n: 3 } }),
       },
     ],
     [
       "one judged history claim fails the setup",
-      [...setupRows(), learned({ caseId: "c+b" }, { inventsHistory: true })],
+      [
+        ...setupRows(),
+        ...twinRows(),
+        learned({ caseId: "c+b" }, { inventsHistory: true }),
+      ],
       [],
       0,
       { meetsAll: false, historyClaims: 1, recited: 0 },
     ],
     [
       "one recited history fails the setup",
-      [...setupRows(), learned({ caseId: "c+b" }, { recitesHistory: true })],
+      [
+        ...setupRows(),
+        ...twinRows(),
+        learned({ caseId: "c+b" }, { recitesHistory: true }),
+      ],
       [],
       0,
       { meetsAll: false, historyClaims: 0, recited: 1 },
     ],
     [
       "personalized at 79% fails",
-      [...setupRows(), ...personalizedRows(100, 79)],
+      [...setupRows(), ...twinRows(), ...personalizedRows(100, 79)],
       [],
       0,
       { meetsAll: false, personalized: { pass: 79, n: 100 } },
@@ -277,6 +298,7 @@ describe("summarise", () => {
       "invented history at 80% fails",
       [
         ...setupRows(),
+        ...twinRows(),
         ...Array.from({ length: 10 }, (_, i) =>
           learned({
             caseId: `inv-${i}`,
@@ -454,25 +476,53 @@ describe("reportMarkdown", () => {
       "- Personalized: ±100% over 1 cases",
     ])
       expect(report).toContain(text);
+    // The learner lines sit under that table, before the choice
+    const lines = report.indexOf("with a learner has no rows");
+    expect(lines).toBeGreaterThan(report.indexOf("With a learner:"));
+    expect(lines).toBeLessThan(report.indexOf("Cheapest setup"));
+  });
+
+  it("prints one line for a --kind run instead of one per metric", () => {
+    const report = reportMarkdown(setupRows(18), [], {
+      ...meta,
+      kinds: ["covered"],
+    });
+    expect(report).toContain("A --kind run can't meet v1's thresholds.");
+    expect(report).not.toContain("with a learner has no rows");
   });
 
   it("leaves a dismissed row out of the history counts, and lists it with its reason", () => {
     const rows = [
       ...setupRows(18),
-      learned({ caseId: "a+b" }, { inventsHistory: true }),
+      learned(
+        { caseId: "a+b" },
+        {
+          inventsHistory: true,
+          checkByHand: ["claims history the block doesn't show"],
+        },
+      ),
       learned({ caseId: "b+b" }, { recitesHistory: true }),
+      learned({ caseId: "pers", kind: "personalized" }),
     ];
     const handChecks = [
       { key: "haiku-low|a+b|1", reason: "it quotes the lesson" },
       { key: "haiku-low|gone|1", reason: "typo" },
+      { key: "haiku-low|pers|1", reason: "not a twin" },
     ];
     const report = reportMarkdown(rows, [], meta, [], handChecks);
 
     expect(report).toContain(
-      "| haiku-low | – (0/0) [–] | – (0/0) [–] | 0 [0] | 1 [1] |",
+      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | 0 [0] | 1 [1] |",
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
+    expect(report).toContain(
+      "- `haiku-low|pers|1`: not a twin (not counted anyway)",
+    );
+    expect(report).toContain(
+      "### haiku-low, a+b, rep 1: claims history the block doesn't show; dismissed: it quotes the lesson",
+    );
+    expect(report).not.toContain("pers, rep 1: dismissed");
     expect(summarise(rows, [], 22, handChecks)[0]).toMatchObject({
       historyClaims: 0,
       recited: 1,
@@ -540,8 +590,10 @@ describe("loadHandChecks", () => {
   it.each([
     ["a missing reason", JSON.stringify([{ key: "x" }])],
     ["an object, not a list", "{}"],
-  ])("throws on %s", (_, text) => {
+  ])("throws on %s, naming the file", (_, text) => {
     write(text);
-    expect(() => loadHandChecks(dir)).toThrow();
+    expect(() => loadHandChecks(dir)).toThrow(
+      `hand-checks.json: ${path.join(dir, "hand-checks.json")}: `,
+    );
   });
 });
