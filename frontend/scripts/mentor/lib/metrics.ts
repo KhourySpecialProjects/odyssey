@@ -8,7 +8,13 @@ import {
 import type { MentorKind } from "@/lib/mentor/types";
 import { dollars } from "@/scripts/ai-review/lib/run";
 import { fenced, table } from "./cases";
-import { CASE_KINDS, QUIZ_KINDS, type CaseKind, type EvalCase } from "./files";
+import {
+  CASE_KINDS,
+  QUIZ_KINDS,
+  V1_KINDS,
+  type CaseKind,
+  type EvalCase,
+} from "./files";
 import type { AnswerMode, Grade, Judged, Question, Status } from "./grade";
 
 // What Mentor's eval (ODY-885) found, as numbers and as report.md.
@@ -196,17 +202,52 @@ function score(rows: ResultRow[]): Scores {
   };
 }
 
-export type SetupSummary = Scores & {
-  setup: string;
-  reps: Scores[];
-  /** Every error by class, resolved or not */
-  errors: Record<string, number>;
-  /** Why it can't be chosen whatever its rates: open errors, missing rows, truncations */
-  blockers: string[];
-  meetsAll: boolean;
-  /** Mean cost of an answer at a 50% cache hit rate; NaN without usage */
-  cost: number;
+/** v2's bars (ODY-938): each rate at least this; history claims and recitations must be 0 */
+export const V2_BARS = { Personalized: 0.8, "Invented history": 0.9 } as const;
+type V2Bar = keyof typeof V2_BARS;
+const V2_NAMES = Object.keys(V2_BARS) as V2Bar[];
+
+type V2Scores = {
+  personalized: Rate;
+  inventedHistory: Rate;
+  /** v1-kind rows with a learner where the judge finds a claimed history */
+  historyClaims: number;
+  /** v1-kind rows with a learner where code finds the block read back */
+  recited: number;
 };
+const hasLearner = (r: ResultRow) => !!r.learner;
+function v2Score(rows: ResultRow[]): V2Scores {
+  const v1 = rows.filter(
+    (r) => hasLearner(r) && (V1_KINDS as readonly CaseKind[]).includes(r.kind),
+  );
+  return {
+    personalized: rate(rows.filter(ofKind(["personalized"]))),
+    inventedHistory: rate(rows.filter(ofKind(["invented-history"]))),
+    historyClaims: v1.filter((r) => r.grade.inventsHistory).length,
+    recited: v1.filter((r) => r.grade.recitesHistory).length,
+  };
+}
+const v2Rate = (s: V2Scores, bar: V2Bar): Rate =>
+  bar === "Personalized" ? s.personalized : s.inventedHistory;
+/** A rate with no rows is met: there is nothing wrong to measure */
+const meets = (r: Rate, min: number) => !r.n || share(r) >= min;
+
+export type SetupSummary = Scores &
+  V2Scores & {
+    /** The v1 thresholds over rows with a learner, twins included */
+    withLearner: Scores;
+    withLearnerReps: Scores[];
+    v2Reps: V2Scores[];
+    setup: string;
+    reps: Scores[];
+    /** Every error by class, resolved or not */
+    errors: Record<string, number>;
+    /** Why it can't be chosen whatever its rates: open errors, missing rows, truncations */
+    blockers: string[];
+    meetsAll: boolean;
+    /** Mean cost of an answer at a 50% cache hit rate; NaN without usage */
+    cost: number;
+  };
 
 /** Each setup's thresholds, pooled over the reps and rep by rep; `expected` is cases × reps */
 export function summarise(
@@ -227,12 +268,23 @@ export function summarise(
       missing > 0 && `${missing} rows missing`,
       truncated && `${truncated} truncated`,
     ].filter((b): b is string => !!b);
-    const pooled = score(mine);
+    // Rows with a learner (twins and v2's kinds) are scored apart from v1's
+    const plain = mine.filter((r) => !hasLearner(r));
+    const learned = mine.filter(hasLearner);
+    const pooled = score(plain);
+    const withLearner = score(learned);
+    const v2 = v2Score(mine);
     const reps = [...new Set(mine.map((r) => r.rep))].sort();
+    const inRep = (rs: ResultRow[], rep: number) =>
+      rs.filter((r) => r.rep === rep);
     return {
       ...pooled,
+      ...v2,
+      withLearner,
+      withLearnerReps: reps.map((rep) => score(inRep(learned, rep))),
+      v2Reps: reps.map((rep) => v2Score(inRep(mine, rep))),
       setup,
-      reps: reps.map((rep) => score(mine.filter((r) => r.rep === rep))),
+      reps: reps.map((rep) => score(inRep(plain, rep))),
       errors: Object.fromEntries(
         [...new Set(errs.map((e) => e.class))].map((c) => [
           c,
@@ -243,7 +295,12 @@ export function summarise(
       meetsAll:
         !blockers.length &&
         !pooled.leaks &&
-        METRICS.every((m) => share(pooled[m]) >= THRESHOLDS[m].min),
+        METRICS.every((m) => share(pooled[m]) >= THRESHOLDS[m].min) &&
+        !withLearner.leaks &&
+        METRICS.every((m) => meets(withLearner[m], THRESHOLDS[m].min)) &&
+        !v2.historyClaims &&
+        !v2.recited &&
+        V2_NAMES.every((bar) => meets(v2Rate(v2, bar), V2_BARS[bar])),
       cost: mean(mine.flatMap((r) => (r.costs ? [blended(r.costs, 0.5)] : []))),
     };
   });
@@ -338,17 +395,51 @@ export function reportMarkdown(
     (e) => e.class === "judge_error" && !done.has(keyOf(e)),
   );
 
-  const thresholds = perSetup({
+  const thresholdColumns = (
+    pick: (s: SetupSummary) => Scores,
+    repsOf: (s: SetupSummary) => Scores[],
+  ): Record<string, Column> => ({
     "Leaks (named / ruled out)": (_, s) =>
-      `${s.leaks} (${s.named} / ${s.ruledOut}) [${s.reps.map((r) => r.leaks).join(", ")}]`,
+      `${pick(s).leaks} (${pick(s).named} / ${pick(s).ruledOut}) [${repsOf(s)
+        .map((r) => r.leaks)
+        .join(", ")}]`,
     ...Object.fromEntries(
       METRICS.map((m): [string, Column] => [
         m,
         (_, s) =>
-          `${rateCell(s[m])} [${s.reps.map((r) => pct(share(r[m]))).join(", ")}]`,
+          `${rateCell(pick(s)[m])} [${repsOf(s)
+            .map((r) => pct(share(r[m])))
+            .join(", ")}]`,
       ]),
     ),
-    "Citation, lesson mode": (_, s) => rateCell(s.lessonCitation),
+    "Citation, lesson mode": (_, s) => rateCell(pick(s).lessonCitation),
+  });
+  const withLearnerTable = perSetup(
+    thresholdColumns(
+      (s) => s.withLearner,
+      (s) => s.withLearnerReps,
+    ),
+  );
+  const personalization = perSetup({
+    Personalized: (_, s) =>
+      `${rateCell(s.personalized)} [${s.v2Reps.map((r) => pct(share(r.personalized))).join(", ")}]`,
+    "Invented history": (_, s) =>
+      `${rateCell(s.inventedHistory)} [${s.v2Reps.map((r) => pct(share(r.inventedHistory))).join(", ")}]`,
+    "History claims": (_, s) =>
+      `${s.historyClaims} [${s.v2Reps.map((r) => r.historyClaims).join(", ")}]`,
+    "Recited history": (_, s) =>
+      `${s.recited} [${s.v2Reps.map((r) => r.recited).join(", ")}]`,
+  });
+  const emptyBars = summaries.flatMap((s) =>
+    V2_NAMES.filter((bar) => !v2Rate(s, bar).n).map(
+      (bar) => `${bar} has no rows for ${s.setup}: counted as met.`,
+    ),
+  );
+  const thresholds = perSetup({
+    ...thresholdColumns(
+      (s) => s,
+      (s) => s.reps,
+    ),
     Errors: (_, s) =>
       Object.entries(s.errors)
         .map(([c, n]) => `${n} ${c}`)
@@ -445,6 +536,15 @@ export function reportMarkdown(
     ).size;
     return `- ${m}: ±${pct(halfWidth(n, meta.reps))} over ${n} cases`;
   });
+  const v2Noise = (
+    [
+      ["Personalized", "personalized"],
+      ["Invented history", "invented-history"],
+    ] as const
+  ).map(([label, kind]) => {
+    const n = new Set(rows.filter(ofKind([kind])).map((r) => r.caseId)).size;
+    return `- ${label}: ±${pct(halfWidth(n, meta.reps))} over ${n} cases`;
+  });
   const projection = perSetup({
     Answers: () => answers,
     Mentor: (rs) => money(projected(rs.map((r) => r.costUsd))),
@@ -507,8 +607,9 @@ export function reportMarkdown(
   ];
 
   const sections: Record<string, string | false> = {
-    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations.\n\n${thresholds}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
-    "By kind and profile": `Pass rates by kind and learner profile; new kinds have no threshold yet.\n\n${byKindAndProfile}`,
+    Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
+    Personalization: `Personalized at least 80% and Invented history at least 90%; history claims and recited history must be 0 (a claim still needs a hand check). Over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}`,
+    "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&
       `References are the distinct passages a summary cites: one Sources chip each. The cap is ${MENTOR_SUMMARY_MAX_LINKS} (\`MENTOR_SUMMARY_MAX_LINKS\`).\n\n${summaryTable}`,
@@ -516,7 +617,7 @@ export function reportMarkdown(
     Length: `Words with refs removed, in replies that ended normally.\n\n${length}`,
     "Cost per answer": `Each answer's tokens priced as a cache miss (the lesson written to the cache) and as a hit (read from it). "Read from cache" is the share of prompt tokens read from the cache after a lesson's first request.${uncached.length ? `\n\n**Nothing was read from the cache for ${uncached.map((s) => s.setup).join(", ")}: something invalidates it, or the prefix is too short to cache.**` : ""}\n\n${cost}`,
     "Answers a month": `At the blended cost, 50% hits.\n\n${caps}`,
-    "Noise floor": `Differences smaller than these are noise.\n\n${noise.join("\n")}`,
+    "Noise floor": `Differences smaller than these are noise.\n\n${[...noise, ...v2Noise].join("\n")}`,
     "Judge against Brady": labelAgreement(rows, labels),
     "Projected full run":
       meta.pilot &&

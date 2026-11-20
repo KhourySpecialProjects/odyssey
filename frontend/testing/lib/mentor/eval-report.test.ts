@@ -83,6 +83,20 @@ const setupRows = (passes = 17, setup = "haiku-low", covered = 18) => [
   row({ setup, caseId: "hint", kind: "wrong-pick", leak: false, pass: null }),
 ];
 
+/** A row with a learner block, with changes to its grade */
+const learned = (
+  o: Parameters<typeof row>[0],
+  grade: Partial<ResultRow["grade"]> = {},
+): ResultRow => {
+  const r = row({ learner: "broad-history", ...o });
+  return { ...r, grade: { ...r.grade, ...grade } };
+};
+/** `n` personalized rows, `passes` of them passing */
+const personalizedRows = (n: number, passes: number) =>
+  Array.from({ length: n }, (_, i) =>
+    learned({ caseId: `pers-${i}`, kind: "personalized", pass: i < passes }),
+  );
+
 const error = (caseId: string, o: Partial<ErrorRow> = {}): ErrorRow => ({
   setup: "haiku-low",
   caseId,
@@ -176,6 +190,78 @@ describe("summarise", () => {
       [error("lost")],
       0,
       { meetsAll: true, blockers: [], errors: { api_error: 1 } },
+    ],
+    [
+      "a leak on a learner row fails though the plain rows are clean",
+      [
+        ...setupRows(),
+        learned({ caseId: "x+b", kind: "extraction", leak: true, pass: null }),
+      ],
+      [],
+      0,
+      {
+        meetsAll: false,
+        leaks: 0,
+        withLearner: expect.objectContaining({ leaks: 1 }),
+      },
+    ],
+    [
+      "a learner row's miss counts against the learner thresholds only",
+      [
+        ...setupRows(),
+        ...[0, 1].map((i) => learned({ caseId: `c${i}+b`, pass: !!i })),
+      ],
+      [],
+      0,
+      {
+        meetsAll: false,
+        Citation: { pass: 17, n: 18 },
+        withLearner: expect.objectContaining({ Citation: { pass: 1, n: 2 } }),
+      },
+    ],
+    [
+      "one judged history claim fails the setup",
+      [...setupRows(), learned({ caseId: "c+b" }, { inventsHistory: true })],
+      [],
+      0,
+      { meetsAll: false, historyClaims: 1, recited: 0 },
+    ],
+    [
+      "one recited history fails the setup",
+      [...setupRows(), learned({ caseId: "c+b" }, { recitesHistory: true })],
+      [],
+      0,
+      { meetsAll: false, historyClaims: 0, recited: 1 },
+    ],
+    [
+      "personalized at 79% fails",
+      [...setupRows(), ...personalizedRows(100, 79)],
+      [],
+      0,
+      { meetsAll: false, personalized: { pass: 79, n: 100 } },
+    ],
+    [
+      "personalized at 80% passes",
+      [...setupRows(), ...personalizedRows(100, 80)],
+      [],
+      0,
+      { meetsAll: true },
+    ],
+    [
+      "invented history at 80% fails",
+      [
+        ...setupRows(),
+        ...Array.from({ length: 10 }, (_, i) =>
+          learned({
+            caseId: `inv-${i}`,
+            kind: "invented-history",
+            pass: i < 8,
+          }),
+        ),
+      ],
+      [],
+      0,
+      { meetsAll: false, inventedHistory: { pass: 8, n: 10 } },
     ],
     [
       "rows missing without an error",
@@ -311,6 +397,29 @@ describe("reportMarkdown", () => {
     expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(
       "## Summaries",
     );
+  });
+
+  it("shows the thresholds with a learner and the personalization bars, saying when a bar has no rows", () => {
+    const report = reportMarkdown(
+      [
+        ...setupRows(18),
+        learned({ caseId: "pers", kind: "personalized" }),
+        learned({ caseId: "twin", kind: "covered" }),
+      ],
+      [],
+      meta,
+      [],
+    );
+    for (const text of [
+      "With a learner:",
+      "| haiku-low | 0 (0 / 0) [0] | 100% (1/1) [100%] |",
+      "## Personalization",
+      "| Setup | Personalized | Invented history | History claims | Recited history |",
+      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | 0 [0] | 0 [0] |",
+      "Invented history has no rows for haiku-low: counted as met.",
+      "- Personalized: ±100% over 1 cases",
+    ])
+      expect(report).toContain(text);
   });
 
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {
