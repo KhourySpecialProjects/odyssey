@@ -6,13 +6,20 @@ export type MentorRouteResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; message: string | null };
 
+/** Typed, so a typo can't become a silent 404 that makes every lookup miss */
+export type MentorRoutePath =
+  | "mentor-usages/check"
+  | "mentor-usages/record"
+  | "mentor-cached-replies/find"
+  | "mentor-cached-replies/store";
+
 /**
  * Calls one of Mentor's private Strapi routes (`mentor-usages/...`,
  * `mentor-cached-replies/...`) with the service token. Bodies are `{ data }`,
  * not v4 entries, so nothing is flattened. A network failure is status 0.
  */
 export async function postMentorRoute<T>(
-  path: string,
+  path: MentorRoutePath,
   body: object,
 ): Promise<MentorRouteResult<T>> {
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/${path}`;
