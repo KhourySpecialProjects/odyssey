@@ -148,8 +148,21 @@ describe("summaryReply", () => {
     expect(other.key).not.toBe(summaryReply(context, ids).key);
   });
 
-  it("holds no student data", () => {
-    const reply = summaryReply(context, ids);
+  it("holds no student data, even when handed the whole input", () => {
+    const input = {
+      ...ids,
+      message: "can you give me a quick summary?",
+      history: [{ role: "student", text: "SECRET-HISTORY" }],
+      chatId: 77,
+    };
+    const reply = summaryReply(context, input);
+    const clean = summaryReply(context, ids);
+    expect(reply.key).toBe(clean.key);
+    expect(reply.params).toEqual(clean.params);
+    expect(reply.row).toEqual(clean.row);
+    expect(JSON.stringify(reply)).not.toMatch(
+      /SECRET-HISTORY|quick summary|chatId|"history"|"message"/,
+    );
     expect(JSON.stringify(reply.params)).not.toContain("<learner>");
     expect(Object.keys(reply.row).sort()).toEqual([
       "dropletId",
@@ -245,6 +258,19 @@ describe("storeCachedReplyWhenDone", () => {
   ])("stores nothing for a %s completion", async (_, done) => {
     await storeCachedReplyWhenDone(reply, Promise.resolve(done));
     expect(mocked).not.toHaveBeenCalled();
+  });
+
+  it("logs a failed store without the answer text", async () => {
+    mocked.mockResolvedValue(null);
+    await storeCachedReplyWhenDone(reply, Promise.resolve(completed()));
+    const logs = [
+      ...(console.info as jest.Mock).mock.calls,
+      ...(console.error as jest.Mock).mock.calls,
+    ].flat();
+    expect(logs).toEqual([
+      `[mentor] saved reply couldn't be stored, ${reply.slot}`,
+    ]);
+    expect(logs.join(" ")).not.toContain("A join combines");
   });
 
   it("resolves even when the store rejects", async () => {
