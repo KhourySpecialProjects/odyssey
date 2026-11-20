@@ -33,6 +33,21 @@ const select = (selection: string, lessonId = 102): EvalCase => ({
   input: { kind: "explain", selection },
 });
 
+const pairedWith = (id: string): EvalCase => ({
+  ...caseById("personalized-01"),
+  pairs: [{ with: id, expect: "A is short, B is long" }],
+});
+/** Another personalized question under two profiles, with no pair */
+const otherQuestion: EvalCase[] = ["personalized-01", "personalized-02"].map(
+  (id) => ({
+    ...caseById(id),
+    id: `${id}-other`,
+    input: { kind: "lesson", message: "Why do keys matter?" },
+    pairs: undefined,
+    contrastOracles: undefined,
+  }),
+);
+
 describe("validateCases", () => {
   it("passes a valid case of each kind and mode", () => {
     expect(validateCases(EVAL_CASES, fixtures)).toEqual([]);
@@ -157,8 +172,65 @@ describe("validateCases", () => {
       /a personalized case needs should/,
     ],
     [
+      "a pair with a case that doesn't exist",
+      [pairedWith("nobody"), caseById("personalized-02")],
+      /pair with nobody, which doesn't exist/,
+    ],
+    [
+      "a pair with another question",
+      [pairedWith("covered-01"), caseById("personalized-02"), covered],
+      /pair with covered-01, a different question/,
+    ],
+    [
+      "a pair with the same profile",
+      [
+        pairedWith("same-profile"),
+        {
+          ...caseById("personalized-01"),
+          id: "same-profile",
+          learner: "copy",
+          pairs: undefined,
+        },
+      ],
+      /pair with same-profile, the same profile/,
+    ],
+    [
+      "a pair listed twice",
+      [
+        {
+          ...caseById("personalized-01"),
+          pairs: [
+            { with: "personalized-02", expect: "A is short, B is long" },
+            { with: "personalized-02", expect: "A is short, B is long" },
+          ],
+        },
+        caseById("personalized-02"),
+      ],
+      /pair with personalized-02 listed twice/,
+    ],
+    [
+      "an expect line that doesn't name A and B",
+      [
+        {
+          ...caseById("personalized-01"),
+          pairs: [{ with: "personalized-02", expect: "the first is shorter" }],
+        },
+        caseById("personalized-02"),
+      ],
+      /expect line for personalized-02 must name A and B/,
+    ],
+    [
+      "a personalized question with no pair, once another has one",
+      [
+        caseById("personalized-01"),
+        caseById("personalized-02"),
+        ...otherQuestion,
+      ],
+      /a personalized question needs a pair/,
+    ],
+    [
       "a personalized question under one profile",
-      [caseById("personalized-01")],
+      [{ ...caseById("personalized-01"), pairs: undefined }],
       /personalized-01: asked under 1 profile; a personalized question needs 2 or more/,
     ],
     [

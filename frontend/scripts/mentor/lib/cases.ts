@@ -237,6 +237,47 @@ export const questionKey = (c: EvalCase) =>
 const normalised = (c: EvalCase) =>
   `${JSON.stringify(c.learner ?? null)}:${questionKey(c)}`;
 
+/** The profile a case asks under, as a comparable string */
+const profileKey = (c: EvalCase) =>
+  JSON.stringify(c.profile ?? c.learner ?? null);
+
+/** Pairs: each `with` is another case of the same question under another profile, once; once any is written, each question under 2 or more profiles needs one */
+function pairProblems(cases: EvalCase[]): string[] {
+  const byId = new Map(cases.map((c) => [c.id, c]));
+  const problems = cases.flatMap((c) => {
+    const found: string[] = [];
+    for (const [i, { with: other, expect }] of (c.pairs ?? []).entries()) {
+      const b = byId.get(other);
+      if (!b) found.push(`${c.id}: pair with ${other}, which doesn't exist`);
+      else if (questionKey(b) !== questionKey(c))
+        found.push(`${c.id}: pair with ${other}, a different question`);
+      else if (profileKey(b) === profileKey(c))
+        found.push(`${c.id}: pair with ${other}, the same profile`);
+      if (c.pairs!.findIndex((p) => p.with === other) !== i)
+        found.push(`${c.id}: pair with ${other} listed twice`);
+      if (!/\bA\b/.test(expect) || !/\bB\b/.test(expect))
+        found.push(`${c.id}: the expect line for ${other} must name A and B`);
+    }
+    return found;
+  });
+  const personalized = cases.filter((c) => c.kind === "personalized");
+  if (!personalized.some((c) => c.pairs?.length)) return problems;
+  const paired = new Set(
+    personalized.flatMap((c) => (c.pairs?.length ? [questionKey(c)] : [])),
+  );
+  const questions = new Map<string, EvalCase[]>();
+  for (const c of personalized)
+    questions.set(questionKey(c), [
+      ...(questions.get(questionKey(c)) ?? []),
+      c,
+    ]);
+  for (const [key, asked] of questions) {
+    if (!paired.has(key) && new Set(asked.map(profileKey)).size >= 2)
+      problems.push(`${asked[0].id}: a personalized question needs a pair`);
+  }
+  return problems;
+}
+
 /** Every problem with each case, ids or inputs that repeat, and personalized questions asked under one profile */
 export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
   const ids = new Set<string>();
@@ -265,7 +306,7 @@ export function validateCases(cases: EvalCase[], fixtures: Fixtures): string[] {
         `${id}: asked under 1 profile; a personalized question needs 2 or more`,
       );
   }
-  return problems;
+  return [...problems, ...pairProblems(cases)];
 }
 
 /** Each case without a learner, copied under this profile as `<id>+<name>` */
@@ -419,6 +460,11 @@ function caseSection({ case: c, lesson, context, ask, learner }: CaseFacts) {
     c.note && `_${c.note}_`,
     learner && `Learner: \`${learner.name}\`\n\n${fenced(learner.text)}`,
     c.should && `Should: ${c.should}`,
+    ...(c.pairs ?? []).map(
+      (p) => `Pair with \`${p.with}\`, expect: ${p.expect}`,
+    ),
+    c.contrastOracles &&
+      `Contrast oracle (for --answers oracle), A reworded:\n\n${fenced(c.contrastOracles.same)}`,
     c.verdict && `Verdict: ${c.verdict}`,
     fenced(JSON.stringify(c.input, null, 2), "json"),
     c.oracle && `A reply that should pass:\n\n${fenced(c.oracle)}`,

@@ -171,6 +171,16 @@ export const EVAL_CASES: EvalCase[] = [
     learner: "finished-prereq",
     profile: learnerProfile(),
     should: "build-on",
+    pairs: [
+      {
+        with: "personalized-02",
+        expect:
+          "A builds on SQL Basics in a few words; B gives a short primer on SQL Basics",
+      },
+    ],
+    contrastOracles: {
+      same: "A join combines rows from two tables [p2]. You know SQL Basics, so it is a small step.",
+    },
   }),
   evalCase({
     id: "personalized-02",

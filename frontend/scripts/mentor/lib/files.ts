@@ -156,6 +156,19 @@ export const caseSchema = z
     verdict: z.enum(VERDICTS).optional(),
     /** A hand-written reply that should pass, for --answers oracle where a template can't write one (personalized, quiz-grade, summary and wrong-pick) */
     oracle: z.string().min(1).optional(),
+    /** Personalized, on the A side: other cases of this question whose answers should differ, and how */
+    pairs: z
+      .array(
+        z
+          .object({ with: z.string().min(1), expect: z.string().min(1) })
+          .strict(),
+      )
+      .optional(),
+    /** For --answers oracle: this case's oracle reworded, to put in B's place */
+    contrastOracles: z
+      .object({ same: z.string().min(1) })
+      .strict()
+      .optional(),
     /** A profile's name in fixtures/learners, or a profile written out */
     learner: z
       .union([z.string().regex(/^[a-z0-9-]+$/), learnerSchema])
