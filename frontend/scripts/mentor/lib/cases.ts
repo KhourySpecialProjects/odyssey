@@ -277,8 +277,6 @@ function pairProblems(cases: EvalCase[]): string[] {
       }
     return found;
   });
-  // Conditional until the cases have pairs; the pair minimum should then be unconditional
-  if (!cases.some((c) => c.pairs?.length)) return problems;
   const questions = new Map<string, EvalCase[]>();
   for (const c of cases.filter((c) => c.kind === "personalized"))
     questions.set(questionKey(c), [
