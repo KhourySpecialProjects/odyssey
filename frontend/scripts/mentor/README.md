@@ -112,6 +112,22 @@ regenerate it:
 UPDATE_V1_REQUESTS=1 npx jest testing/lib/mentor/eval-v1-requests.test.ts
 ```
 
+### Twins (ODY-938)
+
+Every case without a learner, apart from the kinds that have their own
+(`personalized`, `invented-history`) and the seeds for 936 and 940
+(`quiz-ask`, `quiz-grade`, `review`), also runs as a twin: a copy with the
+`broad-history` profile, id `<id>+broad-history`, `twinOf` the original. Twins
+are made when a run starts, not copied into `cases.jsonl`, so `summary` and any
+later v1 kind get them automatically. They are graded exactly as the case they
+copy, so the "with a learner" thresholds compare like with like, and they also
+get the `claims_history` question and the recitation check.
+
+`broad-history` has about 8 finished droplets across areas and 2 in progress,
+and no prerequisites or viewed lessons, so it suits any case (a twin whose
+profile has either throws). `--twins <name>` picks another such profile, and
+`--twins none` turns twins off. Twins aren't in the v1 request pin.
+
 ### New kinds (v2, ODY-941)
 
 For Mentor v2: personalized answers (ODY-938), a real Quiz me (ODY-936) and
@@ -248,29 +264,32 @@ Each pause needs Brady's yes.
 
 What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
 
-- **Price a full run for free:** `npx tsx scripts/mentor/cases.ts --cost` runs
-  the checks, then prints the cost of every request a full run would send
-  (4 setups × 2 reps), with no client and no key. It assumes generous output
-  sizes (1,000 tokens for an answer, 2,500 for a judge call, which really
-  uses about 70), so it is an **upper bound**: $19.83 for 89 cases.
-- **A full run, realistically: about $2.70.** The 2026-11-06 run (68 cases × 2
-  reps × 4 setups) cost $2.19: $0.86 of Mentor answers and $1.33 of judging
-  (the judge averaged about 1,340 input and 71 output tokens a call). Scaled
-  to 81 cases that is $2.19 × 81 / 68 = $2.61. `quiz-ask` and `review` judge
-  prompts are bigger, because the judge sees every passage (about 1,900
-  tokens by the repo's own count, against 800 for the others): 4 such cases ×
-  8 setup-reps = 32 calls × about 1,850 more tokens at $2 per million is
-  about $0.12 more.
-- **With ODY-968's 8 cases (89 in all):** a full 4-setup run is about $3.20, a
-  haiku-medium-only run (`--setup haiku-medium`) about $0.60, and each canned
-  mode about $0.18. A summary's judge call is the bigger kind, about $0.0071.
-- **A pilot: about $0.35** (`pilotCases` takes one case per kind and format:
-  19 cases, 7 of them v2 seeds). The last pilot, 12 cases × 4 setups × 1 rep,
-  cost about $0.20.
+- **Price a run for free:** `npx tsx scripts/mentor/cases.ts --cost` runs the
+  checks, then prints the cost of every request a run would send, twins
+  included, with no client and no key. It takes `--setup`, `--kind` and
+  `--twins` like `eval.ts`. It assumes generous output sizes (1,000 tokens for
+  an answer, 2,500 for a judge call, which really uses about 70), so it is an
+  **upper bound**: $28.29 for 89 cases and their twins on `haiku-medium`,
+  `haiku-high` and `sonnet-medium`.
+- **Last measured:** the 2026-11-06 run (68 cases × 2 reps × 4 setups) cost
+  $2.19: $0.86 of Mentor answers and $1.33 of judging (the judge averaged
+  about 1,340 input and 71 output tokens a call, about $0.0034).
+- **Estimates for ODY-938, until its runs replace them.** About 181 cases once
+  the cases and twins are in. Judge calls are about $0.0034 each, a Mentor
+  answer about $0.0002 on Haiku and $0.0030 on Sonnet, and a learner block adds
+  about 500 uncached tokens to each request and judge call.
 
-The report has a "By kind and profile" section after "Thresholds": pass rate
-per kind and learner profile for each setup, with a leak count where leaks
-were checked. The new kinds have no threshold yet, so read them there.
+  | Step                                                                            | Estimate    |
+  | ------------------------------------------------------------------------------- | ----------- |
+  | Grading check: oracle, idk and wrong (null is free), about 162 judge calls each | about $1.80 |
+  | Pilot: about 36 cases × 3 setups × 1 rep                                        | about $0.45 |
+  | Iteration: up to 6 `--kind` runs, mostly `haiku-medium`                         | about $1.50 |
+  | Final full run: 181 cases × 3 setups × 2 reps                                   | about $5.75 |
+
+The report has "With a learner" under "Thresholds", then a "Personalization"
+section, then "By kind and profile": pass rate per kind and learner profile for
+each setup, with a leak count where leaks were checked. Quiz-ask, quiz-grade
+and review have no threshold yet, so read them there.
 
 1. **Cases signed off.** `cases.ts` passes and Brady has read all of
    `cases.md`. His yes approves the canned replies and the pilot below, and nothing more.
@@ -310,11 +329,15 @@ were checked. The new kinds have no threshold yet, so read them there.
    ```
 
 `--setup haiku-low` (repeatable) runs only some of `haiku-low`, `haiku-medium`,
-`haiku-high`, `sonnet-low`, `sonnet-medium` and `sonnet-high`. `--kind wrong-pick`
-(repeatable) runs only those kinds, for testing one kind's rule or model
-cheaply. A resumed run keeps the settings it started
-with, and refuses if `cases.jsonl`, the learner profiles,
-`MENTOR_PROMPT_VERSION`, `JUDGE_VERSION` or the fixtures have changed since.
+`haiku-high`, `sonnet-low` and `sonnet-medium`. `--kind personalized`
+(repeatable) keeps only those kinds, for a cheap iteration run, for example
+`--kind personalized --kind invented-history --setup haiku-medium --reps 1`.
+`--twins <name>` or `--twins none` picks the twin profile (default
+`broad-history`; see "Twins"). `cases.ts --cost` takes the same `--setup`,
+`--kind` and `--twins`, so it prices the run you mean. A resumed run keeps the
+settings it started with, and refuses if `cases.jsonl`, the learner profiles,
+`MENTOR_PROMPT_VERSION`, `JUDGE_VERSION`, the fixtures, `--twins` or `--kind`
+have changed since.
 
 Each run writes `runs/<date>-mentor/`: `meta.json`, `results.jsonl` (one row
 per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for
