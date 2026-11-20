@@ -13,11 +13,13 @@ const {
 let strapi;
 let token;
 let coCompletionPairs;
+let completionCounts;
 let MIN_PAIR_COUNT;
 
 const get = (headers = {}) =>
   request(strapi.server.httpServer).get('/api/co-completions').set(headers);
-const pairs = async () => (await get({ Authorization: `Bearer ${token}` })).body.data.pairs;
+const body = async () => (await get({ Authorization: `Bearer ${token}` })).body.data;
+const pairs = async () => (await body()).pairs;
 
 const makeDroplets = (n) =>
   Promise.all(
@@ -46,7 +48,7 @@ const seed = async (students, droplets) => {
 beforeAll(async () => {
   strapi = await setupStrapi();
   token = await createFullAccessToken(strapi);
-  ({ coCompletionPairs, MIN_PAIR_COUNT } = require('../../dist/src/lib/co-completion'));
+  ({ coCompletionPairs, completionCounts, MIN_PAIR_COUNT } = require('../../dist/src/lib/co-completion'));
 });
 
 afterAll(async () => {
@@ -66,7 +68,7 @@ describe('GET /co-completions', () => {
 
     expect(res.status).toBe(200);
     expect(Object.keys(res.body)).toEqual(['data']);
-    expect(Object.keys(res.body.data)).toEqual(['pairs']);
+    expect(Object.keys(res.body.data)).toEqual(['pairs', 'completions']);
     expect(res.body.data.pairs).toHaveLength(2);
     expect(res.body.data.pairs).toEqual(
       expect.arrayContaining([
@@ -74,15 +76,23 @@ describe('GET /co-completions', () => {
         { source: b.id, target: a.id, count: 3 },
       ])
     );
+    expect(res.body.data.completions).toEqual(
+      [
+        { droplet: a.id, count: 3 },
+        { droplet: b.id, count: 3 },
+      ].sort((x, y) => x.droplet - y.droplet)
+    );
   });
 
   it.each([
-    ['one short of the threshold', -1, 0],
-    ['at the threshold', 0, 2],
-  ])('%s returns %i pairs', async (_name, offset, expected) => {
+    ['one short of the threshold', 0, 0, -1],
+    ['at the threshold', 2, 2, 0],
+  ])('%s returns %i pairs and %i completions', async (_name, expected, expectedCompletions, offset) => {
     await seed(MIN_PAIR_COUNT + offset, await makeDroplets(2));
 
-    expect(await pairs()).toHaveLength(expected);
+    const data = await body();
+    expect(data.pairs).toHaveLength(expected);
+    expect(data.completions).toHaveLength(expectedCompletions);
   });
 
   it.each([
@@ -114,7 +124,7 @@ describe('GET /co-completions', () => {
       .set({ Authorization: `Bearer ${token}` });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: { pairs: [] } });
+    expect(res.body).toEqual({ data: { pairs: [], completions: [] } });
   });
 
   it('refuses a request without a token', async () => {
@@ -163,5 +173,17 @@ describe('coCompletionPairs', () => {
       [s.id, 3],
       [Math.min(t2.id, t3.id), 2],
     ]);
+  });
+});
+
+describe('completionCounts', () => {
+  it('counts each finisher once and ignores in-progress enrollments', async () => {
+    const [a] = await makeDroplets(1);
+    const users = await seed(3, [a]);
+    await enroll(users[0], a);
+    const [extra] = await makeUsers(1);
+    await enroll(extra, a, { isComplete: false });
+
+    expect(await completionCounts()).toEqual([{ droplet: a.id, count: 3 }]);
   });
 });
