@@ -139,6 +139,7 @@ export function scanSource(
       message,
     });
 
+  const flagged = new Set<ts.Node>();
   const visit = (n: ts.Node) => {
     if (ts.isJsxElement(n) || ts.isJsxSelfClosingElement(n)) {
       const opening = ts.isJsxElement(n) ? n.openingElement : n;
@@ -149,7 +150,23 @@ export function scanSource(
       ) {
         add(n, `<${name}> without asChild adds a second X: ${FIX}`);
       }
-      if (name === "button" || name === "Button") {
+      if (
+        (name === "DialogClose" || name === "SheetClose") &&
+        ts.isJsxElement(n)
+      ) {
+        // An X inside a close wrapper is a second close, whatever its label.
+        const kids = n.children.filter((c) => !isBlank(c, sf));
+        const child = kids.find(
+          (c): c is ts.JsxElement => ts.isJsxElement(c) && onlyChildIsX(c, sf),
+        );
+        if (child) {
+          flagged.add(child);
+          add(n, `X inside <${name}> duplicates the built-in close: ${FIX}`);
+        } else if (onlyChildIsX(n, sf)) {
+          add(n, `X inside <${name}> duplicates the built-in close: ${FIX}`);
+        }
+      }
+      if ((name === "button" || name === "Button") && !flagged.has(n)) {
         if (hasCloseLabel(opening, n, sf)) {
           add(
             n,
@@ -238,6 +255,18 @@ describe("scanSource", () => {
     [
       "an X button in a ResponsiveDialog file",
       `<ResponsiveDialog><button onClick={f}><X/></button></ResponsiveDialog>`,
+    ],
+    [
+      'an X button labelled "Dismiss" inside DialogClose asChild',
+      wrap(
+        `<DialogClose asChild><button aria-label="Dismiss"><X/></button></DialogClose>`,
+      ),
+    ],
+    [
+      "an X button inside SheetClose asChild",
+      wrap(
+        `<SheetClose asChild><button aria-label="Dismiss"><X/></button></SheetClose>`,
+      ),
     ],
   ])("flags %s", (_name, src) => {
     expect(scanSource(src)).toHaveLength(1);
