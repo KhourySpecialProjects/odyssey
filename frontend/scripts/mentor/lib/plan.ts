@@ -150,7 +150,7 @@ export function pricedContrasts(
     .map((j) => ({ params: requestFor(j), outputTokens: 2500 }));
 }
 
-/** --pilot: the first case of each kind in each format, and of each twin, plus each kept A side's partners, in file order */
+/** --pilot: the first case of each kind, format and twin, plus pair partners of kept cases, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
   const seen = new Set<string>();
   const first = cases.filter((c) => {
@@ -159,10 +159,19 @@ export function pilotCases(cases: EvalCase[]): EvalCase[] {
     seen.add(key);
     return true;
   });
+  const firstIds = new Set(first.map((c) => c.id));
   const partners = new Set(
     first.flatMap((c) => (c.pairs ?? []).map((p) => p.with)),
   );
-  const kept = new Set([...first, ...cases.filter((c) => partners.has(c.id))]);
+  // A kept B side brings its A side
+  const aSides = cases.filter((c) =>
+    c.pairs?.some((p) => firstIds.has(p.with)),
+  );
+  const kept = new Set([
+    ...first,
+    ...cases.filter((c) => partners.has(c.id)),
+    ...aSides,
+  ]);
   return cases.filter((c) => kept.has(c));
 }
 

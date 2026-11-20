@@ -189,6 +189,41 @@ describe("pilotCases", () => {
       "covered-explain-01",
     ]);
   });
+
+  describe("with pairs", () => {
+    const personalized = (id: string, withId?: string) => ({
+      ...caseById("datasci-personalized-01"),
+      id,
+      pairs: withId ? [{ with: withId, expect: "differs" }] : undefined,
+    });
+
+    it("keeps an A side's partner in file order, and no other A side of its kind", () => {
+      const cases = [
+        personalized("personalized-01", "personalized-02"),
+        caseById("covered-01"),
+        personalized("personalized-02"),
+        personalized("personalized-03", "personalized-02"),
+      ];
+      expect(pilotCases(cases).map((c) => c.id)).toEqual([
+        "personalized-01",
+        "covered-01",
+        "personalized-02",
+      ]);
+    });
+
+    it("keeps the A side of a kept B side", () => {
+      const cases = [
+        personalized("personalized-01"),
+        { ...caseById("covered-01"), id: "b-side" },
+        personalized("a-side", "b-side"),
+      ];
+      expect(pilotCases(cases).map((c) => c.id)).toEqual([
+        "personalized-01",
+        "b-side",
+        "a-side",
+      ]);
+    });
+  });
 });
 
 describe("pilotCases with twins", () => {
