@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 
 jest.mock("@/lib/requests/enrollment", () => ({
   updateEnrollmentFirstTime: jest.fn(),
@@ -124,5 +125,25 @@ describe("CompletedDropletBlock", () => {
     expect(
       screen.getByText(/Droplet & <Special> Characters/),
     ).toBeInTheDocument();
+  });
+
+  it("has a single close button that marks the enrollment as seen", async () => {
+    render(
+      <CompletedDropletBlock
+        droplet={mockDroplet as any}
+        enrollment={mockEnrollment as any}
+        authUser={mockAuthUser as any}
+      />,
+    );
+
+    expectSingleCloseButton(screen.getByRole("dialog"));
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+
+    await waitFor(() => {
+      expect(updateEnrollmentFirstTime).toHaveBeenCalledWith("enrollment-123");
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
   });
 });
