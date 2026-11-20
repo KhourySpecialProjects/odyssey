@@ -90,6 +90,26 @@ describe("streamMentorAnswer", () => {
     await expect(result!.usage).resolves.toMatchObject({ input_tokens: 40 });
   });
 
+  it.each<[string, ClaudeScript, "end_turn" | "max_tokens" | null]>([
+    ["end_turn", {}, "end_turn"],
+    ["max_tokens", { stopReason: "max_tokens" }, "max_tokens"],
+    ["a refusal", { stopReason: "refusal" }, null],
+    ["an empty answer", { texts: [] }, null],
+    ["an API error midway", { failMidway: true }, null],
+  ])("settles completed for %s", async (_, script, stopReason) => {
+    const { result } = await answer(script);
+    await readAllMentorEvents(result!.response.body!);
+    await expect(result!.completed).resolves.toEqual(
+      stopReason
+        ? {
+            text: ANSWER,
+            citations: citationsFor(context, ANSWER),
+            stopReason,
+          }
+        : null,
+    );
+  });
+
   it("gives null, with nothing billed, when Claude fails before answering", async () => {
     const { claude, result } = await answer({ status: 500 });
     expect(result).toBeNull();
@@ -116,6 +136,7 @@ describe("streamMentorAnswer", () => {
       }
       // 30 characters streamed, at about 4 a token
       await expect(result!.usage).resolves.toMatchObject({ output_tokens: 8 });
+      await expect(result!.completed).resolves.toBeNull();
       expect(claude.calls[0].signal.aborted).toBe(true);
     },
   );
@@ -125,5 +146,6 @@ describe("streamMentorAnswer", () => {
     const events = await readAllMentorEvents(result!.response.body!);
     expect(events.at(-1)).toEqual(failed("failed"));
     expect(claude.calls[0].signal.aborted).toBe(true);
+    await expect(result!.completed).resolves.toBeNull();
   });
 });
