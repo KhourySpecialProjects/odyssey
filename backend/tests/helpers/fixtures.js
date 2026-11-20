@@ -74,7 +74,7 @@ const cachedReplyData = (overrides = {}) => {
   };
 };
 
-const mentorFeedbackData =(overrides = {}) => ({
+const mentorFeedbackData = (overrides = {}) => ({
   answerKey: unique('answer'),
   kind: 'lesson',
   rating: 'up',

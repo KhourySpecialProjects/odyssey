@@ -143,6 +143,10 @@ describe('mentor-cached-reply routes (ODY-967)', () => {
       .post('/api/auth/local/register')
       .send({ username: `u${Date.now()}`, email: `u${Date.now()}@example.test`, password: 'Passw0rd!long' });
     expect(registered.body.jwt).toBeTruthy();
+    const granted = await strapi.db
+      .query('plugin::users-permissions.permission')
+      .count({ where: { role: id, action: { $startsWith: 'api::mentor-cached-reply.custom-mentor-cached-reply.' } } });
+    expect(granted).toBe(2);
 
     for (const path of ROUTES) {
       const res = await request(strapi.server.httpServer)
