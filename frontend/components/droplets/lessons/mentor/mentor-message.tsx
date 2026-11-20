@@ -31,6 +31,7 @@ export function MentorMessage({
   onRetry,
   feedback,
   questionText,
+  stale = false,
 }: {
   message: MentorMsg;
   lessonName: string;
@@ -42,6 +43,8 @@ export function MentorMessage({
   feedback?: MentorFeedback;
   /** The student message right before this answer */
   questionText?: string;
+  /** Grounded in another lesson: no "Read" line and no sources */
+  stale?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,6 +52,7 @@ export function MentorMessage({
   const streaming = status === "streaming";
   // A stopped answer can end mid-ref, so only a finished one keeps a trailing "["
   const shown = displayAnswer(message.text, { streaming: status !== "done" });
+  const citations = stale ? [] : message.citations;
   const showTools = status === "done" || status === "stopped";
 
   const copy = async () => {
@@ -76,10 +80,12 @@ export function MentorMessage({
       aria-busy={streaming}
       className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
     >
-      <p className="mb-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-        <Check className="h-3 w-3" aria-hidden="true" />
-        Read {lessonName}
-      </p>
+      {!stale && (
+        <p className="mb-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <Check className="h-3 w-3" aria-hidden="true" />
+          Read {lessonName}
+        </p>
+      )}
 
       {shown && (
         <div className="prose prose-sm prose-p:my-2 prose-code:before:content-none prose-code:after:content-none dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
@@ -123,9 +129,9 @@ export function MentorMessage({
         </div>
       )}
 
-      {status === "done" && message.citations.length > 0 && (
+      {status === "done" && citations.length > 0 && (
         <ul aria-label="Sources" className="mt-2 flex flex-wrap gap-2">
-          {message.citations.map((c) => (
+          {citations.map((c) => (
             <li key={c.ref}>
               <button
                 type="button"
@@ -163,7 +169,7 @@ export function MentorMessage({
             <MentorRating
               kind={message.kind ?? "lesson"}
               answerKey={message.id}
-              citations={message.citations}
+              citations={citations}
               answerText={shown.trim()}
               questionText={questionText}
               {...feedback}

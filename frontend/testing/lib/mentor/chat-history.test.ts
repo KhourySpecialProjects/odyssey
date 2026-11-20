@@ -41,6 +41,12 @@ describe("startMentorChat and ownedChat", () => {
     ]);
   });
 
+  it("refreshes the user's cached chat list when a chat starts", async () => {
+    await start(7);
+
+    expect(revalidateTag).toHaveBeenCalledWith("mentor-chats-7");
+  });
+
   it("returns the chat to its owner and null to anyone else", async () => {
     const id = await start(7);
 
