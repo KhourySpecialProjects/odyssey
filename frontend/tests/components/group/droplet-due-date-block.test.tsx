@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 import { DropletDueDateBlock } from "@/components/group/droplet-due-date-block";
 import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import { GroupSemester } from "@/types";
@@ -569,6 +570,45 @@ describe("DropletDueDateBlock", () => {
         expect(saveButton).toBeDisabled();
         expect(deleteButton).toBeDisabled();
       });
+    });
+  });
+
+  describe("Remove dialog close button", () => {
+    const openRemoveDialog = async () => {
+      mockedGetGroupDueDate.mockResolvedValue(
+        makeDueDate({ dueDate: DateTime.fromISO("2024-03-20T15:00:00.000Z") }),
+      );
+
+      render(
+        <DropletDueDateBlock
+          existingGroup={mockGroup}
+          currentDroplet={mockDroplet}
+        />,
+      );
+      const deleteButton = await screen.findByRole("delete");
+      await waitFor(() => expect(deleteButton).not.toBeDisabled());
+      fireEvent.click(deleteButton);
+      return screen.findByRole("dialog");
+    };
+
+    it("renders exactly one close button", async () => {
+      expectSingleCloseButton(await openRemoveDialog());
+    });
+
+    it.each([
+      [
+        "the Close button",
+        () => fireEvent.click(screen.getByRole("button", { name: "Close" })),
+      ],
+      [
+        "Escape",
+        () => fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" }),
+      ],
+    ])("closes without removing when closed with %s", async (_name, close) => {
+      await openRemoveDialog();
+      close();
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(assignDropletDueDate).not.toHaveBeenCalled();
     });
   });
 
