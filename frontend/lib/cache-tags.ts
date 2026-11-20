@@ -170,6 +170,9 @@
  *                 reach the picks through enrollments-{id},
  *                 voyage-enrollments-{id} and learner-profile-{id}, which
  *                 the engine's reads also carry.
+ * mentor-chats   Per-user tag "mentor-chats-{userId}": read by                60s
+ *                 listMentorChats; invalidated by saveMentorExchange and
+ *                 the delete actions (ODY-937)
  * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
  *                 getLearnerProfile (engine, Settings);
  *                 invalidated by saveLearnerProfile
@@ -215,7 +218,8 @@ export const CACHE_TAGS = {
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
-  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks and dismissals (ODY-952, ODY-954)
+  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  mentorChats: (userId: number) => `mentor-chats-${userId}`, // one student's saved Mentor chats (ODY-937)
   learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
   // Per-droplet (scoped to one droplet)

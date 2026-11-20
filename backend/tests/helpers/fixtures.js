@@ -33,6 +33,8 @@ const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
+const MENTOR_CHAT_UID = 'api::mentor-chat.mentor-chat';
+const MENTOR_MESSAGE_UID = 'api::mentor-message.mentor-message';
 const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
 const TAG_UID = 'api::tag.tag';
@@ -202,6 +204,8 @@ module.exports = {
   MENTOR_SETTING_UID,
   STREAK_DAY_UID,
   MENTOR_FEEDBACK_UID,
+  MENTOR_CHAT_UID,
+  MENTOR_MESSAGE_UID,
   GROUP_UID,
   TAG_UID,
   RECOMMENDATION_DISMISSAL_UID,

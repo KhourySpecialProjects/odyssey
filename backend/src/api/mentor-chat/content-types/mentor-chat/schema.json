@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mentor_chats",
+  "info": {
+    "singularName": "mentor-chat",
+    "pluralName": "mentor-chats",
+    "displayName": "Mentor Chat",
+    "description": "One saved Mentor conversation of one student, deleted after 30 days. Never shown to instructors (ODY-937)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "authorizedUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson"
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": ["lesson", "explain"],
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 80,
+      "private": true
+    },
+    "lastMessageAt": {
+      "type": "datetime"
+    },
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::mentor-message.mentor-message",
+      "mappedBy": "chat"
+    }
+  }
+}

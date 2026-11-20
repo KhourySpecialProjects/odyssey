@@ -132,6 +132,8 @@ export function useMentorChat({
   const controller = useRef<AbortController | null>(null);
   const stopped = useRef(false);
   const locked = useRef(false);
+  // The saved chat this conversation continues (ODY-937), from X-Mentor-Chat-Id
+  const chatId = useRef<string | null>(null);
 
   const commit = useCallback((next: ChatMsg[]) => {
     messagesRef.current = next;
@@ -174,6 +176,7 @@ export function useMentorChat({
             dropletId,
             lessonId,
             history,
+            ...(chatId.current && { chatId: chatId.current }),
           }),
           signal: ctl.signal,
         });
@@ -186,6 +189,7 @@ export function useMentorChat({
           } else fail({ message: f.message, retry: f.retry });
           return;
         }
+        chatId.current = res.headers.get("X-Mentor-Chat-Id") ?? chatId.current;
         if (!res.body) throw new MentorStreamError("No body");
         let text = "";
         for await (const e of readMentorEvents(res.body)) {
@@ -271,5 +275,13 @@ export function useMentorChat({
     controller.current?.abort();
   }, []);
 
-  return { messages, streaming, lock, ask, stop, retry };
+  // Starts a new conversation: the next ask opens a new saved chat
+  const clear = useCallback(() => {
+    stopped.current = true;
+    controller.current?.abort();
+    chatId.current = null;
+    commit([]);
+  }, [commit]);
+
+  return { messages, streaming, lock, ask, stop, retry, clear };
 }
