@@ -1,6 +1,7 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { AuthorizedUserBlock } from "@/components/admin/users/authorized-user";
 import { AuthorizedUser, TimeZone } from "@/types";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 
 jest.mock("@/lib/requests/authorized-user", () => ({
   updateUserInfo: jest.fn().mockResolvedValue({ ok: true, data: null }),
@@ -34,18 +35,6 @@ const user: AuthorizedUser = {
   was_blocked: [],
   timeZone: "America/New_York" as TimeZone,
   roles: [],
-};
-
-// DialogContent already renders a "Close" button; a second, icon-only button
-// (no text, no accessible name) is the duplicate X from ODY-874.
-const expectSingleCloseButton = (dialog: HTMLElement) => {
-  expect(
-    within(dialog).getAllByRole("button", { name: /close/i }),
-  ).toHaveLength(1);
-  const iconOnly = within(dialog)
-    .getAllByRole("button")
-    .filter((button) => !button.textContent?.trim());
-  expect(iconOnly).toHaveLength(0);
 };
 
 describe("AuthorizedUserBlock", () => {

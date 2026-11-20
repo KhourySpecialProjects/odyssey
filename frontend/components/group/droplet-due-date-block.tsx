@@ -99,7 +99,10 @@ export function DropletDueDateBlock({
               <Trash2Icon />
             </Button>
           </div>
-          <Dialog open={removePopupVisible}>
+          <Dialog
+            open={removePopupVisible}
+            onOpenChange={setRemovePopupVisible}
+          >
             <DialogContent>
               <DialogHeader className="flex flex-col items-center text-center">
                 <DialogTitle>
