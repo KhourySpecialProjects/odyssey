@@ -129,6 +129,31 @@ and no prerequisites or viewed lessons, so it suits any case (a twin whose
 profile has either throws). `--twins <name>` picks another such profile, and
 `--twins none` turns twins off. Twins aren't in the v1 request pin.
 
+### Pairs and the contrast judge (ODY-938)
+
+Each personalized question under 2 or more profiles needs a pair. On one case
+of the question (the A side), `pairs` lists `{ with: <other case's id>, expect }`:
+the other case asks the same question under another profile, and `expect` says
+how the two answers should differ, naming the droplet or level the difference
+rests on. Write the two students as the words `A` and `B` and nothing else
+spelled that way (not a capital "A" as an article), because the line is
+relabelled when the order swaps. `--check` requires pairs on every such
+question once any case has one.
+
+For each (setup, rep, pair), one extra call of the judge model sees the
+question, both blocks, both replies and the `expect` line, and answers
+`differs_as_expected` (yes or no) with a one-line reason. A is shown first on
+rep 1 and second on rep 2, with `expect` relabelled to fit. The call shares
+`JUDGE_VERSION` and writes a row to `contrast.jsonl`. A pair passes only when
+both rows pass their own `should` and the verdict is yes. A pair with a row
+missing gets no call, and the report blocks the setup until it's filled in.
+
+`--answers oracle` also grades the contrast judge: per pair it asks about the
+real oracles (expect yes), A's oracle against `contrastOracles.same`, a reworded
+copy of it (expect no), and the two oracles swapped (expect no). The report
+says "Contrast judge vs oracle pairs: n/N", and N/N is needed before any
+iteration run.
+
 ### New kinds (v2, ODY-941)
 
 For Mentor v2: personalized answers (ODY-938), a real Quiz me (ODY-936) and
@@ -293,6 +318,10 @@ What it costs, from the runs so far. Paid runs stay Brady's, after his yes.
   | Iteration: up to 6 `--kind` runs, mostly `haiku-medium`                         | about $1.50 |
   | Final full run: 181 cases × 3 setups × 2 reps                                   | about $5.75 |
 
+  Contrast calls (7 pairs) add about $0.10 to the grading check (3 per pair)
+  and about $0.20 to the final run (1 per pair, setup and rep). `cases.ts --cost`
+  counts them.
+
 The report has "With a learner" under "Thresholds", then a "Personalization"
 section, then "By kind and profile": pass rate per kind and learner profile for
 each setup, with a leak count where leaks were checked. Quiz-ask, quiz-grade
@@ -357,7 +386,7 @@ dismissal can't change ("not counted anyway"). Under "Check by hand", a twin
 row it clears shows "dismissed: <reason>".
 
 Each run writes `runs/<date>-mentor/`: `meta.json`, `results.jsonl` (one row
-per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for
+per setup, case and rep, as it finishes), `contrast.jsonl` (one per pair call), `errors.jsonl`, `report.md`, and for
 a pilot `pilot-labels.json` (rows are added to it each time the report is
 rewritten). Runs are gitignored.
 
