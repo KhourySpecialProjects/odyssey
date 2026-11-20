@@ -2314,7 +2314,7 @@ Pair with `interview-personalized-02`, expect: A builds on Career Readiness 101 
 Contrast oracle (for --answers oracle), A reworded:
 
 ```
-You've done Career Readiness 101 already, so go straight to this part: research the company, its mission, values and culture [p3], be ready to talk through your resume [p7] and bring questions for the interviewer [p10].
+Building on Career Readiness 101, here is only the new part: research the company, its mission, values and culture [p3], be ready to talk through your resume [p7] and bring questions for the interviewer [p10].
 ```
 
 ```json
@@ -2327,7 +2327,7 @@ You've done Career Readiness 101 already, so go straight to this part: research 
 A reply that should pass:
 
 ```
-Since you've finished Career Readiness 101, you have a head start, so here is the interview-specific part: take the time to research the company, its mission, values and culture [p3], know your resume in detail [p7] and prepare questions to ask the interviewer [p10].
+This builds on Career Readiness 101, so here is just the interview-specific part: take the time to research the company, its mission, values and culture [p3], know your resume in detail [p7] and prepare questions to ask the interviewer [p10].
 ```
 
 Gold:
