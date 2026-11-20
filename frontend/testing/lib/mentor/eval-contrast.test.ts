@@ -7,6 +7,7 @@ import { factsFor } from "@/scripts/mentor/lib/cases";
 import {
   CONTRAST,
   contrastJobs,
+  contrastKey,
   contrastRequest,
   orderFor,
   pairsOf,
@@ -14,7 +15,12 @@ import {
   runContrasts,
 } from "@/scripts/mentor/lib/contrast";
 import { readJsonl } from "@/scripts/mentor/lib/files";
-import type { ContrastRow, ResultRow } from "@/scripts/mentor/lib/metrics";
+import type {
+  ContrastRow,
+  ErrorRow,
+  ResultRow,
+} from "@/scripts/mentor/lib/metrics";
+import { ERRORS } from "@/scripts/mentor/lib/run";
 import { pricedContrasts } from "@/scripts/mentor/lib/plan";
 import {
   caseById,
@@ -50,17 +56,44 @@ describe("contrastRequest", () => {
       ),
     );
 
-  it("shows A then B on rep 1, and B then A with the expect line relabelled on rep 2", () => {
-    expect(orderFor(1)).toBe("AB");
-    expect(orderFor(2)).toBe("BA");
-    expect(orderFor(3)).toBe("AB");
+  it.each<[string, number, number | undefined, "AB" | "BA"]>([
+    ["rep 1 shows A first", 1, undefined, "AB"],
+    ["rep 2 shows B first", 2, undefined, "BA"],
+    ["rep 3 shows A first", 3, undefined, "AB"],
+    ["an oracle check's pair 1 shows A first, whatever the rep", 1, 1, "AB"],
+    ["an oracle check's pair 2 shows B first", 1, 2, "BA"],
+  ])(
+    "orders by rep, or by pair in an oracle check: %s",
+    (_, rep, pairNo, order) => {
+      expect(orderFor(rep, pairNo)).toBe(order);
+    },
+  );
+
+  it("shows B's learner block first with B's reply on BA, and leaves the expect line and labels alone", () => {
     const ab = request("AB");
-    expect(ab.indexOf("Reply A")).toBeLessThan(ab.indexOf("Reply B"));
-    expect(ab).toContain("A builds on SQL Basics in a few words; B gives");
+    expect(ab.indexOf("<learner_a>")).toBeLessThan(ab.indexOf("<reply_a>"));
+    expect(ab.indexOf("<reply_a>")).toBeLessThan(ab.indexOf("<learner_b>"));
+    expect(ab.indexOf("<learner_b>")).toBeLessThan(ab.indexOf("<reply_b>"));
 
     const ba = request("BA");
-    expect(ba.indexOf("Reply B")).toBeLessThan(ba.indexOf("Reply A"));
-    expect(ba).toContain("B builds on SQL Basics in a few words; A gives");
+    const at = (tag: string) => ba.indexOf(`<${tag}>`);
+    expect([
+      at("learner_b"),
+      at("reply_b"),
+      at("learner_a"),
+      at("reply_a"),
+    ]).toEqual(
+      [at("learner_b"), at("reply_b"), at("learner_a"), at("reply_a")].sort(
+        (x, y) => x - y,
+      ),
+    );
+    expect(ba).toContain(
+      `<learner_b>\n${facts.get("personalized-02")!.learner!.text}`,
+    );
+    expect(ba).toContain("<reply_b>\nReply B\n</reply_b>");
+    // The expect line reads the same in both orders
+    expect(ba).toContain(`<expect>\n${pair.expect}\n</expect>`);
+    expect(ab).toContain(`<expect>\n${pair.expect}\n</expect>`);
   });
 
   it("keeps a reply from closing the judge's tags", () => {
@@ -130,6 +163,30 @@ describe("contrastJobs", () => {
     ]);
   });
 
+  it("alternates an oracle check's order by pair, and a real run's by rep", () => {
+    const orders = (oracle: boolean) =>
+      contrastJobs(
+        [pair, pair],
+        [...resultRows(), ...resultRows("haiku-low", 2)],
+        facts,
+        oracle,
+      ).map((j) => [j.rep, j.order]);
+
+    expect(orders(false)).toEqual([
+      [1, "AB"],
+      [1, "AB"],
+      [2, "BA"],
+      [2, "BA"],
+    ]);
+    // Per pair: 3 calls each, the first pair AB and the second BA, on both reps
+    expect(orders(true)).toEqual([
+      ...Array(3).fill([1, "AB"]),
+      ...Array(3).fill([1, "BA"]),
+      ...Array(3).fill([2, "AB"]),
+      ...Array(3).fill([2, "BA"]),
+    ]);
+  });
+
   it("makes no call for a pair with a row missing", () => {
     expect(contrastJobs(pairs, resultRows().slice(0, 1), facts, false)).toEqual(
       [],
@@ -140,6 +197,20 @@ describe("contrastJobs", () => {
     const runs = [1, 2].map((rep) => ({ setup: "haiku-low", rep }));
     expect(pricedContrasts(pairs, fixtures, runs, false)).toHaveLength(2);
     expect(pricedContrasts(pairs, fixtures, runs, true)).toHaveLength(6);
+  });
+
+  it("prices one call fewer for each already written", () => {
+    const runs = [1, 2].map((rep) => ({ setup: "haiku-low", rep }));
+    const done = new Set([
+      contrastKey({
+        setup: "haiku-low",
+        rep: 1,
+        a: pair.a.id,
+        b: pair.b.id,
+        variant: "real",
+      }),
+    ]);
+    expect(pricedContrasts(pairs, fixtures, runs, false, done)).toHaveLength(1);
   });
 });
 
@@ -193,5 +264,22 @@ describe("runContrasts", () => {
     expect(await runContrasts(fake, jobs(), dir)).toBe(1);
     expect(create).toHaveBeenCalledTimes(3);
     expect(readJsonl(path.join(dir, CONTRAST))).toHaveLength(2);
+  });
+
+  it("writes a failed call to errors.jsonl as a contrast_error, with its pair", async () => {
+    create.mockRejectedValueOnce(new Anthropic.AnthropicError("down"));
+    create.mockResolvedValueOnce({ ...verdict("yes"), stop_reason: "refusal" });
+    await runContrasts(fake, jobs(), dir);
+
+    const errors = readJsonl<ErrorRow>(path.join(dir, ERRORS));
+    expect(errors).toHaveLength(2);
+    expect(errors[0]).toMatchObject({
+      setup: "haiku-low",
+      caseId: pair.a.id,
+      class: "contrast_error",
+      pair: { b: pair.b.id, variant: "real" },
+    });
+    expect(errors.map((e) => e.detail).join()).toMatch(/down/);
+    expect(errors.map((e) => e.detail).join()).toMatch(/refusal/);
   });
 });

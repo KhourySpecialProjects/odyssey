@@ -57,8 +57,15 @@ export type ResultRow = Key & {
 
 /** One line of errors.jsonl: never scored. A judge error keeps the reply and its answer, to judge again. */
 export type ErrorRow = Key & {
-  class: "api_error" | "timeout" | "model_mismatch" | "judge_error";
+  class:
+    | "api_error"
+    | "timeout"
+    | "model_mismatch"
+    | "judge_error"
+    | "contrast_error";
   detail: string;
+  /** A contrast_error: `caseId` is the A side, and this names the B side and the call */
+  pair?: { b: string; variant: ContrastRow["variant"] };
   usage?: Anthropic.Usage;
   reply?: string;
   answer?: Pick<
@@ -93,7 +100,7 @@ export type RunMeta = {
   /** How many cases this run asks, for each setup and rep */
   cases: number;
   /** The full run's size, for a pilot's projection */
-  fullRun: { cases: number; reps: number };
+  fullRun: { cases: number; reps: number; pairs?: number };
   startedAt: string;
 };
 
@@ -108,6 +115,8 @@ export type ContrastRow = {
   b: string;
   order: "AB" | "BA";
   variant: "real" | "same" | "swapped";
+  /** The pair's expect line, as the judge saw it */
+  expect: string;
   expected: "yes" | "no" | null;
   verdict: "yes" | "no";
   reason: string;
@@ -324,9 +333,18 @@ export function summarise(
   rows: ResultRow[],
   errors: ErrorRow[],
   expected: number,
-  contrasts: ContrastRow[] = [],
-  expectedPairs = 0,
-  handChecks: HandCheck[] = [],
+  {
+    contrasts = [],
+    expectedPairs = 0,
+    expectedOracle = 0,
+    handChecks = [],
+  }: {
+    contrasts?: ContrastRow[];
+    /** Real contrasts, and oracle-check ones, expected for each setup */
+    expectedPairs?: number;
+    expectedOracle?: number;
+    handChecks?: HandCheck[];
+  } = {},
 ): SetupSummary[] {
   const dismissed = new Set(handChecks.map((h) => h.key));
   const done = new Set(rows.map(keyOf));
@@ -334,17 +352,26 @@ export function summarise(
   return setups.map((setup) => {
     const mine = rows.filter((r) => r.setup === setup);
     const errs = errors.filter((e) => e.setup === setup);
-    const open = new Set(errs.filter((e) => !done.has(keyOf(e))).map(keyOf));
+    // A failed contrast call is a missing contrast, not an open row error
+    const open = new Set(
+      errs
+        .filter((e) => e.class !== "contrast_error" && !done.has(keyOf(e)))
+        .map(keyOf),
+    );
     const missing = expected - mine.length - open.size;
     const myContrasts = contrasts.filter((c) => c.setup === setup);
-    const missingPairs =
-      expectedPairs - myContrasts.filter((c) => c.variant === "real").length;
+    const realContrasts = myContrasts.filter(
+      (c) => c.variant === "real",
+    ).length;
+    const missingPairs = expectedPairs - realContrasts;
+    const missingOracle = expectedOracle - (myContrasts.length - realContrasts);
     const truncated = mine.filter((r) => r.status === "truncated").length;
     const blockers = [
       open.size && `${open.size} open errors`,
       missing > 0 && `${missing} rows missing`,
       truncated && `${truncated} truncated`,
       missingPairs > 0 && `${missingPairs} contrasts missing`,
+      missingOracle > 0 && `${missingOracle} oracle contrasts missing`,
     ].filter((b): b is string => !!b);
     // Rows with a learner (twins and v2's kinds) are scored apart from v1's
     const plain = mine.filter((r) => !hasLearner(r));
@@ -444,14 +471,14 @@ export function reportMarkdown(
   contrasts: ContrastRow[] = [],
   handChecks: HandCheck[] = [],
 ): string {
-  const summaries = summarise(
-    rows,
-    errors,
-    meta.cases * meta.reps,
+  const pairCalls = (meta.pairs ?? 0) * meta.reps;
+  const oracleMode = meta.answers === "oracle";
+  const summaries = summarise(rows, errors, meta.cases * meta.reps, {
     contrasts,
-    (meta.pairs ?? 0) * meta.reps,
+    expectedPairs: pairCalls,
+    expectedOracle: oracleMode ? pairCalls * 2 : 0,
     handChecks,
-  );
+  });
   const chosen = chosenSetup(summaries);
   const perSetup = (columns: Record<string, Column>) =>
     table(
@@ -516,9 +543,42 @@ export function reportMarkdown(
   );
   const contrastsOf = (setup: string) =>
     contrasts.filter((c) => c.setup === setup);
-  const failedPairs = pairOutcomes(rows, contrasts).filter((o) => !o.pass);
+  const pairOrder = (c: ContrastRow) =>
+    `${c.setup}|${c.a}|${c.b}|${String(c.rep).padStart(3, "0")}`;
+  const failedPairs = pairOutcomes(rows, contrasts)
+    .filter((o) => !o.pass)
+    .sort((x, y) => pairOrder(x.contrast).localeCompare(pairOrder(y.contrast)));
+  const failing = (o: PairOutcome) =>
+    o.aPass && o.bPass
+      ? "both pass"
+      : o.aPass || o.bPass
+        ? `${o.aPass ? "B" : "A"} fails`
+        : "A and B fail";
   const oracleChecks = contrasts.filter((c) => c.expected);
   const agreed = oracleChecks.filter((c) => c.verdict === c.expected).length;
+  const disagreed = oracleChecks.filter((c) => c.verdict !== c.expected);
+  // One call per pair and variant: real, same and swapped
+  const oracleExpected = pairCalls * 3;
+  const written = new Set(
+    contrasts.map((c) => `${c.setup}|${c.a}|${c.b}|${c.rep}|${c.variant}`),
+  );
+  const contrastErrors = [
+    ...new Map(
+      errors
+        .filter(
+          (e) =>
+            e.class === "contrast_error" &&
+            e.pair &&
+            !written.has(
+              `${e.setup}|${e.caseId}|${e.pair.b}|${e.rep}|${e.pair.variant}`,
+            ),
+        )
+        .map((e) => [
+          `${e.setup}|${e.caseId}|${e.pair!.b}|${e.rep}|${e.pair!.variant}`,
+          e,
+        ]),
+    ).values(),
+  ];
   const personalization = perSetup({
     Personalized: (_, s) =>
       `${rateCell(s.personalized)} [${s.v2Reps.map((r) => pct(share(r.personalized))).join(", ")}]`,
@@ -678,14 +738,23 @@ export function reportMarkdown(
     const n = new Set(rows.filter(ofKind([kind])).map((r) => r.caseId)).size;
     return `- ${label}: ±${pct(halfWidth(n, meta.reps))} over ${n} cases`;
   });
+  const fullPairs = (meta.fullRun.pairs ?? 0) * meta.fullRun.reps;
+  const projectedContrast = (setup: string) => {
+    const costs = contrasts
+      .filter((c) => c.setup === setup && c.variant === "real")
+      .map((c) => c.costUsd);
+    return costs.length ? mean(costs) * fullPairs : 0;
+  };
   const projection = perSetup({
     Answers: () => answers,
     Mentor: (rs) => money(projected(rs.map((r) => r.costUsd))),
     Judge: (rs) => money(projected(rs.flatMap((r) => r.judge?.costUsd ?? []))),
-    Total: (rs) =>
+    Contrast: (_, s) => money(projectedContrast(s.setup)),
+    Total: (rs, s) =>
       money(
         projected(rs.map((r) => r.costUsd)) +
-          projected(rs.flatMap((r) => r.judge?.costUsd ?? [])),
+          projected(rs.flatMap((r) => r.judge?.costUsd ?? [])) +
+          projectedContrast(s.setup),
       ),
   });
   const profiles = CASE_KINDS.flatMap((kind) =>
@@ -714,13 +783,23 @@ export function reportMarkdown(
       }),
     ]),
   );
+  const rowOf = new Map(rows.map((r) => [keyOf(r), r]));
   const byHand = [
     ...failedPairs
       .filter((o) => o.aPass && o.bPass)
-      .map(
-        (o) =>
-          `### ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep}: both replies pass, but the judge says they don't differ as expected\n${o.contrast.reason}`,
-      ),
+      .map(({ contrast: c }) => {
+        const side = (label: "A" | "B") => {
+          const id = label === "A" ? c.a : c.b;
+          const reply = rowOf.get(`${c.setup}|${id}|${c.rep}`)?.reply;
+          return `${label} (${id}):\n\n${fenced(reply || "(empty)")}`;
+        };
+        const shownOrder = c.order === "AB" ? ["A", "B"] : ["B", "A"];
+        return [
+          `### ${c.setup}, ${c.a} vs ${c.b}, rep ${c.rep}: both replies pass, but the judge says they don't differ as expected`,
+          `Shown ${c.order}. Expect: ${c.expect}\nJudge says ${c.verdict}: ${c.reason}`,
+          ...shownOrder.map((l) => side(l as "A" | "B")),
+        ].join("\n\n");
+      }),
     ...rows.flatMap((r) => {
       const fails = r.grade.pass === false;
       const why = [
@@ -750,7 +829,7 @@ export function reportMarkdown(
 
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
-    Personalization: `Personalized and Pairs at least 80% and Invented history at least 90%; a pair passes when both its rows pass and the contrast judge says they differ as expected; history claims and recited history must be 0 (a claim still needs a hand check). Personalized, Pairs and Invented history are over their own rows; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${failedPairs.length ? `\n\nFailed pairs:\n\n${failedPairs.map((o) => `- ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep} (shown ${o.contrast.order}): ${o.aPass && o.bPass ? "both pass, " : ""}judge says ${o.contrast.verdict}: ${o.contrast.reason}`).join("\n")}` : ""}${oracleChecks.length ? `\n\nContrast judge vs oracle pairs: ${agreed}/${oracleChecks.length}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
+    Personalization: `Personalized and Pairs at least 80% and Invented history at least 90%; a pair passes when both its rows pass and the contrast judge says they differ as expected; history claims and recited history must be 0 (a claim still needs a hand check). Personalized, Pairs and Invented history are over their own rows; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${failedPairs.length ? `\n\nFailed pairs:\n\n${failedPairs.map((o) => `- ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep} (shown ${o.contrast.order}): ${failing(o)}, judge says ${o.contrast.verdict}: ${o.contrast.reason}`).join("\n")}` : ""}${oracleChecks.length || oracleMode ? `\n\nContrast judge vs oracle pairs: ${agreed}/${oracleExpected}` : ""}${disagreed.length ? `\n\nOracle checks the judge got wrong:\n\n${disagreed.map((c) => `- ${c.setup}, ${c.a} vs ${c.b}, ${c.variant}: judge says ${c.verdict}, expected ${c.expected}: ${c.reason}`).join("\n")}` : ""}${contrastErrors.length ? `\n\nContrast calls that failed (a resume retries them):\n\n${contrastErrors.map((e) => `- ${e.setup}, ${e.caseId} vs ${e.pair!.b} (${e.pair!.variant}), rep ${e.rep}: ${e.detail}`).join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
     "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&
@@ -763,7 +842,7 @@ export function reportMarkdown(
     "Judge against Brady": labelAgreement(rows, labels),
     "Projected full run":
       meta.pilot &&
-      `${meta.fullRun.cases} cases × ${meta.fullRun.reps} reps for each setup, at this run's mean cost per answer and per judge call.\n\n${projection}`,
+      `${meta.fullRun.cases} cases × ${meta.fullRun.reps} reps for each setup, at this run's mean cost per answer, judge call and contrast call.\n\n${projection}`,
     "Check by hand": `Every leak, every failure on a threshold, every disagreement between the code and the judge, and every reply not yet judged.\n\n${byHand.join("\n\n") || "_Nothing._"}`,
   };
   return [

@@ -5,12 +5,11 @@ import { costOf } from "@/lib/ai-review/models";
 import type { CaseFacts } from "./cases";
 import { appendJsonl, readJsonl, type EvalCase } from "./files";
 import { GAP, JUDGE, JUDGE_MAX_TOKENS, studentInput, textOf } from "./grade";
-import type { ContrastRow, ResultRow } from "./metrics";
-import { TIMEOUT_MS } from "./run";
+import type { ContrastRow, ErrorRow, ResultRow } from "./metrics";
+import { ERRORS, TIMEOUT_MS } from "./run";
 
-// The contrast judge (ODY-938): one call per (setup, rep, pair) that sees both
-// profiles' replies to one question and says whether they differ as the
-// pair's `expect` line says. It shares JUDGE_VERSION with the per-row judge.
+// The contrast judge (ODY-938): one call per (setup, rep, pair) saying whether
+// two profiles' replies differ as `expect` says. It shares JUDGE_VERSION.
 
 export const CONTRAST = "contrast.jsonl";
 /** Where a pair's replies come from: the real ones, or an oracle check's two wrong ones */
@@ -25,8 +24,9 @@ export type Pair = {
   oracles?: EvalCase["contrastOracles"];
 };
 
-/** Rep 1 shows A then B, rep 2 B then A, and so on */
-export const orderFor = (rep: number): Order => (rep % 2 ? "AB" : "BA");
+/** Real runs show A first on odd reps; an oracle check alternates by pair number (1-based) instead */
+export const orderFor = (rep: number, pairNo = rep): Order =>
+  pairNo % 2 ? "AB" : "BA";
 
 /** The pairs whose two cases are both in the run, from each A side's `pairs` */
 export function pairsOf(cases: EvalCase[]): Pair[] {
@@ -39,11 +39,7 @@ export function pairsOf(cases: EvalCase[]): Pair[] {
   );
 }
 
-/** Swaps the standalone words A and B, so an expect line fits the order shown */
-const swapped = (text: string) =>
-  text.replace(/\b[AB]\b/g, (m) => (m === "A" ? "B" : "A"));
-
-const CONTRAST_SYSTEM = `You compare two replies from Mentor, a study helper that answers a student's questions about one lesson of an online course. Two students, A and B, asked the same question. Each has their own record of what they have done, shown in <learner_a> and <learner_b>, and each got the reply shown next to it.
+const CONTRAST_SYSTEM = `You compare two replies from Mentor, a study helper that answers a student's questions about one lesson of an online course. Two students, A and B, asked the same question. Each has their own record of what they have done, shown in <learner_a> or <learner_b>, and got the reply in <reply_a> or <reply_b>. The two students' blocks may appear in either order; each is named for its student.
 
 Answer one question about the replies: do they differ in the way <expect> says? Say yes only if the difference <expect> describes is there, in the direction it describes. Replies that say much the same thing, or that differ the other way round, or in some other way, are no. Ignore differences in wording that <expect> doesn't mention.
 
@@ -59,14 +55,21 @@ const shown = (text: string) => text.replace(CONTRAST_TAG, "‹$1$2");
 const tagged = (tag: string, text: string) =>
   `<${tag}>\n${shown(text)}\n</${tag}>`;
 
-/** The call for one pair: in order BA, B's side is shown first and the expect line is relabelled to fit */
+/** The call for one pair: in order BA, B's blocks come first; the labels stay with the students */
 export function contrastRequest(
   a: Side,
   b: Side,
   expect: string,
   order: Order,
 ): Anthropic.MessageCreateParamsNonStreaming {
-  const [first, second] = order === "AB" ? [a, b] : [b, a];
+  const blocks = (side: Side, label: "a" | "b") => [
+    tagged(`learner_${label}`, side.facts.learner?.text ?? "none"),
+    tagged(`reply_${label}`, side.reply),
+  ];
+  const students =
+    order === "AB"
+      ? [...blocks(a, "a"), ...blocks(b, "b")]
+      : [...blocks(b, "b"), ...blocks(a, "a")];
   return {
     model: JUDGE.model,
     max_tokens: JUDGE_MAX_TOKENS,
@@ -92,11 +95,8 @@ export function contrastRequest(
         role: "user",
         content: [
           tagged("student_input", studentInput(a.facts)),
-          tagged("learner_a", first.facts.learner?.text ?? "none"),
-          tagged("reply_a", first.reply),
-          tagged("learner_b", second.facts.learner?.text ?? "none"),
-          tagged("reply_b", second.reply),
-          tagged("expect", order === "AB" ? expect : swapped(expect)),
+          ...students,
+          tagged("expect", expect),
           "Answer: differs_as_expected, yes or no, with the reason.",
         ].join("\n\n"),
       },
@@ -136,6 +136,7 @@ export type ContrastJob = {
   rep: number;
   pair: Pair;
   variant: Variant;
+  order: Order;
   expected: "yes" | "no" | null;
   a: Side;
   b: Side;
@@ -149,11 +150,7 @@ export const contrastKey = (r: {
   variant: Variant;
 }) => `${r.setup}|${r.a}|${r.b}|${r.rep}|${r.variant}`;
 
-/**
- * The calls for each (setup, rep) whose two rows are in. Oracle mode adds, per
- * pair, a reworded copy of A's reply (expect no) and the two replies swapped
- * (expect no). A pair with a side missing gets none.
- */
+/** The calls for each (setup, rep) whose two rows are in; oracle mode adds a reworded A and a swap (expect no) */
 export function contrastJobs(
   pairs: Pair[],
   rows: ResultRow[],
@@ -167,7 +164,7 @@ export function contrastJobs(
     (k) => [k.split("|")[0], Number(k.split("|")[1])] as const,
   );
   return runs.flatMap(([setup, rep]) =>
-    pairs.flatMap((pair) => {
+    pairs.flatMap((pair, i) => {
       const [ra, rb] = [pair.a.id, pair.b.id].map((id) =>
         replyOf.get(`${setup}|${id}|${rep}`),
       );
@@ -183,6 +180,7 @@ export function contrastJobs(
         rep,
         pair,
         variant,
+        order: oracle ? orderFor(rep, i + 1) : orderFor(rep),
         expected,
         a: { facts: fa, reply: a },
         b: { facts: fb, reply: b },
@@ -201,9 +199,9 @@ export function contrastJobs(
 
 /** The request a job sends */
 export const requestFor = (j: ContrastJob) =>
-  contrastRequest(j.a, j.b, j.pair.expect, orderFor(j.rep));
+  contrastRequest(j.a, j.b, j.pair.expect, j.order);
 
-/** Runs the calls not yet in contrast.jsonl, 4 at a time; returns how many ran. A failed call is left for a resume. */
+/** Runs the calls not yet in contrast.jsonl, 4 at a time; returns how many ran. A failed call goes to errors.jsonl for a resume. */
 export async function runContrasts(
   client: Anthropic,
   jobs: ContrastJob[],
@@ -219,6 +217,18 @@ export async function runContrasts(
     while (next < todo.length) {
       const job = todo[next++];
       const id = `${job.setup} rep ${job.rep} ${job.pair.a.id} vs ${job.pair.b.id} (${job.variant})`;
+      const fail = (detail: string) => {
+        console.log(`  contrast ${id}: ${detail}`);
+        const error: ErrorRow = {
+          setup: job.setup,
+          caseId: job.pair.a.id,
+          rep: job.rep,
+          class: "contrast_error",
+          detail,
+          pair: { b: job.pair.b.id, variant: job.variant },
+        };
+        appendJsonl(path.join(dir, ERRORS), error);
+      };
       try {
         const message = await client.messages.create(requestFor(job), {
           signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -227,7 +237,7 @@ export async function runContrasts(
           ? parseContrast(message)
           : { ok: false as const, detail: `served by ${message.model}` };
         if (!parsed.ok) {
-          console.log(`  contrast ${id}: ${parsed.detail}`);
+          fail(parsed.detail);
           continue;
         }
         const row: ContrastRow = {
@@ -235,8 +245,9 @@ export async function runContrasts(
           rep: job.rep,
           a: job.pair.a.id,
           b: job.pair.b.id,
-          order: orderFor(job.rep),
+          order: job.order,
           variant: job.variant,
+          expect: job.pair.expect,
           expected: job.expected,
           verdict: parsed.verdict,
           reason: parsed.reason,
@@ -248,7 +259,7 @@ export async function runContrasts(
         console.log(`  contrast ${id}: ${parsed.verdict}`);
       } catch (err) {
         if (!(err instanceof Anthropic.AnthropicError)) throw err;
-        console.log(`  contrast ${id}: ${String(err)}`);
+        fail(String(err));
       }
     }
   };

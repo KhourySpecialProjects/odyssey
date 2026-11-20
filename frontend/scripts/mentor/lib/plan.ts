@@ -150,15 +150,20 @@ export function pricedContrasts(
     .map((j) => ({ params: requestFor(j), outputTokens: 2500 }));
 }
 
-/** --pilot: the first case of each kind in each format, and of each twin, in file order */
+/** --pilot: the first case of each kind in each format, and of each twin, plus each kept A side's partners, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
   const seen = new Set<string>();
-  return cases.filter((c) => {
+  const first = cases.filter((c) => {
     const key = `${c.kind} ${c.format}${c.twinOf ? " twin" : ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+  const partners = new Set(
+    first.flatMap((c) => (c.pairs ?? []).map((p) => p.with)),
+  );
+  const kept = new Set([...first, ...cases.filter((c) => partners.has(c.id))]);
+  return cases.filter((c) => kept.has(c));
 }
 
 /**

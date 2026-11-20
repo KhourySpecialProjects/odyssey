@@ -532,7 +532,7 @@ describe("reportMarkdown", () => {
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
-    expect(summarise(rows, [], 22, [], 0, handChecks)[0]).toMatchObject({
+    expect(summarise(rows, [], 22, { handChecks })[0]).toMatchObject({
       historyClaims: 0,
       recited: 1,
     });
@@ -547,6 +547,7 @@ describe("reportMarkdown", () => {
       b: "pb",
       order: "AB",
       variant: "real",
+      expect: "A builds on it; B gives a primer",
       expected: null,
       verdict: "yes",
       reason: "B has a primer.",
@@ -558,13 +559,21 @@ describe("reportMarkdown", () => {
       learned({ caseId: "pa", kind: "personalized", pass: aPass }),
       learned({ caseId: "pb", kind: "personalized", pass: bPass }),
     ];
-    const summary = (rows: ResultRow[], contrasts: ContrastRow[], pairs = 1) =>
+    const summary = (
+      rows: ResultRow[],
+      contrasts: ContrastRow[],
+      expectedPairs = 1,
+      expectedOracle = 0,
+    ) =>
       summarise(
         [...setupRows(), ...twinRows(), ...rows],
         [],
         24 + rows.length,
-        contrasts,
-        pairs,
+        {
+          contrasts,
+          expectedPairs,
+          expectedOracle,
+        },
       )[0];
 
     it.each<[string, boolean, boolean, "yes" | "no", number]>([
@@ -587,23 +596,141 @@ describe("reportMarkdown", () => {
       expect(s.pairs.n).toBe(0);
     });
 
-    it("lists failed pairs, sends both-pass ones to check by hand, and counts oracle agreement", () => {
+    it("blocks the setup while an oracle variant is missing", () => {
+      const s = summary(pairRows(true, true), [contrast()], 1, 2);
+      expect(s.blockers).toEqual(["2 oracle contrasts missing"]);
+      expect(
+        summary(
+          pairRows(true, true),
+          [
+            contrast(),
+            contrast({ variant: "same", expected: "no" }),
+            contrast({ variant: "swapped", expected: "no" }),
+          ],
+          1,
+          2,
+        ).blockers,
+      ).toEqual([]);
+    });
+
+    it("names a failed contrast call without counting it as an open error, until a resume replaces it", () => {
+      const failed = error("pa", {
+        class: "contrast_error",
+        detail: "the judge stopped: refusal",
+        pair: { b: "pb", variant: "real" },
+      });
+      const run = (contrasts: ContrastRow[]) =>
+        reportMarkdown(
+          [...setupRows(18), ...pairRows(true, true)],
+          [failed],
+          { ...meta, pairs: 1 },
+          [],
+          contrasts,
+        );
+
+      expect(run([])).toContain(
+        "- haiku-low, pa vs pb (real), rep 1: the judge stopped: refusal",
+      );
+      expect(run([])).not.toContain("1 open errors");
+      expect(run([contrast()])).not.toContain("Contrast calls that failed");
+    });
+
+    it("sorts failed pairs by setup, pair and rep, and names the side that fails", () => {
+      const rep2 = (id: string) =>
+        learned({ caseId: id, kind: "personalized", rep: 2 });
       const report = reportMarkdown(
-        [...setupRows(18), ...pairRows(true, true)],
+        [
+          ...setupRows(18),
+          ...pairRows(true, true),
+          learned({ caseId: "pc", kind: "personalized", pass: false }),
+          rep2("pa"),
+          rep2("pb"),
+        ],
+        [],
+        { ...meta, pairs: 2, reps: 2 },
+        [],
+        [
+          contrast({ b: "pc", verdict: "no" }),
+          contrast({ rep: 2, order: "BA", verdict: "no" }),
+          contrast({ verdict: "no" }),
+        ],
+      );
+      const lines = report
+        .split("\n")
+        .filter((l) => l.startsWith("- haiku-low, pa vs"));
+      expect(lines.map((l) => l.split(", judge")[0])).toEqual([
+        "- haiku-low, pa vs pb, rep 1 (shown AB): both pass",
+        "- haiku-low, pa vs pb, rep 2 (shown BA): both pass",
+        "- haiku-low, pa vs pc, rep 1 (shown AB): B fails",
+      ]);
+    });
+
+    it("shows a both-pass pair's replies in the order shown, with the expect line", () => {
+      const rows = [
+        ...setupRows(18),
+        learned({ caseId: "pa", kind: "personalized", reply: "Reply of A." }),
+        learned({ caseId: "pb", kind: "personalized", reply: "Reply of B." }),
+      ];
+      const report = reportMarkdown(
+        rows,
         [],
         { ...meta, pairs: 1 },
         [],
+        [contrast({ verdict: "no", order: "BA" })],
+      );
+
+      expect(report).toContain(
+        "Shown BA. Expect: A builds on it; B gives a primer",
+      );
+      expect(report.indexOf("Reply of B.")).toBeGreaterThan(0);
+      expect(report.indexOf("Reply of B.")).toBeLessThan(
+        report.indexOf("Reply of A."),
+      );
+    });
+
+    it("projects the contrast calls' cost into the full run", () => {
+      const report = reportMarkdown(
+        [...setupRows(18), ...pairRows(true, true)],
+        [],
+        { ...meta, pairs: 1, fullRun: { cases: 60, reps: 2, pairs: 3 } },
+        [],
+        [contrast()],
+      );
+      // 3 pairs × 2 reps at $0.01 each
+      expect(report).toMatch(
+        /\| Answers \| Mentor \| Judge \| Contrast \| Total \|/,
+      );
+      expect(report).toContain("$0.06");
+    });
+
+    it("lists failed pairs, sends both-pass ones to check by hand, and counts oracle agreement out of what's expected", () => {
+      const report = reportMarkdown(
+        [...setupRows(18), ...pairRows(true, true)],
+        [],
+        { ...meta, pairs: 1, answers: "oracle" },
+        [],
         [
-          contrast({ verdict: "no", reason: "They read alike." }),
+          contrast({
+            verdict: "no",
+            expected: "yes",
+            reason: "They read alike.",
+          }),
           contrast({ variant: "same", expected: "no", verdict: "no" }),
-          contrast({ variant: "swapped", expected: "no", verdict: "yes" }),
+          contrast({
+            variant: "swapped",
+            expected: "no",
+            verdict: "yes",
+            reason: "B reads like A.",
+          }),
         ],
       );
       for (const text of [
         "| haiku-low | 100% (2/2) [100%] | – (0/0) [–] | 0% (0/1) [0%] | 1 |",
         "- haiku-low, pa vs pb, rep 1 (shown AB): both pass, judge says no: They read alike.",
+        "- haiku-low, pa vs pb, swapped: judge says yes, expected no: B reads like A.",
+        "- haiku-low, pa vs pb, real: judge says no, expected yes: They read alike.",
         "### haiku-low, pa vs pb, rep 1: both replies pass, but the judge says they don't differ as expected",
-        "Contrast judge vs oracle pairs: 1/2",
+        "Contrast judge vs oracle pairs: 1/3",
       ])
         expect(report).toContain(text);
     });

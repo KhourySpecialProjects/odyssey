@@ -167,7 +167,11 @@ async function main() {
         values.pilot ? pilotCases(all) : all,
         answers ?? null,
       ).length,
-      fullRun: { cases: all.length, reps: FULL_REPS },
+      fullRun: {
+        cases: all.length,
+        reps: FULL_REPS,
+        pairs: pairsOf(all).length,
+      },
       startedAt: new Date().toISOString(),
     };
   }
