@@ -22,6 +22,10 @@ import { mentorClient } from "@/lib/mentor/client";
 import { buildLessonContext, citationsFor } from "@/lib/mentor/context";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
 import { resolveMentorAsk } from "@/lib/mentor/ask";
+import {
+  getLearnerContext,
+  studentAllowsPersonalization,
+} from "@/lib/mentor/learner-source";
 import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
 import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { SSE_HEADERS } from "@/lib/mentor/sse";
@@ -33,6 +37,7 @@ import {
   recordMentorUsage,
   type MentorAllowance,
 } from "@/lib/mentor/usage";
+import { getMentorSetting } from "@/lib/requests/mentor-setting";
 import { fakeClaude } from "@/testing/mocks/claudeStreamMock";
 import {
   mentorText,
@@ -66,6 +71,13 @@ jest.mock("@/lib/mentor/cached-reply-store", () => ({
   findCachedReply: jest.fn(),
   storeCachedReply: jest.fn(),
 }));
+jest.mock("@/lib/mentor/learner-source", () => ({
+  studentAllowsPersonalization: jest.fn(),
+  getLearnerContext: jest.fn(),
+}));
+jest.mock("@/lib/requests/mentor-setting", () => ({
+  getMentorSetting: jest.fn(),
+}));
 jest.mock("@/lib/mentor/usage", () => ({
   checkMentorAccess: jest.fn(),
   checkMentorAllowance: jest.fn(),
@@ -83,6 +95,9 @@ const record = jest.mocked(recordMentorUsage);
 const owned = jest.mocked(ownedChat);
 const start = jest.mocked(startMentorChat);
 const save = jest.mocked(saveMentorExchange);
+const setting = jest.mocked(getMentorSetting);
+const allows = jest.mocked(studentAllowsPersonalization);
+const learnerOf = jest.mocked(getLearnerContext);
 
 const user = { id: 7, email: "s@example.invalid", roles: [] };
 const lesson = classicLesson();
@@ -166,6 +181,13 @@ beforeEach(() => {
   owned.mockResolvedValue(null);
   start.mockResolvedValue("newchat0001");
   save.mockResolvedValue(undefined);
+  setting.mockResolvedValue({
+    enabled: true,
+    personalize: false,
+    pilotGroupIds: [],
+  });
+  allows.mockResolvedValue(false);
+  learnerOf.mockResolvedValue(null);
   useClaude();
 });
 
@@ -354,6 +376,47 @@ describe("POST /api/mentor", () => {
       },
     });
   });
+
+  const LEARNER = {
+    finished: [
+      {
+        name: "SQL Basics",
+        tags: ["sql"],
+        difficulty: "Beginner",
+        month: "2026-09",
+      },
+    ],
+    inProgress: [],
+    prerequisites: [],
+    viewedLessons: [],
+  };
+  it.each<[string, boolean, boolean, "context" | "null" | "throws", boolean]>([
+    ["the switch off", false, true, "context", false],
+    ["the student not allowing it", true, false, "context", false],
+    ["both on", true, true, "context", true],
+    ["both on but no learner context", true, true, "null", false],
+    ["the learner fetch throwing", true, true, "throws", false],
+  ])(
+    "the learner block, with %s",
+    async (_, personalize, studentAllows, result, sent) => {
+      setting.mockResolvedValue({
+        enabled: true,
+        personalize,
+        pilotGroupIds: [],
+      });
+      allows.mockResolvedValue(studentAllows);
+      if (result === "throws") learnerOf.mockRejectedValue(new Error("down"));
+      else learnerOf.mockResolvedValue(result === "null" ? null : LEARNER);
+      const response = await post({ ...ask(), userId: 99 });
+      expect(response.status).toBe(200);
+      await readAllMentorEvents(response.body!);
+      const content = JSON.parse(claude.calls[0].body).messages[0].content;
+      expect(content).toHaveLength(sent ? 3 : 2);
+      if (sent) expect(content[1].text).toMatch(/^<learner>[\s\S]*SQL Basics/);
+      // The id comes from the session, not the body
+      expect(allows).toHaveBeenCalledWith(user.id);
+    },
+  );
 
   it.each([
     ["Classic", lesson, classicLesson({ mc: 412 }), 41, 413],
