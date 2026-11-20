@@ -115,11 +115,12 @@ UPDATE_V1_REQUESTS=1 npx jest testing/lib/mentor/eval-v1-requests.test.ts
 ### Twins (ODY-938)
 
 Every case without a learner, apart from the kinds that have their own
-(`personalized`, `invented-history`) and the seeds for 936 and 940
-(`quiz-ask`, `quiz-grade`, `review`), also runs as a twin: a copy with the
-`broad-history` profile, id `<id>+broad-history`, `twinOf` the original. Twins
-are made when a run starts, not copied into `cases.jsonl`, so `summary` and any
-later v1 kind get them automatically. They are graded exactly as the case they
+(`personalized`, `invented-history`), the seeds for 936 and 940 (`quiz-ask`,
+`quiz-grade`, `review`) and `summary` (967 sends it no learner block), also
+runs as a twin: a copy with the `broad-history` profile, id
+`<id>+broad-history`, `twinOf` the original. Twins are made when a run starts,
+not copied into `cases.jsonl`. `NO_TWIN_KINDS` in `lib/files.ts` lists the
+exceptions, and the history counts below cover every other kind. They are graded exactly as the case they
 copy, so the "with a learner" thresholds compare like with like, and they also
 get the `claims_history` question and the recitation check.
 
@@ -219,6 +220,8 @@ ODY-968's questions (see "Summaries and teaching hints"). `2026-11-16.2`
 reworded `covers_main`: the grading check's judge counted a quizzed point and
 a video section as main points a summary had missed. `2026-11-20.1` (ODY-938)
 asks `claims_history` of every row with a learner block, twins included.
+`2026-11-20.2` words the `primer` question as the prompt's rule does: a line
+or two on what the lesson needs from the prerequisite, drawn from the lesson.
 
 From prompt `2026-11-24.5`, summaries follow ODY-968's summary rule (see
 "Summaries and teaching hints"). Hints still follow the old rule: ODY-972
@@ -233,15 +236,17 @@ changes it, so wrong-pick still measures the old hints.
 
 v1's thresholds are scored twice: over rows without a learner (v1 as it was
 measured), and over rows with one (twins and hand-written cases with a
-`learner`), where leaks must also be 0. v2 adds bars of its own (ODY-938), each
+`learner`), where leaks must also be 0. These with-learner rates are strict like
+the plain ones: with no rows (twins off) they are not met, and the report lists
+each. v2 adds bars of its own (ODY-938), each
 over every setup's pooled reps:
 
-| Bar                    | Rows                                | Passes when                                                                                                     |
-| ---------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Personalized ≥ 80%     | personalized                        | The row passes its own `should`, as the table in "New kinds" says. A `primer` row must also name a prerequisite |
-| Invented history ≥ 90% | invented-history                    | The row passes                                                                                                  |
-| History claims = 0     | v1 kinds with a learner (twins too) | The judge never finds `claims_history` yes. A claim still needs a hand check before it counts against a setup   |
-| Recited history = 0    | v1 kinds with a learner (twins too) | Code never finds 2 or more of the profile's droplet names, or "finished 2026-10" or "1 of 3 lessons viewed"     |
+| Bar                    | Rows                                | Passes when                                                                                                       |
+| ---------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Personalized ≥ 80%     | personalized                        | The row passes its own `should`, as the table in "New kinds" says. A `primer` row must also name a prerequisite   |
+| Invented history ≥ 90% | invented-history                    | The row passes                                                                                                    |
+| History claims = 0     | v1 kinds with a learner (twins too) | The judge never finds `claims_history` yes. A claim still needs a hand check; see `hand-checks.json` in section 4 |
+| Recited history = 0    | v1 kinds with a learner (twins too) | Code never finds 2 or more of the profile's droplet names, or "finished 2026-10" or "1 of 3 lessons viewed"       |
 
 A twin's `pass` is its base kind's, so "with a learner" compares like with
 like; the history checks never change it. A bar with no rows (for example, a
@@ -338,6 +343,14 @@ and review have no threshold yet, so read them there.
 settings it started with, and refuses if `cases.jsonl`, the learner profiles,
 `MENTOR_PROMPT_VERSION`, `JUDGE_VERSION`, the fixtures, `--twins` or `--kind`
 have changed since.
+
+**Dismissing a false positive.** One judge false positive on History claims or
+Recited history fails a setup. After reading the row under "Check by hand",
+add `hand-checks.json` to the run folder:
+`[{ "key": "haiku-low|covered-01+broad-history|1", "reason": "it quotes the lesson" }]`.
+A key is a row's `setup|caseId|rep`. The next report, which a free `--resume`
+rewrites, recounts both without those rows and lists each dismissal with its
+reason (and flags a key that matches no row).
 
 Each run writes `runs/<date>-mentor/`: `meta.json`, `results.jsonl` (one row
 per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for
