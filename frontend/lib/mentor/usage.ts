@@ -4,8 +4,7 @@ import {
   checkRateLimit,
   formatRateLimitError,
 } from "@/lib/import/rate-limiter";
-import { readJsonOrNull } from "@/lib/strapi-response";
-import { STRAPI_RESPONSE_FORMAT_HEADER } from "@/lib/utils";
+import { postMentorRoute } from "./strapi-route";
 import { MENTOR_KINDS, type MentorKind } from "./types";
 
 // Mentor's allowance check and usage record (ODY-884). The limits live in
@@ -84,44 +83,6 @@ const UNAVAILABLE: MentorAllowance = {
 
 const RECORD_RETRIES = 2;
 
-type RouteResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string | null };
-
-/**
- * Calls a Mentor usage route (`backend/src/api/mentor-usage`) with the service
- * token. Bodies are `{ data }`, not v4 entries, so nothing is flattened. A
- * network failure is status 0.
- */
-async function postMentorRoute<T>(
-  path: "check" | "record",
-  body: object,
-): Promise<RouteResult<T>> {
-  const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/mentor-usages/${path}`;
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
-    const json = await readJsonOrNull(response).catch(() => null);
-    if (!response.ok || !json?.data) {
-      const message: string | null = json?.error?.message ?? null;
-      console.error(`POST ${url} failed:`, response.status, message);
-      return { ok: false, status: response.status, message };
-    }
-    return { ok: true, data: json.data as T };
-  } catch (error) {
-    console.error(`POST ${url} failed:`, error);
-    return { ok: false, status: 0, message: null };
-  }
-}
-
 /**
  * Call before creating the Anthropic client. Never throws.
  * Only `{ allowed: true }` permits a model call.
@@ -132,7 +93,7 @@ async function postMentorRoute<T>(
 export async function checkMentorAllowance(
   user: MentorUser,
 ): Promise<MentorAllowance> {
-  const result = await postMentorRoute<CheckData>("check", {
+  const result = await postMentorRoute<CheckData>("mentor-usages/check", {
     userId: user.id,
   });
   if (!result.ok || typeof result.data.allowed !== "boolean") {
@@ -189,7 +150,10 @@ export async function recordMentorUsage(input: {
   };
   try {
     for (let attempt = 0; attempt <= RECORD_RETRIES; attempt++) {
-      const result = await postMentorRoute<{ id: number }>("record", body);
+      const result = await postMentorRoute<{ id: number }>(
+        "mentor-usages/record",
+        body,
+      );
       if (result.ok) return true;
       if (result.status !== 0 && result.status < 500) break;
     }
