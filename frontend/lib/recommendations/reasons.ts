@@ -14,6 +14,7 @@ export const REASONS = {
   coCompletion: (name: string) => `Popular with students who finished ${name}`,
   interest: (name: string) => `Matches your interest: ${name}`,
   focus: (area: FocusArea) => `Matches your focus: ${FOCUS_LABELS[area]}`,
+  popular: "Popular on Odyssey",
   topRated: "Top rated on Odyssey",
   unrated: "Something new to try",
 };

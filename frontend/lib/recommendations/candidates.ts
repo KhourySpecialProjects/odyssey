@@ -223,10 +223,19 @@ export async function getRankInput(
   userId: number,
   excludeIds: number[],
 ): Promise<RankInput> {
-  const [candidates, student, coCompletion] = await Promise.all([
+  const [candidates, student, { pairs, completions }] = await Promise.all([
     getCandidates(),
     getStudentState(userId),
-    optional("co-completion", getCoCompletion(), new Map()),
+    optional("co-completion", getCoCompletion(), {
+      pairs: new Map(),
+      completions: new Map(),
+    }),
   ]);
-  return { candidates, student, excludeIds, coCompletion };
+  return {
+    candidates,
+    student,
+    excludeIds,
+    coCompletion: pairs,
+    completions,
+  };
 }
