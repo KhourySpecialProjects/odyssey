@@ -2,7 +2,7 @@ import DOMPurify from "isomorphic-dompurify";
 
 /**
  * Emblem contract (the SVG an emblem generator must produce):
- * - a 5:2 wide `viewBox`, e.g. `viewBox="0 0 250 100"` (square works, shown centred);
+ * - a roughly 2.2:1 wide `viewBox`, e.g. `viewBox="0 0 220 100"` (square works, shown centred);
  * - presentation attributes only (`fill`, `stroke`, ...), no `style` attribute or `filter`;
  * - no `<style>`, filters, `<use>`, `<image>`, `<a>` or links of any kind;
  * - at most 50 KB.
