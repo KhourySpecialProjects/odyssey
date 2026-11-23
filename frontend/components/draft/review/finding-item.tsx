@@ -13,7 +13,7 @@ import { BAND_COLORS, type Band } from "@/lib/review-panel/colors";
 import type { AiFinding } from "@/types";
 
 const FOCUS =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D7597] focus-visible:ring-offset-1";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D7597] focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#131c2e]";
 
 type Props = {
   finding: AiFinding;
@@ -69,7 +69,7 @@ export function FindingItem({
         </span>
         <div className="min-w-0 flex-1">
           {lessonLabel && (
-            <span className="mb-1 inline-block rounded bg-slate-100 px-1.5 py-px text-[10px] font-semibold text-[#344054]">
+            <span className="mb-1 inline-block rounded bg-slate-100 px-1.5 py-px text-[10px] font-semibold text-[#344054] dark:bg-slate-800 dark:text-slate-200">
               {lessonLabel}
             </span>
           )}
@@ -82,7 +82,7 @@ export function FindingItem({
           >
             <span className="sr-only">Highlighted text: </span>“{finding.quote}”
           </blockquote>
-          <p className="mt-1.5 text-sm leading-snug text-slate-900">
+          <p className="mt-1.5 text-sm leading-snug text-slate-900 dark:text-slate-100">
             {finding.reason}
           </p>
           {onShowInLesson && (
@@ -90,7 +90,7 @@ export function FindingItem({
               type="button"
               onClick={() => onShowInLesson(finding)}
               className={cn(
-                "mt-1 inline-flex items-center gap-0.5 rounded text-xs text-[#667085] hover:text-[#1F5E7A] hover:underline",
+                "mt-1 inline-flex items-center gap-0.5 rounded text-xs text-[#667085] hover:text-[#1F5E7A] hover:underline dark:text-slate-400 dark:hover:text-sky-300",
                 FOCUS,
               )}
             >
@@ -110,7 +110,7 @@ export function FindingItem({
               onStartComment?.(finding);
             }}
             className={cn(
-              "inline-flex items-center gap-1 rounded text-[#1F5E7A] hover:underline",
+              "inline-flex items-center gap-1 rounded text-[#1F5E7A] hover:underline dark:text-sky-300",
               FOCUS,
             )}
           >
@@ -123,7 +123,7 @@ export function FindingItem({
           aria-disabled={composing || undefined}
           onClick={() => !composing && onDismiss(finding.id)}
           className={cn(
-            "inline-flex items-center gap-1 rounded text-[#667085] hover:text-[#344054] hover:underline",
+            "inline-flex items-center gap-1 rounded text-[#667085] hover:text-[#344054] hover:underline dark:text-slate-400 dark:hover:text-slate-100",
             composing && "cursor-not-allowed opacity-60",
             FOCUS,
           )}
@@ -163,14 +163,14 @@ export function DismissedFinding({
   onUndismiss: (findingId: string) => void;
 }) {
   return (
-    <li className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-[#667085]">
+    <li className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-[#667085] dark:text-slate-400">
       <IconEyeOff size={14} aria-hidden="true" />
       <span className="flex-1 truncate">Not an issue: “{finding.quote}”</span>
       <button
         type="button"
         onClick={() => onUndismiss(finding.id)}
         className={cn(
-          "rounded font-medium text-[#1F5E7A] hover:underline",
+          "rounded font-medium text-[#1F5E7A] hover:underline dark:text-sky-300",
           FOCUS,
         )}
       >

@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const FOCUS =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A]";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A] dark:focus-visible:outline-sky-400";
 
 const STEP = 16;
 

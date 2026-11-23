@@ -18,7 +18,7 @@ import { DismissedFinding, FindingItem } from "./finding-item";
 import { useReviewFocus, type OpenDetail } from "./review-focus-context";
 
 const FOCUS =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D7597] focus-visible:ring-offset-1";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D7597] focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#131c2e]";
 
 const BAND_GLYPH: Partial<Record<Band, Icon>> = {
   good: IconCheck,
@@ -131,7 +131,7 @@ export function CriterionDetail({
       aria-label={`${criterion.name} details`}
       aria-busy={pending || undefined}
       onKeyDown={onRegionKey}
-      className="mx-1 mt-2 rounded-lg border bg-slate-50 p-3"
+      className="mx-1 mt-2 rounded-lg border bg-slate-50 p-3 dark:bg-[#0b1220]"
       style={{ borderColor: colour.outline }}
     >
       <div className="flex items-start gap-2.5">
@@ -149,7 +149,7 @@ export function CriterionDetail({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-900">
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {criterion.name}
             </span>
             <span
@@ -160,14 +160,16 @@ export function CriterionDetail({
               {BAND_LABEL[band]}
             </span>
             {changed && (
-              <span className="text-[11px] text-[#667085]">
+              <span className="text-[11px] text-[#667085] dark:text-slate-400">
                 · changed by you (AI: {score?.aiValue})
               </span>
             )}
           </div>
           {score?.aiRationale && (
-            <p className="mt-1 text-xs leading-snug text-[#475467]">
-              <span className="font-medium text-[#344054]">Why:</span>{" "}
+            <p className="mt-1 text-xs leading-snug text-[#475467] dark:text-slate-300">
+              <span className="font-medium text-[#344054] dark:text-slate-200">
+                Why:
+              </span>{" "}
               {score.aiRationale}
             </p>
           )}
@@ -177,7 +179,7 @@ export function CriterionDetail({
           aria-label={`Close ${criterion.name} details`}
           onClick={onClose}
           className={cn(
-            "-mt-1 -mr-1 rounded p-1 text-[#667085] hover:bg-white",
+            "-mt-1 -mr-1 rounded p-1 text-[#667085] hover:bg-white dark:text-slate-400 dark:hover:bg-white/10",
             FOCUS,
           )}
         >
@@ -187,11 +189,11 @@ export function CriterionDetail({
 
       {!unscored && (
         <>
-          <p className="mt-3 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+          <p className="mt-3 text-xs font-semibold tracking-wide text-[#667085] uppercase dark:text-slate-400">
             Points · {total}
           </p>
           {noFindings ? (
-            <p className="mt-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-center text-xs text-[#667085]">
+            <p className="mt-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-center text-xs text-[#667085] dark:border-[#33425c] dark:bg-[#131c2e] dark:text-slate-400">
               Nothing in this {lessonId === null ? "droplet" : "lesson"} cost
               points on {criterion.name}.
             </p>
@@ -242,7 +244,7 @@ export function CriterionDetail({
       <div className="mt-2 text-xs">
         {unscored ? (
           <p
-            className="font-medium text-[#344054]"
+            className="font-medium text-[#344054] dark:text-slate-200"
             id={`score-it-${criterion.id}`}
           >
             Score it yourself
@@ -253,7 +255,7 @@ export function CriterionDetail({
             aria-expanded={expanded}
             onClick={() => setExpanded((open) => !open)}
             className={cn(
-              "rounded font-medium text-[#1F5E7A] hover:underline",
+              "rounded font-medium text-[#1F5E7A] hover:underline dark:text-sky-300",
               FOCUS,
             )}
           >
@@ -290,8 +292,8 @@ export function CriterionDetail({
                     onChange(n);
                   }}
                   className={cn(
-                    "h-8 flex-1 rounded-md border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054]",
-                    selected && "text-white",
+                    "h-8 flex-1 rounded-md border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] dark:border-[#33425c] dark:bg-[#131c2e] dark:text-slate-200",
+                    selected && "text-white dark:text-white",
                     pending && "cursor-wait opacity-60",
                     FOCUS,
                   )}
