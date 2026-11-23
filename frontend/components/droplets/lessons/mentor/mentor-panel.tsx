@@ -152,6 +152,29 @@ export function MentorPanel({
     [loadChat, fail],
   );
 
+  // ?mentorChat=<id> (from Mentor chats): open that chat once, then drop the param
+  const linkedChat = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("mentorChat");
+    if (!id || linkedChat.current === id) return;
+    linkedChat.current = id;
+    defaulted.current = true;
+    params.delete("mentorChat");
+    const rest = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        (rest ? `?${rest}` : "") +
+        window.location.hash,
+    );
+    void loadChat(id).then((ok) => {
+      if (ok) setView("chat");
+      else fail("Couldn't open that chat");
+    });
+  }, [loadChat, fail]);
+
   const removeChat = useCallback(
     async (target: MentorChatSummary) => {
       const res = await deleteMentorChat(target.documentId);

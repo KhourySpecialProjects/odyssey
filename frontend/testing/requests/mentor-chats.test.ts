@@ -88,6 +88,29 @@ describe("listMentorChats", () => {
   });
 });
 
+describe("listMentorChats search", () => {
+  it("sends q trimmed in a header, never in the URL", async () => {
+    await listMentorChats({ q: "  joins & más " });
+
+    const [url, init] = store.fetchMock.mock.calls.at(-1) as unknown as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(String(url)).not.toContain("jo");
+    expect(init.headers["X-Mentor-Search"]).toBe("joins%20%26%20m%C3%A1s");
+  });
+
+  it.each(["   ", "a".repeat(101)])("refuses a bad q (%#)", async (q) => {
+    store.fetchMock.mockClear();
+
+    expect(await listMentorChats({ q })).toEqual({
+      ok: false,
+      error: "not_found",
+    });
+    expect(store.fetchMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("getMentorChat", () => {
   it("returns the caller's chat with its messages, oldest first", async () => {
     const id = await saved(7);

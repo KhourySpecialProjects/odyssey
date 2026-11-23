@@ -165,3 +165,59 @@ describe('deleting', () => {
     expect(await messageCount(kept)).toBe(2);
   });
 });
+
+describe('listChats search (q)', () => {
+  const started = async (user, droplet, lesson, title, lastMessageAt = daysAgo(1)) =>
+    strapi.documents(MENTOR_CHAT_UID).create({
+      data: {
+        authorizedUser: user.documentId,
+        droplet: droplet.documentId,
+        lesson: lesson.documentId,
+        kind: 'lesson',
+        title,
+        lastMessageAt,
+      },
+    });
+  const ids = (rows) => rows.map((r) => r.documentId).sort();
+
+  it('matches the title, the droplet name or the lesson name, ignoring case', async () => {
+    const user = await strapi.documents(USER_UID).create({ data: userData() });
+    const plain = await strapi.documents(DROPLET_UID).create({ data: dropletData() });
+    const plainLesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    const named = await strapi.documents(DROPLET_UID).create({ data: dropletData({ name: 'Zebra Droplet' }) });
+    const namedLesson = await strapi.documents(LESSON_UID).create({ data: lessonData({ name: 'Walrus Lesson' }) });
+    const byTitle = await started(user, plain, plainLesson, 'Why is the Quokka happy?');
+    const byDroplet = await started(user, named, plainLesson, 'other');
+    const byLesson = await started(user, plain, namedLesson, 'another');
+
+    expect(ids(await lib.listChats(user.id, { q: 'QUOKKA' }))).toEqual([byTitle.documentId]);
+    expect(ids(await lib.listChats(user.id, { q: 'zebra' }))).toEqual([byDroplet.documentId]);
+    expect(ids(await lib.listChats(user.id, { q: 'walrus' }))).toEqual([byLesson.documentId]);
+    expect(await lib.listChats(user.id, { q: 'no such thing' })).toEqual([]);
+  });
+
+  it('never returns another user\'s chat or one past 30 days', async () => {
+    const mine = await strapi.documents(USER_UID).create({ data: userData() });
+    const theirs = await strapi.documents(USER_UID).create({ data: userData() });
+    const droplet = await strapi.documents(DROPLET_UID).create({ data: dropletData() });
+    const lesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    await started(theirs, droplet, lesson, 'Giraffe secrets');
+    await started(mine, droplet, lesson, 'Giraffe old', daysAgo(31));
+    const live = await started(mine, droplet, lesson, 'Giraffe new');
+
+    expect(ids(await lib.listChats(mine.id, { q: 'giraffe' }))).toEqual([live.documentId]);
+  });
+
+  it('treats % and _ literally', async () => {
+    const user = await strapi.documents(USER_UID).create({ data: userData() });
+    const droplet = await strapi.documents(DROPLET_UID).create({ data: dropletData() });
+    const lesson = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    const percent = await started(user, droplet, lesson, '100% sure');
+    await started(user, droplet, lesson, '100 sure');
+    const underscore = await started(user, droplet, lesson, 'snake_case');
+    await started(user, droplet, lesson, 'snakeXcase');
+
+    expect(ids(await lib.listChats(user.id, { q: '%' }))).toEqual([percent.documentId]);
+    expect(ids(await lib.listChats(user.id, { q: 'snake_case' }))).toEqual([underscore.documentId]);
+  });
+});

@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { toast } from "sonner";
 import { MentorPanel } from "@/components/droplets/lessons/mentor/mentor-panel";
 import { acceptNotice } from "@/components/droplets/lessons/mentor/mentor-notice";
 import { useLessonPanelStore } from "@/stores/lesson-panel-store";
@@ -141,6 +142,53 @@ beforeEach(async () => {
     .mocked(getMentorChat)
     .mockImplementation(async () => saved("What is a join?") as never);
   jest.mocked(deleteMentorChat).mockResolvedValue({ ok: true });
+});
+
+describe("?mentorChat link", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  it("opens that chat once and drops the param from the URL", async () => {
+    window.history.replaceState(null, "", "/d/x/y?mentorChat=chatBBBB2222&a=1");
+    jest
+      .mocked(getMentorChat)
+      .mockImplementation(async () => saved("Why index?") as never);
+    renderPanel();
+    open();
+
+    expect(await screen.findByText("Why index?")).toBeInTheDocument();
+    expect(getMentorChat).toHaveBeenCalledWith("chatBBBB2222");
+    expect(getMentorChat).toHaveBeenCalledTimes(1);
+    expect(window.location.search).toBe("?a=1");
+  });
+
+  it("announces a failed link in the phone sheet, not only a toast", async () => {
+    jest.mocked(useMediaQuery).mockReturnValue(false);
+    window.history.replaceState(null, "", "/d/x/y?mentorChat=chatZZZZ9999");
+    jest
+      .mocked(getMentorChat)
+      .mockResolvedValue({ ok: false, error: "not_found" });
+    renderPanel();
+    open();
+
+    expect(
+      await screen.findByText("Couldn't open that chat"),
+    ).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledWith("Couldn't open that chat");
+  });
+
+  it("is not replaced by the most recent chat's default load", async () => {
+    window.history.replaceState(null, "", "/d/x/y?mentorChat=chatBBBB2222");
+    jest
+      .mocked(getMentorChat)
+      .mockImplementation(async () => saved("Why index?") as never);
+    renderPanel();
+    open();
+
+    expect(await screen.findByText("Why index?")).toBeInTheDocument();
+    await waitFor(() => expect(listMentorChats).not.toHaveBeenCalled());
+    expect(getMentorChat).not.toHaveBeenCalledWith("chatAAAA1111");
+    expect(screen.queryByText("What is a join?")).toBeNull();
+  });
 });
 
 describe("Mentor chat list", () => {
