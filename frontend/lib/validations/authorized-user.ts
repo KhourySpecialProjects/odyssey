@@ -22,6 +22,7 @@ export const SELF_EDIT_FIELDS = [
   "photo",
   "firstTime",
   "isPublic",
+  "mentorPersonalization",
 ] as const;
 
 const roleEnum = z.nativeEnum(AuthorizedUserRoleTitle);
@@ -42,6 +43,7 @@ export const UpdateUserInfoSchema = z
     photo: z.string().nullable().optional(),
     firstTime: z.boolean().optional(),
     isPublic: z.boolean().optional(),
+    mentorPersonalization: z.boolean().optional(),
     // Admin-only fields
     isEnabled: z.boolean().optional(),
     roles: z.array(roleEnum).optional(),
@@ -64,5 +66,6 @@ export const UpdateUserInfoSelfSchema = z
     photo: z.string().nullable().optional(),
     firstTime: z.boolean().optional(),
     isPublic: z.boolean().optional(),
+    mentorPersonalization: z.boolean().optional(),
   })
   .strict(); // reject any extra keys so admin-only fields cannot slip through
