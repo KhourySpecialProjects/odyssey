@@ -1477,6 +1477,12 @@ Lessons of this droplet already viewed:
 }
 ```
 
+A reply that should pass:
+
+```
+DNS is there to map human-readable domain names to computer-friendly IP addresses, so you don't have to remember the numbers [p2]. I can only go by this lesson. If any of it is unclear, reread [p2].
+```
+
 Gold:
 
 - "map human-readable domain names to computer-friendly IP Addresses" is in p2
@@ -1507,6 +1513,12 @@ Lessons of this droplet already viewed:
   "kind": "lesson",
   "message": "didn't i already learn sketch relations in an earlier droplet? remind me what they're for"
 }
+```
+
+A reply that should pass:
+
+```
+Sketch relations lock your geometry so it behaves predictably [p8]. I can only go by this lesson here. If any of it is unclear, reread [p8].
 ```
 
 Gold:
@@ -2013,7 +2025,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this lesson picks how to summarize a variable by its type [p3, p4], such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
+A quick primer first: what this lesson needs from Intro to Statistics is the idea of summarizing a column, with the mode or frequency for unordered categories [p9] and the median or rank for ordered ones [p10]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
 ```
 
 Gold:
@@ -2043,7 +2055,7 @@ Lessons of this droplet already viewed:
 
 Should: build-on
 
-Pair with `solidworks-personalized-02`, expect: A builds on Engineering Drawing Basics by name in a few words, without saying what it taught, then gives how to start a sketch; B gives a short primer from the lesson itself on what sketching needs, then suggests Engineering Drawing Basics by name
+Pair with `solidworks-personalized-02`, expect: A builds on Engineering Drawing Basics by name in a few words, without saying what it taught; B gives a short primer from the lesson itself on what sketching needs, then suggests Engineering Drawing Basics by name
 
 Contrast oracle (for --answers oracle), A reworded:
 
@@ -2101,7 +2113,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: a sketch is a 2D drawing made with tools like Line, Rectangle and Circle, and sized with Smart Dimension [p6, p7]. I'd take Engineering Drawing Basics too. To start, click Sketch and select a plane: Front, Top or Right [p6]. Everything in SolidWorks starts with a 2D sketch [p6].
+A quick primer first: what this lesson needs from Engineering Drawing Basics is the idea of a 2D drawing, since every SolidWorks part starts as one, drawn with Line, Rectangle and Circle and sized with Smart Dimension [p6, p7]. I'd take Engineering Drawing Basics too. To start, click Sketch and select a plane: Front, Top or Right [p6]. Everything in SolidWorks starts with a 2D sketch [p6].
 ```
 
 Gold:
