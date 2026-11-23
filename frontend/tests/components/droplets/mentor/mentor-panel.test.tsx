@@ -27,6 +27,11 @@ jest.mock("react-markdown", () => ({
 jest.mock("@/hooks/use-media-query", () => ({
   useMediaQuery: jest.fn(() => true),
 }));
+jest.mock("@/lib/requests/mentor-chats", () => ({
+  listMentorChats: jest.fn().mockResolvedValue({ ok: true, data: [] }),
+  getMentorChat: jest.fn(),
+  deleteMentorChat: jest.fn(),
+}));
 jest.mock("@/lib/requests/notes", () => ({ createNote: jest.fn() }));
 jest.mock("@/lib/requests/mentor-feedback", () => ({
   saveMentorFeedback: jest.fn(),
